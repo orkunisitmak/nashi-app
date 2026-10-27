@@ -34,6 +34,13 @@ final class TargetSizeSearchTests: XCTestCase {
         XCTAssertThrowsError(try TargetSizeSearch.run(originalBytes:200000,targetBytes:0,startQuality:90,lossy:true,allowResize:true,encode:smooth))
     }
 
+    func testEveryScaleStepIsReachedWithoutRepeatedProbes() throws {
+        var seen:[String]=[]
+        let outcome=try TargetSizeSearch.run(originalBytes:200000,targetBytes:10,startQuality:90,lossy:true,allowResize:true){ q,s in seen.append("\(q)@\(s)");return 50000 }
+        XCTAssertEqual(Set(seen).count,seen.count);XCTAssertEqual(outcome.attempts,seen.count)
+        XCTAssertTrue(seen.contains("\(TargetSizeSearch.qualityFloor)@\(TargetSizeSearch.scales.last!)"))
+    }
+
     func testCancellationStopsEncodingAndDescriptionIsPlain() {
         let token=CancellationToken();var probes=0
         XCTAssertThrowsError(try TargetSizeSearch.run(originalBytes:200000,targetBytes:10,startQuality:90,lossy:true,allowResize:true,token:token){ q,s in probes+=1;if probes==3 { token.cancel() };return self.smooth(q,s) })

@@ -20,6 +20,8 @@ internal static class TargetSizeChecks
         check(lossless.Status==TargetSizeStatus.Achieved&&lossless.Best!.Quality==100&&lossless.Best.Bytes<=60000,"Lossless search changed quality or missed a reachable size");
         check(TargetSizeSearch.Run(1000,1000,80,true,true,(_,_)=>throw new Exception("encoded")).Status==TargetSizeStatus.AlreadyUnderTarget,"A file already under target was re-encoded");
         var flat=TargetSizeSearch.Run(200000,10,90,true,true,(_,_)=>50000);check(flat.Attempts<=TargetSizeSearch.MaxAttempts&&flat.Status==TargetSizeStatus.BestEffortAboveTarget,"A plateau exceeded the attempt cap");
+        var seen=new List<(int,double)>();var ladder=TargetSizeSearch.Run(200000,10,90,true,true,(q,sc)=>{seen.Add((q,sc));return 50000;});
+        check(seen.Distinct().Count()==seen.Count&&seen.Contains((TargetSizeSearch.QualityFloor,TargetSizeSearch.Scales[^1]))&&ladder.Attempts==seen.Count,"Target search repeated a probe or stopped before the last scale step");
         try{TargetSizeSearch.Run(200000,0,90,true,true,Smooth);check(false,"A zero target was accepted");}catch(ArgumentException){check(true,"");}
         using var cancel=new CancellationTokenSource();var probes=0;
         try{TargetSizeSearch.Run(200000,10,90,true,true,(q,s)=>{if(++probes==3)cancel.Cancel();return Smooth(q,s);},cancel.Token);check(false,"Cancellation was ignored");}catch(OperationCanceledException){check(probes==3,"Search encoded after cancellation");}

@@ -18,8 +18,10 @@ public enum TargetSizeSearch {
     public static let qualityFloor=30
     /// Longest-edge scale steps tried after quality alone cannot fit.
     public static let scales:[Double]=[1,0.85,0.7,0.55,0.4,0.3,0.2,0.12,0.08,0.05]
-    /// Bisection over 1-100 needs at most 7 probes per scale; this caps pathological inputs.
-    public static let maxAttempts=64
+    /// One probe at the start quality plus at most 7 bisection probes over 1-99.
+    public static let probesPerScale=8
+    /// Enough for every scale step, while still bounding pathological inputs.
+    public static let maxAttempts=scales.count*probesPerScale
 
     public static func run(originalBytes:Int64,targetBytes:Int64,startQuality:Int,lossy:Bool,allowResize:Bool,token:CancellationToken = .init(),encode:(Int,Double) throws->Int64) throws->TargetSizeOutcome {
         guard targetBytes>0 else { throw NashiError.invalidInput("Choose a positive target file size.") }
@@ -44,8 +46,6 @@ public enum TargetSizeSearch {
                 let middle=low+(high-low+1)/2,candidate=try probe(middle,scale)
                 if candidate.bytes<=targetBytes { if best == nil || candidate.quality>best!.quality { best=candidate };low=middle+1 } else { high=middle-1 }
             }
-            // A non-monotonic curve can make every bisection probe miss although the floor fits.
-            if best == nil && floor<top && attempts<maxAttempts { let last=try probe(floor,scale);if last.bytes<=targetBytes { best=last } }
             if let best { return .init(status:.achieved,best:best,smallest:smallest,attempts:attempts) }
         }
         return .init(status:.bestEffortAboveTarget,best:nil,smallest:smallest,attempts:attempts)

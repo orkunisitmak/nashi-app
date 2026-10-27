@@ -19,8 +19,10 @@ public static class TargetSizeSearch
     public const int QualityFloor=30;
     /// Longest-edge scale steps tried after quality alone cannot fit (Size priority).
     public static readonly double[] Scales=[1,.85,.7,.55,.4,.3,.2,.12,.08,.05];
-    /// Bisection over 1-100 needs at most 7 probes per scale; this caps pathological inputs.
-    public const int MaxAttempts=64;
+    /// One probe at the start quality plus at most 7 bisection probes over 1-99.
+    public const int ProbesPerScale=8;
+    /// Enough for every scale step, while still bounding pathological inputs.
+    public static readonly int MaxAttempts=Scales.Length*ProbesPerScale;
 
     public static TargetSizeOutcome Run(long originalBytes,long targetBytes,int startQuality,bool lossy,bool allowResize,Func<int,double,long> encode,CancellationToken token=default)
     {
@@ -44,8 +46,6 @@ public static class TargetSizeSearch
                 var middle=low+(high-low+1)/2;var candidate=Probe(middle,scale);
                 if(candidate.Bytes<=targetBytes){if(best is null||candidate.Quality>best.Quality)best=candidate;low=middle+1;}else high=middle-1;
             }
-            // A non-monotonic curve can make every bisection probe miss although the floor fits.
-            if(best is null&&floor<top&&attempts<MaxAttempts){var last=Probe(floor,scale);if(last.Bytes<=targetBytes)best=last;}
             if(best is not null)return new(TargetSizeStatus.Achieved,best,smallest,attempts);
         }
         return new(TargetSizeStatus.BestEffortAboveTarget,null,smallest,attempts);
