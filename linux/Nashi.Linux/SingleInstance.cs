@@ -8,7 +8,7 @@ namespace Nashi.Linux;
 /// Only the first Nashi process monitors desktop drags; later launches forward file arguments.
 internal sealed class SingleInstance:IDisposable
 {
-    private readonly Mutex mutex=new(false,"NashiLinux-"+Environment.UserName);
+    private readonly FileStream instanceLock;
     private readonly CancellationTokenSource lifetime=new();
     private readonly ConcurrentQueue<string[]> pending=new();
     private readonly string socketPath;
@@ -21,7 +21,9 @@ internal sealed class SingleInstance:IDisposable
         if(!OperatingSystem.IsWindows())File.SetUnixFileMode(root,UnixFileMode.UserRead|UnixFileMode.UserWrite|UnixFileMode.UserExecute);
         socketPath=Path.Combine(root,"instance.sock");
         if(Encoding.UTF8.GetByteCount(socketPath)>100)throw new IOException("The Nashi runtime path is too long for a Unix socket.");
-        try{IsPrimary=mutex.WaitOne(0);}catch(AbandonedMutexException){IsPrimary=true;}
+        if(!OperatingSystem.IsLinux())throw new PlatformNotSupportedException("This launcher is for Linux.");
+        instanceLock=new FileStream(Path.Combine(root,"instance.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.ReadWrite);
+        try{instanceLock.Lock(0,1);IsPrimary=true;}catch(IOException){IsPrimary=false;}
         if(!IsPrimary)return;
         if(File.Exists(socketPath))File.Delete(socketPath);
         listener=new Socket(AddressFamily.Unix,SocketType.Stream,ProtocolType.Unspecified);listener.Bind(new UnixDomainSocketEndPoint(socketPath));listener.Listen(4);
@@ -55,6 +57,6 @@ internal sealed class SingleInstance:IDisposable
     }
     public void Dispose()
     {
-        lifetime.Cancel();listener?.Dispose();if(IsPrimary){if(File.Exists(socketPath))File.Delete(socketPath);mutex.ReleaseMutex();}mutex.Dispose();
+        lifetime.Cancel();listener?.Dispose();if(IsPrimary){if(File.Exists(socketPath))File.Delete(socketPath);if(OperatingSystem.IsLinux())instanceLock.Unlock(0,1);}instanceLock.Dispose();
     }
 }
