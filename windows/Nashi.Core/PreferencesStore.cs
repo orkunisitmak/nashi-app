@@ -16,7 +16,20 @@ public sealed class PreferencesStore
     private readonly string file;public Preferences Value{get;private set;}=new();public string? RecoveryNotice{get;private set;}
     public PreferencesStore(string directory)
     {
-        file=Path.Combine(directory,"preferences.json");if(!File.Exists(file))return;try{if(new FileInfo(file).Length>1_000_000)throw new InvalidDataException();Value=JsonSerializer.Deserialize<Preferences>(File.ReadAllText(file))??new();Value=Value with{Language=AppLocalization.Normalize(Value.Language)};Validate(Value);}catch(Exception error)when(error is JsonException or IOException or ArgumentException){RecoveryNotice="Settings could not be loaded. Defaults are in use.";Value=new();}
+        file=Path.Combine(directory,"preferences.json");if(!File.Exists(file))return;
+        try
+        {
+            if(new FileInfo(file).Length>1_000_000)throw new InvalidDataException("Preferences are too large.");
+            Value=JsonSerializer.Deserialize<Preferences>(File.ReadAllText(file))??throw new InvalidDataException("Preferences are empty.");
+            Value=Value with{Language=AppLocalization.Normalize(Value.Language)};Validate(Value);
+        }
+        catch(Exception error)when(error is JsonException or InvalidDataException or ArgumentException or NotSupportedException)
+        {
+            try{File.Copy(file,file+".recovered-"+Guid.NewGuid().ToString("N"));}
+            catch(Exception backupError)when(backupError is IOException or UnauthorizedAccessException){RecoveryNotice="Settings recovery needs access to your Nashi data folder. Defaults are in use.";Value=new();return;}
+            RecoveryNotice="Settings could not be loaded. Defaults are in use; a recovery copy was kept.";Value=new();
+        }
+        catch(Exception error)when(error is IOException or UnauthorizedAccessException){RecoveryNotice="Settings are unavailable. Check access to your Nashi data folder.";Value=new();}
     }
     private static void Validate(Preferences p)
     {

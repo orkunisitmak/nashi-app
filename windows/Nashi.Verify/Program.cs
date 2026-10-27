@@ -66,6 +66,10 @@ try
     File.Delete(unicodeFile);Check(reopened.Entries.Single().AvailablePaths.Length==0,"Missing Library file was available");
     for(var i=0;i<55;i++)library.Record("ZIP "+i,[Path.Combine(root,"Output.txt")]);Check(library.Entries.Count==LibraryStore.Limit,"Library retention limit failed");
     Check(new LibraryStore(libraryDirectory).Entries.Count==LibraryStore.Limit,"Persisted Library limit failed");
+    var preferencesDirectory=Path.Combine(root,"Preferences recovery");Directory.CreateDirectory(preferencesDirectory);var preferencesFile=Path.Combine(preferencesDirectory,"preferences.json");File.WriteAllText(preferencesFile,"{broken");var preferencesRecovery=new PreferencesStore(preferencesDirectory);
+    Check(preferencesRecovery.Value.Language=="en"&&preferencesRecovery.RecoveryNotice is not null,"Corrupt preferences crashed or did not report recovery");
+    var preferenceCopies=Directory.GetFiles(preferencesDirectory,"preferences.json.recovered-*");Check(preferenceCopies.Length==1&&File.ReadAllText(preferenceCopies[0])=="{broken","Corrupt preferences recovery copy missing");
+    preferencesRecovery.Save(preferencesRecovery.Value with{Feedback=false});Check(!new PreferencesStore(preferencesDirectory).Value.Feedback,"Preferences did not recover after saving defaults");Directory.Delete(preferencesDirectory,true);
     var album=Path.Combine(root,"Exported album");Directory.CreateDirectory(album);library.Record("Extract ZIP",[album]);Check(new LibraryStore(libraryDirectory).Entries.First().AvailablePaths.Single()==album,"Library lost an exported directory");Directory.Delete(album);
     var broken=Path.Combine(libraryDirectory,"library.json");File.WriteAllText(broken,"{broken");var recovered=new LibraryStore(libraryDirectory);
     Check(recovered.Entries.Count==0&&recovered.RecoveryNotice is not null,"Corrupt Library crashed or did not report recovery");
