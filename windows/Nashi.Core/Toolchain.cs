@@ -11,14 +11,18 @@ public sealed class Toolchain(string directory)
     public string Executable(string name)
     {
         if(name is not ("ffmpeg" or "ffprobe" or "yt-dlp" or "deno"))throw new ArgumentException("Unknown tool.");
+        if (!OperatingSystem.IsWindows()) return SystemTools.Find(name) ?? throw new FileNotFoundException("Install "+name+" using your Linux package manager.");
         var path=Path.Combine(DirectoryPath,name+".exe");
         if(!ToolInstallation.UsableFile(path))throw new FileNotFoundException("Choose Set up media tools first.");return path;
     }
+    public bool HasExecutable(string name)
+    {try{_ = Executable(name);return true;}catch(FileNotFoundException){return false;}}
     private static bool Complete(string directory)=>new[]{"ffmpeg","ffprobe","yt-dlp","deno"}.All(n=>ToolInstallation.UsableFile(Path.Combine(directory,n+".exe")));
-    public bool Ready=>Complete(DirectoryPath);
+    public bool Ready=>OperatingSystem.IsWindows()?Complete(DirectoryPath):new[]{"ffmpeg","ffprobe","yt-dlp","deno"}.All(n=>SystemTools.Find(n) is not null);
     public async Task InstallAsync(IProgress<OperationProgress>? progress=null,CancellationToken token=default)
     {
         token.ThrowIfCancellationRequested();if(Ready){progress?.Report(new(1,"Media tools ready"));return;}
+        if (!OperatingSystem.IsWindows()) throw new PlatformNotSupportedException("Install ffmpeg, yt-dlp and deno with your Linux package manager. Windows binaries cannot be installed on Linux.");
         var parent=Path.GetDirectoryName(DirectoryPath)!;Directory.CreateDirectory(parent);
         var stage=Path.Combine(parent,"tools-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(stage);
         try

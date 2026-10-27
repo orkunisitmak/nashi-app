@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+NASHI_APPDIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+exec "$NASHI_APPDIR/usr/lib/nashi/Nashi" "$@"

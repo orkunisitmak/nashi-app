@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup><ProjectReference Include="../../windows/Nashi.Core/Nashi.Core.csproj" /></ItemGroup>
+  <ItemGroup>
+    <Compile Include="../../windows/Nashi.Windows/CompositionOptions.cs" Link="CompositionOptions.cs" />
+    <Compile Include="../../windows/Nashi.Windows/DocumentConversion.cs" Link="DocumentConversion.cs" />
+    <Compile Include="../../windows/Nashi.Windows/RichTextAttachments.cs" Link="RichTextAttachments.cs" />
+  </ItemGroup>
+</Project>

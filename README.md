@@ -39,6 +39,10 @@ On macOS, hold **Shift** while dragging in Finder for conversion, **Command** fo
 
 Supported media editors use **Space** for play/pause, **Left/Right** to seek one second and **I/O** to mark a range. Crop uses drag, **Shift** for aspect lock and **Enter** to save. The [English](https://orkunisitmak.github.io/nashi-app/#shortcuts) and [Turkish](https://orkunisitmak.github.io/nashi-app/tr/#shortcuts) pages contain the complete macOS shortcut sheet; the [Windows guide](windows/README.md) lists its available controls.
 
+## Linux port
+
+A native Linux port is being developed in [`linux/`](linux/README.md), sharing Nashi’s existing conversion engines and artwork. It is a development preview; [the Linux parity checklist](linux/FEATURE-PARITY.md) records the work still required before a complete Linux release.
+
 ## Build
 
 For macOS: Apple Silicon, macOS 13+ and Xcode/Swift 6.

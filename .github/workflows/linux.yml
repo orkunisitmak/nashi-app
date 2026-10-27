@@ -1,0 +1,61 @@
+name: Linux
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, linux-port]
+    paths: ['linux/**', 'windows/Nashi.Core/**', 'windows/Nashi.Windows/DocumentConversion.cs', 'windows/Nashi.Windows/RichTextAttachments.cs', 'Resources/**', 'scripts/*linux*', '.github/workflows/linux.yml']
+  pull_request:
+    paths: ['linux/**', 'windows/Nashi.Core/**', 'windows/Nashi.Windows/DocumentConversion.cs', 'windows/Nashi.Windows/RichTextAttachments.cs', 'Resources/**', 'scripts/*linux*', '.github/workflows/linux.yml']
+permissions:
+  contents: read
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            rid: linux-x64
+            mpv: libmpv1
+          - runner: ubuntu-24.04-arm
+            rid: linux-arm64
+            mpv: libmpv2
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Install desktop and verification dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libx11-6 libice6 libsm6 libfontconfig1 libgomp1 fonts-dejavu-core xvfb ffmpeg poppler-utils tesseract-ocr libimage-exiftool-perl libreoffice xdg-utils rpm ${{ matrix.mpv }}
+      - name: Verify shared engines
+        env:
+          NASHI_VERIFY_FFMPEG: /usr/bin/ffmpeg
+          NASHI_VERIFY_FFPROBE: /usr/bin/ffprobe
+        run: dotnet run --project windows/Nashi.Verify -c Release
+      - name: Verify Linux exports
+        run: dotnet run --project linux/Nashi.Linux.Verify -c Release
+      - name: Publish self-contained Linux app
+        run: scripts/build-linux.sh '${{ matrix.rid }}'
+      - name: Native X11 UI checks
+        env:
+          NASHI_SMOKE_DIRECTORY: ${{ github.workspace }}/build/linux-smoke
+        run: xvfb-run -a 'build/linux/${{ matrix.rid }}/Nashi/Nashi' --smoke-test
+      - name: Package AppImage, tarball, deb and rpm
+        env:
+          NASHI_APPIMAGE: '1'
+        run: scripts/package-linux.sh '${{ matrix.rid }}'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Nashi-${{ matrix.rid }}
+          path: build/linux/dist/*
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Linux-UI-evidence-${{ matrix.rid }}
+          path: build/linux-smoke/
+          if-no-files-found: ignore

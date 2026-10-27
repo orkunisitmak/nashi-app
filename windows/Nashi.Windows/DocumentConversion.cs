@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using System.Net;
 using System.Xml.Linq;
-using System.Windows.Media.Imaging;
 using Nashi.Core;
 namespace Nashi.Windows;
 
@@ -20,8 +19,8 @@ public sealed class DocumentConversion(OfficeRuntime runtime,Toolchain tools)
             if(FeatureCatalog.IsArchive(input)){outputs.AddRange(ArchiveEngine.Convert(input,format,tx.StagingDirectory,options.Password,progress,token));continue;}
             if(ext is "srt" or "vtt")
             {var path=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+"."+format);await File.WriteAllTextAsync(path,SubtitleCodec.Convert(await File.ReadAllTextAsync(input,token),format),new UTF8Encoding(false),token);outputs.Add(path);continue;}
-            var engine=runtime.Executable is {} office?new OfficeDocuments(office,tools.Ready?tools.Executable("deno"):"",AppContext.BaseDirectory):null;
-            if(ext=="pages"){if(engine is null||!tools.Ready)throw new InvalidOperationException("Set up office and media tools once to enable native Pages interoperability.");source=await engine.PagesReadAsync(input,work,token);}
+            var engine=runtime.Executable is {} office?new OfficeDocuments(office,tools.HasExecutable("deno")?tools.Executable("deno"):"",AppContext.BaseDirectory):null;
+            if(ext=="pages"){if(engine is null||!tools.HasExecutable("deno"))throw new InvalidOperationException("Set up office and media tools once to enable native Pages interoperability.");source=await engine.PagesReadAsync(input,work,token);}
             if(ext=="rtfd"){source=await RichTextAttachments.Materialize(input,work,token);}
             if(ext=="textclipping")source=await MaterializeClipping(input,work,token);
             if(ext is "txt" or "md"){var normalized=Path.Combine(work,Path.GetFileName(input));await File.WriteAllTextAsync(normalized,LegacyTextCodec.Decode(await File.ReadAllBytesAsync(input,token)),new UTF8Encoding(false),token);source=normalized;}
@@ -42,7 +41,7 @@ public sealed class DocumentConversion(OfficeRuntime runtime,Toolchain tools)
             }
             if(format=="pages")
             {
-                if(!tools.Ready)throw new InvalidOperationException("Set up media tools once to enable the Pages runtime.");var docx=ext=="docx"?input:await Require(engine).OfficeAsync(source,"docx",work,token);var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+".pages");outputs.Add(await Require(engine).PagesWriteAsync(docx,output,token));continue;
+                if(!tools.HasExecutable("deno"))throw new InvalidOperationException("Set up media tools once to enable the Pages runtime.");var docx=ext=="docx"?input:await Require(engine).OfficeAsync(source,"docx",work,token);var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+".pages");outputs.Add(await Require(engine).PagesWriteAsync(docx,output,token));continue;
             }
             if(format=="epub"&&options.EpubLayout=="fixed")
             {var pdf=await Require(engine).OfficeAsync(source,"pdf",work,token);var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+".epub");EpubFixed(await NativePdf.RenderAsync(pdf,options.Dpi,token,ext=="pdf"?options.Password:""),output,Path.GetFileNameWithoutExtension(input));outputs.Add(output);continue;}
