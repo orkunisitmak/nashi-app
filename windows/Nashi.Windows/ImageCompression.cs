@@ -12,7 +12,9 @@ public static partial class ImageEngine
             token.ThrowIfCancellationRequested();if(File.Exists(output))File.Delete(output);
             var frame=scale<1?new TransformedBitmap(image,new ScaleTransform(Math.Max(1,(int)(image.PixelWidth*scale))/(double)image.PixelWidth,Math.Max(1,(int)(image.PixelHeight*scale))/(double)image.PixelHeight)):image;Save(frame,output,format,q,options.EncoderPath,token);
         }
-        var outcome=target is {} limit?TargetSizeSearch.Run(original,limit,quality,lossy,true,(q,scale)=>{progress?.Report(new(null,$"Fitting image · attempt {++attempt}…"));Encode(q,scale);return new FileInfo(output).Length;},token):null;
+        // Skipping the search is safe only when the untouched source can be kept; resized or re-encoded outputs must be measured.
+        var keepsOriginal=image.PixelWidth==source.PixelWidth&&image.PixelHeight==source.PixelHeight&&FeatureCatalog.Extension(input)==format;
+        var outcome=target is {} limit?TargetSizeSearch.Run(keepsOriginal?original:long.MaxValue,limit,quality,lossy,true,(q,scale)=>{progress?.Report(new(null,$"Fitting image · attempt {++attempt}…"));Encode(q,scale);return new FileInfo(output).Length;},token):null;
         if(outcome is {Status:TargetSizeStatus.BestEffortAboveTarget})
         {
             if(File.Exists(output))File.Delete(output);

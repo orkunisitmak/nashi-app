@@ -22,6 +22,7 @@ internal static class TargetSizeChecks
         var flat=TargetSizeSearch.Run(200000,10,90,true,true,(_,_)=>50000);check(flat.Attempts<=TargetSizeSearch.MaxAttempts&&flat.Status==TargetSizeStatus.BestEffortAboveTarget,"A plateau exceeded the attempt cap");
         var seen=new List<(int,double)>();var ladder=TargetSizeSearch.Run(200000,10,90,true,true,(q,sc)=>{seen.Add((q,sc));return 50000;});
         check(seen.Distinct().Count()==seen.Count&&seen.Contains((TargetSizeSearch.QualityFloor,TargetSizeSearch.Scales[^1]))&&ladder.Attempts==seen.Count,"Target search repeated a probe or stopped before the last scale step");
+        var transformed=TargetSizeSearch.Run(long.MaxValue,30000,90,true,true,Smooth);check(transformed.Status==TargetSizeStatus.Achieved&&transformed.Attempts>0&&transformed.Best!.Bytes<=30000,"A transformed output skipped measurement against the target");
         try{TargetSizeSearch.Run(200000,0,90,true,true,Smooth);check(false,"A zero target was accepted");}catch(ArgumentException){check(true,"");}
         using var cancel=new CancellationTokenSource();var probes=0;
         try{TargetSizeSearch.Run(200000,10,90,true,true,(q,s)=>{if(++probes==3)cancel.Cancel();return Smooth(q,s);},cancel.Token);check(false,"Cancellation was ignored");}catch(OperationCanceledException){check(probes==3,"Search encoded after cancellation");}

@@ -519,7 +519,10 @@ public enum ImageEngine {
             return ((try FileManager.default.attributesOfItem(atPath:output.path))[.size] as? NSNumber)?.int64Value ?? 0
         }
         let start=Int((quality*100).rounded())
-        let outcome=try target.map { try TargetSizeSearch.run(originalBytes:inputSize,targetBytes:$0,startQuality:start,lossy:lossy,allowResize:true,token:token,encode:encode) }
+        // Skipping the search is safe only when retainSmallerOriginal can fall back to the
+        // untouched source; resized or re-encoded outputs must be measured against the target.
+        let keepsOriginal=image.width==originalWidth && image.height==originalHeight && input.pathExtension.lowercased()==ext.lowercased()
+        let outcome=try target.map { try TargetSizeSearch.run(originalBytes:keepsOriginal ? inputSize:.max,targetBytes:$0,startQuality:start,lossy:lossy,allowResize:true,token:token,encode:encode) }
         if let outcome,outcome.status == .bestEffortAboveTarget {
             try? FileManager.default.removeItem(at:output)
             throw NashiError.failed("The requested file size could not be reached. Choose a larger target.")

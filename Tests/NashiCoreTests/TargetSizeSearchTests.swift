@@ -41,6 +41,12 @@ final class TargetSizeSearchTests: XCTestCase {
         XCTAssertTrue(seen.contains("\(TargetSizeSearch.qualityFloor)@\(TargetSizeSearch.scales.last!)"))
     }
 
+    func testTransformedOutputIsMeasuredEvenWhenSourceIsUnderTarget() throws {
+        // compress passes .max when the source cannot be kept (resized or re-encoded output).
+        let outcome=try TargetSizeSearch.run(originalBytes:.max,targetBytes:30000,startQuality:90,lossy:true,allowResize:true,encode:smooth)
+        XCTAssertEqual(outcome.status,.achieved);XCTAssertGreaterThan(outcome.attempts,0);XCTAssertLessThanOrEqual(try XCTUnwrap(outcome.best).bytes,30000)
+    }
+
     func testCancellationStopsEncodingAndDescriptionIsPlain() {
         let token=CancellationToken();var probes=0
         XCTAssertThrowsError(try TargetSizeSearch.run(originalBytes:200000,targetBytes:10,startQuality:90,lossy:true,allowResize:true,token:token){ q,s in probes+=1;if probes==3 { token.cancel() };return self.smooth(q,s) })
