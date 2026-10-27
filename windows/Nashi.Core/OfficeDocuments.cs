@@ -42,7 +42,14 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
     }
     private Task<ProcessResult> PagesCall(string mode,string input,string output,CancellationToken token)
     {
-        var bundle=Path.Combine(assets,"PagesInterop.js");var script=Path.Combine(assets,"pages-windows.js");return ProcessRunner.RunAsync(deno,["run","--no-prompt","--no-config","--cached-only","--allow-read="+bundle.Replace(",",",,")+","+Path.GetFullPath(input).Replace(",",",,"),"--allow-write="+Path.GetFullPath(output).Replace(",",",,"),script,bundle,mode,Path.GetFullPath(input),Path.GetFullPath(output)],token);
+        var bundle=Path.Combine(assets,"PagesInterop.js");
+        if(Path.GetFileNameWithoutExtension(deno) is "node" or "nodejs")
+        {
+            // Node's permission model gives the same exact-path read/write limits as Deno.
+            var module=Path.Combine(assets,"pages-node.mjs");
+            return ProcessRunner.RunAsync(deno,["--permission","--allow-fs-read="+module,"--allow-fs-read="+bundle,"--allow-fs-read="+Path.GetFullPath(input),"--allow-fs-write="+Path.GetFullPath(output),module,bundle,mode,Path.GetFullPath(input),Path.GetFullPath(output)],token);
+        }
+        var script=Path.Combine(assets,"pages-windows.js");return ProcessRunner.RunAsync(deno,["run","--no-prompt","--no-config","--cached-only","--allow-read="+bundle.Replace(",",",,")+","+Path.GetFullPath(input).Replace(",",",,"),"--allow-write="+Path.GetFullPath(output).Replace(",",",,"),script,bundle,mode,Path.GetFullPath(input),Path.GetFullPath(output)],token);
     }
     private static XDocument Xml(ZipArchive zip,string entry)
     {
