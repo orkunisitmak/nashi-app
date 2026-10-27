@@ -522,8 +522,7 @@ public enum ImageEngine {
         let outcome=try target.map { try TargetSizeSearch.run(originalBytes:inputSize,targetBytes:$0,startQuality:start,lossy:lossy,allowResize:true,token:token,encode:encode) }
         if let outcome,outcome.status == .bestEffortAboveTarget {
             try? FileManager.default.removeItem(at:output)
-            let detail=outcome.smallest.map{"\(ByteCountFormatter.string(fromByteCount:$0.bytes,countStyle:.binary)) (\(TargetSizeSearch.describe($0,lossy:lossy)))"} ?? "unavailable"
-            throw NashiError.failed("The requested file size could not be reached. The smallest result was \(detail). Choose a larger target.")
+            throw NashiError.failed("The requested file size could not be reached. Choose a larger target.")
         }
         let best=outcome?.best
         if let best { if try encode(best.quality,best.scale) != best.bytes { try? FileManager.default.removeItem(at:output);throw NashiError.failed("The compressed size changed between attempts.") } }
