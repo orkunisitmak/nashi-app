@@ -1,0 +1,49 @@
+name: Linux
+on:
+  push:
+    branches: [main]
+  pull_request:
+  repository_dispatch:
+    types: [owner-pr-merged]
+permissions:
+  contents: read
+concurrency:
+  group: linux-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        with:
+          dotnet-version: '10.0.x'
+      - name: Install distribution tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg libimage-exiftool-perl tesseract-ocr tesseract-ocr-eng libreoffice-writer-nogui file qrencode desktop-file-utils
+      - name: Shared engine checks with system FFmpeg
+        env:
+          NASHI_VERIFY_FFMPEG: /usr/bin/ffmpeg
+          NASHI_VERIFY_FFPROBE: /usr/bin/ffprobe
+        run: dotnet run --project windows/Nashi.Verify -c Release
+      - name: Publish Linux x64
+        run: |
+          dotnet restore linux/Nashi.Linux --locked-mode
+          dotnet publish linux/Nashi.Linux -c Release --no-restore -o build/linux/Nashi
+      - name: End-to-end CLI, engine and headless UI checks
+        run: bash scripts/test-linux-cli.sh build/linux/Nashi/nashi "$RUNNER_TEMP/nashi-linux"
+      - name: Install script round trip
+        run: |
+          PREFIX="$RUNNER_TEMP/prefix/nashi" BIN_DIR="$RUNNER_TEMP/bin" DATA_DIR="$RUNNER_TEMP/share" linux/install.sh
+          desktop-file-validate "$RUNNER_TEMP/share/applications/nashi.desktop" || true
+          PREFIX="$RUNNER_TEMP/prefix/nashi" BIN_DIR="$RUNNER_TEMP/bin" DATA_DIR="$RUNNER_TEMP/share" linux/install.sh --uninstall
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        if: always()
+        with:
+          name: nashi-linux-ui
+          path: ${{ runner.temp }}/nashi-linux/out/ui-*.png
+          if-no-files-found: ignore

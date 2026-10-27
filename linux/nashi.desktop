@@ -1,0 +1,17 @@
+[Desktop Entry]
+Type=Application
+Version=1.5
+Name=Nashi
+GenericName=File Converter
+GenericName[tr]=Dosya Dönüştürücü
+Comment=Convert, fine-tune and send files on their way
+Comment[tr]=Dosyalarını dönüştür, düzenle ve yoluna gönder
+Exec=nashi %F
+TryExec=nashi
+Icon=nashi
+Terminal=false
+Categories=Utility;FileTools;
+Keywords=convert;compress;pdf;image;video;audio;crop;trim;zip;dönüştür;sıkıştır;kırp;
+StartupNotify=true
+StartupWMClass=nashi
+MimeType=audio/x-aiff;video/x-msvideo;image/avif;image/bmp;text/csv;application/vnd.openxmlformats-officedocument.wordprocessingml.document;application/epub+zip;audio/flac;image/gif;application/gzip;image/heic;image/jpeg;audio/mp4;text/markdown;video/x-matroska;video/quicktime;audio/mpeg;video/mp4;application/vnd.oasis.opendocument.spreadsheet;audio/ogg;audio/x-opus+ogg;application/x-iwork-pages-sffpages;application/pdf;image/png;application/vnd.ms-powerpoint;application/vnd.openxmlformats-officedocument.presentationml.presentation;application/vnd.rar;application/rtf;application/x-subrip;image/svg+xml;application/x-tar;image/tiff;text/tab-separated-values;text/plain;text/vtt;audio/x-wav;video/webm;image/webp;audio/x-ms-wma;video/x-ms-wmv;application/vnd.ms-excel;application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;application/zip;
