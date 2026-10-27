@@ -16,7 +16,8 @@ public sealed class PreferencesStore
     private readonly string file;public Preferences Value{get;private set;}=new();public string? RecoveryNotice{get;private set;}
     public PreferencesStore(string directory)
     {
-        file=Path.Combine(directory,"preferences.json");if(!File.Exists(file))return;
+        file=Path.Combine(directory,"preferences.json");AtomicFile.RecoverOrphan(file);
+        if(!File.Exists(file))return;
         try
         {
             if(new FileInfo(file).Length>1_000_000)throw new InvalidDataException("Preferences are too large.");
@@ -39,7 +40,7 @@ public sealed class PreferencesStore
     }
     public void Save(Preferences value)
     {
-        Validate(value);Directory.CreateDirectory(Path.GetDirectoryName(file)!);var temporary=file+"."+Guid.NewGuid().ToString("N")+".tmp";try{File.WriteAllText(temporary,JsonSerializer.Serialize(value));File.Move(temporary,file,true);Value=value;}finally{if(File.Exists(temporary))File.Delete(temporary);}
+        Validate(value);AtomicFile.WriteAllText(file,JsonSerializer.Serialize(value));Value=value;
     }
     public OutputProfile Profile(string format)=>Value.Formats.GetValueOrDefault(format,new());
     public void SetProfile(string format,OutputProfile profile){var formats=new Dictionary<string,OutputProfile>(Value.Formats){[format]=profile};Save(Value with{Formats=formats});}

@@ -39,6 +39,8 @@ public static class PublicUpdates
     {
         // Caller must verify the archive signature before calling. This extractor
         // still rejects traversal, links, aliases and excessive expansion.
+        destination=Path.GetFullPath(destination);Directory.CreateDirectory(destination);
+        if((File.GetAttributes(destination)&FileAttributes.ReparsePoint)!=0)throw new InvalidDataException("Update destination cannot be a symbolic link.");
         using var zip=ZipFile.OpenRead(archive);long total=0;var names=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         if(zip.Entries.Count>10000)throw new InvalidDataException("Too many update files.");
         foreach(var entry in zip.Entries)
@@ -46,6 +48,7 @@ public static class PublicUpdates
             token.ThrowIfCancellationRequested();total=checked(total+entry.Length);if(total>3L*1024*1024*1024)throw new InvalidDataException("Expanded update is too large.");
             var relative=entry.FullName.TrimEnd('/','\\');if(relative.Length==0)continue;var path=SafePaths.ArchiveEntry(destination,relative);
             if(!names.Add(path)||((entry.ExternalAttributes>>16)&0xF000)==0xA000||(entry.ExternalAttributes&0x400)!=0)throw new InvalidDataException("Unsafe update entry.");
+            SafePaths.RejectLinks(destination,path);
             if(entry.FullName.EndsWith('/')){Directory.CreateDirectory(path);continue;}
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);entry.ExtractToFile(path);
         }
