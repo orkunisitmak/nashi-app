@@ -6,11 +6,22 @@ namespace Nashi.Windows;
 internal static class UpdateInstaller
 {
     public static Version Current=>Assembly.GetExecutingAssembly().GetName().Version??new(0,7,0);
+    public static void CleanupStale()
+    {
+        var target=Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory);
+        var parent=Path.GetDirectoryName(target);if(parent is null)return;
+        foreach(var directory in Directory.EnumerateDirectories(parent,".nashi-update-*"))
+        {
+            try { if(DateTime.UtcNow-Directory.GetLastWriteTimeUtc(directory)>TimeSpan.FromHours(24))Directory.Delete(directory,true); }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+        }
+    }
     public static async Task StageAsync(WindowsUpdate update,IProgress<OperationProgress> progress,CancellationToken token)
     {
         var target=Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory);var parent=Path.GetDirectoryName(target)??throw new IOException("Extract Nashi into its own writable folder first.");
         if(target==Path.GetPathRoot(target)||(File.GetAttributes(target)&FileAttributes.ReparsePoint)!=0)throw new IOException("Use a regular writable folder for portable updates.");
-        var stage=Path.Combine(parent,".nashi-update-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(stage);
+        var stage=AtomicFile.CreateTemporaryDirectory(".nashi-update-",parent);
         try
         {
             var archive=Path.Combine(stage,"update.zip");await VerifiedDownload.FetchAsync(new(update.Url),archive,update.Length,p=>progress.Report(new(p*.85,"Downloading Nashi "+update.Version+"…")),token);

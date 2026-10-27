@@ -9,7 +9,7 @@ namespace Nashi.Windows;
 internal sealed class FilePreviewWindow:Window
 {
     private readonly string[] paths;private int index;
-    private readonly Toolchain tools;private readonly OfficeRuntime office;private readonly string temporary=Path.Combine(Path.GetTempPath(),"Nashi-quick-preview-"+Guid.NewGuid().ToString("N"));private CancellationTokenSource lifetime=new();
+    private readonly Toolchain tools;private readonly OfficeRuntime office;private readonly string temporary=AtomicFile.CreateTemporaryDirectory("Nashi-quick-preview-");private CancellationTokenSource lifetime=new();
     private readonly ContentControl content=new();private readonly TextBlock caption=new(){TextTrimming=TextTrimming.CharacterEllipsis,VerticalAlignment=VerticalAlignment.Center};
     private MediaElement? player;private bool playing;private readonly Slider scrub=new(){Minimum=0,Maximum=1,MinWidth=140};
     private PdfRasterDocument? pdfDocument;

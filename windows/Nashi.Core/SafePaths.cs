@@ -5,6 +5,15 @@ public static class SafePaths
     private static readonly HashSet<string> Devices = new(StringComparer.OrdinalIgnoreCase)
     { "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9" };
 
+    public static bool Contained(string root, string path)
+    {
+        var fullRoot = Path.TrimEndingDirectorySeparator(Path.GetFullPath(root));
+        var fullPath = Path.GetFullPath(path);
+        var relative = Path.GetRelativePath(fullRoot, fullPath);
+        return relative != ".." && !relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal) &&
+            !Path.IsPathRooted(relative);
+    }
+
     public static string ArchiveEntry(string root, string entry)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(entry);
@@ -19,6 +28,21 @@ public static class SafePaths
         if (!destination.StartsWith(fullRoot, StringComparison.OrdinalIgnoreCase))
             throw new InvalidDataException("The archive entry leaves its destination.");
         return destination;
+    }
+
+    public static void RejectLinks(string root, string path)
+    {
+        var fullRoot = Path.GetFullPath(root);
+        if (!Contained(fullRoot, path)) throw new InvalidDataException("A path leaves its destination.");
+        var relative = Path.GetRelativePath(fullRoot, path);
+        var current = fullRoot;
+        foreach (var part in relative.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries))
+        {
+            current = Path.Combine(current, part);
+            if ((File.Exists(current) || Directory.Exists(current)) &&
+                (File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0)
+                throw new InvalidDataException("A destination path contains a symbolic link.");
+        }
     }
 
     public static string Unique(string directory, string filename)
