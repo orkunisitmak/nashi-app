@@ -15,16 +15,16 @@ The target is the complete Nashi experience. This file explicitly separates impl
 | Metadata | Original MetadataService; system ExifTool resolution; write/remove options | Verify the ported metadata editor and image conversion tag preservation with system ExifTool |
 | Web | Original WebDownload/WebPhotos; correct system FFmpeg directory; public image/media download types | Platform-specific result previews, Instagram photo selection and quality UI |
 | File actions / Float | Copy/move/path/ZIP; basic always-on-top reusable file shelf; external file preview | Native share/terminal, drag-out/add/collapse/edge pinning, robust transactional move failure UI |
-| Preferences | Shared PreferencesStore; appearance, language, output mode/folder, download folder, reveal results | Format default profiles, shortcut/wheel settings, login/tray options |
-| Global integration | In-app keyboard shortcuts and file drops | Global drag-modifier wheels, global copied-link shortcut, window-placement wheel, tray recovery; Wayland requires compositor/portal adaptations |
+| Preferences | Shared PreferencesStore; appearance, language, output mode/folder, download folder, reveal results and configurable distinct drag chords | Format default profiles, wheel appearance/feedback and login/tray options |
+| Global integration | Ctrl/Shift/Alt file-drop wheels; X11 Xdnd/modifier observer and cursor-positioned radial drop targets | Real file-manager X11 integration checks; global native Wayland drag behavior, global copied-link shortcut, window-placement wheel and tray recovery require further work |
 | Updates | Windows updater is not used for Linux | Linux release metadata, trusted signatures, atomic install/recovery and end-to-end public release verification |
-| Distribution | Self-contained x64/ARM64 projects; AppImage/tar/deb/rpm packaging and CI | Actual CI results for each package; installation/upgrade checks on Debian/Ubuntu/Fedora/Arch and GNOME/KDE |
+| Distribution | Self-contained x64/ARM64 builds; AppImage/tar/deb/rpm packaging and CI | Actual CI results for each package; ARM64 execution and installation/upgrade checks on Debian/Ubuntu/Fedora/Arch and GNOME/KDE; GitHub account billing currently prevents hosted jobs from starting |
 
 ## Evidence from the development machine
 
 - Native x64 Linux build succeeds with warnings treated as errors.
-- `linux/Nashi.Linux.Verify`: 29 checks, including real image dimensions/pixels, original hashes, PDF page counts/rendering, archive/subtitle round trips, QR, cancellation and real FFmpeg conversion/trim.
+- `linux/Nashi.Linux.Verify`: 36 checks, including real image dimensions/pixels, original hashes, PDF page counts/rendering, archive/subtitle round trips, QR, cancellation and real FFmpeg conversion/trim.
 - `windows/Nashi.Verify` on Linux with system FFmpeg/ffprobe: 1,327 shared engine/security checks pass. This is existing Nashi code, not a claim about the Windows GUI running on Linux.
-- `Nashi --smoke-test`: opens real Avalonia Linux windows, checks Home/tool/editor construction and captures PNGs. The suite also probes libmpv playback where configured. Only the emitted successful `smoke.json` is evidence of a completed run.
+- `Nashi --smoke-test`: 25 assertions in real Avalonia Linux windows, covering Home/editor construction, PDF thumbnails, metadata values, libmpv playback/seek, URI filtering and Ctrl/Shift/Alt routed drag/drop events. Captures light/dark/compact/editor/wheel PNGs. The drag tests inject application events, not operating-system input; they do not establish real global file-manager integration. Only the emitted successful `smoke.json` is evidence of a completed run.
 
 CI results, screenshots, package checksums and successful installation must be linked before promoting this branch to a feature-complete Linux release. Remaining cells above are release blockers, not optional differences to silently omit.

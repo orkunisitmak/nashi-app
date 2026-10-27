@@ -52,7 +52,9 @@ NASHI_APPIMAGE=1 scripts/package-linux.sh linux-x64
 NASHI_SMOKE_DIRECTORY="$PWD/build/linux-smoke" build/linux/linux-x64/Nashi/Nashi --smoke-test
 ```
 
-`package-linux.sh` always creates a tarball. It also creates deb/rpm packages when `dpkg-deb`/`rpmbuild` are present; `NASHI_APPIMAGE=1` downloads hash-pinned official AppImage tooling and runtime. Run an ARM64 AppImage build on an ARM64 host. GitHub Actions performs independent x64 and ARM64 builds and uploads packages plus native UI evidence. An artifact or checksum is not a signed update channel or an official upstream release.
+`package-linux.sh` always creates a tarball. It also creates deb/rpm packages when `dpkg-deb` (or `ar`)/`rpmbuild` are present; `NASHI_APPIMAGE=1` downloads hash-pinned official AppImage tooling and runtime. Cross-packaging uses the build host’s appimagetool with the verified target-architecture runtime; actually running ARM64 packages still needs an ARM64 machine. GitHub Actions performs independent x64 and ARM64 builds and uploads packages plus native UI evidence. An artifact or checksum is not a signed update channel or an official upstream release.
+
+While dragging files **onto Nashi**, hold **Ctrl** for tools, **Shift** for conversion or **Alt** for file actions, then drop onto a wheel segment. An Xdnd monitor also implements global wheels for X11 sources while Nashi is open. Native Wayland sources do not expose global drag data/modifier state to arbitrary applications; global behavior is not verified there.
 
 **Ctrl+O** chooses files, **Ctrl+V** imports files/text/images/links outside text inputs, **Ctrl+Space** opens the tool wheel, **Ctrl+1/2** switches Home/Library, **Ctrl+F** searches Library. Embedded playback uses Space, arrow keys and I/O. Image crop uses drag and Shift for a square; annotation supports Ctrl+Z and Select/Move. Originals are exported as new copies through Nashi's transaction layer.
 

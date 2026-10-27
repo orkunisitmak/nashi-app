@@ -33,7 +33,7 @@ public static class ImageEngine
         for(var i=0;i<inputs.Count;i++)
         {
             token.ThrowIfCancellationRequested();using var image=PhotoCodec.Read(inputs[i]);
-            if(tool=="editImage") { image.Read(PhotoCodec.Adjust(image.ToByteArray(MagickFormat.Png),o.Adjustments));if(o.Width is {} w||o.Height is not null){var width=o.Width??(int)image.Width;var height=o.Height??(int)image.Height;ValidateSize(width,height);image.Resize((uint)width,(uint)height);}if(o.Rotation!=0)image.Rotate(o.Rotation);if(o.FlipHorizontal)image.Flop();if(o.FlipVertical)image.Flip(); }
+            if(tool=="editImage") { image.Read(PhotoCodec.Adjust(image.ToByteArray(MagickFormat.Png),o.Adjustments));if(o.Width is {} w||o.Height is not null){var width=o.Width??(int)image.Width;var height=o.Height??(int)image.Height;ValidateSize(width,height);image.Resize(new MagickGeometry((uint)width,(uint)height){IgnoreAspectRatio=true});}if(o.Rotation!=0)image.Rotate(o.Rotation);if(o.FlipHorizontal)image.Flop();if(o.FlipVertical)image.Flip(); }
             if(tool=="cropImage") { ValidateRegion(o.X,o.Y,o.Width,o.Height,image);image.Crop(new MagickGeometry(o.X,o.Y,(uint)o.Width!.Value,(uint)o.Height!.Value));image.ResetPage(); }
             if(tool=="redactImage")
             {
@@ -54,7 +54,7 @@ public static class ImageEngine
                 }
             }
             if(tool=="frameImage"){using var framed=Compositions.Frame(image,o.Frame);image.Read(framed.ToByteArray(MagickFormat.Png));}
-            var ext=format??FeatureCatalog.Extension(inputs[i]);if(ext=="svg")ext="png";
+            var ext=tool is "frameImage" or "redactImage"?"png":format??FeatureCatalog.Extension(inputs[i]);if(ext=="svg")ext="png";
             var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(inputs[i])+" "+tool+"."+ext);
             image.Strip();
             var target=tool=="compress"?Compression.Target(new FileInfo(inputs[i]).Length,o.TargetBytes,o.ReductionPercent):null;

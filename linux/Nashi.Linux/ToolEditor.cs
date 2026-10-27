@@ -5,6 +5,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
+using Avalonia.Threading;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
@@ -23,13 +24,17 @@ public sealed class ToolEditor:Window
     private MediaPreview? mediaPreview;
     private readonly CancellationTokenSource lifetime=new();
     private Task? processedTask;
+    private Task? photoTask;
+    private readonly DispatcherTimer photoClock=new(){Interval=TimeSpan.FromMilliseconds(300)};
+    private long photoGeneration;
+    private bool showingOriginal;
     private string? processedDirectory;
     private readonly Dictionary<string,TextBox> textFields=[];
     private readonly StackPanel fields=new(){Spacing=10};
     public ToolEditor(string action,string? format,string[] inputs,LinuxEngine engine)
     {
         this.action=action;inputOrder.AddRange(inputs);Title=(action=="convert"?"Convert to "+format?.ToUpperInvariant():FeatureCatalog.ToolNames.GetValueOrDefault(action,action))+" · Nashi";
-        Width=1000;Height=740;MinWidth=720;MinHeight=520;FontFamily=new Avalonia.Media.FontFamily("Noto Sans, DejaVu Sans");Background=NashiTheme.Paper;Foreground=NashiTheme.Ink;
+        Width=1000;Height=740;MinWidth=720;MinHeight=520;FontFamily=new Avalonia.Media.FontFamily("DejaVu Sans");Background=NashiTheme.Paper;Foreground=NashiTheme.Ink;
         var root=new DockPanel{Margin=new(28)};var heading=new StackPanel{Spacing=8,Margin=new(0,0,0,22)};heading.Children.Add(NashiTheme.Text(Title[..^8],26));heading.Children.Add(NashiTheme.Text(Path.GetFileName(inputs[0])+" · Original stays safe",13,true));DockPanel.SetDock(heading,Dock.Top);root.Children.Add(heading);
         var footer=new StackPanel{Spacing=8,Margin=new(0,18,0,0)};footer.Children.Add(error);var buttons=new StackPanel{Orientation=Orientation.Horizontal,Spacing=10};
         buttons.Children.Add(NashiTheme.Button("Save new copy",Save,true));buttons.Children.Add(NashiTheme.Button("Reset",()=>Reset()));buttons.Children.Add(NashiTheme.Button("Cancel",()=>Close((LinuxOptions?)null)));footer.Children.Add(buttons);DockPanel.SetDock(footer,Dock.Bottom);root.Children.Add(footer);
@@ -56,14 +61,31 @@ public sealed class ToolEditor:Window
             preview.Children.Add(NashiTheme.Button("Original",()=>mediaPreview.Load(inputs[0])));
             var processed=NashiTheme.Button("Preview processed result",()=>{});processed.Click+=(_,_)=>processedTask=PreviewProcessed(inputs[0],engine,processed);preview.Children.Add(processed);
         }
-        Closed+=async(_,_)=>{lifetime.Cancel();if(processedTask is not null)await processedTask;if(processedDirectory is not null&&Directory.Exists(processedDirectory))Directory.Delete(processedDirectory,true);};
+        Closed+=async(_,_)=>{lifetime.Cancel();photoClock.Stop();if(processedTask is not null)await processedTask;if(photoTask is not null)await photoTask;if(processedDirectory is not null&&Directory.Exists(processedDirectory))Directory.Delete(processedDirectory,true);};
         if(inputs.Length>1){
             fields.Children.Add(NashiTheme.Text("File order",16));var order=new ListBox{ItemsSource=inputOrder.Select(Path.GetFileName).ToArray(),SelectedIndex=0,MaxHeight=150};fields.Children.Add(order);
-            void Move(int delta){var from=order.SelectedIndex;var to=from+delta;if(from<0||to<0||to>=inputOrder.Count)return;var item=inputOrder[from];inputOrder.RemoveAt(from);inputOrder.Insert(to,item);order.ItemsSource=inputOrder.Select(Path.GetFileName).ToArray();order.SelectedIndex=to;}
+            void Move(int delta){var from=order.SelectedIndex;var to=from+delta;if(from<0||to<0||to>=inputOrder.Count)return;var item=inputOrder[from];inputOrder.RemoveAt(from);inputOrder.Insert(to,item);order.ItemsSource=inputOrder.Select(Path.GetFileName).ToArray();order.SelectedIndex=to;QueuePhoto();}
             var sorting=new StackPanel{Orientation=Orientation.Horizontal,Spacing=8};sorting.Children.Add(NashiTheme.Button("Move up",()=>Move(-1)));sorting.Children.Add(NashiTheme.Button("Move down",()=>Move(1)));fields.Children.Add(sorting);
+        }
+        if(surface is not null&&action is "editImage" or "frameImage" or "createCollage"){
+            photoClock.Tick+=(_,_)=>{photoClock.Stop();photoTask=RefreshPhoto(engine);};
+            foreach(var child in fields.Children){if(child is TextBox text)text.TextChanged+=(_,_)=>QueuePhoto();if(child is ComboBox choice)choice.SelectionChanged+=(_,_)=>QueuePhoto();if(child is CheckBox toggle)toggle.IsCheckedChanged+=(_,_)=>QueuePhoto();}
+            var original=new CheckBox{Content="Show original",Foreground=NashiTheme.Ink};original.IsCheckedChanged+=(_,_)=>{showingOriginal=original.IsChecked==true;if(showingOriginal){photoGeneration++;surface.SetPreview(PhotoCodec.Png(inputs[0]));}else QueuePhoto();};preview.Children.Add(original);Opened+=(_,_)=>QueuePhoto();
         }
         if(fields.Children.Count==0)fields.Children.Add(NashiTheme.Text("Ready to make a fresh copy. No extra settings needed.",14,true));
         KeyDown+=(_,e)=>{if(mediaPreview?.Handle(e)==true){e.Handled=true;return;}if(e.Key==Key.Escape)Close((LinuxOptions?)null);if(e.Key==Key.Enter&&FocusManager?.GetFocusedElement() is not TextBox)Save();};
+    }
+    private void QueuePhoto(){if(showingOriginal||lifetime.IsCancellationRequested)return;photoGeneration++;photoClock.Stop();photoClock.Start();}
+    private async Task RefreshPhoto(LinuxEngine engine)
+    {
+        var generation=photoGeneration;var work=Path.Combine(Path.GetTempPath(),"NashiPhotoPreview-"+Guid.NewGuid().ToString("N"));
+        try{
+            var options=(LinuxOptions)Fill(new LinuxOptions());var inputs=OrderedInputs;
+            var output=await Task.Run(()=>engine.RunAsync(action,inputs,work,options,token:lifetime.Token));
+            var pixels=await Task.Run(()=>PhotoCodec.Png(output[0]),lifetime.Token);
+            if(!lifetime.IsCancellationRequested&&!showingOriginal&&generation==photoGeneration){surface?.SetPreview(pixels);error.Text="";}
+        }catch(OperationCanceledException){}catch(Exception ex){if(generation==photoGeneration)error.Text="Preview: "+ex.Message;}
+        finally{if(Directory.Exists(work))Directory.Delete(work,true);}
     }
     private async Task PreviewProcessed(string input,LinuxEngine engine,Button button)
     {

@@ -23,16 +23,22 @@ ln -s nashi.png "$NASHI_APPDIR/.DirIcon"
 if [ "${NASHI_APPIMAGE:-0}" = 1 ]; then
     # Pinned official tool AND runtime. No moving 'continuous' dependency.
     case "$NASHI_ARCH" in
-      x86_64) NASHI_TOOL_HASH=ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0; NASHI_RUNTIME_HASH=2fca8b443c92510f1483a883f60061ad09b46b978b2631c807cd873a47ec260d;;
-      aarch64) NASHI_TOOL_HASH=f0837e7448a0c1e4e650a93bb3e85802546e60654ef287576f46c71c126a9158; NASHI_RUNTIME_HASH=00cbdfcf917cc6c0ff6d3347d59e0ca1f7f45a6df1a428a0d6d8a78664d87444;;
+      x86_64) NASHI_RUNTIME_HASH=2fca8b443c92510f1483a883f60061ad09b46b978b2631c807cd873a47ec260d;;
+      aarch64) NASHI_RUNTIME_HASH=00cbdfcf917cc6c0ff6d3347d59e0ca1f7f45a6df1a428a0d6d8a78664d87444;;
     esac
-    curl -fL --retry 3 "https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-$NASHI_ARCH.AppImage" -o "$NASHI_STAGE/appimagetool"
+    NASHI_HOST_ARCH=$(uname -m)
+    case "$NASHI_HOST_ARCH" in
+      x86_64) NASHI_TOOL_HASH=ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0;;
+      aarch64) NASHI_TOOL_HASH=f0837e7448a0c1e4e650a93bb3e85802546e60654ef287576f46c71c126a9158;;
+      *) echo 'AppImage tooling requires an x86_64 or aarch64 build host.' >&2; exit 2;;
+    esac
+    curl -fL --retry 3 "https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-$NASHI_HOST_ARCH.AppImage" -o "$NASHI_STAGE/appimagetool"
     curl -fL --retry 3 "https://github.com/AppImage/type2-runtime/releases/download/20251108/runtime-$NASHI_ARCH" -o "$NASHI_STAGE/runtime"
     printf '%s  %s\n%s  %s\n' "$NASHI_TOOL_HASH" "$NASHI_STAGE/appimagetool" "$NASHI_RUNTIME_HASH" "$NASHI_STAGE/runtime" | sha256sum -c -
     chmod +x "$NASHI_STAGE/appimagetool"
     ARCH="$NASHI_ARCH" "$NASHI_STAGE/appimagetool" --appimage-extract-and-run --runtime-file "$NASHI_STAGE/runtime" "$NASHI_APPDIR" "$NASHI_DIST/Nashi-Linux-$NASHI_ARCH.AppImage"
 fi
-if command -v dpkg-deb >/dev/null 2>&1; then
+if command -v dpkg-deb >/dev/null 2>&1 || command -v ar >/dev/null 2>&1; then
     NASHI_DEB="$NASHI_STAGE/deb"
     mkdir -p "$NASHI_DEB/DEBIAN" "$NASHI_DEB/opt/nashi" "$NASHI_DEB/usr/bin" "$NASHI_DEB/usr/share/applications" "$NASHI_DEB/usr/share/icons/hicolor/256x256/apps"
     cp -a "$NASHI_APP/." "$NASHI_DEB/opt/nashi/"
@@ -51,7 +57,14 @@ Recommends: ffmpeg, poppler-utils, tesseract-ocr, libimage-exiftool-perl, libreo
 Description: Nashi file conversion and editing for Linux (preview)
  A native Linux port sharing Nashi's original conversion engines.
 CONTROL
-    dpkg-deb --root-owner-group --build "$NASHI_DEB" "$NASHI_DIST/Nashi-Linux-$NASHI_ARCH.deb"
+    if command -v dpkg-deb >/dev/null 2>&1; then
+        dpkg-deb --root-owner-group --build "$NASHI_DEB" "$NASHI_DIST/Nashi-Linux-$NASHI_ARCH.deb"
+    else
+        printf '2.0\n' > "$NASHI_STAGE/debian-binary"
+        tar --owner=0 --group=0 --numeric-owner -czf "$NASHI_STAGE/control.tar.gz" -C "$NASHI_DEB/DEBIAN" .
+        tar --owner=0 --group=0 --numeric-owner --exclude=./DEBIAN -czf "$NASHI_STAGE/data.tar.gz" -C "$NASHI_DEB" .
+        ar crD "$NASHI_DIST/Nashi-Linux-$NASHI_ARCH.deb" "$NASHI_STAGE/debian-binary" "$NASHI_STAGE/control.tar.gz" "$NASHI_STAGE/data.tar.gz"
+    fi
 fi
 if command -v rpmbuild >/dev/null 2>&1; then
     NASHI_RPM="$NASHI_STAGE/rpm"

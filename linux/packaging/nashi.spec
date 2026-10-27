@@ -8,6 +8,7 @@ Source0: nashi.tar.gz
 Source1: nashi.desktop
 Source2: nashi.png
 AutoReqProv: no
+%global __strip /bin/true
 Requires: glibc >= 2.35, libgcc, libstdc++, libicu, openssl-libs, zlib, libX11, libICE, libSM, fontconfig, libgomp
 Recommends: ffmpeg, poppler-utils, tesseract, perl-Image-ExifTool, libreoffice, mpv-libs, xdg-utils
 

@@ -37,6 +37,7 @@ internal sealed class ImageSurface:Viewbox
         canvas.PointerPressed+=Begin;canvas.PointerMoved+=Move;canvas.PointerReleased+=End;Focusable=true;
         KeyDown+=(_,e)=>{if(e.Key==Key.Z&&e.KeyModifiers.HasFlag(KeyModifiers.Control)){Undo();e.Handled=true;}if(e.Key==Key.Delete&&active is not null){canvas.Children.Remove(active);active=null;e.Handled=true;}};
     }
+    public void SetPreview(byte[] bytes){using var stream=new MemoryStream(bytes);var bitmap=new Bitmap(stream);var old=original.Source as Bitmap;original.Source=bitmap;original.Width=canvas.Width=bitmap.PixelSize.Width;original.Height=canvas.Height=bitmap.PixelSize.Height;old?.Dispose();}
     public void Reset(){while(canvas.Children.Count>1)canvas.Children.RemoveAt(1);undo.Clear();active=null;markNumber=1;}
     public void Undo(){if(undo.TryPop(out var shape)){canvas.Children.Remove(shape);active=null;}}
     public byte[] Png()

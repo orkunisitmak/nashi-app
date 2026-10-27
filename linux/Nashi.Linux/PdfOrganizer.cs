@@ -24,7 +24,7 @@ internal sealed class PdfOrganizer:Window
         controls.Children.Add(NashiTheme.Button("Move left",()=>Move(-1)));controls.Children.Add(NashiTheme.Button("Move right",()=>Move(1)));controls.Children.Add(NashiTheme.Button("Rotate",()=>{foreach(var page in Selected())page.Rotation=(page.Rotation+90)%360;Reload();}));
         controls.Children.Add(NashiTheme.Button("Duplicate",()=>{foreach(var page in Selected().Reverse())pages.Insert(pages.IndexOf(page)+1,new(page.Number,page.Image){Rotation=page.Rotation});Reload();}));
         controls.Children.Add(NashiTheme.Button("Remove",Remove));controls.Children.Add(uniform);controls.Children.Add(NashiTheme.Button("Save organized copy",()=>{if(pages.Count>0)Close(new PdfOrganization(pages.Select(p=>p.Number).ToArray(),pages.Select(p=>p.Rotation).ToArray(),uniform.IsChecked==true));},true));
-        controls.Children.Add(NashiTheme.Button("Cancel",()=>Close((PdfOrganization?)null)));root.Children.Add(gallery);Reload();
+        controls.Children.Add(NashiTheme.Button("Cancel",()=>Close((PdfOrganization?)null)));foreach(var control in controls.Children)control.Margin=new(3);root.Children.Add(gallery);Reload();
         KeyDown+=(_,e)=>{if(e.Key==Key.Escape)Close((PdfOrganization?)null);if(e.Key==Key.Delete)Remove();};
     }
     private Page[] Selected()=>gallery.SelectedItems!.Cast<ListBoxItem>().Select(i=>(Page)i.Tag!).ToArray();

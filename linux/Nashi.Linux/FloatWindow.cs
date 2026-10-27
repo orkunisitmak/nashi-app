@@ -6,7 +6,7 @@ public sealed class FloatWindow:Window
 {
     public FloatWindow(string[] files,Action<IEnumerable<string>> reuse)
     {
-        Title="Nashi · Float";Width=380;Height=360;Topmost=true;FontFamily=new Avalonia.Media.FontFamily("Noto Sans, DejaVu Sans");Background=NashiTheme.Paper;Foreground=NashiTheme.Ink;
+        Title="Nashi · Float";Width=380;Height=360;Topmost=true;FontFamily=new Avalonia.Media.FontFamily("DejaVu Sans");Background=NashiTheme.Paper;Foreground=NashiTheme.Ink;
         var panel=new StackPanel{Margin=new(18),Spacing=10};Content=new ScrollViewer{Content=panel};panel.Children.Add(NashiTheme.Text("Float",22));
         foreach(var path in files)
         {

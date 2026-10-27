@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><OutputType>WinExe</OutputType><AssemblyName>Nashi</AssemblyName><RestorePackagesWithLockFile>true</RestorePackagesWithLockFile></PropertyGroup>
+  <PropertyGroup><OutputType>WinExe</OutputType><AssemblyName>Nashi</AssemblyName><RuntimeIdentifiers>linux-x64;linux-arm64</RuntimeIdentifiers><RestorePackagesWithLockFile>true</RestorePackagesWithLockFile></PropertyGroup>
   <ItemGroup><Compile Include="../../windows/Nashi.Windows/MediaMetadata.cs" Link="MediaMetadata.cs" /></ItemGroup>
   <ItemGroup><ProjectReference Include="../Nashi.Linux.Engine/Nashi.Linux.Engine.csproj" /></ItemGroup>
   <ItemGroup>

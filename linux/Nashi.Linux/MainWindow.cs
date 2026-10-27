@@ -20,24 +20,34 @@ public sealed class MainWindow:Window
     private readonly LinuxEngine engine=new();
     private readonly PreferencesStore preferences;
     private TextBox? librarySearch;
+    private X11DragMonitor? dragMonitor;
+    private WheelWindow? dragWheel;
+    private long dragSession;
+    private string? dragMode;
     private readonly TextBlock status=NashiTheme.Text("Files stay on your computer.",12,true);
     private readonly ContentControl page=new();
     private readonly ProgressBar progress=new(){IsVisible=false,Height=4};
     private CancellationTokenSource? operation;
     private bool libraryVisible;
     private readonly List<string> initial;
-    public MainWindow(string[]? paths=null,LibraryStore? store=null)
+    public MainWindow(string[]? paths=null,LibraryStore? store=null,bool monitorDesktop=true)
     {
         library=store??new();preferences=new(library.DirectoryPath);NashiTheme.Language=preferences.Value.Language;initial=(paths??[]).Where(p=>!p.StartsWith("--",StringComparison.Ordinal)).ToList();
-        NashiTheme.Apply(library.Appearance);FontFamily=new FontFamily("Noto Sans, DejaVu Sans");Title="Nashi";Width=900;Height=760;MinWidth=640;MinHeight=520;
+        NashiTheme.Apply(library.Appearance);FontFamily=new FontFamily("DejaVu Sans");Title="Nashi";Width=900;Height=760;MinWidth=640;MinHeight=520;
         using(var icon=AssetLoader.Open(new Uri("avares://Nashi/Assets/NashiIcon.png")))Icon=new WindowIcon(icon);
-        Build();DragDrop.SetAllowDrop(this,true);AddHandler(DragDrop.DropEvent,Drop);KeyDown+=OnKey;
-        Opened+=(_,_)=>{Add(initial);if(library.RecoveryNotice is {} notice)status.Text=notice;};
+        Build();DragDrop.SetAllowDrop(this,true);AddHandler(DragDrop.DropEvent,Drop);AddHandler(DragDrop.DragOverEvent,DragOver);KeyDown+=OnKey;
+        Opened+=(_,_)=>{if(monitorDesktop&&!(paths??[]).Contains("--smoke-test")&&preferences.Value.Enabled)dragMonitor=new X11DragMonitor(drag=>Dispatcher.UIThread.Post(()=>DesktopDragChanged(drag)),()=>preferences.Value);Add(initial);if(library.RecoveryNotice is {} notice)status.Text=notice;if((paths??[]).Contains("--download"))_ = Download();if((paths??[]).Contains("--library"))ShowPage(true);};
+        Closed+=(_,_)=>{dragMonitor?.Dispose();dragWheel?.Close();};
         Closing+=(_,e)=>{if(operation is not null){operation.Cancel();e.Cancel=true;status.Text="Cancelling… Close again when the operation finishes.";}};
+    }
+    internal void HandleLaunch(string[] args)
+    {
+        Show();if(WindowState==WindowState.Minimized)WindowState=WindowState.Normal;Activate();var incoming=args.Where(a=>!a.StartsWith("--",StringComparison.Ordinal)&&!(Uri.TryCreate(a,UriKind.Absolute,out var uri)&&uri.Scheme is "https" or "http")).ToArray();if(incoming.Length>0)Add(incoming);
+        if(args.Contains("--download"))_ = Download();if(args.Contains("--library"))ShowPage(true);
     }
     private void Build()
     {
-        Background=NashiTheme.Paper;Foreground=NashiTheme.Ink;
+        Background=NashiTheme.Paper;Foreground=NashiTheme.Ink;status.Foreground=NashiTheme.Muted;
         var shell=new DockPanel{Margin=new(28)};
         var header=new Grid{ColumnDefinitions=new("*,Auto"),Margin=new(0,0,0,24)};
         var identity=new StackPanel{Orientation=Orientation.Horizontal,Spacing=10,VerticalAlignment=VerticalAlignment.Center};
@@ -97,6 +107,38 @@ public sealed class MainWindow:Window
         if(operation is not null)return;
         var items=e.DataTransfer.TryGetFiles();if(items is not null)Add(items.Select(p=>p.TryGetLocalPath()).OfType<string>());e.Handled=true;
     }
+    private void DragOver(object? sender,DragEventArgs e)
+    {
+        if(operation is not null||!preferences.Value.Enabled)return;
+        var mode=X11DragMonitor.ModeFor(e.KeyModifiers.HasFlag(KeyModifiers.Control),e.KeyModifiers.HasFlag(KeyModifiers.Shift),e.KeyModifiers.HasFlag(KeyModifiers.Alt),preferences.Value);
+        if(mode is null){if(dragSession==-1)DesktopDragChanged(null);return;}var items=e.DataTransfer.TryGetFiles();var paths=items?.Select(p=>p.TryGetLocalPath()).OfType<string>().ToArray();if(paths is not {Length:>0})return;
+        DesktopDragChanged(new(paths,mode,this.PointToScreen(e.GetPosition(this)),-1));e.DragEffects=DragDropEffects.Copy;e.Handled=true;
+    }
+    private void DesktopDragChanged(DesktopDrag? drag)
+    {
+        if(operation is not null||!IsVisible)return;
+        if(drag is null){var old=dragWheel;_ = CloseEndedDrag(old);return;}
+        if(dragWheel?.IsVisible==true&&dragSession==drag.Session&&dragMode==drag.Mode)return;
+        dragWheel?.Close();dragSession=drag.Session;dragMode=drag.Mode;
+        var choices=drag.Mode switch{
+            "tools"=>FeatureCatalog.Tools(drag.Files).Select(id=>(Id:id,Label:FeatureCatalog.ToolNames[id])).ToArray(),
+            "convert"=>FeatureCatalog.Formats(drag.Files).Select(format=>(Id:"convert:"+format,Label:format.ToUpperInvariant())).ToArray(),
+            _=>new[]{(Id:"copy",Label:"Copy"),(Id:"move",Label:"Move"),(Id:"copyPath",Label:"Copy paths"),(Id:"float",Label:"Float"),(Id:"zip",Label:"Create ZIP")}
+        };
+        if(choices.Length==0)return;
+        dragWheel=new WheelWindow(choices,id=>{
+            files.Clear();Add(drag.Files);Show();Activate();
+            if(id.StartsWith("convert:",StringComparison.Ordinal))_ = Edit("convert",id[8..]);
+            else if(drag.Mode=="tools")_ = Edit(id);
+            else if(id=="copy"||id=="move")_ = CopyFiles(id=="move");
+            else if(id=="copyPath")_ = CopyPaths();
+            else if(id=="float")new FloatWindow(drag.Files,Add).Show(this);
+            else if(id=="zip")_ = Run((dest,p,t)=>Task.FromResult<IReadOnlyList<string>>([DocumentEngine.Zip(drag.Files,dest,p,t)]),"ZIP");
+        },drag.Mode=="tools"?"Tools":drag.Mode=="convert"?"Convert":"Files",drag.Pointer);
+        dragWheel.Show();
+    }
+    private async Task CloseEndedDrag(WheelWindow? wheel){await Task.Delay(180);if(wheel?.IsVisible==true&&!wheel.Dropped)wheel.Close();}
+    private async Task CopyPaths(){if(Clipboard is not null)await Clipboard.SetTextAsync(string.Join('\n',files));}
     private async Task Paste()
     {
         if(operation is not null||Clipboard is null)return;
@@ -136,11 +178,11 @@ public sealed class MainWindow:Window
         }
         catch(Exception error){status.Text=error.Message;}
     }
-    private async Task Run(Func<string,IProgress<OperationProgress>,CancellationToken,Task<IReadOnlyList<string>>> work,string label)
+    private async Task Run(Func<string,IProgress<OperationProgress>,CancellationToken,Task<IReadOnlyList<string>>> work,string label,bool forceAsk=false,string? preferredDestination=null)
     {
-        string? destination=null;
-        if(preferences.Value.OutputMode=="beside"&&files.Count>0)destination=Path.GetDirectoryName(files[0]);
-        else if(preferences.Value.OutputMode=="folder"&&!string.IsNullOrWhiteSpace(preferences.Value.OutputFolder))destination=preferences.Value.OutputFolder;
+        string? destination=preferredDestination;
+        if(destination is null&&!forceAsk&&preferences.Value.OutputMode=="beside"&&files.Count>0)destination=Path.GetDirectoryName(files[0]);
+        else if(destination is null&&!forceAsk&&preferences.Value.OutputMode=="folder"&&!string.IsNullOrWhiteSpace(preferences.Value.OutputFolder))destination=preferences.Value.OutputFolder;
         if(destination is null){var folders=await StorageProvider.OpenFolderPickerAsync(new(){Title="Save new copies",AllowMultiple=false});destination=folders.FirstOrDefault()?.TryGetLocalPath();}if(destination is null)return;
         operation=new();progress.IsVisible=true;progress.IsIndeterminate=true;
         var cancellation=operation;var cancel=NashiTheme.Button("Cancel",()=>cancellation.Cancel());
@@ -180,12 +222,18 @@ public sealed class MainWindow:Window
         var outputFolder=new TextBox{PlaceholderText="Output folder",Text=preferences.Value.OutputFolder};panel.Children.Add(outputFolder);
         panel.Children.Add(NashiTheme.Button("Choose output folder",async()=>{var selected=await StorageProvider.OpenFolderPickerAsync(new(){AllowMultiple=false});if(selected.FirstOrDefault()?.TryGetLocalPath() is {} path)outputFolder.Text=path;}));
         panel.Children.Add(NashiTheme.Text("Download folder"));var downloads=new TextBox{Text=preferences.Value.DownloadFolder};panel.Children.Add(downloads);
+        var enabled=new CheckBox{Content="Enable drag shortcuts",IsChecked=preferences.Value.Enabled};panel.Children.Add(enabled);
+        var chords=new[]{"Ctrl","Shift","Alt","Ctrl+Shift","Ctrl+Alt","Shift+Alt"};
+        panel.Children.Add(NashiTheme.Text("Tools drag shortcut"));var toolsChord=new ComboBox{ItemsSource=chords,SelectedItem=preferences.Value.ToolsModifier};panel.Children.Add(toolsChord);
+        panel.Children.Add(NashiTheme.Text("Conversion drag shortcut"));var convertChord=new ComboBox{ItemsSource=chords,SelectedItem=preferences.Value.ConvertModifier};panel.Children.Add(convertChord);
+        panel.Children.Add(NashiTheme.Text("File actions drag shortcut"));var actionsChord=new ComboBox{ItemsSource=chords,SelectedItem=preferences.Value.ActionsModifier};panel.Children.Add(actionsChord);
         var reveal=new CheckBox{Content="Show finished files in file manager",IsChecked=preferences.Value.RevealFinished};panel.Children.Add(reveal);
         var dialog=new Window{Title="Nashi · Settings",Width=540,Height=620,Background=NashiTheme.Paper,Content=new ScrollViewer{Content=panel}};
         var message=NashiTheme.Text("",12);panel.Children.Add(message);
         panel.Children.Add(NashiTheme.Button("Save",()=>{
             try{
-                var value=appearance.SelectedItem as string??"system";preferences.Save(preferences.Value with{Language=language.SelectedItem as string??"en",OutputMode=outputMode.SelectedItem as string??"ask",OutputFolder=outputFolder.Text??"",DownloadFolder=downloads.Text??"",RevealFinished=reveal.IsChecked==true});
+                var value=appearance.SelectedItem as string??"system";preferences.Save(preferences.Value with{Enabled=enabled.IsChecked==true,ToolsModifier=toolsChord.SelectedItem as string??"Ctrl",ConvertModifier=convertChord.SelectedItem as string??"Shift",ActionsModifier=actionsChord.SelectedItem as string??"Alt",Language=language.SelectedItem as string??"en",OutputMode=outputMode.SelectedItem as string??"ask",OutputFolder=outputFolder.Text??"",DownloadFolder=downloads.Text??"",RevealFinished=reveal.IsChecked==true});
+                if(preferences.Value.Enabled&&dragMonitor is null)dragMonitor=new X11DragMonitor(drag=>Dispatcher.UIThread.Post(()=>DesktopDragChanged(drag)),()=>preferences.Value);
                 library.SetAppearance(value);NashiTheme.Language=preferences.Value.Language;NashiTheme.Apply(value);Build();dialog.Close();
             }catch(Exception error){message.Text=error.Message;}
         },true));await dialog.ShowDialog(this);
@@ -195,6 +243,7 @@ public sealed class MainWindow:Window
         var panel=new StackPanel{Margin=new(24),Spacing=12};panel.Children.Add(NashiTheme.Text("Tools for Linux",22));
         foreach(var tool in new[]{"ffmpeg","ffprobe","yt-dlp","deno","libreoffice","pdftoppm","tesseract","exiftool"})panel.Children.Add(NashiTheme.Text(tool+": "+(SystemTools.Find(tool)??"Install with your distribution's package manager")));
         panel.Children.Add(NashiTheme.Text("Image, archive, subtitle and PDF organizing tools work without these optional programs.",13,true));
+        panel.Children.Add(NashiTheme.Text(Environment.GetEnvironmentVariable("XDG_SESSION_TYPE")=="wayland"?"Wayland: hold Ctrl / Shift / Alt while dragging onto Nashi. Global drag wheels are limited to X11 sources; native Wayland apps need desktop-specific integration.":"Drag shortcuts: Ctrl tools, Shift conversion, Alt file actions. Keep Nashi running.",13,true));
         var dialog=new Window{Title="Nashi · Set up tools",Width=640,Height=510,Content=panel};panel.Children.Add(NashiTheme.Button("Close",dialog.Close));await dialog.ShowDialog(this);
     }
     private async Task Download(string? initialLink=null)
@@ -203,7 +252,7 @@ public sealed class MainWindow:Window
         panel.Children.Add(NashiTheme.Text("Download a link",24));var link=new TextBox{PlaceholderText="Public video, image or audio link",Text=initialLink};panel.Children.Add(link);
         var kind=new ComboBox{ItemsSource=new[]{"video","audio","thumbnail","photos","image"},SelectedIndex=0};panel.Children.Add(kind);
         string? selectedLink=null;string selectedKind="video";panel.Children.Add(NashiTheme.Button("Continue",()=>{selectedLink=link.Text;selectedKind=(string)kind.SelectedItem!;dialog.Close();},true));await dialog.ShowDialog(this);
-        if(string.IsNullOrWhiteSpace(selectedLink))return;var value=selectedLink;await Run((dest,p,t)=>new WebDownload(engine.Tools).DownloadAsync(value,selectedKind,dest,p,t),"Download");
+        if(string.IsNullOrWhiteSpace(selectedLink))return;var value=selectedLink;await Run((dest,p,t)=>new WebDownload(engine.Tools).DownloadAsync(value,selectedKind,dest,p,t),"Download",preferredDestination:preferences.Value.DownloadFolder);
     }
     internal static async Task OpenPath(string path)
     {
@@ -226,11 +275,6 @@ public sealed class MainWindow:Window
     }
     private async Task CopyFiles(bool move)
     {
-        var selected=files.ToArray();await Run(async(dest,p,t)=>
-        {
-            using var tx=new ExportTransaction(dest);var staged=new List<string>();
-            foreach(var input in selected){t.ThrowIfCancellationRequested();if(Directory.Exists(input))throw new ArgumentException("Select regular files for this action.");var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileName(input));await using(var source=File.OpenRead(input))await using(var target=File.Create(output))await source.CopyToAsync(target,t);staged.Add(output);}
-            var result=tx.Publish(staged,t);if(move)foreach(var input in selected)File.Delete(input);return result;
-        },move?"Move":"Copy");
+        var selected=files.ToArray();await Run((dest,p,t)=>FileTransfer.RunAsync(selected,dest,move,p,t),move?"Move":"Copy",forceAsk:true);
     }
 }

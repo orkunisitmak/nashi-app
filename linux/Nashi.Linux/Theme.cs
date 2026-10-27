@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Styling;
+using Avalonia.Platform;
 using Nashi.Core;
 namespace Nashi.Linux;
 internal static class NashiTheme
@@ -16,10 +17,14 @@ internal static class NashiTheme
     public static IBrush Brush(string hex)=>new SolidColorBrush(Color.Parse(hex));
     public static void Apply(string appearance)
     {
-        Dark=appearance=="dark"||appearance=="system"&&Application.Current!.ActualThemeVariant==ThemeVariant.Dark;
-        Application.Current!.RequestedThemeVariant=appearance switch{"dark"=>ThemeVariant.Dark,"light"=>ThemeVariant.Light,_=>ThemeVariant.Default};
+        Dark=appearance=="dark"||appearance=="system"&&Application.Current!.PlatformSettings?.GetColorValues().ThemeVariant==PlatformThemeVariant.Dark;
+        Application.Current!.RequestedThemeVariant=Dark?ThemeVariant.Dark:ThemeVariant.Light;
+        foreach(var suffix in new[]{"PointerOver","Pressed"}){
+            Application.Current.Resources["ButtonBackground"+suffix]=Surface;
+            Application.Current.Resources["ButtonForeground"+suffix]=Ink;
+        }
     }
-    public static TextBlock Text(string value,double size=14,bool muted=false)=>new(){Text=AppLocalization.Text(value,Language),FontSize=size,FontWeight=size>=20?FontWeight.SemiBold:FontWeight.Normal,Foreground=muted?Muted:Ink,TextWrapping=TextWrapping.Wrap};
+    public static TextBlock Text(string value,double size=14,bool muted=false)=>new(){Text=AppLocalization.Text(value,Language),FontFamily=new FontFamily("DejaVu Sans"),FontSize=size,FontWeight=size>=20?FontWeight.SemiBold:FontWeight.Normal,Foreground=muted?Muted:Ink,TextWrapping=TextWrapping.Wrap};
     public static Border Card(Control content)=>new(){Background=Surface,CornerRadius=new(24),Padding=new(22),Child=content};
     public static Button Button(string label,Action action,bool primary=false)
     {
