@@ -23,19 +23,33 @@ internal static class UpdateInstaller
             foreach(var file in Directory.EnumerateFiles(payload))File.Copy(file,Path.Combine(worker,Path.GetFileName(file)));
             var request=new InstallRequest(Environment.ProcessId,target,payload,stage);
             var fileName=Path.Combine(stage,"request.json");await File.WriteAllTextAsync(fileName,JsonSerializer.Serialize(request),token);
-            token.ThrowIfCancellationRequested();var start=new ProcessStartInfo(Path.Combine(worker,"Nashi.exe")){UseShellExecute=false,WorkingDirectory=worker};start.ArgumentList.Add("--apply-update");start.ArgumentList.Add(fileName);_ = Process.Start(start)??throw new IOException("Cannot start update installer.");
+            token.ThrowIfCancellationRequested();
+            var start=new ProcessStartInfo(Path.Combine(worker,"Nashi.exe")){UseShellExecute=false,WorkingDirectory=worker};
+            start.ArgumentList.Add("--apply-update");start.ArgumentList.Add(fileName);
+            using var installer=Process.Start(start)??throw new IOException("Cannot start update installer.");
         }
-        catch{Directory.Delete(stage,true);throw;}
+        catch
+        {
+            try { Directory.Delete(stage, true); }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+            throw;
+        }
     }
     public static int Apply(string requestFile)
     {
         var request=JsonSerializer.Deserialize<InstallRequest>(File.ReadAllText(requestFile))??throw new InvalidDataException("No install request.");
         var stage=Path.GetFullPath(request.Stage);var target=Path.GetFullPath(request.Target);var payload=Path.GetFullPath(request.Payload);
         if(!Path.GetFileName(stage).StartsWith(".nashi-update-",StringComparison.Ordinal)||Path.GetDirectoryName(stage)!=Path.GetDirectoryName(target)||payload!=Path.Combine(stage,"payload")||Path.GetFullPath(requestFile)!=Path.Combine(stage,"request.json"))throw new InvalidDataException("Invalid install paths.");
-        try{var old=Process.GetProcessById(request.ProcessId);if(!old.WaitForExit(60000))throw new IOException("Nashi is still running.");}catch(ArgumentException){}
+        try{using var old=Process.GetProcessById(request.ProcessId);if(!old.WaitForExit(60000))throw new IOException("Nashi is still running.");}catch(ArgumentException){}
         var backup=target+".backup-"+Guid.NewGuid().ToString("N");
         Directory.Move(target,backup);
-        try{Directory.Move(payload,target);}catch{Directory.Move(backup,target);throw;}
+        try{Directory.Move(payload,target);}catch(Exception payloadError)
+        {
+            if(Directory.Exists(target))Directory.Delete(target,true);
+            Directory.Move(backup,target);
+            throw new IOException("Nashi could not install the update; the previous installation was restored.",payloadError);
+        }
         Process.Start(new ProcessStartInfo(Path.Combine(target,"Nashi.exe")){UseShellExecute=true,WorkingDirectory=target});
         // Backups remain recoverable; the app never recursively deletes a user's
         // portable directory merely because an update succeeded.
