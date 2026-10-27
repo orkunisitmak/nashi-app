@@ -53,11 +53,11 @@ public sealed class RangeTimeline:FrameworkElement
     }
     protected override void OnRender(DrawingContext dc)
     {
-        base.OnRender(dc);var w=Math.Max(1,ActualWidth-24);dc.DrawRoundedRectangle(new SolidColorBrush(Color.FromRgb(215,226,204)),null,new Rect(12,8,w,38),8,8);
+        base.OnRender(dc);var w=Math.Max(1,ActualWidth-24);dc.DrawRoundedRectangle(Theme.Brush("Inset"),null,new Rect(12,8,w,38),8,8);
         if(artwork.Length>0){dc.PushClip(new RectangleGeometry(new Rect(12,8,w,38),8,8));for(var n=0;n<artwork.Length;n++)dc.DrawImage(artwork[n],new Rect(12+w*n/artwork.Length,8,w/artwork.Length,38));dc.Pop();}
         var left=12+w*Start/Duration;var right=12+w*End/Duration;
-        dc.DrawRoundedRectangle(new SolidColorBrush(Color.FromArgb(artwork.Length>0?(byte)70:(byte)255,229,189,80)),new Pen(Brushes.Gold,1),new Rect(left,8,Math.Max(4,right-left),38),6,6);
-        foreach(var x in new[]{left,right}){dc.DrawRoundedRectangle(Brushes.DarkOliveGreen,null,new Rect(x-7,3,14,48),5,5);dc.DrawLine(new Pen(Brushes.White,2),new Point(x,19),new Point(x,35));}
+        dc.DrawRoundedRectangle(new SolidColorBrush(Color.FromArgb(artwork.Length>0?(byte)70:(byte)150,0xC8,0xE6,0x4C)),new Pen(Theme.Brush("Gold"),1),new Rect(left,8,Math.Max(4,right-left),38),6,6);
+        foreach(var x in new[]{left,right}){dc.DrawRoundedRectangle(Theme.Primary,null,new Rect(x-7,3,14,48),5,5);dc.DrawLine(new Pen(new SolidColorBrush(Theme.OnPrimary),2),new Point(x,19),new Point(x,35));}
     }
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
     {

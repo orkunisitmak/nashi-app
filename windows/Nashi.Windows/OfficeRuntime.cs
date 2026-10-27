@@ -9,9 +9,9 @@ namespace Nashi.Windows;
 public sealed class OfficeRuntime(string root)
 {
     public string? Executable=>new[]{Path.Combine(root,"office-26.8.1","program","soffice.com"),Path.Combine(root,"office-26.8.1","program","soffice.exe"),Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),"LibreOffice","program","soffice.com"),Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),"LibreOffice","program","soffice.exe")}.FirstOrDefault(ToolInstallation.UsableFile);
-    public async Task InstallAsync(IProgress<OperationProgress>? progress,CancellationToken token)
+    public async Task InstallAsync(IProgress<OperationProgress>? progress,CancellationToken token,bool reinstall=false)
     {
-        if(Executable is not null)return;Directory.CreateDirectory(root);var stage=Path.Combine(root,".office-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(stage);
+        if(Executable is not null&&!reinstall)return;Directory.CreateDirectory(root);var stage=Path.Combine(root,".office-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(stage);
         try
         {
             var msi=Path.Combine(stage,"office.msi");await VerifiedDownload.FetchAsync(new("https://download.documentfoundation.org/libreoffice/stable/26.8.1/win/x86_64/LibreOffice_26.8.1_Win_x86-64.msi"),msi,600L*1024*1024,p=>progress?.Report(new(p*.75,"Downloading LibreOffice 26.8.1…")),token);
@@ -19,7 +19,7 @@ public sealed class OfficeRuntime(string root)
             var content=Path.Combine(stage,"content");Directory.CreateDirectory(content);await Task.Run(()=>MsiImage.Extract(msi,content,progress,token),token);
             var executable=Directory.GetFiles(content,"soffice.exe",SearchOption.AllDirectories).Single(p=>Path.GetFileName(Path.GetDirectoryName(p))=="program");var application=Directory.GetParent(Path.GetDirectoryName(executable)!)!.FullName;
             var runtimes=Path.Combine(content,".native-runtime");if(Directory.Exists(runtimes))foreach(var dll in Directory.EnumerateFiles(runtimes,"*.dll"))File.Copy(dll,Path.Combine(application,"program",Path.GetFileName(dll)),true);
-            token.ThrowIfCancellationRequested();ToolInstallation.Publish(application,Path.Combine(root,"office-26.8.1"),p=>ToolInstallation.UsableFile(Path.Combine(p,"program","soffice.exe")));progress?.Report(new(1,"Office tools ready"));
+            token.ThrowIfCancellationRequested();ToolInstallation.Publish(application,Path.Combine(root,"office-26.8.1"),p=>ToolInstallation.UsableFile(Path.Combine(p,"program","soffice.exe")),reinstall);progress?.Report(new(1,"Office tools ready"));
         }
         finally{if(Directory.Exists(stage))Directory.Delete(stage,true);}
     }

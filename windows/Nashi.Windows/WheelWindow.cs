@@ -39,9 +39,10 @@ public sealed class WheelWindow:Window
         for(var i=0;i<sectors.Count;i++){sectors[i].Fill=i==index?Theme.Brush("Sage"):Theme.Brush("Inset");sectors[i].Stroke=i==index?Theme.Brush("Gold"):Theme.Brush("Line");sectors[i].StrokeThickness=i==index?2:1;}
         if(index>=0)Feedback.Play();
     }
-    public WheelWindow(Window? owner,IReadOnlyList<ToolChoice> tools,Action<ToolChoice> select,bool externalDrag=false)
+    public WheelWindow(Window? owner,IReadOnlyList<ToolChoice> tools,Action<ToolChoice> select,bool externalDrag=false,string? dragTitle=null)
     {
-        this.choices=tools;this.select=select;if(owner is not null)Owner=owner;Title=externalDrag?"Nashi Window Management":"Nashi tools";Width=WheelPresentation.Diameter*WheelPresentation.Preferences.WheelScale;Height=Width;WindowStyle=WindowStyle.None;AllowsTransparency=true;Background=Brushes.Transparent;ResizeMode=ResizeMode.NoResize;ShowInTaskbar=false;WindowStartupLocation=externalDrag?WindowStartupLocation.Manual:WindowStartupLocation.CenterOwner;
+        // dragTitle marks a file drag that follows the pointer (the desk), rather than window arrangement.
+        this.choices=tools;this.select=select;if(owner is not null)Owner=owner;Title=dragTitle is not null?"Nashi · "+dragTitle:externalDrag?"Nashi Window Management":"Nashi tools";Width=WheelPresentation.Diameter*WheelPresentation.Preferences.WheelScale;Height=Width;WindowStyle=WindowStyle.None;AllowsTransparency=true;Background=Brushes.Transparent;ResizeMode=ResizeMode.NoResize;ShowInTaskbar=false;WindowStartupLocation=externalDrag?WindowStartupLocation.Manual:WindowStartupLocation.CenterOwner;
         if(externalDrag){ShowActivated=false;Topmost=true;Focusable=false;}
         var canvas=new Canvas{Width=540,Height=540};surface=canvas;KeyboardNavigation.SetTabNavigation(canvas,KeyboardNavigationMode.Cycle);Content=new Viewbox{Child=canvas,Stretch=Stretch.Uniform};
         var disc=new Ellipse{Width=530,Height=530,Fill=WheelPresentation.Backdrop};Canvas.SetLeft(disc,5);Canvas.SetTop(disc,5);canvas.Children.Add(disc);
@@ -57,24 +58,17 @@ public sealed class WheelWindow:Window
             button.Click+=(_,_)=>{Close();select(choice);};button.MouseEnter+=(_,_)=>Highlight(index);button.GotKeyboardFocus+=(_,_)=>Highlight(index);
             path.MouseLeftButtonUp+=(_,_)=>{Close();select(choice);};path.MouseEnter+=(_,_)=>Highlight(index);
         }
-        var centerLabel=new StackPanel();centerLabel.Children.Add(L10n.Label(new TextBlock{Text=externalDrag?"Arrange window":tools.All(t=>t.Id.StartsWith("convert:"))?"Convert":tools.Any(t=>t.Id=="float")?"File actions":"Tools",FontSize=externalDrag?17:20,FontWeight=FontWeights.SemiBold,TextAlignment=TextAlignment.Center}));centerLabel.Children.Add(L10n.Label(new TextBlock{Text=externalDrag?"Release to place · Esc cancels":"Esc to close",FontSize=externalDrag?9:11,TextAlignment=TextAlignment.Center,Foreground=Theme.Brush("Muted"),Margin=new(0,6,0,0)}));
+        var centerLabel=new StackPanel();centerLabel.Children.Add(L10n.Label(new TextBlock{Text=dragTitle??(externalDrag?"Arrange window":tools.All(t=>t.Id.StartsWith("convert:"))?"Convert":tools.Any(t=>t.Id=="float")?"File actions":"Tools"),FontSize=externalDrag&&dragTitle is null?17:20,FontWeight=FontWeights.SemiBold,TextAlignment=TextAlignment.Center}));centerLabel.Children.Add(L10n.Label(new TextBlock{Text=dragTitle is not null?"Release on a choice · Esc cancels":externalDrag?"Release to place · Esc cancels":"Esc to close",FontSize=externalDrag?9:11,TextAlignment=TextAlignment.Center,Foreground=Theme.Brush("Muted"),Margin=new(0,6,0,0)}));
         var center=new Button{Style=(Style)Application.Current.FindResource("WheelLabelButton"),Focusable=false,Content=centerLabel,Width=180,Height=180,Background=Brushes.Transparent,Foreground=Theme.Brush("Ink")};Canvas.SetLeft(center,180);Canvas.SetTop(center,180);canvas.Children.Add(center);center.Click+=(_,_)=>Close();PreviewKeyDown+=(_,e)=>{e.Handled=Navigate(e.Key);};Loaded+=(_,_)=>{WheelPresentation.Animate(this);if(!externalDrag&&buttons.Count>0)buttons[0].Focus();};bool closing=false;Closing+=(_,_)=>closing=true;Deactivated+=(_,_)=>{if(!externalDrag&&!closing&&IsVisible)Close();};
     }
 }
 internal static class Feedback
 {
     internal static bool Enabled{get;set;}=true;
-    private static MediaPlayer? player;private static DateTime last;
-    internal static void Stop(){player?.Stop();player?.Close();player=null;}
+    private static DateTime last;
+    internal static void Stop()=>Sounds.Stop();
     public static void Play()
     {
-        if(!Enabled||(DateTime.UtcNow-last).TotalMilliseconds<70)return;last=DateTime.UtcNow;
-        try
-        {
-            var directory=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Nashi");Directory.CreateDirectory(directory);var file=Path.Combine(directory,"WheelSelection.wav");
-            if(!File.Exists(file)){using var source=Application.GetResourceStream(new Uri("pack://application:,,,/Assets/WheelSelection.wav")).Stream;using var target=File.Create(file);source.CopyTo(target);}
-            if(player is null){var created=new MediaPlayer{Volume=.65};player=created;created.MediaOpened+=(_,_)=>{if(Enabled&&ReferenceEquals(player,created))created.Play();};created.Open(new Uri(file));}else{player.Position=TimeSpan.Zero;player.Play();}
-
-        }catch(IOException){}catch(InvalidOperationException){}
+        if(!Enabled||(DateTime.UtcNow-last).TotalMilliseconds<45)return;last=DateTime.UtcNow;Sounds.Click();
     }
 }

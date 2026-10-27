@@ -10,13 +10,13 @@ public sealed partial class ToolEditor
     private string PreviewDirectory()=>previewDirectory??=Directory.CreateDirectory(Path.Combine(Path.GetTempPath(),"Nashi-preview-"+Guid.NewGuid().ToString("N"))).FullName;
     internal async Task CreatePreviewProxy()
     {
-        if(processedPlayback||processingPreview){time.Text="Processed preview unavailable for this Windows codec.";return;}
-        if(triedProxy||previewTools?.Ready!=true){time.Text="This Windows codec cannot play directly. Set up media tools to create a local preview.";return;}triedProxy=true;time.Text="Preparing a local preview…";
+        if(processedPlayback||processingPreview){L10n.SetText(time,"Processed preview unavailable for this Windows codec.");return;}
+        if(triedProxy||previewTools?.Ready!=true){L10n.SetText(time,"This Windows codec cannot play directly. Set up media tools to create a local preview.");return;}triedProxy=true;L10n.SetText(time,"Preparing a local preview…");
         try
         {
             var output=Path.Combine(PreviewDirectory(),media?.Video is null?"preview.wav":"preview.mp4");var args=new List<string>{"-v","error","-nostdin","-i",input};if(media?.Video is not null)args.AddRange(["-vf","scale=w='min(1280,iw)':h=-2","-c:v","libx264","-preset","veryfast","-crf","25","-pix_fmt","yuv420p","-c:a","aac","-movflags","+faststart"]);else args.AddRange(["-vn","-c:a","pcm_s16le"]);args.Add(output);
-            await ProcessRunner.RunAsync(previewTools.Executable("ffmpeg"),args,previewLifetime.Token);if(previewLifetime.IsCancellationRequested)return;originalPreviewPath=output;if(processedPlayback||processingPreview)return;player.Source=new Uri(output);player.Play();player.Pause();playing=false;Seek(0);time.Text="Preview ready · export uses your original file.";
-        }catch(OperationCanceledException){}catch(Exception error){if(IsVisible)time.Text="Preview unavailable: "+error.Message;}
+            await ProcessRunner.RunAsync(previewTools.Executable("ffmpeg"),args,previewLifetime.Token);if(previewLifetime.IsCancellationRequested)return;originalPreviewPath=output;if(processedPlayback||processingPreview)return;player.Source=new Uri(output);player.Play();player.Pause();playing=false;Seek(0);L10n.SetText(time,"Preview ready · export uses your original file.");
+        }catch(OperationCanceledException){}catch(Exception error){if(IsVisible)time.Text=string.Format(L10n.Text("Preview unavailable: {0}"),error.Message);}
     }
     private async Task LoadTimelineArtwork()
     {

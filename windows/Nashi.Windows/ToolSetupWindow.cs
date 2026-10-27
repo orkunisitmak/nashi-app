@@ -9,6 +9,7 @@ public sealed class ToolSetupWindow : Window
 {
     private readonly Func<ToolSetupStatus> probe;
     private readonly Func<ToolGroup, IProgress<OperationProgress>, CancellationToken, Task> install;
+    private readonly Func<ToolGroup, IProgress<OperationProgress>, CancellationToken, Task>? reinstall;
     private readonly Action<bool> workingChanged;
     private readonly StackPanel groups = new();
     private readonly TextBlock status = Label("Download the missing tools to enable all conversions, previews and web downloads. Tools already found on your computer are kept.");
@@ -21,12 +22,14 @@ public sealed class ToolSetupWindow : Window
     internal Button ContinueButton => next;
     public ToolSetupWindow(Window owner, Toolchain media, OfficeRuntime office, Action<bool> workingChanged)
         : this(owner, () => new(media.Ready, office.Executable is not null),
-            (group, report, token) => Task.Run(() => group == ToolGroup.Media ? media.InstallAsync(report, token) : office.InstallAsync(report, token),token), workingChanged) { }
+            (group, report, token) => Task.Run(() => group == ToolGroup.Media ? media.InstallAsync(report, token) : office.InstallAsync(report, token),token), workingChanged,
+            (group, report, token) => Task.Run(() => group == ToolGroup.Media ? media.InstallAsync(report, token, reinstall: true) : office.InstallAsync(report, token, reinstall: true),token)) { }
     internal ToolSetupWindow(Window owner, Func<ToolSetupStatus> probe,
-        Func<ToolGroup, IProgress<OperationProgress>, CancellationToken, Task> install, Action<bool>? workingChanged = null)
+        Func<ToolGroup, IProgress<OperationProgress>, CancellationToken, Task> install, Action<bool>? workingChanged = null,
+        Func<ToolGroup, IProgress<OperationProgress>, CancellationToken, Task>? reinstall = null)
     {
-        this.probe = probe; this.install = install; this.workingChanged = workingChanged ?? (_ => { });
-        Owner = owner; Theme.Attach(this); Title = "Set up Nashi tools"; Width = 646; Height = 690; MinWidth = 590; MinHeight = 560; WindowStartupLocation = WindowStartupLocation.CenterOwner;
+        this.probe = probe; this.install = install; this.reinstall = reinstall; this.workingChanged = workingChanged ?? (_ => { });
+        Owner = owner; Theme.Attach(this); Title = "Set up Nashi tools"; Width = 700; SizeToContent = SizeToContent.Height; MaxHeight = SystemParameters.WorkArea.Height * .94; MinWidth = 590; MinHeight = 560; WindowStartupLocation = WindowStartupLocation.CenterOwner;
         L10n.Bind(this,TitleProperty,"Set up Nashi tools");
         var root = new DockPanel(); Content = root;
         var footer = new StackPanel { Margin = new(24) }; DockPanel.SetDock(footer, Dock.Bottom); root.Children.Add(footer);
@@ -36,7 +39,7 @@ public sealed class ToolSetupWindow : Window
         AutomationProperties.SetAutomationId(next, "SetupContinue"); DockPanel.SetDock(next, Dock.Right); actions.Children.Add(next);
         cancel = MainWindow.Button("Cancel setup", () => cancellation?.Cancel()); AutomationProperties.SetAutomationId(cancel, "SetupCancel"); actions.Children.Add(cancel);
         var content = new StackPanel { Margin = new(28) }; root.Children.Add(new ScrollViewer { Content = content, VerticalScrollBarVisibility = ScrollBarVisibility.Auto });
-        content.Children.Add(Label("FIRST-TIME SETUP", 11)); content.Children.Add(Label("A few tools. More possibilities.", 28));
+        content.Children.Add(Label("A few tools. More possibilities.", 26));
         content.Children.Add(Label("One download per tool group. No account or GitHub token.", 14)); content.Children.Add(groups);
         content.Children.Add(MainWindow.Button("Upstream versions, licenses and source links", () => MainWindow.OpenUrl("https://github.com/orkunisitmak/nashi-app/blob/main/docs/dependencies.md")));
         Closing += (_, e) => { if (Working) { e.Cancel = true; cancellation?.Cancel(); } };
@@ -59,19 +62,24 @@ public sealed class ToolSetupWindow : Window
     private void Group(string title, string detail, bool ready, ToolGroup group)
     {
         var row = new StackPanel { Margin = new(14) }; row.Children.Add(Label(title, 18)); row.Children.Add(Label(detail));
-        if (ready) row.Children.Add(Label("Already available on your computer"));
+        if (ready)
+        {
+            // Installed but misbehaving (an SSL-broken yt-dlp, a damaged LibreOffice): fetch a fresh verified copy.
+            row.Children.Add(Label("Already available on your computer"));
+            if (reinstall is not null) { var again = MainWindow.Button("Reinstall", async () => await StartSetupAsync(group, force: true)); again.HorizontalAlignment = HorizontalAlignment.Left; again.Margin = new(0, 4, 0, 0); again.IsEnabled = !Working; AutomationProperties.SetAutomationId(again, group == ToolGroup.Media ? "ReinstallMedia" : "ReinstallOffice"); row.Children.Add(again); }
+        }
         else
         {
             var download = MainWindow.Button(group == ToolGroup.Media ? "Download media tools" : "Download office tools", async () => await StartSetupAsync(group));
             download.IsEnabled = !Working; AutomationProperties.SetAutomationId(download, group == ToolGroup.Media ? "SetupMedia" : "SetupOffice"); row.Children.Add(download);
         }
-        var card = new Border { Child = row, CornerRadius = new(16), BorderThickness = new(1), Margin = new(0, 12, 0, 8) };
+        var card = new Border { Child = row, CornerRadius = new(12), BorderThickness = new(1), Margin = new(0, 12, 0, 8) };
         card.SetResourceReference(Border.BackgroundProperty, "Surface"); card.SetResourceReference(Border.BorderBrushProperty, "Line"); groups.Children.Add(card);
     }
-    internal async Task StartSetupAsync(ToolGroup? selected = null)
+    internal async Task StartSetupAsync(ToolGroup? selected = null, bool force = false)
     {
         if (Working) return;
-        var pending = Status.Missing.Where(g => selected is null || g == selected).ToArray(); if (pending.Length == 0) { Refresh(); return; }
+        var pending = force && selected is {} only ? new[] { only } : Status.Missing.Where(g => selected is null || g == selected).ToArray(); if (pending.Length == 0) { Refresh(); return; }
         Working = true; cancellation = new(); workingChanged(true); Refresh(); progress.IsIndeterminate = true;
         var token = cancellation.Token;
         try
@@ -80,7 +88,7 @@ public sealed class ToolSetupWindow : Window
             {
                 token.ThrowIfCancellationRequested(); var index = i;
                 var report = new Progress<OperationProgress>(p => { if (!Working || token.IsCancellationRequested) return; progress.IsIndeterminate = p.Fraction is null; if (p.Fraction is {} value) progress.Value = (index + value) / pending.Length; L10n.SetText(status, p.Label); });
-                await install(pending[i], report, token); Refresh();
+                await (force && reinstall is not null ? reinstall : install)(pending[i], report, token); Refresh();
             }
             if (Status.Missing.Any(pending.Contains)) throw new InvalidDataException("The downloaded tools are incomplete. Please try setup again.");
             L10n.SetText(status, Status.Ready ? "Ready. You can go back to your files." : "One tool group is ready. Download the remaining tools to finish setup.");

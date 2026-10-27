@@ -6,13 +6,13 @@ public sealed partial class MainWindow
     private string[]? pendingLaunch;private System.Windows.Threading.DispatcherTimer? launchTimer;
     internal void AcceptLaunch(string[] paths)
     {
-        ShowMain();if(paths.Length==0)return;if(busy||!DesktopGeometry.IsInteractive(this)){pendingLaunch=paths;launchTimer??=new(){Interval=TimeSpan.FromMilliseconds(200)};launchTimer.Stop();launchTimer.Tick-=AcceptPending;launchTimer.Tick+=AcceptPending;launchTimer.Start();return;}files.Clear();Add(paths);ShowLibrary(false);
+        ShowMain();if(paths.Length==0)return;if(busy||!DesktopGeometry.IsInteractive(this)){pendingLaunch=paths;launchTimer??=new(){Interval=TimeSpan.FromMilliseconds(200)};launchTimer.Stop();launchTimer.Tick-=AcceptPending;launchTimer.Tick+=AcceptPending;launchTimer.Start();return;}Add(paths);ShowLibrary(false);
     }
     private void AcceptPending(object? sender,EventArgs e){if(busy||!DesktopGeometry.IsInteractive(this))return;launchTimer?.Stop();if(pendingLaunch is {} paths){pendingLaunch=null;AcceptLaunch(paths);}}
     private TrayHost? tray;private bool quitting;
     private void SetupDesktop()
     {
-        globalDrag=new(this,preferences,OnGlobalDrop,OpenCopiedLink);
+        globalDrag=new(this,preferences,OnGlobalDrop,OpenCopiedLink){Suppressed=()=>desk.Dragging};
         try{tray=new(this,ShowMain,TrayMenu);}catch(InvalidOperationException error){L10n.SetText(status,error.Message);}
         Closing+=(_,e)=>{if(!e.Cancel&&tray is not null&&preferences.Value.KeepInTray&&!quitting){e.Cancel=true;Hide();}};
         Closed+=(_,_)=>{launchTimer?.Stop();tray?.Dispose();};if(Environment.GetCommandLineArgs().Contains("--background"))Hide();
@@ -22,13 +22,14 @@ public sealed partial class MainWindow
     {
         var menu=new System.Windows.Controls.ContextMenu();
         void Item(string text,Action action){var item=new System.Windows.Controls.MenuItem();L10n.Bind(item,System.Windows.Controls.HeaderedItemsControl.HeaderProperty,text);item.Click+=(_,_)=>action();menu.Items.Add(item);}
-        Item("Open Nashi",ShowMain);Item("Library",()=>{ShowMain();ShowLibrary(true);});Item("Download copied link",OpenCopiedLink);Item("Settings",()=>{ShowMain();ShowSettings();});Item(update is null?"Check for updates":"Update to "+update.Version,()=>{ShowMain();_ = CheckUpdatesAsync(true);});menu.Items.Add(new System.Windows.Controls.Separator());Item("Quit Nashi",()=>{if(busy){ShowMain();L10n.SetText(status,"Finish or cancel the current operation before quitting.");return;}quitting=true;Application.Current.Shutdown();});return menu;
+        Item("Open Nashi",ShowMain);Item("Library",()=>{ShowMain();ShowLibrary(true);});Item("Download copied link",OpenCopiedLink);Item("Settings",()=>{ShowMain();ShowSettings();});Item(update is null?"Check for updates":"Update to "+update.Version,()=>{ShowMain();ShowSettings("Updates",true);});menu.Items.Add(new System.Windows.Controls.Separator());Item("Quit Nashi",()=>{if(busy){ShowMain();L10n.SetText(status,"Finish or cancel the current operation before quitting.");return;}quitting=true;Application.Current.Shutdown();});return menu;
     }
     private void ApplyPreferences(){L10n.Language=preferences.Value.Language;Feedback.Enabled=preferences.Value.Feedback;WheelPresentation.Preferences=preferences.Value;}
-    private void ShowSettings(){new SettingsWindow(this,preferences,ApplyPreferences,()=>CheckUpdatesAsync(true),library).ShowDialog();appearance.SelectedItem=char.ToUpper(library.Appearance[0])+library.Appearance[1..];}
+    private void ShowSettings(string? section=null,bool check=false){if(OwnedWindows.OfType<SettingsWindow>().FirstOrDefault() is {} open){open.Activate();return;}new SettingsWindow(this,preferences,ApplyPreferences,Updates(),library,section,check).ShowDialog();appearance.SelectedItem=char.ToUpper(library.Appearance[0])+library.Appearance[1..];}
     private void OpenCopiedLink()
     {
-        if(busy)return;try{var payload=WebMediaPayload.Parse(Clipboard.GetText());if(payload is null){L10n.SetText(status,"Copy a public media link first.");return;}Show();WindowState=WindowState.Normal;Activate();link.Text=payload.Url;SetDownloadKind(payload);OpenDownload();}catch(Exception error)when(ClipboardImport.IsClipboardError(error)){L10n.SetText(status,"Clipboard is busy. Try again.");}
+        WebMediaPayload? payload=null;try{payload=WebMediaPayload.Parse(Clipboard.GetText());}catch(Exception error)when(ClipboardImport.IsClipboardError(error)){}
+        Show();if(WindowState==WindowState.Minimized)WindowState=WindowState.Normal;Activate();if(payload is not null&&!busy){link.Text=payload.Url;SetDownloadKind(payload);}OpenDownload();if(payload is not null&&!busy)_=InspectWebLinkAsync();
     }
     private void SetDownloadKind(WebMediaPayload payload,string? chosen=null)
     {
@@ -40,7 +41,7 @@ public sealed partial class MainWindow
         Dispatcher.BeginInvoke(async()=>
         {
             if(busy)return;
-            if(paths is {Length:>0}&&!action.StartsWith("download:",StringComparison.Ordinal)){files.Clear();Add(paths);if(action.StartsWith("convert:",StringComparison.Ordinal))await EditAsync(new(action,"Convert","↗"));else if(new[]{"share","float","copy","move","copyPath","terminal"}.Contains(action))await PerformFileAction(action,paths);else await EditAsync(new(action,FeatureCatalog.ToolNames.GetValueOrDefault(action,action),"✦"));}
+            if(paths is {Length:>0}&&!action.StartsWith("download:",StringComparison.Ordinal)){Add(paths);var dropped=paths.Select(Path.GetFullPath).ToArray();if(action.StartsWith("convert:",StringComparison.Ordinal))await EditAsync(new(action,"Convert","↗"),dropped);else if(FileActionIds.Contains(action))await PerformFileAction(action,dropped);else await EditAsync(new(action,FeatureCatalog.ToolNames.GetValueOrDefault(action,action),"magic-wand"),dropped);}
             else if(payload is not null){link.Text=payload.Url;SetDownloadKind(payload,action.StartsWith("download:",StringComparison.Ordinal)?action[9..]:null);Show();WindowState=WindowState.Normal;Activate();OpenDownload();}
         });
     }

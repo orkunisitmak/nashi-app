@@ -22,22 +22,27 @@ public static partial class ImageEngine
         if(FeatureCatalog.Extension(file) is "webp" or "heic" or "avif" or "svg")return FromPng(PhotoCodec.Png(file));
         using var stream=File.OpenRead(file);var decoder=BitmapDecoder.Create(stream,BitmapCreateOptions.PreservePixelFormat,BitmapCacheOption.OnLoad);var frame=decoder.Frames[0];BitmapSource image=frame;
         if((long)image.PixelWidth*image.PixelHeight>100_000_000)throw new InvalidDataException("This image is too large (100 MP limit).");
-        ushort orientation=1;
-        if(frame.Metadata is BitmapMetadata metadata)
-        {
-            foreach(var query in new[]{"/app1/ifd/{ushort=274}","/ifd/{ushort=274}"})
-            {
-                if(metadata.ContainsQuery(query)&&metadata.GetQuery(query) is ushort value){orientation=value;break;}
-            }
-        }
+        var orientation=Orientation(frame);
         if(frame.ColorContexts is {Count:>0} contexts)image=new ColorConvertedBitmap(image,contexts[0],new ColorContext(PixelFormats.Bgra32),PixelFormats.Bgra32);
+        image=Orient(image,orientation);image.Freeze();return image;
+    }
+    /// The EXIF orientation Windows itself honors (JPEG, TIFF, HEIC); 1 when there is none.
+    internal static ushort Orientation(BitmapFrame frame)
+    {
+        if(frame.Metadata is BitmapMetadata metadata)
+            foreach(var query in new[]{"/app1/ifd/{ushort=274}","/ifd/{ushort=274}"})
+                try{if(metadata.ContainsQuery(query)&&metadata.GetQuery(query) is ushort value&&value is >=1 and <=8)return value;}catch(Exception error)when(error is NotSupportedException or InvalidOperationException or ArgumentException or System.Runtime.InteropServices.COMException){}
+        return 1;
+    }
+    /// Turns stored pixels upright for an EXIF orientation (mirror first, then rotate clockwise).
+    internal static BitmapSource Orient(BitmapSource image,ushort orientation)
+    {
         var transforms=new TransformGroup();
         if(orientation is 2 or 5 or 7)transforms.Children.Add(new ScaleTransform(-1,1));
         else if(orientation==4)transforms.Children.Add(new ScaleTransform(1,-1));
         var angle=orientation switch{3=>180,5 or 8=>270,6 or 7=>90,_=>0};
         if(angle!=0)transforms.Children.Add(new RotateTransform(angle));
-        if(transforms.Children.Count>0)image=new TransformedBitmap(image,transforms);
-        image.Freeze();return image;
+        return transforms.Children.Count>0?new TransformedBitmap(image,transforms):image;
     }
 
     public static IReadOnlyList<string> Apply(string tool,IReadOnlyList<string> inputs,string destination,ImageOptions options,string? format=null,CancellationToken token=default,IProgress<OperationProgress>? progress=null)

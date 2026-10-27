@@ -19,11 +19,24 @@ internal static class L10n
 {
     internal static string Language{get=>LanguageState.Shared.Language;set=>LanguageState.Shared.Language=value;}
     internal static string Text(string source)=>AppLocalization.Text(source,Language);
+    /// Formats first, then translates through the catalog's "{0}" templates.
+    internal static string Format(string template,params object[] values)=>Text(string.Format(System.Globalization.CultureInfo.InvariantCulture,template,values));
     internal static string Uppercase(string source)=>AppLocalization.Uppercase(Text(source),Language);
     internal static void Bind(DependencyObject target,DependencyProperty property,string source)=>BindingOperations.SetBinding(target,property,new Binding(nameof(LanguageState.Language)){Source=LanguageState.Shared,Converter=TextConverter.Shared,ConverterParameter=source,Mode=BindingMode.OneWay});
     internal static TextBlock Label(TextBlock text){Bind(text,TextBlock.TextProperty,text.Text);return text;}
     internal static T Content<T>(T control)where T:ContentControl{if(control.Content is string source)Bind(control,ContentControl.ContentProperty,source);return control;}
     internal static void SetText(TextBlock text,string source)=>Bind(text,TextBlock.TextProperty,source);
+    internal static void SetContent(ContentControl control,string source)=>Bind(control,ContentControl.ContentProperty,source);
+    // Any TextBlock that loads with a literal catalog string follows the language, so new views
+    // do not need to remember L10n.Label. Text typed by the user is never touched. The hook lives
+    // in an implicit app style because WPF does not raise Loaded class handlers.
+    internal static void Install(){var style=new Style(typeof(TextBlock));style.Setters.Add(new EventSetter(FrameworkElement.LoadedEvent,new RoutedEventHandler(BindLiteral)));Application.Current.Resources[typeof(TextBlock)]=style;}
+    private static void BindLiteral(object sender,RoutedEventArgs _)
+    {
+        var text=(TextBlock)sender;if(BindingOperations.IsDataBound(text,TextBlock.TextProperty)||!AppLocalization.Known(text.Text))return;
+        for(DependencyObject? parent=VisualTreeHelper.GetParent(text);parent is not null;parent=VisualTreeHelper.GetParent(parent))if(parent is TextBoxBase or ContentPresenter{Content:string})return;
+        Bind(text,TextBlock.TextProperty,text.Text);
+    }
     internal static void Attach(DependencyObject root)
     {
         if(root is ButtonBase button&&button.Content is string content&&!BindingOperations.IsDataBound(button,ContentControl.ContentProperty))Bind(button,ContentControl.ContentProperty,content);
@@ -43,7 +56,7 @@ internal static class L10n
         public object Convert(object value,Type type,object parameter,CultureInfo culture)=>AppLocalization.Text((string)parameter,(string)value);
         public object ConvertBack(object value,Type type,object parameter,CultureInfo culture)=>throw new NotSupportedException();
     }
-    private sealed class ChoiceConverter:IMultiValueConverter
+    internal sealed class ChoiceConverter:IMultiValueConverter
     {
         internal static readonly ChoiceConverter Shared=new();
         public object Convert(object[] values,Type type,object parameter,CultureInfo culture)=>values.Length==2&&values[0] is string source&&values[1] is string language?AppLocalization.Text(source,language):values[0];

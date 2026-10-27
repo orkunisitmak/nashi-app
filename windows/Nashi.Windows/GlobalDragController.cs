@@ -24,6 +24,8 @@ public sealed class GlobalDragController:IDisposable
     private readonly Window owner;private readonly PreferencesStore preferences;private readonly Action<string,IDataObject,string?> dropped;private readonly Action link;private readonly System.Windows.Threading.DispatcherTimer timer;
     private NativePoint start;private bool down,opened;private Task<string?>? hint;private GlobalDropWheel? wheel;private HwndSource? source;private IntPtr handle;private bool? shortcutEnabled;
     internal GlobalDropWheel? ActiveWheel=>wheel;
+    /// True while the main window's file desk runs its own drag and wheel.
+    internal Func<bool>? Suppressed{get;set;}
     public bool LinkShortcutRegistered{get;private set;}
     private bool OwnerAvailable=>DesktopGeometry.IsInteractive(owner);
     public GlobalDragController(Window owner,PreferencesStore preferences,Action<string,IDataObject,string?> dropped,Action link)
@@ -38,7 +40,7 @@ public sealed class GlobalDragController:IDisposable
     private string Chord(){var parts=new List<string>();if(Held(0x11))parts.Add("Ctrl");if(Held(0x10))parts.Add("Shift");if(Held(0x12))parts.Add("Alt");return string.Join('+',parts);}
     private void Poll()
     {
-        UpdateShortcut();if(!preferences.Value.Enabled||!OwnerAvailable){wheel?.Close();wheel=null;down=false;opened=false;hint=null;return;}var held=PrimaryMouseButton.IsPressed;GetCursorPos(out var point);
+        UpdateShortcut();if(!preferences.Value.Enabled||!OwnerAvailable){wheel?.Close();wheel=null;down=false;opened=false;hint=null;return;}if(Suppressed?.Invoke()==true){down=false;opened=false;hint=null;return;}var held=PrimaryMouseButton.IsPressed;GetCursorPos(out var point);
         if(!held){if(down){down=false;opened=false;hint=null;if(wheel is {IsVisible:true}){var old=wheel;var dismiss=new System.Windows.Threading.DispatcherTimer{Interval=TimeSpan.FromMilliseconds(150)};dismiss.Tick+=(_,_)=>{dismiss.Stop();if(old.IsVisible)old.Close();};dismiss.Start();}wheel=null;}return;}
         if(!down){down=true;start=point;opened=false;hint=null;return;}if(opened||Math.Abs(point.X-start.X)+Math.Abs(point.Y-start.Y)<10)return;
         hint??=Task.Run(()=>LinkAt(start));var chord=Chord();var p=preferences.Value;var kind=chord==p.ToolsModifier?"tools":chord==p.ConvertModifier?"convert":chord==p.ActionsModifier?"actions":null;if(kind is null)return;opened=true;
@@ -71,7 +73,7 @@ internal sealed class GlobalDropWheel:Window
         this.mode=mode;this.chosen=chosen;this.hint=hint;Title="Nashi · "+mode;Width=Height=WheelPresentation.Diameter*scale;WindowStyle=WindowStyle.None;AllowsTransparency=true;Background=Brushes.Transparent;ResizeMode=ResizeMode.NoResize;ShowInTaskbar=false;ShowActivated=false;Topmost=true;AllowDrop=true;Content=new Viewbox{Child=canvas};Build([]);Loaded+=(_,_)=>WheelPresentation.Animate(this);
         DragEnter+=(_,e)=>{entered++;Track(e);};
         DragOver+=(_,e)=>{over++;Track(e);};
-        Drop+=(_,e)=>{dropCount++;Track(e);var id=selection;Close();if(id.Length>0)chosen(e.Data,id);e.Handled=true;};PreviewKeyDown+=(_,e)=>{if(e.Key==Key.Escape){Close();e.Handled=true;}};
+        Drop+=(_,e)=>{dropCount++;Track(e);var id=selection;Close();if(id.Length>0)chosen(e.Data,id);e.Handled=true;};DropImage.Attach(this);PreviewKeyDown+=(_,e)=>{if(e.Key==Key.Escape){Close();e.Handled=true;}};
     }
     private void Track(DragEventArgs e)
     {
@@ -90,11 +92,11 @@ internal sealed class GlobalDropWheel:Window
     {
         if(files.Length>0&&web is null)
         {
-            if(mode=="convert")return FeatureCatalog.Formats(files).Select(f=>new ToolChoice("convert:"+f,f.ToUpperInvariant(),"↗")).ToArray();
-            if(mode=="actions")return [new("share","Share","◉"),new("float","Float","▣"),new("copy","Copy","▱"),new("move","Move","↗"),new("copyPath","Copy Path","↪"),new("terminal","Terminal",">_")];
+            if(mode=="convert")return FeatureCatalog.Formats(files).Select(f=>new ToolChoice("convert:"+f,f.ToUpperInvariant(),"")).ToArray();
+            if(mode=="actions")return [new("share","Share","share-network"),new("float","Float","push-pin"),new("copy","Copy","copy"),new("move","Move","folder-open"),new("copyPath","Copy Path","path"),new("terminal","Terminal","terminal-window")];
             return FeatureCatalog.Tools(files).Select(t=>new ToolChoice(t,FeatureCatalog.ToolNames[t],MainWindow.ToolSymbol(t))).ToArray();
         }
-        if(web is null)return [];return web.Kind switch{"youtube"=>[new("download:video","Download Video","↓"),new("download:thumbnail","Download Thumbnail","▣"),new("download:audio","Download Audio","♫")],"instagramPhotos"=>[new("download:photos","Download Images","▣")],"instagramReel"=>[new("download:video","Download Video","↓"),new("download:audio","Download Audio","♫")],"image"=>[new("download:image","Download Image","↓")],_=>[new("download:video","Download Video","↓"),new("download:audio","Download Audio","♫") ]};
+        if(web is null)return [];return web.Kind switch{"youtube"=>[new("download:video","Download Video","download-simple"),new("download:thumbnail","Download Thumbnail","image"),new("download:audio","Download Audio","music-note")],"instagramPhotos"=>[new("download:photos","Download Images","image")],"instagramReel"=>[new("download:video","Download Video","download-simple"),new("download:audio","Download Audio","music-note")],"image"=>[new("download:image","Download Image","download-simple")],_=>[new("download:video","Download Video","download-simple"),new("download:audio","Download Audio","music-note") ]};
     }
     private void Highlight(int index){var paths=canvas.Children.OfType<System.Windows.Shapes.Path>().ToArray();for(var n=0;n<paths.Length;n++){paths[n].Fill=Theme.Brush(n==index?"Sage":"Inset");paths[n].Stroke=Theme.Brush(n==index?"Gold":"Line");}}
     private void Build(IReadOnlyList<ToolChoice> tools)

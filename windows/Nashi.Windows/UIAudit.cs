@@ -208,6 +208,7 @@ internal static class UIAudit
             ValidateLayout(subject, capture);
             if (subject is WheelWindow wheel) ValidateWheel(wheel, capture);
             if (subject is ToolEditor editor) ValidateFooter(editor, capture);
+            if (capture.Language == "tr") ValidateTranslation(subject, capture);
             var image = Path.Combine(output, "captures", capture.Appearance, capture.Language, capture.Scene + ".png");
             Directory.CreateDirectory(Path.GetDirectoryName(image)!);
             var rendered = Render(subject, image);
@@ -231,7 +232,7 @@ internal static class UIAudit
 
     private static SettingsWindow Settings(MainWindow owner, PreferencesStore preferences, LibraryStore library, string scene)
     {
-        var settings = new SettingsWindow(owner, preferences, () => { }, () => Task.CompletedTask, library);
+        var settings = new SettingsWindow(owner, preferences, () => { }, null, library);
         var list = Descendants<ListBox>(settings).FirstOrDefault();
         // The visual tree is not yet materialized, so fall back to the logical tree for the page selector.
         list ??= LogicalDescendants<ListBox>(settings).FirstOrDefault();
@@ -294,11 +295,11 @@ internal static class UIAudit
         {
             "home.empty" => subject == owner && !owner.LibraryVisible && owner.SelectedFiles.Count == 0,
             "home.selected" => subject == owner && !owner.LibraryVisible && owner.SelectedFiles.SequenceEqual(new[] { fixtures.Image }),
-            "library" => subject == owner && owner.LibraryVisible && Descendants<ListBox>(owner).Any() && owner.SearchField.IsVisible,
+            "library" => subject == owner && owner.LibraryVisible && owner.SearchField.IsVisible,
             "settings.general" or "settings.formats" or "settings.updates" => subject is SettingsWindow &&
                 Descendants<ListBox>(subject).Any(list => Equals(list.SelectedItem, capture.Scene.Split('.')[1] switch { "formats" => "Formats", "updates" => "Updates", _ => "General" })),
             "wheel.pdf-multiple" => subject is WheelWindow && owner.SelectedFiles.SequenceEqual(fixtures.Pdfs) &&
-                Descendants<System.Windows.Shapes.Path>(subject).Count(path => path.Data is StreamGeometry) == FeatureCatalog.Tools(fixtures.Pdfs).Length,
+                Descendants<System.Windows.Shapes.Path>(subject).Count(path => path.Data is StreamGeometry && !Equals(path.Tag, Icons.Tag)) == FeatureCatalog.Tools(fixtures.Pdfs).Length,
             "editor.crop-image" => subject is ToolEditor crop && crop.FieldForTest("Width").Text == fixtures.Bitmap.PixelWidth.ToString(CultureInfo.CurrentCulture),
             "editor.annotate-image" => subject is ToolEditor && Descendants<ComboBox>(subject).Any(combo => Equals(combo.SelectedItem, "Marker")),
             "editor.frame-image" => subject is ToolEditor frame && frame.UIAuditPreviewReady &&
@@ -345,6 +346,33 @@ internal static class UIAudit
         var visible = footer is { IsVisible: true, ActualHeight: > 0 } && Contains(new Rect(root.RenderSize), footer.TransformToAncestor(root).TransformBounds(new Rect(footer.RenderSize)));
         capture.Checks["editorFooterVisible"] = visible;
         if (!visible) capture.Issues.Add("Editor footer is clipped at the supported minimum window size.");
+    }
+
+    // Turkish scenes must not show English UI copy. User text (TextBox) and file names are skipped;
+    // a string fails when the catalog has a translation for it or it reads as English prose.
+    private static readonly HashSet<string> EnglishWords = new(StringComparer.Ordinal)
+    {
+        "the", "and", "or", "to", "of", "for", "your", "you", "with", "here", "when", "while",
+        "add", "change", "drop", "drag", "hold", "press", "save", "keep", "file", "files", "image", "tools", "actions",
+        "convert", "ready", "start", "select", "choose", "open", "make", "something", "next", "form", "copy", "new"
+    };
+
+    private static void ValidateTranslation(Window subject, Capture capture)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var texts = Descendants<TextBlock>(subject).Concat(LogicalDescendants<TextBlock>(subject))
+            .Where(text => Ancestor<TextBoxBase>(text, subject) is null).Select(text => text.Text)
+            .Concat(Descendants<ContentControl>(subject).Where(control => control is not ListBoxItem and not ComboBoxItem).Select(control => control.Content as string))
+            .Concat(Descendants<FrameworkElement>(subject).Select(element => element.ToolTip as string));
+        foreach (var text in texts)
+        {
+            if (string.IsNullOrWhiteSpace(text) || !seen.Add(text)) continue;
+            var translated = AppLocalization.Turkish.TryGetValue(text, out var target) && target != text;
+            var words = System.Text.RegularExpressions.Regex.Matches(text, @"\b[A-Za-z]+\b").Select(match => match.Value.ToLowerInvariant());
+            if (!translated && !words.Any(EnglishWords.Contains)) continue;
+            capture.Issues.Add("Untranslated Turkish UI text: " + text.ReplaceLineEndings(" "));
+        }
+        capture.Checks["turkishCopy"] = !capture.Issues.Any(issue => issue.StartsWith("Untranslated", StringComparison.Ordinal));
     }
 
     private static void ValidateWheel(WheelWindow wheel, Capture capture)

@@ -7,6 +7,8 @@ public partial class App:Application
     private WindowManagement? windowManagement;
     protected override void OnStartup(StartupEventArgs e)
     {
+        DiagnosticLog.Install(e.Args);
+        L10n.Install();
         if(Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY") is {} diagnostics)
         {
             Directory.CreateDirectory(diagnostics);
@@ -15,6 +17,8 @@ public partial class App:Application
         }
         DispatcherUnhandledException+=(_,error)=>{var folder=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");if(folder is not null){Directory.CreateDirectory(folder);File.WriteAllText(Path.Combine(folder,"dispatcher-error.txt"),error.Exception.ToString());error.Handled=true;Shutdown(1);}};
         base.OnStartup(e);
+        // The sound engine loads its sounds and opens the output now, so the first sound plays whole.
+        Sounds.Start();Activated+=(_,_)=>Sounds.Wake();
         if(e.Args.Contains("--ui-audit"))
         {
             IsSmokeTest=true;ShutdownMode=ShutdownMode.OnExplicitShutdown;
@@ -47,6 +51,12 @@ public partial class App:Application
         }
         if(e.Args.Length==2&&e.Args[0]=="--apply-update"){try{Shutdown(UpdateInstaller.Apply(e.Args[1]));}catch(Exception error){UseSavedLanguage();MessageBox.Show(L10n.Text(error.Message),L10n.Text("Nashi update could not finish"));Shutdown(1);}return;}
         if(e.Args.Contains("--verify-update-state")){try{ShutdownMode=ShutdownMode.OnExplicitShutdown;SmokeTests.VerifyUpdateState();Shutdown(0);}catch(Exception error){Console.Error.WriteLine(error);Shutdown(1);}return;}
+        if(e.Args.Length==2&&e.Args[0]=="--desk-check")
+        {
+            ShutdownMode=ShutdownMode.OnExplicitShutdown;var problems=new List<string>();
+            try{FileDeskChecks.Run(e.Args[1],(ok,message)=>{if(!ok)problems.Add(message);});}catch(Exception error){problems.Add(error.ToString());}
+            File.WriteAllLines(Path.Combine(e.Args[1],"desk-check.txt"),problems.Count==0?["passed"]:problems);Shutdown(problems.Count==0?0:1);return;
+        }
         if(e.Args.Contains("--smoke-test")){IsSmokeTest=true;try{NativeExceptionTrace.Install();SmokeTests.Run();Shutdown(0);}catch(Exception error){Console.Error.WriteLine(error);var directory=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");if(directory is not null){Directory.CreateDirectory(directory);File.WriteAllText(Path.Combine(directory,"error.txt"),error.ToString());}Shutdown(1);}return;}
         if(e.Args.Length==1&&e.Args[0]=="--install-update"){ShutdownMode=ShutdownMode.OnExplicitShutdown;_ = InstallUpdateAsync();return;}
         instance=new SingleInstance();Exit+=(_,_)=>instance.Dispose();var paths=e.Args.Where(p=>File.Exists(p)||Directory.Exists(p)).ToArray();

@@ -20,6 +20,7 @@ internal static class DesktopInput
     [DllImport("user32.dll")]private static extern bool SetCursorPos(int x,int y);
     internal static void MovePointer(Point point){SetCursorPos((int)point.X,(int)point.Y);var input=new Input{Data=new(){Mouse=new(){Flags=1}}};SendInput(1,[input],Marshal.SizeOf<Input>());}
     internal static void Hold(Key key,bool pressed){var input=new Input{Type=1,Data=new(){Keyboard=new(){Key=(ushort)KeyInterop.VirtualKeyFromKey(key),Flags=pressed?0u:2u}}};if(SendInput(1,[input],Marshal.SizeOf<Input>())!=1)throw new InvalidOperationException("Native key input unavailable.");}
+    internal static void Click(Point point,bool right=false){MovePointer(point);foreach(var flag in right?new[]{8u,16u}:new[]{2u,4u}){var input=new Input{Data=new(){Mouse=new(){Flags=flag}}};SendInput(1,[input],Marshal.SizeOf<Input>());Pump(40);}}
     internal static void HoldMouse(bool pressed){var input=new Input{Data=new(){Mouse=new(){Flags=pressed?2u:4u}}};if(SendInput(1,[input],Marshal.SizeOf<Input>())!=1)throw new InvalidOperationException("Native mouse input unavailable.");}
     internal static void Pump(int milliseconds=140)
     {
@@ -29,7 +30,9 @@ internal static class DesktopInput
     internal static void Key(Window window,Key key,bool control=false,bool shift=false,bool alt=false)
     {
         window.Activate();Pump();var inputs=new List<Input>();
-        void Add(int vk,bool up=false)=>inputs.Add(new(){Type=1,Data=new(){Keyboard=new(){Key=(ushort)vk,Flags=up?2u:0u}}});
+        // Arrows and the navigation block are extended keys; sent without the flag they become the numpad
+        // keys, and with NumLock on Windows drops Shift from Shift+numpad (Shift+Right arrives as plain Right).
+        void Add(int vk,bool up=false)=>inputs.Add(new(){Type=1,Data=new(){Keyboard=new(){Key=(ushort)vk,Flags=(up?2u:0u)|(vk is >=0x21 and <=0x28 or 0x2D or 0x2E?1u:0u)}}});
         if(control)Add(0x11);if(shift)Add(0x10);if(alt)Add(0x12);Add(KeyInterop.VirtualKeyFromKey(key));Add(KeyInterop.VirtualKeyFromKey(key),true);if(alt)Add(0x12,true);if(shift)Add(0x10,true);if(control)Add(0x11,true);
         if(SendInput((uint)inputs.Count,inputs.ToArray(),Marshal.SizeOf<Input>())!=inputs.Count)throw new InvalidOperationException("Native keyboard input was unavailable on this Windows desktop.");Pump();
     }

@@ -10,26 +10,26 @@ public sealed partial class MainWindow
     private readonly StackPanel photoChoices=new();private readonly HashSet<int> selectedWebPhotos=[];private CancellationTokenSource? inspection;private string? inspectedLink,webPayloadKind;
     private void BuildWebOptions()
     {
-        var buttons=new WrapPanel();buttons.Children.Add(Button("Find media",async()=>await InspectWebLinkAsync()));buttons.Children.Add(Button("Paste link",()=>{try{link.Text=Clipboard.GetText();}catch(Exception e)when(ClipboardImport.IsClipboardError(e)){webSummary.Text="Clipboard is busy. Try Paste again.";}}));webContent.Children.Add(buttons);webContent.Children.Add(webSummary);
+        var buttons=new WrapPanel();buttons.Children.Add(Button("Find media",async()=>await InspectWebLinkAsync()));buttons.Children.Add(Button("Paste link",()=>{try{link.Text=Clipboard.GetText();}catch(Exception e)when(ClipboardImport.IsClipboardError(e)){L10n.SetText(webSummary,"Clipboard is busy. Try Paste again.");}}));webContent.Children.Add(buttons);webContent.Children.Add(webSummary);
         var quality=new StackPanel();quality.Children.Add(Text("Video quality",12,"Muted"));quality.Children.Add(webQuality);webContent.Children.Add(quality);downloadKind.SelectionChanged+=(_,_)=>quality.Visibility=downloadKind.SelectedItem as string=="video"?Visibility.Visible:Visibility.Collapsed;webContent.Children.Add(photoChoices);
         var destination=new DockPanel{Margin=new(0,14,0,4)};var location=Text(preferences.Value.DownloadFolder,12,"Muted");var change=Button("Change…",()=>{var picker=new OpenFolderDialog{Title="Save downloaded media to…"};if(picker.ShowDialog(webWindow??this)==true){preferences.Save(preferences.Value with{DownloadFolder=picker.FolderName});location.Text=picker.FolderName;}});DockPanel.SetDock(change,Dock.Right);destination.Children.Add(change);destination.Children.Add(location);webContent.Children.Add(Card(destination));
         webContent.Children.Add(Text("Instagram photo posts open a photo selection. Reel links offer video and audio. Public downloadable media only.",11,"Muted"));
-        link.TextChanged+=(_,_)=>{inspection?.Cancel();inspectedLink=null;photoChoices.Children.Clear();selectedWebPhotos.Clear();var payload=WebMediaPayload.Parse(link.Text);if(payload is not null&&payload.Kind!=webPayloadKind){webPayloadKind=payload.Kind;SetDownloadKind(payload);}webSummary.Text="Choose Find media to inspect this link.";};
+        link.TextChanged+=(_,_)=>{inspection?.Cancel();inspectedLink=null;photoChoices.Children.Clear();selectedWebPhotos.Clear();var payload=WebMediaPayload.Parse(link.Text);if(payload is not null&&payload.Kind!=webPayloadKind){webPayloadKind=payload.Kind;SetDownloadKind(payload);}L10n.SetText(webSummary,"Choose Find media to inspect this link.");};
     }
     private async Task InspectWebLinkAsync()
     {
-        if(busy)return;inspection?.Cancel();var pending=new CancellationTokenSource();inspection=pending;var input=link.Text;var payload=WebMediaPayload.Parse(input);if(payload is null){webSummary.Text="Paste one complete public media link.";return;}
-        SetDownloadKind(payload,downloadKind.SelectedItem as string);photoChoices.Children.Clear();selectedWebPhotos.Clear();webSummary.Text="Finding the media…";
+        if(busy)return;inspection?.Cancel();var pending=new CancellationTokenSource();inspection=pending;var input=link.Text;var payload=WebMediaPayload.Parse(input);if(payload is null){L10n.SetText(webSummary,"Paste one complete public media link.");return;}
+        SetDownloadKind(payload,downloadKind.SelectedItem as string);photoChoices.Children.Clear();selectedWebPhotos.Clear();L10n.SetText(webSummary,"Finding the media…");
         try
         {
             var engine=new WebDownload(tools);
             if(payload.Kind=="instagramPhotos")
             {
                 if(!tools.Ready)throw new InvalidOperationException("Set up media tools once to inspect Instagram posts.");var photos=await engine.InspectPhotosAsync(payload.Url,pending.Token);if(input!=link.Text||pending.IsCancellationRequested)return;
-                webSummary.Text=$"{photos.Length} photos · full-frame images · saved in post order";var row=new WrapPanel();row.Children.Add(Button("All",()=>{foreach(var box in photoChoices.Children.OfType<CheckBox>())box.IsChecked=true;}));row.Children.Add(Button("None",()=>{foreach(var box in photoChoices.Children.OfType<CheckBox>())box.IsChecked=false;}));photoChoices.Children.Add(row);
+                L10n.SetText(webSummary,$"{photos.Length} photos · full-frame images · saved in post order");var row=new WrapPanel();row.Children.Add(Button("All",()=>{foreach(var box in photoChoices.Children.OfType<CheckBox>())box.IsChecked=true;}));row.Children.Add(Button("None",()=>{foreach(var box in photoChoices.Children.OfType<CheckBox>())box.IsChecked=false;}));photoChoices.Children.Add(row);
                 foreach(var photo in photos){selectedWebPhotos.Add(photo.Id);var box=new CheckBox{Content=$"Photo {photo.Id}  ·  {photo.Width} × {photo.Height}",IsChecked=true,Margin=new(4,9,4,9)};box.Checked+=(_,_)=>selectedWebPhotos.Add(photo.Id);box.Unchecked+=(_,_)=>selectedWebPhotos.Remove(photo.Id);photoChoices.Children.Add(box);}
             }
-            else if(payload.Kind=="image"||downloadKind.SelectedItem as string=="thumbnail")webSummary.Text=payload.Kind=="image"?"Original image · ready to download":"YouTube thumbnail · best available full-size image";
+            else if(payload.Kind=="image"||downloadKind.SelectedItem as string=="thumbnail")L10n.SetText(webSummary,payload.Kind=="image"?"Original image · ready to download":"YouTube thumbnail · best available full-size image");
             else
             {
                 if(!tools.Ready)throw new InvalidOperationException("Set up media tools once to inspect this media.");var info=await engine.InspectAsync(payload.Url,pending.Token);if(input!=link.Text||pending.IsCancellationRequested)return;webSummary.Text=info.Title+"\n"+info.Site+(info.Duration is {} seconds?" · "+TimeSpan.FromSeconds(seconds).ToString(@"hh\:mm\:ss"):"");if(info.AudioOnly){downloadKind.ItemsSource=new[]{"audio"};downloadKind.SelectedIndex=0;}

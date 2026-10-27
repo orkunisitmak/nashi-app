@@ -24,7 +24,9 @@ public sealed class MetadataService(string root)
     {
         // Pixels are already oriented and converted to sRGB. Do not reattach a
         // stale orientation, source ICC profile, preview or image dimensions.
-        await ProcessRunner.RunAsync(Executable??throw new InvalidOperationException("Metadata tools are not ready."),["-overwrite_original","-charset","filename=UTF8","-tagsFromFile",Path.GetFullPath(source),"-all:all","--ICC_Profile","--Orientation","--ThumbnailImage","--PreviewImage","--JpgFromRaw","--ImageWidth","--ImageHeight","--ExifImageWidth","--ExifImageHeight","-Orientation=1","-ColorSpace=sRGB","--",Path.GetFullPath(output)],token);
+        // "Orientation#=1" is the number; plain "Orientation=1" is matched against the printed
+        // names and picks "Rotate 180", which turned every converted JPEG upside down.
+        await ProcessRunner.RunAsync(Executable??throw new InvalidOperationException("Metadata tools are not ready."),["-overwrite_original","-charset","filename=UTF8","-tagsFromFile",Path.GetFullPath(source),"-all:all","--ICC_Profile","--Orientation","--ThumbnailImage","--PreviewImage","--JpgFromRaw","--ImageWidth","--ImageHeight","--ExifImageWidth","--ExifImageHeight","-Orientation#=1","-ColorSpace=sRGB","--",Path.GetFullPath(output)],token);
     }
     public async Task<IReadOnlyList<string>> WriteAsync(IReadOnlyList<string> inputs,string destination,bool removeAll,IReadOnlyDictionary<string,string>? updates=null,IReadOnlyList<string>? removals=null,IProgress<OperationProgress>? progress=null,CancellationToken token=default)
     {

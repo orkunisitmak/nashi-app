@@ -7,6 +7,8 @@ namespace Nashi.Windows;
 public sealed partial class MainWindow
 {
     internal IReadOnlyList<ToolChoice> UIAuditToolChoices => Choices();
+    /// Lets the desk check queue real jobs through the production runner.
+    internal Task QueueForCheck(Func<string, IProgress<Nashi.Core.OperationProgress>, CancellationToken, Task<IReadOnlyList<string>>> work, string label) => RunAsync(work, label);
 }
 
 public sealed partial class ToolEditor

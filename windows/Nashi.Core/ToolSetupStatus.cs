@@ -10,10 +10,11 @@ public sealed record ToolSetupStatus(bool MediaReady, bool OfficeReady)
 public static class ToolInstallation
 {
     public static bool UsableFile(string path) => File.Exists(path) && new FileInfo(path).Length > 0;
-    public static void Publish(string stage, string target, Func<string, bool> complete)
+    /// replace: a reinstall swaps even a complete existing copy for the fresh one.
+    public static void Publish(string stage, string target, Func<string, bool> complete, bool replace = false)
     {
         if (!complete(stage)) throw new InvalidDataException("The downloaded tools are incomplete. Please try setup again.");
-        if (complete(target)) return;
+        if (!replace && complete(target)) return;
         var backup = Path.Combine(Path.GetDirectoryName(target)!, ".previous-" + Guid.NewGuid().ToString("N"));
         var existing = Directory.Exists(target);
         if (existing) Directory.Move(target, backup);

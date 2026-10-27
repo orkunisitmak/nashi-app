@@ -15,7 +15,7 @@ internal static class LocalizationChecks
     internal static void Run(string directory,MainWindow owner,string image,Action<bool,string> check)
     {
         var before=L10n.Language;var prefs=new PreferencesStore(Path.Combine(directory,"Language profile"));
-        var settings=new SettingsWindow(owner,prefs,()=>L10n.Language=prefs.Value.Language,()=>Task.CompletedTask);
+        var settings=new SettingsWindow(owner,prefs,()=>L10n.Language=prefs.Value.Language,null);
         var editor=new ToolEditor(owner,"crop","Crop Image",image,preview:ImageEngine.Load(image));
         try
         {

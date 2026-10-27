@@ -122,7 +122,7 @@ public sealed class FloatShelf:Window
     private void Animate(DependencyProperty property,double value)
     {
         var previous=(double)GetValue(property);BeginAnimation(property,null);SetValue(property,value);
-        if(WheelPresentation.Preferences.Animations&&SystemParameters.ClientAreaAnimation&&double.IsFinite(previous)&&IsVisible)BeginAnimation(property,new DoubleAnimation(previous,value,TimeSpan.FromMilliseconds(180)){EasingFunction=new CubicEase{EasingMode=EasingMode.EaseOut},FillBehavior=FillBehavior.Stop});
+        if(Motion.On&&double.IsFinite(previous)&&IsVisible)BeginAnimation(property,new DoubleAnimation(previous,value,TimeSpan.FromMilliseconds(180)){EasingFunction=new CubicEase{EasingMode=EasingMode.EaseOut},FillBehavior=FillBehavior.Stop});
     }
     private void Options(){var menu=Menu();menu.PlacementTarget=options;menu.IsOpen=true;}
     private ContextMenu Menu()

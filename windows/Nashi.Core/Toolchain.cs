@@ -16,9 +16,9 @@ public sealed class Toolchain(string directory)
     }
     private static bool Complete(string directory)=>new[]{"ffmpeg","ffprobe","yt-dlp","deno"}.All(n=>ToolInstallation.UsableFile(Path.Combine(directory,n+".exe")));
     public bool Ready=>Complete(DirectoryPath);
-    public async Task InstallAsync(IProgress<OperationProgress>? progress=null,CancellationToken token=default)
+    public async Task InstallAsync(IProgress<OperationProgress>? progress=null,CancellationToken token=default,bool reinstall=false)
     {
-        token.ThrowIfCancellationRequested();if(Ready){progress?.Report(new(1,"Media tools ready"));return;}
+        token.ThrowIfCancellationRequested();if(Ready&&!reinstall){progress?.Report(new(1,"Media tools ready"));return;}
         var parent=Path.GetDirectoryName(DirectoryPath)!;Directory.CreateDirectory(parent);
         var stage=Path.Combine(parent,"tools-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(stage);
         try
@@ -49,7 +49,7 @@ public sealed class Toolchain(string directory)
                 if(File.Exists(archive))File.Delete(archive);
             }
             token.ThrowIfCancellationRequested();
-            ToolInstallation.Publish(stage,DirectoryPath,Complete);progress?.Report(new(1,"Media tools ready"));
+            ToolInstallation.Publish(stage,DirectoryPath,Complete,reinstall);progress?.Report(new(1,"Media tools ready"));
         }
         finally{if(Directory.Exists(stage))Directory.Delete(stage,true);}
     }

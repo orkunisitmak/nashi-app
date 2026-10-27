@@ -9,6 +9,8 @@ PDFsharp 6.2.4, empira and contributors, MIT.
 https://github.com/empira/PDFsharp/blob/master/LICENSE
 BouncyCastle.Cryptography 2.7.0, The Legion of the Bouncy Castle Inc., MIT.
 https://github.com/bcgit/bc-csharp/blob/master/LICENSE.md
+Phosphor Icons 2.1.1, Phosphor Icons (Helena Zhang and Tobias Fried), MIT.
+https://github.com/phosphor-icons/core/blob/main/LICENSE
 Exact NuGet packages and transitive dependency licenses are recorded in the
 committed packages.lock.json files and Windows dependency inventory.
 Media tools are downloaded separately from pinned upstream releases after the

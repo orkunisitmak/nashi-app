@@ -27,18 +27,21 @@ public static class PhotoCodec
         if(!FeatureCatalog.IsImage(path)&&FeatureCatalog.Extension(path)!="gif")throw new ArgumentException("Choose an image.");
         if(new FileInfo(path).Length>200_000_000)throw new InvalidDataException("This image exceeds 200 MB.");
         if(FeatureCatalog.Extension(path)=="svg")ValidateSvg(path);
-        var ext=FeatureCatalog.Extension(path);var settings=new MagickReadSettings{FrameCount=1,Format=ext=="svg"?MagickFormat.Msvg:Format(ext)};
+        var ext=FeatureCatalog.Extension(path);// librsvg draws SVG like a browser; the built-in MSVG renderer drops gradients, transforms and transparency.
+        var settings=new MagickReadSettings{FrameCount=1,Format=ext=="svg"?MagickFormat.Rsvg:Format(ext),BackgroundColor=ext=="svg"?MagickColors.Transparent:null};
         using var stream=File.OpenRead(path);var info=new MagickImageInfo(stream,settings);if((ulong)info.Width*info.Height>100_000_000)throw new InvalidDataException("This image exceeds 100 MP.");stream.Position=0;
-        var image=new MagickImage(stream,settings);image.AutoOrient();if(image.GetColorProfile() is not null)image.TransformColorSpace(ColorProfiles.SRGB);else image.ColorSpace=ColorSpace.sRGB;return image;
+        var image=new MagickImage(stream,settings);if(ext!="webp")image.AutoOrient();if(image.GetColorProfile() is not null)image.TransformColorSpace(ColorProfiles.SRGB);else image.ColorSpace=ColorSpace.sRGB;return image;
     }
     private static void ValidateSvg(string path)
     {
         using var reader=XmlReader.Create(path,new XmlReaderSettings{DtdProcessing=DtdProcessing.Prohibit,XmlResolver=null,MaxCharactersInDocument=20_000_000});var xml=XDocument.Load(reader);
+        // librsvg honours <?xml-stylesheet?> and CSS @import, which would pull in other files.
+        if(xml.Nodes().OfType<XProcessingInstruction>().Any(p=>p.Target.Equals("xml-stylesheet",StringComparison.OrdinalIgnoreCase))||xml.Descendants().Any(e=>e.Name.LocalName=="include"))throw new InvalidDataException("SVG external styles are not loaded.");
         foreach(var element in xml.Descendants())
         {
             if(element.Name.LocalName is "script" or "foreignObject")throw new InvalidDataException("Use a static SVG without embedded scripts or HTML.");
             foreach(var attribute in element.Attributes())if(attribute.Name.LocalName is "href" or "src"&&!attribute.Value.StartsWith('#')&&!new[]{"data:image/png;base64,","data:image/jpeg;base64,","data:image/webp;base64,"}.Any(p=>attribute.Value.StartsWith(p,StringComparison.Ordinal)))throw new InvalidDataException("SVG external resources are not loaded. Embed the raster image first.");
-            if(element.Value.Contains("url(",StringComparison.OrdinalIgnoreCase)&&!element.Value.Contains("url(#",StringComparison.OrdinalIgnoreCase))throw new InvalidDataException("SVG external styles are not loaded.");
+            if(element.Value.Contains("@import",StringComparison.OrdinalIgnoreCase)||element.Value.Contains("url(",StringComparison.OrdinalIgnoreCase)&&!element.Value.Contains("url(#",StringComparison.OrdinalIgnoreCase))throw new InvalidDataException("SVG external styles are not loaded.");
             foreach(var attribute in element.Attributes())if(attribute.Value.Contains("url(",StringComparison.OrdinalIgnoreCase)&&!attribute.Value.Contains("url(#",StringComparison.OrdinalIgnoreCase))throw new InvalidDataException("SVG external styles are not loaded.");
         }
     }

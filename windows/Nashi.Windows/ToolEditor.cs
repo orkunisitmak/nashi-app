@@ -47,7 +47,8 @@ public sealed partial class ToolEditor:Window
         duration=media?.Duration??1;
         if(media is not null)
         {
-            player.ScrubbingEnabled=true;player.Loaded+=(_,_)=>{player.Play();player.Pause();};player.MediaFailed+=async(_,_)=>await CreatePreviewProxy();
+            // Scrubbing is for video frames; on a sound alone it leaves Play stuck after the first Pause.
+            player.ScrubbingEnabled=media.Video is not null;player.Loaded+=(_,_)=>{player.Play();player.Pause();};player.MediaFailed+=async(_,_)=>await CreatePreviewProxy();
             if(tool is "trimVideo" or "trimAudio" or "redactAudio")
             {
                 timeline.Set(duration,0,duration);previewStack.Children.Add(timeline);timeline.Changed+=(a,b)=>{var valid=double.TryParse(fields["Start"].Text,NumberStyles.Float,CultureInfo.CurrentCulture,out var previousStart)&&double.IsFinite(previousStart);fields["Start"].Text=Number(a);fields["End"].Text=Number(b);Seek(!valid||Math.Abs(a-previousStart)>.0001?a:b);};
@@ -92,7 +93,7 @@ public sealed partial class ToolEditor:Window
         }
         BuildPhotoOptions(inputs??[input]);BuildInputOrder(inputs??[input]);BuildCropOptions();BuildCompressionOptions();BuildDocumentOptions();BuildMediaOptions();
         if(options.Children.Count==1)options.Children.Add(L10n.Label(new TextBlock{Text="Ready to make a fresh copy. No extra settings needed.",TextWrapping=TextWrapping.Wrap,Margin=new(4,20,4,0)}));
-        var footer=new DockPanel{Margin=new(0,20,0,0),LastChildFill=false};Grid.SetRow(footer,2);grid.Children.Add(footer);var save=MainWindow.Button("Save new copy  ↗",Save);save.Background=Theme.Primary;save.Foreground=new SolidColorBrush(Color.FromRgb(43,54,28));DockPanel.SetDock(save,Dock.Right);footer.Children.Add(save);var cancel=MainWindow.Button("Cancel",()=>DialogResult=false);DockPanel.SetDock(cancel,Dock.Left);footer.Children.Add(cancel);var reset=MainWindow.Button("↶ Reset",Reset);DockPanel.SetDock(reset,Dock.Left);footer.Children.Add(reset);var safe=L10n.Label(new TextBlock{Text="Original stays safe",Foreground=Theme.Brush("Muted"),FontSize=12,VerticalAlignment=VerticalAlignment.Center,Margin=new(0,0,16,0)});DockPanel.SetDock(safe,Dock.Right);footer.Children.Add(safe);
+        var footer=new DockPanel{Margin=new(0,20,0,0),LastChildFill=false};Grid.SetRow(footer,2);grid.Children.Add(footer);var save=MainWindow.Button("Save new copy  ↗",Save);save.Background=Theme.Primary;save.Foreground=new SolidColorBrush(Theme.OnPrimary);DockPanel.SetDock(save,Dock.Right);footer.Children.Add(save);var cancel=MainWindow.Button("Cancel",()=>DialogResult=false);DockPanel.SetDock(cancel,Dock.Left);footer.Children.Add(cancel);var reset=MainWindow.Button("↶ Reset",Reset);DockPanel.SetDock(reset,Dock.Left);footer.Children.Add(reset);var safe=L10n.Label(new TextBlock{Text="Original stays safe",Foreground=Theme.Brush("Muted"),FontSize=12,VerticalAlignment=VerticalAlignment.Center,Margin=new(0,0,16,0)});DockPanel.SetDock(safe,Dock.Right);footer.Children.Add(safe);
         var clock=new System.Windows.Threading.DispatcherTimer{Interval=TimeSpan.FromMilliseconds(100)};
         clock.Tick+=(_,_)=>{if(!scrubber.IsMouseCaptureWithin&&!scrubber.IsKeyboardFocusWithin)scrubber.Value=Math.Clamp(player.Position.TotalSeconds,0,duration);if(playing){time.Text=$"{player.Position:mm\\:ss\\.fff} / {TimeSpan.FromSeconds(duration):mm\\:ss\\.fff}";if(playingRange&&player.Position.TotalSeconds>=rangePlaybackEnd){player.Pause();playing=false;playingRange=false;}}};
         player.MediaEnded+=(_,_)=>{playing=false;player.Pause();};clock.Start();
