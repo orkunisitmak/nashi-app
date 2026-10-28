@@ -46,6 +46,7 @@ jobs:
       - name: Publish self-contained Linux app
         run: scripts/build-linux.sh '${{ matrix.rid }}'
       - name: Native X11 UI checks
+        timeout-minutes: 10
         env:
           NASHI_SMOKE_DIRECTORY: ${{ github.workspace }}/build/linux-smoke
         run: |

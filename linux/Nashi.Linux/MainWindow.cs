@@ -35,7 +35,7 @@ public sealed class MainWindow:Window
         library=store??new();preferences=new(library.DirectoryPath);NashiTheme.Language=preferences.Value.Language;initial=(paths??[]).Where(p=>!p.StartsWith("--",StringComparison.Ordinal)).ToList();
         NashiTheme.Apply(library.Appearance);FontFamily=new FontFamily("DejaVu Sans");Title="Nashi";Width=900;Height=760;MinWidth=640;MinHeight=520;
         using(var icon=AssetLoader.Open(new Uri("avares://Nashi/Assets/NashiIcon.png")))Icon=new WindowIcon(icon);
-        Build();DragDrop.SetAllowDrop(this,true);AddHandler(DragDrop.DropEvent,Drop);AddHandler(DragDrop.DragOverEvent,DragOver);KeyDown+=OnKey;
+        status.TextWrapping=TextWrapping.Wrap;Build();DragDrop.SetAllowDrop(this,true);AddHandler(DragDrop.DropEvent,Drop);AddHandler(DragDrop.DragOverEvent,DragOver);KeyDown+=OnKey;
         Opened+=(_,_)=>{if(monitorDesktop&&!(paths??[]).Contains("--smoke-test")&&preferences.Value.Enabled)dragMonitor=new X11DragMonitor(drag=>Dispatcher.UIThread.Post(()=>DesktopDragChanged(drag)),()=>preferences.Value);Add(initial);if(library.RecoveryNotice is {} notice)status.Text=notice;if((paths??[]).Contains("--download"))_ = Download();if((paths??[]).Contains("--library"))ShowPage(true);};
         Closed+=(_,_)=>{dragMonitor?.Dispose();dragWheel?.Close();};
         Closing+=(_,e)=>{if(operation is not null){operation.Cancel();e.Cancel=true;status.Text="Cancelling… Close again when the operation finishes.";}};
@@ -178,7 +178,7 @@ public sealed class MainWindow:Window
         }
         catch(Exception error){status.Text=error.Message;}
     }
-    private async Task Run(Func<string,IProgress<OperationProgress>,CancellationToken,Task<IReadOnlyList<string>>> work,string label,bool forceAsk=false,string? preferredDestination=null)
+    private async Task Run(Func<string,IProgress<OperationProgress>,CancellationToken,Task<IReadOnlyList<string>>> work,string label,bool forceAsk=false,string? preferredDestination=null,Action<IReadOnlyList<string>>? completed=null)
     {
         string? destination=preferredDestination;
         if(destination is null&&!forceAsk&&preferences.Value.OutputMode=="beside"&&files.Count>0)destination=Path.GetDirectoryName(files[0]);
@@ -190,8 +190,9 @@ public sealed class MainWindow:Window
         var report=new Progress<OperationProgress>(p=>{status.Text=p.Label;progress.IsIndeterminate=p.Fraction is null;if(p.Fraction is {} f)progress.Value=f*100;});
         try
         {
-            var outputs=await Task.Run(()=>work(destination,report,cancellation.Token));library.Record(label,outputs);status.Text=$"Saved {outputs.Count} new cop{(outputs.Count==1?"y":"ies")}.";ShowPage(libraryVisible);if(preferences.Value.RevealFinished)await OpenPath(destination);
+            var outputs=await Task.Run(()=>work(destination,report,cancellation.Token));completed?.Invoke(outputs);library.Record(label,outputs);status.Text=$"Saved {outputs.Count} new cop{(outputs.Count==1?"y":"ies")}.";ShowPage(libraryVisible);if(preferences.Value.RevealFinished)await OpenPath(destination);
         }
+        catch(IncompleteMoveException error){completed?.Invoke(error.Outputs.Concat(error.RetainedOriginals).ToArray());library.Record(label+" (copies retained)",error.Outputs);ShowPage(libraryVisible);status.Text=$"Copied {error.Outputs.Count} item(s); {error.RetainedOriginals.Count} original(s) could not be removed. Copies: {destination}. Retained originals: "+string.Join(", ",error.RetainedOriginals);}
         catch(OperationCanceledException){status.Text="Cancelled. Original files are safe.";}
         catch(Exception error){status.Text=error.Message;}
         finally{operation.Dispose();operation=null;progress.IsVisible=false;toast.Close();}
@@ -273,8 +274,8 @@ public sealed class MainWindow:Window
         panel.Children.Add(NashiTheme.Button("Create ZIP",()=>{dialog.Close();_ = Run((dest,p,t)=>Task.FromResult<IReadOnlyList<string>>([DocumentEngine.Zip(files.ToArray(),dest,p,t)]),"ZIP");}));
         panel.Children.Add(NashiTheme.Button("Float files",()=>{new FloatWindow(files.ToArray(),Add).Show(this);dialog.Close();}));await dialog.ShowDialog(this);
     }
-    private async Task CopyFiles(bool move)
+    internal async Task CopyFiles(bool move,string? destination=null)
     {
-        var selected=files.ToArray();await Run((dest,p,t)=>FileTransfer.RunAsync(selected,dest,move,p,t),move?"Move":"Copy",forceAsk:true);
+        var selected=files.ToArray();await Run((dest,p,t)=>FileTransfer.RunAsync(selected,dest,move,p,t),move?"Move":"Copy",forceAsk:true,preferredDestination:destination,completed:outputs=>{if(move){files.Clear();foreach(var output in outputs)files.Add(output);}});
     }
 }

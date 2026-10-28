@@ -16,7 +16,7 @@ internal static class SmokeChecks
     internal static int ExitCode{get;private set;}=1;
     internal static async Task Run(MainWindow window,string directory)
     {
-        Directory.CreateDirectory(directory);var checks=0;void Check(bool condition,string message){Assert(condition,message);checks++;}
+        Directory.CreateDirectory(directory);var checks=0;void Check(bool condition,string message){Assert(condition,message);checks++;Console.WriteLine("PASS "+message);}
         try
         {
             await Task.Delay(600);
@@ -106,6 +106,14 @@ internal static class SmokeChecks
             var cropWidth=cropEditor.GetVisualDescendants().OfType<TextBox>().Single(t=>t.Name=="Width");cropWidth.Text="100";await Task.Delay(100);Check(CropNear(new Rect(10,10,100,30)),"numeric crop width updates selection: "+cropSurface.CropBounds);
             var aspectChoice=cropEditor.GetVisualDescendants().OfType<ComboBox>().Single();aspectChoice.SelectedItem="16:9";
             Check(cropSurface.CropBounds is {} selected&&Math.Abs(selected.Width/selected.Height-16d/9)<.0001,"crop preset updates visible selection");await Task.Delay(150);Capture(cropEditor,Path.Combine(directory,"crop-handles.png"));cropEditor.Close();
+            if(OperatingSystem.IsLinux()&&Environment.UserName!="root"){
+                var protectedSource=Path.Combine(directory,"move-ui-source");Directory.CreateDirectory(protectedSource);var original=Path.Combine(protectedSource,"keep.txt");await File.WriteAllTextAsync(original,"retained original");
+                var mode=File.GetUnixFileMode(protectedSource);var store=new LibraryStore(Path.Combine(directory,"move-ui-state"));var moveWindow=new MainWindow([],store,false);moveWindow.Show(window);moveWindow.Add([original]);File.SetUnixFileMode(protectedSource,UnixFileMode.UserRead|UnixFileMode.UserExecute);
+                try{await moveWindow.CopyFiles(true,Path.Combine(directory,"move-ui-output"));await Task.Delay(150);
+                    Check(moveWindow.GetVisualDescendants().OfType<TextBlock>().Any(t=>t.Text?.Contains("Retained originals:",StringComparison.Ordinal)==true),"partial move UI exposes retained originals and copy location");
+                    var entry=store.Search("").Single();Check(entry.Paths.Count()==1&&entry.AvailablePaths.Count()==1&&File.Exists(original),"partial move UI records published copies in Library");moveWindow.GetVisualDescendants().OfType<Button>().Single(b=>b.Content as string=="Library").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));await Task.Delay(150);Capture(moveWindow,Path.Combine(directory,"partial-move.png"));
+                }finally{File.SetUnixFileMode(protectedSource,mode);moveWindow.Close();}
+            }
             await AnnotationChecks.Run(window,fixture,directory,Check,Capture);
             await RedactionUiChecks.Run(window,directory,Check,Capture);
             var shelf=new FloatWindow([fixture],_=>{});shelf.Show(window);await Task.Delay(150);
@@ -125,6 +133,6 @@ internal static class SmokeChecks
     private static void Assert(bool value,string message){if(!value)throw new Exception(message);}
     private static void Capture(Window window,string path)
     {
-        using var image=new RenderTargetBitmap(new PixelSize((int)window.Bounds.Width,(int)window.Bounds.Height),new Vector(96,96));image.Render(window);image.Save(path,new PngBitmapEncoderOptions());
+        window.UpdateLayout();using var image=new RenderTargetBitmap(new PixelSize((int)window.Bounds.Width,(int)window.Bounds.Height),new Vector(96,96));image.Render(window);image.Save(path,new PngBitmapEncoderOptions());
     }
 }
