@@ -18,6 +18,7 @@ internal sealed class MediaPlayer(string path):NativeControlHost
     public string? Error{get;private set;}
     public double Position=>Number("time-pos");
     public double Duration=>Number("duration");
+    internal string? LoadedPath=>Get("path");
     public bool Paused=>Get("pause")!="no";
     protected override IPlatformHandle CreateNativeControlCore(IPlatformHandle parent)
     {

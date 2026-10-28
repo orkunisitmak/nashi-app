@@ -12,6 +12,7 @@ internal sealed class RangeTimeline:Control
     public event Action<double,double>? Changed;
     private bool dragging,startHandle,moveRange;private double originalStart,originalEnd,originX,laneWidth;
     private Bitmap[] artwork=[];
+    internal int ArtworkCount=>artwork.Length;
     public RangeTimeline(){Height=54;MinWidth=160;Focusable=true;Cursor=new Cursor(StandardCursorType.SizeWestEast);}
     public void SetArtwork(Bitmap[] images){foreach(var image in artwork)image.Dispose();artwork=images;InvalidateVisual();}
     public void Set(double duration,double start,double end)
