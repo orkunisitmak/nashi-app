@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -13,18 +14,18 @@ internal sealed partial class ImageSurface
     private IPointer? gesturePointer;
     private readonly HashSet<Bitmap> ownedArtwork=[];
     private bool disposed;
-    public string DrawingTool{get=>drawingTool;set{if(value==drawingTool)return;ReleasePointer();drawingTool=value;if(action=="annotateImage"){active=null;RefreshHandles();AnnotationsChanged?.Invoke();}}}
+    public string DrawingTool{get=>drawingTool;set{if(value==drawingTool)return;ReleasePointer();drawingTool=value;if(action=="annotateImage"){active=null;RefreshHandles();SceneChanged?.Invoke();}}}
     public string AnnotationFont{get;set;}="system";
     public event Action<string>? DrawingError;
-    public event Action? AnnotationsChanged;
+    public event Action? SceneChanged;
     internal AnnotationMark[] Annotations=>canvas.Children.OfType<AnnotationMark>().ToArray();
     internal int SelectedAnnotation=>active is AnnotationMark mark?Array.IndexOf(Annotations,mark):-1;
-    internal void SelectAnnotation(int index){ReleasePointer();active=index>=0&&index<Annotations.Length?Annotations[index]:null;RefreshHandles();AnnotationsChanged?.Invoke();}
+    internal void SelectAnnotation(int index){ReleasePointer();active=index>=0&&index<Annotations.Length?Annotations[index]:null;RefreshHandles();SceneChanged?.Invoke();}
     private bool BeginAnnotation(Point point)
     {
         if(DrawingTool=="Select / Move"){
             var tolerance=HandleSize*1.5;active=Annotations.Reverse().FirstOrDefault(mark=>mark.SourceBounds.Inflate(tolerance).Contains(point));
-            if(active is not null){beforeGesture=CaptureState();previous=MarkBounds(active);resizeHandle=HitHandle(previous,point,tolerance);moving=resizeHandle is null;}RefreshHandles();AnnotationsChanged?.Invoke();return active is not null;
+            if(active is not null){beforeGesture=CaptureState();previous=MarkBounds(active);resizeHandle=HitHandle(previous,point,tolerance);moving=resizeHandle is null;}RefreshHandles();SceneChanged?.Invoke();return active is not null;
         }
         if(!Color.TryParse(Ink,out var color)){DrawingError?.Invoke("Choose a valid ink color, such as #FF5200.");return false;}
         if(!double.IsFinite(StrokeWidth)||StrokeWidth<1||StrokeWidth>40||!double.IsFinite(FontSize)||FontSize<8||FontSize>160){DrawingError?.Invoke("Use a stroke width from 1 to 40 and text size from 8 to 160.");return false;}
@@ -68,6 +69,6 @@ internal sealed partial class ImageSurface
     }
     private void RefreshHandles()
     {
-        handles.Children.Clear();if(CropBounds is {} crop)ShowCropHandles(crop);else if(action=="annotateImage"&&DrawingTool=="Select / Move"&&active is AnnotationMark mark)ShowCropHandles(mark.SourceBounds,true);
+        handles.Children.Clear();if(CropBounds is {} crop)ShowCropHandles(crop);else if(action=="annotateImage"&&DrawingTool=="Select / Move"&&active is AnnotationMark mark)ShowCropHandles(mark.SourceBounds,true);else if(action=="redactImage"&&active is Rectangle region)ShowCropHandles(MarkBounds(region));
     }
 }

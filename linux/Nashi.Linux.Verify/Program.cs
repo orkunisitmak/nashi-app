@@ -79,6 +79,7 @@ try
         var recovered=await engine.RunAsync("convert",documentPdf,output,new(),"txt");Check((await File.ReadAllTextAsync(recovered.Single())).Contains("Nashi"),"PDF text conversion round trip");
     }
     else Console.WriteLine("SKIP LibreOffice integration: executable unavailable");
+    await RedactionVerify.Run(engine,root,output,Check,MustFail);
     Console.WriteLine($"All {passed} Linux checks passed.");
 }
 finally{Directory.Delete(root,true);}

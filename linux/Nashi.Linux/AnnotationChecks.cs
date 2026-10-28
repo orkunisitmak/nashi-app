@@ -89,7 +89,7 @@ internal static class AnnotationChecks
             await File.WriteAllBytesAsync(Path.Combine(directory,"annotation-magnifier-layering.png"),surface.Png());
         }finally{editor.Close();}
     }
-    private static void PointerGesture(Window editor,ImageSurface surface,Point start,IReadOnlyList<Point> moves)
+    internal static void PointerGesture(Window editor,ImageSurface surface,Point start,IReadOnlyList<Point> moves)
     {
         var drawing=surface.GetVisualDescendants().OfType<Canvas>().First(c=>c.Children.OfType<Image>().Any());var pointer=new Pointer(73,PointerType.Mouse,true);Point Root(Point point)=>drawing.TranslatePoint(point,editor)!.Value;
         var down=new PointerPointProperties(RawInputModifiers.LeftMouseButton,PointerUpdateKind.LeftButtonPressed);

@@ -30,7 +30,15 @@ internal static class SmokeChecks
             foreach(var action in new[]{"cropImage","editImage","annotateImage","frameImage","redactImage","compress"})
             {
                 var editor=new ToolEditor(action,null,[fixture],new LinuxEngine());editor.Show(window);await Task.Delay(100);
-                Check(editor.GetVisualDescendants().OfType<Button>().Any(b=>b.Content as string=="Save new copy"),"editor "+action);Capture(editor,Path.Combine(directory,action+".png"));editor.Close();
+                Check(editor.GetVisualDescendants().OfType<Button>().Any(b=>b.Content as string=="Save new copy"),"editor "+action);
+                if(action is "editImage" or "frameImage"){
+                    if(action=="editImage"){editor.GetVisualDescendants().OfType<TextBox>().Single(t=>t.Name=="Width").Text="200";editor.GetVisualDescendants().OfType<TextBox>().Single(t=>t.Name=="Height").Text="150";}
+                    var limit=DateTime.UtcNow.AddSeconds(20);while(editor.PhotoPreviewBusy){if(DateTime.UtcNow>limit)throw new Exception("Photo preview timed out: "+action);await Task.Delay(30);}
+                    var photo=editor.GetVisualDescendants().OfType<ImageSurface>().Single().GetVisualDescendants().OfType<Image>().Single();var pixels=((Bitmap)photo.Source!).PixelSize;
+                    Check(pixels==(action=="editImage"?new PixelSize(200,150):new PixelSize(480,400)),"live photo preview dimensions: "+action);
+                    if(action=="editImage"){editor.GetVisualDescendants().OfType<CheckBox>().Single(c=>c.Name=="OriginalView").IsChecked=true;await Task.Delay(30);Check(((Bitmap)photo.Source!).PixelSize==new PixelSize(320,240),"photo Show original restores source dimensions");}
+                }
+                Capture(editor,Path.Combine(directory,action+".png"));editor.Close();
             }
             if(SystemTools.Find("ffmpeg") is {} ffmpeg){
                 var media=Path.Combine(directory,"video.mp4");if(File.Exists(media))File.Delete(media);
@@ -83,6 +91,7 @@ internal static class SmokeChecks
             var aspectChoice=cropEditor.GetVisualDescendants().OfType<ComboBox>().Single();aspectChoice.SelectedItem="16:9";
             Check(cropSurface.CropBounds is {} selected&&Math.Abs(selected.Width/selected.Height-16d/9)<.0001,"crop preset updates visible selection");await Task.Delay(150);Capture(cropEditor,Path.Combine(directory,"crop-handles.png"));cropEditor.Close();
             await AnnotationChecks.Run(window,fixture,directory,Check,Capture);
+            await RedactionUiChecks.Run(window,directory,Check,Capture);
             var shelf=new FloatWindow([fixture],_=>{});shelf.Show(window);await Task.Delay(150);
             shelf.AddFiles([fixture,Path.Combine(directory,"missing.png")]);Check(shelf.Files.Count==1,"Float ignores duplicate and missing files");
             using(var transfer=new DataTransfer()){transfer.Add(DataTransferItem.CreateFile((await window.StorageProvider.TryGetFileFromPathAsync(new Uri(pdf)))!));shelf.RaiseEvent(new DragEventArgs(DragDrop.DropEvent,transfer,shelf,new Point(60,80),KeyModifiers.None));}

@@ -15,7 +15,7 @@ internal sealed partial class ImageSurface
     {
         if(beforeGesture is not {} before)return;beforeGesture=null;var after=CaptureState();
         var same=before.Marks.Length==after.Marks.Length&&before.NextNumber==after.NextNumber&&before.Marks.Zip(after.Marks).All(pair=>pair.First.Mark==pair.Second.Mark&&CloseBounds(pair.First.Bounds,pair.Second.Bounds)&&pair.First.Points.SequenceEqual(pair.Second.Points));
-        if(!same)Remember(before);AnnotationsChanged?.Invoke();
+        if(!same)Remember(before);SceneChanged?.Invoke();
     }
     private static bool CloseBounds(Rect a,Rect b)=>Math.Abs(a.X-b.X)<1e-7&&Math.Abs(a.Y-b.Y)<1e-7&&Math.Abs(a.Width-b.Width)<1e-7&&Math.Abs(a.Height-b.Height)<1e-7;
     private void Restore(SurfaceState state)
@@ -26,12 +26,12 @@ internal sealed partial class ImageSurface
             else{Canvas.SetLeft(item.Mark,item.Bounds.X);Canvas.SetTop(item.Mark,item.Bounds.Y);item.Mark.Width=item.Bounds.Width;item.Mark.Height=item.Bounds.Height;}
             canvas.Children.Add(item.Mark);
         }
-        active=state.Active;markNumber=state.NextNumber;RefreshHandles();if(CropBounds is {} crop)changed(crop);AnnotationsChanged?.Invoke();
+        active=state.Active;markNumber=state.NextNumber;if(action=="redactImage")RedactionStyle=redactionStyle;ShowOriginal(originalView);RefreshHandles();if(CropBounds is {} crop)changed(crop);else if(action=="redactImage"&&active is not null)changed(MarkBounds(active));SceneChanged?.Invoke();
     }
     private void ReleasePointer(){gesturePointer?.Capture(null);gesturePointer=null;moving=false;resizeHandle=null;CommitGesture();}
-    public void Reset(){ReleasePointer();while(canvas.Children.Count>1)canvas.Children.RemoveAt(1);undo.Clear();redo.Clear();active=null;handles.Children.Clear();markNumber=1;PruneArtwork();AnnotationsChanged?.Invoke();}
-    public void ClearMarks(){ReleasePointer();if(canvas.Children.Count==1)return;Remember(CaptureState());while(canvas.Children.Count>1)canvas.Children.RemoveAt(1);active=null;handles.Children.Clear();markNumber=1;PruneArtwork();AnnotationsChanged?.Invoke();}
+    public void Reset(){ReleasePointer();while(canvas.Children.Count>1)canvas.Children.RemoveAt(1);undo.Clear();redo.Clear();active=null;handles.Children.Clear();markNumber=1;PruneArtwork();SceneChanged?.Invoke();}
+    public void ClearMarks(){ReleasePointer();if(canvas.Children.Count==1)return;Remember(CaptureState());while(canvas.Children.Count>1)canvas.Children.RemoveAt(1);active=null;handles.Children.Clear();markNumber=1;PruneArtwork();SceneChanged?.Invoke();}
     public void Undo(){ReleasePointer();if(undo.Count==0)return;var state=undo[^1];undo.RemoveAt(undo.Count-1);redo.Add(CaptureState());Restore(state);}
     public void Redo(){ReleasePointer();if(redo.Count==0)return;var state=redo[^1];redo.RemoveAt(redo.Count-1);undo.Add(CaptureState());Restore(state);}
-    public void DeleteSelected(){ReleasePointer();if(active is null)return;Remember(CaptureState());canvas.Children.Remove(active);active=null;RefreshHandles();AnnotationsChanged?.Invoke();}
+    public void DeleteSelected(){ReleasePointer();if(active is null)return;Remember(CaptureState());canvas.Children.Remove(active);active=null;RefreshHandles();SceneChanged?.Invoke();}
 }

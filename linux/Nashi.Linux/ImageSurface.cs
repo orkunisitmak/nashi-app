@@ -31,7 +31,7 @@ internal sealed partial class ImageSurface:Viewbox
     public double FontSize{get;set;}=24;
     public string AnnotationText{get;set;}="Note";
     public string? InsertImage{get;set;}
-    public MediaRegion[] Regions=>canvas.Children.OfType<Rectangle>().Where(r=>r.Width>0&&r.Height>0).Select(r=>new MediaRegion(Math.Floor(Canvas.GetLeft(r)),Math.Floor(Canvas.GetTop(r)),Math.Ceiling(Canvas.GetLeft(r)+r.Width)-Math.Floor(Canvas.GetLeft(r)),Math.Ceiling(Canvas.GetTop(r)+r.Height)-Math.Floor(Canvas.GetTop(r)))).ToArray();
+    public MediaRegion[] Regions=>RegionBounds.Select(r=>{var x=Math.Floor(r.X+1e-7);var y=Math.Floor(r.Y+1e-7);return new MediaRegion(x,y,Math.Ceiling(r.Right-1e-7)-x,Math.Ceiling(r.Bottom-1e-7)-y);}).ToArray();
     public int PixelWidth{get;} public int PixelHeight{get;}
     public ImageSurface(byte[] bytes,string action,Action<Rect> changed)
     {
@@ -52,28 +52,32 @@ internal sealed partial class ImageSurface:Viewbox
     private void Begin(object? sender,PointerPressedEventArgs e)
     {
         if(!e.GetCurrentPoint(canvas).Properties.IsLeftButtonPressed)return;
-        if(action is not ("cropImage" or "redactImage" or "annotateImage"))return;
+        if(originalView||action is not ("cropImage" or "redactImage" or "annotateImage"))return;
         origin=Position(e);last=origin;Focus();moving=false;resizeHandle=null;e.Handled=true;
         if(action=="annotateImage"){
             if(!BeginAnnotation(origin))return;
             gesturePointer=e.Pointer;e.Pointer.Capture(canvas);return;
         }
         beforeGesture=CaptureState();gesturePointer=e.Pointer;e.Pointer.Capture(canvas);
+        if(action=="redactImage"&&BeginRegion(origin))return;
         if(action=="cropImage"&&CropBounds is {} crop){
             previous=crop;resizeHandle=HitHandle(crop,origin,HandleSize*1.5);
             if(resizeHandle is not null)return;
             if(crop.Contains(origin)){moving=true;return;}
         }
         if(action=="cropImage"&&active is not null)canvas.Children.Remove(active);
-        active=new Rectangle{Width=1,Height=1,Stroke=NashiTheme.Gold,StrokeThickness=2,Fill=action=="redactImage"?Brushes.Black:NashiTheme.Brush("#22333333")};
+        active=new Rectangle{Width=1,Height=1,Stroke=NashiTheme.Gold,StrokeThickness=2,Fill=action=="redactImage"?RedactionBrush:NashiTheme.Brush("#22333333"),IsHitTestVisible=false};
         origin=new(Math.Min(origin.X,PixelWidth-1),Math.Min(origin.Y,PixelHeight-1));Canvas.SetLeft(active,origin.X);Canvas.SetTop(active,origin.Y);canvas.Children.Add(active);
-        if(action=="cropImage")SetCrop(new(origin,new Size(1,1)));
+        if(action=="cropImage")SetCrop(new(origin,new Size(1,1)));else{changed(MarkBounds(active));RefreshHandles();SceneChanged?.Invoke();}
     }
     private void Move(object? sender,PointerEventArgs e)
     {
         if(e.Pointer.Captured!=canvas||active is null)return;var point=Position(e);e.Handled=true;
         if(action=="cropImage"&&CropBounds is not null&&(moving||resizeHandle is not null)){
             SetCrop(resizeHandle is {} handle?CropGeometry.Resize(previous,handle,point,new(PixelWidth,PixelHeight),CropRatio??(e.KeyModifiers.HasFlag(KeyModifiers.Shift)?previous.Width/previous.Height:null)):CropGeometry.Move(previous,origin,point,new(PixelWidth,PixelHeight)));return;
+        }
+        if(action=="redactImage"&&(moving||resizeHandle is not null)){
+            SetRegionBounds(resizeHandle is {} handle?CropGeometry.Resize(previous,handle,point,new(PixelWidth,PixelHeight),e.KeyModifiers.HasFlag(KeyModifiers.Shift)?previous.Width/previous.Height:null):CropGeometry.Move(previous,origin,point,new(PixelWidth,PixelHeight)));return;
         }
         if(action=="annotateImage"){MoveAnnotation(point,e.KeyModifiers);return;}
         if(action=="cropImage"){
@@ -83,8 +87,7 @@ internal sealed partial class ImageSurface:Viewbox
         var dx=point.X-origin.X;var dy=point.Y-origin.Y;
         if(e.KeyModifiers.HasFlag(KeyModifiers.Shift)){var side=Math.Min(Math.Abs(dx),Math.Abs(dy));dx=Math.Sign(dx)*side;dy=Math.Sign(dy)*side;}
         var rect=new Rect(new Point(origin.X+Math.Min(0,dx),origin.Y+Math.Min(0,dy)),new Size(Math.Max(1,Math.Abs(dx)),Math.Max(1,Math.Abs(dy))));
-        Canvas.SetLeft(active,rect.X);Canvas.SetTop(active,rect.Y);active.Width=rect.Width;active.Height=rect.Height;last=point;
-        if(action is "cropImage" or "redactImage")changed(rect);
+        SetRegionBounds(rect);last=point;
     }
     private double HandleSize=>Math.Clamp(8*PixelWidth/Math.Max(1,Bounds.Width),2,40);
     internal void SetCrop(Rect rect)
