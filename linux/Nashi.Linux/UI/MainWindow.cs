@@ -188,6 +188,10 @@ internal sealed class MainWindow:Window
         var paths=picked.Select(f=>f.TryGetLocalPath()).OfType<string>().ToArray();if(paths.Length==0)return;
         files.Clear();CloseTool();Add(paths);ShowLibrary(false);
     }
+    private async Task ChooseThenWheelAsync()
+    {
+        SetStatus("Choose files first. The wheel shows the tools for them.");await ChooseAsync();if(files.Count>0)ShowWheel();
+    }
     private void OnDrop(object? sender,DragEventArgs e)
     {
         e.Handled=true;if(busy)return;
@@ -303,7 +307,9 @@ internal sealed class MainWindow:Window
         else if(ctrl&&e.Key==Key.O){_=ChooseAsync();e.Handled=true;}
         else if(ctrl&&e.Key==Key.V&&!editing){_=PasteAsync();e.Handled=true;}
         else if(e.KeyModifiers==(KeyModifiers.Control|KeyModifiers.Shift)&&e.Key==Key.D){_=PasteLinkAsync();e.Handled=true;}
-        else if(ctrl&&e.Key==Key.Space){ShowWheel();e.Handled=true;}
+        // With nothing selected the wheel has no tools to show, so Ctrl+Space
+        // starts with the picker and opens the wheel for the chosen files.
+        else if(ctrl&&e.Key==Key.Space){if(files.Count==0)_=ChooseThenWheelAsync();else ShowWheel();e.Handled=true;}
     }
     private async Task PasteLinkAsync()
     {

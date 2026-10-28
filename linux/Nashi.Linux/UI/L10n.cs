@@ -113,6 +113,7 @@ internal static class L10n
         ["Sharpen"]="Keskinleştir",
         ["Vignette"]="Vinyet",
         ["Ctrl+Space  Tools wheel"]="Ctrl+Boşluk  Araç çarkı",
+        ["Choose files first. The wheel shows the tools for them."]="Önce dosya seç. Çark, seçtiğin dosyaların araçlarını gösterir.",
         ["Drop files here or use Open with › Nashi in your file manager."]="Dosyaları buraya bırak ya da dosya yöneticinde Birlikte aç › Nashi'yi kullan.",
         ["Resize"]="Yeniden boyutlandır",
         ["Rotate"]="Döndür",
