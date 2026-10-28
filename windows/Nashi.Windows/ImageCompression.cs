@@ -20,7 +20,7 @@ public static partial class ImageEngine
             if(File.Exists(output))File.Delete(output);
             throw new IOException("The requested image size could not be reached. Choose a larger target.");
         }
-        var best=outcome?.Best;if(best is null)Encode(quality,1);else if(new FileInfo(output).Length!=best.Bytes)Encode(best.Quality,best.Scale);
+        var best=outcome?.Best;if(best is null)Encode(quality,1);else if(new FileInfo(output).Length!=best.Bytes){Encode(best.Quality,best.Scale);if(new FileInfo(output).Length>target){File.Delete(output);throw new IOException("The requested image size could not be reached. Choose a larger target.");}}
         var originalDimensions=(best?.Scale??1)==1&&image.PixelWidth==source.PixelWidth&&image.PixelHeight==source.PixelHeight;
         if(originalDimensions&&FeatureCatalog.Extension(input)==format&&original<new FileInfo(output).Length)File.Copy(input,output,true);
     }

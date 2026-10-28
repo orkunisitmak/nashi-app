@@ -54,8 +54,11 @@ final class TargetSizeSearchTests: XCTestCase {
         // Seeded noise keeps the fixture detailed, synthetic and deterministic.
         var seed:UInt64=42,pixels=[UInt8](repeating:255,count:16*12*4)
         for index in pixels.indices where index%4 != 3 { seed=seed &* 6364136223846793005 &+ 1442695040888963407;pixels[index]=UInt8(truncatingIfNeeded:seed>>56) }
-        let context=try XCTUnwrap(CGContext(data:&pixels,width:16,height:12,bitsPerComponent:8,bytesPerRow:16*4,space:CGColorSpace(name:CGColorSpace.sRGB)!,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue))
-        try ImageEngine.write(try XCTUnwrap(context.makeImage()),to:input)
+        // The context must not outlive the buffer, so the image is created and written inside the scope.
+        try pixels.withUnsafeMutableBytes { buffer in
+            let context=try XCTUnwrap(CGContext(data:buffer.baseAddress,width:16,height:12,bitsPerComponent:8,bytesPerRow:16*4,space:CGColorSpace(name:CGColorSpace.sRGB)!,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue))
+            try ImageEngine.write(try XCTUnwrap(context.makeImage()),to:input)
+        }
         let original=try Data(contentsOf:input),target=Int64(original.count)+1
         var options=OperationOptions();options.width=120;options.height=90
         let expanded=try XCTUnwrap(ImageEngine.compress(input,options:options,token:.init()).first)
