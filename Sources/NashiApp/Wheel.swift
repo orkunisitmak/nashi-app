@@ -17,6 +17,7 @@ struct WheelItem {
     let state:AppState
     var panel:NSPanel?
     var wheel:WheelView?
+    private var chromeSolid:Bool?
     var mode:WheelMode = .convert
     var inputs:[URL]=[]
     var keyMonitor:Any?
@@ -31,33 +32,23 @@ struct WheelItem {
         guard !inputs.isEmpty,!state.working else { return }
         WheelFeedback.shared.prepare()
         self.inputs=inputs;self.mode=mode;keyboardMode=keyboard
-        var items:[WheelItem]=[]
-        if inputs.first?.isFileURL == false {
-            let media=WebMediaDragPayload.parse(urls:inputs.map(\.absoluteString))
-            let video=media?.videoURL != nil
-            let photos=media?.isInstagramPhotoPost == true
-            items=[WheelItem(title:photos ? "Download photos…":video ? "Download video…":media?.imageURL != nil ? "Download image…":"Download…",symbol:photos ? "photo.on.rectangle":video ? "play.rectangle":"arrow.down.circle",webAction:.download)]
-            if video,media?.imageURL != nil { items.append(WheelItem(title:"Download thumbnail…",symbol:"photo",webAction:.thumbnail)) }
-            if !photos,(video || media?.imageURL == nil) { items.append(WheelItem(title:"Audio MP3…",symbol:"waveform",webAction:.audio)) }
-            items += [WheelItem(title:"Copy link",symbol:"link",webAction:.copy),WheelItem(title:"Open link",symbol:"safari",webAction:.open)]
-        } else { switch mode {
-        case .convert: items=FeatureCatalog.formats(for:inputs).map{WheelItem(title:$0 == "gz" ? "GZIP":$0.uppercased(),operation:.convert($0))}
-        case .tools: items=FeatureCatalog.tools(for:inputs).map{WheelItem(title:FeatureCatalog.toolNames[$0] ?? $0.title,symbol:FeatureCatalog.toolSymbols[$0],operation:.tool($0))}
-        case .actions: items=FileAction.allCases.map{WheelItem(title:$0.title,symbol:$0.symbol,action:$0)}
-        } }
+        let items=Self.wheelItems(mode,inputs:inputs)
         let exists=panel?.isVisible ?? false
         let desiredSize=CGFloat(320*UserDefaults.standard.double(forKey:"wheelScale"))
-        if let panel,!exists,abs(panel.frame.width-desiredSize)>0.5 { panel.setContentSize(NSSize(width:desiredSize,height:desiredSize));panel.contentView?.layer?.cornerRadius=desiredSize/2 }
-        if panel == nil {
-            let size=CGFloat(320*UserDefaults.standard.double(forKey:"wheelScale"))
-            let p=WheelPanel(contentRect:NSRect(x:0,y:0,width:size,height:size),styleMask:[.borderless,.nonactivatingPanel],backing:.buffered,defer:false)
-            p.backgroundColor = .clear;p.isOpaque=false;p.hasShadow=false;p.level = .statusBar;p.collectionBehavior=[.canJoinAllSpaces,.fullScreenAuxiliary];p.hidesOnDeactivate=false
-            let effect=NSVisualEffectView(frame:NSRect(x:0,y:0,width:size,height:size));effect.material = .popover;effect.blendingMode = .behindWindow;effect.state = .active;effect.wantsLayer=true;effect.layer?.cornerRadius=size/2;effect.layer?.masksToBounds=true
-            let view=WheelView(frame:effect.bounds);view.autoresizingMask=[.width,.height];effect.addSubview(view);p.contentView=effect
-            view.onSelect = { [weak self] item in self?.apply(item) };view.onCancel = { [weak self] in self?.hide() }
-            view.onDragInputs = { [weak self] urls in guard let self else { return };self.show(inputs:urls,mode:self.mode,at:NSEvent.mouseLocation,keyboard:self.keyboardMode) }
-            self.panel=p;self.wheel=view
-            keyWindowObserver=NotificationCenter.default.addObserver(forName:NSWindow.didResignKeyNotification,object:p,queue:.main) { [weak self] _ in Task { @MainActor in if self?.keyboardMode == true { self?.hide() } } }
+        if let panel,!exists,abs(panel.frame.width-desiredSize)>0.5 { panel.setContentSize(NSSize(width:desiredSize,height:desiredSize));WheelChrome.fit(panel.contentView,diameter:desiredSize) }
+        let solidChrome=WheelChrome.solid
+        if panel == nil || chromeSolid != solidChrome {
+            let size=panel?.frame.width ?? CGFloat(320*UserDefaults.standard.double(forKey:"wheelScale"))
+            let p=panel ?? WheelPanel(contentRect:NSRect(x:0,y:0,width:size,height:size),styleMask:[.borderless,.nonactivatingPanel],backing:.buffered,defer:false)
+            if panel == nil { p.backgroundColor = .clear;p.isOpaque=false;p.hasShadow=false;p.level = .statusBar;p.collectionBehavior=[.canJoinAllSpaces,.fullScreenAuxiliary];p.hidesOnDeactivate=false }
+            let view=wheel ?? WheelView(frame:NSRect(x:0,y:0,width:size,height:size))
+            p.contentView=WheelChrome.wrap(view,diameter:size)
+            if wheel == nil {
+                view.onSelect = { [weak self] item in self?.apply(item) };view.onCancel = { [weak self] in self?.hide() }
+                view.onDragInputs = { [weak self] urls in guard let self else { return };self.show(inputs:urls,mode:self.mode,at:NSEvent.mouseLocation,keyboard:self.keyboardMode) }
+            }
+            self.panel=p;self.wheel=view;chromeSolid=solidChrome
+            if keyWindowObserver == nil { keyWindowObserver=NotificationCenter.default.addObserver(forName:NSWindow.didResignKeyNotification,object:p,queue:.main) { [weak self] _ in Task { @MainActor in if self?.keyboardMode == true { self?.hide() } } } }
         }
         wheel?.centerTitle=inputs.first?.isFileURL == false ? "Web media":nil;wheel?.items=items;wheel?.inputs=inputs;wheel?.mode=mode;wheel?.selected=keyboard ? (items.isEmpty ? nil:0):nil
         if !exists,let p=panel {
@@ -67,7 +58,6 @@ struct WheelItem {
             let y=min(max(visible.minY+4,point.y-p.frame.height/2),visible.maxY-p.frame.height-4)
             p.setFrameOrigin(NSPoint(x:x,y:y))
         }
-        if let effect=panel?.contentView as? NSVisualEffectView { effect.state=UserDefaults.standard.string(forKey:"conversionFanTheme")=="metallic" ? .inactive:.active }
         if !exists,NashiMotion.enabled {
             panel?.alphaValue=0;panel?.orderFrontRegardless()
             NSAnimationContext.runAnimationGroup { context in context.duration=0.13;panel?.animator().alphaValue=1 }
@@ -98,9 +88,54 @@ struct WheelItem {
         guard !state.working else { return }
         state.inputs=inputs;if let action=item.action { state.perform(action) };if let op=item.operation { state.select(op) }
     }
+    private static func wheelItems(_ mode:WheelMode,inputs:[URL])->[WheelItem] {
+        if inputs.first?.isFileURL == false {
+            let media=WebMediaDragPayload.parse(urls:inputs.map(\.absoluteString))
+            let video=media?.videoURL != nil
+            let photos=media?.isInstagramPhotoPost == true
+            var items=[WheelItem(title:photos ? "Download photos…":video ? "Download video…":media?.imageURL != nil ? "Download image…":"Download…",symbol:photos ? "photo.on.rectangle":video ? "play.rectangle":"arrow.down.circle",webAction:.download)]
+            if video,media?.imageURL != nil { items.append(WheelItem(title:"Download thumbnail…",symbol:"photo",webAction:.thumbnail)) }
+            if !photos,(video || media?.imageURL == nil) { items.append(WheelItem(title:"Audio MP3…",symbol:"waveform",webAction:.audio)) }
+            items += [WheelItem(title:"Copy link",symbol:"link",webAction:.copy),WheelItem(title:"Open link",symbol:"safari",webAction:.open)]
+            return items
+        }
+        switch mode {
+        case .convert: return FeatureCatalog.formats(for:inputs).map{WheelItem(title:$0 == "gz" ? "GZIP":$0.uppercased(),operation:.convert($0))}
+        case .tools: return FeatureCatalog.tools(for:inputs).map{WheelItem(title:FeatureCatalog.toolNames[$0] ?? $0.title,symbol:FeatureCatalog.toolSymbols[$0],operation:.tool($0))}
+        case .actions: return FileAction.allCases.map{WheelItem(title:$0.title,symbol:$0.symbol,action:$0)}
+        }
+    }
     func hide() { keyboardMode=false;panel?.orderOut(nil);if let monitor=keyMonitor { NSEvent.removeMonitor(monitor);keyMonitor=nil } }
     func endDrag() { if !keyboardMode { hide() } }
     deinit { if let focusObserver { NotificationCenter.default.removeObserver(focusObserver) };if let keyWindowObserver { NotificationCenter.default.removeObserver(keyWindowObserver) } }
+}
+
+enum WheelChrome {
+    static var solid:Bool { UserDefaults.standard.string(forKey:"conversionFanTheme")=="metallic" }
+    static func wrap(_ content:NSView,diameter:CGFloat)->NSView {
+        content.frame=NSRect(x:0,y:0,width:diameter,height:diameter);content.autoresizingMask=[.width,.height]
+        if solid {
+            let effect=NSVisualEffectView(frame:content.frame);effect.material = .popover;effect.blendingMode = .behindWindow;effect.state = .inactive;effect.wantsLayer=true;effect.layer?.cornerRadius=diameter/2;effect.layer?.masksToBounds=true;effect.addSubview(content);return effect
+        }
+        if #available(macOS 26,*) {
+            let glass=NSGlassEffectView(frame:content.frame);glass.style = .regular;glass.cornerRadius=diameter/2;glass.tintColor=tint;glass.contentView=content;return glass
+        }
+        let effect=NSVisualEffectView(frame:content.frame);effect.material = .underWindowBackground;effect.blendingMode = .behindWindow;effect.state = .active;effect.isEmphasized=true;effect.wantsLayer=true;effect.layer?.cornerRadius=diameter/2;effect.layer?.masksToBounds=true;effect.addSubview(content);return effect
+    }
+    static func fit(_ host:NSView?,diameter:CGFloat) {
+        host?.layer?.cornerRadius=diameter/2
+        if #available(macOS 26,*),let glass=host as? NSGlassEffectView { glass.cornerRadius=diameter/2 }
+    }
+    /// A wash, not a paint. Opaque tints flatten the system glass into a disc.
+    private static var tint:NSColor {
+        NSColor(name:nil) { appearance in appearance.bestMatch(from:[.darkAqua,.aqua]) == .darkAqua ? NSColor(srgbRed:0.62,green:0.76,blue:0.94,alpha:0.16):NSColor(srgbRed:1,green:1,blue:1,alpha:0.20) }
+    }
+}
+private enum WheelGlass {
+    private static func dynamic(_ light:NSColor,_ dark:NSColor)->NSColor { NSColor(name:nil) { $0.bestMatch(from:[.darkAqua,.aqua]) == .darkAqua ? dark:light } }
+    static let veil=dynamic(NSColor(srgbRed:1,green:1,blue:1,alpha:0.28),NSColor(srgbRed:0.06,green:0.09,blue:0.15,alpha:0.34))
+    static let disc=dynamic(NSColor(srgbRed:0.96,green:0.97,blue:0.99,alpha:0.74),NSColor(srgbRed:0.05,green:0.08,blue:0.13,alpha:0.62))
+    static let hairline=dynamic(NSColor.white.withAlphaComponent(0.72),NSColor.white.withAlphaComponent(0.16))
 }
 
 final class WheelView:NSView {
@@ -122,6 +157,7 @@ final class WheelView:NSView {
     var onDragInputs:(([URL])->Void)?
     private var tracking:NSTrackingArea?
     override var acceptsFirstResponder:Bool { true }
+    override var isOpaque:Bool { false }
     override init(frame:NSRect) { super.init(frame:frame);registerForDraggedTypes(WebLinkPayload.pasteboardTypes);setAccessibilityRole(.group);setAccessibilityLabel("Nashi \(mode.rawValue) wheel") }
     required init?(coder:NSCoder) { fatalError() }
     override func updateTrackingAreas() { if let tracking { removeTrackingArea(tracking) };tracking=NSTrackingArea(rect:bounds,options:[.activeAlways,.mouseMoved,.mouseEnteredAndExited,.inVisibleRect],owner:self);addTrackingArea(tracking!);super.updateTrackingAreas() }
@@ -132,16 +168,18 @@ final class WheelView:NSView {
     func petal(_ index:Int)->NSBezierPath { geometry.petal(index) }
     override func draw(_ dirtyRect:NSRect) {
         if labelBounds != bounds { labelLayouts.removeAll();labelBounds=bounds }
-        let solid=UserDefaults.standard.string(forKey:"conversionFanTheme")=="metallic"
-        let backdrop=NSBezierPath(ovalIn:bounds.insetBy(dx:bounds.width*0.035,dy:bounds.height*0.035));NSColor.windowBackgroundColor.withAlphaComponent(0.22).setFill();backdrop.fill()
-        NSColor.gray.withAlphaComponent(0.17).setStroke();backdrop.lineWidth=0.7;backdrop.stroke()
+        let solid=WheelChrome.solid
+        let backdrop=NSBezierPath(ovalIn:bounds.insetBy(dx:bounds.width*0.035,dy:bounds.height*0.035))
+        if solid { NSColor.windowBackgroundColor.withAlphaComponent(0.22).setFill();backdrop.fill();NSColor.gray.withAlphaComponent(0.17).setStroke();backdrop.lineWidth=0.7;backdrop.stroke() }
+        else { WheelGlass.veil.setFill();backdrop.fill();WheelGlass.hairline.setStroke();backdrop.lineWidth=1;backdrop.stroke() }
         for (i,item) in items.enumerated() {
             let path=petal(i)
             if solid,selected != i,let gradient=NSGradient(starting:NSColor(calibratedWhite:0.36,alpha:1),ending:NSColor(calibratedWhite:0.20,alpha:1)) { gradient.draw(in:path,angle:90) }
             else if selected==i,let gradient=NSGradient(starting:NashiPalette.gold,ending:NSColor(NashiPalette.goldEnd)) { gradient.draw(in:path,angle:80) }
-            else { NSColor.controlBackgroundColor.withAlphaComponent(0.88).setFill();path.fill() }
-            NSColor.gray.withAlphaComponent(0.24).setStroke();path.lineWidth=0.7;path.stroke()
-            let foreground=selected==i ? NashiPalette.ink:solid ? NSColor.white:NSColor.labelColor
+            else if solid { NSColor.controlBackgroundColor.withAlphaComponent(0.88).setFill();path.fill() }
+            else { WheelGlass.veil.setFill();path.fill() }
+            (solid ? NSColor.gray.withAlphaComponent(0.24):WheelGlass.hairline).setStroke();path.lineWidth=solid ? 0.7:0.8;path.stroke()
+            let foreground=selected==i ? NashiPalette.ink:solid ? NSColor.white:NashiPalette.slateInk
             let scale=min(bounds.width,bounds.height)/320
             let source=item.symbol.flatMap { NSImage(systemSymbolName:$0,accessibilityDescription:item.title) }
             let baseFont=NSFont.systemFont(ofSize:(source == nil ? 13:9.5)*scale,weight:.semibold)
@@ -166,14 +204,16 @@ final class WheelView:NSView {
             }
             WheelLabelLayout.draw(layout,color:foreground)
         }
-        let disc=geometry.disc;NSColor.controlBackgroundColor.setFill();disc.fill()
+        let disc=geometry.disc
+        if solid { NSColor.controlBackgroundColor.setFill();disc.fill() }
+        else { WheelGlass.disc.setFill();disc.fill();WheelGlass.hairline.setStroke();disc.lineWidth=1;disc.stroke() }
         func key(_ setting:String,_ fallback:String)->String { let name=UserDefaults.standard.string(forKey:setting) ?? fallback;return ModifierChord.legacy(name)?.symbols ?? name }
         let emptyTitle=mode == .tools ? "No file tools\n\(key("convertKey","shift")) Convert\n\(key("actionsKey","control")) Actions":"No formats\n\(key("toolsKey","command")) Tools\n\(key("actionsKey","control")) Actions"
         let title=selected.flatMap{items.indices.contains($0) ? items[$0].title:nil} ?? (items.isEmpty ? emptyTitle:(centerTitle ?? mode.rawValue.capitalized))
         let layout=WheelLabelLayout.fitted(L10n.text(title),font:NSFont.systemFont(ofSize:(items.isEmpty ? 10:11)*geometry.scale,weight:.semibold),
-                                           color:.labelColor,inside:disc,centers:[center],
+                                           color:solid ? .labelColor:NashiPalette.slateInk,inside:disc,centers:[center],
                                            maximumWidth:inner*2-16*geometry.scale,scale:geometry.scale)
-        WheelLabelLayout.draw(layout)
+        WheelLabelLayout.draw(layout,color:solid ? nil:NashiPalette.slateInk)
     }
     /// Uses the same rendered label geometry; never substitutes a test-only layout.
     func labelAuditIssues(_ index:Int,title:String)->[String] {

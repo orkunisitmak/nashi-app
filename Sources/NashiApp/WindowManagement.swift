@@ -163,14 +163,11 @@ enum WindowPlacementGlyph {
             panel.title="Nashi Window Management";panel.isOpaque=false;panel.backgroundColor = .clear
             panel.level = .statusBar;panel.ignoresMouseEvents=true;panel.hasShadow=false
             panel.collectionBehavior=[.canJoinAllSpaces,.fullScreenAuxiliary];panel.hidesOnDeactivate=false
-            let effect=NSVisualEffectView(frame:NSRect(x:0,y:0,width:size,height:size))
-            effect.material = .popover;effect.blendingMode = .behindWindow;effect.state = .active
-            effect.wantsLayer=true;effect.layer?.cornerRadius=size/2;effect.layer?.masksToBounds=true
-            let view=WheelView(frame:effect.bounds);view.autoresizingMask=[.width,.height]
+            let view=WheelView(frame:NSRect(x:0,y:0,width:size,height:size))
             view.centerTitle="Arrange window";view.mode = .tools
             view.items=WindowPlacement.allCases.map { WheelItem(title:$0.title,symbol:"rectangle",windowPlacement:$0) }
             view.onCancel={ [weak self] in self?.cancel();self?.target?.intent.cancel() }
-            effect.addSubview(view);panel.contentView=effect;wheelPanel=panel;wheel=view
+            panel.contentView=WheelChrome.wrap(view,diameter:size);wheelPanel=panel;wheel=view
         }
         guard let panel=wheelPanel,let screen=screen(at:point) else { cancel();return }
         let area=screen.visibleFrame

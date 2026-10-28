@@ -7,6 +7,8 @@ import NashiUpdates
 struct HomeView:View {
     @ObservedObject var state:AppState
     @ObservedObject var updater:AppUpdater
+    @AppStorage("appTheme") private var appTheme="nashi"
+    @AppStorage("appAppearance") private var appAppearance="system"
     @AppStorage("convertKey") private var convertKey="shift"
     @AppStorage("toolsKey") private var toolsKey="command"
     @AppStorage("actionsKey") private var actionsKey="control"
@@ -82,7 +84,7 @@ struct HomeView:View {
                 }.padding(.horizontal,28).padding(.bottom,24)
             }
         }
-        }.frame(minWidth:700,minHeight:580).background(NashiPalette.canvas).tint(.nashi)
+        }.frame(minWidth:700,minHeight:580).background(NashiPalette.canvas).foregroundStyle(NashiPalette.pageInk).tint(.nashi).id(appTheme+"-"+appAppearance)
             .nashiAnimation(value:state.inputs.isEmpty).nashiAnimation(value:state.working)
             .nashiAnimation(value:updater.availableVersion)
             .onChange(of:state.libraryFocusRequest) { _ in librarySearchFocused=true }
