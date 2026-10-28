@@ -61,3 +61,5 @@ While dragging files **onto Nashi**, hold **Ctrl** for tools, **Shift** for conv
 ## License
 
 The original [MIT license](../LICENSE) and author attribution remain. See [Linux third-party notices](THIRD-PARTY-NOTICES.md). The fork's Linux preview must not be described as an official release from the upstream maintainer.
+
+Float supports adding local files through the picker or file drops, removing shelf entries, reusing individual/all files, and collapsing the shelf. Drag/Drag all exports file references with copy semantics so removing a shelf entry or dragging does not delete the original. Real drag-out interoperability across file managers and desktops still requires manual verification.

@@ -54,6 +54,11 @@ internal static class SmokeChecks
                     }else wheel.Close();
                 }
             }
+            var shelf=new FloatWindow([fixture],_=>{});shelf.Show(window);await Task.Delay(150);
+            shelf.AddFiles([fixture,Path.Combine(directory,"missing.png")]);Check(shelf.Files.Count==1,"Float ignores duplicate and missing files");
+            using(var transfer=new DataTransfer()){transfer.Add(DataTransferItem.CreateFile((await window.StorageProvider.TryGetFileFromPathAsync(new Uri(pdf)))!));shelf.RaiseEvent(new DragEventArgs(DragDrop.DropEvent,transfer,shelf,new Point(60,80),KeyModifiers.None));}
+            Check(shelf.Files.SequenceEqual([fixture,pdf]),"Float drop adds local files");await Task.Delay(150);Capture(shelf,Path.Combine(directory,"float.png"));
+            shelf.ToggleCollapsed();Check(shelf.Height==170,"Float collapse");shelf.ToggleCollapsed();Check(shelf.Height==390,"Float expand");shelf.Close();
             foreach(var appearance in new[]{"light","dark"}){
                 var store=new LibraryStore(Path.Combine(directory,appearance+"-state"));store.SetAppearance(appearance);var screen=new MainWindow([],store,monitorDesktop:false);screen.Show();await Task.Delay(150);Capture(screen,Path.Combine(directory,"home-"+appearance+".png"));screen.Width=640;screen.Height=520;await Task.Delay(100);Capture(screen,Path.Combine(directory,"compact-"+appearance+".png"));screen.Close();Check(true,appearance+" native rendering");
             }
