@@ -19,7 +19,7 @@ internal static class L10n
 {
     internal static string Language{get=>LanguageState.Shared.Language;set=>LanguageState.Shared.Language=value;}
     internal static string Text(string source)=>AppLocalization.Text(source,Language);
-    internal static string Uppercase(string source)=>Text(source).ToUpper(CultureInfo.GetCultureInfo(Language));
+    internal static string Uppercase(string source)=>AppLocalization.Uppercase(Text(source),Language);
     internal static void Bind(DependencyObject target,DependencyProperty property,string source)=>BindingOperations.SetBinding(target,property,new Binding(nameof(LanguageState.Language)){Source=LanguageState.Shared,Converter=TextConverter.Shared,ConverterParameter=source,Mode=BindingMode.OneWay});
     internal static TextBlock Label(TextBlock text){Bind(text,TextBlock.TextProperty,text.Text);return text;}
     internal static T Content<T>(T control)where T:ContentControl{if(control.Content is string source)Bind(control,ContentControl.ContentProperty,source);return control;}

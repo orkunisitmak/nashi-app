@@ -27,9 +27,16 @@ Windows uses Explorer, Windows keyboard conventions and Windows Share. Apple Air
 
 - `dotnet run --project windows/Nashi.Verify -c Release` runs platform-independent engine/security tests; media tests require the explicit `NASHI_VERIFY_FFMPEG` / `NASHI_VERIFY_FFPROBE` paths or CI tool setup.
 - `Nashi --smoke-test` exercises a real isolated Windows desktop. Set `NASHI_SMOKE_DIRECTORY` for JSON, failure diagnostics, export fixtures and PNG render artifacts. Extended parity checks run on GitHub Actions.
+- Set `NASHI_VERIFY_TOOLS_DIRECTORY` to reuse a separate, already verified media-tool installation in local native tests. This does not change the application's tool directory.
 - `parity-progress.json` records the last completed assertion; `parity.json` and `smoke.json` are written only after their complete suites pass. Failure diagnostics must not be presented as a successful suite.
 - Native tests use Windows SendInput and OLE plus WPF render captures. They are not a physical Windows computer-use session or a claim that every third-party media site is always available.
 
 The released code passed 198 engine checks and two native runs of 231 assertions with actual exit code 0: [Windows evidence](https://github.com/orkunisitmak/nashi-app/actions/runs/39454458596). Post-publication update evidence is recorded in [the real update workflow](https://github.com/orkunisitmak/nashi-app/actions/runs/39458173367).
 
 The combined desktop branch also includes the eight-layout window wheel (including Maximize) and the follow-up Home/Library/preview/clipboard/media alignment. See [the desktop comparison and shortcut map](../docs/DESKTOP-PARITY.md) for the current behavior and native platform adaptations.
+
+## Editor reliability regressions
+
+The Windows smoke suite also covers invalid/non-finite/out-of-duration playback ranges, changing a range field while playback is running, invalid time fields with keyboard marking, focused scrubber keyboard seeking, and Reset restoring media options and saved conversion profiles. Invalid preview input remains in the editor for correction; playback timers use the validated range captured when playback starts.
+
+Codec fallback is exercised with an actual FFmpeg proxy, followed by processed playback and a return to Original. Original reuses the working proxy while exports continue to use the source file. Reset restores choices, source order, backgrounds, annotation state, compression presets, zoom and the current format's saved defaults.

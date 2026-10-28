@@ -14,8 +14,32 @@ public enum AppLocalization {
               let values = try? JSONDecoder().decode([String:String].self, from: data) else { return [:] }
         return values
     }()
+    /// Product and key names that keep Latin capitals in Turkish upper case (SHIFT, not SHİFT).
+    public static let latinWords: Set<String> = {
+        guard let url = Bundle.module.url(forResource: "LatinWords", withExtension: "json", subdirectory: "Resources"),
+              let data = try? Data(contentsOf: url),
+              let words = try? JSONDecoder().decode([String].self, from: data) else { return [] }
+        return Set(words)
+    }()
+    /// Upper case for UI copy. Turkish words follow Turkish rules; names in `latinWords` do not.
+    public static func uppercased(_ value:String, language:String) -> String {
+        let latin = Locale(identifier:"en_US_POSIX")
+        guard normalizedLanguage(language) == "tr" else { return value.uppercased(with:latin) }
+        let turkishLocale = Locale(identifier:"tr_TR")
+        var result = "", word = ""
+        func flush() {
+            guard !word.isEmpty else { return }
+            result += latinWords.contains(word) ? word.uppercased(with:latin) : word.uppercased(with:turkishLocale)
+            word = ""
+        }
+        for character in value {
+            if character.isLetter { word.append(character) } else { flush(); result.append(character) }
+        }
+        flush()
+        return result
+    }
     private static let uppercase = Dictionary(turkish.filter { !$0.key.contains("{0}") }.map {
-        ($0.key.uppercased(with: Locale(identifier:"en_US_POSIX")), $0.value.uppercased(with: Locale(identifier:"tr_TR")))
+        ($0.key.uppercased(with: Locale(identifier:"en_US_POSIX")), uppercased($0.value, language:"tr"))
     }, uniquingKeysWith: { first, _ in first })
     private struct Template {
         let expression: NSRegularExpression

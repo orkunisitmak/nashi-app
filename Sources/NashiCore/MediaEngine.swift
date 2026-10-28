@@ -426,12 +426,12 @@ public enum MediaEngine {
         var graph: [String] = []
         var previous = "0:v:0"
         for (index, selection) in selections.enumerated() {
-            let rect = try pixelRect(selection.rect, width: width, height: height)
+            let rect = try mode == "solid" ? redactionPixelRect(selection.rect, width: width, height: height) : pixelRect(selection.rect, width: width, height: height)
             let range = try timeRange(selection.start, selection.end, duration: info.duration)
             let enable = "between(t,\(decimal(range.0)),\(decimal(range.1)))"
             let next = "redacted\(index)"
             if mode == "solid" {
-                graph.append("[\(previous)]drawbox=x=\(rect.x):y=\(rect.y):w=\(rect.w):h=\(rect.h):color=\(try ffmpegColor(options.backgroundColor)):t=fill:enable='\(enable)'[\(next)]")
+                graph.append("[\(previous)]drawbox=x=\(rect.x):y=\(rect.y):w=\(rect.w):h=\(rect.h):color=\(try ffmpegColor(options.backgroundColor,opaque:true)):t=fill:enable='\(enable)'[\(next)]")
             } else {
                 let effect = mode == "blur" ? "gblur=sigma=20:steps=2" : "scale=\(max(1, rect.w / 16)):\(max(1, rect.h / 16)):flags=neighbor,scale=\(rect.w):\(rect.h):flags=neighbor"
                 graph.append("[\(previous)]split[base\(index)][crop\(index)];[crop\(index)]crop=\(rect.w):\(rect.h):\(rect.x):\(rect.y):exact=1,\(effect)[effect\(index)];[base\(index)][effect\(index)]overlay=\(rect.x):\(rect.y):enable='\(enable)'[\(next)]")
@@ -674,12 +674,20 @@ public enum MediaEngine {
         guard [rect.x, rect.y, rect.width, rect.height].allSatisfy(\.isFinite), rect.x >= 0, rect.y >= 0, rect.width >= 2, rect.height >= 2, rect.x + rect.width <= Double(width) + 0.01, rect.y + rect.height <= Double(height) + 0.01 else { throw NashiError.invalidInput("The selected rectangle must be inside the video and at least 2 × 2 pixels.") }
         return (Int(rect.x), Int(rect.y), Int(rect.width), Int(rect.height))
     }
+    private static func redactionPixelRect(_ rect: EditRect, width: Int, height: Int) throws -> (x: Int, y: Int, w: Int, h: Int) {
+        _ = try pixelRect(rect,width:width,height:height)
+        // Cover every pixel touched by the selection, matching image redaction.
+        // Truncating origin and size separately can leave the far edge visible.
+        let x=Int(floor(rect.x)),y=Int(floor(rect.y))
+        let right=min(width,Int(ceil(rect.x+rect.width))),bottom=min(height,Int(ceil(rect.y+rect.height)))
+        return (x,y,right-x,bottom-y)
+    }
     private static func audioExtension(_ input: URL) -> String { let ext = input.pathExtension.lowercased(); return audioFormats.contains(ext) ? ext : "m4a" }
     private static func videoExtension(_ input: URL) -> String { let ext = input.pathExtension.lowercased(); return videoFormats.contains(ext) && ext != "gif" ? ext : "mp4" }
-    private static func ffmpegColor(_ color: String) throws -> String {
+    private static func ffmpegColor(_ color: String, opaque: Bool = false) throws -> String {
         let hex = color.hasPrefix("#") ? String(color.dropFirst()) : color
         guard [6, 8].contains(hex.count), hex.allSatisfy(\.isHexDigit) else { throw NashiError.invalidInput("Use a six- or eight-digit hexadecimal color.") }
-        return "0x" + hex
+        return "0x" + (opaque ? String(hex.prefix(6)) : hex)
     }
     private static func metadataArguments(_ metadata: [String: String]) -> [String] {
         metadata.sorted { $0.key < $1.key }.flatMap { ["-metadata", "\($0.key)=\($0.value)"] }

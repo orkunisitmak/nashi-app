@@ -8,7 +8,7 @@ public sealed partial class ToolEditor
     internal bool ProcessedPlayback=>processedPlayback;
     private void PlayOriginalPreview()
     {
-        if(processingPreview||media is null)return;processedPlayback=false;drawing.IsEnabled=true;drawing.Visibility=System.Windows.Visibility.Visible;duration=media.Duration;scrubber.Maximum=duration;player.Source=new Uri(input);Seek(0);player.Play();playing=true;
+        if(processingPreview||media is null)return;processedPlayback=false;drawing.IsEnabled=true;drawing.Visibility=System.Windows.Visibility.Visible;duration=media.Duration;scrubber.Maximum=duration;player.Source=new Uri(originalPreviewPath??input);Seek(0);player.Play();playing=true;
     }
     private async Task PreviewProcessed()
     {

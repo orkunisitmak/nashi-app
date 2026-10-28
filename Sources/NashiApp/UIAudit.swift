@@ -98,6 +98,7 @@ struct UIAuditError:LocalizedError { let message:String;init(_ message:String){s
     private func run()async throws {
         try prepareOutput()
         validatorChecks=try UIAuditChecks.run()
+        validatorChecks += try UIAuditChecks.redactionPreviews(at:options.output.appendingPathComponent("redaction-preview"))
         let originalArguments=UserDefaults.standard.volatileDomain(forName:UserDefaults.argumentDomain)
         self.originalArguments=originalArguments
         try makeFixtures()

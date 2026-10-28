@@ -143,7 +143,7 @@ struct ImageEditPreview:View {
     }
     func rectangle(_ r:EditRect,ratio:CGFloat,origin:CGPoint,color:Color,fill:Bool,handles:Bool)->some View {
         ZStack(alignment:.topLeading) {
-            Rectangle().fill(fill ? color.opacity(0.7):.clear).overlay(Rectangle().stroke(color,lineWidth:1.5))
+            Rectangle().fill(fill ? color:.clear).overlay(Rectangle().stroke(color,lineWidth:1.5))
             if handles { ForEach(Handle.allCases,id:\.rawValue) { h in RoundedRectangle(cornerRadius:2).fill(Color.nashi).frame(width:8,height:8).offset(x:r.width*ratio*h.x-4,y:r.height*ratio*h.y-4) } }
         }.frame(width:max(1,r.width*ratio),height:max(1,r.height*ratio)).offset(x:origin.x+r.x*ratio,y:origin.y+r.y*ratio)
     }

@@ -13,7 +13,7 @@ public sealed partial class MainWindow
         if(selected.All(p=>FeatureCatalog.IsAudio(p)||FeatureCatalog.IsVideo(p)&&FeatureCatalog.Extension(p)!="gif")){await EditMediaMetadataAsync(selected);return;}
         if(metadataService.Executable is null)
         {
-            if(MessageBox.Show(this,"Download ExifTool (~11 MB) from its official SourceForge distribution? The SHA-256 is checked and it runs locally without an administrator password. Upstream licenses are retained.","Set up metadata tools",MessageBoxButton.OKCancel)!=MessageBoxResult.OK)return;
+            if(MessageBox.Show(this,L10n.Text("Download ExifTool (~11 MB) from its official SourceForge distribution? The SHA-256 is checked and it runs locally without an administrator password. Upstream licenses are retained."),L10n.Text("Set up metadata tools"),MessageBoxButton.OKCancel)!=MessageBoxResult.OK)return;
             SetBusy(true);using var token=new CancellationTokenSource();var toast=new ToastWindow(this,token.Cancel);toast.Show();try{await metadataService.InstallAsync(new Progress<OperationProgress>(toast.Update),token.Token);}finally{toast.Close();SetBusy(false);}
         }
         var removeAll=selected.Length>1;Dictionary<string,string>? changes=null;
@@ -24,8 +24,8 @@ public sealed partial class MainWindow
     private async Task SetupOfficeAsync()
     {
         if(busy)return;if(officeRuntime.Executable is not null){L10n.SetText(status,"Office tools are ready.");return;}
-        if(MessageBox.Show(this,"Download LibreOffice 26.8.1 (~360 MB) from The Document Foundation? Its SHA-256 is checked, then the package is extracted into Nashi’s user tools folder. No administrator password or Office subscription is needed. LibreOffice retains its upstream licenses.","Set up office tools",MessageBoxButton.OKCancel)!=MessageBoxResult.OK)return;
-        SetBusy(true);using var cancellation=new CancellationTokenSource();var toast=new ToastWindow(this,cancellation.Cancel);toast.Show();try{await officeRuntime.InstallAsync(new Progress<OperationProgress>(toast.Update),cancellation.Token);toast.Complete([]);L10n.SetText(status,"Office tools ready.");}catch(OperationCanceledException){toast.Close();L10n.SetText(status,"Setup cancelled.");}catch(Exception error){toast.Close();MessageBox.Show(this,error.Message,"Office setup could not finish");}finally{SetBusy(false);}
+        if(MessageBox.Show(this,L10n.Text("Download LibreOffice 26.8.1 (~360 MB) from The Document Foundation? Its SHA-256 is checked, then the package is extracted into Nashi’s user tools folder. No administrator password or Office subscription is needed. LibreOffice retains its upstream licenses."),L10n.Text("Set up office tools"),MessageBoxButton.OKCancel)!=MessageBoxResult.OK)return;
+        SetBusy(true);using var cancellation=new CancellationTokenSource();var toast=new ToastWindow(this,cancellation.Cancel);toast.Show();try{await officeRuntime.InstallAsync(new Progress<OperationProgress>(toast.Update),cancellation.Token);toast.Complete([]);L10n.SetText(status,"Office tools ready.");}catch(OperationCanceledException){toast.Close();L10n.SetText(status,"Setup cancelled.");}catch(Exception error){toast.Close();MessageBox.Show(this,L10n.Text(error.Message),L10n.Text("Office setup could not finish"));}finally{SetBusy(false);}
     }
     private async Task EditDocumentAsync(ToolChoice choice,string[] selected,string? requestedFormat=null)
     {

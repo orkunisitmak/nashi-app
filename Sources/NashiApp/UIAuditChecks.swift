@@ -1,9 +1,51 @@
 import Foundation
 import AppKit
+import SwiftUI
+import NashiCore
 
 /// Adversarial geometry cases keep an audit failure meaningful. These checks
 /// exercise the report validator without launching a window or changing state.
 @MainActor enum UIAuditChecks {
+    /// Render the actual shared canvas, including the video overlay path, so
+    /// engine-only export tests cannot hide a translucent selection preview.
+    static func redactionPreviews(at output:URL)throws->[String] {
+        try FileManager.default.createDirectory(at:output,withIntermediateDirectories:true)
+        var checks:[String]=[]
+        for scheme in [ColorScheme.light,.dark] {
+            for active in [true,false] {
+                for (name,color) in [("red",Color(.sRGB,red:1,green:0,blue:0,opacity:1)),("blue",Color(.sRGB,red:0,green:0,blue:1,opacity:1))] {
+                    let preview=ImageEditPreview(image:nil,imageSize:CGSize(width:64,height:64),crop:nil,
+                        redactions:[EditRect(x:16,y:16,width:32,height:32)],annotations:[],
+                        redactionColor:color,activeRedactions:active ? [0]:[]) { _ in }
+                    let renderer=ImageRenderer(content:preview.frame(width:64,height:64)
+                        .background(Color.white).environment(\.colorScheme,scheme))
+                    renderer.scale=1
+                    guard let image=renderer.cgImage else{throw UIAuditError("Redaction canvas could not be rendered")}
+                    let bitmap=NSBitmapImageRep(cgImage:image)
+                    guard let center=bitmap.colorAt(x:32,y:32)?.usingColorSpace(.deviceRGB),
+                          let outside=bitmap.colorAt(x:4,y:4)?.usingColorSpace(.deviceRGB) else{throw UIAuditError("Redaction canvas pixels could not be read")}
+                    let actual=[center.redComponent,center.greenComponent,center.blueComponent]
+                    // Compare in the renderer's color space instead of assuming
+                    // a particular machine's color-management transform.
+                    let reference=ImageRenderer(content:(active ? color:Color.white)
+                        .frame(width:64,height:64).background(Color.white).environment(\.colorScheme,scheme))
+                    reference.scale=1
+                    guard let referenceImage=reference.cgImage,
+                          let target=NSBitmapImageRep(cgImage:referenceImage).colorAt(x:32,y:32)?.usingColorSpace(.deviceRGB) else{throw UIAuditError("Opaque color reference could not be rendered")}
+                    let wanted=[Double(target.redComponent),Double(target.greenComponent),Double(target.blueComponent)]
+                    let label="\(scheme == .light ? "light":"dark")-\(active ? "active":"inactive")-\(name)"
+                    guard let png=bitmap.representation(using:.png,properties:[:])else{throw UIAuditError("Redaction canvas PNG could not be encoded")}
+                    try png.write(to:output.appendingPathComponent(label+".png"))
+                    guard zip(actual,wanted).allSatisfy({pair in abs(Double(pair.0)-pair.1)<0.02}),center.alphaComponent>0.99,
+                          outside.redComponent>0.99,outside.greenComponent>0.99,outside.blueComponent>0.99 else{
+                        throw UIAuditError("Redaction canvas \(label): center=\(actual), alpha=\(center.alphaComponent), outside=\([outside.redComponent,outside.greenComponent,outside.blueComponent]), expected=\(wanted)")
+                    }
+                    checks.append("Opaque redaction canvas: "+label)
+                }
+            }
+        }
+        return checks
+    }
     @discardableResult static func run()throws->[String] {
         let bounds=CGRect(x:0,y:0,width:900,height:420)
         let valid:[String:CGRect]=[

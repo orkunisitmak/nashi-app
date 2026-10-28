@@ -32,9 +32,13 @@ internal static class WindowManagementSmoke
             foreach(var placement in Enum.GetValues<WindowPlacement>())
             {
                 var expected=placement.Frame(area);
-                check(WindowManagement.Apply(handle,expected),"Native layout failed: "+placement);
-                DesktopInput.Pump(100);var actual=WindowManagement.Bounds(handle);
-                check(Math.Abs(actual.X-expected.X)<3&&Math.Abs(actual.Y-expected.Y)<3&&Math.Abs(actual.Width-expected.Width)<3&&Math.Abs(actual.Height-expected.Height)<3,"Native window bounds mismatch: "+placement);
+                // Exercise the production retry path: DWM's invisible borders may
+                // still be settling when a newly created HWND first appears.
+                var arrange=manager.ArrangeAsync(handle,placement,area);var until=DateTime.UtcNow.AddSeconds(5);
+                while(!arrange.IsCompleted&&DateTime.UtcNow<until)DesktopInput.Pump(30);
+                check(arrange.IsCompletedSuccessfully,"Native layout did not complete: "+placement);
+                arrange.GetAwaiter().GetResult();var actual=WindowManagement.Bounds(handle);
+                check(Math.Abs(actual.X-expected.X)<3&&Math.Abs(actual.Y-expected.Y)<3&&Math.Abs(actual.Width-expected.Width)<3&&Math.Abs(actual.Height-expected.Height)<3,$"Native window bounds mismatch: {placement}; expected={expected}; actual={actual}");
             }
             var index=0;
             foreach(var placement in Enum.GetValues<WindowPlacement>())
@@ -63,7 +67,7 @@ internal static class WindowManagementSmoke
                 check(limited!=0,"Constrained window fixture did not appear");
                 // Force the real native minimum, then let the child WPF layout
                 // and DWM invisible resize borders settle before measuring it.
-                _=WindowManagement.Apply(limited,new(80,90,160,420));DesktopInput.Pump(300);
+                _=WindowManagement.RequestFrame(limited,new(80,90,160,420));DesktopInput.Pump(300);
                 var minimum=WindowManagement.Bounds(limited).Width;
                 foreach(var placement in new[]{WindowPlacement.LeftThird,WindowPlacement.MiddleThird,WindowPlacement.RightThird,WindowPlacement.Maximize})
                 {
@@ -77,7 +81,7 @@ internal static class WindowManagementSmoke
     }
     private static void Gesture(nint target,WindowManagement manager,WindowPlacement choice,bool shift,bool cancel,bool resize=false)
     {
-        var reset=new WindowFrame(80,90,620,420);_ =WindowManagement.Apply(target,reset);DesktopInput.Pump(150);
+        var reset=new WindowFrame(80,90,620,420);_ =WindowManagement.RequestFrame(target,reset);DesktopInput.Pump(150);
         var task=Task.Run(()=>
         {
             var key=(byte)(shift?0x10:0x12);var down=false;

@@ -4,7 +4,10 @@ import itertools,json,pathlib,re,sys
 check="--check" in sys.argv
 root=pathlib.Path(__file__).resolve().parents[1]
 values=json.loads((root/'Sources/NashiCore/Resources/Turkish.json').read_text())
-values.update({key.upper():value.replace('i','İ').replace('ı','I').upper() for key,value in list(values.items()) if not re.search(r'\{\d\}',key)})
+# Turkish upper case (i→İ, ı→I), except product and key names, which keep Latin capitals (SHIFT, not SHİFT).
+latin=set(json.loads((root/'Sources/NashiCore/Resources/LatinWords.json').read_text(encoding='utf-8')))
+def turkish_upper(value):return re.sub(r'[^\W\d_]+',lambda m:m.group().upper() if m.group() in latin else m.group().replace('i','İ').replace('ı','I').upper(),value)
+values.update({key.upper():turkish_upper(value) for key,value in list(values.items()) if not re.search(r'\{\d\}',key)})
 # SwiftUI interpolates strings as %@ and integer counts as %lld.
 for key,value in list(values.items()):
  count=len(re.findall(r'\{\d\}',key))

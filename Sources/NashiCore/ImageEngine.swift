@@ -348,7 +348,9 @@ public enum ImageEngine {
         for rect in regions {
             let pixels=CGRect(x:rect.x,y:rect.y,width:rect.width,height:rect.height).integral
             let target=CGRect(x:pixels.minX,y:CGFloat(image.height)-pixels.maxY,width:pixels.width,height:pixels.height)
-            if settings.style == .solid { ctx.setFillColor(color(settings.color));ctx.fill(target) }
+            // Solid redaction replaces the selected pixels; an editor color's
+            // alpha must never blend the original content back into the result.
+            if settings.style == .solid { ctx.setFillColor(color(settings.color).copy(alpha:1)!);ctx.fill(target) }
             else if let part=image.cropping(to:pixels) {
                 let original=CIImage(cgImage:part),bounds=original.extent
                 let filtered:CIImage

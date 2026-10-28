@@ -139,7 +139,7 @@ public sealed class FloatShelf:Window
     private void Remove(){foreach(var p in files.SelectedItems.Cast<ListBoxItem>().Select(i=>(string)i.Tag).ToArray())paths.Remove(p);Reload();}
     private void Choose(){var picker=new OpenFileDialog{Multiselect=true};if(picker.ShowDialog(this)==true)Add(picker.FileNames);}
     private static bool ActionError(Exception error)=>error is IOException or UnauthorizedAccessException or Win32Exception or System.Runtime.InteropServices.COMException;
-    private void Report(Exception error)=>MessageBox.Show(this,error.Message,L10n.Text("Float action unavailable"));
+    private void Report(Exception error)=>MessageBox.Show(this,L10n.Text(error.Message),L10n.Text("Float action unavailable"));
     private async void OnKey(object sender,KeyEventArgs e)
     {
         try{

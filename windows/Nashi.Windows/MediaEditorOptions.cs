@@ -8,7 +8,7 @@ public sealed partial class ToolEditor
 {
     private readonly CheckBox trimSilence=new(){Content="Remove silence at the beginning and end",Margin=new(4,12,4,12)},joinClips=new(){Content="Join retained clips into one video",Margin=new(4,12,4,12)};
     private readonly ComboBox visualization=new(){ItemsSource=new[]{"waveform","spectrum","bars","image"},SelectedIndex=0},redactMode=new(){ItemsSource=new[]{"solid","blur","pixelate"},SelectedIndex=0},bleepMode=new(){ItemsSource=new[]{"bleep","mute"},SelectedIndex=0},sampleDepth=new(){ItemsSource=new[]{"matchSource","pcm16","pcm24","pcm32","float32"},SelectedIndex=0};
-    private readonly List<MediaRange> bleepRanges=[];private readonly List<MediaRegion> videoRegions=[];private readonly ListBox rangesList=new(){MaxHeight=140};private string? visualImage;private bool playingRange;
+    private readonly List<MediaRange> bleepRanges=[];private readonly List<MediaRegion> videoRegions=[];private readonly ListBox rangesList=new(){MaxHeight=140};private string? visualImage;private bool playingRange;private double rangePlaybackEnd;
     private void BuildMediaOptions()
     {
         if(media is null)return;
@@ -21,12 +21,22 @@ public sealed partial class ToolEditor
         }
         if(tool=="redactAudio")
         {
-            options.Children.Add(L10n.Label(new TextBlock{Text="Replace selected audio with"}));options.Children.Add(bleepMode);options.Children.Add(MainWindow.Button("Add selected range",()=>{try{var a=Value("Start");var b=Value("End",duration);if(a<0||b<=a||b>duration)throw new ArgumentException("Choose a valid range first.");bleepRanges.Add(new(a,b));ReloadRanges();}catch(ArgumentException error){MessageBox.Show(this,error.Message,"Check selected range");}}));options.Children.Add(rangesList);options.Children.Add(MainWindow.Button("Remove selected range",()=>{if(rangesList.SelectedIndex is var i&&i>=0&&i<bleepRanges.Count){bleepRanges.RemoveAt(i);ReloadRanges();}}));
+            options.Children.Add(L10n.Label(new TextBlock{Text="Replace selected audio with"}));options.Children.Add(bleepMode);options.Children.Add(MainWindow.Button("Add selected range",()=>{try{var a=Value("Start");var b=Value("End",duration);if(a<0||b<=a||b>duration)throw new ArgumentException("Choose a valid range first.");bleepRanges.Add(new(a,b));ReloadRanges();}catch(ArgumentException error){MessageBox.Show(this,L10n.Text(error.Message),L10n.Text("Check selected range"));}}));options.Children.Add(rangesList);options.Children.Add(MainWindow.Button("Remove selected range",()=>{if(rangesList.SelectedIndex is var i&&i>=0&&i<bleepRanges.Count){bleepRanges.RemoveAt(i);ReloadRanges();}}));
         }
         if(tool=="redactVideo"){options.Children.Add(L10n.Label(new TextBlock{Text="Cover style"}));options.Children.Add(redactMode);options.Children.Add(rangesList);options.Children.Add(MainWindow.Button("Remove selected area",()=>{var i=rangesList.SelectedIndex;if(i>=0&&i<videoRegions.Count){videoRegions.RemoveAt(i);var shape=drawing.Children.OfType<System.Windows.Shapes.Rectangle>().ElementAtOrDefault(i);if(shape is not null)drawing.Children.Remove(shape);ReloadRanges();}}));}
     }
     private void ReloadRanges(){rangesList.ItemsSource=null;rangesList.ItemsSource=tool=="redactAudio"?bleepRanges.Select((r,i)=>$"{i+1} · {r.Start:0.###}–{r.End:0.###} s").ToArray():videoRegions.Select((r,i)=>$"{i+1} · {r.Width:0}×{r.Height:0} · {r.Start:0.###}–{r.End:0.###} s").ToArray();}
-    private void PlayRange(){var a=Value("Start");var b=Value("End",duration);if(a<0||b<=a||b>duration)throw new ArgumentException("Choose a valid range.");Seek(a);playingRange=true;player.Play();playing=true;}
+    private (double Start,double End) ReadPlaybackRange()
+    {
+        var a=Value("Start");var b=Value("End",duration);
+        if(a<0||b<=a||b>duration)throw new ArgumentException("Start must be before End, within the media duration.");
+        return(a,b);
+    }
+    private void PlayRange()
+    {
+        try{var (a,b)=ReadPlaybackRange();Seek(a);rangePlaybackEnd=b;playingRange=true;player.Play();playing=true;}
+        catch(ArgumentException error){player.Pause();playing=false;playingRange=false;time.Text=error.Message;}
+    }
     private MediaOptions MoreMediaSettings(MediaOptions original)
     {
         double[] Numbers(string name)=>fields.TryGetValue(name,out var field)&&!string.IsNullOrWhiteSpace(field.Text)?field.Text.Split(';',StringSplitOptions.RemoveEmptyEntries).Select(s=>double.Parse(s.Trim(),CultureInfo.CurrentCulture)).ToArray():[];

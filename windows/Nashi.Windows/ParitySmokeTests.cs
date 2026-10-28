@@ -11,7 +11,7 @@ internal static class ParitySmokeTests
 {
     internal static Toolchain Tools(string root)
     {
-        var ci=Environment.GetEnvironmentVariable("GITHUB_ACTIONS")=="true";var path=ci?Path.Combine(Environment.GetEnvironmentVariable("RUNNER_TEMP")??root,"Nashi-Test-Tools"):Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Nashi","Tools","v1");var tools=new Toolchain(path);
+        var ci=Environment.GetEnvironmentVariable("GITHUB_ACTIONS")=="true";var path=Environment.GetEnvironmentVariable("NASHI_VERIFY_TOOLS_DIRECTORY")??(ci?Path.Combine(Environment.GetEnvironmentVariable("RUNNER_TEMP")??root,"Nashi-Test-Tools"):Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Nashi","Tools","v1"));var tools=new Toolchain(path);
         if(ci&&!tools.Ready)Task.Run(()=>tools.InstallAsync()).GetAwaiter().GetResult();return tools;
     }
     private static T Wait<T>(Task<T> task,int seconds=180){var clock=Stopwatch.StartNew();while(!task.IsCompleted){if(clock.Elapsed.TotalSeconds>seconds)throw new TimeoutException("Native parity operation timed out.");DesktopInput.Pump(30);}return task.GetAwaiter().GetResult();}

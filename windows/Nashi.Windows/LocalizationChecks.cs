@@ -19,6 +19,18 @@ internal static class LocalizationChecks
         var editor=new ToolEditor(owner,"crop","Crop Image",image,preview:ImageEngine.Load(image));
         try
         {
+            foreach(var error in new Exception[]{new UnauthorizedAccessException("fixture"),new IOException("fixture"),new System.Security.SecurityException("fixture")})
+            {
+                L10n.Language="tr";App.UseSavedLanguage(()=>throw error);
+                check(L10n.Language=="en","An unreadable language preference hid the original startup error: "+error.GetType().Name);
+            }
+            App.UseSavedLanguage(()=>"tr");check(L10n.Language=="tr","Readable saved language was not used for an error dialog");
+            check(NumericInput.ParseFinite("1,25",System.Globalization.CultureInfo.GetCultureInfo("tr-TR"))==1.25&&NumericInput.ParseFinite("1.25",System.Globalization.CultureInfo.InvariantCulture)==1.25,"Localized numeric input changed valid values");
+            foreach(var invalid in new[]{"not a number","NaN","Infinity"})
+            {
+                try{NumericInput.ParseFinite(invalid,System.Globalization.CultureInfo.InvariantCulture);check(false,"Invalid numeric input was accepted: "+invalid);}
+                catch(ArgumentException error){check(Nashi.Core.AppLocalization.Text(error.Message,"tr")=="Geçerli bir sayı gir.","Invalid-number framework text was not converted to localized validation copy");}
+            }
             L10n.Language="en";settings.Show();editor.Show();DesktopInput.Pump();
             editor.FieldForTest("Width").Text="123";
             var language=Children(settings).OfType<ComboBox>().Single(c=>AutomationProperties.GetAutomationId(c)=="AppLanguage");

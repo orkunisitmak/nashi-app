@@ -35,7 +35,7 @@ internal sealed class WindowManagement:IDisposable
         var dispatcher=Dispatcher.CurrentDispatcher;
         callback=(handle,type,window,objectId,childId,thread,time)=>
         {
-            if(disposed||dispatcher.HasShutdownStarted)return;Native.GetCursorPos(out var point);var mouseDown=(Native.GetAsyncKeyState(1)&0x8000)!=0;var escapeDown=(Native.GetAsyncKeyState(0x1B)&0x8000)!=0;
+            if(disposed||dispatcher.HasShutdownStarted)return;Native.GetCursorPos(out var point);var mouseDown=PrimaryMouseButton.IsPressed;var escapeDown=(Native.GetAsyncKeyState(0x1B)&0x8000)!=0;
             // Native WinEvent callbacks can reenter window teardown. Return to
             // Windows before creating/closing WPF HWNDs; snapshot Escape now.
             dispatcher.BeginInvoke(DispatcherPriority.Input,()=>OnWindowEvent(handle,type,window,objectId,childId,thread,time,point,mouseDown,escapeDown));
@@ -66,7 +66,7 @@ internal sealed class WindowManagement:IDisposable
             }
         }
     }
-    private async Task ArrangeAsync(nint captured,WindowPlacement placement,WindowFrame work)
+    internal async Task ArrangeAsync(nint captured,WindowPlacement placement,WindowFrame work)
     {
         pendingPlacement?.Cancel();var cancellation=new CancellationTokenSource();pendingPlacement=cancellation;PlacementPending=true;
         try
@@ -154,11 +154,9 @@ internal sealed class WindowManagement:IDisposable
         if(Native.DwmGetWindowAttribute(handle,9,out var visible,Marshal.SizeOf<Native.Rect>())==0)r=visible;
         return new(r.Left,r.Top,r.Right-r.Left,r.Bottom-r.Top);
     }
-    internal static bool Apply(nint handle,WindowFrame frame)
-        =>RequestFrame(handle,frame)&&Matches(Bounds(handle),frame);
     private static bool Matches(WindowFrame actual,WindowFrame expected)
         =>Math.Abs(actual.X-expected.X)<3&&Math.Abs(actual.Y-expected.Y)<3&&Math.Abs(actual.Width-expected.Width)<3&&Math.Abs(actual.Height-expected.Height)<3;
-    private static bool RequestFrame(nint handle,WindowFrame frame)
+    internal static bool RequestFrame(nint handle,WindowFrame frame)
     {
         if(frame.Width<=0||frame.Height<=0||!Native.IsWindow(handle)||!Native.GetWindowRect(handle,out var raw))return false;
         var visual=Bounds(handle);var left=visual.X-raw.Left;var top=visual.Y-raw.Top;

@@ -401,7 +401,7 @@ struct ToolEditor:View {
     var redactionControls:some View {
         VStack(alignment:.leading,spacing:12) {
             Picker("Style",selection:$options.redactionMode) { Text("Solid").tag("black");Text("Blur").tag("blur");if tool == .redactImage { Text("Pixelate").tag("pixelate") } }.pickerStyle(.segmented)
-            ColorPicker("Color",selection:colorBinding($options.backgroundColor))
+            ColorPicker("Color",selection:colorBinding($options.backgroundColor),supportsOpacity:false)
             Text("Drag on the preview to add an area. Each area is saved into the new copy.").font(.caption).foregroundStyle(.secondary)
             if tool == .redactImage { HStack { Button("Detect Faces") { detectRedactions(faces:true) };Button("Detect Text") { detectRedactions(faces:false) } } }
             if tool == .redactVideo { timeRangeFields }
@@ -495,7 +495,7 @@ struct ToolEditor:View {
     var metadataGroups:[String] { Array(Set(visibleMetadata.map(metadataGroup))).sorted() }
     func metadataGroup(_ key:String)->String { if let separator=key.firstIndex(of:category == .image ? ".":":") { return String(key[..<separator]) };return category == .pdf ? "Document":"File" }
     var imagePreview:some View {
-        ImageEditPreview(image:showOriginal ? baseImage.map{NSImage(cgImage:$0,size:.zero)}:image,imageSize:showOriginal ? imageSize:(previewSize ?? imageSize),crop:tool == .cropImage ? options.crop:nil,redactions:options.redactions,annotations:options.imageAnnotations,redactionColor:Color(cgColor:ImageEngine.color(options.backgroundColor)),zoom:previewZoom,onStroke:tool == .annotateImage && !selectingAnnotations ? addAnnotation:nil,onMoveAnnotation:{i,r,points in options.imageAnnotations[i].rect=r;options.imageAnnotations[i].points=points},onMoveRedaction:{i,r in options.redactions[i]=r},onMoveCrop:{r in setCrop(r)},cropEnabled:tool == .cropImage,cropAspectRatio:cropAspectRatio,onCropInteraction:cropInteraction,annotationStyle:tool == .annotateImage ? annotationStyle:nil,annotationSource:baseImage,selectAnnotations:selectingAnnotations) { rect in
+        ImageEditPreview(image:showOriginal ? baseImage.map{NSImage(cgImage:$0,size:.zero)}:image,imageSize:showOriginal ? imageSize:(previewSize ?? imageSize),crop:tool == .cropImage ? options.crop:nil,redactions:options.redactions,annotations:options.imageAnnotations,redactionColor:Color(cgColor:ImageEngine.color(options.backgroundColor).copy(alpha:1)!),zoom:previewZoom,onStroke:tool == .annotateImage && !selectingAnnotations ? addAnnotation:nil,onMoveAnnotation:{i,r,points in options.imageAnnotations[i].rect=r;options.imageAnnotations[i].points=points},onMoveRedaction:{i,r in options.redactions[i]=r},onMoveCrop:{r in setCrop(r)},cropEnabled:tool == .cropImage,cropAspectRatio:cropAspectRatio,onCropInteraction:cropInteraction,annotationStyle:tool == .annotateImage ? annotationStyle:nil,annotationSource:baseImage,selectAnnotations:selectingAnnotations) { rect in
             switch tool {
             case .cropImage: setCrop(rect)
             case .redactImage: options.redactions.append(rect)
@@ -510,7 +510,7 @@ struct ToolEditor:View {
                 ZStack {
                     PlayerView(player:player,onTime:updatePlayhead,onPlayback:{isPlaying=$0},hiddenControls:true)
                         .id(ObjectIdentifier(player)).frame(height:audio && tool != .audioToVideo ? 0:330)
-                    if (tool == .cropVideo || tool == .redactVideo) && !processedPlayback { ImageEditPreview(image:nil,imageSize:imageSize,crop:tool == .cropVideo ? options.crop:nil,redactions:options.redactions,annotations:[],redactionColor:Color(cgColor:ImageEngine.color(options.backgroundColor)),activeRedactions:tool == .redactVideo ? activeVideoRegions:nil,onMoveRedaction:{i,r in options.redactions[i]=r;if options.videoRedactions.indices.contains(i) { options.videoRedactions[i].rect=r }},onMoveCrop:setCrop,cropEnabled:tool == .cropVideo,cropAspectRatio:cropAspectRatio,onCropInteraction:cropInteraction) { rect in if tool == .cropVideo { setCrop(rect) } else { options.redactions.append(rect);options.videoRedactions.append(VideoRedaction(rect:rect,start:options.start,end:options.end)) } }.frame(height:330) }
+                    if (tool == .cropVideo || tool == .redactVideo) && !processedPlayback { ImageEditPreview(image:nil,imageSize:imageSize,crop:tool == .cropVideo ? options.crop:nil,redactions:options.redactions,annotations:[],redactionColor:Color(cgColor:ImageEngine.color(options.backgroundColor).copy(alpha:1)!),activeRedactions:tool == .redactVideo ? activeVideoRegions:nil,onMoveRedaction:{i,r in options.redactions[i]=r;if options.videoRedactions.indices.contains(i) { options.videoRedactions[i].rect=r }},onMoveCrop:setCrop,cropEnabled:tool == .cropVideo,cropAspectRatio:cropAspectRatio,onCropInteraction:cropInteraction) { rect in if tool == .cropVideo { setCrop(rect) } else { options.redactions.append(rect);options.videoRedactions.append(VideoRedaction(rect:rect,start:options.start,end:options.end)) } }.frame(height:330) }
                 }.cornerRadius(10)
             }
             if tool == .audioToVideo {

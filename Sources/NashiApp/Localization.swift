@@ -6,7 +6,7 @@ extension Notification.Name { static let nashiLanguageChanged=Notification.Name(
 enum L10n {
     static var language:String { AppLocalization.normalizedLanguage(UserDefaults.standard.string(forKey:"appLanguage")) }
     static func text(_ value:String)->String { AppLocalization.text(value,language:language) }
-    static func uppercase(_ value:String)->String { text(value).uppercased(with:Locale(identifier:language)) }
+    static func uppercase(_ value:String)->String { AppLocalization.uppercased(text(value),language:language) }
     private static let menuSources=NSMapTable<NSMenuItem,NSString>.weakToStrongObjects()
     private static let windowSources=NSMapTable<NSWindow,NSString>.weakToStrongObjects()
     static func windowTitle(_ window:NSWindow,source:String) { windowSources.setObject(source as NSString,forKey:window);window.title=text(source) }

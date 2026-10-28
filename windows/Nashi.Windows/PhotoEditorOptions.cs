@@ -48,11 +48,15 @@ public sealed partial class ToolEditor
         {
             photoPreview=new(){Interval=TimeSpan.FromMilliseconds(300)};photoPreview.Tick+=async(_,_)=>{photoPreview.Stop();await PreviewPhoto();};
             foreach(var box in fields.Values)box.TextChanged+=(_,_)=>QueuePhotoPreview();backdrop.SelectionChanged+=(_,_)=>QueuePhotoPreview();collageLayout.SelectionChanged+=(_,_)=>QueuePhotoPreview();Closed+=(_,_)=>photoPreview.Stop();
-            var original=L10n.Content(new CheckBox{Content="Show original",Margin=new(4,14,4,4)});original.Checked+=(_,_)=>{showingOriginal=true;photoPreview.Stop();photoGeneration++;SetPhotoPreview(bitmap!);};original.Unchecked+=(_,_)=>{showingOriginal=false;QueuePhotoPreview();};previewStack.Children.Add(original);Loaded+=(_,_)=>QueuePhotoPreview();
+            var original=L10n.Content(new CheckBox{Content="Show original",Margin=new(4,14,4,4)});original.Checked+=(_,_)=>{showingOriginal=true;photoPreview.Stop();photoGeneration++;SetPhotoPreview(bitmap!);};original.Unchecked+=(_,_)=>{showingOriginal=false;QueuePhotoPreview();};resetPhotoView=()=>original.IsChecked=false;previewStack.Children.Add(original);Loaded+=(_,_)=>QueuePhotoPreview();
         }
         if(tool=="annotate")options.Children.Add(MainWindow.Button("Choose annotation image…",()=>{var picker=new OpenFileDialog{Filter="Images|*.png;*.jpg;*.webp;*.heic;*.avif;*.bmp"};if(picker.ShowDialog(this)==true){annotationImage=picker.FileName;drawingTool.SelectedIndex=9;}}));
     }
-    private void RotatePhoto(int degrees){fields["Degrees"].Text=Number(Value("Degrees")+degrees);var width=fields["Width"].Text;fields["Width"].Text=fields["Height"].Text;fields["Height"].Text=width;QueuePhotoPreview();}
+    private void RotatePhoto(int degrees)
+    {
+        try{fields["Degrees"].Text=Number(Value("Degrees")+degrees);var width=fields["Width"].Text;fields["Width"].Text=fields["Height"].Text;fields["Height"].Text=width;QueuePhotoPreview();}
+        catch(ArgumentException error){ToolTip=error.Message;}
+    }
     private void PhotoGroup(string title,(string Name,double Minimum,double Maximum)[] controls)
     {
         options.Children.Add(L10n.Label(new TextBlock{Text=title,FontSize=15,FontWeight=FontWeights.SemiBold,Foreground=Theme.Brush("Muted"),Margin=new(4,16,4,4)}));
@@ -70,6 +74,7 @@ public sealed partial class ToolEditor
         void SetZoom(double value){zoom=Math.Clamp(value,.25,4);var height=Math.Clamp(ActualHeight-360,180,420);scroll.Height=height;viewbox.Width=Math.Max(100,scroll.ViewportWidth)*zoom;viewbox.Height=(scroll.ViewportHeight>0?scroll.ViewportHeight:height)*zoom;}
         var percent=L10n.Label(new TextBlock{Text="100%",VerticalAlignment=VerticalAlignment.Center,Foreground=Theme.Brush("Muted"),Margin=new(8,0,8,0)});
         void Apply(double value){SetZoom(value);percent.Text=$"{zoom*100:0}%";}
+        resetPreviewZoom=()=>Apply(1);
         controls.Children.Add(MainWindow.Button("−",()=>Apply(zoom/1.25)));controls.Children.Add(MainWindow.Button("Fit",()=>Apply(1)));controls.Children.Add(MainWindow.Button("+",()=>Apply(zoom*1.25)));controls.Children.Add(percent);result.Children.Add(controls);result.Children.Add(scroll);System.Windows.Automation.AutomationProperties.SetAutomationId(scroll,"ImagePreviewViewport");scroll.SizeChanged+=(_,_)=>SetZoom(zoom);scroll.ScrollChanged+=(_,e)=>{if(Math.Abs(e.ViewportWidthChange)>.1||Math.Abs(e.ViewportHeightChange)>.1)SetZoom(zoom);};SizeChanged+=(_,_)=>SetZoom(zoom);return result;
     }
     private void MoveImage(int delta){var index=imageOrder.SelectedIndex;var next=index+delta;if(index<0||next<0||next>=imageOrder.Items.Count)return;var item=imageOrder.Items[index];imageOrder.Items.RemoveAt(index);imageOrder.Items.Insert(next,item);imageOrder.SelectedIndex=next;QueuePhotoPreview();}
@@ -97,7 +102,7 @@ public sealed partial class ToolEditor
     private void SetPhotoPreview(BitmapSource result){drawing.Width=result.PixelWidth;drawing.Height=result.PixelHeight;if(drawing.Children[0] is Image image){image.Source=result;image.Width=result.PixelWidth;image.Height=result.PixelHeight;}}
     private async Task DetectPhoto(bool text,bool faces)
     {
-        if(bitmap is null)return;try{var regions=await NativePdf.DetectAsync(bitmap,text,faces);foreach(var r in regions){photoRegions.Add(r);var shape=new Rectangle{Width=r.Width,Height=r.Height,Fill=Brushes.Black,Stroke=Brushes.Gold,StrokeThickness=2,IsHitTestVisible=false};Canvas.SetLeft(shape,r.X);Canvas.SetTop(shape,r.Y);drawing.Children.Add(shape);}if(regions.Length==0)MessageBox.Show(this,"No matching regions were detected. You can still draw areas by hand.","Redact Photo");}catch(Exception error){MessageBox.Show(this,error.Message,"Detection unavailable");}
+        if(bitmap is null)return;try{var regions=await NativePdf.DetectAsync(bitmap,text,faces);foreach(var r in regions){photoRegions.Add(r);var shape=new Rectangle{Width=r.Width,Height=r.Height,Fill=Brushes.Black,Stroke=Brushes.Gold,StrokeThickness=2,IsHitTestVisible=false};Canvas.SetLeft(shape,r.X);Canvas.SetTop(shape,r.Y);drawing.Children.Add(shape);}if(regions.Length==0)MessageBox.Show(this,L10n.Text("No matching regions were detected. You can still draw areas by hand."),L10n.Text("Redact Photo"));}catch(Exception error){MessageBox.Show(this,L10n.Text(error.Message),L10n.Text("Detection unavailable"));}
     }
     private void AnnotationStart()
     {

@@ -21,7 +21,7 @@ exportProfile=preferences.Profile(value);fields["Quality (%)"].Text=Number(expor
             if(fields.TryGetValue("Audio bitrate (kbps)",out var bitrate))bitrate.Text=Number(exportProfile.AudioBitrate);if(fields.TryGetValue("Maximum video height (0 = original)",out var height))height.Text=Number(exportProfile.MaxVideoHeight);if(fields.TryGetValue("GIF frames per second",out var fps))fps.Text=Number(exportProfile.GifFrameRate);if(fields.TryGetValue("GIF width",out var width))width.Text=Number(exportProfile.GifWidth);sampleDepth.SelectedItem=exportProfile.SampleDepth;
             if(fields.TryGetValue("DPI",out var dpi))dpi.Text=Number(exportProfile.Dpi);documentLayout.SelectedItem=exportProfile.Layout;epubLayout.SelectedItem=exportProfile.EpubLayout;
         }
-        format.SelectionChanged+=(_,_)=>Apply();if(requestedFormat is not null&&format.Items.Contains(requestedFormat))format.SelectedItem=requestedFormat;Apply();
+        applyExportProfile=Apply;format.SelectionChanged+=(_,_)=>Apply();if(requestedFormat is not null&&format.Items.Contains(requestedFormat))format.SelectedItem=requestedFormat;Apply();
     }
     internal bool PreserveImageMetadata=>preserveMetadata.IsChecked==true;
 }

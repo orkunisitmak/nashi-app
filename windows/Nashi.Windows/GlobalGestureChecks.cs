@@ -18,6 +18,7 @@ internal static class GlobalGestureChecks
     [DllImport("user32.dll")]private static extern bool PostMessage(IntPtr handle,uint message,IntPtr w,IntPtr l);
     internal static void Run(Window owner,string root,string original,Action<bool,string> check)
     {
+        check(PrimaryMouseButton.VirtualKey(false)==0x01&&PrimaryMouseButton.VirtualKey(true)==0x02,"Swapped mouse buttons did not map the primary drag button");
         // Explorer is a separate source process. A same-thread WPF drag source
         // blocks the target's dispatcher inside DoDragDrop and is not a valid
         // test of the global Explorer gesture.

@@ -50,6 +50,7 @@ enum ArchiveCodec {
                 _ = a.readSkip(reader)
                 continue
             }
+            try validateDestination(destination, root: root)
             if let link = a.entryHardlink(entry) {
                 _ = try safeURL(String(cString: link), inside: root)
                 links.append(.init(destination: destination, target: String(cString: link), hard: true))
@@ -101,7 +102,9 @@ enum ArchiveCodec {
         }
         for link in links.filter(\.hard) {
             try token.check()
+            try validateDestination(link.destination, root: root)
             let target = try safeURL(link.target, inside: root)
+            try validateDestination(target, root: root)
             let attributes = try fm.attributesOfItem(atPath: target.path)
             guard attributes[.type] as? FileAttributeType == .typeRegular else {
                 throw NashiError.invalidInput("An archive hard link does not point to a regular file.")
@@ -111,6 +114,10 @@ enum ArchiveCodec {
         }
         for link in links.filter({ !$0.hard }) {
             try token.check()
+            // Deferred entries must be checked against the filesystem as it
+            // exists now, before creating directories or the link itself.
+            try validateDestination(link.destination, root: root)
+            try validateSymbolicTarget(link.target, at: link.destination, root: root)
             try fm.createDirectory(at: link.destination.deletingLastPathComponent(), withIntermediateDirectories: true)
             try fm.createSymbolicLink(atPath: link.destination.path, withDestinationPath: link.target)
         }
@@ -212,6 +219,27 @@ enum ArchiveCodec {
         let base = root.resolvingSymlinksInPath().standardizedFileURL.path
         let path = url.resolvingSymlinksInPath().standardizedFileURL.path
         return path == base || path.hasPrefix(base + "/")
+    }
+    private static func validateDestination(_ destination: URL, root: URL) throws {
+        let base=root.standardizedFileURL
+        let prefix=base.path+"/",path=destination.standardizedFileURL.path
+        guard path.hasPrefix(prefix) else { throw NashiError.invalidInput("An archive path leaves its extraction folder.") }
+        var item=base
+        // lstat does not follow a link, including a dangling one. Only inspect
+        // components below the trusted staging root, preserving macOS aliases
+        // such as /var without permitting archive-created directory aliases.
+        for component in path.dropFirst(prefix.count).split(separator:"/") {
+            item.appendPathComponent(String(component))
+            var attributes=stat()
+            if lstat(item.path,&attributes) != 0 {
+                let code=errno
+                if code==ENOENT { return }
+                throw POSIXError(POSIXErrorCode(rawValue:code) ?? .EIO)
+            }
+            guard attributes.st_mode & S_IFMT != S_IFLNK else {
+                throw NashiError.invalidInput("An archive entry cannot be created through a symbolic link.")
+            }
+        }
     }
     private static func validateSymbolicTarget(_ target: String, at destination: URL, root: URL) throws {
         guard !target.hasPrefix("/"), !target.contains("\\"), target.range(of: "^[A-Za-z]:", options: .regularExpression) == nil,
