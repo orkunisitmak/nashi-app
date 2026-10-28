@@ -13,6 +13,11 @@ internal sealed class ImageSurface:Viewbox
 {
     private readonly Canvas canvas;
     private readonly Image original;
+    private readonly Canvas handles=new(){IsHitTestVisible=false};
+    private CropGeometry.Handle? resizeHandle;
+    private double? cropRatio;
+    public double? CropRatio{get=>cropRatio;set{cropRatio=value;if(action=="cropImage"&&value is >0){var width=Math.Min(PixelWidth,PixelHeight*value.Value);SetCrop(new((PixelWidth-width)/2,(PixelHeight-width/value.Value)/2,width,width/value.Value));}}}
+    internal Rect? CropBounds=>action=="cropImage"&&active is Rectangle r&&r.Width>=1&&r.Height>=1?new Rect(Canvas.GetLeft(r),Canvas.GetTop(r),r.Width,r.Height):null;
     private readonly Stack<Control> undo=[];
     private Control? active;
     private Point origin;
@@ -33,13 +38,15 @@ internal sealed class ImageSurface:Viewbox
     public ImageSurface(byte[] bytes,string action,Action<Rect> changed)
     {
         this.action=action;this.changed=changed;using var stream=new MemoryStream(bytes);var bitmap=new Bitmap(stream);PixelWidth=bitmap.PixelSize.Width;PixelHeight=bitmap.PixelSize.Height;
-        original=new Image{Source=bitmap,Width=PixelWidth,Height=PixelHeight};canvas=new Canvas{Width=PixelWidth,Height=PixelHeight,Background=Brushes.Transparent,ClipToBounds=true};canvas.Children.Add(original);Child=canvas;Stretch=Stretch.Uniform;MaxHeight=460;
+        original=new Image{Source=bitmap,Width=PixelWidth,Height=PixelHeight};canvas=new Canvas{Width=PixelWidth,Height=PixelHeight,Background=Brushes.Transparent,ClipToBounds=true};canvas.Children.Add(original);var layers=new Grid();layers.Children.Add(canvas);layers.Children.Add(handles);Child=layers;Stretch=Stretch.Uniform;MaxHeight=460;
         canvas.PointerPressed+=Begin;canvas.PointerMoved+=Move;canvas.PointerReleased+=End;Focusable=true;
+        SizeChanged+=(_,_)=>{if(CropBounds is {} crop)ShowCropHandles(crop);};
+        canvas.PointerCaptureLost+=(_,_)=>{moving=false;resizeHandle=null;};
         KeyDown+=(_,e)=>{if(e.Key==Key.Z&&e.KeyModifiers.HasFlag(KeyModifiers.Control)){Undo();e.Handled=true;}if(e.Key==Key.Delete&&active is not null){canvas.Children.Remove(active);active=null;e.Handled=true;}};
     }
     public void SetPreview(byte[] bytes){using var stream=new MemoryStream(bytes);var bitmap=new Bitmap(stream);var old=original.Source as Bitmap;original.Source=bitmap;original.Width=canvas.Width=bitmap.PixelSize.Width;original.Height=canvas.Height=bitmap.PixelSize.Height;old?.Dispose();}
-    public void Reset(){while(canvas.Children.Count>1)canvas.Children.RemoveAt(1);undo.Clear();active=null;markNumber=1;}
-    public void Undo(){if(undo.TryPop(out var shape)){canvas.Children.Remove(shape);active=null;}}
+    public void Reset(){while(canvas.Children.Count>1)canvas.Children.RemoveAt(1);undo.Clear();active=null;handles.Children.Clear();markNumber=1;}
+    public void Undo(){if(undo.TryPop(out var shape)){canvas.Children.Remove(shape);active=null;handles.Children.Clear();}}
     public byte[] Png()
     {
         using var bitmap=new RenderTargetBitmap(new PixelSize(PixelWidth,PixelHeight),new Vector(96,96));bitmap.Render(canvas);using var output=new MemoryStream();bitmap.Save(output,new PngBitmapEncoderOptions());return output.ToArray();
@@ -49,9 +56,14 @@ internal sealed class ImageSurface:Viewbox
     {
         if(!e.GetCurrentPoint(canvas).Properties.IsLeftButtonPressed)return;
         if(action is not ("cropImage" or "redactImage" or "annotateImage"))return;
-        origin=Position(e);last=origin;Focus();e.Pointer.Capture(canvas);
-        if(action=="cropImage"&&active is Rectangle crop&&new Rect(Canvas.GetLeft(crop),Canvas.GetTop(crop),crop.Width,crop.Height).Contains(origin))
-        {moving=true;previous=new(Canvas.GetLeft(crop),Canvas.GetTop(crop),crop.Width,crop.Height);return;}
+        origin=Position(e);last=origin;Focus();e.Pointer.Capture(canvas);e.Handled=true;
+        resizeHandle=null;
+        if(action=="cropImage"&&CropBounds is {} crop){
+            previous=crop;var tolerance=HandleSize*1.5;
+            var nearest=Enum.GetValues<CropGeometry.Handle>().Select(handle=>{var f=CropGeometry.Fraction(handle);return (Handle:handle,Distance:Math.Sqrt(Math.Pow(crop.X+f.X*crop.Width-origin.X,2)+Math.Pow(crop.Y+f.Y*crop.Height-origin.Y,2)));}).OrderBy(h=>h.Distance).First();
+            if(nearest.Distance<=tolerance){resizeHandle=nearest.Handle;return;}
+            if(crop.Contains(origin)){moving=true;return;}
+        }
         if(action=="annotateImage"&&DrawingTool=="Select / Move")
         {
             active=canvas.Children.Reverse().FirstOrDefault(c=>c!=original&&new Rect(Canvas.GetLeft(c),Canvas.GetTop(c),double.IsNaN(c.Width)?c.Bounds.Width:c.Width,double.IsNaN(c.Height)?c.Bounds.Height:c.Height).Contains(origin));
@@ -75,7 +87,9 @@ internal sealed class ImageSurface:Viewbox
         }
         else active=new Rectangle{Stroke=NashiTheme.Gold,StrokeThickness=2,Fill=action=="redactImage"?Brushes.Black:NashiTheme.Brush("#22333333")};
         if(active is not Polyline){Canvas.SetLeft(active,origin.X);Canvas.SetTop(active,origin.Y);}
-        canvas.Children.Add(active);undo.Push(active);e.Handled=true;
+        canvas.Children.Add(active);undo.Push(active);
+        if(action=="cropImage"){origin=new(Math.Min(origin.X,PixelWidth-1),Math.Min(origin.Y,PixelHeight-1));SetCrop(new(origin,new Size(1,1)));}
+        e.Handled=true;
     }
     private Control Magnifier(Point point)
     {
@@ -84,7 +98,10 @@ internal sealed class ImageSurface:Viewbox
     }
     private void Move(object? sender,PointerEventArgs e)
     {
-        if(e.Pointer.Captured!=canvas||active is null)return;var point=Position(e);
+        if(e.Pointer.Captured!=canvas||active is null)return;var point=Position(e);e.Handled=true;
+        if(action=="cropImage"&&CropBounds is not null&&(moving||resizeHandle is not null)){
+            SetCrop(resizeHandle is {} handle?CropGeometry.Resize(previous,handle,point,new(PixelWidth,PixelHeight),CropRatio??(e.KeyModifiers.HasFlag(KeyModifiers.Shift)?previous.Width/previous.Height:null)):CropGeometry.Move(previous,origin,point,new(PixelWidth,PixelHeight)));return;
+        }
         if(moving)
         {
             var x=Math.Clamp(previous.X+point.X-origin.X,0,Math.Max(0,PixelWidth-active.Bounds.Width));var y=Math.Clamp(previous.Y+point.Y-origin.Y,0,Math.Max(0,PixelHeight-active.Bounds.Height));Canvas.SetLeft(active,x);Canvas.SetTop(active,y);
@@ -98,11 +115,28 @@ internal sealed class ImageSurface:Viewbox
             else line.Points=new Points{origin,point};return;
         }
         if(active is TextBlock)return;
+        if(action=="cropImage"){
+            var selection=CropGeometry.Selection(origin,point,new(PixelWidth,PixelHeight),CropRatio??(e.KeyModifiers.HasFlag(KeyModifiers.Shift)?1:null));
+            if(selection.Width>=1&&selection.Height>=1)SetCrop(selection);return;
+        }
         var dx=point.X-origin.X;var dy=point.Y-origin.Y;
         if(e.KeyModifiers.HasFlag(KeyModifiers.Shift)){var side=Math.Min(Math.Abs(dx),Math.Abs(dy));dx=Math.Sign(dx)*side;dy=Math.Sign(dy)*side;}
         var rect=new Rect(new Point(origin.X+Math.Min(0,dx),origin.Y+Math.Min(0,dy)),new Size(Math.Max(1,Math.Abs(dx)),Math.Max(1,Math.Abs(dy))));
         Canvas.SetLeft(active,rect.X);Canvas.SetTop(active,rect.Y);active.Width=rect.Width;active.Height=rect.Height;last=point;
         if(action is "cropImage" or "redactImage")changed(rect);
     }
-    private void End(object? sender,PointerReleasedEventArgs e){e.Pointer.Capture(null);moving=false;e.Handled=true;}
+    private double HandleSize=>Math.Clamp(8*PixelWidth/Math.Max(1,Bounds.Width),2,40);
+    internal void SetCrop(Rect rect)
+    {
+        if(action!="cropImage")throw new InvalidOperationException("Not a crop surface.");
+        if(active is not Rectangle){active=new Rectangle{Stroke=NashiTheme.Gold,StrokeThickness=2,Fill=NashiTheme.Brush("#22333333")};canvas.Children.Add(active);undo.Push(active);}
+        Canvas.SetLeft(active,rect.X);Canvas.SetTop(active,rect.Y);active.Width=rect.Width;active.Height=rect.Height;
+        ShowCropHandles(rect);changed(rect);
+    }
+    private void ShowCropHandles(Rect rect)
+    {
+        handles.Children.Clear();var size=HandleSize;
+        foreach(var handle in Enum.GetValues<CropGeometry.Handle>()){var f=CropGeometry.Fraction(handle);var mark=new Rectangle{Width=size,Height=size,Fill=Brushes.White,Stroke=NashiTheme.Gold,StrokeThickness=Math.Max(1,size/5)};Canvas.SetLeft(mark,rect.X+f.X*rect.Width-size/2);Canvas.SetTop(mark,rect.Y+f.Y*rect.Height-size/2);handles.Children.Add(mark);}
+    }
+    private void End(object? sender,PointerReleasedEventArgs e){e.Pointer.Capture(null);moving=false;resizeHandle=null;e.Handled=true;}
 }

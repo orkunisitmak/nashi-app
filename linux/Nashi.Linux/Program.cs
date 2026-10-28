@@ -7,11 +7,11 @@ namespace Nashi.Linux;
 internal static class Program
 {
     internal static SingleInstance? Instance{get;private set;}
-    [STAThread] public static void Main(string[] args)
+    [STAThread] public static int Main(string[] args)
     {
-        if(args.Contains("--smoke-test")){BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);return;}
-        try{using var instance=new SingleInstance();if(!instance.IsPrimary){instance.Forward(args);return;}Instance=instance;BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);}
-        catch(Exception error){Console.Error.WriteLine("Nashi could not start: "+error.Message);Environment.ExitCode=1;}
+        if(args.Contains("--smoke-test")){BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);return SmokeChecks.ExitCode;}
+        try{using var instance=new SingleInstance();if(!instance.IsPrimary){instance.Forward(args);return 0;}Instance=instance;return BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);}
+        catch(Exception error){Console.Error.WriteLine("Nashi could not start: "+error.Message);return 1;}
     }
     public static AppBuilder BuildAvaloniaApp()=>AppBuilder.Configure<App>().UsePlatformDetect();
 }

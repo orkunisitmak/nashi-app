@@ -46,7 +46,16 @@ jobs:
       - name: Native X11 UI checks
         env:
           NASHI_SMOKE_DIRECTORY: ${{ github.workspace }}/build/linux-smoke
-        run: xvfb-run -a 'build/linux/${{ matrix.rid }}/Nashi/Nashi' --smoke-test
+        run: |
+          xvfb-run -a 'build/linux/${{ matrix.rid }}/Nashi/Nashi' --smoke-test
+          # A deliberately unwritable fixture must fail the process, not just log an error.
+          NASHI_FAILURE="$NASHI_SMOKE_DIRECTORY/expected-failure"
+          mkdir -p "$NASHI_FAILURE/source.png"
+          if NASHI_SMOKE_DIRECTORY="$NASHI_FAILURE" xvfb-run -a 'build/linux/${{ matrix.rid }}/Nashi/Nashi' --smoke-test > "$NASHI_FAILURE/failure.log" 2>&1; then
+            echo 'Smoke failure incorrectly returned success' >&2
+            exit 1
+          fi
+          python3 -c 'import pathlib,sys; assert "Linux native UI smoke failed:" in pathlib.Path(sys.argv[1]).read_text()' "$NASHI_FAILURE/failure.log"
       - name: Package AppImage, tarball, deb and rpm
         env:
           NASHI_APPIMAGE: '1'
