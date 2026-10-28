@@ -34,14 +34,22 @@ public static class AppLocalization
     private static readonly (Regex Pattern,string Target)[] templates=Turkish.Where(x=>x.Key.Contains("{0}",StringComparison.Ordinal)).OrderByDescending(x=>x.Key.Length).Select(x=>
     {
         var pattern=Regex.Escape(x.Key);
-        for(var i=0;i<10;i++)pattern=pattern.Replace(Regex.Escape("{"+i+"}"),"(.*?)",StringComparison.Ordinal);
+        for(var i=0;i<10;i++)pattern=pattern.Replace(Regex.Escape("{"+i+"}"),WordBound(x.Key,"{"+i+"}")?@"(\S+?)":"(.*?)",StringComparison.Ordinal);
         return(new Regex("^"+pattern+"$",RegexOptions.Singleline|RegexOptions.CultureInvariant,TimeSpan.FromMilliseconds(50)),x.Value);
     }).ToArray();
+    // A placeholder at the very start or end of a key that touches a word ("{0} files", "Convert to {0}")
+    // stands for one token such as a count, format or version. Matching prose there produced
+    // "Add or change dosya" and "JPG · Nashi biçimine dönüştür", so those captures may not contain spaces.
+    private static bool WordBound(string key,string token)=>
+        key.StartsWith(token,StringComparison.Ordinal)&&Regex.IsMatch(key[token.Length..],@"^ \p{L}")||
+        key.EndsWith(token,StringComparison.Ordinal)&&Regex.IsMatch(key[..^token.Length],@"\p{L} $");
     public static string Text(string source,string language)
     {
         if(Normalize(language)!="tr")return source;
         if(Turkish.TryGetValue(source,out var exact)||uppercase.TryGetValue(source,out exact))return exact;
         if(source.Length>=16_384)return source;
+        // Window titles: translate the title, keep the app suffix ("Convert to JPG · Nashi").
+        const string suffix=" · Nashi";if(source.Length>suffix.Length&&source.EndsWith(suffix,StringComparison.Ordinal))return Text(source[..^suffix.Length],language)+suffix;
         foreach(var (pattern,target) in templates)
         {
             var match=pattern.Match(source);if(!match.Success)continue;

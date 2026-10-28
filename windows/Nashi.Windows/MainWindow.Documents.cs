@@ -36,9 +36,15 @@ public sealed partial class MainWindow
         }
         if(choice.Id=="organizePDF")
         {
-            var organizer=await PdfOrganizer.CreateAsync(this,selected[0]);if(organizer.ShowDialog()!=true)return;await RunAsync((destination,p,t)=>Task.Run(()=>DocumentEngine.Pdf("organizePDF",selected,destination,organizer.Pages,t,organizer.Rotations,pageRotations:organizer.PageRotations,uniformWidth:organizer.UniformWidth),t),"Organize PDF");return;
+            var organizer=await PdfOrganizer.CreateAsync(this,selected[0]);if(organizer.ShowDialog()!=true)return;
+            // Read the organizer's WPF state on the UI thread; the export runs on a worker thread.
+            var pages=organizer.Pages;var rotations=organizer.Rotations;var pageRotations=organizer.PageRotations;var uniformWidth=organizer.UniformWidth;
+            await RunAsync((destination,p,t)=>Task.Run(()=>DocumentEngine.Pdf("organizePDF",selected,destination,pages,t,rotations,pageRotations:pageRotations,uniformWidth:uniformWidth),t),"Organize PDF");return;
         }
-        var dialog=new ToolEditor(this,choice.Id,choice.Title,selected[0],inputs:selected);if(dialog.ShowDialog()!=true)return;if(choice.Id=="compress"){await RunAsync((destination,p,t)=>PdfCompression.RunAsync(selected,destination,dialog.ImageOptions,dialog.DocumentOptions.Password,p,t),"Compress PDF");return;}await RunAsync((destination,p,t)=>Task.Run(()=>DocumentEngine.Pdf(choice.Id,dialog.OrderedInputs,destination,null,t,pagesPerFile:dialog.PagesPerFile,password:dialog.DocumentOptions.Password,pageRanges:dialog.PageRanges),t),choice.Title);
+        var dialog=new ToolEditor(this,choice.Id,choice.Title,selected[0],inputs:selected);if(dialog.ShowDialog()!=true)return;if(choice.Id=="compress"){await RunAsync((destination,p,t)=>PdfCompression.RunAsync(selected,destination,dialog.ImageOptions,dialog.DocumentOptions.Password,p,t),"Compress PDF");return;}
+        // PagesPerFile and PageRanges read editor text boxes, so capture them before leaving the UI thread.
+        var inputs=dialog.OrderedInputs;var pagesPerFile=dialog.PagesPerFile;var password=dialog.DocumentOptions.Password;var pageRanges=dialog.PageRanges;
+        await RunAsync((destination,p,t)=>Task.Run(()=>DocumentEngine.Pdf(choice.Id,inputs,destination,null,t,pagesPerFile:pagesPerFile,password:password,pageRanges:pageRanges),t),choice.Title);
     }
     private async Task ReadQrAsync(IReadOnlyList<string> inputs)
     {

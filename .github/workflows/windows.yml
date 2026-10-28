@@ -90,6 +90,29 @@ jobs:
             if (!(Test-Path (Join-Path $directory 'smoke.json'))) { throw 'No native smoke result' }
             Get-Content (Join-Path $directory 'smoke.json')
           }
+      - name: Focused interaction completion and timeout recovery
+        shell: pwsh
+        run: |
+          foreach ($fixture in @(
+            @{Name='focused'; Arguments=@('--smoke-test-interactions'); ExitCode=0},
+            @{Name='focused-timeout'; Arguments=@('--smoke-test-interactions','--timeout-seconds','1'); ExitCode=1}
+          )) {
+            $directory = Join-Path '${{ github.workspace }}\build\windows-smoke' $fixture.Name
+            New-Item -ItemType Directory -Force $directory | Out-Null
+            $start = [System.Diagnostics.ProcessStartInfo]::new((Resolve-Path build/windows/Nashi/Nashi.exe))
+            $start.UseShellExecute = $false
+            $start.Environment['NASHI_SMOKE_DIRECTORY'] = $directory
+            foreach ($argument in $fixture.Arguments) { $start.ArgumentList.Add($argument) }
+            $process = [System.Diagnostics.Process]::Start($start)
+            try {
+              if (!$process.WaitForExit(150000)) { $process.Kill($true); throw 'Focused interaction process did not terminate' }
+              if ($process.ExitCode -ne $fixture.ExitCode) { throw "Unexpected focused interaction exit code: $($process.ExitCode)" }
+              $report = Get-Content (Join-Path $directory 'interactions.json') -Raw | ConvertFrom-Json
+              if ($fixture.ExitCode -eq 0 -and ($report.checks -lt 21 -or $report.failures.Count -ne 0)) { throw 'Focused interactions did not complete' }
+              if ($fixture.ExitCode -eq 1 -and $report.failures -notcontains 'Focused native interaction checks timed out.') { throw 'No timeout failure report' }
+              Write-Host "$($fixture.Name): exit=$($process.ExitCode); checks=$($report.checks); failures=$($report.failures.Count)"
+            } finally { $process.Dispose() }
+          }
       - name: Package portable app
         shell: pwsh
         run: |

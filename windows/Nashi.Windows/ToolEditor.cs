@@ -79,7 +79,7 @@ public sealed partial class ToolEditor:Window
         if(tool=="rotate")Field("Degrees",90);
         if(tool is "crop" or "cropVideo" or "redactVideo" or "redactImage")
         {
-            options.Children.Add(new TextBlock{Text=tool=="redactVideo"?"Drag a region to cover with a solid block.":"Drag to select a crop. Hold Shift for a square; existing selections keep their ratio. Press Enter to save.",TextWrapping=TextWrapping.Wrap,Margin=new(4,4,4,16)});
+            options.Children.Add(new TextBlock{Text=L10n.Text(tool=="redactVideo"?"Drag a region to cover with a solid block.":"Drag to select a crop. Hold Shift for a square; existing selections keep their ratio. Press Enter to save."),TextWrapping=TextWrapping.Wrap,Margin=new(4,4,4,16)});
             var w=bitmap?.PixelWidth??media?.Video?.Width??1280;var h=bitmap?.PixelHeight??media?.Video?.Height??720;
             Field("X",0);Field("Y",0);Field("Width",w);Field("Height",h);
             if(tool=="redactVideo"){Field("Start",0);Field("End",duration);}
@@ -87,7 +87,7 @@ public sealed partial class ToolEditor:Window
         if(tool=="annotate")
         {
             drawingTool.ItemsSource=new[]{"Marker","Rectangle","Arrow","Line","Ellipse","Text","Number","Callout","Magnifier","Image","Freehand","Select / Move"};drawingTool.SelectedIndex=0;
-            options.Children.Add(L10n.Label(new TextBlock{Text="Drawing tool"}));options.Children.Add(drawingTool);TextField("Annotation text","Note");TextField("Ink color","#FF5200");Field("Stroke width",3);Field("Font size",24);options.Children.Add(L10n.Label(new TextBlock{Text="Drag to draw. One active tool per stroke.",TextWrapping=TextWrapping.Wrap,Margin=new(4,12,4,12)}));
+            options.Children.Add(L10n.Label(new TextBlock{Text="Drawing tool"}));options.Children.Add(drawingTool);TextField("Annotation text",L10n.Text("Note"));TextField("Ink color","#FF5200");Field("Stroke width",3);Field("Font size",24);options.Children.Add(L10n.Label(new TextBlock{Text="Drag to draw. One active tool per stroke.",TextWrapping=TextWrapping.Wrap,Margin=new(4,12,4,12)}));
             options.Children.Add(MainWindow.Button("Undo last mark",()=>{UndoAnnotation();}));
         }
         BuildPhotoOptions(inputs??[input]);BuildInputOrder(inputs??[input]);BuildCropOptions();BuildCompressionOptions();BuildDocumentOptions();BuildMediaOptions();
@@ -104,7 +104,7 @@ public sealed partial class ToolEditor:Window
     private Action? resetCompression,resetPhotoView,resetPreviewZoom,applyExportProfile;
     private void Reset()
     {
-        if(processingPreview){time.Text="Wait for the processed preview to finish before resetting.";return;}
+        if(processingPreview){time.Text=L10n.Text("Wait for the processed preview to finish before resetting.");return;}
         if(media is not null){if(processedPlayback)PlayOriginalPreview();player.Pause();playing=false;Seek(0);}
         resetCompression?.Invoke();resetPhotoView?.Invoke();resetPreviewZoom?.Invoke();
         foreach(var pair in defaults)fields[pair.Key].Text=pair.Value;
@@ -194,6 +194,7 @@ public sealed partial class ToolEditor:Window
             ImageOptions=PhotoSettings(new(fields.ContainsKey("Width")?(int)w:null,fields.ContainsKey("Height")?(int)h:null,(int)Value("Degrees",tool=="rotate"?90:0),tool=="crop"?new Int32Rect((int)x,(int)y,(int)w,(int)h):null,(int)Value("Quality (%)",85),true,annotated));
             MediaOptions=MoreMediaSettings(MediaOptions);
             Format=format.SelectedItem as string??"png";
+            if(tool=="splitPDF"&&(!int.TryParse(fields["Pages per file"].Text,NumberStyles.AllowLeadingWhite|NumberStyles.AllowTrailingWhite,CultureInfo.CurrentCulture,out var perFile)||perFile is <1 or >1000))throw new ArgumentException("Choose between 1 and 1,000 pages per file."); // validate while the editor is still open
             if(tool=="organizePDF")Pages=fields["Page numbers"].Text.Split(',',StringSplitOptions.RemoveEmptyEntries).Select(s=>int.Parse(s.Trim(),CultureInfo.InvariantCulture)).ToArray();
             DocumentOptions=new((int)Value("DPI",144),documentLayout.SelectedItem as string??"editable",epubLayout.SelectedItem as string??"reflowable",archivePassword.Password);if(accept)DialogResult=true;return true;
         }

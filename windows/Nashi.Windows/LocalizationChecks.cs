@@ -38,6 +38,9 @@ internal static class LocalizationChecks
             check(prefs.Value.Language=="tr"&&new PreferencesStore(Path.Combine(directory,"Language profile")).Value.Language=="tr","Turkish setting did not persist through a real picker selection");
             check(Children(settings).OfType<TextBlock>().Any(t=>t.Text=="Dil"),"Settings language label did not update live");
             check(Children(owner).OfType<Button>().Any(b=>b.Content as string=="Ana Sayfa"),"Open Home buttons did not switch to Turkish");
+            // The window opens with one file selected, so Refresh() has already set the selection copy.
+            check(Children(owner).OfType<TextBlock>().Any(t=>t.Text=="✦  SIRA SENDE")&&Children(owner).OfType<TextBlock>().Any(t=>t.Text=="Hadi yeni bir şey yapalım.")&&Children(owner).OfType<Button>().Any(b=>b.Content as string=="Dosya ekle veya değiştir"),"Home selection copy did not switch to Turkish");
+            check(Children(owner).OfType<TextBlock>().Any(t=>t.Text==Path.GetFileName(image)),"Home translated or lost the selected file name");
             check(Children(editor).OfType<TextBlock>().Any(t=>t.Text=="Görseli Kırp"),"Open crop editor did not switch language");
             check(editor.FieldForTest("Width").Text=="123","Language switch reset an unsaved editor value");
             check(language.SelectedItem as string=="Türkçe","Language picker did not retain the Turkish autonym");
@@ -48,6 +51,7 @@ internal static class LocalizationChecks
             wheel.Show();DesktopInput.Pump();Capture(wheel,Path.Combine(directory,"windows-window-wheel-turkish.png"));wheel.Close();
             settings.Activate();language.Focus();DesktopInput.Key(settings,Key.Home);DesktopInput.Pump();
             check(prefs.Value.Language=="en"&&Children(owner).OfType<Button>().Any(b=>b.Content as string=="Home"),"Switching back to English left stale Turkish controls");
+            check(Children(owner).OfType<TextBlock>().Any(t=>t.Text=="✦  READY WHEN YOU ARE"),"Home selection copy stayed Turkish after switching back to English");
             check(editor.FieldForTest("Width").Text=="123","Switching back reset the crop draft");
         }
         finally{editor.Close();settings.Close();L10n.Language=before;}

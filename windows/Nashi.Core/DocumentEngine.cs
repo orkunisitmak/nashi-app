@@ -13,12 +13,12 @@ public static partial class DocumentEngine
         {
             if(inputs.Count<2)throw new ArgumentException("Choose at least two PDFs.");
             using var merged=new PdfDocument();
-            foreach(var file in inputs){token.ThrowIfCancellationRequested();using var source=PdfReader.Open(file,password,PdfDocumentOpenMode.Import);foreach(var page in source.Pages)merged.AddPage(page);}
+            foreach(var file in inputs){token.ThrowIfCancellationRequested();using var source=PdfReader.Open(file,password,PdfDocumentOpenMode.Import);RequireRebuildable(source,tool);foreach(var page in source.Pages)merged.AddPage(page);}
             var output=SafePaths.Unique(tx.StagingDirectory,"Merged.pdf");merged.Save(output);outputs.Add(output);
         }
         else foreach(var input in inputs)
         {
-            token.ThrowIfCancellationRequested();using var source=PdfReader.Open(input,password,PdfDocumentOpenMode.Import);
+            token.ThrowIfCancellationRequested();using var source=PdfReader.Open(input,password,PdfDocumentOpenMode.Import);RequireRebuildable(source,tool);
             if(tool=="splitPDF")
             {
                 if(pagesPerFile<1||pagesPerFile>1000)throw new ArgumentException("Choose between 1 and 1,000 pages per file.");
@@ -32,7 +32,7 @@ public static partial class DocumentEngine
             else if(tool=="organizePDF")
             {
                 if(pages is null||pages.Length==0||pages.Any(p=>p<1||p>source.PageCount))throw new ArgumentException("Enter page numbers within this PDF, in the desired order.");
-                if(uniformWidth&&(source.Internals.Catalog.Elements.ContainsKey("/AcroForm")||source.Internals.Catalog.Elements.ContainsKey("/Names")||source.Internals.Catalog.Elements.ContainsKey("/Outlines")||source.Pages.Cast<PdfPage>().Any(p=>p.Elements.ContainsKey("/Annots"))))throw new ArgumentException("Turn off uniform width to preserve this PDF’s form fields, attachments, links or navigation.");
+                if(uniformWidth&&(source.Internals.Catalog.Elements.ContainsKey("/Names")||source.Internals.Catalog.Elements.ContainsKey("/Outlines")||source.Pages.Cast<PdfPage>().Any(p=>p.Elements.ContainsKey("/Annots"))))throw new ArgumentException("Turn off uniform width to preserve this PDF’s form fields, attachments, links or navigation.");
                 using var result=new PdfDocument();for(var n=0;n<pages.Length;n++){var page=pages[n];var added=result.AddPage(source.Pages[page-1]);added.Rotate=(added.Rotate+(pageRotations is not null?pageRotations[n]:rotations?.GetValueOrDefault(page)??0))%360;}
                 var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+" Organized.pdf");result.Save(output);if(uniformWidth&&tool=="organizePDF")UniformWidths(output,token);outputs.Add(output);
             }
@@ -44,6 +44,21 @@ public static partial class DocumentEngine
             else throw new ArgumentException("Unknown PDF tool.");
         }
         return tx.Publish(outputs,token);
+    }
+    // These tools copy pages into a new document, which leaves the catalog's form field registry
+    // and attachments behind: fields go dead and files disappear without a word. Refuse instead,
+    // as macOS does where it cannot keep them. Unlike macOS, metadata cleanup still accepts tagged
+    // and layered PDFs: most PDFs saved from Word are tagged, and refusing them would make the tool
+    // unusable for them. Their tags and layer settings are dropped, as they were before.
+    private static void RequireRebuildable(PdfDocument source,string tool)
+    {
+        if(tool=="compress")return;var catalog=source.Internals.Catalog.Elements;
+        var widgets=source.Pages.Cast<PdfPage>().Any(p=>p.Elements.GetArray("/Annots") is {} annotations&&annotations.Elements.Any(e=>(e is PdfSharp.Pdf.Advanced.PdfReference reference?reference.Value:e) is PdfDictionary annotation&&annotation.Elements.GetName("/Subtype")=="/Widget"));
+        var attachments=catalog.GetDictionary("/Names")?.Elements.ContainsKey("/EmbeddedFiles")==true||catalog.ContainsKey("/AF")||catalog.ContainsKey("/Collection");
+        // Some generators write an empty /AcroForm; only fields (or an XFA form) are lost.
+        var form=catalog.GetDictionary("/AcroForm");var fields=form is not null&&(form.Elements.GetArray("/Fields") is {Elements.Count:>0}||form.Elements.ContainsKey("/XFA"));
+        if(!fields&&!widgets&&!attachments)return;
+        throw new InvalidDataException(tool=="removeMetadata"?"This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported.":"This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported.");
     }
     public static string Zip(IReadOnlyList<string> inputs,string destination,IProgress<OperationProgress>? progress=null,CancellationToken token=default)
     {

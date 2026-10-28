@@ -3,10 +3,11 @@ using System.Text.Json;
 
 namespace Nashi.Core;
 
-public sealed record MediaStream(int Index, string Kind, string Codec, int? Width, int? Height, bool AttachedPicture,int Bits=0,string SampleFormat="",double FrameRate=30);
+public sealed record MediaStream(int Index, string Kind, string Codec, int? Width, int? Height, bool AttachedPicture,int Bits=0,string SampleFormat="",double FrameRate=30,int SampleRate=0);
 public sealed record MediaInfo(double Duration, long Bytes, IReadOnlyList<MediaStream> Streams)
 {
     public MediaStream? Video => Streams.FirstOrDefault(s => s.Kind == "video" && !s.AttachedPicture);
+    public MediaStream? Audio => Streams.FirstOrDefault(s => s.Kind == "audio");
     public bool HasAudio => Streams.Any(s => s.Kind == "audio");
 }
 public sealed record MediaRegion(double X, double Y, double Width, double Height, double Start = 0, double? End = null);
@@ -73,7 +74,7 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
             // FFmpeg auto-rotates decoded frames before crop/scale filters. The
             // editor and validation use those same displayed dimensions.
             if(double.IsFinite(rotation)&&Math.Abs(Math.Abs(rotation)%180-90)<.001)(width,height)=(height,width);
-            streams.Add(new(stream.GetProperty("index").GetInt32(), GetString(stream,"codec_type"), GetString(stream,"codec_name"), width, height, attached,GetInt(stream,"bits_per_raw_sample")??GetInt(stream,"bits_per_sample")??0,GetString(stream,"sample_fmt"),ParseFrameRate(GetString(stream,"avg_frame_rate"))));
+            streams.Add(new(stream.GetProperty("index").GetInt32(), GetString(stream,"codec_type"), GetString(stream,"codec_name"), width, height, attached,GetInt(stream,"bits_per_raw_sample")??GetInt(stream,"bits_per_sample")??0,GetString(stream,"sample_fmt"),ParseFrameRate(GetString(stream,"avg_frame_rate")),int.TryParse(GetString(stream,"sample_rate"),NumberStyles.Integer,CultureInfo.InvariantCulture,out var sampleRate)&&sampleRate>0?sampleRate:0));
         }
         var duration = root.TryGetProperty("format", out var format) && double.TryParse(GetString(format,"duration"), CultureInfo.InvariantCulture, out var seconds) && double.IsFinite(seconds) ? Math.Max(0,seconds) : 0;
         return new(duration, new FileInfo(input).Length, streams);
@@ -245,7 +246,15 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
             if(numbers.All(x=>double.IsFinite(x.Item2)))filter+=string.Concat(numbers.Select(x=>":"+x.Item1+"="+Number(x.Item2)))+":linear=true";
         }
         var output=Output(directory,input,ext," Normalized");
-        await RenderAsync(["-i",input,"-map","0:a:0","-af",filter,..AudioEncoding(ext,options)],output,info.Duration,p=>progress(p with{Fraction=.45+p.Fraction*.55}),token);return output;
+        await RenderAsync(["-i",input,"-map","0:a:0","-af",filter,..NormalizedRate(ext,info),..AudioEncoding(ext,options)],output,info.Duration,p=>progress(p with{Fraction=.45+p.Fraction*.55}),token);return output;
+    }
+    // loudnorm resamples to 192 kHz internally. Lossless and Vorbis outputs keep the source rate (as on macOS);
+    // MP3/AAC/WMA encoders top out at 48 kHz, and Opus is always 48 kHz, so FFmpeg picks the rate for Opus.
+    private static string[] NormalizedRate(string ext,MediaInfo info)
+    {
+        var source=info.Audio is {SampleRate:>0} audio?audio.SampleRate:48000;
+        int? rate=ext switch{"wav" or "aiff" or "flac"=>source,"ogg"=>Math.Min(source,192000),"mp3" or "m4a" or "aac" or "wma"=>Math.Min(source,48000),_=>null};
+        return rate is {} value?["-ar",value.ToString(CultureInfo.InvariantCulture)]:[];
     }
 
     private async Task<string> CompressAsync(string input,MediaInfo info,string directory,MediaOptions options,Action<OperationProgress> progress,CancellationToken token)

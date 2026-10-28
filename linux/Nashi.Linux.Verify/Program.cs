@@ -21,6 +21,13 @@ try
     await MustFail(()=>FileTransfer.RunAsync([tree],Path.Combine(tree,"inside"),false,null,default),"copy destination outside source");
     var moved=await FileTransfer.RunAsync(copied,Path.Combine(root,"moved"),true,null,default);Check(Directory.Exists(moved.Single())&&!Directory.Exists(copied.Single()),"copy before delete folder move");
     await FileTransferVerify.Run(root,Check);
+    var selectedPdf=(await engine.RunAsync("createPDF",[image,leaf],output,new()))[0];
+    var renderedPages=await NativePdf.RenderPagesAsync(selectedPdf,[2,2,0,3],72,default);
+    Check(renderedPages.Keys.SequenceEqual([2]),"selective PDF rendering deduplicates valid 1-based pages");
+    using(var rendered=new MagickImage(renderedPages[2])){Check(rendered.Width==60&&rendered.Height==120,"selective PDF rendering uses the requested page dimensions and DPI");using var pixels=rendered.GetPixels();Check(pixels.GetPixel(20,20).ToColor()!.G>pixels.GetPixel(20,20).ToColor()!.R,"selective PDF rendering returns the requested page content");}
+    using(var rasterCrop=new MagickImage(ImageEngine.CropPng(renderedPages[2],10,20,30,40)))Check(rasterCrop.Width==30&&rasterCrop.Height==40,"shared document fallback crops rendered images through the Linux adapter");
+    using(var cancelPdf=new CancellationTokenSource()){cancelPdf.Cancel();await MustFail(()=>NativePdf.RenderPagesAsync(selectedPdf,[],72,cancelPdf.Token),"selective PDF rendering honours cancellation before opening files");}
+
     var gradient=await engine.RunAsync("frameImage",[image],output,new(){Frame=new(Backdrop:"gradient",Color:"#ffffff",GradientEnd:"#000000",Width:300,Height:240,Padding:20)});using(var decoded=PhotoCodec.Read(gradient.Single()))Check(decoded.Width==300&&decoded.Height==240,"gradient frame canvas");
     var featured=await engine.RunAsync("createCollage",[image,leaf],output,new(){Collage=new(Layout:"featured",Width:500,Height:300,Padding:10,Order:[1,0])});using(var decoded=PhotoCodec.Read(featured.Single())){using var pixels=decoded.GetPixels();Check(pixels.GetPixel(50,50).ToColor()!.G>pixels.GetPixel(50,50).ToColor()!.R,"featured collage order");}
     var sized=await engine.RunAsync("editImage",[image],output,new(){Width=90,Height=90});using(var decoded=PhotoCodec.Read(sized.Single()))Check(decoded.Width==90&&decoded.Height==90,"explicit image dimensions");

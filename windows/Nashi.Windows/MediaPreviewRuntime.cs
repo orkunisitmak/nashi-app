@@ -10,7 +10,7 @@ public sealed partial class ToolEditor
     private string PreviewDirectory()=>previewDirectory??=Directory.CreateDirectory(Path.Combine(Path.GetTempPath(),"Nashi-preview-"+Guid.NewGuid().ToString("N"))).FullName;
     internal async Task CreatePreviewProxy()
     {
-        if(processedPlayback||processingPreview){time.Text="Processed preview unavailable for this Windows codec.";return;}
+        if(processedPlayback||processingPreview){time.Text=L10n.Text("Processed preview unavailable for this Windows codec.");return;}
         if(triedProxy||previewTools?.Ready!=true){time.Text="This Windows codec cannot play directly. Set up media tools to create a local preview.";return;}triedProxy=true;time.Text="Preparing a local preview…";
         try
         {

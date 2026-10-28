@@ -11,6 +11,12 @@ final class AppLocalizationTests:XCTestCase {
         XCTAssertEqual(AppLocalization.text("READ QR CODES",language:"tr"),"QR KODLARINI OKU")
         XCTAssertEqual(AppLocalization.text("Resize Image".uppercased(),language:"tr"),"GÖRSELİ BOYUTLANDIR")
     }
+    func testWordBoundTemplatesDoNotSwallowProseOrTitles() {
+        XCTAssertNotEqual(AppLocalization.text("Add or change files",language:"tr"),"Add or change dosya")
+        XCTAssertEqual(AppLocalization.text("3 files",language:"tr"),"3 dosya")
+        XCTAssertEqual(AppLocalization.text("Convert to JPG",language:"tr"),"JPG biçimine dönüştür")
+        XCTAssertEqual(AppLocalization.text("Convert to JPG · Nashi",language:"tr"),"JPG biçimine dönüştür · Nashi")
+    }
     func testTurkishUppercaseKeepsLatinProductAndKeyNames() {
         XCTAssertEqual(AppLocalization.text("SHOW NASHI IN FINDER",language:"tr"),"NASHI'Yİ FINDER'DA GÖSTER")
         XCTAssertEqual(AppLocalization.uppercased("Shift'e bas",language:"tr"),"SHIFT'E BAS")
@@ -36,5 +42,15 @@ final class AppLocalizationTests:XCTestCase {
             XCTAssertEqual(tokens(source),tokens(translation),source)
         }
         for code in ["png","MP4","Ctrl+Shift","⌘S","00:01.250"] { XCTAssertEqual(AppLocalization.text(code,language:"tr"),code) }
+    }
+    func testTranslatedCatalogsOnlyUseTurkishSourceStrings() {
+        let reference=Set(AppLocalization.turkish.keys)
+        XCTAssertFalse(reference.isEmpty)
+        for language in AppLocalization.supportedLanguages where language != "en" {
+            let catalog=AppLocalization.catalog(for:language)
+            XCTAssertTrue(Set(catalog.keys).isSubset(of:reference),"\(language) has keys that Turkish.json lacks")
+            XCTAssertFalse(catalog.values.contains{$0.isEmpty},language)
+        }
+        XCTAssertTrue(AppLocalization.catalog(for:"en").isEmpty)
     }
 }

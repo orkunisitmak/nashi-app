@@ -5,6 +5,7 @@ using System.Windows.Media.Effects;
 namespace Nashi.Windows;
 public static partial class ImageEngine
 {
+    internal static byte[] CropPng(byte[] png,int x,int y,int width,int height)=>PngBytes(new CroppedBitmap(FromPng(png),new System.Windows.Int32Rect(x,y,width,height)));
     internal static byte[] PngBytes(BitmapSource source){var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(source));using var stream=new MemoryStream();encoder.Save(stream);return stream.ToArray();}
     internal static BitmapSource FromPng(byte[] png){using var stream=new MemoryStream(png);var bitmap=BitmapFrame.Create(stream,BitmapCreateOptions.None,BitmapCacheOption.OnLoad);bitmap.Freeze();return bitmap;}
     private static BitmapSource Render(int width,int height,Action<DrawingContext> draw)

@@ -8,6 +8,8 @@ namespace Nashi.Windows;
 public sealed record ImageDimensions(int PixelWidth,int PixelHeight);
 public static class ImageEngine
 {
+    public static byte[] CropPng(byte[] png,int x,int y,int width,int height)
+    {using var image=new MagickImage(png);ValidateRegion(x,y,width,height,image);image.Crop(new MagickGeometry(x,y,(uint)width,(uint)height));image.ResetPage();return image.ToByteArray(MagickFormat.Png);}
     public static ImageDimensions FromPng(byte[] bytes)
     { using var image=new MagickImage(bytes);return new((int)image.Width,(int)image.Height); }
     public static async Task<IReadOnlyList<string>> Apply(string tool,IReadOnlyList<string> inputs,string destination,LinuxOptions o,string? format,CancellationToken token,IProgress<OperationProgress>? progress)
