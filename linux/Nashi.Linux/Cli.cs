@@ -40,7 +40,7 @@ internal static class Cli
                     if(LinuxPdf.Tesseract is null)Console.WriteLine("Optional OCR for scanned PDFs:\n  "+LinuxPdf.InstallTesseract);
                     return 0;
             }
-            var (positional,options)=Parse(args.Skip(1));
+            var (positional,options)=Parse(args.Skip(1));notify=options.Remove("notify");
             switch(args[0])
             {
                 case "list":
@@ -76,9 +76,17 @@ internal static class Cli
         }
         catch(OperationCanceledException){Console.Error.WriteLine("Cancelled. Originals kept.");return 130;}
         catch(Exception error)when(error is ArgumentException or InvalidOperationException or IOException or InvalidDataException or UnauthorizedAccessException or PlatformNotSupportedException or FormatException or NotSupportedException)
-        {Console.Error.WriteLine("nashi: "+error.Message);return 1;}
+        {Console.Error.WriteLine("nashi: "+error.Message);Notify(error.Message,error:true);return 1;}
     }
-    private static int Print(IReadOnlyList<string> outputs){Console.Error.WriteLine();foreach(var output in outputs)Console.WriteLine(output);return 0;}
+    private static int Print(IReadOnlyList<string> outputs){Console.Error.WriteLine();foreach(var output in outputs)Console.WriteLine(output);Notify(outputs.Count==1?Path.GetFileName(outputs[0]):outputs.Count+" new files",outputs.Count>0?outputs[0]:null);return 0;}
+    /// --notify 1 (used by the Dolphin actions) reports the result as a desktop notification.
+    private static bool notify;
+    private static void Notify(string message,string? file=null,bool error=false)
+    {
+        if(!notify||SystemTools.Find("notify-send") is not {} sender)return;
+        try{var info=new System.Diagnostics.ProcessStartInfo(sender){UseShellExecute=false};foreach(var a in new[]{"--app-name=Nashi","--icon=nashi",error?"--urgency=normal":"--urgency=low","Nashi",message})info.ArgumentList.Add(a);System.Diagnostics.Process.Start(info)?.WaitForExit(3000);}
+        catch(System.ComponentModel.Win32Exception){}
+    }
     private static IProgress<OperationProgress> Progress()=>new Inline(p=>{if(!Console.IsErrorRedirected)Console.Error.Write("\r"+(p.Fraction is {} f?$"{f:P0} ":"")+p.Label.PadRight(60));});
     private sealed class Inline(Action<OperationProgress> report):IProgress<OperationProgress>{public void Report(OperationProgress value)=>report(value);}
     private static (List<string>,Dictionary<string,string>) Parse(IEnumerable<string> args)

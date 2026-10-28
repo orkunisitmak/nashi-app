@@ -111,6 +111,12 @@ if "$nashi" --render "$out/ui-run.png" --tool convert:webp --run "$work/gui/$(ba
 # Real mouse clicks: a wheel tool, then Run, then wheel scrolling on Home.
 mouse=$("$nashi" --render "$out/ui-mouse.png" --click-wheel "Create PDF" "$photo" "$fixtures/second.png" 2>/dev/null | grep -E '^(WHEELRUN|SCROLL)' | tr '\n' ' ')
 [[ $mouse == "WHEELRUN outputs=1 SCROLL moved " ]] && { pass=$((pass+1)); echo "PASS mouse: wheel → Run → scroll"; } || { fail=$((fail+1)); echo "FAIL mouse: $mouse"; }
+# Drop chords pick the wheel, as Shift/Ctrl/Alt do on macOS and Windows.
+expect_wheel(){ local got; got=$("$nashi" --render "$out/ui-drop.png" "$@" 2>/dev/null | grep -E '^(DROP|LINK)'); [[ $got == *"$WANT"* ]] && { pass=$((pass+1)); echo "PASS $NAME"; } || { fail=$((fail+1)); echo "FAIL $NAME: $got"; }; }
+NAME="Shift drop → convert wheel" WANT="DROP convert: PNG" expect_wheel --drop-chord Shift "$photo"
+NAME="Ctrl drop of images → one PDF first" WANT="DROP tools: Create PDF" expect_wheel --drop-chord Ctrl "$photo" "$fixtures/second.png"
+NAME="Alt drop → file actions" WANT="DROP actions: Open folder" expect_wheel --drop-chord Alt "$photo"
+NAME="YouTube link → download wheel" WANT="LINK Download Video | Download Audio | Download Thumbnail" expect_wheel --link "https://youtu.be/dQw4w9WgXcQ"
 [[ -e $photo && -e $fixtures/clip.mp4 ]] && { pass=$((pass+1)); echo "PASS originals kept"; } || { fail=$((fail+1)); echo "FAIL an original was removed"; }
 
 echo "PASSED=$pass FAILED=$fail"

@@ -14,17 +14,20 @@ prefix=${PREFIX:-$HOME/.local/lib/nashi}
 bin_dir=${BIN_DIR:-$HOME/.local/bin}
 data_dir=${DATA_DIR:-$data_home}
 desktop_file=$data_dir/applications/nashi.desktop
+service_menus=$data_dir/kio/servicemenus
 
 refresh_caches() {
   command -v update-desktop-database >/dev/null && update-desktop-database -q "$data_dir/applications" || true
   command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -q -t "$data_dir/icons/hicolor" || true
+  # Lets Plasma pick up the Meta+Shift+N shortcut and the new Dolphin actions.
+  for tool in kbuildsycoca6 kbuildsycoca5; do command -v $tool >/dev/null && { $tool --noincremental >/dev/null 2>&1 || true; break; }; done
 }
 
 if [[ ${1:-} == "--uninstall" ]]; then
   # Removes only what this script installed. Library and settings in
   # ${XDG_DATA_HOME:-~/.local/share}/Nashi are kept.
   [[ -L $bin_dir/nashi ]] && rm -f -- "$bin_dir/nashi"
-  rm -f -- "$desktop_file"
+  rm -f -- "$desktop_file" "$service_menus/nashi.desktop" "$service_menus/nashi-images.desktop"
   for size in 256 512; do rm -f -- "$data_dir/icons/hicolor/${size}x${size}/apps/nashi.png"; done
   [[ -f $prefix/nashi && -f $prefix/Nashi.Core.dll ]] && rm -rf -- "$prefix"
   refresh_caches
@@ -68,6 +71,12 @@ done
 
 # Absolute Exec/TryExec: desktop sessions do not always have ~/.local/bin on PATH.
 sed -e "s|^Exec=nashi |Exec=$prefix/nashi |" -e "s|^TryExec=nashi$|TryExec=$prefix/nashi|" "$repo/linux/nashi.desktop" >"$desktop_file"
+# Dolphin/Konqueror right-click actions (Nashi submenu). Plasma 6 requires them executable.
+mkdir -p "$service_menus"
+for menu in nashi.desktop nashi-images.desktop; do
+  sed -e "s|^Exec=nashi |Exec=$prefix/nashi |" "$repo/linux/servicemenus/$menu" >"$service_menus/$menu"
+  chmod +x "$service_menus/$menu"
+done
 refresh_caches
 
 echo "Nashi is installed. Open it from your app menu, run 'nashi', or right-click files › Open with › Nashi."

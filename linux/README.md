@@ -39,7 +39,11 @@ Images, PDF tools, archives, subtitles and QR codes work with no extra packages.
 ## Use
 
 - **Open with › Nashi** from Files/Nautilus, Dolphin, Nemo, Thunar and other file managers, drop files on the window, **Ctrl+O** or **Ctrl+V** (files, an image, text or a link).
-- A drop opens the tools wheel. **Ctrl+Space** reopens it; arrows/Tab move, Enter opens, Escape closes.
+- Dropping files on the window opens the tools wheel. Hold the same chords as on Windows while dropping: **Shift** shows conversions, **Ctrl** tools (several images start with one combined PDF), **Alt** file actions; Settings › drag shortcuts changes them. **Ctrl+Space** opens the wheel for the selection, or the file picker first when nothing is selected; arrows/Tab move, Enter opens, Escape closes.
+- Dropping a link from the browser opens download choices (YouTube: video, audio or cover; Instagram Reels: video or audio); with **Ctrl** the best-quality video downloads at once.
+- **Dolphin / Konqueror:** right-click files › **Nashi** › Open Tools Wheel, Convert…, Tools…, and for images **Combine into One PDF** (runs in the background with a notification).
+- **Meta+Shift+N** opens the wheel for files you copied with Ctrl+C in any file manager (change it in System Settings › Shortcuts › Nashi).
+- The **system tray** icon offers Choose Files, Download from Link, Settings, Recent Conversions and Quit. Closing the window keeps Nashi in the tray (Settings can turn this off); launching Nashi again, from Open with or a Dolphin action, reuses the running window.
 - **Ctrl+1/2** Home/Library, **Ctrl+F** search Library, **Ctrl+,** Settings, **Ctrl+Shift+D** use a copied media link.
 - Crop, redact and annotate regions are dragged on the preview (right-click or Delete removes the last one). Video crop and redaction use the first frame.
 - Outputs go beside the original, to a fixed folder, or to a folder you choose each time (Settings). Originals are never overwritten; a failed or cancelled batch publishes nothing.
@@ -76,9 +80,10 @@ What did not work on Linux before this port, and how it is handled now:
 | Library paths | case-insensitive de-duplication | case-sensitive on Linux, where `Photo.png` and `photo.png` are different files |
 | Pages runtime | Deno only | Deno, or Node.js with `--permission` |
 | Reveal / terminal / open | `explorer.exe` | FileManager1 D-Bus, `xdg-open`, the user's terminal |
+| Tray, single instance, drag chords | Win32 tray, named mutex, global hooks | StatusNotifierItem tray, `$XDG_RUNTIME_DIR` socket, chords on drops into the window, Dolphin service menus, a KDE global shortcut |
 | Updates | signed Windows ZIP replaces `Nashi.exe` | not self-replacing; update through `git pull && linux/install.sh` or a package |
 
-Not available on Linux by design: system-wide drag gestures while dragging in another app (Wayland does not let apps watch global input; use **Open with**, drop or the CLI instead), the tray icon and the Float shelf. HEIC export needs FFmpeg with libx265, which the standard Arch, Debian/Ubuntu and RPM Fusion builds include.
+Not available on Linux by design: watching drags and modifier keys inside *other* apps (Wayland does not let apps observe global input), so the Dolphin actions, the Meta+Shift+N shortcut and drops on the Nashi window replace the Finder/Explorer drag chords; window snapping is provided by the desktop itself (KDE: Meta+arrows or drag a window to an edge); the Float shelf. HEIC export needs FFmpeg with libx265, which the standard Arch, Debian/Ubuntu and RPM Fusion builds include.
 
 ## Build and verify
 

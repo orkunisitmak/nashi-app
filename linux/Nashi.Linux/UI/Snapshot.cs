@@ -12,10 +12,10 @@ internal static class Snapshot
     internal static Task<int> RunAsync(string[] args)
     {
         if(args.Length==0){Console.Error.WriteLine("Usage: nashi --render OUT.png [--page …] [--theme …] [--lang …] [FILE…]");return Task.FromResult(64);}
-        var output=Path.GetFullPath(args[0]);var page="home";var theme="light";var language="en";var files=new List<string>();var tool="";var execute=false;var press=false;string? clickWheel=null;var width=860;var height=820;
+        var output=Path.GetFullPath(args[0]);var page="home";var theme="light";var language="en";var files=new List<string>();var tool="";var execute=false;var press=false;string? clickWheel=null;string? chord=null;string? dropLink=null;var width=860;var height=820;
         for(var i=1;i<args.Length;i++)
         {
-            switch(args[i]){case "--page":page=args[++i];break;case "--theme":theme=args[++i];break;case "--lang":language=args[++i];break;case "--tool":tool=args[++i];break;case "--run":execute=true;break;case "--press-ctrl-space":press=true;break;case "--click-wheel":clickWheel=args[++i];break;case "--size":var s=args[++i].Split('x');width=int.Parse(s[0]);height=int.Parse(s[1]);break;default:files.Add(args[i]);break;}
+            switch(args[i]){case "--page":page=args[++i];break;case "--theme":theme=args[++i];break;case "--lang":language=args[++i];break;case "--tool":tool=args[++i];break;case "--run":execute=true;break;case "--press-ctrl-space":press=true;break;case "--click-wheel":clickWheel=args[++i];break;case "--drop-chord":chord=args[++i];break;case "--link":dropLink=args[++i];break;case "--size":var s=args[++i].Split('x');width=int.Parse(s[0]);height=int.Parse(s[1]);break;default:files.Add(args[i]);break;}
         }
         AppBuilder.Configure<App>().UseSkia().UseHeadless(new AvaloniaHeadlessPlatformOptions{UseHeadlessDrawing=false}).SetupWithoutStarting();
         var data=Path.Combine(Path.GetTempPath(),"Nashi-render-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(data);
@@ -46,6 +46,14 @@ internal static class Snapshot
                 // Wheel scrolling must reach the Home page too.
                 {var before=window.HomeScrollOffset;window.MouseWheel(new Avalonia.Point(430,400),new Avalonia.Vector(0,3));for(var k=0;k<10;k++){Pump();Thread.Sleep(10);}Console.WriteLine($"SCROLL {(window.HomeScrollOffset!=before?"moved":"stuck")}");}
             }
+            // --drop-chord Shift|Ctrl|Alt|none: the wheel a drop with that chord opens.
+            if(chord is not null)
+            {
+                var modifiers=chord.Split('+').Aggregate(Avalonia.Input.KeyModifiers.None,(m,k)=>m|(k switch{"Ctrl"=>Avalonia.Input.KeyModifiers.Control,"Shift"=>Avalonia.Input.KeyModifiers.Shift,"Alt"=>Avalonia.Input.KeyModifiers.Alt,_=>Avalonia.Input.KeyModifiers.None}));
+                var mode=window.DropMode(modifiers);window.ShowWheel(mode);Pump();
+                Console.WriteLine("DROP "+mode+": "+string.Join(" | ",window.WheelButtons.Select(Avalonia.Automation.AutomationProperties.GetName)));
+            }
+            if(dropLink is not null){window.ShowLinkWheel(WebMediaPayload.Parse(dropLink)!);Pump();Console.WriteLine("LINK "+string.Join(" | ",window.WheelButtons.Select(Avalonia.Automation.AutomationProperties.GetName)));}
             for(var n=0;n<40;n++){Pump();Thread.Sleep(25);}
             var target=dialog??window;if(dialog is not null){dialog.Show();for(var n=0;n<10;n++)Pump();}
             using var frame=target.CaptureRenderedFrame()??throw new InvalidOperationException("Nothing was rendered.");frame.Save(output);

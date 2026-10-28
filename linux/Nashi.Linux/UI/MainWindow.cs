@@ -65,7 +65,7 @@ internal sealed class MainWindow:Window
         home.Children.Add(homeTitle);var intro=Brand.Text("Convert, fine-tune, and send them on their way.",14,"Muted");intro.Margin=new(0,6,0,22);home.Children.Add(intro);
         var dropText=new StackPanel{Spacing=6};dropText.Children.Add(selectionPill);dropText.Children.Add(selection);dropText.Children.Add(fileDescription);
         var picks=new WrapPanel{Margin=new(0,10,0,0)};chooseButton=Brand.Primary("Choose files",async()=>await ChooseAsync());picks.Children.Add(chooseButton);picks.Children.Add(Brand.Button("Paste",async()=>await PasteAsync()));
-        wheelButton=Brand.Primary("Open wheel",ShowWheel);picks.Children.Add(wheelButton);dropText.Children.Add(picks);
+        wheelButton=Brand.Primary("Open wheel",()=>ShowWheel());picks.Children.Add(wheelButton);dropText.Children.Add(picks);
         list.ItemsSource=files;list.Res(ListBox.BackgroundProperty,"Inset");list.CornerRadius=new(12);list.ItemTemplate=new Avalonia.Controls.Templates.FuncDataTemplate<string>((path,_)=>new TextBlock{Text=Path.GetFileName(path),[ToolTip.TipProperty]=path});
         var clear=Brand.Button("Clear",()=>{files.Clear();CloseTool();Refresh();});var remove=Brand.Button("Remove",()=>{foreach(var item in list.SelectedItems?.OfType<string>().ToArray()??[])files.Remove(item);CloseTool();Refresh();});
         var manageButtons=new StackPanel{Spacing=4};manageButtons.Children.Add(clear);manageButtons.Children.Add(remove);var manageRow=new DockPanel();DockPanel.SetDock(manageButtons,Dock.Right);manageRow.Children.Add(manageButtons);manageRow.Children.Add(list);
@@ -87,12 +87,32 @@ internal sealed class MainWindow:Window
         AddHandler(DragDrop.DragOverEvent,(_,e)=>{e.DragEffects=!busy&&(e.Data.Contains(DataFormats.Files)||e.Data.Contains(DataFormats.Text))?DragDropEffects.Copy:DragDropEffects.None;e.Handled=true;});
         AddHandler(DragDrop.DropEvent,OnDrop);
         AddHandler(KeyDownEvent,OnKey,RoutingStrategies.Tunnel);
-        Closing+=(_,e)=>{if(busy){e.Cancel=true;SetStatus("Finish the current operation or choose Cancel before closing Nashi.");}};
+        Closing+=(_,e)=>
+        {
+            if(busy){e.Cancel=true;SetStatus("Finish the current operation or choose Cancel before closing Nashi.");return;}
+            // Keep in tray: closing hides the window; the tray, Open with or `nashi` brings it back.
+            if(KeepsRunning&&!replacing&&e.CloseReason is WindowCloseReason.WindowClosing){e.Cancel=true;Hide();}
+        };
+        Closed+=(_,_)=>{if(!replacing&&Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop&&desktop.MainWindow==this)desktop.Shutdown();};
         if(library.RecoveryNotice is {} notice)SetStatus(notice);else if(preferences.RecoveryNotice is {} settingsNotice)SetStatus(settingsNotice);
         Add(initial??[]);ShowLibrary(false);RenderLibrary();UpdateToolsButton();
         Opened+=(_,_)=>{if(operations.Status().Any(s=>s.Path is null&&s.InstallKey is "ffmpeg" or "office"))SetStatus("Some tools are missing. Choose Finish setup to see how to install them.");};
     }
     private void SetStatus(string text)=>status.Text=L10n.T(text);
+    internal bool Busy=>busy;private bool replacing;
+    internal bool KeepsRunning=>preferences.Value.KeepInTray&&!Design.IsDesignMode&&Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime;
+    internal void Reveal(){Show();if(WindowState==WindowState.Minimized)WindowState=WindowState.Normal;Activate();}
+    internal void OpenSettings()=>ShowSettings();
+    internal async Task ChooseFromTrayAsync(){await ChooseAsync();if(files.Count>0)ShowWheel();}
+    internal Task PasteLinkFromTrayAsync()=>PasteLinkAsync();
+    /// A request from another launch or the first one: Dolphin actions, shortcuts, Open with.
+    internal async Task HandleAsync(LaunchRequest request)
+    {
+        Reveal();if(busy)return;
+        if(request.Clipboard){await PasteAsync();if(files.Count>0&&!LibraryVisible)ShowWheel(request.Mode);return;}
+        if(request.Files.Length>0){files.Clear();CloseTool();Add(request.Files);ShowLibrary(false);}
+        if(request.Wheel&&files.Count>0)ShowWheel(request.Mode);
+    }
     private void UpdateToolsButton()=>toolsButton.Content=L10n.T(operations.InstallCommand().Length==0?"Tools ready":"Finish setup");
     internal void ShowLibrary(bool visible)
     {
@@ -200,9 +220,28 @@ internal sealed class MainWindow:Window
     private void OnDrop(object? sender,DragEventArgs e)
     {
         e.Handled=true;if(busy)return;
+        var mode=DropMode(e.KeyModifiers);
         var dropped=e.Data.GetFiles()?.Select(f=>f.TryGetLocalPath()).OfType<string>().ToArray()??[];
-        if(dropped.Length>0){files.Clear();CloseTool();Add(dropped);ShowLibrary(false);if(files.Count>0)ShowWheel();return;}
-        if(e.Data.GetText() is {} text)ImportText(text);
+        if(dropped.Length>0){files.Clear();CloseTool();Add(dropped);ShowLibrary(false);if(files.Count>0)ShowWheel(mode);return;}
+        if(e.Data.GetText() is not {} text)return;
+        // Links dragged from a browser: the tools chord downloads the best video at once.
+        if(WebMediaPayload.Parse(text) is {} payload&&text.Split(['\r','\n'],StringSplitOptions.RemoveEmptyEntries).Length<=2&&Desktop.LocalPath(text.Trim()) is null)
+        {
+            link.Text=payload.Url;ShowLibrary(false);
+            if(mode=="tools")_=DownloadLinkAsync(payload.Url,payload.Kind=="image"?"image":"video");else ShowLinkWheel(payload);
+            return;
+        }
+        ImportText(text);
+    }
+    internal string DropMode(KeyModifiers modifiers)
+    {
+        string Chord(KeyModifiers m)=>string.Join('+',new[]{(KeyModifiers.Control,"Ctrl"),(KeyModifiers.Shift,"Shift"),(KeyModifiers.Alt,"Alt")}.Where(x=>m.HasFlag(x.Item1)).Select(x=>x.Item2));
+        var chord=Chord(modifiers&(KeyModifiers.Control|KeyModifiers.Shift|KeyModifiers.Alt));var p=preferences.Value;
+        return chord.Length==0?"all":chord==p.ConvertModifier?"convert":chord==p.ToolsModifier?"tools":chord==p.ActionsModifier?"actions":"all";
+    }
+    private async Task DownloadLinkAsync(string url,string kind)
+    {
+        downloadKind.SelectedIndex=Math.Max(0,Array.IndexOf(new[]{"video","audio","thumbnail","image"},kind));link.Text=url;await DownloadAsync();
     }
     private async Task PasteAsync()
     {
@@ -272,14 +311,40 @@ internal sealed class MainWindow:Window
     private readonly List<Button> wheelItems=[];private int wheelIndex;
     internal bool WheelVisible=>overlay.IsVisible;
     internal IReadOnlyList<Button> WheelButtons=>wheelItems;internal Button? RunButton{get;private set;}
-    internal void ShowWheel()
+    private sealed record WheelChoice(string Title,string Symbol,Func<Task> Run);
+    /// mode follows the Windows drag chords: "convert" (Shift), "tools" (Ctrl),
+    /// "actions" (Alt) or "all" (plain drop, Ctrl+Space, Open wheel).
+    internal void ShowWheel(string mode="all")
     {
-        if(busy||files.Count==0)return;var choices=FeatureCatalog.Formats(files).Take(6).Select(f=>(Id:"convert",Format:(string?)f,Title:f.ToUpperInvariant(),Symbol:"⇄")).Concat(Operations.Choices(files).Select(c=>(Id:c.Id,Format:(string?)null,Title:L10n.T(c.Title),Symbol:c.Symbol))).Take(14).ToArray();
+        if(busy||files.Count==0)return;
+        var formats=FeatureCatalog.Formats(files).Select(f=>new WheelChoice(f.ToUpperInvariant(),"⇄",()=>OpenToolAsync("convert",f)));
+        var tools=Operations.Choices(files).Select(c=>new WheelChoice(L10n.T(c.Title),c.Symbol,()=>OpenToolAsync(c.Id,null))).ToList();
+        // Several images dropped with the tools chord: one PDF first, as on macOS/Windows.
+        if(files.Count>1&&Operations.Images(files)){var pdf=tools.FindIndex(t=>t.Title==L10n.T("Create PDF"));if(pdf>0){var item=tools[pdf];tools.RemoveAt(pdf);tools.Insert(0,item);}}
+        var actions=new WheelChoice[]{new(L10n.T("Open folder"),"▱",()=>Task.Run(()=>Desktop.Reveal(files[0]))),new(L10n.T("Copy path"),"⧉",async()=>{await SetClipboardAsync(string.Join('\n',files));SetStatus("Path copied.");}),
+            new(L10n.T("Copy to…"),"⇉",()=>CopyOrMoveAsync(false)),new(L10n.T("Move to…"),"➜",()=>CopyOrMoveAsync(true)),new(L10n.T("Open terminal here"),">_",()=>{if(!Desktop.Terminal(files[0]))SetStatus("No terminal was found. Set $TERMINAL to your terminal.");return Task.CompletedTask;})};
+        var choices=(mode switch{"convert"=>formats.Take(14),"tools"=>tools.Take(14),"actions"=>actions,_=>formats.Take(6).Concat(tools).Take(14)}).ToArray();
+        ShowChoices(choices,files.Count==1?Path.GetFileName(files[0]):L10n.T($"{files.Count} files, ready to go."));
+    }
+    /// A dropped link: the download choices for that site, like the Windows wheel.
+    internal void ShowLinkWheel(WebMediaPayload payload)
+    {
+        WheelChoice Download(string title,string symbol,string kind)=>new(L10n.T(title),symbol,()=>DownloadLinkAsync(payload.Url,kind));
+        var choices=payload.Kind switch
+        {
+            "youtube"=>new[]{Download("Download Video","↓","video"),Download("Download Audio","♫","audio"),Download("Download Thumbnail","▣","thumbnail")},
+            "image"=>[Download("Download Image","▣","image")],
+            _=>[Download("Download Video","↓","video"),Download("Download Audio","♫","audio")]
+        };
+        ShowChoices(choices,new Uri(payload.Url).Host);
+    }
+    private void ShowChoices(WheelChoice[] choices,string caption)
+    {
         if(choices.Length==0)return;
         overlay.Children.Clear();wheelItems.Clear();overlay.Background=new SolidColorBrush(Color.FromArgb(120,10,16,12));
         var size=Math.Min(560,Math.Min(Bounds.Width,Bounds.Height)-40);var canvas=new Canvas{Width=size,Height=size,HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center};
         var disc=new Border{Width=size,Height=size,CornerRadius=new(size/2),BorderThickness=new(1),Opacity=.97}.Res(Border.BackgroundProperty,"Surface").Res(Border.BorderBrushProperty,"Line");canvas.Children.Add(disc);
-        var center=new StackPanel{Width=150,Spacing=4};center.Children.Add(new Image{Source=Brand.Asset("NashiMark"),Width=46,Height=46});var label=Brand.Text(files.Count==1?Path.GetFileName(files[0]):L10n.T($"{files.Count} files, ready to go."),12,"Muted",false);label.TextAlignment=TextAlignment.Center;label.MaxHeight=48;center.Children.Add(label);
+        var center=new StackPanel{Width=150,Spacing=4};center.Children.Add(new Image{Source=Brand.Asset("NashiMark"),Width=46,Height=46});var label=Brand.Text(caption,12,"Muted",false);label.TextAlignment=TextAlignment.Center;label.MaxHeight=48;center.Children.Add(label);
         Canvas.SetLeft(center,size/2-75);Canvas.SetTop(center,size/2-48);canvas.Children.Add(center);
         var radius=size/2-62;
         for(var n=0;n<choices.Length;n++)
@@ -289,7 +354,7 @@ internal sealed class MainWindow:Window
             ((TextBlock)content.Children[0]).HorizontalAlignment=HorizontalAlignment.Center;title.HorizontalAlignment=HorizontalAlignment.Center;
             var button=new Button{Content=content,Width=100,Height=72,CornerRadius=new(18),HorizontalContentAlignment=HorizontalAlignment.Center,VerticalContentAlignment=VerticalAlignment.Center};
             Avalonia.Automation.AutomationProperties.SetName(button,choice.Title);
-button.Click+=async(_,_)=>{HideWheel();await OpenToolAsync(choice.Id,choice.Format);};
+button.Click+=async(_,_)=>{HideWheel();await choice.Run();};
             Canvas.SetLeft(button,size/2+Math.Cos(angle)*radius-50);Canvas.SetTop(button,size/2+Math.Sin(angle)*radius-36);canvas.Children.Add(button);wheelItems.Add(button);
         }
         overlay.Children.Add(canvas);overlay.IsVisible=true;wheelIndex=0;wheelItems[0].Focus();
@@ -378,7 +443,7 @@ button.Click+=async(_,_)=>{HideWheel();await OpenToolAsync(choice.Id,choice.Form
         if(!window.Saved)return;L10n.Language=preferences.Value.Language;Brand.Apply(library.Appearance);
         // Labels are localized when built, so a language change rebuilds the window with the same selection.
         if(language!=preferences.Value.Language&&!busy&&Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
-        {var replacement=new MainWindow(library,preferences,files.ToArray()){Width=Width,Height=Height,Position=Position,WindowStartupLocation=WindowStartupLocation.Manual};desktop.MainWindow=replacement;replacement.Show();Close();return;}
+        {var replacement=new MainWindow(library,preferences,files.ToArray()){Width=Width,Height=Height,Position=Position,WindowStartupLocation=WindowStartupLocation.Manual};desktop.MainWindow=replacement;replacement.Show();replacing=true;Close();return;}
         Refresh();RenderLibrary();SetStatus("Settings saved.");
     }
 }

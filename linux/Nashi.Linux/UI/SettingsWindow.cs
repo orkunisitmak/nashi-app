@@ -24,6 +24,7 @@ internal sealed class SettingsWindow:Window
         var outputModes=new[]{"beside","ask","folder"};var output=Combo("Save new files",["Beside the original","Ask every time","Always this folder"],Math.Max(0,Array.IndexOf(outputModes,p.OutputMode)));
         var outputFolder=Folder("Output folder",p.OutputFolder);var downloads=Folder("Download folder",p.DownloadFolder);
         var reveal=new CheckBox{Content=L10n.T("Show finished files in the file manager"),IsChecked=p.RevealFinished,Margin=new(0,8,0,0)};stack.Children.Add(reveal);
+        var tray=new CheckBox{Content=L10n.T("Keep Nashi in the system tray when the window closes"),IsChecked=p.KeepInTray};stack.Children.Add(tray);
         var note=Brand.Text("Updates come from your package or a new release; Nashi does not replace itself on Linux.",11,"Muted");note.Margin=new(0,10,0,0);stack.Children.Add(note);
         var error=Brand.Text("",12,"Gold",false);stack.Children.Add(error);
         var buttons=new StackPanel{Orientation=Orientation.Horizontal,HorizontalAlignment=HorizontalAlignment.Right,Margin=new(0,8,0,0)};
@@ -33,7 +34,7 @@ internal sealed class SettingsWindow:Window
             {
                 var mode=outputModes[Math.Max(0,output.SelectedIndex)];var folder=(outputFolder.Text??"").Trim();var download=(downloads.Text??"").Trim();
                 if(mode=="folder"&&!Path.IsPathFullyQualified(folder))throw new ArgumentException(L10n.T("Choose a folder"));if(!Path.IsPathFullyQualified(download))throw new ArgumentException(L10n.T("Choose a folder"));
-                preferences.Save(p with{Language=language.SelectedIndex==1?"tr":"en",OutputMode=mode,OutputFolder=folder,DownloadFolder=download,RevealFinished=reveal.IsChecked==true});
+                preferences.Save(p with{Language=language.SelectedIndex==1?"tr":"en",OutputMode=mode,OutputFolder=folder,DownloadFolder=download,RevealFinished=reveal.IsChecked==true,KeepInTray=tray.IsChecked==true});
                 library.SetAppearance(new[]{"system","light","dark"}[Math.Max(0,appearance.SelectedIndex)]);Saved=true;Close();
             }
             catch(Exception failure)when(failure is ArgumentException or IOException or UnauthorizedAccessException){error.Text=failure.Message;}
