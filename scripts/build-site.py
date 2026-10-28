@@ -3,9 +3,9 @@
 from pathlib import Path
 import json,html,hashlib,re
 R=Path(__file__).resolve().parent.parent
-catalog=json.loads((R/'docs/assets/catalog.json').read_text())
+catalog=json.loads((R/'docs/assets/catalog.json').read_text(encoding='utf-8'))
 css_revision=hashlib.sha256((R/'docs/assets/site.css').read_bytes()).hexdigest()[:12]
-source=(R/'Sources/NashiCore/FeatureCatalog.swift').read_text()
+source=(R/'Sources/NashiCore/FeatureCatalog.swift').read_text(encoding='utf-8')
 demo_catalog=dict(catalog)
 for key in ['singleTools','multipleTools']:
  section=source.split('let '+key+':')[1].split('\n    ]')[0]
@@ -13,9 +13,9 @@ for key in ['singleTools','multipleTools']:
 # UI copy and palette come from the shipping apps, just like the tool matrix.
 # Keep marketing copy independent; the interactive preview follows native UI.
 wheel_titles=dict(re.findall(r'\.(\w+): "([^"]+)"',source.split('let toolNames:')[1].split('\n    ]')[0]))
-models=(R/'Sources/NashiCore/Models.swift').read_text().split('public enum ToolKind:')[1].split('public struct EditRect:')[0]
+models=(R/'Sources/NashiCore/Models.swift').read_text(encoding='utf-8').split('public enum ToolKind:')[1].split('public struct EditRect:')[0]
 editor_titles=dict(re.findall(r'case \.(\w+): return "([^"]+)"',models))
-editor=(R/'Sources/NashiApp/ToolEditor.swift').read_text()
+editor=(R/'Sources/NashiApp/ToolEditor.swift').read_text(encoding='utf-8')
 def simple_switch(section):
  result={}
  for cases,value in re.findall(r'case ([^:\n]+):\s*return "([^"\\]*)"\s*\n',section):
@@ -23,13 +23,13 @@ def simple_switch(section):
  return result
 hints=simple_switch(editor.split('var toolHint:String')[1].split('var primaryTitle:String')[0])
 primary=simple_switch(editor.split('var primaryTitle:String')[1].split('var canApply:Bool')[0])
-palette={key:{'light':light,'dark':dark} for key,light,dark in re.findall(r'\("(\w+)","(#[A-Fa-f0-9]+)","(#[A-Fa-f0-9]+)"\)',(R/'windows/Nashi.Windows/Theme.cs').read_text())}
-translations=json.loads((R/'Sources/NashiCore/Resources/Turkish.json').read_text())
-feedback_source=(R/'Sources/NashiApp/WheelFeedback.swift').read_text()
+palette={key:{'light':light,'dark':dark} for key,light,dark in re.findall(r'\("(\w+)","(#[A-Fa-f0-9]+)","(#[A-Fa-f0-9]+)"\)',(R/'windows/Nashi.Windows/Theme.cs').read_text(encoding='utf-8'))}
+translations=json.loads((R/'Sources/NashiCore/Resources/Turkish.json').read_text(encoding='utf-8'))
+feedback_source=(R/'Sources/NashiApp/WheelFeedback.swift').read_text(encoding='utf-8')
 feedback={'voices':int(re.search(r'for _ in 0\.\.<(\d+)',feedback_source)[1]),'volume':float(re.search(r'player.volume = ([\d.]+)',feedback_source)[1]),'minimumInterval':float(re.search(r'minimumInterval: TimeInterval = ([\d.]+)',feedback_source)[1])}
 ui_strings=set(wheel_titles.values())|set(editor_titles.values())|set(hints.values())|set(primary.values())|{'Fine-tune it. Save a fresh copy.','Convert','Tools','Actions','Float','Copy','Move','Copy Path','Terminal','Original stays safe','PREVIEW','MAKE IT YOURS','Save a fresh copy','Icons','List','Clear','Close','Appearance','Light','Dark'}
 demo_catalog['presentation']={'wheelTitles':wheel_titles,'editorTitles':editor_titles,'hints':hints,'primaryTitles':primary,'palette':palette,'feedback':feedback,'translations':{text:translations[text] for text in sorted(ui_strings) if text in translations}}
-(R/'docs/assets/demo/catalog.json').write_text(json.dumps(demo_catalog,ensure_ascii=False,separators=(',',':')))
+(R/'docs/assets/demo/catalog.json').write_text(json.dumps(demo_catalog,ensure_ascii=False,separators=(',',':')), encoding='utf-8')
 play_revision=hashlib.sha256(b''.join((R/p).read_bytes() for p in ['docs/assets/playground.js','docs/assets/playground.css','docs/assets/wheel-geometry.mjs','docs/assets/demo/catalog.json','docs/assets/demo/wheel-selection.wav'])).hexdigest()[:12]
 media_revision=hashlib.sha256((R/'docs/assets/showcase/nashi-demo.mp4').read_bytes()).hexdigest()[:12]
 features=[
@@ -110,5 +110,5 @@ for language in ['en','tr']:
 <section class="trust"><div><span class="eyebrow">{choose('Local first. Open by design.','Önce yerel. Tasarımı açık.')}</span><h2>{choose('Small footprint.<br>Clear boundaries.','Küçük araç.<br>Açık sınırlar.')}</h2></div><div><h3>{choose('Privacy','Gizlilik')}</h3><p>{choose('Conversion and editing run locally. Web downloads contact the chosen site. No analytics, cloud account, browser-cookie import or subscription is built in.','Dönüştürme ve düzenleme yerelde çalışır. Web indirmeleri seçilen siteye bağlanır. Analytics, bulut hesabı, tarayıcı çerezi aktarma veya abonelik bulunmaz.')}</p><h3>{choose('Signed updates','İmzalı güncellemeler')}</h3><p>{choose('Official public updates require no GitHub token. macOS verifies its signed feed and archive; Windows verifies its archive signature and version. Active jobs finish before the app restarts.','Resmi public güncellemeler GitHub tokenı istemez. macOS feed ve arşiv imzasını; Windows arşiv imzasını ve sürümünü doğrular. Yeniden başlatmadan önce mevcut iş tamamlanır.')}</p><h3>{choose('Transparent limitations','Açık sınırlamalar')}</h3><p>{choose('Complex document conversions are best-effort. Haptic feedback depends on hardware. macOS and Windows may show first-run warnings for builds without an OS-trusted publisher signature. We do not ask you to disable system security.','Karmaşık belge dönüşümleri her özelliği koruyamayabilir. Titreşim donanıma bağlıdır. İşletim sistemince güvenilen yayıncı imzası olmayan build’lerde macOS/Windows ilk açılış uyarıları gösterebilir. Sistem güvenliğini kapatmanız istenmez.')}</p></div></section>
 <section class="inspiration"><h2>{choose('Inspired. Independently made.','İlham alındı. Bağımsız geliştirildi.')}</h2><p>{choose('Nashi was inspired by Tangerine’s delightful drag-and-wheel interaction and adds new features and refined workflows. It is not affiliated with or endorsed by Tangerine or LEAP STUDIO.','Nashi, Tangerine’in keyifli sürükle ve çark etkileşiminden ilham aldı; yeni özellikler ve geliştirilmiş iş akışları ekliyor. Tangerine veya LEAP STUDIO ile bağlantılı değildir ve onlar tarafından desteklenmez.')}</p><a href="https://tangerineformac.com/">Tangerine ↗</a></section></main>
 <footer><a class="brand" href="#">Nashi <span>◉</span></a><p>{choose('Original source under MIT. Third-party tools keep their own licenses.','Orijinal kaynak kod MIT lisanslıdır. Üçüncü taraf araçların kendi lisansları geçerlidir.')}</p><a href="https://github.com/orkunisitmak/nashi-app/blob/main/SECURITY.md">{choose('Security','Güvenlik')}</a><a href="https://github.com/orkunisitmak/nashi-app/blob/main/LICENSE">MIT</a></footer></body></html>'''
- out=R/'docs'/('tr/index.html' if tr else 'index.html');out.write_text(doc)
+ out=R/'docs'/('tr/index.html' if tr else 'index.html');out.write_text(doc, encoding='utf-8')
 print('Built EN/TR pages and interactive catalog: 27 tools, 45 inputs, 275 routes,',len(shortcuts),'shortcuts each')
