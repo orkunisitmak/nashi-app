@@ -1,4 +1,5 @@
 import XCTest
+import CoreGraphics
 @testable import NashiCore
 
 /// Mirrors windows/Nashi.Verify/TargetSizeChecks.cs so both platforms share the same expectations.
@@ -45,6 +46,24 @@ final class TargetSizeSearchTests: XCTestCase {
         // compress passes .max when the source cannot be kept (resized or re-encoded output).
         let outcome=try TargetSizeSearch.run(originalBytes:.max,targetBytes:30000,startQuality:90,lossy:true,allowResize:true,encode:smooth)
         XCTAssertEqual(outcome.status,.achieved);XCTAssertGreaterThan(outcome.attempts,0);XCTAssertLessThanOrEqual(try XCTUnwrap(outcome.best).bytes,30000)
+    }
+
+    func testCompressionMeasuresUpscaledOutputWhenSourceIsUnderTarget() throws {
+        let folder=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:folder) }
+        let input=folder.appendingPathComponent("small.png")
+        // Seeded noise keeps the fixture detailed, synthetic and deterministic.
+        var seed:UInt64=42,pixels=[UInt8](repeating:255,count:16*12*4)
+        for index in pixels.indices where index%4 != 3 { seed=seed &* 6364136223846793005 &+ 1442695040888963407;pixels[index]=UInt8(truncatingIfNeeded:seed>>56) }
+        let context=try XCTUnwrap(CGContext(data:&pixels,width:16,height:12,bitsPerComponent:8,bytesPerRow:16*4,space:CGColorSpace(name:CGColorSpace.sRGB)!,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue))
+        try ImageEngine.write(try XCTUnwrap(context.makeImage()),to:input)
+        let original=try Data(contentsOf:input),target=Int64(original.count)+1
+        var options=OperationOptions();options.width=120;options.height=90
+        let expanded=try XCTUnwrap(ImageEngine.compress(input,options:options,token:.init()).first)
+        XCTAssertGreaterThan(Int64(try Data(contentsOf:expanded).count),target)
+        options.targetBytes=target
+        let compressed=try XCTUnwrap(ImageEngine.compress(input,options:options,token:.init()).first)
+        XCTAssertLessThanOrEqual(Int64(try Data(contentsOf:compressed).count),target)
+        XCTAssertEqual(try Data(contentsOf:input),original)
     }
 
     func testCancellationStopsEncodingAndDescriptionIsPlain() {

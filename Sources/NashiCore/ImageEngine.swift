@@ -510,6 +510,8 @@ public enum ImageEngine {
         if let target { guard target>0 else { throw NashiError.invalidInput("Choose a positive target file size.") } }
         let ext=["jpg","jpeg","heic","webp","avif","png"].contains(input.pathExtension.lowercased()) ? input.pathExtension : "jpg"
         let output=OutputFiles.unique(for:input,extension:ext,suffix:" - Compressed",directory:options.outputDirectory)
+        // Each attempt overwrites the output; a cancelled or failed search must not leave one behind.
+        var complete=false;defer { if !complete { try? FileManager.default.removeItem(at:output) } }
         let quality=max(0.01,min(1,options.quality)),lossy=ext.lowercased() != "png"
         func encode(_ percent:Int,_ scale:Double) throws->Int64 {
             try token.check();try? FileManager.default.removeItem(at:output)
@@ -531,6 +533,7 @@ public enum ImageEngine {
         if let best { if try encode(best.quality,best.scale) != best.bytes { try? FileManager.default.removeItem(at:output);throw NashiError.failed("The compressed size changed between attempts.") } }
         else { _=try encode(start,1) }
         if (best?.scale ?? 1)==1,image.width==originalWidth,image.height==originalHeight { try OutputFiles.retainSmallerOriginal(input,output:output,target:target) }
+        complete=true
         return [output]
     }
 
