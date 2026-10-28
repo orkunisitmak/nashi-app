@@ -2,12 +2,15 @@ name: Linux
 on:
   workflow_dispatch:
   push:
-    branches: [main, linux-port]
-    paths: ['linux/**', 'windows/Nashi.Core/**', 'windows/Nashi.Windows/DocumentConversion.cs', 'windows/Nashi.Windows/RichTextAttachments.cs', 'Resources/**', 'scripts/*linux*', '.github/workflows/linux.yml']
+    branches: [main]
+    paths: ['linux/**', 'windows/Nashi.Core/**', 'windows/Nashi.Verify/**', 'windows/Directory.Build.props', 'windows/Nashi.Windows/CompositionOptions.cs', 'windows/Nashi.Windows/DocumentConversion.cs', 'windows/Nashi.Windows/RichTextAttachments.cs', 'Resources/**', 'scripts/*linux*', '.github/workflows/linux.yml']
   pull_request:
-    paths: ['linux/**', 'windows/Nashi.Core/**', 'windows/Nashi.Windows/DocumentConversion.cs', 'windows/Nashi.Windows/RichTextAttachments.cs', 'Resources/**', 'scripts/*linux*', '.github/workflows/linux.yml']
+    paths: ['linux/**', 'windows/Nashi.Core/**', 'windows/Nashi.Verify/**', 'windows/Directory.Build.props', 'windows/Nashi.Windows/CompositionOptions.cs', 'windows/Nashi.Windows/DocumentConversion.cs', 'windows/Nashi.Windows/RichTextAttachments.cs', 'Resources/**', 'scripts/*linux*', '.github/workflows/linux.yml']
 permissions:
   contents: read
+concurrency:
+  group: linux-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
     strategy:
