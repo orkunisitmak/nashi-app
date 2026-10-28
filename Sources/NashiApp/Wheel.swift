@@ -134,7 +134,6 @@ enum WheelChrome {
 private enum WheelGlass {
     private static func dynamic(_ light:NSColor,_ dark:NSColor)->NSColor { NSColor(name:nil) { $0.bestMatch(from:[.darkAqua,.aqua]) == .darkAqua ? dark:light } }
     static let veil=dynamic(NSColor(srgbRed:1,green:1,blue:1,alpha:0.28),NSColor(srgbRed:0.06,green:0.09,blue:0.15,alpha:0.34))
-    static let disc=dynamic(NSColor(srgbRed:0.96,green:0.97,blue:0.99,alpha:0.74),NSColor(srgbRed:0.05,green:0.08,blue:0.13,alpha:0.62))
     static let hairline=dynamic(NSColor.white.withAlphaComponent(0.72),NSColor.white.withAlphaComponent(0.16))
 }
 
@@ -171,7 +170,6 @@ final class WheelView:NSView {
         let solid=WheelChrome.solid
         let backdrop=NSBezierPath(ovalIn:bounds.insetBy(dx:bounds.width*0.035,dy:bounds.height*0.035))
         if solid { NSColor.windowBackgroundColor.withAlphaComponent(0.22).setFill();backdrop.fill();NSColor.gray.withAlphaComponent(0.17).setStroke();backdrop.lineWidth=0.7;backdrop.stroke() }
-        else { WheelGlass.veil.setFill();backdrop.fill();WheelGlass.hairline.setStroke();backdrop.lineWidth=1;backdrop.stroke() }
         for (i,item) in items.enumerated() {
             let path=petal(i)
             if solid,selected != i,let gradient=NSGradient(starting:NSColor(calibratedWhite:0.36,alpha:1),ending:NSColor(calibratedWhite:0.20,alpha:1)) { gradient.draw(in:path,angle:90) }
@@ -206,7 +204,6 @@ final class WheelView:NSView {
         }
         let disc=geometry.disc
         if solid { NSColor.controlBackgroundColor.setFill();disc.fill() }
-        else { WheelGlass.disc.setFill();disc.fill();WheelGlass.hairline.setStroke();disc.lineWidth=1;disc.stroke() }
         func key(_ setting:String,_ fallback:String)->String { let name=UserDefaults.standard.string(forKey:setting) ?? fallback;return ModifierChord.legacy(name)?.symbols ?? name }
         let emptyTitle=mode == .tools ? "No file tools\n\(key("convertKey","shift")) Convert\n\(key("actionsKey","control")) Actions":"No formats\n\(key("toolsKey","command")) Tools\n\(key("actionsKey","control")) Actions"
         let title=selected.flatMap{items.indices.contains($0) ? items[$0].title:nil} ?? (items.isEmpty ? emptyTitle:(centerTitle ?? mode.rawValue.capitalized))
