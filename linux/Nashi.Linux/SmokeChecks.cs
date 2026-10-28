@@ -82,6 +82,7 @@ internal static class SmokeChecks
             var cropWidth=cropEditor.GetVisualDescendants().OfType<TextBox>().Single(t=>t.Name=="Width");cropWidth.Text="100";await Task.Delay(100);Check(CropNear(new Rect(10,10,100,30)),"numeric crop width updates selection: "+cropSurface.CropBounds);
             var aspectChoice=cropEditor.GetVisualDescendants().OfType<ComboBox>().Single();aspectChoice.SelectedItem="16:9";
             Check(cropSurface.CropBounds is {} selected&&Math.Abs(selected.Width/selected.Height-16d/9)<.0001,"crop preset updates visible selection");await Task.Delay(150);Capture(cropEditor,Path.Combine(directory,"crop-handles.png"));cropEditor.Close();
+            await AnnotationChecks.Run(window,fixture,directory,Check,Capture);
             var shelf=new FloatWindow([fixture],_=>{});shelf.Show(window);await Task.Delay(150);
             shelf.AddFiles([fixture,Path.Combine(directory,"missing.png")]);Check(shelf.Files.Count==1,"Float ignores duplicate and missing files");
             using(var transfer=new DataTransfer()){transfer.Add(DataTransferItem.CreateFile((await window.StorageProvider.TryGetFileFromPathAsync(new Uri(pdf)))!));shelf.RaiseEvent(new DragEventArgs(DragDrop.DropEvent,transfer,shelf,new Point(60,80),KeyModifiers.None));}

@@ -22,6 +22,7 @@ public sealed class ToolEditor:Window
     private readonly string action;
     private ImageSurface? surface;
     private ComboBox? cropAspect;
+    private ComboBox? annotationTool;
     private bool cropSync;
     private bool editorReady;
     private MediaPreview? mediaPreview;
@@ -44,17 +45,21 @@ public sealed class ToolEditor:Window
         var body=new Grid{ColumnDefinitions=new("3*,2*")};var preview=new StackPanel{Spacing=14,Margin=new(0,0,24,0)};body.Children.Add(new ScrollViewer{Content=preview});
         if(FeatureCatalog.IsImage(inputs[0]))
         {
-            try{surface=new ImageSurface(PhotoCodec.Png(inputs[0]),action,UpdateRegionFields);preview.Children.Add(surface);
+            try{surface=new ImageSurface(PhotoCodec.Png(inputs[0]),action,UpdateRegionFields);surface.DrawingError+=message=>error.Text=message;preview.Children.Add(surface);
                 if(action=="cropImage"){
                     preview.Children.Add(NashiTheme.Text("Aspect ratio",13));var ratios=cropAspect=new ComboBox{ItemsSource=new[]{"Free","1:1","16:9","9:16","4:3","3:4"},SelectedIndex=0};
                     ratios.SelectionChanged+=(_,_)=>{var text=ratios.SelectedItem as string;if(text is null||text=="Free")surface.CropRatio=null;else{var parts=text.Split(':');surface.CropRatio=double.Parse(parts[0],CultureInfo.InvariantCulture)/double.Parse(parts[1],CultureInfo.InvariantCulture);}};preview.Children.Add(ratios);
                 }
                 if(action=="annotateImage"){
-                    var tool=new ComboBox{ItemsSource=new[]{"Marker","Rectangle","Arrow","Line","Ellipse","Text","Number","Callout","Magnifier","Image","Freehand","Select / Move"},SelectedIndex=0};tool.SelectionChanged+=(_,_)=>surface.DrawingTool=(string)tool.SelectedItem!;preview.Children.Add(tool);
-                    preview.Children.Add(NashiTheme.Button("Undo last mark",surface.Undo));
-                    preview.Children.Add(NashiTheme.Button("Choose annotation image",async()=>{var picked=await StorageProvider.OpenFilePickerAsync(new(){AllowMultiple=false});surface.InsertImage=picked.FirstOrDefault()?.TryGetLocalPath();}));
+                    var toolsPanel=new StackPanel{Spacing=8};fields.Children.Add(toolsPanel);toolsPanel.Children.Add(NashiTheme.Text("Drawing tool",13));
+                    var tool=annotationTool=new ComboBox{ItemsSource=new[]{"Marker","Rectangle","Arrow","Line","Ellipse","Text","Number","Callout","Magnifier","Image","Freehand","Select / Move"},SelectedIndex=0};tool.SelectionChanged+=(_,_)=>surface.DrawingTool=(string)tool.SelectedItem!;toolsPanel.Children.Add(tool);
+                    var editing=new WrapPanel();editing.Children.Add(NashiTheme.Button("Undo",surface.Undo));editing.Children.Add(NashiTheme.Button("Redo",surface.Redo));editing.Children.Add(NashiTheme.Button("Delete selected",surface.DeleteSelected));editing.Children.Add(NashiTheme.Button("Clear",surface.ClearMarks));toolsPanel.Children.Add(editing);
+                    toolsPanel.Children.Add(NashiTheme.Button("Choose annotation image",async()=>{var picked=await StorageProvider.OpenFilePickerAsync(new(){AllowMultiple=false});if(picked.FirstOrDefault()?.TryGetLocalPath() is {} path){surface.InsertImage=path;tool.SelectedItem="Image";}}));
+                    var marks=new ListBox{Name="Annotations",MaxHeight=100};toolsPanel.Children.Add(marks);var updating=false;
+                    void RefreshMarks(){updating=true;try{marks.ItemsSource=surface.Annotations.Select((mark,index)=>$"{index+1}. {mark.Kind}").ToArray();marks.SelectedIndex=surface.SelectedAnnotation;}finally{updating=false;}}
+                    surface.AnnotationsChanged+=RefreshMarks;marks.SelectionChanged+=(_,_)=>{if(updating||marks.SelectedIndex<0)return;var index=marks.SelectedIndex;tool.SelectedItem="Select / Move";surface.SelectAnnotation(index);};RefreshMarks();
                 }
-                if(action is "cropImage" or "redactImage" or "annotateImage")preview.Children.Add(NashiTheme.Text(action=="cropImage"?"Drag inside to move, handles to resize, or outside to start again. Shift locks the ratio.":"Drag to draw. Shift locks the ratio. Ctrl+Z undoes a mark.",12,true));
+                if(action is "cropImage" or "redactImage" or "annotateImage")preview.Children.Add(NashiTheme.Text(action=="cropImage"?"Drag inside to move, handles to resize, or outside to start again. Shift locks the ratio.":action=="annotateImage"?"Draw with the selected tool. Use Select / Move to drag marks or resize their handles. Ctrl+Z undoes; Ctrl+Shift+Z redoes.":"Drag to draw. Shift locks the ratio. Ctrl+Z undoes a mark.",12,true));
             }catch(Exception ex){preview.Children.Add(NashiTheme.Text(ex.Message));}
         }
         else if(FeatureCatalog.IsVideo(inputs[0])||FeatureCatalog.IsAudio(inputs[0])){mediaPreview=new MediaPreview(inputs[0],GetNumber,Set);preview.Children.Add(mediaPreview);}
@@ -68,7 +73,7 @@ public sealed class ToolEditor:Window
             preview.Children.Add(NashiTheme.Button("Original",()=>mediaPreview.Load(inputs[0])));
             var processed=NashiTheme.Button("Preview processed result",()=>{});processed.Click+=(_,_)=>processedTask=PreviewProcessed(inputs[0],engine,processed);preview.Children.Add(processed);
         }
-        Closed+=async(_,_)=>{lifetime.Cancel();photoClock.Stop();if(processedTask is not null)await processedTask;if(photoTask is not null)await photoTask;if(processedDirectory is not null&&Directory.Exists(processedDirectory))Directory.Delete(processedDirectory,true);};
+        Closed+=async(_,_)=>{lifetime.Cancel();photoClock.Stop();try{if(processedTask is not null)await processedTask;if(photoTask is not null)await photoTask;if(processedDirectory is not null&&Directory.Exists(processedDirectory))Directory.Delete(processedDirectory,true);}finally{surface?.DisposeArtwork();}};
         if(inputs.Length>1){
             fields.Children.Add(NashiTheme.Text("File order",16));var order=new ListBox{ItemsSource=inputOrder.Select(Path.GetFileName).ToArray(),SelectedIndex=0,MaxHeight=150};fields.Children.Add(order);
             void Move(int delta){var from=order.SelectedIndex;var to=from+delta;if(from<0||to<0||to>=inputOrder.Count)return;var item=inputOrder[from];inputOrder.RemoveAt(from);inputOrder.Insert(to,item);order.ItemsSource=inputOrder.Select(Path.GetFileName).ToArray();order.SelectedIndex=to;QueuePhoto();}
@@ -110,13 +115,13 @@ public sealed class ToolEditor:Window
         {
             if(action is "editImage" or "cropImage" or "redactImage")
             {Number("Width",null);Number("Height",null);}
-            if(action is "cropImage" or "redactImage" or "annotateImage"){Number("X",0);Number("Y",0);}
+            if(action is "cropImage" or "redactImage"){Number("X",0);Number("Y",0);}
             if(action=="editImage")
             {Number("Rotation",0);Toggle("FlipHorizontal",false);Toggle("FlipVertical",false);BuildObject("Adjustments",new PhotoAdjustments());}
             if(action=="frameImage")BuildObject("Frame",new FrameOptions());
             if(action=="createCollage")BuildObject("Collage",new CollageOptions());
             if(action=="redactImage")Text("RedactionStyle","solid");
-            if(action=="annotateImage"){Text("Text","");Text("Ink","#1e271a");Text("Font","DejaVu-Sans");Number("FontSize",32);}
+            if(action=="annotateImage"){Text("Text","Note");Text("Ink","#FF5200");Text("Font","system");Number("StrokeWidth",3);Number("FontSize",24);}
             if(action=="convert")Toggle("PreserveImageMetadata",false);
             if(action is "compress" or "convert"){Number("Quality",85);if(action=="compress"){Number("TargetBytes",null);Number("ReductionPercent",null);}}
         }
@@ -173,14 +178,17 @@ public sealed class ToolEditor:Window
     private void Text(string name,string initial)
     {
         var choices=name.Split('.')[^1] switch{
-            "Backdrop"=>new[]{"solid","gradient","image"},"Layout"=>name.StartsWith("Collage.",StringComparison.Ordinal)?new[]{"grid","row","column","featured"}:new[]{"editable","preserve"},
+            "Font"=>new[]{"system","rounded","serif","monospaced"},"Backdrop"=>new[]{"solid","gradient","image"},"Layout"=>name.StartsWith("Collage.",StringComparison.Ordinal)?new[]{"grid","row","column","featured"}:new[]{"editable","preserve"},
             "EpubLayout"=>new[]{"reflowable","fixed"},"RedactionStyle"=>new[]{"solid","blur","pixelate"},"RedactionMode"=>new[]{"solid","blur","pixelate"},
             "SampleDepth"=>new[]{"matchSource","pcm16","pcm24","pcm32","float32"},"Visualization"=>new[]{"waveform","spectrum","image"},_=>Array.Empty<string>()};
-        if(choices.Length>0){fields.Children.Add(NashiTheme.Text(Label(name),13));var choice=new ComboBox{ItemsSource=choices,SelectedItem=initial,Tag=initial};fields.Children.Add(choice);values[name]=()=>choice.SelectedItem as string??initial;return;}
+        if(choices.Length>0){fields.Children.Add(NashiTheme.Text(Label(name),13));var choice=new ComboBox{ItemsSource=choices,SelectedItem=initial,Tag=initial};fields.Children.Add(choice);values[name]=()=>choice.SelectedItem as string??initial;if(name=="Font"&&surface is not null){surface.AnnotationFont=initial;choice.SelectionChanged+=(_,_)=>surface.AnnotationFont=choice.SelectedItem as string??"system";}return;}
 
         fields.Children.Add(NashiTheme.Text(Label(name),13));var input=new TextBox{Name=name.Replace(".","_",StringComparison.Ordinal),Text=initial,PlaceholderText=Hint(name)};fields.Children.Add(input);values[name]=()=>input.Text??"";input.Tag=initial;textFields[name]=input;
         if(name.EndsWith("BackgroundImage",StringComparison.Ordinal)||name.EndsWith("VisualizationImage",StringComparison.Ordinal))fields.Children.Add(NashiTheme.Button("Choose image",async()=>{var picked=await StorageProvider.OpenFilePickerAsync(new(){AllowMultiple=false});if(picked.FirstOrDefault()?.TryGetLocalPath()is {} path)input.Text=path;}));
-        if(surface is not null)input.TextChanged+=(_,_)=>{if(name=="Ink")surface.Ink=input.Text??"#FF5200";if(name=="Text")surface.AnnotationText=input.Text??"Note";if(name=="FontSize"&&double.TryParse(input.Text,CultureInfo.InvariantCulture,out var size))surface.FontSize=size;};
+        if(surface is not null){
+            void UpdateStyle(){if(name=="Ink")surface.Ink=input.Text??"";if(name=="Text")surface.AnnotationText=input.Text??"";if(name=="FontSize")surface.FontSize=double.TryParse(input.Text,CultureInfo.InvariantCulture,out var size)?size:double.NaN;if(name=="StrokeWidth")surface.StrokeWidth=double.TryParse(input.Text,CultureInfo.InvariantCulture,out var width)?width:double.NaN;}
+            UpdateStyle();input.PropertyChanged+=(_,e)=>{if(e.Property==TextBox.TextProperty)UpdateStyle();};
+        }
         if(action=="cropImage"&&(name is "X" or "Y" or "Width" or "Height"))input.PropertyChanged+=(_,e)=>{if(e.Property==TextBox.TextProperty&&editorReady&&!cropSync)UpdateCropFromFields(name);};
     }
     private void UpdateRegionFields(Rect rect)
@@ -209,7 +217,7 @@ public sealed class ToolEditor:Window
     private static string Hint(string name)=>name.Split('.')[^1] switch
     {"SnapshotTimes" or "SplitPoints" or "DiscardedClips"=>"Comma-separated values", "AudioRedactions"=>"Start,end; start,end (seconds)","Regions"=>"X,Y,width,height,start,end; …", "Metadata"=>"One tag=value per line",_=>""};
     private void Reset()
-    {foreach(var child in fields.Children){if(child is TextBox t)t.Text=t.Tag as string;if(child is CheckBox c)c.IsChecked=c.Tag as bool?;if(child is ComboBox choice)choice.SelectedItem=choice.Tag;}if(cropAspect is not null)cropAspect.SelectedIndex=0;surface?.Reset();error.Text="";}
+    {foreach(var child in fields.Children){if(child is TextBox t)t.Text=t.Tag as string;if(child is CheckBox c)c.IsChecked=c.Tag as bool?;if(child is ComboBox choice)choice.SelectedItem=choice.Tag;}if(cropAspect is not null)cropAspect.SelectedIndex=0;if(annotationTool is not null)annotationTool.SelectedIndex=0;surface?.Reset();error.Text="";}
     private object Fill(object target,string prefix="")
     {
         foreach(var p in target.GetType().GetProperties())
