@@ -23,7 +23,13 @@ public static class AtomicFile
         }
         finally
         {
-            if (File.Exists(temporary)) File.Delete(temporary);
+            try
+            {
+                if (File.Exists(temporary)) File.Delete(temporary);
+            }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+            {
+            }
         }
     }
 
