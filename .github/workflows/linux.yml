@@ -40,6 +40,8 @@ jobs:
           NASHI_VERIFY_FFPROBE: /usr/bin/ffprobe
         run: dotnet run --project windows/Nashi.Verify -c Release
       - name: Verify Linux exports
+        env:
+          NASHI_VERIFY_EVIDENCE_DIRECTORY: ${{ github.workspace }}/build/linux-smoke
         run: dotnet run --project linux/Nashi.Linux.Verify -c Release
       - name: Publish self-contained Linux app
         run: scripts/build-linux.sh '${{ matrix.rid }}'

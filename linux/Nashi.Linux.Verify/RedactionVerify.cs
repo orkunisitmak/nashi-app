@@ -52,7 +52,13 @@ internal static class RedactionVerify
             if(languages.Contains("eng")){
                 var textImage=Path.Combine(root,"private-text.png");using(var source=new MagickImage(MagickColors.White,800,240)){new Drawables().Font("DejaVu-Sans").FontPointSize(72).FillColor(MagickColors.Black).Text(40,130,"PRIVATE DATA").Draw(source);source.Write(textImage);}
                 var textHash=SHA256.HashData(await File.ReadAllBytesAsync(textImage));var words=await TextDetection.DetectAsync(textImage,"eng");
-                check(words.Any(w=>w.Text.Equals("PRIVATE",StringComparison.OrdinalIgnoreCase))&&words.Any(w=>w.Text.Equals("DATA",StringComparison.OrdinalIgnoreCase)),"real Tesseract detects fixture words");
+                var recognised=words.Any(w=>w.Text.Equals("PRIVATE",StringComparison.OrdinalIgnoreCase))&&words.Any(w=>w.Text.Equals("DATA",StringComparison.OrdinalIgnoreCase));
+                if(!recognised){
+                    Console.WriteLine("OCR detected: "+string.Join(" | ",words.Select(w=>$"{w.Text} [{w.Region}] confidence={w.Confidence}")));
+                    var diagnostic=await ProcessRunner.RunAsync(SystemTools.Find("tesseract")!,[textImage,"stdout","-l","eng","--psm","11","tsv"]);Console.WriteLine("OCR raw TSV: "+diagnostic.Output);Console.WriteLine("OCR stderr: "+diagnostic.Error);
+                    if(Environment.GetEnvironmentVariable("NASHI_VERIFY_EVIDENCE_DIRECTORY") is {} evidence){Directory.CreateDirectory(evidence);File.Copy(textImage,Path.Combine(evidence,"ocr-fixture.png"),true);await File.WriteAllTextAsync(Path.Combine(evidence,"ocr-diagnostic.tsv"),diagnostic.Output);}
+                }
+                check(recognised,"real Tesseract detects fixture words");
                 using(var source=new MagickImage(textImage))using(var pixels=source.GetPixels()){
                     var missed=0;for(var y=0;y<240;y++)for(var x=0;x<800;x++)if(pixels.GetPixel(x,y).ToColor()!.R<100&&!words.Any(w=>x>=w.Region.X&&x<w.Region.X+w.Region.Width&&y>=w.Region.Y&&y<w.Region.Y+w.Region.Height))missed++;
                     check(missed==0,"detected padded regions enclose fixture text pixels");
