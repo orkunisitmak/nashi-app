@@ -214,7 +214,7 @@ public sealed partial class MainWindow:Window
     private void ShowWheel(){if(!busy&&Choices().Count>0)new WheelWindow(this,Choices(),async choice=>await EditAsync(choice)).Show();}
     private async Task EditAsync(ToolChoice choice)
     {
-        if(busy||files.Count==0)return;string? temporary=null;try
+        if(busy||files.Count==0)return;string? temporary=null;string? previewDirectory=null;try
         {
             var requestedFormat=choice.Id.StartsWith("convert:",StringComparison.Ordinal)?choice.Id[8..]:null;if(requestedFormat is not null)choice=new("convert","Convert to "+requestedFormat.ToUpperInvariant(),"↗");
             choice=choice with{Id=choice.Id switch{"cropImage"=>"crop","annotateImage"=>"annotate","mergePDF"=>"mergePDFs",_=>choice.Id}};
@@ -229,11 +229,12 @@ public sealed partial class MainWindow:Window
                 var engine=new MediaEngine(tools.Executable("ffmpeg"),tools.Executable("ffprobe"));info=await engine.InspectAsync(input);
                 if(choice.Id is "cropVideo" or "redactVideo")
                 {
-                    temporary=Path.Combine(AtomicFile.CreateTemporaryDirectory("Nashi-preview-"),"frame.png");
+                    previewDirectory=AtomicFile.CreateTemporaryDirectory("Nashi-preview-");
+                    temporary=Path.Combine(previewDirectory,"frame.png");
                     await ProcessRunner.RunAsync(tools.Executable("ffmpeg"),["-v","error","-i",input,"-frames:v","1",temporary]);preview=ImageEngine.Load(temporary);
                 }
             }
-            SetBusy(false);var editor=new ToolEditor(this,choice.Id,choice.Title,input,info,preview,selected,choice.Id=="convert"?FeatureCatalog.Formats(selected):null);editor.ConfigureProfiles(preferences,requestedFormat);editor.ConfigureMediaRuntime(tools);var accepted=editor.ShowDialog()==true;if(temporary is not null)File.Delete(temporary);if(!accepted)return;
+            SetBusy(false);var editor=new ToolEditor(this,choice.Id,choice.Title,input,info,preview,selected,choice.Id=="convert"?FeatureCatalog.Formats(selected):null);editor.ConfigureProfiles(preferences,requestedFormat);editor.ConfigureMediaRuntime(tools);var accepted=editor.ShowDialog()==true;if(!accepted)return;
             var inputs=choice.Id is "cropVideo" or "redactVideo" or "annotate"?new[]{input}:editor.OrderedInputs;
             if(imageSelection)await RunAsync(async(destination,p,t)=>
             {
@@ -249,7 +250,11 @@ public sealed partial class MainWindow:Window
             else await RunAsync((destination,p,t)=>Task.Run(()=>DocumentEngine.Pdf(choice.Id,inputs,destination,editor.Pages,t),t),choice.Title);
         }
         catch(Exception error){MessageBox.Show(this,L10n.Text(error.Message),L10n.Text("Couldn’t open this tool"),MessageBoxButton.OK,MessageBoxImage.Information);}
-        finally{if(temporary is not null&&File.Exists(temporary))File.Delete(temporary);SetBusy(false);}
+        finally
+        {
+            try{if(previewDirectory is not null&&Directory.Exists(previewDirectory))Directory.Delete(previewDirectory,true);}catch(Exception error)when(error is IOException or UnauthorizedAccessException or System.Security.SecurityException){if(temporary is not null&&File.Exists(temporary))try{File.Delete(temporary);}catch(Exception cleanupError)when(cleanupError is IOException or UnauthorizedAccessException or System.Security.SecurityException){}}
+            SetBusy(false);
+        }
     }
     private async Task RunAsync(Func<string,IProgress<OperationProgress>,CancellationToken,Task<IReadOnlyList<string>>> work,string label="Fresh copy")
     {

@@ -16,7 +16,7 @@ public sealed class PreferencesStore
     private readonly string file;public Preferences Value{get;private set;}=new();public string? RecoveryNotice{get;private set;}
     public PreferencesStore(string directory)
     {
-        file=Path.Combine(directory,"preferences.json");AtomicFile.RecoverOrphan(file);
+        file=Path.Combine(directory,"preferences.json");AtomicFile.RecoverOrphan(file,contents=>ValidateRecovered(contents));
         if(!File.Exists(file))return;
         try
         {
@@ -26,11 +26,25 @@ public sealed class PreferencesStore
         }
         catch(Exception error)when(error is JsonException or InvalidDataException or ArgumentException or NotSupportedException)
         {
-            try{File.Copy(file,file+".recovered-"+Guid.NewGuid().ToString("N"));}
-            catch(Exception backupError)when(backupError is IOException or UnauthorizedAccessException){RecoveryNotice="Settings recovery needs access to your Nashi data folder. Defaults are in use.";Value=new();return;}
+            var quarantine=file+".recovered-"+Guid.NewGuid().ToString("N");
+            try
+            {
+                File.Copy(file,quarantine);
+                File.Delete(file);
+            }
+            catch(Exception backupError)when(backupError is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+            {
+                RecoveryNotice="Settings recovery needs access to your Nashi data folder. Defaults are in use.";Value=new();return;
+            }
             RecoveryNotice="Settings could not be loaded. Defaults are in use; a recovery copy was kept.";Value=new();
         }
         catch(Exception error)when(error is IOException or UnauthorizedAccessException){RecoveryNotice="Settings are unavailable. Check access to your Nashi data folder.";Value=new();}
+    }
+    private static bool ValidateRecovered(string contents)
+    {
+        var value=JsonSerializer.Deserialize<Preferences>(contents)??throw new InvalidDataException("Preferences are empty.");
+        Validate(value with{Language=AppLocalization.Normalize(value.Language)});
+        return true;
     }
     private static void Validate(Preferences p)
     {
