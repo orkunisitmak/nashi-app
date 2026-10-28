@@ -61,6 +61,24 @@ try
         var converted=await engine.RunAsync("convert",[audio],output,new(),"flac");var info=await new MediaEngine(ffmpeg,ffprobe).InspectAsync(converted.Single());Check(info.HasAudio&&Math.Abs(info.Duration-2)<.1,"shared FFmpeg conversion");
         var trimmed=await engine.RunAsync("trimAudio",[audio],output,new(){Media=new(){Start=.25,End=1.25}});info=await new MediaEngine(ffmpeg,ffprobe).InspectAsync(trimmed.Single());Check(Math.Abs(info.Duration-1)<.1,"shared audio trim");
     }
+    if(SystemTools.Find("exiftool") is not null)
+    {
+        var metadata=new MetadataService(Path.Combine(root,"metadata-tools"));
+        var tagged=await engine.RunAsync("removeMetadata",[image],output,new(){RemoveAllMetadata=false,Metadata=new(){{"EXIF:Artist","Nashi Linux"}}});
+        var tags=await metadata.ReadAsync(tagged.Single());Check(tags.TryGetValue("EXIF:Artist",out var artist)&&artist=="Nashi Linux","system ExifTool writes image tags");
+        var cleaned=await engine.RunAsync("removeMetadata",tagged,output,new());tags=await metadata.ReadAsync(cleaned.Single());Check(!tags.ContainsKey("EXIF:Artist"),"system ExifTool removes image tags");
+        var preserved=await engine.RunAsync("convert",tagged,output,new(){PreserveImageMetadata=true},"jpg");tags=await metadata.ReadAsync(preserved.Single());Check(tags.TryGetValue("EXIF:Artist",out artist)&&artist=="Nashi Linux","image conversion preserves requested tags");
+    }
+    else Console.WriteLine("SKIP ExifTool integration: executable unavailable");
+    if(SystemTools.Find("libreoffice") is not null||SystemTools.Find("soffice") is not null)
+    {
+        var document=Path.Combine(root,"Linux document.txt");const string text="Nashi Linux document integration fixture.";await File.WriteAllTextAsync(document,text);
+        var docx=await engine.RunAsync("convert",[document],output,new(),"docx");
+        using(var zip=System.IO.Compression.ZipFile.OpenRead(docx.Single())){var entry=zip.GetEntry("word/document.xml");Check(entry is not null,"LibreOffice produces DOCX package");using var reader=new StreamReader(entry!.Open());Check((await reader.ReadToEndAsync()).Contains(text),"DOCX retains source text");}
+        var documentPdf=await engine.RunAsync("convert",docx,output,new(),"pdf");using(var decoded=UglyToad.PdfPig.PdfDocument.Open(documentPdf.Single()))Check(decoded.NumberOfPages==1&&decoded.GetPage(1).Text.Contains("Nashi"),"LibreOffice DOCX to PDF retains text");
+        var recovered=await engine.RunAsync("convert",documentPdf,output,new(),"txt");Check((await File.ReadAllTextAsync(recovered.Single())).Contains("Nashi"),"PDF text conversion round trip");
+    }
+    else Console.WriteLine("SKIP LibreOffice integration: executable unavailable");
     Console.WriteLine($"All {passed} Linux checks passed.");
 }
 finally{Directory.Delete(root,true);}
