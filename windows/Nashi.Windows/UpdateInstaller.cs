@@ -10,12 +10,15 @@ internal static class UpdateInstaller
     {
         var target=Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory);
         var parent=Path.GetDirectoryName(target);if(parent is null)return;
-        foreach(var directory in Directory.EnumerateDirectories(parent,".nashi-update-*"))
+        try
         {
-            try { if(DateTime.UtcNow-Directory.GetLastWriteTimeUtc(directory)>TimeSpan.FromHours(24))Directory.Delete(directory,true); }
-            catch (IOException) { }
-            catch (UnauthorizedAccessException) { }
+            foreach(var directory in Directory.EnumerateDirectories(parent,".nashi-update-*"))
+            {
+                try { if(DateTime.UtcNow-Directory.GetLastWriteTimeUtc(directory)>TimeSpan.FromHours(24))Directory.Delete(directory,true); }
+                catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.Security.SecurityException) { }
+            }
         }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.Security.SecurityException) { }
     }
     public static async Task StageAsync(WindowsUpdate update,IProgress<OperationProgress> progress,CancellationToken token)
     {
@@ -42,8 +45,7 @@ internal static class UpdateInstaller
         catch
         {
             try { Directory.Delete(stage, true); }
-            catch (IOException) { }
-            catch (UnauthorizedAccessException) { }
+            catch (Exception cleanupError) when (cleanupError is IOException or UnauthorizedAccessException or System.Security.SecurityException) { }
             throw;
         }
     }
@@ -57,8 +59,15 @@ internal static class UpdateInstaller
         Directory.Move(target,backup);
         try{Directory.Move(payload,target);}catch(Exception payloadError)
         {
-            if(Directory.Exists(target))Directory.Delete(target,true);
-            Directory.Move(backup,target);
+            try
+            {
+                if(Directory.Exists(target))Directory.Delete(target,true);
+                Directory.Move(backup,target);
+            }
+            catch(Exception restoreError)
+            {
+                throw new IOException("Nashi could not install the update, and the previous installation could not be restored from "+backup+".",new AggregateException(payloadError,restoreError));
+            }
             throw new IOException("Nashi could not install the update; the previous installation was restored.",payloadError);
         }
         Process.Start(new ProcessStartInfo(Path.Combine(target,"Nashi.exe")){UseShellExecute=true,WorkingDirectory=target});

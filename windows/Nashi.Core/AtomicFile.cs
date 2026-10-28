@@ -27,23 +27,24 @@ public static class AtomicFile
         }
     }
 
-    public static void RecoverOrphan(string path)
+    public static void RecoverOrphan(string path, Func<string, bool>? validate = null)
     {
         var full = Path.GetFullPath(path);
         var directory = Path.GetDirectoryName(full);
         var name = Path.GetFileName(full);
         if (directory is null || !Directory.Exists(directory)) return;
-        var orphan = Directory.EnumerateFiles(directory, name + ".*.tmp")
-            .OrderByDescending(File.GetLastWriteTimeUtc)
-            .FirstOrDefault(candidate => File.Exists(candidate) && IsJson(candidate));
-        if (orphan is null) return;
         try
         {
+            var orphan = Directory.EnumerateFiles(directory, name + ".*.tmp")
+                .OrderByDescending(candidate => File.GetLastWriteTimeUtc(candidate))
+                .FirstOrDefault(candidate => File.Exists(candidate) && IsValidJson(candidate, validate));
+            if (orphan is null) return;
             if (!File.Exists(full)) File.Move(orphan, full);
             else if (File.GetLastWriteTimeUtc(orphan) > File.GetLastWriteTimeUtc(full)) File.Move(orphan, full, true);
         }
-        catch (IOException) { }
-        catch (UnauthorizedAccessException) { }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        {
+        }
     }
 
     public static string CreateTemporaryDirectory(string prefix)=>CreateTemporaryDirectory(prefix,Path.GetTempPath());
@@ -65,9 +66,15 @@ public static class AtomicFile
         throw new IOException("Could not create a private temporary directory.");
     }
 
-    private static bool IsJson(string file)
+    private static bool IsValidJson(string file, Func<string, bool>? validate)
     {
-        try { System.Text.Json.JsonDocument.Parse(File.ReadAllText(file)).Dispose(); return true; }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { return false; }
+        try
+        {
+            var contents = File.ReadAllText(file);
+            System.Text.Json.JsonDocument.Parse(contents).Dispose();
+            return validate?.Invoke(contents) ?? true;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.Security.SecurityException or System.Text.Json.JsonException or ArgumentException or InvalidDataException or NotSupportedException)
+        { return false; }
     }
 }
