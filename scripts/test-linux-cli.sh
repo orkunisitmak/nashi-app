@@ -108,6 +108,9 @@ done
 mkdir -p "$work/gui" && cp "$photo" "$work/gui/"
 if "$nashi" --render "$out/ui-run.png" --tool convert:webp --run "$work/gui/$(basename "$photo")" 2>"$work/error.txt" | grep -q "^OUTPUT .*\.webp$" && ls "$work/gui/"*.webp >/dev/null 2>&1; then pass=$((pass+1)); echo "PASS window run → webp"; else fail=$((fail+1)); echo "FAIL window run $(cat "$work/error.txt")"; fi
 [[ $("$nashi" --render "$out/ui-key.png" --press-ctrl-space "$photo" 2>/dev/null | grep '^WHEEL') == "WHEEL True" ]] && { pass=$((pass+1)); echo "PASS Ctrl+Space opens the wheel"; } || { fail=$((fail+1)); echo "FAIL Ctrl+Space did not open the wheel"; }
+# Real mouse clicks: a wheel tool, then Run, then wheel scrolling on Home.
+mouse=$("$nashi" --render "$out/ui-mouse.png" --click-wheel "Create PDF" "$photo" "$fixtures/second.png" 2>/dev/null | grep -E '^(WHEELRUN|SCROLL)' | tr '\n' ' ')
+[[ $mouse == "WHEELRUN outputs=1 SCROLL moved " ]] && { pass=$((pass+1)); echo "PASS mouse: wheel → Run → scroll"; } || { fail=$((fail+1)); echo "FAIL mouse: $mouse"; }
 [[ -e $photo && -e $fixtures/clip.mp4 ]] && { pass=$((pass+1)); echo "PASS originals kept"; } || { fail=$((fail+1)); echo "FAIL an original was removed"; }
 
 echo "PASSED=$pass FAILED=$fail"

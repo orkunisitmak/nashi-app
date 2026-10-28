@@ -34,7 +34,9 @@ internal sealed class MainWindow:Window
     private readonly Border manage;private readonly Button chooseButton,wheelButton;
     private CancellationTokenSource? running;private bool busy;
     internal IReadOnlyList<string> SelectedFiles=>files;
-    internal bool LibraryVisible=>libraryPage.IsVisible;
+    internal bool LibraryVisible=>libraryScroll.IsVisible;
+    private readonly ScrollViewer homeScroll,libraryScroll;
+    internal double HomeScrollOffset=>homeScroll.Offset.Y;
 
     public MainWindow(LibraryStore library,PreferencesStore preferences,IReadOnlyList<string>? initial=null)
     {
@@ -56,7 +58,10 @@ internal sealed class MainWindow:Window
         DockPanel.SetDock(cancelButton,Dock.Right);footer.Children.Add(cancelButton);DockPanel.SetDock(progress,Dock.Right);progress.Margin=new(10,0,0,0);footer.Children.Add(progress);footer.Children.Add(status);
         // Pages
         var pages=new Panel();root.Children.Add(pages);
-        pages.Children.Add(new ScrollViewer{Content=home,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled});pages.Children.Add(new ScrollViewer{Content=libraryPage,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled});
+        // Pages share one cell; the hidden page's ScrollViewer itself must be hidden,
+        // or it lies over the visible page and takes its clicks and wheel scrolling.
+        homeScroll=new ScrollViewer{Content=home,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled};libraryScroll=new ScrollViewer{Content=libraryPage,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled};
+        pages.Children.Add(homeScroll);pages.Children.Add(libraryScroll);
         home.Children.Add(homeTitle);var intro=Brand.Text("Convert, fine-tune, and send them on their way.",14,"Muted");intro.Margin=new(0,6,0,22);home.Children.Add(intro);
         var dropText=new StackPanel{Spacing=6};dropText.Children.Add(selectionPill);dropText.Children.Add(selection);dropText.Children.Add(fileDescription);
         var picks=new WrapPanel{Margin=new(0,10,0,0)};chooseButton=Brand.Primary("Choose files",async()=>await ChooseAsync());picks.Children.Add(chooseButton);picks.Children.Add(Brand.Button("Paste",async()=>await PasteAsync()));
@@ -91,7 +96,7 @@ internal sealed class MainWindow:Window
     private void UpdateToolsButton()=>toolsButton.Content=L10n.T(operations.InstallCommand().Length==0?"Tools ready":"Finish setup");
     internal void ShowLibrary(bool visible)
     {
-        home.IsVisible=!visible;libraryPage.IsVisible=visible;
+        homeScroll.IsVisible=!visible;libraryScroll.IsVisible=visible;
         homeButton.Res(BackgroundProperty,visible?"Surface":"Sage");libraryButton.Res(BackgroundProperty,visible?"Sage":"Surface");if(visible)RenderLibrary();
     }
     private void Add(IEnumerable<string> paths)
@@ -143,7 +148,7 @@ internal sealed class MainWindow:Window
         toolArea.Children.Clear();var stack=new StackPanel{Spacing=10};var head=new DockPanel();var close=Brand.Icon("✕","Close",CloseTool);DockPanel.SetDock(close,Dock.Right);head.Children.Add(close);head.Children.Add(Brand.Text(title,19,null,false));stack.Children.Add(head);
         stack.Children.Add(Brand.Text(selected.Length==1?Path.GetFileName(selected[0]):L10n.T($"{selected.Length} files, ready to go."),12,"Muted",false));
         if(panel.Info is {} info)stack.Children.Add(Brand.Text($"{TimeSpan.FromSeconds(info.Duration):hh\\:mm\\:ss\\.f}"+(info.Video is {} v?$"  ·  {v.Width}×{v.Height}":""),11,"Muted",false));
-        stack.Children.Add(panel);var run=Brand.Primary("Run",async()=>await RunToolAsync());run.HorizontalAlignment=HorizontalAlignment.Left;stack.Children.Add(run);
+        stack.Children.Add(panel);var run=Brand.Primary("Run",async()=>await RunToolAsync());RunButton=run;run.HorizontalAlignment=HorizontalAlignment.Left;stack.Children.Add(run);
         toolArea.Children.Add(Brand.Card(stack));run.Focus();Dispatcher.UIThread.Post(()=>toolArea.BringIntoView(),DispatcherPriority.Background);
         SetStatus("Choose one tool from the wheel or the tiles below.");
     }
@@ -266,6 +271,7 @@ internal sealed class MainWindow:Window
     // Radial tools wheel. Arrow keys / Tab move, Enter opens, Escape closes.
     private readonly List<Button> wheelItems=[];private int wheelIndex;
     internal bool WheelVisible=>overlay.IsVisible;
+    internal IReadOnlyList<Button> WheelButtons=>wheelItems;internal Button? RunButton{get;private set;}
     internal void ShowWheel()
     {
         if(busy||files.Count==0)return;var choices=FeatureCatalog.Formats(files).Take(6).Select(f=>(Id:"convert",Format:(string?)f,Title:f.ToUpperInvariant(),Symbol:"⇄")).Concat(Operations.Choices(files).Select(c=>(Id:c.Id,Format:(string?)null,Title:L10n.T(c.Title),Symbol:c.Symbol))).Take(14).ToArray();
@@ -283,7 +289,7 @@ internal sealed class MainWindow:Window
             ((TextBlock)content.Children[0]).HorizontalAlignment=HorizontalAlignment.Center;title.HorizontalAlignment=HorizontalAlignment.Center;
             var button=new Button{Content=content,Width=100,Height=72,CornerRadius=new(18),HorizontalContentAlignment=HorizontalAlignment.Center,VerticalContentAlignment=VerticalAlignment.Center};
             Avalonia.Automation.AutomationProperties.SetName(button,choice.Title);
-            button.Click+=async(_,_)=>{HideWheel();await OpenToolAsync(choice.Id,choice.Format);};
+button.Click+=async(_,_)=>{HideWheel();await OpenToolAsync(choice.Id,choice.Format);};
             Canvas.SetLeft(button,size/2+Math.Cos(angle)*radius-50);Canvas.SetTop(button,size/2+Math.Sin(angle)*radius-36);canvas.Children.Add(button);wheelItems.Add(button);
         }
         overlay.Children.Add(canvas);overlay.IsVisible=true;wheelIndex=0;wheelItems[0].Focus();
