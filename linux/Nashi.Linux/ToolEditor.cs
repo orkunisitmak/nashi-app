@@ -229,7 +229,7 @@ public sealed partial class ToolEditor:Window
     private static string Hint(string name)=>name.Split('.')[^1] switch
     {"SnapshotTimes" or "SplitPoints" or "DiscardedClips"=>"Comma-separated values", "AudioRedactions"=>"Start,end; start,end (seconds)","Regions"=>"X,Y,width,height,start,end; …", "Metadata"=>"One tag=value per line",_=>""};
     private void Reset()
-    {detectionRun?.Cancel();if(originalView is not null)originalView.IsChecked=false;foreach(var child in fields.Children){if(child is TextBox t)t.Text=t.Tag as string;if(child is CheckBox c)c.IsChecked=c.Tag as bool?;if(child is ComboBox choice)choice.SelectedItem=choice.Tag;}if(cropAspect is not null)cropAspect.SelectedIndex=0;if(annotationTool is not null)annotationTool.SelectedIndex=0;surface?.Reset();error.Text="";}
+    {if(processedTask is {IsCompleted:false}){error.Text="Wait for the processed preview to finish before resetting.";return;}mediaPreview?.Reset();detectionRun?.Cancel();if(originalView is not null)originalView.IsChecked=false;foreach(var child in fields.Children){if(child is TextBox t)t.Text=t.Tag as string;if(child is CheckBox c)c.IsChecked=c.Tag as bool?;if(child is ComboBox choice)choice.SelectedItem=choice.Tag;}if(cropAspect is not null)cropAspect.SelectedIndex=0;if(annotationTool is not null)annotationTool.SelectedIndex=0;surface?.Reset();error.Text="";}
     private object Fill(object target,string prefix="")
     {
         foreach(var p in target.GetType().GetProperties())

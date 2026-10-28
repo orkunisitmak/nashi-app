@@ -27,6 +27,8 @@ internal sealed class MediaPlayer(string path):NativeControlHost
         {
             player=mpv_create();if(player==IntPtr.Zero)throw new InvalidOperationException("Media preview could not start.");
             Option("wid",handle.Handle.ToInt64().ToString(CultureInfo.InvariantCulture));Option("config","no");Option("terminal","no");Option("input-default-bindings","no");Option("input-vo-keyboard","no");Option("idle","yes");Option("pause","yes");Option("keep-open","yes");
+            // Hosted UI checks have no audio device; retain decoding/timing with mpv's null sink.
+            if(Environment.GetCommandLineArgs().Contains("--smoke-test"))Option("ao","null");
             if(mpv_initialize(player)<0)throw new InvalidOperationException("Media preview could not initialize.");
             Command("loadfile",System.IO.Path.GetFullPath(path));
         }
