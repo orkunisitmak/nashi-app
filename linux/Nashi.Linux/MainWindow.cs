@@ -172,7 +172,7 @@ public sealed class MainWindow:Window
                 status.Text="Rendering PDF pages…";var images=await NativePdf.RenderAsync(selected[0],72,CancellationToken.None);var organizer=new PdfOrganizer(images);var organization=await organizer.ShowDialog<PdfOrganization?>(this);if(organization is null)return;
                 await Run((dest,p,t)=>engine.RunAsync(action,selected,dest,new(){Pages=organization.Pages,PageRotations=organization.Rotations,UniformWidth=organization.UniformWidth},progress:p,token:t),"Organize PDF");return;
             }
-            var editor=new ToolEditor(action,format,selected,engine);
+            var editor=new ToolEditor(action,format,selected,engine,preferences);
             var options=await editor.ShowDialog<LinuxOptions?>(this);if(options is null)return;selected=editor.OrderedInputs;
             await Run((dest,p,t)=>engine.RunAsync(action,selected,dest,options,format,p,t),action=="convert"?"Convert to "+format:FeatureCatalog.ToolNames.GetValueOrDefault(action,action));
         }
@@ -229,7 +229,7 @@ public sealed class MainWindow:Window
         panel.Children.Add(NashiTheme.Text("Conversion drag shortcut"));var convertChord=new ComboBox{ItemsSource=chords,SelectedItem=preferences.Value.ConvertModifier};panel.Children.Add(convertChord);
         panel.Children.Add(NashiTheme.Text("File actions drag shortcut"));var actionsChord=new ComboBox{ItemsSource=chords,SelectedItem=preferences.Value.ActionsModifier};panel.Children.Add(actionsChord);
         var reveal=new CheckBox{Content="Show finished files in file manager",IsChecked=preferences.Value.RevealFinished};panel.Children.Add(reveal);
-        var dialog=new Window{Title="Nashi · Settings",Width=540,Height=620,Background=NashiTheme.Paper,Content=new ScrollViewer{Content=panel}};
+        var dialog=new Window{Title="Nashi · Settings",Width=540,Height=620,Background=NashiTheme.Paper,Content=new ScrollViewer{Content=panel}};panel.Children.Insert(1,NashiTheme.Button("Export defaults",async()=>await new FormatDefaultsWindow(preferences).ShowDialog(dialog)));
         var message=NashiTheme.Text("",12);panel.Children.Add(message);
         panel.Children.Add(NashiTheme.Button("Save",()=>{
             try{

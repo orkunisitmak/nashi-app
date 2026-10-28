@@ -114,6 +114,7 @@ internal static class SmokeChecks
                     var entry=store.Search("").Single();Check(entry.Paths.Count()==1&&entry.AvailablePaths.Count()==1&&File.Exists(original),"partial move UI records published copies in Library");moveWindow.GetVisualDescendants().OfType<Button>().Single(b=>b.Content as string=="Library").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));await Task.Delay(150);Capture(moveWindow,Path.Combine(directory,"partial-move.png"));
                 }finally{File.SetUnixFileMode(protectedSource,mode);moveWindow.Close();}
             }
+            await ProfileChecks.Run(window,fixture,directory,Check,Capture);
             await AnnotationChecks.Run(window,fixture,directory,Check,Capture);
             await RedactionUiChecks.Run(window,directory,Check,Capture);
             var shelf=new FloatWindow([fixture],_=>{});shelf.Show(window);await Task.Delay(150);

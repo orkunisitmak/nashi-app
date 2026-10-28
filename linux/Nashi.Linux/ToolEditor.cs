@@ -39,7 +39,7 @@ public sealed partial class ToolEditor:Window
     private string? processedDirectory;
     private readonly Dictionary<string,TextBox> textFields=[];
     private readonly StackPanel fields=new(){Spacing=10};
-    public ToolEditor(string action,string? format,string[] inputs,LinuxEngine engine)
+    public ToolEditor(string action,string? format,string[] inputs,LinuxEngine engine,PreferencesStore? preferences=null)
     {
         this.action=action;inputOrder.AddRange(inputs);Title=(action=="convert"?"Convert to "+format?.ToUpperInvariant():FeatureCatalog.ToolNames.GetValueOrDefault(action,action))+" · Nashi";
         Width=1000;Height=740;MinWidth=720;MinHeight=520;FontFamily=new Avalonia.Media.FontFamily("DejaVu Sans");Background=NashiTheme.Paper;Foreground=NashiTheme.Ink;
@@ -73,6 +73,7 @@ public sealed partial class ToolEditor:Window
         preview.Children.Add(NashiTheme.Button("Open original preview",async()=>{try{await MainWindow.OpenPath(inputs[0]);}catch(Exception ex){error.Text=ex.Message;}}));
         var options=new ScrollViewer{Content=fields};Grid.SetColumn(options,1);body.Children.Add(options);root.Children.Add(body);Content=root;
         if(inputs.All(p=>FeatureCatalog.IsAudio(p)||FeatureCatalog.IsVideo(p)))BuildMedia();else BuildFile(inputs,format);
+        if(preferences is not null&&action=="convert"&&format is not null)ConfigureProfile(preferences,format,inputs);
         if(surface is not null){if(textFields.TryGetValue("Width",out var width)&&string.IsNullOrEmpty(width.Text))width.Text=surface.PixelWidth.ToString(CultureInfo.InvariantCulture);if(textFields.TryGetValue("Height",out var height)&&string.IsNullOrEmpty(height.Text))height.Text=surface.PixelHeight.ToString(CultureInfo.InvariantCulture);}
         if(mediaPreview is not null&&action is "normalizeAudio" or "audioChannels" or "redactAudio" or "redactVideo" or "splitVideo" or "audioToVideo"){
             preview.Children.Add(NashiTheme.Button("Original",()=>mediaPreview.Load(inputs[0])));
@@ -222,7 +223,7 @@ public sealed partial class ToolEditor:Window
     {Text(name,Display(initial));}
     private void Toggle(string name,bool initial)
     {
-        var input=new CheckBox{Content=Label(name),IsChecked=initial,Foreground=NashiTheme.Ink,Tag=initial};fields.Children.Add(input);values[name]=()=>input.IsChecked??false;
+        var input=new CheckBox{Name=name.Replace(".","_",StringComparison.Ordinal),Content=Label(name),IsChecked=initial,Foreground=NashiTheme.Ink,Tag=initial};fields.Children.Add(input);values[name]=()=>input.IsChecked??false;
     }
     private static string Label(string name)=>Regex.Replace(name.Split('.')[^1],"(?<=[a-z])([A-Z])"," $1") switch
     {"Target Bytes"=>"Target size (bytes)","Page Ranges"=>"Pages in order (e.g. 1-3, 5)","Quality"=>name.StartsWith("Media.",StringComparison.Ordinal)?"Quality (0–1)":"Quality (%)",var label=>label};
