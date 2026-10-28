@@ -46,7 +46,7 @@ internal static class RedactionUiChecks
     }
     private static async Task CheckDetection(Window owner,string directory,Action<bool,string> check,Action<Window,string> capture)
     {
-        var fixture=Path.Combine(directory,"redaction-ui-text.png");using(var image=new MagickImage(MagickColors.White,800,240)){new Drawables().Font("DejaVu-Sans").FontPointSize(72).FillColor(MagickColors.Black).Text(40,130,"PRIVATE DATA").Draw(image);image.Write(fixture);}
+        var fixture=Path.Combine(directory,"redaction-ui-text.png");using(var image=new MagickImage(MagickColors.White,800,240)){new Drawables().Font(await FontFiles.ResolveAsync("DejaVu Sans")).FontPointSize(72).FillColor(MagickColors.Black).Text(40,130,"PRIVATE DATA").Draw(image);image.Write(fixture);}
         var editor=new ToolEditor("redactImage",null,[fixture],new LinuxEngine());editor.Show(owner);await Task.Delay(100);
         try{
             var detect=editor.GetVisualDescendants().OfType<Button>().Single(b=>b.Content as string=="Detect text");var cancel=editor.GetVisualDescendants().OfType<Button>().Single(b=>b.Content as string=="Cancel detection");var languages=editor.GetVisualDescendants().OfType<ComboBox>().Single(c=>c.Name=="OcrLanguage");

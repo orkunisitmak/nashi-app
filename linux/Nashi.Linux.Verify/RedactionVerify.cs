@@ -50,7 +50,11 @@ internal static class RedactionVerify
         if(SystemTools.Find("tesseract") is not null){
             var languages=await TextDetection.LanguagesAsync();check(languages.Length>0&&!languages.Contains("osd"),"OCR offers installed recognition languages");
             if(languages.Contains("eng")){
-                var textImage=Path.Combine(root,"private-text.png");using(var source=new MagickImage(MagickColors.White,800,240)){new Drawables().Font("DejaVu-Sans").FontPointSize(72).FillColor(MagickColors.Black).Text(40,130,"PRIVATE DATA").Draw(source);source.Write(textImage);}
+                var textImage=Path.Combine(root,"private-text.png");using(var source=new MagickImage(MagickColors.White,800,240)){new Drawables().Font(await FontFiles.ResolveAsync("DejaVu Sans")).FontPointSize(72).FillColor(MagickColors.Black).Text(40,130,"PRIVATE DATA").Draw(source);source.Write(textImage);}
+                using(var fixture=new MagickImage(textImage))using(var pixels=fixture.GetPixels()){
+                    var dark=0;for(var y=0;y<240;y++)for(var x=0;x<800;x++)if(pixels.GetPixel(x,y).ToColor()!.R<100)dark++;
+                    check(dark>1000,"OCR fixture contains rendered text pixels");
+                }
                 var textHash=SHA256.HashData(await File.ReadAllBytesAsync(textImage));var words=await TextDetection.DetectAsync(textImage,"eng");
                 var recognised=words.Any(w=>w.Text.Equals("PRIVATE",StringComparison.OrdinalIgnoreCase))&&words.Any(w=>w.Text.Equals("DATA",StringComparison.OrdinalIgnoreCase));
                 if(!recognised){

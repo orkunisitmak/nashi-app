@@ -52,7 +52,7 @@ public static class ImageEngine
             {
                 if(o.AnnotatedPng is not null){image.Read(o.AnnotatedPng);}else {
                 if(string.IsNullOrWhiteSpace(o.Text))throw new ArgumentException("Enter annotation text.");
-                new Drawables().Font(o.Font).FontPointSize(o.FontSize).FillColor(new MagickColor(o.Ink)).Text(o.X,o.Y+o.FontSize,o.Text).Draw(image);
+                new Drawables().Font(await FontFiles.ResolveAsync(o.Font,token)).FontPointSize(o.FontSize).FillColor(new MagickColor(o.Ink)).Text(o.X,o.Y+o.FontSize,o.Text).Draw(image);
                 }
             }
             if(tool=="frameImage"){using var framed=Compositions.Frame(image,o.Frame);image.Read(framed.ToByteArray(MagickFormat.Png));}
