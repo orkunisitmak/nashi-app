@@ -128,7 +128,12 @@ public sealed class MainWindow:Window
             catch(Exception error){status.Text=error.Message;}
             return;
         }
-        MediaOptions? media=null;ImageEdit? edit=null;
+        MediaOptions? media=null;ImageEdit? edit=null;PhotoEdit? photo=null;
+        if(choice.Id=="editImage")
+        {
+            PhotoDialog editor;try{editor=await PhotoDialog.CreateAsync(choice.Title,inputs[0]);}catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or ImageMagick.MagickException){status.Text=error.Message;return;}
+            await editor.ShowDialog(this);if(editor.Result is not {} result)return;photo=result;
+        }
         if(choice.Id=="cropImage")
         {
             CropDialog crop;try{crop=await CropDialog.CreateAsync(choice.Title,inputs[0]);}catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or ImageMagick.MagickException){status.Text=error.Message;return;}
@@ -153,7 +158,7 @@ public sealed class MainWindow:Window
         var report=new Progress<OperationProgress>(p=>{if(p.Fraction is {} f){progress.IsIndeterminate=false;progress.Value=f;}status.Text=p.Label;});
         try
         {
-            var outputs=await Operations.RunAsync(choice,inputs,destination,report,running.Token,media,edit);
+            var outputs=await Operations.RunAsync(choice,inputs,destination,report,running.Token,media,edit,photo);
             library.Record(choice.Id=="convert"?"Convert to "+choice.Format!.ToUpperInvariant():choice.Title,outputs);
             lastFolder=destination;reveal.IsVisible=true;
             status.Text=outputs.Count==1?$"Saved {Path.GetFileName(outputs[0])}":$"Saved {outputs.Count} files";

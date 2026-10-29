@@ -12,7 +12,7 @@ public sealed record Choice(string Id,string Title,string? Format=null);
 public static class Operations
 {
     private static readonly string[] ImageOutputs=["jpg","png","webp","tiff","avif","bmp","heic","pdf"];
-    private static readonly string[] ImplementedTools=["compress","removeMetadata","cropImage","createPDF","mergePDF","splitPDF","muteVideo","normalizeAudio","changeVideoSpeed","joinVideos","audioChannels","videoSnapshots","splitVideo","audioToVideo","trimVideo","trimAudio","extractArchive","readQRCode"];
+    private static readonly string[] ImplementedTools=["compress","removeMetadata","cropImage","editImage","createPDF","mergePDF","splitPDF","muteVideo","normalizeAudio","changeVideoSpeed","joinVideos","audioChannels","videoSnapshots","splitVideo","audioToVideo","trimVideo","trimAudio","extractArchive","readQRCode"];
 
     public static string? Executable(string name)
     {
@@ -46,7 +46,7 @@ public static class Operations
             .Select(id=>new Choice(id,FeatureCatalog.ToolNames[id])).ToArray();
     }
 
-    public static async Task<IReadOnlyList<string>> RunAsync(Choice choice,IReadOnlyList<string> inputs,string destination,IProgress<OperationProgress> progress,CancellationToken token,MediaOptions? media=null,ImageEdit? edit=null)
+    public static async Task<IReadOnlyList<string>> RunAsync(Choice choice,IReadOnlyList<string> inputs,string destination,IProgress<OperationProgress> progress,CancellationToken token,MediaOptions? media=null,ImageEdit? edit=null,PhotoEdit? photo=null)
     {
         if(choice.Id=="convert")
         {
@@ -59,6 +59,7 @@ public static class Operations
         return choice.Id switch
         {
             "cropImage"=>await Task.Run(()=>Images(inputs,destination,null,92,true,progress,token,image=>Crop(image,edit??throw new ArgumentException("Drag a crop inside the image."))),token),
+            "editImage"=>await Task.Run(()=>Images(inputs,destination,null,92,true,progress,token,(photo??throw new ArgumentException("Choose photo adjustments.")).Apply),token),
             "compress" when inputs.All(FeatureCatalog.IsImage)=>await Task.Run(()=>Images(inputs,destination,null,70,false,progress,token),token),
             "removeMetadata"=>await Task.Run(()=>Images(inputs,destination,null,92,false,progress,token),token),
             "createPDF"=>await Task.Run(()=>ImagesToPdf(inputs,destination,progress,token),token),

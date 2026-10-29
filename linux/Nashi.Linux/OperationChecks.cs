@@ -21,7 +21,7 @@ internal static class OperationChecks
             var originalHash=Hash(png);
 
             Check(Operations.Formats([png]).SequenceEqual(new[]{"jpg","webp","heic","tiff","avif","bmp","pdf"}),"PNG conversion formats");
-            Check(Operations.Tools([png]).Select(t=>t.Id).SequenceEqual(new[]{"compress","removeMetadata","cropImage","readQRCode"}),"PNG tools");
+            Check(Operations.Tools([png]).Select(t=>t.Id).SequenceEqual(new[]{"compress","removeMetadata","editImage","cropImage","readQRCode"}),"PNG tools");
             foreach(var format in Operations.Formats([png]))
             {
                 var output=Operations.RunAsync(new("convert",format,format),[png],Path.Combine(root,"convert-"+format),progress,token).GetAwaiter().GetResult().Single();
@@ -38,6 +38,8 @@ internal static class OperationChecks
             var shared=Operations.RunAsync(new("cropImage","Crop Image"),[png,jpg],Path.Combine(root,"crop-many"),progress,token,null,new(0,0,1,.5)).GetAwaiter().GetResult();
             Check(shared.Count==2,"Crop several images");
             try{Operations.Crop(new MagickImage(MagickColors.White,10,10),new(.8,0,.5,1));Check(false,"Crop outside the image is rejected");}catch(ArgumentException){Check(true,"Crop outside the image is rejected");}
+            var edited=Operations.RunAsync(new("editImage","Edit Photo"),[png],Path.Combine(root,"edit"),progress,token,null,null,new(new PhotoAdjustments{Exposure=-1,Saturation=0},90,true)).GetAwaiter().GetResult().Single();
+            using(var result=new MagickImage(edited)){using var pixels=result.GetPixels();var c=pixels.GetPixel(10,10).ToColor()!;Check(result.Width==200&&result.Height==320&&Math.Abs(c.R-c.B)<3&&c.R is > 70 and < 120,"Edit photo rotates, desaturates and darkens");}
             var pdf=Operations.RunAsync(new("createPDF","Create PDF"),[png,jpg],Path.Combine(root,"pdf"),progress,token).GetAwaiter().GetResult().Single();
             using(var document=PdfDocument.Open(pdf))Check(document.NumberOfPages==2,"Images to PDF pages");
             var merged=Operations.RunAsync(new("mergePDF","Merge PDFs"),[pdf,pdf],Path.Combine(root,"merge"),progress,token).GetAwaiter().GetResult().Single();
