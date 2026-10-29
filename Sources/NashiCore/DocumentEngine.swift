@@ -115,7 +115,7 @@ public enum DocumentEngine {
     public static func extractArchive(_ input: URL, options: OperationOptions, token: CancellationToken) throws -> [URL] {
         let parent = options.outputDirectory ?? input.deletingLastPathComponent()
         try FileManager.default.createDirectory(at: parent, withIntermediateDirectories: true)
-        let name = input.deletingPathExtension().lastPathComponent + " Extracted"
+        let name = archiveNamed(input).deletingPathExtension().lastPathComponent + " Extracted"
         let output = uniqueFolder(name, in: parent)
         let work = try OutputFiles.temporaryDirectory()
         defer { try? FileManager.default.removeItem(at: work) }
@@ -135,7 +135,13 @@ public enum DocumentEngine {
         let archive = work.appendingPathComponent("Archive").appendingPathExtension(format)
         let level = options.compressionPreset == "fast" ? 0 : options.compressionPreset == "maximum" ? 9 : 6
         try ArchiveCodec.create(from: extracted, at: archive, format: format, compressionLevel: level, token: token)
-        return try publish(archive, to: destination(input, format: format, options: options), token: token)
+        return try publish(archive, to: destination(archiveNamed(input), format: format, options: options), token: token)
+    }
+
+    /// Names outputs of "Name.tar.gz" after "Name", as is already done for "Name.tgz".
+    private static func archiveNamed(_ input: URL) -> URL {
+        let inner = input.deletingPathExtension()
+        return ["gz", "gzip"].contains(input.pathExtension.lowercased()) && inner.pathExtension.lowercased() == "tar" ? inner : input
     }
 
     /// Each invocation owns an isolated LibreOffice profile. Headless conversion

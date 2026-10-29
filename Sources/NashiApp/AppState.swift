@@ -146,6 +146,12 @@ struct JobRecord:Codable,Identifiable {
                     try FileManager.default.moveItem(at:source,to:target);moved[source]=target
                 };reportSuccess(.action("Files moved.",files:urls.map{moved[$0] ?? $0})) } catch { self.error=error.localizedDescription }
                 inputs=inputs.map{moved[$0] ?? $0}
+                // Keep Library records pointing at files Nashi itself moved.
+                let movedPaths=Dictionary(moved.map{($0.key.path,$0.value.path)},uniquingKeysWith:{first,_ in first})
+                if !movedPaths.isEmpty {
+                    history=history.map{var record=$0;record.outputs=record.outputs.map{movedPaths[$0] ?? $0};return record}
+                    if let data=try? JSONEncoder().encode(history) { historyDefaults.set(data,forKey:"history") }
+                }
             }
         case .terminal:
             let directory=((try? urls[0].resourceValues(forKeys:[.isDirectoryKey]).isDirectory) ?? false) ? urls[0] : urls[0].deletingLastPathComponent()

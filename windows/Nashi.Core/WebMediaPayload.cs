@@ -7,7 +7,8 @@ public sealed record WebMediaPayload(string Url,string Kind,string? Thumbnail=nu
     {
         if(text?.Length>32768||html?.Length>2_000_000||sourceHint?.Length>16384)return null;
         var candidates=new List<string>();if(sourceHint is not null)candidates.Add(sourceHint);
-        if(html is not null)foreach(Match match in Regex.Matches(html,"(?:href|src)\\s*=\\s*[\"']([^\"']+)[\"']",RegexOptions.IgnoreCase,TimeSpan.FromSeconds(1)))candidates.Add(WebUtility.HtmlDecode(match.Groups[1].Value));
+        if(html is not null)foreach(Match match in Regex.Matches(html,"(?:href|src)\\s*=\\s*(?:\"([^\"]+)\"|'([^']+)'|([^\\s>\"']+))",RegexOptions.IgnoreCase,TimeSpan.FromSeconds(1)))
+            candidates.Add(WebUtility.HtmlDecode(match.Groups[1].Success?match.Groups[1].Value:match.Groups[2].Success?match.Groups[2].Value:match.Groups[3].Value));
         if(text is not null)candidates.AddRange(text.Split(['\r','\n','\t'],StringSplitOptions.RemoveEmptyEntries).Select(t=>t.Trim()));
         var urls=candidates.Where(c=>Uri.TryCreate(c,UriKind.Absolute,out var u)&&u.Scheme is "http" or "https"&&string.IsNullOrEmpty(u.UserInfo)).Distinct().Select(c=>new Uri(c)).ToArray();
         foreach(var url in urls)

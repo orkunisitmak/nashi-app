@@ -28,13 +28,13 @@ public enum ImageEngine {
         let output=OutputFiles.unique(for:input,extension:format,directory:options.outputDirectory)
         var complete=false;defer { if !complete { try? FileManager.default.removeItem(at:output) } }
         let metadata = options.preserveMetadata ? CGImageSourceCreateWithURL(input as CFURL,nil).map { imageProperties($0,input:input) as CFDictionary } : nil
-        try write(image,to:output,quality:options.quality,metadata:metadata)
+        try write(image,to:output,quality:options.quality,metadata:metadata,token:token)
         if options.preserveMetadata { try ImageMetadataEngine.copyMetadata(from:input,to:output,token:token) }
         complete=true
         return [output]
     }
 
-    public static func write(_ image: CGImage, to url: URL, quality: Double = 0.8, metadata: CFDictionary? = nil) throws {
+    public static func write(_ image: CGImage, to url: URL, quality: Double = 0.8, metadata: CFDictionary? = nil, token: CancellationToken = .init()) throws {
         let ext=url.pathExtension.lowercased()
         let type: String
         switch ext {
@@ -62,7 +62,7 @@ public enum ImageEngine {
             if ext == "webp" { args += ["-c:v","libwebp","-quality",String(Int(quality*100))] }
             if ext == "avif" { args += ["-c:v","libaom-av1","-still-picture","1","-cpu-used","6","-crf",String(Int((1-quality)*50)+8)] }
             args += [url.path]
-            try ProcessRunner.run(Dependencies.executable("ffmpeg"),args)
+            try ProcessRunner.run(Dependencies.executable("ffmpeg"),args,token:token)
         }
     }
 

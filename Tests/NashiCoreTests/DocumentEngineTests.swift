@@ -174,6 +174,28 @@ final class DocumentEngineTests: XCTestCase {
         XCTAssertEqual(try fm.destinationOfSymbolicLink(atPath: link.path), root.appendingPathComponent("Missing folder").path)
     }
 
+    func testDanglingLinksBesideTheInputKeepTheirNamesAndAreNotReplaced() throws {
+        let fm = FileManager.default
+        func danglingLink(_ name: String) throws -> URL {
+            let link = root.appendingPathComponent(name)
+            try fm.createSymbolicLink(atPath: link.path, withDestinationPath: root.appendingPathComponent("Missing \(name)").path)
+            return link
+        }
+        let captionsLink = try danglingLink("Captions.vtt")
+        let tarLink = try danglingLink("Bundle.tar")
+        let subtitle = try file("Captions.srt", "1\n00:00:01,000 --> 00:00:02,000\nHello\n")
+        XCTAssertEqual(try convert(subtitle, "vtt").lastPathComponent, "Captions 2.vtt")
+        let payload = root.appendingPathComponent("Payload", isDirectory: true)
+        try fm.createDirectory(at: payload, withIntermediateDirectories: true)
+        try Data("data\n".utf8).write(to: payload.appendingPathComponent("a.txt"))
+        let archive = root.appendingPathComponent("Bundle.zip")
+        try ArchiveCodec.create(from: payload, at: archive, format: "zip", token: .init())
+        XCTAssertEqual(try convert(archive, "tar").lastPathComponent, "Bundle 2.tar")
+        for link in [captionsLink, tarLink] {
+            XCTAssertEqual(try fm.destinationOfSymbolicLink(atPath: link.path), root.appendingPathComponent("Missing \(link.lastPathComponent)").path)
+        }
+    }
+
     func testCancellationProducesNoPublishedDocumentOrExtractedFolder() throws {
         let input = try file("Cancelled.txt", "content")
         let token = CancellationToken(); token.cancel()

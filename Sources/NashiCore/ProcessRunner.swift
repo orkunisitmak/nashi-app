@@ -130,7 +130,9 @@ public enum OutputFiles {
         let cleanExt = ext.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "."))
         var candidate = dir.appendingPathComponent(stem).appendingPathExtension(cleanExt)
         var index = 2
-        while FileManager.default.fileExists(atPath: candidate.path) {
+        // lstat-based: a dangling link still occupies its name. fileExists would
+        // report it free, so moves fail and atomic writes replace the link.
+        while (try? FileManager.default.attributesOfItem(atPath: candidate.path)) != nil {
             candidate = dir.appendingPathComponent("\(stem) \(index)").appendingPathExtension(cleanExt); index += 1
         }
         return candidate

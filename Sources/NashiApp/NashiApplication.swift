@@ -239,7 +239,7 @@ enum NashiApplication {
         if downloadWindow == nil {
             downloadWindow=makeToolWindow(title:"Download from the web",size:NSSize(width:660,height:680),view:WebDownloadView(model:downloadModel,state:state))
             downloadWindow?.contentMinSize=NSSize(width:620,height:520)
-            downloadModel.onUseFiles = { [weak self] in guard let self else { return };self.state.inputs=self.downloadModel.completed;self.downloadWindow?.close();self.showHome() }
+            downloadModel.onUseFiles = { [weak self] in guard let self,!self.state.working else { return };self.state.inputs=self.downloadModel.completed;self.downloadWindow?.close();self.showHome() }
         }
         downloadModel.open(url,mode:mode)
         downloadWindow?.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true)
@@ -327,7 +327,7 @@ enum NashiApplication {
     }
     func application(_ application:NSApplication,open urls:[URL]) {
         if let web=urls.first(where:{!$0.isFileURL}),let valid=try? WebDownloadEngine.link(web.absoluteString) { showWebDownload(valid,mode:.video) }
-        else { state.inputs=urls;showHome();state.onOpenWheel?() }
+        else { if !state.working { state.inputs=urls };showHome();state.onOpenWheel?() }
     }
     /// Defers termination during active jobs and lets unsaved PDF editors cancel application exit.
     func applicationShouldTerminate(_ sender:NSApplication)->NSApplication.TerminateReply {
