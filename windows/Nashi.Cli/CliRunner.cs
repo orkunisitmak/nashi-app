@@ -6,12 +6,12 @@ using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 namespace Nashi.Cli;
 
 /// <summary>
-/// Small, read-only Windows CLI entry point. Conversion and tool commands stay
-/// out of scope until the cross-platform contract is agreed in issue #21.
+/// Narrow Windows CLI preview. It reuses Nashi.Core's transactional PDF
+/// merging; broader conversions wait for the contract decision in issue #21.
 /// </summary>
 public static class CliRunner
 {
-    private const string Usage = "Usage: nashi-cli catalog\n       nashi-cli inspect FILE [--json]\n       nashi-cli --help\n\nConversion and tool execution are not implemented in this first Windows slice.";
+    private const string Usage = "Usage: nashi-cli catalog\n       nashi-cli inspect FILE [--json]\n       nashi-cli tool mergePDF FILE1.pdf FILE2.pdf [...] [--json]\n       nashi-cli --help\n\nOther conversion and tool commands are not implemented in this Windows preview.";
 
     public static int Run(string[] args,TextWriter output,TextWriter error)
     {
@@ -39,6 +39,22 @@ public static class CliRunner
                 var fullPath=Path.GetFullPath(commands[1]);
                 if(!File.Exists(fullPath))throw new FileNotFoundException("Input file does not exist.",fullPath);
                 output.WriteLine(JsonSerializer.Serialize(Inspect(fullPath)));
+                return 0;
+            }
+            if(commands.Length>=4 && commands[0]=="tool" && commands[1]=="mergePDF")
+            {
+                var files=commands.Skip(2).Select(Path.GetFullPath).ToArray();
+                foreach(var file in files)
+                {
+                    if(!string.Equals(FeatureCatalog.Extension(file),"pdf",StringComparison.Ordinal))
+                        throw new ArgumentException("mergePDF accepts only PDF inputs.");
+                    if(!File.Exists(file))throw new FileNotFoundException("Input PDF does not exist.",file);
+                    if((File.GetAttributes(file)&FileAttributes.ReparsePoint)!=0)
+                        throw new ArgumentException("PDF input cannot be a symbolic link.");
+                }
+                var result=DocumentEngine.Pdf("mergePDFs",files,Path.GetDirectoryName(files[0])!);
+                if(machineError)output.WriteLine(JsonSerializer.Serialize(result));
+                else foreach(var path in result)output.WriteLine(path);
                 return 0;
             }
             throw new ArgumentException(Usage);

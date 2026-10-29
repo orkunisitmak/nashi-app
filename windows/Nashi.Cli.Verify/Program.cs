@@ -66,6 +66,59 @@ try
     using(var doc=JsonDocument.Parse(invalidError))
         Check(doc.RootElement.GetProperty("error").GetString() is {Length:>0},"Unsupported commands need machine-readable errors.");
     Check(Directory.GetFiles(folder).Length==2,"Read-only CLI commands must not create exports.");
+
+    // New tool command must reuse the core transaction: atomic exports,
+    // source preservation, safe names, and machine-readable output.
+    var firstPdf=Path.Combine(folder,"Synthetic.pdf");
+    var secondPdf=Path.Combine(folder,"Second file.pdf");
+    using(var pdf=new PdfSharp.Pdf.PdfDocument())
+    {
+        pdf.AddPage();
+        pdf.Save(secondPdf);
+    }
+    var firstHash=SHA256.HashData(File.ReadAllBytes(firstPdf));
+    var secondHash=SHA256.HashData(File.ReadAllBytes(secondPdf));
+
+    var (mergeJson,mergeError,mergeStatus)=Run("tool","mergePDF",firstPdf,secondPdf,"--json");
+    Check(mergeStatus==0&&mergeError=="","A supported headless PDF merge must succeed.");
+    string firstMerged;
+    using(var doc=JsonDocument.Parse(mergeJson))
+    {
+        var paths=doc.RootElement.EnumerateArray().Select(p=>p.GetString()!).ToArray();
+        Check(paths.Length==1 && Path.GetFileName(paths[0])=="Merged.pdf" && File.Exists(paths[0]),
+            "JSON merge results should contain the output path.");
+        firstMerged=paths[0];
+    }
+    using(var document=UglyToad.PdfPig.PdfDocument.Open(firstMerged))
+        Check(document.NumberOfPages==3,"Merged PDF must preserve all three pages.");
+    Check(SHA256.HashData(File.ReadAllBytes(firstPdf)).SequenceEqual(firstHash)
+        && SHA256.HashData(File.ReadAllBytes(secondPdf)).SequenceEqual(secondHash),
+        "PDF merge must not modify source files.");
+
+    var (againOut,againErr,againStatus)=Run("tool","mergePDF",firstPdf,secondPdf);
+    var secondMerged=againOut.Trim();
+    Check(againStatus==0 && againErr=="" && File.Exists(secondMerged)
+        && !string.Equals(firstMerged,secondMerged,StringComparison.OrdinalIgnoreCase),
+        "Running again must create a unique output without overwriting existing merges.");
+
+    var (notEnoughOut,notEnoughErr,notEnoughStatus)=Run("tool","mergePDF",firstPdf,"--json");
+    Check(notEnoughStatus!=0 && notEnoughOut=="" && notEnoughErr.Contains("error"),
+        "Missing second PDF must fail and return structured error.");
+
+    var invalid=Path.Combine(folder,"Bad.pdf");
+    File.WriteAllText(invalid,"not a PDF");
+    var (brokenOut,brokenErr,brokenStatus)=Run("tool","mergePDF",firstPdf,invalid,"--json");
+    Check(brokenStatus!=0 && brokenOut=="" && brokenErr.Contains("error"),
+        "A corrupt input PDF must fail atomically.");
+    Check(Directory.GetFiles(folder,"Merged*.pdf").Length==2,
+        "A failed merge must not publish a partial PDF.");
+    Check(!Directory.EnumerateDirectories(folder,".nashi-*").Any(),
+        "Staging folders must be cleaned after both success and failure.");
+
+    var (wrongOut,wrongErr,wrongStatus)=Run("tool","mergePDF",firstPdf,image,"--json");
+    Check(wrongStatus!=0 && wrongOut=="" && wrongErr.Contains("error"),
+        "A non-PDF input must not be silently treated as a PDF.");
+
 }
 finally{Directory.Delete(folder,true);}
-Console.WriteLine(JsonSerializer.Serialize(new {passed=checks,scope="Isolated Windows CLI foundation; real UI and conversion not claimed"}));
+Console.WriteLine(JsonSerializer.Serialize(new {passed=checks,scope="Isolated Windows CLI preview: catalog/inspect/transactional mergePDF; real UI not claimed"}));
