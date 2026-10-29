@@ -27,6 +27,7 @@ try
     await RunnerChecks(temp.FullName);
     HomeChecks();
     WheelChecks(temp.FullName);
+    ToolSetupChecks(temp.FullName);
 }
 finally
 {
@@ -212,6 +213,61 @@ void HomeChecks()
     var shown = window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.IsEffectivelyVisible).Select(t => t.Text).ToList();
     Check(shown.Count(t => t == "chip.png") >= 2 && shown.Contains("1 file ready."), "Selected files show as chips with a status line");
     window.Close();
+}
+
+void ToolSetupChecks(string root)
+{
+    var saved = Environment.GetEnvironmentVariable("XDG_DATA_HOME");
+    try
+    {
+        Environment.SetEnvironmentVariable("XDG_DATA_HOME", "/tmp/x");
+        Check(AppPaths.Tools == "/tmp/x/Nashi/tools", "XDG_DATA_HOME sets the tools folder");
+        Environment.SetEnvironmentVariable("XDG_DATA_HOME", null);
+        Check(AppPaths.Tools.EndsWith(Path.Combine(".local", "share", "Nashi", "tools")), "Without XDG_DATA_HOME tools live under ~/.local/share");
+    }
+    finally { Environment.SetEnvironmentVariable("XDG_DATA_HOME", saved); }
+
+    var missing = new Toolchain(Directory.CreateDirectory(Path.Combine(root, "tools-missing")).FullName, "");
+    var presentDir = Directory.CreateDirectory(Path.Combine(root, "tools-present")).FullName;
+    foreach (var name in new[] { "ffmpeg", "ffprobe" }) File.WriteAllText(Path.Combine(presentDir, name), "x");
+    var present = new Toolchain(presentDir, "");
+    Check(!AppPaths.MediaReady(missing) && AppPaths.MediaReady(present), "Media readiness is ffmpeg plus ffprobe");
+
+    var smoke = Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");
+    List<string> Texts(Window w) => w.GetVisualDescendants().OfType<TextBlock>().Where(t => t.IsEffectivelyVisible).Select(t => t.Text ?? "").ToList();
+    foreach (var (toolchain, label) in new[] { (missing, "missing"), (present, "ready") })
+    {
+        var window = new ToolSetupWindow(toolchain);
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        var texts = Texts(window);
+        var action = window.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => b.IsEffectivelyVisible && b.Content as string == "Download missing tools");
+        if (label == "missing") Check(texts.Contains("Missing") && texts.Contains("Set up tools") && action is not null, "Setup window offers a download when media tools are missing");
+        else Check(texts.Contains("Ready") && texts.Contains("Tools ready") && action is null, "Setup window shows Ready and no download when tools are present");
+        var frame = window.CaptureRenderedFrame();
+        Check(frame is not null, "Setup window renders (" + label + ")");
+        if (!string.IsNullOrEmpty(smoke) && frame is not null)
+        {
+            Directory.CreateDirectory(smoke);
+            frame.Save(Path.Combine(smoke, $"tool-setup-{label}-light.png"));
+        }
+        window.Close();
+    }
+
+    var home = new MainWindow(present) { Width = 820, Height = 780 };
+    home.Show();
+    Dispatcher.UIThread.RunJobs();
+    Check(home.GetVisualDescendants().OfType<Button>().Any(b => b.Content as string == "Tools ready"), "Header says Tools ready when media tools are present");
+    home.Close();
+    var needs = new MainWindow(missing) { Width = 820, Height = 780 };
+    needs.Show();
+    Dispatcher.UIThread.RunJobs();
+    var header = needs.GetVisualDescendants().OfType<Button>().First(b => b.Content as string == "Set up tools");
+    header.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+    Dispatcher.UIThread.RunJobs();
+    Check(needs.OwnedWindows.OfType<ToolSetupWindow>().Count() == 1, "Header Set up tools opens the setup window");
+    foreach (var w in needs.OwnedWindows.ToArray()) w.Close();
+    needs.Close();
 }
 
 void WheelChecks(string root)

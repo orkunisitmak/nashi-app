@@ -12,8 +12,7 @@
     <Grid DockPanel.Dock="Top" Margin="28,19,28,15" ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto">
       <Image Source="avares://Nashi/Assets/NashiMark.png" Width="40" Height="40" />
       <TextBlock Grid.Column="1" Text="Nashi" Margin="10,0,0,0" FontSize="19" FontWeight="Bold" LetterSpacing="-0.5" VerticalAlignment="Center" />
-      <!-- Hook: the tool setup window (later task) opens from here. -->
-      <Button Grid.Column="3" Classes="secondary compact" Content="Set up tools" Click="OnSetUpTools" VerticalAlignment="Center" />
+      <Button x:Name="SetUpToolsButton" Grid.Column="3" Classes="secondary compact" Content="Set up tools" Click="OnSetUpTools" VerticalAlignment="Center" />
       <Border Grid.Column="4" Classes="pill" Margin="10,0">
         <StackPanel Orientation="Horizontal" Spacing="5">
           <PathIcon Data="{StaticResource IconLock}" />

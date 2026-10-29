@@ -40,7 +40,8 @@ public sealed partial class MainWindow : Window
         public const string SavedOne = "Saved 1 new file. Originals kept.";
         public const string SavedMany = "Saved {0} new files. Originals kept.";
         public const string Cancelled = "Cancelled. Originals kept.";
-        public const string NeedsTools = "This needs media tools (ffmpeg). Use “Set up tools” at the top, then try again.";
+        public const string SetUpTools = "Set up tools";
+        public const string ToolsReady = "Tools ready";
         public const string Failed = "Couldn’t finish: {0}";
         public const string Problem = "Something went wrong: {0}";
     }
@@ -52,16 +53,19 @@ public sealed partial class MainWindow : Window
     private bool dropTargeted;
     private bool busy;
     private string? notice;
-    // Task 8 swaps this for AppPaths.CreateToolchain().
-    private readonly OperationRunner runner = new(new Toolchain(
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Nashi", "tools"),
-        Environment.GetEnvironmentVariable("PATH")));
+    private readonly Toolchain tools;
+    private readonly OperationRunner runner;
 
     public Selection Selection { get; } = new();
 
-    public MainWindow()
+    public MainWindow() : this(AppPaths.CreateToolchain()) { }
+
+    public MainWindow(Toolchain tools)
     {
         InitializeComponent();
+        this.tools = tools;
+        runner = new OperationRunner(tools);
+        RefreshToolsButton();
         Selection.Changed += () => { notice = null; Refresh(); };
         AddHandler(DragDrop.DragOverEvent, OnDragOver);
         AddHandler(DragDrop.DragLeaveEvent, (_, _) => SetDropTargeted(false));
@@ -173,8 +177,17 @@ public sealed partial class MainWindow : Window
         Refresh();
     }
 
-    // Hook for Task 8: the tool setup window opens from here.
-    private void OnSetUpTools(object? sender, RoutedEventArgs e) { }
+    private void OnSetUpTools(object? sender, RoutedEventArgs e) => _ = ShowToolSetupAsync();
+
+    /// Opens the setup window over this one; the header label follows whatever it left installed.
+    private async Task ShowToolSetupAsync()
+    {
+        try { await new ToolSetupWindow(tools).ShowDialog(this); }
+        catch (Exception error) { Notify(string.Format(Copy.Problem, error.Message)); }
+        RefreshToolsButton();
+    }
+
+    private void RefreshToolsButton() => SetUpToolsButton.Content = AppPaths.MediaReady(tools) ? Copy.ToolsReady : Copy.SetUpTools;
     private void OnConvert(object? sender, RoutedEventArgs e) => ShowFormatWheel();
     private void OnTools(object? sender, RoutedEventArgs e) => ShowToolsWheel();
     private void OnActions(object? sender, RoutedEventArgs e) { }
@@ -234,13 +247,8 @@ public sealed partial class MainWindow : Window
             catch (Exception error)
             {
                 toast.Close();
-                // ponytail: Task 8 turns the missing-tools message into opening the setup window.
-                Notify(error switch
-                {
-                    OperationCanceledException => Copy.Cancelled,
-                    MissingToolsException => Copy.NeedsTools,
-                    _ => string.Format(Copy.Failed, error.Message),
-                });
+                if (error is MissingToolsException) await ShowToolSetupAsync();
+                else Notify(error is OperationCanceledException ? Copy.Cancelled : string.Format(Copy.Failed, error.Message));
             }
         }
         finally { busy = false; }

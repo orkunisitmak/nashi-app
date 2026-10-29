@@ -1,0 +1,35 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Nashi.Linux.ToolSetupWindow"
+        Title="Set up tools"
+        Width="480" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner">
+  <StackPanel Margin="28,24" Spacing="16">
+    <StackPanel Spacing="6">
+      <TextBlock x:Name="HeadingText" FontSize="22" FontWeight="Bold" LetterSpacing="-0.5" />
+      <TextBlock x:Name="DetailText" Classes="secondary" FontSize="12" TextWrapping="Wrap" />
+    </StackPanel>
+    <Border Classes="card" Padding="18,14">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Spacing="3" VerticalAlignment="Center">
+          <TextBlock x:Name="ToolName" FontSize="14" FontWeight="SemiBold" />
+          <TextBlock x:Name="ToolDetail" Classes="secondary" FontSize="11" TextWrapping="Wrap" />
+        </StackPanel>
+        <Border x:Name="StatusPill" Grid.Column="1" Classes="pill gold" VerticalAlignment="Center">
+          <TextBlock x:Name="StatusText" />
+        </Border>
+      </Grid>
+    </Border>
+    <StackPanel x:Name="ProgressPanel" Spacing="6" IsVisible="False">
+      <TextBlock x:Name="ProgressText" Classes="secondary" FontSize="11" TextTrimming="CharacterEllipsis" />
+      <ProgressBar x:Name="Bar" Height="5" MinHeight="5" Minimum="0" Maximum="1" IsIndeterminate="True" CornerRadius="3"
+                   Foreground="{StaticResource NashiPrimaryFill}" Background="{DynamicResource NashiInset}" />
+    </StackPanel>
+    <TextBlock x:Name="ErrorText" FontSize="11" TextWrapping="Wrap" IsVisible="False" Foreground="{DynamicResource NashiGoldInk}" />
+    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+      <Button x:Name="CancelButton" Classes="secondary" Click="OnCancel" IsVisible="False" />
+      <Button x:Name="ActionButton" Classes="primary" Click="OnAction" />
+      <Button x:Name="CloseButton" Classes="secondary" Click="OnClose" />
+    </StackPanel>
+  </StackPanel>
+</Window>
