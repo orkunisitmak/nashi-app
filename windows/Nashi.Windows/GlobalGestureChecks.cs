@@ -16,6 +16,8 @@ internal static class GlobalGestureChecks
     [DllImport("user32.dll")]private static extern bool GetWindowRect(IntPtr handle,out NativeRect rect);
     [DllImport("user32.dll")]private static extern bool SetForegroundWindow(IntPtr handle);
     [DllImport("user32.dll")]private static extern bool PostMessage(IntPtr handle,uint message,IntPtr w,IntPtr l);
+    [DllImport("user32.dll")]private static extern bool RegisterHotKey(IntPtr window,int id,uint modifiers,uint key);
+    [DllImport("user32.dll")]private static extern bool UnregisterHotKey(IntPtr window,int id);
     internal static void Run(Window owner,string root,string original,Action<bool,string> check)
     {
         check(PrimaryMouseButton.VirtualKey(false)==0x01&&PrimaryMouseButton.VirtualKey(true)==0x02,"Swapped mouse buttons did not map the primary drag button");
@@ -69,7 +71,7 @@ internal static class GlobalGestureChecks
             finally{DesktopInput.HoldMouse(false);DesktopInput.Hold(Key.LeftShift,false);DesktopInput.Pump(250);plain.Close();}
             // In a fullscreen game, sprinting or crouching while firing and aiming is Shift or Ctrl with a primary drag,
             // and Ctrl+Shift+D strafes during a slide. No wheel may open above the game, and the keys must reach it.
-            phase="fullscreen game";var registered=controller.LinkShortcutRegistered;var keys=new List<Key>();var game=new Window{WindowStyle=WindowStyle.None,ResizeMode=ResizeMode.NoResize,WindowState=WindowState.Maximized,Topmost=true,ShowInTaskbar=false,Background=System.Windows.Media.Brushes.Black};game.KeyDown+=(_,e)=>keys.Add(e.Key);game.Show();game.Activate();DesktopInput.Pump(300);
+            phase="fullscreen game";var registered=controller.LinkShortcutRegistered;var taken=false;var keys=new List<Key>();var game=new Window{WindowStyle=WindowStyle.None,ResizeMode=ResizeMode.NoResize,WindowState=WindowState.Maximized,Topmost=true,ShowInTaskbar=false,Background=System.Windows.Media.Brushes.Black};game.KeyDown+=(_,e)=>keys.Add(e.Key);game.Show();game.Activate();DesktopInput.Pump(300);
             try
             {
                 check(DesktopGeometry.FullscreenForeground(),"A borderless window covering its monitor was not recognized as a fullscreen game");
@@ -81,9 +83,12 @@ internal static class GlobalGestureChecks
                     finally{DesktopInput.HoldMouse(false);DesktopInput.Hold(modifier,false);DesktopInput.Pump(200);}
                 }
                 selected=null;DesktopInput.Key(game,Key.D,control:true,shift:true);check(keys.Contains(Key.D)&&selected is null,"Ctrl+Shift+D did not reach the fullscreen game");
+                // Another app may take the free combination while the game runs; Nashi must retry once it is released.
+                taken=registered&&RegisterHotKey(IntPtr.Zero,7702,0x4000|0x2|0x4,0x44);
             }
             finally{game.Close();}
-            for(var n=0;n<20&&registered&&!controller.LinkShortcutRegistered;n++)DesktopInput.Pump(50);check(controller.LinkShortcutRegistered==registered,"Ctrl+Shift+D was not reserved again after the fullscreen game closed");
+            if(taken){DesktopInput.Pump(300);check(!controller.LinkShortcutRegistered,"Nashi claimed Ctrl+Shift+D while another app held it");UnregisterHotKey(IntPtr.Zero,7702);}
+            for(var n=0;n<60&&registered&&!controller.LinkShortcutRegistered;n++)DesktopInput.Pump(50);check(controller.LinkShortcutRegistered==registered,"Ctrl+Shift+D was not reserved again after the fullscreen game closed");
             if(controller.LinkShortcutRegistered){DesktopInput.Key(owner,Key.D,control:true,shift:true);check(selected=="link-shortcut","Global copied-link shortcut Ctrl+Shift+D");}
             var main=owner as MainWindow;var beforeLaunch=main?.SelectedFiles.ToArray();var modal=new Window{Owner=owner,Width=300,Height=200,WindowStartupLocation=WindowStartupLocation.CenterOwner,Content=new System.Windows.Controls.Border{Background=System.Windows.Media.Brushes.DarkOliveGreen}};Exception? modalError=null;
             modal.Dispatcher.BeginInvoke(()=>
