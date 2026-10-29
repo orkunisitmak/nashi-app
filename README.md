@@ -33,6 +33,10 @@ First launch guides you through **Finish setup → Download missing tools** for 
 
 These first public builds do not have Apple notarization or Windows Authenticode publisher signing. Your OS may require first-launch approval; consult [Apple's guidance](https://support.apple.com/en-us/102445). Nashi does not disable system security settings. Official release assets include SHA-256 checksums. A CI artifact alone is not an official signed update.
 
+## Linux preview
+
+A native Linux preview is available from source using Avalonia / .NET 10 and the shared C# engine. See [Linux build, supported features and platform differences](linux/README.md). It supports local file drop, conversions, image adjustments, PDF/archive/subtitle tools, Library and optional system media/Office tools. This initial port does not yet provide full macOS/Windows desktop or editor parity.
+
 ## Shortcuts
 
 On macOS, hold **Shift** while dragging in Finder for conversion, **Command** for tools or **Control** for file actions. **Control–Shift–D** downloads a copied public link. Drag modifiers are customizable. On Windows, use **Ctrl+O** to choose files, **Ctrl+V** to import copied files/text/images, and **Ctrl+Space** for the tools and conversion wheel. **Ctrl+2** opens Library; **Ctrl+F** searches it. Normal paste inside text fields is preserved. Home and Library share the Mac color palette, rounded cards and gold actions, with System/Light/Dark appearance.

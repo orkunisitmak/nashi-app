@@ -1,0 +1,51 @@
+name: Linux preview
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: linux-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        with:
+          dotnet-version: '10.0.x'
+      - name: Native desktop and media dependencies
+        run: sudo apt-get update && sudo apt-get install -y xvfb libice6 libsm6 libfontconfig1 libx11-6 ffmpeg libreoffice-writer libreoffice-calc desktop-file-utils libglib2.0-bin
+      - name: Restore locked dependencies
+        run: dotnet restore linux/Nashi.Linux.Verify --locked-mode
+      - name: Engine and security regressions
+        run: dotnet run --project linux/Nashi.Linux.Verify -c Release --no-restore
+      - name: Desktop entry argument and install checks
+        run: python3 scripts/test-linux-install.py
+      - name: Isolated native window and export checks
+        env:
+          XDG_DATA_HOME: '${{ github.workspace }}/build/linux-smoke/data'
+          NASHI_SMOKE_DIRECTORY: '${{ github.workspace }}/build/linux-smoke'
+        run: xvfb-run -a dotnet run --project linux/Nashi.Linux -c Release --no-build -- --smoke-test
+      - name: Build self-contained portable archive
+        run: linux/build.sh linux-x64
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: Nashi-linux-x64-preview
+          path: |
+            build/Nashi-linux-x64.tar.gz
+            build/Nashi-linux-x64.tar.gz.sha256
+          if-no-files-found: error
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        if: always()
+        with:
+          name: linux-native-smoke
+          path: build/linux-smoke
+          if-no-files-found: warn
+          retention-days: 7

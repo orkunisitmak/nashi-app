@@ -40,3 +40,7 @@ Desteklenen medya editörlerinde **Space** oynat/duraklat, **sağ/sol ok** bir s
 Dönüştürme ve düzenleme yerelde çalışır. Web indirmeleri seçtiğin siteye bağlanır. Analytics, bulut hesabı veya tarayıcı çerezi aktarma yok. Public güncellemeler GitHub hesabı/token istemez. macOS feed ve arşiv imzasını, Windows arşiv imzasını ve sürümünü doğrular. İşler tamamlanmadan veya iptal edilmeden güncelleme için uygulama kapanmaz. Windows eski uygulama klasörünü geri alınabilir yedek olarak tutar.
 
 Kaynak kod [MIT](LICENSE) lisanslıdır; üçüncü taraf bileşenlerin kendi lisansları geçerlidir. [macOS build adımları](README.md#build) · [Windows build adımları](windows/README.md).
+
+## Linux önizlemesi
+
+Avalonia / .NET 10 ve ortak C# işlem motorunu kullanan Linux sürümü kaynak koddan derlenebilir. Dosya bırakma, dönüştürme, temel görsel düzenleme, PDF/arşiv/altyazı araçları ve kitaplık içerir. [Derleme, desteklenen özellikler ve platform farkları](linux/README.md). Bu ilk port henüz macOS/Windows ile tam özellik eşitliği sunmaz.
