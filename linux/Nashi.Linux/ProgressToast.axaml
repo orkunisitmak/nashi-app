@@ -1,0 +1,21 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Nashi.Linux.ProgressToast"
+        Title="Nashi — Progress"
+        Width="510" SizeToContent="Height" CanResize="False"
+        SystemDecorations="None" ShowInTaskbar="False" ShowActivated="False"
+        WindowStartupLocation="Manual"
+        Background="Transparent" TransparencyLevelHint="Transparent"
+        TransparencyBackgroundFallback="{DynamicResource NashiCanvas}">
+  <Border x:Name="Card" Classes="card" Padding="22,18" Background="{DynamicResource NashiSurface}">
+    <Grid ColumnDefinitions="*,Auto">
+      <StackPanel Spacing="6" VerticalAlignment="Center">
+        <TextBlock x:Name="TitleText" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" />
+        <TextBlock x:Name="MessageText" Classes="secondary" FontSize="11" TextTrimming="CharacterEllipsis" />
+        <ProgressBar x:Name="Bar" Height="5" MinHeight="5" Minimum="0" Maximum="1" IsIndeterminate="True" CornerRadius="3"
+                     Foreground="{StaticResource NashiPrimaryFill}" Background="{DynamicResource NashiInset}" Margin="0,4,0,0" />
+      </StackPanel>
+      <Button x:Name="ActionButton" Grid.Column="1" Classes="secondary compact" Margin="18,0,0,0" VerticalAlignment="Center" Click="OnAction" />
+    </Grid>
+  </Border>
+</Window>

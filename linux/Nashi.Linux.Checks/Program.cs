@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
+using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
@@ -25,6 +26,7 @@ try
     ImageChecks(temp.FullName);
     await RunnerChecks(temp.FullName);
     HomeChecks();
+    WheelChecks(temp.FullName);
 }
 finally
 {
@@ -210,6 +212,99 @@ void HomeChecks()
     var shown = window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.IsEffectivelyVisible).Select(t => t.Text).ToList();
     Check(shown.Count(t => t == "chip.png") >= 2 && shown.Contains("1 file ready."), "Selected files show as chips with a status line");
     window.Close();
+}
+
+void WheelChecks(string root)
+{
+    // Pure geometry at 320: radius 140.8, inner 57.3.
+    var size = new Size(320, 320);
+    Check(Wheel.IndexAt(new Point(160, 60), size, 8) == 0, "IndexAt top of the ring is item 0");
+    Check(Wheel.IndexAt(new Point(260, 160), size, 8) == 2, "IndexAt right-middle of the ring is item 2");
+    Check(Wheel.IndexAt(new Point(160, 160), size, 8) == -1, "IndexAt the center is -1");
+    Check(Wheel.IndexAt(new Point(5, 5), size, 8) == -1 && Wheel.IndexAt(new Point(160, 3), size, 8) == -1, "IndexAt outside the ring is -1");
+
+    string[] formats = ["JPG", "WEBP", "HEIC", "TIFF", "AVIF", "BMP", "PDF", "GIF"];
+    var items = formats.Select(f => new WheelItem("convert:" + f.ToLowerInvariant(), f)).ToArray();
+    var window = new WheelWindow("Convert", items);
+    WheelItem? chosen = null;
+    window.Wheel.Chosen += item => chosen = item;
+    window.Show();
+    Dispatcher.UIThread.RunJobs();
+    window.Wheel.Focus();
+    Check(window.Wheel.HighlightedIndex == 0, "Wheel opens with the first item highlighted");
+    window.KeyPressQwerty(PhysicalKey.ArrowRight, RawInputModifiers.None);
+    Check(window.Wheel.HighlightedIndex == 1, "Right moves the highlight forward");
+    window.KeyPressQwerty(PhysicalKey.ArrowLeft, RawInputModifiers.None);
+    window.KeyPressQwerty(PhysicalKey.ArrowLeft, RawInputModifiers.None);
+    Check(window.Wheel.HighlightedIndex == 7, "Left wraps around to the last item");
+    window.KeyPressQwerty(PhysicalKey.ArrowRight, RawInputModifiers.None);
+    Check(window.Wheel.HighlightedIndex == 0, "Right wraps around to the first item");
+    var frame = window.CaptureRenderedFrame();
+    Check(frame is not null, "Wheel renders a frame");
+    var smoke = Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");
+    if (!string.IsNullOrEmpty(smoke) && frame is not null)
+    {
+        Directory.CreateDirectory(smoke);
+        frame.Save(Path.Combine(smoke, "wheel-light.png"));
+    }
+    window.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+    Dispatcher.UIThread.RunJobs();
+    Check(chosen == items[0] && !window.IsVisible, "Enter chooses the highlighted item and closes the wheel");
+
+    var escape = new WheelWindow("Convert", items);
+    escape.Show();
+    Dispatcher.UIThread.RunJobs();
+    escape.Wheel.Focus();
+    escape.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);
+    Dispatcher.UIThread.RunJobs();
+    Check(!escape.IsVisible, "Esc closes the wheel");
+
+    var many = Enumerable.Range(1, 10).Select(n => new WheelItem("t" + n, "Item " + n)).ToArray();
+    var paged = new Wheel { Items = many };
+    Check(paged.Segments.Count == 8 && paged.Segments[^1].Id == "page:next" && paged.PageCount == 2, "Ten items page as six plus Previous and Next");
+    paged.HighlightedIndex = 7;
+    paged.RaiseEvent(new Avalonia.Input.KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Avalonia.Input.Key.Enter });
+    Check(paged.Segments[0].Id == "t7" && paged.Segments.Count == 6, "Next shows the remaining items with Previous and Next");
+
+    // Home: empty wheels say why; a PNG opens a format wheel with JPG; the success toast copy.
+    var home = new MainWindow { Width = 820, Height = 780 };
+    home.Show();
+    Dispatcher.UIThread.RunJobs();
+    Button Chip(string text) => home.GetVisualDescendants().OfType<Button>().First(b => b.GetVisualDescendants().OfType<TextBlock>().Any(t => t.Text == text));
+    string Status() => home.GetVisualDescendants().OfType<TextBlock>().First(t => t.Name == "StatusLine").Text ?? "";
+    Chip("Tools").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+    Check(Status() == "Choose files first." && home.OwnedWindows.Count == 0, "Tools with nothing selected shows a status message");
+    var doc = Path.Combine(root, "notes.docx");
+    File.WriteAllText(doc, "x");
+    home.Selection.Add([doc]);
+    Chip("Convert").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+    Check(Status().Contains("No conversions") && home.OwnedWindows.Count == 0, "An empty format wheel shows a status message instead");
+    home.Selection.Clear();
+    var png = Path.Combine(root, "wheel.png");
+    File.WriteAllText(png, "x");
+    home.Selection.Add([png]);
+    Chip("Convert").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+    Dispatcher.UIThread.RunJobs();
+    var opened = home.OwnedWindows.OfType<WheelWindow>().SingleOrDefault();
+    Check(opened is not null && opened.Wheel.Items.Any(i => i.Id == "convert:jpg" && i.Title == "JPG"), "Convert chip on a PNG opens a format wheel with JPG");
+    opened?.Close();
+    home.KeyPressQwerty(PhysicalKey.Space, RawInputModifiers.Control);
+    Dispatcher.UIThread.RunJobs();
+    var tools = home.OwnedWindows.OfType<WheelWindow>().SingleOrDefault();
+    Check(tools is not null && tools.Wheel.Items.Select(i => i.Id).SequenceEqual(["convert", "compress"]), "Ctrl+Space opens the tools wheel with Convert first");
+    tools?.Close();
+
+    var toast = new ProgressToast("Convert to JPG", null);
+    toast.Show(home);
+    toast.Update(new OperationProgress(0.5, "Saving images…"));
+    toast.Complete([Path.Combine(root, "wheel.jpg")], root);
+    Dispatcher.UIThread.RunJobs();
+    var toastTexts = toast.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
+    Check(toastTexts.Contains("Saved 1 new file. Originals kept.") && toastTexts.Contains("Show in folder"), "Success toast says what was saved and offers Show in folder");
+    var toastFrame = toast.CaptureRenderedFrame();
+    if (!string.IsNullOrEmpty(smoke) && toastFrame is not null) toastFrame.Save(Path.Combine(smoke, "toast-success-light.png"));
+    toast.Close();
+    home.Close();
 }
 
 async Task RunnerChecks(string root)

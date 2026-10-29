@@ -5,6 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Platform.Storage;
+using Nashi.Core;
 
 namespace Nashi.Linux;
 
@@ -29,6 +30,19 @@ public sealed partial class MainWindow : Window
         public const string OneReady = "1 file ready.";
         public const string ManyReady = "{0} files ready.";
         public const string Skipped = "Skipped {0}: only existing files can come in, not folders.";
+        public const string ConvertWheel = "Convert";
+        public const string ToolsWheel = "Tools";
+        public const string ConvertTo = "Convert to {0}";
+        public const string ChooseFirst = "Choose files first.";
+        public const string NoFormats = "No conversions for this selection yet.";
+        public const string NoTools = "No tools for this selection yet.";
+        public const string SaveTo = "Save new files to…";
+        public const string SavedOne = "Saved 1 new file. Originals kept.";
+        public const string SavedMany = "Saved {0} new files. Originals kept.";
+        public const string Cancelled = "Cancelled. Originals kept.";
+        public const string NeedsTools = "This needs media tools (ffmpeg). Use “Set up tools” at the top, then try again.";
+        public const string Failed = "Couldn’t finish: {0}";
+        public const string Problem = "Something went wrong: {0}";
     }
 
     private static readonly Bitmap Mark = Load("NashiMark.png");
@@ -36,13 +50,19 @@ public sealed partial class MainWindow : Window
 
     private int lastSkipped;
     private bool dropTargeted;
+    private bool busy;
+    private string? notice;
+    // Task 8 swaps this for AppPaths.CreateToolchain().
+    private readonly OperationRunner runner = new(new Toolchain(
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Nashi", "tools"),
+        Environment.GetEnvironmentVariable("PATH")));
 
     public Selection Selection { get; } = new();
 
     public MainWindow()
     {
         InitializeComponent();
-        Selection.Changed += Refresh;
+        Selection.Changed += () => { notice = null; Refresh(); };
         AddHandler(DragDrop.DragOverEvent, OnDragOver);
         AddHandler(DragDrop.DragLeaveEvent, (_, _) => SetDropTargeted(false));
         AddHandler(DragDrop.DropEvent, OnDrop);
@@ -80,6 +100,7 @@ public sealed partial class MainWindow : Window
         var status = new List<string>();
         if (any) status.Add(files.Count == 1 ? Copy.OneReady : string.Format(Copy.ManyReady, files.Count));
         if (lastSkipped > 0) status.Add(string.Format(Copy.Skipped, lastSkipped));
+        if (notice is not null) status.Add(notice);
         StatusLine.Text = string.Join(" ", status);
         StatusLine.IsVisible = status.Count > 0;
     }
@@ -95,8 +116,12 @@ public sealed partial class MainWindow : Window
 
     private async void OnChooseFiles(object? sender, RoutedEventArgs e)
     {
-        var picked = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions { Title = Copy.PickerTitle, AllowMultiple = true });
-        if (picked.Count > 0) AddFiles(LocalPaths(picked));
+        try
+        {
+            var picked = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions { Title = Copy.PickerTitle, AllowMultiple = true });
+            if (picked.Count > 0) AddFiles(LocalPaths(picked));
+        }
+        catch (Exception error) { Notify(string.Format(Copy.Problem, error.Message)); }
     }
 
     private void OnRemoveFile(object? sender, RoutedEventArgs e)
@@ -114,9 +139,12 @@ public sealed partial class MainWindow : Window
     protected override async void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
-        if (e.Handled || e.Key != Key.V || e.KeyModifiers != KeyModifiers.Control || Clipboard is null) return;
+        if (e.Handled || e.KeyModifiers != KeyModifiers.Control) return;
+        if (e.Key == Key.Space) { e.Handled = true; ShowToolsWheel(); return; }
+        if (e.Key != Key.V || Clipboard is null) return;
         e.Handled = true;
-        AddFiles(LocalPaths(await Clipboard.TryGetFilesAsync()));
+        try { AddFiles(LocalPaths(await Clipboard.TryGetFilesAsync())); }
+        catch (Exception error) { Notify(string.Format(Copy.Problem, error.Message)); }
     }
 
     private void OnDragOver(object? sender, DragEventArgs e)
@@ -139,9 +167,101 @@ public sealed partial class MainWindow : Window
         Refresh();
     }
 
-    // Hooks for later tasks: tool setup and the wheel connect here.
+    private void Notify(string message)
+    {
+        notice = message;
+        Refresh();
+    }
+
+    // Hook for Task 8: the tool setup window opens from here.
     private void OnSetUpTools(object? sender, RoutedEventArgs e) { }
-    private void OnConvert(object? sender, RoutedEventArgs e) { }
-    private void OnTools(object? sender, RoutedEventArgs e) { }
+    private void OnConvert(object? sender, RoutedEventArgs e) => ShowFormatWheel();
+    private void OnTools(object? sender, RoutedEventArgs e) => ShowToolsWheel();
     private void OnActions(object? sender, RoutedEventArgs e) { }
+
+    /// Tools, with Convert first when the selection has formats; Ctrl+Space opens it too.
+    private void ShowToolsWheel()
+    {
+        var files = Selection.Files;
+        var items = Capabilities.Tools(files).Select(id => new WheelItem(id, FeatureCatalog.ToolNames.GetValueOrDefault(id, id))).ToList();
+        if (Capabilities.Formats(files).Length > 0) items.Insert(0, new WheelItem("convert", Copy.ConvertWheel));
+        ShowWheel(Copy.ToolsWheel, items, Copy.NoTools);
+    }
+
+    private void ShowFormatWheel() =>
+        ShowWheel(Copy.ConvertWheel, Capabilities.Formats(Selection.Files).Select(f => new WheelItem("convert:" + f, f == "gz" ? "GZIP" : f.ToUpperInvariant())).ToList(), Copy.NoFormats);
+
+    private void ShowWheel(string title, IReadOnlyList<WheelItem> items, string empty)
+    {
+        if (busy) return;
+        if (Selection.Files.Count == 0) { Notify(Copy.ChooseFirst); return; }
+        if (items.Count == 0) { Notify(empty); return; }
+        var wheel = new WheelWindow(title, items);
+        wheel.Wheel.Chosen += OnWheelChosen;
+        wheel.Show(this);
+    }
+
+    private async void OnWheelChosen(WheelItem item)
+    {
+        try
+        {
+            if (item.Id == "convert") ShowFormatWheel();
+            else await RunAsync(item);
+        }
+        catch (Exception error) { Notify(string.Format(Copy.Problem, error.Message)); }
+    }
+
+    private async Task RunAsync(WheelItem item)
+    {
+        if (busy) return;
+        busy = true;
+        try
+        {
+            var files = Selection.Files.ToArray();
+            if (files.Length == 0) return;
+            var destination = await DestinationAsync(files[0]);
+            if (destination is null) return;
+            var title = item.Id.StartsWith("convert:", StringComparison.Ordinal) ? string.Format(Copy.ConvertTo, item.Title) : item.Title;
+            using var cancellation = new CancellationTokenSource();
+            var toast = new ProgressToast(title, cancellation.Cancel);
+            toast.Show(this);
+            try
+            {
+                var outputs = await runner.RunAsync(item.Id, files, destination, new Progress<OperationProgress>(toast.Update), cancellation.Token);
+                toast.Complete(outputs, destination);
+                Notify(outputs.Count == 1 ? Copy.SavedOne : string.Format(Copy.SavedMany, outputs.Count));
+            }
+            catch (Exception error)
+            {
+                toast.Close();
+                // ponytail: Task 8 turns the missing-tools message into opening the setup window.
+                Notify(error switch
+                {
+                    OperationCanceledException => Copy.Cancelled,
+                    MissingToolsException => Copy.NeedsTools,
+                    _ => string.Format(Copy.Failed, error.Message),
+                });
+            }
+        }
+        finally { busy = false; }
+    }
+
+    /// The first file's folder when Nashi may write there; otherwise the user picks one (null when cancelled).
+    private async Task<string?> DestinationAsync(string first)
+    {
+        var folder = Path.GetDirectoryName(first);
+        if (folder is not null && Writable(folder)) return folder;
+        var picked = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { Title = Copy.SaveTo });
+        return picked.Count > 0 ? picked[0].TryGetLocalPath() : null;
+    }
+
+    private static bool Writable(string folder)
+    {
+        try
+        {
+            using var probe = new FileStream(Path.Combine(folder, ".nashi-" + Guid.NewGuid().ToString("N")), FileMode.CreateNew, FileAccess.Write, FileShare.None, 1, FileOptions.DeleteOnClose);
+            return true;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException) { return false; }
+    }
 }

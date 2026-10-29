@@ -1,0 +1,11 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:Nashi.Linux"
+        x:Class="Nashi.Linux.WheelWindow"
+        Title="Nashi wheel"
+        Width="320" Height="320" CanResize="False"
+        SystemDecorations="None" ShowInTaskbar="False" WindowStartupLocation="CenterOwner"
+        Background="Transparent" TransparencyLevelHint="Transparent"
+        TransparencyBackgroundFallback="{DynamicResource NashiCanvas}">
+  <local:Wheel x:Name="Ring" />
+</Window>

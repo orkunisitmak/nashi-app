@@ -108,7 +108,7 @@
             </StackPanel>
             <TextBlock x:Name="StatusLine" Classes="secondary" FontSize="11" IsVisible="False" TextWrapping="Wrap" />
 
-            <!-- Hooks: the wheel (later task) opens from these chips. -->
+            <!-- Convert opens the format wheel, Tools the tools wheel (also Ctrl+Space). -->
             <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,2,0,0">
               <Button Classes="chip" Click="OnConvert">
                 <StackPanel Orientation="Horizontal" Spacing="6">
