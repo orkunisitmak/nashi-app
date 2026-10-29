@@ -69,6 +69,17 @@ internal static class OperationChecks
                 var joined=Operations.RunAsync(new("joinVideos","Join Videos"),[clip,clip],Path.Combine(root,"join"),progress,token).GetAwaiter().GetResult().Single();
                 var joinedDuration=Operations.Media.InspectAsync(joined,token).GetAwaiter().GetResult().Duration;
                 Check(joinedDuration is > 3.6 and < 4.4,"Joined duration");
+                var trimmed=Operations.RunAsync(new("trimVideo","Trim Video"),[clip],Path.Combine(root,"trim"),progress,token,new(){Start=.5,End=1.5}).GetAwaiter().GetResult().Single();
+                Check(Operations.Media.InspectAsync(trimmed,token).GetAwaiter().GetResult().Duration is > .8 and < 1.25,"Trim keeps the In/Out range");
+                var cut=Operations.RunAsync(new("trimAudio","Trim Audio"),[wav],Path.Combine(root,"trim-audio"),progress,token,new(){Start=0,End=1}).GetAwaiter().GetResult().Single();
+                Check(Operations.Media.InspectAsync(cut,token).GetAwaiter().GetResult().Duration is > .9 and < 1.1,"Audio trim");
+                var halves=Operations.RunAsync(new("splitVideo","Split Video"),[clip],Path.Combine(root,"split-video"),progress,token,new(){EqualClips=2}).GetAwaiter().GetResult();
+                Check(halves.Count==2,"Split into equal parts");
+                var stills=Operations.RunAsync(new("videoSnapshots","Video Snapshots"),[clip],Path.Combine(root,"snapshots"),progress,token,new(){SnapshotTimes=[.2,1,1.8]}).GetAwaiter().GetResult();
+                Check(stills.Count==3&&stills.All(s=>new MagickImageInfo(s).Width==320),"Snapshots");
+                var visual=Operations.RunAsync(new("audioToVideo","Audio Visualizer"),[wav],Path.Combine(root,"visual"),progress,token,new(){Visualization="bars"}).GetAwaiter().GetResult().Single();
+                Check(Operations.Media.InspectAsync(visual,token).GetAwaiter().GetResult().Video is not null,"Audio visualizer video");
+                Check(TrimDialog.Parse("1:15")==75&&TrimDialog.Parse("1:01:15.5")==3675.5&&TrimDialog.Parse("x") is null&&TrimDialog.Format(75.25)=="1:15.2","Time fields");
             }
             Check(Hash(png)==originalHash,"Original is unchanged");
             Console.WriteLine($"{{\"passed\":{passed},\"scope\":\"Linux preview image, PDF, QR, archive, audio and video exports\"}}");
