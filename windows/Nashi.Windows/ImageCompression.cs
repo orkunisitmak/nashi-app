@@ -12,8 +12,8 @@ public static partial class ImageEngine
             token.ThrowIfCancellationRequested();if(File.Exists(output))File.Delete(output);
             var frame=scale<1?new TransformedBitmap(image,new ScaleTransform(Math.Max(1,(int)(image.PixelWidth*scale))/(double)image.PixelWidth,Math.Max(1,(int)(image.PixelHeight*scale))/(double)image.PixelHeight)):image;Save(frame,output,format,q,options.EncoderPath,token);
         }
-        // Skipping the search is safe only when the untouched source can be kept; resized or re-encoded outputs must be measured.
-        var keepsOriginal=image.PixelWidth==source.PixelWidth&&image.PixelHeight==source.PixelHeight&&FeatureCatalog.Extension(input)==format;
+        // The source file can stand in for the output only when no edit reached the pixels; flips, 180° turns and annotations keep the size but must still be encoded and measured.
+        var keepsOriginal=options.Annotated is null&&!options.FlipHorizontal&&!options.FlipVertical&&((options.Rotation%360)+360)%360==0&&image.PixelWidth==source.PixelWidth&&image.PixelHeight==source.PixelHeight&&FeatureCatalog.Extension(input)==format;
         var outcome=target is {} limit?TargetSizeSearch.Run(keepsOriginal?original:long.MaxValue,limit,quality,lossy,true,(q,scale)=>{progress?.Report(new(null,$"Fitting image · attempt {++attempt}…"));Encode(q,scale);return new FileInfo(output).Length;},token):null;
         if(outcome is {Status:TargetSizeStatus.BestEffortAboveTarget})
         {
@@ -21,8 +21,7 @@ public static partial class ImageEngine
             throw new IOException("The requested image size could not be reached. Choose a larger target.");
         }
         var best=outcome?.Best;if(best is null)Encode(quality,1);else if(new FileInfo(output).Length!=best.Bytes){Encode(best.Quality,best.Scale);if(new FileInfo(output).Length>target){File.Delete(output);throw new IOException("The requested image size could not be reached. Choose a larger target.");}}
-        var originalDimensions=(best?.Scale??1)==1&&image.PixelWidth==source.PixelWidth&&image.PixelHeight==source.PixelHeight;
-        if(originalDimensions&&FeatureCatalog.Extension(input)==format&&original<new FileInfo(output).Length)File.Copy(input,output,true);
+        if((best?.Scale??1)==1&&keepsOriginal&&original<new FileInfo(output).Length)File.Copy(input,output,true);
     }
     internal static long? CompressionTarget(long original,long? bytes,double? percent)
     {
