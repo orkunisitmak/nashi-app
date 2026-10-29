@@ -197,7 +197,9 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
                 if(options.Visualization=="image")
                 {
                     if(options.VisualizationImage is null||!File.Exists(options.VisualizationImage))throw new ArgumentException("Choose an image.");
-                    args=["-loop","1","-framerate","30","-i",options.VisualizationImage,"-i",input,"-map","0:v:0","-map","1:a:0","-vf",$"scale={w}:{h}:force_original_aspect_ratio=decrease,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2,setsar=1"];
+                    // Input options apply only to the next -i, so each input needs its own whitelist.
+                    string[] localOnly=["-protocol_whitelist","file,pipe,crypto,data"];
+                    args=[..localOnly,"-loop","1","-framerate","30","-i",options.VisualizationImage,..localOnly,"-i",input,"-map","0:v:0","-map","1:a:0","-vf",$"scale={w}:{h}:force_original_aspect_ratio=decrease,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2,setsar=1"];
                 }
                 else
                 {
