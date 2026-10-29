@@ -73,7 +73,10 @@ public static class ImageOperations
 
     static void Write(MagickImage image, string output, string format, int quality, bool strip)
     {
-        if (strip) image.Strip();
+        // Convert drops EXIF/GPS but keeps the colour profile so colours don't shift; Compress drops everything.
+        var icc = strip ? null : image.GetColorProfile();
+        image.Strip();
+        if (icc is not null) image.SetProfile(icc);
         // JPEG and BMP have no usable alpha; flatten onto white rather than turning transparency black.
         if (format is "jpg" or "bmp" && image.HasAlpha) image.ColorAlpha(MagickColors.White);
         image.Quality = (uint)quality;

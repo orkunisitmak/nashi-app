@@ -147,6 +147,22 @@ void ImageChecks(string root)
     using (var pre = new MagickImage(icc)) Check(pre.GetColorProfile() != null, "ICC fixture carries a profile");
     using (var back = new MagickImage(iccOut[0])) Check(back.GetColorProfile() != null, "Convert keeps the ICC profile");
 
+    var gps = Path.Combine(work, "gps.jpg");
+    using (var g = new MagickImage("gradient:red-blue", 64, 48))
+    {
+        var exif = new ExifProfile();
+        exif.SetValue(ExifTag.GPSLatitude, new[] { new Rational(41, 1), new Rational(0, 1), new Rational(0, 1) });
+        g.SetProfile(exif); g.SetProfile(ColorProfiles.AppleRGB); g.Write(gps);
+    }
+    using (var pre = new MagickImage(gps)) Check(pre.GetExifProfile()?.GetValue(ExifTag.GPSLatitude) is not null, "GPS fixture carries GPS");
+    foreach (var fmt in new[] { "jpg", "png" })
+    {
+        var o = ImageOperations.Convert([gps], fmt, Path.Combine(work, "out-gps-" + fmt), null, default);
+        using var back = new MagickImage(o[0]);
+        Check(back.GetExifProfile()?.GetValue(ExifTag.GPSLatitude) is null && (fmt == "png" || back.GetColorProfile() != null), $"Convert to {fmt} drops GPS and keeps the colour profile");
+        // ponytail: PNG writes the sRGB profile as an sRGB chunk, so only jpg can show the ICC survives.
+    }
+
     Check(Throws<ArgumentException>(() => ImageOperations.Convert([], "pdf", Path.Combine(work, "out-empty"), null, default)) && Throws<ArgumentException>(() => ImageOperations.Compress([], Path.Combine(work, "out-empty"), null, default)), "Empty inputs throw ArgumentException");
 
     var cancelled = Path.Combine(work, "out-cancel");
