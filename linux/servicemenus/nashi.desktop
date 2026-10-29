@@ -1,0 +1,25 @@
+[Desktop Entry]
+Type=Service
+MimeType=all/allfiles;
+Actions=wheel;convert;tools;
+X-KDE-Submenu=Nashi
+X-KDE-Submenu[tr]=Nashi
+Icon=nashi
+
+[Desktop Action wheel]
+Name=Open Tools Wheel
+Name[tr]=Araç çarkını aç
+Icon=nashi
+Exec=nashi --wheel all %F
+
+[Desktop Action convert]
+Name=Convert…
+Name[tr]=Dönüştür…
+Icon=nashi
+Exec=nashi --wheel convert %F
+
+[Desktop Action tools]
+Name=Tools…
+Name[tr]=Araçlar…
+Icon=nashi
+Exec=nashi --wheel tools %F

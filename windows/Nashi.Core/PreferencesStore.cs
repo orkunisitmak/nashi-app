@@ -8,7 +8,7 @@ public sealed record Preferences
     public bool Enabled{get;init;}=true;public bool Feedback{get;init;}=true;public bool Animations{get;init;}=true;public bool KeepInTray{get;init;}=true;public bool RevealFinished{get;init;}
     public double WheelScale{get;init;}=1;public string WheelFinish{get;init;}="glass";public string FloatBehavior{get;init;}="createNew";
     public string ToolsModifier{get;init;}="Ctrl";public string ConvertModifier{get;init;}="Shift";public string ActionsModifier{get;init;}="Alt";
-    public string OutputMode{get;init;}="beside";public string OutputFolder{get;init;}="";public string DownloadFolder{get;init;}=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),"Downloads");
+    public string OutputMode{get;init;}="beside";public string OutputFolder{get;init;}="";public string DownloadFolder{get;init;}=SystemTools.Downloads();
     public Dictionary<string,OutputProfile> Formats{get;init;}=[];
 }
 public sealed class PreferencesStore

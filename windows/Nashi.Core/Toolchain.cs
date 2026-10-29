@@ -8,17 +8,42 @@ namespace Nashi.Core;
 public sealed class Toolchain(string directory)
 {
     public string DirectoryPath=>Path.GetFullPath(directory);
+    private static readonly string[] Names=["ffmpeg","ffprobe","yt-dlp","deno"];
     public string Executable(string name)
     {
-        if(name is not ("ffmpeg" or "ffprobe" or "yt-dlp" or "deno"))throw new ArgumentException("Unknown tool.");
-        var path=Path.Combine(DirectoryPath,name+".exe");
-        if(!ToolInstallation.UsableFile(path))throw new FileNotFoundException("Choose Set up media tools first.");return path;
+        if(!Names.Contains(name))throw new ArgumentException("Unknown tool.");
+        if(OperatingSystem.IsWindows())
+        {
+            var path=Path.Combine(DirectoryPath,name+".exe");
+            if(!ToolInstallation.UsableFile(path))throw new FileNotFoundException("Choose Set up media tools first.");return path;
+        }
+        return Locate(name)??throw new FileNotFoundException("Install "+(name=="deno"?"Deno or Node.js":name)+" first: "+SystemTools.InstallCommand([name]));
     }
-    private static bool Complete(string directory)=>new[]{"ffmpeg","ffprobe","yt-dlp","deno"}.All(n=>ToolInstallation.UsableFile(Path.Combine(directory,n+".exe")));
-    public bool Ready=>Complete(DirectoryPath);
+    // Outside Windows, a tool placed in Nashi's own tools folder wins over the
+    // distribution package; Deno's slot falls back to Node.js for yt-dlp.
+    private string? Locate(string name)
+    {
+        var local=Path.Combine(DirectoryPath,name);if(SystemTools.IsExecutable(local))return local;
+        return name=="deno"?SystemTools.JavaScriptRuntime():SystemTools.Find(name);
+    }
+    /// The yt-dlp --js-runtimes value for the runtime that Executable("deno") found.
+    public string JavaScriptRuntime
+    {
+        get{var path=Executable("deno");var name=Path.GetFileNameWithoutExtension(path);return (name is "node" or "nodejs"?"node":"deno")+":"+path;}
+    }
+    /// The folder handed to yt-dlp so it merges with the same FFmpeg Nashi uses.
+    public string FFmpegLocation=>OperatingSystem.IsWindows()?DirectoryPath:Path.GetDirectoryName(Executable("ffmpeg"))!;
+    public IReadOnlyList<string> Missing=>OperatingSystem.IsWindows()?(Ready?[]:Names):Names.Where(n=>Locate(n) is null).ToArray();
+    /// Editing and converting local media needs only FFmpeg and FFprobe.
+    public bool MediaReady=>OperatingSystem.IsWindows()?Ready:Locate("ffmpeg") is not null&&Locate("ffprobe") is not null;
+    private static bool Complete(string directory)=>Names.All(n=>ToolInstallation.UsableFile(Path.Combine(directory,n+".exe")));
+    public bool Ready=>OperatingSystem.IsWindows()?Complete(DirectoryPath):Names.All(n=>Locate(n) is not null);
     public async Task InstallAsync(IProgress<OperationProgress>? progress=null,CancellationToken token=default)
     {
         token.ThrowIfCancellationRequested();if(Ready){progress?.Report(new(1,"Media tools ready"));return;}
+        // The pinned upstream archives below are Windows builds. Other systems
+        // get security updates for these tools through their package manager.
+        if(!OperatingSystem.IsWindows())throw new PlatformNotSupportedException("Install the missing media tools with your package manager, then try again: "+SystemTools.InstallCommand(Missing));
         var parent=Path.GetDirectoryName(DirectoryPath)!;Directory.CreateDirectory(parent);
         var stage=Path.Combine(parent,"tools-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(stage);
         try

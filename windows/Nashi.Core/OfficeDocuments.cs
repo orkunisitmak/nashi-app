@@ -26,7 +26,7 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
             var spreadsheet=new[]{"csv","tsv","xls","xlsx","ods"}.Contains(ext);var slides=new[]{"ppt","pptx"}.Contains(ext);
             var filter=format switch{"docx"=>"docx:Office Open XML Text","pptx"=>"pptx:Impress MS PowerPoint 2007 XML","xlsx"=>"xlsx:Calc MS Excel 2007 XML","pdf"=>"pdf:"+(spreadsheet?"calc_pdf_Export":slides?"impress_pdf_Export":"writer_pdf_Export"),"txt"=>"txt:Text (encoded):UTF8,LF","csv"=>"csv:Text - txt - csv (StarCalc):44,34,76,1,,0,false,true,true,false,false,0","tsv"=>"csv:Text - txt - csv (StarCalc):9,34,76,1,,0,false,true,true,false,false,0","html"=>"html:HTML (StarWriter)","md"=>"md:Markdown","epub"=>"epub:EPUB",_=>format};
             var args=new List<string>{"-env:UserInstallation="+new Uri(profile+Path.DirectorySeparatorChar).AbsoluteUri,"--headless","--nologo","--nodefault","--nolockcheck","--nofirststartwizard","--norestore"};
-            if(ext is "csv" or "tsv")args.Add("--infilter=Text - txt - csv (StarCalc):"+(ext=="tsv"?9:44)+",34,76,1,,1033,true,true");else if(ext=="txt")args.Add("--infilter=Text (encoded):UTF8,LF");else if(ext=="md")args.Add("--infilter=Markdown");
+            if(ext is "csv" or "tsv")args.Add("--infilter=Text - txt - csv (StarCalc):"+(ext=="tsv"?9:44)+",34,76,1,,1033,true,true");else if(ext=="txt")args.Add("--infilter=Text (encoded):UTF8,LF");else if(ext=="md"&&OperatingSystem.IsWindows())args.Add("--infilter=Markdown");
             if(ext=="html"&&format is "xlsx" or "ods" or "csv" or "tsv")args.Add("--infilter=HTML (StarCalc)");
             if(ext=="pdf"&&format=="pptx")args.Add("--infilter=impress_pdf_import");
             args.AddRange(["--convert-to",filter,"--outdir",rendered,Path.GetFullPath(input)]);
@@ -48,7 +48,14 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
     }
     private Task<ProcessResult> PagesCall(string mode,string input,string output,CancellationToken token)
     {
-        var bundle=Path.Combine(assets,"PagesInterop.js");var script=Path.Combine(assets,"pages-windows.js");return ProcessRunner.RunAsync(deno,["run","--no-prompt","--no-config","--cached-only","--allow-read="+bundle.Replace(",",",,")+","+Path.GetFullPath(input).Replace(",",",,"),"--allow-write="+Path.GetFullPath(output).Replace(",",",,"),script,bundle,mode,Path.GetFullPath(input),Path.GetFullPath(output)],token);
+        var bundle=Path.Combine(assets,"PagesInterop.js");
+        if(Path.GetFileNameWithoutExtension(deno) is "node" or "nodejs")
+        {
+            // Node's permission model gives the same exact-path read/write limits as Deno.
+            var module=Path.Combine(assets,"pages-node.mjs");
+            return ProcessRunner.RunAsync(deno,["--permission","--allow-fs-read="+module,"--allow-fs-read="+bundle,"--allow-fs-read="+Path.GetFullPath(input),"--allow-fs-write="+Path.GetFullPath(output),module,bundle,mode,Path.GetFullPath(input),Path.GetFullPath(output)],token);
+        }
+        var script=Path.Combine(assets,"pages-windows.js");return ProcessRunner.RunAsync(deno,["run","--no-prompt","--no-config","--cached-only","--allow-read="+bundle.Replace(",",",,")+","+Path.GetFullPath(input).Replace(",",",,"),"--allow-write="+Path.GetFullPath(output).Replace(",",",,"),script,bundle,mode,Path.GetFullPath(input),Path.GetFullPath(output)],token);
     }
     private static XDocument Xml(ZipArchive zip,string entry)
     {

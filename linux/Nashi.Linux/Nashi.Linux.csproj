@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><RootNamespace>Nashi.Linux</RootNamespace><AssemblyName>nashi</AssemblyName>
+    <!-- Set here, not with `dotnet publish -r`: a command-line RID would also flow into
+         the shared Nashi.Core project and rewrite the Windows engine's lock file. -->
+    <RuntimeIdentifier>linux-$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant())</RuntimeIdentifier><SelfContained>true</SelfContained>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <PublishSingleFile>false</PublishSingleFile><DebugType>none</DebugType><DebugSymbols>false</DebugSymbols>
+    <InvariantGlobalization>false</InvariantGlobalization><BuiltInComInteropSupport>false</BuiltInComInteropSupport>
+  </PropertyGroup>
+  <ItemGroup><ProjectReference Include="../../windows/Nashi.Core/Nashi.Core.csproj" /></ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Headless" Version="11.3.22" />
+    <!-- Same PDFium build as the Windows app, packaged for Linux. -->
+    <PackageReference Include="bblanchon.PDFium.Linux" Version="155.0.8044" />
+  </ItemGroup>
+  <ItemGroup>
+    <AvaloniaResource Include="../../Resources/Brand/NashiIcon.png" Link="Assets/NashiIcon.png" />
+    <AvaloniaResource Include="../../Resources/Brand/NashiMark.png" Link="Assets/NashiMark.png" />
+    <AvaloniaResource Include="../../Resources/Brand/NashiMarkHappy.png" Link="Assets/NashiMarkHappy.png" />
+    <Content Include="../../Resources/PagesInterop.js" Link="PagesInterop.js" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../scripts/pages-windows.js" Link="pages-windows.js" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../scripts/pages-node.mjs" Link="pages-node.mjs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../Resources/Brand/NashiIcon.png" Link="share/nashi.png" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../nashi.desktop" Link="share/nashi.desktop" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../Resources/licenses/cupertino-files/**" Link="licenses/cupertino-files/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../windows/licenses/**" Link="licenses/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../windows/THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

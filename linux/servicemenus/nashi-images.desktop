@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Service
+MimeType=image/jpeg;image/png;image/webp;image/heic;image/avif;image/tiff;image/bmp;image/svg+xml;
+Actions=merge-pdf;
+X-KDE-Submenu=Nashi
+X-KDE-Submenu[tr]=Nashi
+Icon=nashi
+
+[Desktop Action merge-pdf]
+Name=Combine into One PDF
+Name[tr]=Tek PDF'de birleştir
+Icon=nashi
+Exec=nashi tool createPDF %F --notify 1
