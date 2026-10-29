@@ -25,7 +25,7 @@ internal static class UpdateInstaller
             var fileName=Path.Combine(stage,"request.json");await File.WriteAllTextAsync(fileName,JsonSerializer.Serialize(request),token);
             token.ThrowIfCancellationRequested();var start=new ProcessStartInfo(Path.Combine(worker,"Nashi.exe")){UseShellExecute=false,WorkingDirectory=worker};start.ArgumentList.Add("--apply-update");start.ArgumentList.Add(fileName);_ = Process.Start(start)??throw new IOException("Cannot start update installer.");
         }
-        catch{Directory.Delete(stage,true);throw;}
+        catch{ToolInstallation.TryDeleteDirectory(stage);throw;}
     }
     public static int Apply(string requestFile)
     {
@@ -34,8 +34,9 @@ internal static class UpdateInstaller
         if(!Path.GetFileName(stage).StartsWith(".nashi-update-",StringComparison.Ordinal)||Path.GetDirectoryName(stage)!=Path.GetDirectoryName(target)||payload!=Path.Combine(stage,"payload")||Path.GetFullPath(requestFile)!=Path.Combine(stage,"request.json"))throw new InvalidDataException("Invalid install paths.");
         try{var old=Process.GetProcessById(request.ProcessId);if(!old.WaitForExit(60000))throw new IOException("Nashi is still running.");}catch(ArgumentException){}
         var backup=target+".backup-"+Guid.NewGuid().ToString("N");
-        Directory.Move(target,backup);
-        try{Directory.Move(payload,target);}catch{Directory.Move(backup,target);throw;}
+        // The exited process, Defender or OneDrive can keep the portable folder locked for a moment.
+        ToolInstallation.MoveDirectory(target,backup,attempts:60);
+        try{ToolInstallation.MoveDirectory(payload,target);}catch{ToolInstallation.MoveDirectory(backup,target,attempts:60);throw;}
         Process.Start(new ProcessStartInfo(Path.Combine(target,"Nashi.exe")){UseShellExecute=true,WorkingDirectory=target});
         // Backups remain recoverable; the app never recursively deletes a user's
         // portable directory merely because an update succeeded.

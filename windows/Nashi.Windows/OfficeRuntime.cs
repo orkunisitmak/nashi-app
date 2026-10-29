@@ -42,7 +42,7 @@ public sealed class OfficeRuntime(string root)
             var executable=Directory.GetFiles(content,"soffice.exe",SearchOption.AllDirectories).Single(p=>Path.GetFileName(Path.GetDirectoryName(p))=="program");var application=Directory.GetParent(Path.GetDirectoryName(executable)!)!.FullName;
             var runtimes=Path.Combine(content,".native-runtime");if(Directory.Exists(runtimes))foreach(var dll in Directory.EnumerateFiles(runtimes,"*.dll"))File.Copy(dll,Path.Combine(application,"program",Path.GetFileName(dll)),true);
             DisablePythonLoader(application);
-            token.ThrowIfCancellationRequested();ToolInstallation.Publish(application,Path.Combine(root,"office-26.8.1"),p=>ToolInstallation.UsableFile(Path.Combine(p,"program","soffice.exe")));progress?.Report(new(1,"Office tools ready"));
+            token.ThrowIfCancellationRequested();await Task.Run(()=>ToolInstallation.Publish(application,Path.Combine(root,"office-26.8.1"),p=>ToolInstallation.UsableFile(Path.Combine(p,"program","soffice.exe"))));progress?.Report(new(1,"Office tools ready"));
         }
         finally{if(Directory.Exists(stage))Directory.Delete(stage,true);}
     }

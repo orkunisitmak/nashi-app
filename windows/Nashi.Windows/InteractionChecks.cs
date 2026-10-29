@@ -24,7 +24,9 @@ internal static class InteractionChecks
     }
     internal static void Run(string root,Action<bool,string> check)
     {
-        var results=new List<(bool Passed,string Message)>();void Verify(bool passed,string message)=>results.Add((passed,message));
+        root=Path.GetFullPath(root);
+        GlobalDragModeChecks.Run(check);
+        void Verify(bool passed,string message)=>check(passed,message);
         var directory=Path.Combine(root,"interaction-fixture-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(directory);
         var visual=new DrawingVisual();using(var drawing=visual.RenderOpen())drawing.DrawRectangle(Brushes.Gold,null,new Rect(0,0,40,30));
         var bitmap=new RenderTargetBitmap(40,30,96,96,PixelFormats.Pbgra32);bitmap.Render(visual);
@@ -34,7 +36,7 @@ internal static class InteractionChecks
         var window=new MainWindow(paths,library,checkForUpdates:false,offerToolSetup:false);
         try
         {
-            L10n.Language="en";Feedback.Enabled=false;window.Show();DesktopInput.Pump(500);
+            L10n.Language="en";Feedback.Enabled=false;window.Show();window.Activate();DesktopInput.Pump(500);
             var open=Children(window).OfType<Button>().Single(button=>button.Content as string=="Open wheel");
             DesktopInput.Click(open);
             var wheel=Application.Current.Windows.OfType<WheelWindow>().FirstOrDefault(candidate=>candidate.Owner==window);
@@ -58,15 +60,18 @@ internal static class InteractionChecks
             var list=Children(window).OfType<ListBox>().Single(item=>System.Windows.Automation.AutomationProperties.GetAutomationId(item)=="SelectedFiles");
             list.Focus();ControlKey(window,Key.A);Verify(list.SelectedItems.Count==paths.Length,"Ctrl+A did not select all Home files");
             list.SelectedItems.Clear();list.SelectedItems.Add(paths[0]);list.SelectedItems.Add(paths[2]);
+            Verify(list.SelectedItems.Count==2,"Could not select the two files to remove");
             DesktopInput.Click(Children(window).OfType<Button>().Single(button=>button.Content as string=="Library"));
             Verify(window.LibraryVisible,"Clicking Library did not open the Library page");DesktopInput.Click(window.SearchField);
+            Verify(list.SelectedItems.Count==2,"Switching to Library lost the Home selection");
             Verify(window.SearchField.IsKeyboardFocused,"Library search did not receive mouse focus");
             window.SearchField.Text="abc";window.SearchField.Select(1,1);DesktopInput.Key(window,Key.Delete);
             Verify(window.SearchField.Text=="ac"&&window.SelectedFiles.Count==3,"Delete in Library search changed the selected files or failed to edit text");
             DesktopInput.Click(Children(window).OfType<Button>().Single(button=>button.Content as string=="Home"));
             Verify(!window.LibraryVisible,"Clicking Home did not return to the Home page");
+            Verify(list.SelectedItems.Count==2,"Switching back to Home lost the file selection");
             list.Focus();DesktopInput.Key(window,Key.Delete);
-            Verify(window.SelectedFiles.SequenceEqual(new[]{paths[1]}),"Delete did not remove only the selected Home files");
+            Verify(window.SelectedFiles.SequenceEqual(new[]{paths[1]}),$"Delete did not remove only the selected Home files; remaining={window.SelectedFiles.Count}; selected={list.SelectedItems.Count}; focus={Keyboard.FocusedElement?.GetType().Name}; active={window.IsActive}");
             Verify(paths.All(File.Exists),"Removing Home selections deleted original files");
 
             ControlKey(window,Key.Space);
@@ -93,7 +98,9 @@ internal static class InteractionChecks
                         timer.Start();DesktopInput.Click(pdf);timer.Stop();
                         Verify(selectedFormat=="pdf","Selecting PDF did not open the conversion editor with PDF selected");
                         var until=DateTime.UtcNow.AddSeconds(15);while(library.Entries.Count==0&&DateTime.UtcNow<until)DesktopInput.Pump(50);
-                        var output=library.Entries.SingleOrDefault()?.AvailablePaths.SingleOrDefault();
+                        var outputs=library.Entries.SelectMany(entry=>entry.AvailablePaths).ToArray();
+                        Verify(outputs.Length==1,$"Single-image PDF conversion produced {outputs.Length} outputs after selection removal");
+                        var output=outputs.Length==1?outputs[0]:null;
                         var readable=false;if(output is not null&&Path.GetExtension(output)==".pdf"){using var document=PdfSharp.Pdf.IO.PdfReader.Open(output,PdfSharp.Pdf.IO.PdfDocumentOpenMode.Import);readable=document.PageCount==1;}
                         Verify(readable,"Saving JPG as PDF from the wheel did not produce a readable page");
                     }
@@ -121,6 +128,5 @@ internal static class InteractionChecks
             foreach(var child in Application.Current.Windows.OfType<Window>().Where(candidate=>candidate.Owner==window).ToArray())child.Close();
             window.Close();L10n.Language=language;Feedback.Enabled=feedback;
         }
-        foreach(var result in results)check(result.Passed,result.Message);
     }
 }

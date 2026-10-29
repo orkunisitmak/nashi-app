@@ -1720,6 +1720,7 @@
 "SMALLER FILE" = "DAHA KÜÇÜK DOSYA";
 "SMALLEST" = "EN KÜÇÜK";
 "SOLID" = "DÜZ";
+"SOMETHING WENT WRONG, BUT NASHI KEPT RUNNING. DETAILS WERE SAVED TO THE NASHI LOGS FOLDER." = "BİR ŞEYLER TERS GİTTİ AMA NASHI ÇALIŞMAYA DEVAM EDİYOR. AYRINTILAR NASHI LOGS KLASÖRÜNE KAYDEDİLDİ.";
 "SOUND AND HAPTIC FEEDBACK" = "SES VE DOKUNSAL GERİ BİLDİRİM";
 "SOUND FEEDBACK" = "SESLİ GERİ BİLDİRİM";
 "SOUND FOLLOWS YOUR MAC’S VOLUME. HAPTICS NEED A COMPATIBLE FORCE TOUCH TRACKPAD." = "SES, MAC'İNİN SES DÜZEYİNİ KULLANIR. TİTREŞİM İÇİN UYUMLU BİR FORCE TOUCH TRACKPAD GEREKİR.";
@@ -1858,6 +1859,7 @@
 "Smaller File" = "Daha Küçük Dosya";
 "Smallest" = "En küçük";
 "Solid" = "Düz";
+"Something went wrong, but Nashi kept running. Details were saved to the Nashi Logs folder." = "Bir şeyler ters gitti ama Nashi çalışmaya devam ediyor. Ayrıntılar Nashi Logs klasörüne kaydedildi.";
 "Sound and haptic feedback" = "Ses ve dokunsal geri bildirim";
 "Sound feedback" = "Sesli geri bildirim";
 "Sound follows your Mac’s volume. Haptics need a compatible Force Touch trackpad." = "Ses, Mac'inin ses düzeyini kullanır. Titreşim için uyumlu bir Force Touch trackpad gerekir.";

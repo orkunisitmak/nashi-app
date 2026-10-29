@@ -832,6 +832,7 @@
   "Expand Float": "Float’ı genişlet",
   "Float action unavailable": "Float işlemi kullanılamıyor",
   "Nashi update could not finish": "Nashi güncellemesi tamamlanamadı",
+  "Something went wrong, but Nashi kept running. Details were saved to the Nashi Logs folder.": "Bir şeyler ters gitti ama Nashi çalışmaya devam ediyor. Ayrıntılar Nashi Logs klasörüne kaydedildi.",
   "Nashi is already running but is still starting. Open it from the system tray or try again in a moment.": "Nashi zaten çalışıyor ama hâlâ açılıyor. Sistem tepsisinden aç veya birazdan tekrar dene.",
   "This window could not be arranged. The app may restrict resizing.": "Bu pencere düzenlenemedi. Uygulama yeniden boyutlandırmayı kısıtlıyor olabilir.",
   "Check export defaults": "Dışa aktarma varsayılanlarını kontrol et",

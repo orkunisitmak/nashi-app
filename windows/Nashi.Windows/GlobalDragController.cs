@@ -42,13 +42,22 @@ public sealed class GlobalDragController:IDisposable
     private IntPtr Hook(IntPtr window,int message,IntPtr w,IntPtr l,ref bool handled){if(message==0x0312&&w.ToInt32()==7701){if(preferences.Value.Enabled&&OwnerAvailable)link();handled=true;}return IntPtr.Zero;}
     private static bool Held(int key)=>(GetAsyncKeyState(key)&0x8000)!=0;
     private string Chord(){var parts=new List<string>();if(Held(0x11))parts.Add("Ctrl");if(Held(0x10))parts.Add("Shift");if(Held(0x12))parts.Add("Alt");return string.Join('+',parts);}
+    internal static string? Mode(string chord,Preferences p)=>chord==p.ToolsModifier?"tools":chord==p.ConvertModifier?"convert":chord==p.ActionsModifier?"actions":null;
+    internal static string? Mode(DragDropKeyStates keys,Preferences p)
+    {
+        var parts=new List<string>();if(keys.HasFlag(DragDropKeyStates.ControlKey))parts.Add("Ctrl");if(keys.HasFlag(DragDropKeyStates.ShiftKey))parts.Add("Shift");if(keys.HasFlag(DragDropKeyStates.AltKey))parts.Add("Alt");return Mode(string.Join('+',parts),p);
+    }
     private void Poll()
     {
         UpdateShortcut();if(!preferences.Value.Enabled||!OwnerAvailable){wheel?.Close();wheel=null;down=false;opened=false;hint=null;return;}var held=PrimaryMouseButton.IsPressed;GetCursorPos(out var point);
         if(!held){if(down){down=false;opened=false;hint=null;if(wheel is {IsVisible:true}){var old=wheel;var dismiss=new System.Windows.Threading.DispatcherTimer{Interval=TimeSpan.FromMilliseconds(150)};dismiss.Tick+=(_,_)=>{dismiss.Stop();if(old.IsVisible)old.Close();};dismiss.Start();}wheel=null;}return;}
-        if(!down){down=true;start=point;opened=false;hint=null;return;}if(opened||Math.Abs(point.X-start.X)+Math.Abs(point.Y-start.Y)<10)return;
-        hint??=Task.Run(()=>LinkAt(start));var chord=Chord();var p=preferences.Value;var kind=chord==p.ToolsModifier?"tools":chord==p.ConvertModifier?"convert":chord==p.ActionsModifier?"actions":null;if(kind is null)return;opened=true;if(InMoveSize())return;
-        var sourceHint=hint;wheel=new GlobalDropWheel(kind,p.WheelScale,(data,id)=>dropped(id,data,sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null),()=>sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null);wheel.Show();DesktopGeometry.PlaceWheel(wheel,point.X,point.Y,WheelPresentation.Diameter*p.WheelScale);
+        if(!down){down=true;start=point;opened=false;hint=null;return;}if(Math.Abs(point.X-start.X)+Math.Abs(point.Y-start.Y)<10&&!opened)return;
+        var origin=start;hint??=Task.Run(()=>LinkAt(origin));var p=preferences.Value;var kind=Mode(Chord(),p);
+        // Keep the same OLE drop target and position while switching modifiers.
+        // A closed/cancelled wheel must not reopen until the next mouse gesture.
+        if(opened){if(wheel is {IsVisible:true})wheel.SetMode(kind);return;}
+        if(kind is null)return;opened=true;if(InMoveSize())return;
+        var sourceHint=hint;wheel=new GlobalDropWheel(kind,p.WheelScale,(data,id)=>dropped(id,data,sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null),()=>sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null,()=>preferences.Value);wheel.Show();DesktopGeometry.PlaceWheel(wheel,point.X,point.Y,WheelPresentation.Diameter*p.WheelScale);wheel.PlacementReady=true;
     }
     private static string? LinkAt(NativePoint point)
     {
@@ -70,6 +79,7 @@ public sealed class GlobalDragController:IDisposable
 
 internal sealed class GlobalDropWheel:Window
 {
+    internal bool PlacementReady{get;set;}
     internal string State=>$"entered={entered}, over={over}, dropped={dropCount}, choices={choices.Count}, selection={selection}, revealed={Revealed}";private int entered,over,dropCount;
     // The wheel opens almost transparent and only appears once an OLE drag carrying a file or
     // link reaches it. Plain mouse drags with a modifier (text selection, scrollbars) and OLE
@@ -78,19 +88,28 @@ internal sealed class GlobalDropWheel:Window
     private const double HiddenOpacity=.02;
     internal bool Revealed{get;private set;}
     private void Reveal(){if(Revealed)return;Revealed=true;foreach(var label in canvas.Children.OfType<Border>())label.Visibility=Visibility.Visible;WheelPresentation.Animate(this,HiddenOpacity);if(Opacity<1&&!HasAnimatedProperties)Opacity=1;}
-    private readonly string mode;private readonly Action<IDataObject,string> chosen;private readonly Func<string?> hint;private readonly Canvas canvas=new(){Width=540,Height=540,Background=Brushes.Transparent,AllowDrop=true};private string selection="";private IReadOnlyList<ToolChoice> choices=[];
-    public GlobalDropWheel(string mode,double scale,Action<IDataObject,string> chosen,Func<string?> hint)
+    private string mode;private readonly Action<IDataObject,string> chosen;private readonly Func<string?> hint;private readonly Func<Preferences> preferences;private string[] files=[];private WebMediaPayload? web;private readonly Canvas canvas=new(){Width=540,Height=540,Background=Brushes.Transparent,AllowDrop=true};private string selection="";private IReadOnlyList<ToolChoice> choices=[];
+    public GlobalDropWheel(string mode,double scale,Action<IDataObject,string> chosen,Func<string?> hint,Func<Preferences>? preferences=null)
     {
-        this.mode=mode;this.chosen=chosen;this.hint=hint;Title="Nashi · "+mode;Width=Height=WheelPresentation.Diameter*scale;WindowStyle=WindowStyle.None;AllowsTransparency=true;Background=Brushes.Transparent;ResizeMode=ResizeMode.NoResize;ShowInTaskbar=false;ShowActivated=false;Topmost=true;AllowDrop=true;Content=new Viewbox{Child=canvas};Build([]);Opacity=HiddenOpacity;
+        this.mode=mode;this.chosen=chosen;this.hint=hint;this.preferences=preferences??(()=>new());Title="Nashi · "+mode;Width=Height=WheelPresentation.Diameter*scale;WindowStyle=WindowStyle.None;AllowsTransparency=true;Background=Brushes.Transparent;ResizeMode=ResizeMode.NoResize;ShowInTaskbar=false;ShowActivated=false;Topmost=true;AllowDrop=true;Content=new Viewbox{Child=canvas};Build([]);Opacity=HiddenOpacity;
         // Reveal only once the payload offers choices. On entry the pointer sits in the center,
         // so e.Effects is still None even for a valid file drag.
         DragEnter+=(_,e)=>{entered++;Track(e);if(choices.Count>0)Reveal();};
         DragOver+=(_,e)=>{over++;Track(e);if(choices.Count>0)Reveal();};
         Drop+=(_,e)=>{dropCount++;Track(e);var id=selection;Close();if(id.Length>0)chosen(e.Data,id);e.Handled=true;};PreviewKeyDown+=(_,e)=>{if(e.Key==Key.Escape){Close();e.Handled=true;}};
     }
+    internal void SetMode(string? updated)
+    {
+        if(updated is null||updated==mode)return;
+        mode=updated;Title="Nashi · "+mode;selection="";choices=Choices(files,web);Build(choices);
+        if(choices.Count>0)Reveal();
+    }
     private void Track(DragEventArgs e)
     {
-        var files=e.Data.GetData(DataFormats.FileDrop) as string[]??[];var updated=Choices(files,Payload(e.Data));
+        files=e.Data.GetData(DataFormats.FileDrop) as string[]??[];web=files.Length>0?null:DragPayload.Parse(e.Data,hint());
+        // OLE supplies modifier changes even with a stationary pointer; use its
+        // state again on Drop so an old segment can never execute after a switch.
+        SetMode(GlobalDragController.Mode(e.KeyStates,preferences()));var updated=Choices(files,web);
         // Replacing the hit-test target during DragEnter causes OLE to enter
         // again instead of advancing to DragOver. Keep the visual tree stable
         // until the payload actually changes, and select on entry as well.
@@ -100,10 +119,9 @@ internal sealed class GlobalDropWheel:Window
         else{var angle=(Math.Atan2(p.Y-270,p.X-270)*180/Math.PI-WheelPresentation.StartAngle(choices.Count)+360+180d/choices.Count)%360;var index=(int)(angle/(360d/choices.Count));var id=choices[index].Id;if(id!=selection){selection=id;Feedback.Play();}Highlight(index);}
         e.Effects=selection.Length>0?DragDropEffects.Copy:DragDropEffects.None;e.Handled=true;
     }
-    private WebMediaPayload? Payload(IDataObject data)=>DragPayload.Parse(data,hint());
     private IReadOnlyList<ToolChoice> Choices(string[] files,WebMediaPayload? web)
     {
-        if(files.Length>0&&web is null)
+        if(files.Length>0)
         {
             if(mode=="convert")return FeatureCatalog.Formats(files).Select(f=>new ToolChoice("convert:"+f,f.ToUpperInvariant(),"↗")).ToArray();
             if(mode=="actions")return [new("share","Share","◉"),new("float","Float","▣"),new("copy","Copy","▱"),new("move","Move","↗"),new("copyPath","Copy Path","↪"),new("terminal","Terminal",">_")];

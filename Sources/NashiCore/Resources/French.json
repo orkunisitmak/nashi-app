@@ -832,6 +832,7 @@
   "Expand Float": "Développer Float",
   "Float action unavailable": "Action Float indisponible",
   "Nashi update could not finish": "La mise à jour de Nashi n’a pas pu se terminer",
+  "Something went wrong, but Nashi kept running. Details were saved to the Nashi Logs folder.": "Un problème est survenu, mais Nashi continue de fonctionner. Les détails ont été enregistrés dans le dossier Logs de Nashi.",
   "Nashi is already running but is still starting. Open it from the system tray or try again in a moment.": "Nashi est déjà ouvert mais démarre encore. Ouvrez-le depuis la zone de notification ou réessayez dans un instant.",
   "This window could not be arranged. The app may restrict resizing.": "Cette fenêtre n’a pas pu être disposée. L’app limite peut-être le redimensionnement.",
   "Check export defaults": "Vérifiez les réglages d’export par défaut",

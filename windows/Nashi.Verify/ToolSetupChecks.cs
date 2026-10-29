@@ -19,6 +19,11 @@ internal static class ToolSetupChecks
             File.Delete(Path.Combine(target,"ready"));File.WriteAllText(Path.Combine(target,"partial"),"rollback");
             try{ToolInstallation.Publish(second,target,p=>{if(p==second){Directory.Delete(second,true);return true;}return false;});throw new Exception("Vanished stage published");}catch(IOException){check(File.ReadAllText(Path.Combine(target,"partial"))=="rollback","Failed replacement did not restore installed tools");}
             File.WriteAllText(Path.Combine(target,"zero.exe"),"");check(!ToolInstallation.UsableFile(Path.Combine(target,"zero.exe")),"Empty placeholder must not count as installed tool");
+            var locked=Path.Combine(directory,"locked");var moved=Path.Combine(directory,"moved");Directory.CreateDirectory(locked);
+            var scanner=new FileStream(Path.Combine(locked,"ffmpeg.exe"),FileMode.Create,FileAccess.Write,FileShare.None);
+            var blocked=false;try{Directory.Move(locked,moved);Directory.Move(moved,locked);}catch(IOException){blocked=true;}catch(UnauthorizedAccessException){blocked=true;}
+            check(blocked,"A locked tool folder must reject a plain rename, or the retry check proves nothing");
+            _ = Task.Delay(400).ContinueWith(_=>scanner.Dispose());ToolInstallation.MoveDirectory(locked,moved);check(File.Exists(Path.Combine(moved,"ffmpeg.exe"))&&!Directory.Exists(locked),"A briefly locked tool folder must still be published");
             var bundled=Path.Combine(directory,"bundled");var installed=Path.Combine(directory,"installed");Directory.CreateDirectory(installed);
             foreach(var name in new[]{"ffmpeg","ffprobe","yt-dlp","deno"})File.WriteAllText(Path.Combine(installed,name+".exe"),"tool");
             check(!new Toolchain(bundled).Ready,"Tools on PATH must stay unused without a search path");

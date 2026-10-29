@@ -16,9 +16,27 @@ public static class ToolInstallation
         if (complete(target)) return;
         var backup = Path.Combine(Path.GetDirectoryName(target)!, ".previous-" + Guid.NewGuid().ToString("N"));
         var existing = Directory.Exists(target);
-        if (existing) Directory.Move(target, backup);
-        try { Directory.Move(stage, target); }
-        catch { if (existing) Directory.Move(backup, target); throw; }
-        if (existing) { try { Directory.Delete(backup, true); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
+        if (existing) MoveDirectory(target, backup);
+        try { MoveDirectory(stage, target); }
+        catch { if (existing) MoveDirectory(backup, target); throw; }
+        if (existing) TryDeleteDirectory(backup);
+    }
+
+    // Antivirus scanners, Search indexing and OneDrive briefly hold freshly written
+    // executables open on Windows, which makes an immediate rename fail with a
+    // sharing violation. Retry for a few seconds before reporting the failure.
+    public static void MoveDirectory(string source, string destination, int attempts = 20)
+    {
+        for (var attempt = 1; ; attempt++)
+        {
+            try { Directory.Move(source, destination); return; }
+            catch (Exception error) when (attempt < attempts && error is IOException or UnauthorizedAccessException && Directory.Exists(source) && !Directory.Exists(destination))
+            { Thread.Sleep(Math.Min(1000, 100 * attempt)); }
+        }
+    }
+
+    public static void TryDeleteDirectory(string path)
+    {
+        try { if (Directory.Exists(path)) Directory.Delete(path, true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
     }
 }

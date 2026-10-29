@@ -126,6 +126,9 @@ public sealed partial class MainWindow:Window
         var changed=LibraryVisible!=visible;
         if(!busy)L10n.SetText(status,"Files stay on your computer.");
         selectedLibraryId=selectedLibraryId??library.Entries.FirstOrDefault()?.Id;home.Visibility=visible?Visibility.Collapsed:Visibility.Visible;libraryPage.Visibility=visible?Visibility.Visible:Visibility.Collapsed;homeScroll.IsHitTestVisible=!visible;libraryScroll.IsHitTestVisible=visible;
+        // Collapse the inactive viewport as well as its content, so it cannot
+        // retain keyboard focus or cover the visible page during navigation.
+        homeScroll.Visibility=home.Visibility;libraryScroll.Visibility=libraryPage.Visibility;
         homeButton.SetResourceReference(Control.BackgroundProperty,visible?"Surface":"Sage");libraryButton.SetResourceReference(Control.BackgroundProperty,visible?"Sage":"Surface");if(visible)RenderLibrary();if(changed&&IsLoaded)Theme.Entrance(visible?libraryPage:home);
     }
     private void Record(string label,IReadOnlyList<string> paths)
@@ -152,7 +155,7 @@ public sealed partial class MainWindow:Window
         if(modifiers==ModifierKeys.Control&&key==Key.OemComma){ShowSettings();return true;}
         if(modifiers==ModifierKeys.Control&&key==Key.D1){ShowLibrary(false);return true;}
         if(modifiers==ModifierKeys.Control&&key==Key.D2){ShowLibrary(true);return true;}
-        if(modifiers==ModifierKeys.Control&&key==Key.F){ShowLibrary(true);search.Focus();search.SelectAll();return true;}
+        if(modifiers==ModifierKeys.Control&&key==Key.F){ShowLibrary(true);libraryScroll.UpdateLayout();search.Focus();search.SelectAll();return true;}
         if(busy)return false;
         if(modifiers==ModifierKeys.Control&&key==Key.O){Choose();return true;}
         if(modifiers==ModifierKeys.Control&&key==Key.U){_ = CheckUpdatesAsync(true);return true;}

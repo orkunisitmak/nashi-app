@@ -1720,6 +1720,7 @@
 "SMALLER FILE" = "SMALLER FILE";
 "SMALLEST" = "SMALLEST";
 "SOLID" = "SOLID";
+"SOMETHING WENT WRONG, BUT NASHI KEPT RUNNING. DETAILS WERE SAVED TO THE NASHI LOGS FOLDER." = "SOMETHING WENT WRONG, BUT NASHI KEPT RUNNING. DETAILS WERE SAVED TO THE NASHI LOGS FOLDER.";
 "SOUND AND HAPTIC FEEDBACK" = "SOUND AND HAPTIC FEEDBACK";
 "SOUND FEEDBACK" = "SOUND FEEDBACK";
 "SOUND FOLLOWS YOUR MAC’S VOLUME. HAPTICS NEED A COMPATIBLE FORCE TOUCH TRACKPAD." = "SOUND FOLLOWS YOUR MAC’S VOLUME. HAPTICS NEED A COMPATIBLE FORCE TOUCH TRACKPAD.";
@@ -1858,6 +1859,7 @@
 "Smaller File" = "Smaller File";
 "Smallest" = "Smallest";
 "Solid" = "Solid";
+"Something went wrong, but Nashi kept running. Details were saved to the Nashi Logs folder." = "Something went wrong, but Nashi kept running. Details were saved to the Nashi Logs folder.";
 "Sound and haptic feedback" = "Sound and haptic feedback";
 "Sound feedback" = "Sound feedback";
 "Sound follows your Mac’s volume. Haptics need a compatible Force Touch trackpad." = "Sound follows your Mac’s volume. Haptics need a compatible Force Touch trackpad.";

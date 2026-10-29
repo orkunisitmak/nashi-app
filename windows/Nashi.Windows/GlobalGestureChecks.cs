@@ -16,13 +16,14 @@ internal static class GlobalGestureChecks
     [DllImport("user32.dll")]private static extern bool GetWindowRect(IntPtr handle,out NativeRect rect);
     [DllImport("user32.dll")]private static extern bool SetForegroundWindow(IntPtr handle);
     [DllImport("user32.dll")]private static extern bool PostMessage(IntPtr handle,uint message,IntPtr w,IntPtr l);
+    [DllImport("user32.dll")]private static extern IntPtr GetForegroundWindow();
     internal static void Run(Window owner,string root,string original,Action<bool,string> check)
     {
         check(PrimaryMouseButton.VirtualKey(false)==0x01&&PrimaryMouseButton.VirtualKey(true)==0x02,"Swapped mouse buttons did not map the primary drag button");
         // Explorer is a separate source process. A same-thread WPF drag source
         // blocks the target's dispatcher inside DoDragDrop and is not a valid
         // test of the global Explorer gesture.
-        var identity=Guid.NewGuid().ToString("N")[..8];var folder=Directory.CreateDirectory(Path.Combine(root,"Nashi drag "+identity));var file=Path.Combine(folder.FullName,"Source "+identity+".png");File.Copy(original,file,true);void OpenFixture()=>Process.Start(new ProcessStartInfo(folder.FullName){UseShellExecute=true});OpenFixture();
+        var identity=Guid.NewGuid().ToString("N")[..8];var folder=Directory.CreateDirectory(Path.Combine(root,"Nashi drag "+identity));var file=Path.Combine(folder.FullName,"Source "+identity+Path.GetExtension(original));File.Copy(original,file,true);void OpenFixture()=>Process.Start(new ProcessStartInfo(folder.FullName){UseShellExecute=true});OpenFixture();
         var phase="discovering Explorer";using var watchdog=new System.Threading.Timer(_=>{File.WriteAllText(Path.Combine(root,"global-gesture-timeout.txt"),phase);DesktopInput.HoldMouse(false);Environment.Exit(1);},null,TimeSpan.FromSeconds(75),System.Threading.Timeout.InfiniteTimeSpan);
         // UI Automation must run away from Nashi's UI thread: enumerating the
         // desktop can query this process's own WPF providers.
@@ -33,24 +34,40 @@ internal static class GlobalGestureChecks
                 Thread.Sleep(100);if(n==15)OpenFixture();var windows=new List<IntPtr>();lastTitles.Clear();EnumWindows((window,_)=>{var type=new System.Text.StringBuilder(256);var title=new System.Text.StringBuilder(512);GetClassName(window,type,256);GetWindowText(window,title,512);if(title.Length>0)lastTitles.Add(type+" · "+title);if(type.ToString()=="CabinetWClass"&&title.ToString().Contains(folder.Name,StringComparison.OrdinalIgnoreCase))windows.Add(window);return true;},IntPtr.Zero);
                 foreach(var handle in windows)
                 {
-                    try{var explorer=AutomationElement.FromHandle(handle);var item=explorer.FindFirst(TreeScope.Descendants,new OrCondition(new PropertyCondition(AutomationElement.NameProperty,Path.GetFileName(file)),new PropertyCondition(AutomationElement.NameProperty,Path.GetFileNameWithoutExtension(file))));if(item is not null&&!item.Current.BoundingRectangle.IsEmpty)return(Handle:handle,Bounds:item.Current.BoundingRectangle);}catch(ElementNotAvailableException){}
+                    try{var explorer=AutomationElement.FromHandle(handle);var item=explorer.FindFirst(TreeScope.Descendants,new OrCondition(new PropertyCondition(AutomationElement.NameProperty,Path.GetFileName(file)),new PropertyCondition(AutomationElement.NameProperty,Path.GetFileNameWithoutExtension(file))));if(item is not null&&!item.Current.BoundingRectangle.IsEmpty&&!item.Current.IsOffscreen){if(item.TryGetCurrentPattern(SelectionItemPattern.Pattern,out var selection))((SelectionItemPattern)selection).Select();return(Handle:handle,Bounds:item.Current.BoundingRectangle,Point:item.GetClickablePoint());}}catch(ElementNotAvailableException){}
                 }
             }
             File.WriteAllLines(Path.Combine(root,"explorer-windows.txt"),lastTitles);throw new Exception("Explorer did not expose its synthetic source file.");
         });
         var discoveryLimit=DateTime.UtcNow.AddSeconds(25);while(!discovery.IsCompleted&&DateTime.UtcNow<discoveryLimit)DesktopInput.Pump(30);if(!discovery.IsCompleted){DesktopCapture.Save(Path.Combine(root,"explorer-discovery.png"));throw new TimeoutException("Explorer UI Automation did not respond.");}if(discovery.IsFaulted)DesktopCapture.Save(Path.Combine(root,"explorer-discovery.png"));var fixture=discovery.GetAwaiter().GetResult();var handle=fixture.Handle;var bounds=fixture.Bounds;if(bounds.IsEmpty)throw new Exception("Explorer's source file has no visible bounds.");
-        var settings=new PreferencesStore(Path.Combine(root,"Gesture preferences"));string? selected=null;string[]? received=null;
+        var settings=new PreferencesStore(Path.Combine(root,"Gesture preferences "+identity));string? selected=null;string[]? received=null;var gesture=0;
         using var controller=new GlobalDragController(owner,settings,(id,data,hint)=>{selected=id;received=data.GetData(DataFormats.FileDrop) as string[];},()=>selected="link-shortcut");
-        void Drag(Key modifier,string mode,string expected)
+        void Drag(Key modifier,string mode,string expected,params (Key Key,string Mode)[] switches)
         {
-            phase="dragging "+mode;selected=null;string? state=null;SetForegroundWindow(handle);DesktopInput.Pump(200);var start=new Point(bounds.Left+bounds.Width/2,bounds.Top+bounds.Height/2);
+            phase="dragging "+mode;selected=null;string? state=null;var capture=Path.Combine(root,$"global-drag-{identity}-{++gesture}-{mode}.png");DesktopInput.Activate(owner);SetForegroundWindow(handle);DesktopInput.Pump(200);var start=fixture.Point;
             var driver=Task.Run(()=>
             {
+                // Activate the source through its title bar, not the file: the
+                // shell can be configured to open files on a single click.
+                if(GetForegroundWindow()!=handle&&GetWindowRect(handle,out var sourceBounds))
+                {
+                    DesktopInput.MovePointer(new(sourceBounds.Left+70,sourceBounds.Top+15));Thread.Sleep(80);DesktopInput.HoldMouse(true);Thread.Sleep(80);DesktopInput.HoldMouse(false);Thread.Sleep(200);
+                }
+                if(GetForegroundWindow()!=handle)throw new Exception("Explorer did not become the foreground drag source.");
                 DesktopInput.MovePointer(start);Thread.Sleep(100);DesktopInput.HoldMouse(true);Thread.Sleep(150);
                 try
                 {
-                    DesktopInput.MovePointer(new(start.X+45,start.Y+20));Thread.Sleep(150);DesktopInput.Hold(modifier,true);var wheel=IntPtr.Zero;for(var n=0;n<30&&wheel==IntPtr.Zero;n++){Thread.Sleep(100);wheel=FindWindow(null,"Nashi · "+mode);}if(wheel==IntPtr.Zero||!GetWindowRect(wheel,out var r))throw new Exception("The global "+mode+" wheel did not open during the Explorer drag.");
-                    DesktopInput.MovePointer(new((r.Left+r.Right)/2d,r.Top+(r.Bottom-r.Top)*.18));Thread.Sleep(400);state=controller.ActiveWheel?.State;owner.Dispatcher.BeginInvoke(()=>DesktopCapture.Save(Path.Combine(root,"global-drag-"+mode+".png")));Thread.Sleep(200);
+                    DesktopInput.MovePointer(new(start.X+45,start.Y+20));Thread.Sleep(150);DesktopInput.Hold(modifier,true);var wheel=IntPtr.Zero;for(var n=0;n<30&&(wheel==IntPtr.Zero||controller.ActiveWheel?.PlacementReady!=true);n++){Thread.Sleep(100);wheel=FindWindow(null,"Nashi · "+mode);}if(wheel==IntPtr.Zero||controller.ActiveWheel?.PlacementReady!=true||!GetWindowRect(wheel,out var r))throw new Exception("The global "+mode+" wheel did not finish opening during the Explorer drag.");
+                    foreach(var next in switches)
+                    {
+                        DesktopInput.Hold(modifier,false);modifier=next.Key;DesktopInput.Hold(modifier,true);
+                        var updated=IntPtr.Zero;for(var n=0;n<30&&updated==IntPtr.Zero;n++){Thread.Sleep(100);updated=FindWindow(null,"Nashi · "+next.Mode);}
+                        if(updated!=wheel)throw new Exception("Changing to "+next.Mode+" did not reuse the active Explorer drop target.");
+                    }
+                    DesktopInput.MovePointer(new((r.Left+r.Right)/2d,r.Top+(r.Bottom-r.Top)*.18));Thread.Sleep(400);state=controller.ActiveWheel?.State;
+                    // Finish the evidence capture before releasing the drag. A
+                    // large desktop PNG can otherwise block OLE Drop delivery.
+                    owner.Dispatcher.Invoke(()=>DesktopCapture.Save(capture));
                 }
                 finally{DesktopInput.HoldMouse(false);DesktopInput.Hold(modifier,false);}
             });
@@ -58,7 +75,9 @@ internal static class GlobalGestureChecks
         }
         try
         {
-            Drag(Key.LeftCtrl,"tools","compress");Drag(Key.LeftAlt,"actions","share");Drag(Key.LeftShift,"convert","convert:"+FeatureCatalog.Formats([file])[0]);
+            Drag(Key.LeftCtrl,"tools",FeatureCatalog.Tools([file])[0]);Drag(Key.LeftAlt,"actions","share");Drag(Key.LeftShift,"convert","convert:"+FeatureCatalog.Formats([file])[0]);
+            Drag(Key.LeftShift,"convert","share",(Key.LeftCtrl,"tools"),(Key.LeftAlt,"actions"));
+            Drag(Key.LeftAlt,"actions","convert:"+FeatureCatalog.Formats([file])[0],(Key.LeftShift,"convert"));
             // A mouse drag that carries no files (e.g. Shift+drag text selection) must not show a wheel.
             phase="plain Shift-drag";var plain=new Window{Width=320,Height=200,Left=bounds.Left,Top=bounds.Top,WindowStartupLocation=WindowStartupLocation.Manual,Content=new System.Windows.Controls.Border{Background=System.Windows.Media.Brushes.DarkSlateGray}};plain.Show();plain.Activate();DesktopInput.Pump(200);
             try

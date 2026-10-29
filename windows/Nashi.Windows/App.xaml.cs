@@ -13,7 +13,10 @@ public partial class App:Application
             AppDomain.CurrentDomain.UnhandledException+=(_,error)=>File.WriteAllText(Path.Combine(diagnostics,$"unhandled-{Environment.ProcessId}.txt"),error.ExceptionObject.ToString());
             Exit+=(_,exit)=>File.WriteAllText(Path.Combine(diagnostics,$"process-exit-{Environment.ProcessId}.json"),System.Text.Json.JsonSerializer.Serialize(new{mode=e.Args.FirstOrDefault(),code=exit.ApplicationExitCode,environmentCode=Environment.ExitCode}));
         }
-        DispatcherUnhandledException+=(_,error)=>{var folder=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");if(folder is not null){Directory.CreateDirectory(folder);File.WriteAllText(Path.Combine(folder,"dispatcher-error.txt"),error.Exception.ToString());error.Handled=true;Shutdown(1);}};
+        DispatcherUnhandledException+=(_,error)=>{var folder=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");if(folder is not null){Directory.CreateDirectory(folder);File.WriteAllText(Path.Combine(folder,"dispatcher-error.txt"),error.Exception.ToString());error.Handled=true;Shutdown(1);return;}error.Handled=Recover(error.Exception);};
+        // Without these, a single unexpected error closes the app with no trace on end-user machines.
+        AppDomain.CurrentDomain.UnhandledException+=(_,error)=>Log(error.ExceptionObject.ToString(),"fatal");
+        TaskScheduler.UnobservedTaskException+=(_,error)=>{Log(error.Exception.ToString(),"background");error.SetObserved();};
         base.OnStartup(e);
         if(e.Args.Contains("--smoke-test-interactions"))
         {
@@ -81,6 +84,34 @@ public partial class App:Application
         // process instead of leaving it behind a shelf with a closed main window.
         var window=new MainWindow(paths,offerToolSetup:!e.Args.Contains("--background"));MainWindow=window;ShutdownMode=ShutdownMode.OnMainWindowClose;instance.Start(incoming=>Dispatcher.BeginInvoke(()=>window.AcceptLaunch(incoming)));window.Show();
         windowManagement=new WindowManagement(notice:message=>MessageBox.Show(L10n.Text(message),L10n.Text("Window arrangement"),MessageBoxButton.OK,MessageBoxImage.Information),isEnabled:()=>window.WindowManagementEnabled);
+    }
+    internal static string LogDirectory=>Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Nashi","Logs");
+    private static readonly Queue<DateTime> recentErrors=new();private static bool reporting;private static readonly Lock logLock=new();
+    internal static void Log(string? details,string kind)
+    {
+        // UI and background-task errors can arrive together; serialize rotation and appends.
+        lock(logLock)try
+        {
+            Directory.CreateDirectory(LogDirectory);var file=Path.Combine(LogDirectory,"errors.log");
+            if(File.Exists(file)&&new FileInfo(file).Length>1_000_000)File.Move(file,file+".old",true);
+            File.AppendAllText(file,$"[{DateTimeOffset.Now:O}] {kind} · Nashi {UpdateInstaller.Current}{Environment.NewLine}{details}{Environment.NewLine}{Environment.NewLine}");
+        }
+        catch(Exception error)when(error is IOException or UnauthorizedAccessException or System.Security.SecurityException){}
+    }
+    // Keep the app alive after a one-off UI error; an error that repeats in a tight loop
+    // (for example during every layout pass) still ends the process instead of spamming dialogs.
+    private bool Recover(Exception error)
+    {
+        Log(error.ToString(),"recovered");var now=DateTime.UtcNow;recentErrors.Enqueue(now);
+        while(recentErrors.Count>0&&now-recentErrors.Peek()>TimeSpan.FromSeconds(10))recentErrors.Dequeue();
+        if(recentErrors.Count>5)return false;
+        if(!reporting)
+        {
+            reporting=true;
+            try{MessageBox.Show(L10n.Text("Something went wrong, but Nashi kept running. Details were saved to the Nashi Logs folder."),"Nashi",MessageBoxButton.OK,MessageBoxImage.Warning);}
+            finally{reporting=false;}
+        }
+        return true;
     }
     internal static void UseSavedLanguage(Func<string>? readLanguage=null)
     {
