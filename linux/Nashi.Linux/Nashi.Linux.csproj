@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <AssemblyName>Nashi</AssemblyName>
+    <RootNamespace>Nashi.Linux</RootNamespace>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.22" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../windows/Nashi.Core/Nashi.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <AvaloniaResource Include="../../Resources/Brand/NashiMark.png" Link="Assets/NashiMark.png" />
+    <AvaloniaResource Include="../../Resources/Brand/NashiMarkHappy.png" Link="Assets/NashiMarkHappy.png" />
+    <AvaloniaResource Include="../../Resources/Brand/NashiIcon.png" Link="Assets/NashiIcon.png" />
+  </ItemGroup>
+</Project>

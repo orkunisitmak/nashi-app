@@ -1,0 +1,7 @@
+<Project>
+  <Import Project="../windows/Directory.Build.props" />
+  <PropertyGroup>
+    <PathMap>$(MSBuildThisFileDirectory)=/_/linux/</PathMap>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+</Project>
