@@ -20,7 +20,7 @@ Self-contained build: `dotnet publish linux/Nashi.Linux -c Release -r linux-x64 
 | Home | Drop files, **Ctrl+O** to choose, **Ctrl+V** to paste files (also `file://` text from Nautilus/Dolphin), remove/clear the selection |
 | Images | Convert between JPG, PNG, WebP, HEIC, TIFF, AVIF and BMP (SVG input), image → PDF; compress; remove metadata (color profile kept); read QR codes |
 | PDF | Merge, split into pages, extract text (TXT) |
-| Audio / video | All shared FFmpeg conversions, compress, remove audio, normalize volume (needs `ffmpeg`/`ffprobe` on `PATH`) |
+| Audio / video | All shared FFmpeg conversions, compress, remove audio, normalize volume, change video speed (0.5×–2×), join videos in selection order, mono/stereo (needs `ffmpeg`/`ffprobe` on `PATH`) |
 | Archives | Extract ZIP/TAR/GZIP/RAR, convert between ZIP, TAR and GZIP |
 | Library / settings | Searchable history of finished files, System/Light/Dark appearance, stored in `$XDG_DATA_HOME/Nashi` |
 

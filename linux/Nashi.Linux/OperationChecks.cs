@@ -58,9 +58,20 @@ internal static class OperationChecks
                 Check(new FileInfo(mp3).Length>0,"Audio conversion");
                 var normalized=Operations.RunAsync(new("normalizeAudio","Normalize Volume"),[wav],Path.Combine(root,"normalize"),progress,token).GetAwaiter().GetResult();
                 Check(normalized.Count==1,"Normalize audio");
+                var mono=Operations.RunAsync(new("audioChannels","Convert Audio Channels"),[wav],Path.Combine(root,"channels"),progress,token,new(){Channels=1}).GetAwaiter().GetResult().Single();
+                Check(ProcessRunner.RunAsync(Operations.Executable("ffprobe")!,["-v","error","-select_streams","a:0","-show_entries","stream=channels","-of","csv=p=0",mono],token).GetAwaiter().GetResult().Output.Trim()=="1","Mono output");
+                var clip=Path.Combine(root,"Clip.mp4");
+                ProcessRunner.RunAsync(Operations.Executable("ffmpeg")!,["-hide_banner","-loglevel","error","-f","lavfi","-i","testsrc=s=320x240:d=2","-f","lavfi","-i","sine=duration=2","-shortest","-pix_fmt","yuv420p",clip],token).GetAwaiter().GetResult();
+                Check(Operations.Tools([clip,clip]).Any(t=>t.Id=="joinVideos")&&Operations.Tools([clip]).Any(t=>t.Id=="changeVideoSpeed"),"Video tools offered");
+                var fast=Operations.RunAsync(new("changeVideoSpeed","Change Video Speed"),[clip],Path.Combine(root,"speed"),progress,token,new(){Speed=2}).GetAwaiter().GetResult().Single();
+                var fastDuration=Operations.Media.InspectAsync(fast,token).GetAwaiter().GetResult().Duration;
+                Check(fastDuration is > .8 and < 1.3,"2× speed halves the duration");
+                var joined=Operations.RunAsync(new("joinVideos","Join Videos"),[clip,clip],Path.Combine(root,"join"),progress,token).GetAwaiter().GetResult().Single();
+                var joinedDuration=Operations.Media.InspectAsync(joined,token).GetAwaiter().GetResult().Duration;
+                Check(joinedDuration is > 3.6 and < 4.4,"Joined duration");
             }
             Check(Hash(png)==originalHash,"Original is unchanged");
-            Console.WriteLine($"{{\"passed\":{passed},\"scope\":\"Linux preview image, PDF, QR, archive and audio exports\"}}");
+            Console.WriteLine($"{{\"passed\":{passed},\"scope\":\"Linux preview image, PDF, QR, archive, audio and video exports\"}}");
             return 0;
         }
         catch(Exception error){Console.Error.WriteLine($"FAILED after {passed} checks: {error}");return 1;}

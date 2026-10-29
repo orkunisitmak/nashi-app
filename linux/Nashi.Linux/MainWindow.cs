@@ -128,12 +128,15 @@ public sealed class MainWindow:Window
             catch(Exception error){status.Text=error.Message;}
             return;
         }
+        MediaOptions? media=null;
+        if(choice.Id=="changeVideoSpeed"){if(await Ask(choice.Title,[("0.5×",.5),("1.5×",1.5),("2×",2d)],1) is not {} speed)return;media=new(){Speed=speed};}
+        else if(choice.Id=="audioChannels"){if(await Ask(choice.Title,[("Mono",1),("Stereo",2)],0) is not {} channels)return;media=new(){Channels=channels};}
         var destination=Path.GetDirectoryName(inputs[0])!;
         running=new CancellationTokenSource();progress.IsVisible=cancel.IsVisible=true;progress.IsIndeterminate=true;reveal.IsVisible=false;status.Text=choice.Title+"…";Refresh();
         var report=new Progress<OperationProgress>(p=>{if(p.Fraction is {} f){progress.IsIndeterminate=false;progress.Value=f;}status.Text=p.Label;});
         try
         {
-            var outputs=await Operations.RunAsync(choice,inputs,destination,report,running.Token);
+            var outputs=await Operations.RunAsync(choice,inputs,destination,report,running.Token,media);
             library.Record(choice.Id=="convert"?"Convert to "+choice.Format!.ToUpperInvariant():choice.Title,outputs);
             lastFolder=destination;reveal.IsVisible=true;
             status.Text=outputs.Count==1?$"Saved {Path.GetFileName(outputs[0])}":$"Saved {outputs.Count} files";
@@ -141,6 +144,18 @@ public sealed class MainWindow:Window
         catch(OperationCanceledException){status.Text="Cancelled. Nothing was saved.";}
         catch(Exception error){status.Text=error.Message;}
         finally{running.Dispose();running=null;progress.IsVisible=cancel.IsVisible=false;Refresh();}
+    }
+
+    /// One-choice dialog for tools whose only option is a small preset list. Null means cancelled.
+    private async Task<T?> Ask<T>(string title,(string Label,T Value)[] options,int selected)where T:struct
+    {
+        T? result=null;var dialog=new Window{Title=title,SizeToContent=SizeToContent.WidthAndHeight,CanResize=false,WindowStartupLocation=WindowStartupLocation.CenterOwner};
+        var list=new ComboBox{ItemsSource=options.Select(o=>o.Label).ToArray(),SelectedIndex=selected,MinWidth=200};
+        var ok=Primary("OK");ok.IsDefault=true;ok.Click+=(_,_)=>{result=options[list.SelectedIndex].Value;dialog.Close();};
+        var close=new Button{Content="Cancel",IsCancel=true};close.Click+=(_,_)=>dialog.Close();
+        dialog.Content=new StackPanel{Margin=new(20),Spacing=14,Children={Label(title),list,new StackPanel{Orientation=Orientation.Horizontal,Spacing=8,HorizontalAlignment=HorizontalAlignment.Right,Children={close,ok}}}};
+        dialog[!BackgroundProperty]=Resource("Paper");
+        await dialog.ShowDialog(this);return result;
     }
 
     private void RefreshLibrary()
