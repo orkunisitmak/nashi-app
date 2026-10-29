@@ -15,12 +15,18 @@ tool=$out/appimagetool-$TOOL_VERSION-x86_64.AppImage
 
 rm -rf "$app"
 mkdir -p "$app/usr/lib/nashi" "$app/usr/share/doc/nashi"
-"${DOTNET:-dotnet}" publish linux/Nashi.Linux -c Release -r linux-x64 --self-contained -o "$app/usr/lib/nashi"
+"${DOTNET:-dotnet}" publish linux/Nashi.Linux -c Release -p:RestoreLockedMode=true -o "$app/usr/lib/nashi"
 
 install -m 755 linux/packaging/AppRun "$app/AppRun"
 install -m 644 linux/packaging/nashi.desktop "$app/nashi.desktop"
 install -m 644 Resources/Brand/NashiIcon.png "$app/nashi.png"
-install -m 644 LICENSE linux/THIRD-PARTY-NOTICES.txt windows/licenses/Magick.NET-THIRD-PARTY-NOTICES.txt "$app/usr/share/doc/nashi/"
+install -m 644 LICENSE linux/THIRD-PARTY-NOTICES.txt "$app/usr/share/doc/nashi/"
+# Every bundled third-party license text; WPF and PDFium are not part of the Linux app.
+mkdir -p "$app/usr/share/doc/nashi/licenses"
+for f in windows/licenses/*.txt linux/licenses/*.txt; do
+  case "$(basename "$f")" in WPF-*|PDFium-*) continue;; esac
+  install -m 644 "$f" "$app/usr/share/doc/nashi/licenses/"
+done
 
 if ! { [ -f "$tool" ] && echo "$TOOL_SHA256  $tool" | sha256sum -c --status; }; then
   curl -fsSL -o "$tool" "$TOOL_URL"
