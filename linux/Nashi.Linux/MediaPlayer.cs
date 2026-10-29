@@ -58,7 +58,11 @@ internal sealed class MediaPlayer(string path):NativeControlHost
         // a video output while another file replaces an audio-only preview.
         for(var i=0;i<256;i++){
             var pointer=mpv_wait_event(player,0);if(pointer==IntPtr.Zero)return;var item=Marshal.PtrToStructure<MpvEvent>(pointer);if(item.Id==0)return;
-            if(item.Id==22&&item.Data!=IntPtr.Zero){
+            if(item.Id==8){
+                // Observations suppress unchanged values. A replacement can finish before
+                // the unavailable/intermediate duration is emitted, so refresh after load.
+                foreach(var name in new[]{"time-pos","duration","pause","path"})if(mpv_get_property_async(player,0,name,1)<0)Error="Media properties could not be refreshed.";
+            }else if(item.Id is 22 or 3&&item.Data!=IntPtr.Zero){
                 var property=Marshal.PtrToStructure<MpvProperty>(item.Data);var name=Marshal.PtrToStringUTF8(property.Name);if(name is null)continue;
                 if(property.Format==1&&property.Data!=IntPtr.Zero){var value=Marshal.ReadIntPtr(property.Data);if(value!=IntPtr.Zero)properties[name]=Marshal.PtrToStringUTF8(value)??"";}
                 else properties.Remove(name);
@@ -77,6 +81,7 @@ internal sealed class MediaPlayer(string path):NativeControlHost
     [DllImport("nashi-mpv",CallingConvention=CallingConvention.Cdecl)]private static extern int mpv_initialize(IntPtr handle);
     [DllImport("nashi-mpv",CallingConvention=CallingConvention.Cdecl)]private static extern int mpv_set_option_string(IntPtr handle,[MarshalAs(UnmanagedType.LPUTF8Str)]string name,[MarshalAs(UnmanagedType.LPUTF8Str)]string value);
     [DllImport("nashi-mpv",CallingConvention=CallingConvention.Cdecl)]private static extern int mpv_observe_property(IntPtr handle,ulong userdata,[MarshalAs(UnmanagedType.LPUTF8Str)]string name,int format);
+    [DllImport("nashi-mpv",CallingConvention=CallingConvention.Cdecl)]private static extern int mpv_get_property_async(IntPtr handle,ulong userdata,[MarshalAs(UnmanagedType.LPUTF8Str)]string name,int format);
     [DllImport("nashi-mpv",CallingConvention=CallingConvention.Cdecl)]private static extern IntPtr mpv_wait_event(IntPtr handle,double timeout);
     [DllImport("nashi-mpv",CallingConvention=CallingConvention.Cdecl)]private static extern int mpv_command_async(IntPtr handle,ulong userdata,IntPtr args);
     [DllImport("nashi-mpv",CallingConvention=CallingConvention.Cdecl)]private static extern IntPtr mpv_error_string(int error);

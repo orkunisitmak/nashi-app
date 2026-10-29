@@ -1,8 +1,8 @@
-# Nashi for Linux — port in progress
+# Nashi for Linux — alpha candidate
 
 This is a native Linux port of Nashi, inside the original repository. It shares Nashi's original feature catalog, media engine, photo adjustments/codecs, archives, subtitles, QR decoder, metadata, Library/preferences and Office document reconstruction. It is not an independent lookalike. The Linux window uses Avalonia because SwiftUI and WPF are tied to their host platforms. Original Nashi branding, copy, artwork and palette are retained.
 
-**This branch is a development preview, not a declaration of complete Mac/Windows parity.** See [FEATURE-PARITY.md](FEATURE-PARITY.md) for the remaining work. Do not advertise all 27 tools being listed as proof that every editor behavior has been ported.
+**This branch is an experimental alpha candidate, not a declaration of complete Mac/Windows parity.** See [ALPHA.md](ALPHA.md) for the initial usability gate and supported test scope. See [FEATURE-PARITY.md](FEATURE-PARITY.md) for the remaining work. Do not advertise all 27 tools being listed as proof that every editor behavior has been ported.
 
 ## Run
 

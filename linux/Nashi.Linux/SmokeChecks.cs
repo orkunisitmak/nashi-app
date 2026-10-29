@@ -59,6 +59,7 @@ internal static class SmokeChecks
                 var audio=Path.Combine(directory,"waveform.wav");await ProcessRunner.RunAsync(ffmpeg,["-v","error","-y","-f","lavfi","-i","sine=frequency=440:duration=2",audio]);
                 preview.Load(audio);await Artwork(audio);Check(timeline.ArtworkCount==1,"audio timeline generates a waveform image");
                 preview.Load(media);preview.Load(processed);await Artwork(processed);Check(preview.ArtworkSource==Path.GetFullPath(processed),"rapid preview changes retain only current artwork");
+                preview.Load(processed);preview.Load(processed);await Artwork(processed);Check(player.Duration>.5,"reloading the same preview refreshes unchanged observed duration");
                 editor.GetVisualDescendants().OfType<Button>().Single(b=>b.Content as string=="Reset").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));await Artwork(media);Check(player.Paused&&player.Position<.1&&Math.Abs(timeline.End-2)<.01,"Reset restores original paused playback and source range");
                 Capture(editor,Path.Combine(directory,"trimVideo.png"));editor.Close();Check(timeline.ArtworkCount==0,"closing media editor releases timeline bitmaps");
             }
