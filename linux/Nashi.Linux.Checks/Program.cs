@@ -27,7 +27,7 @@ try
     await RunnerChecks(temp.FullName);
     HomeChecks();
     WheelChecks(temp.FullName);
-    ToolSetupChecks(temp.FullName);
+    await ToolSetupChecks(temp.FullName);
 }
 finally
 {
@@ -215,7 +215,7 @@ void HomeChecks()
     window.Close();
 }
 
-void ToolSetupChecks(string root)
+async Task ToolSetupChecks(string root)
 {
     var saved = Environment.GetEnvironmentVariable("XDG_DATA_HOME");
     try
@@ -253,6 +253,34 @@ void ToolSetupChecks(string root)
         }
         window.Close();
     }
+
+    // Injected installs: cancel then retry, and a failure.
+    var attempt = 0;
+    var fake = new ToolSetupWindow(missing, async (_, token) =>
+    {
+        if (++attempt == 3) throw new IOException("disk full");
+        await Task.Delay(Timeout.Infinite, token);
+    });
+    fake.Show();
+    Dispatcher.UIThread.RunJobs();
+    Button Find(string text) => fake.GetVisualDescendants().OfType<Button>().First(b => b.Content as string == text);
+    bool Visible(string text) => fake.GetVisualDescendants().OfType<Button>().Any(b => b.IsEffectivelyVisible && b.Content as string == text);
+    void Click(string text) { Find(text).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent)); Dispatcher.UIThread.RunJobs(); }
+    async Task Settle() { for (var i = 0; i < 50 && Visible("Cancel"); i++) { await Task.Delay(20); Dispatcher.UIThread.RunJobs(); } }
+    Click("Download missing tools");
+    Check(Visible("Cancel") && Find("Cancel").IsEnabled, "Installing shows an enabled Cancel");
+    Click("Cancel");
+    Check(!Find("Cancel").IsEnabled, "Cancel disables itself while cancelling");
+    await Settle();
+    Check(Visible("Retry") && Texts(fake).Any(t => t.StartsWith("Cancelled")), "A cancelled install offers Retry");
+    Click("Retry");
+    Check(Visible("Cancel") && Find("Cancel").IsEnabled, "Cancel works again after Retry");
+    Click("Cancel");
+    await Settle();
+    Click("Retry");
+    await Settle();
+    Check(Visible("Retry") && Texts(fake).Any(t => t.Contains("disk full")), "A failed install shows the error and Retry");
+    fake.Close();
 
     var home = new MainWindow(present) { Width = 820, Height = 780 };
     home.Show();

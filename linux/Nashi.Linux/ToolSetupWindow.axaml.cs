@@ -29,15 +29,17 @@ public sealed partial class ToolSetupWindow : Window
     }
 
     private readonly Toolchain tools;
+    private readonly Func<IProgress<OperationProgress>, CancellationToken, Task> install;
     private CancellationTokenSource? cancellation;
     private string? error;
 
     public ToolSetupWindow() : this(AppPaths.CreateToolchain()) { }
 
-    public ToolSetupWindow(Toolchain tools)
+    public ToolSetupWindow(Toolchain tools, Func<IProgress<OperationProgress>, CancellationToken, Task>? install = null)
     {
         InitializeComponent();
         this.tools = tools;
+        this.install = install ?? ((progress, token) => tools.InstallAsync(progress, token));
         Title = Copy.Heading;
         ToolName.Text = Copy.Tool;
         ToolDetail.Text = Copy.ToolDetail;
@@ -70,11 +72,12 @@ public sealed partial class ToolSetupWindow : Window
         error = null;
         cancellation = new CancellationTokenSource();
         ProgressText.Text = Copy.Starting;
+        CancelButton.IsEnabled = true;
         Bar.IsIndeterminate = true;
         Refresh();
         try
         {
-            await tools.InstallAsync(new Progress<OperationProgress>(Update), cancellation.Token);
+            await install(new Progress<OperationProgress>(Update), cancellation.Token);
             if (!AppPaths.MediaReady(tools)) error = Copy.StillMissing;
         }
         catch (OperationCanceledException) { error = Copy.Cancelled; }
