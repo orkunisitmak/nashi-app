@@ -36,6 +36,11 @@ jobs:
         run: |
           dotnet run --project windows/Nashi.Verify -c Release
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify experimental read-only Windows CLI (#21)
+        shell: pwsh
+        run: |
+          dotnet run --project windows/Nashi.Cli.Verify -c Release
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Windows native image PDF ZIP and WPF render checks
         shell: pwsh
         env:

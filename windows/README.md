@@ -15,3 +15,22 @@ While dragging in Explorer or another application, **Ctrl** opens tools, **Shift
 Media editors use **Space** for play/pause, **Left/Right** for one-second seeking, **Shift+Left/Right** for frame steps, **I/O** for range marks and **Shift+Space** to play the selected range. Crop supports drag, Shift ratio lock, selection move/resize, aspect presets and Enter save. Annotation supports Select/Move, Delete and Ctrl+Z. Normal text-field editing is preserved.
 
 `Nashi.Verify` checks the shared engine and security foundation. `Nashi --smoke-test` runs real Windows keyboard, clipboard, OLE drag, Library, editor and export checks and writes diagnostic JSON/PNG artifacts. See [verification details](FEATURE-PARITY.md#commands-and-evidence) before interpreting a CI artifact as a completed test or official release.
+
+
+## Experimental read-only Windows CLI (issue #21)
+
+The `windows/Nashi.Cli` project is a **first Windows CLI slice for maintainer review**, not a full replacement for the macOS CLI. It runs without opening the WPF app and reads the existing `Nashi.Core` / shared `FeatureCatalog.json`. Build with the **.NET 10 SDK**.
+
+```powershell
+dotnet run --project windows/Nashi.Cli -- catalog
+dotnet run --project windows/Nashi.Cli -- inspect "C:\path\to\photo.png"
+dotnet run --project windows/Nashi.Cli -- inspect "C:\path\to\document.pdf" --json
+dotnet run --project windows/Nashi.Cli.Verify -c Release
+```
+
+- `catalog`: JSON `conversionMatrix` and `tools` from the checked-in shared catalog, without probing the filesystem.
+- `inspect FILE`: JSON category matching macOS extension groups; image width/height and PDF page count/extracted text for supported files. For other formats, returns only category; media duration and stream metadata are not implemented.
+- `--json`: machine-readable errors to **stderr**, nonzero exit status for bad input; successful catalog/inspect output is always JSON on stdout.
+- `--help`: usage. **No `convert`, `tool`, or `dependencies` execution yet.** Those return a nonzero usage error; they must not claim success or modify files.
+
+No existing Windows UI or macOS CLI behavior is changed. This first slice requires a maintainer decision on whether Swift and C# share one public command/options/JSON contract before adding write operations. Source files must remain unchanged; regression checks use redistributable synthetic fixtures only.
