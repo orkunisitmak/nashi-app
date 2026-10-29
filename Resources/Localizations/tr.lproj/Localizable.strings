@@ -786,6 +786,8 @@
 "Enter a valid number for %@." = "%@ için geçerli bir sayı gir.";
 "Enter a valid number for %lld." = "%lld için geçerli bir sayı gir.";
 "Enter page numbers within this PDF, in the desired order." = "Bu PDF'deki sayfa numaralarını istediğin sırayla gir.";
+"Entire playlist · %@ videos" = "Tüm oynatma listesi · %@ video";
+"Entire playlist · %lld videos" = "Tüm oynatma listesi · %lld video";
 "Esc to close" = "Kapatmak için Esc";
 "Everything has a next form." = "Her dosyanın yeni bir hâli var.";
 "Expand Float" = "Float’ı genişlet";
@@ -1297,6 +1299,7 @@
 "ONE LAST STEP.\nSET UP YOUR TOOLS." = "SON BİR ADIM.\nARAÇLARINI KUR.";
 "ONE OR MORE MEDIA SETTINGS ARE OUTSIDE THEIR SUPPORTED RANGE." = "BİR VEYA DAHA FAZLA MEDYA AYARI DESTEKLENEN ARALIĞIN DIŞINDA.";
 "ONE TOOL GROUP IS READY. DOWNLOAD THE REMAINING TOOLS TO FINISH SETUP." = "BİR ARAÇ GRUBU HAZIR. KURULUMU TAMAMLAMAK İÇİN KALAN ARAÇLARI İNDİR.";
+"ONE VIDEO" = "TEK VİDEO";
 "OPEN" = "AÇ";
 "OPEN IN TERMINAL" = "TERMINAL'DE AÇ";
 "OPEN LINK" = "BAĞLANTIYI AÇ";
@@ -1338,6 +1341,7 @@
 "One last step.\nSet up your tools." = "Son bir adım.\nAraçlarını kur.";
 "One or more media settings are outside their supported range." = "Bir veya daha fazla medya ayarı desteklenen aralığın dışında.";
 "One tool group is ready. Download the remaining tools to finish setup." = "Bir araç grubu hazır. Kurulumu tamamlamak için kalan araçları indir.";
+"One video" = "Tek video";
 "Open" = "Aç";
 "Open Login Items" = "Giriş Öğelerini Aç";
 "Open Nashi" = "Nashi'yi Aç";
@@ -1935,6 +1939,7 @@
 "THIS IMAGE IS TOO LARGE (100 MP LIMIT)." = "BU GÖRSEL ÇOK BÜYÜK (SINIR 100 MP).";
 "THIS IMAGE IS TOO LARGE TO PASTE. CHOOSE THE IMAGE FILE INSTEAD." = "BU GÖRSEL YAPIŞTIRMAK İÇİN ÇOK BÜYÜK. BUNUN YERİNE GÖRSEL DOSYASINI SEÇ.";
 "THIS LINK DID NOT RETURN A DOWNLOADABLE IMAGE." = "BU BAĞLANTIDAN İNDİRİLEBİLİR BİR GÖRSEL GELMEDİ.";
+"THIS LINK IS A PLAYLIST" = "BU BAĞLANTI BİR OYNATMA LİSTESİ";
 "THIS OUTPUT FORMAT HAS NO ADJUSTABLE CONVERSION DEFAULTS." = "BU ÇIKTI BİÇİMİNİN AYARLANABİLİR DÖNÜŞTÜRME TERCİHİ YOK.";
 "THIS PDF CONTAINS NO PAGES." = "BU PDF'DE SAYFA YOK.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT MERGING, SPLITTING OR REORDERING PAGES CANNOT KEEP. NO COPY WAS EXPORTED." = "BU PDF'DE BİRLEŞTİRME, BÖLME VEYA SAYFALARI YENİDEN SIRALAMA SIRASINDA KORUNAMAYAN FORM ALANLARI YA DA EKLER VAR. KOPYA DIŞA AKTARILMADI.";
@@ -2030,6 +2035,7 @@
 "This image is too large (100 MP limit)." = "Bu görsel çok büyük (sınır 100 MP).";
 "This image is too large to paste. Choose the image file instead." = "Bu görsel yapıştırmak için çok büyük. Bunun yerine görsel dosyasını seç.";
 "This link did not return a downloadable image." = "Bu bağlantıdan indirilebilir bir görsel gelmedi.";
+"This link is a playlist" = "Bu bağlantı bir oynatma listesi";
 "This output format has no adjustable conversion defaults." = "Bu çıktı biçiminin ayarlanabilir dönüştürme tercihi yok.";
 "This post contains videos. Use its Reel link to download video." = "Bu gönderide video var. Videoyu indirmek için Reel bağlantısını kullan.";
 "This repository is private" = "Bu depo gizli";
@@ -2137,6 +2143,7 @@
 "VIDEO SIZE" = "VİDEO BOYUTU";
 "VIDEO SNAPSHOTS" = "VİDEODAN KARE AL";
 "VIDEO, AUDIO, OR AN IMAGE. STRAIGHT INTO YOUR TOOLS." = "VİDEO, SES VEYA GÖRSEL. DOĞRUDAN ARAÇLARINA AKTAR.";
+"VIDEOS ARE SAVED IN PLAYLIST ORDER IN A NEW FOLDER. UNAVAILABLE VIDEOS ARE SKIPPED." = "VİDEOLAR OYNATMA LİSTESİ SIRASIYLA YENİ BİR KLASÖRE KAYDEDİLİR. ERİŞİLEMEYEN VİDEOLAR ATLANIR.";
 "VIGNETTE" = "VİNYET";
 "VISUALIZATION" = "GÖRSELLEŞTİRME";
 "Value" = "Değer";
@@ -2149,6 +2156,7 @@
 "Video quality" = "Video kalitesi";
 "Video size" = "Video boyutu";
 "Video, audio, or an image. Straight into your tools." = "Video, ses veya görsel. Doğrudan araçlarına aktar.";
+"Videos are saved in playlist order in a new folder. Unavailable videos are skipped." = "Videolar oynatma listesi sırasıyla yeni bir klasöre kaydedilir. Erişilemeyen videolar atlanır.";
 "Vignette" = "Vinyet";
 "Visualization" = "Görselleştirme";
 "WAIT FOR THE PROCESSED PREVIEW TO FINISH BEFORE RESETTING." = "SIFIRLAMADAN ÖNCE İŞLENMİŞ ÖNİZLEMENİN BİTMESİNİ BEKLE.";

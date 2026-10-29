@@ -786,6 +786,8 @@
 "Enter a valid number for %@." = "Saisissez un nombre valide pour %@.";
 "Enter a valid number for %lld." = "Saisissez un nombre valide pour %lld.";
 "Enter page numbers within this PDF, in the desired order." = "Saisissez des numéros de page de ce PDF, dans l’ordre souhaité.";
+"Entire playlist · %@ videos" = "Toute la playlist · %@ vidéos";
+"Entire playlist · %lld videos" = "Toute la playlist · %lld vidéos";
 "Esc to close" = "Échap pour fermer";
 "Everything has a next form." = "Tout a une prochaine forme.";
 "Expand Float" = "Développer Float";
@@ -1297,6 +1299,7 @@
 "ONE LAST STEP.\nSET UP YOUR TOOLS." = "UNE DERNIÈRE ÉTAPE.\nCONFIGUREZ VOS OUTILS.";
 "ONE OR MORE MEDIA SETTINGS ARE OUTSIDE THEIR SUPPORTED RANGE." = "UN OU PLUSIEURS RÉGLAGES MULTIMÉDIAS SONT EN DEHORS DE LEUR PLAGE PRISE EN CHARGE.";
 "ONE TOOL GROUP IS READY. DOWNLOAD THE REMAINING TOOLS TO FINISH SETUP." = "UN GROUPE D’OUTILS EST PRÊT. TÉLÉCHARGEZ LES OUTILS RESTANTS POUR TERMINER LA CONFIGURATION.";
+"ONE VIDEO" = "UNE SEULE VIDÉO";
 "OPEN" = "OUVRIR";
 "OPEN IN TERMINAL" = "OUVRIR DANS TERMINAL";
 "OPEN LINK" = "OUVRIR LE LIEN";
@@ -1338,6 +1341,7 @@
 "One last step.\nSet up your tools." = "Une dernière étape.\nConfigurez vos outils.";
 "One or more media settings are outside their supported range." = "Un ou plusieurs réglages multimédias sont en dehors de leur plage prise en charge.";
 "One tool group is ready. Download the remaining tools to finish setup." = "Un groupe d’outils est prêt. Téléchargez les outils restants pour terminer la configuration.";
+"One video" = "Une seule vidéo";
 "Open" = "Ouvrir";
 "Open Login Items" = "Ouvrir les éléments d’ouverture";
 "Open Nashi" = "Ouvrir Nashi";
@@ -1935,6 +1939,7 @@
 "THIS IMAGE IS TOO LARGE (100 MP LIMIT)." = "CETTE IMAGE EST TROP GRANDE (LIMITE DE 100 MPX).";
 "THIS IMAGE IS TOO LARGE TO PASTE. CHOOSE THE IMAGE FILE INSTEAD." = "CETTE IMAGE EST TROP GRANDE POUR ÊTRE COLLÉE. CHOISISSEZ PLUTÔT LE FICHIER IMAGE.";
 "THIS LINK DID NOT RETURN A DOWNLOADABLE IMAGE." = "CE LIEN N’A PAS RENVOYÉ D’IMAGE TÉLÉCHARGEABLE.";
+"THIS LINK IS A PLAYLIST" = "CE LIEN EST UNE PLAYLIST";
 "THIS OUTPUT FORMAT HAS NO ADJUSTABLE CONVERSION DEFAULTS." = "CE FORMAT DE SORTIE N’A PAS DE RÉGLAGES DE CONVERSION MODIFIABLES.";
 "THIS PDF CONTAINS NO PAGES." = "CE PDF NE CONTIENT AUCUNE PAGE.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT MERGING, SPLITTING OR REORDERING PAGES CANNOT KEEP. NO COPY WAS EXPORTED." = "CE PDF CONTIENT DES CHAMPS DE FORMULAIRE OU DES PIÈCES JOINTES QUE LA FUSION, LA DIVISION OU LA RÉORGANISATION DES PAGES NE PEUT PAS CONSERVER. AUCUNE COPIE N’A ÉTÉ EXPORTÉE.";
@@ -2030,6 +2035,7 @@
 "This image is too large (100 MP limit)." = "Cette image est trop grande (limite de 100 Mpx).";
 "This image is too large to paste. Choose the image file instead." = "Cette image est trop grande pour être collée. Choisissez plutôt le fichier image.";
 "This link did not return a downloadable image." = "Ce lien n’a pas renvoyé d’image téléchargeable.";
+"This link is a playlist" = "Ce lien est une playlist";
 "This output format has no adjustable conversion defaults." = "Ce format de sortie n’a pas de réglages de conversion modifiables.";
 "This post contains videos. Use its Reel link to download video." = "Cette publication contient des vidéos. Utilisez son lien Reel pour télécharger la vidéo.";
 "This repository is private" = "Ce dépôt est privé";
@@ -2137,6 +2143,7 @@
 "VIDEO SIZE" = "TAILLE DE LA VIDÉO";
 "VIDEO SNAPSHOTS" = "CAPTURES DE LA VIDÉO";
 "VIDEO, AUDIO, OR AN IMAGE. STRAIGHT INTO YOUR TOOLS." = "VIDÉO, AUDIO OU IMAGE. DIRECTEMENT DANS VOS OUTILS.";
+"VIDEOS ARE SAVED IN PLAYLIST ORDER IN A NEW FOLDER. UNAVAILABLE VIDEOS ARE SKIPPED." = "LES VIDÉOS SONT ENREGISTRÉES DANS L’ORDRE DE LA PLAYLIST DANS UN NOUVEAU DOSSIER. LES VIDÉOS INDISPONIBLES SONT IGNORÉES.";
 "VIGNETTE" = "VIGNETTAGE";
 "VISUALIZATION" = "VISUALISATION";
 "Value" = "Valeur";
@@ -2149,6 +2156,7 @@
 "Video quality" = "Qualité vidéo";
 "Video size" = "Taille de la vidéo";
 "Video, audio, or an image. Straight into your tools." = "Vidéo, audio ou image. Directement dans vos outils.";
+"Videos are saved in playlist order in a new folder. Unavailable videos are skipped." = "Les vidéos sont enregistrées dans l’ordre de la playlist dans un nouveau dossier. Les vidéos indisponibles sont ignorées.";
 "Vignette" = "Vignettage";
 "Visualization" = "Visualisation";
 "WAIT FOR THE PROCESSED PREVIEW TO FINISH BEFORE RESETTING." = "ATTENDEZ LA FIN DE L’APERÇU TRAITÉ AVANT DE RÉINITIALISER.";

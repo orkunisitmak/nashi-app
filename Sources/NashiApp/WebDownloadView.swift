@@ -12,6 +12,8 @@ import NashiCore
     @Published var error:String?
     @Published var completed:[URL]=[]
     @Published var selectedPhotos=Set<Int>()
+    @Published var wholePlaylist=true
+    @Published var playlistVideo=1
     @Published var shortcutAvailable=false
     @Published var destination:URL
     let state:AppState
@@ -51,6 +53,8 @@ import NashiCore
                 let found=try await WebDownloadEngine.inspect(url,token:token)
                 guard let self,self.revision==current,!Task.isCancelled else { return }
                 self.info=found;self.maximumHeight=0;self.selectedPhotos=Set(found.photos.map(\.id))
+                // A watch link inside a list suggests that one video; a bare playlist link suggests all of it.
+                self.wholePlaylist=found.playlistStart==nil;self.playlistVideo=found.playlistStart ?? 1
                 if found.kind == .image { self.linkText=found.url.absoluteString }
                 self.mode=found.modes.contains(self.pendingMode ?? .video) ? (self.pendingMode ?? .video):(found.modes.first ?? .original)
                 self.pendingMode=nil;self.inspecting=false
@@ -72,13 +76,14 @@ import NashiCore
         guard let info,!downloading,!state.working else { return }
         let mode=mode,maximum=maximumHeight>0 ? maximumHeight:nil,folder=destination
         let selection=info.photos.isEmpty ? nil:selectedPhotos
+        let videos:Set<Int>?=info.playlist.isEmpty ? nil:wholePlaylist ? Set(info.playlist.map(\.id)):[playlistVideo]
         downloading=true;error=nil;completed=[]
         state.beginJob("Starting download…")
         let token=state.token
         Task { [state] in
             defer { downloading=false;state.finishJob() }
             do {
-                let files=try await WebDownloadEngine.download(info,mode:mode,maximumHeight:maximum,destination:folder,selectedPhotos:selection,token:token) { [weak state] fraction,label in
+                let files=try await WebDownloadEngine.download(info,mode:mode,maximumHeight:maximum,destination:folder,selectedPhotos:selection,playlistItems:videos,token:token) { [weak state] fraction,label in
                     Task { @MainActor in state?.receiveProgress(fraction,label:label,token:token) }
                 }
                 state.stopProgressUpdates();state.outputs=files;state.inputs=files;state.progress=1;completed=files
@@ -150,6 +155,22 @@ struct WebDownloadView:View {
                                 }
                             }.padding(17).nashiCard().disabled(model.downloading)
                         }
+                        if !info.playlist.isEmpty {
+                            VStack(alignment:.leading,spacing:12) {
+                                Text("This link is a playlist").font(.headline)
+                                Picker("",selection:$model.wholePlaylist) {
+                                    Text("Entire playlist · \(info.playlist.count) videos").tag(true)
+                                    Text("One video").tag(false)
+                                }.pickerStyle(.radioGroup).labelsHidden().accessibilityLabel("Playlist download")
+                                if model.wholePlaylist {
+                                    Text("Videos are saved in playlist order in a new folder. Unavailable videos are skipped.").font(.caption).foregroundStyle(.secondary)
+                                } else {
+                                    Picker("",selection:$model.playlistVideo) {
+                                        ForEach(info.playlist) { Text(verbatim:"\($0.id). \($0.title)").tag($0.id) }
+                                    }.labelsHidden().accessibilityLabel("Playlist video")
+                                }
+                            }.padding(17).frame(maxWidth:.infinity,alignment:.leading).nashiCard().disabled(model.downloading)
+                        }
                         if info.modes.count>1 {
                             Picker("Save as",selection:$model.mode) { ForEach(info.modes,id:\.self) { LText($0.title).tag($0) } }.pickerStyle(.segmented).disabled(model.downloading)
                         }
@@ -184,14 +205,15 @@ struct WebDownloadView:View {
                 else if !model.completed.isEmpty { Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting(model.completed) } }
                 Spacer()
                 if !model.completed.isEmpty { Button("Use in Nashi") { model.onUseFiles?() }.buttonStyle(NashiButtonStyle(.primary)) }
-                else if let info=model.info { Button(!info.photos.isEmpty ? "Download \(model.selectedPhotos.count) \(model.selectedPhotos.count==1 ? "photo":"photos")":model.mode == .audioMP3 ? "Download MP3":info.kind == .image ? "Download image":"Download") { model.download() }.buttonStyle(NashiButtonStyle(.primary)).disabled(model.downloading || state.working || (!info.photos.isEmpty && model.selectedPhotos.isEmpty)) }
+                else if let info=model.info { Button(!info.photos.isEmpty ? "Download \(model.selectedPhotos.count) \(model.selectedPhotos.count==1 ? "photo":"photos")":!info.playlist.isEmpty && model.wholePlaylist ? "Download playlist":model.mode == .audioMP3 ? "Download MP3":info.kind == .image ? "Download image":"Download") { model.download() }.buttonStyle(NashiButtonStyle(.primary)).disabled(model.downloading || state.working || (!info.photos.isEmpty && model.selectedPhotos.isEmpty)) }
                 else { Button("Check link") { model.inspect() }.buttonStyle(NashiButtonStyle(.primary)).disabled(model.linkText.isEmpty || model.inspecting) }
             }.padding(20)
-        }.onChange(of:model.mode) { _ in model.configurationChanged() }.onChange(of:model.maximumHeight) { _ in model.configurationChanged() }.frame(minWidth:620,minHeight:520).background(NashiPalette.canvas).tint(.nashi).buttonStyle(NashiButtonStyle(.secondary,compact:true))
+        }.onChange(of:model.mode) { _ in model.configurationChanged() }.onChange(of:model.maximumHeight) { _ in model.configurationChanged() }.onChange(of:model.wholePlaylist) { _ in model.configurationChanged() }.onChange(of:model.playlistVideo) { _ in model.configurationChanged() }.frame(minWidth:620,minHeight:520).background(NashiPalette.canvas).tint(.nashi).buttonStyle(NashiButtonStyle(.secondary,compact:true))
     }
     func details(_ info:WebMediaInfo)->String {
         var details=[info.site,info.kind.rawValue.capitalized]
         if !info.photos.isEmpty { details.append("\(info.photos.count) \(info.photos.count==1 ? "photo":"photos")") }
+        if !info.playlist.isEmpty { details.append("\(info.playlist.count) \(info.playlist.count==1 ? "video":"videos")") }
         if let width=info.imageWidth,let height=info.imageHeight { details.append("\(width) × \(height)") }
         if let duration=info.duration { details.append("\(Int(duration)/60):\(String(format:"%02d",Int(duration)%60))") }
         if let height=info.heights.max() { details.append("\(height)p") }

@@ -786,6 +786,8 @@
 "Enter a valid number for %@." = "Enter a valid number for %@.";
 "Enter a valid number for %lld." = "Enter a valid number for %lld.";
 "Enter page numbers within this PDF, in the desired order." = "Enter page numbers within this PDF, in the desired order.";
+"Entire playlist · %@ videos" = "Entire playlist · %@ videos";
+"Entire playlist · %lld videos" = "Entire playlist · %lld videos";
 "Esc to close" = "Esc to close";
 "Everything has a next form." = "Everything has a next form.";
 "Expand Float" = "Expand Float";
@@ -1297,6 +1299,7 @@
 "ONE LAST STEP.\nSET UP YOUR TOOLS." = "ONE LAST STEP.\nSET UP YOUR TOOLS.";
 "ONE OR MORE MEDIA SETTINGS ARE OUTSIDE THEIR SUPPORTED RANGE." = "ONE OR MORE MEDIA SETTINGS ARE OUTSIDE THEIR SUPPORTED RANGE.";
 "ONE TOOL GROUP IS READY. DOWNLOAD THE REMAINING TOOLS TO FINISH SETUP." = "ONE TOOL GROUP IS READY. DOWNLOAD THE REMAINING TOOLS TO FINISH SETUP.";
+"ONE VIDEO" = "ONE VIDEO";
 "OPEN" = "OPEN";
 "OPEN IN TERMINAL" = "OPEN IN TERMINAL";
 "OPEN LINK" = "OPEN LINK";
@@ -1338,6 +1341,7 @@
 "One last step.\nSet up your tools." = "One last step.\nSet up your tools.";
 "One or more media settings are outside their supported range." = "One or more media settings are outside their supported range.";
 "One tool group is ready. Download the remaining tools to finish setup." = "One tool group is ready. Download the remaining tools to finish setup.";
+"One video" = "One video";
 "Open" = "Open";
 "Open Login Items" = "Open Login Items";
 "Open Nashi" = "Open Nashi";
@@ -1935,6 +1939,7 @@
 "THIS IMAGE IS TOO LARGE (100 MP LIMIT)." = "THIS IMAGE IS TOO LARGE (100 MP LIMIT).";
 "THIS IMAGE IS TOO LARGE TO PASTE. CHOOSE THE IMAGE FILE INSTEAD." = "THIS IMAGE IS TOO LARGE TO PASTE. CHOOSE THE IMAGE FILE INSTEAD.";
 "THIS LINK DID NOT RETURN A DOWNLOADABLE IMAGE." = "THIS LINK DID NOT RETURN A DOWNLOADABLE IMAGE.";
+"THIS LINK IS A PLAYLIST" = "THIS LINK IS A PLAYLIST";
 "THIS OUTPUT FORMAT HAS NO ADJUSTABLE CONVERSION DEFAULTS." = "THIS OUTPUT FORMAT HAS NO ADJUSTABLE CONVERSION DEFAULTS.";
 "THIS PDF CONTAINS NO PAGES." = "THIS PDF CONTAINS NO PAGES.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT MERGING, SPLITTING OR REORDERING PAGES CANNOT KEEP. NO COPY WAS EXPORTED." = "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT MERGING, SPLITTING OR REORDERING PAGES CANNOT KEEP. NO COPY WAS EXPORTED.";
@@ -2030,6 +2035,7 @@
 "This image is too large (100 MP limit)." = "This image is too large (100 MP limit).";
 "This image is too large to paste. Choose the image file instead." = "This image is too large to paste. Choose the image file instead.";
 "This link did not return a downloadable image." = "This link did not return a downloadable image.";
+"This link is a playlist" = "This link is a playlist";
 "This output format has no adjustable conversion defaults." = "This output format has no adjustable conversion defaults.";
 "This post contains videos. Use its Reel link to download video." = "This post contains videos. Use its Reel link to download video.";
 "This repository is private" = "This repository is private";
@@ -2137,6 +2143,7 @@
 "VIDEO SIZE" = "VIDEO SIZE";
 "VIDEO SNAPSHOTS" = "VIDEO SNAPSHOTS";
 "VIDEO, AUDIO, OR AN IMAGE. STRAIGHT INTO YOUR TOOLS." = "VIDEO, AUDIO, OR AN IMAGE. STRAIGHT INTO YOUR TOOLS.";
+"VIDEOS ARE SAVED IN PLAYLIST ORDER IN A NEW FOLDER. UNAVAILABLE VIDEOS ARE SKIPPED." = "VIDEOS ARE SAVED IN PLAYLIST ORDER IN A NEW FOLDER. UNAVAILABLE VIDEOS ARE SKIPPED.";
 "VIGNETTE" = "VIGNETTE";
 "VISUALIZATION" = "VISUALIZATION";
 "Value" = "Value";
@@ -2149,6 +2156,7 @@
 "Video quality" = "Video quality";
 "Video size" = "Video size";
 "Video, audio, or an image. Straight into your tools." = "Video, audio, or an image. Straight into your tools.";
+"Videos are saved in playlist order in a new folder. Unavailable videos are skipped." = "Videos are saved in playlist order in a new folder. Unavailable videos are skipped.";
 "Vignette" = "Vignette";
 "Visualization" = "Visualization";
 "WAIT FOR THE PROCESSED PREVIEW TO FINISH BEFORE RESETTING." = "WAIT FOR THE PROCESSED PREVIEW TO FINISH BEFORE RESETTING.";

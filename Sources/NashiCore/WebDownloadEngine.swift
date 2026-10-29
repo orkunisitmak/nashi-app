@@ -19,7 +19,18 @@ public struct WebMediaInfo:Sendable {
     public var imageHeight:Int? = nil
     public var photos:[WebPhoto] = []
     public var skippedVideoCount:Int = 0
+    public var playlist:[WebPlaylistEntry] = []
+    /// The playlist position of the video a watch?v=…&list=… link pointed at.
+    public var playlistStart:Int? = nil
     public var modes:[WebDownloadMode] { kind == .image ? [.original]:direct || kind == .audio ? [.original,.audioMP3]:[.video,.audioMP3] }
+}
+
+public struct WebPlaylistEntry:Sendable,Identifiable {
+    /// 1-based playlist position.
+    public let id:Int
+    public let url:URL
+    public let title:String
+    public let duration:Double?
 }
 
 public enum WebDownloadEngine {
@@ -37,10 +48,20 @@ public enum WebDownloadEngine {
         let session=URLSession(configuration:.ephemeral)
         defer { session.invalidateAndCancel() }
         if WebMediaDragPayload.isInstagramPhotoPost(url) {
-            let args=try baseArguments(photoPost:true)+["--ignore-no-formats-error","--skip-download","--dump-single-json","--no-progress","--",url.absoluteString]
+            let args=try baseArguments(playlistEnd:51)+["--ignore-no-formats-error","--skip-download","--dump-single-json","--no-progress","--",url.absoluteString]
             let data=try await Task.detached { try WebDownloadProcess.run(Dependencies.executable("yt-dlp"),args,token:token,timeout:100) }.value
             try token.check();try Task.checkCancellation()
             return try InstagramPhotos.parse(data,url:url)
+        }
+        if let list=youTubePlaylistID(url),let canonical=URL(string:"https://www.youtube.com/playlist?list=\(list)") {
+            let args=try baseArguments(playlistEnd:playlistLimit)+["--flat-playlist","--skip-download","--dump-single-json","--no-progress","--",canonical.absoluteString]
+            // A private or broken list still leaves the single video in a watch link usable.
+            if let data=try? await Task.detached(operation:{ try WebDownloadProcess.run(Dependencies.executable("yt-dlp"),args,token:token,timeout:100) }).value,
+               let info=try? parsePlaylist(data,url:url) {
+                try token.check();try Task.checkCancellation()
+                return info
+            }
+            try token.check();try Task.checkCancellation()
         }
         if let cover=try await YouTubeThumbnail.resolve(url,token:token,fetch:{ candidate in
             var request=URLRequest(url:candidate);request.timeoutInterval=12
@@ -81,7 +102,42 @@ public enum WebDownloadEngine {
         return WebMediaInfo(url:url,title:String((item["title"] as? String ?? "Web media").prefix(300)),kind:video ? .video:.audio,site:item["extractor_key"] as? String ?? url.host ?? "Web",duration:duration,heights:heights,direct:false,filename:nil,byteCount:nil)
     }
 
-    public static func download(_ info:WebMediaInfo,mode:WebDownloadMode,maximumHeight:Int?,destination:URL,selectedPhotos:Set<Int>? = nil,
+    static let playlistLimit=500
+    /// YouTube list links, except auto-generated mixes (RD…), which have no fixed contents.
+    public static func youTubePlaylistID(_ url:URL)->String? {
+        let host=url.host?.lowercased() ?? ""
+        guard ["youtube.com","www.youtube.com","m.youtube.com","music.youtube.com","youtu.be"].contains(host),
+              let list=URLComponents(url:url,resolvingAgainstBaseURL:false)?.queryItems?.first(where:{$0.name=="list"})?.value,
+              (2...128).contains(list.utf8.count),!list.hasPrefix("RD"),
+              list.utf8.allSatisfy({(65...90).contains($0) || (97...122).contains($0) || (48...57).contains($0) || $0==45 || $0==95}) else { return nil }
+        return list
+    }
+
+    public static func parsePlaylist(_ data:Data,url:URL) throws -> WebMediaInfo {
+        guard let root=try JSONSerialization.jsonObject(with:data) as? [String:Any],root["_type"] as? String=="playlist",
+              let raw=root["entries"] as? [Any] else { throw NashiError.failed("The site did not return a readable playlist.") }
+        var entries:[WebPlaylistEntry]=[],start:Int?
+        let current=URLComponents(url:url,resolvingAgainstBaseURL:false)?.queryItems?.first(where:{$0.name=="v"})?.value
+        // Unavailable items can arrive as null; skip them rather than rejecting the whole list.
+        for item in raw.prefix(playlistLimit).compactMap({$0 as? [String:Any]}) {
+            guard let id=item["id"] as? String,let link=URL(string:item["url"] as? String ?? "https://www.youtube.com/watch?v=\(id)"),
+                  let video=try? WebDownloadEngine.link(link.absoluteString) else { continue }
+            let position=entries.count+1
+            if id==current { start=position }
+            let duration=(item["duration"] as? Double).flatMap{$0.isFinite && $0>0 ? $0:nil}
+            entries.append(WebPlaylistEntry(id:position,url:video,title:String((item["title"] as? String ?? "Video \(position)").prefix(300)),duration:duration))
+        }
+        guard !entries.isEmpty else { throw NashiError.unsupported("This playlist has no public videos.") }
+        // A watch link whose video is not in the readable list falls back to that single video
+        // instead of offering a playlist that would preselect everything else.
+        if current != nil,start == nil { throw NashiError.unsupported("The linked video is not in the readable part of this playlist.") }
+        var info=WebMediaInfo(url:url,title:String((root["title"] as? String ?? "YouTube playlist").prefix(300)),kind:.video,site:"YouTube",
+                              duration:nil,heights:[],direct:false,filename:nil,byteCount:nil)
+        info.playlist=entries;info.playlistStart=start
+        return info
+    }
+
+    public static func download(_ info:WebMediaInfo,mode:WebDownloadMode,maximumHeight:Int?,destination:URL,selectedPhotos:Set<Int>? = nil,playlistItems:Set<Int>? = nil,
                                 token:CancellationToken = .init(),progress:@escaping ProgressHandler) async throws -> [URL] {
         _=try link(info.url.absoluteString)
         guard destination.isFileURL,info.modes.contains(mode) else { throw NashiError.invalidInput("Choose an available media type and a local destination folder.") }
@@ -92,16 +148,14 @@ public enum WebDownloadEngine {
         let results:[URL]
         if !info.photos.isEmpty {
             results=try await InstagramPhotos.download(info,selected:selectedPhotos,directory:area.directory,token:token,progress:progress)
+        } else if !info.playlist.isEmpty {
+            results=try await downloadPlaylist(info,items:playlistItems,mode:mode,maximumHeight:maximumHeight,directory:area.directory,token:token,progress:progress)
         } else if info.direct {
             results=try await downloadDirect(info,mode:mode,directory:area.directory,token:token,progress:progress)
         } else {
             let arguments=try downloadArguments(info,mode:mode,maximumHeight:maximumHeight,directory:area.directory)
             let data=try await Task.detached { try WebDownloadProcess.run(Dependencies.executable("yt-dlp"),arguments,token:token,timeout:21_600,progress:progress) }.value
-            results=String(decoding:data,as:UTF8.self).split(separator:"\n").compactMap { line in
-                guard line.hasPrefix("NASHI_FILE:"),let encoded=String(line.dropFirst("NASHI_FILE:".count)).data(using:.utf8),
-                      let path=(try? JSONSerialization.jsonObject(with:encoded,options:.fragmentsAllowed)) as? String else { return nil }
-                return URL(fileURLWithPath:path)
-            }
+            results=downloadedFiles(data)
         }
         try Task.checkCancellation();try token.check()
         if mode == .video,let maximumHeight {
@@ -114,6 +168,57 @@ public enum WebDownloadEngine {
         let output=try transaction.publish(token:token)
         progress(1,"Saved to \(destination.lastPathComponent)")
         return output
+    }
+
+    static func downloadedFiles(_ data:Data)->[URL] {
+        String(decoding:data,as:UTF8.self).split(separator:"\n").compactMap { line in
+            guard line.hasPrefix("NASHI_FILE:"),let encoded=String(line.dropFirst("NASHI_FILE:".count)).data(using:.utf8),
+                  let path=(try? JSONSerialization.jsonObject(with:encoded,options:.fragmentsAllowed)) as? String else { return nil }
+            return URL(fileURLWithPath:path)
+        }
+    }
+
+    /// One video per yt-dlp run, so a private or removed video skips instead of discarding the rest.
+    static func downloadPlaylist(_ info:WebMediaInfo,items:Set<Int>?,mode:WebDownloadMode,maximumHeight:Int?,directory:URL,
+                                 token:CancellationToken,progress:@escaping ProgressHandler) async throws -> [URL] {
+        let ids=Set(info.playlist.map(\.id)),selection=items ?? ids
+        guard !selection.isEmpty,selection.isSubset(of:ids) else { throw NashiError.invalidInput("Choose at least one video from this playlist.") }
+        let entries=info.playlist.filter{selection.contains($0.id)}
+        // A single video lands as a plain file; several share a folder named after the playlist.
+        let folder=entries.count==1 ? directory:directory.appendingPathComponent(cleanFilename(info.title,mime:nil),isDirectory:true)
+        if entries.count>1 { try FileManager.default.createDirectory(at:folder,withIntermediateDirectories:false) }
+        var outputs:[URL]=[]
+        for (index,entry) in entries.enumerated() {
+            try token.check();try Task.checkCancellation()
+            let count=entries.count
+            // Each video of a multi-video download stages in its own folder, so a run that fails
+            // midway takes its .part files and unmerged streams with it instead of publishing them.
+            let staging=count==1 ? folder:directory.appendingPathComponent(".video-\(entry.id)",isDirectory:true)
+            if count>1 { try FileManager.default.createDirectory(at:staging,withIntermediateDirectories:false) }
+            defer { if count>1 { try? FileManager.default.removeItem(at:staging) } }
+            let item=WebMediaInfo(url:entry.url,title:entry.title,kind:.video,site:info.site,duration:entry.duration,heights:[],direct:false,filename:nil,byteCount:nil)
+            let arguments=try downloadArguments(item,mode:mode,maximumHeight:maximumHeight,directory:staging)
+            let data:Data
+            do {
+                data=try await Task.detached {
+                    try WebDownloadProcess.run(Dependencies.executable("yt-dlp"),arguments,token:token,timeout:21_600) { fraction,label in
+                        guard count>1 else { progress(fraction,label);return }
+                        progress(fraction.isFinite && fraction>=0 ? (Double(index)+min(1,fraction))/Double(count):OperationProgress.indeterminate,"Video \(index+1) of \(count)…")
+                    }
+                }.value
+            } catch {
+                // Only a video the site refuses is skipped; local failures below still abort the export.
+                if token.isCancelled || count==1 { throw error }
+                continue
+            }
+            for file in downloadedFiles(data) {
+                guard count>1 else { outputs.append(file);continue }
+                let numbered=folder.appendingPathComponent(String(format:"%03d - ",entry.id)+file.lastPathComponent)
+                try FileManager.default.moveItem(at:file,to:numbered);outputs.append(numbered)
+            }
+        }
+        guard !outputs.isEmpty else { throw NashiError.failed("None of the selected playlist videos could be downloaded. They may be private or unavailable.") }
+        return outputs
     }
 
     // Some sites omit dimensions or report stale values for their direct formats.
@@ -137,12 +242,12 @@ public enum WebDownloadEngine {
         }
     }
 
-    static func baseArguments(photoPost:Bool=false) throws -> [String] {
+    static func baseArguments(playlistEnd:Int?=nil) throws -> [String] {
         ["--ignore-config","--no-plugin-dirs","--no-update","--no-cache-dir","--no-remote-components",
          "--no-js-runtimes","--js-runtimes","deno:\(try Dependencies.executable("deno").path)",
          "--ffmpeg-location",try Dependencies.executable("ffmpeg").deletingLastPathComponent().path,
          "--socket-timeout","20","--retries","2","--extractor-retries","1","--no-colors"] +
-        (photoPost ? ["--yes-playlist","--playlist-end","51"]:["--no-playlist","--playlist-items","1"])
+        (playlistEnd.map{["--yes-playlist","--playlist-end",String($0)]} ?? ["--no-playlist","--playlist-items","1"])
     }
     static func downloadArguments(_ info:WebMediaInfo,mode:WebDownloadMode,maximumHeight:Int?,directory:URL) throws -> [String] {
         var args=try baseArguments()+["--no-simulate","--no-overwrites","--windows-filenames","--trim-filenames","180",
