@@ -49,12 +49,17 @@ public sealed class MainWindow:Window
     {
         Background=NashiTheme.Paper;Foreground=NashiTheme.Ink;status.Foreground=NashiTheme.Muted;
         var shell=new DockPanel{Margin=new(28)};
-        var header=new Grid{ColumnDefinitions=new("*,Auto"),Margin=new(0,0,0,24)};
+        var header=new Grid{ColumnDefinitions=new("*,Auto"),RowDefinitions=new("Auto,Auto"),Margin=new(0,0,0,24)};
         var identity=new StackPanel{Orientation=Orientation.Horizontal,Spacing=10,VerticalAlignment=VerticalAlignment.Center};
         using(var stream=AssetLoader.Open(new Uri("avares://Nashi/Assets/NashiMark.png")))identity.Children.Add(new Image{Source=new Bitmap(stream),Width=38,Height=38});
         identity.Children.Add(NashiTheme.Text("Nashi",20));header.Children.Add(identity);
         var nav=new StackPanel{Orientation=Orientation.Horizontal,Spacing=6};Grid.SetColumn(nav,1);
         nav.Children.Add(NashiTheme.Button("Set up tools",()=>_ = ShowSetup()));nav.Children.Add(NashiTheme.Button("Home",()=>ShowPage(false)));nav.Children.Add(NashiTheme.Button("Library",()=>ShowPage(true)));nav.Children.Add(NashiTheme.Button("Settings",()=>_ = Settings()));header.Children.Add(nav);
+        bool? headerWrapped=null;header.SizeChanged+=(_,_)=>{
+            if(header.Bounds.Width<=0)return;var wrap=identity.DesiredSize.Width+nav.DesiredSize.Width+20>header.Bounds.Width;if(headerWrapped==wrap)return;headerWrapped=wrap;
+            Grid.SetColumnSpan(identity,wrap?2:1);Grid.SetColumn(nav,wrap?0:1);Grid.SetColumnSpan(nav,wrap?2:1);Grid.SetRow(nav,wrap?1:0);
+            nav.HorizontalAlignment=wrap?HorizontalAlignment.Left:HorizontalAlignment.Right;nav.Margin=wrap?new Thickness(0,12,0,0):new Thickness(0);
+        };
         DockPanel.SetDock(header,Dock.Top);shell.Children.Add(header);
         var footer=new StackPanel{Spacing=10,Margin=new(0,16,0,0)};footer.Children.Add(progress);footer.Children.Add(status);DockPanel.SetDock(footer,Dock.Bottom);shell.Children.Add(footer);
         shell.Children.Add(new ScrollViewer{Content=page,HorizontalScrollBarVisibility=Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled});Content=shell;ShowPage(libraryVisible);
@@ -218,7 +223,7 @@ public sealed class MainWindow:Window
     {
         var panel=new StackPanel{Margin=new(24),Spacing=12};panel.Children.Add(NashiTheme.Text("Settings",24));
         panel.Children.Add(NashiTheme.Text("Appearance"));var appearance=new ComboBox{ItemsSource=new[]{"system","light","dark"},SelectedItem=library.Appearance};panel.Children.Add(appearance);
-        panel.Children.Add(NashiTheme.Text("Language"));var language=new ComboBox{ItemsSource=new[]{"en","tr"},SelectedItem=preferences.Value.Language};panel.Children.Add(language);
+        panel.Children.Add(NashiTheme.Text("Language"));var language=new ComboBox{ItemsSource=AppLocalization.SupportedLanguages,SelectedItem=preferences.Value.Language};panel.Children.Add(language);
         panel.Children.Add(NashiTheme.Text("Save new copies"));var outputMode=new ComboBox{ItemsSource=new[]{"beside","ask","folder"},SelectedItem=preferences.Value.OutputMode};panel.Children.Add(outputMode);
         var outputFolder=new TextBox{PlaceholderText="Output folder",Text=preferences.Value.OutputFolder};panel.Children.Add(outputFolder);
         panel.Children.Add(NashiTheme.Button("Choose output folder",async()=>{var selected=await StorageProvider.OpenFolderPickerAsync(new(){AllowMultiple=false});if(selected.FirstOrDefault()?.TryGetLocalPath() is {} path)outputFolder.Text=path;}));

@@ -2,11 +2,15 @@ using System.Runtime.InteropServices;
 using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Platform;
+using Avalonia.Threading;
 namespace Nashi.Linux;
 
 /// Embeds the distribution's libmpv, with no shell commands or external player window.
-internal sealed class MediaPlayer(string path):NativeControlHost
+internal sealed class MediaPlayer:NativeControlHost
 {
+    private readonly string path;
+    private readonly DispatcherTimer commandClock=new(){Interval=TimeSpan.FromMilliseconds(16)};
+    public MediaPlayer(string path){this.path=path;commandClock.Tick+=(_,_)=>{if(Available)PollEvents();if(inFlight==0&&commands.Count==0)commandClock.Stop();};}
     static MediaPlayer()=>NativeLibrary.SetDllImportResolver(typeof(MediaPlayer).Assembly,(name,assembly,path)=>
     {
         if(name!="nashi-mpv")return IntPtr.Zero;
@@ -16,6 +20,9 @@ internal sealed class MediaPlayer(string path):NativeControlHost
     private static readonly string[] ObservedProperties=["time-pos","duration","pause","path","vo-configured"];
     private IntPtr player;
     private Task? shutdown;
+    private readonly Queue<string[]> commands=[];
+    private ulong commandId,inFlight,propertyBatch;
+    private bool closing;
     private readonly Dictionary<string,string> properties=[];
     private readonly Queue<string> diagnostics=[];
     internal string Diagnostics=>string.Join(" | ",diagnostics);
@@ -47,14 +54,18 @@ internal sealed class MediaPlayer(string path):NativeControlHost
     }
     protected override void DestroyNativeControlCore(IPlatformHandle control)
     {DisposePlayer();base.DestroyNativeControlCore(control);}
-    internal Task ShutdownAsync()
+    internal Task ShutdownAsync()=>shutdown??=StopAndDestroy();
+    private async Task StopAndDestroy()
     {
-        if(shutdown is not null)return shutdown;var handle=player;player=IntPtr.Zero;
-        return shutdown=handle==IntPtr.Zero?Task.CompletedTask:Task.Run(()=>mpv_terminate_destroy(handle));
+        if(!Available)return;closing=true;commands.Clear();commands.Enqueue(["stop"]);StartNextCommand();
+        var limit=DateTime.UtcNow.AddSeconds(5);
+        while(Available&&(inFlight!=0||commands.Count>0)&&DateTime.UtcNow<limit){PollEvents();await Task.Delay(10);}
+        if(inFlight!=0)Trace("Stop acknowledgement timed out during shutdown");
+        commandClock.Stop();var handle=player;player=IntPtr.Zero;if(handle!=IntPtr.Zero)await Task.Run(()=>mpv_terminate_destroy(handle));
     }
-    private void DisposePlayer(){if(player!=IntPtr.Zero){mpv_terminate_destroy(player);player=IntPtr.Zero;}}
+    private void DisposePlayer(){commandClock.Stop();if(player!=IntPtr.Zero){mpv_terminate_destroy(player);player=IntPtr.Zero;}}
     private void Option(string key,string value){if(mpv_set_option_string(player,key,value)<0)throw new InvalidOperationException("Unsupported media preview option: "+key);}
-    public void Load(string file){if(Available){properties.Clear();Error=null;Pause();Command("loadfile",System.IO.Path.GetFullPath(file));}}
+    public void Load(string file){if(Available&&!closing){propertyBatch++;properties.Clear();Error=null;Pause();Command("loadfile",System.IO.Path.GetFullPath(file));}}
     public void Toggle(){if(Available)Command("cycle","pause");}
     public void Seek(double seconds){if(Available&&double.IsFinite(seconds))Command("seek",Math.Clamp(seconds,0,Math.Max(Duration,0)).ToString(CultureInfo.InvariantCulture),"absolute+exact");}
     public void SetSpeed(double speed){if(Available&&double.IsFinite(speed))Command("set","speed",Math.Clamp(speed,.05,32).ToString(CultureInfo.InvariantCulture));}
@@ -69,26 +80,36 @@ internal sealed class MediaPlayer(string path):NativeControlHost
         // Never wait on the playback core from the Avalonia thread. It may be creating
         // a video output while another file replaces an audio-only preview.
         for(var i=0;i<256;i++){
-            var pointer=mpv_wait_event(player,0);if(pointer==IntPtr.Zero)return;var item=Marshal.PtrToStructure<MpvEvent>(pointer);if(item.Id==0)return;
+            var pointer=mpv_wait_event(player,0);if(pointer==IntPtr.Zero)break;var item=Marshal.PtrToStructure<MpvEvent>(pointer);if(item.Id==0)break;
             if(item.Id==2&&item.Data!=IntPtr.Zero){Trace(Marshal.PtrToStringUTF8(Marshal.ReadIntPtr(item.Data,2*IntPtr.Size))??"");}
             else if(item.Id==7&&item.Data!=IntPtr.Zero){var reason=Marshal.ReadInt32(item.Data);var failure=Marshal.ReadInt32(item.Data,4);Trace($"end-file reason={reason} error={failure}");if(failure<0)Error="Media file could not be played: "+Marshal.PtrToStringUTF8(mpv_error_string(failure));}
-            else if(item.Id==8){Trace("file-loaded");
+            else if(item.Id==8){Trace("file-loaded");Error=null;var batch=++propertyBatch;
                 // Observations suppress unchanged values. A replacement can finish before
                 // the unavailable/intermediate duration is emitted, so refresh after load.
-                foreach(var name in ObservedProperties)if(mpv_get_property_async(player,0,name,1)<0)Error="Media properties could not be refreshed.";
+                foreach(var name in ObservedProperties)if(mpv_get_property_async(player,batch,name,1)<0)Error="Media properties could not be refreshed.";
             }else if(item.Id is 22 or 3&&item.Data!=IntPtr.Zero){
+                if(item.Id==3&&item.UserData!=propertyBatch)continue;
                 var property=Marshal.PtrToStructure<MpvProperty>(item.Data);var name=Marshal.PtrToStringUTF8(property.Name);if(name is null)continue;
                 if(property.Format==1&&property.Data!=IntPtr.Zero){var value=Marshal.ReadIntPtr(property.Data);if(value!=IntPtr.Zero)properties[name]=Marshal.PtrToStringUTF8(value)??"";}
                 else properties.Remove(name);
-            }else if(item.Id==5&&item.Error<0)Error="Media command failed: "+(Marshal.PtrToStringUTF8(mpv_error_string(item.Error))??item.Error.ToString(CultureInfo.InvariantCulture));
+            }else if(item.Id==5){
+                if(item.UserData==inFlight)inFlight=0;
+                if(item.Error<0)Error="Media command failed: "+(Marshal.PtrToStringUTF8(mpv_error_string(item.Error))??item.Error.ToString(CultureInfo.InvariantCulture));
+            }
         }
+        StartNextCommand();
     }
     [StructLayout(LayoutKind.Sequential)]private struct MpvEvent{public int Id;public int Error;public ulong UserData;public IntPtr Data;}
     [StructLayout(LayoutKind.Sequential)]private struct MpvProperty{public IntPtr Name;public int Format;public IntPtr Data;}
     private void Command(params string[] args)
     {
-        if(!Available)return;var strings=args.Select(Marshal.StringToCoTaskMemUTF8).ToArray();var pointers=Marshal.AllocHGlobal((strings.Length+1)*IntPtr.Size);
-        try{for(var i=0;i<strings.Length;i++)Marshal.WriteIntPtr(pointers,i*IntPtr.Size,strings[i]);Marshal.WriteIntPtr(pointers,strings.Length*IntPtr.Size,IntPtr.Zero);if(mpv_command_async(player,0,pointers)<0)throw new InvalidOperationException("Media preview command failed.");}
+        if(!Available||closing)return;commands.Enqueue(args);commandClock.Start();StartNextCommand();
+    }
+    private void StartNextCommand()
+    {
+        if(!Available||inFlight!=0||commands.Count==0)return;var args=commands.Dequeue();inFlight=++commandId;
+        var strings=args.Select(Marshal.StringToCoTaskMemUTF8).ToArray();var pointers=Marshal.AllocHGlobal((strings.Length+1)*IntPtr.Size);
+        try{for(var i=0;i<strings.Length;i++)Marshal.WriteIntPtr(pointers,i*IntPtr.Size,strings[i]);Marshal.WriteIntPtr(pointers,strings.Length*IntPtr.Size,IntPtr.Zero);if(mpv_command_async(player,inFlight,pointers)<0){inFlight=0;Error="Media preview command could not be queued.";}}
         finally{Marshal.FreeHGlobal(pointers);foreach(var value in strings)Marshal.FreeCoTaskMem(value);}
     }
     [DllImport("nashi-mpv",CallingConvention=CallingConvention.Cdecl)]private static extern IntPtr mpv_create();

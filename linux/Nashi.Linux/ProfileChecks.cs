@@ -30,16 +30,16 @@ internal static class ProfileChecks
             Text("Quality").Text="61";Click("Save defaults for JPG");var reloaded=new PreferencesStore(state);
             check(reloaded.Profile("jpg").Quality==.61&&reloaded.Profile("webp").Quality==.68,"saving defaults persists only the selected format");
             Text("Quality").Text="0";Click("Save defaults for JPG");check(new PreferencesStore(state).Profile("jpg").Quality==.61,"invalid export defaults cannot overwrite the saved profile");
-            Click("Reset");Click("Save new copy");check((await result)?.Quality==61,"conversion export returns the saved quality after Reset");
+            Click("Reset");Click("Save new copy");check((await result.WaitAsync(TimeSpan.FromSeconds(15)))?.Quality==61,"conversion export returns the saved quality after Reset");
         }finally{if(editor.IsVisible)editor.Close((LinuxOptions?)null);}
         var text=Path.Combine(directory,"profile-document.txt");await File.WriteAllTextAsync(text,"Nashi profile document");preferences.SetProfile("pdf",new(Dpi:200,Layout:"preserve",EpubLayout:"fixed"));
         editor=new ToolEditor("convert","pdf",[text],new LinuxEngine(),preferences);result=editor.ShowDialog<LinuxOptions?>(owner);await Task.Delay(80);
-        try{check(!editor.GetVisualDescendants().OfType<ComboBox>().Single(c=>c.Name=="Document_Layout").IsVisible&&!Text("Document_Dpi").IsVisible,"document conversion hides format-inapplicable controls");Click("Save new copy");var options=await result;check(options?.Document is {Dpi:200,Layout:"preserve",EpubLayout:"fixed"},"document editor applies persisted DPI and layout defaults");}
+        try{check(!editor.GetVisualDescendants().OfType<ComboBox>().Single(c=>c.Name=="Document_Layout").IsVisible&&!Text("Document_Dpi").IsVisible,"document conversion hides format-inapplicable controls");Click("Save new copy");var options=await result.WaitAsync(TimeSpan.FromSeconds(15));check(options?.Document is {Dpi:200,Layout:"preserve",EpubLayout:"fixed"},"document editor applies persisted DPI and layout defaults");}
         finally{if(editor.IsVisible)editor.Close((LinuxOptions?)null);}
         var video=Path.Combine(directory,"video.mp4");if(!File.Exists(video))return;
         preferences.SetProfile("mp4",new(Quality:.42,AudioBitrate:192,SampleDepth:"pcm24",MaxVideoHeight:120,GifFrameRate:8,GifWidth:640,PreserveMetadata:false));
         editor=new ToolEditor("convert","mp4",[video],new LinuxEngine(),preferences);result=editor.ShowDialog<LinuxOptions?>(owner);await Task.Delay(80);
-        try{check(Text("Media_Quality").IsVisible&&!Text("Media_GifWidth").IsVisible,"MP4 conversion hides GIF-only controls");Click("Save new copy");var options=await result;check(options?.Media is {Quality:.42,AudioBitrate:192,SampleDepth:"pcm24",Height:120,GifFrameRate:8,GifWidth:640,PreserveMetadata:false},"media editor applies persisted quality, dimensions, codec and metadata defaults");}
+        try{check(Text("Media_Quality").IsVisible&&!Text("Media_GifWidth").IsVisible,"MP4 conversion hides GIF-only controls");Click("Save new copy");var options=await result.WaitAsync(TimeSpan.FromSeconds(15));check(options?.Media is {Quality:.42,AudioBitrate:192,SampleDepth:"pcm24",Height:120,GifFrameRate:8,GifWidth:640,PreserveMetadata:false},"media editor applies persisted quality, dimensions, codec and metadata defaults");}
         finally{if(editor.IsVisible)editor.Close((LinuxOptions?)null);}
         editor=new ToolEditor("convert","gif",[video],new LinuxEngine(),preferences);editor.Show(owner);await Task.Delay(80);
         try{check(Text("Media_GifWidth").IsVisible&&!Text("Media_Quality").IsVisible&&!editor.GetVisualDescendants().OfType<CheckBox>().Single(c=>c.Name=="Media_PreserveMetadata").IsVisible,"GIF conversion shows GIF controls and hides incompatible metadata and quality");capture(editor,Path.Combine(directory,"gif-profile-controls.png"));}

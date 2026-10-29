@@ -44,7 +44,7 @@ public sealed partial class ToolEditor:Window
     private readonly StackPanel fields=new(){Spacing=10};
     public ToolEditor(string action,string? format,string[] inputs,LinuxEngine engine,PreferencesStore? preferences=null)
     {
-        this.action=action;inputOrder.AddRange(inputs);Title=(action=="convert"?"Convert to "+format?.ToUpperInvariant():FeatureCatalog.ToolNames.GetValueOrDefault(action,action))+" · Nashi";
+        this.action=action;inputOrder.AddRange(inputs);Title=AppLocalization.Text((action=="convert"?"Convert to "+format?.ToUpperInvariant():FeatureCatalog.ToolNames.GetValueOrDefault(action,action))+" · Nashi",NashiTheme.Language);
         Width=1000;Height=740;MinWidth=720;MinHeight=520;FontFamily=new Avalonia.Media.FontFamily("DejaVu Sans");Background=NashiTheme.Paper;Foreground=NashiTheme.Ink;
         var root=new DockPanel{Margin=new(28)};var heading=new StackPanel{Spacing=8,Margin=new(0,0,0,22)};heading.Children.Add(NashiTheme.Text(Title[..^8],26));heading.Children.Add(NashiTheme.Text(Path.GetFileName(inputs[0])+" · Original stays safe",13,true));DockPanel.SetDock(heading,Dock.Top);root.Children.Add(heading);
         var footer=new StackPanel{Spacing=8,Margin=new(0,18,0,0)};footer.Children.Add(error);var buttons=new StackPanel{Orientation=Orientation.Horizontal,Spacing=10};
@@ -85,7 +85,7 @@ public sealed partial class ToolEditor:Window
         Closing+=async(_,e)=>{
             if(mediaPreview is null||mediaCloseReady)return;e.Cancel=true;if(mediaClosing is not null)return;
             IsEnabled=false;lifetime.Cancel();mediaClosing=mediaPreview.ShutdownAsync();
-            try{await mediaClosing;await Task.Yield();mediaCloseReady=true;Close(pendingDialogResult);}
+            try{await mediaClosing.WaitAsync(TimeSpan.FromSeconds(10));await Task.Yield();mediaCloseReady=true;Close(pendingDialogResult);}
             catch(Exception failure){mediaClosing=null;IsEnabled=true;error.Text="Media player could not close: "+failure.Message;}
         };
         Closed+=async(_,_)=>{lifetime.Cancel();photoClock.Stop();try{if(processedTask is not null)await processedTask;if(photoTasks.Count>0)await Task.WhenAll(photoTasks.ToArray());if(detectionTask is not null)await detectionTask;if(processedDirectory is not null&&Directory.Exists(processedDirectory))Directory.Delete(processedDirectory,true);}finally{surface?.DisposeArtwork();}};
@@ -98,7 +98,7 @@ public sealed partial class ToolEditor:Window
             photoClock.Tick+=(_,_)=>{photoClock.Stop();photoTasks.RemoveAll(t=>t.IsCompletedSuccessfully);photoTasks.Add(RefreshPhoto(engine));};
             if(action=="redactImage")surface.SceneChanged+=QueuePhoto;
             foreach(var child in fields.Children){if(child is TextBox text)text.TextChanged+=(_,_)=>QueuePhoto();if(child is ComboBox choice)choice.SelectionChanged+=(_,_)=>QueuePhoto();if(child is CheckBox toggle)toggle.IsCheckedChanged+=(_,_)=>QueuePhoto();}
-            var original=originalView=new CheckBox{Name="OriginalView",Content="Show original",Foreground=NashiTheme.Ink};original.IsCheckedChanged+=(_,_)=>{showingOriginal=original.IsChecked==true;surface.ShowOriginal(showingOriginal);if(showingOriginal){photoGeneration++;photoClock.Stop();photoPreviewRun?.Cancel();surface.SetPreview(originalPhoto!);}else QueuePhoto();};if(action=="redactImage")preview.Children.Insert(0,original);else preview.Children.Add(original);Opened+=(_,_)=>QueuePhoto();
+            var original=originalView=new CheckBox{Name="OriginalView",Content=AppLocalization.Text("Show original",NashiTheme.Language),Foreground=NashiTheme.Ink};original.IsCheckedChanged+=(_,_)=>{showingOriginal=original.IsChecked==true;surface.ShowOriginal(showingOriginal);if(showingOriginal){photoGeneration++;photoClock.Stop();photoPreviewRun?.Cancel();surface.SetPreview(originalPhoto!);}else QueuePhoto();};if(action=="redactImage")preview.Children.Insert(0,original);else preview.Children.Add(original);Opened+=(_,_)=>QueuePhoto();
         }
         if(fields.Children.Count==0)fields.Children.Add(NashiTheme.Text("Ready to make a fresh copy. No extra settings needed.",14,true));
         KeyDown+=(_,e)=>{if(mediaPreview?.Handle(e)==true){e.Handled=true;return;}if(e.Key==Key.Escape)Finish(null);if(e.Key==Key.Enter&&FocusManager?.GetFocusedElement() is not TextBox)Save();};
@@ -232,7 +232,7 @@ public sealed partial class ToolEditor:Window
     {Text(name,Display(initial));}
     private void Toggle(string name,bool initial)
     {
-        var input=new CheckBox{Name=name.Replace(".","_",StringComparison.Ordinal),Content=Label(name),IsChecked=initial,Foreground=NashiTheme.Ink,Tag=initial};fields.Children.Add(input);values[name]=()=>input.IsChecked??false;
+        var input=new CheckBox{Name=name.Replace(".","_",StringComparison.Ordinal),Content=AppLocalization.Text(Label(name),NashiTheme.Language),IsChecked=initial,Foreground=NashiTheme.Ink,Tag=initial};fields.Children.Add(input);values[name]=()=>input.IsChecked??false;
     }
     private static string Label(string name)=>Regex.Replace(name.Split('.')[^1],"(?<=[a-z])([A-Z])"," $1") switch
     {"Target Bytes"=>"Target size (bytes)","Page Ranges"=>"Pages in order (e.g. 1-3, 5)","Quality"=>name.StartsWith("Media.",StringComparison.Ordinal)?"Quality (0–1)":"Quality (%)",var label=>label};

@@ -45,7 +45,7 @@ internal static class SmokeChecks
                 var media=Path.Combine(directory,"video.mp4");if(File.Exists(media))File.Delete(media);
                 await ProcessRunner.RunAsync(ffmpeg,["-v","error","-f","lavfi","-i","color=c=gold:s=320x240:d=2","-c:v","mpeg4",media]);
                 var editor=new ToolEditor("trimVideo",null,[media],new LinuxEngine());editor.Show(window);await Task.Delay(800);
-                var player=editor.GetVisualDescendants().OfType<MediaPlayer>().Single();Check(player.Available,"embedded Linux media playback: "+player.Error);Check(player.Duration>1,"native player duration");player.Toggle();await Task.Delay(500);Check(player.Position>.1,"native playback advances");player.Pause();player.Seek(1);await Task.Delay(200);Check(Math.Abs(player.Position-1)<.2,"native seek");var preview=editor.GetVisualDescendants().OfType<MediaPreview>().Single();var timeline=editor.GetVisualDescendants().OfType<RangeTimeline>().Single();
+                var player=editor.GetVisualDescendants().OfType<MediaPlayer>().Single();Check(player.Available,"embedded Linux media playback: "+player.Error);Check(player.Duration>1,"native player duration");player.Toggle();var playbackLimit=DateTime.UtcNow.AddSeconds(5);while(player.Position<=.1&&DateTime.UtcNow<playbackLimit)await Task.Delay(30);Check(player.Position>.1,$"native playback advances: position={player.Position}; paused={player.Paused}; error={player.Error}; {player.Diagnostics}");player.Pause();player.Seek(1);await Task.Delay(200);Check(Math.Abs(player.Position-1)<.2,"native seek");var preview=editor.GetVisualDescendants().OfType<MediaPreview>().Single();var timeline=editor.GetVisualDescendants().OfType<RangeTimeline>().Single();
                 async Task Artwork(string path){var limit=DateTime.UtcNow.AddSeconds(25);while(preview.ArtworkSource!=Path.GetFullPath(path)){if(preview.ArtworkError is {} error)throw new Exception(error);if(DateTime.UtcNow>limit)throw new Exception($"Timeline artwork timeout: {path}; loaded={player.LoadedPath}; duration={player.Duration}; player={player.Error}; native log={player.Diagnostics}");await Task.Delay(30);}}
                 await Artwork(media);Check(timeline.ArtworkCount>1,"video timeline contains extracted filmstrip frames");
                 var processed=(await new LinuxEngine().RunAsync("trimVideo",[media],Path.Combine(directory,"processed-preview"),new(){Media=new(){Start=0,End=1}})).Single();
@@ -116,6 +116,7 @@ internal static class SmokeChecks
                     var entry=store.Search("").Single();Check(entry.Paths.Count()==1&&entry.AvailablePaths.Count()==1&&File.Exists(original),"partial move UI records published copies in Library");moveWindow.GetVisualDescendants().OfType<Button>().Single(b=>b.Content as string=="Library").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));await Task.Delay(150);Capture(moveWindow,Path.Combine(directory,"partial-move.png"));
                 }finally{File.SetUnixFileMode(protectedSource,mode);moveWindow.Close();}
             }
+            await LocalizationUiChecks.Run(window,fixture,directory,Check,Capture);
             await ProfileChecks.Run(window,fixture,directory,Check,Capture);
             await AnnotationChecks.Run(window,fixture,directory,Check,Capture);
             await RedactionUiChecks.Run(window,directory,Check,Capture);
@@ -130,7 +131,7 @@ internal static class SmokeChecks
             await File.WriteAllTextAsync(Path.Combine(directory,"smoke.json"),System.Text.Json.JsonSerializer.Serialize(new{passed=true,checks}));
             ExitCode=0;Console.WriteLine($"Linux native UI smoke: {checks} checks passed.");
         }
-        catch(Exception error){Console.Error.WriteLine("Linux native UI smoke failed: "+error);ExitCode=1;}
+        catch(Exception error){Console.Error.WriteLine("Linux native UI smoke failed: "+error);ExitCode=1;Environment.Exit(1);}
         finally{window.Close();}
     }
     private static void Assert(bool value,string message){if(!value)throw new Exception(message);}

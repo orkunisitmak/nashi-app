@@ -25,7 +25,7 @@ internal sealed class FormatDefaultsWindow:Window
             if(name is "png" or "jpg" or "epub")Number("dpi","PDF rendering DPI",profile.Dpi);
             if(name is "docx" or "pages")Choice("layout","PDF layout",["editable","preserve"],profile.Layout);
             if(name=="epub")Choice("epub","EPUB layout",["reflowable","fixed"],profile.EpubLayout);
-            var metadata=new CheckBox{Name="ProfileMetadata",Content="Preserve metadata",IsChecked=profile.PreserveMetadata};if(video||audio||image&&name!="bmp")panel.Children.Add(metadata);
+            var metadata=new CheckBox{Name="ProfileMetadata",Content=AppLocalization.Text("Preserve metadata",NashiTheme.Language),IsChecked=profile.PreserveMetadata};if(video||audio||image&&name!="bmp")panel.Children.Add(metadata);
             if(fields.Count+choices.Count==0&&metadata.Parent is null)panel.Children.Add(NashiTheme.Text("This format uses its original document structure. No export defaults are needed.",13,true));
             var error=NashiTheme.Text("",13);panel.Children.Add(error);
             double Value(string key,double fallback){if(!fields.TryGetValue(key,out var field))return fallback;var number=double.Parse(field.Text??"",CultureInfo.InvariantCulture);if(!double.IsFinite(number))throw new ArgumentException("Choose a finite number.");return number;}
