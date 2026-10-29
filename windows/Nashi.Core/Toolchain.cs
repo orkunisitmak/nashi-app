@@ -72,6 +72,8 @@ public sealed class Toolchain(string directory,string? searchPath=null)
                     var tar=archive+".tar";await using(var xz=new SharpCompress.Compressors.Xz.XZStream(File.OpenRead(archive)))await using(var plain=File.Create(tar))await xz.CopyToAsync(plain,token);
                     var unpack=ArchiveEngine.Extract(tar,Path.Combine(stage,"unpack-"+n),null,null,token)[0];
                     foreach(var name in package.Files)File.Move(Directory.GetFiles(unpack,name,SearchOption.AllDirectories).Single(),Path.Combine(stage,name));
+                    var license=Directory.GetFiles(unpack,"LICENSE*",SearchOption.AllDirectories).FirstOrDefault(f=>new FileInfo(f).Length<1024*1024);
+                    if(license is not null)File.Move(license,Path.Combine(stage,package.Name.Split(' ')[0]+"-LICENSE.txt"));
                     Directory.Delete(Path.Combine(stage,"unpack-"+n),true);File.Delete(tar);
                 }
                 else File.Move(archive,Path.Combine(stage,package.Files[0]));

@@ -24,4 +24,16 @@ The first foreground launch opens the same two-group setup as macOS. Choose **Do
 
 Exact URLs and hashes: [`Toolchain.cs`](../windows/Nashi.Core/Toolchain.cs). [Windows availability and shortcuts](../windows/README.md). [Bundled Windows library notices](../windows/THIRD-PARTY-NOTICES.txt). The preview is self-contained and does not require .NET to be installed separately.
 
+## Linux x64 preview
+
+Linux ships as an unsigned AppImage. Image, audio/video (with media tools), archive, subtitle and PDF merge/create/compress features are described in [`linux/README.md`](../linux/README.md). Media setup downloads these pinned upstream releases (HTTPS only, SHA-256 verified before anything is extracted); an `ffmpeg`/`ffprobe` already on `PATH` is used instead of downloading:
+
+- [FFmpeg / ffprobe 9.0.2 GPL build, BtbN FFmpeg-Builds `autobuild-2026-10-29-19-17`](https://github.com/BtbN/FFmpeg-Builds/releases/tag/autobuild-2026-10-29-19-17), GPL. `ffmpeg-n9.0.2-37-gae19868753-linux64-gpl-9.0.tar.xz`, SHA-256 `83537b0f6a97905f325080f6f5916e70ec252d1ef3e4ce4746f755b88720cbf5`. The archive's `LICENSE` is kept next to the tools. [FFmpeg sources](https://github.com/FFmpeg/FFmpeg).
+- [yt-dlp 2026.08.19, `yt-dlp_linux`](https://github.com/yt-dlp/yt-dlp/releases/tag/2026.08.19), GPLv3+ standalone combination, SHA-256 `58162f9bfdc27458ea47bfcb311cf47028f17d8154a8bf7d689861d46399230a`.
+- [Deno 2.9.7, `deno-x86_64-unknown-linux-gnu.zip`](https://github.com/denoland/deno/releases/tag/v2.9.7), MIT and included dependency licenses, SHA-256 `c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490`.
+- [ExifTool 13.59, `Image-ExifTool-13.59.tar.gz`](https://exiftool.org/), Perl Artistic License or GPL, SHA-256 `668ea3acececb7235fbd0f4900e72d5f12c9b07e5c778fd36cb1e9b5828fd65a`. Includes its complete Perl source; needs `perl`.
+- [appimagetool 1.9.0](https://github.com/AppImage/appimagetool/releases/tag/1.9.0), MIT, used only by the build script (SHA-256 `46fdd785094c7f6e545b61afcfb0f3d98d8eab243f644b4b17698c01d06083d1`); it is not shipped.
+
+Exact URLs and hashes: [`Toolchain.cs`](../windows/Nashi.Core/Toolchain.cs), [`MetadataService.cs`](../windows/Nashi.Core/MetadataService.cs) and [`build-linux-appimage.sh`](../scripts/build-linux-appimage.sh). The AppImage is self-contained and carries all bundled library license texts in `usr/share/doc/nashi/licenses/` ([notices](../linux/THIRD-PARTY-NOTICES.txt)).
+
 We do not change operating-system security settings or request administrator access for this setup. OS publisher trust and Nashi’s pinned update-signature verification are separate: the first public builds are not Apple-notarized or Windows Authenticode signed.
