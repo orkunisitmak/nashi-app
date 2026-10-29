@@ -28,7 +28,8 @@ public enum ImageEngine {
         let output=OutputFiles.unique(for:input,extension:format,directory:options.outputDirectory)
         var complete=false;defer { if !complete { try? FileManager.default.removeItem(at:output) } }
         let metadata = options.preserveMetadata ? CGImageSourceCreateWithURL(input as CFURL,nil).map { imageProperties($0,input:input) as CFDictionary } : nil
-        try write(image,to:output,quality:options.quality,metadata:metadata)
+        if format == "ico" { try IconContainer.write(image,to:output,token:token) }
+        else { try write(image,to:output,quality:options.quality,metadata:metadata) }
         if options.preserveMetadata { try ImageMetadataEngine.copyMetadata(from:input,to:output,token:token) }
         complete=true
         return [output]

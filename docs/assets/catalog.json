@@ -25,6 +25,7 @@
       "heic",
       "tiff",
       "bmp",
+      "ico",
       "pdf"
     ],
     "bmp" : [
@@ -34,6 +35,7 @@
       "heic",
       "tiff",
       "avif",
+      "ico",
       "pdf"
     ],
     "csv" : [
@@ -88,6 +90,7 @@
       "tiff",
       "avif",
       "bmp",
+      "ico",
       "pdf"
     ],
     "jpg" : [
@@ -97,6 +100,7 @@
       "tiff",
       "avif",
       "bmp",
+      "ico",
       "pdf"
     ],
     "m4a" : [
@@ -206,6 +210,7 @@
       "tiff",
       "avif",
       "bmp",
+      "ico",
       "pdf"
     ],
     "ppt" : [
@@ -257,6 +262,7 @@
       "tiff",
       "avif",
       "bmp",
+      "ico",
       "pdf"
     ],
     "tar" : [
@@ -281,6 +287,7 @@
       "heic",
       "avif",
       "bmp",
+      "ico",
       "pdf"
     ],
     "tsv" : [
@@ -328,6 +335,7 @@
       "tiff",
       "avif",
       "bmp",
+      "ico",
       "pdf"
     ],
     "wma" : [

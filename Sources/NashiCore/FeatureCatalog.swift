@@ -2,14 +2,14 @@ import Foundation
 
 public enum FeatureCatalog {
     public static let conversionMatrix: [String: [String]] = [
-        "jpg": ["png", "webp", "heic", "tiff", "avif", "bmp", "pdf"],
-        "png": ["jpg", "webp", "heic", "tiff", "avif", "bmp", "pdf"],
-        "webp": ["jpg", "png", "heic", "tiff", "avif", "bmp", "pdf"],
-        "heic": ["jpg", "png", "webp", "tiff", "avif", "bmp", "pdf"],
-        "tiff": ["jpg", "png", "webp", "heic", "avif", "bmp", "pdf"],
-        "svg": ["jpg", "png", "webp", "heic", "tiff", "avif", "bmp", "pdf"],
-        "avif": ["jpg", "png", "webp", "heic", "tiff", "bmp", "pdf"],
-        "bmp": ["jpg", "png", "webp", "heic", "tiff", "avif", "pdf"],
+        "jpg": ["png", "webp", "heic", "tiff", "avif", "bmp", "ico", "pdf"],
+        "png": ["jpg", "webp", "heic", "tiff", "avif", "bmp", "ico", "pdf"],
+        "webp": ["jpg", "png", "heic", "tiff", "avif", "bmp", "ico", "pdf"],
+        "heic": ["jpg", "png", "webp", "tiff", "avif", "bmp", "ico", "pdf"],
+        "tiff": ["jpg", "png", "webp", "heic", "avif", "bmp", "ico", "pdf"],
+        "svg": ["jpg", "png", "webp", "heic", "tiff", "avif", "bmp", "ico", "pdf"],
+        "avif": ["jpg", "png", "webp", "heic", "tiff", "bmp", "ico", "pdf"],
+        "bmp": ["jpg", "png", "webp", "heic", "tiff", "avif", "ico", "pdf"],
         "mp3": ["m4a", "wav", "flac", "ogg", "opus", "aiff", "wma"],
         "m4a": ["mp3", "wav", "flac", "ogg", "opus", "aiff", "wma"],
         "wav": ["mp3", "m4a", "flac", "ogg", "opus", "aiff", "wma"],

@@ -323,6 +323,7 @@
 "CHOOSE AN INSTAGRAM PHOTO POST LINK." = "BİR INSTAGRAM FOTOĞRAF GÖNDERİSİ BAĞLANTISI SEÇ.";
 "CHOOSE ANNOTATION IMAGE…" = "İŞARET GÖRSELİ SEÇ…";
 "CHOOSE AT LEAST ONE FRAME." = "EN AZ BİR KARE SEÇ.";
+"CHOOSE AT LEAST ONE ICON SIZE." = "EN AZ BİR SİMGE BOYUTU SEÇ.";
 "CHOOSE AT LEAST TWO PDFS." = "EN AZ İKİ PDF SEÇ.";
 "CHOOSE AT LEAST TWO VIDEOS." = "EN AZ İKİ VİDEO SEÇ.";
 "CHOOSE AT MOST 10,000 CLIPS." = "EN FAZLA 10.000 KLİP SEÇ.";
@@ -406,6 +407,9 @@
 "COPY PATH" = "YOLU KOPYALA";
 "CORNER RADIUS" = "KÖŞE YUVARLAKLIĞI";
 "CORNERS" = "KÖŞELER";
+"COULD NOT ALLOCATE THE ICON CANVAS." = "SİMGE TUVALİ OLUŞTURULAMADI.";
+"COULD NOT DRAW THE ICON." = "SİMGE ÇİZİLEMEDİ.";
+"COULD NOT ENCODE THE ICON." = "SİMGE KODLANAMADI.";
 "COULDN’T CHECK FOR UPDATES" = "GÜNCELLEMELER DENETLENEMEDİ";
 "COULDN’T FINISH" = "İŞLEM TAMAMLANAMADI";
 "COULDN’T OPEN THIS TOOL" = "BU ARAÇ AÇILAMADI";
@@ -489,6 +493,7 @@
 "Choose an input format to see its available outputs." = "Kullanılabilir çıktılarını görmek için bir girdi biçimi seç.";
 "Choose annotation image…" = "İşaret görseli seç…";
 "Choose at least one frame." = "En az bir kare seç.";
+"Choose at least one icon size." = "En az bir simge boyutu seç.";
 "Choose at least two PDFs." = "En az iki PDF seç.";
 "Choose at least two videos." = "En az iki video seç.";
 "Choose at most 10,000 clips." = "En fazla 10.000 klip seç.";
@@ -578,6 +583,9 @@
 "Copy path" = "Yolu kopyala";
 "Corner radius" = "Köşe yuvarlaklığı";
 "Corners" = "Köşeler";
+"Could not allocate the icon canvas." = "Simge tuvali oluşturulamadı.";
+"Could not draw the icon." = "Simge çizilemedi.";
+"Could not encode the icon." = "Simge kodlanamadı.";
 "Couldn’t check for updates" = "Güncellemeler denetlenemedi";
 "Couldn’t finish" = "İşlem tamamlanamadı";
 "Couldn’t open this tool" = "Bu araç açılamadı";
@@ -982,6 +990,8 @@
 "Hold a key while dragging in Finder" = "Finder'da sürüklerken bir kısayol tuşuna bas";
 "Home" = "Ana Sayfa";
 "Hue" = "Renk tonu";
+"ICON IMAGES MUST BE 1 TO 256 PIXELS." = "SİMGE GÖRSELLERİ 1 İLE 256 PİKSEL ARASINDA OLMALI.";
+"ICON IMAGES MUST BE PNG DATA." = "SİMGE GÖRSELLERİ PNG VERİSİ OLMALI.";
 "ICONS" = "SİMGELER";
 "IMAGE" = "GÖRSEL";
 "IMAGE COMPRESSION" = "GÖRSEL SIKIŞTIRMA";
@@ -1009,6 +1019,8 @@
 "INVALID UPDATE SIGNATURE LENGTH." = "GÜNCELLEME İMZASININ UZUNLUĞU GEÇERSİZ.";
 "INVALID UPDATE SIGNATURE." = "GÜNCELLEME İMZASI GEÇERSİZ.";
 "INVALID YOUTUBE VIDEO ID." = "YOUTUBE VİDEO KİMLİĞİ GEÇERSİZ.";
+"Icon images must be 1 to 256 pixels." = "Simge görselleri 1 ile 256 piksel arasında olmalı.";
+"Icon images must be PNG data." = "Simge görselleri PNG verisi olmalı.";
 "Icons" = "Simgeler";
 "Image" = "Görsel";
 "Image Compression" = "Görsel Sıkıştırma";
