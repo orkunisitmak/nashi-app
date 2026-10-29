@@ -20,7 +20,7 @@
           <TextBlock Text="{l:T 'On your computer'}" />
         </StackPanel>
       </Border>
-      <Button Grid.Column="5" Classes="quiet compact" ToolTip.Tip="{l:T 'Settings'}" AutomationProperties.Name="{l:T 'Settings'}" VerticalAlignment="Center">
+      <Button x:Name="SettingsButton" Grid.Column="5" Classes="quiet compact" IsEnabled="False" ToolTip.Tip="{l:T 'Coming soon'}" ToolTip.ShowOnDisabled="True" AutomationProperties.Name="{l:T 'Settings'}" VerticalAlignment="Center">
         <PathIcon Data="{StaticResource IconSliders}" Width="15" Height="15" />
       </Button>
     </Grid>
@@ -34,7 +34,7 @@
         </StackPanel>
 
         <!-- Start card -->
-        <Border x:Name="StartCard" Classes="card" CornerRadius="26" Padding="24">
+        <Border x:Name="StartCard" Classes="card" CornerRadius="22" Padding="24">
           <StackPanel Spacing="18">
             <Grid ColumnDefinitions="*,166">
               <StackPanel Spacing="12" VerticalAlignment="Center">
@@ -122,7 +122,7 @@
                   <TextBlock Text="{l:T 'Tools'}" />
                 </StackPanel>
               </Button>
-              <Button Classes="chip" Click="OnActions">
+              <Button Classes="chip" IsEnabled="False" ToolTip.Tip="{l:T 'Coming soon'}" ToolTip.ShowOnDisabled="True">
                 <StackPanel Orientation="Horizontal" Spacing="6">
                   <PathIcon Data="{StaticResource IconActions}" />
                   <TextBlock Text="{l:T 'Actions'}" />

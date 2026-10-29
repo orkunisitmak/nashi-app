@@ -148,10 +148,13 @@ public sealed partial class MainWindow : Window
     {
         base.OnKeyDown(e);
         if (e.Handled || e.KeyModifiers != KeyModifiers.Control) return;
-        if (e.Key == Key.Space) { e.Handled = true; ShowToolsWheel(); return; }
-        if (e.Key != Key.V || Clipboard is null) return;
+        if (e.Key != Key.Space && (e.Key != Key.V || Clipboard is null)) return;
         e.Handled = true;
-        try { AddFiles(LocalPaths(await Clipboard.TryGetFilesAsync())); }
+        try
+        {
+            if (e.Key == Key.Space) { ShowToolsWheel(); return; }
+            AddFiles(LocalPaths(await Clipboard!.TryGetFilesAsync()));
+        }
         catch (Exception error) { Notify(L10n.F(Copy.Problem, L10n.T(error.Message))); }
     }
 
@@ -194,7 +197,6 @@ public sealed partial class MainWindow : Window
     private void RefreshToolsButton() => SetUpToolsButton.Content = AppPaths.MediaReady(tools) ? L10n.T(Copy.ToolsReady) : L10n.T(Copy.SetUpTools);
     private void OnConvert(object? sender, RoutedEventArgs e) => ShowFormatWheel();
     private void OnTools(object? sender, RoutedEventArgs e) => ShowToolsWheel();
-    private void OnActions(object? sender, RoutedEventArgs e) { }
 
     /// Tools, with Convert first when the selection has formats; Ctrl+Space opens it too.
     private void ShowToolsWheel()

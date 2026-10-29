@@ -88,6 +88,9 @@ void CapabilityChecks()
     Check(Capabilities.Formats(mp4).SequenceEqual(FeatureCatalog.Formats(mp4)), "Formats for an MP4 keep catalog order");
     Check(Capabilities.Formats(zip).SequenceEqual(["tar", "gz"]), "Formats for a ZIP are tar and gz");
     Check(Capabilities.Formats(mixed).Length == 0, "Formats for PNG plus MP4 is empty");
+    var mp3Formats = Capabilities.Formats(["x.mp3"]);
+    Check(mp3Formats.Contains("wav") && !mp3Formats.Contains("mp3") && !mp3Formats.Contains("mp4"), "Formats for an MP3 are audio formats without mp3 or video");
+    Check(Capabilities.Formats(["x.srt"]).SequenceEqual(["vtt", "txt"]) && Capabilities.Formats(["x.vtt"]).SequenceEqual(["srt", "txt"]), "Formats for srt and vtt are the other subtitle formats plus txt");
     Check(Capabilities.Tools(mixed).All(t => FeatureCatalog.Tools(mixed).Contains(t)), "Tools for PNG plus MP4 stay inside the catalog intersection");
     Check(Capabilities.Tools(pdf2).Contains("mergePDF"), "Tools for two PDFs include mergePDF");
     Check(Capabilities.Tools([]).Length == 0, "Tools for an empty selection is empty");
@@ -359,6 +362,8 @@ void WheelChecks(string root)
     Dispatcher.UIThread.RunJobs();
     Button Chip(string text) => home.GetVisualDescendants().OfType<Button>().First(b => b.GetVisualDescendants().OfType<TextBlock>().Any(t => t.Text == text));
     string Status() => home.GetVisualDescendants().OfType<TextBlock>().First(t => t.Name == "StatusLine").Text ?? "";
+    Check(!Chip("Actions").IsEnabled, "The Actions chip is disabled until it does something");
+    Check(!home.GetVisualDescendants().OfType<Button>().First(x => x.Name == "SettingsButton").IsEnabled, "The Settings button is disabled until it does something");
     Chip("Tools").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
     Check(Status() == "Choose files first." && home.OwnedWindows.Count == 0, "Tools with nothing selected shows a status message");
     var doc = Path.Combine(root, "notes.docx");
