@@ -8,6 +8,15 @@ The shared catalog contains 27 tools and 45 input formats. It includes photo edi
 
 Library and preferences live in `%LOCALAPPDATA%/Nashi`, outside the portable application folder. Library keeps the last 50 successful exports and clipboard imports. Text imports use UTF-8 and image imports use lossless PNG. No clipboard monitoring runs in the background. Signed public update staging verifies the manifest, archive hash, version and trusted signature before restart.
 
+## Packaging and update channels
+
+`dotnet publish windows/Nashi.Windows -c Release -o build/windows/Nashi` produces the payload shared by both release packages:
+
+- **Setup (`build/Nashi-Setup-<version>-x64.exe`):** build with `makensis /NOCD /DNASHI_VERSION=<version> windows/installer/windows-setup.nsi` from the repository root (`/NOCD` keeps the default payload and output paths rooted there). The installer is per-user (`%LOCALAPPDATA%\Programs\Nashi`, no administrator rights), adds Start Menu shortcuts, an optional desktop shortcut and an `HKCU` uninstall entry, and marks the install with `HKCU\Software\Nashi\InstallMode=setup`. Silent mode (`/S`) waits for a running Nashi to exit, installs over the registered folder and reopens the app unless `/nolaunch` is passed.
+- **Portable ZIP (`build/Nashi-Windows-x64.zip`):** the original package; keep its folder intact so portable updates can replace it safely.
+
+The app picks its update channel automatically. Portable copies keep the existing flow: the signed ZIP is verified with the Ed25519 manifest signature and swapped into place by a helper process, leaving `.backup-*` folders recoverable. Setup-installed copies never folder-swap; they download the signed `Nashi-Setup-x64.exe` referenced by the manifest and rerun it silently. The `windows-update.json` manifest therefore carries the optional fields `SetupUrl`, `SetupLength` and `SetupEdSignature` (same Ed25519 key, same validation rules as the ZIP fields) alongside `Version`, `Url`, `Length` and `EdSignature`. Releases publish both packages plus an unversioned `Nashi-Setup-x64.exe` alias of the current Setup, matching the macOS `Nashi-macOS-arm64.zip` alias convention. Setup-installed copies refuse the portable swap when the manifest carries no Setup package, so the uninstall entry can never be orphaned.
+
 While dragging in Explorer or another application, **Ctrl** opens tools, **Shift** conversion and **Alt** file actions. Settings can change the three chords. **Ctrl+Shift+D** opens a copied public media link. The app can remain in the system tray.
 
 **Ctrl+O** chooses files; **Ctrl+V** imports files/text/images/links outside text fields; **Ctrl+1/2** switches Home/Library; **Ctrl+F** searches; **Ctrl+U** checks updates. **Ctrl+Space** opens the selected files' wheel; choose **Convert** to select an output format. Arrows/Tab choose an item, Enter opens it and Escape closes it. In the Home file list, **Delete** removes the selected entries from Nashi without deleting the original files.

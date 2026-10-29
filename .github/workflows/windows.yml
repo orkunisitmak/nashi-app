@@ -118,12 +118,44 @@ jobs:
         run: |
           Compress-Archive -Path build/windows/Nashi/* -DestinationPath build/Nashi-Windows-x64.zip
           Get-FileHash build/Nashi-Windows-x64.zip -Algorithm SHA256
+      - name: Package per-user Setup installer
+        shell: pwsh
+        run: |
+          if (-not (Get-Command makensis.exe -ErrorAction SilentlyContinue)) { choco install nsis -y --no-progress }
+          $version = ([xml](Get-Content windows/Directory.Build.props)).Project.PropertyGroup.Version
+          & makensis.exe /NOCD /DNASHI_VERSION=$version windows/installer/windows-setup.nsi
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-FileHash "build/Nashi-Setup-$version-x64.exe" -Algorithm SHA256
+      - name: Verify Setup installs, runs and uninstalls silently
+        shell: pwsh
+        run: |
+          $version = ([xml](Get-Content windows/Directory.Build.props)).Project.PropertyGroup.Version
+          $setup = (Resolve-Path "build/Nashi-Setup-$version-x64.exe").Path
+          $install = Start-Process -FilePath $setup -ArgumentList '/S','/nolaunch' -PassThru -Wait
+          if ($install.ExitCode -ne 0) { throw "Silent installer exited with $($install.ExitCode)" }
+          $installed = Join-Path $env:LOCALAPPDATA 'Programs\Nashi\Nashi.exe'
+          if (!(Test-Path $installed)) { throw 'Silent install did not produce Nashi.exe' }
+          $entry = Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Nashi' -ErrorAction Stop
+          if ($entry.DisplayVersion -ne $version) { throw "Unexpected uninstall entry version $($entry.DisplayVersion)" }
+          if ((Get-ItemProperty 'HKCU:\Software\Nashi').InstallMode -ne 'setup') { throw 'Setup install mode marker missing' }
+          $env:NASHI_SMOKE_DIRECTORY = "$PWD\build\installer-smoke"
+          $fixture = Start-Process -FilePath $installed -ArgumentList '--verify-update-state' -PassThru -Wait
+          if ($fixture.ExitCode -ne 0) { throw "Installed app fixture exited with $($fixture.ExitCode)" }
+          $uninstall = Start-Process -FilePath (Join-Path (Split-Path $installed) 'uninst.exe') -ArgumentList '/S' -PassThru -Wait
+          # The NSIS uninstaller copies itself to temp and returns early; wait
+          # for the files and the registry entry to actually disappear.
+          $deadline = (Get-Date).AddSeconds(60)
+          while (((Test-Path $installed) -or (Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Nashi' -ErrorAction SilentlyContinue)) -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 500 }
+          if (Test-Path $installed) { throw 'Silent uninstall left Nashi.exe behind' }
+          if (Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Nashi' -ErrorAction SilentlyContinue) { throw 'Uninstall registry entry remains' }
+          Write-Host 'Per-user Setup install, native fixture and silent uninstall verified.'
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         if: always()
         with:
           name: windows-preview
           path: |
             build/Nashi-Windows-x64.zip
+            build/Nashi-Setup-*.exe
             build/windows-smoke
           retention-days: 7
           if-no-files-found: error

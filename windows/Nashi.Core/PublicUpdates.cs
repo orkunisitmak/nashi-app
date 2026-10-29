@@ -5,7 +5,7 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
 namespace Nashi.Core;
 
-public sealed record WindowsUpdate(string Version,string Url,long Length,string EdSignature);
+public sealed record WindowsUpdate(string Version,string Url,long Length,string EdSignature,string? SetupUrl=null,long SetupLength=0,string? SetupEdSignature=null);
 public static class PublicUpdates
 {
     public const string Repository="orkunisitmak/nashi-app";
@@ -26,14 +26,27 @@ public static class PublicUpdates
     {
         if(!Version.TryParse(update.Version,out _)||!Uri.TryCreate(update.Url,UriKind.Absolute,out var uri)||uri.Scheme!="https"||uri.Host!="github.com"||!uri.AbsolutePath.StartsWith("/"+Repository+"/releases/download/",StringComparison.Ordinal)||!string.IsNullOrEmpty(uri.UserInfo)||uri.Query.Length>0||update.Length<1||update.Length>1024L*1024*1024)throw new InvalidDataException("Invalid public update location or size.");
         try{if(Convert.FromBase64String(update.EdSignature).Length!=64)throw new InvalidDataException("Invalid update signature length.");}catch(FormatException e){throw new InvalidDataException("Invalid update signature.",e);}
+        // The optional per-user installer package is optional so older portable
+        // feeds keep validating; when one field is present all three must be.
+        if(update.SetupUrl is null)
+        {
+            if(update.SetupLength!=0||update.SetupEdSignature is not null)throw new InvalidDataException("Invalid public update setup location.");
+            return;
+        }
+        if(!Uri.TryCreate(update.SetupUrl,UriKind.Absolute,out var setup)||setup.Scheme!="https"||setup.Host!="github.com"||!setup.AbsolutePath.StartsWith("/"+Repository+"/releases/download/",StringComparison.Ordinal)||!string.IsNullOrEmpty(setup.UserInfo)||setup.Query.Length>0||update.SetupLength<1||update.SetupLength>1024L*1024*1024)throw new InvalidDataException("Invalid public update setup location or size.");
+        try{if(Convert.FromBase64String(update.SetupEdSignature??"").Length!=64)throw new InvalidDataException("Invalid update setup signature length.");}catch(FormatException e){throw new InvalidDataException("Invalid update setup signature.",e);}
     }
-    public static async Task VerifyAsync(string archive,WindowsUpdate update,CancellationToken token=default)
+    public static Task VerifyAsync(string archive,WindowsUpdate update,CancellationToken token=default)
     {
-        Validate(update);if(new FileInfo(archive).Length!=update.Length)throw new InvalidDataException("Update size mismatch.");
+        Validate(update);return VerifyFileAsync(archive,update.Length,update.EdSignature,token);
+    }
+    public static async Task VerifyFileAsync(string file,long expectedLength,string edSignature,CancellationToken token=default)
+    {
+        if(new FileInfo(file).Length!=expectedLength)throw new InvalidDataException("Update size mismatch.");
         var verifier=new Ed25519Signer();verifier.Init(false,new Ed25519PublicKeyParameters(Convert.FromBase64String(PublicKey),0));
-        await using var source=File.OpenRead(archive);var buffer=new byte[81920];int count;
+        await using var source=File.OpenRead(file);var buffer=new byte[81920];int count;
         while((count=await source.ReadAsync(buffer,token))>0)verifier.BlockUpdate(buffer,0,count);
-        if(!verifier.VerifySignature(Convert.FromBase64String(update.EdSignature)))throw new InvalidDataException("The update signature is invalid. Your existing app was kept.");
+        if(!verifier.VerifySignature(Convert.FromBase64String(edSignature)))throw new InvalidDataException("The update signature is invalid. Your existing app was kept.");
     }
     public static void ExtractVerified(string archive,string destination,CancellationToken token=default)
     {
