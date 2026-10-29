@@ -2,7 +2,7 @@
 
 Nashi for Linux is a milestone 1 preview built with .NET 10 and Avalonia. It shares the conversion engine with the Windows app. The AppImage is self-contained: no separate .NET install is required. It is unsigned, and the CI artifact is not an official signed update. Verify the download against its `.sha256` file.
 
-[Download Nashi-Linux-x86_64.AppImage](https://github.com/orkunisitmak/nashi-app/releases/latest/download/Nashi-Linux-x86_64.AppImage), then `chmod +x Nashi-Linux-x86_64.AppImage` and run it. `--version` prints the app version.
+The [AppImage link](https://github.com/orkunisitmak/nashi-app/releases/latest/download/Nashi-Linux-x86_64.AppImage) works once a maintainer publishes a release that includes it; until then, download the "Linux preview" CI artifact. Then `chmod +x Nashi-Linux-x86_64.AppImage` and run it. Running needs libfuse2, or use `--appimage-extract-and-run`. `--version` prints the app version.
 
 ## What works in milestone 1
 

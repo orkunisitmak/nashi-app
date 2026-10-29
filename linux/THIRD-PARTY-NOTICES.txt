@@ -1,0 +1,21 @@
+Nashi for Linux. Copyright 2026 Nashi contributors. MIT (see LICENSE).
+Independent app inspired by Tangerine; not affiliated with LEAP STUDIO.
+Exact package versions: linux/Nashi.Linux/packages.lock.json.
+
+Bundled in the AppImage:
+- .NET 10 runtime, Microsoft and contributors, MIT. https://github.com/dotnet/runtime/blob/main/LICENSE.TXT (third-party notices: licenses/dotnet-THIRD-PARTY-NOTICES.txt in the repository)
+- Avalonia 11.3.22 (Avalonia.Desktop, .Themes.Fluent, .Skia, .X11, .FreeDesktop and related packages), AvaloniaUI OÜ and contributors, MIT. https://github.com/AvaloniaUI/Avalonia/blob/master/licence.md
+- Avalonia.Fonts.Inter 11.3.22 / Inter font, The Inter Project Authors, SIL Open Font License 1.1. https://github.com/rsms/inter/blob/master/LICENSE.txt
+- SkiaSharp 2.88.9 and SkiaSharp.NativeAssets.Linux, Microsoft/Xamarin and contributors, MIT; native Skia, Google, BSD-3-Clause. https://github.com/mono/SkiaSharp/blob/main/LICENSE.md
+- HarfBuzzSharp 8.3.1.1 and HarfBuzzSharp.NativeAssets.Linux, MIT; native HarfBuzz, MIT. https://github.com/harfbuzz/harfbuzz/blob/main/COPYING
+- MicroCom.Runtime 0.11.0, AvaloniaUI, MIT. https://github.com/kekekeks/MicroCom
+- Tmds.DBus.Protocol 0.21.3, Tom Deseyn and contributors, MIT. https://github.com/tmds/Tmds.DBus
+- Magick.NET 15.0.0 (Q8-AnyCPU) and Magick.NET.Core, Apache-2.0, https://github.com/dlemstra/Magick.NET. Native dependency licenses: Magick.NET-THIRD-PARTY-NOTICES.txt (shipped next to this file).
+- PDFsharp 6.2.4, empira and contributors, MIT. https://github.com/empira/PDFsharp/blob/master/LICENSE
+- PdfPig 0.1.16, Eliot Jones and contributors, Apache-2.0. https://github.com/UglyToad/PdfPig
+- ZXing.Net 0.16.11, Michael Jahn and contributors, Apache-2.0. https://github.com/micjahn/ZXing.Net
+- SharpCompress 0.50.5, Adam Hathcock and contributors, MIT. https://github.com/adamhathcock/sharpcompress
+- BouncyCastle.Cryptography 2.7.0, The Legion of the Bouncy Castle Inc., MIT. https://github.com/bcgit/bc-csharp/blob/master/LICENSE.md
+- Microsoft.Extensions.DependencyInjection.Abstractions / Logging.Abstractions 8.x and System.Security.Cryptography.Pkcs 10.0.13, Microsoft, MIT.
+
+Media tools (FFmpeg and others) are downloaded separately from pinned upstream releases after the user chooses setup, or taken from the system; their licenses are shown by setup.

@@ -20,7 +20,7 @@ mkdir -p "$app/usr/lib/nashi" "$app/usr/share/doc/nashi"
 install -m 755 linux/packaging/AppRun "$app/AppRun"
 install -m 644 linux/packaging/nashi.desktop "$app/nashi.desktop"
 install -m 644 Resources/Brand/NashiIcon.png "$app/nashi.png"
-install -m 644 LICENSE windows/THIRD-PARTY-NOTICES.txt "$app/usr/share/doc/nashi/"
+install -m 644 LICENSE linux/THIRD-PARTY-NOTICES.txt windows/licenses/Magick.NET-THIRD-PARTY-NOTICES.txt "$app/usr/share/doc/nashi/"
 
 if ! { [ -f "$tool" ] && echo "$TOOL_SHA256  $tool" | sha256sum -c --status; }; then
   curl -fsSL -o "$tool" "$TOOL_URL"

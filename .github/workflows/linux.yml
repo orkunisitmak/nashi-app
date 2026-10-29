@@ -52,6 +52,16 @@ jobs:
       - name: Build AppImage
         shell: bash
         run: bash scripts/build-linux-appimage.sh
+      - name: Check AppImage version
+        shell: bash
+        run: |
+          expected=$(sed -n 's#.*<Version>\(.*\)</Version>.*#\1#p' windows/Directory.Build.props)
+          actual=$(APPIMAGE_EXTRACT_AND_RUN=1 ./build/linux/Nashi-Linux-x86_64.AppImage --version)
+          test "$actual" = "$expected" || { echo "got '$actual', want '$expected'" >&2; exit 1; }
+          (cd "$RUNNER_TEMP" && "$GITHUB_WORKSPACE/build/linux/Nashi-Linux-x86_64.AppImage" --appimage-extract >/dev/null)
+          for f in LICENSE THIRD-PARTY-NOTICES.txt Magick.NET-THIRD-PARTY-NOTICES.txt; do
+            test -s "$RUNNER_TEMP/squashfs-root/usr/share/doc/nashi/$f"
+          done
       - name: Upload Linux AppImage
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
