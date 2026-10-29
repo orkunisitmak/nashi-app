@@ -128,7 +128,12 @@ public sealed class MainWindow:Window
             catch(Exception error){status.Text=error.Message;}
             return;
         }
-        MediaOptions? media=null;
+        MediaOptions? media=null;ImageEdit? edit=null;
+        if(choice.Id=="cropImage")
+        {
+            CropDialog crop;try{crop=await CropDialog.CreateAsync(choice.Title,inputs[0]);}catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or ImageMagick.MagickException){status.Text=error.Message;return;}
+            await crop.ShowDialog(this);if(crop.Result is not {} selection)return;edit=selection;
+        }
         if(choice.Id=="changeVideoSpeed"){if(await Ask(choice.Title,[("0.5×",.5),("1.5×",1.5),("2×",2d)],1) is not {} speed)return;media=new(){Speed=speed};}
         else if(choice.Id=="audioChannels"){if(await Ask(choice.Title,[("Mono",1),("Stereo",2)],0) is not {} channels)return;media=new(){Channels=channels};}
         else if(choice.Id=="splitVideo"){if(await Ask(choice.Title,[("2 equal parts",2),("3 equal parts",3),("4 equal parts",4)],0) is not {} parts)return;media=new(){EqualClips=parts};}
@@ -148,7 +153,7 @@ public sealed class MainWindow:Window
         var report=new Progress<OperationProgress>(p=>{if(p.Fraction is {} f){progress.IsIndeterminate=false;progress.Value=f;}status.Text=p.Label;});
         try
         {
-            var outputs=await Operations.RunAsync(choice,inputs,destination,report,running.Token,media);
+            var outputs=await Operations.RunAsync(choice,inputs,destination,report,running.Token,media,edit);
             library.Record(choice.Id=="convert"?"Convert to "+choice.Format!.ToUpperInvariant():choice.Title,outputs);
             lastFolder=destination;reveal.IsVisible=true;
             status.Text=outputs.Count==1?$"Saved {Path.GetFileName(outputs[0])}":$"Saved {outputs.Count} files";

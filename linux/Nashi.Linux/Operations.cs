@@ -12,7 +12,7 @@ public sealed record Choice(string Id,string Title,string? Format=null);
 public static class Operations
 {
     private static readonly string[] ImageOutputs=["jpg","png","webp","tiff","avif","bmp","heic","pdf"];
-    private static readonly string[] ImplementedTools=["compress","removeMetadata","createPDF","mergePDF","splitPDF","muteVideo","normalizeAudio","changeVideoSpeed","joinVideos","audioChannels","videoSnapshots","splitVideo","audioToVideo","trimVideo","trimAudio","extractArchive","readQRCode"];
+    private static readonly string[] ImplementedTools=["compress","removeMetadata","cropImage","createPDF","mergePDF","splitPDF","muteVideo","normalizeAudio","changeVideoSpeed","joinVideos","audioChannels","videoSnapshots","splitVideo","audioToVideo","trimVideo","trimAudio","extractArchive","readQRCode"];
 
     public static string? Executable(string name)
     {
@@ -46,7 +46,7 @@ public static class Operations
             .Select(id=>new Choice(id,FeatureCatalog.ToolNames[id])).ToArray();
     }
 
-    public static async Task<IReadOnlyList<string>> RunAsync(Choice choice,IReadOnlyList<string> inputs,string destination,IProgress<OperationProgress> progress,CancellationToken token,MediaOptions? media=null)
+    public static async Task<IReadOnlyList<string>> RunAsync(Choice choice,IReadOnlyList<string> inputs,string destination,IProgress<OperationProgress> progress,CancellationToken token,MediaOptions? media=null,ImageEdit? edit=null)
     {
         if(choice.Id=="convert")
         {
@@ -58,6 +58,7 @@ public static class Operations
         }
         return choice.Id switch
         {
+            "cropImage"=>await Task.Run(()=>Images(inputs,destination,null,92,true,progress,token,image=>Crop(image,edit??throw new ArgumentException("Drag a crop inside the image."))),token),
             "compress" when inputs.All(FeatureCatalog.IsImage)=>await Task.Run(()=>Images(inputs,destination,null,70,false,progress,token),token),
             "removeMetadata"=>await Task.Run(()=>Images(inputs,destination,null,92,false,progress,token),token),
             "createPDF"=>await Task.Run(()=>ImagesToPdf(inputs,destination,progress,token),token),
@@ -71,14 +72,14 @@ public static class Operations
     private static MediaEngine RequireMedia()=>Media??throw new FileNotFoundException("Install FFmpeg with your package manager to use media tools.");
 
     /// Re-encodes images. A null format keeps each source format; metadata is kept only for conversions.
-    public static IReadOnlyList<string> Images(IReadOnlyList<string> inputs,string destination,string? format,int quality,bool keepMetadata,IProgress<OperationProgress>? progress,CancellationToken token)
+    public static IReadOnlyList<string> Images(IReadOnlyList<string> inputs,string destination,string? format,int quality,bool keepMetadata,IProgress<OperationProgress>? progress,CancellationToken token,Action<MagickImage>? transform=null)
     {
         using var tx=new ExportTransaction(destination);var outputs=new List<string>();
         foreach(var input in inputs)
         {
             token.ThrowIfCancellationRequested();
             var ext=format??FeatureCatalog.Extension(input);if(ext=="svg")ext="png";
-            using var image=PhotoCodec.Read(input);
+            using var image=PhotoCodec.Read(input);transform?.Invoke(image);
             if(!keepMetadata){var profile=image.GetColorProfile();image.Strip();if(profile is not null)image.SetProfile(profile);}
             image.Quality=(uint)quality;
             if(ext is "jpg" or "bmp"&&image.HasAlpha){image.BackgroundColor=MagickColors.White;image.Alpha(AlphaAction.Remove);}
@@ -89,6 +90,15 @@ public static class Operations
             progress?.Report(new(outputs.Count/(double)inputs.Count*.98,"Saving images…"));
         }
         return tx.Publish(outputs,token);
+    }
+
+    /// The relative selection is applied to each image's own size, at least one pixel.
+    public static void Crop(MagickImage image,ImageEdit edit)
+    {
+        if(new[]{edit.X,edit.Y,edit.Width,edit.Height}.Any(v=>!double.IsFinite(v))||edit.X<0||edit.Y<0||edit.Width<=0||edit.Height<=0||edit.X+edit.Width>1.0001||edit.Y+edit.Height>1.0001)throw new ArgumentException("Drag a crop inside the image.");
+        var x=(int)Math.Round(edit.X*image.Width);var y=(int)Math.Round(edit.Y*image.Height);
+        var w=(uint)Math.Clamp(Math.Round(edit.Width*image.Width),1,image.Width-x);var h=(uint)Math.Clamp(Math.Round(edit.Height*image.Height),1,image.Height-y);
+        image.Crop(new MagickGeometry(x,y,w,h));image.ResetPage();
     }
 
     public static IReadOnlyList<string> ImagesToPdf(IReadOnlyList<string> inputs,string destination,IProgress<OperationProgress>? progress,CancellationToken token)

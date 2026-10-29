@@ -21,7 +21,7 @@ internal static class OperationChecks
             var originalHash=Hash(png);
 
             Check(Operations.Formats([png]).SequenceEqual(new[]{"jpg","webp","heic","tiff","avif","bmp","pdf"}),"PNG conversion formats");
-            Check(Operations.Tools([png]).Select(t=>t.Id).SequenceEqual(new[]{"compress","removeMetadata","readQRCode"}),"PNG tools");
+            Check(Operations.Tools([png]).Select(t=>t.Id).SequenceEqual(new[]{"compress","removeMetadata","cropImage","readQRCode"}),"PNG tools");
             foreach(var format in Operations.Formats([png]))
             {
                 var output=Operations.RunAsync(new("convert",format,format),[png],Path.Combine(root,"convert-"+format),progress,token).GetAwaiter().GetResult().Single();
@@ -32,6 +32,12 @@ internal static class OperationChecks
             var again=Operations.RunAsync(new("convert","jpg","jpg"),[jpg],Path.Combine(root,"convert-jpg"),progress,token).GetAwaiter().GetResult().Single();
             Check(again!=jpg&&File.Exists(jpg)&&Path.GetFileName(again)=="Pear 2.jpg","Existing output is never overwritten");
 
+            Check(Operations.Tools([png]).Any(t=>t.Id=="cropImage")&&Operations.Tools([png,jpg]).Any(t=>t.Id=="cropImage"),"Crop offered");
+            var cropped=Operations.RunAsync(new("cropImage","Crop Image"),[png],Path.Combine(root,"crop"),progress,token,null,new(.25,.5,.5,.5)).GetAwaiter().GetResult().Single();
+            using(var result=new MagickImage(cropped))Check(result.Width==160&&result.Height==100&&result.Page.X==0,"Crop size and page");
+            var shared=Operations.RunAsync(new("cropImage","Crop Image"),[png,jpg],Path.Combine(root,"crop-many"),progress,token,null,new(0,0,1,.5)).GetAwaiter().GetResult();
+            Check(shared.Count==2,"Crop several images");
+            try{Operations.Crop(new MagickImage(MagickColors.White,10,10),new(.8,0,.5,1));Check(false,"Crop outside the image is rejected");}catch(ArgumentException){Check(true,"Crop outside the image is rejected");}
             var pdf=Operations.RunAsync(new("createPDF","Create PDF"),[png,jpg],Path.Combine(root,"pdf"),progress,token).GetAwaiter().GetResult().Single();
             using(var document=PdfDocument.Open(pdf))Check(document.NumberOfPages==2,"Images to PDF pages");
             var merged=Operations.RunAsync(new("mergePDF","Merge PDFs"),[pdf,pdf],Path.Combine(root,"merge"),progress,token).GetAwaiter().GetResult().Single();
