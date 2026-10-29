@@ -13,13 +13,18 @@ internal sealed class MediaPlayer(string path):NativeControlHost
         foreach(var library in new[]{"libmpv.so.2","libmpv.so.1"})if(NativeLibrary.TryLoad(library,assembly,path,out var loaded))return loaded;
         return IntPtr.Zero;
     });
+    private static readonly string[] ObservedProperties=["time-pos","duration","pause","path","vo-configured"];
     private IntPtr player;
     private readonly Dictionary<string,string> properties=[];
+    private readonly Queue<string> diagnostics=[];
+    internal string Diagnostics=>string.Join(" | ",diagnostics);
+    private void Trace(string message){diagnostics.Enqueue(message.Trim());while(diagnostics.Count>32)diagnostics.Dequeue();}
     public bool Available=>player!=IntPtr.Zero;
     public string? Error{get;private set;}
     public double Position=>Number("time-pos");
     public double Duration=>Number("duration");
     internal string? LoadedPath=>Get("path");
+    internal bool VideoOutputConfigured=>Get("vo-configured")=="yes";
     public bool Paused=>Get("pause")!="no";
     protected override IPlatformHandle CreateNativeControlCore(IPlatformHandle parent)
     {
@@ -27,11 +32,12 @@ internal sealed class MediaPlayer(string path):NativeControlHost
         try
         {
             player=mpv_create();if(player==IntPtr.Zero)throw new InvalidOperationException("Media preview could not start.");
-            Option("wid",handle.Handle.ToInt64().ToString(CultureInfo.InvariantCulture));Option("config","no");Option("terminal","no");Option("input-default-bindings","no");Option("input-vo-keyboard","no");Option("idle","yes");Option("pause","yes");Option("keep-open","yes");
+            Option("wid",handle.Handle.ToInt64().ToString(CultureInfo.InvariantCulture));Option("config","no");Option("terminal","no");Option("input-default-bindings","no");Option("input-vo-keyboard","no");Option("idle","yes");Option("pause","yes");Option("keep-open","yes");Option("force-window","yes");
             // Hosted UI checks have no audio device; retain decoding/timing with mpv's null sink.
             if(Environment.GetCommandLineArgs().Contains("--smoke-test"))Option("ao","null");
             if(mpv_initialize(player)<0)throw new InvalidOperationException("Media preview could not initialize.");
-            foreach(var property in new[]{"time-pos","duration","pause","path"})if(mpv_observe_property(player,0,property,1)<0)throw new InvalidOperationException("Media property observation failed: "+property);
+            mpv_request_log_messages(player,"info");
+            foreach(var property in ObservedProperties)if(mpv_observe_property(player,0,property,1)<0)throw new InvalidOperationException("Media property observation failed: "+property);
             Command("loadfile",System.IO.Path.GetFullPath(path));
         }
         catch(Exception error)when(error is DllNotFoundException or EntryPointNotFoundException or InvalidOperationException)
@@ -58,10 +64,12 @@ internal sealed class MediaPlayer(string path):NativeControlHost
         // a video output while another file replaces an audio-only preview.
         for(var i=0;i<256;i++){
             var pointer=mpv_wait_event(player,0);if(pointer==IntPtr.Zero)return;var item=Marshal.PtrToStructure<MpvEvent>(pointer);if(item.Id==0)return;
-            if(item.Id==8){
+            if(item.Id==2&&item.Data!=IntPtr.Zero){Trace(Marshal.PtrToStringUTF8(Marshal.ReadIntPtr(item.Data,2*IntPtr.Size))??"");}
+            else if(item.Id==7&&item.Data!=IntPtr.Zero){var reason=Marshal.ReadInt32(item.Data);var failure=Marshal.ReadInt32(item.Data,4);Trace($"end-file reason={reason} error={failure}");if(failure<0)Error="Media file could not be played: "+Marshal.PtrToStringUTF8(mpv_error_string(failure));}
+            else if(item.Id==8){Trace("file-loaded");
                 // Observations suppress unchanged values. A replacement can finish before
                 // the unavailable/intermediate duration is emitted, so refresh after load.
-                foreach(var name in new[]{"time-pos","duration","pause","path"})if(mpv_get_property_async(player,0,name,1)<0)Error="Media properties could not be refreshed.";
+                foreach(var name in ObservedProperties)if(mpv_get_property_async(player,0,name,1)<0)Error="Media properties could not be refreshed.";
             }else if(item.Id is 22 or 3&&item.Data!=IntPtr.Zero){
                 var property=Marshal.PtrToStructure<MpvProperty>(item.Data);var name=Marshal.PtrToStringUTF8(property.Name);if(name is null)continue;
                 if(property.Format==1&&property.Data!=IntPtr.Zero){var value=Marshal.ReadIntPtr(property.Data);if(value!=IntPtr.Zero)properties[name]=Marshal.PtrToStringUTF8(value)??"";}
@@ -84,6 +92,7 @@ internal sealed class MediaPlayer(string path):NativeControlHost
     [DllImport("nashi-mpv",CallingConvention=CallingConvention.Cdecl)]private static extern int mpv_get_property_async(IntPtr handle,ulong userdata,[MarshalAs(UnmanagedType.LPUTF8Str)]string name,int format);
     [DllImport("nashi-mpv",CallingConvention=CallingConvention.Cdecl)]private static extern IntPtr mpv_wait_event(IntPtr handle,double timeout);
     [DllImport("nashi-mpv",CallingConvention=CallingConvention.Cdecl)]private static extern int mpv_command_async(IntPtr handle,ulong userdata,IntPtr args);
+    [DllImport("nashi-mpv",CallingConvention=CallingConvention.Cdecl)]private static extern int mpv_request_log_messages(IntPtr handle,[MarshalAs(UnmanagedType.LPUTF8Str)]string level);
     [DllImport("nashi-mpv",CallingConvention=CallingConvention.Cdecl)]private static extern IntPtr mpv_error_string(int error);
     [DllImport("nashi-mpv",CallingConvention=CallingConvention.Cdecl)]private static extern void mpv_terminate_destroy(IntPtr handle);
 }
