@@ -49,6 +49,8 @@ NASHI_VERIFY_FFMPEG=/usr/bin/ffmpeg NASHI_VERIFY_FFPROBE=/usr/bin/ffprobe \
   dotnet run --project windows/Nashi.Verify -c Release
 scripts/build-linux.sh linux-x64  # or linux-arm64
 NASHI_APPIMAGE=1 scripts/package-linux.sh linux-x64
+# Optional: keep review candidates apart from an existing tested alpha.
+NASHI_APPIMAGE=1 NASHI_DIST_DIR="$PWD/build/linux/candidates" scripts/package-linux.sh linux-x64
 NASHI_SMOKE_DIRECTORY="$PWD/build/linux-smoke" build/linux/linux-x64/Nashi/Nashi --smoke-test
 ```
 

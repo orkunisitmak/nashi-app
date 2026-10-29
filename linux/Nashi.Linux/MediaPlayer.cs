@@ -9,6 +9,7 @@ namespace Nashi.Linux;
 internal sealed class MediaPlayer:NativeControlHost
 {
     private readonly string path;
+    private readonly bool smoke=Environment.GetCommandLineArgs().Contains("--smoke-test");
     private readonly DispatcherTimer commandClock=new(){Interval=TimeSpan.FromMilliseconds(16)};
     public MediaPlayer(string path){this.path=path;commandClock.Tick+=(_,_)=>{if(Available)PollEvents();if(inFlight==0&&commands.Count==0)commandClock.Stop();};}
     static MediaPlayer()=>NativeLibrary.SetDllImportResolver(typeof(MediaPlayer).Assembly,(name,assembly,path)=>
@@ -26,7 +27,7 @@ internal sealed class MediaPlayer:NativeControlHost
     private readonly Dictionary<string,string> properties=[];
     private readonly Queue<string> diagnostics=[];
     internal string Diagnostics=>string.Join(" | ",diagnostics);
-    private void Trace(string message){diagnostics.Enqueue(message.Trim());while(diagnostics.Count>32)diagnostics.Dequeue();}
+    private void Trace(string message){diagnostics.Enqueue(message.Trim());while(diagnostics.Count>32)diagnostics.Dequeue();if(smoke&&(message.StartsWith("command ",StringComparison.Ordinal)||message.StartsWith("shutdown",StringComparison.Ordinal)||message.StartsWith("native terminate",StringComparison.Ordinal)||message.StartsWith("VO:",StringComparison.Ordinal)))Console.WriteLine("MPV lifecycle: "+message.Trim());}
     public bool Available=>player!=IntPtr.Zero;
     public string? Error{get;private set;}
     public double Position=>Number("time-pos");
@@ -40,7 +41,7 @@ internal sealed class MediaPlayer:NativeControlHost
         try
         {
             player=mpv_create();if(player==IntPtr.Zero)throw new InvalidOperationException("Media preview could not start.");
-            Option("wid",handle.Handle.ToInt64().ToString(CultureInfo.InvariantCulture));Option("config","no");Option("terminal","no");Option("input-default-bindings","no");Option("input-vo-keyboard","no");Option("idle","yes");Option("pause","yes");Option("keep-open","yes");Option("force-window","yes");
+            Option("wid",handle.Handle.ToInt64().ToString(CultureInfo.InvariantCulture));Option("config","no");Option("vo","gpu,x11");Option("terminal","no");Option("input-default-bindings","no");Option("input-vo-keyboard","no");Option("idle","yes");Option("pause","yes");Option("keep-open","yes");Option("force-window","yes");
             // Hosted UI checks have no audio device; retain decoding/timing with mpv's null sink.
             if(Environment.GetCommandLineArgs().Contains("--smoke-test"))Option("ao","null");
             if(mpv_initialize(player)<0)throw new InvalidOperationException("Media preview could not initialize.");
@@ -57,11 +58,11 @@ internal sealed class MediaPlayer:NativeControlHost
     internal Task ShutdownAsync()=>shutdown??=StopAndDestroy();
     private async Task StopAndDestroy()
     {
-        if(!Available)return;closing=true;commands.Clear();commands.Enqueue(["stop"]);StartNextCommand();
+        if(!Available)return;Trace("shutdown requested");closing=true;commands.Clear();commands.Enqueue(["stop"]);StartNextCommand();
         var limit=DateTime.UtcNow.AddSeconds(5);
         while(Available&&(inFlight!=0||commands.Count>0)&&DateTime.UtcNow<limit){PollEvents();await Task.Delay(10);}
         if(inFlight!=0)Trace("Stop acknowledgement timed out during shutdown");
-        commandClock.Stop();var handle=player;player=IntPtr.Zero;if(handle!=IntPtr.Zero)await Task.Run(()=>mpv_terminate_destroy(handle));
+        commandClock.Stop();var handle=player;player=IntPtr.Zero;if(handle!=IntPtr.Zero){Trace("native terminate begins");await Task.Run(()=>mpv_terminate_destroy(handle));Trace("native terminate completed");}
     }
     private void DisposePlayer(){commandClock.Stop();if(player!=IntPtr.Zero){mpv_terminate_destroy(player);player=IntPtr.Zero;}}
     private void Option(string key,string value){if(mpv_set_option_string(player,key,value)<0)throw new InvalidOperationException("Unsupported media preview option: "+key);}
@@ -93,7 +94,7 @@ internal sealed class MediaPlayer:NativeControlHost
                 if(property.Format==1&&property.Data!=IntPtr.Zero){var value=Marshal.ReadIntPtr(property.Data);if(value!=IntPtr.Zero)properties[name]=Marshal.PtrToStringUTF8(value)??"";}
                 else properties.Remove(name);
             }else if(item.Id==5){
-                if(item.UserData==inFlight)inFlight=0;
+                Trace($"command reply {item.UserData} error={item.Error}");if(item.UserData==inFlight)inFlight=0;
                 if(item.Error<0)Error="Media command failed: "+(Marshal.PtrToStringUTF8(mpv_error_string(item.Error))??item.Error.ToString(CultureInfo.InvariantCulture));
             }
         }
@@ -107,7 +108,7 @@ internal sealed class MediaPlayer:NativeControlHost
     }
     private void StartNextCommand()
     {
-        if(!Available||inFlight!=0||commands.Count==0)return;var args=commands.Dequeue();inFlight=++commandId;
+        if(!Available||inFlight!=0||commands.Count==0)return;var args=commands.Dequeue();inFlight=++commandId;Trace($"command {inFlight}: {args[0]}");
         var strings=args.Select(Marshal.StringToCoTaskMemUTF8).ToArray();var pointers=Marshal.AllocHGlobal((strings.Length+1)*IntPtr.Size);
         try{for(var i=0;i<strings.Length;i++)Marshal.WriteIntPtr(pointers,i*IntPtr.Size,strings[i]);Marshal.WriteIntPtr(pointers,strings.Length*IntPtr.Size,IntPtr.Zero);if(mpv_command_async(player,inFlight,pointers)<0){inFlight=0;Error="Media preview command could not be queued.";}}
         finally{Marshal.FreeHGlobal(pointers);foreach(var value in strings)Marshal.FreeCoTaskMem(value);}

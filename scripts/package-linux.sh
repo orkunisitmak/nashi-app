@@ -7,7 +7,7 @@ NASHI_RID=${1:-linux-x64}
 case "$NASHI_RID" in linux-x64) NASHI_ARCH=x86_64; NASHI_DEB_ARCH=amd64;; linux-arm64) NASHI_ARCH=aarch64; NASHI_DEB_ARCH=arm64;; *) exit 2;; esac
 NASHI_APP="$NASHI_ROOT/build/linux/$NASHI_RID/Nashi"
 [ -x "$NASHI_APP/Nashi" ] || { echo 'Run scripts/build-linux.sh first.' >&2; exit 1; }
-NASHI_DIST="$NASHI_ROOT/build/linux/dist"
+NASHI_DIST="${NASHI_DIST_DIR:-$NASHI_ROOT/build/linux/dist}"
 mkdir -p "$NASHI_DIST"
 tar -czf "$NASHI_DIST/Nashi-Linux-$NASHI_ARCH.tar.gz" -C "$(dirname "$NASHI_APP")" Nashi
 NASHI_STAGE=$(mktemp -d "$NASHI_ROOT/build/linux/package.XXXXXXXX")
