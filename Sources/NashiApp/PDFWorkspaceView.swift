@@ -17,6 +17,7 @@ struct PDFWorkspaceView:View {
     @State private var bottom=0.0
     @State private var customWidth=595.276
 
+    /// Presents multi-selection page cards, batch tools, crop margins and undoable width settings.
     var body:some View {
         VStack(alignment:.leading,spacing:14) {
             HStack {
@@ -106,9 +107,11 @@ struct PDFWorkspaceView:View {
             if editor.widthMode != .original { LText("Widths scale proportionally. Documents with forms, links or attachments may not support this operation.").font(.caption).foregroundStyle(.secondary) }
         }.onChange(of:editor.customWidth) { customWidth=$0 }
     }
+    /// Builds a translated margin label and numeric field for one unrotated PDF-point inset.
     private func margin(_ title:String,value:Binding<Double>)->some View {
         VStack(alignment:.leading,spacing:4) { LText(title).font(.caption);TextField(title,value:value,format:.number).frame(minWidth:60) }
     }
+    /// Validates every chosen PDF and the combined page count before importing any selected file.
     private func addPDF() {
         let panel=NSOpenPanel();panel.allowedContentTypes=[.pdf];panel.allowsMultipleSelection=true
         guard panel.runModal() == .OK else{return}
@@ -127,6 +130,7 @@ private struct PDFPageCard:View {
     let selected:Bool
     @State private var thumbnail:NSImage?
     private var revision:String { "\(item.id):\(item.page.rotation):\(NSStringFromRect(item.page.bounds(for:.cropBox)))" }
+    /// Renders a selectable card and refreshes its cached thumbnail when identity, rotation or crop changes.
     var body:some View {
         VStack(spacing:6) {
             if let thumbnail { Image(nsImage:thumbnail).resizable().scaledToFit().frame(height:140) }
@@ -143,8 +147,11 @@ private struct PDFPageDropDelegate:DropDelegate {
     @Binding var editor:PDFPageEditorState
     @Binding var draggedID:UUID?
     let insertion:Int
+    /// Accepts only an in-process page drag whose page still belongs to the active selection.
     func validateDrop(info:DropInfo)->Bool { draggedID.map{editor.selectedIDs.contains($0)} ?? false }
+    /// Advertises a move operation so the drag preserves page-instance identity.
     func dropUpdated(info:DropInfo)->DropProposal? { DropProposal(operation:.move) }
+    /// Moves the selected block to the requested insertion point and clears the active drag token.
     func performDrop(info:DropInfo)->Bool {
         guard validateDrop(info:info) else{return false}
         editor.moveSelected(to:insertion);draggedID=nil;return true

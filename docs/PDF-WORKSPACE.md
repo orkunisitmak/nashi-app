@@ -15,6 +15,8 @@ Open **Organize PDF** for a PDF file. Original files remain unchanged; **Save or
 
 Edits show an unsaved indicator. Closing an unsaved workspace asks whether to keep editing or discard changes. A successful full save marks the current workspace as saved; extraction does not. Undo/redo retains up to 100 edits for the current session. Reset starts a new session from the original input.
 
+Owner-encrypted simple PDFs that open without a user password remain editable in the workspace. Core callers may supply a password through `OperationOptions.password`; the workspace UI does not yet prompt for one. Simple encrypted sources are copied with PDFKit into a private, temporary unencrypted document before the preserving writer applies the complete page plan. The temporary directory is removed on every exit path. Rich encrypted PDFs remain refused to protect document features.
+
 The existing preserving PDF writer remains responsible for forms, attachments, page references and unsupported structures. Rich PDFs are refused for width scaling, and unsupported page operations fail without publishing a partial copy. Digital signatures and document structures that cannot be safely preserved are not flattened silently. Existing page-editing file/page limits still apply.
 
 ## Verification

@@ -216,6 +216,9 @@ async function selectDocument(bytes,selection) {
  for(const index of selection) {if(!emitted.has(index)){emitted.add(index);final.push(byIndex.get(index));}else final.push(copies.shift());}
  setPageOrder(doc,final);validate(doc);gc(doc);validateNoRemovedPages(doc);return doc;
 }
+/** Applies a validated workspace plan, retaining registered fields and attachments.
+ * Reorders output instances before crop/rotation/width transforms, then validates the saved graph again.
+ */
 async function transform(request) {
  if(!request||!Array.isArray(request.sources)||!request.sources.length||!Array.isArray(request.selections)||request.sources.length!==request.selections.length)throw new Error("Choose PDF sources and a page selection for each source.");
  if(request.sources.length>1000)throw new Error("Choose no more than 1,000 PDF files at once.");

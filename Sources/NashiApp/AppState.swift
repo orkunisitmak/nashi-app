@@ -74,6 +74,7 @@ struct JobRecord:Codable,Identifiable {
         }
         execute(operation,options:settings)
     }
+    /// Runs an authorized conversion transaction, records published outputs, then reports success on the main actor.
     func execute(_ operation:NashiCore.Operation,options:NashiCore.OperationOptions = .init(),inputs:[URL]?=nil,completion:(([URL])->Void)?=nil) {
         guard !working else { return }
         let selected=inputs ?? self.inputs

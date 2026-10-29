@@ -9,6 +9,7 @@ import NashiCore
     private var checks:[String]=[]
     private var window:ToolPanel?
     init(output:URL) { self.output=output }
+    /// Runs disposable own-window checks and writes a machine-readable report before terminating the QA process.
     func applicationDidFinishLaunching(_ notification:Notification) {
         Task {
             var failure:String?
@@ -18,9 +19,11 @@ import NashiCore
             window?.shouldClose=nil;window?.close();exit(failure == nil ? 0:1)
         }
     }
+    /// Records a named invariant or fails the smoke run with the corresponding diagnostic.
     private func check(_ value:Bool,_ label:String)throws {
         guard value else{throw NSError(domain:"PDF workspace smoke",code:1,userInfo:[NSLocalizedDescriptionKey:label])};checks.append(label)
     }
+    /// Exercises production shortcut routing, text-field protection, batch history and native panel close interception.
     private func run()async throws {
         try FileManager.default.createDirectory(at:output,withIntermediateDirectories:true)
         let source=output.appendingPathComponent("Source.pdf"),document=PDFDocument()
@@ -28,9 +31,11 @@ import NashiCore
         guard document.write(to:source) else{throw NashiError.failed("Could not create smoke PDF")}
         let original=try Data(contentsOf:source),fixture=Fixture()
         fixture.editor.reset(document:try PDFEngine.open(source),sourceURL:source)
+        /// Builds a local synthetic key event without posting global keyboard input.
         func event(_ key:UInt16,_ text:String="",flags:NSEvent.ModifierFlags=[])->NSEvent {
             NSEvent.keyEvent(with:.keyDown,location:.zero,modifierFlags:flags,timestamp:0,windowNumber:0,context:nil,characters:text,charactersIgnoringModifiers:text,isARepeat:false,keyCode:key)!
         }
+        /// Replays one event through the same decoder and PDF command router used by the production editor.
         func route(_ event:NSEvent,responder:NSResponder?=nil)->Bool {
             guard let command=EditorKeyboardCommand.decode(event) else{return false}
             return command.route(event,responder:responder){PDFEditorKeyboardRouter.perform($0,editor:&fixture.editor)} == nil

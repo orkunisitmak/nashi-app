@@ -90,6 +90,7 @@ struct ToolEditor:View {
     var video:Bool { category == .video && ![.removeMetadata,.compress,.joinVideos].contains(tool) }
     var audio:Bool { category == .audio && tool != .removeMetadata && tool != .compress }
     var sideBySide:Bool { visual || video || audio }
+    /// Hosts tool controls, previews and job feedback while preserving editor state across locale changes.
     var body:some View {
         VStack(spacing:0) {
             HStack(spacing:14) {
@@ -457,6 +458,7 @@ struct ToolEditor:View {
             Button { inputs.swapAt(index,index+1) } label:{Image(systemName:"chevron.down")}.disabled(index==inputs.count-1)
         } } }
     }
+    /// Binds the PDF workspace to the shared export job and prevents edits while a save is running.
     var pdfControls:some View {
         PDFWorkspaceView(editor:$pdfEditor,onExtract:{saveOrganizedPDF(selectedOnly:true)},onError:{previewError=$0})
             .disabled(state.working)
@@ -555,6 +557,7 @@ struct ToolEditor:View {
     func channelWaveform(_ title:String,peaks:[Float],gain:Double)->some View {
         HStack { LText(title).font(.caption.bold()).frame(width:15);AudioWaveformView(peaks:peaks.map{min(1,$0*Float(gain))},duration:duration,current:playhead,selection:nil,redactions:[],rangeEnabled:false,onSeek:seek,onRange:{_,_ in}).frame(height:50) }
     }
+    /// Prepares the current input for its tool and ignores cancelled or superseded preview generations.
     func load() async {
         guard let input else { return }
         let generation=editorGeneration,token=previewToken
@@ -659,6 +662,7 @@ struct ToolEditor:View {
         }
         state.execute(.tool(tool),options:applied,inputs:inputs)
     }
+    /// Exports the current plan or selection; only a successful full export marks the workspace clean.
     func saveOrganizedPDF(selectedOnly:Bool=false) {
         guard canApply,!pdfEditor.pages.isEmpty else { return }
         var settings=options
@@ -722,6 +726,7 @@ struct ToolEditor:View {
         guard canAddSplitPoint else { return }
         options.equalClips=nil;options.splitPoints.append(playhead);options.splitPoints.sort()
     }
+    /// Routes PDF commands before media commands, while respecting readiness, active jobs and crop confirmation.
     func handleShortcut(_ command:EditorKeyboardCommand)->Bool {
         guard !isLoading,readyToApply,!state.working else { return false }
         if command == .save { guard canApply else { return false };apply();return true }

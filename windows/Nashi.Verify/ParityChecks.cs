@@ -4,6 +4,7 @@ using System.Text;
 using ImageMagick;
 internal static class ParityChecks
 {
+    /// <summary>Checks shared-catalog and document behavior with synthetic fixtures, including uniform-width parity.</summary>
     public static void Run(Action<bool,string> check,string root)
     {
         check(FeatureCatalog.Conversions.Count==46&&FeatureCatalog.ToolNames.Count==27,"Mac/Windows catalog count diverged");

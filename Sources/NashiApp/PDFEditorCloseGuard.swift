@@ -9,6 +9,7 @@ struct PDFEditorCloseGuard:NSViewRepresentable {
         var enabled=false
         var hasChanges=false
         weak var panel:ToolPanel?
+        /// Installs a panel-local discard prompt; keeping edits cancels both the custom close button and Command-W.
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
             panel?.shouldClose=nil
@@ -22,7 +23,10 @@ struct PDFEditorCloseGuard:NSViewRepresentable {
             }
         }
     }
+    /// Creates the close guard with the current enabled and unsaved-content state.
     func makeNSView(context:Context)->GuardView { let view=GuardView();view.enabled=enabled;view.hasChanges=hasChanges;return view }
+    /// Updates the existing guard without recreating the editor or losing its draft.
     func updateNSView(_ view:GuardView,context:Context) { view.enabled=enabled;view.hasChanges=hasChanges }
+    /// Removes the panel callback when SwiftUI releases the guard view.
     static func dismantleNSView(_ view:GuardView,coordinator:()) { view.panel?.shouldClose=nil }
 }

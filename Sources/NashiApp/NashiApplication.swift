@@ -10,6 +10,7 @@ import ApplicationServices
 
 @main
 enum NashiApplication {
+    /// Dispatches explicit own-window QA/CLI modes before starting the normal desktop application.
     @MainActor static func main() {
         if CommandLine.arguments.count>1,["convert","tool","inspect","catalog","dependencies"].contains(CommandLine.arguments[1]) { exit(NashiCommandLine.run()) }
         let app=NSApplication.shared
@@ -325,6 +326,7 @@ enum NashiApplication {
         if let web=urls.first(where:{!$0.isFileURL}),let valid=try? WebDownloadEngine.link(web.absoluteString) { showWebDownload(valid,mode:.video) }
         else { state.inputs=urls;showHome();state.onOpenWheel?() }
     }
+    /// Defers termination during active jobs and lets unsaved PDF editors cancel application exit.
     func applicationShouldTerminate(_ sender:NSApplication)->NSApplication.TerminateReply {
         // Sparkle can resume an earlier install without the postponement callback.
         // Never terminate a conversion before it has committed its results.
@@ -362,6 +364,7 @@ final class ToolPanel:NSPanel {
     override var canBecomeMain:Bool { true }
     // A borderless panel has no standard close button for AppKit to click.
     var shouldClose:(()->Bool)?
+    /// Consults the editor discard guard before closing a borderless tool panel.
     override func close() { guard shouldClose?() != false else{return};super.close() }
     override func performClose(_ sender:Any?) { close() }
 }

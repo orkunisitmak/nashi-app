@@ -7,6 +7,7 @@ enum EditorKeyboardCommand: Equatable {
     case playRange, markIn, markOut, addMarker, save, confirmCrop
     case deleteSelection, selectAll, undo, redo
 
+    /// Decodes editor shortcuts while keeping Turkish I variants equivalent for media mark-in commands.
     static func decode(_ event: NSEvent) -> Self? {
         let modifiers = event.modifierFlags.intersection([.command, .control, .option, .shift])
         // Turkish I/ı/İ should invoke the same marked-in shortcut as Latin I/i.
@@ -36,6 +37,7 @@ enum EditorKeyboardCommand: Equatable {
 
     var acceptsRepeat: Bool { if case .nudge = self { return true }; return false }
 
+    /// Preserves text/control editing, permits PDF commands on focused buttons, and suppresses unsafe repeats.
     func route(_ event: NSEvent, responder: NSResponder?, perform: (Self) -> Bool) -> NSEvent? {
         if Self.preservesControlInput(responder) {
             switch self {
@@ -87,6 +89,7 @@ struct EditorKeyboardShortcuts: NSViewRepresentable {
                 return self.handle(event)
             }
         }
+        /// Routes local key events only to this active editor window, committing field edits before saving.
         func handle(_ event: NSEvent) -> NSEvent? {
             guard enabled, let window, window.isKeyWindow, NSApp.isActive,
                   event.window === window, window.attachedSheet == nil,
@@ -123,6 +126,7 @@ struct EditorKeyboardShortcuts: NSViewRepresentable {
 
 /// Shared by the production editor and own-window keyboard smoke checks.
 enum PDFEditorKeyboardRouter {
+    /// Applies PDF selection, batch deletion and history commands while leaving unrelated commands unhandled.
     static func perform(_ command:EditorKeyboardCommand,editor:inout PDFPageEditorState)->Bool {
         switch command {
         case .deleteSelection:editor.deleteSelected()

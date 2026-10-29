@@ -19,10 +19,14 @@ public struct PDFWorkspacePage: Codable, Sendable {
 }
 
 extension PDFEngine {
+    /// Applies a complete page plan and publishes one copy, preserving source files and rich-PDF checks.
+    /// Simple encrypted sources are copied through PDFKit before the shared writer applies every edit.
     static func workspace(inputs:[URL],options:OperationOptions,token:CancellationToken)throws->[URL] {
         let plan=options.pdfWorkspacePages
         guard let first=inputs.first,!plan.isEmpty,plan.count<=10_000 else{throw NashiError.invalidInput("Choose between 1 and 10,000 output pages.")}
         let work=try OutputFiles.temporaryDirectory();defer{try? FileManager.default.removeItem(at:work)}
+        // Decrypted intermediate copies must be private and removed on every exit path.
+        try FileManager.default.setAttributes([.posixPermissions:0o700],ofItemAtPath:work.path)
         var sources:[URL]=[],selections:[[Int]]=[],groups:[Int:Int]=[:],order:[(Int,Int)]=[]
         let blank=PDFDocument();var blankGroup:Int?
         for item in plan {
@@ -32,7 +36,11 @@ extension PDFEngine {
             if let source=item.sourceIndex {
                 guard inputs.indices.contains(source),item.pageIndex>=0 else{throw NashiError.invalidInput("A selected PDF source is outside the workspace.")}
                 if let existing=groups[source] { group=existing }
-                else { group=sources.count;groups[source]=group;sources.append(inputs[source]);selections.append([]) }
+                else {
+                    group=sources.count;groups[source]=group
+                    sources.append(try workspaceSource(inputs[source],password:options.password,work:work,token:token))
+                    selections.append([])
+                }
                 index=item.pageIndex
             } else {
                 guard let size=item.blankSize,size.isValid else{throw NashiError.invalidInput("Choose a valid blank page size.")}
@@ -57,4 +65,37 @@ extension PDFEngine {
         try bytes.write(to:output,options:.atomic)
         return [output]
     }
+
+    /// Returns an ordinary PDF unchanged or creates a private, unencrypted copy of a simple encrypted source.
+    /// PDFKit must unlock with the supplied password; rich encrypted documents are refused before page copying.
+    /// The caller owns `work` and removes it after success, cancellation, or failure.
+    private static func workspaceSource(_ input:URL,password:String,work:URL,token:CancellationToken)throws->URL {
+        try token.check()
+        let attributes=try input.resourceValues(forKeys:[.isRegularFileKey,.fileSizeKey])
+        guard attributes.isRegularFile == true,let size=attributes.fileSize,size>0,size<=100_000_000 else {
+            throw NashiError.invalidInput("This PDF is empty, is not a regular file, or exceeds the 100 MB page-editing limit.")
+        }
+        let source=try open(input,password:password)
+        guard source.isEncrypted else{return input}
+        guard !requiresPreservingWrite(source) else {
+            throw NashiError.unsupported("This password-protected PDF contains document features that this page operation cannot safely preserve. Use an unencrypted copy for form fields, attachments or links. No copy was exported.")
+        }
+        // Writing the unlocked source itself retains its encryption. Copy pages into a fresh document instead.
+        let unlocked=PDFDocument()
+        for index in 0..<source.pageCount {
+            try token.check()
+            guard let page=source.page(at:index)?.copy() as? PDFPage else{throw NashiError.failed("A PDF page could not be copied.")}
+            unlocked.insert(page,at:unlocked.pageCount)
+        }
+        unlocked.documentAttributes=source.documentAttributes
+        let output=work.appendingPathComponent("Unlocked-"+UUID().uuidString+".pdf")
+        try token.check()
+        guard unlocked.write(to:output),let reopened=PDFDocument(url:output),!reopened.isEncrypted,
+              !reopened.isLocked,reopened.pageCount==source.pageCount else {
+            throw NashiError.failed("Could not save the unlocked PDF pages.")
+        }
+        try token.check()
+        return output
+    }
+
 }

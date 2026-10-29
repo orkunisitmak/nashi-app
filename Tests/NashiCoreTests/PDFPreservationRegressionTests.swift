@@ -10,6 +10,7 @@ final class PDFPreservationRegressionTests: XCTestCase {
     override func setUpWithError() throws { root = try OutputFiles.temporaryDirectory() }
     override func tearDownWithError() throws { if let root { try? FileManager.default.removeItem(at: root) } }
 
+    /// Verifies that interleaving rich sources retains independent field registries and attachments, and refuses scaling.
     func testWorkspaceInterleavesRichSourcesAndPreservesIndependentFormsAndAttachments() throws {
         let first=try fixture("Workspace first",prefix:"LEFT")
         let second=try fixture("Workspace second",prefix:"RIGHT")
@@ -25,6 +26,17 @@ final class PDFPreservationRegressionTests: XCTestCase {
         XCTAssertEqual(snapshot.attachments.count,2)
         options.pdfWidthMode = .narrowest
         XCTAssertThrowsError(try ConversionEngine.run(.init(inputs:[first,second],operation:.tool(.organizePDF),options:options)))
+    }
+
+    /// Refusing rich encrypted sources must roll back the entire workspace and preserve every input.
+    func testWorkspaceRejectsRichEncryptedSourceWithoutPublishingOrChangingInputs()throws {
+        let plain=try fixture("Workspace encrypted form",prefix:"RICH")
+        let encrypted=root.appendingPathComponent("Encrypted rich workspace.pdf")
+        XCTAssertTrue(try PDFEngine.open(plain).write(to:encrypted,withOptions:[.ownerPasswordOption:"synthetic-owner",.userPasswordOption:""]))
+        let ordinary=try fixture("Ordinary workspace source",prefix:"PLAIN",fields:false,attachment:false)
+        var options=OperationOptions()
+        options.pdfWorkspacePages=[.init(sourceIndex:0,pageIndex:0),.init(sourceIndex:1,pageIndex:0)]
+        try assertRefused(.organizePDF,inputs:[ordinary,encrypted],options:options,reason:"password-protected PDF contains document features")
     }
 
     func testOrganizePreservesRegisteredFieldsAttachmentsPageOrderAndRotations() throws {

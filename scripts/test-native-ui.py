@@ -49,6 +49,7 @@ def bundle_for_audit(binary, output):
 
 
 def main():
+    """Run isolated native captures, parser/output guards, and production PDF/range/artwork smoke checks."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--app", default=".build/debug/Nashi")
     parser.add_argument("--output", default="build/native-ui")

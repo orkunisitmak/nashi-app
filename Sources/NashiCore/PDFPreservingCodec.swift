@@ -85,6 +85,7 @@ enum PDFPreservingCodec {
             }
         }
 
+        /// Invokes the bundled object-graph writer and checks cancellation, runtime diagnostics and completion deadlines.
         func transform(_ json: String) throws -> String {
             try token.check()
             guard let run = context.objectForKeyedSubscript("NashiPDF")?.objectForKeyedSubscript("run"), !run.isUndefined else {
