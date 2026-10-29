@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Nashi
+Comment=Convert and edit files locally
+Exec=Nashi %F
+Icon=nashi
+Terminal=false
+Categories=Utility;Graphics;AudioVideo;
+MimeType=image/png;image/jpeg;image/webp;image/heic;image/avif;image/tiff;image/bmp;image/svg+xml;application/pdf;audio/mpeg;audio/x-wav;audio/flac;audio/ogg;video/mp4;video/quicktime;video/x-matroska;video/webm;application/zip;application/x-tar;application/gzip;
