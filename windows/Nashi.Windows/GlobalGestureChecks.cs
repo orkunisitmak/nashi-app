@@ -67,6 +67,23 @@ internal static class GlobalGestureChecks
                 check(controller.ActiveWheel is not {Revealed:true},"A plain Shift-drag without files showed the global wheel");
             }
             finally{DesktopInput.HoldMouse(false);DesktopInput.Hold(Key.LeftShift,false);DesktopInput.Pump(250);plain.Close();}
+            // In a fullscreen game, sprinting or crouching while firing and aiming is Shift or Ctrl with a primary drag,
+            // and Ctrl+Shift+D strafes during a slide. No wheel may open above the game, and the keys must reach it.
+            phase="fullscreen game";var registered=controller.LinkShortcutRegistered;var keys=new List<Key>();var game=new Window{WindowStyle=WindowStyle.None,ResizeMode=ResizeMode.NoResize,WindowState=WindowState.Maximized,Topmost=true,ShowInTaskbar=false,Background=System.Windows.Media.Brushes.Black};game.KeyDown+=(_,e)=>keys.Add(e.Key);game.Show();game.Activate();DesktopInput.Pump(300);
+            try
+            {
+                check(DesktopGeometry.FullscreenForeground(),"A borderless window covering its monitor was not recognized as a fullscreen game");
+                for(var n=0;n<20&&controller.LinkShortcutRegistered;n++)DesktopInput.Pump(50);check(!controller.LinkShortcutRegistered,"Ctrl+Shift+D stayed reserved while a fullscreen game was in front");
+                foreach(var modifier in new[]{Key.LeftShift,Key.LeftCtrl})
+                {
+                    var q=game.PointToScreen(new Point(200,200));DesktopInput.MovePointer(q);DesktopInput.HoldMouse(true);DesktopInput.Pump(80);DesktopInput.Hold(modifier,true);
+                    try{DesktopInput.MovePointer(new(q.X+60,q.Y+10));DesktopInput.Pump(260);check(controller.ActiveWheel is null,modifier+"-drag over a fullscreen game opened the global wheel");}
+                    finally{DesktopInput.HoldMouse(false);DesktopInput.Hold(modifier,false);DesktopInput.Pump(200);}
+                }
+                selected=null;DesktopInput.Key(game,Key.D,control:true,shift:true);check(keys.Contains(Key.D)&&selected is null,"Ctrl+Shift+D did not reach the fullscreen game");
+            }
+            finally{game.Close();}
+            for(var n=0;n<20&&registered&&!controller.LinkShortcutRegistered;n++)DesktopInput.Pump(50);check(controller.LinkShortcutRegistered==registered,"Ctrl+Shift+D was not reserved again after the fullscreen game closed");
             if(controller.LinkShortcutRegistered){DesktopInput.Key(owner,Key.D,control:true,shift:true);check(selected=="link-shortcut","Global copied-link shortcut Ctrl+Shift+D");}
             var main=owner as MainWindow;var beforeLaunch=main?.SelectedFiles.ToArray();var modal=new Window{Owner=owner,Width=300,Height=200,WindowStartupLocation=WindowStartupLocation.CenterOwner,Content=new System.Windows.Controls.Border{Background=System.Windows.Media.Brushes.DarkOliveGreen}};Exception? modalError=null;
             modal.Dispatcher.BeginInvoke(()=>
