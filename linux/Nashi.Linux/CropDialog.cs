@@ -49,21 +49,58 @@ internal sealed class CropDialog:Window
     /// Decodes with the shared reader (orientation, color profile, HEIC/AVIF/SVG) and keeps a bounded preview.
     public static async Task<CropDialog> CreateAsync(string title,string input)
     {
-        var (png,width,height)=await Task.Run(()=>
-        {
-            using var image=PhotoCodec.Read(input);var w=(int)image.Width;var h=(int)image.Height;
-            if(Math.Max(w,h)>2048)image.Resize(new ImageMagick.MagickGeometry(2048,2048));
-            return (image.ToByteArray(ImageMagick.MagickFormat.Png),w,h);
-        });
-        using var stream=new MemoryStream(png);return new(title,input,new Bitmap(stream),new(width,height));
+        var (preview,pixels)=await Picture.LoadAsync(()=>PhotoCodec.Read(input));return new(title,input,preview,pixels);
+    }
+    /// A video frame from FFmpeg; the selection is returned relative to its size.
+    public static async Task<CropDialog> CreateAsync(string title,string input,byte[] frame)
+    {
+        var (preview,pixels)=await Picture.LoadAsync(()=>new ImageMagick.MagickImage(frame));return new(title,input,preview,pixels);
     }
 }
 
-internal sealed class CropCanvas(Bitmap preview,PixelSize pixels):Control
+internal static class Picture
+{
+    public const uint PreviewEdge=2048;
+    public static async Task<(Bitmap Preview,PixelSize Pixels)> LoadAsync(Func<ImageMagick.MagickImage> load)
+    {
+        var (png,width,height)=await Task.Run(()=>
+        {
+            using var image=load();var w=(int)image.Width;var h=(int)image.Height;
+            if(Math.Max(w,h)>PreviewEdge)image.Resize(new ImageMagick.MagickGeometry(PreviewEdge,PreviewEdge));
+            return (image.ToByteArray(ImageMagick.MagickFormat.Png),w,h);
+        });
+        using var stream=new MemoryStream(png);return (new Bitmap(stream),new(width,height));
+    }
+}
+
+/// A picture fitted into the control, with conversions between screen points and source pixels.
+internal abstract class PictureCanvas(Bitmap preview,PixelSize pixels):Control
+{
+    protected const double Handle=10,Minimum=4;
+    public PixelSize Pixels{get;}=pixels;
+    private Bitmap shown=preview;
+    public Bitmap Preview{get=>shown;set{shown=value;InvalidateVisual();}}
+    protected Rect Image
+    {
+        get{var scale=Math.Min(Bounds.Width/Pixels.Width,Bounds.Height/Pixels.Height);var w=Pixels.Width*scale;var h=Pixels.Height*scale;return new((Bounds.Width-w)/2,(Bounds.Height-h)/2,w,h);}
+    }
+    protected double Scale=>Image.Width/Pixels.Width;
+    protected Point ToPixels(Point p){var i=Image;return new(Math.Clamp((p.X-i.X)/Scale,0,Pixels.Width),Math.Clamp((p.Y-i.Y)/Scale,0,Pixels.Height));}
+    protected Rect ToScreen(Rect r){var i=Image;return new(i.X+r.X*Scale,i.Y+r.Y*Scale,r.Width*Scale,r.Height*Scale);}
+    protected Rect Clamp(Rect r)
+    {
+        var w=Math.Clamp(r.Width,1,Pixels.Width);var h=Math.Clamp(r.Height,1,Pixels.Height);
+        return new(Math.Round(Math.Clamp(r.X,0,Pixels.Width-w)),Math.Round(Math.Clamp(r.Y,0,Pixels.Height-h)),Math.Round(w),Math.Round(h));
+    }
+    protected static Point[] Corners(Rect r)=>[r.TopLeft,r.TopRight,r.BottomRight,r.BottomLeft];
+    protected static int Corner(Rect screen,Point p)=>Array.FindIndex(Corners(screen),c=>Math.Abs(c.X-p.X)<=Handle&&Math.Abs(c.Y-p.Y)<=Handle);
+    protected static readonly IBrush Gold=new SolidColorBrush(Color.FromRgb(227,184,89));
+    protected static void Handles(DrawingContext context,Rect s){foreach(var c in Corners(s))context.DrawRectangle(Gold,new Pen(Brushes.White,1),new Rect(c.X-5,c.Y-5,10,10));}
+}
+
+internal sealed class CropCanvas(Bitmap preview,PixelSize pixels):PictureCanvas(preview,pixels)
 {
     private enum Mode{None,Create,Move,Resize}
-    private const double Handle=10,Minimum=4;
-    public PixelSize Pixels{get;}=pixels;
     public Rect Selection{get;private set;}=new(0,0,pixels.Width,pixels.Height);
     public event Action? Changed;
     private double? aspect;
@@ -82,25 +119,11 @@ internal sealed class CropCanvas(Bitmap preview,PixelSize pixels):Control
     private void Update(){Changed?.Invoke();InvalidateVisual();}
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e){base.OnAttachedToVisualTree(e);Changed?.Invoke();}
 
-    private Rect Image
-    {
-        get{var scale=Math.Min(Bounds.Width/Pixels.Width,Bounds.Height/Pixels.Height);var w=Pixels.Width*scale;var h=Pixels.Height*scale;return new((Bounds.Width-w)/2,(Bounds.Height-h)/2,w,h);}
-    }
-    private double Scale=>Image.Width/Pixels.Width;
-    private Point ToPixels(Point p){var i=Image;return new(Math.Clamp((p.X-i.X)/Scale,0,Pixels.Width),Math.Clamp((p.Y-i.Y)/Scale,0,Pixels.Height));}
-    private Rect ToScreen(Rect r){var i=Image;return new(i.X+r.X*Scale,i.Y+r.Y*Scale,r.Width*Scale,r.Height*Scale);}
-    private Rect Clamp(Rect r)
-    {
-        var w=Math.Clamp(r.Width,1,Pixels.Width);var h=Math.Clamp(r.Height,1,Pixels.Height);
-        return new(Math.Round(Math.Clamp(r.X,0,Pixels.Width-w)),Math.Round(Math.Clamp(r.Y,0,Pixels.Height-h)),Math.Round(w),Math.Round(h));
-    }
-    private Point[] Corners(Rect r)=>[r.TopLeft,r.TopRight,r.BottomRight,r.BottomLeft];
-
     protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
         base.OnPointerPressed(e);if(!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)return;
         Focus();var p=e.GetPosition(this);var screen=ToScreen(Selection);start=Selection;origin=ToPixels(p);
-        var corner=Array.FindIndex(Corners(screen),c=>Math.Abs(c.X-p.X)<=Handle&&Math.Abs(c.Y-p.Y)<=Handle);
+        var corner=Corner(screen,p);
         if(corner>=0){mode=Mode.Resize;anchor=Corners(Selection)[(corner+2)%4];}
         else if(screen.Contains(p))mode=Mode.Move;
         else{mode=Mode.Create;anchor=origin;}
@@ -109,7 +132,7 @@ internal sealed class CropCanvas(Bitmap preview,PixelSize pixels):Control
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);var p=e.GetPosition(this);
-        if(mode==Mode.None){Cursor=new(Corners(ToScreen(Selection)).Any(c=>Math.Abs(c.X-p.X)<=Handle&&Math.Abs(c.Y-p.Y)<=Handle)?StandardCursorType.SizeAll:ToScreen(Selection).Contains(p)?StandardCursorType.Hand:StandardCursorType.Cross);return;}
+        if(mode==Mode.None){Cursor=new(Corner(ToScreen(Selection),p)>=0?StandardCursorType.SizeAll:ToScreen(Selection).Contains(p)?StandardCursorType.Hand:StandardCursorType.Cross);return;}
         var point=ToPixels(p);
         if(mode==Mode.Move){Selection=Clamp(start.Translate(new Vector(point.X-origin.X,point.Y-origin.Y)));Update();return;}
         var ratio=aspect??((e.KeyModifiers&KeyModifiers.Shift)!=0?(mode==Mode.Resize?start.Width/start.Height:1):null);
@@ -133,7 +156,7 @@ internal sealed class CropCanvas(Bitmap preview,PixelSize pixels):Control
 
     public override void Render(DrawingContext context)
     {
-        var image=Image;context.DrawImage(preview,new Rect(preview.Size),image);
+        var image=Image;context.DrawImage(Preview,new Rect(Preview.Size),image);
         var s=ToScreen(Selection);var shade=new SolidColorBrush(Color.FromArgb(140,0,0,0));
         context.FillRectangle(shade,new(image.X,image.Y,image.Width,s.Y-image.Y));
         context.FillRectangle(shade,new(image.X,s.Bottom,image.Width,image.Bottom-s.Bottom));
@@ -142,7 +165,6 @@ internal sealed class CropCanvas(Bitmap preview,PixelSize pixels):Control
         var thirds=new Pen(new SolidColorBrush(Color.FromArgb(110,255,255,255)),1);
         for(var n=1;n<3;n++){context.DrawLine(thirds,new(s.X+s.Width*n/3,s.Y),new(s.X+s.Width*n/3,s.Bottom));context.DrawLine(thirds,new(s.X,s.Y+s.Height*n/3),new(s.Right,s.Y+s.Height*n/3));}
         context.DrawRectangle(new Pen(Brushes.White,1.5),s);
-        var gold=new SolidColorBrush(Color.FromRgb(227,184,89));
-        foreach(var c in Corners(s))context.DrawRectangle(gold,new Pen(Brushes.White,1),new Rect(c.X-5,c.Y-5,10,10));
+        Handles(context,s);
     }
 }

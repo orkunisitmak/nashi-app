@@ -14,6 +14,9 @@ public sealed record CollageOptions(string Layout="grid",int Columns=2,int Width
     public CollageOptions Scaled(double f)=>this with{Width=Math.Max(1,(int)Math.Round(Width*f)),Height=Math.Max(1,(int)Math.Round(Height*f)),Spacing=(int)Math.Round(Spacing*f),Padding=(int)Math.Round(Padding*f),CornerRadius=CornerRadius*f};
 }
 
+/// Areas are fractions of the image size, so one set of boxes fits every selected image.
+public sealed record Redaction(ImageEdit[] Areas,string Style="solid");
+
 public static class Compositions
 {
     public static MagickColor Color(string value)
@@ -66,6 +69,31 @@ public static class Compositions
             return canvas;
         }
         catch{canvas.Dispose();throw;}
+    }
+
+    /// Same styles as Windows: a black box, a blur, or 16-pixel blocks. Blur strength follows the
+    /// area size, so a preview drawn at a smaller size matches the saved file. The EXIF thumbnail and
+    /// Photoshop resources are removed because they can hold a small copy of the unredacted picture.
+    public static void Redact(MagickImage image,Redaction r,double scale=1)
+    {
+        if(r.Areas.Length is 0 or >500)throw new ArgumentException("Draw at least one area to redact.");if(r.Style is not ("solid" or "blur" or "pixelate"))throw new ArgumentException("Choose a cover style.");
+        foreach(var area in r.Areas)
+        {
+            if(new[]{area.X,area.Y,area.Width,area.Height}.Any(v=>!double.IsFinite(v))||area.X<0||area.Y<0||area.Width<=0||area.Height<=0||area.X+area.Width>1.0001||area.Y+area.Height>1.0001)throw new ArgumentException("Keep redaction areas inside the image.");
+            var x=(int)Math.Round(area.X*image.Width);var y=(int)Math.Round(area.Y*image.Height);if(x>=image.Width||y>=image.Height)continue;
+            var w=(uint)Math.Clamp(Math.Round(area.Width*image.Width),1,image.Width-x);var h=(uint)Math.Clamp(Math.Round(area.Height*image.Height),1,image.Height-y);
+            if(r.Style=="solid"){new Drawables().FillColor(MagickColors.Black).StrokeColor(MagickColors.Transparent).Rectangle(x,y,x+w-1,y+h-1).Draw(image);continue;}
+            using var piece=(MagickImage)image.Clone();piece.Crop(new MagickGeometry(x,y,w,h));piece.ResetPage();
+            if(r.Style=="pixelate"){var block=Math.Max(1,16*scale);piece.Sample(new MagickGeometry((uint)Math.Max(1,Math.Round(w/block)),(uint)Math.Max(1,Math.Round(h/block))){IgnoreAspectRatio=true});piece.Sample(new MagickGeometry(w,h){IgnoreAspectRatio=true});}
+            else
+            {
+                // A blur through a 1/12 copy is strong at any size and stays fast on large areas.
+                piece.Resize(new MagickGeometry(Math.Max(1,w/12),Math.Max(1,h/12)){IgnoreAspectRatio=true});piece.GaussianBlur(0,1.5);piece.Resize(new MagickGeometry(w,h){IgnoreAspectRatio=true});
+            }
+            image.Composite(piece,x,y,CompositeOperator.Copy);
+        }
+        if(image.GetExifProfile() is {} exif){exif.RemoveThumbnail();image.SetProfile(exif);}
+        image.RemoveProfile("8bim");
     }
 
     private readonly record struct Area(double X,double Y,double Width,double Height);

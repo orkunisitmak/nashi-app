@@ -7,14 +7,14 @@ namespace Nashi.Linux;
 
 public sealed record Choice(string Id,string Title,string? Format=null);
 /// Choices made in a tool's dialog; each tool reads only its own part.
-public sealed record ToolSettings(MediaOptions? Media=null,ImageEdit? Crop=null,PhotoEdit? Photo=null,FrameOptions? Frame=null,CollageOptions? Collage=null);
+public sealed record ToolSettings(MediaOptions? Media=null,ImageEdit? Crop=null,PhotoEdit? Photo=null,FrameOptions? Frame=null,CollageOptions? Collage=null,Redaction? Redact=null);
 
 /// The Linux preview offers only workflows implemented here; the shared catalog decides
 /// which of them apply to a selection, so the rules match macOS and Windows.
 public static class Operations
 {
     private static readonly string[] ImageOutputs=["jpg","png","webp","tiff","avif","bmp","heic","pdf"];
-    private static readonly string[] ImplementedTools=["compress","removeMetadata","cropImage","editImage","frameImage","createCollage","createPDF","mergePDF","splitPDF","muteVideo","normalizeAudio","changeVideoSpeed","joinVideos","audioChannels","videoSnapshots","splitVideo","audioToVideo","trimVideo","trimAudio","extractArchive","readQRCode"];
+    private static readonly string[] ImplementedTools=["compress","removeMetadata","cropImage","editImage","redactImage","frameImage","createCollage","createPDF","mergePDF","splitPDF","muteVideo","normalizeAudio","changeVideoSpeed","joinVideos","audioChannels","videoSnapshots","splitVideo","audioToVideo","trimVideo","trimAudio","cropVideo","redactVideo","extractArchive","readQRCode"];
 
     public static string? Executable(string name)
     {
@@ -50,7 +50,7 @@ public static class Operations
 
     public static async Task<IReadOnlyList<string>> RunAsync(Choice choice,IReadOnlyList<string> inputs,string destination,IProgress<OperationProgress> progress,CancellationToken token,ToolSettings? settings=null)
     {
-        var (media,edit,photo,frame,collage)=settings??new();
+        var (media,edit,photo,frame,collage,redact)=settings??new();
         if(choice.Id=="convert")
         {
             var format=choice.Format!;
@@ -63,6 +63,7 @@ public static class Operations
         {
             "cropImage"=>await Task.Run(()=>Images(inputs,destination,null,92,true,progress,token,image=>Crop(image,edit??throw new ArgumentException("Drag a crop inside the image."))),token),
             "editImage"=>await Task.Run(()=>Images(inputs,destination,null,92,true,progress,token,(photo??throw new ArgumentException("Choose photo adjustments.")).Apply),token),
+            "redactImage"=>await Task.Run(()=>Images(inputs,destination,null,92,true,progress,token,image=>Compositions.Redact(image,redact??throw new ArgumentException("Draw at least one area to redact."))),token),
             "frameImage"=>await Task.Run(()=>Images(inputs,destination,"png",92,true,progress,token,image=>Replace(image,Compositions.Frame(image,frame??new()))),token),
             "createCollage"=>await Task.Run(()=>Collage(inputs,destination,collage??new(),progress,token),token),
             "compress" when inputs.All(FeatureCatalog.IsImage)=>await Task.Run(()=>Images(inputs,destination,null,70,false,progress,token),token),
@@ -71,9 +72,21 @@ public static class Operations
             "mergePDF"=>await Task.Run(()=>DocumentEngine.Pdf("mergePDFs",inputs,destination,null,token),token),
             "splitPDF"=>await Task.Run(()=>DocumentEngine.Pdf("splitPDF",inputs,destination,null,token),token),
             "extractArchive"=>await Task.Run(()=>inputs.SelectMany(i=>ArchiveEngine.Extract(i,destination,null,progress,token)).ToArray(),token),
-            "compress" or "muteVideo" or "normalizeAudio" or "changeVideoSpeed" or "joinVideos" or "audioChannels" or "videoSnapshots" or "splitVideo" or "audioToVideo" or "trimVideo" or "trimAudio"=>await RequireMedia().ToolAsync(choice.Id,inputs,destination,media??new MediaOptions(),progress,token),
+            "compress" or "muteVideo" or "normalizeAudio" or "changeVideoSpeed" or "joinVideos" or "audioChannels" or "videoSnapshots" or "splitVideo" or "audioToVideo" or "trimVideo" or "trimAudio" or "cropVideo" or "redactVideo"=>await RequireMedia().ToolAsync(choice.Id,inputs,destination,media??new MediaOptions(),progress,token),
             _=>throw new NotSupportedException("This tool is not available in the Linux preview yet.")
         };
+    }
+    /// One full-size video frame as PNG, for the crop and redact editors.
+    public static async Task<byte[]> VideoFrameAsync(string input,double seconds,CancellationToken token=default)
+    {
+        var folder=Directory.CreateTempSubdirectory("nashi-frame-").FullName;
+        try
+        {
+            var file=Path.Combine(folder,"frame.png");
+            await ProcessRunner.RunAsync(Executable("ffmpeg")??throw new FileNotFoundException("Install FFmpeg with your package manager to use media tools."),["-hide_banner","-loglevel","error","-ss",seconds.ToString("0.###",System.Globalization.CultureInfo.InvariantCulture),"-i",input,"-frames:v","1","-y",file],token);
+            return File.Exists(file)?await File.ReadAllBytesAsync(file,token):throw new InvalidDataException("Could not read a frame from this video.");
+        }
+        finally{try{Directory.Delete(folder,true);}catch(IOException){}catch(UnauthorizedAccessException){}}
     }
     private static MediaEngine RequireMedia()=>Media??throw new FileNotFoundException("Install FFmpeg with your package manager to use media tools.");
 

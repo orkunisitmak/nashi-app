@@ -128,7 +128,7 @@ public sealed class MainWindow:Window
             catch(Exception error){status.Text=error.Message;}
             return;
         }
-        MediaOptions? media=null;ImageEdit? edit=null;PhotoEdit? photo=null;FrameOptions? frame=null;CollageOptions? collage=null;
+        MediaOptions? media=null;ImageEdit? edit=null;PhotoEdit? photo=null;FrameOptions? frame=null;CollageOptions? collage=null;Redaction? redact=null;
         if(choice.Id=="frameImage")
         {
             FrameDialog editor;try{editor=await FrameDialog.CreateAsync(choice.Title,inputs[0]);}catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or ImageMagick.MagickException){status.Text=error.Message;return;}
@@ -149,7 +149,31 @@ public sealed class MainWindow:Window
             CropDialog crop;try{crop=await CropDialog.CreateAsync(choice.Title,inputs[0]);}catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or ImageMagick.MagickException){status.Text=error.Message;return;}
             await crop.ShowDialog(this);if(crop.Result is not {} selection)return;edit=selection;
         }
-        if(choice.Id=="changeVideoSpeed"){if(await Ask(choice.Title,[("0.5×",.5),("1.5×",1.5),("2×",2d)],1) is not {} speed)return;media=new(){Speed=speed};}
+        if(choice.Id=="redactImage")
+        {
+            RedactDialog editor;try{editor=await RedactDialog.CreateAsync(choice.Title,inputs[0]);}catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or ImageMagick.MagickException){status.Text=error.Message;return;}
+            await editor.ShowDialog(this);if(editor.Result is not {} areas)return;redact=areas;
+        }
+        else if(choice.Id is "cropVideo" or "redactVideo")
+        {
+            // Boxes are drawn on a frame at 10% of the clip and sent to FFmpeg in video pixels.
+            MediaInfo info;byte[] picture;status.Text="Reading a frame…";
+            try{info=await Operations.Media!.InspectAsync(inputs[0]);if(info.Video is null)throw new ArgumentException("This file has no video stream.");picture=await Operations.VideoFrameAsync(inputs[0],info.Duration*.1);}
+            catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or InvalidOperationException){status.Text=error.Message;return;}
+            status.Text="";double w=info.Video.Width??0,h=info.Video.Height??0;if(w<2||h<2){status.Text="Could not read the video size.";return;}
+            MediaRegion Region(ImageEdit a){var x=Math.Floor(a.X*w);var y=Math.Floor(a.Y*h);return new(x,y,Math.Clamp(Math.Round(a.Width*w),2,w-x),Math.Clamp(Math.Round(a.Height*h),2,h-y));}
+            if(choice.Id=="cropVideo")
+            {
+                CropDialog crop;try{crop=await CropDialog.CreateAsync(choice.Title,inputs[0],picture);}catch(Exception error)when(error is ArgumentException or ImageMagick.MagickException){status.Text=error.Message;return;}
+                await crop.ShowDialog(this);if(crop.Result is not {} selection)return;media=new(){Regions=[Region(selection)]};
+            }
+            else
+            {
+                RedactDialog editor;try{editor=await RedactDialog.CreateAsync(choice.Title,inputs[0],picture);}catch(Exception error)when(error is ArgumentException or ImageMagick.MagickException){status.Text=error.Message;return;}
+                await editor.ShowDialog(this);if(editor.Result is not {} areas)return;media=new(){Regions=areas.Areas.Select(Region).ToArray(),RedactionMode=areas.Style};
+            }
+        }
+        else if(choice.Id=="changeVideoSpeed"){if(await Ask(choice.Title,[("0.5×",.5),("1.5×",1.5),("2×",2d)],1) is not {} speed)return;media=new(){Speed=speed};}
         else if(choice.Id=="audioChannels"){if(await Ask(choice.Title,[("Mono",1),("Stereo",2)],0) is not {} channels)return;media=new(){Channels=channels};}
         else if(choice.Id=="splitVideo"){if(await Ask(choice.Title,[("2 equal parts",2),("3 equal parts",3),("4 equal parts",4)],0) is not {} parts)return;media=new(){EqualClips=parts};}
         else if(choice.Id=="audioToVideo"){string[] styles=["waveform","spectrum","bars"];if(await Ask(choice.Title,[("Waveform",0),("Spectrum",1),("Bars",2)],0) is not {} style)return;media=new(){Visualization=styles[style]};}
@@ -168,7 +192,7 @@ public sealed class MainWindow:Window
         var report=new Progress<OperationProgress>(p=>{if(p.Fraction is {} f){progress.IsIndeterminate=false;progress.Value=f;}status.Text=p.Label;});
         try
         {
-            var outputs=await Operations.RunAsync(choice,inputs,destination,report,running.Token,new(media,edit,photo,frame,collage));
+            var outputs=await Operations.RunAsync(choice,inputs,destination,report,running.Token,new(media,edit,photo,frame,collage,redact));
             library.Record(choice.Id=="convert"?"Convert to "+choice.Format!.ToUpperInvariant():choice.Title,outputs);
             lastFolder=destination;reveal.IsVisible=true;
             status.Text=outputs.Count==1?$"Saved {Path.GetFileName(outputs[0])}":$"Saved {outputs.Count} files";

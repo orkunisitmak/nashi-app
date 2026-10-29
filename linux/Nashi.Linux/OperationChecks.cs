@@ -21,7 +21,7 @@ internal static class OperationChecks
             var originalHash=Hash(png);
 
             Check(Operations.Formats([png]).SequenceEqual(new[]{"jpg","webp","heic","tiff","avif","bmp","pdf"}),"PNG conversion formats");
-            Check(Operations.Tools([png]).Select(t=>t.Id).SequenceEqual(new[]{"compress","removeMetadata","editImage","frameImage","cropImage","readQRCode"}),"PNG tools");
+            Check(Operations.Tools([png]).Select(t=>t.Id).SequenceEqual(new[]{"compress","removeMetadata","editImage","frameImage","cropImage","redactImage","readQRCode"}),"PNG tools");
             foreach(var format in Operations.Formats([png]))
             {
                 var output=Operations.RunAsync(new("convert",format,format),[png],Path.Combine(root,"convert-"+format),progress,token).GetAwaiter().GetResult().Single();
@@ -50,6 +50,19 @@ internal static class OperationChecks
             var collage=Operations.RunAsync(new("createCollage","Create Collage"),[png,blue],Path.Combine(root,"collage"),progress,token,new(Collage:new(Layout:"row",Width:400,Height:200,Spacing:0,Padding:0,Order:[1,0]))).GetAwaiter().GetResult().Single();
             using(var result=new MagickImage(collage)){using var pixels=result.GetPixels();Check(Path.GetFileName(collage)=="Collage.png"&&result.Width==400&&pixels.GetPixel(50,100).ToColor()!.B>180&&pixels.GetPixel(350,100).ToColor()!.R>200,"Collage size and order");}
             try{using var _=Compositions.Collage([new MagickImage(MagickColors.Red,10,10),new MagickImage(MagickColors.Red,10,10)],new(Width:100,Height:100,Padding:60));Check(false,"Collage rejects padding that leaves no room");}catch(ArgumentException){Check(true,"Collage rejects padding that leaves no room");}
+            var redacted=Operations.RunAsync(new("redactImage","Redact Photo"),[png],Path.Combine(root,"redact"),progress,token,new(Redact:new([new(0,0,.25,.5)]))).GetAwaiter().GetResult().Single();
+            using(var result=new MagickImage(redacted)){using var pixels=result.GetPixels();var inside=pixels.GetPixel(40,50).ToColor()!;var outside=pixels.GetPixel(200,150).ToColor()!;Check(FeatureCatalog.Extension(redacted)=="png"&&inside.R<3&&inside.G<3&&outside.R>200,"Redact black box keeps the format");}
+            var noisy=Path.Combine(root,"Noise.png");using(var image=new MagickImage("plasma:fractal",256,256)){image.Write(noisy,MagickFormat.Png);}
+            foreach(var style in new[]{"pixelate","blur"})
+            {
+                var covered=Operations.RunAsync(new("redactImage","Redact Photo"),[noisy],Path.Combine(root,"redact-"+style),progress,token,new(Redact:new([new(0,0,.5,.5)],style))).GetAwaiter().GetResult().Single();
+                using var before=new MagickImage(noisy);using var after=new MagickImage(covered);using var a=after.GetPixels();using var b=before.GetPixels();
+                // Neighbouring pixels inside the area become (nearly) equal; outside the area nothing changes.
+                double Step(IPixelCollection<byte> p,int x,int y){var c=p.GetPixel(x,y).ToColor()!;var d=p.GetPixel(x+1,y).ToColor()!;return Math.Abs(c.R-d.R)+Math.Abs(c.G-d.G)+Math.Abs(c.B-d.B);}
+                var inside=Enumerable.Range(0,120).Sum(n=>Step(a,n,n));var original=Enumerable.Range(0,120).Sum(n=>Step(b,n,n));
+                Check(inside<original/3&&a.GetPixel(200,200).ToColor()!.Equals(b.GetPixel(200,200).ToColor()),"Redact "+style);
+            }
+            try{using var image=new MagickImage(MagickColors.Red,10,10);Compositions.Redact(image,new([new(.5,.5,.8,.2)]));Check(false,"Redact rejects areas outside the image");}catch(ArgumentException){Check(true,"Redact rejects areas outside the image");}
             var pdf=Operations.RunAsync(new("createPDF","Create PDF"),[png,jpg],Path.Combine(root,"pdf"),progress,token).GetAwaiter().GetResult().Single();
             using(var document=PdfDocument.Open(pdf))Check(document.NumberOfPages==2,"Images to PDF pages");
             var merged=Operations.RunAsync(new("mergePDF","Merge PDFs"),[pdf,pdf],Path.Combine(root,"merge"),progress,token).GetAwaiter().GetResult().Single();
@@ -97,6 +110,10 @@ internal static class OperationChecks
                 Check(stills.Count==3&&stills.All(s=>new MagickImageInfo(s).Width==320),"Snapshots");
                 var visual=Operations.RunAsync(new("audioToVideo","Audio Visualizer"),[wav],Path.Combine(root,"visual"),progress,token,new(Media:new(){Visualization="bars"})).GetAwaiter().GetResult().Single();
                 Check(Operations.Media.InspectAsync(visual,token).GetAwaiter().GetResult().Video is not null,"Audio visualizer video");
+                var croppedClip=Operations.RunAsync(new("cropVideo","Crop Video"),[clip],Path.Combine(root,"crop-video"),progress,token,new(Media:new(){Regions=[new(80,60,160,120)]})).GetAwaiter().GetResult().Single();
+                var croppedInfo=Operations.Media.InspectAsync(croppedClip,token).GetAwaiter().GetResult();Check(croppedInfo.Video is {Width:160,Height:120}&&croppedInfo.HasAudio,"Crop video keeps the box and the sound");
+                var hidden=Operations.RunAsync(new("redactVideo","Redact Video"),[clip],Path.Combine(root,"redact-video"),progress,token,new(Media:new(){Regions=[new(0,0,100,100)],RedactionMode="solid"})).GetAwaiter().GetResult().Single();
+                using(var frame=new MagickImage(Operations.VideoFrameAsync(hidden,1,token).GetAwaiter().GetResult())){using var pixels=frame.GetPixels();var c=pixels.GetPixel(50,50).ToColor()!;var open=pixels.GetPixel(250,200).ToColor()!;Check(frame.Width==320&&c.R<20&&c.G<20&&c.B<20&&open.R+open.G+open.B>60,"Redact video covers the box");}
                 Check(TrimDialog.Parse("1:15")==75&&TrimDialog.Parse("1:01:15.5")==3675.5&&TrimDialog.Parse("x") is null&&TrimDialog.Format(75.25)=="1:15.2","Time fields");
             }
             Check(Hash(png)==originalHash,"Original is unchanged");
