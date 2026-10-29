@@ -10,6 +10,7 @@ public static class ImageOperations
 {
     public static IReadOnlyList<string> Convert(IReadOnlyList<string> inputs, string format, string destination, IProgress<OperationProgress>? progress, CancellationToken token)
     {
+        if (inputs.Count == 0) throw new ArgumentException("Choose at least one image.");
         format = format.ToLowerInvariant();
         if (!Capabilities.ImageFormats.Contains(format)) throw new NotSupportedException($"Converting to {format} is not supported on Linux.");
         using var tx = new ExportTransaction(destination);
@@ -40,7 +41,7 @@ public static class ImageOperations
             token.ThrowIfCancellationRequested();
             using var image = PhotoCodec.Read(inputs[n]);
             var output = SafePaths.Unique(tx.StagingDirectory, Path.GetFileNameWithoutExtension(inputs[n]) + "." + format);
-            Write(image, output, format, 85);
+            Write(image, output, format, 85, strip: false);
             outputs.Add(output);
             progress?.Report(new((n + 1) / (double)inputs.Count * .98, "Saving images…"));
         }
@@ -49,28 +50,30 @@ public static class ImageOperations
 
     public static IReadOnlyList<string> Compress(IReadOnlyList<string> inputs, string destination, IProgress<OperationProgress>? progress, CancellationToken token)
     {
+        if (inputs.Count == 0) throw new ArgumentException("Choose at least one image.");
         using var tx = new ExportTransaction(destination);
         var outputs = new List<string>();
         for (var n = 0; n < inputs.Count; n++)
         {
             token.ThrowIfCancellationRequested();
             var input = inputs[n];
-            var ext = FeatureCatalog.Extension(input);
-            if (ext == "jpeg") ext = "jpg";
+            var sourceExt = FeatureCatalog.Extension(input);
+            if (sourceExt == "jpeg") sourceExt = "jpg";
+            var ext = sourceExt;
             if (ext is not ("jpg" or "png" or "webp" or "heic" or "avif") || !Capabilities.ImageFormats.Contains(ext)) ext = "jpg";
             var output = SafePaths.Unique(tx.StagingDirectory, Path.GetFileNameWithoutExtension(input) + " Compressed." + ext);
-            using (var image = PhotoCodec.Read(input)) Write(image, output, ext, 70);
+            using (var image = PhotoCodec.Read(input)) Write(image, output, ext, 70, strip: true);
             // Never hand back a bigger file than the original.
-            if (FeatureCatalog.Extension(input) == ext && new FileInfo(input).Length < new FileInfo(output).Length) File.Copy(input, output, true);
+            if (sourceExt == ext && new FileInfo(input).Length < new FileInfo(output).Length) File.Copy(input, output, true);
             outputs.Add(output);
             progress?.Report(new((n + 1) / (double)inputs.Count * .98, "Saving images…"));
         }
         return tx.Publish(outputs, token);
     }
 
-    static void Write(MagickImage image, string output, string format, int quality)
+    static void Write(MagickImage image, string output, string format, int quality, bool strip)
     {
-        image.Strip();
+        if (strip) image.Strip();
         // JPEG and BMP have no usable alpha; flatten onto white rather than turning transparency black.
         if (format is "jpg" or "bmp" && image.HasAlpha) image.ColorAlpha(MagickColors.White);
         image.Quality = (uint)quality;

@@ -136,6 +136,19 @@ void ImageChecks(string root)
     var small = ImageOperations.Compress([noisy], Path.Combine(work, "out-compress"), null, default);
     Check(small.Count == 1 && new FileInfo(small[0]).Length < new FileInfo(noisy).Length && small[0].EndsWith(" Compressed.jpg"), "Compress makes a smaller JPG");
 
+    var tiny = Path.Combine(work, "tiny.jpeg");
+    using (var t = new MagickImage("gradient:red-blue", 8, 8)) { t.Quality = 5; t.Write(tiny); }
+    var tinyOut = ImageOperations.Compress([tiny], Path.Combine(work, "out-tiny"), null, default);
+    Check(new FileInfo(tinyOut[0]).Length <= new FileInfo(tiny).Length, "Compress never returns a larger .jpeg");
+
+    var icc = Path.Combine(work, "icc.png");
+    using (var p = new MagickImage("gradient:red-blue", 64, 48)) { p.SetProfile(ColorProfiles.AppleRGB); p.Write(icc); }
+    var iccOut = ImageOperations.Convert([icc], "jpg", Path.Combine(work, "out-icc"), null, default);
+    using (var pre = new MagickImage(icc)) Check(pre.GetColorProfile() != null, "ICC fixture carries a profile");
+    using (var back = new MagickImage(iccOut[0])) Check(back.GetColorProfile() != null, "Convert keeps the ICC profile");
+
+    Check(Throws<ArgumentException>(() => ImageOperations.Convert([], "pdf", Path.Combine(work, "out-empty"), null, default)) && Throws<ArgumentException>(() => ImageOperations.Compress([], Path.Combine(work, "out-empty"), null, default)), "Empty inputs throw ArgumentException");
+
     var cancelled = Path.Combine(work, "out-cancel");
     var token = new CancellationToken(true);
     try { ImageOperations.Convert([source], "jpg", cancelled, null, token); Check(false, "Cancelled convert throws"); }
@@ -181,5 +194,7 @@ void HomeChecks()
     Check(shown.Count(t => t == "chip.png") >= 2 && shown.Contains("1 file ready."), "Selected files show as chips with a status line");
     window.Close();
 }
+
+static bool Throws<T>(Action a) where T : Exception { try { a(); return false; } catch (T) { return true; } }
 
 static bool Near(byte actual, byte expected) => Math.Abs(actual - expected) <= 1;
