@@ -9,6 +9,8 @@ public sealed record ToolSetupStatus(bool MediaReady, bool OfficeReady)
 
 public static class ToolInstallation
 {
+    public static string ExecutableName(string name) => OperatingSystem.IsWindows() ? name + ".exe" : name;
+    public static void MarkExecutable(string path) { if (!OperatingSystem.IsWindows()) File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute | UnixFileMode.GroupRead | UnixFileMode.GroupExecute | UnixFileMode.OtherRead | UnixFileMode.OtherExecute); }
     public static bool UsableFile(string path) => File.Exists(path) && new FileInfo(path).Length > 0;
     public static void Publish(string stage, string target, Func<string, bool> complete)
     {

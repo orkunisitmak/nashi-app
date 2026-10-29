@@ -5,15 +5,18 @@ namespace Nashi.Core;
 public sealed class MetadataService(string root)
 {
     public static readonly string[] EditableTags=["EXIF:Artist","EXIF:Copyright","EXIF:ImageDescription","EXIF:Make","EXIF:Model","EXIF:Software","EXIF:DateTimeOriginal","EXIF:CreateDate","EXIF:ModifyDate","EXIF:UserComment","XMP:Title","XMP:Description","XMP:Creator","XMP:Rights","PDF:Title","PDF:Author","PDF:Subject","PDF:Keywords","QuickTime:Title","QuickTime:Artist","QuickTime:Comment","ID3:Title","ID3:Artist","ID3:Album","ID3:Year","ID3:Genre","ID3:Comment"];
-    public string? Executable=>File.Exists(Path.Combine(root,"metadata-13.59","exiftool.exe"))?Path.Combine(root,"metadata-13.59","exiftool.exe"):null;
+    public string? Executable=>File.Exists(Path.Combine(root,"metadata-13.59",ToolInstallation.ExecutableName("exiftool")))?Path.Combine(root,"metadata-13.59",ToolInstallation.ExecutableName("exiftool")):null;
     public async Task InstallAsync(IProgress<OperationProgress>? progress,CancellationToken token)
     {
         if(Executable is not null)return;Directory.CreateDirectory(root);var stage=Path.Combine(root,".metadata-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(stage);
         try
         {
-            var zip=Path.Combine(stage,"exiftool.zip");await VerifiedDownload.FetchAsync(new("https://downloads.sourceforge.net/project/exiftool/exiftool-13.59_64.zip"),zip,30_000_000,p=>progress?.Report(new(p*.8,"Downloading ExifTool…")),token);
-            await using(var file=File.OpenRead(zip))if(Convert.ToHexString(await SHA256.HashDataAsync(file,token)).ToLowerInvariant()!="44b512b25af500724ba579d0a53c8fc5851628b692dd5e5d94ae4a15c2cba9ec")throw new InvalidDataException("Metadata tools checksum mismatch.");
-            var unpack=ArchiveEngine.Extract(zip,stage,null,null,token)[0];var exe=Directory.GetFiles(unpack,"exiftool(-k).exe",SearchOption.AllDirectories).Single();var folder=Path.GetDirectoryName(exe)!;File.Move(exe,Path.Combine(folder,"exiftool.exe"));token.ThrowIfCancellationRequested();Directory.Move(folder,Path.Combine(root,"metadata-13.59"));progress?.Report(new(1,"Metadata tools ready"));
+            var windows=OperatingSystem.IsWindows();var zip=Path.Combine(stage,windows?"exiftool.zip":"exiftool.tar.gz");await VerifiedDownload.FetchAsync(new(windows?"https://downloads.sourceforge.net/project/exiftool/exiftool-13.59_64.zip":"https://downloads.sourceforge.net/project/exiftool/Image-ExifTool-13.59.tar.gz"),zip,30_000_000,p=>progress?.Report(new(p*.8,"Downloading ExifTool…")),token);
+            await using(var file=File.OpenRead(zip))if(Convert.ToHexString(await SHA256.HashDataAsync(file,token)).ToLowerInvariant()!=(windows?"44b512b25af500724ba579d0a53c8fc5851628b692dd5e5d94ae4a15c2cba9ec":"668ea3acececb7235fbd0f4900e72d5f12c9b07e5c778fd36cb1e9b5828fd65a"))throw new InvalidDataException("Metadata tools checksum mismatch.");
+            var unpack=ArchiveEngine.Extract(zip,stage,null,null,token)[0];
+            if(windows){var exe=Directory.GetFiles(unpack,"exiftool(-k).exe",SearchOption.AllDirectories).Single();var folder=Path.GetDirectoryName(exe)!;File.Move(exe,Path.Combine(folder,"exiftool.exe"));token.ThrowIfCancellationRequested();Directory.Move(folder,Path.Combine(root,"metadata-13.59"));}
+            else{var folder=Directory.GetFiles(unpack,"exiftool",SearchOption.AllDirectories).Single();ToolInstallation.MarkExecutable(folder);token.ThrowIfCancellationRequested();Directory.Move(Path.GetDirectoryName(folder)!,Path.Combine(root,"metadata-13.59"));}
+            progress?.Report(new(1,"Metadata tools ready"));
         }finally{if(Directory.Exists(stage))Directory.Delete(stage,true);}
     }
     public async Task<IReadOnlyDictionary<string,string>> ReadAsync(string input,CancellationToken token=default)

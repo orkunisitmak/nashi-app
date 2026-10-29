@@ -6,6 +6,8 @@ if(Environment.GetEnvironmentVariable("NASHI_VERIFY_DOWNLOAD_TOOLS")=="1")
     var toolPath=Environment.GetEnvironmentVariable("NASHI_VERIFY_TOOLS_DIRECTORY")??throw new Exception("Set a test tool directory.");
     var tools=new Toolchain(toolPath);if(!tools.Ready)await tools.InstallAsync();
     Environment.SetEnvironmentVariable("NASHI_VERIFY_FFMPEG",tools.Executable("ffmpeg"));Environment.SetEnvironmentVariable("NASHI_VERIFY_FFPROBE",tools.Executable("ffprobe"));
+    var metadata=new MetadataService(Path.Combine(toolPath,"metadata"));await metadata.InstallAsync(null,default);
+    if(metadata.Executable is null||!(await ProcessRunner.RunAsync(metadata.Executable,["-ver"],default)).Output.Trim().StartsWith("13.59"))throw new Exception("Downloaded ExifTool must run.");
 }
 var checks = 0;
 void Check(bool value, string message) { if (!value) throw new Exception(message); checks++; }
