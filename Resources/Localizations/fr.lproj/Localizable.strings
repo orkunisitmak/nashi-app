@@ -2092,6 +2092,7 @@
 "SELECT ALL" = "TOUT SÉLECTIONNER";
 "SELECT AN AREA TO REDACT, OR DETECT FACES OR TEXT." = "SÉLECTIONNEZ UNE ZONE À CAVIARDER, OU DÉTECTEZ LES VISAGES OU LE TEXTE.";
 "SELECT AT LEAST ONE AVAILABLE PHOTO." = "SÉLECTIONNEZ AU MOINS UNE PHOTO DISPONIBLE.";
+"SELECT AT LEAST ONE LOCAL FILE." = "SÉLECTIONNEZ AU MOINS UN FICHIER LOCAL.";
 "SELECT AT LEAST ONE PAGE." = "SÉLECTIONNEZ AU MOINS UNE PAGE.";
 "SELECT ONE CROP RECTANGLE." = "SÉLECTIONNEZ UN SEUL RECTANGLE DE RECADRAGE.";
 "SELECT ONLY THIS REPOSITORY AND GIVE CONTENTS READ ACCESS. THE TOKEN STAYS IN THIS MAC’S KEYCHAIN." = "SÉLECTIONNEZ UNIQUEMENT CE DÉPÔT ET ACCORDEZ L’ACCÈS EN LECTURE À CONTENTS. LE JETON RESTE DANS LE TROUSSEAU DE CE MAC.";
@@ -2257,6 +2258,7 @@
 "Select a clip and press Delete to remove it from the result." = "Sélectionnez un clip et appuyez sur Supprimer pour le retirer du résultat.";
 "Select an area to redact, or detect faces or text." = "Sélectionnez une zone à caviarder, ou détectez les visages ou le texte.";
 "Select at least one available photo." = "Sélectionnez au moins une photo disponible.";
+"Select at least one local file." = "Sélectionnez au moins un fichier local.";
 "Select at least one page." = "Sélectionnez au moins une page.";
 "Select one crop rectangle." = "Sélectionnez un seul rectangle de recadrage.";
 "Select only this repository and give Contents read access. The token stays in this Mac’s Keychain." = "Sélectionnez uniquement ce dépôt et accordez l’accès en lecture à Contents. Le jeton reste dans le trousseau de ce Mac.";
