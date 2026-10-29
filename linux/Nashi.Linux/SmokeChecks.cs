@@ -62,6 +62,7 @@ internal static class SmokeChecks
                 preview.Load(processed);preview.Load(processed);await Artwork(processed);Check(player.Duration>.5,"reloading the same preview refreshes unchanged observed duration");
                 editor.GetVisualDescendants().OfType<Button>().Single(b=>b.Content as string=="Reset").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));await Artwork(media);Check(player.Paused&&player.Position<.1&&Math.Abs(timeline.End-2)<.01,"Reset restores original paused playback and source range");
                 Capture(editor,Path.Combine(directory,"trimVideo.png"));editor.Close();Check(timeline.ArtworkCount==0,"closing media editor releases timeline bitmaps");
+                var closeLimit=DateTime.UtcNow.AddSeconds(10);while(editor.IsVisible){if(DateTime.UtcNow>closeLimit)throw new Exception("Media editor shutdown did not finish");await Task.Delay(30);}Check(true,"media editor completes native shutdown without blocking the UI");
             }
             var pdf=(await new LinuxEngine().RunAsync("createPDF",[fixture,fixture],directory,new()))[0];
             var organizer=new PdfOrganizer(await NativePdf.RenderAsync(pdf,72,CancellationToken.None));organizer.Show(window);await Task.Delay(150);Check(organizer.GetVisualDescendants().OfType<ListBoxItem>().Count()==2,"PDF thumbnails");Capture(organizer,Path.Combine(directory,"pdf-organizer.png"));organizer.Close();

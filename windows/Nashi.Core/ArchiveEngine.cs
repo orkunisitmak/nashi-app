@@ -1,11 +1,23 @@
 using System.Formats.Tar;
 using System.IO.Compression;
 using SharpCompress.Archives;
+using SharpCompress.Common;
 using SharpCompress.Readers;
 using System.Text;
 namespace Nashi.Core;
 public static class ArchiveEngine
 {
+    static ArchiveEngine()=>Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+    private static readonly UTF8Encoding StrictUtf8=new(false,true);
+    // Names without the UTF-8 flag are UTF-8 from macOS and EPUB tools, but the OEM code page
+    // from 7-Zip and Explorer on Windows (cp857 in Turkish, cp437 as the ZIP spec's default).
+    // Like 7-Zip, keep valid UTF-8 and read anything else in the OEM code page.
+    private static string DecodeName(byte[] bytes,int index,int count,EncodingType type)
+    {
+        if(type==EncodingType.UTF8)return Encoding.UTF8.GetString(bytes,index,count);
+        try{return StrictUtf8.GetString(bytes,index,count);}
+        catch(DecoderFallbackException){return LegacyTextCodec.Oem.GetString(bytes,index,count);}
+    }
     public static IReadOnlyList<string> Extract(string input,string destination,string? password=null,IProgress<OperationProgress>? progress=null,CancellationToken token=default)
     {
         using var tx=new ExportTransaction(destination);var folder=Path.Combine(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+" Extracted");Directory.CreateDirectory(folder);
@@ -20,7 +32,7 @@ public static class ArchiveEngine
                 if(!tar){probe.Close();File.Move(sourcePath,SafePaths.ArchiveEntry(folder,Path.GetFileNameWithoutExtension(input)));return tx.Publish([folder],token);}
             }
         }
-        using var archive=ArchiveFactory.OpenArchive(sourcePath,new ReaderOptions{Password=password});var entries=archive.Entries.ToArray();
+        using var archive=ArchiveFactory.OpenArchive(sourcePath,new ReaderOptions{Password=password,ArchiveEncoding=new ArchiveEncoding{CustomDecoder=DecodeName}});var entries=archive.Entries.ToArray();
         if(entries.Length>10000||entries.Sum(e=>Math.Max(0,e.Size))>4L*1024*1024*1024)throw new InvalidDataException("Archive exceeds 10,000 entries or 4 GB.");
         var names=new HashSet<string>(StringComparer.OrdinalIgnoreCase);long copied=0;var index=0;
         foreach(var entry in entries)

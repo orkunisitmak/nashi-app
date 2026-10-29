@@ -15,6 +15,7 @@ internal sealed class MediaPlayer(string path):NativeControlHost
     });
     private static readonly string[] ObservedProperties=["time-pos","duration","pause","path","vo-configured"];
     private IntPtr player;
+    private Task? shutdown;
     private readonly Dictionary<string,string> properties=[];
     private readonly Queue<string> diagnostics=[];
     internal string Diagnostics=>string.Join(" | ",diagnostics);
@@ -46,6 +47,11 @@ internal sealed class MediaPlayer(string path):NativeControlHost
     }
     protected override void DestroyNativeControlCore(IPlatformHandle control)
     {DisposePlayer();base.DestroyNativeControlCore(control);}
+    internal Task ShutdownAsync()
+    {
+        if(shutdown is not null)return shutdown;var handle=player;player=IntPtr.Zero;
+        return shutdown=handle==IntPtr.Zero?Task.CompletedTask:Task.Run(()=>mpv_terminate_destroy(handle));
+    }
     private void DisposePlayer(){if(player!=IntPtr.Zero){mpv_terminate_destroy(player);player=IntPtr.Zero;}}
     private void Option(string key,string value){if(mpv_set_option_string(player,key,value)<0)throw new InvalidOperationException("Unsupported media preview option: "+key);}
     public void Load(string file){if(Available){properties.Clear();Error=null;Pause();Command("loadfile",System.IO.Path.GetFullPath(file));}}

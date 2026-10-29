@@ -2,7 +2,7 @@
 
 These features are included in the published [0.7.5 release](https://github.com/orkunisitmak/nashi-app/releases/tag/v0.7.5-36). The native platform adaptations and evidence boundaries below still apply.
 
-`Resources/FeatureCatalog.json` is the shared availability contract: 45 input formats, 27 tools, single/multiple-selection rules and conversion intersections. `scripts/check-feature-parity.py` compares it with the Swift catalog on every source check. The catalog check establishes matching choices; engine and native desktop checks establish behavior.
+`Resources/FeatureCatalog.json` is the shared availability contract: 46 input formats, 27 tools, single/multiple-selection rules and conversion intersections. `scripts/check-feature-parity.py` compares it with the Swift catalog on every source check. The catalog check establishes matching choices; engine and native desktop checks establish behavior.
 
 | Area | Windows implementation | Verification |
 | --- | --- | --- |

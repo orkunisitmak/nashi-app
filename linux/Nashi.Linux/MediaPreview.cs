@@ -53,6 +53,7 @@ internal sealed class MediaPreview:StackPanel
         };
         AttachedToVisualTree+=(_,_)=>clock.Start();DetachedFromVisualTree+=(_,_)=>{clock.Stop();CancelArtwork();timeline.SetArtwork([]);ArtworkSource=null;};
     }
+    internal Task ShutdownAsync(){clock.Stop();CancelArtwork();timeline.SetArtwork([]);ArtworkSource=null;return player.ShutdownAsync();}
     private void CancelArtwork(){artworkRequest?.Cancel();}
     internal void Reset(){Load(originalPath);player.Pause();}
     internal void Load(string file){CancelArtwork();currentPath=Path.GetFullPath(file);initialized=false;previewStart=0;previewEnd=null;rangeEnd=null;ArtworkSource=null;ArtworkError=null;timeline.SetArtwork([]);player.Load(file);}

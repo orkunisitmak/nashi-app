@@ -92,7 +92,7 @@ public sealed partial class ToolEditor
         try
         {
             var settings=PhotoSettings(new((int)Value("Width",bitmap.PixelWidth),(int)Value("Height",bitmap.PixelHeight),(int)Value("Degrees",0)));BitmapSource result;
-            if(tool=="editImage"){var factor=Math.Min(1,1200d/Math.Max(bitmap.PixelWidth,bitmap.PixelHeight));var source=factor<1?new TransformedBitmap(bitmap,new ScaleTransform(factor,factor)):(BitmapSource)bitmap;var png=ImageEngine.PngBytes(source);result=ImageEngine.FromPng(await Task.Run(()=>PhotoCodec.Adjust(png,settings.Adjustments)));result=ImageEngine.TransformPhoto(result,settings with{Width=Math.Max(1,(int)Math.Round((settings.Width??bitmap.PixelWidth)*factor)),Height=Math.Max(1,(int)Math.Round((settings.Height??bitmap.PixelHeight)*factor))});}
+            if(tool=="editImage"){var factor=Math.Min(1,1200d/Math.Max(bitmap.PixelWidth,bitmap.PixelHeight));var source=factor<1?new TransformedBitmap(bitmap,new ScaleTransform(factor,factor)):(BitmapSource)bitmap;var png=ImageEngine.PngBytes(source);result=ImageEngine.FromPng(await Task.Run(()=>PhotoCodec.Adjust(png,settings.Adjustments)));result=ImageEngine.TransformPhoto(result,SizeUntouched?settings with{Width=null,Height=null}:settings with{Width=Math.Max(1,(int)Math.Round((settings.Width??bitmap.PixelWidth)*factor)),Height=Math.Max(1,(int)Math.Round((settings.Height??bitmap.PixelHeight)*factor))});}
             else if(tool=="frameImage")result=ImageEngine.Frame(bitmap,settings.Frame);
             else result=ImageEngine.Collage(collageInputs,settings.Collage,CancellationToken.None);
             if(!IsVisible||showingOriginal||generation!=photoGeneration)return;SetPhotoPreview(result);

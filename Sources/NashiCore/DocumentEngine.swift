@@ -49,6 +49,12 @@ public enum DocumentEngine {
 
         var source = input
         let ext = normalized(input.pathExtension)
+        if ext == "html" && format == "pdf" {
+            // The office importer drops most CSS layout; WebKit prints the page as a browser does.
+            let pdf = work.appendingPathComponent(input.deletingPathExtension().lastPathComponent).appendingPathExtension("pdf")
+            try HTMLPDFRenderer.render(input, to: pdf, token: token)
+            return try publish(pdf, to: output, token: token)
+        }
         if ext == "pages" {
             // Modern IWA Pages files are parsed locally; the original is
             // never opened by or handed to an installed Apple office app.

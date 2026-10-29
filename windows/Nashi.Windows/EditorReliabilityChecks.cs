@@ -64,8 +64,77 @@ internal static class EditorReliabilityChecks
                 check(failure is null&&photo.FieldForTest("Width").Text=="100","Invalid photo rotation escaped the editor or partially changed dimensions");
                 photo.FieldForTest("Degrees").Text="0";rotate.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 check(photo.FieldForTest("Degrees").Text=="90"&&photo.FieldForTest("Width").Text=="60","Photo rotation did not recover after correcting invalid input");
+                photo.AcceptForTest();var turned=ImageEngine.Load(ImageEngine.Apply("editImage",[image],root,photo.ImageOptions)[0]);
+                check(turned.PixelWidth==60&&turned.PixelHeight==100,$"Rotate Right distorted the photo to {turned.PixelWidth}×{turned.PixelHeight}");
+                Children(photo).OfType<Button>().Single(b=>b.Content as string=="↶ Reset").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));photo.FieldForTest("Degrees").Text="45";DesktopInput.Pump(1500);photo.AcceptForTest();
+                var tilted=ImageEngine.Load(ImageEngine.Apply("editImage",[image],root,photo.ImageOptions)[0]);
+                check(photo.IsVisible&&tilted.PixelWidth==114&&tilted.PixelHeight==114,$"A 45° photo rotation crashed the preview or lost the turned corners: {tilted.PixelWidth}×{tilted.PixelHeight}");
+                var shown=(System.Windows.Media.Imaging.BitmapSource)((Image)Children(photo).OfType<Canvas>().First(c=>c.Children.Count>0&&c.Children[0] is Image).Children[0]).Source;
+                check(shown.PixelWidth==114&&shown.PixelHeight==114,$"The 45° preview ({shown.PixelWidth}×{shown.PixelHeight}) differs from the exported photo");
             }
             finally{photo.Close();}
+            var single=new ToolEditor(owner,"resize","Resize",image,preview:pixels);
+            try
+            {
+                single.Show();DesktopInput.Pump();single.FieldForTest("Height").Text="30";single.AcceptForTest();var exact=ImageEngine.Load(ImageEngine.Apply("resize",[image],root,single.ImageOptions)[0]);
+                check(exact.PixelWidth==100&&exact.PixelHeight==30,$"Resizing one image ignored the typed size: {exact.PixelWidth}×{exact.PixelHeight}");
+            }
+            finally{single.Close();}
+            // Default ranges show milliseconds and can round just past ffprobe's duration.
+            var rounded=new ToolEditor(owner,"trimAudio","Trim Audio",audio,new MediaInfo(4.9876,new FileInfo(audio).Length,[new MediaStream(0,"audio","pcm_s16le",null,null,false)]));
+            try
+            {
+                rounded.Show();DesktopInput.Pump();Exception? failure=null;try{rounded.AcceptForTest();}catch(Exception error){failure=error;}
+                check(failure is null&&rounded.MediaOptions.End<=4.9876,"The untouched trim range was rejected or ran past the media: End="+rounded.FieldForTest("End").Text+" "+failure?.Message);
+                rounded.FieldForTest("Start").Text="4.9875";rounded.FieldForTest("End").Text="4.988";failure=null;try{rounded.AcceptForTest();}catch(ArgumentException error){failure=error;}
+                check(failure is not null,"A range that is too short once End is clamped to the media was accepted");
+                rounded.FieldForTest("Start").Text="1.1";rounded.FieldForTest("End").Text="1.15";failure=null;try{rounded.AcceptForTest();}catch(ArgumentException error){failure=error;}
+                check(failure is null,"A 50 ms range was refused by floating-point rounding: "+failure?.Message);
+            }
+            finally{rounded.Close();}
+            var bleep=new ToolEditor(owner,"redactAudio","Bleep Audio",audio,new MediaInfo(5,new FileInfo(audio).Length,[new MediaStream(0,"audio","pcm_s16le",null,null,false)]));
+            try
+            {
+                bleep.Show();DesktopInput.Pump();bleep.FieldForTest("Start").Text="1";bleep.FieldForTest("End").Text="2";
+                Children(bleep).OfType<Button>().Single(b=>b.Content as string=="Add selected range").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                bleep.FieldForTest("Start").Text="3";bleep.FieldForTest("End").Text="1";Exception? failure=null;try{bleep.AcceptForTest();}catch(Exception error){failure=error;}
+                check(failure is null&&bleep.MediaOptions.AudioRedactions is [{Start:1,End:2}],"Bleep Audio checked the playback selection instead of the added ranges: "+failure?.Message);
+            }
+            finally{bleep.Close();}
+            var tall=System.Windows.Media.Imaging.BitmapSource.Create(60,100,96,96,PixelFormats.Bgra32,null,new byte[60*100*4],60*4);var portrait=Path.Combine(root,"Reliability portrait.png");ImageEngine.Save(tall,portrait,"png");
+            var batch=new ToolEditor(owner,"compress","Compress",image,preview:pixels,inputs:[image,portrait]);
+            try
+            {
+                batch.Show();DesktopInput.Pump();batch.AcceptForTest();var kept=ImageEngine.Apply("compress",[image,portrait],root,batch.ImageOptions).Select(ImageEngine.Load).ToArray();
+                check(kept[0].PixelWidth==100&&kept[0].PixelHeight==60&&kept[1].PixelWidth==60&&kept[1].PixelHeight==100,"Batch compression stretched images to the first image's size");
+                Children(batch).OfType<ComboBox>().Single(c=>c.Items.Contains("50%")).SelectedItem="50%";batch.AcceptForTest();var halved=ImageEngine.Apply("compress",[image,portrait],root,batch.ImageOptions).Select(ImageEngine.Load).ToArray();
+                check(halved[0].PixelWidth==50&&halved[0].PixelHeight==30&&halved[1].PixelWidth==30&&halved[1].PixelHeight==50,"A size preset was not applied to each image's own dimensions");
+            }
+            finally{batch.Close();}
+            var widths=new ToolEditor(owner,"resize","Resize",image,preview:pixels,inputs:[image,portrait]);
+            try
+            {
+                widths.Show();DesktopInput.Pump();widths.FieldForTest("Width").Text="50";widths.AcceptForTest();var narrowed=ImageEngine.Apply("resize",[image,portrait],root,widths.ImageOptions).Select(ImageEngine.Load).ToArray();
+                check(narrowed[0].PixelWidth==50&&narrowed[0].PixelHeight==30&&narrowed[1].PixelWidth==50&&narrowed[1].PixelHeight==83,"A batch width change did not keep each image's proportions");
+            }
+            finally{widths.Close();}
+            var flattened=Path.Combine(root,"Reliability transparent.jpg");ImageEngine.Save(pixels,flattened,"jpg");var corner=new byte[4];new System.Windows.Media.Imaging.FormatConvertedBitmap(ImageEngine.Load(flattened),PixelFormats.Bgra32,null,0).CopyPixels(new Int32Rect(0,0,1,1),corner,4,0);
+            check(corner[0]>245&&corner[1]>245&&corner[2]>245,"Transparent pixels turned black in a JPEG export");
+            var cover=new ToolEditor(owner,"redactImage","Redact Photo",image,preview:pixels);
+            try
+            {
+                cover.Show();DesktopInput.Pump();var canvas=Children(cover).OfType<Canvas>().First(c=>c.Children.Count>0&&c.Children[0] is Image);var shapes=canvas.Children.Count;
+                foreach(var routed in new[]{UIElement.MouseLeftButtonDownEvent,UIElement.MouseLeftButtonUpEvent})canvas.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice,0,MouseButton.Left){RoutedEvent=routed});
+                check(canvas.Children.Count==shapes,"A click without a drag left a redaction box that is never exported");
+            }
+            finally{cover.Close();}
+            var video=new ToolEditor(owner,"redactVideo","Redact Video",audio,new MediaInfo(5,new FileInfo(audio).Length,[new MediaStream(0,"video","h264",100,60,false)]),pixels);
+            try
+            {
+                video.Show();DesktopInput.Pump();Exception? failure=null;try{video.AcceptForTest();}catch(ArgumentException error){failure=error;}
+                check(failure?.Message=="Drag an area first.","Redact Video accepted a save without any drawn area");
+            }
+            finally{video.Close();}
         }
         finally{editor.Close();owner.Close();}
     }

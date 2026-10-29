@@ -6,7 +6,8 @@ internal static class ParityChecks
 {
     public static void Run(Action<bool,string> check,string root)
     {
-        check(FeatureCatalog.Conversions.Count==45&&FeatureCatalog.ToolNames.Count==27,"Mac/Windows catalog count diverged");
+        check(FeatureCatalog.Conversions.Count==46&&FeatureCatalog.ToolNames.Count==27,"Mac/Windows catalog count diverged");
+        check(FeatureCatalog.Formats(["a.htm","b.html"]).SequenceEqual(new[]{"pdf"})&&FeatureCatalog.Tools(["a.html"]).Length==0,"HTML inputs lost their PDF route");
         check(FeatureCatalog.Formats(["a.jpeg","b.png"]).Contains("webp"),"Mixed image conversion intersection failed");
         check(!FeatureCatalog.Formats(["a.png","b.mp4"]).Any(),"Unrelated inputs offered an invalid format");
         check(FeatureCatalog.Tools(["a.pdf","b.pdf"]).SequenceEqual(new[]{"compress","removeMetadata","splitPDF","mergePDF","readQRCode"}),"Multiple PDF wheel diverged from Mac");
@@ -53,12 +54,34 @@ internal static class ParityChecks
         check(Chapter(new UTF32Encoding(false,false).GetBytes("<?xml version=\"1.0\"?><p>\u011e</p>"))=="\u011e"&&Chapter(new UTF32Encoding(true,false).GetBytes("<p>\u011e</p>"))=="\u011e"&&Chapter(Encoding.Unicode.GetBytes("<p>\u011e</p>"))=="\u011e"&&Chapter(Encoding.BigEndianUnicode.GetBytes("<p>\u011e</p>"))=="\u011e","EPUB chapters in UTF-32, or in UTF-16 without a declaration, and without a byte order mark were read as UTF-8");
         check(Chapter(Encoding.UTF8.GetBytes("<p><![CDATA[a&mdash;b]]>&mdash;<!-- &nbsp; --><?nashi &nbsp;?></p>"))=="a&mdash;b\u2014"&&OfficeDocuments.NumericEntities("<!-- &nbsp; --><?nashi &nbsp;?>")=="<!-- &nbsp; --><?nashi &nbsp;?>","Named entities inside CDATA, comments or processing instructions were rewritten");
         var preferences=new PreferencesStore(Path.Combine(root,"Preferences"));preferences.Save(preferences.Value with{Feedback=false,WheelScale=1.2,FloatBehavior="addToExisting"});preferences.SetProfile("jpg",new(Quality:.7));var persisted=new PreferencesStore(Path.Combine(root,"Preferences"));check(!persisted.Value.Feedback&&persisted.Value.WheelScale==1.2&&persisted.Profile("jpg").Quality==.7,"Windows settings/export defaults did not persist");try{persisted.Save(persisted.Value with{ToolsModifier="Shift"});throw new Exception("Conflicting drag shortcuts accepted");}catch(ArgumentException){check(true,"Drag shortcut collision validation");}
+        var oversized=Path.Combine(root,"Oversized preferences");Directory.CreateDirectory(oversized);File.WriteAllText(Path.Combine(oversized,"preferences.json"),new string(' ',1_000_001));var oversizedSettings=new PreferencesStore(oversized);check(oversizedSettings.RecoveryNotice is not null&&oversizedSettings.Value.Language=="en"&&oversizedSettings.Value.Enabled,"Oversized settings crashed startup or did not fall back to defaults");
         check(WebMediaPayload.Parse("https://i.ytimg.com/vi/mXS5W7_kdzk/hqdefault.jpg") is {Kind:"youtube",Url:"https://www.youtube.com/watch?v=mXS5W7_kdzk"},"YouTube home thumbnail did not recover its video");
         check(WebMediaPayload.Parse("https://cdn.example/image.jpg","<a href=\"https://www.instagram.com/p/FixtureCode/\"><img src=\"https://cdn.example/image.jpg\"/></a>") is {Kind:"instagramPhotos"},"Instagram grid image chose video/thumbnail");check(WebMediaPayload.Parse("https://www.instagram.com/reel/FixtureCode/") is {Kind:"instagramReel"},"Reel classification failed");check(WebMediaPayload.Parse("https://cdn.example/image.jpg") is {Kind:"image"},"Direct image classification failed");
         var info=WebDownload.ParseInfo("{\"title\":\"Nashi fixture\",\"duration\":3,\"formats\":[{\"height\":720},{\"height\":1080},{\"height\":2160,\"has_drm\":true}]}","fixture");check(info.Heights.SequenceEqual(new[]{720,1080})&&info.Duration==3,"Web inspection included DRM format or lost quality choices");try{WebDownload.ParseInfo("{\"is_live\":true}","fixture");throw new Exception("Live stream accepted");}catch(InvalidDataException){check(true,"Web live stream validation");}
         var photoFixture="{\"entries\":[{\"thumbnails\":[{\"url\":\"https://scontent.cdninstagram.com/photo.jpg?stp=c0.0.720.720a_s640x640\",\"width\":640,\"height\":640},{\"url\":\"https://scontent.cdninstagram.com/original.jpg?sig=keep\",\"width\":1440,\"height\":1920}]},{\"duration\":5,\"formats\":[{\"url\":\"https://scontent.cdninstagram.com/video.mp4\"}]}]}";var photos=WebPhotos.Instagram(photoFixture);check(photos.Length==1&&photos[0].Url.EndsWith("original.jpg?sig=keep",StringComparison.Ordinal),"Instagram carousel did not choose full-frame photo or skipped video incorrectly");
         check(LegacyTextCodec.Decode(Encoding.Unicode.GetPreamble().Concat(Encoding.Unicode.GetBytes("Türkçe 🍐")).ToArray())=="Türkçe 🍐","UTF-16 text lost Unicode");
-        check(LegacyTextCodec.Decode(new byte[]{0x63,0x61,0x66,0xe9})=="café","Legacy text decoding failed");
+        check(LegacyTextCodec.Decode(new UTF32Encoding(false,true).GetPreamble().Concat(Encoding.UTF32.GetBytes("Türkçe 🍐")).ToArray())=="Türkçe 🍐","UTF-32 text was read as UTF-16");
+        // Files from Turkish Windows, 7-Zip and Excel: ANSI 1254 text, OEM 857 ZIP names, semicolon CSV.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);var culture=System.Globalization.CultureInfo.CurrentCulture;var codePages=LegacyTextCodec.SystemCodePages;
+        try
+        {
+            LegacyTextCodec.SystemCodePages=(1252,437);check(LegacyTextCodec.Decode(new byte[]{0x63,0x61,0x66,0xe9})=="café","Legacy text decoding failed");
+            LegacyTextCodec.SystemCodePages=(1254,857);System.Globalization.CultureInfo.CurrentCulture=System.Globalization.CultureInfo.GetCultureInfo("tr-TR");
+            var turkish=LegacyTextCodec.Decode(Encoding.GetEncoding(1254).GetBytes("1\n00:00:01,000 --> 00:00:02,000\nŞimdi ığdır, İzmir\n"));
+            check(turkish.Contains("Şimdi ığdır, İzmir")&&SubtitleCodec.Convert(turkish,"vtt").Contains("Şimdi ığdır, İzmir"),"Turkish ANSI text or subtitles were decoded as Western European");
+            var legacyZip=Path.Combine(root,"Legacy names.zip");using(var stream=File.Create(legacyZip))using(var archive=new ZipArchive(stream,ZipArchiveMode.Create,false,Encoding.GetEncoding(857)))foreach(var name in new[]{"Şubat.txt","Ğubat.txt"})using(var writer=new StreamWriter(archive.CreateEntry(name).Open()))writer.Write(name);
+            // macOS Archive Utility writes UTF-8 names without setting the UTF-8 flag.
+            var macZip=Path.Combine(root,"Mac names.zip");using(var stream=File.Create(macZip))using(var archive=new ZipArchive(stream,ZipArchiveMode.Create,false,Encoding.Latin1))using(var writer=new StreamWriter(archive.CreateEntry(Encoding.Latin1.GetString(Encoding.UTF8.GetBytes("Şubat.txt"))).Open()))writer.Write("Şubat");
+            var legacy=ArchiveEngine.Extract(legacyZip,root)[0];var mac=ArchiveEngine.Extract(macZip,root)[0];
+            check(File.Exists(Path.Combine(legacy,"Şubat.txt"))&&File.Exists(Path.Combine(legacy,"Ğubat.txt"))&&File.Exists(Path.Combine(mac,"Şubat.txt")),"ZIP names without the UTF-8 flag lost Turkish letters");
+            var excel=Path.Combine(root,"Excel.csv");File.WriteAllText(excel,"\"Ad;Soyad\";Tutar\nAyşe;1,5\n");var plain=Path.Combine(root,"Plain.csv");File.WriteAllText(plain,"\"a;b\",c,d\n");
+            var notes=Path.Combine(root,"Notes.csv");File.WriteAllText(notes,"name,notes;detail;status\nAda,a;b;c\n");
+            check(OfficeDocuments.DelimitedLayout(excel,"csv")==(59,1055)&&OfficeDocuments.DelimitedLayout(plain,"csv")==(44,1033)&&OfficeDocuments.DelimitedLayout(notes,"csv")==(44,1033),"Semicolon CSV from Turkish Excel was read as comma-separated English, or a comma CSV with semicolons in it as semicolon-separated");
+            var streamed=Path.Combine(root,"Streamed.csv");var normalized=Path.Combine(root,"Streamed UTF-8.csv");const string table="Ad;Şehir\nAyşe;İzmir\n";
+            foreach(var bytes in new[]{Encoding.GetEncoding(1254).GetBytes(table),Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(table)).ToArray(),Encoding.Unicode.GetPreamble().Concat(Encoding.Unicode.GetBytes(table)).ToArray(),new UTF32Encoding(true,true).GetPreamble().Concat(new UTF32Encoding(true,false).GetBytes(table)).ToArray()})
+            {File.WriteAllBytes(streamed,bytes);LegacyTextCodec.ToUtf8Async(streamed,normalized).GetAwaiter().GetResult();check(LegacyTextCodec.Decode(bytes)==table&&File.ReadAllText(normalized)==table&&File.ReadAllBytes(normalized).Length==Encoding.UTF8.GetByteCount(table),"Streamed text normalization did not match Decode");}
+        }
+        finally{System.Globalization.CultureInfo.CurrentCulture=culture;LegacyTextCodec.SystemCodePages=codePages;}
         var clipping=LegacyTextCodec.Clipping(Encoding.UTF8.GetBytes("<?xml version=\"1.0\"?><plist><dict><key>public.utf8-plain-text</key><data>VMO8cmvDp2U=</data></dict></plist>"));check(Encoding.UTF8.GetString(clipping.Bytes)=="Türkçe","Text clipping plist lost content");
         var binary=LegacyTextCodec.Clipping(System.Convert.FromBase64String("YnBsaXN0MDDRAQJfEBZwdWJsaWMudXRmOC1wbGFpbi10ZXh0aQBUAPwAcgBrAOcAZQAg2DzfUAgLJAAAAAAAAAEBAAAAAAAAAAMAAAAAAAAAAAAAAAAAAAA3"));check(Encoding.UTF8.GetString(binary.Bytes)=="Türkçe 🍐","Binary text clipping lost Unicode");
         var docx=Path.Combine(root,"Styled.docx");using(var archive=ZipFile.Open(docx,ZipArchiveMode.Create))
@@ -87,12 +110,26 @@ internal static class ParityChecks
         var external=Path.Combine(root,"External.svg");File.WriteAllText(external,"<svg xmlns=\"http://www.w3.org/2000/svg\"><image href=\"file:///private/example.png\"/></svg>");try{PhotoCodec.Png(external);throw new Exception("External SVG resource accepted");}catch(InvalidDataException){check(true,"SVG resource isolation");}
         foreach(var format in new[]{"png","jpg","webp","heic","avif","tiff","bmp"})
         {if(format=="heic"&&Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG") is null)continue;var output=Path.Combine(root,"Image codec."+format);PhotoCodec.EncodePng(png,output,format,encoder:Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG"));using var decoded=PhotoCodec.Read(output);check(decoded.Width==96&&decoded.Height==64,"Image codec round trip failed: "+format);}
+        // Raw BGRA pixels (WPF's Bgra32) must keep channel order and alpha without an intermediate PNG.
+        // 16 px quadrants (blue | red over half-transparent green | grey) survive AVIF/WebP chroma subsampling.
+        var bgra=new byte[32*32*4];for(var y=0;y<32;y++)for(var x=0;x<32;x++){var i=(y*32+x)*4;byte[] c=y<16?(x<16?[255,0,0,255]:[0,0,255,255]):(x<16?[0,255,0,128]:[90,90,90,255]);c.CopyTo(bgra,i);}
+        foreach(var format in new[]{"png","webp","avif"})
+        {var output=Path.Combine(root,"Raw pixels."+format);PhotoCodec.EncodePixels(bgra,32,32,output,format,100);using var decoded=new MagickImage(output);check(decoded.Width==32&&decoded.Height==32,"Raw pixel encode changed size: "+format);
+            using var pixels=decoded.GetPixels();var blue=pixels.GetPixel(8,8).ToColor()!;var red=pixels.GetPixel(24,8).ToColor()!;check(blue.B>200&&blue.R<55&&red.R>200&&red.B<55,"Raw pixel encode swapped colour channels: "+format);
+            if(format=="png")check(pixels.GetPixel(8,24).ToColor()!.A==128,"Raw pixel encode lost alpha");}
         if(Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG") is {} encoder){using var oddImage=new MagickImage(MagickColors.Gold,97,65);var odd=Path.Combine(root,"Odd.heic");PhotoCodec.EncodePng(oddImage.ToByteArray(MagickFormat.Png),odd,"heic",encoder:encoder);using var decodedOdd=PhotoCodec.Read(odd);check(decodedOdd.Width==97&&decodedOdd.Height==65,"HEIC odd dimensions changed");}
         var taggedColor=Path.Combine(root,"Wide gamut.webp");using(var wide=new MagickImage(new MagickColor(100,128,30),16,16)){wide.SetProfile(ColorProfiles.AdobeRGB1998);wide.Write(taggedColor,MagickFormat.WebP);}using(var expectedColor=new MagickImage(taggedColor))using(var actualColor=PhotoCodec.Read(taggedColor)){expectedColor.TransformColorSpace(ColorProfiles.SRGB);check(expectedColor.Compare(actualColor,ErrorMetric.Absolute)==0,"Wide-gamut image profile was ignored");}
         var neutral=PhotoCodec.Adjust(png,new());using(var decoded=new MagickImage(neutral))check(decoded.Width==96&&decoded.Height==64,"Neutral photo adjustment changed dimensions");
         var changed=PhotoCodec.Adjust(png,new(){Brightness=.2,Saturation=.3,Temperature=.2,Shadows=.1});using(var a=new MagickImage(png))using(var b=new MagickImage(changed))check(a.Compare(b,ErrorMetric.Absolute)>0,"Photo adjustments did not change pixels");
         foreach(var effect in new[]{new PhotoAdjustments{Blur=2},new(){Sharpen=1},new(){NoiseReduction=.5},new(){Grain=.3},new(){Vignette=.4},new(){Gamma=1.2},new(){Exposure=.5},new(){Hue=50},new(){Dehaze=.2}})check(PhotoCodec.Adjust(png,effect).Length>0,"Photo effect failed");
         try{PhotoCodec.Adjust(png,new(){Gamma=double.NaN});throw new Exception("Invalid adjustment accepted");}catch(ArgumentException){check(true,"Photo finite validation");}
+        // A killed tool can still hold a staged file when the user cancels.
+        Exception? outcome=null;var hidden=false;FileStream? held=null;string? staging=null;var cleanup=new System.Diagnostics.Stopwatch();
+        try{using var tx=new ExportTransaction(Path.Combine(root,"Held export"));staging=tx.StagingDirectory;hidden=File.GetAttributes(staging).HasFlag(FileAttributes.Hidden);held=File.Create(Path.Combine(staging,"partial.mp4"));cleanup.Start();throw new OperationCanceledException();}
+        catch(Exception error){cleanup.Stop();outcome=error;}finally{held?.Dispose();}
+        check(hidden&&outcome is OperationCanceledException&&cleanup.ElapsedMilliseconds<300,"Staging cleanup replaced a cancellation with "+outcome?.GetType().Name+", blocked for "+cleanup.ElapsedMilliseconds+" ms, or staging was visible");
+        var released=System.Diagnostics.Stopwatch.StartNew();while(Directory.Exists(staging)&&released.Elapsed.TotalSeconds<5)Thread.Sleep(50);
+        check(!Directory.Exists(staging),"A staging folder was left behind after its file was released");
     }
     private static void StoredRar(string output)
     {

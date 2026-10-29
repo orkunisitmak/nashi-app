@@ -209,9 +209,10 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
                 RequireAudio(info);if(options.AudioRedactions.Length==0)throw new ArgumentException("Add a bleep or silence range.");
                 var ranges=options.AudioRedactions.Select(r=>TimeRange(r.Start,r.End,info.Duration)).ToList();
                 var expression=string.Join('+',ranges.Select(r=>$"between(t,{Number(r.Start)},{Number(r.End)})"));
-                // aeval's channel-independent expression is expanded to the input layout.
+                // One channel-independent expression; c=same keeps the input layout,
+                // otherwise aeval derives a mono layout from the single expression.
                 var replacement=options.RedactionMode=="mute"?"0":"0.18*sin(2*PI*1000*t)";
-                args.AddRange(["-map","0:a:0","-af",$"aeval=exprs='if({expression},{replacement},val(ch))'",..AudioEncoding(ext,options)]);break;
+                args.AddRange(["-map","0:a:0","-af",$"aeval=exprs='if({expression},{replacement},val(ch))':c=same",..AudioEncoding(ext,options)]);break;
             case "redactVideo":
                 RequireVideo(info);if(options.Regions.Length==0)throw new ArgumentException("Draw a region to redact.");
                 var graph=new List<string>();var previous="0:v:0";
@@ -368,7 +369,7 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
     };
     private static string Scale(MediaOptions o)=>$"scale={o.Width?.ToString(CultureInfo.InvariantCulture)??"-2"}:{o.Height?.ToString(CultureInfo.InvariantCulture)??"-2"}:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2";
     private static string Tempo(double speed){var parts=new List<string>();while(speed>2){parts.Add("atempo=2");speed/=2;}while(speed<.5){parts.Add("atempo=0.5");speed*=2;}parts.Add("atempo="+Number(speed));return string.Join(',',parts);}
-    private static MediaRange TimeRange(double start,double? end,double duration){var stop=end??duration;if(!double.IsFinite(start)||!double.IsFinite(stop)||start<0||stop-start<.05||duration>0&&stop>duration+.001)throw new ArgumentException("Choose a valid time range.");return new(start,stop);}
+    private static MediaRange TimeRange(double start,double? end,double duration){var stop=end??duration;if(!double.IsFinite(start)||!double.IsFinite(stop)||start<0||Math.Round(stop-start,6)<.05||duration>0&&stop>duration+.001)throw new ArgumentException("Choose a valid time range.");return new(start,stop);}
     private static (int X,int Y,int Width,int Height) PixelRect(MediaRegion r,MediaInfo info){var w=info.Video?.Width??0;var h=info.Video?.Height??0;if(!new[]{r.X,r.Y,r.Width,r.Height}.All(double.IsFinite)||r.X<0||r.Y<0||r.Width<2||r.Height<2||r.X+r.Width>w||r.Y+r.Height>h)throw new ArgumentException("Choose a rectangle inside the video.");return((int)r.X,(int)r.Y,(int)r.Width,(int)r.Height);}
     private static void RequireVideo(MediaInfo info){if(info.Video is null)throw new ArgumentException("This file has no video stream.");}
     private static void RequireAudio(MediaInfo info){if(!info.HasAudio)throw new ArgumentException("This file has no audio stream.");}

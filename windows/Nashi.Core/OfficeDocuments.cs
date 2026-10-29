@@ -26,7 +26,7 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
             var spreadsheet=new[]{"csv","tsv","xls","xlsx","ods"}.Contains(ext);var slides=new[]{"ppt","pptx"}.Contains(ext);
             var filter=format switch{"docx"=>"docx:Office Open XML Text","pptx"=>"pptx:Impress MS PowerPoint 2007 XML","xlsx"=>"xlsx:Calc MS Excel 2007 XML","pdf"=>"pdf:"+(spreadsheet?"calc_pdf_Export":slides?"impress_pdf_Export":"writer_pdf_Export"),"txt"=>"txt:Text (encoded):UTF8,LF","csv"=>"csv:Text - txt - csv (StarCalc):44,34,76,1,,0,false,true,true,false,false,0","tsv"=>"csv:Text - txt - csv (StarCalc):9,34,76,1,,0,false,true,true,false,false,0","html"=>"html:HTML (StarWriter)","md"=>"md:Markdown","epub"=>"epub:EPUB",_=>format};
             var args=new List<string>{"-env:UserInstallation="+new Uri(profile+Path.DirectorySeparatorChar).AbsoluteUri,"--headless","--nologo","--nodefault","--nolockcheck","--nofirststartwizard","--norestore"};
-            if(ext is "csv" or "tsv")args.Add("--infilter=Text - txt - csv (StarCalc):"+(ext=="tsv"?9:44)+",34,76,1,,1033,true,true");else if(ext=="txt")args.Add("--infilter=Text (encoded):UTF8,LF");else if(ext=="md")args.Add("--infilter=Markdown");
+            if(ext is "csv" or "tsv"){var (delimiter,language)=DelimitedLayout(input,ext);args.Add("--infilter=Text - txt - csv (StarCalc):"+delimiter+",34,76,1,,"+language+",true,true");}else if(ext=="txt")args.Add("--infilter=Text (encoded):UTF8,LF");else if(ext=="md")args.Add("--infilter=Markdown");
             if(ext=="html"&&format is "xlsx" or "ods" or "csv" or "tsv")args.Add("--infilter=HTML (StarCalc)");
             if(ext=="pdf"&&format=="pptx")args.Add("--infilter=impress_pdf_import");
             args.AddRange(["--convert-to",filter,"--outdir",rendered,Path.GetFullPath(input)]);
@@ -37,6 +37,24 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
             var output=Path.Combine(rendered,Path.GetFileNameWithoutExtension(input)+"."+(format=="tsv"?"csv":format));if(!File.Exists(output)||new FileInfo(output).Length==0)throw new IOException("Office could not convert this document to "+format.ToUpperInvariant()+". "+(result.Error+" "+result.Output).Trim());var destination=SafePaths.Unique(outputDirectory,Path.GetFileNameWithoutExtension(original)+"."+(format=="tsv"?"csv":format));File.Move(output,destination);return destination;
         }
         finally{if(Directory.Exists(job))Directory.Delete(job,true);}
+    }
+    // Excel saves semicolon-separated "CSV" where the comma is the decimal mark (Turkish,
+    // German…). Read those with the user's locale so 1,5 stays a number, not text.
+    // Semicolons are the delimiter only when every record has the same number of them and
+    // the commas don't line up the same way; anything ambiguous stays comma-separated.
+    internal static (int Delimiter,int Language) DelimitedLayout(string input,string ext)
+    {
+        if(ext=="tsv")return(9,1033);
+        using var reader=new StreamReader(input,Encoding.UTF8,true);var quoted=false;int commas=0,semicolons=0;var records=new List<(int Commas,int Semicolons)>();
+        for(int c,read=0;records.Count<50&&read<1_000_000&&(c=reader.Read())>=0;read++)
+        {
+            if(c=='"')quoted=!quoted;else if(quoted)continue;else if(c==',')commas++;else if(c==';')semicolons++;
+            else if(c is '\n' or '\r'){if(commas+semicolons>0)records.Add((commas,semicolons));commas=semicolons=0;}
+        }
+        if(commas+semicolons>0&&reader.Peek()<0)records.Add((commas,semicolons));
+        bool Aligned(Func<(int Commas,int Semicolons),int> count)=>records.Count>0&&count(records[0])>0&&records.All(r=>count(r)==count(records[0]));
+        var culture=System.Globalization.CultureInfo.CurrentCulture;var commaDecimal=culture.NumberFormat.NumberDecimalSeparator==","&&culture.LCID is not (127 or 4096);
+        return Aligned(r=>r.Semicolons)&&!Aligned(r=>r.Commas)?(59,commaDecimal?culture.LCID:1033):(44,1033);
     }
     public async Task<string> PagesReadAsync(string input,string work,CancellationToken token)
     {

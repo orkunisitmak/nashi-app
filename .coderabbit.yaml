@@ -61,7 +61,7 @@ reviews:
         Check WPF focus and routed input, finite/range validation, Reset completeness,
         source versus processed preview lifetime, actual native process exit codes
         and original-file safety. Engine-only checks do not prove Windows UI.
-        Keep the shared 45-format/27-tool catalog aligned and locked restore intact.
+        Keep the shared 46-format/27-tool catalog aligned and locked restore intact.
     - path: "Sources/NashiUpdates/**"
       instructions: >-
         Require human security review for update trust, signatures, broker protocol,

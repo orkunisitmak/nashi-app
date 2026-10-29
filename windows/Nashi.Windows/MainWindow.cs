@@ -19,7 +19,7 @@ public sealed partial class MainWindow:Window
     private readonly TextBlock status=Text("Files stay on your computer.",12,"Muted");
     private readonly TextBox link=new(){ToolTip="Paste a public video, image or audio page link"};
     private readonly ComboBox downloadKind=new(){ItemsSource=new[]{"video","audio","thumbnail"},SelectedIndex=0,MinWidth=110};
-    private readonly Toolchain tools=new(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Nashi","Tools","v1"));
+    private readonly Toolchain tools=new(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Nashi","Tools","v1"),Environment.GetEnvironmentVariable("PATH"));
     private readonly LibraryStore library;
     private readonly PreferencesStore preferences;private GlobalDragController? globalDrag;
     private readonly StackPanel home=new(),libraryPage=new(),libraryRows=new(),recentRows=new();

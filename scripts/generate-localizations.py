@@ -5,7 +5,7 @@ check="--check" in sys.argv
 root=pathlib.Path(__file__).resolve().parents[1]
 resources=root/'Sources/NashiCore/Resources'
 # Translated catalogs, one per non-English language: language code -> catalog file.
-catalogs={'tr':'Turkish.json'}
+catalogs={'tr':'Turkish.json','fr':'French.json'}
 # Turkish upper case (i→İ, ı→I), except product and key names, which keep Latin capitals (SHIFT, not SHİFT).
 latin=set(json.loads((resources/'LatinWords.json').read_text(encoding='utf-8')))
 def turkish_upper(value):return re.sub(r'[^\W\d_]+',lambda m:m.group().upper() if m.group() in latin else m.group().replace('i','İ').replace('ı','I').upper(),value)

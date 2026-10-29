@@ -1,6 +1,6 @@
 # Mac and Windows desktop parity
 
-Both implementations use the same 45 input-format / 27-tool catalog. `scripts/check-feature-parity.py` checks conversion destinations, tool names and single/multi-file eligibility against the Swift source; it is not a substitute for running the tools.
+Both implementations use the same 46 input-format / 27-tool catalog. `scripts/check-feature-parity.py` checks conversion destinations, tool names and single/multi-file eligibility against the Swift source; it is not a substitute for running the tools.
 
 | Workflow | Shared behavior |
 | --- | --- |
@@ -44,6 +44,7 @@ Drag chords are configurable. Text entry keeps normal editing shortcuts; tool sh
 - Mac uses Quick Look/AVFoundation and Sparkle; Windows uses WPF, a pinned CPU PDFium renderer, Windows media APIs, local conversion previews and an Ed25519-verified update helper. PDF form appearances remain visible in read-only previews; previews do not execute document scripts or open link actions. Unsupported Windows media codecs use a local FFmpeg preview proxy. Office previews require the same optional private office runtime as Windows document conversion; originals stay unchanged.
 - macOS window control needs the user's system permission. Windows normally uses WinEvent/window APIs, but elevated/protected applications can reject resizing. Both platforms report refused placements.
 - Native fonts, title-bar controls, file pickers and system sharing dialogs follow the operating system. App page structure, palette, actions and keyboard behavior are shared.
+- HTML to PDF: Mac prints the page with the system WebKit engine and needs no office runtime. Page scripts run, so script-drawn content such as e-invoice QR codes prints, but without WebRTC, camera, microphone or location access. Only regular files inside the page's folder load, and every remote resource is blocked. Windows converts sanitized HTML with the optional office runtime, which first removes scripts, linked files and remote resources, so script-drawn QR codes are missing there.
 - Authenticated/protected web media and upstream service availability are not guaranteed by either version.
 
 ## Reproducible verification

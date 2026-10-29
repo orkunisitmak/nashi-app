@@ -15,7 +15,8 @@ public sealed partial class MainWindow
         globalDrag=new(this,preferences,OnGlobalDrop,OpenCopiedLink);
         try{tray=new(this,ShowMain,TrayMenu);}catch(InvalidOperationException error){L10n.SetText(status,error.Message);}
         Closing+=(_,e)=>{if(!e.Cancel&&tray is not null&&preferences.Value.KeepInTray&&!quitting){e.Cancel=true;Hide();}};
-        Closed+=(_,_)=>{launchTimer?.Stop();tray?.Dispose();};if(Environment.GetCommandLineArgs().Contains("--background"))Hide();
+        // Without a tray icon (Explorer not ready at sign-in), a hidden Nashi could not be reached.
+        Closed+=(_,_)=>{launchTimer?.Stop();tray?.Dispose();};if(tray is not null&&Environment.GetCommandLineArgs().Contains("--background"))Hide();
     }
     private void ShowMain(){Show();WindowState=WindowState.Normal;Activate();if(monitorToolSetup)Dispatcher.BeginInvoke(OfferFirstRunTools);}
     private System.Windows.Controls.ContextMenu TrayMenu()

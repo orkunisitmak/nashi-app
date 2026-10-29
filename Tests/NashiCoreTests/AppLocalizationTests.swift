@@ -25,7 +25,8 @@ final class AppLocalizationTests:XCTestCase {
     }
     func testFallbackAndFormattingKeepOriginalInput() {
         XCTAssertEqual(AppLocalization.normalizedLanguage(nil),"en")
-        XCTAssertEqual(AppLocalization.normalizedLanguage("fr"),"en")
+        XCTAssertEqual(AppLocalization.normalizedLanguage("fr"),"fr")
+        XCTAssertEqual(AppLocalization.normalizedLanguage("de"),"en")
         XCTAssertEqual(AppLocalization.text("Library",language:"en"),"Library")
         XCTAssertTrue(AppLocalization.matches("Crop Image",query:"kırp",language:"tr"))
         XCTAssertTrue(AppLocalization.matches("Crop Image",query:"görsel",language:"tr"))
@@ -52,5 +53,21 @@ final class AppLocalizationTests:XCTestCase {
             XCTAssertFalse(catalog.values.contains{$0.isEmpty},language)
         }
         XCTAssertTrue(AppLocalization.catalog(for:"en").isEmpty)
+    }
+    func testFrenchCopyPlaceholdersAndCasing() {
+        let marker=try! NSRegularExpression(pattern:#"\{[0-9]\}"#)
+        func tokens(_ value:String)->[String] { marker.matches(in:value,range:NSRange(value.startIndex...,in:value)).compactMap{Range($0.range,in:value).map{String(value[$0])}}.sorted() }
+        for (source,translation) in AppLocalization.french { XCTAssertEqual(tokens(source),tokens(translation),source) }
+        for source in Array(FeatureCatalog.toolNames.values)+ToolKind.allCases.map(\.title)+WindowPlacement.allCases.map(\.title) {
+            XCTAssertNotEqual(AppLocalization.text(source,language:"fr"),source,source)
+        }
+        XCTAssertEqual(AppLocalization.text("Library",language:"fr"),"Bibliothèque")
+        XCTAssertEqual(AppLocalization.text("Nicely done. 12 files are ready.",language:"fr"),"Bien joué. 12 fichiers sont prêts.")
+        XCTAssertEqual(AppLocalization.text("Resize Image".uppercased(),language:"fr"),"REDIMENSIONNER L’IMAGE")
+        XCTAssertEqual(AppLocalization.uppercased("Bibliothèque à jour",language:"fr"),"BIBLIOTHÈQUE À JOUR")
+        XCTAssertEqual(AppLocalization.text("Original size: Français {0} $1 \\ image.png",language:"fr"),"Taille d’origine\u{00A0}: Français {0} $1 \\ image.png")
+        XCTAssertEqual(AppLocalization.text("Home.png",language:"fr"),"Home.png")
+        XCTAssertTrue(AppLocalization.matches("Crop Image",query:"recadrer",language:"fr"))
+        for code in ["png","MP4","Ctrl+Shift","⌘S","00:01.250"] { XCTAssertEqual(AppLocalization.text(code,language:"fr"),code) }
     }
 }

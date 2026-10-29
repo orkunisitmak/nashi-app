@@ -16,7 +16,7 @@ public sealed class PreferencesStore
     private readonly string file;public Preferences Value{get;private set;}=new();public string? RecoveryNotice{get;private set;}
     public PreferencesStore(string directory)
     {
-        file=Path.Combine(directory,"preferences.json");if(!File.Exists(file))return;try{if(new FileInfo(file).Length>1_000_000)throw new InvalidDataException();Value=JsonSerializer.Deserialize<Preferences>(File.ReadAllText(file))??new();Value=Value with{Language=AppLocalization.Normalize(Value.Language)};Validate(Value);}catch(Exception error)when(error is JsonException or IOException or ArgumentException){RecoveryNotice="Settings could not be loaded. Defaults are in use.";Value=new();}
+        file=Path.Combine(directory,"preferences.json");if(!File.Exists(file))return;try{if(new FileInfo(file).Length>1_000_000)throw new InvalidDataException();Value=JsonSerializer.Deserialize<Preferences>(File.ReadAllText(file))??new();Value=Value with{Language=AppLocalization.Normalize(Value.Language)};Validate(Value);}catch(Exception error)when(error is JsonException or IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException){RecoveryNotice="Settings could not be loaded. Defaults are in use.";Value=new();}
     }
     private static void Validate(Preferences p)
     {

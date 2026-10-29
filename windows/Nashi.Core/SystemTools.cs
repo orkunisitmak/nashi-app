@@ -3,11 +3,11 @@ namespace Nashi.Core;
 /// Resolves executables without a shell; current-directory PATH entries are ignored.
 public static class SystemTools
 {
-    public static string? Find(string name)
+    public static string? Find(string name,string? searchPath=null)
     {
         if (name.IndexOfAny([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar]) >= 0)
             throw new ArgumentException("Use an executable name.", nameof(name));
-        foreach (var directory in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator))
+        foreach (var directory in (searchPath??Environment.GetEnvironmentVariable("PATH")??"").Split(Path.PathSeparator))
         {
             if (!Path.IsPathFullyQualified(directory)) continue;
             var path = Path.Combine(directory, name);

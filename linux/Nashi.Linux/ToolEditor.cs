@@ -28,6 +28,9 @@ public sealed partial class ToolEditor:Window
     private MediaPreview? mediaPreview;
     private readonly CancellationTokenSource lifetime=new();
     private Task? processedTask;
+    private Task? mediaClosing;
+    private bool mediaCloseReady;
+    private LinuxOptions? pendingDialogResult;
     private readonly List<Task> photoTasks=[];
     private CancellationTokenSource? photoPreviewRun;
     private byte[]? originalPhoto;
@@ -45,7 +48,7 @@ public sealed partial class ToolEditor:Window
         Width=1000;Height=740;MinWidth=720;MinHeight=520;FontFamily=new Avalonia.Media.FontFamily("DejaVu Sans");Background=NashiTheme.Paper;Foreground=NashiTheme.Ink;
         var root=new DockPanel{Margin=new(28)};var heading=new StackPanel{Spacing=8,Margin=new(0,0,0,22)};heading.Children.Add(NashiTheme.Text(Title[..^8],26));heading.Children.Add(NashiTheme.Text(Path.GetFileName(inputs[0])+" · Original stays safe",13,true));DockPanel.SetDock(heading,Dock.Top);root.Children.Add(heading);
         var footer=new StackPanel{Spacing=8,Margin=new(0,18,0,0)};footer.Children.Add(error);var buttons=new StackPanel{Orientation=Orientation.Horizontal,Spacing=10};
-        buttons.Children.Add(NashiTheme.Button("Save new copy",Save,true));buttons.Children.Add(NashiTheme.Button("Reset",()=>Reset()));buttons.Children.Add(NashiTheme.Button("Cancel",()=>Close((LinuxOptions?)null)));footer.Children.Add(buttons);DockPanel.SetDock(footer,Dock.Bottom);root.Children.Add(footer);
+        buttons.Children.Add(NashiTheme.Button("Save new copy",Save,true));buttons.Children.Add(NashiTheme.Button("Reset",()=>Reset()));buttons.Children.Add(NashiTheme.Button("Cancel",()=>Finish(null)));footer.Children.Add(buttons);DockPanel.SetDock(footer,Dock.Bottom);root.Children.Add(footer);
         var body=new Grid{ColumnDefinitions=new("3*,2*")};var preview=new StackPanel{Spacing=14,Margin=new(0,0,24,0)};body.Children.Add(new ScrollViewer{Content=preview});
         if(FeatureCatalog.IsImage(inputs[0]))
         {
@@ -79,6 +82,12 @@ public sealed partial class ToolEditor:Window
             preview.Children.Add(NashiTheme.Button("Original",()=>mediaPreview.Load(inputs[0])));
             var processed=NashiTheme.Button("Preview processed result",()=>{});processed.Click+=(_,_)=>processedTask=PreviewProcessed(inputs[0],engine,processed);preview.Children.Add(processed);
         }
+        Closing+=async(_,e)=>{
+            if(mediaPreview is null||mediaCloseReady)return;e.Cancel=true;if(mediaClosing is not null)return;
+            IsEnabled=false;lifetime.Cancel();mediaClosing=mediaPreview.ShutdownAsync();
+            try{await mediaClosing;await Task.Yield();mediaCloseReady=true;Close(pendingDialogResult);}
+            catch(Exception failure){mediaClosing=null;IsEnabled=true;error.Text="Media player could not close: "+failure.Message;}
+        };
         Closed+=async(_,_)=>{lifetime.Cancel();photoClock.Stop();try{if(processedTask is not null)await processedTask;if(photoTasks.Count>0)await Task.WhenAll(photoTasks.ToArray());if(detectionTask is not null)await detectionTask;if(processedDirectory is not null&&Directory.Exists(processedDirectory))Directory.Delete(processedDirectory,true);}finally{surface?.DisposeArtwork();}};
         if(inputs.Length>1){
             fields.Children.Add(NashiTheme.Text("File order",16));var order=new ListBox{ItemsSource=inputOrder.Select(Path.GetFileName).ToArray(),SelectedIndex=0,MaxHeight=150};fields.Children.Add(order);
@@ -92,7 +101,7 @@ public sealed partial class ToolEditor:Window
             var original=originalView=new CheckBox{Name="OriginalView",Content="Show original",Foreground=NashiTheme.Ink};original.IsCheckedChanged+=(_,_)=>{showingOriginal=original.IsChecked==true;surface.ShowOriginal(showingOriginal);if(showingOriginal){photoGeneration++;photoClock.Stop();photoPreviewRun?.Cancel();surface.SetPreview(originalPhoto!);}else QueuePhoto();};if(action=="redactImage")preview.Children.Insert(0,original);else preview.Children.Add(original);Opened+=(_,_)=>QueuePhoto();
         }
         if(fields.Children.Count==0)fields.Children.Add(NashiTheme.Text("Ready to make a fresh copy. No extra settings needed.",14,true));
-        KeyDown+=(_,e)=>{if(mediaPreview?.Handle(e)==true){e.Handled=true;return;}if(e.Key==Key.Escape)Close((LinuxOptions?)null);if(e.Key==Key.Enter&&FocusManager?.GetFocusedElement() is not TextBox)Save();};
+        KeyDown+=(_,e)=>{if(mediaPreview?.Handle(e)==true){e.Handled=true;return;}if(e.Key==Key.Escape)Finish(null);if(e.Key==Key.Enter&&FocusManager?.GetFocusedElement() is not TextBox)Save();};
         editorReady=true;
     }
     private void QueuePhoto(){if(showingOriginal||lifetime.IsCancellationRequested)return;photoGeneration++;photoPreviewRun?.Cancel();photoClock.Stop();photoClock.Start();}
@@ -253,9 +262,10 @@ public sealed partial class ToolEditor:Window
     }
     private static double[] Numbers(string text)=>text.Split(',',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries).Select(s=>double.Parse(s,CultureInfo.InvariantCulture)).ToArray();
     private static IEnumerable<double[]> Rows(string text)=>text.Split(';',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries).Select(Numbers);
+    private void Finish(LinuxOptions? result){pendingDialogResult=result;Close(result);}
     private void Save()
     {
-        try{var result=(LinuxOptions)Fill(new LinuxOptions());if(action=="redactImage"&&surface is not null){if(surface.Regions.Length==0)throw new ArgumentException("Draw or detect at least one redaction area before saving.");if(result.X<0||result.Y<0||result.Width is null or <1||result.Height is null or <1||(long)result.X+result.Width>surface.PixelWidth||(long)result.Y+result.Height>surface.PixelHeight)throw new ArgumentException("Choose an area inside the image.");result=result with{Regions=surface.Regions};}if(action=="annotateImage"&&surface is not null)result=result with{AnnotatedPng=surface.Png()};Close(result);}
+        try{var result=(LinuxOptions)Fill(new LinuxOptions());if(action=="redactImage"&&surface is not null){if(surface.Regions.Length==0)throw new ArgumentException("Draw or detect at least one redaction area before saving.");if(result.X<0||result.Y<0||result.Width is null or <1||result.Height is null or <1||(long)result.X+result.Width>surface.PixelWidth||(long)result.Y+result.Height>surface.PixelHeight)throw new ArgumentException("Choose an area inside the image.");result=result with{Regions=surface.Regions};}if(action=="annotateImage"&&surface is not null)result=result with{AnnotatedPng=surface.Png()};Finish(result);}
         catch(Exception ex)when(ex is ArgumentException or FormatException or OverflowException or TargetInvocationException){error.Text="Check your options: "+ex.Message;}
     }
 }

@@ -26,6 +26,7 @@ internal static class LocalizationChecks
             }
             App.UseSavedLanguage(()=>"tr");check(L10n.Language=="tr","Readable saved language was not used for an error dialog");
             check(NumericInput.ParseFinite("1,25",System.Globalization.CultureInfo.GetCultureInfo("tr-TR"))==1.25&&NumericInput.ParseFinite("1.25",System.Globalization.CultureInfo.InvariantCulture)==1.25,"Localized numeric input changed valid values");
+            check(NumericInput.ParseFinite("12.5",System.Globalization.CultureInfo.GetCultureInfo("tr-TR"))==12.5,"A Turkish thousands separator turned 12.5 seconds into 125");
             foreach(var invalid in new[]{"not a number","NaN","Infinity"})
             {
                 try{NumericInput.ParseFinite(invalid,System.Globalization.CultureInfo.InvariantCulture);check(false,"Invalid numeric input was accepted: "+invalid);}

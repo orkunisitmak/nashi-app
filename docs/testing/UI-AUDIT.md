@@ -33,7 +33,7 @@ Both audit commands accept these optional filters:
 ```text
 --scenes editor.crop-image,wheel.pdf-multiple
 --appearance light|dark|both
---language en|tr|both
+--language en|tr|fr|both
 ```
 
 Unknown scenes/options, empty selections, repeated scenes and invalid themes/languages fail. No filter means the complete matrix: **10 scenes × 2 appearances × 2 languages = 40 captures per platform**.

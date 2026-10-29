@@ -2,7 +2,7 @@ import Foundation
 
 /// UI copy only. File names, document contents, identifiers and export parameters stay verbatim.
 public enum AppLocalization {
-    public static let supportedLanguages = ["en", "tr"]
+    public static let supportedLanguages = ["en", "tr", "fr"]
     public static func normalizedLanguage(_ value: String?) -> String { supportedLanguages.contains(value ?? "") ? value! : "en" }
     public static func matches(_ source:String,query:String,language:String)->Bool {
         let locale=Locale(identifier:normalizedLanguage(language))
@@ -15,10 +15,12 @@ public enum AppLocalization {
         return values
     }
     public static let turkish: [String: String] = loadCatalog("Turkish")
+    public static let french: [String: String] = loadCatalog("French")
     /// Source-to-translation table for a non-English language; empty for English.
     public static func catalog(for language: String) -> [String: String] {
         switch normalizedLanguage(language) {
         case "tr": return turkish
+        case "fr": return french
         default: return [:]
         }
     }
@@ -34,6 +36,7 @@ public enum AppLocalization {
         let latin = Locale(identifier:"en_US_POSIX")
         switch normalizedLanguage(language) {
         case "tr": break
+        case "fr": return value.uppercased(with:Locale(identifier:"fr_FR"))
         default: return value.uppercased(with:latin)
         }
         let turkishLocale = Locale(identifier:"tr_TR")
