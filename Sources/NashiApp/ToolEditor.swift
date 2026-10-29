@@ -126,7 +126,7 @@ struct ToolEditor:View {
                     }.padding(24).frame(maxWidth:sideBySide ? .infinity:720,alignment:.leading)
                 }.frame(width:sideBySide ? 380:nil).frame(maxWidth:sideBySide ? nil:.infinity,maxHeight:.infinity).uiAuditProbe("editor.options")
             }.uiAuditProbe("editor.body")
-            if state.activeTool==tool,state.activeInputs==inputs,(state.working || state.error != nil || (tool == .compress && !state.outputs.isEmpty)) {
+            if state.activeTool==tool,state.activeInputs==(tool == .organizePDF ? pdfEditor.sourceURLs.compactMap{$0}:inputs),(state.working || state.error != nil || (tool == .compress && !state.outputs.isEmpty)) {
                 VStack(alignment:.leading,spacing:6) {
                     JobProgressView(state:state)
                     if tool == .compress,!state.working,!state.outputs.isEmpty {
@@ -136,7 +136,7 @@ struct ToolEditor:View {
             }
             Divider()
             HStack(spacing:12) {
-                Button { reset() } label:{Label("Reset",systemImage:"arrow.counterclockwise")}.buttonStyle(NashiButtonStyle(.quiet)).uiAuditProbe("editor.reset").accessibilityIdentifier("editor.reset")
+                Button { reset() } label:{Label("Reset",systemImage:"arrow.counterclockwise")}.buttonStyle(NashiButtonStyle(.quiet)).uiAuditProbe("editor.reset").accessibilityIdentifier("editor.reset").disabled(state.working)
                 Spacer()
                 Label("Original stays safe",systemImage:"lock").font(.system(size:10)).foregroundStyle(.secondary)
                 Button { apply() } label:{Label { LText(primaryTitle) } icon:{ Image(systemName:"arrow.up.right") }.uiAuditProbe("editor.primary.label")}.buttonStyle(NashiButtonStyle(.primary)).uiAuditProbe("editor.primary").accessibilityIdentifier("editor.primary").disabled(!canApply).help(isCropTool ? "Save a cropped copy (Return or ⌘S)":"Save a fresh copy (⌘S)")
@@ -148,6 +148,7 @@ struct ToolEditor:View {
             .task(id:visualizationKey) { await renderVisualization() }
             .onChange(of:previewKey) { _ in if processedPlayback { playOriginal(play:false) } }
             .background(WindowIdentityReader { ownerWindowID=$0 })
+            .background(PDFEditorCloseGuard(enabled:tool == .organizePDF,hasChanges:pdfEditor.isDirty))
             .background(EditorKeyboardShortcuts(enabled:!isLoading && readyToApply && !state.working,onCommand:handleShortcut))
             .onReceive(NotificationCenter.default.publisher(for:NSWindow.willCloseNotification)) { notification in if let window=notification.object as? NSWindow,ownerWindowID==ObjectIdentifier(window) { disposeMedia() } }
             .onReceive(NotificationCenter.default.publisher(for:.AVPlayerItemDidPlayToEndTime).receive(on:DispatchQueue.main)) { notification in if let item=notification.object as? AVPlayerItem,item === player?.currentItem { playerReachedEnd=true } }
@@ -457,17 +458,8 @@ struct ToolEditor:View {
         } } }
     }
     var pdfControls:some View {
-        VStack(alignment:.leading,spacing:14) {
-            LazyVGrid(columns:[GridItem(.adaptive(minimum:110))],spacing:14) { ForEach(Array(pdfEditor.pages.enumerated()),id:\.offset) { index,page in VStack { Image(nsImage:page.thumbnail(of:NSSize(width:100,height:140),for:.mediaBox)).resizable().scaledToFit().frame(height:140);Text("\(index+1)").font(.caption) }.padding(8).background(pdfEditor.selectedPage==index ? Color.nashi.opacity(0.2):Color.primary.opacity(0.03)).cornerRadius(8).onTapGesture{pdfEditor.select(index)} } }
-            HStack {
-                Button("Rotate") { pdfEditor.rotateSelected() }.disabled(!pdfEditor.hasSelection)
-                Button("Duplicate") { pdfEditor.duplicateSelected() }.disabled(!pdfEditor.hasSelection)
-                Button("Delete") { pdfEditor.deleteSelected() }.disabled(!pdfEditor.canDelete)
-                Button("Move Left") { pdfEditor.moveSelected(by:-1) }.disabled(!pdfEditor.canMoveLeft)
-                Button("Move Right") { pdfEditor.moveSelected(by:1) }.disabled(!pdfEditor.canMoveRight)
-            }
-            Toggle("Make all pages the same width",isOn:$options.pdfUniformWidth)
-        }
+        PDFWorkspaceView(editor:$pdfEditor,onExtract:{saveOrganizedPDF(selectedOnly:true)},onError:{previewError=$0})
+            .disabled(state.working)
     }
     var metadataControls:some View {
         VStack(alignment:.leading,spacing:12) {
@@ -605,7 +597,7 @@ struct ToolEditor:View {
                 else { loaded=try await Task.detached { try MediaEngine.readMetadata(input,token:token) }.value }
                 try checkGeneration(generation,token:token);metadata=loaded;originalMetadata=loaded
             }
-            if tool == .organizePDF { pdfEditor.reset(document:try PDFEngine.open(input)) }
+            if tool == .organizePDF { pdfEditor.reset(document:try PDFEngine.open(input),sourceURL:input) }
             if tool == .frameImage { options.imageFrame = .init() }
             if tool == .createCollage { options.collage = .init() }
             if tool == .audioToVideo { width=1920;height=1080;options.backgroundColor="#000000" }
@@ -667,10 +659,14 @@ struct ToolEditor:View {
         }
         state.execute(.tool(tool),options:applied,inputs:inputs)
     }
-    func saveOrganizedPDF() {
+    func saveOrganizedPDF(selectedOnly:Bool=false) {
         guard canApply,!pdfEditor.pages.isEmpty else { return }
-        var settings=options;settings.pdfPageOrder=pdfEditor.sourceIndexes;settings.pdfPageRotations=pdfEditor.rotations
-        state.execute(.tool(.organizePDF),options:settings,inputs:inputs)
+        var settings=options
+        settings.pdfWorkspacePages=pdfEditor.exportPlan(selectedOnly:selectedOnly)
+        settings.pdfExtractSelection=selectedOnly;settings.pdfWidthMode=pdfEditor.widthMode;settings.pdfCustomWidth=pdfEditor.customWidth
+        state.execute(.tool(.organizePDF),options:settings,inputs:pdfEditor.sourceURLs.compactMap{$0}) { _ in
+            if !selectedOnly { pdfEditor.markSaved() }
+        }
     }
     func detectRedactions(faces:Bool) {
         guard let input,readyToApply,!isLoading else { return }
@@ -730,6 +726,7 @@ struct ToolEditor:View {
         guard !isLoading,readyToApply,!state.working else { return false }
         if command == .save { guard canApply else { return false };apply();return true }
         if command == .confirmCrop { guard isCropTool,canApply else { return false };apply();return true }
+        if tool == .organizePDF { return PDFEditorKeyboardRouter.perform(command,editor:&pdfEditor) }
         guard (audio || video),player != nil,!previewBusy else { return false }
         switch command {
         case .togglePlayback: togglePlayback()
@@ -752,7 +749,7 @@ struct ToolEditor:View {
             if tool == .splitVideo { addSplitPoint() }
             else if tool == .videoSnapshots { options.snapshotTimes.append(playhead) }
             else { return false }
-        case .save,.confirmCrop: break
+        case .save,.confirmCrop,.deleteSelection,.selectAll,.undo,.redo: return false
         }
         return true
     }

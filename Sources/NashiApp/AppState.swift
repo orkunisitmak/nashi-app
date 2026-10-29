@@ -74,7 +74,7 @@ struct JobRecord:Codable,Identifiable {
         }
         execute(operation,options:settings)
     }
-    func execute(_ operation:NashiCore.Operation,options:NashiCore.OperationOptions = .init(),inputs:[URL]?=nil) {
+    func execute(_ operation:NashiCore.Operation,options:NashiCore.OperationOptions = .init(),inputs:[URL]?=nil,completion:(([URL])->Void)?=nil) {
         guard !working else { return }
         let selected=inputs ?? self.inputs
         beginJob(operation.title)
@@ -94,7 +94,7 @@ struct JobRecord:Codable,Identifiable {
                         }
                     }
                 }.value
-                stopProgressUpdates();outputs=result;progress=1
+                stopProgressUpdates();outputs=result;progress=1;completion?(result)
                 let record=JobRecord(title:operation.title,inputs:selected.map(\.path),outputs:result.map(\.path))
                 history.insert(record,at:0);history=Array(history.prefix(50))
                 if let data=try? JSONEncoder().encode(history) { historyDefaults.set(data,forKey:"history") }

@@ -21,6 +21,11 @@ enum NashiApplication {
             }catch {fputs(error.localizedDescription+"\n",stderr);exit(64)}
             return
         }
+        if let index=CommandLine.arguments.firstIndex(of:"--pdf-workspace-smoke"),CommandLine.arguments.count>index+1 {
+            let runner=PDFWorkspaceSmoke(output:URL(fileURLWithPath:CommandLine.arguments[index+1],isDirectory:true))
+            app.delegate=runner;app.setActivationPolicy(.accessory)
+            withExtendedLifetime(runner){app.run()};return
+        }
         if let index=CommandLine.arguments.firstIndex(of:"--range-accessibility-smoke"),CommandLine.arguments.count>index+1 {
             let runner=MediaRangeAccessibilitySmoke(output:URL(fileURLWithPath:CommandLine.arguments[index+1],isDirectory:true))
             app.delegate=runner;app.setActivationPolicy(.accessory)
@@ -323,7 +328,11 @@ enum NashiApplication {
     func applicationShouldTerminate(_ sender:NSApplication)->NSApplication.TerminateReply {
         // Sparkle can resume an earlier install without the postponement callback.
         // Never terminate a conversion before it has committed its results.
-        (state.working || toolSetupWorking) ? .terminateCancel:.terminateNow
+        guard !state.working,!toolSetupWorking else{return .terminateCancel}
+        for panel in state.toolWindows.compactMap({$0 as? ToolPanel}) where panel.isVisible {
+            if panel.shouldClose?() == false {return .terminateCancel}
+        }
+        return .terminateNow
     }
     func applicationShouldHandleReopen(_ sender:NSApplication,hasVisibleWindows flag:Bool)->Bool { showHome();return true }
     func makeWindow<V:View>(title:String,size:NSSize,view:V)->NSWindow {
@@ -352,5 +361,7 @@ final class ToolPanel:NSPanel {
     override var canBecomeKey:Bool { true }
     override var canBecomeMain:Bool { true }
     // A borderless panel has no standard close button for AppKit to click.
+    var shouldClose:(()->Bool)?
+    override func close() { guard shouldClose?() != false else{return};super.close() }
     override func performClose(_ sender:Any?) { close() }
 }

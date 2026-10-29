@@ -13,6 +13,6 @@ public static partial class DocumentEngine
     }
     private static void UniformWidths(string file,CancellationToken token)
     {
-        var bytes=File.ReadAllBytes(file);using var memory=new MemoryStream(bytes);using var form=XPdfForm.FromStream(memory);var width=0d;for(var n=1;n<=form.PageCount;n++){form.PageNumber=n;width=Math.Max(width,form.PointWidth);}using var result=new PdfDocument();for(var n=1;n<=form.PageCount;n++){token.ThrowIfCancellationRequested();form.PageNumber=n;var page=result.AddPage();page.Width=XUnit.FromPoint(width);page.Height=XUnit.FromPoint(form.PointHeight*width/form.PointWidth);using var graphics=XGraphics.FromPdfPage(page);graphics.DrawImage(form,0,0,page.Width.Point,page.Height.Point);}using var output=new MemoryStream();result.Save(output);File.WriteAllBytes(file,output.ToArray());
+        var bytes=File.ReadAllBytes(file);using var memory=new MemoryStream(bytes);using var form=XPdfForm.FromStream(memory);var width=double.PositiveInfinity;for(var n=1;n<=form.PageCount;n++){form.PageNumber=n;width=Math.Min(width,form.PointWidth);}using var result=new PdfDocument();for(var n=1;n<=form.PageCount;n++){token.ThrowIfCancellationRequested();form.PageNumber=n;var page=result.AddPage();page.Width=XUnit.FromPoint(width);page.Height=XUnit.FromPoint(form.PointHeight*width/form.PointWidth);using var graphics=XGraphics.FromPdfPage(page);graphics.DrawImage(form,0,0,page.Width.Point,page.Height.Point);}using var output=new MemoryStream();result.Save(output);File.WriteAllBytes(file,output.ToArray());
     }
 }

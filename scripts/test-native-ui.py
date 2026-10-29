@@ -92,6 +92,9 @@ def main():
         assert capture["status"] == "captured" and not capture["issues"]
         assert (output / "gallery" / capture["image"]).stat().st_size > 100
 
+    invoke(["--pdf-workspace-smoke", output / "pdf-workspace"])
+    pdf_workspace = json.loads((output / "pdf-workspace/pdf-workspace.json").read_text())
+    assert pdf_workspace["passed"] and len(pdf_workspace["checks"]) >= 13
     invoke(["--range-accessibility-smoke", output / "range"])
     ranges = json.loads((output / "range/mac-range-accessibility.json").read_text())
     assert ranges["passed"] and len(ranges["checks"]) >= 20
@@ -99,7 +102,8 @@ def main():
     artwork = json.loads((output / "artwork/file-artwork.json").read_text())
     assert artwork["passed"] >= 11 and artwork["asyncProviderCalls"] == 1
     print(f"PASS: 40 native UI captures; {len(gallery['validatorChecks'])} audit guardrails; "
-          f"{len(ranges['checks'])} range checks; {artwork['passed']} artwork checks; parser/output safety")
+          f"{len(ranges['checks'])} range checks; {len(pdf_workspace['checks'])} PDF workspace checks; "
+          f"{artwork['passed']} artwork checks; parser/output safety")
 
 
 if __name__ == "__main__":

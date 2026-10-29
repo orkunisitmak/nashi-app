@@ -1,9 +1,11 @@
 import AppKit
 import SwiftUI
+import NashiCore
 
 enum EditorKeyboardCommand: Equatable {
     case togglePlayback, nudge(direction: Int, fine: Bool), beginning, end
     case playRange, markIn, markOut, addMarker, save, confirmCrop
+    case deleteSelection, selectAll, undo, redo
 
     static func decode(_ event: NSEvent) -> Self? {
         let modifiers = event.modifierFlags.intersection([.command, .control, .option, .shift])
@@ -13,9 +15,13 @@ enum EditorKeyboardCommand: Equatable {
             .lowercased().replacingOccurrences(of: "ı", with: "i")
         let command: Self?
         if modifiers == .command, key == "s" { command = .save }
+        else if modifiers == .command, key == "a" { command = .selectAll }
+        else if modifiers == .command, key == "z" { command = .undo }
+        else if modifiers == [.command,.shift], key == "z" { command = .redo }
         else if modifiers.isEmpty || modifiers == .shift {
             switch event.keyCode {
             case 36 where modifiers.isEmpty,76 where modifiers.isEmpty: command = .confirmCrop
+            case 51 where modifiers.isEmpty,117 where modifiers.isEmpty: command = .deleteSelection
             case 49: command = modifiers == .shift ? .playRange : .togglePlayback
             case 123: command = .nudge(direction: -1, fine: modifiers == .shift)
             case 124: command = .nudge(direction: 1, fine: modifiers == .shift)
@@ -31,7 +37,14 @@ enum EditorKeyboardCommand: Equatable {
     var acceptsRepeat: Bool { if case .nudge = self { return true }; return false }
 
     func route(_ event: NSEvent, responder: NSResponder?, perform: (Self) -> Bool) -> NSEvent? {
-        guard !Self.preservesControlInput(responder) else { return event }
+        if Self.preservesControlInput(responder) {
+            switch self {
+            case .deleteSelection,.selectAll,.undo,.redo:
+                // Buttons do not consume these keys; editable fields keep native text editing.
+                guard responder is NSButton else { return event }
+            default:return event
+            }
+        }
         if event.isARepeat, !acceptsRepeat { return nil }
         return perform(self) ? nil : event
     }
@@ -106,4 +119,22 @@ struct EditorKeyboardShortcuts: NSViewRepresentable {
         view.enabled = enabled; view.onCommand = onCommand
     }
     static func dismantleNSView(_ view: MonitorView, coordinator: ()) { view.stop(); view.onCommand = nil }
+}
+
+/// Shared by the production editor and own-window keyboard smoke checks.
+enum PDFEditorKeyboardRouter {
+    static func perform(_ command:EditorKeyboardCommand,editor:inout PDFPageEditorState)->Bool {
+        switch command {
+        case .deleteSelection:editor.deleteSelected()
+        case .selectAll:editor.selectAll()
+        case .undo:editor.undo()
+        case .redo:editor.redo()
+        case .nudge(let direction,let extending):
+            guard !editor.items.isEmpty else{return true}
+            let current=editor.selectedPage ?? (direction>0 ? -1:editor.items.count)
+            editor.select(max(0,min(editor.items.count-1,current+direction)),extending:extending)
+        default:return false
+        }
+        return true
+    }
 }

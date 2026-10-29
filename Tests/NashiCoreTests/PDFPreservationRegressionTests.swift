@@ -10,6 +10,23 @@ final class PDFPreservationRegressionTests: XCTestCase {
     override func setUpWithError() throws { root = try OutputFiles.temporaryDirectory() }
     override func tearDownWithError() throws { if let root { try? FileManager.default.removeItem(at: root) } }
 
+    func testWorkspaceInterleavesRichSourcesAndPreservesIndependentFormsAndAttachments() throws {
+        let first=try fixture("Workspace first",prefix:"LEFT")
+        let second=try fixture("Workspace second",prefix:"RIGHT")
+        var options=OperationOptions();options.outputDirectory=root
+        options.pdfWorkspacePages=[.init(sourceIndex:0,pageIndex:1,rotation:90),.init(sourceIndex:1,pageIndex:0),.init(sourceIndex:0,pageIndex:0),.init(sourceIndex:1,pageIndex:1)]
+        let output=try ConversionEngine.run(.init(inputs:[first,second],operation:.tool(.organizePDF),options:options))[0]
+        let document=try PDFEngine.open(output),snapshot=try snapshot(output)
+        XCTAssertEqual(document.pageCount,4);XCTAssertEqual(document.page(at:0)?.rotation,90)
+        XCTAssertTrue(document.page(at:0)!.string!.contains("SECOND_SECRET_PAGE"))
+        XCTAssertTrue(document.page(at:1)!.string!.contains("FIRST_PUBLIC_PAGE"))
+        XCTAssertEqual(snapshot.fields.count,4);XCTAssertEqual(Set(snapshot.fields.map(\.name)).count,4)
+        XCTAssertEqual(Set(snapshot.fields.map(\.value)),["LEFT_FIRST_VALUE","LEFT_SECOND_PRIVATE_VALUE","RIGHT_FIRST_VALUE","RIGHT_SECOND_PRIVATE_VALUE"])
+        XCTAssertEqual(snapshot.attachments.count,2)
+        options.pdfWidthMode = .narrowest
+        XCTAssertThrowsError(try ConversionEngine.run(.init(inputs:[first,second],operation:.tool(.organizePDF),options:options)))
+    }
+
     func testOrganizePreservesRegisteredFieldsAttachmentsPageOrderAndRotations() throws {
         let input = try fixture("Reorder", prefix: "LEFT")
         let before = try Data(contentsOf: input)

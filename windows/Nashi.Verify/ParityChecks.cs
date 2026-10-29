@@ -34,6 +34,12 @@ internal static class ParityChecks
         check(mixedPages.SequenceEqual(new[]{1})&&asked is {Left:72,Width:200,Height:100} found&&Math.Abs(found.Top-(842-600))<.5&&mixedHtml.Contains("Caption")&&mixedHtml.Contains("data:image/png;base64,BAUG"),"An image PdfPig cannot decode vanished from a page with text: "+asked);
         var large=new byte[20_000_001];check(OfficeDocuments.PdfHtml(mixedPdf,"",(_,area)=>area is null?null:large,out _).Contains(Convert.ToBase64String(large)),"A large render of an image area was dropped although whole-page renders keep it");
         PdfSharp.Pdf.PdfDictionary Form(PdfSharp.Pdf.PdfDocument pdf,bool field){var form=new PdfSharp.Pdf.PdfDictionary(pdf);var fields=new PdfSharp.Pdf.PdfArray(pdf);if(field){var item=new PdfSharp.Pdf.PdfDictionary(pdf);item.Elements.SetString("/T","Name");pdf.Internals.AddObject(item);fields.Elements.Add(item.Reference!);}form.Elements["/Fields"]=fields;pdf.Internals.AddObject(form);return form;}
+        var narrowPdf=Pdf("Narrow width.pdf","BT /F1 24 Tf 72 700 Td (Narrow) Tj ET",pdf=>pdf.Pages[0].Width=PdfSharp.Drawing.XUnit.FromPoint(300));
+        var widePdf=Pdf("Wide width.pdf","BT /F1 24 Tf 72 700 Td (Wide) Tj ET",pdf=>pdf.Pages[0].Width=PdfSharp.Drawing.XUnit.FromPoint(500));
+        var mixedWidths=DocumentEngine.Pdf("mergePDFs",[narrowPdf,widePdf],root)[0];
+        var equalWidths=DocumentEngine.Pdf("organizePDF",[mixedWidths],root,[1,2],uniformWidth:true)[0];
+        using(var equal=PdfSharp.Pdf.IO.PdfReader.Open(equalWidths,PdfSharp.Pdf.IO.PdfDocumentOpenMode.Import))
+            check(equal.PageCount==2&&equal.Pages.Cast<PdfSharp.Pdf.PdfPage>().All(page=>Math.Abs(page.Width.Point-300)<.01),"Uniform width must match the narrowest page, as on macOS");
         var formPdf=Pdf("Form.pdf","BT /F1 24 Tf 72 700 Td (Form) Tj ET",pdf=>pdf.Internals.Catalog.Elements.SetReference("/AcroForm",Form(pdf,true)));
         var emptyFormPdf=Pdf("Empty form.pdf","BT /F1 24 Tf 72 700 Td (No fields) Tj ET",pdf=>pdf.Internals.Catalog.Elements.SetReference("/AcroForm",Form(pdf,false)));
         check(DocumentEngine.Pdf("splitPDF",[emptyFormPdf],root).Count==1&&DocumentEngine.Pdf("organizePDF",[emptyFormPdf],root,[1],uniformWidth:true).Count==1,"A PDF with an empty AcroForm and no fields was refused");

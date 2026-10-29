@@ -94,12 +94,15 @@
 "A split point lies outside the video." = "A split point lies outside the video.";
 "A subtitle cue ends before it starts." = "A subtitle cue ends before it starts.";
 "A table cell span is invalid or exceeds 1,024 columns." = "A table cell span is invalid or exceeds 1,024 columns.";
+"A4 WIDTH" = "A4 WIDTH";
+"A4 width" = "A4 width";
 "ABOUT" = "ABOUT";
 "ACCESSIBILITY" = "ACCESSIBILITY";
 "ACTIONS" = "ACTIONS";
 "ADD" = "ADD";
 "ADD A BLEEP OR SILENCE RANGE." = "ADD A BLEEP OR SILENCE RANGE.";
 "ADD BG" = "ADD BG";
+"ADD BLANK PAGE" = "ADD BLANK PAGE";
 "ADD FIELD" = "ADD FIELD";
 "ADD FILES" = "ADD FILES";
 "ADD FILES TO AN EXISTING FLOAT" = "ADD FILES TO AN EXISTING FLOAT";
@@ -107,6 +110,7 @@
 "ADD FRAME" = "ADD FRAME";
 "ADD METADATA FIELD" = "ADD METADATA FIELD";
 "ADD OR CHANGE FILES" = "ADD OR CHANGE FILES";
+"ADD PDF…" = "ADD PDF…";
 "ADD REDACTION" = "ADD REDACTION";
 "ADD SELECTED RANGE" = "ADD SELECTED RANGE";
 "ADD SPLIT" = "ADD SPLIT";
@@ -134,6 +138,8 @@
 "ANOTHER TASK IS RUNNING. YOUR LINK IS READY WHEN IT FINISHES." = "ANOTHER TASK IS RUNNING. YOUR LINK IS READY WHEN IT FINISHES.";
 "APPEARANCE" = "APPEARANCE";
 "APPEARANCE COULD NOT BE SAVED" = "APPEARANCE COULD NOT BE SAVED";
+"APPLY CROP" = "APPLY CROP";
+"APPLY WIDTH" = "APPLY WIDTH";
 "ARCHIVE CONTAINS A LINK." = "ARCHIVE CONTAINS A LINK.";
 "ARCHIVE CONTAINS DUPLICATE NAMES." = "ARCHIVE CONTAINS DUPLICATE NAMES.";
 "ARCHIVE CONTAINS DUPLICATE PATHS OR LINKS." = "ARCHIVE CONTAINS DUPLICATE PATHS OR LINKS.";
@@ -170,9 +176,11 @@
 "Add Files…" = "Add Files…";
 "Add Frame" = "Add Frame";
 "Add Metadata Field" = "Add Metadata Field";
+"Add PDF…" = "Add PDF…";
 "Add Redaction" = "Add Redaction";
 "Add Split" = "Add Split";
 "Add a bleep or silence range." = "Add a bleep or silence range.";
+"Add blank page" = "Add blank page";
 "Add files" = "Add files";
 "Add or change files" = "Add or change files";
 "Add selected range" = "Add selected range";
@@ -204,6 +212,8 @@
 "Another task is running. Your link is ready when it finishes." = "Another task is running. Your link is ready when it finishes.";
 "Appearance" = "Appearance";
 "Appearance could not be saved" = "Appearance could not be saved";
+"Apply crop" = "Apply crop";
+"Apply width" = "Apply width";
 "Archive contains a link." = "Archive contains a link.";
 "Archive contains duplicate names." = "Archive contains duplicate names.";
 "Archive contains duplicate paths or links." = "Archive contains duplicate paths or links.";
@@ -306,6 +316,7 @@
 "CHOOSE A HEX BACKGROUND COLOR, SUCH AS #FFFFFF OR #00FFFFFF." = "CHOOSE A HEX BACKGROUND COLOR, SUCH AS #FFFFFF OR #00FFFFFF.";
 "CHOOSE A LARGER TARGET SIZE." = "CHOOSE A LARGER TARGET SIZE.";
 "CHOOSE A NONEMPTY IMAGE." = "CHOOSE A NONEMPTY IMAGE.";
+"CHOOSE A PAGE WIDTH BETWEEN 0 AND 14,400 POINTS." = "CHOOSE A PAGE WIDTH BETWEEN 0 AND 14,400 POINTS.";
 "CHOOSE A PDF SMALLER THAN 200 MB." = "CHOOSE A PDF SMALLER THAN 200 MB.";
 "CHOOSE A PDF WITH 1 TO 1,000 PAGES." = "CHOOSE A PDF WITH 1 TO 1,000 PAGES.";
 "CHOOSE A PLAIN OUTPUT FILENAME." = "CHOOSE A PLAIN OUTPUT FILENAME.";
@@ -340,10 +351,12 @@
 "CHOOSE FIND MEDIA TO INSPECT THIS LINK." = "CHOOSE FIND MEDIA TO INSPECT THIS LINK.";
 "CHOOSE FINITE PHOTO ADJUSTMENTS WITHIN THEIR RANGES." = "CHOOSE FINITE PHOTO ADJUSTMENTS WITHIN THEIR RANGES.";
 "CHOOSE MEDIA AND A SUPPORTED TOOL." = "CHOOSE MEDIA AND A SUPPORTED TOOL.";
+"CHOOSE NO MORE THAN 10,000 OUTPUT PAGES AT ONCE." = "CHOOSE NO MORE THAN 10,000 OUTPUT PAGES AT ONCE.";
 "CHOOSE ONE INSTAGRAM POST WITH UP TO 50 ITEMS." = "CHOOSE ONE INSTAGRAM POST WITH UP TO 50 ITEMS.";
 "CHOOSE ONE OF THE EDITABLE METADATA FIELDS." = "CHOOSE ONE OF THE EDITABLE METADATA FIELDS.";
 "CHOOSE OUTPUT FOLDER…" = "CHOOSE OUTPUT FOLDER…";
 "CHOOSE PAGE RANGES SUCH AS 1-3, 5 WITHIN THE PDF PAGE COUNT." = "CHOOSE PAGE RANGES SUCH AS 1-3, 5 WITHIN THE PDF PAGE COUNT.";
+"CHOOSE PAGES AND NONNEGATIVE CROP MARGINS." = "CHOOSE PAGES AND NONNEGATIVE CROP MARGINS.";
 "CHOOSE SET UP MEDIA TOOLS FIRST." = "CHOOSE SET UP MEDIA TOOLS FIRST.";
 "CHOOSE SET UP MEDIA TOOLS ONCE TO ENABLE MEDIA EDITING." = "CHOOSE SET UP MEDIA TOOLS ONCE TO ENABLE MEDIA EDITING.";
 "CHOOSE SET UP MEDIA TOOLS ONCE TO ENABLE WEB DOWNLOADS." = "CHOOSE SET UP MEDIA TOOLS ONCE TO ENABLE WEB DOWNLOADS.";
@@ -419,11 +432,14 @@
 "CROP AREA" = "CROP AREA";
 "CROP IMAGE" = "CROP IMAGE";
 "CROP IMAGE · NASHI" = "CROP IMAGE · NASHI";
+"CROP MARGINS MUST LEAVE A VISIBLE AREA ON EVERY SELECTED PAGE." = "CROP MARGINS MUST LEAVE A VISIBLE AREA ON EVERY SELECTED PAGE.";
+"CROP SELECTED PAGES" = "CROP SELECTED PAGES";
 "CROP VIDEO" = "CROP VIDEO";
 "CTRL+O  CHOOSE FILES\nCTRL+V  PASTE FILES, TEXT, AN IMAGE OR LINK\nCTRL+SPACE / ENTER  OPEN TOOLS\nCTRL+1 / CTRL+2  HOME / LIBRARY\nCTRL+F  FIND IN LIBRARY\nCTRL+SHIFT+D  USE A COPIED DOWNLOAD LINK\nCTRL+U  CHECK FOR UPDATES\n\nWHEEL: ARROWS / TAB TO CHOOSE, ENTER TO OPEN, ESC TO CLOSE\nMEDIA: SPACE PLAY/PAUSE, ←/→ 1 SECOND, SHIFT+←/→ 1/30S, I/O SET RANGE\nCROP: DRAG, SHIFT LOCKS RATIO, ENTER SAVES\nEDITING TEXT: NORMAL PASTE AND ARROW KEYS ARE PRESERVED." = "CTRL+O  CHOOSE FILES\nCTRL+V  PASTE FILES, TEXT, AN IMAGE OR LINK\nCTRL+SPACE / ENTER  OPEN TOOLS\nCTRL+1 / CTRL+2  HOME / LIBRARY\nCTRL+F  FIND IN LIBRARY\nCTRL+SHIFT+D  USE A COPIED DOWNLOAD LINK\nCTRL+U  CHECK FOR UPDATES\n\nWHEEL: ARROWS / TAB TO CHOOSE, ENTER TO OPEN, ESC TO CLOSE\nMEDIA: SPACE PLAY/PAUSE, ←/→ 1 SECOND, SHIFT+←/→ 1/30S, I/O SET RANGE\nCROP: DRAG, SHIFT LOCKS RATIO, ENTER SAVES\nEDITING TEXT: NORMAL PASTE AND ARROW KEYS ARE PRESERVED.";
 "CTRL+O  CHOOSE FILES\nCTRL+V  PASTE FILES, TEXT, AN IMAGE OR LINK\nCTRL+SPACE / ENTER  OPEN TOOLS AND CONVERSIONS\nDELETE  REMOVE SELECTED FILES FROM NASHI\nCTRL+1 / CTRL+2  HOME / LIBRARY\nCTRL+F  FIND IN LIBRARY\nCTRL+SHIFT+D  USE A COPIED DOWNLOAD LINK\nCTRL+U  CHECK FOR UPDATES\n\nWHEEL: ARROWS / TAB TO CHOOSE, ENTER TO OPEN, ESC TO CLOSE\nMEDIA: SPACE PLAY/PAUSE, ←/→ 1 SECOND, SHIFT+←/→ 1/30S, I/O SET RANGE\nCROP: DRAG, SHIFT LOCKS RATIO, ENTER SAVES\nEDITING TEXT: NORMAL PASTE AND ARROW KEYS ARE PRESERVED." = "CTRL+O  CHOOSE FILES\nCTRL+V  PASTE FILES, TEXT, AN IMAGE OR LINK\nCTRL+SPACE / ENTER  OPEN TOOLS AND CONVERSIONS\nDELETE  REMOVE SELECTED FILES FROM NASHI\nCTRL+1 / CTRL+2  HOME / LIBRARY\nCTRL+F  FIND IN LIBRARY\nCTRL+SHIFT+D  USE A COPIED DOWNLOAD LINK\nCTRL+U  CHECK FOR UPDATES\n\nWHEEL: ARROWS / TAB TO CHOOSE, ENTER TO OPEN, ESC TO CLOSE\nMEDIA: SPACE PLAY/PAUSE, ←/→ 1 SECOND, SHIFT+←/→ 1/30S, I/O SET RANGE\nCROP: DRAG, SHIFT LOCKS RATIO, ENTER SAVES\nEDITING TEXT: NORMAL PASTE AND ARROW KEYS ARE PRESERVED.";
 "CTRL+SHIFT+D  USE A COPIED LINK  ·  PUBLIC, DOWNLOADABLE MEDIA" = "CTRL+SHIFT+D  USE A COPIED LINK  ·  PUBLIC, DOWNLOADABLE MEDIA";
 "CUSTOM DIMENSIONS" = "CUSTOM DIMENSIONS";
+"CUSTOM WIDTH" = "CUSTOM WIDTH";
 "CUT" = "CUT";
 "Callout" = "Callout";
 "Cancel" = "Cancel";
@@ -474,6 +490,7 @@
 "Choose a hex background color, such as #FFFFFF or #00FFFFFF." = "Choose a hex background color, such as #FFFFFF or #00FFFFFF.";
 "Choose a larger target size." = "Choose a larger target size.";
 "Choose a nonempty image." = "Choose a nonempty image.";
+"Choose a page width between 0 and 14,400 points." = "Choose a page width between 0 and 14,400 points.";
 "Choose a plain output filename." = "Choose a plain output filename.";
 "Choose a positive size or a reduction below 100%. Zero uses automatic compression." = "Choose a positive size or a reduction below 100%. Zero uses automatic compression.";
 "Choose a positive target size or a reduction between 0 and 100%." = "Choose a positive target size or a reduction between 0 and 100%.";
@@ -505,10 +522,12 @@
 "Choose files…" = "Choose files…";
 "Choose finite photo adjustments within their ranges." = "Choose finite photo adjustments within their ranges.";
 "Choose media and a supported tool." = "Choose media and a supported tool.";
+"Choose no more than 10,000 output pages at once." = "Choose no more than 10,000 output pages at once.";
 "Choose one Instagram post with up to 50 items." = "Choose one Instagram post with up to 50 items.";
 "Choose one of the editable metadata fields." = "Choose one of the editable metadata fields.";
 "Choose output folder…" = "Choose output folder…";
 "Choose page ranges such as 1-3, 5 within the PDF page count." = "Choose page ranges such as 1-3, 5 within the PDF page count.";
+"Choose pages and nonnegative crop margins." = "Choose pages and nonnegative crop margins.";
 "Choose supported GIF and audio sample settings." = "Choose supported GIF and audio sample settings.";
 "Choose supported export defaults." = "Choose supported export defaults.";
 "Choose supported loudness targets." = "Choose supported loudness targets.";
@@ -593,10 +612,13 @@
 "Crop Image · Nashi" = "Crop Image · Nashi";
 "Crop Video" = "Crop Video";
 "Crop area" = "Crop area";
+"Crop margins must leave a visible area on every selected page." = "Crop margins must leave a visible area on every selected page.";
+"Crop selected pages" = "Crop selected pages";
 "Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved." = "Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved.";
 "Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools and conversions\nDelete  Remove selected files from Nashi\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved." = "Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools and conversions\nDelete  Remove selected files from Nashi\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved.";
 "Ctrl+Shift+D  Use a copied link  ·  Public, downloadable media" = "Ctrl+Shift+D  Use a copied link  ·  Public, downloadable media";
 "Custom dimensions" = "Custom dimensions";
+"Custom width" = "Custom width";
 "Cut" = "Cut";
 "DARK" = "DARK";
 "DEFAULTS APPLY WHENEVER YOU CHOOSE AN OUTPUT FORMAT." = "DEFAULTS APPLY WHENEVER YOU CHOOSE AN OUTPUT FORMAT.";
@@ -612,6 +634,8 @@
 "DETECTION UNAVAILABLE" = "DETECTION UNAVAILABLE";
 "DEVICE CONTROL AND DATA ACCESS" = "DEVICE CONTROL AND DATA ACCESS";
 "DEVICES" = "DEVICES";
+"DISCARD CHANGES" = "DISCARD CHANGES";
+"DISCARD PDF CHANGES?" = "DISCARD PDF CHANGES?";
 "DISCONNECT & FORGET TOKEN" = "DISCONNECT & FORGET TOKEN";
 "DISMISS" = "DISMISS";
 "DOCUMENT XML IS TOO LARGE." = "DOCUMENT XML IS TOO LARGE.";
@@ -661,6 +685,7 @@
 "DROP FILES HERE" = "DROP FILES HERE";
 "DROP FILES HERE · SPACE FOR QUICK LOOK" = "DROP FILES HERE · SPACE FOR QUICK LOOK";
 "DROP FILES OR FOLDERS HERE" = "DROP FILES OR FOLDERS HERE";
+"DROP HERE TO MOVE TO END" = "DROP HERE TO MOVE TO END";
 "DROP IT LIKE IT’S… A FILE." = "DROP IT LIKE IT’S… A FILE.";
 "DROP SOMETHING GOOD." = "DROP SOMETHING GOOD.";
 "DUPLICATE" = "DUPLICATE";
@@ -680,6 +705,8 @@
 "Detection unavailable" = "Detection unavailable";
 "Device Control and Data Access" = "Device Control and Data Access";
 "Devices" = "Devices";
+"Discard PDF changes?" = "Discard PDF changes?";
+"Discard changes" = "Discard changes";
 "Disconnect & Forget Token" = "Disconnect & Forget Token";
 "Dismiss" = "Dismiss";
 "Document XML is too large." = "Document XML is too large.";
@@ -736,6 +763,7 @@
 "Drop files here" = "Drop files here";
 "Drop files here · Space for Quick Look" = "Drop files here · Space for Quick Look";
 "Drop files or folders here" = "Drop files or folders here";
+"Drop here to move to end" = "Drop here to move to end";
 "Drop it like it’s… a file." = "Drop it like it’s… a file.";
 "Drop something good." = "Drop something good.";
 "Duplicate" = "Duplicate";
@@ -767,6 +795,7 @@
 "EXPOSURE" = "EXPOSURE";
 "EXTRACT ARCHIVE" = "EXTRACT ARCHIVE";
 "EXTRACT NASHI INTO ITS OWN WRITABLE FOLDER FIRST." = "EXTRACT NASHI INTO ITS OWN WRITABLE FOLDER FIRST.";
+"EXTRACT SELECTED PAGES" = "EXTRACT SELECTED PAGES";
 "Edit" = "Edit";
 "Edit Image" = "Edit Image";
 "Edit Photo" = "Edit Photo";
@@ -796,6 +825,7 @@
 "Exposure" = "Exposure";
 "Extract Archive" = "Extract Archive";
 "Extract Nashi into its own writable folder first." = "Extract Nashi into its own writable folder first.";
+"Extract selected pages" = "Extract selected pages";
 "FADE" = "FADE";
 "FASTER" = "FASTER";
 "FEATURED" = "FEATURED";
@@ -1043,8 +1073,11 @@
 "Join retained clips into one video" = "Join retained clips into one video";
 "KEEP AT LEAST ONE CLIP." = "KEEP AT LEAST ONE CLIP.";
 "KEEP AT LEAST ONE PAGE." = "KEEP AT LEAST ONE PAGE.";
+"KEEP AT LEAST ONE PAGE. DESELECT A PAGE TO DELETE THE OTHERS." = "KEEP AT LEAST ONE PAGE. DESELECT A PAGE TO DELETE THE OTHERS.";
 "KEEP DRAGGING\nDROP A FILE OR LINK" = "KEEP DRAGGING\nDROP A FILE OR LINK";
+"KEEP EDITING" = "KEEP EDITING";
 "KEEP ORIGINAL DIMENSIONS" = "KEEP ORIGINAL DIMENSIONS";
+"KEEP ORIGINAL WIDTHS" = "KEEP ORIGINAL WIDTHS";
 "KEEP REDACTION AREAS INSIDE THE IMAGE." = "KEEP REDACTION AREAS INSIDE THE IMAGE.";
 "KEEP RUNNING IN THE SYSTEM TRAY" = "KEEP RUNNING IN THE SYSTEM TRAY";
 "KEEP SPLIT POINTS AT LEAST 0.05 SECONDS APART." = "KEEP SPLIT POINTS AT LEAST 0.05 SECONDS APART.";
@@ -1054,8 +1087,11 @@
 "KEEP THINGS\nMOVING." = "KEEP THINGS\nMOVING.";
 "Keep at least one clip." = "Keep at least one clip.";
 "Keep at least one page." = "Keep at least one page.";
+"Keep at least one page. Deselect a page to delete the others." = "Keep at least one page. Deselect a page to delete the others.";
 "Keep dragging\nDrop a file or link" = "Keep dragging\nDrop a file or link";
+"Keep editing" = "Keep editing";
 "Keep original dimensions" = "Keep original dimensions";
+"Keep original widths" = "Keep original widths";
 "Keep redaction areas inside the image." = "Keep redaction areas inside the image.";
 "Keep running in the system tray" = "Keep running in the system tray";
 "Keep split points at least 0.05 seconds apart." = "Keep split points at least 0.05 seconds apart.";
@@ -1132,8 +1168,11 @@
 "MAKE IT YOURS · NASHI" = "MAKE IT YOURS · NASHI";
 "MAKE SOME SPACE. KEEP WHAT MATTERS." = "MAKE SOME SPACE. KEEP WHAT MATTERS.";
 "MAKE YOUR POINT." = "MAKE YOUR POINT.";
+"MARGINS IN PDF POINTS, BEFORE PAGE ROTATION. CROPPING HIDES CONTENT OUTSIDE THE PAGE; IT DOES NOT REDACT IT." = "MARGINS IN PDF POINTS, BEFORE PAGE ROTATION. CROPPING HIDES CONTENT OUTSIDE THE PAGE; IT DOES NOT REDACT IT.";
 "MARKER" = "MARKER";
+"MATCH NARROWEST PAGE" = "MATCH NARROWEST PAGE";
 "MATCH SOURCE" = "MATCH SOURCE";
+"MATCH WIDEST PAGE" = "MATCH WIDEST PAGE";
 "MAXIMIZE" = "MAXIMIZE";
 "MAXIMUM HEIGHT" = "MAXIMUM HEIGHT";
 "MAXIMUM VIDEO HEIGHT" = "MAXIMUM VIDEO HEIGHT";
@@ -1172,9 +1211,12 @@
 "Make it yours · Nashi" = "Make it yours · Nashi";
 "Make some space. Keep what matters." = "Make some space. Keep what matters.";
 "Make your point." = "Make your point.";
+"Margins in PDF points, before page rotation. Cropping hides content outside the page; it does not redact it." = "Margins in PDF points, before page rotation. Cropping hides content outside the page; it does not redact it.";
 "Marker" = "Marker";
 "Match Source" = "Match Source";
+"Match narrowest page" = "Match narrowest page";
 "Match source" = "Match source";
+"Match widest page" = "Match widest page";
 "Maximize" = "Maximize";
 "Maximum height" = "Maximum height";
 "Maximum video height" = "Maximum video height";
@@ -1359,11 +1401,14 @@
 "Output format" = "Output format";
 "Output-only format." = "Output-only format.";
 "PADDING" = "PADDING";
+"PAGE" = "PAGE";
 "PAGE NUMBERS" = "PAGE NUMBERS";
 "PAGE RANGES" = "PAGE RANGES";
 "PAGE RANGES, FOR EXAMPLE 1-3, 5" = "PAGE RANGES, FOR EXAMPLE 1-3, 5";
+"PAGE WIDTH" = "PAGE WIDTH";
 "PAGES INPUT EXCEEDS 200 MB." = "PAGES INPUT EXCEEDS 200 MB.";
 "PAGES PER FILE" = "PAGES PER FILE";
+"PAGES SELECTED" = "PAGES SELECTED";
 "PASTE" = "PASTE";
 "PASTE A PUBLIC HTTP(S) MEDIA OR PAGE LINK." = "PASTE A PUBLIC HTTP(S) MEDIA OR PAGE LINK.";
 "PASTE A PUBLIC MEDIA LINK TO BEGIN." = "PASTE A PUBLIC MEDIA LINK TO BEGIN.";
@@ -1430,11 +1475,13 @@
 "PROTECTED MEDIA CANNOT BE DOWNLOADED." = "PROTECTED MEDIA CANNOT BE DOWNLOADED.";
 "PUBLIC UPDATES WORK WITHOUT A TOKEN." = "PUBLIC UPDATES WORK WITHOUT A TOKEN.";
 "Padding" = "Padding";
+"Page" = "Page";
 "Page %@" = "Page %@";
 "Page %lld" = "Page %lld";
 "Page numbers" = "Page numbers";
 "Page ranges" = "Page ranges";
 "Page ranges, for example 1-3, 5" = "Page ranges, for example 1-3, 5";
+"Page width" = "Page width";
 "Pages input exceeds 200 MB." = "Pages input exceeds 200 MB.";
 "Pages per file" = "Pages per file";
 "Paste" = "Paste";
@@ -1544,6 +1591,7 @@
 "REPLACE SELECTED AUDIO WITH" = "REPLACE SELECTED AUDIO WITH";
 "REPORT SAVED." = "REPORT SAVED.";
 "RESET" = "RESET";
+"RESET CROP" = "RESET CROP";
 "RESIZE" = "RESIZE";
 "RESIZE IMAGE" = "RESIZE IMAGE";
 "RESTORE CLIPS" = "RESTORE CLIPS";
@@ -1606,6 +1654,7 @@
 "Replace selected audio with" = "Replace selected audio with";
 "Report saved." = "Report saved.";
 "Reset" = "Reset";
+"Reset crop" = "Reset crop";
 "Resize" = "Resize";
 "Resize Image" = "Resize Image";
 "Restore Clips" = "Restore Clips";
@@ -1708,6 +1757,7 @@
 "SHARPEN" = "SHARPEN";
 "SHARPNESS" = "SHARPNESS";
 "SHIFT LOCKS THE RATIO · RETURN CROPS\nDRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE." = "SHIFT LOCKS THE RATIO · RETURN CROPS\nDRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE.";
+"SHIFT-CLICK SELECTS A RANGE. COMMAND-CLICK SELECTS INDIVIDUAL PAGES. DRAG TO REORDER; DELETE REMOVES SELECTED PAGES." = "SHIFT-CLICK SELECTS A RANGE. COMMAND-CLICK SELECTS INDIVIDUAL PAGES. DRAG TO REORDER; DELETE REMOVES SELECTED PAGES.";
 "SHOW IN EXPLORER" = "SHOW IN EXPLORER";
 "SHOW IN FINDER" = "SHOW IN FINDER";
 "SHOW NASHI IN FINDER" = "SHOW NASHI IN FINDER";
@@ -1806,6 +1856,7 @@
 "Select / Move" = "Select / Move";
 "Select All" = "Select All";
 "Select a clip and press Delete to remove it from the result." = "Select a clip and press Delete to remove it from the result.";
+"Select all" = "Select all";
 "Select at least one available photo." = "Select at least one available photo.";
 "Select one crop rectangle." = "Select one crop rectangle.";
 "Select only this repository and give Contents read access. The token stays in this Mac’s Keychain." = "Select only this repository and give Contents read access. The token stays in this Mac’s Keychain.";
@@ -1845,6 +1896,7 @@
 "Sharpen" = "Sharpen";
 "Sharpness" = "Sharpness";
 "Shift locks the ratio · Return crops\nDrag inside to move; drag a handle to resize." = "Shift locks the ratio · Return crops\nDrag inside to move; drag a handle to resize.";
+"Shift-click selects a range. Command-click selects individual pages. Drag to reorder; Delete removes selected pages." = "Shift-click selects a range. Command-click selects individual pages. Drag to reorder; Delete removes selected pages.";
 "Show Nashi in Finder" = "Show Nashi in Finder";
 "Show Original" = "Show Original";
 "Show in Explorer" = "Show in Explorer";
@@ -2069,6 +2121,7 @@
 "UNIT" = "UNIT";
 "UNSAFE DOWNLOAD REDIRECT." = "UNSAFE DOWNLOAD REDIRECT.";
 "UNSAFE UPDATE ENTRY." = "UNSAFE UPDATE ENTRY.";
+"UNSAVED CHANGES" = "UNSAVED CHANGES";
 "UNSUPPORTED AUDIO FORMAT." = "UNSUPPORTED AUDIO FORMAT.";
 "UNSUPPORTED IMAGE FORMAT." = "UNSUPPORTED IMAGE FORMAT.";
 "UNSUPPORTED STREAM/CHAPTER TAG." = "UNSUPPORTED STREAM/CHAPTER TAG.";
@@ -2099,6 +2152,7 @@
 "Unit" = "Unit";
 "Unsafe download redirect." = "Unsafe download redirect.";
 "Unsafe update entry." = "Unsafe update entry.";
+"Unsaved changes" = "Unsaved changes";
 "Unsupported audio format." = "Unsupported audio format.";
 "Unsupported image format." = "Unsupported image format.";
 "Unsupported stream/chapter tag." = "Unsupported stream/chapter tag.";
@@ -2159,6 +2213,8 @@
 "WHEEL SIZE" = "WHEEL SIZE";
 "WHITES" = "WHITES";
 "WIDTH" = "WIDTH";
+"WIDTH IN POINTS" = "WIDTH IN POINTS";
+"WIDTHS SCALE PROPORTIONALLY. DOCUMENTS WITH FORMS, LINKS OR ATTACHMENTS MAY NOT SUPPORT THIS OPERATION." = "WIDTHS SCALE PROPORTIONALLY. DOCUMENTS WITH FORMS, LINKS OR ATTACHMENTS MAY NOT SUPPORT THIS OPERATION.";
 "WINDOW" = "WINDOW";
 "WINDOW ARRANGEMENT" = "WINDOW ARRANGEMENT";
 "WINDOW MANAGEMENT" = "WINDOW MANAGEMENT";
@@ -2174,6 +2230,8 @@
 "Wheel size" = "Wheel size";
 "Whites" = "Whites";
 "Width" = "Width";
+"Width in points" = "Width in points";
+"Widths scale proportionally. Documents with forms, links or attachments may not support this operation." = "Widths scale proportionally. Documents with forms, links or attachments may not support this operation.";
 "Window" = "Window";
 "Window arrangement" = "Window arrangement";
 "Window management" = "Window management";
@@ -2195,6 +2253,7 @@
 "YOUR KIND OF FLOW." = "YOUR KIND OF FLOW.";
 "YOUR LIBRARY" = "YOUR LIBRARY";
 "YOUR NEXT FRESH COPY WILL LAND HERE." = "YOUR NEXT FRESH COPY WILL LAND HERE.";
+"YOUR ORGANIZED PDF HAS NOT BEEN SAVED. YOUR ORIGINAL FILES ARE UNCHANGED." = "YOUR ORGANIZED PDF HAS NOT BEEN SAVED. YOUR ORIGINAL FILES ARE UNCHANGED.";
 "YOUR ORIGINAL STAYS SAFE" = "YOUR ORIGINAL STAYS SAFE";
 "YOUR TOOLS ARE READY." = "YOUR TOOLS ARE READY.";
 "YOUR TOOLS ARE READY. LET’S PUT THAT NEXT FILE TO GOOD USE." = "YOUR TOOLS ARE READY. LET’S PUT THAT NEXT FILE TO GOOD USE.";
@@ -2215,6 +2274,7 @@
 "Your go-to exports." = "Your go-to exports.";
 "Your kind of flow." = "Your kind of flow.";
 "Your next fresh copy will land here." = "Your next fresh copy will land here.";
+"Your organized PDF has not been saved. Your original files are unchanged." = "Your organized PDF has not been saved. Your original files are unchanged.";
 "Your original stays safe" = "Your original stays safe";
 "Your tools are ready." = "Your tools are ready.";
 "Your tools are ready. Let’s put that next file to good use." = "Your tools are ready. Let’s put that next file to good use.";
@@ -2223,6 +2283,7 @@
 "Zip regular files and folders without links (10,000 item limit)." = "Zip regular files and folders without links (10,000 item limit).";
 "macOS Reduce Motion is on. Nashi keeps motion off." = "macOS Reduce Motion is on. Nashi keeps motion off.";
 "owner/repository or GitHub URL" = "owner/repository or GitHub URL";
+"pages selected" = "pages selected";
 "←/→ FILES · MEDIA: SPACE PLAY/PAUSE, ←/→ 1S, ALT+←/→ FILES · ESC CLOSES" = "←/→ FILES · MEDIA: SPACE PLAY/PAUSE, ←/→ 1S, ALT+←/→ FILES · ESC CLOSES";
 "←/→ FILES · MEDIA: SPACE PLAY/PAUSE, ←/→ 1S, ⌥←/→ FILES · ESC CLOSES" = "←/→ FILES · MEDIA: SPACE PLAY/PAUSE, ←/→ 1S, ⌥←/→ FILES · ESC CLOSES";
 "←/→ files · Media: Space play/pause, ←/→ 1s, Alt+←/→ files · Esc closes" = "←/→ files · Media: Space play/pause, ←/→ 1s, Alt+←/→ files · Esc closes";

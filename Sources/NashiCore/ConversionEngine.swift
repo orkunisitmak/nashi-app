@@ -8,7 +8,7 @@ public enum ConversionEngine {
         let transaction=ExportTransaction()
         defer { transaction.cleanUp() }
         let groups:[[URL]]
-        if case .tool(let tool)=request.operation,[ToolKind.createPDF,.mergePDF,.createCollage,.joinVideos,.readQRCode].contains(tool) {
+        if case .tool(let tool)=request.operation,([ToolKind.createPDF,.mergePDF,.createCollage,.joinVideos,.readQRCode].contains(tool) || (tool == .organizePDF && !request.options.pdfWorkspacePages.isEmpty)) {
             groups=[request.inputs]
         } else { groups=request.inputs.map{[$0]} }
         for (index,inputs) in groups.enumerated() {
