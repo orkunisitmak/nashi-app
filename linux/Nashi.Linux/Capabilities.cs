@@ -6,7 +6,7 @@ namespace Nashi.Linux;
 public static class Capabilities
 {
     static readonly IReadOnlySet<string> SupportedTools = new HashSet<string> { "compress", "muteVideo", "normalizeAudio", "extractArchive", "createPDF", "mergePDF" };
-    static readonly string[] ImageOutputs = ["png", "jpg", "webp", "heic", "avif", "bmp", "gif", "tiff", "pdf"];
+    internal static readonly string[] ImageFormats = ["png", "jpg", "webp", "avif", "bmp", "gif", "tiff", "pdf"];
     static readonly string[] ArchiveOutputs = ["zip", "tar", "gz"];
     static readonly string[] SubtitleOutputs = ["srt", "vtt", "txt"];
 
@@ -22,7 +22,7 @@ public static class Capabilities
     static IEnumerable<string> Routes(IReadOnlyList<string> files)
     {
         if (files.Count == 0) return [];
-        if (files.All(FeatureCatalog.IsImage)) return ImageOutputs;
+        if (files.All(FeatureCatalog.IsImage)) return ImageFormats;
         if (files.All(p => FeatureCatalog.IsAudio(p) || FeatureCatalog.IsVideo(p)))
             return MediaEngine.AudioFormats.Concat(MediaEngine.VideoFormats);
         if (files.All(FeatureCatalog.IsArchive)) return ArchiveOutputs;

@@ -5,6 +5,7 @@ using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using ImageMagick;
 using Nashi.Core;
 using Nashi.Linux;
 
@@ -21,6 +22,7 @@ try
 {
     SelectionChecks(temp.FullName);
     CapabilityChecks();
+    ImageChecks(temp.FullName);
     HomeChecks();
 }
 finally
@@ -84,6 +86,62 @@ void CapabilityChecks()
     Check(Capabilities.Tools([]).Length == 0, "Tools for an empty selection is empty");
     Check(Capabilities.Formats(pdf2).Length == 0 && Capabilities.Formats(["x.pdf"]).Length == 0, "Formats for PDFs are empty");
     Check(Capabilities.Formats(docx).Length == 0, "Formats for a DOCX are empty");
+}
+
+void ImageChecks(string root)
+{
+    var work = Directory.CreateDirectory(Path.Combine(root, "images")).FullName;
+    var source = Path.Combine(work, "-ğüş photo.png");
+    using (var gradient = new MagickImage("gradient:red-blue", 64, 48)) gradient.Write(source);
+    var second = Path.Combine(work, "second.png");
+    File.Copy(source, second);
+    var hash = System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(source));
+
+    foreach (var format in new[] { "png", "jpg", "webp", "heic", "avif", "bmp", "gif", "tiff", "pdf" })
+    {
+        var dest = Path.Combine(work, "out-" + format);
+        if (format == "heic")
+        {
+            // Magick.NET on Linux has no HEIC encoder, so the route is not offered.
+            Check(!Capabilities.Formats(["x.png"]).Contains("heic"), "heic is not offered for images");
+            try { ImageOperations.Convert([source], "heic", dest, null, default); Check(false, "Convert to heic throws"); }
+            catch (NotSupportedException) { Check(true, "Convert to heic throws NotSupportedException"); }
+            continue;
+        }
+        try
+        {
+            var files = ImageOperations.Convert([source], format, dest, null, default);
+            Check(files.Count == 1 && Directory.GetFileSystemEntries(dest).Length == 1 && Path.GetExtension(files[0]) == "." + format, $"Convert to {format} produces one file with its extension");
+            if (format == "pdf")
+                using (var doc = UglyToad.PdfPig.PdfDocument.Open(files[0])) Check(doc.NumberOfPages == 1, "PDF has one page");
+            else
+            {
+                using var back = PhotoCodec.Read(files[0]);
+                Check(back.Width == 64 && back.Height == 48, $"{format} output reopens at 64x48");
+            }
+        }
+        catch (Exception error)
+        {
+            Check(false, $"Convert to {format} threw {error.GetType().Name}: {error.Message}");
+        }
+    }
+
+    var pdf2 = ImageOperations.Convert([source, second], "pdf", Path.Combine(work, "out-pdf2"), null, default);
+    using (var doc = UglyToad.PdfPig.PdfDocument.Open(pdf2[0])) Check(pdf2.Count == 1 && doc.NumberOfPages == 2, "Two images make one two-page PDF");
+
+    var noisy = Path.Combine(work, "noisy.jpg");
+    var pixels = new byte[1000 * 1000 * 3];
+    new Random(1).NextBytes(pixels);
+    using (var noise = new MagickImage()) { noise.ReadPixels(pixels, new PixelReadSettings(1000, 1000, StorageType.Char, PixelMapping.RGB)); noise.Quality = 100; noise.Write(noisy); }
+    var small = ImageOperations.Compress([noisy], Path.Combine(work, "out-compress"), null, default);
+    Check(small.Count == 1 && new FileInfo(small[0]).Length < new FileInfo(noisy).Length && small[0].EndsWith(" Compressed.jpg"), "Compress makes a smaller JPG");
+
+    var cancelled = Path.Combine(work, "out-cancel");
+    var token = new CancellationToken(true);
+    try { ImageOperations.Convert([source], "jpg", cancelled, null, token); Check(false, "Cancelled convert throws"); }
+    catch (OperationCanceledException) { Check(Directory.GetFileSystemEntries(cancelled).Length == 0, "Cancelled convert leaves the destination empty"); }
+
+    Check(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(source)).SequenceEqual(hash), "Source file is unchanged");
 }
 
 void HomeChecks()
