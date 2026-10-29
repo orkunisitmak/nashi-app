@@ -10,6 +10,7 @@
 "%@ files, ready to go." = "%@ files, ready to go.";
 "%@ is enabled" = "%@ is enabled";
 "%@ items" = "%@ items";
+"%@ percent" = "%@ percent";
 "%@ selected" = "%@ selected";
 "%@ selected · Drag to carry files" = "%@ selected · Drag to carry files";
 "%@ ways to change it" = "%@ ways to change it";
@@ -24,6 +25,7 @@
 "%lld files, ready to go." = "%lld files, ready to go.";
 "%lld is enabled" = "%lld is enabled";
 "%lld items" = "%lld items";
+"%lld percent" = "%lld percent";
 "%lld selected" = "%lld selected";
 "%lld selected · Drag to carry files" = "%lld selected · Drag to carry files";
 "%lld ways to change it" = "%lld ways to change it";
@@ -246,6 +248,7 @@
 "BLACKS" = "BLACKS";
 "BLEEP" = "BLEEP";
 "BLEEP AUDIO" = "BLEEP AUDIO";
+"BLOOM" = "BLOOM";
 "BLUR" = "BLUR";
 "BORDER" = "BORDER";
 "BOTTOM" = "BOTTOM";
@@ -265,6 +268,7 @@
 "Blacks" = "Blacks";
 "Bleep" = "Bleep";
 "Bleep Audio" = "Bleep Audio";
+"Bloom" = "Bloom";
 "Blur" = "Blur";
 "Border" = "Border";
 "Bottom" = "Bottom";
@@ -365,6 +369,7 @@
 "CHOOSE WHAT YOUR FILE SHARES." = "CHOOSE WHAT YOUR FILE SHARES.";
 "CHOOSE ZIP, TAR OR GZIP." = "CHOOSE ZIP, TAR OR GZIP.";
 "CLARITY" = "CLARITY";
+"CLASSIC" = "CLASSIC";
 "CLEAR" = "CLEAR";
 "CLEAR FLOAT" = "CLEAR FLOAT";
 "CLEAR SELECTION" = "CLEAR SELECTION";
@@ -376,6 +381,7 @@
 "COLOR" = "COLOR";
 "COLUMN" = "COLUMN";
 "COLUMNS" = "COLUMNS";
+"COMMAND TO CONVERT" = "COMMAND TO CONVERT";
 "COMPATIBILITY" = "COMPATIBILITY";
 "COMPRESS" = "COMPRESS";
 "COMPRESS & SAVE" = "COMPRESS & SAVE";
@@ -522,6 +528,7 @@
 "Choose visualization image…" = "Choose visualization image…";
 "Choose what your file shares." = "Choose what your file shares.";
 "Clarity" = "Clarity";
+"Classic" = "Classic";
 "Clear" = "Clear";
 "Clear Float" = "Clear Float";
 "Clear Selection" = "Clear Selection";
@@ -535,6 +542,7 @@
 "Color" = "Color";
 "Column" = "Column";
 "Columns" = "Columns";
+"Command to convert" = "Command to convert";
 "Compatibility" = "Compatibility";
 "Compress" = "Compress";
 "Compress & save" = "Compress & save";
@@ -614,6 +622,7 @@
 "DEVICES" = "DEVICES";
 "DISCONNECT & FORGET TOKEN" = "DISCONNECT & FORGET TOKEN";
 "DISMISS" = "DISMISS";
+"DISMISS ERROR" = "DISMISS ERROR";
 "DOCUMENT XML IS TOO LARGE." = "DOCUMENT XML IS TOO LARGE.";
 "DOCUMENTS" = "DOCUMENTS";
 "DONE" = "DONE";
@@ -643,6 +652,7 @@
 "DOWNLOADING LIBREOFFICE 26.8.1…" = "DOWNLOADING LIBREOFFICE 26.8.1…";
 "DOWNLOADING…" = "DOWNLOADING…";
 "DRAG A CROP INSIDE THE IMAGE." = "DRAG A CROP INSIDE THE IMAGE.";
+"DRAG A FILE IN FINDER, TAP COMMAND, AND DROP ONTO ITS NEXT FORMAT." = "DRAG A FILE IN FINDER, TAP COMMAND, AND DROP ONTO ITS NEXT FORMAT.";
 "DRAG A RANGE TO MOVE IT; DRAG ITS EDGES TO RESIZE. DRAG EMPTY SPACE TO ADD." = "DRAG A RANGE TO MOVE IT; DRAG ITS EDGES TO RESIZE. DRAG EMPTY SPACE TO ADD.";
 "DRAG A REGION TO COVER WITH A SOLID BLOCK." = "DRAG A REGION TO COVER WITH A SOLID BLOCK.";
 "DRAG A WINDOW BY ITS TITLE BAR OR RESIZE BORDER, THEN TAP SHIFT OR COMMAND. HOVER OVER A LAYOUT AND RELEASE THE MOUSE TO PLACE IT. ESCAPE CANCELS." = "DRAG A WINDOW BY ITS TITLE BAR OR RESIZE BORDER, THEN TAP SHIFT OR COMMAND. HOVER OVER A LAYOUT AND RELEASE THE MOUSE TO PLACE IT. ESCAPE CANCELS.";
@@ -682,6 +692,7 @@
 "Devices" = "Devices";
 "Disconnect & Forget Token" = "Disconnect & Forget Token";
 "Dismiss" = "Dismiss";
+"Dismiss error" = "Dismiss error";
 "Document XML is too large." = "Document XML is too large.";
 "Documents" = "Documents";
 "Done" = "Done";
@@ -718,6 +729,7 @@
 "Downloading Nashi %lld…" = "Downloading Nashi %lld…";
 "Downloading…" = "Downloading…";
 "Drag a crop inside the image." = "Drag a crop inside the image.";
+"Drag a file in Finder, tap Command, and drop onto its next format." = "Drag a file in Finder, tap Command, and drop onto its next format.";
 "Drag a range to move it; drag its edges to resize. Drag empty space to add." = "Drag a range to move it; drag its edges to resize. Drag empty space to add.";
 "Drag a region to cover with a solid block." = "Drag a region to cover with a solid block.";
 "Drag a window by its title bar or resize border, then tap Shift or Command. Hover over a layout and release the mouse to place it. Escape cancels." = "Drag a window by its title bar or resize border, then tap Shift or Command. Hover over a layout and release the mouse to place it. Escape cancels.";
@@ -797,6 +809,7 @@
 "Extract Archive" = "Extract Archive";
 "Extract Nashi into its own writable folder first." = "Extract Nashi into its own writable folder first.";
 "FADE" = "FADE";
+"FADES IN QUICKLY AND DISAPPEARS AT ONCE." = "FADES IN QUICKLY AND DISAPPEARS AT ONCE.";
 "FASTER" = "FASTER";
 "FEATURED" = "FEATURED";
 "FEATURES & SHORTCUTS" = "FEATURES & SHORTCUTS";
@@ -840,6 +853,7 @@
 "FIT WHOLE IMAGE" = "FIT WHOLE IMAGE";
 "FIXED PAGES" = "FIXED PAGES";
 "FLEXIBLE, REFLOWABLE TEXT" = "FLEXIBLE, REFLOWABLE TEXT";
+"FLIES OUT OF THE SCREEN TOWARD YOU IN 3D AND SINKS BACK INTO IT WHEN IT CLOSES." = "FLIES OUT OF THE SCREEN TOWARD YOU IN 3D AND SINKS BACK INTO IT WHEN IT CLOSES.";
 "FLIP" = "FLIP";
 "FLIP HORIZONTALLY" = "FLIP HORIZONTALLY";
 "FLIP VERTICALLY" = "FLIP VERTICALLY";
@@ -865,6 +879,7 @@
 "FRESHLY MADE" = "FRESHLY MADE";
 "FRESHLY MADE, PASTED, AND READY FOR ANOTHER ROUND." = "FRESHLY MADE, PASTED, AND READY FOR ANOTHER ROUND.";
 "Fade" = "Fade";
+"Fades in quickly and disappears at once." = "Fades in quickly and disappears at once.";
 "Faster" = "Faster";
 "Featured" = "Featured";
 "Features & shortcuts" = "Features & shortcuts";
@@ -908,6 +923,7 @@
 "Fitting image · attempt %lld…" = "Fitting image · attempt %lld…";
 "Fixed pages" = "Fixed pages";
 "Flexible, reflowable text" = "Flexible, reflowable text";
+"Flies out of the screen toward you in 3D and sinks back into it when it closes." = "Flies out of the screen toward you in 3D and sinks back into it when it closes.";
 "Flip" = "Flip";
 "Flip horizontally" = "Flip horizontally";
 "Flip vertically" = "Flip vertically";
@@ -951,10 +967,13 @@
 "GITHUB REPOSITORY" = "GITHUB REPOSITORY";
 "GIVE IT A LITTLE BREATHING ROOM." = "GIVE IT A LITTLE BREATHING ROOM.";
 "GLASS" = "GLASS";
+"GLASS INTENSITY" = "GLASS INTENSITY";
+"GLASS STYLE" = "GLASS STYLE";
 "GRADIENT" = "GRADIENT";
 "GRADIENT END" = "GRADIENT END";
 "GRAIN" = "GRAIN";
 "GRID" = "GRID";
+"GROWS OUT OF THE DRAGGED FILE’S CAPSULE AND FOLDS BACK INTO IT." = "GROWS OUT OF THE DRAGGED FILE’S CAPSULE AND FOLDS BACK INTO IT.";
 "GZIP EXPANDS BEYOND 4 GB." = "GZIP EXPANDS BEYOND 4 GB.";
 "GZIP expands beyond 4 GB." = "GZIP expands beyond 4 GB.";
 "Gamma" = "Gamma";
@@ -964,16 +983,20 @@
 "GitHub repository" = "GitHub repository";
 "Give it a little breathing room." = "Give it a little breathing room.";
 "Glass" = "Glass";
+"Glass intensity" = "Glass intensity";
+"Glass style" = "Glass style";
 "Gradient" = "Gradient";
 "Gradient end" = "Gradient end";
 "Grain" = "Grain";
 "Grid" = "Grid";
+"Grows out of the dragged file’s capsule and folds back into it." = "Grows out of the dragged file’s capsule and folds back into it.";
 "HEIGHT" = "HEIGHT";
 "HELLO" = "HELLO";
 "HIGHER QUALITY" = "HIGHER QUALITY";
 "HIGHLIGHTS" = "HIGHLIGHTS";
 "HOLD A KEY WHILE DRAGGING IN FINDER" = "HOLD A KEY WHILE DRAGGING IN FINDER";
 "HOME" = "HOME";
+"HOVER THE SLICES. CHANGES SHOW HERE AS YOU MAKE THEM." = "HOVER THE SLICES. CHANGES SHOW HERE AS YOU MAKE THEM.";
 "HUE" = "HUE";
 "Height" = "Height";
 "Hello" = "Hello";
@@ -981,6 +1004,7 @@
 "Highlights" = "Highlights";
 "Hold a key while dragging in Finder" = "Hold a key while dragging in Finder";
 "Home" = "Home";
+"Hover the slices. Changes show here as you make them." = "Hover the slices. Changes show here as you make them.";
 "Hue" = "Hue";
 "ICONS" = "ICONS";
 "IMAGE" = "IMAGE";
@@ -991,6 +1015,7 @@
 "IMAGE SIZE" = "IMAGE SIZE";
 "IMAGES" = "IMAGES";
 "IMAGES, VIDEOS, DOCUMENTS, AND ALL THE LITTLE THINGS IN BETWEEN." = "IMAGES, VIDEOS, DOCUMENTS, AND ALL THE LITTLE THINGS IN BETWEEN.";
+"IN PROGRESS" = "IN PROGRESS";
 "INK COLOR" = "INK COLOR";
 "INPUT AND OUTPUT FORMAT." = "INPUT AND OUTPUT FORMAT.";
 "INPUT FORMAT" = "INPUT FORMAT";
@@ -1009,6 +1034,7 @@
 "INVALID UPDATE SIGNATURE LENGTH." = "INVALID UPDATE SIGNATURE LENGTH.";
 "INVALID UPDATE SIGNATURE." = "INVALID UPDATE SIGNATURE.";
 "INVALID YOUTUBE VIDEO ID." = "INVALID YOUTUBE VIDEO ID.";
+"ISLAND" = "ISLAND";
 "Icons" = "Icons";
 "Image" = "Image";
 "Image Compression" = "Image Compression";
@@ -1019,6 +1045,7 @@
 "Image size" = "Image size";
 "Images" = "Images";
 "Images, videos, documents, and all the little things in between." = "Images, videos, documents, and all the little things in between.";
+"In progress" = "In progress";
 "Ink color" = "Ink color";
 "Input and output format." = "Input and output format.";
 "Input format" = "Input format";
@@ -1037,8 +1064,11 @@
 "Invalid update manifest." = "Invalid update manifest.";
 "Invalid update signature length." = "Invalid update signature length.";
 "Invalid update signature." = "Invalid update signature.";
+"Island" = "Island";
+"JELLY" = "JELLY";
 "JOIN RETAINED CLIPS INTO ONE VIDEO" = "JOIN RETAINED CLIPS INTO ONE VIDEO";
 "JOIN VIDEOS" = "JOIN VIDEOS";
+"Jelly" = "Jelly";
 "Join Videos" = "Join Videos";
 "Join retained clips into one video" = "Join retained clips into one video";
 "KEEP AT LEAST ONE CLIP." = "KEEP AT LEAST ONE CLIP.";
@@ -1131,6 +1161,7 @@
 "MAKE IT YOURS" = "MAKE IT YOURS";
 "MAKE IT YOURS · NASHI" = "MAKE IT YOURS · NASHI";
 "MAKE SOME SPACE. KEEP WHAT MATTERS." = "MAKE SOME SPACE. KEEP WHAT MATTERS.";
+"MAKE THE WHEEL YOURS." = "MAKE THE WHEEL YOURS.";
 "MAKE YOUR POINT." = "MAKE YOUR POINT.";
 "MARKER" = "MARKER";
 "MATCH SOURCE" = "MATCH SOURCE";
@@ -1171,6 +1202,7 @@
 "Make it yours" = "Make it yours";
 "Make it yours · Nashi" = "Make it yours · Nashi";
 "Make some space. Keep what matters." = "Make some space. Keep what matters.";
+"Make the wheel yours." = "Make the wheel yours.";
 "Make your point." = "Make your point.";
 "Marker" = "Marker";
 "Match Source" = "Match Source";
@@ -1304,6 +1336,7 @@
 "OPEN NASHI" = "OPEN NASHI";
 "OPEN PERMISSION SETTINGS…" = "OPEN PERMISSION SETTINGS…";
 "OPEN WHEEL" = "OPEN WHEEL";
+"OPTION FOR TOOLS" = "OPTION FOR TOOLS";
 "OPTIONAL. YOU CAN CHANGE THIS IN SETTINGS." = "OPTIONAL. YOU CAN CHANGE THIS IN SETTINGS.";
 "ORGANIZE PDF" = "ORGANIZE PDF";
 "ORIGINAL" = "ORIGINAL";
@@ -1345,6 +1378,11 @@
 "Open link" = "Open link";
 "Open permission settings…" = "Open permission settings…";
 "Open wheel" = "Open wheel";
+"Opens in %@ · Closes in %@" = "Opens in %@ · Closes in %@";
+"Opens in %@ · Closes in %lld" = "Opens in %@ · Closes in %lld";
+"Opens in %lld · Closes in %@" = "Opens in %lld · Closes in %@";
+"Opens in %lld · Closes in %lld" = "Opens in %lld · Closes in %lld";
+"Option for tools" = "Option for tools";
 "Optional. You can change this in Settings." = "Optional. You can change this in Settings.";
 "Organize PDF" = "Organize PDF";
 "Original" = "Original";
@@ -1390,16 +1428,20 @@
 "PDF preview bitmap could not be allocated." = "PDF preview bitmap could not be allocated.";
 "PDF → OFFICE LAYOUT" = "PDF → OFFICE LAYOUT";
 "PDF → Office layout" = "PDF → Office layout";
+"PETALS OPEN ONE BY ONE, CLOCKWISE, THEN FOLD BACK." = "PETALS OPEN ONE BY ONE, CLOCKWISE, THEN FOLD BACK.";
 "PHOTOS" = "PHOTOS";
 "PICK A FOLDER YOU WORK IN. FRESH COPIES ARE SAVED BESIDE THE ORIGINALS BY DEFAULT." = "PICK A FOLDER YOU WORK IN. FRESH COPIES ARE SAVED BESIDE THE ORIGINALS BY DEFAULT.";
+"PICK ITS GLASS AND THE WAY IT ARRIVES AND LEAVES." = "PICK ITS GLASS AND THE WAY IT ARRIVES AND LEAVES.";
 "PIN" = "PIN";
 "PIXELATE" = "PIXELATE";
 "PLAY" = "PLAY";
 "PLAY / PAUSE" = "PLAY / PAUSE";
+"PLAY ANIMATION" = "PLAY ANIMATION";
 "PLAY RESULT" = "PLAY RESULT";
 "PLAY SELECTED RANGE" = "PLAY SELECTED RANGE";
 "PLAYBACK / DOCUMENT ORDER" = "PLAYBACK / DOCUMENT ORDER";
 "PLAYBACK SPEED" = "PLAYBACK SPEED";
+"POP OUT" = "POP OUT";
 "PORTRAIT" = "PORTRAIT";
 "PORTRAIT · 4:5" = "PORTRAIT · 4:5";
 "PORTRAIT · 9:16" = "PORTRAIT · 9:16";
@@ -1427,6 +1469,7 @@
 "PROCESSED PREVIEW · EXPORT USES THE ORIGINAL FILE." = "PROCESSED PREVIEW · EXPORT USES THE ORIGINAL FILE.";
 "PROCESSED PREVIEW. CHOOSE ORIGINAL TO EDIT AREAS." = "PROCESSED PREVIEW. CHOOSE ORIGINAL TO EDIT AREAS.";
 "PROCESSING…" = "PROCESSING…";
+"PROGRESS" = "PROGRESS";
 "PROTECTED MEDIA CANNOT BE DOWNLOADED." = "PROTECTED MEDIA CANNOT BE DOWNLOADED.";
 "PUBLIC UPDATES WORK WITHOUT A TOKEN." = "PUBLIC UPDATES WORK WITHOUT A TOKEN.";
 "Padding" = "Padding";
@@ -1447,17 +1490,21 @@
 "Pasted image" = "Pasted image";
 "Pasted text" = "Pasted text";
 "Pause" = "Pause";
+"Petals open one by one, clockwise, then fold back." = "Petals open one by one, clockwise, then fold back.";
 "Photos" = "Photos";
 "Pick a folder you work in. Fresh copies are saved beside the originals by default." = "Pick a folder you work in. Fresh copies are saved beside the originals by default.";
+"Pick its glass and the way it arrives and leaves." = "Pick its glass and the way it arrives and leaves.";
 "Pin" = "Pin";
 "Pixelate" = "Pixelate";
 "Play" = "Play";
 "Play / pause" = "Play / pause";
 "Play Result" = "Play Result";
 "Play Selected Range" = "Play Selected Range";
+"Play animation" = "Play animation";
 "Play selected range" = "Play selected range";
 "Playback / document order" = "Playback / document order";
 "Playback speed" = "Playback speed";
+"Pop out" = "Pop out";
 "Portrait" = "Portrait";
 "Portrait · 4:5" = "Portrait · 4:5";
 "Portrait · 9:16" = "Portrait · 9:16";
@@ -1489,6 +1536,7 @@
 "Processed preview · export uses the original file." = "Processed preview · export uses the original file.";
 "Processed preview. Choose Original to edit areas." = "Processed preview. Choose Original to edit areas.";
 "Processing…" = "Processing…";
+"Progress" = "Progress";
 "Protected media cannot be downloaded." = "Protected media cannot be downloaded.";
 "Public updates work without a token." = "Public updates work without a token.";
 "QUALITY" = "QUALITY";
@@ -1514,12 +1562,14 @@
 "READY." = "READY.";
 "READY. YOU CAN GO BACK TO YOUR FILES." = "READY. YOU CAN GO BACK TO YOUR FILES.";
 "RECENT CONVERSIONS" = "RECENT CONVERSIONS";
+"RECOMMENDED" = "RECOMMENDED";
 "RECTANGLE" = "RECTANGLE";
 "REDACT AUDIO" = "REDACT AUDIO";
 "REDACT IMAGE" = "REDACT IMAGE";
 "REDACT PHOTO" = "REDACT PHOTO";
 "REDACT VIDEO" = "REDACT VIDEO";
 "REDO" = "REDO";
+"REDUCE MOTION IS ON, SO THE WHEEL SIMPLY FADES." = "REDUCE MOTION IS ON, SO THE WHEEL SIMPLY FADES.";
 "REDUCE PADDING OR SPACING TO FIT THE IMAGES." = "REDUCE PADDING OR SPACING TO FIT THE IMAGES.";
 "REDUCE SPACING TO FIT THE FEATURED LAYOUT." = "REDUCE SPACING TO FIT THE FEATURED LAYOUT.";
 "REDUCTION (%; 0 = AUTO)" = "REDUCTION (%; 0 = AUTO)";
@@ -1574,12 +1624,14 @@
 "Ready." = "Ready.";
 "Ready. You can go back to your files." = "Ready. You can go back to your files.";
 "Recent Conversions" = "Recent Conversions";
+"Recommended" = "Recommended";
 "Rectangle" = "Rectangle";
 "Redact Audio" = "Redact Audio";
 "Redact Image" = "Redact Image";
 "Redact Photo" = "Redact Photo";
 "Redact Video" = "Redact Video";
 "Redo" = "Redo";
+"Reduce Motion is on, so the wheel simply fades." = "Reduce Motion is on, so the wheel simply fades.";
 "Reduce padding or spacing to fit the images." = "Reduce padding or spacing to fit the images.";
 "Reduce spacing to fit the featured layout." = "Reduce spacing to fit the featured layout.";
 "Reduction (%; 0 = auto)" = "Reduction (%; 0 = auto)";
@@ -1706,6 +1758,7 @@
 "SHARE" = "SHARE";
 "SHARE…" = "SHARE…";
 "SHARPEN" = "SHARPEN";
+"SHARPENS FROM A BLUR AND SETTLES WITH A GENTLE SPRING." = "SHARPENS FROM A BLUR AND SETTLES WITH A GENTLE SPRING.";
 "SHARPNESS" = "SHARPNESS";
 "SHIFT LOCKS THE RATIO · RETURN CROPS\nDRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE." = "SHIFT LOCKS THE RATIO · RETURN CROPS\nDRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE.";
 "SHOW IN EXPLORER" = "SHOW IN EXPLORER";
@@ -1719,6 +1772,8 @@
 "SMALL · 1280 PX LONGEST EDGE" = "SMALL · 1280 PX LONGEST EDGE";
 "SMALLER FILE" = "SMALLER FILE";
 "SMALLEST" = "SMALLEST";
+"SNAP" = "SNAP";
+"SOFT" = "SOFT";
 "SOLID" = "SOLID";
 "SOUND AND HAPTIC FEEDBACK" = "SOUND AND HAPTIC FEEDBACK";
 "SOUND FEEDBACK" = "SOUND FEEDBACK";
@@ -1731,6 +1786,8 @@
 "SPACING" = "SPACING";
 "SPECTRUM" = "SPECTRUM";
 "SPEED" = "SPEED";
+"SPIN" = "SPIN";
+"SPINS OPEN AND SPINS AWAY." = "SPINS OPEN AND SPINS AWAY.";
 "SPLIT PDF" = "SPLIT PDF";
 "SPLIT POINTS (SECONDS; SEPARATED BY SEMICOLONS)" = "SPLIT POINTS (SECONDS; SEPARATED BY SEMICOLONS)";
 "SPLIT VIDEO" = "SPLIT VIDEO";
@@ -1843,6 +1900,7 @@
 "Share" = "Share";
 "Share…" = "Share…";
 "Sharpen" = "Sharpen";
+"Sharpens from a blur and settles with a gentle spring." = "Sharpens from a blur and settles with a gentle spring.";
 "Sharpness" = "Sharpness";
 "Shift locks the ratio · Return crops\nDrag inside to move; drag a handle to resize." = "Shift locks the ratio · Return crops\nDrag inside to move; drag a handle to resize.";
 "Show Nashi in Finder" = "Show Nashi in Finder";
@@ -1857,6 +1915,8 @@
 "Small · 1280 px longest edge" = "Small · 1280 px longest edge";
 "Smaller File" = "Smaller File";
 "Smallest" = "Smallest";
+"Snap" = "Snap";
+"Soft" = "Soft";
 "Solid" = "Solid";
 "Sound and haptic feedback" = "Sound and haptic feedback";
 "Sound feedback" = "Sound feedback";
@@ -1869,6 +1929,8 @@
 "Spacing" = "Spacing";
 "Spectrum" = "Spectrum";
 "Speed" = "Speed";
+"Spin" = "Spin";
+"Spins open and spins away." = "Spins open and spins away.";
 "Split PDF" = "Split PDF";
 "Split Video" = "Split Video";
 "Split points (seconds; separated by semicolons)" = "Split points (seconds; separated by semicolons)";
@@ -1889,6 +1951,7 @@
 "Subtitles" = "Subtitles";
 "Subtle animations" = "Subtle animations";
 "System" = "System";
+"TAP OPTION WHILE DRAGGING, OR PICK TOOLS UNDER THE WHEEL, TO CROP, COMPRESS, ANNOTATE, AND GIVE YOUR FILE A LITTLE LOVE." = "TAP OPTION WHILE DRAGGING, OR PICK TOOLS UNDER THE WHEEL, TO CROP, COMPRESS, ANNOTATE, AND GIVE YOUR FILE A LITTLE LOVE.";
 "TAP THE CHOSEN MODIFIER COMBINATION WHILE DRAGGING FILES." = "TAP THE CHOSEN MODIFIER COMBINATION WHILE DRAGGING FILES.";
 "TARGET" = "TARGET";
 "TARGET LOUDNESS" = "TARGET LOUDNESS";
@@ -1922,6 +1985,7 @@
 "THE SIGNED PACKAGE VERSION DOES NOT MATCH THIS UPDATE." = "THE SIGNED PACKAGE VERSION DOES NOT MATCH THIS UPDATE.";
 "THE UPDATE DOES NOT CONTAIN NASHI." = "THE UPDATE DOES NOT CONTAIN NASHI.";
 "THE UPDATE SIGNATURE IS INVALID. YOUR EXISTING APP WAS KEPT." = "THE UPDATE SIGNATURE IS INVALID. YOUR EXISTING APP WAS KEPT.";
+"THEME" = "THEME";
 "THESE FILES HAVE MOVED OR WERE DELETED." = "THESE FILES HAVE MOVED OR WERE DELETED.";
 "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE." = "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE.";
 "THIS FILE HAS MOVED OR WAS DELETED." = "THIS FILE HAS MOVED OR WAS DELETED.";
@@ -1952,6 +2016,7 @@
 "THUMBNAIL" = "THUMBNAIL";
 "TIMES (SECONDS)" = "TIMES (SECONDS)";
 "TINT" = "TINT";
+"TINTED" = "TINTED";
 "TOO MANY FILES ALREADY USE THIS NAME." = "TOO MANY FILES ALREADY USE THIS NAME.";
 "TOO MANY IMAGE REDIRECTS." = "TOO MANY IMAGE REDIRECTS.";
 "TOO MANY UPDATE FILES." = "TOO MANY UPDATE FILES.";
@@ -1964,6 +2029,7 @@
 "TRACK NAME" = "TRACK NAME";
 "TRANSPARENT" = "TRANSPARENT";
 "TRANSPARENT BACKGROUNDS SAVE AS PNG TO KEEP THEIR TRANSPARENCY." = "TRANSPARENT BACKGROUNDS SAVE AS PNG TO KEEP THEIR TRANSPARENCY.";
+"TRANSPARENT SHOWS MORE OF WHAT’S BEHIND THE WHEEL. TINTED IS EASIER TO READ." = "TRANSPARENT SHOWS MORE OF WHAT’S BEHIND THE WHEEL. TINTED IS EASIER TO READ.";
 "TRIM" = "TRIM";
 "TRIM AUDIO" = "TRIM AUDIO";
 "TRIM AUDIO · NASHI" = "TRIM AUDIO · NASHI";
@@ -1974,6 +2040,8 @@
 "TRY A CLEARER IMAGE OR ANOTHER PDF." = "TRY A CLEARER IMAGE OR ANOTHER PDF.";
 "TRY FEEDBACK" = "TRY FEEDBACK";
 "TURN OFF UNIFORM WIDTH TO PRESERVE THIS PDF’S FORM FIELDS, ATTACHMENTS, LINKS OR NAVIGATION." = "TURN OFF UNIFORM WIDTH TO PRESERVE THIS PDF’S FORM FIELDS, ATTACHMENTS, LINKS OR NAVIGATION.";
+"TURNS TO DUST WITH A SNAP AND REFORMS FROM IT. TAKES LONGER." = "TURNS TO DUST WITH A SNAP AND REFORMS FROM IT. TAKES LONGER.";
+"Tap Option while dragging, or pick Tools under the wheel, to crop, compress, annotate, and give your file a little love." = "Tap Option while dragging, or pick Tools under the wheel, to crop, compress, annotate, and give your file a little love.";
 "Tap the chosen modifier combination while dragging files." = "Tap the chosen modifier combination while dragging files.";
 "Target" = "Target";
 "Target LUFS" = "Target LUFS";
@@ -2009,6 +2077,7 @@
 "The signed package version does not match this update." = "The signed package version does not match this update.";
 "The update does not contain Nashi." = "The update does not contain Nashi.";
 "The update signature is invalid. Your existing app was kept." = "The update signature is invalid. Your existing app was kept.";
+"Theme" = "Theme";
 "These files have moved or were deleted." = "These files have moved or were deleted.";
 "This PDF contains no pages." = "This PDF contains no pages.";
 "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported." = "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported.";
@@ -2041,6 +2110,7 @@
 "Thumbnail" = "Thumbnail";
 "Times (seconds)" = "Times (seconds)";
 "Tint" = "Tint";
+"Tinted" = "Tinted";
 "Too many files already use this name." = "Too many files already use this name.";
 "Too many image redirects." = "Too many image redirects.";
 "Too many update files." = "Too many update files.";
@@ -2053,6 +2123,7 @@
 "Track name" = "Track name";
 "Transparent" = "Transparent";
 "Transparent backgrounds save as PNG to keep their transparency." = "Transparent backgrounds save as PNG to keep their transparency.";
+"Transparent shows more of what’s behind the wheel. Tinted is easier to read." = "Transparent shows more of what’s behind the wheel. Tinted is easier to read.";
 "Trim" = "Trim";
 "Trim Audio" = "Trim Audio";
 "Trim Audio · Nashi" = "Trim Audio · Nashi";
@@ -2063,6 +2134,7 @@
 "Try a clearer image or another PDF." = "Try a clearer image or another PDF.";
 "Try feedback" = "Try feedback";
 "Turn off uniform width to preserve this PDF’s form fields, attachments, links or navigation." = "Turn off uniform width to preserve this PDF’s form fields, attachments, links or navigation.";
+"Turns to dust with a snap and reforms from it. Takes longer." = "Turns to dust with a snap and reforms from it. Takes longer.";
 "UNDO" = "UNDO";
 "UNDO AREA" = "UNDO AREA";
 "UNDO LAST MARK" = "UNDO LAST MARK";
@@ -2155,7 +2227,11 @@
 "WAVEFORM" = "WAVEFORM";
 "WELCOME TO NASHI" = "WELCOME TO NASHI";
 "WELCOME…" = "WELCOME…";
+"WHEEL ANIMATION" = "WHEEL ANIMATION";
 "WHEEL FINISH" = "WHEEL FINISH";
+"WHEEL GLASS" = "WHEEL GLASS";
+"WHEEL MODE" = "WHEEL MODE";
+"WHEEL PREVIEW" = "WHEEL PREVIEW";
 "WHEEL SIZE" = "WHEEL SIZE";
 "WHITES" = "WHITES";
 "WIDTH" = "WIDTH";
@@ -2165,12 +2241,17 @@
 "WINDOW MANAGEMENT · DRAG A TITLE BAR, THEN SHIFT OR ALT" = "WINDOW MANAGEMENT · DRAG A TITLE BAR, THEN SHIFT OR ALT";
 "WINDOWS COULD NOT ADD NASHI TO THE SYSTEM TRAY." = "WINDOWS COULD NOT ADD NASHI TO THE SYSTEM TRAY.";
 "WINDOWS COULD NOT CREATE A TRAY ICON." = "WINDOWS COULD NOT CREATE A TRAY ICON.";
+"WOBBLES INTO PLACE LIKE LIQUID GLASS AND POPS LIKE A BUBBLE." = "WOBBLES INTO PLACE LIKE LIQUID GLASS AND POPS LIKE A BUBBLE.";
 "WORKING…" = "WORKING…";
 "Wait for the processed preview to finish before resetting." = "Wait for the processed preview to finish before resetting.";
 "Waveform" = "Waveform";
 "Welcome to Nashi" = "Welcome to Nashi";
 "Welcome…" = "Welcome…";
+"Wheel animation" = "Wheel animation";
 "Wheel finish" = "Wheel finish";
+"Wheel glass" = "Wheel glass";
+"Wheel mode" = "Wheel mode";
+"Wheel preview" = "Wheel preview";
 "Wheel size" = "Wheel size";
 "Whites" = "Whites";
 "Width" = "Width";
@@ -2180,6 +2261,7 @@
 "Window management · drag a title bar, then Shift or Alt" = "Window management · drag a title bar, then Shift or Alt";
 "Windows could not add Nashi to the system tray." = "Windows could not add Nashi to the system tray.";
 "Windows could not create a tray icon." = "Windows could not create a tray icon.";
+"Wobbles into place like Liquid Glass and pops like a bubble." = "Wobbles into place like Liquid Glass and pops like a bubble.";
 "Working…" = "Working…";
 "YOU CAN ALSO CHOOSE FILES FROM THE MAIN WINDOW." = "YOU CAN ALSO CHOOSE FILES FROM THE MAIN WINDOW.";
 "YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL." = "YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL.";

@@ -10,6 +10,7 @@
 "%@ files, ready to go." = "%@ dosya hazır.";
 "%@ is enabled" = "%@ izni açık";
 "%@ items" = "%@ öğe";
+"%@ percent" = "yüzde %@";
 "%@ selected" = "%@ seçili";
 "%@ selected · Drag to carry files" = "%@ seçili · Dosyaları taşımak için sürükle";
 "%@ ways to change it" = "%@ farklı biçime çevir";
@@ -24,6 +25,7 @@
 "%lld files, ready to go." = "%lld dosya hazır.";
 "%lld is enabled" = "%lld izni açık";
 "%lld items" = "%lld öğe";
+"%lld percent" = "yüzde %lld";
 "%lld selected" = "%lld seçili";
 "%lld selected · Drag to carry files" = "%lld seçili · Dosyaları taşımak için sürükle";
 "%lld ways to change it" = "%lld farklı biçime çevir";
@@ -246,6 +248,7 @@
 "BLACKS" = "SİYAHLAR";
 "BLEEP" = "BİP";
 "BLEEP AUDIO" = "SESE BİP EKLE";
+"BLOOM" = "ÇİÇEK";
 "BLUR" = "BULANIKLAŞTIR";
 "BORDER" = "KENARLIK";
 "BOTTOM" = "ALT";
@@ -265,6 +268,7 @@
 "Blacks" = "Siyahlar";
 "Bleep" = "Bip";
 "Bleep Audio" = "Sese Bip Ekle";
+"Bloom" = "Çiçek";
 "Blur" = "Bulanıklaştır";
 "Border" = "Kenarlık";
 "Bottom" = "Alt";
@@ -365,6 +369,7 @@
 "CHOOSE WHAT YOUR FILE SHARES." = "DOSYANIN NE PAYLAŞTIĞINI SEN SEÇ.";
 "CHOOSE ZIP, TAR OR GZIP." = "ZIP, TAR VEYA GZIP SEÇ.";
 "CLARITY" = "NETLİK";
+"CLASSIC" = "KLASİK";
 "CLEAR" = "TEMİZLE";
 "CLEAR FLOAT" = "YÜZEN PENCEREYİ TEMİZLE";
 "CLEAR SELECTION" = "SEÇİMİ TEMİZLE";
@@ -376,6 +381,7 @@
 "COLOR" = "RENK";
 "COLUMN" = "SÜTUN";
 "COLUMNS" = "SÜTUN SAYISI";
+"COMMAND TO CONVERT" = "DÖNÜŞTÜRMEK İÇİN COMMAND";
 "COMPATIBILITY" = "UYUMLULUK";
 "COMPRESS" = "SIKIŞTIR";
 "COMPRESS & SAVE" = "SIKIŞTIR VE KAYDET";
@@ -522,6 +528,7 @@
 "Choose visualization image…" = "Görselleştirme görseli seç…";
 "Choose what your file shares." = "Dosyanın ne paylaştığını sen seç.";
 "Clarity" = "Netlik";
+"Classic" = "Klasik";
 "Clear" = "Temizle";
 "Clear Float" = "Yüzen Pencereyi Temizle";
 "Clear Selection" = "Seçimi Temizle";
@@ -535,6 +542,7 @@
 "Color" = "Renk";
 "Column" = "Sütun";
 "Columns" = "Sütun sayısı";
+"Command to convert" = "Dönüştürmek için Command";
 "Compatibility" = "Uyumluluk";
 "Compress" = "Sıkıştır";
 "Compress & save" = "Sıkıştır ve kaydet";
@@ -614,6 +622,7 @@
 "DEVICES" = "AYGITLAR";
 "DISCONNECT & FORGET TOKEN" = "BAĞLANTIYI KES VE TOKENI SİL";
 "DISMISS" = "KAPAT";
+"DISMISS ERROR" = "HATAYI KAPAT";
 "DOCUMENT XML IS TOO LARGE." = "BELGE XML'İ ÇOK BÜYÜK.";
 "DOCUMENTS" = "BELGELER";
 "DONE" = "BİTTİ";
@@ -643,6 +652,7 @@
 "DOWNLOADING LIBREOFFICE 26.8.1…" = "LIBREOFFICE 26.8.1 İNDİRİLİYOR…";
 "DOWNLOADING…" = "İNDİRİLİYOR…";
 "DRAG A CROP INSIDE THE IMAGE." = "KIRPMA ALANINI GÖRSELİN İÇİNDE SÜRÜKLE.";
+"DRAG A FILE IN FINDER, TAP COMMAND, AND DROP ONTO ITS NEXT FORMAT." = "FINDER’DA BİR DOSYA SÜRÜKLERKEN COMMAND’A BAS VE YENİ BİÇİMİNİN ÜZERİNE BIRAK.";
 "DRAG A RANGE TO MOVE IT; DRAG ITS EDGES TO RESIZE. DRAG EMPTY SPACE TO ADD." = "ARALIĞI TAŞIMAK İÇİN İÇİNİ, BOYUTLANDIRMAK İÇİN KENARLARINI SÜRÜKLE. YENİ ARALIK İÇİN BOŞ BİR ALANI SÜRÜKLE.";
 "DRAG A REGION TO COVER WITH A SOLID BLOCK." = "DÜZ BİR BLOKLA KAPATILACAK ALANI SÜRÜKLEYEREK SEÇ.";
 "DRAG A WINDOW BY ITS TITLE BAR OR RESIZE BORDER, THEN TAP SHIFT OR COMMAND. HOVER OVER A LAYOUT AND RELEASE THE MOUSE TO PLACE IT. ESCAPE CANCELS." = "PENCEREYİ BAŞLIK ÇUBUĞUNDAN VEYA KENARINDAN SÜRÜKLERKEN SHIFT YA DA COMMAND'A BAS. BİR DÜZENİN ÜZERİNE GELİP FAREYİ BIRAK. ESCAPE İPTAL EDER.";
@@ -682,6 +692,7 @@
 "Devices" = "Aygıtlar";
 "Disconnect & Forget Token" = "Bağlantıyı Kes ve Tokenı Sil";
 "Dismiss" = "Kapat";
+"Dismiss error" = "Hatayı kapat";
 "Document XML is too large." = "Belge XML'i çok büyük.";
 "Documents" = "Belgeler";
 "Done" = "Bitti";
@@ -718,6 +729,7 @@
 "Downloading Nashi %lld…" = "Nashi %lld indiriliyor…";
 "Downloading…" = "İndiriliyor…";
 "Drag a crop inside the image." = "Kırpma alanını görselin içinde sürükle.";
+"Drag a file in Finder, tap Command, and drop onto its next format." = "Finder’da bir dosya sürüklerken Command’a bas ve yeni biçiminin üzerine bırak.";
 "Drag a range to move it; drag its edges to resize. Drag empty space to add." = "Aralığı taşımak için içini, boyutlandırmak için kenarlarını sürükle. Yeni aralık için boş bir alanı sürükle.";
 "Drag a region to cover with a solid block." = "Düz bir blokla kapatılacak alanı sürükleyerek seç.";
 "Drag a window by its title bar or resize border, then tap Shift or Command. Hover over a layout and release the mouse to place it. Escape cancels." = "Pencereyi başlık çubuğundan veya kenarından sürüklerken Shift ya da Command'a bas. Bir düzenin üzerine gelip fareyi bırak. Escape iptal eder.";
@@ -797,6 +809,7 @@
 "Extract Archive" = "Arşivi Aç";
 "Extract Nashi into its own writable folder first." = "Önce Nashi'yi yazılabilir, kendine ait bir klasöre çıkar.";
 "FADE" = "SOLUKLAŞTIRMA";
+"FADES IN QUICKLY AND DISAPPEARS AT ONCE." = "HIZLA BELİRİR, KAPANIRKEN ANINDA KAYBOLUR.";
 "FASTER" = "DAHA HIZLI";
 "FEATURED" = "ÖNE ÇIKAN";
 "FEATURES & SHORTCUTS" = "ÖZELLİKLER VE KISAYOLLAR";
@@ -840,6 +853,7 @@
 "FIT WHOLE IMAGE" = "GÖRSELİN TAMAMINI SIĞDIR";
 "FIXED PAGES" = "SABİT SAYFALAR";
 "FLEXIBLE, REFLOWABLE TEXT" = "ESNEK, YENİDEN AKABİLEN METİN";
+"FLIES OUT OF THE SCREEN TOWARD YOU IN 3D AND SINKS BACK INTO IT WHEN IT CLOSES." = "3B OLARAK EKRANIN DERİNLİĞİNDEN SANA DOĞRU FIRLAR, KAPANIRKEN İÇİNE GERİ ÇEKİLİR.";
 "FLIP" = "ÇEVİR";
 "FLIP HORIZONTALLY" = "YATAY ÇEVİR";
 "FLIP VERTICALLY" = "DİKEY ÇEVİR";
@@ -865,6 +879,7 @@
 "FRESHLY MADE" = "YENİ HAZIRLANANLAR";
 "FRESHLY MADE, PASTED, AND READY FOR ANOTHER ROUND." = "YENİ HAZIRLANAN, YAPIŞTIRILAN VE YENİDEN KULLANIMA HAZIR DOSYALARIN.";
 "Fade" = "Soluklaştırma";
+"Fades in quickly and disappears at once." = "Hızla belirir, kapanırken anında kaybolur.";
 "Faster" = "Daha hızlı";
 "Featured" = "Öne çıkan";
 "Features & shortcuts" = "Özellikler ve kısayollar";
@@ -908,6 +923,7 @@
 "Fitting image · attempt %lld…" = "Görsel sığdırılıyor · deneme %lld…";
 "Fixed pages" = "Sabit sayfalar";
 "Flexible, reflowable text" = "Esnek, yeniden akabilen metin";
+"Flies out of the screen toward you in 3D and sinks back into it when it closes." = "3B olarak ekranın derinliğinden sana doğru fırlar, kapanırken içine geri çekilir.";
 "Flip" = "Çevir";
 "Flip horizontally" = "Yatay çevir";
 "Flip vertically" = "Dikey çevir";
@@ -951,10 +967,13 @@
 "GITHUB REPOSITORY" = "GITHUB DEPOSU";
 "GIVE IT A LITTLE BREATHING ROOM." = "BİRAZ NEFES ALACAK ALAN AÇ.";
 "GLASS" = "CAM";
+"GLASS INTENSITY" = "CAM YOĞUNLUĞU";
+"GLASS STYLE" = "CAM STİLİ";
 "GRADIENT" = "GEÇİŞ";
 "GRADIENT END" = "GEÇİŞİN BİTİŞ RENGİ";
 "GRAIN" = "GREN";
 "GRID" = "IZGARA";
+"GROWS OUT OF THE DRAGGED FILE’S CAPSULE AND FOLDS BACK INTO IT." = "SÜRÜKLENEN DOSYANIN KAPSÜLÜNDEN BÜYÜR, KAPANIRKEN ONA GERİ DÖNER.";
 "GZIP EXPANDS BEYOND 4 GB." = "GZIP AÇILDIĞINDA 4 GB'I AŞIYOR.";
 "GZIP expands beyond 4 GB." = "GZIP açıldığında 4 GB'ı aşıyor.";
 "Gamma" = "Gama";
@@ -964,16 +983,20 @@
 "GitHub repository" = "GitHub deposu";
 "Give it a little breathing room." = "Biraz nefes alacak alan aç.";
 "Glass" = "Cam";
+"Glass intensity" = "Cam yoğunluğu";
+"Glass style" = "Cam stili";
 "Gradient" = "Geçiş";
 "Gradient end" = "Geçişin bitiş rengi";
 "Grain" = "Gren";
 "Grid" = "Izgara";
+"Grows out of the dragged file’s capsule and folds back into it." = "Sürüklenen dosyanın kapsülünden büyür, kapanırken ona geri döner.";
 "HEIGHT" = "YÜKSEKLİK";
 "HELLO" = "MERHABA";
 "HIGHER QUALITY" = "DAHA YÜKSEK KALİTE";
 "HIGHLIGHTS" = "PARLAK ALANLAR";
 "HOLD A KEY WHILE DRAGGING IN FINDER" = "FINDER'DA SÜRÜKLERKEN BİR KISAYOL TUŞUNA BAS";
 "HOME" = "ANA SAYFA";
+"HOVER THE SLICES. CHANGES SHOW HERE AS YOU MAKE THEM." = "DİLİMLERİN ÜZERİNDE GEZİN. DEĞİŞİKLİKLER BURADA ANINDA GÖRÜNÜR.";
 "HUE" = "RENK TONU";
 "Height" = "Yükseklik";
 "Hello" = "Merhaba";
@@ -981,6 +1004,7 @@
 "Highlights" = "Parlak alanlar";
 "Hold a key while dragging in Finder" = "Finder'da sürüklerken bir kısayol tuşuna bas";
 "Home" = "Ana Sayfa";
+"Hover the slices. Changes show here as you make them." = "Dilimlerin üzerinde gezin. Değişiklikler burada anında görünür.";
 "Hue" = "Renk tonu";
 "ICONS" = "SİMGELER";
 "IMAGE" = "GÖRSEL";
@@ -991,6 +1015,7 @@
 "IMAGE SIZE" = "GÖRSEL BOYUTU";
 "IMAGES" = "GÖRSELLER";
 "IMAGES, VIDEOS, DOCUMENTS, AND ALL THE LITTLE THINGS IN BETWEEN." = "GÖRSELLER, VİDEOLAR, BELGELER VE DİĞER TÜM DOSYALARIN.";
+"IN PROGRESS" = "SÜRÜYOR";
 "INK COLOR" = "KALEM RENGİ";
 "INPUT AND OUTPUT FORMAT." = "GİRDİ VE ÇIKTI BİÇİMİ.";
 "INPUT FORMAT" = "GİRDİ BİÇİMİ";
@@ -1009,6 +1034,7 @@
 "INVALID UPDATE SIGNATURE LENGTH." = "GÜNCELLEME İMZASININ UZUNLUĞU GEÇERSİZ.";
 "INVALID UPDATE SIGNATURE." = "GÜNCELLEME İMZASI GEÇERSİZ.";
 "INVALID YOUTUBE VIDEO ID." = "YOUTUBE VİDEO KİMLİĞİ GEÇERSİZ.";
+"ISLAND" = "ADA";
 "Icons" = "Simgeler";
 "Image" = "Görsel";
 "Image Compression" = "Görsel Sıkıştırma";
@@ -1019,6 +1045,7 @@
 "Image size" = "Görsel boyutu";
 "Images" = "Görseller";
 "Images, videos, documents, and all the little things in between." = "Görseller, videolar, belgeler ve diğer tüm dosyaların.";
+"In progress" = "Sürüyor";
 "Ink color" = "Kalem rengi";
 "Input and output format." = "Girdi ve çıktı biçimi.";
 "Input format" = "Girdi biçimi";
@@ -1037,8 +1064,11 @@
 "Invalid update manifest." = "Güncelleme bilgisi geçersiz.";
 "Invalid update signature length." = "Güncelleme imzasının uzunluğu geçersiz.";
 "Invalid update signature." = "Güncelleme imzası geçersiz.";
+"Island" = "Ada";
+"JELLY" = "JÖLE";
 "JOIN RETAINED CLIPS INTO ONE VIDEO" = "KALAN KLİPLERİ TEK VİDEODA BİRLEŞTİR";
 "JOIN VIDEOS" = "VİDEOLARI BİRLEŞTİR";
+"Jelly" = "Jöle";
 "Join Videos" = "Videoları Birleştir";
 "Join retained clips into one video" = "Kalan klipleri tek videoda birleştir";
 "KEEP AT LEAST ONE CLIP." = "EN AZ BİR KLİP BIRAK.";
@@ -1131,6 +1161,7 @@
 "MAKE IT YOURS" = "SANA GÖRE";
 "MAKE IT YOURS · NASHI" = "SANA GÖRE · NASHI";
 "MAKE SOME SPACE. KEEP WHAT MATTERS." = "YER AÇ. ÖNEMLİ OLANI KORU.";
+"MAKE THE WHEEL YOURS." = "ÇARKI KENDİNE GÖRE AYARLA.";
 "MAKE YOUR POINT." = "ANLATMAK İSTEDİĞİNİ İŞARETLE.";
 "MARKER" = "KALEM";
 "MATCH SOURCE" = "KAYNAKLA AYNI";
@@ -1171,6 +1202,7 @@
 "Make it yours" = "Sana göre";
 "Make it yours · Nashi" = "Sana göre · Nashi";
 "Make some space. Keep what matters." = "Yer aç. Önemli olanı koru.";
+"Make the wheel yours." = "Çarkı kendine göre ayarla.";
 "Make your point." = "Anlatmak istediğini işaretle.";
 "Marker" = "Kalem";
 "Match Source" = "Kaynakla Aynı";
@@ -1304,6 +1336,7 @@
 "OPEN NASHI" = "NASHI'Yİ AÇ";
 "OPEN PERMISSION SETTINGS…" = "İZİN AYARLARINI AÇ…";
 "OPEN WHEEL" = "ÇARKI AÇ";
+"OPTION FOR TOOLS" = "ARAÇLAR İÇİN OPTİON";
 "OPTIONAL. YOU CAN CHANGE THIS IN SETTINGS." = "İSTEĞE BAĞLI. AYARLARDAN DEĞİŞTİREBİLİRSİN.";
 "ORGANIZE PDF" = "PDF'Yİ DÜZENLE";
 "ORIGINAL" = "ORİJİNAL";
@@ -1345,6 +1378,11 @@
 "Open link" = "Bağlantıyı aç";
 "Open permission settings…" = "İzin ayarlarını aç…";
 "Open wheel" = "Çarkı aç";
+"Opens in %@ · Closes in %@" = "Açılış %@ · Kapanış %@";
+"Opens in %@ · Closes in %lld" = "Açılış %@ · Kapanış %lld";
+"Opens in %lld · Closes in %@" = "Açılış %lld · Kapanış %@";
+"Opens in %lld · Closes in %lld" = "Açılış %lld · Kapanış %lld";
+"Option for tools" = "Araçlar için Option";
 "Optional. You can change this in Settings." = "İsteğe bağlı. Ayarlardan değiştirebilirsin.";
 "Organize PDF" = "PDF'yi Düzenle";
 "Original" = "Orijinal";
@@ -1390,16 +1428,20 @@
 "PDF preview bitmap could not be allocated." = "PDF önizlemesi için bellek ayrılamadı.";
 "PDF → OFFICE LAYOUT" = "PDF → OFFICE DÜZENİ";
 "PDF → Office layout" = "PDF → Office düzeni";
+"PETALS OPEN ONE BY ONE, CLOCKWISE, THEN FOLD BACK." = "DİLİMLER SAAT YÖNÜNDE TEK TEK AÇILIR, TERS SIRAYLA KATLANIR.";
 "PHOTOS" = "FOTOĞRAFLAR";
 "PICK A FOLDER YOU WORK IN. FRESH COPIES ARE SAVED BESIDE THE ORIGINALS BY DEFAULT." = "ÇALIŞTIĞIN BİR KLASÖRÜ SEÇ. YENİ KOPYALAR VARSAYILAN OLARAK ORİJİNALLERİN YANINA KAYDEDİLİR.";
+"PICK ITS GLASS AND THE WAY IT ARRIVES AND LEAVES." = "CAMINI VE NASIL GELİP GİTTİĞİNİ SEÇ.";
 "PIN" = "SABİTLE";
 "PIXELATE" = "PİKSELLEŞTİR";
 "PLAY" = "OYNAT";
 "PLAY / PAUSE" = "OYNAT / DURAKLAT";
+"PLAY ANIMATION" = "ANİMASYONU OYNAT";
 "PLAY RESULT" = "SONUCU OYNAT";
 "PLAY SELECTED RANGE" = "SEÇİLİ ARALIĞI OYNAT";
 "PLAYBACK / DOCUMENT ORDER" = "OYNATMA / BELGE SIRASI";
 "PLAYBACK SPEED" = "OYNATMA HIZI";
+"POP OUT" = "ÖNE ÇIKIŞ";
 "PORTRAIT" = "DİKEY";
 "PORTRAIT · 4:5" = "DİKEY · 4:5";
 "PORTRAIT · 9:16" = "DİKEY · 9:16";
@@ -1427,6 +1469,7 @@
 "PROCESSED PREVIEW · EXPORT USES THE ORIGINAL FILE." = "İŞLENMİŞ ÖNİZLEME · DIŞA AKTARMADA ORİJİNAL DOSYA KULLANILIR.";
 "PROCESSED PREVIEW. CHOOSE ORIGINAL TO EDIT AREAS." = "İŞLENMİŞ ÖNİZLEME. ALANLARI DÜZENLEMEK İÇİN ORİJİNAL'İ SEÇ.";
 "PROCESSING…" = "İŞLENİYOR…";
+"PROGRESS" = "İLERLEME";
 "PROTECTED MEDIA CANNOT BE DOWNLOADED." = "KORUMALI MEDYA İNDİRİLEMEZ.";
 "PUBLIC UPDATES WORK WITHOUT A TOKEN." = "HERKESE AÇIK GÜNCELLEMELER İÇİN TOKEN GEREKMEZ.";
 "Padding" = "İç boşluk";
@@ -1447,17 +1490,21 @@
 "Pasted image" = "Yapıştırılan görsel";
 "Pasted text" = "Yapıştırılan metin";
 "Pause" = "Duraklat";
+"Petals open one by one, clockwise, then fold back." = "Dilimler saat yönünde tek tek açılır, ters sırayla katlanır.";
 "Photos" = "Fotoğraflar";
 "Pick a folder you work in. Fresh copies are saved beside the originals by default." = "Çalıştığın bir klasörü seç. Yeni kopyalar varsayılan olarak orijinallerin yanına kaydedilir.";
+"Pick its glass and the way it arrives and leaves." = "Camını ve nasıl gelip gittiğini seç.";
 "Pin" = "Sabitle";
 "Pixelate" = "Pikselleştir";
 "Play" = "Oynat";
 "Play / pause" = "Oynat / duraklat";
 "Play Result" = "Sonucu Oynat";
 "Play Selected Range" = "Seçili Aralığı Oynat";
+"Play animation" = "Animasyonu oynat";
 "Play selected range" = "Seçili aralığı oynat";
 "Playback / document order" = "Oynatma / belge sırası";
 "Playback speed" = "Oynatma hızı";
+"Pop out" = "Öne çıkış";
 "Portrait" = "Dikey";
 "Portrait · 4:5" = "Dikey · 4:5";
 "Portrait · 9:16" = "Dikey · 9:16";
@@ -1489,6 +1536,7 @@
 "Processed preview · export uses the original file." = "İşlenmiş önizleme · dışa aktarmada orijinal dosya kullanılır.";
 "Processed preview. Choose Original to edit areas." = "İşlenmiş önizleme. Alanları düzenlemek için Orijinal'i seç.";
 "Processing…" = "İşleniyor…";
+"Progress" = "İlerleme";
 "Protected media cannot be downloaded." = "Korumalı medya indirilemez.";
 "Public updates work without a token." = "Herkese açık güncellemeler için token gerekmez.";
 "QUALITY" = "KALİTE";
@@ -1514,12 +1562,14 @@
 "READY." = "HAZIR.";
 "READY. YOU CAN GO BACK TO YOUR FILES." = "HAZIR. DOSYALARINA DÖNEBİLİRSİN.";
 "RECENT CONVERSIONS" = "SON DÖNÜŞTÜRMELER";
+"RECOMMENDED" = "ÖNERİLEN";
 "RECTANGLE" = "DİKDÖRTGEN";
 "REDACT AUDIO" = "SESİ SANSÜRLE";
 "REDACT IMAGE" = "GÖRSELİ SANSÜRLE";
 "REDACT PHOTO" = "FOTOĞRAFI SANSÜRLE";
 "REDACT VIDEO" = "VİDEOYU SANSÜRLE";
 "REDO" = "YİNELE";
+"REDUCE MOTION IS ON, SO THE WHEEL SIMPLY FADES." = "HAREKETİ AZALT AÇIK; ÇARK YALNIZCA SOLARAK AÇILIP KAPANIR.";
 "REDUCE PADDING OR SPACING TO FIT THE IMAGES." = "GÖRSELLERİN SIĞMASI İÇİN KENAR BOŞLUĞUNU VEYA ARALIĞI AZALT.";
 "REDUCE SPACING TO FIT THE FEATURED LAYOUT." = "ÖNE ÇIKAN DÜZENE SIĞMASI İÇİN ARALIĞI AZALT.";
 "REDUCTION (%; 0 = AUTO)" = "KÜÇÜLTME (%; 0 = OTOMATİK)";
@@ -1574,12 +1624,14 @@
 "Ready." = "Hazır.";
 "Ready. You can go back to your files." = "Hazır. Dosyalarına dönebilirsin.";
 "Recent Conversions" = "Son Dönüştürmeler";
+"Recommended" = "Önerilen";
 "Rectangle" = "Dikdörtgen";
 "Redact Audio" = "Sesi Sansürle";
 "Redact Image" = "Görseli Sansürle";
 "Redact Photo" = "Fotoğrafı Sansürle";
 "Redact Video" = "Videoyu Sansürle";
 "Redo" = "Yinele";
+"Reduce Motion is on, so the wheel simply fades." = "Hareketi Azalt açık; çark yalnızca solarak açılıp kapanır.";
 "Reduce padding or spacing to fit the images." = "Görsellerin sığması için kenar boşluğunu veya aralığı azalt.";
 "Reduce spacing to fit the featured layout." = "Öne çıkan düzene sığması için aralığı azalt.";
 "Reduction (%; 0 = auto)" = "Küçültme (%; 0 = otomatik)";
@@ -1706,6 +1758,7 @@
 "SHARE" = "PAYLAŞ";
 "SHARE…" = "PAYLAŞ…";
 "SHARPEN" = "KESKİNLEŞTİRME";
+"SHARPENS FROM A BLUR AND SETTLES WITH A GENTLE SPRING." = "BULANIKTAN NETLEŞİR, YUMUŞAK BİR YAYLA YERİNE OTURUR.";
 "SHARPNESS" = "KESKİNLİK";
 "SHIFT LOCKS THE RATIO · RETURN CROPS\nDRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE." = "SHIFT ORANI KİLİTLER · ENTER KIRPAR\nTAŞIMAK İÇİN ALANIN İÇİNİ, BOYUTLANDIRMAK İÇİN TUTAMAĞI SÜRÜKLE.";
 "SHOW IN EXPLORER" = "DOSYA GEZGİNİ'NDE GÖSTER";
@@ -1719,6 +1772,8 @@
 "SMALL · 1280 PX LONGEST EDGE" = "KÜÇÜK · UZUN KENAR 1280 PX";
 "SMALLER FILE" = "DAHA KÜÇÜK DOSYA";
 "SMALLEST" = "EN KÜÇÜK";
+"SNAP" = "ŞIKLATMA";
+"SOFT" = "YUMUŞAK";
 "SOLID" = "DÜZ";
 "SOUND AND HAPTIC FEEDBACK" = "SES VE DOKUNSAL GERİ BİLDİRİM";
 "SOUND FEEDBACK" = "SESLİ GERİ BİLDİRİM";
@@ -1731,6 +1786,8 @@
 "SPACING" = "BOŞLUK";
 "SPECTRUM" = "SPEKTRUM";
 "SPEED" = "HIZ";
+"SPIN" = "DÖNEN";
+"SPINS OPEN AND SPINS AWAY." = "DÖNEREK AÇILIR, DÖNEREK KAYBOLUR.";
 "SPLIT PDF" = "PDF'Yİ BÖL";
 "SPLIT POINTS (SECONDS; SEPARATED BY SEMICOLONS)" = "BÖLME NOKTALARI (SANİYE; NOKTALI VİRGÜLLE AYIR)";
 "SPLIT VIDEO" = "VİDEOYU BÖL";
@@ -1843,6 +1900,7 @@
 "Share" = "Paylaş";
 "Share…" = "Paylaş…";
 "Sharpen" = "Keskinleştirme";
+"Sharpens from a blur and settles with a gentle spring." = "Bulanıktan netleşir, yumuşak bir yayla yerine oturur.";
 "Sharpness" = "Keskinlik";
 "Shift locks the ratio · Return crops\nDrag inside to move; drag a handle to resize." = "Shift oranı kilitler · Enter kırpar\nTaşımak için alanın içini, boyutlandırmak için tutamağı sürükle.";
 "Show Nashi in Finder" = "Nashi'yi Finder'da Göster";
@@ -1857,6 +1915,8 @@
 "Small · 1280 px longest edge" = "Küçük · uzun kenar 1280 px";
 "Smaller File" = "Daha Küçük Dosya";
 "Smallest" = "En küçük";
+"Snap" = "Şıklatma";
+"Soft" = "Yumuşak";
 "Solid" = "Düz";
 "Sound and haptic feedback" = "Ses ve dokunsal geri bildirim";
 "Sound feedback" = "Sesli geri bildirim";
@@ -1869,6 +1929,8 @@
 "Spacing" = "Boşluk";
 "Spectrum" = "Spektrum";
 "Speed" = "Hız";
+"Spin" = "Dönen";
+"Spins open and spins away." = "Dönerek açılır, dönerek kaybolur.";
 "Split PDF" = "PDF'yi Böl";
 "Split Video" = "Videoyu Böl";
 "Split points (seconds; separated by semicolons)" = "Bölme noktaları (saniye; noktalı virgülle ayır)";
@@ -1889,6 +1951,7 @@
 "Subtitles" = "Altyazılar";
 "Subtle animations" = "Hafif animasyonlar";
 "System" = "Sistem";
+"TAP OPTION WHILE DRAGGING, OR PICK TOOLS UNDER THE WHEEL, TO CROP, COMPRESS, ANNOTATE, AND GIVE YOUR FILE A LITTLE LOVE." = "KIRPMAK, SIKIŞTIRMAK, İŞARETLEMEK VE DOSYANA BİRAZ ÖZEN GÖSTERMEK İÇİN SÜRÜKLERKEN OPTİON’A BAS YA DA ÇARKIN ALTINDAKİ ARAÇLAR’I SEÇ.";
 "TAP THE CHOSEN MODIFIER COMBINATION WHILE DRAGGING FILES." = "DOSYALARI SÜRÜKLERKEN SEÇTİĞİN TUŞ BİRLEŞİMİNE BAS.";
 "TARGET" = "HEDEF";
 "TARGET LOUDNESS" = "HEDEF SES DÜZEYİ";
@@ -1922,6 +1985,7 @@
 "THE SIGNED PACKAGE VERSION DOES NOT MATCH THIS UPDATE." = "İMZALI PAKETİN SÜRÜMÜ BU GÜNCELLEMEYLE EŞLEŞMİYOR.";
 "THE UPDATE DOES NOT CONTAIN NASHI." = "GÜNCELLEME NASHI'Yİ İÇERMİYOR.";
 "THE UPDATE SIGNATURE IS INVALID. YOUR EXISTING APP WAS KEPT." = "GÜNCELLEME İMZASI GEÇERSİZ. MEVCUT UYGULAMAN KORUNDU.";
+"THEME" = "TEMA";
 "THESE FILES HAVE MOVED OR WERE DELETED." = "BU DOSYALAR TAŞINMIŞ VEYA SİLİNMİŞ.";
 "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE." = "BU KIRPMA, SEÇİLEN TÜM GÖRSELLERE UYGULANIR VE HER GÖRSELİN SINIRLARINA SIĞMALIDIR.";
 "THIS FILE HAS MOVED OR WAS DELETED." = "BU DOSYA TAŞINMIŞ VEYA SİLİNMİŞ.";
@@ -1952,6 +2016,7 @@
 "THUMBNAIL" = "KÜÇÜK RESİM";
 "TIMES (SECONDS)" = "ZAMANLAR (SANİYE)";
 "TINT" = "TON";
+"TINTED" = "RENKLİ";
 "TOO MANY FILES ALREADY USE THIS NAME." = "BU ADI KULLANAN ÇOK FAZLA DOSYA VAR.";
 "TOO MANY IMAGE REDIRECTS." = "GÖRSEL ÇOK FAZLA KEZ YÖNLENDİRİLDİ.";
 "TOO MANY UPDATE FILES." = "GÜNCELLEMEDE ÇOK FAZLA DOSYA VAR.";
@@ -1964,6 +2029,7 @@
 "TRACK NAME" = "İZ ADI";
 "TRANSPARENT" = "ŞEFFAF";
 "TRANSPARENT BACKGROUNDS SAVE AS PNG TO KEEP THEIR TRANSPARENCY." = "ŞEFFAF ARKA PLANLAR, ŞEFFAFLIĞI KORUMAK İÇİN PNG OLARAK KAYDEDİLİR.";
+"TRANSPARENT SHOWS MORE OF WHAT’S BEHIND THE WHEEL. TINTED IS EASIER TO READ." = "ŞEFFAF, ÇARKIN ARKASINI DAHA ÇOK GÖSTERİR. RENKLİ DAHA KOLAY OKUNUR.";
 "TRIM" = "KIRP";
 "TRIM AUDIO" = "SESİ KIRP";
 "TRIM AUDIO · NASHI" = "SESİ KIRP · NASHI";
@@ -1974,6 +2040,8 @@
 "TRY A CLEARER IMAGE OR ANOTHER PDF." = "DAHA NET BİR GÖRSEL VEYA BAŞKA BİR PDF DENE.";
 "TRY FEEDBACK" = "GERİ BİLDİRİMİ DENE";
 "TURN OFF UNIFORM WIDTH TO PRESERVE THIS PDF’S FORM FIELDS, ATTACHMENTS, LINKS OR NAVIGATION." = "BU PDF'NİN FORM ALANLARINI, EKLERİNİ, BAĞLANTILARINI VEYA GEZİNMESİNİ KORUMAK İÇİN EŞİT GENİŞLİĞİ KAPAT.";
+"TURNS TO DUST WITH A SNAP AND REFORMS FROM IT. TAKES LONGER." = "ŞIKLATMAYLA TOZA DÖNÜŞÜR, TOZDAN YENİDEN OLUŞUR. DAHA UZUN SÜRER.";
+"Tap Option while dragging, or pick Tools under the wheel, to crop, compress, annotate, and give your file a little love." = "Kırpmak, sıkıştırmak, işaretlemek ve dosyana biraz özen göstermek için sürüklerken Option’a bas ya da çarkın altındaki Araçlar’ı seç.";
 "Tap the chosen modifier combination while dragging files." = "Dosyaları sürüklerken seçtiğin tuş birleşimine bas.";
 "Target" = "Hedef";
 "Target LUFS" = "Hedef LUFS";
@@ -2009,6 +2077,7 @@
 "The signed package version does not match this update." = "İmzalı paketin sürümü bu güncellemeyle eşleşmiyor.";
 "The update does not contain Nashi." = "Güncelleme Nashi'yi içermiyor.";
 "The update signature is invalid. Your existing app was kept." = "Güncelleme imzası geçersiz. Mevcut uygulaman korundu.";
+"Theme" = "Tema";
 "These files have moved or were deleted." = "Bu dosyalar taşınmış veya silinmiş.";
 "This PDF contains no pages." = "Bu PDF'de sayfa yok.";
 "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported." = "Bu PDF'de birleştirme, bölme veya sayfaları yeniden sıralama sırasında korunamayan form alanları ya da ekler var. Kopya dışa aktarılmadı.";
@@ -2041,6 +2110,7 @@
 "Thumbnail" = "Küçük resim";
 "Times (seconds)" = "Zamanlar (saniye)";
 "Tint" = "Ton";
+"Tinted" = "Renkli";
 "Too many files already use this name." = "Bu adı kullanan çok fazla dosya var.";
 "Too many image redirects." = "Görsel çok fazla kez yönlendirildi.";
 "Too many update files." = "Güncellemede çok fazla dosya var.";
@@ -2053,6 +2123,7 @@
 "Track name" = "İz adı";
 "Transparent" = "Şeffaf";
 "Transparent backgrounds save as PNG to keep their transparency." = "Şeffaf arka planlar, şeffaflığı korumak için PNG olarak kaydedilir.";
+"Transparent shows more of what’s behind the wheel. Tinted is easier to read." = "Şeffaf, çarkın arkasını daha çok gösterir. Renkli daha kolay okunur.";
 "Trim" = "Kırp";
 "Trim Audio" = "Sesi Kırp";
 "Trim Audio · Nashi" = "Sesi Kırp · Nashi";
@@ -2063,6 +2134,7 @@
 "Try a clearer image or another PDF." = "Daha net bir görsel veya başka bir PDF dene.";
 "Try feedback" = "Geri bildirimi dene";
 "Turn off uniform width to preserve this PDF’s form fields, attachments, links or navigation." = "Bu PDF'nin form alanlarını, eklerini, bağlantılarını veya gezinmesini korumak için eşit genişliği kapat.";
+"Turns to dust with a snap and reforms from it. Takes longer." = "Şıklatmayla toza dönüşür, tozdan yeniden oluşur. Daha uzun sürer.";
 "UNDO" = "GERİ AL";
 "UNDO AREA" = "ALANI GERİ AL";
 "UNDO LAST MARK" = "SON İŞARETİ GERİ AL";
@@ -2155,7 +2227,11 @@
 "WAVEFORM" = "DALGA BİÇİMİ";
 "WELCOME TO NASHI" = "NASHI'YE HOŞ GELDİN";
 "WELCOME…" = "HOŞ GELDİN…";
+"WHEEL ANIMATION" = "ÇARK ANİMASYONU";
 "WHEEL FINISH" = "ÇARK GÖRÜNÜMÜ";
+"WHEEL GLASS" = "ÇARK CAMI";
+"WHEEL MODE" = "ÇARK MODU";
+"WHEEL PREVIEW" = "ÇARK ÖNİZLEMESİ";
 "WHEEL SIZE" = "ÇARK BOYUTU";
 "WHITES" = "BEYAZLAR";
 "WIDTH" = "GENİŞLİK";
@@ -2165,12 +2241,17 @@
 "WINDOW MANAGEMENT · DRAG A TITLE BAR, THEN SHIFT OR ALT" = "PENCERE DÜZENİ · BAŞLIK ÇUBUĞUNU SÜRÜKLERKEN SHIFT VEYA ALT'A BAS";
 "WINDOWS COULD NOT ADD NASHI TO THE SYSTEM TRAY." = "WINDOWS, NASHI'Yİ SİSTEM TEPSİSİNE EKLEYEMEDİ.";
 "WINDOWS COULD NOT CREATE A TRAY ICON." = "WINDOWS TEPSİ SİMGESİNİ OLUŞTURAMADI.";
+"WOBBLES INTO PLACE LIKE LIQUID GLASS AND POPS LIKE A BUBBLE." = "LİQUİD GLASS GİBİ ESNEYEREK OTURUR, BALONCUK GİBİ PATLAR.";
 "WORKING…" = "İŞLENİYOR…";
 "Wait for the processed preview to finish before resetting." = "Sıfırlamadan önce işlenmiş önizlemenin bitmesini bekle.";
 "Waveform" = "Dalga biçimi";
 "Welcome to Nashi" = "Nashi'ye Hoş Geldin";
 "Welcome…" = "Hoş Geldin…";
+"Wheel animation" = "Çark animasyonu";
 "Wheel finish" = "Çark görünümü";
+"Wheel glass" = "Çark camı";
+"Wheel mode" = "Çark modu";
+"Wheel preview" = "Çark önizlemesi";
 "Wheel size" = "Çark boyutu";
 "Whites" = "Beyazlar";
 "Width" = "Genişlik";
@@ -2180,6 +2261,7 @@
 "Window management · drag a title bar, then Shift or Alt" = "Pencere düzeni · başlık çubuğunu sürüklerken Shift veya Alt'a bas";
 "Windows could not add Nashi to the system tray." = "Windows, Nashi'yi sistem tepsisine ekleyemedi.";
 "Windows could not create a tray icon." = "Windows tepsi simgesini oluşturamadı.";
+"Wobbles into place like Liquid Glass and pops like a bubble." = "Liquid Glass gibi esneyerek oturur, baloncuk gibi patlar.";
 "Working…" = "İşleniyor…";
 "YOU CAN ALSO CHOOSE FILES FROM THE MAIN WINDOW." = "ANA PENCEREDEN DE DOSYA SEÇEBİLİRSİN.";
 "YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL." = "NE ZAMAN İNDİRİP KURACAĞINA SEN KARAR VER.";

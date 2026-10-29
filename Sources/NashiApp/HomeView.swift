@@ -7,8 +7,8 @@ import NashiUpdates
 struct HomeView:View {
     @ObservedObject var state:AppState
     @ObservedObject var updater:AppUpdater
-    @AppStorage("convertKey") private var convertKey="shift"
-    @AppStorage("toolsKey") private var toolsKey="command"
+    @AppStorage("convertKey") private var convertKey="command"
+    @AppStorage("toolsKey") private var toolsKey="option"
     @AppStorage("actionsKey") private var actionsKey="control"
     @FocusState private var librarySearchFocused:Bool
     @State private var targeted=false

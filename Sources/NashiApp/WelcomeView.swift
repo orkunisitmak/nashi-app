@@ -56,8 +56,8 @@ struct WelcomeView:View {
             Text("A happier home for all the little file jobs. Convert, edit, and share — right on your Mac.").font(.system(size:13)).foregroundStyle(.secondary)
             Label("Your files stay local",systemImage:"lock.shield").font(.system(size:11,weight:.medium)).foregroundStyle(NashiPalette.forest)
         case 1,2,3:
-            Text(page==1 ? "Drag a file in Finder, tap Shift, and drop onto its next format.":page==2 ? "Tap Command while dragging to crop, compress, annotate, and give your file a little love.":"Tap Control while dragging to copy, move, share, or carry files in a floating shelf.").font(.system(size:13)).foregroundStyle(.secondary)
-            HStack(spacing:9) { Text(page==1 ? "⇧":page==2 ? "⌘":"⌃").font(.system(size:22,weight:.semibold));Text(page==1 ? "Shift to convert":page==2 ? "Command for tools":"Control for actions").font(.system(size:12,weight:.semibold,design:.rounded)) }.padding(13).background(NashiPalette.surface,in:RoundedRectangle(cornerRadius:13))
+            Text(page==1 ? "Drag a file in Finder, tap Command, and drop onto its next format.":page==2 ? "Tap Option while dragging, or pick Tools under the wheel, to crop, compress, annotate, and give your file a little love.":"Tap Control while dragging to copy, move, share, or carry files in a floating shelf.").font(.system(size:13)).foregroundStyle(.secondary)
+            HStack(spacing:9) { Text(page==1 ? "⌘":page==2 ? "⌥":"⌃").font(.system(size:22,weight:.semibold));Text(page==1 ? "Command to convert":page==2 ? "Option for tools":"Control for actions").font(.system(size:12,weight:.semibold,design:.rounded)) }.padding(13).background(NashiPalette.surface,in:RoundedRectangle(cornerRadius:13))
             Text("You can also choose files from the main window.").font(.system(size:11)).foregroundStyle(.secondary)
         case 4:
             Text("Pick a folder you work in. Fresh copies are saved beside the originals by default.").font(.system(size:13)).foregroundStyle(.secondary)

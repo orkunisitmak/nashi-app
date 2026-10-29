@@ -109,6 +109,8 @@ struct UIAuditError:LocalizedError { let message:String;init(_ message:String){s
             let suite="Nashi.UIAudit."+UUID().uuidString;suites.insert(suite)
             guard let defaults=UserDefaults(suiteName:suite) else{throw UIAuditError("Isolated audit preferences could not be created")}
             var arguments=originalArguments;arguments["appLanguage"]=language;arguments["appAppearance"]=appearance;arguments["reduceAnimations"]=true;arguments["soundsAndHapticsEnabled"]=false;arguments["sound"]=false;arguments["reveal"]=false
+            // The wheel stage reads its Theme settings from the standard store; pin them so the user's choice never reaches a capture.
+            arguments["conversionFanTheme"]="glass";arguments["wheelGlassStyle"]="tinted";arguments["wheelGlassIntensity"]=0.5
             UserDefaults.standard.setVolatileDomain(arguments,forName:UserDefaults.argumentDomain)
             // Each UserDefaults instance caches its own volatile search domains.
             // Set both stores so NSArgumentDomain cannot mask this cell's suite.
@@ -140,14 +142,17 @@ struct UIAuditError:LocalizedError { let message:String;init(_ message:String){s
             let tool:ToolKind=scene=="editor.crop-image" ? .cropImage:scene=="editor.annotate-image" ? .annotateImage:.frameImage
             view=AnyView(ToolEditor(state:state,tool:tool));size=NSSize(width:900,height:420)
         case "wheel.pdf-multiple":
-            let wheel=WheelView(frame:NSRect(x:0,y:0,width:320,height:320));let inputs=[fixtures["pdf1"]!,fixtures["pdf2"]!]
-            wheel.mode = .tools;wheel.inputs=inputs
-            wheel.items=FeatureCatalog.tools(for:inputs).map{WheelItem(title:FeatureCatalog.toolNames[$0] ?? $0.title,symbol:FeatureCatalog.toolSymbols[$0],operation:.tool($0))};wheel.centerTitle="Tools"
-            let host=NSWindow(contentRect:NSRect(x:0,y:0,width:320,height:320),styleMask:[.titled,.closable],backing:.buffered,defer:false);host.isReleasedWhenClosed=false;host.title="Nashi UI Audit · "+scene;host.contentView=wheel;host.center();host.makeKeyAndOrderFront(nil);window=host;NSApp.activate(ignoringOtherApps:true)
-            wheel.updateAccessibility()
+            // The production stage (glass, file capsule, mode bar) set up as WheelController.show does, at rest.
+            let stage=WheelStageView(frame:.zero),wheel=stage.wheel,inputs=[fixtures["pdf1"]!,fixtures["pdf2"]!]
+            let size=stage.layout(size:320);stage.fadesWindow=false;stage.applyFinish()
+            stage.bar.mode = .tools;stage.capsuleLabel.stringValue=L10n.text("\(inputs.count) files")
+            wheel.items=FeatureCatalog.tools(for:inputs).map{WheelItem(title:FeatureCatalog.toolNames[$0] ?? $0.title,symbol:FeatureCatalog.toolSymbols[$0],operation:.tool($0))};wheel.inputs=inputs;wheel.mode = .tools
+            stage.apply(.rest(wheel.items.count))
+            let host=NSWindow(contentRect:NSRect(origin:.zero,size:size),styleMask:[.titled,.closable],backing:.buffered,defer:false);host.isReleasedWhenClosed=false;host.title="Nashi UI Audit · "+scene;host.contentView=stage;host.center();host.makeKeyAndOrderFront(nil);window=host;NSApp.activate(ignoringOtherApps:true)
+            wheel.updateAccessibility();stage.bar.updateAccessibility()
             try await settle(recorder:nil)
-            observedPreferences=try await verifyPreferences(scene:scene,appearance:appearance,language:language,defaults:defaults,view:wheel)
-            try save(scene:scene,appearance:appearance,language:language,view:wheel,recorder:nil,issues:wheel.items.enumerated().flatMap{index,item in wheel.labelAuditIssues(index,title:item.title)})
+            observedPreferences=try await verifyPreferences(scene:scene,appearance:appearance,language:language,defaults:defaults,view:stage)
+            try save(scene:scene,appearance:appearance,language:language,view:stage,recorder:nil,issues:wheel.items.enumerated().flatMap{index,item in wheel.labelAuditIssues(index,title:item.title)})
             return
         default:throw UIAuditError("Unknown audit scene")
         }

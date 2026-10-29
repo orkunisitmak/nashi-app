@@ -46,7 +46,7 @@ struct WheelGeometry {
     func petal(_ index: Int) -> NSBezierPath {
         let delta = 360 / CGFloat(max(1,count)), gap: CGFloat = 0.9
         let mid = startAngle - CGFloat(index)*delta, a = mid-delta/2+gap, b = mid+delta/2-gap
-        let corner = min(10*scale, inner*delta * .pi/180/4)
+        let corner = min(16*scale, inner*delta * .pi/180/2.6)
         let outerInset = corner/radius*180 / .pi, innerInset = corner/inner*180 / .pi
         func point(_ r: CGFloat, _ degrees: CGFloat) -> NSPoint {
             NSPoint(x: center.x+r*cos(degrees * .pi/180), y: center.y+r*sin(degrees * .pi/180))

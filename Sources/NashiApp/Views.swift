@@ -15,7 +15,6 @@ struct SettingsView:View {
     @AppStorage("enabled") private var enabled=true
     @AppStorage("reveal") private var reveal=true
     @AppStorage("wheelScale") private var wheelScale=1.0
-    @AppStorage("conversionFanTheme") private var fanTheme="glass"
     @AppStorage("soundsAndHapticsEnabled") private var feedback=true
     @AppStorage("floatWheelBehavior") private var floatBehavior="createNew"
     @AppStorage("fileActionsTerminalApplication") private var terminalApplication="com.apple.Terminal"
@@ -47,6 +46,7 @@ struct SettingsView:View {
             Group {
                 switch section {
                 case .general:general
+                case .theme:ThemeSettingsView()
                 case .formats:formats
                 case .compatibility:CompatibilitySettingsView { format in selectedFormat=format;section = .formats }
                 case .folders:FolderSettingsView()
@@ -89,7 +89,6 @@ struct SettingsView:View {
                 VStack(spacing:16) {
                     HStack { Text("Language");Spacer();Picker("Language",selection:$appLanguage) { Text(verbatim:"English").tag("en");Text(verbatim:"Türkçe").tag("tr");Text(verbatim:"Français").tag("fr") }.labelsHidden().frame(width:230).accessibilityIdentifier("AppLanguage") }
                     HStack { Text("Appearance");Spacer();Picker("Appearance",selection:$appAppearance) { Text("System").tag("system");Text("Light").tag("light");Text("Dark").tag("dark") }.labelsHidden().pickerStyle(.segmented).frame(width:230) }
-                    HStack { Text("Wheel finish");Spacer();Picker("Wheel finish",selection:$fanTheme) { Text("Glass").tag("glass");Text("Solid").tag("metallic") }.labelsHidden().pickerStyle(.segmented).frame(width:230) }
                     Divider()
                     Toggle("Launch at login",isOn:Binding(get:{launch},set:updateLaunch)).disabled(launchUnavailable)
                     if launchNeedsApproval { HStack { Text("Allow Nashi in macOS Login Items.").font(.caption).foregroundStyle(.secondary);Spacer();Button("Open Login Items") { SMAppService.openSystemSettingsLoginItems() } } }
@@ -178,9 +177,9 @@ struct SettingsView:View {
 }
 
 enum SettingsSection:String,CaseIterable,Identifiable {
-    case general="General",formats="Formats",compatibility="Compatibility",folders="Folders",updates="Updates",about="About"
+    case general="General",theme="Theme",formats="Formats",compatibility="Compatibility",folders="Folders",updates="Updates",about="About"
     var id:String { rawValue }
-    var symbol:String { switch self { case .general:return "gearshape";case .formats:return "doc.on.doc";case .compatibility:return "square.grid.3x3";case .folders:return "folder";case .updates:return "arrow.triangle.2.circlepath";case .about:return "info.circle" } }
+    var symbol:String { switch self { case .general:return "gearshape";case .theme:return "paintpalette";case .formats:return "doc.on.doc";case .compatibility:return "square.grid.3x3";case .folders:return "folder";case .updates:return "arrow.triangle.2.circlepath";case .about:return "info.circle" } }
 }
 
 private struct FormatSettingsDetail:View {

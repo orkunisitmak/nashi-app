@@ -33,7 +33,7 @@ enum WheelShortcut: String, CaseIterable, Identifiable {
     var title: String { switch self { case .conversions:return "Conversion wheel";case .tools:return "File tools wheel";case .actions:return "File actions wheel" } }
     var storageKey: String { switch self { case .conversions:return "conversionWheelDragModifierMask";case .tools:return "toolsWheelDragModifierMask";case .actions:return "actionsWheelDragModifierMask" } }
     var legacyKey: String { switch self { case .conversions:return "convertKey";case .tools:return "toolsKey";case .actions:return "actionsKey" } }
-    var defaultChord: ModifierChord { switch self { case .conversions:return .init(.shift);case .tools:return .init(.command);case .actions:return .init(.control) } }
+    var defaultChord: ModifierChord { switch self { case .conversions:return .init(.command);case .tools:return .init(.option);case .actions:return .init(.control) } }
 }
 
 enum ModifierPreferences {
@@ -50,6 +50,18 @@ enum ModifierPreferences {
         defaults.set(chord.rawValue,forKey:wheel.storageKey)
         defaults.set(chord.title.lowercased().replacingOccurrences(of:" + ",with:"+"),forKey:wheel.legacyKey)
         return true
+    }
+    /// Call before registering defaults. When the new defaults would clash with a chord the user set,
+    /// every wheel they never set returns to its old chord (Shift conversions, Command tools, Control actions).
+    /// `set` never allowed a clash, so the user's chords plus the old defaults are always clash-free.
+    static func keepPreviousDefaults(defaults:UserDefaults = .standard) {
+        let chords=WheelShortcut.allCases.map { chord(for:$0,defaults:defaults) }
+        guard Set(chords).count<chords.count else { return }
+        // Conversions first: Shift is no wheel's new default, which frees Command for tools.
+        for (wheel,previous) in [(WheelShortcut.conversions,ModifierChord(.shift)),(.tools,ModifierChord(.command))]
+        where defaults.object(forKey:wheel.storageKey) == nil && defaults.object(forKey:wheel.legacyKey) == nil {
+            set(previous,for:wheel,defaults:defaults)
+        }
     }
     static func available(for wheel:WheelShortcut,defaults:UserDefaults = .standard)->[ModifierChord] {
         let reserved=Set(WheelShortcut.allCases.filter{$0 != wheel}.map{chord(for:$0,defaults:defaults)})
