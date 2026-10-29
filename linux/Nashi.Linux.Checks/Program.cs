@@ -5,6 +5,7 @@ using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using Nashi.Core;
 using Nashi.Linux;
 
 var passed = 0;
@@ -19,6 +20,7 @@ var temp = Directory.CreateTempSubdirectory("nashi-linux-checks-");
 try
 {
     SelectionChecks(temp.FullName);
+    CapabilityChecks();
     HomeChecks();
 }
 finally
@@ -61,6 +63,27 @@ void SelectionChecks(string root)
 
     selection.Clear();
     Check(selection.Files.Count == 0 && changes == 3, "Clear empties and fires Changed once");
+}
+
+void CapabilityChecks()
+{
+    string[] png = ["x.png"], mp4 = ["x.mp4"], pdf2 = ["a.pdf", "b.pdf"], docx = ["x.docx"], zip = ["x.zip"];
+    string[] mixed = ["x.png", "y.mp4"];
+
+    var pngFormats = Capabilities.Formats(png);
+    Check(pngFormats.Contains("jpg") && pngFormats.Contains("webp") && pngFormats.Contains("pdf"), "Formats for a PNG include jpg, webp and pdf");
+    Check(!pngFormats.Contains("png"), "Formats for a PNG exclude png");
+    Check(Capabilities.Tools(png).SequenceEqual(["compress"]), "Tools for a PNG is compress only");
+    var mp4Tools = Capabilities.Tools(mp4);
+    Check(mp4Tools.Contains("compress") && mp4Tools.Contains("muteVideo"), "Tools for an MP4 include compress and muteVideo");
+    Check(Capabilities.Formats(mp4).SequenceEqual(FeatureCatalog.Formats(mp4)), "Formats for an MP4 keep catalog order");
+    Check(Capabilities.Formats(zip).SequenceEqual(["tar", "gz"]), "Formats for a ZIP are tar and gz");
+    Check(Capabilities.Formats(mixed).Length == 0, "Formats for PNG plus MP4 is empty");
+    Check(Capabilities.Tools(mixed).All(t => FeatureCatalog.Tools(mixed).Contains(t)), "Tools for PNG plus MP4 stay inside the catalog intersection");
+    Check(Capabilities.Tools(pdf2).Contains("mergePDF"), "Tools for two PDFs include mergePDF");
+    Check(Capabilities.Tools([]).Length == 0, "Tools for an empty selection is empty");
+    Check(Capabilities.Formats(pdf2).Length == 0 && Capabilities.Formats(["x.pdf"]).Length == 0, "Formats for PDFs are empty");
+    Check(Capabilities.Formats(docx).Length == 0, "Formats for a DOCX are empty");
 }
 
 void HomeChecks()
