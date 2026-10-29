@@ -39,6 +39,8 @@ jobs:
         shell: bash
         env:
           NASHI_SMOKE_DIRECTORY: ${{ runner.temp }}/Nashi-Linux-Smoke
+          NASHI_VERIFY_FFMPEG: ${{ runner.temp }}/Nashi-Test-Tools/ffmpeg
+          NASHI_VERIFY_FFPROBE: ${{ runner.temp }}/Nashi-Test-Tools/ffprobe
         run: dotnet run --project linux/Nashi.Linux.Checks -c Release
       - name: Upload Linux smoke screenshots
         if: always()
