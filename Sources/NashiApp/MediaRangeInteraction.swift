@@ -39,10 +39,13 @@ struct MediaRangeDrag {
         switch target {
         case .start(let index):
             let range=initial!
-            return .range(index,TimeRange(start:max(0,min(range.end-minimum,range.start+delta)),end:range.end))
+            // An edge already inside the minimum length may stay put, never jump outward.
+            let limit=range.start<=range.end ? max(range.end-minimum,range.start):range.end-minimum
+            return .range(index,TimeRange(start:max(0,min(limit,range.start+delta)),end:range.end))
         case .end(let index):
             let range=initial!
-            return .range(index,TimeRange(start:range.start,end:min(duration,max(range.start+minimum,range.end+delta))))
+            let limit=range.start<=range.end ? min(range.start+minimum,range.end):range.start+minimum
+            return .range(index,TimeRange(start:range.start,end:min(duration,max(limit,range.end+delta))))
         case .move(let index):
             let range=initial!,length=max(0,range.end-range.start)
             let start=max(0,min(duration-length,range.start+delta))
@@ -123,7 +126,8 @@ struct MediaRangeInteraction: NSViewRepresentable {
         func endpointBounds(index:Int,start:Bool)->ClosedRange<Double>? {
             guard isEditableRange(index) else{return nil}
             let range=ranges[index],minimum=min(0.02,duration)
-            return start ? 0...max(0,range.end-minimum):min(duration,range.start+minimum)...duration
+            // A range already shorter than the minimum keeps its current edge reachable.
+            return start ? 0...max(0,range.end-minimum,range.start):min(duration,range.start+minimum,range.end)...duration
         }
         @discardableResult func setEndpoint(index:Int,start:Bool,value:Double)->Bool {
             guard canEditRange(index),value.isFinite,let limits=endpointBounds(index:index,start:start) else{return false}

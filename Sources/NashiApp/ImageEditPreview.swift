@@ -65,7 +65,7 @@ struct ImageEditPreview:View {
                     updateDrag(value,origin:origin,ratio:ratio)
                     if case .new=target,let rect=dragRect {
                         if annotationStyle != nil,let onStroke { onStroke(rect,stroke) }
-                        else if cropEnabled ? (rect.width>=1 && rect.height>=1):(rect.width>1 || rect.height>1) { onRect(rect) }
+                        else if cropEnabled ? (rect.width>=1 && rect.height>=1):(rect.width>0 && rect.height>0 && (rect.width>1 || rect.height>1)) { onRect(rect) }
                     }
                     target=nil;startingRect=nil;stroke=[];dragRect=nil
                     if cropEnabled { onCropInteraction?(false) }

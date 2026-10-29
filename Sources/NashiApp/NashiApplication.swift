@@ -261,6 +261,8 @@ enum NashiApplication {
     }
     func applicationWillTerminate(_ notification:Notification) {
         windowManagement?.stop()
+        // Previews and file inspection don't block quitting; their ffmpeg/ffprobe must not outlive Nashi.
+        ProcessRunner.terminateAll()
         if let downloadHotKey { UnregisterEventHotKey(downloadHotKey) }
         if let downloadHotKeyHandler { RemoveEventHandler(downloadHotKeyHandler) }
     }
@@ -284,6 +286,7 @@ enum NashiApplication {
             let panel=ToolPanel(contentRect:NSRect(x:0,y:0,width:760,height:520),styleMask:[.borderless,.closable],backing:.buffered,defer:false)
             panel.title="Welcome to Nashi";panel.isReleasedWhenClosed=false;panel.isOpaque=false;panel.backgroundColor = .clear;panel.hasShadow=true;panel.hidesOnDeactivate=false
             let view=WelcomeView(onDone:{ [weak self] in self?.finishWelcome() },onClose:{ [weak self] in self?.finishWelcome() },onMinimize:{ [weak self] in self?.welcome?.orderOut(nil) })
+            panel.onPerformClose={ [weak self] in self?.finishWelcome() }
             panel.contentView=NSHostingView(rootView:view.nashiLanguage());panel.center();welcome=panel
         }
         welcome?.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true)
@@ -362,9 +365,16 @@ extension AppDelegate:NSMenuItemValidation {
 final class ToolPanel:NSPanel {
     override var canBecomeKey:Bool { true }
     override var canBecomeMain:Bool { true }
-    // A borderless panel has no standard close button for AppKit to click.
+    // A borderless panel has no standard close button for AppKit to click or to validate
+    // Close Window against. An owner with its own close flow (Welcome) takes it through that flow.
     var shouldClose:(()->Bool)?
+    var onPerformClose:(()->Void)?
     /// Consults the editor discard guard before closing a borderless tool panel.
     override func close() { guard shouldClose?() != false else{return};super.close() }
-    override func performClose(_ sender:Any?) { close() }
+    /// Routes Close Window through the owner's close flow, falling back to the editor discard guard.
+    override func performClose(_ sender:Any?) { if let onPerformClose { onPerformClose() } else { close() } }
+    /// Keeps Close Window available for closable borderless panels without a standard titlebar button.
+    override func validateUserInterfaceItem(_ item:NSValidatedUserInterfaceItem)->Bool {
+        item.action == #selector(performClose(_:)) ? styleMask.contains(.closable):super.validateUserInterfaceItem(item)
+    }
 }

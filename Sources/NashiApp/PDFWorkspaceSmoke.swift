@@ -67,6 +67,12 @@ import NashiCore
             try bitmap.representation(using:.png,properties:[:])?.write(to:output.appendingPathComponent("pdf-workspace.png"))
             try check(bitmap.pixelsWide>0,"Production PDF workspace renders in its own native window")
         } else { try check(false,"Production PDF workspace must render") }
+        let closeItem=NSMenuItem(title:"Close Window",action:#selector(NSWindow.performClose(_:)),keyEquivalent:"w")
+        try check(panel.validateUserInterfaceItem(closeItem),"Close Window remains enabled for a closable borderless panel")
+        var ownerCloseRequests=0
+        panel.onPerformClose={ownerCloseRequests+=1};panel.performClose(nil)
+        try check(ownerCloseRequests==1 && panel.isVisible,"Close Window respects the owner's custom close flow")
+        panel.onPerformClose=nil
         panel.shouldClose={false};panel.performClose(nil)
         try check(panel.isVisible,"A rejected close request keeps the PDF workspace open")
         panel.shouldClose={true};panel.performClose(nil)

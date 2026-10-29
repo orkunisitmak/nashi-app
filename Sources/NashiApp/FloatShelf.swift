@@ -263,7 +263,10 @@ enum FloatShelfViewMode:Int { case icons,list }
     func collectionView(_ collectionView:NSCollectionView,acceptDrop draggingInfo:NSDraggingInfo,indexPath:IndexPath,dropOperation:NSCollectionView.DropOperation)->Bool {
         let values=ShelfDropSurface.fileURLs(draggingInfo.draggingPasteboard);guard !values.isEmpty else { return false };append(values);return true
     }
-    private func refreshAfterDrag() { collection.reloadData();updateLabels() }
+    private func refreshAfterDrag() {
+        let selected=Set(selectedIndices.map{items[$0].id})
+        reload(preserving:selected)
+    }
 
     private func handleKey(_ event:NSEvent)->Bool {
         let command=event.modifierFlags.contains(.command)
@@ -290,7 +293,9 @@ enum FloatShelfViewMode:Int { case icons,list }
         for offset in items.indices {
             let index=(start+offset)%items.count
             if items[index].url.lastPathComponent.lowercased().hasPrefix(typeBuffer) {
-                collection.selectItems(at:[IndexPath(item:index,section:0)],scrollPosition:.centeredVertically);return true
+                let path=IndexPath(item:index,section:0)
+                collection.selectionIndexPaths=[path];collection.scrollToItems(at:[path],scrollPosition:.centeredVertically)
+                updateLabels();updatePreviewIfVisible();return true
             }
         }
         return !items.isEmpty

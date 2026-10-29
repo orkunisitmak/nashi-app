@@ -22,9 +22,9 @@ import NashiCore
     }
     func refresh() {
         guard !working else { return }
-        let previouslyReady = status.ready; status = probe()
+        let previous = status; status = probe()
         if status.ready { message = "Ready. You can go back to your files." }
-        else if previouslyReady { message = "Download the missing tools to enable all conversions, previews and web downloads. Tools already found on your computer are kept." }
+        else if previous.ready || status != previous { message = "Download the missing tools to enable all conversions, previews and web downloads. Tools already found on your computer are kept." }
     }
     func install(_ group: ToolGroup? = nil) {
         guard !working else { return }

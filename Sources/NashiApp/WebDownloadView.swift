@@ -25,9 +25,8 @@ import NashiCore
         destination=UserDefaults.standard.string(forKey:"webDownloadDestination").map{URL(fileURLWithPath:$0,isDirectory:true)} ?? FileManager.default.urls(for:.downloadsDirectory,in:.userDomainMask)[0]
     }
     func open(_ url:URL?,mode:WebDownloadMode) {
-        guard !downloading else { return }
-        pendingMode=mode
-        if let url { linkText=url.absoluteString;inspect() }
+        guard !downloading,let url else { return }
+        pendingMode=mode;linkText=url.absoluteString;inspect()
     }
     func editedLink() {
         guard !downloading else { return }

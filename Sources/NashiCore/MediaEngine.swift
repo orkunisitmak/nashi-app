@@ -326,7 +326,7 @@ public enum MediaEngine {
             points = (1..<count).map { info.duration * Double($0) / Double(count) }
         } else {
             guard options.splitInterval.isFinite, options.splitInterval > 0, info.duration / options.splitInterval <= 10000 else { throw NashiError.invalidInput("Enter a positive split interval producing at most 10,000 clips.") }
-            points = stride(from: options.splitInterval, to: info.duration - 0.000001, by: options.splitInterval).map { $0 }
+            points = stride(from: options.splitInterval, to: info.duration - 0.05 + 0.000001, by: options.splitInterval).map { $0 }
         }
         let boundaries = [0] + points + [info.duration]
         guard zip(boundaries, boundaries.dropFirst()).allSatisfy({ $0.1 - $0.0 >= 0.05 - 0.000001 }) else { throw NashiError.invalidInput("Split points must be at least 0.05 seconds apart and from either end.") }
@@ -435,7 +435,7 @@ public enum MediaEngine {
         var graph: [String] = []
         var previous = "0:v:0"
         for (index, selection) in selections.enumerated() {
-            let rect = try mode == "solid" ? redactionPixelRect(selection.rect, width: width, height: height) : pixelRect(selection.rect, width: width, height: height)
+            let rect = try redactionPixelRect(selection.rect, width: width, height: height)
             let range = try timeRange(selection.start, selection.end, duration: info.duration)
             let enable = "between(t,\(decimal(range.0)),\(decimal(range.1)))"
             let next = "redacted\(index)"
@@ -677,7 +677,7 @@ public enum MediaEngine {
     }
     private static func timeRange(_ start: Double, _ end: Double?, duration: Double) throws -> (Double, Double) {
         let finish = end ?? duration
-        guard start.isFinite, finish.isFinite, start >= 0, finish > start, duration <= 0 || finish <= duration + 0.001 else { throw NashiError.invalidInput("The start and end times must describe a nonempty range inside the media.") }
+        guard start.isFinite, finish.isFinite, start >= 0, finish > start, duration <= 0 || (start < duration && finish <= duration + 0.001) else { throw NashiError.invalidInput("The start and end times must describe a nonempty range inside the media.") }
         return (start, min(finish, duration > 0 ? duration : finish))
     }
     private static func pixelRect(_ rect: EditRect, width: Int, height: Int) throws -> (x: Int, y: Int, w: Int, h: Int) {

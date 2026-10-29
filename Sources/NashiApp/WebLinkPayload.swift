@@ -29,8 +29,11 @@ enum WebLinkPayload {
         }
         return result.resolved()
     }
+    // Main-thread only: a newer drop supersedes loads still pending from an older one.
+    private static var providerLoad=0
     static func urls(from providers:[NSItemProvider],completion:@escaping([URL])->Void) {
         let group=DispatchGroup(),result=Representations()
+        providerLoad += 1;let load=providerLoad
         for (index,provider) in providers.enumerated() {
             // Browser images can advertise a file promise without supplying a
             // usable local URL. Resolve their web representations as a fallback;
@@ -43,7 +46,7 @@ enum WebLinkPayload {
                 }
             }
         }
-        group.notify(queue:.main) { completion(result.resolved()) }
+        group.notify(queue:.main) { if load==providerLoad { completion(result.resolved()) } }
     }
     static func clipboardLink()->URL? { urls(from:.general).first(where:{!$0.isFileURL}) }
 

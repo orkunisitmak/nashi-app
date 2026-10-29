@@ -39,6 +39,29 @@ final class OperationProgressTests:XCTestCase {
         XCTAssertEqual(seen.wait(timeout:.now()+0.5),.success,"A short progress line was buffered until process exit")
         release.signal();wait(for:[finished],timeout:4)
     }
+    func testTerminateAllStopsRunningChildrenWithoutTheirTokens() throws {
+        // App termination cannot wait for the token-polling thread; terminateAll must stop the child itself.
+        let directory=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:directory) }
+        let ready=directory.appendingPathComponent("ready"),hold=directory.appendingPathComponent("hold")
+        XCTAssertEqual(mkfifo(ready.path,0o600),0);XCTAssertEqual(mkfifo(hold.path,0o600),0)
+        let outcome=Events(),finished=DispatchSemaphore(value:0)
+        DispatchQueue.global().async {
+            defer { finished.signal() }
+            do { try ProcessRunner.run(URL(fileURLWithPath:"/bin/sh"),["-c","echo $$ > \"$0\"; read -r _ < \"$1\"",ready.path,hold.path]);outcome.add(0,"completed") }
+            catch { outcome.add(1,"\(error)") }
+        }
+        let reader=try XCTUnwrap(FileHandle(forReadingAtPath:ready.path))   // blocks until the child has started
+        let pid=try XCTUnwrap(pid_t(String(decoding:reader.readDataToEndOfFile(),as:UTF8.self).trimmingCharacters(in:.whitespacesAndNewlines)))
+        try reader.close()
+        ProcessRunner.terminateAll()
+        if finished.wait(timeout:.now()+10) == .timedOut {
+            let fd=open(hold.path,O_WRONLY|O_NONBLOCK);if fd>=0 { close(fd) }   // release the child so it cannot leak
+            _=finished.wait(timeout:.now()+5);return XCTFail("terminateAll left the child running")
+        }
+        XCTAssertEqual(outcome.values.map(\.0),[1],"\(outcome.values)")
+        XCTAssertFalse(kill(pid,0)==0)
+        ProcessRunner.terminateAll()   // nothing left to stop; must be a no-op
+    }
     func testDownloadProcessStreamsShortProgressAndStageLines() throws {
         let seen=DispatchSemaphore(value:0),events=Events()
         let finished=expectation(description:"download helper finished")
