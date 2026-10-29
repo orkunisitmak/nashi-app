@@ -40,11 +40,11 @@ public sealed partial class ToolSetupWindow : Window
         InitializeComponent();
         this.tools = tools;
         this.install = install ?? ((progress, token) => tools.InstallAsync(progress, token));
-        Title = Copy.Heading;
-        ToolName.Text = Copy.Tool;
-        ToolDetail.Text = Copy.ToolDetail;
-        CancelButton.Content = Copy.Cancel;
-        CloseButton.Content = Copy.Close;
+        Title = L10n.T(Copy.Heading);
+        ToolName.Text = L10n.T(Copy.Tool);
+        ToolDetail.Text = L10n.T(Copy.ToolDetail);
+        CancelButton.Content = L10n.T(Copy.Cancel);
+        CloseButton.Content = L10n.T(Copy.Close);
         Closing += (_, _) => cancellation?.Cancel();
         Refresh();
     }
@@ -54,14 +54,14 @@ public sealed partial class ToolSetupWindow : Window
     private void Refresh()
     {
         var ready = AppPaths.MediaReady(tools);
-        HeadingText.Text = ready ? Copy.HeadingReady : Copy.Heading;
-        DetailText.Text = ready ? Copy.DetailReady : Copy.Detail;
-        StatusText.Text = ready ? Copy.Ready : Copy.Missing;
+        HeadingText.Text = ready ? L10n.T(Copy.HeadingReady) : L10n.T(Copy.Heading);
+        DetailText.Text = ready ? L10n.T(Copy.DetailReady) : L10n.T(Copy.Detail);
+        StatusText.Text = ready ? L10n.T(Copy.Ready) : L10n.T(Copy.Missing);
         StatusPill.Classes.Set("gold", !ready);
         ProgressPanel.IsVisible = Installing;
         CancelButton.IsVisible = Installing;
         ActionButton.IsVisible = !ready && !Installing;
-        ActionButton.Content = error is null ? Copy.Download : Copy.Retry;
+        ActionButton.Content = error is null ? L10n.T(Copy.Download) : L10n.T(Copy.Retry);
         ErrorText.IsVisible = error is not null;
         ErrorText.Text = error;
     }
@@ -71,17 +71,17 @@ public sealed partial class ToolSetupWindow : Window
         if (Installing) return;
         error = null;
         cancellation = new CancellationTokenSource();
-        ProgressText.Text = Copy.Starting;
+        ProgressText.Text = L10n.T(Copy.Starting);
         CancelButton.IsEnabled = true;
         Bar.IsIndeterminate = true;
         Refresh();
         try
         {
             await install(new Progress<OperationProgress>(Update), cancellation.Token);
-            if (!AppPaths.MediaReady(tools)) error = Copy.StillMissing;
+            if (!AppPaths.MediaReady(tools)) error = L10n.T(Copy.StillMissing);
         }
-        catch (OperationCanceledException) { error = Copy.Cancelled; }
-        catch (Exception failure) { error = string.Format(Copy.Failed, failure.Message); }
+        catch (OperationCanceledException) { error = L10n.T(Copy.Cancelled); }
+        catch (Exception failure) { error = L10n.F(Copy.Failed, L10n.T(failure.Message)); }
         finally
         {
             cancellation.Dispose();
@@ -93,7 +93,7 @@ public sealed partial class ToolSetupWindow : Window
     private void Update(OperationProgress progress)
     {
         if (!Installing) return;
-        ProgressText.Text = progress.Label;
+        ProgressText.Text = L10n.T(progress.Label);
         Bar.IsIndeterminate = progress.Fraction is null;
         if (progress.Fraction is { } fraction) Bar.Value = Math.Clamp(fraction, 0, 1);
     }
@@ -102,7 +102,7 @@ public sealed partial class ToolSetupWindow : Window
     {
         cancellation?.Cancel();
         CancelButton.IsEnabled = false;
-        ProgressText.Text = Copy.Cancelling;
+        ProgressText.Text = L10n.T(Copy.Cancelling);
     }
 
     private void OnClose(object? sender, RoutedEventArgs e) => Close();

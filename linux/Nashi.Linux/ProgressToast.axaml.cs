@@ -31,15 +31,15 @@ public sealed partial class ProgressToast : Window
         InitializeComponent();
         this.cancel = cancel;
         TitleText.Text = title;
-        MessageText.Text = Copy.Starting;
-        ActionButton.Content = Copy.Cancel;
+        MessageText.Text = L10n.T(Copy.Starting);
+        ActionButton.Content = L10n.T(Copy.Cancel);
         Opened += (_, _) => PlaceOverOwner();
     }
 
     public void Update(OperationProgress progress)
     {
         if (folder is not null) return;
-        MessageText.Text = progress.Label;
+        MessageText.Text = L10n.T(progress.Label);
         Bar.IsIndeterminate = progress.Fraction is null;
         if (progress.Fraction is { } fraction) Bar.Value = Math.Clamp(fraction, 0, 1);
     }
@@ -47,10 +47,10 @@ public sealed partial class ProgressToast : Window
     public void Complete(IReadOnlyList<string> outputs, string destination)
     {
         folder = destination;
-        TitleText.Text = outputs.Count == 1 ? Copy.SavedOne : string.Format(Copy.SavedMany, outputs.Count);
+        TitleText.Text = outputs.Count == 1 ? L10n.T(Copy.SavedOne) : L10n.F(Copy.SavedMany, outputs.Count);
         MessageText.Text = outputs.Count > 0 ? Path.GetFileName(outputs[0]) : destination;
         Bar.IsVisible = false;
-        ActionButton.Content = Copy.ShowInFolder;
+        ActionButton.Content = L10n.T(Copy.ShowInFolder);
         ActionButton.IsEnabled = true;
         DispatcherTimer.RunOnce(Close, TimeSpan.FromSeconds(4));
     }
@@ -61,7 +61,7 @@ public sealed partial class ProgressToast : Window
         {
             cancel?.Invoke();
             ActionButton.IsEnabled = false;
-            MessageText.Text = Copy.Cancelling;
+            MessageText.Text = L10n.T(Copy.Cancelling);
             return;
         }
         try { Process.Start(new ProcessStartInfo("xdg-open", [folder]) { UseShellExecute = false })?.Dispose(); }

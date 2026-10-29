@@ -7,8 +7,10 @@
 "%@ QR code found." = "%@ code QR trouvé.";
 "%@ QR codes found." = "%@ codes QR trouvés.";
 "%@ files" = "%@ fichiers";
+"%@ files ready." = "%@ files ready.";
 "%@ files, ready to go." = "%@ fichiers, prêts à partir.";
 "%@ is enabled" = "%@ est activé";
+"%@ is not available for this selection on Linux." = "%@ is not available for this selection on Linux.";
 "%@ items" = "%@ éléments";
 "%@ selected" = "%@ sélectionnés";
 "%@ selected · Drag to carry files" = "%@ sélectionnés · Faites glisser pour emporter les fichiers";
@@ -21,15 +23,19 @@
 "%lld QR code found." = "%lld code QR trouvé.";
 "%lld QR codes found." = "%lld codes QR trouvés.";
 "%lld files" = "%lld fichiers";
+"%lld files ready." = "%lld files ready.";
 "%lld files, ready to go." = "%lld fichiers, prêts à partir.";
 "%lld is enabled" = "%lld est activé";
+"%lld is not available for this selection on Linux." = "%lld is not available for this selection on Linux.";
 "%lld items" = "%lld éléments";
 "%lld selected" = "%lld sélectionnés";
 "%lld selected · Drag to carry files" = "%lld sélectionnés · Faites glisser pour emporter les fichiers";
 "%lld ways to change it" = "%lld façons de le transformer";
 "%lld · Nashi" = "%lld · Nashi";
 "%lld · Original stays safe" = "%lld · L’original reste intact";
+"1 FILE READY." = "1 FILE READY.";
 "1 ITEM" = "1 ÉLÉMENT";
+"1 file ready." = "1 file ready.";
 "1 item" = "1 élément";
 "1/3 LEFT · MIDDLE · RIGHT   /   1/2 LEFT · RIGHT   /   2/3 LEFT · RIGHT" = "1/3 GAUCHE · MILIEU · DROITE   /   1/2 GAUCHE · DROITE   /   2/3 GAUCHE · DROITE";
 "1/3 left · middle · right   /   1/2 left · right   /   2/3 left · right" = "1/3 gauche · milieu · droite   /   1/2 gauche · droite   /   2/3 gauche · droite";
@@ -274,7 +280,9 @@
 "CANCEL" = "ANNULER";
 "CANCEL DOWNLOAD" = "ANNULER LE TÉLÉCHARGEMENT";
 "CANCEL SETUP" = "ANNULER LA CONFIGURATION";
+"CANCELLED. NOTHING WAS INSTALLED." = "CANCELLED. NOTHING WAS INSTALLED.";
 "CANCELLED. ORIGINALS KEPT." = "ANNULÉ. ORIGINAUX CONSERVÉS.";
+"CANCELLING…" = "CANCELLING…";
 "CANNOT START UPDATE INSTALLER." = "IMPOSSIBLE DE DÉMARRER LE PROGRAMME D’INSTALLATION DE LA MISE À JOUR.";
 "CANVAS" = "CANEVAS";
 "CANVAS HEIGHT" = "HAUTEUR DU CANEVAS";
@@ -323,6 +331,7 @@
 "CHOOSE AN INSTAGRAM PHOTO POST LINK." = "CHOISISSEZ UN LIEN DE PUBLICATION DE PHOTOS INSTAGRAM.";
 "CHOOSE ANNOTATION IMAGE…" = "CHOISIR L’IMAGE D’ANNOTATION…";
 "CHOOSE AT LEAST ONE FRAME." = "CHOISISSEZ AU MOINS UNE IMAGE.";
+"CHOOSE AT LEAST ONE IMAGE." = "CHOOSE AT LEAST ONE IMAGE.";
 "CHOOSE AT LEAST TWO PDFS." = "CHOISISSEZ AU MOINS DEUX PDF.";
 "CHOOSE AT LEAST TWO VIDEOS." = "CHOISISSEZ AU MOINS DEUX VIDÉOS.";
 "CHOOSE AT MOST 10,000 CLIPS." = "CHOISISSEZ 10 000 CLIPS AU MAXIMUM.";
@@ -334,6 +343,7 @@
 "CHOOSE FEWER FILES TO OPEN." = "CHOISISSEZ MOINS DE FICHIERS À OUVRIR.";
 "CHOOSE FILES" = "CHOISIR DES FICHIERS";
 "CHOOSE FILES AND A SUPPORTED MEDIA FORMAT." = "CHOISISSEZ DES FICHIERS ET UN FORMAT MULTIMÉDIA PRIS EN CHARGE.";
+"CHOOSE FILES FIRST." = "CHOOSE FILES FIRST.";
 "CHOOSE FILES FOR NASHI" = "CHOISIR DES FICHIERS POUR NASHI";
 "CHOOSE FILES TO ZIP." = "CHOISISSEZ DES FICHIERS À COMPRESSER EN ZIP.";
 "CHOOSE FILES…" = "CHOISIR DES FICHIERS…";
@@ -370,12 +380,14 @@
 "CLEAR SELECTION" = "EFFACER LA SÉLECTION";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "LE PRESSE-PAPIERS EST OCCUPÉ. RÉESSAYEZ.";
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "LE PRESSE-PAPIERS EST OCCUPÉ. RÉESSAYEZ DE COLLER.";
+"CLOSE" = "CLOSE";
 "CLOSE FLOAT WITHOUT DELETING FILES" = "FERMER FLOAT SANS SUPPRIMER LES FICHIERS";
 "CLOSE WINDOW" = "FERMER LA FENÊTRE";
 "COLLAPSE FLOAT" = "RÉDUIRE FLOAT";
 "COLOR" = "COULEUR";
 "COLUMN" = "COLONNE";
 "COLUMNS" = "COLONNES";
+"COMING SOON" = "COMING SOON";
 "COMPATIBILITY" = "COMPATIBILITÉ";
 "COMPRESS" = "COMPRESSER";
 "COMPRESS & SAVE" = "COMPRESSER ET ENREGISTRER";
@@ -429,7 +441,9 @@
 "Cancel" = "Annuler";
 "Cancel download" = "Annuler le téléchargement";
 "Cancel setup" = "Annuler la configuration";
+"Cancelled. Nothing was installed." = "Cancelled. Nothing was installed.";
 "Cancelled. Originals kept." = "Annulé. Originaux conservés.";
+"Cancelling…" = "Cancelling…";
 "Cannot start update installer." = "Impossible de démarrer le programme d’installation de la mise à jour.";
 "Canvas" = "Canevas";
 "Canvas height" = "Hauteur du canevas";
@@ -489,6 +503,7 @@
 "Choose an input format to see its available outputs." = "Choisissez un format d’entrée pour voir les sorties disponibles.";
 "Choose annotation image…" = "Choisir l’image d’annotation…";
 "Choose at least one frame." = "Choisissez au moins une image.";
+"Choose at least one image." = "Choose at least one image.";
 "Choose at least two PDFs." = "Choisissez au moins deux PDF.";
 "Choose at least two videos." = "Choisissez au moins deux vidéos.";
 "Choose at most 10,000 clips." = "Choisissez 10 000 clips au maximum.";
@@ -500,6 +515,7 @@
 "Choose fewer files to open." = "Choisissez moins de fichiers à ouvrir.";
 "Choose files" = "Choisir des fichiers";
 "Choose files and a supported media format." = "Choisissez des fichiers et un format multimédia pris en charge.";
+"Choose files first." = "Choose files first.";
 "Choose files for Nashi" = "Choisir des fichiers pour Nashi";
 "Choose files to zip." = "Choisissez des fichiers à compresser en ZIP.";
 "Choose files…" = "Choisir des fichiers…";
@@ -529,12 +545,14 @@
 "Clip %lld" = "Clip %lld";
 "Clipboard is busy. Try Paste again." = "Le presse-papiers est occupé. Réessayez de coller.";
 "Clipboard is busy. Try again." = "Le presse-papiers est occupé. Réessayez.";
+"Close" = "Close";
 "Close Float without deleting files" = "Fermer Float sans supprimer les fichiers";
 "Close Window" = "Fermer la fenêtre";
 "Collapse Float" = "Réduire Float";
 "Color" = "Couleur";
 "Column" = "Colonne";
 "Columns" = "Colonnes";
+"Coming soon" = "Coming soon";
 "Compatibility" = "Compatibilité";
 "Compress" = "Compresser";
 "Compress & save" = "Compresser et enregistrer";
@@ -568,6 +586,8 @@
 "Convert to %lld" = "Convertir en %lld";
 "Convert · while dragging" = "Convertir · pendant le glissement";
 "Convert, fine-tune, and send them on their way." = "Convertissez, peaufinez et envoyez-les sur leur chemin.";
+"Converting to %@ is not supported on Linux." = "Converting to %@ is not supported on Linux.";
+"Converting to %lld is not supported on Linux." = "Converting to %lld is not supported on Linux.";
 "Copied link" = "Lien copié";
 "Copy" = "Copier";
 "Copy Path" = "Copier le chemin";
@@ -580,7 +600,11 @@
 "Corners" = "Coins";
 "Couldn’t check for updates" = "Impossible de rechercher les mises à jour";
 "Couldn’t finish" = "Impossible de terminer";
+"Couldn’t finish: %@" = "Couldn’t finish: %@";
+"Couldn’t finish: %lld" = "Couldn’t finish: %lld";
 "Couldn’t open this tool" = "Impossible d’ouvrir cet outil";
+"Couldn’t set up tools: %@" = "Couldn’t set up tools: %@";
+"Couldn’t set up tools: %lld" = "Couldn’t set up tools: %lld";
 "Cover style" = "Style de pochette";
 "Create Collage" = "Créer un collage";
 "Create PDF" = "Créer un PDF";
@@ -760,6 +784,7 @@
 "EPUB layout" = "Mise en page EPUB";
 "ESC TO CLOSE" = "ÉCHAP POUR FERMER";
 "EVERYTHING HAS A NEXT FORM." = "TOUT A UNE PROCHAINE FORME.";
+"EVERYTHING NASHI NEEDS FOR AUDIO AND VIDEO IS IN PLACE." = "EVERYTHING NASHI NEEDS FOR AUDIO AND VIDEO IS IN PLACE.";
 "EXPAND FLOAT" = "DÉVELOPPER FLOAT";
 "EXPANDED UPDATE IS TOO LARGE." = "LA MISE À JOUR DÉCOMPRESSÉE EST TROP VOLUMINEUSE.";
 "EXPORT CLIPS" = "EXPORTER LES CLIPS";
@@ -787,6 +812,7 @@
 "Enter a valid number for %lld." = "Saisissez un nombre valide pour %lld.";
 "Enter page numbers within this PDF, in the desired order." = "Saisissez des numéros de page de ce PDF, dans l’ordre souhaité.";
 "Esc to close" = "Échap pour fermer";
+"Everything Nashi needs for audio and video is in place." = "Everything Nashi needs for audio and video is in place.";
 "Everything has a next form." = "Tout a une prochaine forme.";
 "Expand Float" = "Développer Float";
 "Expanded update is too large." = "La mise à jour décompressée est trop volumineuse.";
@@ -800,7 +826,9 @@
 "FASTER" = "PLUS RAPIDE";
 "FEATURED" = "EN VEDETTE";
 "FEATURES & SHORTCUTS" = "FONCTIONNALITÉS ET RACCOURCIS";
+"FFMPEG AND FFPROBE" = "FFMPEG AND FFPROBE";
 "FFMPEG, FFPROBE, YT-DLP AND DENO ENABLE MEDIA CONVERSION, PREVIEWS AND WEB DOWNLOADS. APPROXIMATELY 180 MB. FFMPEG AND YT-DLP USE GPL LICENSES; DENO USES MIT." = "FFMPEG, FFPROBE, YT-DLP ET DENO PERMETTENT LA CONVERSION MULTIMÉDIA, LES APERÇUS ET LES TÉLÉCHARGEMENTS WEB. ENVIRON 180 MO. FFMPEG ET YT-DLP SONT SOUS LICENCE GPL ; DENO EST SOUS LICENCE MIT.";
+"FFmpeg and FFprobe" = "FFmpeg and FFprobe";
 "FFmpeg, ffprobe, yt-dlp and Deno enable media conversion, previews and web downloads. Approximately 180 MB. FFmpeg and yt-dlp use GPL licenses; Deno uses MIT." = "FFmpeg, ffprobe, yt-dlp et Deno permettent la conversion multimédia, les aperçus et les téléchargements web. Environ 180 Mo. FFmpeg et yt-dlp sont sous licence GPL ; Deno est sous licence MIT.";
 "FIELD" = "CHAMP";
 "FILE" = "FICHIER";
@@ -940,6 +968,7 @@
 "GAMMA MUST BE POSITIVE; CONTRAST AND SATURATION CANNOT BE NEGATIVE." = "LE GAMMA DOIT ÊTRE POSITIF ; LE CONTRASTE ET LA SATURATION NE PEUVENT PAS ÊTRE NÉGATIFS.";
 "GENERAL" = "GÉNÉRAL";
 "GET STARTED" = "DÉMARRER";
+"GETTING STARTED…" = "GETTING STARTED…";
 "GIF FRAME RATE" = "FRÉQUENCE D’IMAGES DU GIF";
 "GIF FRAMES PER SECOND" = "IMAGES PAR SECONDE DU GIF";
 "GIF MAXIMUM WIDTH" = "LARGEUR MAXIMALE DU GIF";
@@ -961,6 +990,7 @@
 "Gamma must be positive; contrast and saturation cannot be negative." = "Le gamma doit être positif ; le contraste et la saturation ne peuvent pas être négatifs.";
 "General" = "Général";
 "Get started" = "Démarrer";
+"Getting started…" = "Getting started…";
 "GitHub repository" = "Dépôt GitHub";
 "Give it a little breathing room." = "Laissez-lui un peu d’air.";
 "Glass" = "Verre";
@@ -1124,6 +1154,7 @@
 "Looking for little squares…" = "À la recherche de petits carrés…";
 "Loudness range" = "Plage de volume sonore";
 "MACOS REDUCE MOTION IS ON. NASHI KEEPS MOTION OFF." = "L’OPTION RÉDUIRE LES ANIMATIONS DE MACOS EST ACTIVÉE. NASHI DÉSACTIVE LES ANIMATIONS.";
+"MADE FOR LINUX" = "MADE FOR LINUX";
 "MADE FOR YOUR MAC" = "CONÇU POUR VOTRE MAC";
 "MAGNIFIER" = "LOUPE";
 "MAKE ALL PAGES THE SAME WIDTH" = "DONNER LA MÊME LARGEUR À TOUTES LES PAGES";
@@ -1142,6 +1173,8 @@
 "MEDIA SETUP" = "CONFIGURATION DES MÉDIAS";
 "MEDIA TOOLS" = "OUTILS MULTIMÉDIAS";
 "MEDIA TOOLS ARE ALREADY INSTALLED." = "LES OUTILS MULTIMÉDIAS SONT DÉJÀ INSTALLÉS.";
+"MEDIA TOOLS ARE NEEDED FOR THIS. INSTALL FFMPEG, OR SET UP MEDIA TOOLS FIRST." = "MEDIA TOOLS ARE NEEDED FOR THIS. INSTALL FFMPEG, OR SET UP MEDIA TOOLS FIRST.";
+"MEDIA TOOLS ARE STILL MISSING AFTER THE DOWNLOAD." = "MEDIA TOOLS ARE STILL MISSING AFTER THE DOWNLOAD.";
 "MEDIA TOOLS READY. YOU CAN EDIT, CONVERT AND DOWNLOAD MEDIA." = "OUTILS MULTIMÉDIAS PRÊTS. VOUS POUVEZ MODIFIER, CONVERTIR ET TÉLÉCHARGER DES MÉDIAS.";
 "MEDIUM · 1920 PX" = "MOYEN · 1920 PX";
 "MEDIUM · 1920 PX LONGEST EDGE" = "MOYEN · 1920 PX SUR LE PLUS GRAND CÔTÉ";
@@ -1151,6 +1184,7 @@
 "METADATA TOOLS CHECKSUM MISMATCH." = "SOMME DE CONTRÔLE DES OUTILS DE MÉTADONNÉES INCORRECTE.";
 "METADATA · NASHI" = "MÉTADONNÉES · NASHI";
 "MIDDLE THIRD" = "TIERS CENTRAL";
+"MISSING" = "MISSING";
 "MONO" = "MONO";
 "MONOSPACED" = "MONOCHASSE";
 "MOVE" = "DÉPLACER";
@@ -1164,6 +1198,7 @@
 "MUTE" = "SILENCE";
 "MUTE VIDEO" = "COUPER LE SON DE LA VIDÉO";
 "MUTE VIDEO · NASHI" = "COUPER LE SON DE LA VIDÉO · NASHI";
+"Made for Linux" = "Made for Linux";
 "Made for your Mac" = "Conçu pour votre Mac";
 "Magnifier" = "Loupe";
 "Make EPUB" = "Créer un EPUB";
@@ -1183,6 +1218,8 @@
 "Media setup" = "Configuration des médias";
 "Media tools" = "Outils multimédias";
 "Media tools are already installed." = "Les outils multimédias sont déjà installés.";
+"Media tools are needed for this. Install ffmpeg, or set up media tools first." = "Media tools are needed for this. Install ffmpeg, or set up media tools first.";
+"Media tools are still missing after the download." = "Media tools are still missing after the download.";
 "Media tools ready. You can edit, convert and download media." = "Outils multimédias prêts. Vous pouvez modifier, convertir et télécharger des médias.";
 "Medium · 1920 px" = "Moyen · 1920 px";
 "Medium · 1920 px longest edge" = "Moyen · 1920 px sur le plus grand côté";
@@ -1192,6 +1229,7 @@
 "Metadata tools checksum mismatch." = "Somme de contrôle des outils de métadonnées incorrecte.";
 "Metadata · Nashi" = "Métadonnées · Nashi";
 "Middle third" = "Tiers central";
+"Missing" = "Missing";
 "Mono" = "Mono";
 "Monospaced" = "Monochasse";
 "Move" = "Déplacer";
@@ -1214,14 +1252,18 @@
 "NASHI SETTINGS" = "RÉGLAGES DE NASHI";
 "NASHI UPDATE" = "MISE À JOUR DE NASHI";
 "NASHI UPDATE COULD NOT FINISH" = "LA MISE À JOUR DE NASHI N’A PAS PU SE TERMINER";
+"NASHI USES FFMPEG FOR AUDIO AND VIDEO. DOWNLOADS COME STRAIGHT FROM THE UPSTREAM PROJECTS AND ARE CHECKED BEFORE ANYTHING IS INSTALLED." = "NASHI USES FFMPEG FOR AUDIO AND VIDEO. DOWNLOADS COME STRAIGHT FROM THE UPSTREAM PROJECTS AND ARE CHECKED BEFORE ANYTHING IS INSTALLED.";
 "NASHI · FEATURES & SHORTCUTS" = "NASHI · FONCTIONNALITÉS ET RACCOURCIS";
+"NASHI — PROGRESS" = "NASHI — PROGRESS";
 "NEXT" = "SUIVANT";
 "NEXT FRAME" = "IMAGE SUIVANTE";
 "NEXT PAGE" = "PAGE SUIVANTE";
+"NEXT ›" = "NEXT ›";
 "NEXT, DOWNLOAD THE MISSING TOOLS FOR MEDIA AND OFFICE FILES. TOOLS ALREADY ON YOUR COMPUTER DO NOT NEED ANOTHER DOWNLOAD." = "TÉLÉCHARGEZ MAINTENANT LES OUTILS MANQUANTS POUR LES FICHIERS MULTIMÉDIAS ET OFFICE. LES OUTILS DÉJÀ PRÉSENTS SUR VOTRE ORDINATEUR NE NÉCESSITENT PAS DE NOUVEAU TÉLÉCHARGEMENT.";
 "NICE FILES.\nNO FUSS." = "DE BEAUX FICHIERS.\nSANS PRISE DE TÊTE.";
 "NICELY DONE." = "BIEN JOUÉ.";
 "NICELY DONE. 1 FILE IS READY." = "BIEN JOUÉ. 1 FICHIER EST PRÊT.";
+"NO CONVERSIONS FOR THIS SELECTION YET." = "NO CONVERSIONS FOR THIS SELECTION YET.";
 "NO FOLDERS ALLOWED YET." = "AUCUN DOSSIER AUTORISÉ POUR L’INSTANT.";
 "NO MATCHES. TRY A FILE NAME OR TOOL." = "AUCUN RÉSULTAT. ESSAYEZ UN NOM DE FICHIER OU D’OUTIL.";
 "NO MATCHING REGIONS WERE DETECTED. YOU CAN STILL DRAW AREAS BY HAND." = "AUCUNE ZONE CORRESPONDANTE N’A ÉTÉ DÉTECTÉE. VOUS POUVEZ TOUJOURS DESSINER DES ZONES À LA MAIN.";
@@ -1232,6 +1274,7 @@
 "NO QR CODES THIS TIME." = "AUCUN CODE QR CETTE FOIS.";
 "NO TEXT COULD BE EXTRACTED OR RECOGNIZED IN THIS PDF." = "AUCUN TEXTE N’A PU ÊTRE EXTRAIT OU RECONNU DANS CE PDF.";
 "NO TIMED SUBTITLE CUES WERE FOUND." = "AUCUNE RÉPLIQUE DE SOUS-TITRE HORODATÉE N’A ÉTÉ TROUVÉE.";
+"NO TOOLS FOR THIS SELECTION YET." = "NO TOOLS FOR THIS SELECTION YET.";
 "NO UNPROTECTED DOWNLOADABLE FORMAT IS AVAILABLE." = "AUCUN FORMAT TÉLÉCHARGEABLE NON PROTÉGÉ N’EST DISPONIBLE.";
 "NO UPDATE CHECKS YET" = "AUCUNE RECHERCHE DE MISE À JOUR POUR L’INSTANT";
 "NO USABLE YOUTUBE THUMBNAIL WAS FOUND." = "AUCUNE MINIATURE YOUTUBE UTILISABLE N’A ÉTÉ TROUVÉE.";
@@ -1251,10 +1294,13 @@
 "Nashi saves results beside the originals. Allow a folder once to include every folder inside it." = "Nashi enregistre les résultats à côté des originaux. Autorisez un dossier une seule fois pour inclure tous les dossiers qu’il contient.";
 "Nashi update" = "Mise à jour de Nashi";
 "Nashi update could not finish" = "La mise à jour de Nashi n’a pas pu se terminer";
+"Nashi uses FFmpeg for audio and video. Downloads come straight from the upstream projects and are checked before anything is installed." = "Nashi uses FFmpeg for audio and video. Downloads come straight from the upstream projects and are checked before anything is installed.";
 "Nashi · Features & shortcuts" = "Nashi · Fonctionnalités et raccourcis";
+"Nashi — Progress" = "Nashi — Progress";
 "Next" = "Suivant";
 "Next frame" = "Image suivante";
 "Next page" = "Page suivante";
+"Next ›" = "Next ›";
 "Next, download the missing tools for media and Office files. Tools already on your computer do not need another download." = "Téléchargez maintenant les outils manquants pour les fichiers multimédias et Office. Les outils déjà présents sur votre ordinateur ne nécessitent pas de nouveau téléchargement.";
 "Nice files.\nNo fuss." = "De beaux fichiers.\nSans prise de tête.";
 "Nicely done." = "Bien joué.";
@@ -1263,6 +1309,7 @@
 "Nicely done. 1 file is ready." = "Bien joué. 1 fichier est prêt.";
 "No QR codes found. Try a larger or sharper image." = "Aucun code QR trouvé. Essayez une image plus grande ou plus nette.";
 "No QR codes this time." = "Aucun code QR cette fois.";
+"No conversions for this selection yet." = "No conversions for this selection yet.";
 "No folders allowed yet." = "Aucun dossier autorisé pour l’instant.";
 "No matches. Try a file name or tool." = "Aucun résultat. Essayez un nom de fichier ou d’outil.";
 "No matching regions were detected. You can still draw areas by hand." = "Aucune zone correspondante n’a été détectée. Vous pouvez toujours dessiner des zones à la main.";
@@ -1271,6 +1318,7 @@
 "No public downloadable media found. Some sites require sign-in or do not expose downloadable media." = "Aucun média public téléchargeable trouvé. Certains sites exigent une connexion ou n’exposent pas de médias téléchargeables.";
 "No text could be extracted or recognized in this PDF." = "Aucun texte n’a pu être extrait ou reconnu dans ce PDF.";
 "No timed subtitle cues were found." = "Aucune réplique de sous-titre horodatée n’a été trouvée.";
+"No tools for this selection yet." = "No tools for this selection yet.";
 "No unprotected downloadable format is available." = "Aucun format téléchargeable non protégé n’est disponible.";
 "No update checks yet" = "Aucune recherche de mise à jour pour l’instant";
 "No usable YouTube thumbnail was found." = "Aucune miniature YouTube utilisable n’a été trouvée.";
@@ -1291,6 +1339,7 @@
 "OFFICE TOOLS ARE READY." = "LES OUTILS BUREAUTIQUES SONT PRÊTS.";
 "OFFICE TOOLS READY" = "OUTILS BUREAUTIQUES PRÊTS";
 "OFFICE TOOLS READY." = "OUTILS BUREAUTIQUES PRÊTS.";
+"ON YOUR COMPUTER" = "ON YOUR COMPUTER";
 "ON YOUR MAC" = "SUR VOTRE MAC";
 "ON YOUR PC" = "SUR VOTRE PC";
 "ONE DOWNLOAD PER TOOL GROUP. NO ACCOUNT OR GITHUB TOKEN." = "UN TÉLÉCHARGEMENT PAR GROUPE D’OUTILS. AUCUN COMPTE NI JETON GITHUB.";
@@ -1334,6 +1383,7 @@
 "Office tools ready." = "Outils bureautiques prêts.";
 "On your Mac" = "Sur votre Mac";
 "On your PC" = "Sur votre PC";
+"On your computer" = "On your computer";
 "One download per tool group. No account or GitHub token." = "Un téléchargement par groupe d’outils. Aucun compte ni jeton GitHub.";
 "One last step.\nSet up your tools." = "Une dernière étape.\nConfigurez vos outils.";
 "One or more media settings are outside their supported range." = "Un ou plusieurs réglages multimédias sont en dehors de leur plage prise en charge.";
@@ -1548,6 +1598,7 @@
 "RESIZE IMAGE" = "REDIMENSIONNER L’IMAGE";
 "RESTORE CLIPS" = "RESTAURER LES CLIPS";
 "RESTORE DEFAULTS" = "RÉTABLIR LES RÉGLAGES PAR DÉFAUT";
+"RETRY" = "RETRY";
 "REVEAL FINISHED FILES IN EXPLORER" = "AFFICHER LES FICHIERS TERMINÉS DANS L’EXPLORATEUR";
 "REVEAL FINISHED FILES IN FINDER" = "AFFICHER LES FICHIERS TERMINÉS DANS LE FINDER";
 "RIGHT" = "DROITE";
@@ -1587,6 +1638,10 @@
 "Reflowable text" = "Texte adaptable";
 "Release to place · Esc cancels" = "Relâchez pour placer · Échap annule";
 "Remove" = "Retirer";
+"Remove %@" = "Remove %@";
+"Remove %@ from selection" = "Remove %@ from selection";
+"Remove %lld" = "Remove %lld";
+"Remove %lld from selection" = "Remove %lld from selection";
 "Remove All" = "Tout supprimer";
 "Remove Audio" = "Supprimer l’audio";
 "Remove Background" = "Supprimer l’arrière-plan";
@@ -1611,6 +1666,7 @@
 "Restore Clips" = "Restaurer les clips";
 "Restore Defaults" = "Rétablir les réglages par défaut";
 "Restore defaults" = "Rétablir les réglages par défaut";
+"Retry" = "Retry";
 "Reveal finished files in Explorer" = "Afficher les fichiers terminés dans l’Explorateur";
 "Reveal finished files in Finder" = "Afficher les fichiers terminés dans le Finder";
 "Right" = "Droite";
@@ -1710,6 +1766,7 @@
 "SHIFT LOCKS THE RATIO · RETURN CROPS\nDRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE." = "MAJ VERROUILLE LES PROPORTIONS · RETOUR RECADRE\nFAITES GLISSER À L’INTÉRIEUR POUR DÉPLACER ; FAITES GLISSER UNE POIGNÉE POUR REDIMENSIONNER.";
 "SHOW IN EXPLORER" = "AFFICHER DANS L’EXPLORATEUR";
 "SHOW IN FINDER" = "AFFICHER DANS LE FINDER";
+"SHOW IN FOLDER" = "SHOW IN FOLDER";
 "SHOW NASHI IN FINDER" = "AFFICHER NASHI DANS LE FINDER";
 "SHOW ORIGINAL" = "AFFICHER L’ORIGINAL";
 "SILENCE THRESHOLD" = "SEUIL DE SILENCE";
@@ -1849,15 +1906,20 @@
 "Show Original" = "Afficher l’original";
 "Show in Explorer" = "Afficher dans l’Explorateur";
 "Show in Finder" = "Afficher dans le Finder";
+"Show in folder" = "Show in folder";
 "Show original" = "Afficher l’original";
 "Silence threshold" = "Seuil de silence";
 "Skip tour" = "Passer la visite";
+"Skipped %@: only existing files can come in, not folders." = "Skipped %@: only existing files can come in, not folders.";
+"Skipped %lld: only existing files can come in, not folders." = "Skipped %lld: only existing files can come in, not folders.";
 "Slides" = "Diapositives";
 "Small · 1280 px" = "Petit · 1280 px";
 "Small · 1280 px longest edge" = "Petit · 1280 px sur le plus grand côté";
 "Smaller File" = "Fichier plus léger";
 "Smallest" = "Le plus petit";
 "Solid" = "Plein";
+"Something went wrong: %@" = "Something went wrong: %@";
+"Something went wrong: %lld" = "Something went wrong: %lld";
 "Sound and haptic feedback" = "Retour sonore et haptique";
 "Sound feedback" = "Retour sonore";
 "Sound follows your Mac’s volume. Haptics need a compatible Force Touch trackpad." = "Le son suit le volume de votre Mac. Le retour haptique nécessite un trackpad Force Touch compatible.";
@@ -2223,6 +2285,8 @@
 "Zip regular files and folders without links (10,000 item limit)." = "Compressez en ZIP des fichiers et dossiers ordinaires, sans liens (limite de 10 000 éléments).";
 "macOS Reduce Motion is on. Nashi keeps motion off." = "L’option Réduire les animations de macOS est activée. Nashi désactive les animations.";
 "owner/repository or GitHub URL" = "propriétaire/dépôt ou URL GitHub";
+"‹ PREVIOUS" = "‹ PREVIOUS";
+"‹ Previous" = "‹ Previous";
 "←/→ FILES · MEDIA: SPACE PLAY/PAUSE, ←/→ 1S, ALT+←/→ FILES · ESC CLOSES" = "←/→ FICHIERS · MÉDIAS : ESPACE LECTURE/PAUSE, ←/→ 1 S, ALT+←/→ FICHIERS · ÉCHAP FERME";
 "←/→ FILES · MEDIA: SPACE PLAY/PAUSE, ←/→ 1S, ⌥←/→ FILES · ESC CLOSES" = "←/→ FICHIERS · MÉDIAS : ESPACE LECTURE/PAUSE, ←/→ 1 S, ⌥←/→ FICHIERS · ÉCHAP FERME";
 "←/→ files · Media: Space play/pause, ←/→ 1s, Alt+←/→ files · Esc closes" = "←/→ fichiers · Médias : Espace lecture/pause, ←/→ 1 s, Alt+←/→ fichiers · Échap ferme";

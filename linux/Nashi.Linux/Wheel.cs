@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using Nashi.Core;
 
 namespace Nashi.Linux;
 
@@ -58,7 +59,7 @@ public sealed class Wheel : Control
 
     /// The petals on screen: all items, or one page plus Previous and Next.
     public IReadOnlyList<WheelItem> Segments => items.Count <= PageSize ? items
-        : [.. items.Skip(page * PagedSize).Take(PagedSize), new(PreviousId, Copy.Previous), new(NextId, Copy.Next)];
+        : [.. items.Skip(page * PagedSize).Take(PagedSize), new(PreviousId, L10n.T(Copy.Previous)), new(NextId, L10n.T(Copy.Next))];
 
     /// Which petal a point falls in, or -1 in the center disc or outside the ring. Pure geometry.
     public static int IndexAt(Point p, Size size, int count)
@@ -161,7 +162,7 @@ public sealed class Wheel : Control
         {
             var on = i == highlighted;
             context.DrawGeometry(on ? selected : Brush("NashiSurface"), new Pen(Line, 0.7), Petal(i, segments.Count, center, radius, inner, scale));
-            var label = Label(segments[i].Title.ToUpper(CultureInfo.CurrentCulture), 13 * scale, 84 * scale, on ? Brush("NashiInk") : text);
+            var label = Label(AppLocalization.Uppercase(segments[i].Title, L10n.Language), 13 * scale, 84 * scale, on ? Brush("NashiInk") : text);
             var at = LabelCenter(i, segments.Count, center, radius, inner);
             context.DrawText(label, new Point(at.X - label.MaxTextWidth / 2, at.Y - label.Height / 2));
         }

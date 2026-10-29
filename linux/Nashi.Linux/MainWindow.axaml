@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="using:Nashi.Linux"
+        xmlns:l="using:Nashi.Linux"
         x:Class="Nashi.Linux.MainWindow"
         x:DataType="local:MainWindow"
         Title="Nashi"
@@ -12,14 +13,14 @@
     <Grid DockPanel.Dock="Top" Margin="28,19,28,15" ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto">
       <Image Source="avares://Nashi/Assets/NashiMark.png" Width="40" Height="40" />
       <TextBlock Grid.Column="1" Text="Nashi" Margin="10,0,0,0" FontSize="19" FontWeight="Bold" LetterSpacing="-0.5" VerticalAlignment="Center" />
-      <Button x:Name="SetUpToolsButton" Grid.Column="3" Classes="secondary compact" Content="Set up tools" Click="OnSetUpTools" VerticalAlignment="Center" />
+      <Button x:Name="SetUpToolsButton" Grid.Column="3" Classes="secondary compact" Content="{l:T 'Set up tools'}" Click="OnSetUpTools" VerticalAlignment="Center" />
       <Border Grid.Column="4" Classes="pill" Margin="10,0">
         <StackPanel Orientation="Horizontal" Spacing="5">
           <PathIcon Data="{StaticResource IconLock}" />
-          <TextBlock Text="On your computer" />
+          <TextBlock Text="{l:T 'On your computer'}" />
         </StackPanel>
       </Border>
-      <Button Grid.Column="5" Classes="quiet compact" ToolTip.Tip="Settings" AutomationProperties.Name="Settings" VerticalAlignment="Center">
+      <Button Grid.Column="5" Classes="quiet compact" ToolTip.Tip="{l:T 'Settings'}" AutomationProperties.Name="{l:T 'Settings'}" VerticalAlignment="Center">
         <PathIcon Data="{StaticResource IconSliders}" Width="15" Height="15" />
       </Button>
     </Grid>
@@ -28,8 +29,8 @@
       <StackPanel Margin="28,0,28,24" Spacing="22">
         <!-- Hero -->
         <StackPanel Spacing="6" Margin="0,8,0,0">
-          <TextBlock Text="Your files. Their next form." FontSize="30" FontWeight="Bold" LetterSpacing="-0.9" />
-          <TextBlock Classes="secondary" Text="Convert, fine-tune, and send them on their way." FontSize="13" />
+          <TextBlock Text="{l:T 'Your files. Their next form.'}" FontSize="30" FontWeight="Bold" LetterSpacing="-0.9" />
+          <TextBlock Classes="secondary" Text="{l:T 'Convert, fine-tune, and send them on their way.'}" FontSize="13" />
         </StackPanel>
 
         <!-- Start card -->
@@ -40,15 +41,15 @@
                 <Border Classes="pill gold">
                   <StackPanel Orientation="Horizontal" Spacing="5">
                     <PathIcon Data="{StaticResource IconSparkle}" />
-                    <TextBlock x:Name="StartPillText" Text="START HERE" LetterSpacing="0.4" />
+                    <TextBlock x:Name="StartPillText" Text="{l:T 'START HERE'}" LetterSpacing="0.4" />
                   </StackPanel>
                 </Border>
-                <TextBlock x:Name="SelectionTitle" Text="Drop something good." FontSize="23" FontWeight="Bold" LetterSpacing="-0.5" TextTrimming="CharacterEllipsis" MaxLines="2" TextWrapping="Wrap" />
-                <TextBlock x:Name="SelectionDetail" Classes="secondary" Text="Images, videos, documents, and all the little things in between." FontSize="12" TextTrimming="CharacterEllipsis" MaxLines="2" TextWrapping="Wrap" />
+                <TextBlock x:Name="SelectionTitle" Text="{l:T 'Drop something good.'}" FontSize="23" FontWeight="Bold" LetterSpacing="-0.5" TextTrimming="CharacterEllipsis" MaxLines="2" TextWrapping="Wrap" />
+                <TextBlock x:Name="SelectionDetail" Classes="secondary" Text="{l:T 'Images, videos, documents, and all the little things in between.'}" FontSize="12" TextTrimming="CharacterEllipsis" MaxLines="2" TextWrapping="Wrap" />
                 <Button x:Name="ChooseButton" Classes="primary" Click="OnChooseFiles" Margin="0,3,0,0">
                   <StackPanel Orientation="Horizontal" Spacing="8">
                     <PathIcon Data="{StaticResource IconPlus}" Width="11" Height="11" />
-                    <TextBlock x:Name="ChooseLabel" Text="Choose files" />
+                    <TextBlock x:Name="ChooseLabel" Text="{l:T 'Choose files'}" />
                   </StackPanel>
                 </Button>
               </StackPanel>
@@ -93,8 +94,8 @@
                         <StackPanel Orientation="Horizontal" Spacing="4">
                           <TextBlock Text="{Binding Name}" FontSize="10" FontWeight="Medium" MaxWidth="220" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                           <Button Classes="quiet" Padding="4" CornerRadius="6" Tag="{Binding Path}" Click="OnRemoveFile"
-                                  ToolTip.Tip="{Binding Name, StringFormat='Remove {0} from selection'}"
-                                  AutomationProperties.Name="{Binding Name, StringFormat='Remove {0}'}">
+                                  ToolTip.Tip="{Binding RemoveTip}"
+                                  AutomationProperties.Name="{Binding RemoveName}">
                             <PathIcon Data="{StaticResource IconClose}" Width="8" Height="8" />
                           </Button>
                         </StackPanel>
@@ -102,7 +103,7 @@
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <Button Grid.Column="1" Classes="quiet compact" Content="Clear" Click="OnClear" VerticalAlignment="Top" />
+                <Button Grid.Column="1" Classes="quiet compact" Content="{l:T 'Clear'}" Click="OnClear" VerticalAlignment="Top" />
               </Grid>
             </StackPanel>
             <TextBlock x:Name="StatusLine" Classes="secondary" FontSize="11" IsVisible="False" TextWrapping="Wrap" />
@@ -112,19 +113,19 @@
               <Button Classes="chip" Click="OnConvert">
                 <StackPanel Orientation="Horizontal" Spacing="6">
                   <PathIcon Data="{StaticResource IconConvert}" />
-                  <TextBlock Text="Convert" />
+                  <TextBlock Text="{l:T 'Convert'}" />
                 </StackPanel>
               </Button>
               <Button Classes="chip" Click="OnTools">
                 <StackPanel Orientation="Horizontal" Spacing="6">
                   <PathIcon Data="{StaticResource IconTools}" />
-                  <TextBlock Text="Tools" />
+                  <TextBlock Text="{l:T 'Tools'}" />
                 </StackPanel>
               </Button>
               <Button Classes="chip" Click="OnActions">
                 <StackPanel Orientation="Horizontal" Spacing="6">
                   <PathIcon Data="{StaticResource IconActions}" />
-                  <TextBlock Text="Actions" />
+                  <TextBlock Text="{l:T 'Actions'}" />
                 </StackPanel>
               </Button>
             </StackPanel>
@@ -132,15 +133,15 @@
         </Border>
 
         <!-- Download a link: not in this milestone. -->
-        <Button Classes="cardButton" IsEnabled="False" ToolTip.Tip="Coming soon" ToolTip.ShowOnDisabled="True">
+        <Button Classes="cardButton" IsEnabled="False" ToolTip.Tip="{l:T 'Coming soon'}" ToolTip.ShowOnDisabled="True">
           <StackPanel Orientation="Horizontal" Spacing="12">
             <Grid Width="25" Height="25" VerticalAlignment="Center">
               <Ellipse Fill="{DynamicResource NashiGold}" />
               <PathIcon Data="{StaticResource IconArrowDown}" Width="15" Height="15" Foreground="White" />
             </Grid>
             <StackPanel Spacing="4">
-              <TextBlock Text="Download a link" FontSize="14" FontWeight="Bold" />
-              <TextBlock Classes="secondary" Text="Video, audio, or an image. Straight into your tools." FontSize="11" />
+              <TextBlock Text="{l:T 'Download a link'}" FontSize="14" FontWeight="Bold" />
+              <TextBlock Classes="secondary" Text="{l:T 'Video, audio, or an image. Straight into your tools.'}" FontSize="11" />
             </StackPanel>
           </StackPanel>
         </Button>
@@ -149,9 +150,9 @@
         <Grid ColumnDefinitions="Auto,*,Auto" TextElement.FontSize="10" TextElement.FontWeight="Medium">
           <StackPanel Orientation="Horizontal" Spacing="6">
             <PathIcon Data="{StaticResource IconLeaf}" Width="11" Height="11" Foreground="{DynamicResource NashiTextSecondary}" />
-            <TextBlock Classes="secondary" Text="A little less file fuss. A little more flow." />
+            <TextBlock Classes="secondary" Text="{l:T 'A little less file fuss. A little more flow.'}" />
           </StackPanel>
-          <TextBlock Grid.Column="2" Text="Made for Linux" Foreground="{DynamicResource NashiTextTertiary}" />
+          <TextBlock Grid.Column="2" Text="{l:T 'Made for Linux'}" Foreground="{DynamicResource NashiTextTertiary}" />
         </Grid>
       </StackPanel>
     </ScrollViewer>

@@ -7,8 +7,10 @@
 "%@ QR code found." = "%@ QR kodu bulundu.";
 "%@ QR codes found." = "%@ QR kodu bulundu.";
 "%@ files" = "%@ dosya";
+"%@ files ready." = "%@ dosya hazır.";
 "%@ files, ready to go." = "%@ dosya hazır.";
 "%@ is enabled" = "%@ izni açık";
+"%@ is not available for this selection on Linux." = "%@ bu seçim için Linux'ta kullanılamıyor.";
 "%@ items" = "%@ öğe";
 "%@ selected" = "%@ seçili";
 "%@ selected · Drag to carry files" = "%@ seçili · Dosyaları taşımak için sürükle";
@@ -21,15 +23,19 @@
 "%lld QR code found." = "%lld QR kodu bulundu.";
 "%lld QR codes found." = "%lld QR kodu bulundu.";
 "%lld files" = "%lld dosya";
+"%lld files ready." = "%lld dosya hazır.";
 "%lld files, ready to go." = "%lld dosya hazır.";
 "%lld is enabled" = "%lld izni açık";
+"%lld is not available for this selection on Linux." = "%lld bu seçim için Linux'ta kullanılamıyor.";
 "%lld items" = "%lld öğe";
 "%lld selected" = "%lld seçili";
 "%lld selected · Drag to carry files" = "%lld seçili · Dosyaları taşımak için sürükle";
 "%lld ways to change it" = "%lld farklı biçime çevir";
 "%lld · Nashi" = "%lld · Nashi";
 "%lld · Original stays safe" = "%lld · Orijinal dosyan güvende";
+"1 FILE READY." = "1 DOSYA HAZIR.";
 "1 ITEM" = "1 ÖĞE";
+"1 file ready." = "1 dosya hazır.";
 "1 item" = "1 öğe";
 "1/3 LEFT · MIDDLE · RIGHT   /   1/2 LEFT · RIGHT   /   2/3 LEFT · RIGHT" = "1/3 SOL · ORTA · SAĞ   /   1/2 SOL · SAĞ   /   2/3 SOL · SAĞ";
 "1/3 left · middle · right   /   1/2 left · right   /   2/3 left · right" = "1/3 sol · orta · sağ   /   1/2 sol · sağ   /   2/3 sol · sağ";
@@ -274,7 +280,9 @@
 "CANCEL" = "İPTAL";
 "CANCEL DOWNLOAD" = "İNDİRMEYİ İPTAL ET";
 "CANCEL SETUP" = "KURULUMU İPTAL ET";
+"CANCELLED. NOTHING WAS INSTALLED." = "İPTAL EDİLDİ. HİÇBİR ŞEY KURULMADI.";
 "CANCELLED. ORIGINALS KEPT." = "İPTAL EDİLDİ. ORİJİNALLER KORUNDU.";
+"CANCELLING…" = "İPTAL EDİLİYOR…";
 "CANNOT START UPDATE INSTALLER." = "GÜNCELLEME YÜKLEYİCİSİ BAŞLATILAMADI.";
 "CANVAS" = "TUVAL";
 "CANVAS HEIGHT" = "TUVAL YÜKSEKLİĞİ";
@@ -323,6 +331,7 @@
 "CHOOSE AN INSTAGRAM PHOTO POST LINK." = "BİR INSTAGRAM FOTOĞRAF GÖNDERİSİ BAĞLANTISI SEÇ.";
 "CHOOSE ANNOTATION IMAGE…" = "İŞARET GÖRSELİ SEÇ…";
 "CHOOSE AT LEAST ONE FRAME." = "EN AZ BİR KARE SEÇ.";
+"CHOOSE AT LEAST ONE IMAGE." = "EN AZ BİR GÖRSEL SEÇ.";
 "CHOOSE AT LEAST TWO PDFS." = "EN AZ İKİ PDF SEÇ.";
 "CHOOSE AT LEAST TWO VIDEOS." = "EN AZ İKİ VİDEO SEÇ.";
 "CHOOSE AT MOST 10,000 CLIPS." = "EN FAZLA 10.000 KLİP SEÇ.";
@@ -334,6 +343,7 @@
 "CHOOSE FEWER FILES TO OPEN." = "AÇMAK İÇİN DAHA AZ DOSYA SEÇ.";
 "CHOOSE FILES" = "DOSYA SEÇ";
 "CHOOSE FILES AND A SUPPORTED MEDIA FORMAT." = "DOSYALARI VE DESTEKLENEN BİR MEDYA BİÇİMİNİ SEÇ.";
+"CHOOSE FILES FIRST." = "ÖNCE DOSYA SEÇ.";
 "CHOOSE FILES FOR NASHI" = "NASHI İÇİN DOSYA SEÇ";
 "CHOOSE FILES TO ZIP." = "SIKIŞTIRMAK İÇİN DOSYA SEÇ.";
 "CHOOSE FILES…" = "DOSYA SEÇ…";
@@ -370,12 +380,14 @@
 "CLEAR SELECTION" = "SEÇİMİ TEMİZLE";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "PANO MEŞGUL. TEKRAR DENE.";
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "PANO MEŞGUL. YENİDEN YAPIŞTIRMAYI DENE.";
+"CLOSE" = "KAPAT";
 "CLOSE FLOAT WITHOUT DELETING FILES" = "DOSYALARI SİLMEDEN FLOAT’I KAPAT";
 "CLOSE WINDOW" = "PENCEREYİ KAPAT";
 "COLLAPSE FLOAT" = "FLOAT’I DARALT";
 "COLOR" = "RENK";
 "COLUMN" = "SÜTUN";
 "COLUMNS" = "SÜTUN SAYISI";
+"COMING SOON" = "ÇOK YAKINDA";
 "COMPATIBILITY" = "UYUMLULUK";
 "COMPRESS" = "SIKIŞTIR";
 "COMPRESS & SAVE" = "SIKIŞTIR VE KAYDET";
@@ -429,7 +441,9 @@
 "Cancel" = "İptal";
 "Cancel download" = "İndirmeyi iptal et";
 "Cancel setup" = "Kurulumu iptal et";
+"Cancelled. Nothing was installed." = "İptal edildi. Hiçbir şey kurulmadı.";
 "Cancelled. Originals kept." = "İptal edildi. Orijinaller korundu.";
+"Cancelling…" = "İptal ediliyor…";
 "Cannot start update installer." = "Güncelleme yükleyicisi başlatılamadı.";
 "Canvas" = "Tuval";
 "Canvas height" = "Tuval yüksekliği";
@@ -489,6 +503,7 @@
 "Choose an input format to see its available outputs." = "Kullanılabilir çıktılarını görmek için bir girdi biçimi seç.";
 "Choose annotation image…" = "İşaret görseli seç…";
 "Choose at least one frame." = "En az bir kare seç.";
+"Choose at least one image." = "En az bir görsel seç.";
 "Choose at least two PDFs." = "En az iki PDF seç.";
 "Choose at least two videos." = "En az iki video seç.";
 "Choose at most 10,000 clips." = "En fazla 10.000 klip seç.";
@@ -500,6 +515,7 @@
 "Choose fewer files to open." = "Açmak için daha az dosya seç.";
 "Choose files" = "Dosya seç";
 "Choose files and a supported media format." = "Dosyaları ve desteklenen bir medya biçimini seç.";
+"Choose files first." = "Önce dosya seç.";
 "Choose files for Nashi" = "Nashi için dosya seç";
 "Choose files to zip." = "Sıkıştırmak için dosya seç.";
 "Choose files…" = "Dosya seç…";
@@ -529,12 +545,14 @@
 "Clip %lld" = "Klip %lld";
 "Clipboard is busy. Try Paste again." = "Pano meşgul. Yeniden yapıştırmayı dene.";
 "Clipboard is busy. Try again." = "Pano meşgul. Tekrar dene.";
+"Close" = "Kapat";
 "Close Float without deleting files" = "Dosyaları silmeden Float’ı kapat";
 "Close Window" = "Pencereyi Kapat";
 "Collapse Float" = "Float’ı daralt";
 "Color" = "Renk";
 "Column" = "Sütun";
 "Columns" = "Sütun sayısı";
+"Coming soon" = "Çok yakında";
 "Compatibility" = "Uyumluluk";
 "Compress" = "Sıkıştır";
 "Compress & save" = "Sıkıştır ve kaydet";
@@ -568,6 +586,8 @@
 "Convert to %lld" = "%lld biçimine dönüştür";
 "Convert · while dragging" = "Dönüştür · sürüklerken";
 "Convert, fine-tune, and send them on their way." = "Dönüştür, ince ayar yap ve paylaş.";
+"Converting to %@ is not supported on Linux." = "%@ biçimine dönüştürme Linux'ta desteklenmiyor.";
+"Converting to %lld is not supported on Linux." = "%lld biçimine dönüştürme Linux'ta desteklenmiyor.";
 "Copied link" = "Kopyalanan bağlantı";
 "Copy" = "Kopyala";
 "Copy Path" = "Yolu Kopyala";
@@ -580,7 +600,11 @@
 "Corners" = "Köşeler";
 "Couldn’t check for updates" = "Güncellemeler denetlenemedi";
 "Couldn’t finish" = "İşlem tamamlanamadı";
+"Couldn’t finish: %@" = "Tamamlanamadı: %@";
+"Couldn’t finish: %lld" = "Tamamlanamadı: %lld";
 "Couldn’t open this tool" = "Bu araç açılamadı";
+"Couldn’t set up tools: %@" = "Araçlar kurulamadı: %@";
+"Couldn’t set up tools: %lld" = "Araçlar kurulamadı: %lld";
 "Cover style" = "Kaplama stili";
 "Create Collage" = "Kolaj Oluştur";
 "Create PDF" = "PDF Oluştur";
@@ -760,6 +784,7 @@
 "EPUB layout" = "EPUB düzeni";
 "ESC TO CLOSE" = "KAPATMAK İÇİN ESC";
 "EVERYTHING HAS A NEXT FORM." = "HER DOSYANIN YENİ BİR HÂLİ VAR.";
+"EVERYTHING NASHI NEEDS FOR AUDIO AND VIDEO IS IN PLACE." = "NASHI'NİN SES VE VİDEO İÇİN İHTİYAÇ DUYDUĞU HER ŞEY HAZIR.";
 "EXPAND FLOAT" = "FLOAT’I GENİŞLET";
 "EXPANDED UPDATE IS TOO LARGE." = "AÇILAN GÜNCELLEME ÇOK BÜYÜK.";
 "EXPORT CLIPS" = "KLİPLERİ KAYDET";
@@ -787,6 +812,7 @@
 "Enter a valid number for %lld." = "%lld için geçerli bir sayı gir.";
 "Enter page numbers within this PDF, in the desired order." = "Bu PDF'deki sayfa numaralarını istediğin sırayla gir.";
 "Esc to close" = "Kapatmak için Esc";
+"Everything Nashi needs for audio and video is in place." = "Nashi'nin ses ve video için ihtiyaç duyduğu her şey hazır.";
 "Everything has a next form." = "Her dosyanın yeni bir hâli var.";
 "Expand Float" = "Float’ı genişlet";
 "Expanded update is too large." = "Açılan güncelleme çok büyük.";
@@ -800,7 +826,9 @@
 "FASTER" = "DAHA HIZLI";
 "FEATURED" = "ÖNE ÇIKAN";
 "FEATURES & SHORTCUTS" = "ÖZELLİKLER VE KISAYOLLAR";
+"FFMPEG AND FFPROBE" = "FFMPEG VE FFPROBE";
 "FFMPEG, FFPROBE, YT-DLP AND DENO ENABLE MEDIA CONVERSION, PREVIEWS AND WEB DOWNLOADS. APPROXIMATELY 180 MB. FFMPEG AND YT-DLP USE GPL LICENSES; DENO USES MIT." = "FFMPEG, FFPROBE, YT-DLP VE DENO; MEDYA DÖNÜŞTÜRME, ÖNİZLEME VE WEB İNDİRMELERİNİ SAĞLAR. YAKLAŞIK 180 MB. FFMPEG VE YT-DLP GPL, DENO MIT LİSANSLIDIR.";
+"FFmpeg and FFprobe" = "FFmpeg ve FFprobe";
 "FFmpeg, ffprobe, yt-dlp and Deno enable media conversion, previews and web downloads. Approximately 180 MB. FFmpeg and yt-dlp use GPL licenses; Deno uses MIT." = "FFmpeg, ffprobe, yt-dlp ve Deno; medya dönüştürme, önizleme ve web indirmelerini sağlar. Yaklaşık 180 MB. FFmpeg ve yt-dlp GPL, Deno MIT lisanslıdır.";
 "FIELD" = "ALAN";
 "FILE" = "DOSYA";
@@ -940,6 +968,7 @@
 "GAMMA MUST BE POSITIVE; CONTRAST AND SATURATION CANNOT BE NEGATIVE." = "GAMA POZİTİF OLMALI; KONTRAST VE DOYGUNLUK NEGATİF OLAMAZ.";
 "GENERAL" = "GENEL";
 "GET STARTED" = "BAŞLA";
+"GETTING STARTED…" = "BAŞLIYOR…";
 "GIF FRAME RATE" = "GIF KARE HIZI";
 "GIF FRAMES PER SECOND" = "GIF SANİYEDEKİ KARE SAYISI";
 "GIF MAXIMUM WIDTH" = "EN FAZLA GIF GENİŞLİĞİ";
@@ -961,6 +990,7 @@
 "Gamma must be positive; contrast and saturation cannot be negative." = "Gama pozitif olmalı; kontrast ve doygunluk negatif olamaz.";
 "General" = "Genel";
 "Get started" = "Başla";
+"Getting started…" = "Başlıyor…";
 "GitHub repository" = "GitHub deposu";
 "Give it a little breathing room." = "Biraz nefes alacak alan aç.";
 "Glass" = "Cam";
@@ -1124,6 +1154,7 @@
 "Looking for little squares…" = "QR kodları aranıyor…";
 "Loudness range" = "Ses düzeyi aralığı";
 "MACOS REDUCE MOTION IS ON. NASHI KEEPS MOTION OFF." = "MACOS HAREKETİ AZALT AÇIK. NASHI ANİMASYONLARI KAPALI TUTAR.";
+"MADE FOR LINUX" = "LİNUX İÇİN YAPILDI";
 "MADE FOR YOUR MAC" = "MAC'İN İÇİN TASARLANDI";
 "MAGNIFIER" = "BÜYÜTEÇ";
 "MAKE ALL PAGES THE SAME WIDTH" = "TÜM SAYFALARI AYNI GENİŞLİKTE YAP";
@@ -1142,6 +1173,8 @@
 "MEDIA SETUP" = "MEDYA KURULUMU";
 "MEDIA TOOLS" = "MEDYA ARAÇLARI";
 "MEDIA TOOLS ARE ALREADY INSTALLED." = "MEDYA ARAÇLARI ZATEN KURULU.";
+"MEDIA TOOLS ARE NEEDED FOR THIS. INSTALL FFMPEG, OR SET UP MEDIA TOOLS FIRST." = "BUNUN İÇİN MEDYA ARAÇLARI GEREKİYOR. FFMPEG'İ KUR YA DA ÖNCE MEDYA ARAÇLARINI KUR.";
+"MEDIA TOOLS ARE STILL MISSING AFTER THE DOWNLOAD." = "İNDİRMEDEN SONRA MEDYA ARAÇLARI HÂLÂ EKSİK.";
 "MEDIA TOOLS READY. YOU CAN EDIT, CONVERT AND DOWNLOAD MEDIA." = "MEDYA ARAÇLARI HAZIR. DÜZENLEYEBİLİR, DÖNÜŞTÜREBİLİR VE İNDİREBİLİRSİN.";
 "MEDIUM · 1920 PX" = "ORTA · 1920 PX";
 "MEDIUM · 1920 PX LONGEST EDGE" = "ORTA · UZUN KENAR 1920 PX";
@@ -1151,6 +1184,7 @@
 "METADATA TOOLS CHECKSUM MISMATCH." = "META VERİ ARAÇLARININ SAĞLAMA TOPLAMI EŞLEŞMİYOR.";
 "METADATA · NASHI" = "META VERİLER · NASHI";
 "MIDDLE THIRD" = "ORTA ÜÇTE BİR";
+"MISSING" = "EKSİK";
 "MONO" = "MONO";
 "MONOSPACED" = "EŞ ARALIKLI";
 "MOVE" = "TAŞI";
@@ -1164,6 +1198,7 @@
 "MUTE" = "SESSİZE AL";
 "MUTE VIDEO" = "VİDEOYU SESSİZE AL";
 "MUTE VIDEO · NASHI" = "VİDEOYU SESSİZE AL · NASHI";
+"Made for Linux" = "Linux için yapıldı";
 "Made for your Mac" = "Mac'in için tasarlandı";
 "Magnifier" = "Büyüteç";
 "Make EPUB" = "EPUB Oluştur";
@@ -1183,6 +1218,8 @@
 "Media setup" = "Medya kurulumu";
 "Media tools" = "Medya araçları";
 "Media tools are already installed." = "Medya araçları zaten kurulu.";
+"Media tools are needed for this. Install ffmpeg, or set up media tools first." = "Bunun için medya araçları gerekiyor. ffmpeg'i kur ya da önce medya araçlarını kur.";
+"Media tools are still missing after the download." = "İndirmeden sonra medya araçları hâlâ eksik.";
 "Media tools ready. You can edit, convert and download media." = "Medya araçları hazır. Düzenleyebilir, dönüştürebilir ve indirebilirsin.";
 "Medium · 1920 px" = "Orta · 1920 px";
 "Medium · 1920 px longest edge" = "Orta · uzun kenar 1920 px";
@@ -1192,6 +1229,7 @@
 "Metadata tools checksum mismatch." = "Meta veri araçlarının sağlama toplamı eşleşmiyor.";
 "Metadata · Nashi" = "Meta Veriler · Nashi";
 "Middle third" = "Orta üçte bir";
+"Missing" = "Eksik";
 "Mono" = "Mono";
 "Monospaced" = "Eş aralıklı";
 "Move" = "Taşı";
@@ -1214,14 +1252,18 @@
 "NASHI SETTINGS" = "NASHI AYARLARI";
 "NASHI UPDATE" = "NASHI GÜNCELLEMESİ";
 "NASHI UPDATE COULD NOT FINISH" = "NASHI GÜNCELLEMESİ TAMAMLANAMADI";
+"NASHI USES FFMPEG FOR AUDIO AND VIDEO. DOWNLOADS COME STRAIGHT FROM THE UPSTREAM PROJECTS AND ARE CHECKED BEFORE ANYTHING IS INSTALLED." = "NASHI, SES VE VİDEO İÇİN FFMPEG KULLANIR. İNDİRMELER DOĞRUDAN ÖZGÜN PROJELERDEN GELİR VE KURULMADAN ÖNCE DOĞRULANIR.";
 "NASHI · FEATURES & SHORTCUTS" = "NASHI · ÖZELLİKLER VE KISAYOLLAR";
+"NASHI — PROGRESS" = "NASHI — İLERLEME";
 "NEXT" = "İLERİ";
 "NEXT FRAME" = "SONRAKİ KARE";
 "NEXT PAGE" = "SONRAKİ SAYFA";
+"NEXT ›" = "İLERİ ›";
 "NEXT, DOWNLOAD THE MISSING TOOLS FOR MEDIA AND OFFICE FILES. TOOLS ALREADY ON YOUR COMPUTER DO NOT NEED ANOTHER DOWNLOAD." = "ŞİMDİ MEDYA VE OFFICE DOSYALARI İÇİN EKSİK ARAÇLARI İNDİR. BİLGİSAYARINDA BULUNAN ARAÇLARI YENİDEN İNDİRMEN GEREKMEZ.";
 "NICE FILES.\nNO FUSS." = "DOSYALAR HAZIR.\nZAHMET YOK.";
 "NICELY DONE." = "HAZIR, ELİNE SAĞLIK!";
 "NICELY DONE. 1 FILE IS READY." = "HAZIR! 1 DOSYAN HAZIR.";
+"NO CONVERSIONS FOR THIS SELECTION YET." = "BU SEÇİM İÇİN HENÜZ DÖNÜŞTÜRME YOK.";
 "NO FOLDERS ALLOWED YET." = "HENÜZ İZİN VERİLEN KLASÖR YOK.";
 "NO MATCHES. TRY A FILE NAME OR TOOL." = "EŞLEŞME BULUNAMADI. DOSYA ADI VEYA ARAÇ ADIYLA ARA.";
 "NO MATCHING REGIONS WERE DETECTED. YOU CAN STILL DRAW AREAS BY HAND." = "EŞLEŞEN BÖLGE BULUNAMADI. ALANLARI YİNE DE ELLE ÇİZEBİLİRSİN.";
@@ -1232,6 +1274,7 @@
 "NO QR CODES THIS TIME." = "QR KODU BULUNAMADI.";
 "NO TEXT COULD BE EXTRACTED OR RECOGNIZED IN THIS PDF." = "BU PDF'DEN METİN ÇIKARILAMADI VEYA TANINAMADI.";
 "NO TIMED SUBTITLE CUES WERE FOUND." = "ZAMANLANMIŞ ALTYAZI SATIRI BULUNAMADI.";
+"NO TOOLS FOR THIS SELECTION YET." = "BU SEÇİM İÇİN HENÜZ ARAÇ YOK.";
 "NO UNPROTECTED DOWNLOADABLE FORMAT IS AVAILABLE." = "KORUMASIZ, İNDİRİLEBİLİR BİR BİÇİM YOK.";
 "NO UPDATE CHECKS YET" = "HENÜZ GÜNCELLEME DENETLENMEDİ";
 "NO USABLE YOUTUBE THUMBNAIL WAS FOUND." = "KULLANILABİLİR BİR YOUTUBE KÜÇÜK RESMİ BULUNAMADI.";
@@ -1251,10 +1294,13 @@
 "Nashi saves results beside the originals. Allow a folder once to include every folder inside it." = "Nashi sonuçları orijinallerin yanına kaydeder. Bir klasöre verilen izin, içindeki klasörleri de kapsar.";
 "Nashi update" = "Nashi güncellemesi";
 "Nashi update could not finish" = "Nashi güncellemesi tamamlanamadı";
+"Nashi uses FFmpeg for audio and video. Downloads come straight from the upstream projects and are checked before anything is installed." = "Nashi, ses ve video için FFmpeg kullanır. İndirmeler doğrudan özgün projelerden gelir ve kurulmadan önce doğrulanır.";
 "Nashi · Features & shortcuts" = "Nashi · Özellikler ve kısayollar";
+"Nashi — Progress" = "Nashi — İlerleme";
 "Next" = "İleri";
 "Next frame" = "Sonraki kare";
 "Next page" = "Sonraki sayfa";
+"Next ›" = "İleri ›";
 "Next, download the missing tools for media and Office files. Tools already on your computer do not need another download." = "Şimdi medya ve Office dosyaları için eksik araçları indir. Bilgisayarında bulunan araçları yeniden indirmen gerekmez.";
 "Nice files.\nNo fuss." = "Dosyalar hazır.\nZahmet yok.";
 "Nicely done." = "Hazır, eline sağlık!";
@@ -1263,6 +1309,7 @@
 "Nicely done. 1 file is ready." = "Hazır! 1 dosyan hazır.";
 "No QR codes found. Try a larger or sharper image." = "QR kodu bulunamadı. Daha büyük veya daha net bir görsel dene.";
 "No QR codes this time." = "QR kodu bulunamadı.";
+"No conversions for this selection yet." = "Bu seçim için henüz dönüştürme yok.";
 "No folders allowed yet." = "Henüz izin verilen klasör yok.";
 "No matches. Try a file name or tool." = "Eşleşme bulunamadı. Dosya adı veya araç adıyla ara.";
 "No matching regions were detected. You can still draw areas by hand." = "Eşleşen bölge bulunamadı. Alanları yine de elle çizebilirsin.";
@@ -1271,6 +1318,7 @@
 "No public downloadable media found. Some sites require sign-in or do not expose downloadable media." = "Herkese açık, indirilebilir medya bulunamadı. Bazı siteler giriş gerektirir veya medyayı indirmeye açmaz.";
 "No text could be extracted or recognized in this PDF." = "Bu PDF'den metin çıkarılamadı veya tanınamadı.";
 "No timed subtitle cues were found." = "Zamanlanmış altyazı satırı bulunamadı.";
+"No tools for this selection yet." = "Bu seçim için henüz araç yok.";
 "No unprotected downloadable format is available." = "Korumasız, indirilebilir bir biçim yok.";
 "No update checks yet" = "Henüz güncelleme denetlenmedi";
 "No usable YouTube thumbnail was found." = "Kullanılabilir bir YouTube küçük resmi bulunamadı.";
@@ -1291,6 +1339,7 @@
 "OFFICE TOOLS ARE READY." = "OFİS ARAÇLARI HAZIR.";
 "OFFICE TOOLS READY" = "OFİS ARAÇLARI HAZIR";
 "OFFICE TOOLS READY." = "OFİS ARAÇLARI HAZIR.";
+"ON YOUR COMPUTER" = "BİLGİSAYARINDA";
 "ON YOUR MAC" = "MAC'İNDE";
 "ON YOUR PC" = "BİLGİSAYARINDA";
 "ONE DOWNLOAD PER TOOL GROUP. NO ACCOUNT OR GITHUB TOKEN." = "HER ARAÇ GRUBU İÇİN BİR KEZ İNDİR. HESAP VEYA GITHUB TOKENI GEREKMEZ.";
@@ -1334,6 +1383,7 @@
 "Office tools ready." = "Ofis araçları hazır.";
 "On your Mac" = "Mac'inde";
 "On your PC" = "Bilgisayarında";
+"On your computer" = "Bilgisayarında";
 "One download per tool group. No account or GitHub token." = "Her araç grubu için bir kez indir. Hesap veya GitHub tokenı gerekmez.";
 "One last step.\nSet up your tools." = "Son bir adım.\nAraçlarını kur.";
 "One or more media settings are outside their supported range." = "Bir veya daha fazla medya ayarı desteklenen aralığın dışında.";
@@ -1548,6 +1598,7 @@
 "RESIZE IMAGE" = "GÖRSELİ BOYUTLANDIR";
 "RESTORE CLIPS" = "KLİPLERİ GERİ GETİR";
 "RESTORE DEFAULTS" = "VARSAYILANLARA DÖN";
+"RETRY" = "YENİDEN DENE";
 "REVEAL FINISHED FILES IN EXPLORER" = "TAMAMLANAN DOSYALARI DOSYA GEZGİNİ'NDE GÖSTER";
 "REVEAL FINISHED FILES IN FINDER" = "TAMAMLANAN DOSYALARI FINDER'DA GÖSTER";
 "RIGHT" = "SAĞ";
@@ -1587,6 +1638,10 @@
 "Reflowable text" = "Esnek metin düzeni";
 "Release to place · Esc cancels" = "Yerleştirmek için bırak · Esc iptal eder";
 "Remove" = "Kaldır";
+"Remove %@" = "%@ dosyasını çıkar";
+"Remove %@ from selection" = "%@ dosyasını seçimden çıkar";
+"Remove %lld" = "%lld dosyasını çıkar";
+"Remove %lld from selection" = "%lld dosyasını seçimden çıkar";
 "Remove All" = "Tümünü Kaldır";
 "Remove Audio" = "Sesi Kaldır";
 "Remove Background" = "Arka Planı Kaldır";
@@ -1611,6 +1666,7 @@
 "Restore Clips" = "Klipleri Geri Getir";
 "Restore Defaults" = "Varsayılanlara Dön";
 "Restore defaults" = "Varsayılanlara dön";
+"Retry" = "Yeniden dene";
 "Reveal finished files in Explorer" = "Tamamlanan dosyaları Dosya Gezgini'nde göster";
 "Reveal finished files in Finder" = "Tamamlanan dosyaları Finder'da göster";
 "Right" = "Sağ";
@@ -1710,6 +1766,7 @@
 "SHIFT LOCKS THE RATIO · RETURN CROPS\nDRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE." = "SHIFT ORANI KİLİTLER · ENTER KIRPAR\nTAŞIMAK İÇİN ALANIN İÇİNİ, BOYUTLANDIRMAK İÇİN TUTAMAĞI SÜRÜKLE.";
 "SHOW IN EXPLORER" = "DOSYA GEZGİNİ'NDE GÖSTER";
 "SHOW IN FINDER" = "FINDER'DA GÖSTER";
+"SHOW IN FOLDER" = "KLASÖRDE GÖSTER";
 "SHOW NASHI IN FINDER" = "NASHI'Yİ FINDER'DA GÖSTER";
 "SHOW ORIGINAL" = "ORİJİNALİ GÖSTER";
 "SILENCE THRESHOLD" = "SESSİZLİK EŞİĞİ";
@@ -1849,15 +1906,20 @@
 "Show Original" = "Orijinali Göster";
 "Show in Explorer" = "Dosya Gezgini'nde Göster";
 "Show in Finder" = "Finder'da Göster";
+"Show in folder" = "Klasörde göster";
 "Show original" = "Orijinali göster";
 "Silence threshold" = "Sessizlik eşiği";
 "Skip tour" = "Turu geç";
+"Skipped %@: only existing files can come in, not folders." = "%@ atlandı: yalnızca var olan dosyalar eklenebilir, klasörler eklenemez.";
+"Skipped %lld: only existing files can come in, not folders." = "%lld atlandı: yalnızca var olan dosyalar eklenebilir, klasörler eklenemez.";
 "Slides" = "Sunumlar";
 "Small · 1280 px" = "Küçük · 1280 px";
 "Small · 1280 px longest edge" = "Küçük · uzun kenar 1280 px";
 "Smaller File" = "Daha Küçük Dosya";
 "Smallest" = "En küçük";
 "Solid" = "Düz";
+"Something went wrong: %@" = "Bir şeyler ters gitti: %@";
+"Something went wrong: %lld" = "Bir şeyler ters gitti: %lld";
 "Sound and haptic feedback" = "Ses ve dokunsal geri bildirim";
 "Sound feedback" = "Sesli geri bildirim";
 "Sound follows your Mac’s volume. Haptics need a compatible Force Touch trackpad." = "Ses, Mac'inin ses düzeyini kullanır. Titreşim için uyumlu bir Force Touch trackpad gerekir.";
@@ -2223,6 +2285,8 @@
 "Zip regular files and folders without links (10,000 item limit)." = "Bağlantı içermeyen normal dosya ve klasörleri sıkıştır (sınır 10.000 öğe).";
 "macOS Reduce Motion is on. Nashi keeps motion off." = "macOS Hareketi Azalt açık. Nashi animasyonları kapalı tutar.";
 "owner/repository or GitHub URL" = "kullanıcı/depo veya GitHub adresi";
+"‹ PREVIOUS" = "‹ GERİ";
+"‹ Previous" = "‹ Geri";
 "←/→ FILES · MEDIA: SPACE PLAY/PAUSE, ←/→ 1S, ALT+←/→ FILES · ESC CLOSES" = "←/→ DOSYALAR · MEDYA: SPACE OYNAT/DURAKLAT, ←/→ 1 SN, ALT+←/→ DOSYALAR · ESC KAPATIR";
 "←/→ FILES · MEDIA: SPACE PLAY/PAUSE, ←/→ 1S, ⌥←/→ FILES · ESC CLOSES" = "←/→ DOSYALAR · MEDYA: SPACE OYNAT/DURAKLAT, ←/→ 1 SN, ⌥←/→ DOSYALAR · ESC KAPATIR";
 "←/→ files · Media: Space play/pause, ←/→ 1s, Alt+←/→ files · Esc closes" = "←/→ dosyalar · Medya: Space oynat/duraklat, ←/→ 1 sn, Alt+←/→ dosyalar · Esc kapatır";

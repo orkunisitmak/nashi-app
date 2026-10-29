@@ -18,6 +18,7 @@ void Check(bool condition, string name)
     else failures.Add(name);
 }
 
+L10n.Language = "en"; // the English checks below must not depend on the machine's locale
 var temp = Directory.CreateTempSubdirectory("nashi-linux-checks-");
 try
 {
@@ -28,6 +29,8 @@ try
     HomeChecks();
     WheelChecks(temp.FullName);
     await ToolSetupChecks(temp.FullName);
+    LocalizationChecks(temp.FullName);
+    AppearanceChecks(temp.FullName);
 }
 finally
 {
@@ -480,6 +483,123 @@ async Task RunnerChecks(string root)
 static bool Throws<T>(Action a) where T : Exception { try { a(); return false; } catch (T) { return true; } }
 
 static bool Near(byte actual, byte expected) => Math.Abs(actual - expected) <= 1;
+
+void LocalizationChecks(string root)
+{
+    Check(L10n.Language == "en", "Checks run in English");
+    L10n.Language = "tr";
+    try
+    {
+        Check(L10n.T("Choose files") == "Dosya seç", "T translates Choose files to Turkish");
+        Check(L10n.F("Saved {0} new files. Originals kept.", 3).Contains('3') && !L10n.F("Saved {0} new files. Originals kept.", 3).Contains("Saved"), "F translates a template and fills the count");
+        Check(L10n.T("Converting to webp is not supported on Linux.") == "webp biçimine dönüştürme Linux'ta desteklenmiyor.", "Interpolated exception messages translate at display time");
+        Check(L10n.T("Some text nobody translated") == "Some text nobody translated", "Unknown text stays as written");
+        Check(L10n.Upper("Ready when you are") == AppLocalization.Uppercase(L10n.T("Ready when you are"), "tr"), "Upper follows the Turkish casing rules");
+
+        // Every literal the Linux UI can show has a Turkish entry.
+        var linux = Path.Combine(RepoRoot(), "linux", "Nashi.Linux");
+        var literals = new SortedSet<string>(StringComparer.Ordinal);
+        foreach (var file in Directory.EnumerateFiles(linux, "*", SearchOption.TopDirectoryOnly))
+        {
+            var source = File.ReadAllText(file);
+            if (file.EndsWith(".axaml"))
+                foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(source, @"\{l:T '((?:[^'\\]|\\.)*)'\}")) literals.Add(m.Groups[1].Value);
+            else if (file.EndsWith(".cs") && !file.EndsWith("L10n.cs"))
+            {
+                foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(source, "(?:public const string \\w+ = |L10n\\.(?:T|F|Upper)\\()\"((?:[^\"\\\\]|\\\\.)*)\"")) literals.Add(m.Groups[1].Value);
+                foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(source, "Exception\\((\\$?)\"((?:[^\"\\\\]|\\\\.)*)\"\\)"))
+                    literals.Add(m.Groups[1].Value == "$" ? System.Text.RegularExpressions.Regex.Replace(m.Groups[2].Value, @"\{[^}]+\}", "{0}") : m.Groups[2].Value);
+            }
+        }
+        literals.RemoveWhere(l => !l.Any(char.IsLetter));
+        // Copy constants that are Windows-style product words rather than UI copy.
+        var missing = literals.Where(l => !AppLocalization.Turkish.ContainsKey(l) && AppLocalization.Text(l, "tr") == l).ToList();
+        Check(literals.Count > 40, "Literal scan finds the Linux UI strings (" + literals.Count + ")");
+        Check(missing.Count == 0, "Every Linux UI literal has a Turkish entry; missing: " + string.Join(" | ", missing));
+        Check(AppLocalization.Text("JPG", "tr") == "JPG", "Format names stay as they are");
+
+        // Headless Home in Turkish has no English hero title.
+        L10n.Language = "tr";
+        var window = new MainWindow { Width = 820, Height = 780 };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        var frame = window.CaptureRenderedFrame();
+        var texts = window.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
+        Check(!texts.Contains("Your files. Their next form.") && texts.Contains(AppLocalization.Text("Your files. Their next form.", "tr")), "Turkish Home has no English hero title");
+        Check(texts.Contains("Dosya seç") && texts.Contains(AppLocalization.Text("START HERE", "tr")), "Turkish Home shows Dosya seç and the Turkish eyebrow");
+        var smoke = Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");
+        if (!string.IsNullOrEmpty(smoke) && frame is not null) { Directory.CreateDirectory(smoke); frame.Save(Path.Combine(smoke, "home-tr.png")); }
+
+        // Turkish wheel: tool names translated, petals upper-cased with İ.
+        var wheel = new WheelWindow(L10n.T("Tools"), [new("compress", L10n.T(FeatureCatalog.ToolNames["compress"])), new("convert", L10n.T("Convert"))]);
+        wheel.Show();
+        Dispatcher.UIThread.RunJobs();
+        Check(wheel.Wheel.Items[0].Title == "Sıkıştır" && wheel.CaptureRenderedFrame() is not null, "Turkish wheel translates tool names and renders");
+        wheel.Close();
+        window.Close();
+    }
+    finally { L10n.Language = "en"; }
+}
+
+void AppearanceChecks(string root)
+{
+    Check(Application.Current!.RequestedThemeVariant == ThemeVariant.Light, "Checks pinned Light earlier");
+    var xaml = File.ReadAllText(Path.Combine(RepoRoot(), "linux", "Nashi.Linux", "App.axaml"));
+    Check(xaml.Contains("RequestedThemeVariant=\"Default\""), "App follows the system theme by default");
+
+    Application.Current!.RequestedThemeVariant = ThemeVariant.Dark;
+    try
+    {
+        var smoke = Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");
+        void Save(Avalonia.Media.Imaging.WriteableBitmap? frame, string name)
+        {
+            if (string.IsNullOrEmpty(smoke) || frame is null) return;
+            Directory.CreateDirectory(smoke);
+            frame.Save(Path.Combine(smoke, name));
+        }
+        Color Resource(Window w, string key) => w.TryFindResource(key, w.ActualThemeVariant, out var v) && v is ISolidColorBrush b ? b.Color : default;
+        bool IsDark(Color c) => c.A == 255 && c.R < 60 && c.G < 60 && c.B < 60;
+
+        var home = new MainWindow { Width = 820, Height = 780 };
+        home.Show();
+        Dispatcher.UIThread.RunJobs();
+        var frame = home.CaptureRenderedFrame();
+        var canvas = (home.Background as ISolidColorBrush)?.Color;
+        Check(canvas is { } c && Near(c.R, 0x11) && Near(c.G, 0x1A) && Near(c.B, 0x14), "Dark Home background is the dark canvas #111A14");
+        Check(home.Foreground is ISolidColorBrush { Color: { R: > 200 } }, "Dark Home text is light");
+        Save(frame, "home-dark.png");
+        home.Close();
+
+        var setup = new ToolSetupWindow(new Toolchain(Directory.CreateDirectory(Path.Combine(root, "dark-tools")).FullName, ""));
+        setup.Show();
+        Dispatcher.UIThread.RunJobs();
+        Check(IsDark(Resource(setup, "NashiCanvas")) && IsDark(Resource(setup, "NashiSurface")), "Dark setup window resolves dark canvas and surface");
+        Save(setup.CaptureRenderedFrame(), "tool-setup-dark.png");
+        setup.Close();
+
+        var toast = new ProgressToast("Convert to JPG", null);
+        toast.Show();
+        Dispatcher.UIThread.RunJobs();
+        Check(IsDark(Resource(toast, "NashiSurface")) && toast.FindControl<Border>("Card")?.Background is ISolidColorBrush { Color: { R: < 60 } }, "Dark toast card uses the dark surface");
+        Save(toast.CaptureRenderedFrame(), "toast-dark.png");
+        toast.Close();
+
+        var wheel = new WheelWindow("Convert", [new("convert:jpg", "JPG"), new("convert:png", "PNG")]);
+        wheel.Show();
+        Dispatcher.UIThread.RunJobs();
+        Check(IsDark(Resource(wheel, "NashiSurface")) && Resource(wheel, "NashiText").R > 200, "Dark wheel resolves dark surface and light text");
+        Save(wheel.CaptureRenderedFrame(), "wheel-dark.png");
+        wheel.Close();
+    }
+    finally { Application.Current!.RequestedThemeVariant = ThemeVariant.Light; }
+}
+
+static string RepoRoot()
+{
+    for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir is not null; dir = dir.Parent)
+        if (Directory.Exists(Path.Combine(dir.FullName, "Sources", "NashiCore"))) return dir.FullName;
+    throw new DirectoryNotFoundException("Repository root not found.");
+}
 
 sealed class Cancel(CancellationTokenSource cts) : IProgress<OperationProgress>
 {

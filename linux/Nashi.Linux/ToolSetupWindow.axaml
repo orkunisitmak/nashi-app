@@ -1,7 +1,8 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Nashi.Linux.ToolSetupWindow"
-        Title="Set up tools"
+        xmlns:l="using:Nashi.Linux"
+        Title="{l:T 'Set up tools'}"
         Width="480" SizeToContent="Height" CanResize="False"
         WindowStartupLocation="CenterOwner">
   <StackPanel Margin="28,24" Spacing="16">
