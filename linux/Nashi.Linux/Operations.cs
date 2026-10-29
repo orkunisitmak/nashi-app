@@ -6,13 +6,15 @@ using ZXing;
 namespace Nashi.Linux;
 
 public sealed record Choice(string Id,string Title,string? Format=null);
+/// Choices made in a tool's dialog; each tool reads only its own part.
+public sealed record ToolSettings(MediaOptions? Media=null,ImageEdit? Crop=null,PhotoEdit? Photo=null,FrameOptions? Frame=null,CollageOptions? Collage=null);
 
 /// The Linux preview offers only workflows implemented here; the shared catalog decides
 /// which of them apply to a selection, so the rules match macOS and Windows.
 public static class Operations
 {
     private static readonly string[] ImageOutputs=["jpg","png","webp","tiff","avif","bmp","heic","pdf"];
-    private static readonly string[] ImplementedTools=["compress","removeMetadata","cropImage","editImage","createPDF","mergePDF","splitPDF","muteVideo","normalizeAudio","changeVideoSpeed","joinVideos","audioChannels","videoSnapshots","splitVideo","audioToVideo","trimVideo","trimAudio","extractArchive","readQRCode"];
+    private static readonly string[] ImplementedTools=["compress","removeMetadata","cropImage","editImage","frameImage","createCollage","createPDF","mergePDF","splitPDF","muteVideo","normalizeAudio","changeVideoSpeed","joinVideos","audioChannels","videoSnapshots","splitVideo","audioToVideo","trimVideo","trimAudio","extractArchive","readQRCode"];
 
     public static string? Executable(string name)
     {
@@ -46,8 +48,9 @@ public static class Operations
             .Select(id=>new Choice(id,FeatureCatalog.ToolNames[id])).ToArray();
     }
 
-    public static async Task<IReadOnlyList<string>> RunAsync(Choice choice,IReadOnlyList<string> inputs,string destination,IProgress<OperationProgress> progress,CancellationToken token,MediaOptions? media=null,ImageEdit? edit=null,PhotoEdit? photo=null)
+    public static async Task<IReadOnlyList<string>> RunAsync(Choice choice,IReadOnlyList<string> inputs,string destination,IProgress<OperationProgress> progress,CancellationToken token,ToolSettings? settings=null)
     {
+        var (media,edit,photo,frame,collage)=settings??new();
         if(choice.Id=="convert")
         {
             var format=choice.Format!;
@@ -60,6 +63,8 @@ public static class Operations
         {
             "cropImage"=>await Task.Run(()=>Images(inputs,destination,null,92,true,progress,token,image=>Crop(image,edit??throw new ArgumentException("Drag a crop inside the image."))),token),
             "editImage"=>await Task.Run(()=>Images(inputs,destination,null,92,true,progress,token,(photo??throw new ArgumentException("Choose photo adjustments.")).Apply),token),
+            "frameImage"=>await Task.Run(()=>Images(inputs,destination,"png",92,true,progress,token,image=>Replace(image,Compositions.Frame(image,frame??new()))),token),
+            "createCollage"=>await Task.Run(()=>Collage(inputs,destination,collage??new(),progress,token),token),
             "compress" when inputs.All(FeatureCatalog.IsImage)=>await Task.Run(()=>Images(inputs,destination,null,70,false,progress,token),token),
             "removeMetadata"=>await Task.Run(()=>Images(inputs,destination,null,92,false,progress,token),token),
             "createPDF"=>await Task.Run(()=>ImagesToPdf(inputs,destination,progress,token),token),
@@ -100,6 +105,20 @@ public static class Operations
         var x=(int)Math.Round(edit.X*image.Width);var y=(int)Math.Round(edit.Y*image.Height);
         var w=(uint)Math.Clamp(Math.Round(edit.Width*image.Width),1,image.Width-x);var h=(uint)Math.Clamp(Math.Round(edit.Height*image.Height),1,image.Height-y);
         image.Crop(new MagickGeometry(x,y,w,h));image.ResetPage();
+    }
+
+    private static void Replace(MagickImage image,MagickImage result){using(result){var exif=image.GetExifProfile();image.Read(result.ToByteArray(MagickFormat.Png),new MagickReadSettings{Format=MagickFormat.Png});if(exif is not null){exif.SetValue(ExifTag.Orientation,(ushort)1);image.SetProfile(exif);}}}
+
+    public static IReadOnlyList<string> Collage(IReadOnlyList<string> inputs,string destination,CollageOptions options,IProgress<OperationProgress>? progress,CancellationToken token)
+    {
+        using var tx=new ExportTransaction(destination);var images=new List<MagickImage>();
+        try
+        {
+            foreach(var input in inputs){token.ThrowIfCancellationRequested();images.Add(PhotoCodec.Read(input));progress?.Report(new(images.Count/(double)inputs.Count*.7,"Reading images…"));}
+            using var result=Compositions.Collage(images,options,token);progress?.Report(new(.9,"Saving collage…"));
+            var file=Path.Combine(tx.StagingDirectory,"Collage.png");result.Write(file,MagickFormat.Png);return tx.Publish([file],token);
+        }
+        finally{foreach(var image in images)image.Dispose();}
     }
 
     public static IReadOnlyList<string> ImagesToPdf(IReadOnlyList<string> inputs,string destination,IProgress<OperationProgress>? progress,CancellationToken token)

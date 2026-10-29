@@ -128,7 +128,17 @@ public sealed class MainWindow:Window
             catch(Exception error){status.Text=error.Message;}
             return;
         }
-        MediaOptions? media=null;ImageEdit? edit=null;PhotoEdit? photo=null;
+        MediaOptions? media=null;ImageEdit? edit=null;PhotoEdit? photo=null;FrameOptions? frame=null;CollageOptions? collage=null;
+        if(choice.Id=="frameImage")
+        {
+            FrameDialog editor;try{editor=await FrameDialog.CreateAsync(choice.Title,inputs[0]);}catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or ImageMagick.MagickException){status.Text=error.Message;return;}
+            await editor.ShowDialog(this);if(!editor.Accepted)return;frame=editor.Result;
+        }
+        else if(choice.Id=="createCollage")
+        {
+            CollageDialog editor;try{editor=await CollageDialog.CreateAsync(choice.Title,inputs);}catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or ImageMagick.MagickException){status.Text=error.Message;return;}
+            await editor.ShowDialog(this);if(!editor.Accepted)return;collage=editor.Result;
+        }
         if(choice.Id=="editImage")
         {
             PhotoDialog editor;try{editor=await PhotoDialog.CreateAsync(choice.Title,inputs[0]);}catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or ImageMagick.MagickException){status.Text=error.Message;return;}
@@ -158,7 +168,7 @@ public sealed class MainWindow:Window
         var report=new Progress<OperationProgress>(p=>{if(p.Fraction is {} f){progress.IsIndeterminate=false;progress.Value=f;}status.Text=p.Label;});
         try
         {
-            var outputs=await Operations.RunAsync(choice,inputs,destination,report,running.Token,media,edit,photo);
+            var outputs=await Operations.RunAsync(choice,inputs,destination,report,running.Token,new(media,edit,photo,frame,collage));
             library.Record(choice.Id=="convert"?"Convert to "+choice.Format!.ToUpperInvariant():choice.Title,outputs);
             lastFolder=destination;reveal.IsVisible=true;
             status.Text=outputs.Count==1?$"Saved {Path.GetFileName(outputs[0])}":$"Saved {outputs.Count} files";
