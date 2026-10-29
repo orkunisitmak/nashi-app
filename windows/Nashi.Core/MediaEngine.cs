@@ -295,6 +295,8 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
             var count=options.EqualClips??(int)Math.Ceiling(info.Duration/options.SplitInterval);
             if(count<1||count>10000)throw new ArgumentException("Choose at most 10,000 clips.");
             points=Enumerable.Range(1,count-1).Select(n=>options.EqualClips is null?options.SplitInterval*n:info.Duration*n/count).ToList();
+            // A sub-0.05 s remainder after the last interval joins the final clip instead of failing the split.
+            if(options.EqualClips is null)points.RemoveAll(p=>info.Duration-p<.05);
         }
         if(points.Any(p=>!double.IsFinite(p)||p<=0||p>=info.Duration))throw new ArgumentException("A split point lies outside the video.");
         var bounds=new[]{0d}.Concat(points.Distinct().Order()).Append(info.Duration).ToArray();
