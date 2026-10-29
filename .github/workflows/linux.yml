@@ -49,3 +49,14 @@ jobs:
           name: linux-smoke
           path: ${{ runner.temp }}/Nashi-Linux-Smoke
           if-no-files-found: ignore
+      - name: Build AppImage
+        shell: bash
+        run: bash scripts/build-linux-appimage.sh
+      - name: Upload Linux AppImage
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: Nashi-Linux-x86_64
+          path: |
+            build/linux/Nashi-Linux-x86_64.AppImage
+            build/linux/Nashi-Linux-x86_64.AppImage.sha256
+          if-no-files-found: error

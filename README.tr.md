@@ -26,6 +26,7 @@ Windows görüntüsü, [PR #1](https://github.com/orkunisitmak/nashi-app/pull/1)
 
 - **[macOS ZIP · Apple Silicon, macOS 13+](https://github.com/orkunisitmak/nashi-app/releases/latest/download/Nashi-macOS-arm64.zip):** ZIP’i aç, Nashi.app’i Uygulamalar klasörüne taşı ve aç. macOS kataloğu 27 araç, 46 girdi formatı ve 276 dönüşüm yolu içerir.
 - **[Windows x64 ZIP · yerel önizleme](https://github.com/orkunisitmak/nashi-app/releases/latest/download/Nashi-Windows-x64.zip):** ZIP’in tamamını kendine ait, yazılabilir bir klasöre çıkar ve Nashi.exe’yi aç. Ayrıca .NET kurmak gerekmez. Güncelleme için klasörün bütünlüğünü koru. [Windows özellikleri ve farkları](windows/README.md).
+- **[Linux x64 AppImage · önizleme](https://github.com/orkunisitmak/nashi-app/releases/latest/download/Nashi-Linux-x86_64.AppImage):** dosyaya `chmod +x` uygula ve aç. Ayrıca .NET kurmak gerekmez. İlk aşama Ana ekranı, görsel/PDF/ses/video dönüşümlerini, arşivleri ve altyazıları kapsar; editörler, Office belgeleri ve web indirme henüz yok. [Linux özellikleri ve build](linux/README.md).
 
 İlk açılışta **Kurulumu tamamla → Eksik araçları indir** akışı Medya ve Office araçlarını sırayla kurar. Bilgisayarında bulunan araçlar yeniden indirilmez; iptal veya hata sonrasında yalnızca eksik gruplarla devam edilir. **Araçlar hazır** durumu iki grup da kullanılabilir olduğunda gösterilir. İndirmeler doğrudan upstream’den gelir; hash’leri kurulumdan önce doğrulanır. Temel yerel görsel/PDF işlemleri hemen çalışır. [Sürümler, hash’ler ve lisanslar](docs/dependencies.md).
 
@@ -39,4 +40,4 @@ Desteklenen medya editörlerinde **Space** oynat/duraklat, **sağ/sol ok** bir s
 
 Dönüştürme ve düzenleme yerelde çalışır. Web indirmeleri seçtiğin siteye bağlanır. Analytics, bulut hesabı veya tarayıcı çerezi aktarma yok. Public güncellemeler GitHub hesabı/token istemez. macOS feed ve arşiv imzasını, Windows arşiv imzasını ve sürümünü doğrular. İşler tamamlanmadan veya iptal edilmeden güncelleme için uygulama kapanmaz. Windows eski uygulama klasörünü geri alınabilir yedek olarak tutar.
 
-Kaynak kod [MIT](LICENSE) lisanslıdır; üçüncü taraf bileşenlerin kendi lisansları geçerlidir. [macOS build adımları](README.md#build) · [Windows build adımları](windows/README.md).
+Kaynak kod [MIT](LICENSE) lisanslıdır; üçüncü taraf bileşenlerin kendi lisansları geçerlidir. [macOS build adımları](README.md#build) · [Windows build adımları](windows/README.md) · [Linux build adımları](linux/README.md).

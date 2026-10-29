@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Nashi
+Comment=Convert and edit files with a drag-and-wheel interface
+Exec=Nashi %F
+Icon=nashi
+Categories=Utility;
+Terminal=false
+StartupWMClass=Nashi
