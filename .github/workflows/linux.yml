@@ -1,0 +1,32 @@
+name: Linux preview
+on:
+  push:
+    branches: [main]
+  pull_request:
+  repository_dispatch:
+    types: [owner-pr-merged]
+permissions:
+  contents: read
+concurrency:
+  group: linux-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        with:
+          dotnet-version: '10.0.x'
+      - name: Restore engine verifier
+        shell: bash
+        run: dotnet restore windows/Nashi.Verify --locked-mode
+      - name: Run engine checks
+        shell: bash
+        env:
+          NASHI_VERIFY_DOWNLOAD_TOOLS: '1'
+          NASHI_VERIFY_TOOLS_DIRECTORY: ${{ runner.temp }}/Nashi-Test-Tools
+        run: dotnet run --project windows/Nashi.Verify -c Release
