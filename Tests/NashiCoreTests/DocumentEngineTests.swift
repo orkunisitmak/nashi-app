@@ -28,6 +28,8 @@ final class DocumentEngineTests: XCTestCase {
         XCTAssertEqual(try DocumentText.read(convert(tabbed, "txt")), "Hi yo\n")
         let voices = try file("Voices.vtt", "WEBVTT\n\n00:01.000 --> 00:02.000\n<v\tAnn>Tom</v> <V Bob>Al</V> <c.red>x</c>\n")
         XCTAssertTrue(try DocumentText.read(convert(voices, "srt")).contains("Tom Al x"))
+        let srtLike = try file("SrtLike.srt", "1\n00:00:01,000 --> 00:00:02,000\nx <c + 1 and y > 3\n<v Ann\nnext line> ok\n")
+        XCTAssertTrue(try DocumentText.read(convert(srtLike, "srt")).contains("x <c + 1 and y > 3\n<v Ann\nnext line> ok"))
         let tagged = try file("Tags.vtt", "WEBVTT\n\n00:01.000 --> 00:02.000\nTom &amp; Jerry &lt;3 <c.red>hi</c> <00:01.500>late\n")
         XCTAssertTrue(try DocumentText.read(convert(tagged, "vtt")).contains("Tom &amp; Jerry &lt;3 <c.red>hi</c> <00:01.500>late"))
     }

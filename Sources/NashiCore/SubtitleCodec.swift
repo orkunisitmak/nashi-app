@@ -73,7 +73,7 @@ enum SubtitleCodec {
         return String(format: "%02lld:%02lld:%02lld%@%03lld", hour, min, sec, vtt ? "." : ",", ms)
     }
     private static func srtText(_ text: String) -> String {
-        let withoutTags = text.replacingOccurrences(of: #"(?i)</?(?:c(?:\.[^ \t\f>]*)?|v|lang|ruby|rt)(?:[ \t\f][^>]*)?>|<\d{2,}:\d{2}(?::\d{2})?\.\d{3}>"#, with: "", options: .regularExpression)
+        let withoutTags = text.replacingOccurrences(of: #"(?i)<(?:/?(?:(?:c|ruby|rt)(?:\.[^<>\s]*)?|(?:v|lang)(?:\.[^<>\s]*)?(?:[ \t\f][^<>\n]*)?)>|\d{2,}:\d{2}(?::\d{2})?\.\d{3}>)"#, with: "", options: .regularExpression)
         // WebVTT preserves no-break spaces and Unicode direction marks.
         let webVTT = withoutTags.replacingOccurrences(of: "&nbsp;", with: "\u{00A0}")
             .replacingOccurrences(of: "&lrm;", with: "\u{200E}")

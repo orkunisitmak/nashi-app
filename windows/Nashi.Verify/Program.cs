@@ -33,6 +33,7 @@ try
     var tabbed="1\n00:00:01,000 --> 00:00:02,000\n<font\tcolor=\"red\">Hi</font> <v\tAnn>yo</v>\n";
     Check(SubtitleCodec.Convert(tabbed,"vtt").Contains("<font\tcolor=\"red\">Hi</font> <v\tAnn>yo</v>")&&SubtitleCodec.Convert(tabbed,"txt")=="Hi yo\n","Tab-separated tag attributes were not treated as markup");
     Check(SubtitleCodec.Convert("WEBVTT\n\n00:01.000 --> 00:02.000\n<v\tAnn>Tom</v> <V Bob>Al</V> <c.red>x</c>\n","srt").Contains("Tom Al x"),"SRT export kept a WebVTT-only tag separated by a tab or written in upper case");
+    Check(SubtitleCodec.Convert("1\n00:00:01,000 --> 00:00:02,000\nx <c + 1 and y > 3\n<v Ann\nnext line> ok\n","srt").Contains("x <c + 1 and y > 3\n<v Ann\nnext line> ok"),"SRT export removed text that only starts like a WebVTT tag or crossed a line break");
     Check(SubtitleCodec.Convert(srt,"srt").Contains("5 < 6 and 7 > 3")&&SubtitleCodec.Convert("WEBVTT\n\n00:01.000 --> 00:02.000\n<v Ann>Tom &amp; <b>Jerry</b></v>\n","srt").Contains("Tom & <b>Jerry</b>"),"SRT export changed plain comparison text or SRT formatting tags");
     foreach(var area in new[]{new WindowFrame(0,24,1511,910),new WindowFrame(-1920,-1030,1920,1006),new WindowFrame(1512,40,1727,1090)})
     {
