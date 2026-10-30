@@ -19,4 +19,6 @@ Bundled in the AppImage:
 - BouncyCastle.Cryptography 2.7.0, The Legion of the Bouncy Castle Inc., MIT. https://github.com/bcgit/bc-csharp/blob/master/LICENSE.md
 - Microsoft.Extensions.DependencyInjection.Abstractions / Logging.Abstractions 8.x and System.Security.Cryptography.Pkcs 10.0.13, Microsoft, MIT.
 
+LibreOffice is not bundled: Office conversions use the system LibreOffice, under its own licenses.
+
 Media tools (FFmpeg and others) are downloaded separately from pinned upstream releases after the user chooses setup, or taken from the system. Each downloaded tool's own license file (where the upstream archive has one) is kept in the tools folder, and docs/dependencies.md lists the versions and licenses.

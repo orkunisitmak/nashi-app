@@ -10,6 +10,7 @@ public static class Capabilities
     static readonly string[] ArchiveOutputs = ["zip", "tar", "gz"];
     static readonly string[] SubtitleOutputs = ["srt", "vtt", "txt"];
     static readonly string[] PdfOutputs = ["png", "jpg"];
+    static readonly string[] OfficeInputs = ["docx", "pptx", "ppt", "xlsx", "xls", "ods", "csv", "tsv", "rtf", "rtfd", "html"];
 
     public static string[] Formats(IReadOnlyList<string> files)
     {
@@ -27,7 +28,10 @@ public static class Capabilities
         if (files.All(p => FeatureCatalog.IsAudio(p) || FeatureCatalog.IsVideo(p)))
             return MediaEngine.AudioFormats.Concat(MediaEngine.VideoFormats);
         if (files.All(FeatureCatalog.IsArchive)) return ArchiveOutputs;
-        if (files.All(DocumentOperations.Handles)) return PdfOutputs;
+        if (files.All(f => FeatureCatalog.Extension(f) == "pdf")) return PdfOutputs;
+        // Office inputs are offered whether or not LibreOffice is installed: choosing one without it opens setup,
+        // which says how to install it. A hidden route would leave a DOCX with an empty wheel.
+        if (files.All(f => OfficeInputs.Contains(FeatureCatalog.Extension(f)))) return FeatureCatalog.Formats(files).Where(f => f != "pages");
         if (files.All(p => FeatureCatalog.Extension(p) is "srt" or "vtt")) return SubtitleOutputs;
         return [];
     }

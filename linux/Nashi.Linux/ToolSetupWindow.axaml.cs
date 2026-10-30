@@ -5,16 +5,21 @@ using Nashi.Core;
 namespace Nashi.Linux;
 
 /// Media tool status plus a download of whatever is missing, with progress, Cancel, error text and Retry.
+/// LibreOffice has its own row: Installed, or Missing with how to install it (there is no portable Linux build to download).
 public sealed partial class ToolSetupWindow : Window
 {
     private static class Copy
     {
         public const string Heading = "Set up tools";
         public const string HeadingReady = "Tools ready";
-        public const string Detail = "Nashi uses FFmpeg for audio and video. Downloads come straight from the upstream projects and are checked before anything is installed.";
-        public const string DetailReady = "Everything Nashi needs for audio and video is in place.";
+        public const string Detail = "Nashi uses FFmpeg for audio and video, Deno for Pages files and LibreOffice for Office documents. Downloads come straight from the upstream projects and are checked before anything is installed.";
+        public const string DetailReady = "Everything Nashi needs for audio, video and documents is in place.";
         public const string Tool = "Media tools";
-        public const string ToolDetail = "FFmpeg and FFprobe";
+        public const string ToolDetail = "FFmpeg, FFprobe and Deno (for Pages)";
+        public const string Office = "Office tools";
+        public const string OfficeDetail = "LibreOffice, for Office documents, text, EPUB and Pages";
+        public const string OfficeHint = "Install LibreOffice with your package manager, for example sudo apt install libreoffice or sudo dnf install libreoffice, then try again. Nashi does not download it.";
+        public const string Installed = "Installed";
         public const string Ready = "Ready";
         public const string Missing = "Missing";
         public const string Download = "Download missing tools";
@@ -43,6 +48,9 @@ public sealed partial class ToolSetupWindow : Window
         Title = L10n.T(Copy.Heading);
         ToolName.Text = L10n.T(Copy.Tool);
         ToolDetail.Text = L10n.T(Copy.ToolDetail);
+        OfficeName.Text = L10n.T(Copy.Office);
+        OfficeDetail.Text = L10n.T(Copy.OfficeDetail);
+        OfficeHint.Text = L10n.T(Copy.OfficeHint);
         CancelButton.Content = L10n.T(Copy.Cancel);
         CloseButton.Content = L10n.T(Copy.Close);
         Closing += (_, _) => cancellation?.Cancel();
@@ -53,14 +61,18 @@ public sealed partial class ToolSetupWindow : Window
 
     private void Refresh()
     {
-        var ready = AppPaths.MediaReady(tools);
-        HeadingText.Text = ready ? L10n.T(Copy.HeadingReady) : L10n.T(Copy.Heading);
-        DetailText.Text = ready ? L10n.T(Copy.DetailReady) : L10n.T(Copy.Detail);
-        StatusText.Text = ready ? L10n.T(Copy.Ready) : L10n.T(Copy.Missing);
-        StatusPill.Classes.Set("gold", !ready);
+        var media = AppPaths.DownloadsReady(tools);
+        var office = AppPaths.Office() is not null;
+        HeadingText.Text = media && office ? L10n.T(Copy.HeadingReady) : L10n.T(Copy.Heading);
+        DetailText.Text = media && office ? L10n.T(Copy.DetailReady) : L10n.T(Copy.Detail);
+        StatusText.Text = media ? L10n.T(Copy.Ready) : L10n.T(Copy.Missing);
+        StatusPill.Classes.Set("gold", !media);
+        OfficeStatus.Text = office ? L10n.T(Copy.Installed) : L10n.T(Copy.Missing);
+        OfficePill.Classes.Set("gold", !office);
+        OfficeHint.IsVisible = !office;
         ProgressPanel.IsVisible = Installing;
         CancelButton.IsVisible = Installing;
-        ActionButton.IsVisible = !ready && !Installing;
+        ActionButton.IsVisible = !media && !Installing;
         ActionButton.Content = error is null ? L10n.T(Copy.Download) : L10n.T(Copy.Retry);
         ErrorText.IsVisible = error is not null;
         ErrorText.Text = error;
@@ -78,7 +90,7 @@ public sealed partial class ToolSetupWindow : Window
         try
         {
             await install(new Progress<OperationProgress>(Update), cancellation.Token);
-            if (!AppPaths.MediaReady(tools)) error = L10n.T(Copy.StillMissing);
+            if (!AppPaths.DownloadsReady(tools)) error = L10n.T(Copy.StillMissing);
         }
         catch (OperationCanceledException) { error = L10n.T(Copy.Cancelled); }
         catch (Exception failure) { error = L10n.F(Copy.Failed, L10n.T(failure.Message)); }

@@ -802,7 +802,7 @@
 "EPUB layout" = "EPUB düzeni";
 "ESC TO CLOSE" = "KAPATMAK İÇİN ESC";
 "EVERYTHING HAS A NEXT FORM." = "HER DOSYANIN YENİ BİR HÂLİ VAR.";
-"EVERYTHING NASHI NEEDS FOR AUDIO AND VIDEO IS IN PLACE." = "NASHI'NİN SES VE VİDEO İÇİN İHTİYAÇ DUYDUĞU HER ŞEY HAZIR.";
+"EVERYTHING NASHI NEEDS FOR AUDIO, VIDEO AND DOCUMENTS IS IN PLACE." = "NASHI'NİN SES, VİDEO VE BELGELER İÇİN İHTİYAÇ DUYDUĞU HER ŞEY HAZIR.";
 "EXPAND FLOAT" = "FLOAT’I GENİŞLET";
 "EXPANDED UPDATE IS TOO LARGE." = "AÇILAN GÜNCELLEME ÇOK BÜYÜK.";
 "EXPORT CLIPS" = "KLİPLERİ KAYDET";
@@ -830,7 +830,7 @@
 "Enter a valid number for %lld." = "%lld için geçerli bir sayı gir.";
 "Enter page numbers within this PDF, in the desired order." = "Bu PDF'deki sayfa numaralarını istediğin sırayla gir.";
 "Esc to close" = "Kapatmak için Esc";
-"Everything Nashi needs for audio and video is in place." = "Nashi'nin ses ve video için ihtiyaç duyduğu her şey hazır.";
+"Everything Nashi needs for audio, video and documents is in place." = "Nashi'nin ses, video ve belgeler için ihtiyaç duyduğu her şey hazır.";
 "Everything has a next form." = "Her dosyanın yeni bir hâli var.";
 "Expand Float" = "Float’ı genişlet";
 "Expanded update is too large." = "Açılan güncelleme çok büyük.";
@@ -844,9 +844,9 @@
 "FASTER" = "DAHA HIZLI";
 "FEATURED" = "ÖNE ÇIKAN";
 "FEATURES & SHORTCUTS" = "ÖZELLİKLER VE KISAYOLLAR";
-"FFMPEG AND FFPROBE" = "FFMPEG VE FFPROBE";
+"FFMPEG, FFPROBE AND DENO (FOR PAGES)" = "FFMPEG, FFPROBE VE DENO (PAGES İÇİN)";
 "FFMPEG, FFPROBE, YT-DLP AND DENO ENABLE MEDIA CONVERSION, PREVIEWS AND WEB DOWNLOADS. APPROXIMATELY 180 MB. FFMPEG AND YT-DLP USE GPL LICENSES; DENO USES MIT." = "FFMPEG, FFPROBE, YT-DLP VE DENO; MEDYA DÖNÜŞTÜRME, ÖNİZLEME VE WEB İNDİRMELERİNİ SAĞLAR. YAKLAŞIK 180 MB. FFMPEG VE YT-DLP GPL, DENO MIT LİSANSLIDIR.";
-"FFmpeg and FFprobe" = "FFmpeg ve FFprobe";
+"FFmpeg, FFprobe and Deno (for Pages)" = "FFmpeg, FFprobe ve Deno (Pages için)";
 "FFmpeg, ffprobe, yt-dlp and Deno enable media conversion, previews and web downloads. Approximately 180 MB. FFmpeg and yt-dlp use GPL licenses; Deno uses MIT." = "FFmpeg, ffprobe, yt-dlp ve Deno; medya dönüştürme, önizleme ve web indirmelerini sağlar. Yaklaşık 180 MB. FFmpeg ve yt-dlp GPL, Deno MIT lisanslıdır.";
 "FIELD" = "ALAN";
 "FILE" = "DOSYA";
@@ -1047,6 +1047,8 @@
 "INSTAGRAM PHOTO POSTS OPEN A PHOTO SELECTION. REEL LINKS OFFER VIDEO AND AUDIO. PUBLIC DOWNLOADABLE MEDIA ONLY." = "INSTAGRAM FOTOĞRAF GÖNDERİLERİNDE FOTOĞRAF SEÇİMİ AÇILIR. REELS BAĞLANTILARINDA VİDEO VE SES SEÇENEKLERİ SUNULUR. YALNIZCA HERKESE AÇIK, İNDİRİLEBİLİR MEDYA DESTEKLENİR.";
 "INSTALL AN OCR LANGUAGE IN WINDOWS LANGUAGE SETTINGS TO DETECT TEXT." = "METİN ALGILAMAK İÇİN WINDOWS DİL AYARLARINDAN BİR OCR DİLİ YÜKLE.";
 "INSTALL AN OCR LANGUAGE IN WINDOWS LANGUAGE SETTINGS TO RECOGNIZE SCANNED PDF TEXT." = "TARANMIŞ PDF METNİNİ TANIMAK İÇİN WINDOWS DİL AYARLARINDAN BİR OCR DİLİ YÜKLE.";
+"INSTALL LIBREOFFICE WITH YOUR PACKAGE MANAGER, FOR EXAMPLE SUDO APT INSTALL LIBREOFFICE OR SUDO DNF INSTALL LIBREOFFICE, THEN TRY AGAIN. NASHI DOES NOT DOWNLOAD IT." = "LIBREOFFICE'İ PAKET YÖNETİCİNLE KUR, ÖRNEĞİN SUDO APT İNSTALL LİBREOFFİCE VEYA SUDO DNF İNSTALL LİBREOFFİCE; SONRA YENİDEN DENE. NASHI ONU İNDİRMEZ.";
+"INSTALLED" = "KURULU";
 "INVALID EPUB CHAPTER PATH." = "EPUB BÖLÜM YOLU GEÇERSİZ.";
 "INVALID EPUB IMAGE PATH." = "EPUB GÖRSEL YOLU GEÇERSİZ.";
 "INVALID METADATA FIELD." = "META VERİ ALANI GEÇERSİZ.";
@@ -1073,8 +1075,10 @@
 "Input-only format." = "Yalnızca girdi biçimi.";
 "Instagram photo posts open a photo selection. For videos, use the share link; for other photos, drag the image or use Copy Image Address. Public media only; login-required and protected items may be unavailable." = "Instagram fotoğraf gönderilerinde fotoğraf seçimi açılır. Videolar için paylaşım bağlantısını kullan; diğer fotoğrafları sürükle veya görsel adresini kopyala. Yalnızca herkese açık medya desteklenir; giriş gerektiren veya korumalı içerikler kullanılamayabilir.";
 "Instagram photo posts open a photo selection. Reel links offer video and audio. Public downloadable media only." = "Instagram fotoğraf gönderilerinde fotoğraf seçimi açılır. Reels bağlantılarında video ve ses seçenekleri sunulur. Yalnızca herkese açık, indirilebilir medya desteklenir.";
+"Install LibreOffice with your package manager, for example sudo apt install libreoffice or sudo dnf install libreoffice, then try again. Nashi does not download it." = "LibreOffice'i paket yöneticinle kur, örneğin sudo apt install libreoffice veya sudo dnf install libreoffice; sonra yeniden dene. Nashi onu indirmez.";
 "Install an OCR language in Windows Language settings to detect text." = "Metin algılamak için Windows dil ayarlarından bir OCR dili yükle.";
 "Install an OCR language in Windows Language settings to recognize scanned PDF text." = "Taranmış PDF metnini tanımak için Windows dil ayarlarından bir OCR dili yükle.";
+"Installed" = "Kurulu";
 "Invalid EPUB chapter path." = "EPUB bölüm yolu geçersiz.";
 "Invalid EPUB image path." = "EPUB görsel yolu geçersiz.";
 "Invalid YouTube video ID." = "YouTube video kimliği geçersiz.";
@@ -1130,6 +1134,8 @@
 "LIBRARY IS TOO LARGE." = "KİTAPLIK ÇOK BÜYÜK.";
 "LIBREOFFICE 26.8.1 ENABLES OFFICE DOCUMENT CONVERSIONS. A 285 MB DOWNLOAD; ABOUT 1 GB INSTALLED. MPL 2.0 AND ITS INCLUDED THIRD-PARTY LICENSES." = "LIBREOFFICE 26.8.1, OFFICE BELGELERİNİ DÖNÜŞTÜRMEYİ SAĞLAR. İNDİRME 285 MB; KURULUM YAKLAŞIK 1 GB. MPL 2.0 VE İÇERDİĞİ ÜÇÜNCÜ TARAF LİSANSLARI GEÇERLİDİR.";
 "LIBREOFFICE 26.8.1 ENABLES OFFICE DOCUMENT CONVERSIONS. APPROXIMATELY 360 MB TO DOWNLOAD. MPL 2.0 AND ITS INCLUDED THIRD-PARTY LICENSES." = "LIBREOFFICE 26.8.1, OFFICE BELGELERİNİ DÖNÜŞTÜRMEYİ SAĞLAR. İNDİRME YAKLAŞIK 360 MB. MPL 2.0 VE İÇERDİĞİ ÜÇÜNCÜ TARAF LİSANSLARI GEÇERLİDİR.";
+"LIBREOFFICE IS NEEDED FOR THIS. INSTALL IT, THEN TRY AGAIN." = "BUNUN İÇİN LIBREOFFICE GEREKİYOR. KURDUKTAN SONRA YENİDEN DENE.";
+"LIBREOFFICE, FOR OFFICE DOCUMENTS, TEXT, EPUB AND PAGES" = "LIBREOFFICE; OFFICE BELGELERİ, METİN, EPUB VE PAGES İÇİN";
 "LIGHT" = "AÇIK";
 "LIGHTING" = "IŞIK";
 "LINE" = "ÇİZGİ";
@@ -1159,6 +1165,8 @@
 "Library is too large." = "Kitaplık çok büyük.";
 "LibreOffice 26.8.1 enables Office document conversions. A 285 MB download; about 1 GB installed. MPL 2.0 and its included third-party licenses." = "LibreOffice 26.8.1, Office belgelerini dönüştürmeyi sağlar. İndirme 285 MB; kurulum yaklaşık 1 GB. MPL 2.0 ve içerdiği üçüncü taraf lisansları geçerlidir.";
 "LibreOffice 26.8.1 enables Office document conversions. Approximately 360 MB to download. MPL 2.0 and its included third-party licenses." = "LibreOffice 26.8.1, Office belgelerini dönüştürmeyi sağlar. İndirme yaklaşık 360 MB. MPL 2.0 ve içerdiği üçüncü taraf lisansları geçerlidir.";
+"LibreOffice is needed for this. Install it, then try again." = "Bunun için LibreOffice gerekiyor. Kurduktan sonra yeniden dene.";
+"LibreOffice, for Office documents, text, EPUB and Pages" = "LibreOffice; Office belgeleri, metin, EPUB ve Pages için";
 "Light" = "Açık";
 "Lighting" = "Işık";
 "Line" = "Çizgi";
@@ -1276,7 +1284,7 @@
 "NASHI SETTINGS" = "NASHI AYARLARI";
 "NASHI UPDATE" = "NASHI GÜNCELLEMESİ";
 "NASHI UPDATE COULD NOT FINISH" = "NASHI GÜNCELLEMESİ TAMAMLANAMADI";
-"NASHI USES FFMPEG FOR AUDIO AND VIDEO. DOWNLOADS COME STRAIGHT FROM THE UPSTREAM PROJECTS AND ARE CHECKED BEFORE ANYTHING IS INSTALLED." = "NASHI, SES VE VİDEO İÇİN FFMPEG KULLANIR. İNDİRMELER DOĞRUDAN ÖZGÜN PROJELERDEN GELİR VE KURULMADAN ÖNCE DOĞRULANIR.";
+"NASHI USES FFMPEG FOR AUDIO AND VIDEO, DENO FOR PAGES FILES AND LIBREOFFICE FOR OFFICE DOCUMENTS. DOWNLOADS COME STRAIGHT FROM THE UPSTREAM PROJECTS AND ARE CHECKED BEFORE ANYTHING IS INSTALLED." = "NASHI SES VE VİDEO İÇİN FFMPEG'İ, PAGES DOSYALARI İÇİN DENO'YU, OFFICE BELGELERİ İÇİN LIBREOFFICE'İ KULLANIR. İNDİRMELER DOĞRUDAN KAYNAK PROJELERDEN GELİR VE KURULMADAN ÖNCE DOĞRULANIR.";
 "NASHI · FEATURES & SHORTCUTS" = "NASHI · ÖZELLİKLER VE KISAYOLLAR";
 "NASHI — COMPLETE" = "NASHI — TAMAMLANDI";
 "NASHI — PROGRESS" = "NASHI — İLERLEME";
@@ -1323,7 +1331,7 @@
 "Nashi saves results beside the originals. Allow a folder once to include every folder inside it." = "Nashi sonuçları orijinallerin yanına kaydeder. Bir klasöre verilen izin, içindeki klasörleri de kapsar.";
 "Nashi update" = "Nashi güncellemesi";
 "Nashi update could not finish" = "Nashi güncellemesi tamamlanamadı";
-"Nashi uses FFmpeg for audio and video. Downloads come straight from the upstream projects and are checked before anything is installed." = "Nashi, ses ve video için FFmpeg kullanır. İndirmeler doğrudan özgün projelerden gelir ve kurulmadan önce doğrulanır.";
+"Nashi uses FFmpeg for audio and video, Deno for Pages files and LibreOffice for Office documents. Downloads come straight from the upstream projects and are checked before anything is installed." = "Nashi ses ve video için FFmpeg'i, Pages dosyaları için Deno'yu, Office belgeleri için LibreOffice'i kullanır. İndirmeler doğrudan kaynak projelerden gelir ve kurulmadan önce doğrulanır.";
 "Nashi · Features & shortcuts" = "Nashi · Özellikler ve kısayollar";
 "Nashi — Complete" = "Nashi — Tamamlandı";
 "Nashi — Progress" = "Nashi — İlerleme";
@@ -1448,6 +1456,7 @@
 "PAGE NUMBERS" = "SAYFA NUMARALARI";
 "PAGE RANGES" = "SAYFA ARALIKLARI";
 "PAGE RANGES, FOR EXAMPLE 1-3, 5" = "SAYFA ARALIKLARI, ÖRNEĞİN 1-3, 5";
+"PAGES DOCUMENTS NEED DENO. DOWNLOAD THE MISSING TOOLS IN SETUP." = "PAGES BELGELERİ İÇİN DENO GEREKİYOR. EKSİK ARAÇLARI KURULUMDAN İNDİR.";
 "PAGES INPUT EXCEEDS 200 MB." = "PAGES DOSYASI 200 MB'I AŞIYOR.";
 "PAGES PER FILE" = "DOSYA BAŞINA SAYFA";
 "PASTE" = "YAPIŞTIR";
@@ -1522,6 +1531,7 @@
 "Page numbers" = "Sayfa numaraları";
 "Page ranges" = "Sayfa aralıkları";
 "Page ranges, for example 1-3, 5" = "Sayfa aralıkları, örneğin 1-3, 5";
+"Pages documents need Deno. Download the missing tools in setup." = "Pages belgeleri için Deno gerekiyor. Eksik araçları kurulumdan indir.";
 "Pages input exceeds 200 MB." = "Pages dosyası 200 MB'ı aşıyor.";
 "Pages per file" = "Dosya başına sayfa";
 "Paste" = "Yapıştır";

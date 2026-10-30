@@ -802,7 +802,7 @@
 "EPUB layout" = "EPUB layout";
 "ESC TO CLOSE" = "ESC TO CLOSE";
 "EVERYTHING HAS A NEXT FORM." = "EVERYTHING HAS A NEXT FORM.";
-"EVERYTHING NASHI NEEDS FOR AUDIO AND VIDEO IS IN PLACE." = "EVERYTHING NASHI NEEDS FOR AUDIO AND VIDEO IS IN PLACE.";
+"EVERYTHING NASHI NEEDS FOR AUDIO, VIDEO AND DOCUMENTS IS IN PLACE." = "EVERYTHING NASHI NEEDS FOR AUDIO, VIDEO AND DOCUMENTS IS IN PLACE.";
 "EXPAND FLOAT" = "EXPAND FLOAT";
 "EXPANDED UPDATE IS TOO LARGE." = "EXPANDED UPDATE IS TOO LARGE.";
 "EXPORT CLIPS" = "EXPORT CLIPS";
@@ -830,7 +830,7 @@
 "Enter a valid number for %lld." = "Enter a valid number for %lld.";
 "Enter page numbers within this PDF, in the desired order." = "Enter page numbers within this PDF, in the desired order.";
 "Esc to close" = "Esc to close";
-"Everything Nashi needs for audio and video is in place." = "Everything Nashi needs for audio and video is in place.";
+"Everything Nashi needs for audio, video and documents is in place." = "Everything Nashi needs for audio, video and documents is in place.";
 "Everything has a next form." = "Everything has a next form.";
 "Expand Float" = "Expand Float";
 "Expanded update is too large." = "Expanded update is too large.";
@@ -844,9 +844,9 @@
 "FASTER" = "FASTER";
 "FEATURED" = "FEATURED";
 "FEATURES & SHORTCUTS" = "FEATURES & SHORTCUTS";
-"FFMPEG AND FFPROBE" = "FFMPEG AND FFPROBE";
+"FFMPEG, FFPROBE AND DENO (FOR PAGES)" = "FFMPEG, FFPROBE AND DENO (FOR PAGES)";
 "FFMPEG, FFPROBE, YT-DLP AND DENO ENABLE MEDIA CONVERSION, PREVIEWS AND WEB DOWNLOADS. APPROXIMATELY 180 MB. FFMPEG AND YT-DLP USE GPL LICENSES; DENO USES MIT." = "FFMPEG, FFPROBE, YT-DLP AND DENO ENABLE MEDIA CONVERSION, PREVIEWS AND WEB DOWNLOADS. APPROXIMATELY 180 MB. FFMPEG AND YT-DLP USE GPL LICENSES; DENO USES MIT.";
-"FFmpeg and FFprobe" = "FFmpeg and FFprobe";
+"FFmpeg, FFprobe and Deno (for Pages)" = "FFmpeg, FFprobe and Deno (for Pages)";
 "FFmpeg, ffprobe, yt-dlp and Deno enable media conversion, previews and web downloads. Approximately 180 MB. FFmpeg and yt-dlp use GPL licenses; Deno uses MIT." = "FFmpeg, ffprobe, yt-dlp and Deno enable media conversion, previews and web downloads. Approximately 180 MB. FFmpeg and yt-dlp use GPL licenses; Deno uses MIT.";
 "FIELD" = "FIELD";
 "FILE" = "FILE";
@@ -1047,6 +1047,8 @@
 "INSTAGRAM PHOTO POSTS OPEN A PHOTO SELECTION. REEL LINKS OFFER VIDEO AND AUDIO. PUBLIC DOWNLOADABLE MEDIA ONLY." = "INSTAGRAM PHOTO POSTS OPEN A PHOTO SELECTION. REEL LINKS OFFER VIDEO AND AUDIO. PUBLIC DOWNLOADABLE MEDIA ONLY.";
 "INSTALL AN OCR LANGUAGE IN WINDOWS LANGUAGE SETTINGS TO DETECT TEXT." = "INSTALL AN OCR LANGUAGE IN WINDOWS LANGUAGE SETTINGS TO DETECT TEXT.";
 "INSTALL AN OCR LANGUAGE IN WINDOWS LANGUAGE SETTINGS TO RECOGNIZE SCANNED PDF TEXT." = "INSTALL AN OCR LANGUAGE IN WINDOWS LANGUAGE SETTINGS TO RECOGNIZE SCANNED PDF TEXT.";
+"INSTALL LIBREOFFICE WITH YOUR PACKAGE MANAGER, FOR EXAMPLE SUDO APT INSTALL LIBREOFFICE OR SUDO DNF INSTALL LIBREOFFICE, THEN TRY AGAIN. NASHI DOES NOT DOWNLOAD IT." = "INSTALL LIBREOFFICE WITH YOUR PACKAGE MANAGER, FOR EXAMPLE SUDO APT INSTALL LIBREOFFICE OR SUDO DNF INSTALL LIBREOFFICE, THEN TRY AGAIN. NASHI DOES NOT DOWNLOAD IT.";
+"INSTALLED" = "INSTALLED";
 "INVALID EPUB CHAPTER PATH." = "INVALID EPUB CHAPTER PATH.";
 "INVALID EPUB IMAGE PATH." = "INVALID EPUB IMAGE PATH.";
 "INVALID METADATA FIELD." = "INVALID METADATA FIELD.";
@@ -1073,8 +1075,10 @@
 "Input-only format." = "Input-only format.";
 "Instagram photo posts open a photo selection. For videos, use the share link; for other photos, drag the image or use Copy Image Address. Public media only; login-required and protected items may be unavailable." = "Instagram photo posts open a photo selection. For videos, use the share link; for other photos, drag the image or use Copy Image Address. Public media only; login-required and protected items may be unavailable.";
 "Instagram photo posts open a photo selection. Reel links offer video and audio. Public downloadable media only." = "Instagram photo posts open a photo selection. Reel links offer video and audio. Public downloadable media only.";
+"Install LibreOffice with your package manager, for example sudo apt install libreoffice or sudo dnf install libreoffice, then try again. Nashi does not download it." = "Install LibreOffice with your package manager, for example sudo apt install libreoffice or sudo dnf install libreoffice, then try again. Nashi does not download it.";
 "Install an OCR language in Windows Language settings to detect text." = "Install an OCR language in Windows Language settings to detect text.";
 "Install an OCR language in Windows Language settings to recognize scanned PDF text." = "Install an OCR language in Windows Language settings to recognize scanned PDF text.";
+"Installed" = "Installed";
 "Invalid EPUB chapter path." = "Invalid EPUB chapter path.";
 "Invalid EPUB image path." = "Invalid EPUB image path.";
 "Invalid YouTube video ID." = "Invalid YouTube video ID.";
@@ -1130,6 +1134,8 @@
 "LIBRARY IS TOO LARGE." = "LIBRARY IS TOO LARGE.";
 "LIBREOFFICE 26.8.1 ENABLES OFFICE DOCUMENT CONVERSIONS. A 285 MB DOWNLOAD; ABOUT 1 GB INSTALLED. MPL 2.0 AND ITS INCLUDED THIRD-PARTY LICENSES." = "LIBREOFFICE 26.8.1 ENABLES OFFICE DOCUMENT CONVERSIONS. A 285 MB DOWNLOAD; ABOUT 1 GB INSTALLED. MPL 2.0 AND ITS INCLUDED THIRD-PARTY LICENSES.";
 "LIBREOFFICE 26.8.1 ENABLES OFFICE DOCUMENT CONVERSIONS. APPROXIMATELY 360 MB TO DOWNLOAD. MPL 2.0 AND ITS INCLUDED THIRD-PARTY LICENSES." = "LIBREOFFICE 26.8.1 ENABLES OFFICE DOCUMENT CONVERSIONS. APPROXIMATELY 360 MB TO DOWNLOAD. MPL 2.0 AND ITS INCLUDED THIRD-PARTY LICENSES.";
+"LIBREOFFICE IS NEEDED FOR THIS. INSTALL IT, THEN TRY AGAIN." = "LIBREOFFICE IS NEEDED FOR THIS. INSTALL IT, THEN TRY AGAIN.";
+"LIBREOFFICE, FOR OFFICE DOCUMENTS, TEXT, EPUB AND PAGES" = "LIBREOFFICE, FOR OFFICE DOCUMENTS, TEXT, EPUB AND PAGES";
 "LIGHT" = "LIGHT";
 "LIGHTING" = "LIGHTING";
 "LINE" = "LINE";
@@ -1159,6 +1165,8 @@
 "Library is too large." = "Library is too large.";
 "LibreOffice 26.8.1 enables Office document conversions. A 285 MB download; about 1 GB installed. MPL 2.0 and its included third-party licenses." = "LibreOffice 26.8.1 enables Office document conversions. A 285 MB download; about 1 GB installed. MPL 2.0 and its included third-party licenses.";
 "LibreOffice 26.8.1 enables Office document conversions. Approximately 360 MB to download. MPL 2.0 and its included third-party licenses." = "LibreOffice 26.8.1 enables Office document conversions. Approximately 360 MB to download. MPL 2.0 and its included third-party licenses.";
+"LibreOffice is needed for this. Install it, then try again." = "LibreOffice is needed for this. Install it, then try again.";
+"LibreOffice, for Office documents, text, EPUB and Pages" = "LibreOffice, for Office documents, text, EPUB and Pages";
 "Light" = "Light";
 "Lighting" = "Lighting";
 "Line" = "Line";
@@ -1276,7 +1284,7 @@
 "NASHI SETTINGS" = "NASHI SETTINGS";
 "NASHI UPDATE" = "NASHI UPDATE";
 "NASHI UPDATE COULD NOT FINISH" = "NASHI UPDATE COULD NOT FINISH";
-"NASHI USES FFMPEG FOR AUDIO AND VIDEO. DOWNLOADS COME STRAIGHT FROM THE UPSTREAM PROJECTS AND ARE CHECKED BEFORE ANYTHING IS INSTALLED." = "NASHI USES FFMPEG FOR AUDIO AND VIDEO. DOWNLOADS COME STRAIGHT FROM THE UPSTREAM PROJECTS AND ARE CHECKED BEFORE ANYTHING IS INSTALLED.";
+"NASHI USES FFMPEG FOR AUDIO AND VIDEO, DENO FOR PAGES FILES AND LIBREOFFICE FOR OFFICE DOCUMENTS. DOWNLOADS COME STRAIGHT FROM THE UPSTREAM PROJECTS AND ARE CHECKED BEFORE ANYTHING IS INSTALLED." = "NASHI USES FFMPEG FOR AUDIO AND VIDEO, DENO FOR PAGES FILES AND LIBREOFFICE FOR OFFICE DOCUMENTS. DOWNLOADS COME STRAIGHT FROM THE UPSTREAM PROJECTS AND ARE CHECKED BEFORE ANYTHING IS INSTALLED.";
 "NASHI · FEATURES & SHORTCUTS" = "NASHI · FEATURES & SHORTCUTS";
 "NASHI — COMPLETE" = "NASHI — COMPLETE";
 "NASHI — PROGRESS" = "NASHI — PROGRESS";
@@ -1323,7 +1331,7 @@
 "Nashi saves results beside the originals. Allow a folder once to include every folder inside it." = "Nashi saves results beside the originals. Allow a folder once to include every folder inside it.";
 "Nashi update" = "Nashi update";
 "Nashi update could not finish" = "Nashi update could not finish";
-"Nashi uses FFmpeg for audio and video. Downloads come straight from the upstream projects and are checked before anything is installed." = "Nashi uses FFmpeg for audio and video. Downloads come straight from the upstream projects and are checked before anything is installed.";
+"Nashi uses FFmpeg for audio and video, Deno for Pages files and LibreOffice for Office documents. Downloads come straight from the upstream projects and are checked before anything is installed." = "Nashi uses FFmpeg for audio and video, Deno for Pages files and LibreOffice for Office documents. Downloads come straight from the upstream projects and are checked before anything is installed.";
 "Nashi · Features & shortcuts" = "Nashi · Features & shortcuts";
 "Nashi — Complete" = "Nashi — Complete";
 "Nashi — Progress" = "Nashi — Progress";
@@ -1448,6 +1456,7 @@
 "PAGE NUMBERS" = "PAGE NUMBERS";
 "PAGE RANGES" = "PAGE RANGES";
 "PAGE RANGES, FOR EXAMPLE 1-3, 5" = "PAGE RANGES, FOR EXAMPLE 1-3, 5";
+"PAGES DOCUMENTS NEED DENO. DOWNLOAD THE MISSING TOOLS IN SETUP." = "PAGES DOCUMENTS NEED DENO. DOWNLOAD THE MISSING TOOLS IN SETUP.";
 "PAGES INPUT EXCEEDS 200 MB." = "PAGES INPUT EXCEEDS 200 MB.";
 "PAGES PER FILE" = "PAGES PER FILE";
 "PASTE" = "PASTE";
@@ -1522,6 +1531,7 @@
 "Page numbers" = "Page numbers";
 "Page ranges" = "Page ranges";
 "Page ranges, for example 1-3, 5" = "Page ranges, for example 1-3, 5";
+"Pages documents need Deno. Download the missing tools in setup." = "Pages documents need Deno. Download the missing tools in setup.";
 "Pages input exceeds 200 MB." = "Pages input exceeds 200 MB.";
 "Pages per file" = "Pages per file";
 "Paste" = "Paste";

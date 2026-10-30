@@ -129,7 +129,7 @@ void CapabilityChecks()
     Check(Capabilities.Tools(pdf2).Contains("mergePDF"), "Tools for two PDFs include mergePDF");
     Check(Capabilities.Tools([]).Length == 0, "Tools for an empty selection is empty");
     Check(Capabilities.Formats(pdf2).SequenceEqual(["jpg", "png"]) && Capabilities.Formats(["x.pdf"]).SequenceEqual(["jpg", "png"]), "Formats for PDFs are jpg and png");
-    Check(Capabilities.Formats(docx).Length == 0, "Formats for a DOCX are empty");
+    Check(Capabilities.Formats(docx).SequenceEqual(FeatureCatalog.Formats(docx).Where(f => f != "pages")), "Formats for a DOCX are the catalog's except Pages");
 }
 
 void ImageChecks(string root)
@@ -272,18 +272,36 @@ async Task ToolSetupChecks(string root)
     foreach (var name in new[] { "ffmpeg", "ffprobe" }) File.WriteAllText(Path.Combine(presentDir, name), "x");
     var present = new Toolchain(presentDir, "");
     Check(!AppPaths.MediaReady(missing) && AppPaths.MediaReady(present), "Media readiness is ffmpeg plus ffprobe");
+    Check(!AppPaths.DownloadsReady(present), "The setup download also covers Deno, for Pages");
+    File.WriteAllText(Path.Combine(presentDir, "deno"), "x");
+    Check(AppPaths.DownloadsReady(present) && AppPaths.Deno(present) == Path.Combine(presentDir, "deno"), "Deno in the tools folder makes the downloads ready");
+    // LibreOffice comes from PATH only: a fake executable soffice stands in for it.
+    var savedOffice = AppPaths.OfficeSearchPath;
+    var officeDir = Directory.CreateDirectory(Path.Combine(root, "office-bin")).FullName;
+    var soffice = Path.Combine(officeDir, "soffice");
+    File.WriteAllText(soffice, "#!/bin/sh\n");
+    AppPaths.OfficeSearchPath = officeDir;
+    Check(AppPaths.Office() is null, "A soffice that is not executable is not LibreOffice");
+    File.SetUnixFileMode(soffice, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+    Check(AppPaths.Office() == soffice, "LibreOffice is the executable soffice on PATH");
+    var snap = Directory.CreateDirectory(Path.Combine(root, "snap-bin")).FullName;
+    File.CreateSymbolicLink(Path.Combine(snap, "libreoffice"), "/snap/bin/libreoffice");
+    AppPaths.OfficeSearchPath = snap;
+    Check(AppPaths.Office() is null, "A Snap LibreOffice is skipped (its sandbox has a private /tmp)");
 
     var smoke = Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");
     List<string> Texts(Window w) => w.GetVisualDescendants().OfType<TextBlock>().Where(t => t.IsEffectivelyVisible).Select(t => t.Text ?? "").ToList();
     foreach (var (toolchain, label) in new[] { (missing, "missing"), (present, "ready") })
     {
+        AppPaths.OfficeSearchPath = label == "ready" ? officeDir : "";
         var window = new ToolSetupWindow(toolchain);
         window.Show();
         Dispatcher.UIThread.RunJobs();
         var texts = Texts(window);
         var action = window.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => b.IsEffectivelyVisible && b.Content as string == "Download missing tools");
-        if (label == "missing") Check(texts.Contains("Missing") && texts.Contains("Set up tools") && action is not null, "Setup window offers a download when media tools are missing");
-        else Check(texts.Contains("Ready") && texts.Contains("Tools ready") && action is null, "Setup window shows Ready and no download when tools are present");
+        var hint = texts.Any(t => t.Contains("sudo apt install libreoffice"));
+        if (label == "missing") Check(texts.Count(t => t == "Missing") == 2 && texts.Contains("Office tools") && hint && texts.Contains("Set up tools") && action is not null, "Setup window offers a download for media tools and says how to install LibreOffice");
+        else Check(texts.Contains("Ready") && texts.Contains("Installed") && !hint && texts.Contains("Tools ready") && action is null, "Setup window shows Ready, LibreOffice Installed and no download when tools are present");
         var frame = window.CaptureRenderedFrame();
         Check(frame is not null, "Setup window renders (" + label + ")");
         if (!string.IsNullOrEmpty(smoke) && frame is not null)
@@ -322,10 +340,11 @@ async Task ToolSetupChecks(string root)
     Check(Visible("Retry") && Texts(fake).Any(t => t.Contains("disk full")), "A failed install shows the error and Retry");
     fake.Close();
 
+    AppPaths.OfficeSearchPath = officeDir;
     var home = new MainWindow(present) { Width = 820, Height = 780 };
     home.Show();
     Dispatcher.UIThread.RunJobs();
-    Check(home.GetVisualDescendants().OfType<Button>().Any(b => b.Content as string == "Tools ready"), "Header says Tools ready when media tools are present");
+    Check(home.GetVisualDescendants().OfType<Button>().Any(b => b.Content as string == "Tools ready"), "Header says Tools ready when media tools, Deno and LibreOffice are present");
     home.Close();
     var needs = new MainWindow(missing) { Width = 820, Height = 780 };
     needs.Show();
@@ -336,6 +355,7 @@ async Task ToolSetupChecks(string root)
     Check(needs.OwnedWindows.OfType<ToolSetupWindow>().Count() == 1, "Header Set up tools opens the setup window");
     foreach (var w in needs.OwnedWindows.ToArray()) w.Close();
     needs.Close();
+    AppPaths.OfficeSearchPath = savedOffice;
 }
 
 void WheelChecks(string root)
@@ -410,12 +430,13 @@ void WheelChecks(string root)
     Check(picks == 2 && home.Selection.Files.SequenceEqual([png]) && pickedWheel is not null, "Ctrl+Space with nothing selected picks files, then shows the wheel");
     pickedWheel?.Close();
     home.Selection.Clear();
-    var doc = Path.Combine(root, "notes.docx");
+    var doc = Path.Combine(root, "notes.xyz");
     File.WriteAllText(doc, "x");
     home.Selection.Add([doc]);
     Chip("Convert").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
     Dispatcher.UIThread.RunJobs();
-    Check(SuccessToast.Current?.FindControl<TextBlock>("TitleText")?.Text == "No conversions for DOCX files yet." && home.OwnedWindows.Count == 0, "An empty format wheel shows a toast card naming the file type");
+    Check(SuccessToast.Current?.FindControl<TextBlock>("TitleText")?.Text == "No conversions for XYZ files yet." && home.OwnedWindows.Count == 0, "An empty format wheel shows a toast card naming the file type");
+    SuccessToast.Current?.Close();
     var pdfOnly = Path.Combine(root, "only.pdf");
     File.WriteAllText(pdfOnly, "x");
     home.Selection.Clear();
@@ -425,7 +446,7 @@ void WheelChecks(string root)
     var pdfWheel = home.OwnedWindows.OfType<WheelWindow>().SingleOrDefault();
     Check(pdfWheel is not null && pdfWheel.Wheel.Items.Select(i => i.Id).SequenceEqual(["convert:jpg", "convert:png"]), "A single PDF's format wheel offers JPG and PNG");
     pdfWheel?.Close();
-    home.Selection.Add([doc]);
+    home.Selection.Add([png]);
     Chip("Convert").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
     Dispatcher.UIThread.RunJobs();
     Check(SuccessToast.Current?.FindControl<TextBlock>("TitleText")?.Text == "No conversions for this selection yet.", "Mixed types say No conversions for this selection yet.");
@@ -903,9 +924,9 @@ async Task BackgroundChecks(string root)
     for (var i = 0; i < 200 && Title()?.StartsWith("Nicely") != true; i++) { await Task.Delay(20); Dispatcher.UIThread.RunJobs(); }
     Check(Title() == "Nicely done. 1 file is ready." && File.Exists(Path.Combine(root, "background.jpg")), "Choosing JPG writes next to the file and shows the success card");
     SuccessToast.Current?.Close();
-    app.ShowWheel([Path.Combine(root, "notes.docx")]);
+    app.ShowWheel([Path.Combine(root, "notes.xyz")]);
     Dispatcher.UIThread.RunJobs();
-    Check(Title() == "No tools for DOCX files yet.", "An empty background wheel says there are no tools for DOCX files yet");
+    Check(Title() == "No tools for XYZ files yet.", "An empty background wheel says there are no tools for XYZ files yet");
     SuccessToast.Current?.Close();
 
     // A pointer wheel nobody touches closes after its idle timeout (30 s by default).

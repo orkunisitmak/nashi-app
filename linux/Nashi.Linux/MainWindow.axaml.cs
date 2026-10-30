@@ -191,7 +191,7 @@ public sealed partial class MainWindow : Window
         RefreshToolsButton();
     }
 
-    private void RefreshToolsButton() => SetUpToolsButton.Content = AppPaths.MediaReady(tools) ? L10n.T(Copy.ToolsReady) : L10n.T(Copy.SetUpTools);
+    private void RefreshToolsButton() => SetUpToolsButton.Content = AppPaths.AllReady(tools) ? L10n.T(Copy.ToolsReady) : L10n.T(Copy.SetUpTools);
     private async void OnConvert(object? sender, RoutedEventArgs e) => await ShowWheelAsync(flow.ShowFormats);
     private async void OnTools(object? sender, RoutedEventArgs e) => await ShowWheelAsync(flow.ShowTools);
     private async void OnActions(object? sender, RoutedEventArgs e) => await ShowWheelAsync(flow.ShowActions);

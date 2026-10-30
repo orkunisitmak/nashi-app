@@ -21,6 +21,21 @@
         </Border>
       </Grid>
     </Border>
+    <!-- LibreOffice is installed by the user's package manager: this row says how, it never downloads. -->
+    <Border Classes="card" Padding="18,14">
+      <StackPanel Spacing="8">
+        <Grid ColumnDefinitions="*,Auto">
+          <StackPanel Spacing="3" VerticalAlignment="Center">
+            <TextBlock x:Name="OfficeName" FontSize="14" FontWeight="SemiBold" />
+            <TextBlock x:Name="OfficeDetail" Classes="secondary" FontSize="11" TextWrapping="Wrap" />
+          </StackPanel>
+          <Border x:Name="OfficePill" Grid.Column="1" Classes="pill gold" VerticalAlignment="Center">
+            <TextBlock x:Name="OfficeStatus" />
+          </Border>
+        </Grid>
+        <TextBlock x:Name="OfficeHint" Classes="secondary" FontSize="11" TextWrapping="Wrap" IsVisible="False" />
+      </StackPanel>
+    </Border>
     <StackPanel x:Name="ProgressPanel" Spacing="6" IsVisible="False">
       <TextBlock x:Name="ProgressText" Classes="secondary" FontSize="11" TextTrimming="CharacterEllipsis" />
       <ProgressBar x:Name="Bar" Height="5" MinHeight="5" Minimum="0" Maximum="1" IsIndeterminate="True" CornerRadius="3"

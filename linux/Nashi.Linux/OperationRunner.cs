@@ -3,8 +3,13 @@ using Nashi.Core;
 
 namespace Nashi.Linux;
 
-/// Media work needs ffmpeg and ffprobe, and they were not found.
-public sealed class MissingToolsException() : Exception("Media tools are needed for this. Install ffmpeg, or set up media tools first.");
+/// A tool the choice needs was not found: ffmpeg and ffprobe for media, LibreOffice for Office work, Deno for Pages.
+public sealed class MissingToolsException(string message = MissingToolsException.Media) : Exception(message)
+{
+    public const string Media = "Media tools are needed for this. Install ffmpeg, or set up media tools first.";
+    public const string Office = "LibreOffice is needed for this. Install it, then try again.";
+    public const string Pages = "Pages documents need Deno. Download the missing tools in setup.";
+}
 
 /// Turns a wheel choice plus selected files into output files, using the shared engine.
 public sealed class OperationRunner(Toolchain tools)
@@ -20,7 +25,7 @@ public sealed class OperationRunner(Toolchain tools)
         {
             if (files.All(FeatureCatalog.IsImage)) return await Task.Run(() => ImageOperations.Convert(files, convert, destination, progress, token), token);
             if (files.All(f => FeatureCatalog.IsAudio(f) || FeatureCatalog.IsVideo(f))) return await Media(progress, (e, p) => e.ConvertAsync(files, convert, destination, new MediaOptions(), p, token));
-            if (files.All(DocumentOperations.Handles)) return await Task.Run(() => DocumentOperations.ConvertAsync(files, convert, destination, progress, token), token);
+            if (files.All(DocumentOperations.Handles)) return await Task.Run(() => new DocumentOperations(AppPaths.Office(), AppPaths.Deno(tools)).ConvertAsync(files, convert, destination, progress, token), token);
             if (files.All(FeatureCatalog.IsArchive)) return await Task.Run(() => Each(files, destination, token, (f, d) => ArchiveEngine.Convert(f, convert, d, null, progress, token)), token);
             return await Task.Run(() => Subtitles(files, convert, destination, token), token);
         }

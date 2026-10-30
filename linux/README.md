@@ -12,8 +12,20 @@ The [AppImage link](https://github.com/orkunisitmak/nashi-app/releases/latest/do
 - The wheel looks and sounds like the macOS one: icons above upper-case labels, a gold highlight, a short opening animation (skipped when GNOME animations are off) and the selection sound through `paplay`, `pw-play` or `aplay` when one is installed.
 - Images: format conversion. HEIC output is not available on Linux because no encoder is available.
 - PDF: merge, create from images and compress, and PDF to PNG or JPG (one image per page, rendered with PDFium).
+- Office documents: Word, PowerPoint, Excel, OpenDocument, CSV/TSV, RTF/RTFD and HTML files convert to every format the macOS app offers for them except Pages, including pages as PNG or JPG images. These need LibreOffice (see below).
 - Audio and video: convert, compress, mute and normalize. These need media tool setup from Home or a system `ffmpeg`.
 - Archives and subtitles.
+
+## LibreOffice
+
+Office conversions run through the system LibreOffice (`soffice` or `libreoffice` on `PATH`). Nashi does not download it, because LibreOffice publishes no portable Linux build. Install it with your package manager:
+
+```sh
+sudo apt install libreoffice      # Debian, Ubuntu
+sudo dnf install libreoffice      # Fedora
+```
+
+The wheel always shows these routes. Choosing one without LibreOffice opens setup, whose **Office tools** row says *Missing* and how to install it. The Snap and Flatpak builds are not used: their sandbox has its own `/tmp`, where each conversion keeps a private, throwaway LibreOffice profile. Every conversion runs headless, stops after 5 minutes, and Cancel stops LibreOffice at once. LibreOffice versions without a Markdown export filter (7.x and similar) save Markdown as plain text.
 
 ## Use Nashi without opening it
 
@@ -42,7 +54,7 @@ Showing the wheel at the pointer needs an X11 session. On Wayland the wheel open
 
 ## Coming
 
-Editors (crop, annotate, trim), Office documents, web download, Library, settings and automatic updates.
+Editors (crop, annotate, trim), conversion options (DPI, PDF layout, fixed-layout EPUB, PDF passwords), web download, Library, settings and automatic updates.
 
 ## Build
 
