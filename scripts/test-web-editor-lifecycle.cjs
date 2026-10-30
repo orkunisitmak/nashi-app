@@ -106,10 +106,11 @@ for (const id of ['mergePDF', 'organizePDF']) {
   });
 }
 test('Closing a video snapshot during seeking never touches the discarded media', async () => {
-  let seeked;
-  const h = harness({setTimeout: () => {}, document: {createElement: () => {throw Error('discarded media was accessed');}}});
+  let seeked, canvasCreations = 0;
+  const h = harness({setTimeout: () => {}, document: {createElement: () => {canvasCreations++; throw Error('discarded media was accessed');}}});
   Object.assign(h.editor, {id: 'videoSnapshots', image: null, duration: 10, values: {timestamp: 2},
     media: {currentTime: 0, addEventListener: (_event, listener) => {seeked = listener;}}});
   const saving = h.save(); h.state.editor = null; seeked(); await saving;
+  assert.equal(canvasCreations, 0);
   assert.equal(h.results.length, 0); assert.equal(h.errors.length, 0);
 });
