@@ -16,7 +16,7 @@ public static partial class SubtitleCodec
     // WebVTT reads an unescaped "<" as the start of a tag and drops the rest of the line, so only a complete
     // known tag or timestamp keeps its "<". WebVTT tag names are case-sensitive, so <I> from SRT becomes <i>.
     private static string VttText(string text)=>TagName().Replace(BareLessThan().Replace(BareAmpersand().Replace(text,"&amp;"),"&lt;"),m=>"<"+m.Groups[1].Value+m.Groups[2].Value.ToLowerInvariant());
-    [GeneratedRegex(@"<(?:/?(?:c|v|lang|ruby|rt)(?:[ .][^>]*)?|\d{2}:\d{2}(?::\d{2})?\.\d{3})>")]private static partial Regex VttOnlyTags();
+    [GeneratedRegex(@"<(?:/?(?:c|v|lang|ruby|rt)(?:[ \t\f.][^>]*)?|\d{2,}:\d{2}(?::\d{2})?\.\d{3})>",RegexOptions.IgnoreCase)]private static partial Regex VttOnlyTags();
     public static Cue[] Parse(string source)
     {
         var lines=source.TrimStart('\uFEFF').Replace("\r\n","\n").Replace('\r','\n').Split('\n');var cues=new List<Cue>();
