@@ -31,6 +31,9 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
 
     public bool Busy { get; private set; }
 
+    /// The launcher's X server time for activating the next pointer wheel (0 = CurrentTime); used once.
+    public uint StartupTime { get; set; }
+
     /// The wheel this flow showed last (it may be closed by now).
     public WheelWindow? LastWheel { get; private set; }
 
@@ -73,7 +76,8 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
         var wheel = LastWheel = new WheelWindow(title, items);
         wheel.Wheel.Chosen += OnChosen;
         if (owner is not null) wheel.Show(owner);
-        else wheel.ShowAt(pointer);
+        else wheel.ShowAt(pointer, StartupTime);
+        StartupTime = 0;
     }
 
     private async void OnChosen(WheelItem item)

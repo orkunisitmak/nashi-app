@@ -1789,6 +1789,7 @@
 "SHOW ORIGINAL" = "AFFICHER L’ORIGINAL";
 "SILENCE THRESHOLD" = "SEUIL DE SILENCE";
 "SKIP TOUR" = "PASSER LA VISITE";
+"SKIPPED THE KEYBOARD SHORTCUT: COULDN’T READ YOUR EXISTING SHORTCUTS, SO THEY WERE LEFT AS THEY ARE." = "SKIPPED THE KEYBOARD SHORTCUT: COULDN’T READ YOUR EXISTING SHORTCUTS, SO THEY WERE LEFT AS THEY ARE.";
 "SKIPPED THE KEYBOARD SHORTCUT: GNOME SETTINGS ARE NOT AVAILABLE." = "SKIPPED THE KEYBOARD SHORTCUT: GNOME SETTINGS ARE NOT AVAILABLE.";
 "SLIDES" = "DIAPOSITIVES";
 "SMALL · 1280 PX" = "PETIT · 1280 PX";
@@ -1934,6 +1935,7 @@
 "Skipped %@: only existing files can come in, not folders." = "Skipped %@: only existing files can come in, not folders.";
 "Skipped %lld: only existing files can come in, not folders." = "Skipped %lld: only existing files can come in, not folders.";
 "Skipped the keyboard shortcut: GNOME settings are not available." = "Skipped the keyboard shortcut: GNOME settings are not available.";
+"Skipped the keyboard shortcut: couldn’t read your existing shortcuts, so they were left as they are." = "Skipped the keyboard shortcut: couldn’t read your existing shortcuts, so they were left as they are.";
 "Slides" = "Diapositives";
 "Small · 1280 px" = "Petit · 1280 px";
 "Small · 1280 px longest edge" = "Petit · 1280 px sur le plus grand côté";

@@ -26,18 +26,22 @@ public sealed record Launch(LaunchMode Mode, IReadOnlyList<string> Files)
 
     static string[] Absolute(IEnumerable<string> paths) => paths.Where(p => p.Length > 0).Select(Path.GetFullPath).ToArray();
 
-    /// What to hand a running instance; null for --background (one is already running).
+    /// What to hand a running instance, with the launcher's DESKTOP_STARTUP_ID when there is one;
+    /// null for --background (one is already running).
     public InstanceMessage? Message => Mode switch
     {
-        LaunchMode.Home => new("show"),
-        LaunchMode.Wheel => new("wheel", [.. Files]),
-        LaunchMode.WheelClipboard => new("wheel-clipboard"),
+        LaunchMode.Home => new("show", null, StartupId),
+        LaunchMode.Wheel => new("wheel", [.. Files], StartupId),
+        LaunchMode.WheelClipboard => new("wheel-clipboard", null, StartupId),
         _ => null,
     };
+
+    static string? StartupId => Environment.GetEnvironmentVariable("DESKTOP_STARTUP_ID") is { Length: > 0 } id ? id : null;
 }
 
 /// One JSON line on the instance socket: show, wheel (with files), wheel-clipboard or quit.
-public sealed record InstanceMessage(string Cmd, string[]? Files = null);
+/// Startup is the sender's DESKTOP_STARTUP_ID; its _TIME<n> is the timestamp for activating the wheel.
+public sealed record InstanceMessage(string Cmd, string[]? Files = null, string? Startup = null);
 
 /// The one running Nashi per user. It holds `<socket>.lock` (flock) for its lifetime and listens on a 0600 Unix socket;
 /// later invocations connect, send one message, and exit. Both ends check the peer is the same user (SO_PEERCRED).

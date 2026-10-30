@@ -27,6 +27,7 @@ public sealed partial class ProgressToast : Window
         MessageText.Text = L10n.T(Copy.Starting);
         ActionButton.Content = L10n.T(Copy.Cancel);
         Opened += (_, _) => Desktop.PlaceAtBottom(this);
+        SizeChanged += (_, _) => Desktop.PlaceAtBottom(this); // SizeToContent settles after Opened
     }
 
     public void Update(OperationProgress progress)

@@ -18,6 +18,7 @@ public static class Integration
         public const string ShortcutAdded = "Added the Ctrl+Alt+N shortcut: copy files, then press it.";
         public const string ShortcutRemoved = "Removed the Ctrl+Alt+N shortcut.";
         public const string NoShortcut = "Skipped the keyboard shortcut: GNOME settings are not available.";
+        public const string UnreadShortcuts = "Skipped the keyboard shortcut: couldn’t read your existing shortcuts, so they were left as they are.";
         public const string Started = "Started Nashi in the background.";
         public const string Stopped = "Stopped the background Nashi.";
     }
@@ -83,7 +84,7 @@ public static class Integration
         foreach (var other in ScriptNames.Select(n => Path.Combine(Scripts(home), n)).Where(p => p != Script(home) && File.Exists(p))) File.Delete(other); // the other language's name
         Write(Script(home), $"#!/bin/sh\nexec {Quote(exe)} --wheel \"$@\"\n", Executable);
         run("update-desktop-database", [Path.GetDirectoryName(OpenWith(home))!]);
-        log.Add(Shortcut(run, $"{Quote(exe)} --wheel-clipboard") ? L10n.T(Copy.ShortcutAdded) : L10n.T(Copy.NoShortcut));
+        log.Add(Shortcut(run, $"{Quote(exe)} --wheel-clipboard") ?? L10n.T(Copy.ShortcutAdded));
         return log;
     }
 
@@ -97,27 +98,31 @@ public static class Integration
             log.Add(L10n.F(Copy.Removed, path));
         }
         run("update-desktop-database", [Path.GetDirectoryName(OpenWith(home))!]);
-        log.Add(Shortcut(run, null) ? L10n.T(Copy.ShortcutRemoved) : L10n.T(Copy.NoShortcut));
+        log.Add(Shortcut(run, null) ?? L10n.T(Copy.ShortcutRemoved));
         return log;
     }
 
-    /// Adds (command set) or removes (null) Nashi's custom keybinding, keeping everyone else's. False without gsettings or the schema.
-    static bool Shortcut(Func<string, IReadOnlyList<string>, string?> run, string? command)
+    /// Adds (command set) or removes (null) Nashi's custom keybinding, keeping everyone else's.
+    /// Null when done; otherwise the note saying why it was skipped. A list it could not read is never written.
+    static string? Shortcut(Func<string, IReadOnlyList<string>, string?> run, string? command)
     {
-        if (run("gsettings", ["list-keys", Schema]) is not { } keys || !keys.Split('\n').Contains("custom-keybindings")) return false;
-        var list = Regex.Matches(run("gsettings", ["get", Schema, "custom-keybindings"]) ?? "", @"'((?:[^'\\]|\\.)*)'").Select(m => m.Groups[1].Value).ToList();
+        if (run("gsettings", ["list-keys", Schema]) is not { } keys || !keys.Split('\n').Contains("custom-keybindings")) return L10n.T(Copy.NoShortcut);
+        var current = run("gsettings", ["get", Schema, "custom-keybindings"])?.Trim();
+        if (current is null || !Regex.IsMatch(current, @"^(@as \[\]|\[\s*('(?:[^'\\]|\\.)*'\s*(,\s*'(?:[^'\\]|\\.)*'\s*)*)?\])$")) return L10n.T(Copy.UnreadShortcuts);
+        var list = Regex.Matches(current, @"'((?:[^'\\]|\\.)*)'").Select(m => m.Groups[1].Value).ToList();
         var entry = Schema + ".custom-keybinding:" + KeybindingPath;
         if (command is null)
         {
             if (list.Remove(KeybindingPath)) run("gsettings", ["set", Schema, "custom-keybindings", Variant(list)]);
             run("gsettings", ["reset-recursively", entry]);
-            return true;
+            return null;
         }
         if (!list.Contains(KeybindingPath)) list.Add(KeybindingPath);
-        return run("gsettings", ["set", entry, "name", Variant("Nashi")]) is not null
+        var written = run("gsettings", ["set", entry, "name", Variant("Nashi")]) is not null
             && run("gsettings", ["set", entry, "command", Variant(command)]) is not null
             && run("gsettings", ["set", entry, "binding", Variant("<Primary><Alt>n")]) is not null
             && run("gsettings", ["set", Schema, "custom-keybindings", Variant(list)]) is not null;
+        return written ? null : L10n.T(Copy.NoShortcut);
     }
 
     static string Variant(string value) => "'" + value.Replace("\\", "\\\\").Replace("'", "\\'") + "'";

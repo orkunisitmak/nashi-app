@@ -62,9 +62,11 @@ public sealed class App : Application
                 home.Activate();
                 break;
             case "wheel":
+                Flow.StartupTime = Desktop.StartupTime(message.Startup);
                 ShowWheel(message.Files ?? []);
                 break;
             case "wheel-clipboard":
+                Flow.StartupTime = Desktop.StartupTime(message.Startup);
                 _ = ShowClipboardWheelAsync();
                 break;
             case "quit":

@@ -39,6 +39,7 @@ public sealed partial class SuccessToast : Window
         ShowButton.IsVisible = folder is not null;
         MarkImage.Source = happy ? MainWindow.HappyMark : MainWindow.Mark;
         Opened += (_, _) => Desktop.PlaceAtBottom(this);
+        SizeChanged += (_, _) => Desktop.PlaceAtBottom(this); // SizeToContent settles after Opened
         Closed += (_, _) => { if (Current == this) Current = null; };
     }
 

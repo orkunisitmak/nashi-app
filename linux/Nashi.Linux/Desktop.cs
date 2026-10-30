@@ -1,4 +1,6 @@
+using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -39,10 +41,11 @@ public static class Desktop
     public static void PlaceAtBottom(Window window)
     {
         if (ScreenAt(window, Pointer()) is not { } screen) return;
-        var area = screen.WorkingArea;
-        var size = PixelSize.FromSize(window.Bounds.Size, screen.Scaling);
-        window.Position = new PixelPoint(area.X + (area.Width - size.Width) / 2, area.Bottom - size.Height - (int)(28 * screen.Scaling));
+        window.Position = BottomCenter(screen.WorkingArea, PixelSize.FromSize(window.Bounds.Size, screen.Scaling), screen.Scaling);
     }
+
+    public static PixelPoint BottomCenter(PixelRect area, PixelSize size, double scaling) =>
+        new(area.X + (area.Width - size.Width) / 2, area.Bottom - size.Height - (int)(28 * scaling));
 
     /// Local files on the clipboard: Avalonia's file list, else the GNOME and uri-list text forms, else plain text paths.
     public static async Task<IReadOnlyList<string>> ClipboardFilesAsync(IClipboard clipboard)
@@ -69,6 +72,74 @@ public static class Desktop
         return paths;
     }
 
+    /// The X server time in a startup-notification id ("…_TIME<n>"), or 0 (CurrentTime).
+    public static uint StartupTime(string? startupId) =>
+        startupId is not null && Regex.Match(startupId, @"_TIME(\d+)$") is { Success: true } m && uint.TryParse(m.Groups[1].Value, out var time) ? time : 0;
+
+    /// X11: asks the window manager to activate `window` as a pager would (_NET_ACTIVE_WINDOW, source 2).
+    public static void Activate(Window window, uint timestamp)
+    {
+        if (X11(window) is not var (display, xid)) return;
+        var message = new IntPtr[24]; // XClientMessageEvent inside the 192-byte XEvent union
+        message[0] = 33; // ClientMessage
+        message[2] = 1; // send_event
+        message[3] = display;
+        message[4] = xid;
+        message[5] = XInternAtom(display, "_NET_ACTIVE_WINDOW", false);
+        message[6] = 32; // format
+        message[7] = 2; // source indication: pager
+        message[8] = (IntPtr)timestamp;
+        XSendEvent(display, XDefaultRootWindow(display), false, (1 << 20) | (1 << 19), message); // SubstructureRedirect | SubstructureNotify
+        XFlush(display);
+    }
+
+    /// X11: a popup-menu keyboard and pointer grab (owner_events) on `window`, so keys reach it even when
+    /// focus-stealing prevention refused activation. Returns the release, or null when not X11 or either grab failed
+    /// (nothing is left grabbed then). Grabbed events go to the grabbing client, so this uses Avalonia's own connection.
+    public static Action? Grab(Window window)
+    {
+        if (X11(window) is not var (display, xid)) return null;
+        const int GrabModeAsync = 1, GrabSuccess = 0;
+        var keyboard = XGrabKeyboard(display, xid, true, GrabModeAsync, GrabModeAsync, IntPtr.Zero) == GrabSuccess;
+        // ButtonPress | ButtonRelease | EnterWindow | LeaveWindow | PointerMotion
+        var pointer = XGrabPointer(display, xid, true, (1 << 2) | (1 << 3) | (1 << 4) | (1 << 5) | (1 << 6), GrabModeAsync, GrabModeAsync, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero) == GrabSuccess;
+        void Release()
+        {
+            if (keyboard) XUngrabKeyboard(display, IntPtr.Zero);
+            if (pointer) XUngrabPointer(display, IntPtr.Zero);
+            XFlush(display);
+        }
+        if (keyboard && pointer) return Release;
+        Release();
+        return null;
+    }
+
+    static (IntPtr Display, IntPtr Window)? X11(Window window)
+    {
+        if (Environment.GetEnvironmentVariable("XDG_SESSION_TYPE") == "wayland") return null;
+        try
+        {
+            return window.TryGetPlatformHandle() is { HandleDescriptor: "XID", Handle: var xid } && AvaloniaDisplay(window) is { } display && display != IntPtr.Zero
+                ? (display, xid) : null;
+        }
+        catch (Exception error) when (error is DllNotFoundException or EntryPointNotFoundException) { return null; }
+    }
+
+    // ponytail: Avalonia 11.3 keeps its Display in the internal X11Window._x11.Display; reflection, pinned by the lock file.
+    static IntPtr? AvaloniaDisplay(Window window)
+    {
+        var impl = window.PlatformImpl;
+        var info = impl?.GetType().GetField("_x11", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(impl);
+        return info?.GetType().GetProperty("Display", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)?.GetValue(info) as IntPtr?;
+    }
+
+    [DllImport("libX11.so.6")] static extern IntPtr XInternAtom(IntPtr display, string name, bool onlyIfExists);
+    [DllImport("libX11.so.6")] static extern int XSendEvent(IntPtr display, IntPtr window, bool propagate, IntPtr mask, IntPtr[] e);
+    [DllImport("libX11.so.6")] static extern int XFlush(IntPtr display);
+    [DllImport("libX11.so.6")] static extern int XGrabKeyboard(IntPtr display, IntPtr window, bool ownerEvents, int pointerMode, int keyboardMode, IntPtr time);
+    [DllImport("libX11.so.6")] static extern int XGrabPointer(IntPtr display, IntPtr window, bool ownerEvents, uint mask, int pointerMode, int keyboardMode, IntPtr confineTo, IntPtr cursor, IntPtr time);
+    [DllImport("libX11.so.6")] static extern int XUngrabKeyboard(IntPtr display, IntPtr time);
+    [DllImport("libX11.so.6")] static extern int XUngrabPointer(IntPtr display, IntPtr time);
     [DllImport("libX11.so.6")] static extern IntPtr XOpenDisplay(IntPtr name);
     [DllImport("libX11.so.6")] static extern int XCloseDisplay(IntPtr display);
     [DllImport("libX11.so.6")] static extern IntPtr XDefaultRootWindow(IntPtr display);

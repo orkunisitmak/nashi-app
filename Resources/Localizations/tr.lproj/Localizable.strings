@@ -1789,6 +1789,7 @@
 "SHOW ORIGINAL" = "ORİJİNALİ GÖSTER";
 "SILENCE THRESHOLD" = "SESSİZLİK EŞİĞİ";
 "SKIP TOUR" = "TURU GEÇ";
+"SKIPPED THE KEYBOARD SHORTCUT: COULDN’T READ YOUR EXISTING SHORTCUTS, SO THEY WERE LEFT AS THEY ARE." = "KLAVYE KISAYOLU ATLANDI: MEVCUT KISAYOLLARIN OKUNAMADI, O YÜZDEN OLDUĞU GİBİ BIRAKILDI.";
 "SKIPPED THE KEYBOARD SHORTCUT: GNOME SETTINGS ARE NOT AVAILABLE." = "KLAVYE KISAYOLU ATLANDI: GNOME AYARLARI KULLANILAMIYOR.";
 "SLIDES" = "SUNUMLAR";
 "SMALL · 1280 PX" = "KÜÇÜK · 1280 PX";
@@ -1934,6 +1935,7 @@
 "Skipped %@: only existing files can come in, not folders." = "%@ atlandı: yalnızca var olan dosyalar eklenebilir, klasörler eklenemez.";
 "Skipped %lld: only existing files can come in, not folders." = "%lld atlandı: yalnızca var olan dosyalar eklenebilir, klasörler eklenemez.";
 "Skipped the keyboard shortcut: GNOME settings are not available." = "Klavye kısayolu atlandı: GNOME ayarları kullanılamıyor.";
+"Skipped the keyboard shortcut: couldn’t read your existing shortcuts, so they were left as they are." = "Klavye kısayolu atlandı: mevcut kısayolların okunamadı, o yüzden olduğu gibi bırakıldı.";
 "Slides" = "Sunumlar";
 "Small · 1280 px" = "Küçük · 1280 px";
 "Small · 1280 px longest edge" = "Küçük · uzun kenar 1280 px";

@@ -647,6 +647,17 @@ void LaunchChecks()
     Check(bare.Mode == LaunchMode.Wheel && bare.Files.SequenceEqual(["/x/a.png", Path.GetFullPath("rel.png")]) && bare.Message!.Cmd == "wheel" && bare.Message.Files!.SequenceEqual(bare.Files), "Bare files (the desktop entry's %F) open the wheel with absolute paths");
     Check(Launch.Parse(["--wheel-clipboard"]).Mode == LaunchMode.WheelClipboard && Launch.Parse(["--wheel-clipboard"]).Message!.Cmd == "wheel-clipboard", "--wheel-clipboard forwards wheel-clipboard");
     Check(Launch.Parse(["--install-integration"]).Mode == LaunchMode.InstallIntegration && Launch.Parse(["--uninstall-integration"]).Mode == LaunchMode.UninstallIntegration, "Integration flags parse");
+    Check(Desktop.StartupTime("nautilus-1234-ece-laptop-_TIME98765") == 98765 && Desktop.StartupTime("gnome-shell/Nashi/5-0-host_TIME4294967295") == uint.MaxValue, "DESKTOP_STARTUP_ID _TIME<n> parses to the timestamp");
+    Check(Desktop.StartupTime(null) == 0 && Desktop.StartupTime("no-time-here") == 0 && Desktop.StartupTime("x_TIMEabc") == 0 && Desktop.StartupTime("x_TIME99999999999") == 0, "Missing or bad startup times are 0 (CurrentTime)");
+    var savedStartup = Environment.GetEnvironmentVariable("DESKTOP_STARTUP_ID");
+    try
+    {
+        Environment.SetEnvironmentVariable("DESKTOP_STARTUP_ID", "nautilus-1-h-_TIME42");
+        Check(Launch.Parse(["--wheel", "/a.png"]).Message!.Startup == "nautilus-1-h-_TIME42" && Launch.Parse(["--wheel-clipboard"]).Message!.Startup == "nautilus-1-h-_TIME42", "The caller's DESKTOP_STARTUP_ID is forwarded");
+        Environment.SetEnvironmentVariable("DESKTOP_STARTUP_ID", null);
+        Check(Launch.Parse(["--wheel", "/a.png"]).Message!.Startup is null, "No DESKTOP_STARTUP_ID forwards none");
+    }
+    finally { Environment.SetEnvironmentVariable("DESKTOP_STARTUP_ID", savedStartup); }
     Check(Launch.Parse(["--version"]).Mode == LaunchMode.Version && Launch.Parse(["--background", "--version"]).Mode == LaunchMode.Version, "--version wins anywhere");
 }
 
@@ -674,8 +685,8 @@ async Task InstanceChecks(string root)
         var received = new System.Collections.Concurrent.BlockingCollection<InstanceMessage>();
         instance!.Start(received.Add);
         string[] names = ["/tmp/ğüş şarkı.mp3", "/tmp/a b/-leading dash.png", "/tmp/$(rm -rf ~)'\".png"];
-        Check(Instance.Send(path, new("wheel", names)), "Send reports an accepted message");
-        Check(received.TryTake(out var got, 5000) && got.Cmd == "wheel" && got.Files!.SequenceEqual(names), "wheel arrives with Turkish, space, dash and quote names intact");
+        Check(Instance.Send(path, new("wheel", names, "x-_TIME7")), "Send reports an accepted message");
+        Check(received.TryTake(out var got, 5000) && got.Cmd == "wheel" && got.Files!.SequenceEqual(names) && got.Startup == "x-_TIME7", "wheel arrives with Turkish, space, dash and quote names and the startup id intact");
 
         var oversized = System.Text.Encoding.UTF8.GetBytes("{\"cmd\":\"wheel\",\"files\":[\"" + new string('a', Instance.MaxMessage) + "\"]}\n");
         var accepted = true;
@@ -770,6 +781,26 @@ void IntegrationChecks(string root)
     Check(settings["list"] == $"['{other}']" && !settings.Keys.Any(k => k.StartsWith(keyed)), "Uninstall removes only Nashi's keybinding");
     Check(removed[^1] == "Removed the Ctrl+Alt+N shortcut.", "Uninstall prints what it removed");
 
+    // A list that can't be read is never overwritten.
+    foreach (var (output, label) in new[] { ((string?)null, "fails"), ("garbage output", "is unparsable") })
+    {
+        settings["list"] = $"['{other}']";
+        var writes = 0;
+        string? Broken(string program, IReadOnlyList<string> args)
+        {
+            if (program == "gsettings" && args[0] == "get") return output;
+            if (program == "gsettings" && args[0] is "set" or "reset-recursively") writes++;
+            return Fake(program, args);
+        }
+        var aborted = Integration.Install(Directory.CreateDirectory(Path.Combine(root, "home-broken")).FullName, exe, Broken);
+        Check(writes == 0 && settings["list"] == $"['{other}']" && aborted[^1].StartsWith("Skipped the keyboard shortcut: couldn’t read"), $"When gsettings get {label}, the keybinding step aborts with a note and writes nothing");
+        var abortedRemove = Integration.Uninstall(Path.Combine(root, "home-broken"), Broken);
+        Check(writes == 0 && abortedRemove[^1].StartsWith("Skipped the keyboard shortcut: couldn’t read"), $"Uninstall also leaves the shortcuts alone when gsettings get {label}");
+    }
+    settings["list"] = "@as []";
+    Integration.Install(Directory.CreateDirectory(Path.Combine(root, "home-empty")).FullName, exe, Fake);
+    Check(settings["list"] == $"['{Integration.KeybindingPath}']", "An empty @as [] list gets Nashi's entry");
+
     var bare = Directory.CreateDirectory(Path.Combine(root, "home-bare")).FullName;
     var noGnome = Integration.Install(bare, exe, (_, _) => null);
     Check(noGnome[^1].StartsWith("Skipped the keyboard shortcut") && File.Exists(Integration.Script(bare)), "Without gsettings the shortcut is skipped with a note and the rest installs");
@@ -806,6 +837,47 @@ async Task BackgroundChecks(string root)
     Dispatcher.UIThread.RunJobs();
     Check(Title() == "No tools for DOCX files yet.", "An empty background wheel says there are no tools for DOCX files yet");
     SuccessToast.Current?.Close();
+
+    // A pointer wheel nobody touches closes after its idle timeout (30 s by default).
+    var now = new DateTime(2026, 1, 1);
+    var idle = new WheelWindow("Tools", [new("compress", "Compress"), new("convert", "Convert")]) { Clock = () => now };
+    idle.ShowAt(null);
+    Dispatcher.UIThread.RunJobs();
+    now += TimeSpan.FromSeconds(29);
+    idle.CloseIfIdle();
+    var openAt29 = idle.IsVisible;
+    idle.KeyPressQwerty(PhysicalKey.ArrowRight, RawInputModifiers.None);
+    now += TimeSpan.FromSeconds(29);
+    idle.CloseIfIdle();
+    var openAfterKey = idle.IsVisible;
+    now += TimeSpan.FromSeconds(1);
+    idle.CloseIfIdle();
+    Dispatcher.UIThread.RunJobs();
+    Check(WheelWindow.IdleTimeout == TimeSpan.FromSeconds(30) && openAt29 && openAfterKey && !idle.IsVisible, "A pointer wheel closes after 30 s without a key or pointer move; a key resets the clock");
+    var home = new WheelWindow("Tools", [new("compress", "Compress")]) { Clock = () => now };
+    home.Show();
+    now += TimeSpan.FromMinutes(5);
+    home.CloseIfIdle();
+    Check(home.IsVisible, "Home's wheel (not at the pointer) has no idle close");
+    home.Close();
+
+    // Toasts stay bottom-center when SizeToContent changes their height.
+    var growing = new ProgressToast("Convert to JPG", null);
+    growing.Show();
+    Dispatcher.UIThread.RunJobs();
+    var screen = growing.Screens.Primary;
+    if (screen is not null)
+    {
+        int Bottom() => growing.Position.Y + (int)(growing.Bounds.Height * screen.Scaling);
+        var before = Bottom();
+        var height = growing.Bounds.Height;
+        growing.FindControl<TextBlock>("TitleText")!.Text = string.Join(" ", Enumerable.Repeat("A much longer title that wraps onto more lines", 6));
+        Dispatcher.UIThread.RunJobs();
+        Check(growing.Bounds.Height > height && Math.Abs(Bottom() - before) <= 1 && Bottom() == screen.WorkingArea.Bottom - 28, "A toast that grows is placed again, still 28 px above the bottom");
+    }
+    else Check(false, "Headless has a screen for placement checks");
+    growing.Close();
+    Check(Desktop.BottomCenter(new PixelRect(0, 0, 1920, 1080), new PixelSize(560, 88), 1) == new PixelPoint(680, 964) && Desktop.BottomCenter(new PixelRect(1920, 0, 2560, 1440), new PixelSize(1120, 176), 2) == new PixelPoint(2640, 1208), "Bottom-center math with scaling and a second screen");
 
     // The success card: copy for 0, 1 and 3 files; light, dark and Turkish renders.
     Check(SuccessToast.Heading(0) == "Nicely done." && SuccessToast.Heading(1) == "Nicely done. 1 file is ready." && SuccessToast.Heading(3) == "Nicely done. 3 files are ready.", "Success titles for 0, 1 and 3 files");
