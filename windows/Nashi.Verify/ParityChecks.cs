@@ -19,6 +19,8 @@ internal static class ParityChecks
             check(runs[0].GetProperty("character").GetProperty("strikethru").GetInt32()==expected,"Word style strikethrough toggle '"+flag+"' lost its inherited state");
             check(runs[1].GetProperty("character").GetProperty("strikethru").GetInt32()==0&&runs[2].GetProperty("character").GetProperty("strikethru").GetInt32()==1,"Direct strikethrough did not override style formatting");
             check(model.RootElement.GetProperty("blocks")[1].GetProperty("runs")[0].GetProperty("character").GetProperty("strikethru").GetInt32()==expected,"Character style strikethrough did not toggle the paragraph's state");
+            var paragraph=System.Xml.Linq.XDocument.Parse(OfficeDocuments.ModelHtml(model.RootElement)).Descendants("p").First();var spans=paragraph.Elements("span").ToArray();
+            check(!paragraph.Attribute("style")!.Value.Contains("text-decoration:")&&!spans[1].Attribute("style")!.Value.Contains("line-through")&&spans[2].Attribute("style")!.Value.Contains("line-through"),"Paragraph-level text decoration prevented a run from clearing inherited strikethrough");
         }
         check(FeatureCatalog.Conversions.Count==46&&FeatureCatalog.ToolNames.Count==27,"Mac/Windows catalog count diverged");
         check(FeatureCatalog.Formats(["a.htm","b.html"]).SequenceEqual(new[]{"pdf"})&&FeatureCatalog.Tools(["a.html"]).Length==0,"HTML inputs lost their PDF route");
