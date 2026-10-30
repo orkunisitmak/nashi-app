@@ -74,4 +74,20 @@ final class WebMediaDragPayloadTests:XCTestCase {
         XCTAssertNil(WebMediaDragPayload.parse(urls:[],html:["<img src='https://example.org/image.jpg'>"+String(repeating:"x",count:131_072)]))
         XCTAssertNil(WebMediaDragPayload.parse(urls:["blob:https://www.youtube.com/id"]))
     }
+    func testFirefoxThumbnailDragRecoversTheVideoFromItsClipdata() throws {
+        // Layout captured from a Firefox YouTube thumbnail drag on macOS.
+        func entry(_ text:String)->Data {
+            let utf16=text.data(using:.utf16LittleEndian)!
+            return withUnsafeBytes(of:UInt32(utf16.count).bigEndian){Data($0)}+utf16
+        }
+        let link="https://www.youtube.com/watch?v=\(id)&pp=ugUEEgJlbg%3D%3D"
+        let clip=withUnsafeBytes(of:UInt32(1).bigEndian){Data($0)}+entry("text/uri-list")+entry(link)+Data(count:4)
+        XCTAssertEqual(WebMediaDragPayload.mozillaClipdataURLs(clip),[link])
+        let media=try XCTUnwrap(WebMediaDragPayload.parse(urls:WebMediaDragPayload.mozillaClipdataURLs(clip)))
+        XCTAssertEqual(media.videoURL?.absoluteString,"https://www.youtube.com/watch?v=\(id)")
+        XCTAssertTrue(WebMediaDragPayload.isBrowserDragCopy(URL(fileURLWithPath:"/var/folders/x/T/mozDraggedFiles/hq720.webp")))
+        XCTAssertFalse(WebMediaDragPayload.isBrowserDragCopy(URL(fileURLWithPath:"/Users/me/Pictures/hq720.webp")))
+        XCTAssertEqual(WebMediaDragPayload.mozillaClipdataURLs(Data([0,0,0,1,0,0,0,9])),[])
+        XCTAssertEqual(WebMediaDragPayload.mozillaClipdataURLs(Data()),[])
+    }
 }

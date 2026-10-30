@@ -51,6 +51,33 @@ public struct WebMediaDragPayload:Equatable,Sendable {
         return .init(primaryURL:url,videoURL:nil,imageURL:nil)
     }
 
+    /// Firefox keeps the dragged page link in its private clipdata even when the
+    /// drag itself is a saved thumbnail file: a big-endian entry count, then
+    /// length-prefixed UTF-16LE type/value pairs.
+    public static func mozillaClipdataURLs(_ data:Data)->[String] {
+        let bytes=[UInt8](data.prefix(131_072));var offset=0
+        func length()->Int? {
+            guard offset+4<=bytes.count else { return nil }
+            defer{offset+=4};return bytes[offset..<offset+4].reduce(0){$0<<8|Int($1)}
+        }
+        func text(_ count:Int)->String? {
+            guard count%2==0,offset+count<=bytes.count else { return nil }
+            defer{offset+=count};return String(data:Data(bytes[offset..<offset+count]),encoding:.utf16LittleEndian)
+        }
+        guard let count=length(),count<=16 else { return [] }
+        var urls:[String]=[]
+        for _ in 0..<count {
+            guard let typeLength=length(),let type=text(typeLength),let valueLength=length(),let value=text(valueLength) else { break }
+            let lines=value.components(separatedBy:.newlines).filter{!$0.isEmpty && !$0.hasPrefix("#")}
+            if type=="text/uri-list" { urls += lines }
+            else if type=="text/x-moz-url",let first=lines.first { urls.append(first) }
+        }
+        return urls
+    }
+    /// Firefox materialises a dragged web image as a temporary file; that copy
+    /// must not hide the page link it came from.
+    public static func isBrowserDragCopy(_ url:URL)->Bool { url.isFileURL && url.pathComponents.contains("mozDraggedFiles") }
+
     private static func unique(_ urls:[URL])->[URL] {
         var seen=Set<URL>();return urls.filter{seen.insert($0).inserted}
     }

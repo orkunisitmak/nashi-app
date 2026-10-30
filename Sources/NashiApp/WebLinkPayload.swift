@@ -6,28 +6,32 @@ enum WebLinkPayload {
     private static let urlTypes=[NSPasteboard.PasteboardType.URL,.string,.init("text/uri-list")]
     private static let listTypes=[NSPasteboard.PasteboardType("WebURLsWithTitlesPboardType"),.init("dyn.ah62d4rv4gu8zs3pcnzme2641rf4guzdmsv0gn64uqm10c6xenv61a3k")]
     private static let baseTypes=[NSPasteboard.PasteboardType("org.chromium.source-url"),.init("org.chromium.chromium-renderer-initiated-drag")]
+    private static let mozillaType=NSPasteboard.PasteboardType("org.mozilla.custom-clipdata")
     static var pasteboardTypes:[NSPasteboard.PasteboardType] { [.fileURL]+urlTypes+htmlTypes+listTypes }
     // NSItemProvider requires UTI identifiers, unlike NSPasteboard's legacy names.
     private static var providerFormats:[NSPasteboard.PasteboardType] {
-        [.fileURL,.URL,.string,.html,.init("org.chromium.image-html")]+listTypes.filter{$0.rawValue.hasPrefix("dyn.")}+baseTypes
+        [.fileURL,.URL,.string,.html,.init("org.chromium.image-html")]+listTypes.filter{$0.rawValue.hasPrefix("dyn.")}+baseTypes+[mozillaType]
     }
     static var providerTypes:[String] { providerFormats.map(\.rawValue) }
 
     static func urls(from board:NSPasteboard)->[URL] {
         // Finder files win over an incidental icon or HTML representation.
+        var files:[URL]=[]
         if board.types?.contains(.fileURL)==true,
-           let files=board.readObjects(forClasses:[NSURL.self],options:[.urlReadingFileURLsOnly:true]) as? [URL],!files.isEmpty { return files }
+           let read=board.readObjects(forClasses:[NSURL.self],options:[.urlReadingFileURLsOnly:true]) as? [URL] { files=read }
+        if !files.isEmpty,!files.allSatisfy(WebMediaDragPayload.isBrowserDragCopy) { return files }
         let result=Representations()
-        for type in urlTypes+htmlTypes+listTypes+baseTypes {
+        for type in urlTypes+htmlTypes+listTypes+baseTypes+[mozillaType] {
             if let value=board.data(forType:type) { result.add(value,type:type.rawValue) }
         }
         // Browsers can put the link and image in separate items.
         for item in (board.pasteboardItems ?? []).prefix(16) {
-            for type in urlTypes+htmlTypes+listTypes+baseTypes {
+            for type in urlTypes+htmlTypes+listTypes+baseTypes+[mozillaType] {
                 if let value=item.data(forType:type) { result.add(value,type:type.rawValue) }
             }
         }
-        return result.resolved()
+        let web=result.resolved()
+        return web.isEmpty ? files:web
     }
     // Main-thread only: a newer drop supersedes loads still pending from an older one.
     private static var providerLoad=0
@@ -63,6 +67,7 @@ enum WebLinkPayload {
             for (_,type,data) in snapshot {
                 if listTypes.contains(where:{$0.rawValue==type}),
                    let list=(try? PropertyListSerialization.propertyList(from:data,format:nil)) as? [[String]],let links=list.first { urls += links;continue }
+                if type==mozillaType.rawValue { urls += WebMediaDragPayload.mozillaClipdataURLs(data);continue }
                 guard let text=String(data:data,encoding:.utf8) ?? String(data:data,encoding:.utf16) else { continue }
                 if type==NSPasteboard.PasteboardType.fileURL.rawValue { if let url=URL(string:text),url.isFileURL { files.append(url) };continue }
                 if htmlTypes.contains(where:{$0.rawValue==type}) { html.append(text) }
@@ -70,8 +75,9 @@ enum WebLinkPayload {
                 else if type=="text/uri-list" { urls += text.components(separatedBy:.newlines).filter{!$0.isEmpty && !$0.hasPrefix("#")} }
                 else { urls.append(text) }
             }
-            if !files.isEmpty { return files }
-            return WebMediaDragPayload.parse(urls:urls,html:html,baseURLs:bases)?.urls ?? []
+            if !files.isEmpty,!files.allSatisfy(WebMediaDragPayload.isBrowserDragCopy) { return files }
+            let web=WebMediaDragPayload.parse(urls:urls,html:html,baseURLs:bases)?.urls ?? []
+            return web.isEmpty ? files:web
         }
     }
 }
