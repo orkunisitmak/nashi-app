@@ -114,6 +114,14 @@ internal static class OperationChecks
                 var croppedInfo=Operations.Media.InspectAsync(croppedClip,token).GetAwaiter().GetResult();Check(croppedInfo.Video is {Width:160,Height:120}&&croppedInfo.HasAudio,"Crop video keeps the box and the sound");
                 var hidden=Operations.RunAsync(new("redactVideo","Redact Video"),[clip],Path.Combine(root,"redact-video"),progress,token,new(Media:new(){Regions=[new(0,0,100,100)],RedactionMode="solid"})).GetAwaiter().GetResult().Single();
                 using(var frame=new MagickImage(Operations.VideoFrameAsync(hidden,1,token).GetAwaiter().GetResult())){using var pixels=frame.GetPixels();var c=pixels.GetPixel(50,50).ToColor()!;var open=pixels.GetPixel(250,200).ToColor()!;Check(frame.Width==320&&c.R<20&&c.G<20&&c.B<20&&open.R+open.G+open.B>60,"Redact video covers the box");}
+                foreach(var (style,quiet) in new[]{("mute",true),("bleep",false)})
+                {
+                    var bleeped=Operations.RunAsync(new("redactAudio","Bleep Audio"),[wav],Path.Combine(root,"bleep-"+style),progress,token,new(Media:new(){AudioRedactions=[new(.5,1.2)],RedactionMode=style})).GetAwaiter().GetResult().Single();
+                    // Loudest sample inside and outside the range, in dB, from FFmpeg's volumedetect.
+                    double Peak(double start,double length)=>double.Parse(System.Text.RegularExpressions.Regex.Match(ProcessRunner.RunAsync(Operations.Executable("ffmpeg")!,["-hide_banner","-ss",start.ToString(System.Globalization.CultureInfo.InvariantCulture),"-t",length.ToString(System.Globalization.CultureInfo.InvariantCulture),"-i",bleeped,"-af","volumedetect","-f","null","-"],token).GetAwaiter().GetResult().Error,@"max_volume: (-?[\d.]+|-inf) dB").Groups[1].Value.Replace("-inf","-200"),System.Globalization.CultureInfo.InvariantCulture);
+                    var inside=Peak(.6,.5);var outside=Peak(1.5,.3);
+                    Check(FeatureCatalog.Extension(bleeped)=="wav"&&outside>-30&&(quiet?inside<-80:inside is > -25 and < -5),"Bleep audio "+style);
+                }
                 Check(TrimDialog.Parse("1:15")==75&&TrimDialog.Parse("1:01:15.5")==3675.5&&TrimDialog.Parse("x") is null&&TrimDialog.Format(75.25)=="1:15.2","Time fields");
             }
             Check(Hash(png)==originalHash,"Original is unchanged");

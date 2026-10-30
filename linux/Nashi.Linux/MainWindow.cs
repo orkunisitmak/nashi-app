@@ -177,7 +177,7 @@ public sealed class MainWindow:Window
         else if(choice.Id=="audioChannels"){if(await Ask(choice.Title,[("Mono",1),("Stereo",2)],0) is not {} channels)return;media=new(){Channels=channels};}
         else if(choice.Id=="splitVideo"){if(await Ask(choice.Title,[("2 equal parts",2),("3 equal parts",3),("4 equal parts",4)],0) is not {} parts)return;media=new(){EqualClips=parts};}
         else if(choice.Id=="audioToVideo"){string[] styles=["waveform","spectrum","bars"];if(await Ask(choice.Title,[("Waveform",0),("Spectrum",1),("Bars",2)],0) is not {} style)return;media=new(){Visualization=styles[style]};}
-        else if(choice.Id is "videoSnapshots" or "trimVideo" or "trimAudio")
+        else if(choice.Id is "videoSnapshots" or "trimVideo" or "trimAudio" or "redactAudio")
         {
             MediaInfo info;try{info=await Operations.Media!.InspectAsync(inputs[0]);}catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException){status.Text=error.Message;return;}
             if(choice.Id=="videoSnapshots")
@@ -185,6 +185,7 @@ public sealed class MainWindow:Window
                 if(await Ask(choice.Title,[("First frame",0),("Middle frame",1),("5 frames across the video",2)],0) is not {} pick)return;var d=info.Duration;
                 media=new(){SnapshotTimes=pick switch{1=>[d/2],2=>[d*.1,d*.3,d*.5,d*.7,d*.9],_=>[0]}};
             }
+            else if(choice.Id=="redactAudio"){var bleep=new BleepDialog(choice.Title,inputs[0],info);await bleep.ShowDialog(this);if(bleep.Result is not {} picked)return;media=new(){AudioRedactions=picked.Ranges,RedactionMode=picked.Mode};}
             else{var trim=new TrimDialog(choice.Title,inputs[0],info);await trim.ShowDialog(this);if(trim.Result is not {} range)return;media=new(){Start=range.Start,End=range.End};}
         }
         var destination=Path.GetDirectoryName(inputs[0])!;
