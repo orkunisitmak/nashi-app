@@ -23,5 +23,20 @@ internal static class DownloadChecks
         using(var cancel=new CancellationTokenSource(80))using(var handler=new Handler((request,n)=>Response(request,new StreamContent(new Stalled())))){try{await VerifiedDownload.FetchForTest(uri,output,10,null,cancel.Token,handler,TimeSpan.FromSeconds(1));throw new Exception("Cancelled download continued");}catch(OperationCanceledException){check(handler.Calls==1&&!File.Exists(output),"Cancelled download retried or left a partial file");}}
         using(var handler=new Handler((request,n)=>{var result=Response(request);result.Content.Headers.ContentLength=5;return result;})){try{await VerifiedDownload.FetchForTest(uri,output,10,null,CancellationToken.None,handler,TimeSpan.FromSeconds(1));throw new Exception("Truncated download accepted");}catch(EndOfStreamException){check(handler.Calls==3&&!File.Exists(output),"Truncated download did not stop after three attempts");}}
         File.WriteAllText(output,"keep");using(var handler=new Handler((request,n)=>Response(request))){try{await VerifiedDownload.FetchForTest(uri,output,10,null,CancellationToken.None,handler,TimeSpan.FromSeconds(1));throw new Exception("Existing output overwritten");}catch(IOException){check(File.ReadAllText(output)=="keep"&&handler.Calls==1,"Download changed an existing file");}}File.Delete(output);
+        foreach(var blocked in new[]{
+            "http://127.0.0.1/file","http://127.1.2.3/file","http://[::1]/file","http://0.0.0.0/file",
+            "http://2130706433/file","http://0x7f000001/file",
+            "http://10.1.2.3/file","http://172.16.0.1/file","http://172.31.255.254/file","http://192.168.1.10/file",
+            "http://100.64.0.1/file","http://169.254.169.254/latest/meta-data/","http://224.0.0.1/file",
+            "http://[fe80::1]/file","http://[fc00::1]/file","http://[::ffff:127.0.0.1]/file",
+            "http://localhost/file","http://localhost./file","http://app.localhost/file","http://media.local/file",
+            "http://metadata.google.internal/computeMetadata/v1/"})
+        {
+            try{WebDownload.Validate(blocked);throw new Exception("Private web address accepted: "+blocked);}catch(ArgumentException){check(true,"Private web address rejected: "+blocked);}
+        }
+        foreach(var allowed in new[]{"https://example.com/file","https://8.8.8.8/file","https://[2001:4860:4860::8888]/file"})
+        {
+            try{check(WebDownload.Validate(allowed).AbsoluteUri==allowed,"Public web address changed: "+allowed);}catch(ArgumentException){throw new Exception("Public web address rejected: "+allowed);}
+        }
     }
 }

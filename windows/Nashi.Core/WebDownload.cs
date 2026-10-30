@@ -1,10 +1,43 @@
+using System.Net;
+using System.Net.Sockets;
 using System.Text.Json;
 namespace Nashi.Core;
 public sealed partial class WebDownload(Toolchain tools)
 {
     public static Uri Validate(string input)
     {
-        if(!Uri.TryCreate(input,UriKind.Absolute,out var url)||url.Scheme is not ("http" or "https")||!string.IsNullOrEmpty(url.UserInfo)||url.IsLoopback||url.Host.EndsWith(".local",StringComparison.OrdinalIgnoreCase))throw new ArgumentException("Paste a public http(s) media or page link.");return url;
+        if(!Uri.TryCreate(input,UriKind.Absolute,out var url)||url.Scheme is not ("http" or "https")||!string.IsNullOrEmpty(url.UserInfo)||url.IsLoopback||url.Host.EndsWith(".local",StringComparison.OrdinalIgnoreCase)||IsPrivateHost(url))throw new ArgumentException("Paste a public http(s) media or page link.");return url;
+    }
+    // Web download links come from the clipboard and from browser drag payloads, so
+    // they are untrusted input. Keep them away from local services and the cloud
+    // metadata endpoints that answer on link-local addresses.
+    private static bool IsPrivateHost(Uri url)
+    {
+        var host=url.Host.TrimEnd('.');
+        if(host.Equals("localhost",StringComparison.OrdinalIgnoreCase)||host.EndsWith(".localhost",StringComparison.OrdinalIgnoreCase)||host.EndsWith(".internal",StringComparison.OrdinalIgnoreCase))return true;
+        if(url.HostNameType is not (UriHostNameType.IPv4 or UriHostNameType.IPv6))return false;
+        if(!IPAddress.TryParse(url.DnsSafeHost,out var address))return false;
+        if(IPAddress.IsLoopback(address))return true;
+        if(address.IsIPv4MappedToIPv6)address=address.MapToIPv4();
+        var bytes=address.GetAddressBytes();
+        if(address.AddressFamily==AddressFamily.InterNetwork)
+        {
+            // RFC 1918 private ranges, RFC 6598 carrier-grade NAT, link-local
+            // (including 169.254.169.254), unspecified, multicast and reserved.
+            return bytes[0] is 0 or 10 or 127
+                || bytes[0]==169&&bytes[1]==254
+                || bytes[0]==172&&bytes[1] is >=16 and <=31
+                || bytes[0]==192&&bytes[1]==168
+                || bytes[0]==100&&bytes[1] is >=64 and <=127
+                || bytes[0]>=224;
+        }
+        if(address.AddressFamily==AddressFamily.InterNetworkV6)
+        {
+            // ::/128, ::1/128, fe80::/10, fec0::/10 and fc00::/7. Multicast
+            // (ff00::/8) is not a valid download target either.
+            return address.Equals(IPAddress.IPv6Any)||address.IsIPv6LinkLocal||address.IsIPv6SiteLocal||address.IsIPv6Multicast||(bytes[0]&0xFE)==0xFC;
+        }
+        return false;
     }
     public async Task<IReadOnlyList<string>> DownloadAsync(string input,string kind,string destination,IProgress<OperationProgress>? progress=null,CancellationToken token=default,int? maximumHeight=null,IReadOnlySet<int>? selectedPhotos=null)
     {
