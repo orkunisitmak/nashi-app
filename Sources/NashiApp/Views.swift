@@ -28,6 +28,7 @@ struct SettingsView:View {
     @AppStorage("appAppearance") private var appAppearance="system"
     @AppStorage("appLanguage") private var appLanguage="en"
     @AppStorage("windowManagementEnabled") private var windowManagementEnabled=true
+    @AppStorage("windowShortcutsEnabled") private var windowShortcutsEnabled=true
     @State private var windowAccessibility=AXIsProcessTrusted()
     @Environment(\.accessibilityReduceMotion) private var systemReducedMotion
     init(updater:AppUpdater,showingUpdates:Bool=false,initialSection:SettingsSection = .general) {
@@ -120,8 +121,10 @@ struct SettingsView:View {
                     Toggle("Arrange windows while dragging",isOn:$windowManagementEnabled)
                     Text("Drag a window by its title bar or resize border, then tap Shift or Command. Hover over a layout and release the mouse to place it. Escape cancels.")
                         .font(.caption).foregroundStyle(.secondary)
-                    Text("1/3 left · middle · right   /   1/2 left · right   /   2/3 left · right")
+                    Text("1/3 left · middle · right   /   1/2 left · right · top · bottom   /   2/3 left · right")
                         .font(.caption).foregroundStyle(.secondary)
+                    Toggle("Arrange the front window with keyboard shortcuts",isOn:$windowShortcutsEnabled).disabled(!windowManagementEnabled)
+                    WindowShortcutsEditor().disabled(!windowManagementEnabled || !windowShortcutsEnabled)
                     if !windowAccessibility {
                         HStack {
                             Text("Allow \(WindowManagementController.permissionName) once to move and resize other apps’ windows.").font(.caption).foregroundStyle(.secondary)

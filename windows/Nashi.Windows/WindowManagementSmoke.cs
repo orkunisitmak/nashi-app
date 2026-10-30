@@ -40,6 +40,14 @@ internal static class WindowManagementSmoke
                 arrange.GetAwaiter().GetResult();var actual=WindowManagement.Bounds(handle);
                 check(Math.Abs(actual.X-expected.X)<3&&Math.Abs(actual.Y-expected.Y)<3&&Math.Abs(actual.Width-expected.Width)<3&&Math.Abs(actual.Height-expected.Height)<3,$"Native window bounds mismatch: {placement}; expected={expected}; actual={actual}");
             }
+            // Layout shortcuts arrange the foreground window; with a single display a repeat stays put.
+            foreach(var placement in new[]{WindowPlacement.RightHalf,WindowPlacement.RightHalf,WindowPlacement.TopHalf,WindowPlacement.BottomHalf})
+            {
+                SetForegroundWindow(handle);DesktopInput.Pump(150);manager.ArrangeForeground(placement);
+                var until=DateTime.UtcNow.AddSeconds(5);do{DesktopInput.Pump(50);}while(manager.PlacementPending&&DateTime.UtcNow<until);
+                var expected=placement.Frame(area);var actual=WindowManagement.Bounds(handle);
+                check(Math.Abs(actual.X-expected.X)<3&&Math.Abs(actual.Y-expected.Y)<3&&Math.Abs(actual.Width-expected.Width)<3&&Math.Abs(actual.Height-expected.Height)<3,$"Layout shortcut failed for {placement}; expected={expected}; actual={actual}");
+            }
             var index=0;
             foreach(var placement in Enum.GetValues<WindowPlacement>())
             {

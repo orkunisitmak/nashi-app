@@ -16,7 +16,7 @@ Both implementations use the same 46 input-format / 27-tool catalog. `scripts/ch
 | PDF/documents | Merge, split, reorder/duplicate/rotate pages, uniform widths, compression, QR reading, editable/preserved document layouts, spreadsheets, EPUB and Pages interoperability |
 | Archives/subtitles | ZIP/TAR/GZIP/RAR workflows and SRT/VTT conversion; original files retained and output collisions handled safely |
 | Float/actions | Compact paperclip stack; hover/click opens a slim thumbnail shelf; stack carries all files, clip moves the shelf; multi-selection, preview, copy/path, reveal/share, icon/list modes and edge attachment; removal never deletes originals |
-| Window management | Eight layouts: thirds, halves, two-thirds and Maximize; actual title-bar/resize drag, target preview, release placement and Escape cancellation; usable display work area; app minimum widths keep the selected left/center/right anchor |
+| Window management | Ten layouts: thirds, left/right and top/bottom halves, two-thirds and Maximize, each with a recordable global shortcut that continues across displays; actual title-bar/resize drag, target preview, release placement and Escape cancellation; usable display work area; app minimum widths keep the selected left/center/right anchor |
 | Progress/results | Borderless progress/success notices, cancellable work, real progress where measurable and indeterminate state otherwise; success fades after three seconds |
 | Settings/updates | Appearance, feedback, motion, drag chords, format profiles, output/download locations, login launch, automatic-check preference, visible update banner and verified public GitHub updates; Library/imports live outside the app bundle |
 
@@ -33,6 +33,9 @@ Both implementations use the same 46 input-format / 27-tool catalog. `scripts/ch
 | Download copied link | Control+Shift+D | Ctrl+Shift+D |
 | Drag: convert / tools / actions | Shift / Command / Control | Shift / Ctrl / Alt |
 | Arrange a dragged window | Shift or Command | Shift or Alt |
+| Front window to a half (repeat to continue on the next display) | Option+Command+arrow | Ctrl+Alt+arrow |
+| Front window to a third / two-thirds | Control+Option+Command / Shift+Option+Command+arrow | Ctrl+Alt+Win / Ctrl+Alt+Shift+arrow |
+| Maximize the front window | Option+Command+F | Ctrl+Alt+F |
 | Preview batch / media | Arrows navigate files; for media arrows seek, Option+arrows change files | Arrows navigate files; for media arrows seek, Alt+arrows change files |
 | Settings / updates | Command+, / Command+U | Ctrl+, / Ctrl+U |
 
@@ -54,7 +57,7 @@ Drag chords are configurable. Text entry keeps normal editing shortcuts; tool sh
 - Installed signed Mac app: `--desktop-parity-smoke <output-directory>` runs real keyboard input against a disposable Home/Library fixture, a private pasteboard and isolated defaults. It does not replace the user's Library or clipboard. It records screenshots and a JSON report.
 - Installed Mac app: `--window-management-smoke <manager-pid> <output-directory>` tests real window drags against the bounded cross-process fixture described in [WINDOW-MANAGEMENT.md](WINDOW-MANAGEMENT.md).
 - `dotnet run --project windows/Nashi.Verify -c Release` checks engine safety, file transactions, formats, source FPS and real FFmpeg operations when tools are configured.
-- Windows executable: `--smoke-test` runs native SendInput/OLE/WPF checks, real OS clipboard imports, Library restart/search/reuse, preview navigation, crop/annotation/export, media controls and processed playback, original-file integrity, Explorer gestures and all eight window layouts. GitHub's Windows runner uploads screenshots, errors and JSON results.
+- Windows executable: `--smoke-test` runs native SendInput/OLE/WPF checks, real OS clipboard imports, Library restart/search/reuse, preview navigation, crop/annotation/export, media controls and processed playback, original-file integrity, Explorer gestures, all ten window layouts and layout shortcuts. GitHub's Windows runner uploads screenshots, errors and JSON results.
 
 Windows native verification runs on an isolated Windows runner. This is not a claim of a physical Windows Computer Use session or listening to audio on every hardware configuration. Regression tests cover additional display geometries; not every display/codec/share-provider configuration has been exercised on physical hardware.
 

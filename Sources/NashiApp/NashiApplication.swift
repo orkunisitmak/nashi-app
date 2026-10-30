@@ -8,6 +8,9 @@ import NashiUpdates
 import NashiCore
 import ApplicationServices
 
+// Carbon also declares a WindowPlacement type.
+private typealias WindowPlacement=NashiCore.WindowPlacement
+
 @main
 enum NashiApplication {
     @MainActor static func main() {
@@ -114,6 +117,10 @@ enum NashiApplication {
     lazy var downloadModel=WebDownloadModel(state:state)
     private var downloadHotKey:EventHotKeyRef?
     private var downloadHotKeyHandler:EventHandlerRef?
+    private var windowHotKeys:[EventHotKeyRef]=[]
+    private var registeredWindowShortcuts:[WindowPlacement:HotKeyCombo]=[:]
+    private var windowShortcutRetry:Timer?
+    private var recordingWindowShortcut=false
     private let successToast=SuccessToastController()
     var welcome:NSWindow?
     var monitor:DragMonitor!
@@ -122,7 +129,7 @@ enum NashiApplication {
 
     func applicationDidFinishLaunching(_ notification:Notification) {
         NashiAppearance.apply()
-        UserDefaults.standard.register(defaults:["enabled":true,"reveal":true,"sound":true,"convertKey":"shift","toolsKey":"command","actionsKey":"control","wheelScale":1.0,"windowManagementEnabled":true])
+        UserDefaults.standard.register(defaults:["enabled":true,"reveal":true,"sound":true,"convertKey":"shift","toolsKey":"command","actionsKey":"control","wheelScale":1.0,"windowManagementEnabled":true,"windowShortcutsEnabled":true])
         let mainMenu=NSMenu();let appMenu=NSMenu()
         appMenu.addItem(withTitle:"Home",action:#selector(showHome),keyEquivalent:"1")
         appMenu.addItem(withTitle:"Library",action:#selector(showLibrary),keyEquivalent:"2")
@@ -177,14 +184,22 @@ enum NashiApplication {
         wheel=WheelController(state:state)
         monitor=DragMonitor(onEnd:{ [weak self] in self?.wheel.endDrag() }) { [weak self] urls,mode,point in self?.wheel.show(inputs:urls,mode:mode,at:point) }
         windowManagement=WindowManagementController(fileWheelIsVisible:{ [weak self] in self?.wheel.panel?.isVisible == true })
+        windowManagement.onAccessibilityChange = { [weak self] in self?.syncWindowShortcuts() }
         windowManagement.onNotice = { message in
-            let alert=NSAlert();alert.messageText="Window arrangement";alert.informativeText=message
+            let alert=NSAlert();alert.messageText=L10n.text("Window arrangement");alert.informativeText=L10n.text(message)
             alert.addButton(withTitle:"OK");alert.runModal()
         }
         state.onOpenWheel = { [weak self] in self?.wheel.show(inputs:self?.state.inputs ?? [],mode:.tools,at:NSEvent.mouseLocation,keyboard:true) }
         state.onWebDownload = { [weak self] url,mode in self?.showWebDownload(url,mode:mode) }
         state.onWebDrop = { [weak self] urls in self?.wheel.show(inputs:urls,mode:.tools,at:NSEvent.mouseLocation,keyboard:true) }
         registerDownloadShortcut()
+        syncWindowShortcuts()
+        NotificationCenter.default.publisher(for:UserDefaults.didChangeNotification).sink { [weak self] _ in
+            DispatchQueue.main.async { self?.syncWindowShortcuts() }
+        }.store(in:&updateObservations)
+        NotificationCenter.default.publisher(for:.windowShortcutRecording).sink { [weak self] note in
+            self?.recordingWindowShortcut=note.object as? Bool ?? false;self?.syncWindowShortcuts()
+        }.store(in:&updateObservations)
         homeKeyboardMonitor=NSEvent.addLocalMonitorForEvents(matching:.keyDown) { [weak self] event in
             guard let self,event.window===self.home,self.home?.isKeyWindow==true else{return event}
             return self.state.handleHomeKey(event,window:self.home!) ? nil:event
@@ -241,10 +256,16 @@ enum NashiApplication {
     private func registerDownloadShortcut() {
         var event=EventTypeSpec(eventClass:OSType(kEventClassKeyboard),eventKind:UInt32(kEventHotKeyPressed))
         let context=Unmanaged.passUnretained(self).toOpaque()
-        let installed=InstallEventHandler(GetApplicationEventTarget(),{ _,_,context in
-            guard let context else { return OSStatus(eventNotHandledErr) }
+        let installed=InstallEventHandler(GetApplicationEventTarget(),{ _,event,context in
+            guard let event,let context else { return OSStatus(eventNotHandledErr) }
+            var hotKey=EventHotKeyID()
+            guard GetEventParameter(event,EventParamName(kEventParamDirectObject),EventParamType(typeEventHotKeyID),nil,
+                                    MemoryLayout<EventHotKeyID>.size,nil,&hotKey)==noErr else { return OSStatus(eventNotHandledErr) }
             let delegate=Unmanaged<AppDelegate>.fromOpaque(context).takeUnretainedValue()
-            Task { @MainActor in delegate.showDownloadLink() }
+            let placement=WindowPlacement(hotKeyID:hotKey.id)
+            Task { @MainActor in
+                if let placement { delegate.windowManagement.arrangeFocusedWindow(placement) } else { delegate.showDownloadLink() }
+            }
             return noErr
         },1,&event,context,&downloadHotKeyHandler)
         if installed==noErr {
@@ -253,11 +274,37 @@ enum NashiApplication {
         }
         downloadModel.shortcutAvailable=state.webShortcutAvailable
     }
+    /// Window shortcuts are global, so they are registered only while the setting is on
+    /// and paused while Settings records a new combination.
+    private func syncWindowShortcuts() {
+        let defaults=UserDefaults.standard
+        // Without window-control access the keys would be swallowed from other apps for nothing.
+        let active=downloadHotKeyHandler != nil && !recordingWindowShortcut && AXIsProcessTrusted() && defaults.bool(forKey:"enabled") &&
+                   defaults.bool(forKey:"windowManagementEnabled") && defaults.bool(forKey:"windowShortcutsEnabled")
+        windowShortcutRetry?.invalidate();windowShortcutRetry=nil
+        var wanted:[WindowPlacement:HotKeyCombo]=[:]
+        if active { for placement in WindowPlacement.allCases { wanted[placement]=WindowShortcutPreferences.shortcut(for:placement) } }
+        guard wanted != registeredWindowShortcuts else { return }
+        windowHotKeys.forEach { UnregisterEventHotKey($0) };windowHotKeys=[]
+        // Only successful registrations are remembered, so the next sync retries a refused one.
+        registeredWindowShortcuts=[:]
+        for (placement,combo) in wanted {
+            var ref:EventHotKeyRef?
+            if RegisterEventHotKey(UInt32(combo.keyCode),combo.carbonModifiers,EventHotKeyID(signature:0x54474E44,id:placement.hotKeyID),
+                                   GetApplicationEventTarget(),0,&ref)==noErr,let ref { windowHotKeys.append(ref);registeredWindowShortcuts[placement]=combo }
+        }
+        // A combination another app holds is retried until that app releases it.
+        if registeredWindowShortcuts.count<wanted.count {
+            windowShortcutRetry=Timer.scheduledTimer(withTimeInterval:5,repeats:false) { [weak self] _ in Task { @MainActor in self?.syncWindowShortcuts() } }
+        }
+    }
     func applicationWillTerminate(_ notification:Notification) {
         windowManagement?.stop()
+        windowShortcutRetry?.invalidate()
         // Previews and file inspection don't block quitting; their ffmpeg/ffprobe must not outlive Nashi.
         ProcessRunner.terminateAll()
         if let downloadHotKey { UnregisterEventHotKey(downloadHotKey) }
+        windowHotKeys.forEach { UnregisterEventHotKey($0) }
         if let downloadHotKeyHandler { RemoveEventHandler(downloadHotKeyHandler) }
     }
     @objc func chooseFiles() {

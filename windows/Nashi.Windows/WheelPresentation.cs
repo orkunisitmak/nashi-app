@@ -17,7 +17,7 @@ internal static class WheelPresentation
         for(var font=16d;font>=10;font-=.5)for(var width=142d;width>=72;width-=7)
         {
             var label=new StackPanel{Width=width,IsHitTestVisible=false};
-            if(choice.Placement is {} placement){var glyph=new System.Windows.Controls.Canvas{Width=36,Height=25,HorizontalAlignment=HorizontalAlignment.Center,Margin=new(0,0,0,7)};glyph.Children.Add(new System.Windows.Shapes.Rectangle{Width=35,Height=24,RadiusX=3,RadiusY=3,Stroke=Theme.Brush("Ink"),StrokeThickness=1.7});var (start,end)=placement.Range();var fill=new System.Windows.Shapes.Rectangle{Width=29*(end-start),Height=18,Fill=Theme.Brush("Ink"),Opacity=.65};System.Windows.Controls.Canvas.SetLeft(fill,3+29*start);System.Windows.Controls.Canvas.SetTop(fill,3);glyph.Children.Add(fill);label.Children.Add(glyph);}
+            if(choice.Placement is {} placement){var glyph=Glyph(placement);glyph.Margin=new(0,0,0,7);label.Children.Add(glyph);}
             else label.Children.Add(new System.Windows.Controls.TextBlock{Text=choice.Symbol,FontSize=32,TextAlignment=TextAlignment.Center,Foreground=Theme.Brush("Ink"),Margin=new(0,0,0,6)});
             label.Children.Add(new System.Windows.Controls.TextBlock{Text=L10n.Uppercase(choice.Title),FontSize=font,FontWeight=FontWeights.SemiBold,TextAlignment=TextAlignment.Center,TextWrapping=TextWrapping.Wrap,Foreground=Theme.Brush("Ink")});
             label.Measure(new Size(width,double.PositiveInfinity));var h=label.DesiredSize.Height;
@@ -28,6 +28,13 @@ internal static class WheelPresentation
             }
         }
         var fallback=new StackPanel{Width=72};fallback.Children.Add(new System.Windows.Controls.TextBlock{Text=L10n.Uppercase(choice.Title),FontSize=10,TextAlignment=TextAlignment.Center,TextWrapping=TextWrapping.Wrap,Foreground=Theme.Brush("Ink")});fallback.Measure(new Size(72,double.PositiveInfinity));return(fallback,new Point(270+preferred*Math.Cos(angle),270+preferred*Math.Sin(angle)));
+    }
+    /// The miniature screen shown for a layout on the wheel and in Settings.
+    internal static System.Windows.Controls.Canvas Glyph(WindowPlacement placement)
+    {
+        var glyph=new System.Windows.Controls.Canvas{Width=36,Height=25,HorizontalAlignment=HorizontalAlignment.Center};glyph.Children.Add(new System.Windows.Shapes.Rectangle{Width=35,Height=24,RadiusX=3,RadiusY=3,Stroke=Theme.Brush("Ink"),StrokeThickness=1.7});
+        var (start,end)=placement.Range();var (top,bottom)=placement.VerticalRange();var fill=new System.Windows.Shapes.Rectangle{Width=29*(end-start),Height=18*(bottom-top),Fill=Theme.Brush("Ink"),Opacity=.65};
+        System.Windows.Controls.Canvas.SetLeft(fill,3+29*start);System.Windows.Controls.Canvas.SetTop(fill,3+18*top);glyph.Children.Add(fill);return glyph;
     }
     internal static void Animate(Window window,double from=0){if(Preferences.Animations&&SystemParameters.ClientAreaAnimation)window.BeginAnimation(UIElement.OpacityProperty,new DoubleAnimation(from,1,TimeSpan.FromMilliseconds(140)));}
 }

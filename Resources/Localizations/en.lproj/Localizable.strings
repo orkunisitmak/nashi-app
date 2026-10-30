@@ -8,6 +8,8 @@
 "%@ QR codes found." = "%@ QR codes found.";
 "%@ files" = "%@ files";
 "%@ files, ready to go." = "%@ files, ready to go.";
+"%@ is already used by %@." = "%@ is already used by %@.";
+"%@ is already used by %lld." = "%@ is already used by %lld.";
 "%@ is enabled" = "%@ is enabled";
 "%@ items" = "%@ items";
 "%@ selected" = "%@ selected";
@@ -22,6 +24,8 @@
 "%lld QR codes found." = "%lld QR codes found.";
 "%lld files" = "%lld files";
 "%lld files, ready to go." = "%lld files, ready to go.";
+"%lld is already used by %@." = "%lld is already used by %@.";
+"%lld is already used by %lld." = "%lld is already used by %lld.";
 "%lld is enabled" = "%lld is enabled";
 "%lld items" = "%lld items";
 "%lld selected" = "%lld selected";
@@ -32,7 +36,9 @@
 "1 ITEM" = "1 ITEM";
 "1 item" = "1 item";
 "1/3 LEFT · MIDDLE · RIGHT   /   1/2 LEFT · RIGHT   /   2/3 LEFT · RIGHT" = "1/3 LEFT · MIDDLE · RIGHT   /   1/2 LEFT · RIGHT   /   2/3 LEFT · RIGHT";
+"1/3 LEFT · MIDDLE · RIGHT   /   1/2 LEFT · RIGHT · TOP · BOTTOM   /   2/3 LEFT · RIGHT" = "1/3 LEFT · MIDDLE · RIGHT   /   1/2 LEFT · RIGHT · TOP · BOTTOM   /   2/3 LEFT · RIGHT";
 "1/3 left · middle · right   /   1/2 left · right   /   2/3 left · right" = "1/3 left · middle · right   /   1/2 left · right   /   2/3 left · right";
+"1/3 left · middle · right   /   1/2 left · right · top · bottom   /   2/3 left · right" = "1/3 left · middle · right   /   1/2 left · right · top · bottom   /   2/3 left · right";
 "1280 PX LONGEST EDGE" = "1280 PX LONGEST EDGE";
 "1280 px longest edge" = "1280 px longest edge";
 "16-BIT INTEGER" = "16-BIT INTEGER";
@@ -143,6 +149,7 @@
 "ARCHIVE PASSWORD (IF NEEDED)" = "ARCHIVE PASSWORD (IF NEEDED)";
 "ARCHIVE SIZE EXCEEDS ITS DECLARED LIMIT." = "ARCHIVE SIZE EXCEEDS ITS DECLARED LIMIT.";
 "ARCHIVES" = "ARCHIVES";
+"ARRANGE THE FRONT WINDOW WITH KEYBOARD SHORTCUTS" = "ARRANGE THE FRONT WINDOW WITH KEYBOARD SHORTCUTS";
 "ARRANGE WINDOW" = "ARRANGE WINDOW";
 "ARRANGE WINDOWS WHILE DRAGGING" = "ARRANGE WINDOWS WHILE DRAGGING";
 "ARROW" = "ARROW";
@@ -215,6 +222,7 @@
 "Archives" = "Archives";
 "Area %@" = "Area %@";
 "Area %lld" = "Area %lld";
+"Arrange the front window with keyboard shortcuts" = "Arrange the front window with keyboard shortcuts";
 "Arrange window" = "Arrange window";
 "Arrange windows while dragging" = "Arrange windows while dragging";
 "Arrow" = "Arrow";
@@ -249,6 +257,7 @@
 "BLUR" = "BLUR";
 "BORDER" = "BORDER";
 "BOTTOM" = "BOTTOM";
+"BOTTOM HALF" = "BOTTOM HALF";
 "BRIGHTNESS" = "BRIGHTNESS";
 "BUILT FOR YOUR FILES. MADE FOR YOUR MAC." = "BUILT FOR YOUR FILES. MADE FOR YOUR MAC.";
 "Back" = "Back";
@@ -268,6 +277,7 @@
 "Blur" = "Blur";
 "Border" = "Border";
 "Bottom" = "Bottom";
+"Bottom half" = "Bottom half";
 "Brightness" = "Brightness";
 "Built for your files. Made for your Mac." = "Built for your files. Made for your Mac.";
 "CALLOUT" = "CALLOUT";
@@ -991,6 +1001,8 @@
 "IMAGE SIZE" = "IMAGE SIZE";
 "IMAGES" = "IMAGES";
 "IMAGES, VIDEOS, DOCUMENTS, AND ALL THE LITTLE THINGS IN BETWEEN." = "IMAGES, VIDEOS, DOCUMENTS, AND ALL THE LITTLE THINGS IN BETWEEN.";
+"INCLUDE CTRL, ALT OR WIN IN THE SHORTCUT." = "INCLUDE CTRL, ALT OR WIN IN THE SHORTCUT.";
+"INCLUDE ⌘, ⌥ OR ⌃ IN THE SHORTCUT." = "INCLUDE ⌘, ⌥ OR ⌃ IN THE SHORTCUT.";
 "INK COLOR" = "INK COLOR";
 "INPUT AND OUTPUT FORMAT." = "INPUT AND OUTPUT FORMAT.";
 "INPUT FORMAT" = "INPUT FORMAT";
@@ -1019,6 +1031,8 @@
 "Image size" = "Image size";
 "Images" = "Images";
 "Images, videos, documents, and all the little things in between." = "Images, videos, documents, and all the little things in between.";
+"Include Ctrl, Alt or Win in the shortcut." = "Include Ctrl, Alt or Win in the shortcut.";
+"Include ⌘, ⌥ or ⌃ in the shortcut." = "Include ⌘, ⌥ or ⌃ in the shortcut.";
 "Ink color" = "Ink color";
 "Input and output format." = "Input and output format.";
 "Input format" = "Input format";
@@ -1413,6 +1427,8 @@
 "PRESERVE METADATA" = "PRESERVE METADATA";
 "PRESERVE ORIGINAL PAGES" = "PRESERVE ORIGINAL PAGES";
 "PRESET" = "PRESET";
+"PRESS RECORD, THEN TYPE A COMBINATION WITH CTRL, ALT OR WIN. BACKSPACE CLEARS IT; ESCAPE CANCELS." = "PRESS RECORD, THEN TYPE A COMBINATION WITH CTRL, ALT OR WIN. BACKSPACE CLEARS IT; ESCAPE CANCELS.";
+"PRESS RECORD, THEN TYPE A COMBINATION WITH ⌘, ⌥ OR ⌃. DELETE CLEARS IT; ESCAPE CANCELS." = "PRESS RECORD, THEN TYPE A COMBINATION WITH ⌘, ⌥ OR ⌃. DELETE CLEARS IT; ESCAPE CANCELS.";
 "PREVIEW" = "PREVIEW";
 "PREVIEW LEFT" = "PREVIEW LEFT";
 "PREVIEW POSITION" = "PREVIEW POSITION";
@@ -1473,6 +1489,8 @@
 "Preserve metadata" = "Preserve metadata";
 "Preserve original pages" = "Preserve original pages";
 "Preset" = "Preset";
+"Press Record, then type a combination with Ctrl, Alt or Win. Backspace clears it; Escape cancels." = "Press Record, then type a combination with Ctrl, Alt or Win. Backspace clears it; Escape cancels.";
+"Press Record, then type a combination with ⌘, ⌥ or ⌃. Delete clears it; Escape cancels." = "Press Record, then type a combination with ⌘, ⌥ or ⌃. Delete clears it; Escape cancels.";
 "Preview" = "Preview";
 "Preview Left" = "Preview Left";
 "Preview Processed" = "Preview Processed";
@@ -1514,6 +1532,7 @@
 "READY." = "READY.";
 "READY. YOU CAN GO BACK TO YOUR FILES." = "READY. YOU CAN GO BACK TO YOUR FILES.";
 "RECENT CONVERSIONS" = "RECENT CONVERSIONS";
+"RECORD" = "RECORD";
 "RECTANGLE" = "RECTANGLE";
 "REDACT AUDIO" = "REDACT AUDIO";
 "REDACT IMAGE" = "REDACT IMAGE";
@@ -1574,6 +1593,7 @@
 "Ready." = "Ready.";
 "Ready. You can go back to your files." = "Ready. You can go back to your files.";
 "Recent Conversions" = "Recent Conversions";
+"Record" = "Record";
 "Rectangle" = "Rectangle";
 "Redact Audio" = "Redact Audio";
 "Redact Image" = "Redact Image";
@@ -1961,6 +1981,7 @@
 "TOOLS READY" = "TOOLS READY";
 "TOOLS · WHILE DRAGGING" = "TOOLS · WHILE DRAGGING";
 "TOP" = "TOP";
+"TOP HALF" = "TOP HALF";
 "TRACK NAME" = "TRACK NAME";
 "TRANSPARENT" = "TRANSPARENT";
 "TRANSPARENT BACKGROUNDS SAVE AS PNG TO KEEP THEIR TRANSPARENCY." = "TRANSPARENT BACKGROUNDS SAVE AS PNG TO KEEP THEIR TRANSPARENCY.";
@@ -1974,6 +1995,7 @@
 "TRY A CLEARER IMAGE OR ANOTHER PDF." = "TRY A CLEARER IMAGE OR ANOTHER PDF.";
 "TRY FEEDBACK" = "TRY FEEDBACK";
 "TURN OFF UNIFORM WIDTH TO PRESERVE THIS PDF’S FORM FIELDS, ATTACHMENTS, LINKS OR NAVIGATION." = "TURN OFF UNIFORM WIDTH TO PRESERVE THIS PDF’S FORM FIELDS, ATTACHMENTS, LINKS OR NAVIGATION.";
+"TYPE A SHORTCUT…" = "TYPE A SHORTCUT…";
 "Tap the chosen modifier combination while dragging files." = "Tap the chosen modifier combination while dragging files.";
 "Target" = "Target";
 "Target LUFS" = "Target LUFS";
@@ -2050,6 +2072,7 @@
 "Tools ready" = "Tools ready";
 "Tools · while dragging" = "Tools · while dragging";
 "Top" = "Top";
+"Top half" = "Top half";
 "Track name" = "Track name";
 "Transparent" = "Transparent";
 "Transparent backgrounds save as PNG to keep their transparency." = "Transparent backgrounds save as PNG to keep their transparency.";
@@ -2063,6 +2086,7 @@
 "Try a clearer image or another PDF." = "Try a clearer image or another PDF.";
 "Try feedback" = "Try feedback";
 "Turn off uniform width to preserve this PDF’s form fields, attachments, links or navigation." = "Turn off uniform width to preserve this PDF’s form fields, attachments, links or navigation.";
+"Type a shortcut…" = "Type a shortcut…";
 "UNDO" = "UNDO";
 "UNDO AREA" = "UNDO AREA";
 "UNDO LAST MARK" = "UNDO LAST MARK";

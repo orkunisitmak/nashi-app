@@ -7,10 +7,10 @@ enum WindowPlacementGlyph {
         let rect=NSRect(x:slot.midX-12,y:slot.midY-8,width:24,height:16)
         let outline=NSBezierPath(roundedRect:rect,xRadius:2,yRadius:2)
         color.setStroke();outline.lineWidth=1.3;outline.stroke()
-        let range=placement.horizontalRange
+        let range=placement.horizontalRange,vertical=placement.verticalRange
         color.withAlphaComponent(0.7).setFill()
-        NSBezierPath(rect:NSRect(x:rect.minX+2+(rect.width-4)*range.lowerBound,y:rect.minY+2,
-                                width:(rect.width-4)*(range.upperBound-range.lowerBound),height:rect.height-4)).fill()
+        NSBezierPath(rect:NSRect(x:rect.minX+2+(rect.width-4)*range.lowerBound,y:rect.maxY-2-(rect.height-4)*vertical.upperBound,
+                                width:(rect.width-4)*(range.upperBound-range.lowerBound),height:(rect.height-4)*(vertical.upperBound-vertical.lowerBound))).fill()
     }
 }
 
@@ -37,6 +37,8 @@ enum WindowPlacementGlyph {
     private var placementTask:Task<Void,Never>?
     private let fileWheelIsVisible:()->Bool
     var onNotice:((String)->Void)?
+    /// Called when macOS grants or revokes the window-control permission.
+    var onAccessibilityChange:(()->Void)?
 
     init(fileWheelIsVisible:@escaping()->Bool) {
         self.fileWheelIsVisible=fileWheelIsVisible
@@ -66,7 +68,10 @@ enum WindowPlacementGlyph {
                                                     now:ProcessInfo.processInfo.systemUptime)
         let point=NSEvent.mouseLocation
         let now=ProcessInfo.processInfo.systemUptime
-        if now>=nextAccessibilityCheck { accessibilityTrusted=AXIsProcessTrusted();nextAccessibilityCheck=now+1 }
+        if now>=nextAccessibilityCheck {
+            let trusted=AXIsProcessTrusted();nextAccessibilityCheck=now+1
+            if trusted != accessibilityTrusted { accessibilityTrusted=trusted;onAccessibilityChange?() }
+        }
         defer { wasDown=down }
         guard UserDefaults.standard.bool(forKey:"enabled"),
               UserDefaults.standard.bool(forKey:"windowManagementEnabled"),accessibilityTrusted else {
@@ -202,16 +207,57 @@ enum WindowPlacementGlyph {
         lastPlacement=placement
     }
 
+    /// A layout shortcut places the frontmost app's focused window without showing the wheel.
+    func arrangeFocusedWindow(_ placement:WindowPlacement) {
+        guard AXIsProcessTrusted() else {
+            onNotice?("Allow \(Self.permissionName) once to move and resize other apps’ windows.");return
+        }
+        guard let app=NSWorkspace.shared.frontmostApplication else { return }
+        // Busy Chromium/Electron apps can take longer than a drag-time query to answer.
+        let element=AXUIElementCreateApplication(app.processIdentifier);AXUIElementSetMessagingTimeout(element,1)
+        guard let window=Self.frontWindow(of:element,pid:app.processIdentifier),let frame=Self.frame(of:window) else { NSSound.beep();return }
+        // Accessibility frames start at the top-left of the primary display; NSScreen frames at the bottom-left.
+        let top=NSScreen.screens.first?.frame.maxY ?? 0
+        let cocoa=CGRect(x:frame.minX,y:top-frame.maxY,width:frame.width,height:frame.height)
+        let screens=NSScreen.screens,current=screen(at:NSPoint(x:cocoa.midX,y:cocoa.midY))
+        let index=screens.firstIndex(of:current) ?? 0
+        let next=WindowPlacement.destination(for:placement,window:cocoa,displays:screens.map(\.visibleFrame),current:index,
+                                             scale:current.backingScaleFactor,resizable:Self.isResizable(window))
+        let screen=screens.indices.contains(next.display) ? screens[next.display]:current
+        placementTask?.cancel()
+        placementTask=Task { [weak self] in await self?.apply(next.placement,to:window,pid:app.processIdentifier,on:screen) }
+    }
+
+    /// The focused window, else the main window, else the first window the app lists.
+    private static func frontWindow(of app:AXUIElement,pid:pid_t)->AXUIElement? {
+        var candidates:[CFTypeRef]=[kAXFocusedWindowAttribute,kAXMainWindowAttribute].compactMap { attribute(app,$0) }
+        if let windows=attribute(app,kAXWindowsAttribute) as? [AXUIElement] { candidates+=windows as [CFTypeRef] }
+        for candidate in candidates where CFGetTypeID(candidate)==AXUIElementGetTypeID() {
+            let window=candidate as! AXUIElement
+            AXUIElementSetMessagingTimeout(window,1)
+            if isUsable(window,pid:pid) { return window }
+        }
+        return nil
+    }
+
     private func cancel() { wheelPanel?.orderOut(nil);wheel?.selected=nil;preview?.orderOut(nil);lastPlacement=nil }
     private func screen(at point:NSPoint)->NSScreen { NSScreen.screens.first(where:{$0.frame.contains(point)}) ?? NSScreen.main ?? NSScreen.screens[0] }
 
     private func apply(_ placement:WindowPlacement,to window:AXUIElement,pid:pid_t,on screen:NSScreen) async {
         guard AXIsProcessTrusted(),Self.isUsable(window,pid:pid) else { return }
-        AXUIElementSetMessagingTimeout(window,0.5)
-        var wanted=placement.frame(in:screen.visibleFrame,scale:screen.backingScaleFactor)
+        AXUIElementSetMessagingTimeout(window,1)
+        // With AXEnhancedUserInterface on (Chrome, Electron, assistive tools) apps animate
+        // every AX move, so the frame reads back stale. Pause it while placing the window.
+        let app=AXUIElementCreateApplication(pid);AXUIElementSetMessagingTimeout(app,1)
+        let enhanced=Self.attribute(app,"AXEnhancedUserInterface") as? Bool==true
+        if enhanced { AXUIElementSetAttributeValue(app,"AXEnhancedUserInterface" as CFString,kCFBooleanFalse) }
+        defer { if enhanced { AXUIElementSetAttributeValue(app,"AXEnhancedUserInterface" as CFString,kCFBooleanTrue) } }
+        let resizable=Self.isResizable(window)
+        var wanted=resizable ? placement.frame(in:screen.visibleFrame,scale:screen.backingScaleFactor)
+                             : placement.frame(in:screen.visibleFrame,scale:screen.backingScaleFactor,fixedSize:Self.frame(of:window)?.size ?? .zero)
         for attempt in 0..<4 {
             guard !Task.isCancelled,Self.isUsable(window,pid:pid) else{return}
-            let acknowledged=Self.requestFrame(wanted,of:window)
+            let acknowledged=Self.requestFrame(wanted,of:window,resize:resizable)
             // AX writes can be acknowledged before Chrome/Electron applies the
             // native layout. Do not report an error from the immediate read.
             try? await Task.sleep(nanoseconds:120_000_000)
@@ -219,10 +265,16 @@ enum WindowPlacementGlyph {
             let origin=Self.accessibilityPoint(NSPoint(x:wanted.minX,y:wanted.maxY))
             if abs(actual.width-wanted.width)<3,abs(actual.height-wanted.height)<3,
                abs(actual.minX-origin.x)<3,abs(actual.minY-origin.y)<3 {return}
-            if acknowledged,attempt>=1,actual.width>wanted.width+3,abs(actual.height-wanted.height)<3 {
-                // Respect an app's minimum width, while retaining the chosen
-                // left/center/right anchor instead of rejecting the placement.
+            let wider=actual.width>wanted.width+3,taller=actual.height>wanted.height+3
+            if acknowledged,attempt>=1,(wider && (taller || abs(actual.height-wanted.height)<3)) ||
+                                        (taller && abs(actual.width-wanted.width)<3) {
+                // Respect an app's minimum width or height, while retaining the chosen
+                // left/center/right or top/bottom anchor instead of rejecting the placement.
                 wanted=placement.frame(in:screen.visibleFrame,scale:screen.backingScaleFactor,minimumSize:actual.size)
+            } else if acknowledged,attempt>=2,actual.width<wanted.width-3 || actual.height<wanted.height-3 {
+                // The app kept a smaller, fixed size: anchor that size instead. Wait one more
+                // round first so a slow resize is not mistaken for a refusal.
+                wanted=placement.frame(in:screen.visibleFrame,scale:screen.backingScaleFactor,fixedSize:actual.size)
             }
         }
         if !Task.isCancelled {onNotice?("This window could not be arranged. The app may restrict resizing.")}
@@ -240,14 +292,21 @@ enum WindowPlacementGlyph {
         return CGRect(origin:point,size:size)
     }
     private static func isUsable(_ window:AXUIElement,pid:pid_t)->Bool {
+        // Java, Qt and some Electron apps report their main windows as dialogs or without a
+        // subrole; only system-owned surfaces are excluded.
+        let subrole=attribute(window,kAXSubroleAttribute) as? String
         guard pid>0,NSRunningApplication(processIdentifier:pid)?.isTerminated==false,
               attribute(window,kAXRoleAttribute) as? String==kAXWindowRole,
-              attribute(window,kAXSubroleAttribute) as? String==kAXStandardWindowSubrole,
+              ![kAXSystemDialogSubrole,kAXSystemFloatingWindowSubrole,kAXUnknownSubrole].contains(subrole ?? ""),
               attribute(window,kAXMinimizedAttribute) as? Bool != true,
               attribute(window,"AXFullScreen") as? Bool != true else { return false }
-        var position:DarwinBoolean=false,size:DarwinBoolean=false
-        return AXUIElementIsAttributeSettable(window,kAXPositionAttribute as CFString,&position) == .success && position.boolValue &&
-               AXUIElementIsAttributeSettable(window,kAXSizeAttribute as CFString,&size) == .success && size.boolValue
+        // Some apps answer "not settable" yet accept the write, so only a definite refusal counts.
+        var position:DarwinBoolean=true
+        return AXUIElementIsAttributeSettable(window,kAXPositionAttribute as CFString,&position) != .success || position.boolValue
+    }
+    private static func isResizable(_ window:AXUIElement)->Bool {
+        var size:DarwinBoolean=true
+        return AXUIElementIsAttributeSettable(window,kAXSizeAttribute as CFString,&size) != .success || size.boolValue
     }
     static func accessibilityPoint(_ point:NSPoint)->CGPoint {
         CGPoint(x:point.x,y:(NSScreen.screens.first?.frame.maxY ?? 0)-point.y)
@@ -258,13 +317,14 @@ enum WindowPlacementGlyph {
         return abs(actual.width-frame.width)<3 && abs(actual.height-frame.height)<3 &&
                abs(actual.minX-position.x)<3 && abs(actual.minY-position.y)<3
     }
-    private static func requestFrame(_ frame:NSRect,of window:AXUIElement)->Bool {
+    private static func requestFrame(_ frame:NSRect,of window:AXUIElement,resize:Bool=true)->Bool {
         var size=frame.size,position=accessibilityPoint(NSPoint(x:frame.minX,y:frame.maxY))
         guard let s=AXValueCreate(.cgSize,&size),let p=AXValueCreate(.cgPoint,&position) else { return false }
-        guard AXUIElementSetAttributeValue(window,kAXSizeAttribute as CFString,s) == .success,
-              AXUIElementSetAttributeValue(window,kAXPositionAttribute as CFString,p) == .success else { return false }
+        // A refused size still moves the window; the caller then anchors the size the app kept.
+        if resize { _=AXUIElementSetAttributeValue(window,kAXSizeAttribute as CFString,s) }
+        guard AXUIElementSetAttributeValue(window,kAXPositionAttribute as CFString,p) == .success else { return false }
         // Some apps constrain the first resize to the old display. Repeat after the move.
-        _=AXUIElementSetAttributeValue(window,kAXSizeAttribute as CFString,s)
+        if resize { _=AXUIElementSetAttributeValue(window,kAXSizeAttribute as CFString,s) }
         _=AXUIElementSetAttributeValue(window,kAXPositionAttribute as CFString,p)
         return true
     }

@@ -8,6 +8,8 @@
 "%@ QR codes found." = "%@ codes QR trouvés.";
 "%@ files" = "%@ fichiers";
 "%@ files, ready to go." = "%@ fichiers, prêts à partir.";
+"%@ is already used by %@." = "%@ est déjà utilisé par %@.";
+"%@ is already used by %lld." = "%@ est déjà utilisé par %lld.";
 "%@ is enabled" = "%@ est activé";
 "%@ items" = "%@ éléments";
 "%@ selected" = "%@ sélectionnés";
@@ -22,6 +24,8 @@
 "%lld QR codes found." = "%lld codes QR trouvés.";
 "%lld files" = "%lld fichiers";
 "%lld files, ready to go." = "%lld fichiers, prêts à partir.";
+"%lld is already used by %@." = "%lld est déjà utilisé par %@.";
+"%lld is already used by %lld." = "%lld est déjà utilisé par %lld.";
 "%lld is enabled" = "%lld est activé";
 "%lld items" = "%lld éléments";
 "%lld selected" = "%lld sélectionnés";
@@ -32,7 +36,9 @@
 "1 ITEM" = "1 ÉLÉMENT";
 "1 item" = "1 élément";
 "1/3 LEFT · MIDDLE · RIGHT   /   1/2 LEFT · RIGHT   /   2/3 LEFT · RIGHT" = "1/3 GAUCHE · MILIEU · DROITE   /   1/2 GAUCHE · DROITE   /   2/3 GAUCHE · DROITE";
+"1/3 LEFT · MIDDLE · RIGHT   /   1/2 LEFT · RIGHT · TOP · BOTTOM   /   2/3 LEFT · RIGHT" = "1/3 GAUCHE · MILIEU · DROITE   /   1/2 GAUCHE · DROITE · HAUT · BAS   /   2/3 GAUCHE · DROITE";
 "1/3 left · middle · right   /   1/2 left · right   /   2/3 left · right" = "1/3 gauche · milieu · droite   /   1/2 gauche · droite   /   2/3 gauche · droite";
+"1/3 left · middle · right   /   1/2 left · right · top · bottom   /   2/3 left · right" = "1/3 gauche · milieu · droite   /   1/2 gauche · droite · haut · bas   /   2/3 gauche · droite";
 "1280 PX LONGEST EDGE" = "1280 PX SUR LE PLUS GRAND CÔTÉ";
 "1280 px longest edge" = "1280 px sur le plus grand côté";
 "16-BIT INTEGER" = "ENTIER 16 BITS";
@@ -143,6 +149,7 @@
 "ARCHIVE PASSWORD (IF NEEDED)" = "MOT DE PASSE DE L’ARCHIVE (SI NÉCESSAIRE)";
 "ARCHIVE SIZE EXCEEDS ITS DECLARED LIMIT." = "LA TAILLE DE L’ARCHIVE DÉPASSE LA LIMITE DÉCLARÉE.";
 "ARCHIVES" = "ARCHIVES";
+"ARRANGE THE FRONT WINDOW WITH KEYBOARD SHORTCUTS" = "DISPOSER LA FENÊTRE ACTIVE AVEC DES RACCOURCIS CLAVIER";
 "ARRANGE WINDOW" = "DISPOSER LA FENÊTRE";
 "ARRANGE WINDOWS WHILE DRAGGING" = "DISPOSER LES FENÊTRES PENDANT LE GLISSEMENT";
 "ARROW" = "FLÈCHE";
@@ -215,6 +222,7 @@
 "Archives" = "Archives";
 "Area %@" = "Zone %@";
 "Area %lld" = "Zone %lld";
+"Arrange the front window with keyboard shortcuts" = "Disposer la fenêtre active avec des raccourcis clavier";
 "Arrange window" = "Disposer la fenêtre";
 "Arrange windows while dragging" = "Disposer les fenêtres pendant le glissement";
 "Arrow" = "Flèche";
@@ -249,6 +257,7 @@
 "BLUR" = "FLOU";
 "BORDER" = "BORDURE";
 "BOTTOM" = "BAS";
+"BOTTOM HALF" = "MOITIÉ BASSE";
 "BRIGHTNESS" = "LUMINOSITÉ";
 "BUILT FOR YOUR FILES. MADE FOR YOUR MAC." = "CONÇU POUR VOS FICHIERS. FAIT POUR VOTRE MAC.";
 "Back" = "Retour";
@@ -268,6 +277,7 @@
 "Blur" = "Flou";
 "Border" = "Bordure";
 "Bottom" = "Bas";
+"Bottom half" = "Moitié basse";
 "Brightness" = "Luminosité";
 "Built for your files. Made for your Mac." = "Conçu pour vos fichiers. Fait pour votre Mac.";
 "CALLOUT" = "LÉGENDE";
@@ -991,6 +1001,8 @@
 "IMAGE SIZE" = "TAILLE DE L’IMAGE";
 "IMAGES" = "IMAGES";
 "IMAGES, VIDEOS, DOCUMENTS, AND ALL THE LITTLE THINGS IN BETWEEN." = "IMAGES, VIDÉOS, DOCUMENTS ET TOUS LES PETITS FORMATS ENTRE LES DEUX.";
+"INCLUDE CTRL, ALT OR WIN IN THE SHORTCUT." = "LE RACCOURCI DOIT INCLURE CTRL, ALT OU WIN.";
+"INCLUDE ⌘, ⌥ OR ⌃ IN THE SHORTCUT." = "LE RACCOURCI DOIT INCLURE ⌘, ⌥ OU ⌃.";
 "INK COLOR" = "COULEUR DE L’ENCRE";
 "INPUT AND OUTPUT FORMAT." = "FORMAT D’ENTRÉE ET DE SORTIE.";
 "INPUT FORMAT" = "FORMAT D’ENTRÉE";
@@ -1019,6 +1031,8 @@
 "Image size" = "Taille de l’image";
 "Images" = "Images";
 "Images, videos, documents, and all the little things in between." = "Images, vidéos, documents et tous les petits formats entre les deux.";
+"Include Ctrl, Alt or Win in the shortcut." = "Le raccourci doit inclure Ctrl, Alt ou Win.";
+"Include ⌘, ⌥ or ⌃ in the shortcut." = "Le raccourci doit inclure ⌘, ⌥ ou ⌃.";
 "Ink color" = "Couleur de l’encre";
 "Input and output format." = "Format d’entrée et de sortie.";
 "Input format" = "Format d’entrée";
@@ -1413,6 +1427,8 @@
 "PRESERVE METADATA" = "CONSERVER LES MÉTADONNÉES";
 "PRESERVE ORIGINAL PAGES" = "CONSERVER LES PAGES D’ORIGINE";
 "PRESET" = "PRÉRÉGLAGE";
+"PRESS RECORD, THEN TYPE A COMBINATION WITH CTRL, ALT OR WIN. BACKSPACE CLEARS IT; ESCAPE CANCELS." = "CLIQUEZ SUR ENREGISTRER, PUIS TAPEZ UNE COMBINAISON AVEC CTRL, ALT OU WIN. RETOUR ARRIÈRE L’EFFACE ; ÉCHAP ANNULE.";
+"PRESS RECORD, THEN TYPE A COMBINATION WITH ⌘, ⌥ OR ⌃. DELETE CLEARS IT; ESCAPE CANCELS." = "CLIQUEZ SUR ENREGISTRER, PUIS TAPEZ UNE COMBINAISON AVEC ⌘, ⌥ OU ⌃. SUPPRIMER L’EFFACE ; ÉCHAP ANNULE.";
 "PREVIEW" = "APERÇU";
 "PREVIEW LEFT" = "APERÇU À GAUCHE";
 "PREVIEW POSITION" = "POSITION DE L’APERÇU";
@@ -1473,6 +1489,8 @@
 "Preserve metadata" = "Conserver les métadonnées";
 "Preserve original pages" = "Conserver les pages d’origine";
 "Preset" = "Préréglage";
+"Press Record, then type a combination with Ctrl, Alt or Win. Backspace clears it; Escape cancels." = "Cliquez sur Enregistrer, puis tapez une combinaison avec Ctrl, Alt ou Win. Retour arrière l’efface ; Échap annule.";
+"Press Record, then type a combination with ⌘, ⌥ or ⌃. Delete clears it; Escape cancels." = "Cliquez sur Enregistrer, puis tapez une combinaison avec ⌘, ⌥ ou ⌃. Supprimer l’efface ; Échap annule.";
 "Preview" = "Aperçu";
 "Preview Left" = "Aperçu à gauche";
 "Preview Processed" = "Aperçu du résultat traité";
@@ -1514,6 +1532,7 @@
 "READY." = "PRÊT.";
 "READY. YOU CAN GO BACK TO YOUR FILES." = "PRÊT. VOUS POUVEZ RETOURNER À VOS FICHIERS.";
 "RECENT CONVERSIONS" = "CONVERSIONS RÉCENTES";
+"RECORD" = "ENREGISTRER";
 "RECTANGLE" = "RECTANGLE";
 "REDACT AUDIO" = "CAVIARDER L’AUDIO";
 "REDACT IMAGE" = "CAVIARDER L’IMAGE";
@@ -1574,6 +1593,7 @@
 "Ready." = "Prêt.";
 "Ready. You can go back to your files." = "Prêt. Vous pouvez retourner à vos fichiers.";
 "Recent Conversions" = "Conversions récentes";
+"Record" = "Enregistrer";
 "Rectangle" = "Rectangle";
 "Redact Audio" = "Caviarder l’audio";
 "Redact Image" = "Caviarder l’image";
@@ -1961,6 +1981,7 @@
 "TOOLS READY" = "OUTILS PRÊTS";
 "TOOLS · WHILE DRAGGING" = "OUTILS · PENDANT LE GLISSEMENT";
 "TOP" = "HAUT";
+"TOP HALF" = "MOITIÉ HAUTE";
 "TRACK NAME" = "NOM DE LA PISTE";
 "TRANSPARENT" = "TRANSPARENT";
 "TRANSPARENT BACKGROUNDS SAVE AS PNG TO KEEP THEIR TRANSPARENCY." = "LES ARRIÈRE-PLANS TRANSPARENTS SONT ENREGISTRÉS EN PNG POUR CONSERVER LEUR TRANSPARENCE.";
@@ -1974,6 +1995,7 @@
 "TRY A CLEARER IMAGE OR ANOTHER PDF." = "ESSAYEZ UNE IMAGE PLUS NETTE OU UN AUTRE PDF.";
 "TRY FEEDBACK" = "ESSAYER LE RETOUR";
 "TURN OFF UNIFORM WIDTH TO PRESERVE THIS PDF’S FORM FIELDS, ATTACHMENTS, LINKS OR NAVIGATION." = "DÉSACTIVEZ LA LARGEUR UNIFORME POUR PRÉSERVER LES CHAMPS DE FORMULAIRE, PIÈCES JOINTES, LIENS OU LA NAVIGATION DE CE PDF.";
+"TYPE A SHORTCUT…" = "TAPEZ UN RACCOURCI…";
 "Tap the chosen modifier combination while dragging files." = "Appuyez sur la combinaison de modificateurs choisie pendant que vous faites glisser des fichiers.";
 "Target" = "Cible";
 "Target LUFS" = "LUFS cible";
@@ -2050,6 +2072,7 @@
 "Tools ready" = "Outils prêts";
 "Tools · while dragging" = "Outils · pendant le glissement";
 "Top" = "Haut";
+"Top half" = "Moitié haute";
 "Track name" = "Nom de la piste";
 "Transparent" = "Transparent";
 "Transparent backgrounds save as PNG to keep their transparency." = "Les arrière-plans transparents sont enregistrés en PNG pour conserver leur transparence.";
@@ -2063,6 +2086,7 @@
 "Try a clearer image or another PDF." = "Essayez une image plus nette ou un autre PDF.";
 "Try feedback" = "Essayer le retour";
 "Turn off uniform width to preserve this PDF’s form fields, attachments, links or navigation." = "Désactivez la largeur uniforme pour préserver les champs de formulaire, pièces jointes, liens ou la navigation de ce PDF.";
+"Type a shortcut…" = "Tapez un raccourci…";
 "UNDO" = "ANNULER";
 "UNDO AREA" = "ANNULER LA ZONE";
 "UNDO LAST MARK" = "ANNULER LE DERNIER REPÈRE";

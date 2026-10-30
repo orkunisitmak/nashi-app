@@ -4,7 +4,7 @@ public partial class App:Application
 {
     private SingleInstance? instance;
     internal static bool IsSmokeTest{get;private set;}
-    private WindowManagement? windowManagement;
+    private WindowManagement? windowManagement;private WindowShortcutHost? windowShortcuts;
     protected override void OnStartup(StartupEventArgs e)
     {
         if(Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY") is {} diagnostics)
@@ -81,6 +81,7 @@ public partial class App:Application
         // process instead of leaving it behind a shelf with a closed main window.
         var window=new MainWindow(paths,offerToolSetup:!e.Args.Contains("--background"));MainWindow=window;ShutdownMode=ShutdownMode.OnMainWindowClose;instance.Start(incoming=>Dispatcher.BeginInvoke(()=>window.AcceptLaunch(incoming)));window.Show();
         windowManagement=new WindowManagement(notice:message=>MessageBox.Show(L10n.Text(message),L10n.Text("Window arrangement"),MessageBoxButton.OK,MessageBoxImage.Information),isEnabled:()=>window.WindowManagementEnabled);
+        windowShortcuts=new WindowShortcutHost(windowManagement,()=>window.PreferenceStore.Value,()=>window.WindowManagementEnabled);
     }
     internal static void UseSavedLanguage(Func<string>? readLanguage=null)
     {
@@ -92,7 +93,7 @@ public partial class App:Application
     {
         try{await instance!.Notify(paths);Shutdown(0);}catch(Exception error)when(error is IOException or OperationCanceledException or UnauthorizedAccessException){UseSavedLanguage();MessageBox.Show(L10n.Text("Nashi is already running but is still starting. Open it from the system tray or try again in a moment."),"Nashi");Shutdown(1);}
     }
-    protected override void OnExit(ExitEventArgs e){windowManagement?.Dispose();Feedback.Stop();PdfRasterDocument.Shutdown();base.OnExit(e);}
+    protected override void OnExit(ExitEventArgs e){windowShortcuts?.Dispose();windowManagement?.Dispose();Feedback.Stop();PdfRasterDocument.Shutdown();base.OnExit(e);}
     private async Task InstallUpdateAsync()
     {
         try

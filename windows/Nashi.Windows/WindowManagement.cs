@@ -82,7 +82,8 @@ internal sealed class WindowManagement:IDisposable
                 await Task.Delay(120,cancellation.Token);var observed=Bounds(captured);
                 Trace?.Invoke($"apply {placement} attempt={attempt+1} desired={frame} actual={observed}");
                 if(Matches(observed,frame))return;
-                if(observed.Width>frame.Width+3)frame=placement.Frame(work,observed.Width);
+                // Respect an app's minimum width or height while keeping the chosen anchor.
+                if(observed.Width>frame.Width+3||observed.Height>frame.Height+3)frame=placement.Frame(work,Math.Max(frame.Width,observed.Width),Math.Max(frame.Height,observed.Height));
             }
             notice("This window could not be arranged. The app may restrict resizing.");
         }
@@ -92,6 +93,35 @@ internal sealed class WindowManagement:IDisposable
             if(ReferenceEquals(pendingPlacement,cancellation)){pendingPlacement=null;PlacementPending=false;}
             cancellation.Dispose();
         }
+    }
+    /// A layout shortcut places the foreground window without showing the wheel. Repeating a
+    /// left/right layout continues on the neighbouring display.
+    internal void ArrangeForeground(WindowPlacement placement)
+    {
+        if(disposed||!enabled())return;var window=Native.GetForegroundWindow();
+        if(window==0||!Native.IsWindowVisible(window)||Native.IsIconic(window)||Native.GetAncestor(window,2)!=window||Native.GetWindowThreadProcessId(window,out var process)==0||process==Environment.ProcessId||Shell(window)){_=Native.MessageBeep(0);return;}
+        // A maximized window ignores SetWindowPos sizes until it is restored.
+        if(Native.IsZoomed(window))_=Native.ShowWindow(window,9);
+        var displays=WorkAreas();var monitor=Native.MonitorFromWindow(window,2);
+        var current=Math.Max(0,displays.FindIndex(d=>d.Monitor==monitor));
+        var (target,display)=placement.Destination(Bounds(window),displays.Select(d=>d.Work).ToList(),current);
+        _=ArrangeAsync(window,target,displays.Count>display?displays[display].Work:WorkArea(new Native.Point()));
+    }
+    private static bool Shell(nint window)
+    {
+        var name=new System.Text.StringBuilder(64);_=Native.GetClassName(window,name,name.Capacity);
+        return name.ToString() is "Progman" or "WorkerW" or "Shell_TrayWnd" or "Shell_SecondaryTrayWnd";
+    }
+    private static List<(nint Monitor,WindowFrame Work)> WorkAreas()
+    {
+        var areas=new List<(nint Monitor,WindowFrame Work)>();
+        _=Native.EnumDisplayMonitors(0,0,(monitor,_,_,_)=>
+        {
+            var info=new Native.MonitorInfo{Size=Marshal.SizeOf<Native.MonitorInfo>()};
+            if(Native.GetMonitorInfo(monitor,ref info))areas.Add((monitor,new(info.Work.Left,info.Work.Top,info.Work.Right-info.Work.Left,info.Work.Bottom-info.Work.Top)));
+            return true;
+        },0);
+        return areas;
     }
     private void Tick()
     {
@@ -184,6 +214,16 @@ internal sealed class WindowManagement:IDisposable
         [DllImport("user32.dll")]internal static extern uint GetDpiForWindow(nint handle);
         [DllImport("user32.dll")]internal static extern nint MonitorFromPoint(Point point,uint flags);
         [DllImport("user32.dll",EntryPoint="GetMonitorInfoW")]internal static extern bool GetMonitorInfo(nint monitor,ref MonitorInfo info);
+        internal delegate bool MonitorCallback(nint monitor,nint context,nint rect,nint data);
+        [DllImport("user32.dll")]internal static extern bool EnumDisplayMonitors(nint context,nint clip,MonitorCallback callback,nint data);
+        [DllImport("user32.dll")]internal static extern nint MonitorFromWindow(nint handle,uint flags);
+        [DllImport("user32.dll")]internal static extern nint GetForegroundWindow();
+        [DllImport("user32.dll")]internal static extern nint GetAncestor(nint handle,uint flags);
+        [DllImport("user32.dll")]internal static extern uint GetWindowThreadProcessId(nint handle,out int process);
+        [DllImport("user32.dll")]internal static extern bool IsZoomed(nint handle);
+        [DllImport("user32.dll")]internal static extern bool ShowWindow(nint handle,int command);
+        [DllImport("user32.dll")]internal static extern bool MessageBeep(uint type);
+        [DllImport("user32.dll",CharSet=CharSet.Unicode)]internal static extern int GetClassName(nint handle,System.Text.StringBuilder name,int capacity);
         [DllImport("dwmapi.dll")]internal static extern int DwmGetWindowAttribute(nint handle,uint attribute,out Rect value,int size);
     }
 }

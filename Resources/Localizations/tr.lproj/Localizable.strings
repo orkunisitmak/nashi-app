@@ -8,6 +8,8 @@
 "%@ QR codes found." = "%@ QR kodu bulundu.";
 "%@ files" = "%@ dosya";
 "%@ files, ready to go." = "%@ dosya hazır.";
+"%@ is already used by %@." = "%@ zaten %@ için kullanılıyor.";
+"%@ is already used by %lld." = "%@ zaten %lld için kullanılıyor.";
 "%@ is enabled" = "%@ izni açık";
 "%@ items" = "%@ öğe";
 "%@ selected" = "%@ seçili";
@@ -22,6 +24,8 @@
 "%lld QR codes found." = "%lld QR kodu bulundu.";
 "%lld files" = "%lld dosya";
 "%lld files, ready to go." = "%lld dosya hazır.";
+"%lld is already used by %@." = "%lld zaten %@ için kullanılıyor.";
+"%lld is already used by %lld." = "%lld zaten %lld için kullanılıyor.";
 "%lld is enabled" = "%lld izni açık";
 "%lld items" = "%lld öğe";
 "%lld selected" = "%lld seçili";
@@ -32,7 +36,9 @@
 "1 ITEM" = "1 ÖĞE";
 "1 item" = "1 öğe";
 "1/3 LEFT · MIDDLE · RIGHT   /   1/2 LEFT · RIGHT   /   2/3 LEFT · RIGHT" = "1/3 SOL · ORTA · SAĞ   /   1/2 SOL · SAĞ   /   2/3 SOL · SAĞ";
+"1/3 LEFT · MIDDLE · RIGHT   /   1/2 LEFT · RIGHT · TOP · BOTTOM   /   2/3 LEFT · RIGHT" = "1/3 SOL · ORTA · SAĞ   /   1/2 SOL · SAĞ · ÜST · ALT   /   2/3 SOL · SAĞ";
 "1/3 left · middle · right   /   1/2 left · right   /   2/3 left · right" = "1/3 sol · orta · sağ   /   1/2 sol · sağ   /   2/3 sol · sağ";
+"1/3 left · middle · right   /   1/2 left · right · top · bottom   /   2/3 left · right" = "1/3 sol · orta · sağ   /   1/2 sol · sağ · üst · alt   /   2/3 sol · sağ";
 "1280 PX LONGEST EDGE" = "UZUN KENAR 1280 PX";
 "1280 px longest edge" = "Uzun kenar 1280 px";
 "16-BIT INTEGER" = "16 BİT TAM SAYI";
@@ -143,6 +149,7 @@
 "ARCHIVE PASSWORD (IF NEEDED)" = "ARŞİV PAROLASI (GEREKİYORSA)";
 "ARCHIVE SIZE EXCEEDS ITS DECLARED LIMIT." = "ARŞİV BOYUTU BİLDİRİLEN SINIRI AŞIYOR.";
 "ARCHIVES" = "ARŞİVLER";
+"ARRANGE THE FRONT WINDOW WITH KEYBOARD SHORTCUTS" = "ÖNDEKİ PENCEREYİ KLAVYE KISAYOLLARIYLA DÜZENLE";
 "ARRANGE WINDOW" = "PENCEREYİ DÜZENLE";
 "ARRANGE WINDOWS WHILE DRAGGING" = "SÜRÜKLERKEN PENCERELERİ DÜZENLE";
 "ARROW" = "OK";
@@ -215,6 +222,7 @@
 "Archives" = "Arşivler";
 "Area %@" = "Alan %@";
 "Area %lld" = "Alan %lld";
+"Arrange the front window with keyboard shortcuts" = "Öndeki pencereyi klavye kısayollarıyla düzenle";
 "Arrange window" = "Pencereyi düzenle";
 "Arrange windows while dragging" = "Sürüklerken pencereleri düzenle";
 "Arrow" = "Ok";
@@ -249,6 +257,7 @@
 "BLUR" = "BULANIKLAŞTIR";
 "BORDER" = "KENARLIK";
 "BOTTOM" = "ALT";
+"BOTTOM HALF" = "ALT YARI";
 "BRIGHTNESS" = "PARLAKLIK";
 "BUILT FOR YOUR FILES. MADE FOR YOUR MAC." = "DOSYALARIN İÇİN GELİŞTİRİLDİ. MAC'İN İÇİN TASARLANDI.";
 "Back" = "Geri";
@@ -268,6 +277,7 @@
 "Blur" = "Bulanıklaştır";
 "Border" = "Kenarlık";
 "Bottom" = "Alt";
+"Bottom half" = "Alt yarı";
 "Brightness" = "Parlaklık";
 "Built for your files. Made for your Mac." = "Dosyaların için geliştirildi. Mac'in için tasarlandı.";
 "CALLOUT" = "AÇIKLAMA";
@@ -991,6 +1001,8 @@
 "IMAGE SIZE" = "GÖRSEL BOYUTU";
 "IMAGES" = "GÖRSELLER";
 "IMAGES, VIDEOS, DOCUMENTS, AND ALL THE LITTLE THINGS IN BETWEEN." = "GÖRSELLER, VİDEOLAR, BELGELER VE DİĞER TÜM DOSYALARIN.";
+"INCLUDE CTRL, ALT OR WIN IN THE SHORTCUT." = "KISAYOLDA CTRL, ALT VEYA WİN BULUNMALI.";
+"INCLUDE ⌘, ⌥ OR ⌃ IN THE SHORTCUT." = "KISAYOLDA ⌘, ⌥ VEYA ⌃ BULUNMALI.";
 "INK COLOR" = "KALEM RENGİ";
 "INPUT AND OUTPUT FORMAT." = "GİRDİ VE ÇIKTI BİÇİMİ.";
 "INPUT FORMAT" = "GİRDİ BİÇİMİ";
@@ -1019,6 +1031,8 @@
 "Image size" = "Görsel boyutu";
 "Images" = "Görseller";
 "Images, videos, documents, and all the little things in between." = "Görseller, videolar, belgeler ve diğer tüm dosyaların.";
+"Include Ctrl, Alt or Win in the shortcut." = "Kısayolda Ctrl, Alt veya Win bulunmalı.";
+"Include ⌘, ⌥ or ⌃ in the shortcut." = "Kısayolda ⌘, ⌥ veya ⌃ bulunmalı.";
 "Ink color" = "Kalem rengi";
 "Input and output format." = "Girdi ve çıktı biçimi.";
 "Input format" = "Girdi biçimi";
@@ -1413,6 +1427,8 @@
 "PRESERVE METADATA" = "META VERİLERİ KORU";
 "PRESERVE ORIGINAL PAGES" = "ORİJİNAL SAYFALARI KORU";
 "PRESET" = "ÖN AYAR";
+"PRESS RECORD, THEN TYPE A COMBINATION WITH CTRL, ALT OR WIN. BACKSPACE CLEARS IT; ESCAPE CANCELS." = "KAYDET'E BAS, SONRA CTRL, ALT VEYA WİN İÇEREN BİR TUŞ BİRLEŞİMİ GİR. GERİ SİLME TUŞU KISAYOLU KALDIRIR; ESCAPE İPTAL EDER.";
+"PRESS RECORD, THEN TYPE A COMBINATION WITH ⌘, ⌥ OR ⌃. DELETE CLEARS IT; ESCAPE CANCELS." = "KAYDET'E BAS, SONRA ⌘, ⌥ VEYA ⌃ İÇEREN BİR TUŞ BİRLEŞİMİ GİR. SİL TUŞU KISAYOLU KALDIRIR; ESCAPE İPTAL EDER.";
 "PREVIEW" = "ÖNİZLEME";
 "PREVIEW LEFT" = "SOLU ÖNİZLE";
 "PREVIEW POSITION" = "ÖNİZLEME KONUMU";
@@ -1473,6 +1489,8 @@
 "Preserve metadata" = "Meta verileri koru";
 "Preserve original pages" = "Orijinal sayfaları koru";
 "Preset" = "Ön ayar";
+"Press Record, then type a combination with Ctrl, Alt or Win. Backspace clears it; Escape cancels." = "Kaydet'e bas, sonra Ctrl, Alt veya Win içeren bir tuş birleşimi gir. Geri silme tuşu kısayolu kaldırır; Escape iptal eder.";
+"Press Record, then type a combination with ⌘, ⌥ or ⌃. Delete clears it; Escape cancels." = "Kaydet'e bas, sonra ⌘, ⌥ veya ⌃ içeren bir tuş birleşimi gir. Sil tuşu kısayolu kaldırır; Escape iptal eder.";
 "Preview" = "Önizleme";
 "Preview Left" = "Solu Önizle";
 "Preview Processed" = "İşlenmişi Önizle";
@@ -1514,6 +1532,7 @@
 "READY." = "HAZIR.";
 "READY. YOU CAN GO BACK TO YOUR FILES." = "HAZIR. DOSYALARINA DÖNEBİLİRSİN.";
 "RECENT CONVERSIONS" = "SON DÖNÜŞTÜRMELER";
+"RECORD" = "KAYDET";
 "RECTANGLE" = "DİKDÖRTGEN";
 "REDACT AUDIO" = "SESİ SANSÜRLE";
 "REDACT IMAGE" = "GÖRSELİ SANSÜRLE";
@@ -1574,6 +1593,7 @@
 "Ready." = "Hazır.";
 "Ready. You can go back to your files." = "Hazır. Dosyalarına dönebilirsin.";
 "Recent Conversions" = "Son Dönüştürmeler";
+"Record" = "Kaydet";
 "Rectangle" = "Dikdörtgen";
 "Redact Audio" = "Sesi Sansürle";
 "Redact Image" = "Görseli Sansürle";
@@ -1961,6 +1981,7 @@
 "TOOLS READY" = "ARAÇLAR HAZIR";
 "TOOLS · WHILE DRAGGING" = "ARAÇLAR · SÜRÜKLERKEN";
 "TOP" = "ÜST";
+"TOP HALF" = "ÜST YARI";
 "TRACK NAME" = "İZ ADI";
 "TRANSPARENT" = "ŞEFFAF";
 "TRANSPARENT BACKGROUNDS SAVE AS PNG TO KEEP THEIR TRANSPARENCY." = "ŞEFFAF ARKA PLANLAR, ŞEFFAFLIĞI KORUMAK İÇİN PNG OLARAK KAYDEDİLİR.";
@@ -1974,6 +1995,7 @@
 "TRY A CLEARER IMAGE OR ANOTHER PDF." = "DAHA NET BİR GÖRSEL VEYA BAŞKA BİR PDF DENE.";
 "TRY FEEDBACK" = "GERİ BİLDİRİMİ DENE";
 "TURN OFF UNIFORM WIDTH TO PRESERVE THIS PDF’S FORM FIELDS, ATTACHMENTS, LINKS OR NAVIGATION." = "BU PDF'NİN FORM ALANLARINI, EKLERİNİ, BAĞLANTILARINI VEYA GEZİNMESİNİ KORUMAK İÇİN EŞİT GENİŞLİĞİ KAPAT.";
+"TYPE A SHORTCUT…" = "KISAYOLA BAS…";
 "Tap the chosen modifier combination while dragging files." = "Dosyaları sürüklerken seçtiğin tuş birleşimine bas.";
 "Target" = "Hedef";
 "Target LUFS" = "Hedef LUFS";
@@ -2050,6 +2072,7 @@
 "Tools ready" = "Araçlar hazır";
 "Tools · while dragging" = "Araçlar · sürüklerken";
 "Top" = "Üst";
+"Top half" = "Üst yarı";
 "Track name" = "İz adı";
 "Transparent" = "Şeffaf";
 "Transparent backgrounds save as PNG to keep their transparency." = "Şeffaf arka planlar, şeffaflığı korumak için PNG olarak kaydedilir.";
@@ -2063,6 +2086,7 @@
 "Try a clearer image or another PDF." = "Daha net bir görsel veya başka bir PDF dene.";
 "Try feedback" = "Geri bildirimi dene";
 "Turn off uniform width to preserve this PDF’s form fields, attachments, links or navigation." = "Bu PDF'nin form alanlarını, eklerini, bağlantılarını veya gezinmesini korumak için eşit genişliği kapat.";
+"Type a shortcut…" = "Kısayola bas…";
 "UNDO" = "GERİ AL";
 "UNDO AREA" = "ALANI GERİ AL";
 "UNDO LAST MARK" = "SON İŞARETİ GERİ AL";
