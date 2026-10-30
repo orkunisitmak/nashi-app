@@ -13,7 +13,7 @@ public partial class App:Application
             AppDomain.CurrentDomain.UnhandledException+=(_,error)=>File.WriteAllText(Path.Combine(diagnostics,$"unhandled-{Environment.ProcessId}.txt"),error.ExceptionObject.ToString());
             Exit+=(_,exit)=>File.WriteAllText(Path.Combine(diagnostics,$"process-exit-{Environment.ProcessId}.json"),System.Text.Json.JsonSerializer.Serialize(new{mode=e.Args.FirstOrDefault(),code=exit.ApplicationExitCode,environmentCode=Environment.ExitCode}));
         }
-        DispatcherUnhandledException+=(_,error)=>{var folder=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");if(folder is not null){Directory.CreateDirectory(folder);File.WriteAllText(Path.Combine(folder,"dispatcher-error.txt"),error.Exception.ToString());error.Handled=true;Shutdown(1);}};
+        DispatcherUnhandledException+=(_,error)=>{var folder=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");if(folder is not null){Directory.CreateDirectory(folder);File.WriteAllText(Path.Combine(folder,"dispatcher-error.txt"),error.Exception.ToString());error.Handled=true;Shutdown(1);}else if(!IsSmokeTest){error.Handled=true;Report(error.Exception);}};
         base.OnStartup(e);
         if(e.Args.Contains("--smoke-test-interactions"))
         {
@@ -81,6 +81,14 @@ public partial class App:Application
         // process instead of leaving it behind a shelf with a closed main window.
         var window=new MainWindow(paths,offerToolSetup:!e.Args.Contains("--background"));MainWindow=window;ShutdownMode=ShutdownMode.OnMainWindowClose;instance.Start(incoming=>Dispatcher.BeginInvoke(()=>window.AcceptLaunch(incoming)));window.Show();
         windowManagement=new WindowManagement(notice:message=>MessageBox.Show(L10n.Text(message),L10n.Text("Window arrangement"),MessageBoxButton.OK,MessageBoxImage.Information),isEnabled:()=>window.WindowManagementEnabled);
+    }
+    private static bool reporting;
+    // Keeps the app alive after an unexpected UI error: append it to a local log and tell the user once at a time.
+    private static void Report(Exception error)
+    {
+        try{var directory=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Nashi");Directory.CreateDirectory(directory);File.AppendAllText(Path.Combine(directory,"ui-error.txt"),$"{DateTime.Now:O}{Environment.NewLine}{error}{Environment.NewLine}{Environment.NewLine}");}
+        catch(Exception log)when(log is IOException or UnauthorizedAccessException or System.Security.SecurityException){}
+        if(reporting)return;reporting=true;try{MessageBox.Show(L10n.Text(error.Message),"Nashi",MessageBoxButton.OK,MessageBoxImage.Warning);}finally{reporting=false;}
     }
     internal static void UseSavedLanguage(Func<string>? readLanguage=null)
     {

@@ -53,7 +53,7 @@ public sealed class FloatShelf:Window
         files.PreviewMouseLeftButtonDown+=(_,e)=>mouseOrigin=e.GetPosition(files);
         files.MouseMove+=(_,e)=>{if(e.LeftButton==MouseButtonState.Pressed&&(e.GetPosition(files)-mouseOrigin).Length>8&&files.SelectedItems.Count>0)Carry(files,Selection());};
         files.SelectionChanged+=(_,_)=>UpdateLabels();
-        files.MouseDoubleClick+=(_,_)=>{foreach(var p in Selection())MainWindow.OpenUrl(p);};PreviewKeyDown+=OnKey;
+        files.MouseDoubleClick+=(_,_)=>{try{foreach(var p in Selection())MainWindow.OpenUrl(p);}catch(Exception error)when(ActionError(error)){Report(error);}};PreviewKeyDown+=OnKey;
         MouseEnter+=(_,_)=>ScheduleHover(true);MouseLeave+=(_,_)=>ScheduleHover(false);
         hover.Tick+=(_,_)=>{hover.Stop();if(interacting||Mouse.LeftButton==MouseButtonState.Pressed)return;if(hoverInside&&IsMouseOver)SetExpanded(true);else if(!hoverInside&&!IsMouseOver)SetExpanded(false);};
         DragOver+=(_,e)=>{e.Effects=e.Data.GetDataPresent(DataFormats.FileDrop)?DragDropEffects.Copy:DragDropEffects.None;e.Handled=true;};

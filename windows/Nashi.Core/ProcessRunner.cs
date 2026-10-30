@@ -27,10 +27,17 @@ public static class ProcessRunner
         using var process = new Process { StartInfo = start };
         if (!process.Start()) throw new IOException("The processing tool could not start.");
         process.StandardInput.Close();
-        using var cancellation = token.Register(() => { try { if (!process.HasExited) process.Kill(entireProcessTree: true); } catch (InvalidOperationException) { } });
+        using var cancellation = token.Register(() => { try { if (!process.HasExited) process.Kill(entireProcessTree: true); } catch (InvalidOperationException) { } catch (System.ComponentModel.Win32Exception) { } });
         var stdout = DrainAsync(process.StandardOutput, outputLine);
         var stderr = DrainAsync(process.StandardError, null);
-        await process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
+        try { await process.WaitForExitAsync(token).ConfigureAwait(false); }
+        catch (OperationCanceledException)
+        {
+            // Kill can fail (access denied, already exiting); never wait unbounded for a cancelled tool.
+            using var grace = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            try { await process.WaitForExitAsync(grace.Token).ConfigureAwait(false); } catch (OperationCanceledException) { }
+            throw new OperationCanceledException(token);
+        }
         var results = await Task.WhenAll(stdout, stderr).ConfigureAwait(false);
         token.ThrowIfCancellationRequested();
         if (process.ExitCode != 0) throw new IOException(string.IsNullOrWhiteSpace(results[1]) ? "The processing tool failed." : results[1][Math.Max(0, results[1].Length - 6000)..].Trim());

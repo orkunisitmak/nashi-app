@@ -24,7 +24,7 @@ public sealed partial class WebDownload(Toolchain tools)
         await ProcessRunner.RunAsync(tools.Executable("yt-dlp"),args,token,line=>
         {
             if(!line.StartsWith("NASHI:",StringComparison.Ordinal))return;
-            var parts=line.Split(':');if(parts.Length==3&&double.TryParse(parts[1],out var current)&&double.TryParse(parts[2],out var total)&&total>0)progress?.Report(new(Math.Clamp(current/total,0,.98),"Downloading media…"));
+            var parts=line.Split(':');if(parts.Length==3&&double.TryParse(parts[1],System.Globalization.NumberStyles.Float,System.Globalization.CultureInfo.InvariantCulture,out var current)&&double.TryParse(parts[2],System.Globalization.NumberStyles.Float,System.Globalization.CultureInfo.InvariantCulture,out var total)&&total>0)progress?.Report(new(Math.Clamp(current/total,0,.98),"Downloading media…"));
         });
         var files=Directory.GetFiles(tx.StagingDirectory).Where(p=>new FileInfo(p).Length>0).ToList();
         if(files.Count==0)throw new IOException("No public downloadable media found. Some sites require sign-in or do not expose downloadable media.");

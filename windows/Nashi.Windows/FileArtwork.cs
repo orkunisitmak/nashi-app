@@ -100,12 +100,13 @@ internal static class FileArtwork
         }
         private void Unloaded(object sender,RoutedEventArgs args)
         {generation++;request?.Cancel();request?.Dispose();request=null;if(owner is not null)owner.Activated-=Activated;owner=null;if(target.TryGetTarget(out var image)){image.SetValue(IsLoadingKey,false);image.SetValue(IsReadyKey,true);}}
-        private void Activated(object? sender,EventArgs args)=>Refresh();
-        internal void Refresh()
+        // Activation only revalidates the stamp; keep the current icon until a changed one arrives.
+        private void Activated(object? sender,EventArgs args)=>Refresh(keepImage:true);
+        internal void Refresh(bool keepImage=false)
         {
             request?.Cancel();request?.Dispose();request=new();
             if(!target.TryGetTarget(out var image))return;
-            var path=image.GetValue(PathProperty) as string;image.Source=placeholder;var current=++generation;
+            var path=image.GetValue(PathProperty) as string;if(!keepImage||image.Source is null)image.Source=placeholder;var current=++generation;
             image.SetValue(IsLoadingKey,!string.IsNullOrEmpty(path));image.SetValue(IsReadyKey,string.IsNullOrEmpty(path));
             if(!string.IsNullOrEmpty(path))_ = ApplyAsync(path,request.Token,current);
         }

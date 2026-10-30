@@ -10,6 +10,8 @@ internal sealed class FilePreviewWindow:Window
 {
     private readonly string[] paths;private int index;
     private readonly Toolchain tools;private readonly OfficeRuntime office;private readonly string temporary=Path.Combine(Path.GetTempPath(),"Nashi-quick-preview-"+Guid.NewGuid().ToString("N"));private CancellationTokenSource lifetime=new();
+    // ImageEngine.Load cannot stop once it starts; one decode at a time keeps fast navigation from stacking full-size decodes.
+    private readonly SemaphoreSlim decoding=new(1,1);
     private readonly ContentControl content=new();private readonly TextBlock caption=new(){TextTrimming=TextTrimming.CharacterEllipsis,VerticalAlignment=VerticalAlignment.Center};
     private MediaElement? player;private bool playing;private readonly Slider scrub=new(){Minimum=0,Maximum=1,MinWidth=140};
     private PdfRasterDocument? pdfDocument;
@@ -25,7 +27,7 @@ internal sealed class FilePreviewWindow:Window
         Owner=owner;Title="Preview · Nashi";Width=800;Height=620;MinWidth=560;MinHeight=400;WindowStartupLocation=WindowStartupLocation.CenterOwner;Theme.Attach(this);
         var root=new DockPanel{Margin=new(20)};Content=root;var header=new DockPanel{Margin=new(0,0,0,14)};DockPanel.SetDock(header,Dock.Top);root.Children.Add(header);
         var navigation=new StackPanel{Orientation=Orientation.Horizontal};DockPanel.SetDock(navigation,Dock.Right);header.Children.Add(navigation);
-        navigation.Children.Add(MainWindow.Button("←",()=>Navigate(-1)));navigation.Children.Add(MainWindow.Button("→",()=>Navigate(1)));navigation.Children.Add(MainWindow.Button("Open",()=>{if(File.Exists(CurrentPath)||Directory.Exists(CurrentPath))MainWindow.OpenUrl(CurrentPath);}));header.Children.Add(caption);
+        navigation.Children.Add(MainWindow.Button("←",()=>Navigate(-1)));navigation.Children.Add(MainWindow.Button("→",()=>Navigate(1)));navigation.Children.Add(MainWindow.Button("Open",()=>{try{if(File.Exists(CurrentPath)||Directory.Exists(CurrentPath))MainWindow.OpenUrl(CurrentPath);}catch(System.ComponentModel.Win32Exception error){MessageBox.Show(this,L10n.Text(error.Message),"Nashi");}}));header.Children.Add(caption);
         var footer=new StackPanel();DockPanel.SetDock(footer,Dock.Bottom);root.Children.Add(footer);transport.Children.Add(MainWindow.Button("Play / pause",Toggle));transport.Children.Add(scrub);footer.Children.Add(transport);
         footer.Children.Add(L10n.Label(new TextBlock{Text="←/→ files · Media: Space play/pause, ←/→ 1s, Alt+←/→ files · Esc closes",FontSize=11,Foreground=Theme.Brush("Muted"),Margin=new(0,12,0,0)}));root.Children.Add(content);
         scrub.ValueChanged+=(_,_)=>{if(!updating&&player is not null)player.Position=TimeSpan.FromSeconds(scrub.Value);};
@@ -53,7 +55,7 @@ internal sealed class FilePreviewWindow:Window
                 if(office.Executable is null){content.Content=L10n.Label(new TextBlock{Text="Set up office tools in Nashi to preview this document here, or use Open.",TextWrapping=TextWrapping.Wrap});return;}
                 Directory.CreateDirectory(temporary);path=(await new DocumentConversion(office,tools).ConvertAsync([path],"pdf",temporary,new(),null,token))[0];token.ThrowIfCancellationRequested();
             }
-            if(FeatureCatalog.IsImage(path))content.Content=new Image{Source=ImageEngine.Load(path),Stretch=Stretch.Uniform};
+            if(FeatureCatalog.IsImage(path)){await decoding.WaitAsync(token);System.Windows.Media.Imaging.BitmapSource bitmap;try{token.ThrowIfCancellationRequested();bitmap=await Task.Run(()=>ImageEngine.Load(path),token);}finally{decoding.Release();}if(!token.IsCancellationRequested)content.Content=new Image{Source=bitmap,Stretch=Stretch.Uniform};}
             else if(FeatureCatalog.Extension(path)=="pdf")
             {
                 // Load pages on demand rather than decoding every page before showing the first.
