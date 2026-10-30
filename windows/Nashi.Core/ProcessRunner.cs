@@ -10,7 +10,7 @@ public sealed record ProcessResult(string Output, string Error);
 public static class ProcessRunner
 {
     public static async Task<ProcessResult> RunAsync(string executable, IEnumerable<string> arguments,
-        CancellationToken token = default, Action<string>? outputLine = null)
+        CancellationToken token = default, Action<string>? outputLine = null, string? standardInput = null)
     {
         token.ThrowIfCancellationRequested();
         if (!Path.IsPathFullyQualified(executable)) throw new ArgumentException("A fully qualified tool path is required.");
@@ -18,7 +18,8 @@ public static class ProcessRunner
         {
             UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true,
             RedirectStandardInput = true, CreateNoWindow = true,
-            StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8
+            StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8,
+            StandardInputEncoding = new UTF8Encoding(false)
         };
         var values = arguments.ToList();
         if (Path.GetFileNameWithoutExtension(executable).ToLowerInvariant() is "ffmpeg" or "ffprobe" && !values.Contains("-protocol_whitelist"))
@@ -26,6 +27,7 @@ public static class ProcessRunner
         foreach (var value in values) start.ArgumentList.Add(value);
         using var process = new Process { StartInfo = start };
         if (!process.Start()) throw new IOException("The processing tool could not start.");
+        if (standardInput is not null) await process.StandardInput.WriteAsync(standardInput).ConfigureAwait(false);
         process.StandardInput.Close();
         using var cancellation = token.Register(() => { try { if (!process.HasExited) process.Kill(entireProcessTree: true); } catch (InvalidOperationException) { } });
         var stdout = DrainAsync(process.StandardOutput, outputLine);
