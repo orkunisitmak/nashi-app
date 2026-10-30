@@ -25,7 +25,7 @@ sudo apt install libreoffice      # Debian, Ubuntu
 sudo dnf install libreoffice      # Fedora
 ```
 
-The wheel always shows these routes. Choosing one without LibreOffice opens setup, whose **Office tools** row says *Missing* and how to install it. The Snap and Flatpak builds are not used: their sandbox has its own `/tmp`, where each conversion keeps a private, throwaway LibreOffice profile. Every conversion runs headless, stops after 5 minutes, and Cancel stops LibreOffice at once. LibreOffice versions without a Markdown export filter (7.x and similar) save Markdown as plain text.
+The wheel always shows these routes. Choosing one without LibreOffice opens setup, whose **Office tools** row says *Missing* and how to install it. The Snap and Flatpak builds are not used: their sandbox has its own `/tmp`, where each conversion keeps a private, throwaway LibreOffice profile. Every conversion runs headless, stops after 5 minutes, and Cancel stops LibreOffice at once. LibreOffice versions without a Markdown export filter (7.x and similar; Nashi checks the installed filter list) save Markdown as plain text, and the success card says "Saved as plain-text Markdown".
 
 ## Use Nashi without opening it
 

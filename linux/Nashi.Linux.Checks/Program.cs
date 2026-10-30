@@ -988,6 +988,9 @@ async Task BackgroundChecks(string root)
     string[] three = [Path.Combine(root, "a.jpg"), Path.Combine(root, "b.jpg"), Path.Combine(root, "c.jpg")];
     Render("success-light", [Path.Combine(root, "background.jpg")]);
     Render("success-three-light", three);
+    var noted = SuccessToast.Done([Path.Combine(root, "notes.md")], root, DocumentOperations.PlainMarkdown);
+    Check(noted.FindControl<TextBlock>("DetailText")?.Text == "notes.md · Saved as plain-text Markdown", "The success card's detail adds the runner's note (plain-text Markdown)");
+    noted.Close();
     Application.Current!.RequestedThemeVariant = ThemeVariant.Dark;
     try { Render("success-dark", [Path.Combine(root, "background.jpg")]); }
     finally { Application.Current!.RequestedThemeVariant = ThemeVariant.Light; }

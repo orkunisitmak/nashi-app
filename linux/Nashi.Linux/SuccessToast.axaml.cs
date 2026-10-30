@@ -45,9 +45,12 @@ public sealed partial class SuccessToast : Window
 
     public static string Heading(int count) => count == 0 ? L10n.T(Copy.Done) : count == 1 ? L10n.T(Copy.DoneOne) : L10n.F(Copy.DoneMany, count);
 
-    /// Finished work: how many files, the first one's name, and Show in folder.
-    public static SuccessToast Done(IReadOnlyList<string> outputs, string folder) =>
-        new(Heading(outputs.Count), outputs.Count > 0 ? Path.GetFileName(outputs[0]) : L10n.T(Copy.Complete), folder, true, Visible);
+    /// Finished work: how many files, the first one's name (plus a note such as a fallback, when there is one), and Show in folder.
+    public static SuccessToast Done(IReadOnlyList<string> outputs, string folder, string? note = null)
+    {
+        var detail = outputs.Count > 0 ? Path.GetFileName(outputs[0]) : L10n.T(Copy.Complete);
+        return new(Heading(outputs.Count), note is null ? detail : detail + " · " + L10n.T(note), folder, true, Visible);
+    }
 
     /// A finished file action ("Copied.", "Moved."…): its detail, and Show in folder when there is a folder to show.
     public static SuccessToast Action(string title, string? detail, string? folder) => new(title, detail, folder, true, Visible);

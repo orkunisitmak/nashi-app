@@ -146,7 +146,7 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
                 if (destination is null) { toast.Close(); return; }
                 var outputs = await runner.RunAsync(item.Id, files, destination, new Progress<OperationProgress>(toast.Update), cancellation.Token);
                 toast.Close();
-                SuccessToast.Done(outputs, destination).Present();
+                SuccessToast.Done(outputs, destination, runner.Note).Present();
             }
             catch (Exception error)
             {

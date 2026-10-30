@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.IO.Compression;
 using System.Net;
 using System.Text;
@@ -104,17 +105,34 @@ public sealed class DocumentOperations(string? office, string? deno)
 
     // LibreOffice gained a Markdown export filter only recently (distribution builds such as 7.x have none).
     // There, plain text stands in: it is valid Markdown, just without headings and emphasis.
-    static async Task<string> Markdown(OfficeDocuments engine, string source, string work, CancellationToken token)
+    // Any other LibreOffice failure is an error, never a quiet fallback.
+    async Task<string> Markdown(OfficeDocuments engine, string source, string work, CancellationToken token)
     {
-        try { return await engine.OfficeAsync(source, "md", work, token); }
-        catch (IOException) when (!token.IsCancellationRequested)
-        {
-            var text = await engine.OfficeAsync(source, "txt", work, token);
-            var markdown = Path.ChangeExtension(text, ".md");
-            File.Move(text, markdown);
-            return markdown;
-        }
+        if (ExportsMarkdown(office!)) return await engine.OfficeAsync(source, "md", work, token);
+        var text = await engine.OfficeAsync(source, "txt", work, token);
+        var markdown = Path.ChangeExtension(text, ".md");
+        File.Move(text, markdown);
+        Note = PlainMarkdown;
+        return markdown;
     }
+
+    public const string PlainMarkdown = "Saved as plain-text Markdown";
+
+    /// What the success card adds to its detail, such as the plain-text Markdown fallback; null when nothing.
+    public string? Note { get; private set; }
+
+    static readonly ConcurrentDictionary<string, bool> markdownExport = new();
+
+    /// Whether this LibreOffice has a Markdown export filter: its share/registry declares a "Markdown" filter flagged EXPORT.
+    /// An install laid out differently is assumed to have one, so a real failure still shows as an error.
+    public static bool ExportsMarkdown(string office) => markdownExport.GetOrAdd(office, path =>
+    {
+        var program = Path.GetDirectoryName(new FileInfo(path).ResolveLinkTarget(true)?.FullName ?? path)!;
+        var registry = Path.GetFullPath(Path.Combine(program, "..", "share", "registry"));
+        if (!Directory.Exists(registry)) return true;
+        var filter = new Regex("<node oor:name=\"Markdown\"[^>]*>\\s*<prop oor:name=\"Flags\">\\s*<value>([^<]*)</value>", RegexOptions.None, TimeSpan.FromSeconds(5));
+        return Directory.EnumerateFiles(registry, "*.xcd").Any(file => filter.Matches(File.ReadAllText(file)).Any(m => m.Groups[1].Value.Split(' ').Contains("EXPORT")));
+    });
 
     // Linux has no OCR engine, so a scanned PDF with no text layer is an error rather than an empty file.
     static string PdfText(string input, string password, CancellationToken token)
@@ -207,20 +225,23 @@ public sealed class DocumentOperations(string? office, string? deno)
         return file;
     }
 
-    static string EpubToHtml(string input, string work, CancellationToken token)
+    internal static string EpubToHtml(string input, string work, CancellationToken token)
     {
+        static string Required(XElement element, string name) => element.Attribute(name)?.Value ?? throw new InvalidDataException("This EPUB could not be read.");
         var extracted = ArchiveEngine.Extract(input, work, null, null, token)[0];
         var container = ReadXml(Path.Combine(extracted, "META-INF", "container.xml"));
-        var file = container.Descendants().First(e => e.Name.LocalName == "rootfile").Attribute("full-path")!.Value;
+        var rootfile = container.Descendants().FirstOrDefault(e => e.Name.LocalName == "rootfile") ?? throw new InvalidDataException("This EPUB could not be read.");
+        var file = Required(rootfile, "full-path");
         var packagePath = SafePaths.ArchiveEntry(extracted, file);
         var package = ReadXml(packagePath);
         var baseFolder = Path.GetDirectoryName(packagePath)!;
-        var items = package.Descendants().Where(e => e.Name.LocalName == "item").ToDictionary(e => e.Attribute("id")!.Value, e => e.Attribute("href")!.Value);
+        var items = new Dictionary<string, string>();
+        foreach (var item in package.Descendants().Where(e => e.Name.LocalName == "item")) items.TryAdd(Required(item, "id"), Required(item, "href"));
         var html = new StringBuilder("<html><head><meta charset=\"utf-8\"/></head><body>");
         foreach (var reference in package.Descendants().Where(e => e.Name.LocalName == "itemref"))
         {
             token.ThrowIfCancellationRequested();
-            var href = items[reference.Attribute("idref")!.Value];
+            if (!items.TryGetValue(Required(reference, "idref"), out var href)) throw new InvalidDataException("This EPUB could not be read.");
             var path = Path.GetFullPath(Path.Combine(baseFolder, Uri.UnescapeDataString(href.Split('#')[0])));
             if (!path.StartsWith(extracted + Path.DirectorySeparatorChar, StringComparison.Ordinal)) throw new InvalidDataException("Invalid EPUB chapter path.");
             var chapter = ReadXml(path);
@@ -231,7 +252,7 @@ public sealed class DocumentOperations(string? office, string? deno)
                 var full = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(path)!, Uri.UnescapeDataString(src.Value)));
                 if (!full.StartsWith(extracted + Path.DirectorySeparatorChar, StringComparison.Ordinal) || !File.Exists(full) || new FileInfo(full).Length > 20_000_000) throw new InvalidDataException("Invalid EPUB image path.");
                 var kind = FeatureCatalog.Extension(full);
-                src.Value = "data:image/" + (kind == "jpg" ? "jpeg" : kind) + ";base64," + Convert.ToBase64String(File.ReadAllBytes(full));
+                src.Value = "data:image/" + (kind switch { "jpg" => "jpeg", "svg" => "svg+xml", _ => kind }) + ";base64," + Convert.ToBase64String(File.ReadAllBytes(full));
             }
             var body = chapter.Descendants().FirstOrDefault(e => e.Name.LocalName == "body");
             if (body is not null) foreach (var node in body.Nodes()) html.Append(node.ToString());
@@ -244,6 +265,12 @@ public sealed class DocumentOperations(string? office, string? deno)
     // EPUB 2 chapters use XHTML named entities (&nbsp; &mdash;) that only the DTD declares,
     // and the DTD stays unread. Turn them into character references before parsing.
     static XDocument ReadXml(string path)
+    {
+        try { return ParseXml(path); }
+        catch (Exception error) when (error is System.Xml.XmlException or FileNotFoundException or DirectoryNotFoundException) { throw new InvalidDataException("This EPUB could not be read.", error); }
+    }
+
+    static XDocument ParseXml(string path)
     {
         var settings = new System.Xml.XmlReaderSettings { DtdProcessing = System.Xml.DtdProcessing.Ignore, XmlResolver = null, MaxCharactersInDocument = 20_000_000 };
         if (new FileInfo(path).Length > 80_000_000) { using var large = System.Xml.XmlReader.Create(path, settings); return XDocument.Load(large); }

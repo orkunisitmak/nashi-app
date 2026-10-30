@@ -69,6 +69,9 @@ static class DocumentChecks
         Console.WriteLine($"Route checks: {results.Count} of {offered} offered routes run ({total} catalog routes, {heic} HEIC outputs not offered); skipped {skipped.Values.Sum()}" + string.Concat(skipped.OrderBy(s => s.Key).Select(s => $", {s.Value} need {s.Key}")));
         foreach (var (route, error) in results.OrderBy(r => r.Route, StringComparer.Ordinal)) check(error is null, "Route " + route + " makes a valid file: " + error);
         check(results.Count >= 4, "Routes ran without any optional tool (pdf→png, jpg, txt, md at least)");
+        // A skip is only ever for a tool this machine lacks; with every tool present (CI) nothing may be skipped.
+        check(!skipped.ContainsKey("fixture"), "No route is skipped for a missing fixture");
+        if (media is not null && office is not null && deno is not null) check(skipped.IsEmpty && results.Count == offered, "With ffmpeg, LibreOffice and Deno every offered route runs (" + results.Count + " of " + offered + ")");
 
         // PDF to images: one per page, named like Windows.
         var pages = await runner.RunAsync("convert:png", [made["pdf"]], Path.Combine(outputs, "pdf-pages"), none, default);
@@ -90,7 +93,23 @@ static class DocumentChecks
         var noDeno = Path.Combine(outputs, "no-deno");
         check(await Catch(() => bare.RunAsync("convert:pages", [made["pdf"]], noDeno, none, default)) is MissingToolsException { Message: MissingToolsException.Pages or MissingToolsException.Office } && !Directory.Exists(noDeno), "Without Deno a Pages route asks for setup before writing anything");
 
-        if (office is not null) await CancelChecks(runner, made["docx"], outputs, check);
+        await EpubChecks(root, check);
+        MarkdownFilterChecks(root, check);
+        // A LibreOffice that has the Markdown filter but fails the export (while plain text would work) reports the error.
+        var failing = Path.Combine(Directory.CreateDirectory(Path.Combine(root, "failing-office")).FullName, "soffice");
+        File.WriteAllText(failing, "#!/bin/sh\nout=; for a; do case \"$prev\" in --outdir) out=$a;; --convert-to) to=$a;; esac; prev=$a; done\n" +
+            "case \"$to\" in md*) echo 'md export failed' >&2; exit 1;; esac\nn=$(basename \"$prev\"); echo text > \"$out/${n%.*}.txt\"\n");
+        File.SetUnixFileMode(failing, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        var failed = Path.Combine(outputs, "failing-md");
+        var mdError = await Catch(() => new DocumentOperations(failing, null).ConvertAsync([made["rtf"]], "md", failed, null, default));
+        check(mdError is IOException && (!Directory.Exists(failed) || Directory.GetFileSystemEntries(failed).Length == 0), "A real LibreOffice failure on the Markdown route is an error, not a plain-text fallback: " + mdError?.Message);
+        if (office is not null)
+        {
+            var markdown = await runner.RunAsync("convert:md", [made["docx"]], Path.Combine(outputs, "note-md"), none, default);
+            var plain = !DocumentOperations.ExportsMarkdown(office);
+            check(runner.Note == (plain ? DocumentOperations.PlainMarkdown : null), "Markdown says it was saved as plain text exactly when LibreOffice has no Markdown export (" + (plain ? "fallback" : "native") + ")");
+            await CancelChecks(runner, made["docx"], outputs, check);
+        }
         else Console.WriteLine("Route checks: LibreOffice cancellation check skipped (no soffice)");
     }
 
@@ -111,6 +130,57 @@ static class DocumentChecks
         check(error is OperationCanceledException && (!Directory.Exists(dest) || Directory.GetFileSystemEntries(dest).Length == 0), "Cancelling an Office conversion leaves no partial output");
         check(alive.Length == 0, "Cancelling an Office conversion kills soffice");
         foreach (var pid in alive) try { System.Diagnostics.Process.GetProcessById(pid).Kill(); } catch (ArgumentException) { } // only this job's own processes
+    }
+
+    /// Malformed EPUB packages give one readable error; SVG pictures keep their MIME type.
+    static async Task EpubChecks(string root, Action<bool, string> check)
+    {
+        var dir = Directory.CreateDirectory(Path.Combine(root, "epub-cases")).FullName;
+        const string Container = "<?xml version=\"1.0\"?><container version=\"1.0\" xmlns=\"urn:oasis:names:tc:opendocument:xmlns:container\"><rootfiles><rootfile full-path=\"content.opf\" media-type=\"application/oebps-package+xml\"/></rootfiles></container>";
+        string Book(string name, string opf, string chapter = "<html xmlns=\"http://www.w3.org/1999/xhtml\"><body><p>x</p></body></html>")
+        {
+            var path = Path.Combine(dir, name + ".epub");
+            Zip(path, ("mimetype", "application/epub+zip"), ("META-INF/container.xml", Container), ("content.opf", opf), ("c.xhtml", chapter), ("pic.svg", "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"4\" height=\"4\"/>"));
+            return path;
+        }
+        const string Manifest = "<manifest><item id=\"c\" href=\"c.xhtml\" media-type=\"application/xhtml+xml\"/></manifest>";
+        var cases = new[]
+        {
+            Book("missing-item", "<package xmlns=\"http://www.idpf.org/2007/opf\">" + Manifest + "<spine><itemref idref=\"nope\"/></spine></package>"),
+            Book("no-href", "<package xmlns=\"http://www.idpf.org/2007/opf\"><manifest><item id=\"c\"/></manifest><spine><itemref idref=\"c\"/></spine></package>"),
+            Book("bad-xml", "<package><manifest>"),
+        };
+        foreach (var book in cases)
+        {
+            var work = Directory.CreateDirectory(Path.Combine(dir, "work-" + Path.GetFileNameWithoutExtension(book))).FullName;
+            Exception? error = null;
+            try { DocumentOperations.EpubToHtml(book, work, default); } catch (Exception e) { error = e; }
+            check(error is InvalidDataException { Message: "This EPUB could not be read." }, "A malformed EPUB (" + Path.GetFileNameWithoutExtension(book) + ") says it could not be read: " + error?.Message);
+        }
+        var svg = Book("svg", "<package xmlns=\"http://www.idpf.org/2007/opf\">" + Manifest + "<spine><itemref idref=\"c\"/></spine></package>", "<html xmlns=\"http://www.w3.org/1999/xhtml\"><body><img src=\"pic.svg\"/></body></html>");
+        var html = File.ReadAllText(DocumentOperations.EpubToHtml(svg, Directory.CreateDirectory(Path.Combine(dir, "work-svg")).FullName, default));
+        check(html.Contains("data:image/svg+xml;base64,"), "An EPUB's SVG picture is embedded as image/svg+xml");
+        await Task.CompletedTask;
+    }
+
+    /// The Markdown export probe reads LibreOffice's filter registry next to the resolved soffice.
+    static void MarkdownFilterChecks(string root, Action<bool, string> check)
+    {
+        bool Probe(string name, string? xcd)
+        {
+            var program = Directory.CreateDirectory(Path.Combine(root, "lo-" + name, "program")).FullName;
+            var soffice = Path.Combine(program, "soffice");
+            File.WriteAllText(soffice, "#!/bin/sh\n");
+            if (xcd is not null) File.WriteAllText(Path.Combine(Directory.CreateDirectory(Path.Combine(root, "lo-" + name, "share", "registry")).FullName, "writer.xcd"), xcd);
+            var link = Path.Combine(root, "lo-" + name + "-bin");
+            File.CreateSymbolicLink(link, soffice);
+            return DocumentOperations.ExportsMarkdown(link);
+        }
+        const string Node = "<node oor:name=\"Markdown\" oor:op=\"replace\">\n  <prop oor:name=\"Flags\">\n    <value>{0}</value>";
+        check(Probe("export", string.Format(Node, "IMPORT EXPORT ALIEN")), "A LibreOffice whose registry has a Markdown EXPORT filter exports Markdown");
+        check(!Probe("import", string.Format(Node, "IMPORT ALIEN")), "An import-only Markdown filter does not count");
+        check(!Probe("none", "<node oor:name=\"MS Word 2007 XML\"/>"), "A LibreOffice without a Markdown filter falls back to plain text");
+        check(Probe("unknown", null), "An unfamiliar install layout is assumed to export Markdown, so its failures stay errors");
     }
 
     // soffice processes running with a Nashi job profile (OfficeDocuments names them NashiOffice-<guid>).

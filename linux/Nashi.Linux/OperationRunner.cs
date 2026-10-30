@@ -14,8 +14,12 @@ public sealed class MissingToolsException(string message = MissingToolsException
 /// Turns a wheel choice plus selected files into output files, using the shared engine.
 public sealed class OperationRunner(Toolchain tools)
 {
+    /// What the last run wants the success card to add (English; translate at display), or null.
+    public string? Note { get; private set; }
+
     public async Task<IReadOnlyList<string>> RunAsync(string choiceId, IReadOnlyList<string> files, string destination, IProgress<OperationProgress> progress, CancellationToken token)
     {
+        Note = null;
         var convert = choiceId.StartsWith("convert:", StringComparison.Ordinal) ? choiceId[8..].ToLowerInvariant() : null;
         if (convert is not null ? !Capabilities.Formats(files).Contains(convert) : !Capabilities.Tools(files).Contains(choiceId))
             throw new NotSupportedException($"{choiceId} is not available for this selection on Linux.");
@@ -25,7 +29,13 @@ public sealed class OperationRunner(Toolchain tools)
         {
             if (files.All(FeatureCatalog.IsImage)) return await Task.Run(() => ImageOperations.Convert(files, convert, destination, progress, token), token);
             if (files.All(f => FeatureCatalog.IsAudio(f) || FeatureCatalog.IsVideo(f))) return await Media(progress, (e, p) => e.ConvertAsync(files, convert, destination, new MediaOptions(), p, token));
-            if (files.All(DocumentOperations.Handles)) return await Task.Run(() => new DocumentOperations(AppPaths.Office(), AppPaths.Deno(tools)).ConvertAsync(files, convert, destination, progress, token), token);
+            if (files.All(DocumentOperations.Handles))
+            {
+                var documents = new DocumentOperations(AppPaths.Office(), AppPaths.Deno(tools));
+                var outputs = await Task.Run(() => documents.ConvertAsync(files, convert, destination, progress, token), token);
+                Note = documents.Note;
+                return outputs;
+            }
             if (files.All(FeatureCatalog.IsArchive)) return await Task.Run(() => Each(files, destination, token, (f, d) => ArchiveEngine.Convert(f, convert, d, null, progress, token)), token);
             return await Task.Run(() => Subtitles(files, convert, destination, token), token);
         }

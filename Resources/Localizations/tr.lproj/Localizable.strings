@@ -1766,6 +1766,7 @@
 "SAVE TRIMMED COPY" = "KIRPILMIŞ KOPYAYI KAYDET";
 "SAVE WITH BACKGROUND" = "ARKA PLANLA KAYDET";
 "SAVED 1 NEW FILE. ORIGINALS KEPT." = "1 YENİ DOSYA KAYDEDİLDİ. ORİJİNAL KORUNDU.";
+"SAVED AS PLAIN-TEXT MARKDOWN" = "DÜZ METİN MARKDOWN OLARAK KAYDEDİLDİ";
 "SAVED IN POST ORDER IN A NEW INSTAGRAM FOLDER." = "GÖNDERİ SIRASIYLA YENİ BİR INSTAGRAM KLASÖRÜNE KAYDEDİLİR.";
 "SAVING COLLAGE…" = "KOLAJ KAYDEDİLİYOR…";
 "SAVING DOCUMENT…" = "BELGE KAYDEDİLİYOR…";
@@ -1907,6 +1908,7 @@
 "Saved %@ new files. Originals kept." = "%@ yeni dosya kaydedildi. Orijinaller korundu.";
 "Saved %lld new files. Originals kept." = "%lld yeni dosya kaydedildi. Orijinaller korundu.";
 "Saved 1 new file. Originals kept." = "1 yeni dosya kaydedildi. Orijinal korundu.";
+"Saved as plain-text Markdown" = "Düz metin Markdown olarak kaydedildi";
 "Saved in post order in a new Instagram folder." = "Gönderi sırasıyla yeni bir Instagram klasörüne kaydedilir.";
 "Saving collage…" = "Kolaj kaydediliyor…";
 "Saving document…" = "Belge kaydediliyor…";
@@ -2049,6 +2051,7 @@
 "THE UPDATE SIGNATURE IS INVALID. YOUR EXISTING APP WAS KEPT." = "GÜNCELLEME İMZASI GEÇERSİZ. MEVCUT UYGULAMAN KORUNDU.";
 "THESE FILES HAVE MOVED OR WERE DELETED." = "BU DOSYALAR TAŞINMIŞ VEYA SİLİNMİŞ.";
 "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE." = "BU KIRPMA, SEÇİLEN TÜM GÖRSELLERE UYGULANIR VE HER GÖRSELİN SINIRLARINA SIĞMALIDIR.";
+"THIS EPUB COULD NOT BE READ." = "BU EPUB OKUNAMADI.";
 "THIS FILE HAS MOVED OR WAS DELETED." = "BU DOSYA TAŞINMIŞ VEYA SİLİNMİŞ.";
 "THIS FILE HAS MOVED OR WAS REMOVED." = "BU DOSYA TAŞINMIŞ VEYA SİLİNMİŞ.";
 "THIS FILE HAS NO AUDIO STREAM." = "BU DOSYADA SES YOK.";
@@ -2136,6 +2139,7 @@
 "The update does not contain Nashi." = "Güncelleme Nashi'yi içermiyor.";
 "The update signature is invalid. Your existing app was kept." = "Güncelleme imzası geçersiz. Mevcut uygulaman korundu.";
 "These files have moved or were deleted." = "Bu dosyalar taşınmış veya silinmiş.";
+"This EPUB could not be read." = "Bu EPUB okunamadı.";
 "This PDF contains no pages." = "Bu PDF'de sayfa yok.";
 "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported." = "Bu PDF'de birleştirme, bölme veya sayfaları yeniden sıralama sırasında korunamayan form alanları ya da ekler var. Kopya dışa aktarılmadı.";
 "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported." = "Bu PDF'de meta veri temizliği sırasında korunamayan form alanları ya da ekler var. Kopya dışa aktarılmadı.";

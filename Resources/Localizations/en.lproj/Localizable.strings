@@ -1766,6 +1766,7 @@
 "SAVE TRIMMED COPY" = "SAVE TRIMMED COPY";
 "SAVE WITH BACKGROUND" = "SAVE WITH BACKGROUND";
 "SAVED 1 NEW FILE. ORIGINALS KEPT." = "SAVED 1 NEW FILE. ORIGINALS KEPT.";
+"SAVED AS PLAIN-TEXT MARKDOWN" = "SAVED AS PLAIN-TEXT MARKDOWN";
 "SAVED IN POST ORDER IN A NEW INSTAGRAM FOLDER." = "SAVED IN POST ORDER IN A NEW INSTAGRAM FOLDER.";
 "SAVING COLLAGE…" = "SAVING COLLAGE…";
 "SAVING DOCUMENT…" = "SAVING DOCUMENT…";
@@ -1907,6 +1908,7 @@
 "Saved %@ new files. Originals kept." = "Saved %@ new files. Originals kept.";
 "Saved %lld new files. Originals kept." = "Saved %lld new files. Originals kept.";
 "Saved 1 new file. Originals kept." = "Saved 1 new file. Originals kept.";
+"Saved as plain-text Markdown" = "Saved as plain-text Markdown";
 "Saved in post order in a new Instagram folder." = "Saved in post order in a new Instagram folder.";
 "Saving collage…" = "Saving collage…";
 "Saving document…" = "Saving document…";
@@ -2049,6 +2051,7 @@
 "THE UPDATE SIGNATURE IS INVALID. YOUR EXISTING APP WAS KEPT." = "THE UPDATE SIGNATURE IS INVALID. YOUR EXISTING APP WAS KEPT.";
 "THESE FILES HAVE MOVED OR WERE DELETED." = "THESE FILES HAVE MOVED OR WERE DELETED.";
 "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE." = "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE.";
+"THIS EPUB COULD NOT BE READ." = "THIS EPUB COULD NOT BE READ.";
 "THIS FILE HAS MOVED OR WAS DELETED." = "THIS FILE HAS MOVED OR WAS DELETED.";
 "THIS FILE HAS MOVED OR WAS REMOVED." = "THIS FILE HAS MOVED OR WAS REMOVED.";
 "THIS FILE HAS NO AUDIO STREAM." = "THIS FILE HAS NO AUDIO STREAM.";
@@ -2136,6 +2139,7 @@
 "The update does not contain Nashi." = "The update does not contain Nashi.";
 "The update signature is invalid. Your existing app was kept." = "The update signature is invalid. Your existing app was kept.";
 "These files have moved or were deleted." = "These files have moved or were deleted.";
+"This EPUB could not be read." = "This EPUB could not be read.";
 "This PDF contains no pages." = "This PDF contains no pages.";
 "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported." = "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported.";
 "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported." = "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported.";

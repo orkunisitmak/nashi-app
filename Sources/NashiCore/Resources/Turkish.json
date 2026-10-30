@@ -1194,5 +1194,7 @@
   "Everything Nashi needs for audio, video and documents is in place.": "Nashi'nin ses, video ve belgeler için ihtiyaç duyduğu her şey hazır.",
   "FFmpeg, FFprobe and Deno (for Pages)": "FFmpeg, FFprobe ve Deno (Pages için)",
   "LibreOffice, for Office documents, text, EPUB and Pages": "LibreOffice; Office belgeleri, metin, EPUB ve Pages için",
-  "Install LibreOffice with your package manager, for example sudo apt install libreoffice or sudo dnf install libreoffice, then try again. Nashi does not download it.": "LibreOffice'i paket yöneticinle kur, örneğin sudo apt install libreoffice veya sudo dnf install libreoffice; sonra yeniden dene. Nashi onu indirmez."
+  "Install LibreOffice with your package manager, for example sudo apt install libreoffice or sudo dnf install libreoffice, then try again. Nashi does not download it.": "LibreOffice'i paket yöneticinle kur, örneğin sudo apt install libreoffice veya sudo dnf install libreoffice; sonra yeniden dene. Nashi onu indirmez.",
+  "This EPUB could not be read.": "Bu EPUB okunamadı.",
+  "Saved as plain-text Markdown": "Düz metin Markdown olarak kaydedildi"
 }

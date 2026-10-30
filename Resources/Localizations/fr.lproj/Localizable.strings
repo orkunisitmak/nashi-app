@@ -1766,6 +1766,7 @@
 "SAVE TRIMMED COPY" = "ENREGISTRER LA COPIE ÉLAGUÉE";
 "SAVE WITH BACKGROUND" = "ENREGISTRER AVEC L’ARRIÈRE-PLAN";
 "SAVED 1 NEW FILE. ORIGINALS KEPT." = "1 NOUVEAU FICHIER ENREGISTRÉ. ORIGINAUX CONSERVÉS.";
+"SAVED AS PLAIN-TEXT MARKDOWN" = "SAVED AS PLAIN-TEXT MARKDOWN";
 "SAVED IN POST ORDER IN A NEW INSTAGRAM FOLDER." = "ENREGISTRÉES DANS L’ORDRE DE LA PUBLICATION, DANS UN NOUVEAU DOSSIER INSTAGRAM.";
 "SAVING COLLAGE…" = "ENREGISTREMENT DU COLLAGE…";
 "SAVING DOCUMENT…" = "ENREGISTREMENT DU DOCUMENT…";
@@ -1907,6 +1908,7 @@
 "Saved %@ new files. Originals kept." = "%@ nouveaux fichiers enregistrés. Originaux conservés.";
 "Saved %lld new files. Originals kept." = "%lld nouveaux fichiers enregistrés. Originaux conservés.";
 "Saved 1 new file. Originals kept." = "1 nouveau fichier enregistré. Originaux conservés.";
+"Saved as plain-text Markdown" = "Saved as plain-text Markdown";
 "Saved in post order in a new Instagram folder." = "Enregistrées dans l’ordre de la publication, dans un nouveau dossier Instagram.";
 "Saving collage…" = "Enregistrement du collage…";
 "Saving document…" = "Enregistrement du document…";
@@ -2049,6 +2051,7 @@
 "THE UPDATE SIGNATURE IS INVALID. YOUR EXISTING APP WAS KEPT." = "LA SIGNATURE DE LA MISE À JOUR EST INVALIDE. VOTRE APP EXISTANTE A ÉTÉ CONSERVÉE.";
 "THESE FILES HAVE MOVED OR WERE DELETED." = "CES FICHIERS ONT ÉTÉ DÉPLACÉS OU SUPPRIMÉS.";
 "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE." = "CE RECADRAGE S’APPLIQUE À TOUTES LES IMAGES SÉLECTIONNÉES ET DOIT TENIR DANS CHACUNE D’ELLES.";
+"THIS EPUB COULD NOT BE READ." = "THIS EPUB COULD NOT BE READ.";
 "THIS FILE HAS MOVED OR WAS DELETED." = "CE FICHIER A ÉTÉ DÉPLACÉ OU SUPPRIMÉ.";
 "THIS FILE HAS MOVED OR WAS REMOVED." = "CE FICHIER A ÉTÉ DÉPLACÉ OU SUPPRIMÉ.";
 "THIS FILE HAS NO AUDIO STREAM." = "CE FICHIER N’A PAS DE FLUX AUDIO.";
@@ -2136,6 +2139,7 @@
 "The update does not contain Nashi." = "La mise à jour ne contient pas Nashi.";
 "The update signature is invalid. Your existing app was kept." = "La signature de la mise à jour est invalide. Votre app existante a été conservée.";
 "These files have moved or were deleted." = "Ces fichiers ont été déplacés ou supprimés.";
+"This EPUB could not be read." = "This EPUB could not be read.";
 "This PDF contains no pages." = "Ce PDF ne contient aucune page.";
 "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported." = "Ce PDF contient des champs de formulaire ou des pièces jointes que la fusion, la division ou la réorganisation des pages ne peut pas conserver. Aucune copie n’a été exportée.";
 "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported." = "Ce PDF contient des champs de formulaire ou des pièces jointes que le nettoyage des métadonnées ne peut pas conserver. Aucune copie n’a été exportée.";
