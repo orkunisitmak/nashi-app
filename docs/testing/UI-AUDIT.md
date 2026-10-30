@@ -36,7 +36,7 @@ Both audit commands accept these optional filters:
 --language en|tr|fr|both
 ```
 
-Unknown scenes/options, empty selections, repeated scenes and invalid themes/languages fail. No filter means the complete matrix: **10 scenes × 2 appearances × 2 languages = 40 captures per platform**.
+Unknown scenes/options, empty selections, repeated scenes and invalid themes/languages fail. No filter means the complete matrix: **11 scenes × 2 appearances × 2 languages = 44 captures per platform**.
 
 | Scene ID | Production surface |
 | --- | --- |
@@ -44,6 +44,7 @@ Unknown scenes/options, empty selections, repeated scenes and invalid themes/lan
 | home.selected | Home with one generated image |
 | library | Image, text, PDF and missing-file entries |
 | settings.general | General preferences |
+| settings.wheels | Wheel item visibility with the live wheel preview |
 | settings.formats | Format preferences |
 | settings.updates | Update preferences, without checking for an update |
 | wheel.pdf-multiple | Tools offered for two generated PDFs |

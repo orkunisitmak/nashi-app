@@ -90,15 +90,7 @@ struct FormatPreferenceItem:Identifiable,Hashable {
     var isOutputOnly:Bool { FeatureCatalog.conversionMatrix[id] == nil }
     var compatibilityLabel:String { isInputOnly ? "Input-only format.":isOutputOnly ? "Output-only format.":"Input and output format." }
     var symbol:String { switch group { case "Images":return "photo";case "Audio":return "waveform";case "Video":return "film";case "Archives":return "archivebox";case "Spreadsheets":return "tablecells";case "Subtitles":return "captions.bubble";default:return "doc.text" } }
-    static let groups:[(String,[String])]=[
-        ("Images",["jpg","png","webp","heic","tiff","svg","avif","bmp"]),
-        ("Documents",["pdf","docx","pages","ppt","pptx","txt","md","rtf","rtfd","textclipping","html","epub"]),
-        ("Spreadsheets",["xlsx","xls","ods","csv","tsv"]),
-        ("Audio",["mp3","m4a","wav","flac","ogg","opus","aiff","wma"]),
-        ("Video",["mp4","mov","mkv","webm","avi","wmv","gif"]),
-        ("Archives",["zip","tar","gz","rar"]),
-        ("Subtitles",["srt","vtt"])
-    ]
+    static let groups=FeatureCatalog.formatGroups
     static let all:[FormatPreferenceItem]=groups.flatMap { group,formats in formats.map{.init(id:$0,group:group)} }
 }
 

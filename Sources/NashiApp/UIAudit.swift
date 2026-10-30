@@ -5,7 +5,7 @@ import NashiCore
 import NashiUpdates
 
 struct UIAuditOptions {
-    static let scenes=["home.empty","home.selected","library","settings.general","settings.formats","settings.updates","wheel.pdf-multiple","editor.crop-image","editor.annotate-image","editor.frame-image"]
+    static let scenes=["home.empty","home.selected","library","settings.general","settings.wheels","settings.formats","settings.updates","wheel.pdf-multiple","editor.crop-image","editor.annotate-image","editor.frame-image"]
     var output:URL
     var scenes=Self.scenes
     var appearances=["light","dark"]
@@ -133,8 +133,8 @@ struct UIAuditError:LocalizedError { let message:String;init(_ message:String){s
         let view:AnyView,size:NSSize
         switch scene {
         case "home.empty","home.selected","library":view=AnyView(HomeView(state:state,updater:updater));size=NSSize(width:700,height:580)
-        case "settings.general","settings.formats","settings.updates":
-            let section:SettingsSection=scene=="settings.formats" ? .formats:scene=="settings.updates" ? .updates:.general
+        case "settings.general","settings.wheels","settings.formats","settings.updates":
+            let section:SettingsSection=scene=="settings.wheels" ? .wheels:scene=="settings.formats" ? .formats:scene=="settings.updates" ? .updates:.general
             view=AnyView(SettingsView(updater:updater,initialSection:section));size=NSSize(width:790,height:590)
         case "editor.crop-image","editor.annotate-image","editor.frame-image":
             let tool:ToolKind=scene=="editor.crop-image" ? .cropImage:scene=="editor.annotate-image" ? .annotateImage:.frameImage

@@ -19,7 +19,7 @@ internal static class UIAudit
 {
     internal static readonly string[] SceneIds =
     [
-        "home.empty", "home.selected", "library", "settings.general", "settings.formats",
+        "home.empty", "home.selected", "library", "settings.general", "settings.wheels", "settings.formats",
         "settings.updates", "wheel.pdf-multiple", "editor.crop-image", "editor.annotate-image", "editor.frame-image"
     ];
     private static readonly string[] Appearances = ["light", "dark"];
@@ -182,7 +182,7 @@ internal static class UIAudit
             subject = capture.Scene switch
             {
                 "home.empty" or "home.selected" or "library" => owner,
-                "settings.general" or "settings.formats" or "settings.updates" => Settings(owner, preferences, library, capture.Scene),
+                "settings.general" or "settings.wheels" or "settings.formats" or "settings.updates" => Settings(owner, preferences, library, capture.Scene),
                 "wheel.pdf-multiple" => new WheelWindow(owner, owner.UIAuditToolChoices, _ => { }),
                 "editor.crop-image" => new ToolEditor(owner, "crop", "Crop Image", fixtures.Image, preview: fixtures.Bitmap),
                 "editor.annotate-image" => new ToolEditor(owner, "annotate", "Annotate", fixtures.Image, preview: fixtures.Bitmap),
@@ -236,7 +236,7 @@ internal static class UIAudit
         // The visual tree is not yet materialized, so fall back to the logical tree for the page selector.
         list ??= LogicalDescendants<ListBox>(settings).FirstOrDefault();
         if (list is null) throw new InvalidOperationException("Settings navigation is missing.");
-        list.SelectedItem = scene switch { "settings.formats" => "Formats", "settings.updates" => "Updates", _ => "General" };
+        list.SelectedItem = scene switch { "settings.wheels" => "Wheels", "settings.formats" => "Formats", "settings.updates" => "Updates", _ => "General" };
         return settings;
     }
 
@@ -295,8 +295,8 @@ internal static class UIAudit
             "home.empty" => subject == owner && !owner.LibraryVisible && owner.SelectedFiles.Count == 0,
             "home.selected" => subject == owner && !owner.LibraryVisible && owner.SelectedFiles.SequenceEqual(new[] { fixtures.Image }),
             "library" => subject == owner && owner.LibraryVisible && Descendants<ListBox>(owner).Any() && owner.SearchField.IsVisible,
-            "settings.general" or "settings.formats" or "settings.updates" => subject is SettingsWindow &&
-                Descendants<ListBox>(subject).Any(list => Equals(list.SelectedItem, capture.Scene.Split('.')[1] switch { "formats" => "Formats", "updates" => "Updates", _ => "General" })),
+            "settings.general" or "settings.wheels" or "settings.formats" or "settings.updates" => subject is SettingsWindow &&
+                Descendants<ListBox>(subject).Any(list => Equals(list.SelectedItem, capture.Scene.Split('.')[1] switch { "wheels" => "Wheels", "formats" => "Formats", "updates" => "Updates", _ => "General" })),
             "wheel.pdf-multiple" => subject is WheelWindow && owner.SelectedFiles.SequenceEqual(fixtures.Pdfs) &&
                 Descendants<System.Windows.Shapes.Path>(subject).Count(path => path.Data is StreamGeometry) == FeatureCatalog.Tools(fixtures.Pdfs).Length,
             "editor.crop-image" => subject is ToolEditor crop && crop.FieldForTest("Width").Text == fixtures.Bitmap.PixelWidth.ToString(CultureInfo.CurrentCulture),

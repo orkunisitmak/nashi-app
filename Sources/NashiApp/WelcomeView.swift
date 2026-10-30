@@ -29,7 +29,7 @@ struct WelcomeView:View {
                     Circle().fill(page==4 ? NashiPalette.sage:NashiPalette.sand).frame(width:280,height:280)
                     if page==0 || page==5 { NashiMark(size:170,happy:page==5).rotationEffect(.degrees(page==5 ? -6:0)) }
                     else if page==4 { Image(systemName:folderAllowed ? "folder.badge.checkmark":"folder.fill").font(.system(size:112,weight:.light)).foregroundStyle(NashiPalette.forest).nashiAnimation(value:folderAllowed) }
-                    else { WelcomeWheelPreview(mode:page==1 ? .convert:page==2 ? .tools:.actions,items:page==1 ? converterItems:page==2 ? toolItems:actionItems).frame(width:300,height:300).allowsHitTesting(false).accessibilityHidden(true) }
+                    else { WheelPreview(mode:page==1 ? .convert:page==2 ? .tools:.actions,items:page==1 ? converterItems:page==2 ? toolItems:actionItems).frame(width:300,height:300).allowsHitTesting(false).accessibilityHidden(true) }
                 }.frame(width:310,height:330).id("art-\(page)").transition(.opacity)
                 VStack(alignment:.leading,spacing:17) {
                     NashiPill(title:names[page].uppercased(),symbol:page==5 ? "checkmark":"sparkle",color:page==5 ? NashiPalette.forest:.nashi)
@@ -131,24 +131,5 @@ struct WelcomeView:View {
             launchError = error.localizedDescription
         }
         readLaunchStatus()
-    }
-}
-
-private struct WelcomeWheelPreview: NSViewRepresentable {
-    let mode: WheelMode
-    let items: [WheelItem]
-    func makeNSView(context: Context) -> WheelView {
-        let view = WheelView(frame: NSRect(x: 0, y: 0, width: 300, height: 300))
-        view.setAccessibilityElement(false)
-        return view
-    }
-    func updateNSView(_ view: WheelView, context: Context) {
-        view.mode = mode
-        view.items = items
-        view.inputs = []
-        view.onSelect = nil
-        view.onCancel = nil
-        view.onDragInputs = nil
-        view.needsDisplay = true
     }
 }

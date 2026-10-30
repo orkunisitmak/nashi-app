@@ -8,7 +8,7 @@ Both implementations use the same 46 input-format / 27-tool catalog. `scripts/ch
 | Library | 50 persistent jobs/imports, search by file or action, missing-file status, preview, reuse and reveal; searching/previewing never deletes originals |
 | Clipboard | Files **and folders**, Unicode text with line breaks, full-size PNG images, HTTP(S) links into the download flow; editable fields retain ordinary paste |
 | Preview | Library and Float batch navigation, images, paged PDFs/documents, selectable text, audio/video; media Space play/pause and one-second seeking; Escape closes |
-| File wheels | Convert/tools/actions while dragging, centered complete captions, 320-point/DIP default diameter, adjustable size, sound feedback, subtle animation and keyboard selection |
+| File wheels | Convert/tools/actions while dragging, centered complete captions, 320-point/DIP default diameter, adjustable size, sound feedback, subtle animation and keyboard selection; Settings › Wheels hides unused convert targets, tools and file actions (the Actions wheel always keeps one) with a live preview drawn by the real wheel |
 | Images | Format conversion, resize/rotate, crop, adjustments/effects, annotation, backgrounds, collages, redaction, image PDFs and metadata |
 | Crop | Drag a new region; Shift makes a square in Free mode, or preserves an existing selection's ratio when resizing; presets, moving, resizing and Enter to save |
 | Media | Conversion, trim, crop, speed, mute, joins/splits, snapshots, normalization, channels, visualization and timed redaction; timeline/waveform, selected-range playback and processed audio/redaction preview |
@@ -18,7 +18,7 @@ Both implementations use the same 46 input-format / 27-tool catalog. `scripts/ch
 | Float/actions | Compact paperclip stack; hover/click opens a slim thumbnail shelf; stack carries all files, clip moves the shelf; multi-selection, preview, copy/path, reveal/share, icon/list modes and edge attachment; removal never deletes originals |
 | Window management | Eight layouts: thirds, halves, two-thirds and Maximize; actual title-bar/resize drag, target preview, release placement and Escape cancellation; usable display work area; app minimum widths keep the selected left/center/right anchor |
 | Progress/results | Borderless progress/success notices, cancellable work, real progress where measurable and indeterminate state otherwise; success fades after three seconds |
-| Settings/updates | Appearance, feedback, motion, drag chords, format profiles, output/download locations, login launch, automatic-check preference, visible update banner and verified public GitHub updates; Library/imports live outside the app bundle |
+| Settings/updates | Appearance, feedback, motion, drag chords, wheel item visibility, format profiles, output/download locations, login launch, automatic-check preference, visible update banner and verified public GitHub updates; Library/imports live outside the app bundle |
 
 ## Shortcut mapping
 

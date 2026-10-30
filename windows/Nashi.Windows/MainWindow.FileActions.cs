@@ -6,7 +6,7 @@ public sealed partial class MainWindow
     private readonly List<FloatShelf> shelves=[];
     private void ShowFileActions()
     {
-        if(busy||files.Count==0)return;var choices=new[]{new ToolChoice("share","Share","◉"),new("float","Float","▣"),new("copy","Copy","▱"),new("move","Move","↗"),new("copyPath","Copy Path","↪"),new("terminal","Terminal",">_")};new WheelWindow(this,choices,async c=>await PerformFileAction(c.Id,files.ToArray())).Show();
+        if(busy||files.Count==0)return;var choices=WheelPresentation.Visible("actions",WheelPresentation.ActionChoices);new WheelWindow(this,choices,async c=>await PerformFileAction(c.Id,files.ToArray())).Show();
     }
     internal async Task PerformFileAction(string action,IReadOnlyList<string> paths)
     {

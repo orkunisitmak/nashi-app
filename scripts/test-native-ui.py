@@ -81,10 +81,10 @@ def main():
 
     invoke(["--ui-audit", output / "gallery"])
     gallery = json.loads((output / "gallery/manifest.json").read_text())
-    assert gallery["passed"] and len(gallery["captures"]) == 40
+    assert gallery["passed"] and len(gallery["captures"]) == 44
     assert len(gallery["validatorChecks"]) >= 18
     expected = {(s, a, l) for s in ["home.empty", "home.selected", "library",
-        "settings.general", "settings.formats", "settings.updates", "wheel.pdf-multiple",
+        "settings.general", "settings.wheels", "settings.formats", "settings.updates", "wheel.pdf-multiple",
         "editor.crop-image", "editor.annotate-image", "editor.frame-image"]
         for a in ["light", "dark"] for l in ["en", "tr"]}
     assert {(c["scene"], c["appearance"], c["language"]) for c in gallery["captures"]} == expected

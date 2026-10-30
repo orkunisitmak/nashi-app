@@ -212,7 +212,7 @@ public sealed partial class MainWindow:Window
     private bool Audio=>All(["mp3","m4a","wav","flac","ogg","opus","aiff","aif","wma","aac"]);
     private IReadOnlyList<ToolChoice> Choices()
     {
-        return FeatureCatalog.Tools(files).Select(id=>new ToolChoice(id switch{"cropImage"=>"crop","annotateImage"=>"annotate","mergePDF"=>"mergePDFs",_=>id},FeatureCatalog.ToolNames[id],ToolSymbol(id))).ToArray();
+        return FeatureCatalog.Tools(files).Select(id=>new ToolChoice(WheelCustomization.EditorToolId(id),FeatureCatalog.ToolNames[id],ToolSymbol(id))).ToArray();
     }
     private void Refresh()
     {
@@ -225,13 +225,14 @@ public sealed partial class MainWindow:Window
     }
     private void ShowWheel()
     {
-        if(busy)return;var choices=Choices().ToList();if(FeatureCatalog.Formats(files).Length>0)choices.Insert(0,new("convert","Convert","⇄"));
+        if(busy)return;var choices=WheelPresentation.Visible("tools",Choices()).ToList();if(ConversionChoices().Count>0)choices.Insert(0,new("convert","Convert","⇄"));
         if(choices.Count>0)new WheelWindow(this,choices,async choice=>{if(choice.Id=="convert")ShowConversionWheel();else await EditAsync(choice);}).Show();
     }
+    private IReadOnlyList<ToolChoice> ConversionChoices()=>WheelPresentation.Visible("convert",FeatureCatalog.Formats(files).Select(format=>new ToolChoice("convert:"+format,format.ToUpperInvariant(),"↗")).ToArray());
     private void ShowConversionWheel()
     {
-        if(busy)return;var choices=FeatureCatalog.Formats(files).Select(format=>new ToolChoice("convert:"+format,format.ToUpperInvariant(),"↗")).ToArray();
-        if(choices.Length>0)new WheelWindow(this,choices,async choice=>await EditAsync(choice)).Show();
+        if(busy)return;var choices=ConversionChoices();
+        if(choices.Count>0)new WheelWindow(this,choices,async choice=>await EditAsync(choice)).Show();
     }
     private async Task EditAsync(ToolChoice choice)
     {

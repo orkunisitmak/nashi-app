@@ -1128,5 +1128,14 @@
   "Note": "Not",
   "Save downloaded media to…": "İndirilen medyayı şuraya kaydet…",
   "Original image · ready to download": "Orijinal görsel · indirmeye hazır",
-  "YouTube thumbnail · best available full-size image": "YouTube küçük resmi · en iyi tam boyutlu görsel"
+  "YouTube thumbnail · best available full-size image": "YouTube küçük resmi · en iyi tam boyutlu görsel",
+  "Wheels": "Çarklar",
+  "Only what you need.": "Sadece ihtiyacın olanlar.",
+  "Hide what you never use. The wheels share the space among the rest.": "Hiç kullanmadıklarını gizle. Çarklar alanı kalanlara paylaştırır.",
+  "Click an item to hide or show it.": "Gizlemek veya göstermek için bir öğeye tıkla.",
+  "Preview with": "Önizleme örneği",
+  "{0} of {1} visible": "{1} öğeden {0} tanesi görünüyor",
+  "At least one action stays visible.": "En az bir eylem görünür kalır.",
+  "Show all": "Tümünü göster",
+  "Opens with {0} while dragging files.": "Dosya sürüklerken {0} ile açılır."
 }

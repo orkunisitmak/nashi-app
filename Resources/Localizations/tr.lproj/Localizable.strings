@@ -10,6 +10,8 @@
 "%@ files, ready to go." = "%@ dosya hazır.";
 "%@ is enabled" = "%@ izni açık";
 "%@ items" = "%@ öğe";
+"%@ of %@ visible" = "%@ öğeden %@ tanesi görünüyor";
+"%@ of %lld visible" = "%lld öğeden %@ tanesi görünüyor";
 "%@ selected" = "%@ seçili";
 "%@ selected · Drag to carry files" = "%@ seçili · Dosyaları taşımak için sürükle";
 "%@ ways to change it" = "%@ farklı biçime çevir";
@@ -24,6 +26,8 @@
 "%lld files, ready to go." = "%lld dosya hazır.";
 "%lld is enabled" = "%lld izni açık";
 "%lld items" = "%lld öğe";
+"%lld of %@ visible" = "%@ öğeden %lld tanesi görünüyor";
+"%lld of %lld visible" = "%lld öğeden %lld tanesi görünüyor";
 "%lld selected" = "%lld seçili";
 "%lld selected · Drag to carry files" = "%lld seçili · Dosyaları taşımak için sürükle";
 "%lld ways to change it" = "%lld farklı biçime çevir";
@@ -148,6 +152,7 @@
 "ARROW" = "OK";
 "ASK EACH TIME" = "HER SEFERİNDE SOR";
 "ASPECT RATIO" = "EN BOY ORANI";
+"AT LEAST ONE ACTION STAYS VISIBLE." = "EN AZ BİR EYLEM GÖRÜNÜR KALIR.";
 "ATTACH TO EDGE" = "KENARA SABİTLE";
 "AUDIO" = "SES";
 "AUDIO BITRATE" = "SES BİT HIZI";
@@ -220,6 +225,7 @@
 "Arrow" = "Ok";
 "Ask each time" = "Her seferinde sor";
 "Aspect ratio" = "En boy oranı";
+"At least one action stays visible." = "En az bir eylem görünür kalır.";
 "Attach to Edge" = "Kenara Sabitle";
 "Audio" = "Ses";
 "Audio Channels" = "Ses Kanalları";
@@ -368,6 +374,7 @@
 "CLEAR" = "TEMİZLE";
 "CLEAR FLOAT" = "YÜZEN PENCEREYİ TEMİZLE";
 "CLEAR SELECTION" = "SEÇİMİ TEMİZLE";
+"CLICK AN ITEM TO HIDE OR SHOW IT." = "GİZLEMEK VEYA GÖSTERMEK İÇİN BİR ÖĞEYE TIKLA.";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "PANO MEŞGUL. TEKRAR DENE.";
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "PANO MEŞGUL. YENİDEN YAPIŞTIRMAYI DENE.";
 "CLOSE FLOAT WITHOUT DELETING FILES" = "DOSYALARI SİLMEDEN FLOAT’I KAPAT";
@@ -525,6 +532,7 @@
 "Clear" = "Temizle";
 "Clear Float" = "Yüzen Pencereyi Temizle";
 "Clear Selection" = "Seçimi Temizle";
+"Click an item to hide or show it." = "Gizlemek veya göstermek için bir öğeye tıkla.";
 "Clip %@" = "Klip %@";
 "Clip %lld" = "Klip %lld";
 "Clipboard is busy. Try Paste again." = "Pano meşgul. Yeniden yapıştırmayı dene.";
@@ -970,6 +978,7 @@
 "Grid" = "Izgara";
 "HEIGHT" = "YÜKSEKLİK";
 "HELLO" = "MERHABA";
+"HIDE WHAT YOU NEVER USE. THE WHEELS SHARE THE SPACE AMONG THE REST." = "HİÇ KULLANMADIKLARINI GİZLE. ÇARKLAR ALANI KALANLARA PAYLAŞTIRIR.";
 "HIGHER QUALITY" = "DAHA YÜKSEK KALİTE";
 "HIGHLIGHTS" = "PARLAK ALANLAR";
 "HOLD A KEY WHILE DRAGGING IN FINDER" = "FINDER'DA SÜRÜKLERKEN BİR KISAYOL TUŞUNA BAS";
@@ -977,6 +986,7 @@
 "HUE" = "RENK TONU";
 "Height" = "Yükseklik";
 "Hello" = "Merhaba";
+"Hide what you never use. The wheels share the space among the rest." = "Hiç kullanmadıklarını gizle. Çarklar alanı kalanlara paylaştırır.";
 "Higher Quality" = "Daha Yüksek Kalite";
 "Highlights" = "Parlak alanlar";
 "Hold a key while dragging in Finder" = "Finder'da sürüklerken bir kısayol tuşuna bas";
@@ -1297,6 +1307,7 @@
 "ONE LAST STEP.\nSET UP YOUR TOOLS." = "SON BİR ADIM.\nARAÇLARINI KUR.";
 "ONE OR MORE MEDIA SETTINGS ARE OUTSIDE THEIR SUPPORTED RANGE." = "BİR VEYA DAHA FAZLA MEDYA AYARI DESTEKLENEN ARALIĞIN DIŞINDA.";
 "ONE TOOL GROUP IS READY. DOWNLOAD THE REMAINING TOOLS TO FINISH SETUP." = "BİR ARAÇ GRUBU HAZIR. KURULUMU TAMAMLAMAK İÇİN KALAN ARAÇLARI İNDİR.";
+"ONLY WHAT YOU NEED." = "SADECE İHTİYACIN OLANLAR.";
 "OPEN" = "AÇ";
 "OPEN IN TERMINAL" = "TERMINAL'DE AÇ";
 "OPEN LINK" = "BAĞLANTIYI AÇ";
@@ -1338,6 +1349,7 @@
 "One last step.\nSet up your tools." = "Son bir adım.\nAraçlarını kur.";
 "One or more media settings are outside their supported range." = "Bir veya daha fazla medya ayarı desteklenen aralığın dışında.";
 "One tool group is ready. Download the remaining tools to finish setup." = "Bir araç grubu hazır. Kurulumu tamamlamak için kalan araçları indir.";
+"Only what you need." = "Sadece ihtiyacın olanlar.";
 "Open" = "Aç";
 "Open Login Items" = "Giriş Öğelerini Aç";
 "Open Nashi" = "Nashi'yi Aç";
@@ -1345,6 +1357,8 @@
 "Open link" = "Bağlantıyı aç";
 "Open permission settings…" = "İzin ayarlarını aç…";
 "Open wheel" = "Çarkı aç";
+"Opens with %@ while dragging files." = "Dosya sürüklerken %@ ile açılır.";
+"Opens with %lld while dragging files." = "Dosya sürüklerken %lld ile açılır.";
 "Optional. You can change this in Settings." = "İsteğe bağlı. Ayarlardan değiştirebilirsin.";
 "Organize PDF" = "PDF'yi Düzenle";
 "Original" = "Orijinal";
@@ -1421,6 +1435,7 @@
 "PREVIEW RIGHT" = "SAĞI ÖNİZLE";
 "PREVIEW USES THE FIRST 12 SECONDS. EXPORT INCLUDES THE FULL RECORDING." = "ÖNİZLEME İLK 12 SANİYEYİ KULLANIR. DIŞA AKTARMA KAYDIN TAMAMINI İÇERİR.";
 "PREVIEW VISUALIZATION" = "GÖRSELLEŞTİRMEYİ ÖNİZLE";
+"PREVIEW WITH" = "ÖNİZLEME ÖRNEĞİ";
 "PREVIOUS FRAME" = "ÖNCEKİ KARE";
 "PREVIOUS PAGE" = "ÖNCEKİ SAYFA";
 "PROCESSED PREVIEW UNAVAILABLE FOR THIS WINDOWS CODEC." = "BU WINDOWS CODEC'İ İÇİN İŞLENMİŞ ÖNİZLEME KULLANILAMIYOR.";
@@ -1483,6 +1498,7 @@
 "Preview unavailable: %@" = "Önizleme kullanılamıyor: %@";
 "Preview unavailable: %lld" = "Önizleme kullanılamıyor: %lld";
 "Preview uses the first 12 seconds. Export includes the full recording." = "Önizleme ilk 12 saniyeyi kullanır. Dışa aktarma kaydın tamamını içerir.";
+"Preview with" = "Önizleme örneği";
 "Previous frame" = "Önceki kare";
 "Previous page" = "Önceki sayfa";
 "Processed preview unavailable for this Windows codec." = "Bu Windows codec'i için işlenmiş önizleme kullanılamıyor.";
@@ -1708,6 +1724,7 @@
 "SHARPEN" = "KESKİNLEŞTİRME";
 "SHARPNESS" = "KESKİNLİK";
 "SHIFT LOCKS THE RATIO · RETURN CROPS\nDRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE." = "SHIFT ORANI KİLİTLER · ENTER KIRPAR\nTAŞIMAK İÇİN ALANIN İÇİNİ, BOYUTLANDIRMAK İÇİN TUTAMAĞI SÜRÜKLE.";
+"SHOW ALL" = "TÜMÜNÜ GÖSTER";
 "SHOW IN EXPLORER" = "DOSYA GEZGİNİ'NDE GÖSTER";
 "SHOW IN FINDER" = "FINDER'DA GÖSTER";
 "SHOW NASHI IN FINDER" = "NASHI'Yİ FINDER'DA GÖSTER";
@@ -1847,6 +1864,7 @@
 "Shift locks the ratio · Return crops\nDrag inside to move; drag a handle to resize." = "Shift oranı kilitler · Enter kırpar\nTaşımak için alanın içini, boyutlandırmak için tutamağı sürükle.";
 "Show Nashi in Finder" = "Nashi'yi Finder'da Göster";
 "Show Original" = "Orijinali Göster";
+"Show all" = "Tümünü göster";
 "Show in Explorer" = "Dosya Gezgini'nde Göster";
 "Show in Finder" = "Finder'da Göster";
 "Show original" = "Orijinali göster";
@@ -2157,6 +2175,7 @@
 "WELCOME…" = "HOŞ GELDİN…";
 "WHEEL FINISH" = "ÇARK GÖRÜNÜMÜ";
 "WHEEL SIZE" = "ÇARK BOYUTU";
+"WHEELS" = "ÇARKLAR";
 "WHITES" = "BEYAZLAR";
 "WIDTH" = "GENİŞLİK";
 "WINDOW" = "PENCERE";
@@ -2172,6 +2191,7 @@
 "Welcome…" = "Hoş Geldin…";
 "Wheel finish" = "Çark görünümü";
 "Wheel size" = "Çark boyutu";
+"Wheels" = "Çarklar";
 "Whites" = "Beyazlar";
 "Width" = "Genişlik";
 "Window" = "Pencere";

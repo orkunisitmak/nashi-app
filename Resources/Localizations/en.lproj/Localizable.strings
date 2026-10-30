@@ -10,6 +10,8 @@
 "%@ files, ready to go." = "%@ files, ready to go.";
 "%@ is enabled" = "%@ is enabled";
 "%@ items" = "%@ items";
+"%@ of %@ visible" = "%@ of %@ visible";
+"%@ of %lld visible" = "%@ of %lld visible";
 "%@ selected" = "%@ selected";
 "%@ selected · Drag to carry files" = "%@ selected · Drag to carry files";
 "%@ ways to change it" = "%@ ways to change it";
@@ -24,6 +26,8 @@
 "%lld files, ready to go." = "%lld files, ready to go.";
 "%lld is enabled" = "%lld is enabled";
 "%lld items" = "%lld items";
+"%lld of %@ visible" = "%lld of %@ visible";
+"%lld of %lld visible" = "%lld of %lld visible";
 "%lld selected" = "%lld selected";
 "%lld selected · Drag to carry files" = "%lld selected · Drag to carry files";
 "%lld ways to change it" = "%lld ways to change it";
@@ -148,6 +152,7 @@
 "ARROW" = "ARROW";
 "ASK EACH TIME" = "ASK EACH TIME";
 "ASPECT RATIO" = "ASPECT RATIO";
+"AT LEAST ONE ACTION STAYS VISIBLE." = "AT LEAST ONE ACTION STAYS VISIBLE.";
 "ATTACH TO EDGE" = "ATTACH TO EDGE";
 "AUDIO" = "AUDIO";
 "AUDIO BITRATE" = "AUDIO BITRATE";
@@ -220,6 +225,7 @@
 "Arrow" = "Arrow";
 "Ask each time" = "Ask each time";
 "Aspect ratio" = "Aspect ratio";
+"At least one action stays visible." = "At least one action stays visible.";
 "Attach to Edge" = "Attach to Edge";
 "Audio" = "Audio";
 "Audio Channels" = "Audio Channels";
@@ -368,6 +374,7 @@
 "CLEAR" = "CLEAR";
 "CLEAR FLOAT" = "CLEAR FLOAT";
 "CLEAR SELECTION" = "CLEAR SELECTION";
+"CLICK AN ITEM TO HIDE OR SHOW IT." = "CLICK AN ITEM TO HIDE OR SHOW IT.";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "CLIPBOARD IS BUSY. TRY AGAIN.";
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "CLIPBOARD IS BUSY. TRY PASTE AGAIN.";
 "CLOSE FLOAT WITHOUT DELETING FILES" = "CLOSE FLOAT WITHOUT DELETING FILES";
@@ -525,6 +532,7 @@
 "Clear" = "Clear";
 "Clear Float" = "Clear Float";
 "Clear Selection" = "Clear Selection";
+"Click an item to hide or show it." = "Click an item to hide or show it.";
 "Clip %@" = "Clip %@";
 "Clip %lld" = "Clip %lld";
 "Clipboard is busy. Try Paste again." = "Clipboard is busy. Try Paste again.";
@@ -970,6 +978,7 @@
 "Grid" = "Grid";
 "HEIGHT" = "HEIGHT";
 "HELLO" = "HELLO";
+"HIDE WHAT YOU NEVER USE. THE WHEELS SHARE THE SPACE AMONG THE REST." = "HIDE WHAT YOU NEVER USE. THE WHEELS SHARE THE SPACE AMONG THE REST.";
 "HIGHER QUALITY" = "HIGHER QUALITY";
 "HIGHLIGHTS" = "HIGHLIGHTS";
 "HOLD A KEY WHILE DRAGGING IN FINDER" = "HOLD A KEY WHILE DRAGGING IN FINDER";
@@ -977,6 +986,7 @@
 "HUE" = "HUE";
 "Height" = "Height";
 "Hello" = "Hello";
+"Hide what you never use. The wheels share the space among the rest." = "Hide what you never use. The wheels share the space among the rest.";
 "Higher Quality" = "Higher Quality";
 "Highlights" = "Highlights";
 "Hold a key while dragging in Finder" = "Hold a key while dragging in Finder";
@@ -1297,6 +1307,7 @@
 "ONE LAST STEP.\nSET UP YOUR TOOLS." = "ONE LAST STEP.\nSET UP YOUR TOOLS.";
 "ONE OR MORE MEDIA SETTINGS ARE OUTSIDE THEIR SUPPORTED RANGE." = "ONE OR MORE MEDIA SETTINGS ARE OUTSIDE THEIR SUPPORTED RANGE.";
 "ONE TOOL GROUP IS READY. DOWNLOAD THE REMAINING TOOLS TO FINISH SETUP." = "ONE TOOL GROUP IS READY. DOWNLOAD THE REMAINING TOOLS TO FINISH SETUP.";
+"ONLY WHAT YOU NEED." = "ONLY WHAT YOU NEED.";
 "OPEN" = "OPEN";
 "OPEN IN TERMINAL" = "OPEN IN TERMINAL";
 "OPEN LINK" = "OPEN LINK";
@@ -1338,6 +1349,7 @@
 "One last step.\nSet up your tools." = "One last step.\nSet up your tools.";
 "One or more media settings are outside their supported range." = "One or more media settings are outside their supported range.";
 "One tool group is ready. Download the remaining tools to finish setup." = "One tool group is ready. Download the remaining tools to finish setup.";
+"Only what you need." = "Only what you need.";
 "Open" = "Open";
 "Open Login Items" = "Open Login Items";
 "Open Nashi" = "Open Nashi";
@@ -1345,6 +1357,8 @@
 "Open link" = "Open link";
 "Open permission settings…" = "Open permission settings…";
 "Open wheel" = "Open wheel";
+"Opens with %@ while dragging files." = "Opens with %@ while dragging files.";
+"Opens with %lld while dragging files." = "Opens with %lld while dragging files.";
 "Optional. You can change this in Settings." = "Optional. You can change this in Settings.";
 "Organize PDF" = "Organize PDF";
 "Original" = "Original";
@@ -1421,6 +1435,7 @@
 "PREVIEW RIGHT" = "PREVIEW RIGHT";
 "PREVIEW USES THE FIRST 12 SECONDS. EXPORT INCLUDES THE FULL RECORDING." = "PREVIEW USES THE FIRST 12 SECONDS. EXPORT INCLUDES THE FULL RECORDING.";
 "PREVIEW VISUALIZATION" = "PREVIEW VISUALIZATION";
+"PREVIEW WITH" = "PREVIEW WITH";
 "PREVIOUS FRAME" = "PREVIOUS FRAME";
 "PREVIOUS PAGE" = "PREVIOUS PAGE";
 "PROCESSED PREVIEW UNAVAILABLE FOR THIS WINDOWS CODEC." = "PROCESSED PREVIEW UNAVAILABLE FOR THIS WINDOWS CODEC.";
@@ -1483,6 +1498,7 @@
 "Preview unavailable: %@" = "Preview unavailable: %@";
 "Preview unavailable: %lld" = "Preview unavailable: %lld";
 "Preview uses the first 12 seconds. Export includes the full recording." = "Preview uses the first 12 seconds. Export includes the full recording.";
+"Preview with" = "Preview with";
 "Previous frame" = "Previous frame";
 "Previous page" = "Previous page";
 "Processed preview unavailable for this Windows codec." = "Processed preview unavailable for this Windows codec.";
@@ -1708,6 +1724,7 @@
 "SHARPEN" = "SHARPEN";
 "SHARPNESS" = "SHARPNESS";
 "SHIFT LOCKS THE RATIO · RETURN CROPS\nDRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE." = "SHIFT LOCKS THE RATIO · RETURN CROPS\nDRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE.";
+"SHOW ALL" = "SHOW ALL";
 "SHOW IN EXPLORER" = "SHOW IN EXPLORER";
 "SHOW IN FINDER" = "SHOW IN FINDER";
 "SHOW NASHI IN FINDER" = "SHOW NASHI IN FINDER";
@@ -1847,6 +1864,7 @@
 "Shift locks the ratio · Return crops\nDrag inside to move; drag a handle to resize." = "Shift locks the ratio · Return crops\nDrag inside to move; drag a handle to resize.";
 "Show Nashi in Finder" = "Show Nashi in Finder";
 "Show Original" = "Show Original";
+"Show all" = "Show all";
 "Show in Explorer" = "Show in Explorer";
 "Show in Finder" = "Show in Finder";
 "Show original" = "Show original";
@@ -2157,6 +2175,7 @@
 "WELCOME…" = "WELCOME…";
 "WHEEL FINISH" = "WHEEL FINISH";
 "WHEEL SIZE" = "WHEEL SIZE";
+"WHEELS" = "WHEELS";
 "WHITES" = "WHITES";
 "WIDTH" = "WIDTH";
 "WINDOW" = "WINDOW";
@@ -2172,6 +2191,7 @@
 "Welcome…" = "Welcome…";
 "Wheel finish" = "Wheel finish";
 "Wheel size" = "Wheel size";
+"Wheels" = "Wheels";
 "Whites" = "Whites";
 "Width" = "Width";
 "Window" = "Window";

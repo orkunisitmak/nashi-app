@@ -107,6 +107,15 @@ public enum FeatureCatalog {
         .redactAudio: "Bleep Audio",
         .readQRCode: "Read QR Codes",
     ]
+    public static let formatGroups:[(String,[String])]=[
+        ("Images",["jpg","png","webp","heic","tiff","svg","avif","bmp"]),
+        ("Documents",["pdf","docx","pages","ppt","pptx","txt","md","rtf","rtfd","textclipping","html","epub"]),
+        ("Spreadsheets",["xlsx","xls","ods","csv","tsv"]),
+        ("Audio",["mp3","m4a","wav","flac","ogg","opus","aiff","wma"]),
+        ("Video",["mp4","mov","mkv","webm","avi","wmv","gif"]),
+        ("Archives",["zip","tar","gz","rar"]),
+        ("Subtitles",["srt","vtt"])
+    ]
     public static let singleTools: [String: [ToolKind]] = [
         "jpg": [.compress, .removeMetadata, .editImage, .annotateImage, .frameImage, .cropImage, .redactImage],
         "png": [.compress, .removeMetadata, .editImage, .annotateImage, .frameImage, .cropImage, .redactImage],

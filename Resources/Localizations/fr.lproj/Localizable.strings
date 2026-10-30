@@ -10,6 +10,8 @@
 "%@ files, ready to go." = "%@ fichiers, prêts à partir.";
 "%@ is enabled" = "%@ est activé";
 "%@ items" = "%@ éléments";
+"%@ of %@ visible" = "%@ sur %@ visibles";
+"%@ of %lld visible" = "%@ sur %lld visibles";
 "%@ selected" = "%@ sélectionnés";
 "%@ selected · Drag to carry files" = "%@ sélectionnés · Faites glisser pour emporter les fichiers";
 "%@ ways to change it" = "%@ façons de le transformer";
@@ -24,6 +26,8 @@
 "%lld files, ready to go." = "%lld fichiers, prêts à partir.";
 "%lld is enabled" = "%lld est activé";
 "%lld items" = "%lld éléments";
+"%lld of %@ visible" = "%lld sur %@ visibles";
+"%lld of %lld visible" = "%lld sur %lld visibles";
 "%lld selected" = "%lld sélectionnés";
 "%lld selected · Drag to carry files" = "%lld sélectionnés · Faites glisser pour emporter les fichiers";
 "%lld ways to change it" = "%lld façons de le transformer";
@@ -148,6 +152,7 @@
 "ARROW" = "FLÈCHE";
 "ASK EACH TIME" = "DEMANDER À CHAQUE FOIS";
 "ASPECT RATIO" = "PROPORTIONS";
+"AT LEAST ONE ACTION STAYS VISIBLE." = "AU MOINS UNE ACTION RESTE VISIBLE.";
 "ATTACH TO EDGE" = "FIXER AU BORD";
 "AUDIO" = "AUDIO";
 "AUDIO BITRATE" = "DÉBIT AUDIO";
@@ -220,6 +225,7 @@
 "Arrow" = "Flèche";
 "Ask each time" = "Demander à chaque fois";
 "Aspect ratio" = "Proportions";
+"At least one action stays visible." = "Au moins une action reste visible.";
 "Attach to Edge" = "Fixer au bord";
 "Audio" = "Audio";
 "Audio Channels" = "Canaux audio";
@@ -368,6 +374,7 @@
 "CLEAR" = "EFFACER";
 "CLEAR FLOAT" = "VIDER LE FLOAT";
 "CLEAR SELECTION" = "EFFACER LA SÉLECTION";
+"CLICK AN ITEM TO HIDE OR SHOW IT." = "CLIQUEZ SUR UN ÉLÉMENT POUR LE MASQUER OU L’AFFICHER.";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "LE PRESSE-PAPIERS EST OCCUPÉ. RÉESSAYEZ.";
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "LE PRESSE-PAPIERS EST OCCUPÉ. RÉESSAYEZ DE COLLER.";
 "CLOSE FLOAT WITHOUT DELETING FILES" = "FERMER FLOAT SANS SUPPRIMER LES FICHIERS";
@@ -525,6 +532,7 @@
 "Clear" = "Effacer";
 "Clear Float" = "Vider le Float";
 "Clear Selection" = "Effacer la sélection";
+"Click an item to hide or show it." = "Cliquez sur un élément pour le masquer ou l’afficher.";
 "Clip %@" = "Clip %@";
 "Clip %lld" = "Clip %lld";
 "Clipboard is busy. Try Paste again." = "Le presse-papiers est occupé. Réessayez de coller.";
@@ -970,6 +978,7 @@
 "Grid" = "Grille";
 "HEIGHT" = "HAUTEUR";
 "HELLO" = "BONJOUR";
+"HIDE WHAT YOU NEVER USE. THE WHEELS SHARE THE SPACE AMONG THE REST." = "MASQUEZ CE QUE VOUS N’UTILISEZ JAMAIS. LES ROUES PARTAGENT L’ESPACE ENTRE LES AUTRES.";
 "HIGHER QUALITY" = "MEILLEURE QUALITÉ";
 "HIGHLIGHTS" = "HAUTES LUMIÈRES";
 "HOLD A KEY WHILE DRAGGING IN FINDER" = "MAINTENEZ UNE TOUCHE EN FAISANT GLISSER DANS LE FINDER";
@@ -977,6 +986,7 @@
 "HUE" = "TEINTE";
 "Height" = "Hauteur";
 "Hello" = "Bonjour";
+"Hide what you never use. The wheels share the space among the rest." = "Masquez ce que vous n’utilisez jamais. Les roues partagent l’espace entre les autres.";
 "Higher Quality" = "Meilleure qualité";
 "Highlights" = "Hautes lumières";
 "Hold a key while dragging in Finder" = "Maintenez une touche en faisant glisser dans le Finder";
@@ -1297,6 +1307,7 @@
 "ONE LAST STEP.\nSET UP YOUR TOOLS." = "UNE DERNIÈRE ÉTAPE.\nCONFIGUREZ VOS OUTILS.";
 "ONE OR MORE MEDIA SETTINGS ARE OUTSIDE THEIR SUPPORTED RANGE." = "UN OU PLUSIEURS RÉGLAGES MULTIMÉDIAS SONT EN DEHORS DE LEUR PLAGE PRISE EN CHARGE.";
 "ONE TOOL GROUP IS READY. DOWNLOAD THE REMAINING TOOLS TO FINISH SETUP." = "UN GROUPE D’OUTILS EST PRÊT. TÉLÉCHARGEZ LES OUTILS RESTANTS POUR TERMINER LA CONFIGURATION.";
+"ONLY WHAT YOU NEED." = "JUSTE L’ESSENTIEL.";
 "OPEN" = "OUVRIR";
 "OPEN IN TERMINAL" = "OUVRIR DANS TERMINAL";
 "OPEN LINK" = "OUVRIR LE LIEN";
@@ -1338,6 +1349,7 @@
 "One last step.\nSet up your tools." = "Une dernière étape.\nConfigurez vos outils.";
 "One or more media settings are outside their supported range." = "Un ou plusieurs réglages multimédias sont en dehors de leur plage prise en charge.";
 "One tool group is ready. Download the remaining tools to finish setup." = "Un groupe d’outils est prêt. Téléchargez les outils restants pour terminer la configuration.";
+"Only what you need." = "Juste l’essentiel.";
 "Open" = "Ouvrir";
 "Open Login Items" = "Ouvrir les éléments d’ouverture";
 "Open Nashi" = "Ouvrir Nashi";
@@ -1345,6 +1357,8 @@
 "Open link" = "Ouvrir le lien";
 "Open permission settings…" = "Ouvrir les réglages d’autorisation…";
 "Open wheel" = "Ouvrir la roue";
+"Opens with %@ while dragging files." = "S’ouvre avec %@ pendant le glissement de fichiers.";
+"Opens with %lld while dragging files." = "S’ouvre avec %lld pendant le glissement de fichiers.";
 "Optional. You can change this in Settings." = "Facultatif. Vous pouvez le modifier dans les Réglages.";
 "Organize PDF" = "Organiser un PDF";
 "Original" = "Original";
@@ -1421,6 +1435,7 @@
 "PREVIEW RIGHT" = "APERÇU À DROITE";
 "PREVIEW USES THE FIRST 12 SECONDS. EXPORT INCLUDES THE FULL RECORDING." = "L’APERÇU UTILISE LES 12 PREMIÈRES SECONDES. L’EXPORT INCLUT L’ENREGISTREMENT COMPLET.";
 "PREVIEW VISUALIZATION" = "APERÇU DE LA VISUALISATION";
+"PREVIEW WITH" = "APERÇU AVEC";
 "PREVIOUS FRAME" = "IMAGE PRÉCÉDENTE";
 "PREVIOUS PAGE" = "PAGE PRÉCÉDENTE";
 "PROCESSED PREVIEW UNAVAILABLE FOR THIS WINDOWS CODEC." = "APERÇU TRAITÉ INDISPONIBLE POUR CE CODEC WINDOWS.";
@@ -1483,6 +1498,7 @@
 "Preview unavailable: %@" = "Aperçu indisponible : %@";
 "Preview unavailable: %lld" = "Aperçu indisponible : %lld";
 "Preview uses the first 12 seconds. Export includes the full recording." = "L’aperçu utilise les 12 premières secondes. L’export inclut l’enregistrement complet.";
+"Preview with" = "Aperçu avec";
 "Previous frame" = "Image précédente";
 "Previous page" = "Page précédente";
 "Processed preview unavailable for this Windows codec." = "Aperçu traité indisponible pour ce codec Windows.";
@@ -1708,6 +1724,7 @@
 "SHARPEN" = "ACCENTUER";
 "SHARPNESS" = "NETTETÉ";
 "SHIFT LOCKS THE RATIO · RETURN CROPS\nDRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE." = "MAJ VERROUILLE LES PROPORTIONS · RETOUR RECADRE\nFAITES GLISSER À L’INTÉRIEUR POUR DÉPLACER ; FAITES GLISSER UNE POIGNÉE POUR REDIMENSIONNER.";
+"SHOW ALL" = "TOUT AFFICHER";
 "SHOW IN EXPLORER" = "AFFICHER DANS L’EXPLORATEUR";
 "SHOW IN FINDER" = "AFFICHER DANS LE FINDER";
 "SHOW NASHI IN FINDER" = "AFFICHER NASHI DANS LE FINDER";
@@ -1847,6 +1864,7 @@
 "Shift locks the ratio · Return crops\nDrag inside to move; drag a handle to resize." = "Maj verrouille les proportions · Retour recadre\nFaites glisser à l’intérieur pour déplacer ; faites glisser une poignée pour redimensionner.";
 "Show Nashi in Finder" = "Afficher Nashi dans le Finder";
 "Show Original" = "Afficher l’original";
+"Show all" = "Tout afficher";
 "Show in Explorer" = "Afficher dans l’Explorateur";
 "Show in Finder" = "Afficher dans le Finder";
 "Show original" = "Afficher l’original";
@@ -2157,6 +2175,7 @@
 "WELCOME…" = "BIENVENUE…";
 "WHEEL FINISH" = "FINITION DE LA ROUE";
 "WHEEL SIZE" = "TAILLE DE LA ROUE";
+"WHEELS" = "ROUES";
 "WHITES" = "BLANCS";
 "WIDTH" = "LARGEUR";
 "WINDOW" = "FENÊTRE";
@@ -2172,6 +2191,7 @@
 "Welcome…" = "Bienvenue…";
 "Wheel finish" = "Finition de la roue";
 "Wheel size" = "Taille de la roue";
+"Wheels" = "Roues";
 "Whites" = "Blancs";
 "Width" = "Largeur";
 "Window" = "Fenêtre";

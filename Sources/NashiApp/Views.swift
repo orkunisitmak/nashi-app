@@ -47,6 +47,7 @@ struct SettingsView:View {
             Group {
                 switch section {
                 case .general:general
+                case .wheels:WheelSettingsView()
                 case .formats:formats
                 case .compatibility:CompatibilitySettingsView { format in selectedFormat=format;section = .formats }
                 case .folders:FolderSettingsView()
@@ -178,9 +179,9 @@ struct SettingsView:View {
 }
 
 enum SettingsSection:String,CaseIterable,Identifiable {
-    case general="General",formats="Formats",compatibility="Compatibility",folders="Folders",updates="Updates",about="About"
+    case general="General",wheels="Wheels",formats="Formats",compatibility="Compatibility",folders="Folders",updates="Updates",about="About"
     var id:String { rawValue }
-    var symbol:String { switch self { case .general:return "gearshape";case .formats:return "doc.on.doc";case .compatibility:return "square.grid.3x3";case .folders:return "folder";case .updates:return "arrow.triangle.2.circlepath";case .about:return "info.circle" } }
+    var symbol:String { switch self { case .general:return "gearshape";case .wheels:return "dial.medium";case .formats:return "doc.on.doc";case .compatibility:return "square.grid.3x3";case .folders:return "folder";case .updates:return "arrow.triangle.2.circlepath";case .about:return "info.circle" } }
 }
 
 private struct FormatSettingsDetail:View {

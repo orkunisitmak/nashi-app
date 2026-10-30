@@ -1128,5 +1128,14 @@
   "Note": "Note",
   "Save downloaded media to…": "Enregistrer les médias téléchargés dans…",
   "Original image · ready to download": "Image originale · prête à télécharger",
-  "YouTube thumbnail · best available full-size image": "Miniature YouTube · meilleure image en taille réelle disponible"
+  "YouTube thumbnail · best available full-size image": "Miniature YouTube · meilleure image en taille réelle disponible",
+  "Wheels": "Roues",
+  "Only what you need.": "Juste l’essentiel.",
+  "Hide what you never use. The wheels share the space among the rest.": "Masquez ce que vous n’utilisez jamais. Les roues partagent l’espace entre les autres.",
+  "Click an item to hide or show it.": "Cliquez sur un élément pour le masquer ou l’afficher.",
+  "Preview with": "Aperçu avec",
+  "{0} of {1} visible": "{0} sur {1} visibles",
+  "At least one action stays visible.": "Au moins une action reste visible.",
+  "Show all": "Tout afficher",
+  "Opens with {0} while dragging files.": "S’ouvre avec {0} pendant le glissement de fichiers."
 }

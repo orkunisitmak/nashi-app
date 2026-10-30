@@ -13,7 +13,30 @@ struct WheelItem {
     var windowPlacement:WindowPlacement? = nil
 }
 
+/// Items people hid in Settings › Wheels, stored per wheel as ids (see WheelCustomization).
+enum WheelVisibility {
+    static func key(_ mode:WheelMode)->String { switch mode { case .convert:return "hiddenWheelFormats";case .tools:return "hiddenWheelTools";case .actions:return "hiddenWheelActions" } }
+    static func hidden(_ mode:WheelMode)->Set<String> { Set(UserDefaults.standard.stringArray(forKey:key(mode)) ?? []) }
+    static func setHidden(_ ids:Set<String>,for mode:WheelMode) { UserDefaults.standard.set(ids.sorted(),forKey:key(mode)) }
+}
+
+extension WheelItem {
+    /// The file wheel for these inputs, without the items hidden in Settings. Actions never come back empty.
+    static func fileItems(mode:WheelMode,inputs:[URL],hidden:Set<String>)->[WheelItem] {
+        switch mode {
+        case .convert: return WheelCustomization.visible(FeatureCatalog.formats(for:inputs),hidden:hidden,id:{$0}).map{WheelItem(title:$0 == "gz" ? "GZIP":$0.uppercased(),operation:.convert($0))}
+        case .tools: return WheelCustomization.visible(FeatureCatalog.tools(for:inputs),hidden:hidden,id:\.rawValue).map{WheelItem(title:FeatureCatalog.toolNames[$0] ?? $0.title,symbol:FeatureCatalog.toolSymbols[$0],operation:.tool($0))}
+        case .actions: return WheelCustomization.visible(FileAction.allCases,hidden:hidden,id:\.rawValue,keepOne:true).map{WheelItem(title:$0.title,symbol:$0.symbol,action:$0)}
+        }
+    }
+}
+
 @MainActor final class WheelController {
+    static var backdropState:NSVisualEffectView.State { UserDefaults.standard.string(forKey:"conversionFanTheme")=="metallic" ? .inactive:.active }
+    static func makeBackdrop(diameter:CGFloat)->NSVisualEffectView {
+        let effect=NSVisualEffectView(frame:NSRect(x:0,y:0,width:diameter,height:diameter));effect.material = .popover;effect.blendingMode = .behindWindow;effect.state=backdropState;effect.wantsLayer=true;effect.layer?.cornerRadius=diameter/2;effect.layer?.masksToBounds=true
+        return effect
+    }
     let state:AppState
     var panel:NSPanel?
     var wheel:WheelView?
@@ -40,11 +63,7 @@ struct WheelItem {
             if video,media?.imageURL != nil { items.append(WheelItem(title:"Download thumbnail…",symbol:"photo",webAction:.thumbnail)) }
             if !photos,(video || media?.imageURL == nil) { items.append(WheelItem(title:"Audio MP3…",symbol:"waveform",webAction:.audio)) }
             items += [WheelItem(title:"Copy link",symbol:"link",webAction:.copy),WheelItem(title:"Open link",symbol:"safari",webAction:.open)]
-        } else { switch mode {
-        case .convert: items=FeatureCatalog.formats(for:inputs).map{WheelItem(title:$0 == "gz" ? "GZIP":$0.uppercased(),operation:.convert($0))}
-        case .tools: items=FeatureCatalog.tools(for:inputs).map{WheelItem(title:FeatureCatalog.toolNames[$0] ?? $0.title,symbol:FeatureCatalog.toolSymbols[$0],operation:.tool($0))}
-        case .actions: items=FileAction.allCases.map{WheelItem(title:$0.title,symbol:$0.symbol,action:$0)}
-        } }
+        } else { items=WheelItem.fileItems(mode:mode,inputs:inputs,hidden:WheelVisibility.hidden(mode)) }
         let exists=panel?.isVisible ?? false
         let desiredSize=CGFloat(320*UserDefaults.standard.double(forKey:"wheelScale"))
         if let panel,!exists,abs(panel.frame.width-desiredSize)>0.5 { panel.setContentSize(NSSize(width:desiredSize,height:desiredSize));panel.contentView?.layer?.cornerRadius=desiredSize/2 }
@@ -52,7 +71,7 @@ struct WheelItem {
             let size=CGFloat(320*UserDefaults.standard.double(forKey:"wheelScale"))
             let p=WheelPanel(contentRect:NSRect(x:0,y:0,width:size,height:size),styleMask:[.borderless,.nonactivatingPanel],backing:.buffered,defer:false)
             p.backgroundColor = .clear;p.isOpaque=false;p.hasShadow=false;p.level = .statusBar;p.collectionBehavior=[.canJoinAllSpaces,.fullScreenAuxiliary];p.hidesOnDeactivate=false
-            let effect=NSVisualEffectView(frame:NSRect(x:0,y:0,width:size,height:size));effect.material = .popover;effect.blendingMode = .behindWindow;effect.state = .active;effect.wantsLayer=true;effect.layer?.cornerRadius=size/2;effect.layer?.masksToBounds=true
+            let effect=WheelController.makeBackdrop(diameter:size)
             let view=WheelView(frame:effect.bounds);view.autoresizingMask=[.width,.height];effect.addSubview(view);p.contentView=effect
             view.onSelect = { [weak self] item in self?.apply(item) };view.onCancel = { [weak self] in self?.hide() }
             view.onDragInputs = { [weak self] urls in guard let self else { return };self.show(inputs:urls,mode:self.mode,at:NSEvent.mouseLocation) }
@@ -67,7 +86,7 @@ struct WheelItem {
             let y=min(max(visible.minY+4,point.y-p.frame.height/2),visible.maxY-p.frame.height-4)
             p.setFrameOrigin(NSPoint(x:x,y:y))
         }
-        if let effect=panel?.contentView as? NSVisualEffectView { effect.state=UserDefaults.standard.string(forKey:"conversionFanTheme")=="metallic" ? .inactive:.active }
+        if let effect=panel?.contentView as? NSVisualEffectView { effect.state=WheelController.backdropState }
         if !exists,NashiMotion.enabled {
             panel?.alphaValue=0;panel?.orderFrontRegardless()
             NSAnimationContext.runAnimationGroup { context in context.duration=0.13;panel?.animator().alphaValue=1 }
