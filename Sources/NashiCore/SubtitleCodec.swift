@@ -14,7 +14,7 @@ enum SubtitleCodec {
         let cues = try parse(source)
         switch format {
         case "vtt":
-            return "WEBVTT\n\n" + cues.map { "\(timestamp($0.start, vtt: true)) --> \(timestamp($0.end, vtt: true))\($0.settings.isEmpty ? "" : " " + $0.settings)\n\($0.text)\n" }.joined(separator: "\n")
+            return "WEBVTT\n\n" + cues.map { "\(timestamp($0.start, vtt: true)) --> \(timestamp($0.end, vtt: true))\($0.settings.isEmpty ? "" : " " + $0.settings)\n\(vttText($0.text))\n" }.joined(separator: "\n")
         case "srt":
             return cues.enumerated().map { index, cue in
                 "\(index + 1)\n\(timestamp(cue.start, vtt: false)) --> \(timestamp(cue.end, vtt: false))\n\(srtText(cue.text))\n"
@@ -80,8 +80,15 @@ enum SubtitleCodec {
             .replacingOccurrences(of: "&rlm;", with: "\u{200F}")
         return DocumentText.decodeEntities(webVTT)
     }
+    private static func vttText(_ text: String) -> String {
+        // WebVTT reads a bare "<" as the start of a tag and drops the rest of the line,
+        // so only a complete known tag or timestamp keeps its "<".
+        let ampersands = text.replacingOccurrences(of: #"&(?!(?:[A-Za-z][A-Za-z0-9]*|#\d+|#[xX][0-9A-Fa-f]+);)"#, with: "&amp;", options: .regularExpression)
+        return ampersands.replacingOccurrences(of: #"(?i)<(?!/?(?:b|i|u|c|v|lang|ruby|rt|font)(?:[ .][^<>\n]*)?>|\d{2,}:\d{2}(?::\d{2})?\.\d{3}>)"#, with: "&lt;", options: .regularExpression)
+    }
     private static func plainText(_ text: String) -> String {
-        let withoutTags = text.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+        // Only real cue tags are markup. "5 < 6 and 7 > 3" is text and must survive export.
+        let withoutTags = text.replacingOccurrences(of: #"(?i)</?(?:b|i|u|c|v|lang|ruby|rt|font)(?:[ .][^<>]*)?>|<\d{2,}:\d{2}(?::\d{2})?\.\d{3}>"#, with: "", options: .regularExpression)
         // Direction marks keep right-to-left lines readable in the exported text too.
         return DocumentText.decodeEntities(withoutTags.replacingOccurrences(of: "&lrm;", with: "\u{200E}").replacingOccurrences(of: "&rlm;", with: "\u{200F}"))
     }
