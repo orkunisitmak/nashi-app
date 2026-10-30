@@ -12,6 +12,7 @@
 "%@ items" = "%@ éléments";
 "%@ selected" = "%@ sélectionnés";
 "%@ selected · Drag to carry files" = "%@ sélectionnés · Faites glisser pour emporter les fichiers";
+"%@ tools" = "%@ tools";
 "%@ ways to change it" = "%@ façons de le transformer";
 "%@ · Nashi" = "%@ · Nashi";
 "%@ · Original stays safe" = "%@ · L’original reste intact";
@@ -26,6 +27,7 @@
 "%lld items" = "%lld éléments";
 "%lld selected" = "%lld sélectionnés";
 "%lld selected · Drag to carry files" = "%lld sélectionnés · Faites glisser pour emporter les fichiers";
+"%lld tools" = "%lld tools";
 "%lld ways to change it" = "%lld façons de le transformer";
 "%lld · Nashi" = "%lld · Nashi";
 "%lld · Original stays safe" = "%lld · L’original reste intact";
@@ -47,9 +49,11 @@
 "32-BIT INTEGER" = "ENTIER 32 BITS";
 "32-bit float" = "Virgule flottante 32 bits";
 "32-bit integer" = "Entier 32 bits";
+"A COMPACT WORKSPACE AT THE TOP OF YOUR SCREEN. HOVER OR DROP FILES TO EXPAND IT." = "A COMPACT WORKSPACE AT THE TOP OF YOUR SCREEN. HOVER OR DROP FILES TO EXPAND IT.";
 "A DISCARDED CLIP IS OUTSIDE THE RANGE." = "UN CLIP SUPPRIMÉ EST EN DEHORS DE LA PLAGE.";
 "A FEW SMALL PREFERENCES. A SMOOTHER EVERYDAY." = "QUELQUES PETITES PRÉFÉRENCES. UN QUOTIDIEN PLUS FLUIDE.";
 "A FEW TOOLS. MORE POSSIBILITIES." = "QUELQUES OUTILS. PLUS DE POSSIBILITÉS.";
+"A FILE IS ON ITS WAY" = "A FILE IS ON ITS WAY";
 "A FRAME LIES OUTSIDE THE VIDEO." = "UNE IMAGE SE TROUVE EN DEHORS DE LA VIDÉO.";
 "A FRESH FILE IS ON ITS WAY." = "UN NOUVEAU FICHIER ARRIVE.";
 "A FRESH FILE IS ON ITS WAY…" = "UN NOUVEAU FICHIER ARRIVE…";
@@ -62,6 +66,7 @@
 "A LITTLE LESS FILE FUSS. A LITTLE MORE FLOW." = "MOINS DE TRACAS AVEC VOS FICHIERS. PLUS DE FLUIDITÉ.";
 "A LITTLE LESS FILE FUSS. A LITTLE MORE FLOW.\nCONVERT, EDIT, AND ORGANIZE — RIGHT ON YOUR MAC." = "MOINS DE TRACAS AVEC VOS FICHIERS. PLUS DE FLUIDITÉ.\nCONVERTISSEZ, MODIFIEZ ET ORGANISEZ, DIRECTEMENT SUR VOTRE MAC.";
 "A LITTLE PEAR. A LOT OF POSSIBILITY." = "UNE PETITE POIRE. PLEIN DE POSSIBILITÉS.";
+"A LITTLE SPACE FOR FOCUS" = "A LITTLE SPACE FOR FOCUS";
 "A NEW FORM.\nIN A TAP." = "UNE NOUVELLE FORME.\nEN UN GESTE.";
 "A PAGE RANGE IS OUTSIDE THE PDF." = "UNE PLAGE DE PAGES DÉPASSE LE PDF.";
 "A PERFECT LANDING SPOT" = "UN POINT DE CHUTE IDÉAL";
@@ -71,9 +76,11 @@
 "A SPLIT POINT LIES OUTSIDE THE VIDEO." = "UN POINT DE COUPURE SE TROUVE EN DEHORS DE LA VIDÉO.";
 "A SUBTITLE CUE ENDS BEFORE IT STARTS." = "UNE RÉPLIQUE DE SOUS-TITRE SE TERMINE AVANT DE COMMENCER.";
 "A TABLE CELL SPAN IS INVALID OR EXCEEDS 1,024 COLUMNS." = "LA FUSION D’UNE CELLULE DE TABLEAU EST INVALIDE OU DÉPASSE 1 024 COLONNES.";
+"A compact workspace at the top of your screen. Hover or drop files to expand it." = "A compact workspace at the top of your screen. Hover or drop files to expand it.";
 "A discarded clip is outside the range." = "Un clip supprimé est en dehors de la plage.";
 "A few small preferences. A smoother everyday." = "Quelques petites préférences. Un quotidien plus fluide.";
 "A few tools. More possibilities." = "Quelques outils. Plus de possibilités.";
+"A file is on its way" = "A file is on its way";
 "A frame lies outside the video." = "Une image se trouve en dehors de la vidéo.";
 "A fresh Nashi is ready." = "Une nouvelle version de Nashi est prête.";
 "A fresh file is on its way." = "Un nouveau fichier arrive.";
@@ -85,11 +92,14 @@
 "A little less file fuss. A little more flow." = "Moins de tracas avec vos fichiers. Plus de fluidité.";
 "A little less file fuss. A little more flow.\nConvert, edit, and organize — right on your Mac." = "Moins de tracas avec vos fichiers. Plus de fluidité.\nConvertissez, modifiez et organisez, directement sur votre Mac.";
 "A little pear. A lot of possibility." = "Une petite poire. Plein de possibilités.";
+"A little space for focus" = "A little space for focus";
 "A new form.\nIn a tap." = "Une nouvelle forme.\nEn un geste.";
 "A page range is outside the PDF." = "Une plage de pages dépasse le PDF.";
 "A perfect landing spot" = "Un point de chute idéal";
 "A photo is unavailable. Try a fresh public post link." = "Une photo est indisponible. Essayez un nouveau lien de publication publique.";
 "A place for fresh files." = "Un endroit pour les nouveaux fichiers.";
+"A quiet %@-minute session" = "A quiet %@-minute session";
+"A quiet %lld-minute session" = "A quiet %lld-minute session";
 "A selected item is missing." = "Un élément sélectionné est manquant.";
 "A split point lies outside the video." = "Un point de coupure se trouve en dehors de la vidéo.";
 "A subtitle cue ends before it starts." = "Une réplique de sous-titre se termine avant de commencer.";
@@ -99,6 +109,7 @@
 "ACTIONS" = "ACTIONS";
 "ADD" = "AJOUTER";
 "ADD A BLEEP OR SILENCE RANGE." = "AJOUTEZ UNE PLAGE DE BIP OU DE SILENCE.";
+"ADD A TASK" = "ADD A TASK";
 "ADD BG" = "AJOUTER UN FOND";
 "ADD FIELD" = "AJOUTER UN CHAMP";
 "ADD FILES" = "AJOUTER DES FICHIERS";
@@ -110,6 +121,7 @@
 "ADD REDACTION" = "AJOUTER UN CAVIARDAGE";
 "ADD SELECTED RANGE" = "AJOUTER LA PLAGE SÉLECTIONNÉE";
 "ADD SPLIT" = "AJOUTER UNE COUPURE";
+"ADD TASK" = "ADD TASK";
 "ADD TO AN EXISTING FLOAT" = "AJOUTER À UN FLOAT EXISTANT";
 "ADDING PAGES…" = "AJOUT DES PAGES…";
 "ADDITIONAL OPTIONS" = "OPTIONS SUPPLÉMENTAIRES";
@@ -173,9 +185,11 @@
 "Add Redaction" = "Ajouter un caviardage";
 "Add Split" = "Ajouter une coupure";
 "Add a bleep or silence range." = "Ajoutez une plage de bip ou de silence.";
+"Add a task" = "Add a task";
 "Add files" = "Ajouter des fichiers";
 "Add or change files" = "Modifier la sélection";
 "Add selected range" = "Ajouter la plage sélectionnée";
+"Add task" = "Add task";
 "Add to an existing Float" = "Ajouter à un Float existant";
 "Adding pages…" = "Ajout des pages…";
 "Additional options" = "Options supplémentaires";
@@ -272,6 +286,7 @@
 "Built for your files. Made for your Mac." = "Conçu pour vos fichiers. Fait pour votre Mac.";
 "CALLOUT" = "LÉGENDE";
 "CANCEL" = "ANNULER";
+"CANCEL CURRENT OPERATION" = "CANCEL CURRENT OPERATION";
 "CANCEL DOWNLOAD" = "ANNULER LE TÉLÉCHARGEMENT";
 "CANCEL SETUP" = "ANNULER LA CONFIGURATION";
 "CANCELLED. ORIGINALS KEPT." = "ANNULÉ. ORIGINAUX CONSERVÉS.";
@@ -299,10 +314,12 @@
 "CHOOSE 2–100 IMAGES FOR A COLLAGE." = "CHOISISSEZ DE 2 À 100 IMAGES POUR UN COLLAGE.";
 "CHOOSE A BACKGROUND IMAGE." = "CHOISISSEZ UNE IMAGE D’ARRIÈRE-PLAN.";
 "CHOOSE A CANVAS WITHIN 100 MP AND 30,000 PIXELS." = "CHOISISSEZ UN CANEVAS DE 100 MPX ET 30 000 PIXELS AU MAXIMUM.";
+"CHOOSE A COMPATIBLE FILE FIRST" = "CHOOSE A COMPATIBLE FILE FIRST";
 "CHOOSE A COMPLETE RTFD FOLDER CONTAINING TXT.RTF." = "CHOISISSEZ UN DOSSIER RTFD COMPLET CONTENANT TXT.RTF.";
 "CHOOSE A DESTINATION OUTSIDE THE FOLDER BEING MOVED." = "CHOISISSEZ UNE DESTINATION EN DEHORS DU DOSSIER DÉPLACÉ.";
 "CHOOSE A FILE TO PREVIEW." = "CHOISISSEZ UN FICHIER À PRÉVISUALISER.";
 "CHOOSE A FINISHED VIDEO INSTEAD OF A LIVE OR UPCOMING STREAM." = "CHOISISSEZ UNE VIDÉO TERMINÉE PLUTÔT QU’UNE DIFFUSION EN DIRECT OU À VENIR.";
+"CHOOSE A FORMAT TO MAKE A FRESH COPY" = "CHOOSE A FORMAT TO MAKE A FRESH COPY";
 "CHOOSE A HEX BACKGROUND COLOR, SUCH AS #FFFFFF OR #00FFFFFF." = "CHOISISSEZ UNE COULEUR D’ARRIÈRE-PLAN HEXADÉCIMALE, COMME #FFFFFF OU #00FFFFFF.";
 "CHOOSE A LARGER TARGET SIZE." = "CHOISISSEZ UNE TAILLE CIBLE PLUS GRANDE.";
 "CHOOSE A NONEMPTY IMAGE." = "CHOISISSEZ UNE IMAGE NON VIDE.";
@@ -314,6 +331,7 @@
 "CHOOSE A RECTANGLE INSIDE THE VIDEO." = "CHOISISSEZ UN RECTANGLE À L’INTÉRIEUR DE LA VIDÉO.";
 "CHOOSE A SUPPORTED MAXIMUM VIDEO HEIGHT." = "CHOISISSEZ UNE HAUTEUR VIDÉO MAXIMALE PRISE EN CHARGE.";
 "CHOOSE A TARGET OF AT LEAST 2 KB." = "CHOISISSEZ UNE CIBLE D’AU MOINS 2 KO.";
+"CHOOSE A TOOL, THEN SELECT ITS FILE." = "CHOOSE A TOOL, THEN SELECT ITS FILE.";
 "CHOOSE A VALID RANGE FIRST." = "CHOISISSEZ D’ABORD UNE PLAGE VALIDE.";
 "CHOOSE A VALID RANGE." = "CHOISISSEZ UNE PLAGE VALIDE.";
 "CHOOSE A VALID TIME RANGE." = "CHOISISSEZ UNE PLAGE DE TEMPS VALIDE.";
@@ -373,10 +391,12 @@
 "CLOSE FLOAT WITHOUT DELETING FILES" = "FERMER FLOAT SANS SUPPRIMER LES FICHIERS";
 "CLOSE WINDOW" = "FERMER LA FENÊTRE";
 "COLLAPSE FLOAT" = "RÉDUIRE FLOAT";
+"COLLAPSE NASHI" = "COLLAPSE NASHI";
 "COLOR" = "COULEUR";
 "COLUMN" = "COLONNE";
 "COLUMNS" = "COLONNES";
 "COMPATIBILITY" = "COMPATIBILITÉ";
+"COMPLETED FILES WILL APPEAR HERE." = "COMPLETED FILES WILL APPEAR HERE.";
 "COMPRESS" = "COMPRESSER";
 "COMPRESS & SAVE" = "COMPRESSER ET ENREGISTRER";
 "COMPRESS PDF" = "COMPRESSER LE PDF";
@@ -389,6 +409,7 @@
 "COMPRESSION STRENGTH" = "INTENSITÉ DE COMPRESSION";
 "CONTINUE TO NASHI" = "CONTINUER VERS NASHI";
 "CONTRAST" = "CONTRASTE";
+"CONVERSION PROGRESS" = "CONVERSION PROGRESS";
 "CONVERSION SETTINGS" = "RÉGLAGES DE CONVERSION";
 "CONVERSION WHEEL" = "ROUE DE CONVERSION";
 "CONVERSIONS" = "CONVERSIONS";
@@ -427,6 +448,7 @@
 "CUT" = "COUPER";
 "Callout" = "Légende";
 "Cancel" = "Annuler";
+"Cancel current operation" = "Cancel current operation";
 "Cancel download" = "Annuler le téléchargement";
 "Cancel setup" = "Annuler la configuration";
 "Cancelled. Originals kept." = "Annulé. Originaux conservés.";
@@ -467,10 +489,12 @@
 "Choose a PDF with 1 to 1,000 pages." = "Choisissez un PDF de 1 à 1 000 pages.";
 "Choose a background image." = "Choisissez une image d’arrière-plan.";
 "Choose a canvas within 100 MP and 30,000 pixels." = "Choisissez un canevas de 100 Mpx et 30 000 pixels au maximum.";
+"Choose a compatible file first" = "Choose a compatible file first";
 "Choose a complete RTFD folder containing TXT.rtf." = "Choisissez un dossier RTFD complet contenant TXT.rtf.";
 "Choose a destination outside the folder being moved." = "Choisissez une destination en dehors du dossier déplacé.";
 "Choose a file to preview." = "Choisissez un fichier à prévisualiser.";
 "Choose a finished video instead of a live or upcoming stream." = "Choisissez une vidéo terminée plutôt qu’une diffusion en direct ou à venir.";
+"Choose a format to make a fresh copy" = "Choose a format to make a fresh copy";
 "Choose a hex background color, such as #FFFFFF or #00FFFFFF." = "Choisissez une couleur d’arrière-plan hexadécimale, comme #FFFFFF ou #00FFFFFF.";
 "Choose a larger target size." = "Choisissez une taille cible plus grande.";
 "Choose a nonempty image." = "Choisissez une image non vide.";
@@ -480,6 +504,7 @@
 "Choose a rectangle inside the video." = "Choisissez un rectangle à l’intérieur de la vidéo.";
 "Choose a supported maximum video height." = "Choisissez une hauteur vidéo maximale prise en charge.";
 "Choose a target of at least 2 KB." = "Choisissez une cible d’au moins 2 Ko.";
+"Choose a tool, then select its file." = "Choose a tool, then select its file.";
 "Choose a valid range first." = "Choisissez d’abord une plage valide.";
 "Choose a valid range." = "Choisissez une plage valide.";
 "Choose a valid time range." = "Choisissez une plage de temps valide.";
@@ -532,10 +557,12 @@
 "Close Float without deleting files" = "Fermer Float sans supprimer les fichiers";
 "Close Window" = "Fermer la fenêtre";
 "Collapse Float" = "Réduire Float";
+"Collapse Nashi" = "Collapse Nashi";
 "Color" = "Couleur";
 "Column" = "Colonne";
 "Columns" = "Colonnes";
 "Compatibility" = "Compatibilité";
+"Completed files will appear here." = "Completed files will appear here.";
 "Compress" = "Compresser";
 "Compress & save" = "Compresser et enregistrer";
 "Compress PDF" = "Compresser le PDF";
@@ -557,11 +584,16 @@
 "Continue to Nashi" = "Continuer vers Nashi";
 "Contrast" = "Contraste";
 "Conversion Settings" = "Réglages de conversion";
+"Conversion progress" = "Conversion progress";
 "Conversion wheel" = "Roue de conversion";
 "Conversions" = "Conversions";
 "Convert" = "Convertir";
 "Convert %@" = "Convertir %@";
+"Convert %@ to %@" = "Convert %@ to %@";
+"Convert %@ to %lld" = "Convert %@ to %lld";
 "Convert %lld" = "Convertir %lld";
+"Convert %lld to %@" = "Convert %lld to %@";
+"Convert %lld to %lld" = "Convert %lld to %lld";
 "Convert Audio Channels" = "Convertir les canaux audio";
 "Convert to" = "Convertir en";
 "Convert to %@" = "Convertir en %@";
@@ -658,10 +690,14 @@
 "DRAW A REGION TO REDACT." = "DESSINEZ UNE ZONE À CAVIARDER.";
 "DRAW AT LEAST ONE AREA TO REDACT." = "DESSINEZ AU MOINS UNE ZONE À CAVIARDER.";
 "DRAWING TOOL" = "OUTIL DE DESSIN";
+"DROP" = "DROP";
 "DROP FILES HERE" = "DÉPOSEZ DES FICHIERS ICI";
+"DROP FILES HERE OR CHOOSE THEM" = "DROP FILES HERE OR CHOOSE THEM";
 "DROP FILES HERE · SPACE FOR QUICK LOOK" = "DÉPOSEZ DES FICHIERS ICI · ESPACE POUR LE COUP D’ŒIL";
 "DROP FILES OR FOLDERS HERE" = "DÉPOSEZ DES FICHIERS OU DES DOSSIERS ICI";
+"DROP FILES TO GET STARTED" = "DROP FILES TO GET STARTED";
 "DROP IT LIKE IT’S… A FILE." = "DÉPOSEZ-LE COMME SI C’ÉTAIT… UN FICHIER.";
+"DROP SHELF" = "DROP SHELF";
 "DROP SOMETHING GOOD." = "DÉPOSEZ QUELQUE CHOSE DE BIEN.";
 "DUPLICATE" = "DUPLIQUER";
 "Dark" = "Sombre";
@@ -733,9 +769,13 @@
 "Draw a region to redact." = "Dessinez une zone à caviarder.";
 "Draw at least one area to redact." = "Dessinez au moins une zone à caviarder.";
 "Drawing tool" = "Outil de dessin";
+"Drop" = "Drop";
+"Drop Shelf" = "Drop Shelf";
 "Drop files here" = "Déposez des fichiers ici";
+"Drop files here or choose them" = "Drop files here or choose them";
 "Drop files here · Space for Quick Look" = "Déposez des fichiers ici · Espace pour le coup d’œil";
 "Drop files or folders here" = "Déposez des fichiers ou des dossiers ici";
+"Drop files to get started" = "Drop files to get started";
 "Drop it like it’s… a file." = "Déposez-le comme si c’était… un fichier.";
 "Drop something good." = "Déposez quelque chose de bien.";
 "Duplicate" = "Dupliquer";
@@ -761,6 +801,7 @@
 "ESC TO CLOSE" = "ÉCHAP POUR FERMER";
 "EVERYTHING HAS A NEXT FORM." = "TOUT A UNE PROCHAINE FORME.";
 "EXPAND FLOAT" = "DÉVELOPPER FLOAT";
+"EXPAND NASHI" = "EXPAND NASHI";
 "EXPANDED UPDATE IS TOO LARGE." = "LA MISE À JOUR DÉCOMPRESSÉE EST TROP VOLUMINEUSE.";
 "EXPORT CLIPS" = "EXPORTER LES CLIPS";
 "EXPORT ONE VIDEO" = "EXPORTER UNE SEULE VIDÉO";
@@ -789,6 +830,7 @@
 "Esc to close" = "Échap pour fermer";
 "Everything has a next form." = "Tout a une prochaine forme.";
 "Expand Float" = "Développer Float";
+"Expand Nashi" = "Expand Nashi";
 "Expanded update is too large." = "La mise à jour décompressée est trop volumineuse.";
 "Export One Video" = "Exporter une seule vidéo";
 "Export clips" = "Exporter les clips";
@@ -818,6 +860,7 @@
 "FILES IN FLOAT" = "FICHIERS DANS FLOAT";
 "FILES MISSING" = "FICHIERS MANQUANTS";
 "FILES MOVED." = "FICHIERS DÉPLACÉS.";
+"FILES STAY ON THIS MAC; NASHI WRITES A NEW OUTPUT COPY." = "FILES STAY ON THIS MAC; NASHI WRITES A NEW OUTPUT COPY.";
 "FILES STAY ON YOUR COMPUTER." = "LES FICHIERS RESTENT SUR VOTRE ORDINATEUR.";
 "FILL CELLS (CROP EDGES)" = "REMPLIR LES CELLULES (ROGNER LES BORDS)";
 "FILL CELLS (CROP TO FIT)" = "REMPLIR LES CELLULES (ROGNER POUR AJUSTER)";
@@ -849,6 +892,8 @@
 "FLOAT BEHAVIOUR" = "COMPORTEMENT DE FLOAT";
 "FLOAT OPTIONS" = "OPTIONS DE FLOAT";
 "FLOAT · 1 FILE" = "FLOAT · 1 FICHIER";
+"FOCUS TIMER" = "FOCUS TIMER";
+"FOCUS TIMER PROGRESS" = "FOCUS TIMER PROGRESS";
 "FOLDERS" = "DOSSIERS";
 "FONT" = "POLICE";
 "FONT SIZE" = "TAILLE DE LA POLICE";
@@ -869,6 +914,7 @@
 "Featured" = "En vedette";
 "Features & shortcuts" = "Fonctionnalités et raccourcis";
 "Field" = "Champ";
+"File" = "File";
 "File action could not finish" = "L’action sur le fichier n’a pas pu se terminer";
 "File actions" = "Actions sur les fichiers";
 "File actions wheel" = "Roue des actions sur les fichiers";
@@ -883,6 +929,7 @@
 "Files in Float" = "Fichiers dans Float";
 "Files missing" = "Fichiers manquants";
 "Files moved." = "Fichiers déplacés.";
+"Files stay on this Mac; Nashi writes a new output copy." = "Files stay on this Mac; Nashi writes a new output copy.";
 "Files stay on your computer." = "Les fichiers restent sur votre ordinateur.";
 "Files were copied safely, but some originals could not be removed. New copies are in %@. Check the originals before retrying." = "Les fichiers ont été copiés en toute sécurité, mais certains originaux n’ont pas pu être supprimés. Les nouvelles copies se trouvent dans %@. Vérifiez les originaux avant de réessayer.";
 "Files were copied safely, but some originals could not be removed. New copies are in %lld. Check the originals before retrying." = "Les fichiers ont été copiés en toute sécurité, mais certains originaux n’ont pas pu être supprimés. Les nouvelles copies se trouvent dans %lld. Vérifiez les originaux avant de réessayer.";
@@ -919,6 +966,8 @@
 "Float · %@ files" = "Float · %@ fichiers";
 "Float · %lld files" = "Float · %lld fichiers";
 "Float · 1 file" = "Float · 1 fichier";
+"Focus timer" = "Focus timer";
+"Focus timer progress" = "Focus timer progress";
 "Folder · %@" = "Dossier · %@";
 "Folder · %lld" = "Dossier · %lld";
 "Folders" = "Dossiers";
@@ -951,6 +1000,8 @@
 "GITHUB REPOSITORY" = "DÉPÔT GITHUB";
 "GIVE IT A LITTLE BREATHING ROOM." = "LAISSEZ-LUI UN PEU D’AIR.";
 "GLASS" = "VERRE";
+"GO BACK 10 SECONDS IN NASHI PREVIEW" = "GO BACK 10 SECONDS IN NASHI PREVIEW";
+"GO FORWARD 10 SECONDS IN NASHI PREVIEW" = "GO FORWARD 10 SECONDS IN NASHI PREVIEW";
 "GRADIENT" = "DÉGRADÉ";
 "GRADIENT END" = "FIN DU DÉGRADÉ";
 "GRAIN" = "GRAIN";
@@ -964,6 +1015,8 @@
 "GitHub repository" = "Dépôt GitHub";
 "Give it a little breathing room." = "Laissez-lui un peu d’air.";
 "Glass" = "Verre";
+"Go back 10 seconds in Nashi preview" = "Go back 10 seconds in Nashi preview";
+"Go forward 10 seconds in Nashi preview" = "Go forward 10 seconds in Nashi preview";
 "Gradient" = "Dégradé";
 "Gradient end" = "Fin du dégradé";
 "Grain" = "Grain";
@@ -972,6 +1025,7 @@
 "HELLO" = "BONJOUR";
 "HIGHER QUALITY" = "MEILLEURE QUALITÉ";
 "HIGHLIGHTS" = "HAUTES LUMIÈRES";
+"HISTORY" = "HISTORY";
 "HOLD A KEY WHILE DRAGGING IN FINDER" = "MAINTENEZ UNE TOUCHE EN FAISANT GLISSER DANS LE FINDER";
 "HOME" = "ACCUEIL";
 "HUE" = "TEINTE";
@@ -979,6 +1033,7 @@
 "Hello" = "Bonjour";
 "Higher Quality" = "Meilleure qualité";
 "Highlights" = "Hautes lumières";
+"History" = "History";
 "Hold a key while dragging in Finder" = "Maintenez une touche en faisant glisser dans le Finder";
 "Home" = "Accueil";
 "Hue" = "Teinte";
@@ -1051,6 +1106,7 @@
 "KEEP THE GOOD PART." = "GARDEZ LE MEILLEUR.";
 "KEEP THE ORIGINAL PAGES" = "CONSERVER LES PAGES D’ORIGINE";
 "KEEP THEM TOGETHER, OR GIVE EACH ONE A FRESH START." = "TRAITEZ-LES ENSEMBLE OU UN PAR UN.";
+"KEEP THESE FILES TOGETHER IN A FLOATING SHELF" = "KEEP THESE FILES TOGETHER IN A FLOATING SHELF";
 "KEEP THINGS\nMOVING." = "GARDEZ LE\nRYTHME.";
 "Keep at least one clip." = "Conservez au moins un clip.";
 "Keep at least one page." = "Conservez au moins une page.";
@@ -1062,6 +1118,7 @@
 "Keep the good part." = "Gardez le meilleur.";
 "Keep the original pages" = "Conserver les pages d’origine";
 "Keep them together, or give each one a fresh start." = "Traitez-les ensemble ou un par un.";
+"Keep these files together in a floating shelf" = "Keep these files together in a floating shelf";
 "Keep things\nmoving." = "Gardez le\nrythme.";
 "LANDSCAPE" = "PAYSAGE";
 "LANDSCAPE · 16:9" = "PAYSAGE · 16:9";
@@ -1132,6 +1189,8 @@
 "MAKE IT YOURS · NASHI" = "À VOTRE FAÇON · NASHI";
 "MAKE SOME SPACE. KEEP WHAT MATTERS." = "FAITES DE LA PLACE. GARDEZ L’ESSENTIEL.";
 "MAKE YOUR POINT." = "FAITES PASSER VOTRE MESSAGE.";
+"MARK TASK COMPLETE" = "MARK TASK COMPLETE";
+"MARK TASK INCOMPLETE" = "MARK TASK INCOMPLETE";
 "MARKER" = "SURLIGNEUR";
 "MATCH SOURCE" = "IDENTIQUE À LA SOURCE";
 "MAXIMIZE" = "AGRANDIR";
@@ -1172,6 +1231,8 @@
 "Make it yours · Nashi" = "À votre façon · Nashi";
 "Make some space. Keep what matters." = "Faites de la place. Gardez l’essentiel.";
 "Make your point." = "Faites passer votre message.";
+"Mark task complete" = "Mark task complete";
+"Mark task incomplete" = "Mark task incomplete";
 "Marker" = "Surligneur";
 "Match Source" = "Identique à la source";
 "Match source" = "Identique à la source";
@@ -1210,6 +1271,7 @@
 "NASHI CHECKS ONCE AN HOUR WHILE IT’S RUNNING. YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL." = "NASHI VÉRIFIE UNE FOIS PAR HEURE PENDANT SON EXÉCUTION. VOUS CHOISISSEZ QUAND TÉLÉCHARGER ET INSTALLER.";
 "NASHI IS ALREADY RUNNING BUT IS STILL STARTING. OPEN IT FROM THE SYSTEM TRAY OR TRY AGAIN IN A MOMENT." = "NASHI EST DÉJÀ OUVERT MAIS DÉMARRE ENCORE. OUVREZ-LE DEPUIS LA ZONE DE NOTIFICATION OU RÉESSAYEZ DANS UN INSTANT.";
 "NASHI IS STILL RUNNING." = "NASHI EST TOUJOURS EN COURS D’EXÉCUTION.";
+"NASHI MEDIA PREVIEW" = "NASHI MEDIA PREVIEW";
 "NASHI SAVES RESULTS BESIDE THE ORIGINALS. ALLOW A FOLDER ONCE TO INCLUDE EVERY FOLDER INSIDE IT." = "NASHI ENREGISTRE LES RÉSULTATS À CÔTÉ DES ORIGINAUX. AUTORISEZ UN DOSSIER UNE SEULE FOIS POUR INCLURE TOUS LES DOSSIERS QU’IL CONTIENT.";
 "NASHI SETTINGS" = "RÉGLAGES DE NASHI";
 "NASHI UPDATE" = "MISE À JOUR DE NASHI";
@@ -1222,6 +1284,7 @@
 "NICE FILES.\nNO FUSS." = "DE BEAUX FICHIERS.\nSANS PRISE DE TÊTE.";
 "NICELY DONE." = "BIEN JOUÉ.";
 "NICELY DONE. 1 FILE IS READY." = "BIEN JOUÉ. 1 FICHIER EST PRÊT.";
+"NO COMPATIBLE CONVERSION FORMATS" = "NO COMPATIBLE CONVERSION FORMATS";
 "NO FOLDERS ALLOWED YET." = "AUCUN DOSSIER AUTORISÉ POUR L’INSTANT.";
 "NO MATCHES. TRY A FILE NAME OR TOOL." = "AUCUN RÉSULTAT. ESSAYEZ UN NOM DE FICHIER OU D’OUTIL.";
 "NO MATCHING REGIONS WERE DETECTED. YOU CAN STILL DRAW AREAS BY HAND." = "AUCUNE ZONE CORRESPONDANTE N’A ÉTÉ DÉTECTÉE. VOUS POUVEZ TOUJOURS DESSINER DES ZONES À LA MAIN.";
@@ -1240,7 +1303,10 @@
 "NONE" = "AUCUNE";
 "NORMALIZE AUDIO" = "NORMALISER L’AUDIO";
 "NORMALIZE VOLUME" = "NORMALISER LE VOLUME";
+"NOTCH MODE" = "NOTCH MODE";
 "NOTE" = "NOTE";
+"NOTES AND TASKS STAY ON THIS MAC." = "NOTES AND TASKS STAY ON THIS MAC.";
+"NOTHING HERE YET" = "NOTHING HERE YET";
 "NOTHING HERE YET. PASTE SOMETHING OR MAKE YOUR FIRST FRESH COPY." = "RIEN ICI POUR L’INSTANT. COLLEZ QUELQUE CHOSE OU CRÉEZ VOTRE PREMIÈRE COPIE.";
 "NUMBER" = "NUMÉRO";
 "NUMBER OF CLIPS" = "NOMBRE DE CLIPS";
@@ -1248,6 +1314,7 @@
 "Nashi checks once an hour while it’s running. You choose when to download and install." = "Nashi vérifie une fois par heure pendant son exécution. Vous choisissez quand télécharger et installer.";
 "Nashi is already running but is still starting. Open it from the system tray or try again in a moment." = "Nashi est déjà ouvert mais démarre encore. Ouvrez-le depuis la zone de notification ou réessayez dans un instant.";
 "Nashi is still running." = "Nashi est toujours en cours d’exécution.";
+"Nashi media preview" = "Nashi media preview";
 "Nashi saves results beside the originals. Allow a folder once to include every folder inside it." = "Nashi enregistre les résultats à côté des originaux. Autorisez un dossier une seule fois pour inclure tous les dossiers qu’il contient.";
 "Nashi update" = "Mise à jour de Nashi";
 "Nashi update could not finish" = "La mise à jour de Nashi n’a pas pu se terminer";
@@ -1263,6 +1330,7 @@
 "Nicely done. 1 file is ready." = "Bien joué. 1 fichier est prêt.";
 "No QR codes found. Try a larger or sharper image." = "Aucun code QR trouvé. Essayez une image plus grande ou plus nette.";
 "No QR codes this time." = "Aucun code QR cette fois.";
+"No compatible conversion formats" = "No compatible conversion formats";
 "No folders allowed yet." = "Aucun dossier autorisé pour l’instant.";
 "No matches. Try a file name or tool." = "Aucun résultat. Essayez un nom de fichier ou d’outil.";
 "No matching regions were detected. You can still draw areas by hand." = "Aucune zone correspondante n’a été détectée. Vous pouvez toujours dessiner des zones à la main.";
@@ -1279,7 +1347,10 @@
 "None" = "Aucune";
 "Normalize Audio" = "Normaliser l’audio";
 "Normalize Volume" = "Normaliser le volume";
+"Notch mode" = "Notch mode";
 "Note" = "Note";
+"Notes and tasks stay on this Mac." = "Notes and tasks stay on this Mac.";
+"Nothing here yet" = "Nothing here yet";
 "Nothing here yet. Paste something or make your first fresh copy." = "Rien ici pour l’instant. Collez quelque chose ou créez votre première copie.";
 "Number" = "Numéro";
 "Number of clips" = "Nombre de clips";
@@ -1303,6 +1374,7 @@
 "OPEN LOGIN ITEMS" = "OUVRIR LES ÉLÉMENTS D’OUVERTURE";
 "OPEN NASHI" = "OUVRIR NASHI";
 "OPEN PERMISSION SETTINGS…" = "OUVRIR LES RÉGLAGES D’AUTORISATION…";
+"OPEN THIS NASHI TOOL" = "OPEN THIS NASHI TOOL";
 "OPEN WHEEL" = "OUVRIR LA ROUE";
 "OPTIONAL. YOU CAN CHANGE THIS IN SETTINGS." = "FACULTATIF. VOUS POUVEZ LE MODIFIER DANS LES RÉGLAGES.";
 "ORGANIZE PDF" = "ORGANISER UN PDF";
@@ -1311,6 +1383,7 @@
 "ORIGINAL IMAGE · READY TO DOWNLOAD" = "IMAGE ORIGINALE · PRÊTE À TÉLÉCHARGER";
 "ORIGINAL STAYS SAFE" = "L’ORIGINAL RESTE INTACT";
 "ORIGINALS REMAIN SAFE. CHOOSE WHERE NEW COPIES SHOULD LAND." = "LES ORIGINAUX RESTENT INTACTS. CHOISISSEZ OÙ PLACER LES NOUVELLES COPIES.";
+"ORIGINALS STAY UNTOUCHED" = "ORIGINALS STAY UNTOUCHED";
 "OTHER" = "AUTRE";
 "OUTPUT" = "SORTIE";
 "OUTPUT FORMAT" = "FORMAT DE SORTIE";
@@ -1344,6 +1417,7 @@
 "Open in Terminal" = "Ouvrir dans Terminal";
 "Open link" = "Ouvrir le lien";
 "Open permission settings…" = "Ouvrir les réglages d’autorisation…";
+"Open this Nashi tool" = "Open this Nashi tool";
 "Open wheel" = "Ouvrir la roue";
 "Optional. You can change this in Settings." = "Facultatif. Vous pouvez le modifier dans les Réglages.";
 "Organize PDF" = "Organiser un PDF";
@@ -1354,6 +1428,7 @@
 "Original size: %lld" = "Taille d’origine : %lld";
 "Original stays safe" = "L’original reste intact";
 "Originals remain safe. Choose where new copies should land." = "Les originaux restent intacts. Choisissez où placer les nouvelles copies.";
+"Originals stay untouched" = "Originals stay untouched";
 "Other" = "Autre";
 "Output" = "Sortie";
 "Output format" = "Format de sortie";
@@ -1369,11 +1444,14 @@
 "PASTE A PUBLIC MEDIA LINK TO BEGIN." = "COLLEZ UN LIEN MÉDIA PUBLIC POUR COMMENCER.";
 "PASTE A PUBLIC VIDEO, IMAGE OR AUDIO PAGE LINK" = "COLLEZ LE LIEN D’UNE PAGE PUBLIQUE DE VIDÉO, D’IMAGE OU D’AUDIO";
 "PASTE A VIDEO SHARE LINK OR IMAGE ADDRESS" = "COLLEZ LE LIEN DE PARTAGE D’UNE VIDÉO OU L’ADRESSE D’UNE IMAGE";
+"PASTE FILES, TEXT, AN IMAGE, OR A LINK FROM THE CLIPBOARD" = "PASTE FILES, TEXT, AN IMAGE, OR A LINK FROM THE CLIPBOARD";
 "PASTE LINK" = "COLLER LE LIEN";
 "PASTE ONE COMPLETE PUBLIC MEDIA LINK." = "COLLEZ UN LIEN MÉDIA PUBLIC COMPLET.";
 "PASTED IMAGE" = "IMAGE COLLÉE";
 "PASTED TEXT" = "TEXTE COLLÉ";
 "PAUSE" = "PAUSE";
+"PAUSE FOCUS TIMER" = "PAUSE FOCUS TIMER";
+"PAUSE NASHI PREVIEW" = "PAUSE NASHI PREVIEW";
 "PDF FORM APPEARANCES COULD NOT BE PREPARED." = "IMPOSSIBLE DE PRÉPARER L’APPARENCE DES FORMULAIRES PDF.";
 "PDF LAYOUT" = "MISE EN PAGE DU PDF";
 "PDF OUTPUT LAYOUT" = "MISE EN PAGE DE SORTIE PDF";
@@ -1396,6 +1474,7 @@
 "PIXELATE" = "PIXELLISER";
 "PLAY" = "LIRE";
 "PLAY / PAUSE" = "LECTURE / PAUSE";
+"PLAY NASHI PREVIEW" = "PLAY NASHI PREVIEW";
 "PLAY RESULT" = "LIRE LE RÉSULTAT";
 "PLAY SELECTED RANGE" = "LIRE LA PLAGE SÉLECTIONNÉE";
 "PLAYBACK / DOCUMENT ORDER" = "ORDRE DE LECTURE / DU DOCUMENT";
@@ -1442,17 +1521,21 @@
 "Paste a public media link to begin." = "Collez un lien média public pour commencer.";
 "Paste a public video, image or audio page link" = "Collez le lien d’une page publique de vidéo, d’image ou d’audio";
 "Paste a video share link or image address" = "Collez le lien de partage d’une vidéo ou l’adresse d’une image";
+"Paste files, text, an image, or a link from the clipboard" = "Paste files, text, an image, or a link from the clipboard";
 "Paste link" = "Coller le lien";
 "Paste one complete public media link." = "Collez un lien média public complet.";
 "Pasted image" = "Image collée";
 "Pasted text" = "Texte collé";
 "Pause" = "Pause";
+"Pause Nashi preview" = "Pause Nashi preview";
+"Pause focus timer" = "Pause focus timer";
 "Photos" = "Photos";
 "Pick a folder you work in. Fresh copies are saved beside the originals by default." = "Choisissez un dossier dans lequel vous travaillez. Par défaut, les nouvelles copies sont enregistrées à côté des originaux.";
 "Pin" = "Épingler";
 "Pixelate" = "Pixelliser";
 "Play" = "Lire";
 "Play / pause" = "Lecture / pause";
+"Play Nashi preview" = "Play Nashi preview";
 "Play Result" = "Lire le résultat";
 "Play Selected Range" = "Lire la plage sélectionnée";
 "Play selected range" = "Lire la plage sélectionnée";
@@ -1494,6 +1577,7 @@
 "QUALITY" = "QUALITÉ";
 "QUALITY (%)" = "QUALITÉ (%)";
 "QUICK LOOK" = "COUP D’ŒIL";
+"QUICK NOTE" = "QUICK NOTE";
 "QUICK PICKS" = "SÉLECTION RAPIDE";
 "QUICK PREVIEW" = "APERÇU RAPIDE";
 "QUIT NASHI" = "QUITTER NASHI";
@@ -1501,6 +1585,7 @@
 "Quality (%)" = "Qualité (%)";
 "Quick Look" = "Coup d’œil";
 "Quick Preview" = "Aperçu rapide";
+"Quick note" = "Quick note";
 "Quit Nashi" = "Quitter Nashi";
 "READ QR CODES" = "LIRE LES CODES QR";
 "READ QR CODES · NASHI" = "LIRE LES CODES QR · NASHI";
@@ -1513,6 +1598,7 @@
 "READY WHEN YOU LOG IN" = "PRÊT DÈS VOTRE CONNEXION";
 "READY." = "PRÊT.";
 "READY. YOU CAN GO BACK TO YOUR FILES." = "PRÊT. VOUS POUVEZ RETOURNER À VOS FICHIERS.";
+"RECENT" = "RECENT";
 "RECENT CONVERSIONS" = "CONVERSIONS RÉCENTES";
 "RECTANGLE" = "RECTANGLE";
 "REDACT AUDIO" = "CAVIARDER L’AUDIO";
@@ -1525,6 +1611,7 @@
 "REDUCTION (%; 0 = AUTO)" = "RÉDUCTION (% ; 0 = AUTO)";
 "REFLOWABLE" = "TEXTE ADAPTABLE";
 "REFLOWABLE TEXT" = "TEXTE ADAPTABLE";
+"RELEASE TO ADD FILES" = "RELEASE TO ADD FILES";
 "RELEASE TO PLACE · ESC CANCELS" = "RELÂCHEZ POUR PLACER · ÉCHAP ANNULE";
 "REMOVE" = "RETIRER";
 "REMOVE ALL" = "TOUT SUPPRIMER";
@@ -1540,10 +1627,12 @@
 "REMOVE SELECTED RANGE" = "RETIRER LA PLAGE SÉLECTIONNÉE";
 "REMOVE SILENCE AT THE BEGINNING AND END" = "SUPPRIMER LE SILENCE AU DÉBUT ET À LA FIN";
 "REMOVE SILENCE FROM BEGINNING AND END" = "SUPPRIMER LE SILENCE AU DÉBUT ET À LA FIN";
+"REMOVE TASK" = "REMOVE TASK";
 "RENDERED PAGES EXCEED 512 MB. CHOOSE A LOWER DPI OR SPLIT THE PDF FIRST." = "LES PAGES RENDUES DÉPASSENT 512 MO. CHOISISSEZ UN DPI PLUS BAS OU DIVISEZ D’ABORD LE PDF.";
 "REPLACE SELECTED AUDIO WITH" = "REMPLACER L’AUDIO SÉLECTIONNÉ PAR";
 "REPORT SAVED." = "RAPPORT ENREGISTRÉ.";
 "RESET" = "RÉINITIALISER";
+"RESET FOCUS TIMER" = "RESET FOCUS TIMER";
 "RESIZE" = "REDIMENSIONNER";
 "RESIZE IMAGE" = "REDIMENSIONNER L’IMAGE";
 "RESTORE CLIPS" = "RESTAURER LES CLIPS";
@@ -1573,6 +1662,7 @@
 "Ready when you log in" = "Prêt dès votre connexion";
 "Ready." = "Prêt.";
 "Ready. You can go back to your files." = "Prêt. Vous pouvez retourner à vos fichiers.";
+"Recent" = "Recent";
 "Recent Conversions" = "Conversions récentes";
 "Rectangle" = "Rectangle";
 "Redact Audio" = "Caviarder l’audio";
@@ -1585,6 +1675,7 @@
 "Reduction (%; 0 = auto)" = "Réduction (% ; 0 = auto)";
 "Reflowable" = "Texte adaptable";
 "Reflowable text" = "Texte adaptable";
+"Release to add files" = "Release to add files";
 "Release to place · Esc cancels" = "Relâchez pour placer · Échap annule";
 "Remove" = "Retirer";
 "Remove All" = "Tout supprimer";
@@ -1600,12 +1691,14 @@
 "Remove selected range" = "Retirer la plage sélectionnée";
 "Remove silence at the beginning and end" = "Supprimer le silence au début et à la fin";
 "Remove silence from beginning and end" = "Supprimer le silence au début et à la fin";
+"Remove task" = "Remove task";
 "Rendered pages exceed 512 MB. Choose a lower DPI or split the PDF first." = "Les pages rendues dépassent 512 Mo. Choisissez un DPI plus bas ou divisez d’abord le PDF.";
 "Rendering page %@" = "Rendu de la page %@";
 "Rendering page %lld" = "Rendu de la page %lld";
 "Replace selected audio with" = "Remplacer l’audio sélectionné par";
 "Report saved." = "Rapport enregistré.";
 "Reset" = "Réinitialiser";
+"Reset focus timer" = "Reset focus timer";
 "Resize" = "Redimensionner";
 "Resize Image" = "Redimensionner l’image";
 "Restore Clips" = "Restaurer les clips";
@@ -1659,6 +1752,7 @@
 "SAVE WITH BACKGROUND" = "ENREGISTRER AVEC L’ARRIÈRE-PLAN";
 "SAVED 1 NEW FILE. ORIGINALS KEPT." = "1 NOUVEAU FICHIER ENREGISTRÉ. ORIGINAUX CONSERVÉS.";
 "SAVED IN POST ORDER IN A NEW INSTAGRAM FOLDER." = "ENREGISTRÉES DANS L’ORDRE DE LA PUBLICATION, DANS UN NOUVEAU DOSSIER INSTAGRAM.";
+"SAVED ON THIS MAC" = "SAVED ON THIS MAC";
 "SAVING COLLAGE…" = "ENREGISTREMENT DU COLLAGE…";
 "SAVING DOCUMENT…" = "ENREGISTREMENT DU DOCUMENT…";
 "SAVING IMAGES…" = "ENREGISTREMENT DES IMAGES…";
@@ -1668,6 +1762,7 @@
 "SECONDS" = "SECONDES";
 "SEE ALL  ↗" = "TOUT VOIR  ↗";
 "SEE ALL RECENT FILES" = "VOIR TOUS LES FICHIERS RÉCENTS";
+"SEEK NASHI MEDIA PREVIEW" = "SEEK NASHI MEDIA PREVIEW";
 "SELECT / MOVE" = "SÉLECTIONNER / DÉPLACER";
 "SELECT A CLIP AND PRESS DELETE TO REMOVE IT FROM THE RESULT." = "SÉLECTIONNEZ UN CLIP ET APPUYEZ SUR SUPPRIMER POUR LE RETIRER DU RÉSULTAT.";
 "SELECT ALL" = "TOUT SÉLECTIONNER";
@@ -1678,6 +1773,7 @@
 "SELECTED FOLDER" = "DOSSIER SÉLECTIONNÉ";
 "SEND IT ON ITS WAY" = "DÉPLACEZ, COPIEZ, PARTAGEZ";
 "SERIF" = "EMPATTEMENT";
+"SESSION COMPLETE" = "SESSION COMPLETE";
 "SET" = "DÉFINIR";
 "SET UP MEDIA TOOLS" = "CONFIGURER LES OUTILS MULTIMÉDIAS";
 "SET UP MEDIA TOOLS FOR THIS CODEC, OR USE OPEN TO PREVIEW IN ITS DEFAULT APP." = "CONFIGUREZ LES OUTILS MULTIMÉDIAS POUR CE CODEC, OU UTILISEZ OUVRIR POUR L’APERÇU DANS L’APP PAR DÉFAUT.";
@@ -1740,6 +1836,7 @@
 "SQUARE · 1:1" = "CARRÉ · 1:1";
 "STAGING CANNOT BE A SYMBOLIC LINK." = "LE DOSSIER INTERMÉDIAIRE NE PEUT PAS ÊTRE UN LIEN SYMBOLIQUE.";
 "START" = "DÉBUT";
+"START FOCUS TIMER" = "START FOCUS TIMER";
 "START HERE" = "COMMENCEZ ICI";
 "START MUST BE BEFORE END, WITHIN THE MEDIA DURATION." = "LE DÉBUT DOIT PRÉCÉDER LA FIN, DANS LA DURÉE DU MÉDIA.";
 "STARTING DOWNLOAD…" = "DÉMARRAGE DU TÉLÉCHARGEMENT…";
@@ -1794,6 +1891,7 @@
 "Saved %lld new files. Originals kept." = "%lld nouveaux fichiers enregistrés. Originaux conservés.";
 "Saved 1 new file. Originals kept." = "1 nouveau fichier enregistré. Originaux conservés.";
 "Saved in post order in a new Instagram folder." = "Enregistrées dans l’ordre de la publication, dans un nouveau dossier Instagram.";
+"Saved on this Mac" = "Saved on this Mac";
 "Saving collage…" = "Enregistrement du collage…";
 "Saving document…" = "Enregistrement du document…";
 "Saving images…" = "Enregistrement des images…";
@@ -1803,6 +1901,7 @@
 "Seconds" = "Secondes";
 "See all  ↗" = "Tout voir  ↗";
 "See all recent files" = "Voir tous les fichiers récents";
+"Seek Nashi media preview" = "Seek Nashi media preview";
 "Select / Move" = "Sélectionner / Déplacer";
 "Select All" = "Tout sélectionner";
 "Select a clip and press Delete to remove it from the result." = "Sélectionnez un clip et appuyez sur Supprimer pour le retirer du résultat.";
@@ -1815,7 +1914,10 @@
 "Selected folder" = "Dossier sélectionné";
 "Send it on its way" = "Déplacez, copiez, partagez";
 "Serif" = "Empattement";
+"Session complete" = "Session complete";
 "Set" = "Définir";
+"Set focus timer to %@ minutes" = "Set focus timer to %@ minutes";
+"Set focus timer to %lld minutes" = "Set focus timer to %lld minutes";
 "Set up Nashi tools" = "Configurer les outils de Nashi";
 "Set up media tools" = "Configurer les outils multimédias";
 "Set up media tools for this codec, or use Open to preview in its default app." = "Configurez les outils multimédias pour ce codec, ou utilisez Ouvrir pour l’aperçu dans l’app par défaut.";
@@ -1878,6 +1980,7 @@
 "Square · 1:1" = "Carré · 1:1";
 "Staging cannot be a symbolic link." = "Le dossier intermédiaire ne peut pas être un lien symbolique.";
 "Start" = "Début";
+"Start focus timer" = "Start focus timer";
 "Start must be before End, within the media duration." = "Le début doit précéder la fin, dans la durée du média.";
 "Starting download…" = "Démarrage du téléchargement…";
 "Stereo" = "Stéréo";
@@ -1952,6 +2055,7 @@
 "THUMBNAIL" = "MINIATURE";
 "TIMES (SECONDS)" = "DURÉES (SECONDES)";
 "TINT" = "NUANCE";
+"TO-DO LIST" = "TO-DO LIST";
 "TOO MANY FILES ALREADY USE THIS NAME." = "TROP DE FICHIERS PORTENT DÉJÀ CE NOM.";
 "TOO MANY IMAGE REDIRECTS." = "TROP DE REDIRECTIONS D’IMAGE.";
 "TOO MANY UPDATE FILES." = "TROP DE FICHIERS DE MISE À JOUR.";
@@ -2041,6 +2145,7 @@
 "Thumbnail" = "Miniature";
 "Times (seconds)" = "Durées (secondes)";
 "Tint" = "Nuance";
+"To-do list" = "To-do list";
 "Too many files already use this name." = "Trop de fichiers portent déjà ce nom.";
 "Too many image redirects." = "Trop de redirections d’image.";
 "Too many update files." = "Trop de fichiers de mise à jour.";
@@ -2158,6 +2263,7 @@
 "WHEEL FINISH" = "FINITION DE LA ROUE";
 "WHEEL SIZE" = "TAILLE DE LA ROUE";
 "WHITES" = "BLANCS";
+"WIDGETS" = "WIDGETS";
 "WIDTH" = "LARGEUR";
 "WINDOW" = "FENÊTRE";
 "WINDOW ARRANGEMENT" = "DISPOSITION DES FENÊTRES";
@@ -2165,7 +2271,9 @@
 "WINDOW MANAGEMENT · DRAG A TITLE BAR, THEN SHIFT OR ALT" = "GESTION DES FENÊTRES · FAITES GLISSER UNE BARRE DE TITRE, PUIS MAJ OU ALT";
 "WINDOWS COULD NOT ADD NASHI TO THE SYSTEM TRAY." = "WINDOWS N’A PAS PU AJOUTER NASHI À LA ZONE DE NOTIFICATION.";
 "WINDOWS COULD NOT CREATE A TRAY ICON." = "WINDOWS N’A PAS PU CRÉER D’ICÔNE DANS LA ZONE DE NOTIFICATION.";
+"WORKING" = "WORKING";
 "WORKING…" = "TRAITEMENT EN COURS…";
+"WRITE A THOUGHT TO KEEP NEARBY…" = "WRITE A THOUGHT TO KEEP NEARBY…";
 "Wait for the processed preview to finish before resetting." = "Attendez la fin de l’aperçu traité avant de réinitialiser.";
 "Waveform" = "Forme d’onde";
 "Welcome to Nashi" = "Bienvenue dans Nashi";
@@ -2173,6 +2281,7 @@
 "Wheel finish" = "Finition de la roue";
 "Wheel size" = "Taille de la roue";
 "Whites" = "Blancs";
+"Widgets" = "Widgets";
 "Width" = "Largeur";
 "Window" = "Fenêtre";
 "Window arrangement" = "Disposition des fenêtres";
@@ -2180,7 +2289,9 @@
 "Window management · drag a title bar, then Shift or Alt" = "Gestion des fenêtres · faites glisser une barre de titre, puis Maj ou Alt";
 "Windows could not add Nashi to the system tray." = "Windows n’a pas pu ajouter Nashi à la zone de notification.";
 "Windows could not create a tray icon." = "Windows n’a pas pu créer d’icône dans la zone de notification.";
+"Working" = "Working";
 "Working…" = "Traitement en cours…";
+"Write a thought to keep nearby…" = "Write a thought to keep nearby…";
 "YOU CAN ALSO CHOOSE FILES FROM THE MAIN WINDOW." = "VOUS POUVEZ AUSSI CHOISIR DES FICHIERS DEPUIS LA FENÊTRE PRINCIPALE.";
 "YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL." = "VOUS CHOISISSEZ QUAND TÉLÉCHARGER ET INSTALLER.";
 "YOU HAVE THE LATEST PUBLISHED WINDOWS VERSION." = "VOUS DISPOSEZ DE LA DERNIÈRE VERSION PUBLIÉE POUR WINDOWS.";
@@ -2190,11 +2301,13 @@
 "YOUR FILES STAY LOCAL" = "VOS FICHIERS RESTENT EN LOCAL";
 "YOUR FILES WILL BE SAVED AS NEW COPIES.\nCHOOSE OPTIONS, THEN SAVE." = "VOS FICHIERS SERONT ENREGISTRÉS SOUS FORME DE NOUVELLES COPIES.\nCHOISISSEZ LES OPTIONS, PUIS ENREGISTREZ.";
 "YOUR FILES, A LITTLE SWEETER." = "VOS FICHIERS, EN PLUS AGRÉABLE.";
+"YOUR FILES, IN FLOW" = "YOUR FILES, IN FLOW";
 "YOUR FILES. THEIR NEXT FORM." = "VOS FICHIERS, SOUS LEUR PROCHAINE FORME.";
 "YOUR GO-TO EXPORTS." = "VOS EXPORTS FAVORIS.";
 "YOUR KIND OF FLOW." = "VOTRE FAÇON DE TRAVAILLER.";
 "YOUR LIBRARY" = "VOTRE BIBLIOTHÈQUE";
 "YOUR NEXT FRESH COPY WILL LAND HERE." = "VOTRE PROCHAINE COPIE ARRIVERA ICI.";
+"YOUR NEXT SMALL STEP GOES HERE." = "YOUR NEXT SMALL STEP GOES HERE.";
 "YOUR ORIGINAL STAYS SAFE" = "VOTRE ORIGINAL RESTE INTACT";
 "YOUR TOOLS ARE READY." = "VOS OUTILS SONT PRÊTS.";
 "YOUR TOOLS ARE READY. LET’S PUT THAT NEXT FILE TO GOOD USE." = "VOS OUTILS SONT PRÊTS. METTONS CE PROCHAIN FICHIER À PROFIT.";
@@ -2211,10 +2324,12 @@
 "Your files stay local" = "Vos fichiers restent en local";
 "Your files will be saved as new copies.\nChoose options, then save." = "Vos fichiers seront enregistrés sous forme de nouvelles copies.\nChoisissez les options, puis enregistrez.";
 "Your files, a little sweeter." = "Vos fichiers, en plus agréable.";
+"Your files, in flow" = "Your files, in flow";
 "Your files. Their next form." = "Vos fichiers, sous leur prochaine forme.";
 "Your go-to exports." = "Vos exports favoris.";
 "Your kind of flow." = "Votre façon de travailler.";
 "Your next fresh copy will land here." = "Votre prochaine copie arrivera ici.";
+"Your next small step goes here." = "Your next small step goes here.";
 "Your original stays safe" = "Votre original reste intact";
 "Your tools are ready." = "Vos outils sont prêts.";
 "Your tools are ready. Let’s put that next file to good use." = "Vos outils sont prêts. Mettons ce prochain fichier à profit.";
@@ -2223,6 +2338,7 @@
 "Zip regular files and folders without links (10,000 item limit)." = "Compressez en ZIP des fichiers et dossiers ordinaires, sans liens (limite de 10 000 éléments).";
 "macOS Reduce Motion is on. Nashi keeps motion off." = "L’option Réduire les animations de macOS est activée. Nashi désactive les animations.";
 "owner/repository or GitHub URL" = "propriétaire/dépôt ou URL GitHub";
+"tools" = "tools";
 "←/→ FILES · MEDIA: SPACE PLAY/PAUSE, ←/→ 1S, ALT+←/→ FILES · ESC CLOSES" = "←/→ FICHIERS · MÉDIAS : ESPACE LECTURE/PAUSE, ←/→ 1 S, ALT+←/→ FICHIERS · ÉCHAP FERME";
 "←/→ FILES · MEDIA: SPACE PLAY/PAUSE, ←/→ 1S, ⌥←/→ FILES · ESC CLOSES" = "←/→ FICHIERS · MÉDIAS : ESPACE LECTURE/PAUSE, ←/→ 1 S, ⌥←/→ FICHIERS · ÉCHAP FERME";
 "←/→ files · Media: Space play/pause, ←/→ 1s, Alt+←/→ files · Esc closes" = "←/→ fichiers · Médias : Espace lecture/pause, ←/→ 1 s, Alt+←/→ fichiers · Échap ferme";

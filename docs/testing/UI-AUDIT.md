@@ -36,6 +36,14 @@ Both audit commands accept these optional filters:
 --language en|tr|fr|both
 ```
 
+Capture all notch scenes in the same four-cell matrix:
+
+```sh
+.build/debug/Nashi --ui-audit build/ui-audit-notch --scenes island.collapsed,island.collapsed-progress,island.collapsed-media,island.expanded.drop,island.expanded.drop.empty,island.expanded.tools,island.expanded.history,island.expanded.widgets,island.expanded.media --appearance both --language both
+```
+
+The optional notch matrix now includes local notes/tasks, selectable 5/15/25/45 minute focus sessions, clipboard paste from the empty Drop Shelf, an entry point into Nashi's existing Float shelf, and Nashi-owned audio preview controls in both compact and expanded states, including bounded 10-second skips. It produces 36 synthetic captures across light/dark and EN/TR. The audit confirms the paste button is exposed without reading the audit runner's clipboard and checks media playback/seeking controls against a generated silent audio fixture.
+
 Unknown scenes/options, empty selections, repeated scenes and invalid themes/languages fail. No filter means the complete matrix: **10 scenes × 2 appearances × 2 languages = 40 captures per platform**.
 
 | Scene ID | Production surface |

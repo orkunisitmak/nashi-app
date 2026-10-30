@@ -115,6 +115,7 @@ enum NashiApplication {
     private var downloadHotKey:EventHotKeyRef?
     private var downloadHotKeyHandler:EventHandlerRef?
     private let successToast=SuccessToastController()
+    private var notchPanelController:NotchPanelController?
     var welcome:NSWindow?
     var monitor:DragMonitor!
     var wheel:WheelController!
@@ -122,7 +123,7 @@ enum NashiApplication {
 
     func applicationDidFinishLaunching(_ notification:Notification) {
         NashiAppearance.apply()
-        UserDefaults.standard.register(defaults:["enabled":true,"reveal":true,"sound":true,"convertKey":"shift","toolsKey":"command","actionsKey":"control","wheelScale":1.0,"windowManagementEnabled":true])
+        UserDefaults.standard.register(defaults:["enabled":true,"reveal":true,"sound":true,"convertKey":"shift","toolsKey":"command","actionsKey":"control","wheelScale":1.0,"windowManagementEnabled":true,"notchModeEnabled":false])
         let mainMenu=NSMenu();let appMenu=NSMenu()
         appMenu.addItem(withTitle:"Home",action:#selector(showHome),keyEquivalent:"1")
         appMenu.addItem(withTitle:"Library",action:#selector(showLibrary),keyEquivalent:"2")
@@ -190,10 +191,12 @@ enum NashiApplication {
             return self.state.handleHomeKey(event,window:self.home!) ? nil:event
         }
         state.onChooseFiles = { [weak self] in self?.chooseFiles() }
+        state.onChooseTool = { [weak self] tool in self?.chooseFiles(for:tool) }
         state.onSettings = { [weak self] in self?.showSettings() }
         state.onShowTool = { [weak self] tool in self?.showTool(tool) }
         state.onEPUBOptions = { [weak self] in guard let self else { return };let window=self.makeWindow(title:"Convert to EPUB",size:NSSize(width:530,height:390),view:EPUBOptionsView(state:self.state,inputs:self.state.inputs));self.state.retainToolWindow(window);window.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true) }
         state.onJobStarted = { [weak self] in self?.successToast.dismiss();self?.showProgress() }
+        notchPanelController=NotchPanelController(state:state,chooseFiles:{ [weak self] in self?.chooseFiles() },chooseTool:{ [weak self] tool in self?.chooseFiles(for:tool) })
         state.onSuccess = { [weak self] notice in self?.progressToast.dismiss();self?.successToast.show(notice) }
         let loginLaunch=NSAppleEventManager.shared().currentAppleEvent?.paramDescriptor(forKeyword:keyAELaunchedAsLogInItem)?.booleanValue ?? false
         if !loginLaunch,!CommandLine.arguments.contains("--background") {
@@ -254,17 +257,19 @@ enum NashiApplication {
         downloadModel.shortcutAvailable=state.webShortcutAvailable
     }
     func applicationWillTerminate(_ notification:Notification) {
+        notchPanelController?.stop()
         windowManagement?.stop()
         // Previews and file inspection don't block quitting; their ffmpeg/ffprobe must not outlive Nashi.
         ProcessRunner.terminateAll()
         if let downloadHotKey { UnregisterEventHotKey(downloadHotKey) }
         if let downloadHotKeyHandler { RemoveEventHandler(downloadHotKeyHandler) }
     }
-    @objc func chooseFiles() {
+    @objc func chooseFiles() { chooseFiles(for:nil) }
+    private func chooseFiles(for tool:ToolKind?) {
         guard !state.working else { return }
         NSApp.activate(ignoringOtherApps:true)
         let panel=NSOpenPanel();panel.allowsMultipleSelection=true;panel.canChooseDirectories=true;panel.prompt="Choose Files"
-        if panel.runModal() == .OK { state.inputs=panel.urls;showHome() }
+        if panel.runModal() == .OK { state.inputs=panel.urls;showHome();if let tool { state.select(.tool(tool)) } }
     }
     @objc func showSettings() {
         presentSettings(updates:false)

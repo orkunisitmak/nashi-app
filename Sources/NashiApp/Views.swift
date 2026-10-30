@@ -28,6 +28,7 @@ struct SettingsView:View {
     @AppStorage("appAppearance") private var appAppearance="system"
     @AppStorage("appLanguage") private var appLanguage="en"
     @AppStorage("windowManagementEnabled") private var windowManagementEnabled=true
+    @AppStorage("notchModeEnabled") private var notchModeEnabled=false
     @State private var windowAccessibility=AXIsProcessTrusted()
     @Environment(\.accessibilityReduceMotion) private var systemReducedMotion
     init(updater:AppUpdater,showingUpdates:Bool=false,initialSection:SettingsSection = .general) {
@@ -90,6 +91,8 @@ struct SettingsView:View {
                     HStack { Text("Language");Spacer();Picker("Language",selection:$appLanguage) { Text(verbatim:"English").tag("en");Text(verbatim:"Türkçe").tag("tr");Text(verbatim:"Français").tag("fr") }.labelsHidden().frame(width:230).accessibilityIdentifier("AppLanguage") }
                     HStack { Text("Appearance");Spacer();Picker("Appearance",selection:$appAppearance) { Text("System").tag("system");Text("Light").tag("light");Text("Dark").tag("dark") }.labelsHidden().pickerStyle(.segmented).frame(width:230) }
                     HStack { Text("Wheel finish");Spacer();Picker("Wheel finish",selection:$fanTheme) { Text("Glass").tag("glass");Text("Solid").tag("metallic") }.labelsHidden().pickerStyle(.segmented).frame(width:230) }
+                    Toggle("Notch mode",isOn:$notchModeEnabled)
+                    Text("A compact workspace at the top of your screen. Hover or drop files to expand it.").font(.caption).foregroundStyle(.secondary).frame(maxWidth:.infinity,alignment:.leading)
                     Divider()
                     Toggle("Launch at login",isOn:Binding(get:{launch},set:updateLaunch)).disabled(launchUnavailable)
                     if launchNeedsApproval { HStack { Text("Allow Nashi in macOS Login Items.").font(.caption).foregroundStyle(.secondary);Spacer();Button("Open Login Items") { SMAppService.openSystemSettingsLoginItems() } } }

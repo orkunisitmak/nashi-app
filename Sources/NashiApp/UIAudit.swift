@@ -1,4 +1,5 @@
 import AppKit
+import AVFoundation
 import SwiftUI
 import PDFKit
 import NashiCore
@@ -6,6 +7,8 @@ import NashiUpdates
 
 struct UIAuditOptions {
     static let scenes=["home.empty","home.selected","library","settings.general","settings.formats","settings.updates","wheel.pdf-multiple","editor.crop-image","editor.annotate-image","editor.frame-image"]
+    static let notchScenes=["island.collapsed","island.collapsed-progress","island.collapsed-media","island.expanded.drop","island.expanded.drop.empty","island.expanded.tools","island.expanded.history","island.expanded.widgets","island.expanded.media"]
+    static let supportedScenes=scenes+notchScenes
     var output:URL
     var scenes=Self.scenes
     var appearances=["light","dark"]
@@ -21,7 +24,7 @@ struct UIAuditOptions {
             guard index<arguments.count else{throw UIAuditError("Missing value for "+key)}
             let value=arguments[index];index+=1
             switch key {
-            case "--scenes":scenes=value.split(separator:",").map(String.init);guard !scenes.isEmpty,Set(scenes).count==scenes.count,scenes.allSatisfy(Self.scenes.contains) else{throw UIAuditError("Unknown or repeated audit scene. Supported: "+Self.scenes.joined(separator:","))}
+            case "--scenes":scenes=value.split(separator:",").map(String.init);guard !scenes.isEmpty,Set(scenes).count==scenes.count,scenes.allSatisfy(Self.supportedScenes.contains) else{throw UIAuditError("Unknown or repeated audit scene. Supported: "+Self.supportedScenes.joined(separator:","))}
             case "--appearance":guard ["light","dark","both"].contains(value) else{throw UIAuditError("Appearance must be light, dark or both")};appearances=value=="both" ? ["light","dark"]:[value]
             case "--language":guard AppLocalization.supportedLanguages.contains(value) || value=="both" else{throw UIAuditError("Language must be en, tr, fr or both")};languages=value=="both" ? ["en","tr"]:[value]
             default:throw UIAuditError("Unknown audit argument: "+key)
@@ -93,6 +96,14 @@ struct UIAuditError:LocalizedError { let message:String;init(_ message:String){s
             let pdf=PDFDocument();for _ in 0..<2 {guard let page=PDFPage(image:NSImage(data:data)!)else{throw UIAuditError("PDF fixture could not be generated")};pdf.insert(page,at:pdf.pageCount)}
             let path=directory.appendingPathComponent("Örnek belge \(number).pdf");guard pdf.write(to:path)else{throw UIAuditError("PDF fixture could not be saved")};fixtures["pdf\(number)"]=path
         }
+        let audioURL=directory.appendingPathComponent("Nashi preview.wav")
+        let audioFormat=AVAudioFormat(commonFormat:.pcmFormatInt16,sampleRate:44_100,channels:1,interleaved:true)!
+        let audioBuffer=AVAudioPCMBuffer(pcmFormat:audioFormat,frameCapacity:44_100)!
+        audioBuffer.frameLength=audioBuffer.frameCapacity
+        memset(audioBuffer.int16ChannelData![0],0,Int(audioBuffer.frameLength)*MemoryLayout<Int16>.size)
+        let audioFile=try AVAudioFile(forWriting:audioURL,settings:audioFormat.settings)
+        try audioFile.write(from:audioBuffer)
+        fixtures["audio"]=audioURL
         fixtures["image"]=imageURL;fixtures["text"]=textURL;fixtures["missing"]=directory.appendingPathComponent("Missing original.png")
     }
     private func run()async throws {
@@ -113,7 +124,7 @@ struct UIAuditError:LocalizedError { let message:String;init(_ message:String){s
             // Each UserDefaults instance caches its own volatile search domains.
             // Set both stores so NSArgumentDomain cannot mask this cell's suite.
             defaults.setVolatileDomain(arguments,forName:UserDefaults.argumentDomain)
-            defaults.set(language,forKey:"appLanguage");defaults.set(appearance,forKey:"appAppearance");defaults.set(true,forKey:"reduceAnimations")
+            defaults.set(language,forKey:"appLanguage");defaults.set(appearance,forKey:"appAppearance");defaults.set(true,forKey:"reduceAnimations");defaults.set(false,forKey:"notchModeEnabled")
             NSApp.appearance=NSAppearance(named:appearance=="dark" ? .darkAqua:.aqua)
             observedPreferences=[:]
             do {try await capture(scene:scene,appearance:appearance,language:language,defaults:defaults)}
@@ -123,8 +134,15 @@ struct UIAuditError:LocalizedError { let message:String;init(_ message:String){s
     private func capture(scene:String,appearance:String,language:String,defaults:UserDefaults)async throws {
         window?.close();window=nil
         let state=AppState(defaults:defaults),recorder=UIAuditLayout(),updater=AppUpdater()
+        defer { state.filePreview.close() }
         let image=fixtures["image"]!,text=fixtures["text"]!,pdf=fixtures["pdf1"]!
-        if scene=="home.selected" || scene.hasPrefix("editor."){state.inputs=[image]}
+        if scene=="home.selected" || scene.hasPrefix("editor.") || scene=="island.expanded.drop" || scene=="island.expanded.tools" {state.inputs=[image]}
+        if scene=="island.collapsed-media" || scene=="island.expanded.media" {state.filePreview.show([fixtures["audio"]!])}
+        if scene=="island.collapsed-progress" {state.inputs=[image];state.working=true;state.progress=0.42;state.progressIsDeterminate=true;state.progressLabel="Convert to PNG";state.activeInputs=[image]}
+        if scene=="island.expanded.history" {
+            state.history=[JobRecord(id:UUID(uuidString:"00000000-0000-0000-0000-000000000011")!,title:"Convert to PNG",inputs:[image.path],outputs:[image.path],date:Date(timeIntervalSince1970:1_767_225_600))]
+            state.working=true;state.progress=0.62;state.progressIsDeterminate=true;state.progressLabel="Compress";state.activeInputs=[image]
+        }
         if scene=="library" {
             state.history=[(image,"Convert to PNG"),(text,"Pasted text"),(pdf,"Merge PDFs"),(fixtures["missing"]!,"Missing original")].enumerated().map { index,item in JobRecord(id:UUID(uuidString:String(format:"00000000-0000-0000-0000-%012d",index+1))!,title:item.1,inputs:[],outputs:[item.0.path],date:Date(timeIntervalSince1970:1_767_225_600)) }
             state.libraryVisible=true
@@ -133,6 +151,18 @@ struct UIAuditError:LocalizedError { let message:String;init(_ message:String){s
         let view:AnyView,size:NSSize
         switch scene {
         case "home.empty","home.selected","library":view=AnyView(HomeView(state:state,updater:updater));size=NSSize(width:700,height:580)
+        case "island.collapsed","island.collapsed-progress","island.collapsed-media","island.expanded.drop","island.expanded.drop.empty","island.expanded.tools","island.expanded.history","island.expanded.widgets","island.expanded.media":
+            let model=NotchPanelModel(defaults:defaults)
+            if scene=="island.expanded.tools" {model.select(.tools)}
+            if scene=="island.expanded.history" {model.select(.history)}
+            if scene=="island.expanded.drop" || scene=="island.expanded.drop.empty" {model.select(.drop)}
+            if scene=="island.expanded.widgets" {
+                model.quickNote="Plan the next small step.\nKeep a clean copy."
+                model.tasks=[.init(title:"Review the image"),.init(title:"Export a fresh copy",isComplete:true)]
+                model.select(.widgets)
+            }
+            view=AnyView(NotchWorkspaceView(state:state,model:model,media:state.filePreview,onChooseFiles:{},onChooseTool:{_ in}))
+            size=scene=="island.collapsed" ? NSSize(width:164,height:44):scene=="island.collapsed-progress" || scene=="island.collapsed-media" ? NSSize(width:266,height:44):NSSize(width:540,height:470)
         case "settings.general","settings.formats","settings.updates":
             let section:SettingsSection=scene=="settings.formats" ? .formats:scene=="settings.updates" ? .updates:.general
             view=AnyView(SettingsView(updater:updater,initialSection:section));size=NSSize(width:790,height:590)
@@ -159,6 +189,14 @@ struct UIAuditError:LocalizedError { let message:String;init(_ message:String){s
         try await settle(recorder:isEditor ? recorder:nil)
         guard let content=host.contentView else{throw UIAuditError("Scene has no content view")}
         observedPreferences=try await verifyPreferences(scene:scene,appearance:appearance,language:language,defaults:defaults,view:content)
+        if scene=="island.expanded.drop.empty" && !ownAccessibilityElements(content).contains(where:{$0.accessibilityIdentifier()=="NashiPasteFromClipboard"}) {
+            throw UIAuditError("The empty Drop Shelf does not expose its clipboard paste action.")
+        }
+        if scene.hasSuffix("media") {
+            let identifiers=Set(ownAccessibilityElements(content).compactMap{$0.accessibilityIdentifier()})
+            guard identifiers.contains("NashiPreviewPlayPause") else { throw UIAuditError("The Nashi media playback control is missing from the notch scene.") }
+            if scene=="island.expanded.media",!identifiers.isSuperset(of:["NashiPreviewSeek","NashiPreviewBack10","NashiPreviewForward10"]) { throw UIAuditError("The expanded Nashi media controls do not expose seeking and skip actions.") }
+        }
         let issues=recorder.issues(in:content.bounds,editor:isEditor)
         try save(scene:scene,appearance:appearance,language:language,view:content,recorder:recorder,issues:issues)
     }

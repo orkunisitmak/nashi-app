@@ -42,6 +42,7 @@ struct JobRecord:Codable,Identifiable {
     var token=CancellationToken()
     var onOpenWheel:(()->Void)?
     var onChooseFiles:(()->Void)?
+    var onChooseTool:((ToolKind)->Void)?
     var onSettings:(()->Void)?
     var onWebDownload:((URL?,WebDownloadMode)->Void)?
     var onWebDrop:(([URL])->Void)?
