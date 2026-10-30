@@ -122,6 +122,7 @@ enum NashiApplication {
 
     func applicationDidFinishLaunching(_ notification:Notification) {
         NashiAppearance.apply()
+        FinderServices.register(provider:self)
         UserDefaults.standard.register(defaults:["enabled":true,"reveal":true,"sound":true,"convertKey":"shift","toolsKey":"command","actionsKey":"control","wheelScale":1.0,"windowManagementEnabled":true])
         let mainMenu=NSMenu();let appMenu=NSMenu()
         appMenu.addItem(withTitle:"Home",action:#selector(showHome),keyEquivalent:"1")
@@ -318,6 +319,18 @@ enum NashiApplication {
         let preview=[ToolKind.editImage,.annotateImage,.cropImage,.frameImage,.redactImage,.createCollage,.cropVideo,.trimVideo,.changeVideoSpeed,.splitVideo,.videoSnapshots,.redactVideo,.trimAudio,.normalizeAudio,.audioChannels,.redactAudio,.audioToVideo].contains(kind)
         let window=makeToolWindow(title:FeatureCatalog.toolNames[kind] ?? kind.title,size:NSSize(width:preview ? 1000:kind == .organizePDF ? 780:600,height:kind == .compress ? 630:760),view:view)
         state.retainToolWindow(window);window.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true)
+    }
+    /// Finder → Services → "Open in Nashi". Same downstream path as opening a
+    /// document, so existing validation, history and wheel behaviour apply.
+    @objc func nashiOpenFiles(_ pasteboard:NSPasteboard,userData:String?,error:AutoreleasingUnsafeMutablePointer<NSString>?) {
+        let files=ServiceInput.files(from:FinderServices.paths(from:pasteboard))
+        guard !files.isEmpty else {
+            error?.pointee = L10n.text("Select at least one local file.") as NSString
+            return
+        }
+        state.inputs=files
+        showHome()
+        state.onOpenWheel?()
     }
     func application(_ application:NSApplication,open urls:[URL]) {
         if let web=urls.first(where:{!$0.isFileURL}),let valid=try? WebDownloadEngine.link(web.absoluteString) { showWebDownload(valid,mode:.video) }

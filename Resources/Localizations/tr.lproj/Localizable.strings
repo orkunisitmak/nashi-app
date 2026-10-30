@@ -1672,6 +1672,7 @@
 "SELECT A CLIP AND PRESS DELETE TO REMOVE IT FROM THE RESULT." = "BİR KLİBİ SEÇ VE SONUÇTAN ÇIKARMAK İÇİN DELETE'E BAS.";
 "SELECT ALL" = "TÜMÜNÜ SEÇ";
 "SELECT AT LEAST ONE AVAILABLE PHOTO." = "KULLANILABİLİR EN AZ BİR FOTOĞRAF SEÇ.";
+"SELECT AT LEAST ONE LOCAL FILE." = "EN AZ BİR YEREL DOSYA SEÇ.";
 "SELECT ONE CROP RECTANGLE." = "TEK BİR KIRPMA ALANI SEÇ.";
 "SELECT ONLY THIS REPOSITORY AND GIVE CONTENTS READ ACCESS. THE TOKEN STAYS IN THIS MAC’S KEYCHAIN." = "YALNIZCA BU DEPOYU SEÇ VE CONTENTS OKUMA İZNİ VER. TOKEN BU MAC'İN ANAHTAR ZİNCİRİ'NDE KALIR.";
 "SELECT PHOTOS" = "FOTOĞRAFLARI SEÇ";
@@ -1807,6 +1808,7 @@
 "Select All" = "Tümünü Seç";
 "Select a clip and press Delete to remove it from the result." = "Bir klibi seç ve sonuçtan çıkarmak için Delete'e bas.";
 "Select at least one available photo." = "Kullanılabilir en az bir fotoğraf seç.";
+"Select at least one local file." = "En az bir yerel dosya seç.";
 "Select one crop rectangle." = "Tek bir kırpma alanı seç.";
 "Select only this repository and give Contents read access. The token stays in this Mac’s Keychain." = "Yalnızca bu depoyu seç ve Contents okuma izni ver. Token bu Mac'in Anahtar Zinciri'nde kalır.";
 "Select photos" = "Fotoğrafları seç";

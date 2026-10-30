@@ -1672,6 +1672,7 @@
 "SELECT A CLIP AND PRESS DELETE TO REMOVE IT FROM THE RESULT." = "SÉLECTIONNEZ UN CLIP ET APPUYEZ SUR SUPPRIMER POUR LE RETIRER DU RÉSULTAT.";
 "SELECT ALL" = "TOUT SÉLECTIONNER";
 "SELECT AT LEAST ONE AVAILABLE PHOTO." = "SÉLECTIONNEZ AU MOINS UNE PHOTO DISPONIBLE.";
+"SELECT AT LEAST ONE LOCAL FILE." = "SELECT AT LEAST ONE LOCAL FILE.";
 "SELECT ONE CROP RECTANGLE." = "SÉLECTIONNEZ UN SEUL RECTANGLE DE RECADRAGE.";
 "SELECT ONLY THIS REPOSITORY AND GIVE CONTENTS READ ACCESS. THE TOKEN STAYS IN THIS MAC’S KEYCHAIN." = "SÉLECTIONNEZ UNIQUEMENT CE DÉPÔT ET ACCORDEZ L’ACCÈS EN LECTURE À CONTENTS. LE JETON RESTE DANS LE TROUSSEAU DE CE MAC.";
 "SELECT PHOTOS" = "SÉLECTIONNER DES PHOTOS";
@@ -1807,6 +1808,7 @@
 "Select All" = "Tout sélectionner";
 "Select a clip and press Delete to remove it from the result." = "Sélectionnez un clip et appuyez sur Supprimer pour le retirer du résultat.";
 "Select at least one available photo." = "Sélectionnez au moins une photo disponible.";
+"Select at least one local file." = "Select at least one local file.";
 "Select one crop rectangle." = "Sélectionnez un seul rectangle de recadrage.";
 "Select only this repository and give Contents read access. The token stays in this Mac’s Keychain." = "Sélectionnez uniquement ce dépôt et accordez l’accès en lecture à Contents. Le jeton reste dans le trousseau de ce Mac.";
 "Select photos" = "Sélectionner des photos";

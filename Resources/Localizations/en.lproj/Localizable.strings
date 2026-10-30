@@ -1672,6 +1672,7 @@
 "SELECT A CLIP AND PRESS DELETE TO REMOVE IT FROM THE RESULT." = "SELECT A CLIP AND PRESS DELETE TO REMOVE IT FROM THE RESULT.";
 "SELECT ALL" = "SELECT ALL";
 "SELECT AT LEAST ONE AVAILABLE PHOTO." = "SELECT AT LEAST ONE AVAILABLE PHOTO.";
+"SELECT AT LEAST ONE LOCAL FILE." = "SELECT AT LEAST ONE LOCAL FILE.";
 "SELECT ONE CROP RECTANGLE." = "SELECT ONE CROP RECTANGLE.";
 "SELECT ONLY THIS REPOSITORY AND GIVE CONTENTS READ ACCESS. THE TOKEN STAYS IN THIS MAC’S KEYCHAIN." = "SELECT ONLY THIS REPOSITORY AND GIVE CONTENTS READ ACCESS. THE TOKEN STAYS IN THIS MAC’S KEYCHAIN.";
 "SELECT PHOTOS" = "SELECT PHOTOS";
@@ -1807,6 +1808,7 @@
 "Select All" = "Select All";
 "Select a clip and press Delete to remove it from the result." = "Select a clip and press Delete to remove it from the result.";
 "Select at least one available photo." = "Select at least one available photo.";
+"Select at least one local file." = "Select at least one local file.";
 "Select one crop rectangle." = "Select one crop rectangle.";
 "Select only this repository and give Contents read access. The token stays in this Mac’s Keychain." = "Select only this repository and give Contents read access. The token stays in this Mac’s Keychain.";
 "Select photos" = "Select photos";
