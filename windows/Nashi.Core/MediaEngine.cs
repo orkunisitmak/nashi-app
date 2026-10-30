@@ -179,7 +179,7 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
                     if(options.TrimSilence){args.AddRange(["-af","silenceremove=start_periods=1:start_duration=0.02:start_threshold=-50dB,areverse,silenceremove=start_periods=1:start_duration=0.02:start_threshold=-50dB,areverse"]);duration=null;}
                     args.AddRange(AudioEncoding(ext,options));
                 }
-                else args.AddRange(["-map","0:v:0","-map","0:a:0?","-vf",EvenSize,..VideoEncoding(ext,options)]);
+                else args.AddRange(["-map","0:v:0","-map","0:a:0?","-vf",EvenSizeFor(ext),..VideoEncoding(ext,options)]);
                 break;
             case "cropVideo":
                 RequireVideo(info);if(options.Regions.Length!=1)throw new ArgumentException("Select one crop rectangle.");
@@ -187,7 +187,7 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
                 args.AddRange(["-map","0:v:0","-map","0:a:0?","-vf",$"crop={crop.Width}:{crop.Height}:{crop.X}:{crop.Y}:exact=1,pad=ceil(iw/2)*2:ceil(ih/2)*2",..VideoEncoding(ext,options)]);break;
             case "changeVideoSpeed":
                 RequireVideo(info);duration=info.Duration/options.Speed;
-                args.AddRange(["-map","0:v:0","-map","0:a:0?","-vf","setpts=(PTS-STARTPTS)/"+Number(options.Speed)+","+EvenSize]);
+                args.AddRange(["-map","0:v:0","-map","0:a:0?","-vf","setpts=(PTS-STARTPTS)/"+Number(options.Speed)+","+EvenSizeFor(ext)]);
                 if(info.HasAudio)args.AddRange(["-af",Tempo(options.Speed)]);
                 args.AddRange(VideoEncoding(ext,options));break;
             case "audioChannels":
@@ -252,7 +252,7 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
                     }
                     previous=next;
                 }
-                graph.Add($"[{previous}]{EvenSize}[even]");
+                graph.Add($"[{previous}]{EvenSizeFor(ext)}[even]");
                 args.AddRange(["-filter_complex",string.Join(';',graph),"-map","[even]","-map","0:a:0?",..VideoEncoding(ext,options)]);break;
             default:throw new ArgumentException("Unsupported media tool.");
         }
@@ -404,6 +404,8 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
     private static string Number(double value)=>double.IsFinite(value)?value.ToString("0.########",CultureInfo.InvariantCulture):throw new ArgumentException("Enter a finite number.");
     // H.264 4:2:0 needs even dimensions; screen recordings of a selected area are often odd (641x361).
     private const string EvenSize="pad=ceil(iw/2)*2:ceil(ih/2)*2";
+    // libx264 (yuv420p) and wmv2 reject odd sizes; VP9 and MPEG-4 keep them, so leave those untouched.
+    private static string EvenSizeFor(string ext)=>ext is "webm" or "avi"?"null":EvenSize;
     private static string GetString(JsonElement element,string property)=>element.TryGetProperty(property,out var value)?value.ToString():"";
     private static int? GetInt(JsonElement element,string property)=>element.TryGetProperty(property,out var value)&&int.TryParse(value.ToString(),NumberStyles.Integer,CultureInfo.InvariantCulture,out var number)?number:null;
     private static void Validate(MediaOptions o)
