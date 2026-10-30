@@ -1,7 +1,7 @@
 {
   "version": 1,
   "dependencies": {
-    "net9.0-windows10.0.19041": {
+    "net10.0-windows10.0.19041": {
       "bblanchon.PDFium.Win32": {
         "type": "Direct",
         "requested": "[155.0.8044, )",
@@ -95,7 +95,7 @@
         }
       }
     },
-    "net9.0-windows10.0.19041/win-x64": {
+    "net10.0-windows10.0.19041/win-x64": {
       "bblanchon.PDFium.Win32": {
         "type": "Direct",
         "requested": "[155.0.8044, )",
