@@ -64,10 +64,13 @@
 "A LITTLE PEAR. A LOT OF POSSIBILITY." = "KÜÇÜK BİR ARMUT. BİR SÜRÜ OLASILIK.";
 "A NEW FORM.\nIN A TAP." = "TEK DOKUNUŞ.\nYENİ BİR BİÇİM.";
 "A PAGE RANGE IS OUTSIDE THE PDF." = "BİR SAYFA ARALIĞI PDF'NİN DIŞINDA.";
+"A PDF PAGE COULD NOT BE COPIED." = "BİR PDF SAYFASI KOPYALANAMADI.";
+"A PDF page could not be copied." = "Bir PDF sayfası kopyalanamadı.";
 "A PERFECT LANDING SPOT" = "BURAYA BIRAKABİLİRSİN";
 "A PHOTO IS UNAVAILABLE. TRY A FRESH PUBLIC POST LINK." = "BİR FOTOĞRAFA ULAŞILAMIYOR. GÖNDERİNİN GÜNCEL, HERKESE AÇIK BAĞLANTISINI DENE.";
 "A PLACE FOR FRESH FILES." = "YENİ DOSYALAR İÇİN BİR YER.";
 "A SELECTED ITEM IS MISSING." = "SEÇİLEN ÖĞELERDEN BİRİ BULUNAMIYOR.";
+"A SELECTED PDF SOURCE IS OUTSIDE THE WORKSPACE." = "SEÇİLİ PDF KAYNAĞI BU ÇALIŞMA ALANINDA BULUNMUYOR.";
 "A SPLIT POINT LIES OUTSIDE THE VIDEO." = "BİR BÖLME NOKTASI VİDEONUN DIŞINDA KALIYOR.";
 "A SUBTITLE CUE ENDS BEFORE IT STARTS." = "BİR ALTYAZI SATIRI BAŞLAMADAN BİTİYOR.";
 "A TABLE CELL SPAN IS INVALID OR EXCEEDS 1,024 COLUMNS." = "BİR TABLO HÜCRESİNİN GENİŞLİĞİ GEÇERSİZ VEYA 1.024 SÜTUNU AŞIYOR.";
@@ -90,6 +93,7 @@
 "A perfect landing spot" = "Buraya bırakabilirsin";
 "A photo is unavailable. Try a fresh public post link." = "Bir fotoğrafa ulaşılamıyor. Gönderinin güncel, herkese açık bağlantısını dene.";
 "A place for fresh files." = "Yeni dosyalar için bir yer.";
+"A selected PDF source is outside the workspace." = "Seçili PDF kaynağı bu çalışma alanında bulunmuyor.";
 "A selected item is missing." = "Seçilen öğelerden biri bulunamıyor.";
 "A split point lies outside the video." = "Bir bölme noktası videonun dışında kalıyor.";
 "A subtitle cue ends before it starts." = "Bir altyazı satırı başlamadan bitiyor.";
@@ -325,6 +329,7 @@
 "CHOOSE A RECTANGLE INSIDE THE VIDEO." = "VİDEONUN İÇİNDE KALAN BİR DİKDÖRTGEN SEÇ.";
 "CHOOSE A SUPPORTED MAXIMUM VIDEO HEIGHT." = "DESTEKLENEN BİR MAKSİMUM VİDEO YÜKSEKLİĞİ SEÇ.";
 "CHOOSE A TARGET OF AT LEAST 2 KB." = "EN AZ 2 KB'LIK BİR HEDEF SEÇ.";
+"CHOOSE A VALID BLANK PAGE SIZE." = "GEÇERLİ BİR BOŞ SAYFA BOYUTU SEÇ.";
 "CHOOSE A VALID RANGE FIRST." = "ÖNCE GEÇERLİ BİR ARALIK SEÇ.";
 "CHOOSE A VALID RANGE." = "GEÇERLİ BİR ARALIK SEÇ.";
 "CHOOSE A VALID TIME RANGE." = "GEÇERLİ BİR ZAMAN ARALIĞI SEÇ.";
@@ -339,6 +344,7 @@
 "CHOOSE AT MOST 10,000 CLIPS." = "EN FAZLA 10.000 KLİP SEÇ.";
 "CHOOSE BACKGROUND IMAGE…" = "ARKA PLAN GÖRSELİ SEÇ…";
 "CHOOSE BETWEEN 1 AND 1,000 PAGES PER FILE." = "DOSYA BAŞINA 1 İLE 1.000 ARASINDA SAYFA SEÇ.";
+"CHOOSE BETWEEN 1 AND 10,000 OUTPUT PAGES." = "1 İLE 10.000 ARASINDA ÇIKTI SAYFASI SEÇ.";
 "CHOOSE DIMENSIONS BETWEEN 1 AND 30,000 PIXELS (100 MP LIMIT)." = "1 İLE 30.000 PİKSEL ARASINDA BOYUTLAR SEÇ (SINIR 100 MP).";
 "CHOOSE DISTINCT DRAG SHORTCUTS AND VALID OUTPUT SETTINGS." = "BİRBİRİNDEN FARKLI SÜRÜKLEME KISAYOLLARI VE GEÇERLİ ÇIKTI AYARLARI SEÇ.";
 "CHOOSE DOWNLOADS FOLDER…" = "İNDİRME KLASÖRÜNÜ SEÇ…";
@@ -372,6 +378,7 @@
 "CHOOSE VALID BACKGROUND AND IMAGE DIMENSIONS." = "GEÇERLİ ARKA PLAN VE GÖRSEL BOYUTLARI SEÇ.";
 "CHOOSE VALID COLLAGE SPACING AND COLUMNS." = "GEÇERLİ KOLAJ ARALIĞI VE SÜTUN SAYISI SEÇ.";
 "CHOOSE VALID IMAGE DIMENSIONS." = "GEÇERLİ GÖRSEL BOYUTLARI SEÇ.";
+"CHOOSE VALID PAGE ROTATIONS AND CROP BOUNDS." = "GEÇERLİ SAYFA DÖNDÜRME AÇILARI VE KIRPMA SINIRLARI SEÇ.";
 "CHOOSE VALID PDF PAGES." = "GEÇERLİ PDF SAYFALARI SEÇ.";
 "CHOOSE VIDEO, AUDIO, THUMBNAIL OR IMAGES." = "VİDEO, SES, KÜÇÜK RESİM VEYA GÖRSEL SEÇ.";
 "CHOOSE VISUALIZATION IMAGE…" = "GÖRSELLEŞTİRME GÖRSELİ SEÇ…";
@@ -419,6 +426,8 @@
 "COPY PATH" = "YOLU KOPYALA";
 "CORNER RADIUS" = "KÖŞE YUVARLAKLIĞI";
 "CORNERS" = "KÖŞELER";
+"COULD NOT CREATE BLANK PDF PAGES." = "BOŞ PDF SAYFALARI OLUŞTURULAMADI.";
+"COULD NOT SAVE THE UNLOCKED PDF PAGES." = "ŞİFRESİ ÇÖZÜLMÜŞ PDF SAYFALARI KAYDEDİLEMEDİ.";
 "COULDN’T CHECK FOR UPDATES" = "GÜNCELLEMELER DENETLENEMEDİ";
 "COULDN’T FINISH" = "İŞLEM TAMAMLANAMADI";
 "COULDN’T OPEN THIS TOOL" = "BU ARAÇ AÇILAMADI";
@@ -497,6 +506,7 @@
 "Choose a rectangle inside the video." = "Videonun içinde kalan bir dikdörtgen seç.";
 "Choose a supported maximum video height." = "Desteklenen bir maksimum video yüksekliği seç.";
 "Choose a target of at least 2 KB." = "En az 2 KB'lık bir hedef seç.";
+"Choose a valid blank page size." = "Geçerli bir boş sayfa boyutu seç.";
 "Choose a valid range first." = "Önce geçerli bir aralık seç.";
 "Choose a valid range." = "Geçerli bir aralık seç.";
 "Choose a valid time range." = "Geçerli bir zaman aralığı seç.";
@@ -511,6 +521,7 @@
 "Choose at most 10,000 clips." = "En fazla 10.000 klip seç.";
 "Choose background image…" = "Arka plan görseli seç…";
 "Choose between 1 and 1,000 pages per file." = "Dosya başına 1 ile 1.000 arasında sayfa seç.";
+"Choose between 1 and 10,000 output pages." = "1 ile 10.000 arasında çıktı sayfası seç.";
 "Choose dimensions between 1 and 30,000 pixels (100 MP limit)." = "1 ile 30.000 piksel arasında boyutlar seç (sınır 100 MP).";
 "Choose distinct drag shortcuts and valid output settings." = "Birbirinden farklı sürükleme kısayolları ve geçerli çıktı ayarları seç.";
 "Choose downloads folder…" = "İndirme klasörünü seç…";
@@ -537,6 +548,7 @@
 "Choose valid background and image dimensions." = "Geçerli arka plan ve görsel boyutları seç.";
 "Choose valid collage spacing and columns." = "Geçerli kolaj aralığı ve sütun sayısı seç.";
 "Choose valid image dimensions." = "Geçerli görsel boyutları seç.";
+"Choose valid page rotations and crop bounds." = "Geçerli sayfa döndürme açıları ve kırpma sınırları seç.";
 "Choose video, audio, thumbnail or images." = "Video, ses, küçük resim veya görsel seç.";
 "Choose visualization image…" = "Görselleştirme görseli seç…";
 "Choose what your file shares." = "Dosyanın ne paylaştığını sen seç.";
@@ -597,6 +609,8 @@
 "Copy path" = "Yolu kopyala";
 "Corner radius" = "Köşe yuvarlaklığı";
 "Corners" = "Köşeler";
+"Could not create blank PDF pages." = "Boş PDF sayfaları oluşturulamadı.";
+"Could not save the unlocked PDF pages." = "Şifresi çözülmüş PDF sayfaları kaydedilemedi.";
 "Couldn’t check for updates" = "Güncellemeler denetlenemedi";
 "Couldn’t finish" = "İşlem tamamlanamadı";
 "Couldn’t open this tool" = "Bu araç açılamadı";
@@ -1988,9 +2002,11 @@
 "THIS IMAGE IS TOO LARGE TO PASTE. CHOOSE THE IMAGE FILE INSTEAD." = "BU GÖRSEL YAPIŞTIRMAK İÇİN ÇOK BÜYÜK. BUNUN YERİNE GÖRSEL DOSYASINI SEÇ.";
 "THIS LINK DID NOT RETURN A DOWNLOADABLE IMAGE." = "BU BAĞLANTIDAN İNDİRİLEBİLİR BİR GÖRSEL GELMEDİ.";
 "THIS OUTPUT FORMAT HAS NO ADJUSTABLE CONVERSION DEFAULTS." = "BU ÇIKTI BİÇİMİNİN AYARLANABİLİR DÖNÜŞTÜRME TERCİHİ YOK.";
+"THIS PASSWORD-PROTECTED PDF CONTAINS DOCUMENT FEATURES THAT THIS PAGE OPERATION CANNOT SAFELY PRESERVE. USE AN UNENCRYPTED COPY FOR FORM FIELDS, ATTACHMENTS OR LINKS. NO COPY WAS EXPORTED." = "BU PAROLA KORUMALI PDF, BU SAYFA İŞLEMİNİN GÜVENLE KORUYAMADIĞI BELGE ÖZELLİKLERİ İÇERİYOR. FORM ALANLARI, EKLER VEYA BAĞLANTILAR İÇİN ŞİFRELENMEMİŞ BİR KOPYA KULLAN. HİÇBİR KOPYA DIŞA AKTARILMADI.";
 "THIS PDF CONTAINS NO PAGES." = "BU PDF'DE SAYFA YOK.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT MERGING, SPLITTING OR REORDERING PAGES CANNOT KEEP. NO COPY WAS EXPORTED." = "BU PDF'DE BİRLEŞTİRME, BÖLME VEYA SAYFALARI YENİDEN SIRALAMA SIRASINDA KORUNAMAYAN FORM ALANLARI YA DA EKLER VAR. KOPYA DIŞA AKTARILMADI.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT METADATA CLEANUP CANNOT KEEP. NO COPY WAS EXPORTED." = "BU PDF'DE META VERİ TEMİZLİĞİ SIRASINDA KORUNAMAYAN FORM ALANLARI YA DA EKLER VAR. KOPYA DIŞA AKTARILMADI.";
+"THIS PDF IS EMPTY, IS NOT A REGULAR FILE, OR EXCEEDS THE 100 MB PAGE-EDITING LIMIT." = "BU PDF BOŞ, NORMAL BİR DOSYA DEĞİL VEYA SAYFA DÜZENLEME İÇİN 100 MB SINIRINI AŞIYOR.";
 "THIS PDF PAGE COULD NOT BE READ." = "BU PDF SAYFASI OKUNAMADI.";
 "THIS POST CONTAINS VIDEOS. USE ITS REEL LINK TO DOWNLOAD VIDEO." = "BU GÖNDERİDE VİDEO VAR. VİDEOYU İNDİRMEK İÇİN REEL BAĞLANTISINI KULLAN.";
 "THIS REPOSITORY IS PRIVATE" = "BU DEPO GİZLİ";
@@ -2065,6 +2081,7 @@
 "This PDF contains no pages." = "Bu PDF'de sayfa yok.";
 "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported." = "Bu PDF'de birleştirme, bölme veya sayfaları yeniden sıralama sırasında korunamayan form alanları ya da ekler var. Kopya dışa aktarılmadı.";
 "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported." = "Bu PDF'de meta veri temizliği sırasında korunamayan form alanları ya da ekler var. Kopya dışa aktarılmadı.";
+"This PDF is empty, is not a regular file, or exceeds the 100 MB page-editing limit." = "Bu PDF boş, normal bir dosya değil veya sayfa düzenleme için 100 MB sınırını aşıyor.";
 "This PDF page could not be read." = "Bu PDF sayfası okunamadı.";
 "This RTFD attachment syntax could not be preserved." = "Bu RTFD ekinin yapısı korunamadı.";
 "This Windows codec cannot play directly. Set up media tools to create a local preview." = "Bu Windows codec'i doğrudan oynatılamıyor. Yerel önizleme oluşturmak için medya araçlarını kur.";
@@ -2083,6 +2100,7 @@
 "This image is too large to paste. Choose the image file instead." = "Bu görsel yapıştırmak için çok büyük. Bunun yerine görsel dosyasını seç.";
 "This link did not return a downloadable image." = "Bu bağlantıdan indirilebilir bir görsel gelmedi.";
 "This output format has no adjustable conversion defaults." = "Bu çıktı biçiminin ayarlanabilir dönüştürme tercihi yok.";
+"This password-protected PDF contains document features that this page operation cannot safely preserve. Use an unencrypted copy for form fields, attachments or links. No copy was exported." = "Bu parola korumalı PDF, bu sayfa işleminin güvenle koruyamadığı belge özellikleri içeriyor. Form alanları, ekler veya bağlantılar için şifrelenmemiş bir kopya kullan. Hiçbir kopya dışa aktarılmadı.";
 "This post contains videos. Use its Reel link to download video." = "Bu gönderide video var. Videoyu indirmek için Reel bağlantısını kullan.";
 "This repository is private" = "Bu depo gizli";
 "This size cannot be reached. Choose a larger target or smaller dimensions." = "Bu boyuta inilemiyor. Daha büyük bir hedef veya daha küçük boyutlar seç.";
@@ -2118,6 +2136,7 @@
 "UNDO" = "GERİ AL";
 "UNDO AREA" = "ALANI GERİ AL";
 "UNDO LAST MARK" = "SON İŞARETİ GERİ AL";
+"UNIFORM PAGE WIDTH CANNOT SAFELY PRESERVE THIS PDF'S FORM FIELDS, ATTACHMENTS, LINKS OR OTHER DOCUMENT FEATURES. TURN OFF UNIFORM WIDTH AND TRY AGAIN. NO COPY WAS EXPORTED." = "GENİŞLİK EŞİTLEME BU PDF’NİN FORM ALANLARINI, EKLERİNİ, BAĞLANTILARINI VEYA DİĞER BELGE ÖZELLİKLERİNİ GÜVENLE KORUYAMIYOR. GENİŞLİK EŞİTLEMEYİ KAPATIP TEKRAR DENE. HİÇBİR KOPYA DIŞA AKTARILMADI.";
 "UNIT" = "BİRİM";
 "UNSAFE DOWNLOAD REDIRECT." = "GÜVENLİ OLMAYAN İNDİRME YÖNLENDİRMESİ.";
 "UNSAFE UPDATE ENTRY." = "GÜNCELLEMEDE GÜVENLİ OLMAYAN BİR ÖĞE VAR.";
@@ -2149,6 +2168,7 @@
 "Undo Area" = "Alanı Geri Al";
 "Undo area" = "Alanı geri al";
 "Undo last mark" = "Son işareti geri al";
+"Uniform page width cannot safely preserve this PDF's form fields, attachments, links or other document features. Turn off Uniform width and try again. No copy was exported." = "Genişlik eşitleme bu PDF’nin form alanlarını, eklerini, bağlantılarını veya diğer belge özelliklerini güvenle koruyamıyor. Genişlik eşitlemeyi kapatıp tekrar dene. Hiçbir kopya dışa aktarılmadı.";
 "Unit" = "Birim";
 "Unsafe download redirect." = "Güvenli olmayan indirme yönlendirmesi.";
 "Unsafe update entry." = "Güncellemede güvenli olmayan bir öğe var.";

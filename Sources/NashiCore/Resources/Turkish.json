@@ -1159,5 +1159,15 @@
   "Choose pages and nonnegative crop margins.": "Sayfaları ve sıfır veya daha büyük kırpma boşluklarını seç.",
   "Crop margins must leave a visible area on every selected page.": "Kırpma boşlukları seçili her sayfada görünür bir alan bırakmalı.",
   "Choose a page width between 0 and 14,400 points.": "Sıfırdan büyük ve en fazla 14.400 puan olan bir sayfa genişliği seç.",
-  "Choose no more than 10,000 output pages at once.": "Tek seferde en fazla 10.000 çıktı sayfası seç."
+  "Choose no more than 10,000 output pages at once.": "Tek seferde en fazla 10.000 çıktı sayfası seç.",
+  "Choose between 1 and 10,000 output pages.": "1 ile 10.000 arasında çıktı sayfası seç.",
+  "Choose valid page rotations and crop bounds.": "Geçerli sayfa döndürme açıları ve kırpma sınırları seç.",
+  "A selected PDF source is outside the workspace.": "Seçili PDF kaynağı bu çalışma alanında bulunmuyor.",
+  "Choose a valid blank page size.": "Geçerli bir boş sayfa boyutu seç.",
+  "Could not create blank PDF pages.": "Boş PDF sayfaları oluşturulamadı.",
+  "Uniform page width cannot safely preserve this PDF's form fields, attachments, links or other document features. Turn off Uniform width and try again. No copy was exported.": "Genişlik eşitleme bu PDF’nin form alanlarını, eklerini, bağlantılarını veya diğer belge özelliklerini güvenle koruyamıyor. Genişlik eşitlemeyi kapatıp tekrar dene. Hiçbir kopya dışa aktarılmadı.",
+  "This PDF is empty, is not a regular file, or exceeds the 100 MB page-editing limit.": "Bu PDF boş, normal bir dosya değil veya sayfa düzenleme için 100 MB sınırını aşıyor.",
+  "This password-protected PDF contains document features that this page operation cannot safely preserve. Use an unencrypted copy for form fields, attachments or links. No copy was exported.": "Bu parola korumalı PDF, bu sayfa işleminin güvenle koruyamadığı belge özellikleri içeriyor. Form alanları, ekler veya bağlantılar için şifrelenmemiş bir kopya kullan. Hiçbir kopya dışa aktarılmadı.",
+  "A PDF page could not be copied.": "Bir PDF sayfası kopyalanamadı.",
+  "Could not save the unlocked PDF pages.": "Şifresi çözülmüş PDF sayfaları kaydedilemedi."
 }

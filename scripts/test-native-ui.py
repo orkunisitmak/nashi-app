@@ -28,7 +28,7 @@ def bundle_for_audit(binary, output):
         info = plistlib.load(stream)
     info.update(CFBundleIdentifier="local.nashi.ui-audit", CFBundleDisplayName="Nashi UI Audit",
                 NashiExternalTools=True)
-    # This candidate is only used by the three explicit own-window QA entrypoints.
+    # This candidate is only used by explicit own-window QA entrypoints.
     info.pop("CFBundleDocumentTypes", None)
     with (contents / "Info.plist").open("wb") as stream:
         plistlib.dump(info, stream)
@@ -80,29 +80,46 @@ def main():
         invoke(["--ui-audit", output / "invalid", *invalid], expected=64)
         assert not (output / "invalid").exists()
 
-    invoke(["--ui-audit", output / "gallery"])
+    gallery_scenes = ["home.empty", "home.selected", "library", "settings.general",
+                      "settings.formats", "settings.updates", "wheel.pdf-multiple",
+                      "editor.crop-image", "editor.annotate-image", "editor.frame-image"]
+    invoke(["--ui-audit", output / "gallery", "--scenes", ",".join(gallery_scenes)])
     gallery = json.loads((output / "gallery/manifest.json").read_text())
     assert gallery["passed"] and len(gallery["captures"]) == 40
     assert len(gallery["validatorChecks"]) >= 18
-    expected = {(s, a, l) for s in ["home.empty", "home.selected", "library",
-        "settings.general", "settings.formats", "settings.updates", "wheel.pdf-multiple",
-        "editor.crop-image", "editor.annotate-image", "editor.frame-image"]
+    expected = {(s, a, l) for s in gallery_scenes
         for a in ["light", "dark"] for l in ["en", "tr"]}
     assert {(c["scene"], c["appearance"], c["language"]) for c in gallery["captures"]} == expected
     for capture in gallery["captures"]:
         assert capture["status"] == "captured" and not capture["issues"]
         assert (output / "gallery" / capture["image"]).stat().st_size > 100
 
+    # Fresh processes isolate SwiftUI's render caches between PDF locale/theme cells.
+    for language in ["en", "tr"]:
+        for appearance in ["light", "dark"]:
+            cell = output / "pdf-views" / f"{appearance}-{language}"
+            invoke(["--ui-audit", cell, "--scenes", "editor.organize-pdf",
+                    "--appearance", appearance, "--language", language])
+            report = json.loads((cell / "manifest.json").read_text())
+            assert report["passed"] and len(report["captures"]) == 1
+            capture = report["captures"][0]
+            assert (capture["scene"], capture["appearance"], capture["language"]) == (
+                "editor.organize-pdf", appearance, language)
+            assert capture["status"] == "captured" and not capture["issues"]
+            assert capture["observedPreferences"]["effectiveAppearance"] == appearance
+            assert capture["observedPreferences"]["standardLanguage"] == language
+            assert (cell / capture["image"]).stat().st_size > 100
+
     invoke(["--pdf-workspace-smoke", output / "pdf-workspace"])
     pdf_workspace = json.loads((output / "pdf-workspace/pdf-workspace.json").read_text())
-    assert pdf_workspace["passed"] and len(pdf_workspace["checks"]) >= 13
+    assert pdf_workspace["passed"] and len(pdf_workspace["checks"]) >= 19
     invoke(["--range-accessibility-smoke", output / "range"])
     ranges = json.loads((output / "range/mac-range-accessibility.json").read_text())
     assert ranges["passed"] and len(ranges["checks"]) >= 20
     invoke(["--file-artwork-smoke", output / "artwork"])
     artwork = json.loads((output / "artwork/file-artwork.json").read_text())
     assert artwork["passed"] >= 11 and artwork["asyncProviderCalls"] == 1
-    print(f"PASS: 40 native UI captures; {len(gallery['validatorChecks'])} audit guardrails; "
+    print(f"PASS: 44 native UI captures; {len(gallery['validatorChecks'])} audit guardrails; "
           f"{len(ranges['checks'])} range checks; {len(pdf_workspace['checks'])} PDF workspace checks; "
           f"{artwork['passed']} artwork checks; parser/output safety")
 

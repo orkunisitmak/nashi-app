@@ -29,7 +29,7 @@ swift test --filter 'PDFPageEditorStateTests|PDFWorkspaceTests|PDFPreservationRe
 python3 scripts/test-native-ui.py
 ```
 
-The native UI runner includes the own-window `--pdf-workspace-smoke` entry point for production shortcut decoding/routing, text-field protection, multi-page deletion, undo/redo and close interception. It requires no global keyboard injection or accessibility permission.
+The native UI runner captures the production PDF workspace in all four light/dark and EN/TR combinations and verifies the effective theme/locale and thumbnail-grid bounds. Inspect those captures for actual translated labels and readable content. The own-window `--pdf-workspace-smoke` entry point covers production shortcut decoding/routing, text-field protection, multi-page deletion, undo/redo, close interception and direct `applicationShouldTerminate` decisions for rejected/accepted discard, active conversion and tool setup. It requires no global keyboard injection or accessibility permission.
 
 Windows' existing verification executable checks that mixed page widths normalize to the narrowest page:
 

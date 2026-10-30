@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 import PDFKit
 import NashiCore
+import NashiUpdates
 
 /// Uses only a disposable PDF and this process's views/events. No global event access.
 @MainActor final class PDFWorkspaceSmoke:NSObject,NSApplicationDelegate {
@@ -75,9 +76,27 @@ import NashiCore
         panel.onPerformClose=nil
         panel.shouldClose={false};panel.performClose(nil)
         try check(panel.isVisible,"A rejected close request keeps the PDF workspace open")
+        let delegate=AppDelegate(state:appState,updater:AppUpdater(credentials:NoCredentials(),defaults:defaults,info:[:]))
+        appState.toolWindows=[panel]
+        try check(delegate.applicationShouldTerminate(NSApp) == .terminateCancel && panel.isVisible,"Application exit consults the PDF discard guard and respects Keep editing")
+        panel.shouldClose={true}
+        try check(delegate.applicationShouldTerminate(NSApp) == .terminateNow && panel.isVisible,"Accepting PDF discard allows application exit without prematurely closing the editor")
+        var closeRequests=0
+        panel.shouldClose={closeRequests+=1;return true}
+        appState.working=true
+        try check(delegate.applicationShouldTerminate(NSApp) == .terminateCancel && closeRequests==0,"Active conversion blocks application exit before consulting PDF editors")
+        appState.working=false;delegate.toolSetupWorking=true
+        try check(delegate.applicationShouldTerminate(NSApp) == .terminateCancel && closeRequests==0,"Active tool setup blocks application exit before consulting PDF editors")
+        delegate.toolSetupWorking=false;appState.toolWindows=[]
         panel.shouldClose={true};panel.performClose(nil)
         try check(!panel.isVisible,"An accepted close request closes the PDF workspace")
         try check(try Data(contentsOf:source)==original,"Keyboard and workspace operations leave the source PDF unchanged")
     }
     @MainActor private final class Fixture:ObservableObject { @Published var editor=PDFPageEditorState() }
+    /// An accidental updater credential request fails locally without touching a Keychain or broker.
+    private struct NoCredentials:UpdateCredentialStore {
+        func token(for repository:GitHubRepository)throws->String {throw UpdateCredentialError.missing}
+        func save(_ token:String,for repository:GitHubRepository)throws {throw UpdateCredentialError.missing}
+        func remove(for repository:GitHubRepository)throws {throw UpdateCredentialError.missing}
+    }
 }

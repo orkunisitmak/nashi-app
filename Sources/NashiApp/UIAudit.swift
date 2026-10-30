@@ -5,7 +5,7 @@ import NashiCore
 import NashiUpdates
 
 struct UIAuditOptions {
-    static let scenes=["home.empty","home.selected","library","settings.general","settings.formats","settings.updates","wheel.pdf-multiple","editor.crop-image","editor.annotate-image","editor.frame-image"]
+    static let scenes=["home.empty","home.selected","library","settings.general","settings.formats","settings.updates","wheel.pdf-multiple","editor.crop-image","editor.annotate-image","editor.frame-image","editor.organize-pdf"]
     var output:URL
     var scenes=Self.scenes
     var appearances=["light","dark"]
@@ -120,11 +120,13 @@ struct UIAuditError:LocalizedError { let message:String;init(_ message:String){s
             catch{records.append(["scene":scene,"appearance":appearance,"language":language,"status":"failed","issues":[error.localizedDescription]])}
         }}}
     }
+    /// Renders one production scene with isolated preferences and checks its settled layout and native labels.
     private func capture(scene:String,appearance:String,language:String,defaults:UserDefaults)async throws {
         window?.close();window=nil
         let state=AppState(defaults:defaults),recorder=UIAuditLayout(),updater=AppUpdater()
         let image=fixtures["image"]!,text=fixtures["text"]!,pdf=fixtures["pdf1"]!
         if scene=="home.selected" || scene.hasPrefix("editor."){state.inputs=[image]}
+        if scene=="editor.organize-pdf" {state.inputs=[pdf]}
         if scene=="library" {
             state.history=[(image,"Convert to PNG"),(text,"Pasted text"),(pdf,"Merge PDFs"),(fixtures["missing"]!,"Missing original")].enumerated().map { index,item in JobRecord(id:UUID(uuidString:String(format:"00000000-0000-0000-0000-%012d",index+1))!,title:item.1,inputs:[],outputs:[item.0.path],date:Date(timeIntervalSince1970:1_767_225_600)) }
             state.libraryVisible=true
@@ -139,6 +141,8 @@ struct UIAuditError:LocalizedError { let message:String;init(_ message:String){s
         case "editor.crop-image","editor.annotate-image","editor.frame-image":
             let tool:ToolKind=scene=="editor.crop-image" ? .cropImage:scene=="editor.annotate-image" ? .annotateImage:.frameImage
             view=AnyView(ToolEditor(state:state,tool:tool));size=NSSize(width:900,height:420)
+        case "editor.organize-pdf":
+            view=AnyView(ToolEditor(state:state,tool:.organizePDF));size=NSSize(width:780,height:760)
         case "wheel.pdf-multiple":
             let wheel=WheelView(frame:NSRect(x:0,y:0,width:320,height:320));let inputs=[fixtures["pdf1"]!,fixtures["pdf2"]!]
             wheel.mode = .tools;wheel.inputs=inputs
@@ -224,6 +228,7 @@ struct UIAuditError:LocalizedError { let message:String;init(_ message:String){s
         }
         return values
     }
+    /// Verifies the actual theme/locale reaching each scene and the native settings picker selections.
     private func verifyPreferences(scene:String,appearance:String,language:String,defaults:UserDefaults,view:NSView)async throws->[String:String] {
         let deadline=Date().addingTimeInterval(3)
         var values:[String:String]=[:],issues:[String]=[]

@@ -58,7 +58,7 @@ struct PDFWorkspaceView:View {
                         .background(NashiPalette.inset,in:RoundedRectangle(cornerRadius:8))
                         .onDrop(of:[pdfPageDragType],delegate:PDFPageDropDelegate(editor:$editor,draggedID:$draggedID,insertion:editor.items.count))
                 }.padding(3)
-            }.frame(height:260)
+            }.frame(height:260).uiAuditProbe("editor.preview")
             HStack {
                 Button("Rotate") { editor.rotateSelected() }.disabled(!editor.hasSelection)
                 Button("Duplicate") { editor.duplicateSelected() }.disabled(!editor.hasSelection || editor.items.count+editor.selectedIndexes.count>10_000)
@@ -139,7 +139,7 @@ private struct PDFPageCard:View {
         }.frame(maxWidth:.infinity).padding(8)
             .background(selected ? Color.nashi.opacity(0.2):Color.primary.opacity(0.03),in:RoundedRectangle(cornerRadius:8))
             .overlay(RoundedRectangle(cornerRadius:8).stroke(selected ? Color.nashi:Color.clear,lineWidth:2))
-            .task(id:revision) { thumbnail=item.page.thumbnail(of:NSSize(width:110,height:140),for:.cropBox) }
+            .task(id:revision) { thumbnail=item.thumbnail(of:NSSize(width:110,height:140)) }
     }
 }
 

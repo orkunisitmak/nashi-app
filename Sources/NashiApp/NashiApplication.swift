@@ -104,8 +104,8 @@ enum NashiApplication {
 }
 
 @MainActor final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
-    let state=AppState()
-    let updater=AppUpdater()
+    let state:AppState
+    let updater:AppUpdater
     private var updateObservations=Set<AnyCancellable>()
     var statusItem:NSStatusItem!
     var home:NSWindow?
@@ -125,6 +125,11 @@ enum NashiApplication {
     var monitor:DragMonitor!
     var wheel:WheelController!
     var windowManagement:WindowManagementController!
+
+    /// Creates the normal application with its persisted state and updater connection.
+    override convenience init() { self.init(state:AppState(),updater:AppUpdater()) }
+    /// Allows own-window QA to exercise lifecycle decisions with isolated state and an unstarted updater.
+    init(state:AppState,updater:AppUpdater) { self.state=state;self.updater=updater;super.init() }
 
     func applicationDidFinishLaunching(_ notification:Notification) {
         NashiAppearance.apply()

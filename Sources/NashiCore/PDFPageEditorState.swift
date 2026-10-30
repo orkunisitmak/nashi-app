@@ -21,6 +21,15 @@ public struct PDFEditorPage: Identifiable {
     func replacing(page: PDFPage, newIdentity: Bool = false) -> Self {
         .init(sourceIndex:sourceIndex,sourcePageIndex:sourcePageIndex,page:page,id:newIdentity ? UUID():id,originalCropBox:originalCropBox)
     }
+    /// Gives a detached snapshot page a temporary document while PDFKit renders its visible crop bounds.
+    public func thumbnail(of size:NSSize)->NSImage {
+        let document=PDFDocument()
+        guard let copy=page.copy() as? PDFPage else{return NSImage(size:size)}
+        document.insert(copy,at:0)
+        let preview=copy.thumbnail(of:size,for:.cropBox)
+        guard let raster=preview.cgImage(forProposedRect:nil,context:nil,hints:nil) else{return preview}
+        return NSImage(cgImage:raster,size:preview.size)
+    }
 }
 
 /// Page objects in snapshots are immutable: every rotation/crop edits a copy.
@@ -38,6 +47,7 @@ public struct PDFPageEditorState {
 
     private struct Snapshot {
         let items:[PDFEditorPage]
+        let sourceURLs:[URL?]
         let selectedIDs:Set<UUID>
         let anchor:UUID?
         let focus:UUID?
@@ -58,7 +68,7 @@ public struct PDFPageEditorState {
     public var canRedo:Bool { !redoStack.isEmpty }
     public var rotations:[Int:Int] { Dictionary(uniqueKeysWithValues:items.enumerated().map{($0.offset,$0.element.page.rotation)}) }
     public var isDirty:Bool { fingerprint != savedFingerprint }
-    private var snapshot:Snapshot { .init(items:items,selectedIDs:selectedIDs,anchor:anchor,focus:focus,widthMode:widthMode,customWidth:customWidth) }
+    private var snapshot:Snapshot { .init(items:items,sourceURLs:sourceURLs,selectedIDs:selectedIDs,anchor:anchor,focus:focus,widthMode:widthMode,customWidth:customWidth) }
     private var fingerprint:String {
         items.map { "\($0.id):\($0.page.rotation):\(NSStringFromRect($0.page.bounds(for:.cropBox)))" }.joined(separator:"|")+"\(widthMode.rawValue):\(customWidth)"
     }
@@ -92,9 +102,9 @@ public struct PDFPageEditorState {
     public mutating func selectAll() { selectedIDs=Set(items.map(\.id));anchor=items.first?.id;focus=items.last?.id }
     /// Snapshots one edit, caps the session history at 100 steps, and invalidates redo history.
     private mutating func record() { undoStack.append(snapshot);if undoStack.count>100 { undoStack.removeFirst() };redoStack=[] }
-    /// Restores page instances, selection focus and width settings together from one history entry.
+    /// Restores page instances, source references, selection focus and width settings together from one history entry.
     private mutating func restore(_ value:Snapshot) {
-        items=value.items;selectedIDs=value.selectedIDs;anchor=value.anchor;focus=value.focus;widthMode=value.widthMode;customWidth=value.customWidth
+        items=value.items;sourceURLs=value.sourceURLs;selectedIDs=value.selectedIDs;anchor=value.anchor;focus=value.focus;widthMode=value.widthMode;customWidth=value.customWidth
     }
     /// Restores the preceding snapshot and retains the current snapshot for redo.
     public mutating func undo() { guard let previous=undoStack.popLast() else{return};redoStack.append(snapshot);restore(previous) }

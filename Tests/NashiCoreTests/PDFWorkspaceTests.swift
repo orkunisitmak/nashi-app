@@ -9,13 +9,13 @@ final class PDFWorkspaceTests:XCTestCase {
     override func setUpWithError() throws { root=try OutputFiles.temporaryDirectory() }
     override func tearDownWithError() throws { try? FileManager.default.removeItem(at:root) }
     /// Creates searchable synthetic pages with distinct text and widths, without external or personal fixtures.
-    private func source(_ name:String,widths:[Double]=[300,500])throws->URL {
+    private func source(_ name:String,widths:[Double]=[300,500],fontSize:CGFloat=18)throws->URL {
         let url=root.appendingPathComponent(name+".pdf")
         let context=CGContext(consumer:CGDataConsumer(url:url as CFURL)!,mediaBox:nil,nil)!
         for (index,width) in widths.enumerated() {
             var box=CGRect(x:0,y:0,width:width,height:600)
             context.beginPDFPage([kCGPDFContextMediaBox:Data(bytes:&box,count:MemoryLayout<CGRect>.size)] as CFDictionary)
-            let line=CTLineCreateWithAttributedString(NSAttributedString(string:"\(name) page \(index+1)",attributes:[.font:NSFont.systemFont(ofSize:18)]))
+            let line=CTLineCreateWithAttributedString(NSAttributedString(string:"\(name) page \(index+1)",attributes:[.font:NSFont.systemFont(ofSize:fontSize)]))
             context.textPosition=CGPoint(x:40,y:100);CTLineDraw(line,context);context.endPDFPage()
         }
         context.closePDF();return url
@@ -26,11 +26,44 @@ final class PDFWorkspaceTests:XCTestCase {
         options.pdfWorkspacePages=editor.exportPlan(selectedOnly:selectedOnly);options.pdfWidthMode=editor.widthMode;options.pdfCustomWidth=editor.customWidth;options.pdfExtractSelection=selectedOnly
         return try ConversionEngine.run(.init(inputs:editor.sourceURLs.compactMap{$0},operation:.tool(.organizePDF),options:options))[0]
     }
+    /// Detached immutable snapshots must render real source content, with the same crop area as the workspace.
+    func testDetachedPageThumbnailRetainsVisibleSourceContentAndCropAspectRatio()throws {
+        let url=try source("Thumbnail",widths:[300],fontSize:72)
+        var editor=PDFPageEditorState()
+        try autoreleasepool { editor.reset(document:try PDFEngine.open(url),sourceURL:url) }
+        editor.select(0);try editor.cropSelected(left:10,right:20,top:30,bottom:40)
+        let image=editor.items[0].thumbnail(of:NSSize(width:110,height:140))
+        let cgImage=try XCTUnwrap(image.cgImage(forProposedRect:nil,context:nil,hints:nil))
+        let bitmap=NSBitmapImageRep(cgImage:cgImage)
+        var inkPixels=0
+        for y in 0..<bitmap.pixelsHigh {for x in 0..<bitmap.pixelsWide {
+            if let color=bitmap.colorAt(x:x,y:y)?.usingColorSpace(.deviceRGB),color.alphaComponent>0.5,
+               min(color.redComponent,color.greenComponent,color.blueComponent)<0.5 {inkPixels+=1}
+        }}
+        XCTAssertGreaterThan(inkPixels,10,"Source text must remain visible in the page card")
+        XCTAssertEqual(Double(bitmap.pixelsWide)/Double(bitmap.pixelsHigh),270.0/530.0,accuracy:0.03)
+    }
+    /// Undoing an import must remove unused source dependencies; redo restores their matching page indices.
+    func testUndoingPDFInsertionRestoresSourcesAndCanExportAfterRemovedImportDisappears()throws {
+        let first=try source("Retained"),second=try source("Removed import")
+        let before=try Data(contentsOf:first)
+        var editor=PDFPageEditorState();editor.reset(document:try PDFEngine.open(first),sourceURL:first)
+        editor.insert(document:try PDFEngine.open(second),sourceURL:second)
+        editor.undo();XCTAssertEqual(editor.sourceURLs,[first]);XCTAssertFalse(editor.isDirty)
+        editor.redo();XCTAssertEqual(editor.sourceURLs,[first,second]);XCTAssertEqual(editor.items.last?.sourceIndex,1)
+        editor.undo();try FileManager.default.removeItem(at:second)
+        let pdf=try PDFEngine.open(export(editor))
+        XCTAssertEqual(pdf.pageCount,2);XCTAssertTrue(pdf.string!.contains("Retained page 1"))
+        XCTAssertEqual(try Data(contentsOf:first),before)
+    }
     /// Verifies batch deletion, selection restoration, saved state, redo and the minimum-one-page invariant.
     func testMultiSelectionDeleteUndoAndRedoPreservePageInstancesAndSelection()throws {
         let url=try source("Original",widths:[300,300,300,300,300])
         var editor=PDFPageEditorState();editor.reset(document:try PDFEngine.open(url),sourceURL:url)
         let ids=editor.items.map(\.id)
+        editor.select(0);editor.select(4,toggling:true);XCTAssertEqual(editor.selectedIndexes,[0,4])
+        editor.select(0,toggling:true);XCTAssertEqual(editor.selectedIndexes,[4])
+        editor.select(4,toggling:true);XCTAssertFalse(editor.hasSelection);XCTAssertFalse(editor.isDirty)
         editor.select(1);editor.select(3,extending:true);editor.select(0,toggling:true)
         XCTAssertEqual(editor.selectedIndexes,[0,1,2,3]);editor.deleteSelected()
         XCTAssertEqual(editor.sourceIndexes,[4]);XCTAssertTrue(editor.isDirty)

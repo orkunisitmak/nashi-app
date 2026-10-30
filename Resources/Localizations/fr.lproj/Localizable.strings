@@ -64,10 +64,13 @@
 "A LITTLE PEAR. A LOT OF POSSIBILITY." = "UNE PETITE POIRE. PLEIN DE POSSIBILITÉS.";
 "A NEW FORM.\nIN A TAP." = "UNE NOUVELLE FORME.\nEN UN GESTE.";
 "A PAGE RANGE IS OUTSIDE THE PDF." = "UNE PLAGE DE PAGES DÉPASSE LE PDF.";
+"A PDF PAGE COULD NOT BE COPIED." = "A PDF PAGE COULD NOT BE COPIED.";
+"A PDF page could not be copied." = "A PDF page could not be copied.";
 "A PERFECT LANDING SPOT" = "UN POINT DE CHUTE IDÉAL";
 "A PHOTO IS UNAVAILABLE. TRY A FRESH PUBLIC POST LINK." = "UNE PHOTO EST INDISPONIBLE. ESSAYEZ UN NOUVEAU LIEN DE PUBLICATION PUBLIQUE.";
 "A PLACE FOR FRESH FILES." = "UN ENDROIT POUR LES NOUVEAUX FICHIERS.";
 "A SELECTED ITEM IS MISSING." = "UN ÉLÉMENT SÉLECTIONNÉ EST MANQUANT.";
+"A SELECTED PDF SOURCE IS OUTSIDE THE WORKSPACE." = "A SELECTED PDF SOURCE IS OUTSIDE THE WORKSPACE.";
 "A SPLIT POINT LIES OUTSIDE THE VIDEO." = "UN POINT DE COUPURE SE TROUVE EN DEHORS DE LA VIDÉO.";
 "A SUBTITLE CUE ENDS BEFORE IT STARTS." = "UNE RÉPLIQUE DE SOUS-TITRE SE TERMINE AVANT DE COMMENCER.";
 "A TABLE CELL SPAN IS INVALID OR EXCEEDS 1,024 COLUMNS." = "LA FUSION D’UNE CELLULE DE TABLEAU EST INVALIDE OU DÉPASSE 1 024 COLONNES.";
@@ -90,6 +93,7 @@
 "A perfect landing spot" = "Un point de chute idéal";
 "A photo is unavailable. Try a fresh public post link." = "Une photo est indisponible. Essayez un nouveau lien de publication publique.";
 "A place for fresh files." = "Un endroit pour les nouveaux fichiers.";
+"A selected PDF source is outside the workspace." = "A selected PDF source is outside the workspace.";
 "A selected item is missing." = "Un élément sélectionné est manquant.";
 "A split point lies outside the video." = "Un point de coupure se trouve en dehors de la vidéo.";
 "A subtitle cue ends before it starts." = "Une réplique de sous-titre se termine avant de commencer.";
@@ -325,6 +329,7 @@
 "CHOOSE A RECTANGLE INSIDE THE VIDEO." = "CHOISISSEZ UN RECTANGLE À L’INTÉRIEUR DE LA VIDÉO.";
 "CHOOSE A SUPPORTED MAXIMUM VIDEO HEIGHT." = "CHOISISSEZ UNE HAUTEUR VIDÉO MAXIMALE PRISE EN CHARGE.";
 "CHOOSE A TARGET OF AT LEAST 2 KB." = "CHOISISSEZ UNE CIBLE D’AU MOINS 2 KO.";
+"CHOOSE A VALID BLANK PAGE SIZE." = "CHOOSE A VALID BLANK PAGE SIZE.";
 "CHOOSE A VALID RANGE FIRST." = "CHOISISSEZ D’ABORD UNE PLAGE VALIDE.";
 "CHOOSE A VALID RANGE." = "CHOISISSEZ UNE PLAGE VALIDE.";
 "CHOOSE A VALID TIME RANGE." = "CHOISISSEZ UNE PLAGE DE TEMPS VALIDE.";
@@ -339,6 +344,7 @@
 "CHOOSE AT MOST 10,000 CLIPS." = "CHOISISSEZ 10 000 CLIPS AU MAXIMUM.";
 "CHOOSE BACKGROUND IMAGE…" = "CHOISIR L’IMAGE D’ARRIÈRE-PLAN…";
 "CHOOSE BETWEEN 1 AND 1,000 PAGES PER FILE." = "CHOISISSEZ ENTRE 1 ET 1 000 PAGES PAR FICHIER.";
+"CHOOSE BETWEEN 1 AND 10,000 OUTPUT PAGES." = "CHOOSE BETWEEN 1 AND 10,000 OUTPUT PAGES.";
 "CHOOSE DIMENSIONS BETWEEN 1 AND 30,000 PIXELS (100 MP LIMIT)." = "CHOISISSEZ DES DIMENSIONS COMPRISES ENTRE 1 ET 30 000 PIXELS (LIMITE DE 100 MPX).";
 "CHOOSE DISTINCT DRAG SHORTCUTS AND VALID OUTPUT SETTINGS." = "CHOISISSEZ DES RACCOURCIS DE GLISSER-DÉPOSER DISTINCTS ET DES RÉGLAGES DE SORTIE VALIDES.";
 "CHOOSE DOWNLOADS FOLDER…" = "CHOISIR LE DOSSIER DE TÉLÉCHARGEMENTS…";
@@ -372,6 +378,7 @@
 "CHOOSE VALID BACKGROUND AND IMAGE DIMENSIONS." = "CHOISISSEZ DES DIMENSIONS D’ARRIÈRE-PLAN ET D’IMAGE VALIDES.";
 "CHOOSE VALID COLLAGE SPACING AND COLUMNS." = "CHOISISSEZ UN ESPACEMENT ET UN NOMBRE DE COLONNES VALIDES POUR LE COLLAGE.";
 "CHOOSE VALID IMAGE DIMENSIONS." = "CHOISISSEZ DES DIMENSIONS D’IMAGE VALIDES.";
+"CHOOSE VALID PAGE ROTATIONS AND CROP BOUNDS." = "CHOOSE VALID PAGE ROTATIONS AND CROP BOUNDS.";
 "CHOOSE VALID PDF PAGES." = "CHOISISSEZ DES PAGES PDF VALIDES.";
 "CHOOSE VIDEO, AUDIO, THUMBNAIL OR IMAGES." = "CHOISISSEZ UNE VIDÉO, UN AUDIO, UNE MINIATURE OU DES IMAGES.";
 "CHOOSE VISUALIZATION IMAGE…" = "CHOISIR L’IMAGE DE VISUALISATION…";
@@ -419,6 +426,8 @@
 "COPY PATH" = "COPIER LE CHEMIN";
 "CORNER RADIUS" = "RAYON DES COINS";
 "CORNERS" = "COINS";
+"COULD NOT CREATE BLANK PDF PAGES." = "COULD NOT CREATE BLANK PDF PAGES.";
+"COULD NOT SAVE THE UNLOCKED PDF PAGES." = "COULD NOT SAVE THE UNLOCKED PDF PAGES.";
 "COULDN’T CHECK FOR UPDATES" = "IMPOSSIBLE DE RECHERCHER LES MISES À JOUR";
 "COULDN’T FINISH" = "IMPOSSIBLE DE TERMINER";
 "COULDN’T OPEN THIS TOOL" = "IMPOSSIBLE D’OUVRIR CET OUTIL";
@@ -497,6 +506,7 @@
 "Choose a rectangle inside the video." = "Choisissez un rectangle à l’intérieur de la vidéo.";
 "Choose a supported maximum video height." = "Choisissez une hauteur vidéo maximale prise en charge.";
 "Choose a target of at least 2 KB." = "Choisissez une cible d’au moins 2 Ko.";
+"Choose a valid blank page size." = "Choose a valid blank page size.";
 "Choose a valid range first." = "Choisissez d’abord une plage valide.";
 "Choose a valid range." = "Choisissez une plage valide.";
 "Choose a valid time range." = "Choisissez une plage de temps valide.";
@@ -511,6 +521,7 @@
 "Choose at most 10,000 clips." = "Choisissez 10 000 clips au maximum.";
 "Choose background image…" = "Choisir l’image d’arrière-plan…";
 "Choose between 1 and 1,000 pages per file." = "Choisissez entre 1 et 1 000 pages par fichier.";
+"Choose between 1 and 10,000 output pages." = "Choose between 1 and 10,000 output pages.";
 "Choose dimensions between 1 and 30,000 pixels (100 MP limit)." = "Choisissez des dimensions comprises entre 1 et 30 000 pixels (limite de 100 Mpx).";
 "Choose distinct drag shortcuts and valid output settings." = "Choisissez des raccourcis de glisser-déposer distincts et des réglages de sortie valides.";
 "Choose downloads folder…" = "Choisir le dossier de téléchargements…";
@@ -537,6 +548,7 @@
 "Choose valid background and image dimensions." = "Choisissez des dimensions d’arrière-plan et d’image valides.";
 "Choose valid collage spacing and columns." = "Choisissez un espacement et un nombre de colonnes valides pour le collage.";
 "Choose valid image dimensions." = "Choisissez des dimensions d’image valides.";
+"Choose valid page rotations and crop bounds." = "Choose valid page rotations and crop bounds.";
 "Choose video, audio, thumbnail or images." = "Choisissez une vidéo, un audio, une miniature ou des images.";
 "Choose visualization image…" = "Choisir l’image de visualisation…";
 "Choose what your file shares." = "Choisissez ce que votre fichier partage.";
@@ -597,6 +609,8 @@
 "Copy path" = "Copier le chemin";
 "Corner radius" = "Rayon des coins";
 "Corners" = "Coins";
+"Could not create blank PDF pages." = "Could not create blank PDF pages.";
+"Could not save the unlocked PDF pages." = "Could not save the unlocked PDF pages.";
 "Couldn’t check for updates" = "Impossible de rechercher les mises à jour";
 "Couldn’t finish" = "Impossible de terminer";
 "Couldn’t open this tool" = "Impossible d’ouvrir cet outil";
@@ -1988,9 +2002,11 @@
 "THIS IMAGE IS TOO LARGE TO PASTE. CHOOSE THE IMAGE FILE INSTEAD." = "CETTE IMAGE EST TROP GRANDE POUR ÊTRE COLLÉE. CHOISISSEZ PLUTÔT LE FICHIER IMAGE.";
 "THIS LINK DID NOT RETURN A DOWNLOADABLE IMAGE." = "CE LIEN N’A PAS RENVOYÉ D’IMAGE TÉLÉCHARGEABLE.";
 "THIS OUTPUT FORMAT HAS NO ADJUSTABLE CONVERSION DEFAULTS." = "CE FORMAT DE SORTIE N’A PAS DE RÉGLAGES DE CONVERSION MODIFIABLES.";
+"THIS PASSWORD-PROTECTED PDF CONTAINS DOCUMENT FEATURES THAT THIS PAGE OPERATION CANNOT SAFELY PRESERVE. USE AN UNENCRYPTED COPY FOR FORM FIELDS, ATTACHMENTS OR LINKS. NO COPY WAS EXPORTED." = "THIS PASSWORD-PROTECTED PDF CONTAINS DOCUMENT FEATURES THAT THIS PAGE OPERATION CANNOT SAFELY PRESERVE. USE AN UNENCRYPTED COPY FOR FORM FIELDS, ATTACHMENTS OR LINKS. NO COPY WAS EXPORTED.";
 "THIS PDF CONTAINS NO PAGES." = "CE PDF NE CONTIENT AUCUNE PAGE.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT MERGING, SPLITTING OR REORDERING PAGES CANNOT KEEP. NO COPY WAS EXPORTED." = "CE PDF CONTIENT DES CHAMPS DE FORMULAIRE OU DES PIÈCES JOINTES QUE LA FUSION, LA DIVISION OU LA RÉORGANISATION DES PAGES NE PEUT PAS CONSERVER. AUCUNE COPIE N’A ÉTÉ EXPORTÉE.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT METADATA CLEANUP CANNOT KEEP. NO COPY WAS EXPORTED." = "CE PDF CONTIENT DES CHAMPS DE FORMULAIRE OU DES PIÈCES JOINTES QUE LE NETTOYAGE DES MÉTADONNÉES NE PEUT PAS CONSERVER. AUCUNE COPIE N’A ÉTÉ EXPORTÉE.";
+"THIS PDF IS EMPTY, IS NOT A REGULAR FILE, OR EXCEEDS THE 100 MB PAGE-EDITING LIMIT." = "THIS PDF IS EMPTY, IS NOT A REGULAR FILE, OR EXCEEDS THE 100 MB PAGE-EDITING LIMIT.";
 "THIS PDF PAGE COULD NOT BE READ." = "CETTE PAGE PDF N’A PAS PU ÊTRE LUE.";
 "THIS POST CONTAINS VIDEOS. USE ITS REEL LINK TO DOWNLOAD VIDEO." = "CETTE PUBLICATION CONTIENT DES VIDÉOS. UTILISEZ SON LIEN REEL POUR TÉLÉCHARGER LA VIDÉO.";
 "THIS REPOSITORY IS PRIVATE" = "CE DÉPÔT EST PRIVÉ";
@@ -2065,6 +2081,7 @@
 "This PDF contains no pages." = "Ce PDF ne contient aucune page.";
 "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported." = "Ce PDF contient des champs de formulaire ou des pièces jointes que la fusion, la division ou la réorganisation des pages ne peut pas conserver. Aucune copie n’a été exportée.";
 "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported." = "Ce PDF contient des champs de formulaire ou des pièces jointes que le nettoyage des métadonnées ne peut pas conserver. Aucune copie n’a été exportée.";
+"This PDF is empty, is not a regular file, or exceeds the 100 MB page-editing limit." = "This PDF is empty, is not a regular file, or exceeds the 100 MB page-editing limit.";
 "This PDF page could not be read." = "Cette page PDF n’a pas pu être lue.";
 "This RTFD attachment syntax could not be preserved." = "Cette syntaxe de pièce jointe RTFD n’a pas pu être préservée.";
 "This Windows codec cannot play directly. Set up media tools to create a local preview." = "Ce codec Windows ne peut pas être lu directement. Configurez les outils multimédias pour créer un aperçu local.";
@@ -2083,6 +2100,7 @@
 "This image is too large to paste. Choose the image file instead." = "Cette image est trop grande pour être collée. Choisissez plutôt le fichier image.";
 "This link did not return a downloadable image." = "Ce lien n’a pas renvoyé d’image téléchargeable.";
 "This output format has no adjustable conversion defaults." = "Ce format de sortie n’a pas de réglages de conversion modifiables.";
+"This password-protected PDF contains document features that this page operation cannot safely preserve. Use an unencrypted copy for form fields, attachments or links. No copy was exported." = "This password-protected PDF contains document features that this page operation cannot safely preserve. Use an unencrypted copy for form fields, attachments or links. No copy was exported.";
 "This post contains videos. Use its Reel link to download video." = "Cette publication contient des vidéos. Utilisez son lien Reel pour télécharger la vidéo.";
 "This repository is private" = "Ce dépôt est privé";
 "This size cannot be reached. Choose a larger target or smaller dimensions." = "Cette taille est impossible à atteindre. Choisissez une cible plus grande ou des dimensions plus petites.";
@@ -2118,6 +2136,7 @@
 "UNDO" = "ANNULER";
 "UNDO AREA" = "ANNULER LA ZONE";
 "UNDO LAST MARK" = "ANNULER LE DERNIER REPÈRE";
+"UNIFORM PAGE WIDTH CANNOT SAFELY PRESERVE THIS PDF'S FORM FIELDS, ATTACHMENTS, LINKS OR OTHER DOCUMENT FEATURES. TURN OFF UNIFORM WIDTH AND TRY AGAIN. NO COPY WAS EXPORTED." = "UNIFORM PAGE WIDTH CANNOT SAFELY PRESERVE THIS PDF'S FORM FIELDS, ATTACHMENTS, LINKS OR OTHER DOCUMENT FEATURES. TURN OFF UNIFORM WIDTH AND TRY AGAIN. NO COPY WAS EXPORTED.";
 "UNIT" = "UNITÉ";
 "UNSAFE DOWNLOAD REDIRECT." = "REDIRECTION DE TÉLÉCHARGEMENT NON SÛRE.";
 "UNSAFE UPDATE ENTRY." = "ENTRÉE DE MISE À JOUR NON SÛRE.";
@@ -2149,6 +2168,7 @@
 "Undo Area" = "Annuler la zone";
 "Undo area" = "Annuler la zone";
 "Undo last mark" = "Annuler le dernier repère";
+"Uniform page width cannot safely preserve this PDF's form fields, attachments, links or other document features. Turn off Uniform width and try again. No copy was exported." = "Uniform page width cannot safely preserve this PDF's form fields, attachments, links or other document features. Turn off Uniform width and try again. No copy was exported.";
 "Unit" = "Unité";
 "Unsafe download redirect." = "Redirection de téléchargement non sûre.";
 "Unsafe update entry." = "Entrée de mise à jour non sûre.";
