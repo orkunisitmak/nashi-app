@@ -141,7 +141,8 @@ public enum WebDownloadEngine {
         ["--ignore-config","--no-plugin-dirs","--no-update","--no-cache-dir","--no-remote-components",
          "--no-js-runtimes","--js-runtimes","deno:\(try Dependencies.executable("deno").path)",
          "--ffmpeg-location",try Dependencies.executable("ffmpeg").deletingLastPathComponent().path,
-         "--socket-timeout","20","--retries","2","--extractor-retries","1","--no-colors"] +
+         "--socket-timeout","20","--retries","2","--extractor-retries","1","--no-colors",
+         "--extractor-args","youtube:player_client=default,-android_vr,android"] +
         (photoPost ? ["--yes-playlist","--playlist-end","51"]:["--no-playlist","--playlist-items","1"])
     }
     static func downloadArguments(_ info:WebMediaInfo,mode:WebDownloadMode,maximumHeight:Int?,directory:URL) throws -> [String] {
