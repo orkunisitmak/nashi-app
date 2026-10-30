@@ -144,7 +144,7 @@ public sealed partial class ToolEditor:Window
     private void BeginDraw(object sender,MouseButtonEventArgs e)
     {
         if(tool is not ("crop" or "cropVideo" or "redactVideo" or "redactImage" or "annotate"))return;
-        drawing.Focus();origin=e.GetPosition(drawing);dragging=drawing.CaptureMouse();
+        drawing.Focus();origin=DesktopInput.SimulatedLocalPosition??e.GetPosition(drawing);dragging=drawing.CaptureMouse()||!DesktopInput.NativeInputAvailable;
         if(BeginCropGesture(origin)){e.Handled=true;return;}
         if(tool=="annotate"){try{AnnotationStart();}catch(ArgumentException error){dragging=false;drawing.ReleaseMouseCapture();if(App.IsSmokeTest)throw;MessageBox.Show(this,L10n.Text(error.Message),L10n.Text("Check drawing settings"));}e.Handled=true;return;}
         if(tool=="annotate"&&drawingTool.SelectedIndex==0){activeStroke=new Polyline{Stroke=new SolidColorBrush(Color.FromArgb(160,234,181,40)),StrokeThickness=Math.Max(3,drawing.Width/100),StrokeLineJoin=PenLineJoin.Round};activeStroke.Points.Add(origin);drawing.Children.Add(activeStroke);}
@@ -157,12 +157,12 @@ public sealed partial class ToolEditor:Window
     }
     private void MoveDraw(object sender,MouseEventArgs e)
     {
-        if(!dragging)return;var p=e.GetPosition(drawing);p.X=Math.Clamp(p.X,0,drawing.Width);p.Y=Math.Clamp(p.Y,0,drawing.Height);
+        if(!dragging)return;var p=DesktopInput.SimulatedLocalPosition??e.GetPosition(drawing);p.X=Math.Clamp(p.X,0,drawing.Width);p.Y=Math.Clamp(p.Y,0,drawing.Height);
         if(MoveCropGesture(p))return;
         if(tool=="annotate"){AnnotationMove(p);return;}
         if(activeStroke is not null){activeStroke.Points.Add(p);return;}
         if(activeRectangle is null)return;var dx=p.X-origin.X;var dy=p.Y-origin.Y;
-        if(tool is "crop" or "cropVideo" && (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)||CropRatio() is not null))
+        if(tool is "crop" or "cropVideo" && (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)||DesktopInput.IsShiftPressed||CropRatio() is not null))
         {
             var ratio=CropRatio()??1d;var width=Math.Min(Math.Abs(dx),Math.Abs(dy)*ratio);var height=width/ratio;p=new(origin.X+Math.CopySign(width,dx),origin.Y+Math.CopySign(height,dy));
         }
@@ -191,7 +191,7 @@ public sealed partial class ToolEditor:Window
     private void TogglePlayback(){playingRange=false;if(playing){player.Pause();playing=false;}else{if(player.Position.TotalSeconds>=duration-.001)Seek(0);player.Play();playing=true;}}
     private void OnKey(object sender,KeyEventArgs e)
     {
-        var modifiers=Keyboard.Modifiers;
+        var modifiers=DesktopInput.EffectiveModifiers;
         if(e.Key==Key.Escape){Close();e.Handled=true;return;}
         if(Keyboard.FocusedElement is Button&&modifiers==ModifierKeys.None&&e.Key is Key.Space or Key.Enter)return;
         if(e.Key==Key.Enter&&modifiers==ModifierKeys.None){Save();e.Handled=true;return;}

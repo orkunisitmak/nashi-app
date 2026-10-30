@@ -30,7 +30,7 @@ internal sealed class FilePreviewWindow:Window
         footer.Children.Add(L10n.Label(new TextBlock{Text="←/→ files · Media: Space play/pause, ←/→ 1s, Alt+←/→ files · Esc closes",FontSize=11,Foreground=Theme.Brush("Muted"),Margin=new(0,12,0,0)}));root.Children.Add(content);
         scrub.ValueChanged+=(_,_)=>{if(!updating&&player is not null)player.Position=TimeSpan.FromSeconds(scrub.Value);};
         timer.Tick+=(_,_)=>{if(player is null)return;updating=true;scrub.Value=player.Position.TotalSeconds;updating=false;};
-        PreviewKeyDown+=(_,e)=>{var key=e.Key==Key.System?e.SystemKey:e.Key;var modifiers=Keyboard.Modifiers;if(key==Key.Escape){Close();e.Handled=true;return;}if(ClipboardImport.IsEditing(Keyboard.FocusedElement as DependencyObject)&&Keyboard.FocusedElement is not TextBox{IsReadOnly:true})return;
+        PreviewKeyDown+=(_,e)=>{var key=e.Key==Key.System?e.SystemKey:e.Key;var modifiers=DesktopInput.EffectiveModifiers;if(key==Key.Escape){Close();e.Handled=true;return;}if(ClipboardImport.IsEditing(Keyboard.FocusedElement as DependencyObject)&&Keyboard.FocusedElement is not TextBox{IsReadOnly:true})return;
             if(modifiers is not (ModifierKeys.None or ModifierKeys.Alt))return;
             if(key==Key.Space){if(player is null)Close();else Toggle();e.Handled=true;}
             else if(key is Key.Left or Key.Right){var direction=key==Key.Left?-1:1;if(player is not null&&modifiers==ModifierKeys.None){player.Position=TimeSpan.FromSeconds(Math.Clamp(player.Position.TotalSeconds+direction,0,scrub.Maximum));}else Navigate(direction);e.Handled=true;}};
