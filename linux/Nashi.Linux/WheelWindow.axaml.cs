@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 
@@ -21,6 +22,20 @@ public sealed partial class WheelWindow : Window
     }
 
     public Wheel Wheel => Ring;
+
+    /// Without an owner: centered on the pointer (or on the primary screen), kept on screen, topmost and focused.
+    public void ShowAt(PixelPoint? pointer)
+    {
+        if (Desktop.ScreenAt(this, pointer) is { } screen)
+        {
+            var area = screen.WorkingArea;
+            WindowStartupLocation = WindowStartupLocation.Manual;
+            Position = Desktop.Place(pointer ?? area.Center, PixelSize.FromSize(new Size(Width, Height), screen.Scaling), area);
+        }
+        Topmost = true;
+        Opened += (_, _) => Activate();
+        Show();
+    }
 
     protected override void OnKeyDown(KeyEventArgs e)
     {

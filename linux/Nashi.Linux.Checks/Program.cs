@@ -10,6 +10,8 @@ using ImageMagick;
 using Nashi.Core;
 using Nashi.Linux;
 
+[assembly: System.Runtime.Versioning.SupportedOSPlatform("linux")]
+
 var passed = 0;
 var failures = new List<string>();
 void Check(bool condition, string name)
@@ -22,6 +24,11 @@ L10n.Language = "en"; // the English checks below must not depend on the machine
 var temp = Directory.CreateTempSubdirectory("nashi-linux-checks-");
 try
 {
+    LaunchChecks();
+    await InstanceChecks(temp.FullName);
+    ClipboardChecks();
+    PlacementChecks();
+    IntegrationChecks(temp.FullName); // before Avalonia starts, like the real --install-integration
     SelectionChecks(temp.FullName);
     CapabilityChecks();
     ImageChecks(temp.FullName);
@@ -31,6 +38,7 @@ try
     await ToolSetupChecks(temp.FullName);
     LocalizationChecks(temp.FullName);
     AppearanceChecks(temp.FullName);
+    await BackgroundChecks(temp.FullName);
 }
 finally
 {
@@ -361,19 +369,41 @@ void WheelChecks(string root)
     home.Show();
     Dispatcher.UIThread.RunJobs();
     Button Chip(string text) => home.GetVisualDescendants().OfType<Button>().First(b => b.GetVisualDescendants().OfType<TextBlock>().Any(t => t.Text == text));
-    string Status() => home.GetVisualDescendants().OfType<TextBlock>().First(t => t.Name == "StatusLine").Text ?? "";
     Check(!Chip("Actions").IsEnabled, "The Actions chip is disabled until it does something");
     Check(!home.GetVisualDescendants().OfType<Button>().First(x => x.Name == "SettingsButton").IsEnabled, "The Settings button is disabled until it does something");
+    var png = Path.Combine(root, "wheel.png");
+    File.WriteAllText(png, "x");
+    var picks = 0;
+    home.PickFiles = () => { picks++; return Task.FromResult<IReadOnlyList<string>>([]); };
     Chip("Tools").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-    Check(Status() == "Choose files first." && home.OwnedWindows.Count == 0, "Tools with nothing selected shows a status message");
+    Dispatcher.UIThread.RunJobs();
+    Check(picks == 1 && home.OwnedWindows.Count == 0, "Tools with nothing selected opens the file picker; cancelling it opens no wheel");
+    home.PickFiles = () => { picks++; return Task.FromResult<IReadOnlyList<string>>([png]); };
+    home.KeyPressQwerty(PhysicalKey.Space, RawInputModifiers.Control);
+    Dispatcher.UIThread.RunJobs();
+    var pickedWheel = home.OwnedWindows.OfType<WheelWindow>().SingleOrDefault();
+    Check(picks == 2 && home.Selection.Files.SequenceEqual([png]) && pickedWheel is not null, "Ctrl+Space with nothing selected picks files, then shows the wheel");
+    pickedWheel?.Close();
+    home.Selection.Clear();
     var doc = Path.Combine(root, "notes.docx");
     File.WriteAllText(doc, "x");
     home.Selection.Add([doc]);
     Chip("Convert").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-    Check(Status().Contains("No conversions") && home.OwnedWindows.Count == 0, "An empty format wheel shows a status message instead");
+    Dispatcher.UIThread.RunJobs();
+    Check(SuccessToast.Current?.FindControl<TextBlock>("TitleText")?.Text == "No conversions for DOCX files yet." && home.OwnedWindows.Count == 0, "An empty format wheel shows a toast card naming the file type");
+    var pdfOnly = Path.Combine(root, "only.pdf");
+    File.WriteAllText(pdfOnly, "x");
     home.Selection.Clear();
-    var png = Path.Combine(root, "wheel.png");
-    File.WriteAllText(png, "x");
+    home.Selection.Add([pdfOnly]);
+    Chip("Convert").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+    Dispatcher.UIThread.RunJobs();
+    Check(SuccessToast.Current?.FindControl<TextBlock>("TitleText")?.Text == "No conversions for PDF files yet.", "A single PDF's empty format wheel says No conversions for PDF files yet.");
+    home.Selection.Add([doc]);
+    Chip("Convert").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+    Dispatcher.UIThread.RunJobs();
+    Check(SuccessToast.Current?.FindControl<TextBlock>("TitleText")?.Text == "No conversions for this selection yet.", "Mixed types say No conversions for this selection yet.");
+    SuccessToast.Current?.Close();
+    home.Selection.Clear();
     home.Selection.Add([png]);
     Chip("Convert").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
     Dispatcher.UIThread.RunJobs();
@@ -389,13 +419,20 @@ void WheelChecks(string root)
     var toast = new ProgressToast("Convert to JPG", null);
     toast.Show(home);
     toast.Update(new OperationProgress(0.5, "Saving images…"));
-    toast.Complete([Path.Combine(root, "wheel.jpg")], root);
     Dispatcher.UIThread.RunJobs();
-    var toastTexts = toast.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
-    Check(toastTexts.Contains("Saved 1 new file. Originals kept.") && toastTexts.Contains("Show in folder"), "Success toast says what was saved and offers Show in folder");
+    Check(toast.GetVisualDescendants().OfType<TextBlock>().Any(t => t.Text == "Saving images…") && toast.Topmost, "Progress toast shows the step and stays on top");
     var toastFrame = toast.CaptureRenderedFrame();
-    if (!string.IsNullOrEmpty(smoke) && toastFrame is not null) toastFrame.Save(Path.Combine(smoke, "toast-success-light.png"));
+    if (!string.IsNullOrEmpty(smoke) && toastFrame is not null) toastFrame.Save(Path.Combine(smoke, "toast-progress-light.png"));
     toast.Close();
+
+    // Ctrl+V reads files through the shared clipboard reader, including the uri-list text form.
+    var pasted = Path.Combine(root, "pasted ğ.png");
+    File.WriteAllText(pasted, "x");
+    home.Clipboard!.SetTextAsync("copy\n" + new Uri(pasted).AbsoluteUri).GetAwaiter().GetResult();
+    home.KeyPressQwerty(PhysicalKey.V, RawInputModifiers.Control);
+    Dispatcher.UIThread.RunJobs();
+    for (var i = 0; i < 50 && !home.Selection.Files.Contains(pasted); i++) { Thread.Sleep(10); Dispatcher.UIThread.RunJobs(); }
+    Check(home.Selection.Files.Contains(pasted), "Ctrl+V adds files copied as file:// text (the GNOME clipboard form)");
     home.Close();
 }
 
@@ -597,6 +634,218 @@ void AppearanceChecks(string root)
         wheel.Close();
     }
     finally { Application.Current!.RequestedThemeVariant = ThemeVariant.Light; }
+}
+
+void LaunchChecks()
+{
+    Check(Launch.Parse([]) == new Launch(LaunchMode.Home, []) || Launch.Parse([]).Mode == LaunchMode.Home, "No arguments open Home");
+    Check(Launch.Parse([]).Message == new InstanceMessage("show"), "Home forwards show to a running instance");
+    Check(Launch.Parse(["--background"]).Mode == LaunchMode.Background && Launch.Parse(["--background"]).Message is null, "--background runs in the background and forwards nothing");
+    var wheel = Launch.Parse(["--wheel", "/a b.png", "-x.png", "--version-not"]);
+    Check(wheel.Mode == LaunchMode.Wheel && wheel.Files.SequenceEqual(["/a b.png", "/-x.png".Replace("/-", Path.GetFullPath("-x.png")[..^6] + "-"), "/--version-not".Replace("/--", Path.GetFullPath("--version-not")[..^13] + "--")]), "--wheel takes every later argument as a file, even with a leading dash");
+    var bare = Launch.Parse(["/x/a.png", "rel.png"]);
+    Check(bare.Mode == LaunchMode.Wheel && bare.Files.SequenceEqual(["/x/a.png", Path.GetFullPath("rel.png")]) && bare.Message!.Cmd == "wheel" && bare.Message.Files!.SequenceEqual(bare.Files), "Bare files (the desktop entry's %F) open the wheel with absolute paths");
+    Check(Launch.Parse(["--wheel-clipboard"]).Mode == LaunchMode.WheelClipboard && Launch.Parse(["--wheel-clipboard"]).Message!.Cmd == "wheel-clipboard", "--wheel-clipboard forwards wheel-clipboard");
+    Check(Launch.Parse(["--install-integration"]).Mode == LaunchMode.InstallIntegration && Launch.Parse(["--uninstall-integration"]).Mode == LaunchMode.UninstallIntegration, "Integration flags parse");
+    Check(Launch.Parse(["--version"]).Mode == LaunchMode.Version && Launch.Parse(["--background", "--version"]).Mode == LaunchMode.Version, "--version wins anywhere");
+}
+
+async Task InstanceChecks(string root)
+{
+    var run = Directory.CreateDirectory(Path.Combine(root, "run")).FullName;
+    var saved = Environment.GetEnvironmentVariable("XDG_RUNTIME_DIR");
+    Environment.SetEnvironmentVariable("XDG_RUNTIME_DIR", run);
+    var path = Instance.SocketPath;
+    Environment.SetEnvironmentVariable("XDG_RUNTIME_DIR", null);
+    Check(Instance.SocketPath == $"/tmp/nashi-{Instance.Uid}.sock", "Without XDG_RUNTIME_DIR the socket lives in /tmp");
+    Environment.SetEnvironmentVariable("XDG_RUNTIME_DIR", saved);
+    Check(path == Path.Combine(run, $"nashi-{Instance.Uid}.sock"), "The socket is $XDG_RUNTIME_DIR/nashi-<uid>.sock");
+
+    // A stale socket: bound once, its owner gone, the file left behind.
+    // (.NET unlinks on Dispose, so another process leaves it.)
+    System.Diagnostics.Process.Start("python3", ["-c", "import socket,sys; socket.socket(socket.AF_UNIX).bind(sys.argv[1])", path])!.WaitForExit();
+    Check(File.Exists(path) && !Instance.Send(path, new("show")), "A stale socket file answers nobody");
+
+    using (var instance = Instance.Claim(path))
+    {
+        Check(instance is not null, "A stale socket file is replaced");
+        Check(File.GetUnixFileMode(path) == (UnixFileMode.UserRead | UnixFileMode.UserWrite), "The socket is mode 0600");
+        Check(Instance.Claim(path) is null && Instance.IsRunning(path), "A second claim fails while the instance lives");
+        var received = new System.Collections.Concurrent.BlockingCollection<InstanceMessage>();
+        instance!.Start(received.Add);
+        string[] names = ["/tmp/ğüş şarkı.mp3", "/tmp/a b/-leading dash.png", "/tmp/$(rm -rf ~)'\".png"];
+        Check(Instance.Send(path, new("wheel", names)), "Send reports an accepted message");
+        Check(received.TryTake(out var got, 5000) && got.Cmd == "wheel" && got.Files!.SequenceEqual(names), "wheel arrives with Turkish, space, dash and quote names intact");
+
+        var oversized = System.Text.Encoding.UTF8.GetBytes("{\"cmd\":\"wheel\",\"files\":[\"" + new string('a', Instance.MaxMessage) + "\"]}\n");
+        var accepted = true;
+        try
+        {
+            using var raw = new System.Net.Sockets.Socket(System.Net.Sockets.AddressFamily.Unix, System.Net.Sockets.SocketType.Stream, System.Net.Sockets.ProtocolType.Unspecified);
+            raw.Connect(new System.Net.Sockets.UnixDomainSocketEndPoint(path));
+            raw.Send(oversized);
+            raw.ReceiveTimeout = 5000;
+            accepted = raw.Receive(new byte[1]) == 1;
+        }
+        catch (System.Net.Sockets.SocketException) { accepted = false; }
+        Check(!accepted && !received.TryTake(out _, 300), "A message over 1 MB is rejected");
+        Check(Instance.Send(path, new("quit")) && received.TryTake(out var quit, 5000) && quit.Cmd == "quit", "The instance still answers after a rejected message");
+    }
+    Check(!File.Exists(path) && !Instance.IsRunning(path), "Disposing the instance removes its socket");
+    await Task.CompletedTask;
+}
+
+void ClipboardChecks()
+{
+    var gnome = Desktop.ClipboardPaths("copy\nfile:///home/ece/My%20Files/%C4%9Fne.png\nfile:///tmp/%C5%9F%20x.mp4\n");
+    Check(gnome.SequenceEqual(["/home/ece/My Files/ğne.png", "/tmp/ş x.mp4"]), "x-special/gnome-copied-files decodes to paths without the copy header");
+    var uris = Desktop.ClipboardPaths("# comment\r\nfile:///a%20b/ğ.png\r\nhttps://example.com/x.png\r\nsmb://server/share/x.png\r\nfile://localhost/c.png\r\n");
+    Check(uris.SequenceEqual(["/a b/ğ.png", "/c.png"]), "uri-list decodes %20 and ğ and ignores non-file URIs");
+    Check(Desktop.ClipboardPaths("/plain/path one.png\nnot a path").SequenceEqual(["/plain/path one.png"]), "Plain absolute paths count, other text does not");
+}
+
+void PlacementChecks()
+{
+    var area = new PixelRect(0, 32, 1920, 1048);
+    var size = new PixelSize(320, 320);
+    bool Inside(PixelPoint p) => p.X >= area.X && p.Y >= area.Y && p.X + size.Width <= area.Right && p.Y + size.Height <= area.Bottom;
+    foreach (var corner in new[] { new PixelPoint(0, 0), new PixelPoint(1919, 0), new PixelPoint(0, 1079), new PixelPoint(1919, 1079) })
+        Check(Inside(Desktop.Place(corner, size, area)), $"The wheel stays on screen with the pointer at {corner}");
+    Check(Desktop.Place(new PixelPoint(960, 540), size, area) == new PixelPoint(800, 380), "Away from edges the wheel is centered on the pointer");
+    var second = new PixelRect(1920, 0, 1280, 1024);
+    Check(Desktop.Place(new PixelPoint(3199, 1023), size, second) == new PixelPoint(2880, 704), "Clamping uses the pointer's own screen");
+}
+
+void IntegrationChecks(string root)
+{
+    var home = Directory.CreateDirectory(Path.Combine(root, "home")).FullName;
+    var apps = Directory.CreateDirectory(Path.Combine(root, "My Apps")).FullName;
+    var exe = Path.Combine(apps, "Nashi");
+    // A stand-in executable that prints its arguments, one per line.
+    File.WriteAllText(exe, "#!/bin/sh\nfor a in \"$@\"; do printf '%s\\n' \"$a\"; done\n");
+    File.SetUnixFileMode(exe, (UnixFileMode)0b111_101_101);
+    const string schema = "org.gnome.settings-daemon.plugins.media-keys";
+    const string other = "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/";
+    var settings = new Dictionary<string, string> { ["list"] = $"['{other}']" };
+    string? Fake(string program, IReadOnlyList<string> args)
+    {
+        if (program != "gsettings") return null;
+        switch (args[0])
+        {
+            case "list-keys": return "volume-up\ncustom-keybindings\n";
+            case "get": return settings["list"] + "\n";
+            case "set" when args[1] == schema: settings["list"] = args[3]; return "";
+            case "set": settings[args[1] + " " + args[2]] = args[3]; return "";
+            case "reset-recursively": foreach (var key in settings.Keys.Where(k => k.StartsWith(args[1] + " ")).ToList()) settings.Remove(key); return "";
+            default: return null;
+        }
+    }
+    var keyed = schema + ".custom-keybinding:" + Integration.KeybindingPath;
+    var scripts = Path.GetDirectoryName(Integration.Script(home))!;
+    Directory.CreateDirectory(scripts);
+    File.WriteAllText(Path.Combine(scripts, "Someone else's script"), "x");
+
+    var log = Integration.Install(home, exe, Fake);
+    Integration.Install(home, exe, Fake);
+    var autostart = File.ReadAllText(Integration.Autostart(home));
+    var entry = File.ReadAllText(Integration.OpenWith(home));
+    Check(autostart.Contains($"\nExec=\"{exe}\" --background\n") && autostart.Contains("\nX-GNOME-Autostart-enabled=true\n") && autostart.Contains("\nNoDisplay=true\n"), "Autostart runs the quoted executable with --background");
+    Check(entry.Contains($"\nExec=\"{exe}\" %F\n") && entry.Contains("\nIcon=nashi\n"), "The Open With entry passes %F to the quoted executable");
+    Check(entry.Contains("image/png;") && entry.Contains("video/mp4;") && entry.Contains("audio/mpeg;") && entry.Contains("application/pdf;") && entry.Contains("application/zip;") && !entry.Contains("officedocument"), "MimeType lists image, audio, video, PDF and ZIP inputs only");
+    Check(Integration.InputExtensions().Count > 15, "Every catalog input the entry claims has a MIME type (" + Integration.InputExtensions().Count + ")");
+    using (var icon = new MagickImage(Integration.Icon(home))) Check(icon.Width == 256 && icon.Height == 256, "The icon is installed as a 256×256 PNG");
+    var script = Integration.Script(home);
+    Check(Path.GetFileName(script) == "Convert with Nashi" && (File.GetUnixFileMode(script) & UnixFileMode.UserExecute) != 0, "The Nautilus script is named in English and executable");
+    var shell = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("sh", [script, "a b.png", "-x.png", "$HOME `x`.png", "ğ\"q'.png"]) { RedirectStandardOutput = true })!;
+    var printed = shell.StandardOutput.ReadToEnd();
+    shell.WaitForExit();
+    Check(printed == "--wheel\na b.png\n-x.png\n$HOME `x`.png\nğ\"q'.png\n", "The script passes the selected files intact after --wheel: " + printed.Replace("\n", "|"));
+    Check(settings["list"] == $"['{other}', '{Integration.KeybindingPath}']", "The shortcut list keeps the existing entry and adds Nashi's once: " + settings["list"]);
+    Check(settings[keyed + " binding"] == "'<Primary><Alt>n'" && settings[keyed + " command"] == $"'\"{exe}\" --wheel-clipboard'", "Ctrl+Alt+N runs the quoted executable with --wheel-clipboard");
+    Check(log.Any(l => l.StartsWith("Wrote ")) && log[^1].StartsWith("Added the Ctrl+Alt+N"), "Install prints what it wrote");
+
+    var removed = Integration.Uninstall(home, Fake);
+    Check(!File.Exists(Integration.Autostart(home)) && !File.Exists(Integration.OpenWith(home)) && !File.Exists(Integration.Icon(home)) && !File.Exists(script), "Uninstall removes Nashi's files");
+    Check(File.Exists(Path.Combine(scripts, "Someone else's script")), "Uninstall keeps other Nautilus scripts");
+    Check(settings["list"] == $"['{other}']" && !settings.Keys.Any(k => k.StartsWith(keyed)), "Uninstall removes only Nashi's keybinding");
+    Check(removed[^1] == "Removed the Ctrl+Alt+N shortcut.", "Uninstall prints what it removed");
+
+    var bare = Directory.CreateDirectory(Path.Combine(root, "home-bare")).FullName;
+    var noGnome = Integration.Install(bare, exe, (_, _) => null);
+    Check(noGnome[^1].StartsWith("Skipped the keyboard shortcut") && File.Exists(Integration.Script(bare)), "Without gsettings the shortcut is skipped with a note and the rest installs");
+    Check(Integration.Quote("/a \"b\" $c `d` \\e") == "\"/a \\\"b\\\" \\$c \\`d\\` \\\\e\"", "Quote escapes \\ \" $ and `");
+}
+
+async Task BackgroundChecks(string root)
+{
+    var app = (App)Application.Current!;
+    var smoke = Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");
+    string? Title() => SuccessToast.Current?.FindControl<TextBlock>("TitleText")?.Text;
+
+    // The pointer-mode wheel: missing and folder paths are filtered; nothing left says so in a card.
+    app.ShowWheel([Path.Combine(root, "missing.png"), root]);
+    Dispatcher.UIThread.RunJobs();
+    Check(Title() == "Nothing to convert" && app.Flow.LastWheel is null, "--wheel with nothing usable shows Nothing to convert");
+    var png = Path.Combine(root, "background.png");
+    using (var g = new MagickImage("gradient:red-blue", 64, 48)) g.Write(png);
+    app.ShowWheel([png, Path.Combine(root, "missing.png")]);
+    Dispatcher.UIThread.RunJobs();
+    var wheel = app.Flow.LastWheel;
+    Check(wheel is { IsVisible: true, Owner: null, Topmost: true } && wheel.Wheel.Items.Select(i => i.Id).SequenceEqual(["convert", "compress"]), "--wheel shows the topmost tools wheel, Convert first, with no main window");
+    wheel!.Wheel.HighlightedIndex = 0;
+    wheel.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+    Dispatcher.UIThread.RunJobs();
+    var formats = app.Flow.LastWheel;
+    Check(formats != wheel && formats is { IsVisible: true } && formats.Wheel.Items.Any(i => i.Id == "convert:jpg"), "Convert opens the format wheel in the same mode");
+    formats!.Wheel.HighlightedIndex = formats.Wheel.Items.ToList().FindIndex(i => i.Id == "convert:jpg");
+    formats.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+    for (var i = 0; i < 200 && Title()?.StartsWith("Nicely") != true; i++) { await Task.Delay(20); Dispatcher.UIThread.RunJobs(); }
+    Check(Title() == "Nicely done. 1 file is ready." && File.Exists(Path.Combine(root, "background.jpg")), "Choosing JPG writes next to the file and shows the success card");
+    SuccessToast.Current?.Close();
+    app.ShowWheel([Path.Combine(root, "notes.docx")]);
+    Dispatcher.UIThread.RunJobs();
+    Check(Title() == "No tools for DOCX files yet.", "An empty background wheel says there are no tools for DOCX files yet");
+    SuccessToast.Current?.Close();
+
+    // The success card: copy for 0, 1 and 3 files; light, dark and Turkish renders.
+    Check(SuccessToast.Heading(0) == "Nicely done." && SuccessToast.Heading(1) == "Nicely done. 1 file is ready." && SuccessToast.Heading(3) == "Nicely done. 3 files are ready.", "Success titles for 0, 1 and 3 files");
+    void Render(string name, IReadOnlyList<string> outputs)
+    {
+        var card = SuccessToast.Done(outputs, root);
+        card.Present();
+        Dispatcher.UIThread.RunJobs();
+        var texts = card.GetVisualDescendants().OfType<TextBlock>().Where(t => t.IsEffectivelyVisible).Select(t => t.Text).ToList();
+        Check(texts.Contains(SuccessToast.Heading(outputs.Count)) && texts.Contains(Path.GetFileName(outputs[0])) && texts.Contains(L10n.T("Show in folder")) && card.Topmost && !card.ShowActivated, $"Success card ({name}) shows title, first file and Show in folder, on top without focus");
+        Check(card.Width == 560 && card.Height == 88, "Success card is 560×88");
+        var frame = card.CaptureRenderedFrame();
+        Check(frame is not null, $"Success card renders ({name})");
+        if (!string.IsNullOrEmpty(smoke) && frame is not null) { Directory.CreateDirectory(smoke); frame.Save(Path.Combine(smoke, $"toast-{name}.png")); }
+        card.Close();
+    }
+    string[] three = [Path.Combine(root, "a.jpg"), Path.Combine(root, "b.jpg"), Path.Combine(root, "c.jpg")];
+    Render("success-light", [Path.Combine(root, "background.jpg")]);
+    Render("success-three-light", three);
+    Application.Current!.RequestedThemeVariant = ThemeVariant.Dark;
+    try { Render("success-dark", [Path.Combine(root, "background.jpg")]); }
+    finally { Application.Current!.RequestedThemeVariant = ThemeVariant.Light; }
+    L10n.Language = "tr";
+    try
+    {
+        Check(SuccessToast.Heading(3) == "Hazır! 3 dosyan hazır.", "Turkish success title for 3 files");
+        Render("success-tr", three);
+        var notice = SuccessToast.Notice(L10n.F("No conversions for {0} files yet.", "PDF"));
+        Check(notice.FindControl<TextBlock>("TitleText")?.Text == "PDF dosyaları için henüz dönüştürme yok.", "Turkish empty-wheel card names the type");
+    }
+    finally { L10n.Language = "en"; }
+
+    var error = SuccessToast.Notice("Couldn’t finish: disk full");
+    error.Present();
+    Dispatcher.UIThread.RunJobs();
+    Check(!error.GetVisualDescendants().OfType<Button>().Any(b => b.IsEffectivelyVisible) && SuccessToast.Current == error, "An error card has no action and replaces the current card");
+    var errorFrame = error.CaptureRenderedFrame();
+    if (!string.IsNullOrEmpty(smoke) && errorFrame is not null) errorFrame.Save(Path.Combine(smoke, "toast-error-light.png"));
+    error.Close();
+    Check(SuccessToast.Visible == TimeSpan.FromSeconds(3) && SuccessToast.ErrorVisible == TimeSpan.FromSeconds(6) && SuccessToast.Fade == TimeSpan.FromSeconds(0.28), "Cards stay 3 s (errors 6 s) and fade over 0.28 s");
 }
 
 static string RepoRoot()

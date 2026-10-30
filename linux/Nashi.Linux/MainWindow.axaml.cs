@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
@@ -34,33 +33,27 @@ public sealed partial class MainWindow : Window
         public const string OneReady = "1 file ready.";
         public const string ManyReady = "{0} files ready.";
         public const string Skipped = "Skipped {0}: only existing files can come in, not folders.";
-        public const string ConvertWheel = "Convert";
-        public const string ToolsWheel = "Tools";
-        public const string ConvertTo = "Convert to {0}";
-        public const string ChooseFirst = "Choose files first.";
-        public const string NoFormats = "No conversions for this selection yet.";
-        public const string NoTools = "No tools for this selection yet.";
-        public const string SaveTo = "Save new files to…";
-        public const string SavedOne = "Saved 1 new file. Originals kept.";
-        public const string SavedMany = "Saved {0} new files. Originals kept.";
-        public const string Cancelled = "Cancelled. Originals kept.";
         public const string SetUpTools = "Set up tools";
         public const string ToolsReady = "Tools ready";
-        public const string Failed = "Couldn’t finish: {0}";
         public const string Problem = "Something went wrong: {0}";
     }
 
-    private static readonly Bitmap Mark = Load("NashiMark.png");
-    private static readonly Bitmap HappyMark = Load("NashiMarkHappy.png");
+    internal static readonly Bitmap Mark = Load("NashiMark.png");
+    internal static readonly Bitmap HappyMark = Load("NashiMarkHappy.png");
 
     private int lastSkipped;
     private bool dropTargeted;
-    private bool busy;
     private string? notice;
     private readonly Toolchain tools;
-    private readonly OperationRunner runner;
+    private readonly WheelFlow flow;
 
     public Selection Selection { get; } = new();
+
+    /// Closing hides the window instead (the background instance keeps running).
+    public bool HideOnClose { get; init; }
+
+    /// Choose files: the system picker; the checks swap in their own.
+    public Func<Task<IReadOnlyList<string>>> PickFiles { get; set; }
 
     public MainWindow() : this(AppPaths.CreateToolchain()) { }
 
@@ -68,7 +61,8 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();
         this.tools = tools;
-        runner = new OperationRunner(tools);
+        flow = new WheelFlow(tools, this, Notify, ShowToolSetupAsync);
+        PickFiles = async () => LocalPaths(await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions { Title = L10n.T(Copy.PickerTitle), AllowMultiple = true })).ToList();
         RefreshToolsButton();
         Selection.Changed += () => { notice = null; Refresh(); };
         AddHandler(DragDrop.DragOverEvent, OnDragOver);
@@ -126,8 +120,8 @@ public sealed partial class MainWindow : Window
     {
         try
         {
-            var picked = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions { Title = L10n.T(Copy.PickerTitle), AllowMultiple = true });
-            if (picked.Count > 0) AddFiles(LocalPaths(picked));
+            var picked = await PickFiles();
+            if (picked.Count > 0) AddFiles(picked);
         }
         catch (Exception error) { Notify(L10n.F(Copy.Problem, L10n.T(error.Message))); }
     }
@@ -152,8 +146,8 @@ public sealed partial class MainWindow : Window
         e.Handled = true;
         try
         {
-            if (e.Key == Key.Space) { ShowToolsWheel(); return; }
-            AddFiles(LocalPaths(await Clipboard!.TryGetFilesAsync()));
+            if (e.Key == Key.Space) { await ShowWheelAsync(formats: false); return; }
+            AddFiles(await Desktop.ClipboardFilesAsync(Clipboard!));
         }
         catch (Exception error) { Notify(L10n.F(Copy.Problem, L10n.T(error.Message))); }
     }
@@ -195,87 +189,34 @@ public sealed partial class MainWindow : Window
     }
 
     private void RefreshToolsButton() => SetUpToolsButton.Content = AppPaths.MediaReady(tools) ? L10n.T(Copy.ToolsReady) : L10n.T(Copy.SetUpTools);
-    private void OnConvert(object? sender, RoutedEventArgs e) => ShowFormatWheel();
-    private void OnTools(object? sender, RoutedEventArgs e) => ShowToolsWheel();
+    private async void OnConvert(object? sender, RoutedEventArgs e) => await ShowWheelAsync(formats: true);
+    private async void OnTools(object? sender, RoutedEventArgs e) => await ShowWheelAsync(formats: false);
 
-    /// Tools, with Convert first when the selection has formats; Ctrl+Space opens it too.
-    private void ShowToolsWheel()
-    {
-        var files = Selection.Files;
-        var items = Capabilities.Tools(files).Select(id => new WheelItem(id, L10n.T(FeatureCatalog.ToolNames.GetValueOrDefault(id, id)))).ToList();
-        if (Capabilities.Formats(files).Length > 0) items.Insert(0, new WheelItem("convert", L10n.T(Copy.ConvertWheel)));
-        ShowWheel(L10n.T(Copy.ToolsWheel), items, L10n.T(Copy.NoTools));
-    }
-
-    private void ShowFormatWheel() =>
-        ShowWheel(L10n.T(Copy.ConvertWheel), Capabilities.Formats(Selection.Files).Select(f => new WheelItem("convert:" + f, f == "gz" ? "GZIP" : f.ToUpperInvariant())).ToList(), L10n.T(Copy.NoFormats));
-
-    private void ShowWheel(string title, IReadOnlyList<WheelItem> items, string empty)
-    {
-        if (busy) return;
-        if (Selection.Files.Count == 0) { Notify(L10n.T(Copy.ChooseFirst)); return; }
-        if (items.Count == 0) { Notify(empty); return; }
-        var wheel = new WheelWindow(title, items);
-        wheel.Wheel.Chosen += OnWheelChosen;
-        wheel.Show(this);
-    }
-
-    private async void OnWheelChosen(WheelItem item)
+    /// The format wheel (Convert chip) or the tools wheel (Tools chip, Ctrl+Space). With nothing selected yet,
+    /// the file picker opens first, then the wheel.
+    private async Task ShowWheelAsync(bool formats)
     {
         try
         {
-            if (item.Id == "convert") ShowFormatWheel();
-            else await RunAsync(item);
+            if (flow.Busy) return;
+            if (Selection.Files.Count == 0)
+            {
+                var picked = await PickFiles();
+                if (picked.Count == 0) return;
+                AddFiles(picked);
+                if (Selection.Files.Count == 0) return;
+            }
+            if (formats) flow.ShowFormats(Selection.Files);
+            else flow.ShowTools(Selection.Files);
         }
         catch (Exception error) { Notify(L10n.F(Copy.Problem, L10n.T(error.Message))); }
     }
 
-    private async Task RunAsync(WheelItem item)
+    protected override void OnClosing(WindowClosingEventArgs e)
     {
-        if (busy) return;
-        busy = true;
-        try
-        {
-            var files = Selection.Files.ToArray();
-            if (files.Length == 0) return;
-            var destination = await DestinationAsync(files[0]);
-            if (destination is null) return;
-            var title = item.Id.StartsWith("convert:", StringComparison.Ordinal) ? L10n.F(Copy.ConvertTo, item.Title) : item.Title;
-            using var cancellation = new CancellationTokenSource();
-            var toast = new ProgressToast(title, cancellation.Cancel);
-            toast.Show(this);
-            try
-            {
-                var outputs = await runner.RunAsync(item.Id, files, destination, new Progress<OperationProgress>(toast.Update), cancellation.Token);
-                toast.Complete(outputs, destination);
-                Notify(outputs.Count == 1 ? L10n.T(Copy.SavedOne) : L10n.F(Copy.SavedMany, outputs.Count));
-            }
-            catch (Exception error)
-            {
-                toast.Close();
-                if (error is MissingToolsException) await ShowToolSetupAsync();
-                else Notify(error is OperationCanceledException ? L10n.T(Copy.Cancelled) : L10n.F(Copy.Failed, L10n.T(error.Message)));
-            }
-        }
-        finally { busy = false; }
-    }
-
-    /// The first file's folder when Nashi may write there; otherwise the user picks one (null when cancelled).
-    private async Task<string?> DestinationAsync(string first)
-    {
-        var folder = Path.GetDirectoryName(first);
-        if (folder is not null && Writable(folder)) return folder;
-        var picked = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { Title = L10n.T(Copy.SaveTo) });
-        return picked.Count > 0 ? picked[0].TryGetLocalPath() : null;
-    }
-
-    private static bool Writable(string folder)
-    {
-        try
-        {
-            using var probe = new FileStream(Path.Combine(folder, ".nashi-" + Guid.NewGuid().ToString("N")), FileMode.CreateNew, FileAccess.Write, FileShare.None, 1, FileOptions.DeleteOnClose);
-            return true;
-        }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException) { return false; }
+        base.OnClosing(e);
+        if (!HideOnClose || e.CloseReason != WindowCloseReason.WindowClosing) return;
+        e.Cancel = true;
+        Hide();
     }
 }
