@@ -19,6 +19,25 @@ final class PDFEngineTests:XCTestCase {
         let second=try ImageEngine.load(outputs[1]);XCTAssertEqual(second.width,1500);XCTAssertEqual(second.height,900)
         XCTAssertEqual(try Data(contentsOf:input),before)
     }
+    func testRasterExportsShowOnlyTheCropBox() throws {
+        // A cropped page hides everything outside its CropBox in viewers; image,
+        // EPUB and slide exports must not reveal that hidden red border.
+        let url=root.appendingPathComponent("Cropped.pdf"),context=CGContext(consumer:CGDataConsumer(url:url as CFURL)!,mediaBox:nil,nil)!
+        var media=CGRect(x:0,y:0,width:400,height:400),crop=CGRect(x:100,y:100,width:200,height:200)
+        context.beginPDFPage([kCGPDFContextMediaBox:Data(bytes:&media,count:MemoryLayout<CGRect>.size),kCGPDFContextCropBox:Data(bytes:&crop,count:MemoryLayout<CGRect>.size)] as CFDictionary)
+        context.setFillColor(CGColor(red:1,green:0,blue:0,alpha:1));context.fill(media);context.setFillColor(CGColor(red:0,green:1,blue:0,alpha:1));context.fill(crop)
+        context.endPDFPage();context.closePDF()
+        func redPixels(_ image:CGImage)->Int {
+            var bytes=[UInt8](repeating:0,count:image.width*image.height*4)
+            CGContext(data:&bytes,width:image.width,height:image.height,bitsPerComponent:8,bytesPerRow:image.width*4,space:CGColorSpaceCreateDeviceRGB(),bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue)!.draw(image,in:CGRect(x:0,y:0,width:image.width,height:image.height))
+            return stride(from:0,to:bytes.count,by:4).filter{bytes[$0]>200&&bytes[$0+1]<60&&bytes[$0+2]<60}.count
+        }
+        var options=OperationOptions();options.dpi=72
+        let rendered=try ImageEngine.load(try PDFEngine.render(url,to:"png",options:options,token:.init())[0])
+        XCTAssertEqual(rendered.width,200);XCTAssertEqual(rendered.height,200);XCTAssertEqual(redPixels(rendered),0)
+        let raster=NSBitmapImageRep(data:try PDFOfficeCodec.rasterPNG(PDFDocument(url:url)!.page(at:0)!,dpi:72,token:.init()))!.cgImage!
+        XCTAssertEqual(raster.width,200);XCTAssertEqual(raster.height,200);XCTAssertEqual(redPixels(raster),0)
+    }
     func testMergeSplitAndOrganizeKeepEditableTextAndOriginals() throws {
         let source=try fixture(),before=try Data(contentsOf:source)
         let merged=try PDFEngine.tool(.mergePDF,inputs:[source,source],options:.init(),token:.init())

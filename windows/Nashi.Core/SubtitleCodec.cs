@@ -30,7 +30,7 @@ public static partial class SubtitleCodec
         var cues=Parse(source);return format switch
         {
             "vtt"=>"WEBVTT\n\n"+string.Join("\n\n",cues.Select(c=>$"{Stamp(c.Start,true)} --> {Stamp(c.End,true)}{(c.Settings.Length>0?" "+c.Settings:"")}\n{c.Text}"))+"\n",
-            "srt"=>string.Join("\n\n",cues.Select((c,i)=>$"{i+1}\n{Stamp(c.Start,false)} --> {Stamp(c.End,false)}\n{VttOnlyTags().Replace(c.Text,"")}"))+"\n",
+            "srt"=>string.Join("\n\n",cues.Select((c,i)=>$"{i+1}\n{Stamp(c.Start,false)} --> {Stamp(c.End,false)}\n{WebUtility.HtmlDecode(VttOnlyTags().Replace(c.Text,""))}"))+"\n",
             "txt"=>string.Join("\n\n",cues.Select(c=>WebUtility.HtmlDecode(Tags().Replace(c.Text,""))))+"\n",_=>throw new ArgumentException("Choose SRT, VTT or TXT.")
         };
     }

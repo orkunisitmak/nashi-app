@@ -44,6 +44,7 @@ public enum ProcessRunner {
             group.wait()
             throw error
         }
+        running.insert(process); defer { running.remove(process) }
         while process.isRunning {
             if token.isCancelled {
                 process.terminate()
@@ -63,6 +64,20 @@ public enum ProcessRunner {
         return ProcessResult(output: captured.output, errorOutput: captured.errors)
     }
     private final class Capture: @unchecked Sendable { var output=Data(); var errors=Data() }
+
+    /// Stops every child still running, for app termination: a cancelled token is
+    /// only observed by the polling thread, which does not outlive the app.
+    public static func terminateAll() {
+        for process in running.snapshot() where process.isRunning { process.terminate() }
+    }
+    private static let running = Running()
+    private final class Running: @unchecked Sendable {
+        private let lock = NSLock()
+        private var processes: [ObjectIdentifier: Process] = [:]
+        func insert(_ process: Process) { lock.lock(); processes[ObjectIdentifier(process)] = process; lock.unlock() }
+        func remove(_ process: Process) { lock.lock(); processes[ObjectIdentifier(process)] = nil; lock.unlock() }
+        func snapshot() -> [Process] { lock.lock(); defer { lock.unlock() }; return Array(processes.values) }
+    }
 }
 
 public enum Dependencies {
@@ -115,7 +130,9 @@ public enum OutputFiles {
         let cleanExt = ext.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "."))
         var candidate = dir.appendingPathComponent(stem).appendingPathExtension(cleanExt)
         var index = 2
-        while FileManager.default.fileExists(atPath: candidate.path) {
+        // lstat-based: a dangling link still occupies its name. fileExists would
+        // report it free, so moves fail and atomic writes replace the link.
+        while (try? FileManager.default.attributesOfItem(atPath: candidate.path)) != nil {
             candidate = dir.appendingPathComponent("\(stem) \(index)").appendingPathExtension(cleanExt); index += 1
         }
         return candidate

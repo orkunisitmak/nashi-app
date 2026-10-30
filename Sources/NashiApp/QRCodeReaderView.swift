@@ -21,9 +21,12 @@ import NashiCore
         let source=inputs,password=password,cancel=token,model=self
         Task {
             do {
-                report=try await Task.detached(priority:.userInitiated) {
+                let scanned=try await Task.detached(priority:.userInitiated) {
                     try QRCodeEngine.scan(source,password:password,token:cancel) { amount,message in Task { @MainActor in model.progress=amount;model.label=message } }
                 }.value
+                // A Cancel or window close can land after the engine's last check.
+                try cancel.check()
+                report=scanned
                 if report.errors.isEmpty { onSuccess(SuccessNotice(title:"Scan complete.",detail:"\(report.results.count) QR code\(report.results.count == 1 ? "":"s") found.")) }
             } catch { self.error=error.localizedDescription }
             busy=false
@@ -31,12 +34,12 @@ import NashiCore
     }
     func copy(_ result:QRCodeMatch) {
         NSPasteboard.general.clearContents()
-        if NSPasteboard.general.setString(result.text,forType:.string) { copied.insert(result.id);onSuccess(SuccessNotice(title:"QR code copied.",detail:"Ready to paste.")) }
+        if NSPasteboard.general.setString(result.text,forType:.string) { copied=[result.id];copiedAll=false;onSuccess(SuccessNotice(title:"QR code copied.",detail:"Ready to paste.")) }
         else { error="Could not copy the QR code." }
     }
     func copyAll() {
         NSPasteboard.general.clearContents()
-        if NSPasteboard.general.setString(report.results.map(\.text).joined(separator:"\n"),forType:.string) { copiedAll=true;onSuccess(SuccessNotice(title:"QR codes copied.",detail:"\(report.results.count) ready to paste.")) }
+        if NSPasteboard.general.setString(report.results.map(\.text).joined(separator:"\n"),forType:.string) { copied=[];copiedAll=true;onSuccess(SuccessNotice(title:"QR codes copied.",detail:"\(report.results.count) ready to paste.")) }
         else { error="Could not copy the QR codes." }
     }
     func saveReport() {

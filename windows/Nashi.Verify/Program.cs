@@ -115,6 +115,7 @@ if(Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG") is {} encoder && En
         Check(Math.Abs((await engine.InspectAsync(source)).Video!.FrameRate-12)<.001,"Frame-by-frame preview lost actual source FPS");
         var trimmed=await engine.ToolAsync("trimVideo",[source],directory,new(){Start=.25,End=1.25},reporter);
         Check(Math.Abs((await engine.InspectAsync(trimmed[0])).Duration-1)<.2,"Trim duration is wrong");
+        Check((await engine.ToolAsync("trimVideo",[source],directory,new(){Start=1.1,End=1.15},reporter)).Count==1,"A 50 ms trim was refused by floating-point rounding");
         Check(progress.Any(p=>p.Fraction>0&&p.Fraction<.98),"No live media progress");
         var audio=await engine.ConvertAsync([source],"mp3",directory,new());Check((await engine.InspectAsync(audio[0])).HasAudio,"Audio conversion failed");
         var deep=await engine.ConvertAsync([source],"wav",directory,new(){SampleDepth="pcm24"});var matched=await engine.ConvertAsync(deep,"aiff",directory,new());Check((await engine.InspectAsync(matched[0])).Streams.First(s=>s.Kind=="audio").Bits==24,"Match source reduced 24-bit audio");
@@ -128,13 +129,20 @@ if(Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG") is {} encoder && En
         var crop=await engine.ToolAsync("cropVideo",[source],directory,new(){Regions=[new(0,0,64,40)]});var cropped=await engine.InspectAsync(crop[0]);Check(cropped.Video?.Width==64&&cropped.Video.Height==40,"Crop dimensions wrong");
         var clips=await engine.ToolAsync("splitVideo",[source],directory,new(){EqualClips=2});Check(clips.Count==2,"Split count wrong");
         foreach(var clip in clips)Check((await engine.InspectAsync(clip)).Duration<1.25,"Split interval wrong");
+        var sourceDuration=(await engine.InspectAsync(source)).Duration;var tail=await engine.ToolAsync("splitVideo",[source],directory,new(){SplitInterval=sourceDuration/2-.01});Check(tail.Count==2,"A sub-0.05 s interval remainder failed the split instead of joining the last clip");
         var joined=await engine.ToolAsync("joinVideos",clips,directory,new());Check((await engine.InspectAsync(joined[0])).Duration>1.8,"Join lost content");
-        var normalized=await engine.ToolAsync("normalizeAudio",audio,directory,new());Check((await engine.InspectAsync(normalized[0])).HasAudio,"Normalization failed");
+        var normalized=await engine.ToolAsync("normalizeAudio",audio,directory,new());var normalizedInfo=await engine.InspectAsync(normalized[0]);Check(normalizedInfo.HasAudio,"Normalization failed");
+        // loudnorm runs at 192 kHz; PCM outputs keep that rate unless the source rate is requested (MP3 cannot exceed 48 kHz, so test WAV).
+        var wav=await engine.ConvertAsync([source],"wav",directory,new());var normalizedWav=await engine.ToolAsync("normalizeAudio",wav,directory,new());
+        var sourceRate=(await engine.InspectAsync(wav[0])).Audio?.SampleRate??0;var normalizedRate=(await engine.InspectAsync(normalizedWav[0])).Audio?.SampleRate??0;Check(sourceRate>0&&normalizedRate==sourceRate,$"Normalization changed the sample rate ({sourceRate} Hz → {normalizedRate} Hz)");
         var snapshots=await engine.ToolAsync("videoSnapshots",[source],directory,new(){SnapshotTimes=[0,1]});Check(snapshots.Count==2&&snapshots.All(File.Exists),"Snapshot output missing");
         var bleeped=await engine.ToolAsync("redactAudio",audio,directory,new(){AudioRedactions=[new(.25,.75)]});Check((await engine.InspectAsync(bleeped[0])).HasAudio,"Bleep export failed");
+        var stereo=Path.Combine(directory,"Stereo.wav");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","sine=duration=1:sample_rate=48000","-ac","2",stereo]);var stereoBleep=await engine.ToolAsync("redactAudio",[stereo],directory,new(){AudioRedactions=[new(.25,.75)]});
+        Check((await ProcessRunner.RunAsync(probe,["-v","error","-select_streams","a:0","-show_entries","stream=channels","-of","csv=p=0",stereoBleep[0]])).Output.Trim()=="2","Audio redaction downmixed a stereo file");
         var redacted=await engine.ToolAsync("redactVideo",[source],directory,new(){Regions=[new(0,0,32,32,.25,.75)],RedactionMode="blur"});Check((await engine.InspectAsync(redacted[0])).Video is not null,"Video redaction failed");
         var channels=await engine.ToolAsync("audioChannels",audio,directory,new(){Channels=1});Check((await engine.InspectAsync(channels[0])).HasAudio,"Channel export failed");
         var visualized=await engine.ToolAsync("audioToVideo",audio,directory,new(){Width=128,Height=72});Check((await engine.InspectAsync(visualized[0])).Video?.Width==128,"Audio visualization failed");
+        var cover=Path.Combine(directory,"Cover.png");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","color=c=red:s=64x64","-frames:v","1",cover]);var still=await engine.ToolAsync("audioToVideo",audio,directory,new(){Width=128,Height=72,Visualization="image",VisualizationImage=cover});Check((await engine.InspectAsync(still[0])).Video?.Width==128,"Still-image visualization failed");
         var compressed=await engine.ToolAsync("compress",[source],directory,new(){TargetBytes=100000});Check(new FileInfo(compressed[0]).Length<=100000,"Compression ignored target");
         var metadata=await engine.ToolAsync("removeMetadata",[source],directory,new());Check((await engine.InspectAsync(metadata[0])).Video is not null,"Metadata export failed");
         foreach(var ext in MediaEngine.AudioFormats)

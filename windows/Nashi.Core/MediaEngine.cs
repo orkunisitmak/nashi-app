@@ -3,10 +3,11 @@ using System.Text.Json;
 
 namespace Nashi.Core;
 
-public sealed record MediaStream(int Index, string Kind, string Codec, int? Width, int? Height, bool AttachedPicture,int Bits=0,string SampleFormat="",double FrameRate=30);
+public sealed record MediaStream(int Index, string Kind, string Codec, int? Width, int? Height, bool AttachedPicture,int Bits=0,string SampleFormat="",double FrameRate=30,int SampleRate=0);
 public sealed record MediaInfo(double Duration, long Bytes, IReadOnlyList<MediaStream> Streams)
 {
     public MediaStream? Video => Streams.FirstOrDefault(s => s.Kind == "video" && !s.AttachedPicture);
+    public MediaStream? Audio => Streams.FirstOrDefault(s => s.Kind == "audio");
     public bool HasAudio => Streams.Any(s => s.Kind == "audio");
 }
 public sealed record MediaRegion(double X, double Y, double Width, double Height, double Start = 0, double? End = null);
@@ -73,7 +74,7 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
             // FFmpeg auto-rotates decoded frames before crop/scale filters. The
             // editor and validation use those same displayed dimensions.
             if(double.IsFinite(rotation)&&Math.Abs(Math.Abs(rotation)%180-90)<.001)(width,height)=(height,width);
-            streams.Add(new(stream.GetProperty("index").GetInt32(), GetString(stream,"codec_type"), GetString(stream,"codec_name"), width, height, attached,GetInt(stream,"bits_per_raw_sample")??GetInt(stream,"bits_per_sample")??0,GetString(stream,"sample_fmt"),ParseFrameRate(GetString(stream,"avg_frame_rate"))));
+            streams.Add(new(stream.GetProperty("index").GetInt32(), GetString(stream,"codec_type"), GetString(stream,"codec_name"), width, height, attached,GetInt(stream,"bits_per_raw_sample")??GetInt(stream,"bits_per_sample")??0,GetString(stream,"sample_fmt"),ParseFrameRate(GetString(stream,"avg_frame_rate")),int.TryParse(GetString(stream,"sample_rate"),NumberStyles.Integer,CultureInfo.InvariantCulture,out var sampleRate)&&sampleRate>0?sampleRate:0));
         }
         var duration = root.TryGetProperty("format", out var format) && double.TryParse(GetString(format,"duration"), CultureInfo.InvariantCulture, out var seconds) && double.IsFinite(seconds) ? Math.Max(0,seconds) : 0;
         return new(duration, new FileInfo(input).Length, streams);
@@ -196,7 +197,9 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
                 if(options.Visualization=="image")
                 {
                     if(options.VisualizationImage is null||!File.Exists(options.VisualizationImage))throw new ArgumentException("Choose an image.");
-                    args=["-loop","1","-framerate","30","-i",options.VisualizationImage,"-i",input,"-map","0:v:0","-map","1:a:0","-vf",$"scale={w}:{h}:force_original_aspect_ratio=decrease,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2,setsar=1"];
+                    // Input options apply only to the next -i, so each input needs its own whitelist.
+                    string[] localOnly=["-protocol_whitelist","file,pipe,crypto,data"];
+                    args=[..localOnly,"-loop","1","-framerate","30","-i",options.VisualizationImage,..localOnly,"-i",input,"-map","0:v:0","-map","1:a:0","-vf",$"scale={w}:{h}:force_original_aspect_ratio=decrease,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2,setsar=1"];
                 }
                 else
                 {
@@ -208,9 +211,10 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
                 RequireAudio(info);if(options.AudioRedactions.Length==0)throw new ArgumentException("Add a bleep or silence range.");
                 var ranges=options.AudioRedactions.Select(r=>TimeRange(r.Start,r.End,info.Duration)).ToList();
                 var expression=string.Join('+',ranges.Select(r=>$"between(t,{Number(r.Start)},{Number(r.End)})"));
-                // aeval's channel-independent expression is expanded to the input layout.
+                // One channel-independent expression; c=same keeps the input layout,
+                // otherwise aeval derives a mono layout from the single expression.
                 var replacement=options.RedactionMode=="mute"?"0":"0.18*sin(2*PI*1000*t)";
-                args.AddRange(["-map","0:a:0","-af",$"aeval=exprs='if({expression},{replacement},val(ch))'",..AudioEncoding(ext,options)]);break;
+                args.AddRange(["-map","0:a:0","-af",$"aeval=exprs='if({expression},{replacement},val(ch))':c=same",..AudioEncoding(ext,options)]);break;
             case "redactVideo":
                 RequireVideo(info);if(options.Regions.Length==0)throw new ArgumentException("Draw a region to redact.");
                 var graph=new List<string>();var previous="0:v:0";
@@ -245,7 +249,15 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
             if(numbers.All(x=>double.IsFinite(x.Item2)))filter+=string.Concat(numbers.Select(x=>":"+x.Item1+"="+Number(x.Item2)))+":linear=true";
         }
         var output=Output(directory,input,ext," Normalized");
-        await RenderAsync(["-i",input,"-map","0:a:0","-af",filter,..AudioEncoding(ext,options)],output,info.Duration,p=>progress(p with{Fraction=.45+p.Fraction*.55}),token);return output;
+        await RenderAsync(["-i",input,"-map","0:a:0","-af",filter,..NormalizedRate(ext,info),..AudioEncoding(ext,options)],output,info.Duration,p=>progress(p with{Fraction=.45+p.Fraction*.55}),token);return output;
+    }
+    // loudnorm resamples to 192 kHz internally. Lossless and Vorbis outputs keep the source rate (as on macOS);
+    // MP3/AAC/WMA encoders top out at 48 kHz, and Opus is always 48 kHz, so FFmpeg picks the rate for Opus.
+    private static string[] NormalizedRate(string ext,MediaInfo info)
+    {
+        var source=info.Audio is {SampleRate:>0} audio?audio.SampleRate:48000;
+        int? rate=ext switch{"wav" or "aiff" or "flac"=>source,"ogg"=>Math.Min(source,192000),"mp3" or "m4a" or "aac" or "wma"=>Math.Min(source,48000),_=>null};
+        return rate is {} value?["-ar",value.ToString(CultureInfo.InvariantCulture)]:[];
     }
 
     private async Task<string> CompressAsync(string input,MediaInfo info,string directory,MediaOptions options,Action<OperationProgress> progress,CancellationToken token)
@@ -285,6 +297,8 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
             var count=options.EqualClips??(int)Math.Ceiling(info.Duration/options.SplitInterval);
             if(count<1||count>10000)throw new ArgumentException("Choose at most 10,000 clips.");
             points=Enumerable.Range(1,count-1).Select(n=>options.EqualClips is null?options.SplitInterval*n:info.Duration*n/count).ToList();
+            // A sub-0.05 s remainder after the last interval joins the final clip instead of failing the split.
+            if(options.EqualClips is null)points.RemoveAll(p=>info.Duration-p<.05);
         }
         if(points.Any(p=>!double.IsFinite(p)||p<=0||p>=info.Duration))throw new ArgumentException("A split point lies outside the video.");
         var bounds=new[]{0d}.Concat(points.Distinct().Order()).Append(info.Duration).ToArray();
@@ -359,7 +373,7 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
     };
     private static string Scale(MediaOptions o)=>$"scale={o.Width?.ToString(CultureInfo.InvariantCulture)??"-2"}:{o.Height?.ToString(CultureInfo.InvariantCulture)??"-2"}:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2";
     private static string Tempo(double speed){var parts=new List<string>();while(speed>2){parts.Add("atempo=2");speed/=2;}while(speed<.5){parts.Add("atempo=0.5");speed*=2;}parts.Add("atempo="+Number(speed));return string.Join(',',parts);}
-    private static MediaRange TimeRange(double start,double? end,double duration){var stop=end??duration;if(!double.IsFinite(start)||!double.IsFinite(stop)||start<0||stop-start<.05||duration>0&&stop>duration+.001)throw new ArgumentException("Choose a valid time range.");return new(start,stop);}
+    private static MediaRange TimeRange(double start,double? end,double duration){var stop=end??duration;if(!double.IsFinite(start)||!double.IsFinite(stop)||start<0||Math.Round(stop-start,6)<.05||duration>0&&stop>duration+.001)throw new ArgumentException("Choose a valid time range.");return new(start,stop);}
     private static (int X,int Y,int Width,int Height) PixelRect(MediaRegion r,MediaInfo info){var w=info.Video?.Width??0;var h=info.Video?.Height??0;if(!new[]{r.X,r.Y,r.Width,r.Height}.All(double.IsFinite)||r.X<0||r.Y<0||r.Width<2||r.Height<2||r.X+r.Width>w||r.Y+r.Height>h)throw new ArgumentException("Choose a rectangle inside the video.");return((int)r.X,(int)r.Y,(int)r.Width,(int)r.Height);}
     private static void RequireVideo(MediaInfo info){if(info.Video is null)throw new ArgumentException("This file has no video stream.");}
     private static void RequireAudio(MediaInfo info){if(!info.HasAudio)throw new ArgumentException("This file has no audio stream.");}

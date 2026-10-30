@@ -34,6 +34,7 @@ public enum FeatureCatalog {
         "rtf": ["docx", "pages", "pdf", "txt", "md", "html", "epub", "png", "jpg"],
         "rtfd": ["docx", "pages", "pdf", "txt", "md", "html", "epub", "png", "jpg"],
         "textclipping": ["docx", "pages", "pdf", "txt", "md", "html", "epub", "png", "jpg"],
+        "html": ["pdf"],
         "epub": ["pdf", "docx", "pages", "txt", "md", "html"],
         "txt": ["docx", "pages", "pdf", "md", "html", "epub", "jpg", "png"],
         "xlsx": ["ods", "csv", "tsv", "pdf"],
@@ -139,6 +140,7 @@ public enum FeatureCatalog {
         "rtf": [],
         "rtfd": [],
         "textclipping": [],
+        "html": [],
         "epub": [],
         "txt": [],
         "xlsx": [],
@@ -186,6 +188,7 @@ public enum FeatureCatalog {
         "rtf": [],
         "rtfd": [],
         "textclipping": [],
+        "html": [],
         "epub": [],
         "txt": [],
         "xlsx": [],
@@ -202,7 +205,7 @@ public enum FeatureCatalog {
     ]
     public static func normalizedExtension(_ url: URL) -> String {
         let ext = url.pathExtension.lowercased()
-        return ["jpeg":"jpg", "tif":"tiff", "heif":"heic", "aif":"aiff", "markdown":"md", "gzip":"gz", "tgz":"gz"].filter { _ in true }[ext] ?? ext
+        return ["jpeg":"jpg", "tif":"tiff", "heif":"heic", "aif":"aiff", "markdown":"md", "htm":"html", "gzip":"gz", "tgz":"gz"].filter { _ in true }[ext] ?? ext
     }
     public static func formats(for inputs: [URL]) -> [String] {
         guard let first=inputs.first else { return [] }

@@ -14,7 +14,9 @@ enum XMPPacketEditor {
     }
     private static func document(_ data:Data) throws -> XMLDocument {
         let base=Data("<x:xmpmeta xmlns:x='adobe:ns:meta/'><rdf:RDF xmlns:rdf='\(rdf)'><rdf:Description rdf:about=''/></rdf:RDF></x:xmpmeta>".utf8)
-        let text=String(decoding:data,as:UTF8.self)
+        // The XML parser also accepts UTF-16/32 packets; dropping NUL bytes exposes
+        // their ASCII declarations to the same check as UTF-8 text.
+        let text=String(decoding:data.filter { $0 != 0 },as:UTF8.self)
         guard text.range(of:"<!DOCTYPE",options:.caseInsensitive)==nil,text.range(of:"<!ENTITY",options:.caseInsensitive)==nil else { throw NashiError.invalidInput("XMP declarations with external entities or DTDs are not supported.") }
         return try XMLDocument(data:data.isEmpty ? base:data,options:[.nodePreserveAll,.nodeLoadExternalEntitiesNever])
     }

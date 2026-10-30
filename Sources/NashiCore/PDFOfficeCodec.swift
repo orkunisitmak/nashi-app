@@ -10,7 +10,7 @@ enum PDFOfficeCodec {
     struct TextCell { var text: String; var rect: CGRect }
 
     static func visualBounds(_ page: PDFPage) -> CGRect {
-        let box = page.bounds(for: .mediaBox)
+        let box = page.bounds(for: .cropBox)
         let rotated = abs(page.rotation) % 180 == 90
         return CGRect(origin: .zero, size: rotated ? CGSize(width: box.height, height: box.width) : box.size)
     }
@@ -27,7 +27,7 @@ enum PDFOfficeCodec {
         context.setFillColor(CGColor(gray: 1, alpha: 1)); context.fill(CGRect(x: 0, y: 0, width: width, height: height))
         context.scaleBy(x: scale, y: scale)
         if crop != nil { context.translateBy(x: -bounds.minX, y: -bounds.minY) }
-        else { context.concatenate(cgPage.getDrawingTransform(.mediaBox, rect: bounds, rotate: 0, preserveAspectRatio: true)) }
+        else { context.concatenate(cgPage.getDrawingTransform(.cropBox, rect: bounds, rotate: 0, preserveAspectRatio: true)) }
         context.drawPDFPage(cgPage)
         try token.check()
         guard let image = context.makeImage(), let data = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) else { throw NashiError.failed("The PDF page image could not be written.") }
@@ -66,9 +66,9 @@ enum PDFOfficeCodec {
 
     static func recognizedCells(_ page: PDFPage, token: CancellationToken) throws -> [TextCell] {
         try token.check()
-        let bounds = page.bounds(for: .mediaBox)
+        let bounds = page.bounds(for: .cropBox)
         let size = NSSize(width: max(1, bounds.width * 2), height: max(1, bounds.height * 2))
-        let image = page.thumbnail(of: size, for: .mediaBox)
+        let image = page.thumbnail(of: size, for: .cropBox)
         var rect = CGRect(origin: .zero, size: size)
         guard let cgImage = image.cgImage(forProposedRect: &rect, context: nil, hints: nil) else { return [] }
         let request = VNRecognizeTextRequest()
@@ -103,7 +103,7 @@ enum PDFOfficeCodec {
                 throw NashiError.invalidInput("PDF page \(index + 1) has an invalid size.")
             }
             let size = NSSize(width: max(1, bounds.width * 2), height: max(1, bounds.height * 2))
-            let image = page.thumbnail(of: size, for: .mediaBox)
+            let image = page.thumbnail(of: size, for: .cropBox)
             var rect = CGRect(origin: .zero, size: size)
             guard let cg = image.cgImage(forProposedRect: &rect, context: nil, hints: nil), let png = NSBitmapImageRep(cgImage: cg).representation(using: .png, properties: [:]) else {
                 throw NashiError.failed("PDF page \(index + 1) could not be rendered.")

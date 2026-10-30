@@ -141,7 +141,7 @@ enum PDFDocumentReconstruction {
         for index in 0..<pdf.pageCount {
             try token.check()
             guard let page = pdf.page(at: index) else { continue }
-            let box = page.bounds(for: .mediaBox)
+            let box = page.bounds(for: .cropBox)
             // A fixed half-inch margin consumes most of a small PDF page.
             // Cap the ordinary margin while reserving at least 90% of a small
             // page's narrow dimension for editable content.
@@ -305,7 +305,7 @@ enum PDFPlacedImages {
         let scanner = Scanner(content: content, resources: resources, transform: .identity, token: token, depth: 0)
         scanner.scan()
         try token.check()
-        let pageBounds = page.bounds(for: .mediaBox)
+        let pageBounds = page.bounds(for: .cropBox)
         var result: [CGRect] = []
         for rect in scanner.images {
             let clipped = rect.intersection(pageBounds)

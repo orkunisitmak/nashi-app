@@ -58,7 +58,12 @@ struct JobRecord:Codable,Identifiable {
     private let historyDefaults:UserDefaults
     init(defaults:UserDefaults = .standard) {
         historyDefaults=defaults;super.init()
-        if let data=historyDefaults.data(forKey:"history"),let items=try? JSONDecoder().decode([JobRecord].self,from:data) { history=items }
+        // Decode records one by one so a single unreadable entry cannot erase the whole Library.
+        if let data=historyDefaults.data(forKey:"history"),let items=try? JSONDecoder().decode([StoredJobRecord].self,from:data) { history=items.compactMap(\.record) }
+    }
+    private struct StoredJobRecord:Decodable {
+        let record:JobRecord?
+        init(from decoder:Decoder) throws { record=try? JobRecord(from:decoder) }
     }
     func retainToolWindow(_ window:NSWindow) {
         toolWindows.append(window);let id=ObjectIdentifier(window)
@@ -140,11 +145,19 @@ struct JobRecord:Codable,Identifiable {
                 var moved:[URL:URL]=[:]
                 do { for source in urls {
                     var target=directory.appendingPathComponent(source.lastPathComponent)
-                    if target.standardizedFileURL == source.standardizedFileURL { continue }
-                    if FileManager.default.fileExists(atPath:target.path) { target=OutputFiles.unique(for:source,extension:source.pathExtension,directory:directory) }
+                    if target.standardizedFileURL == source.standardizedFileURL || sameFolder(source.deletingLastPathComponent(),directory) { continue }
+                    // Same names as OutputFiles.unique, but attributesOfItem does not follow links, so a dangling link also takes a name.
+                    var index=2
+                    while (try? FileManager.default.attributesOfItem(atPath:target.path)) != nil { target=directory.appendingPathComponent("\(source.deletingPathExtension().lastPathComponent) \(index)").appendingPathExtension(source.pathExtension.lowercased());index+=1 }
                     try FileManager.default.moveItem(at:source,to:target);moved[source]=target
                 };reportSuccess(.action("Files moved.",files:urls.map{moved[$0] ?? $0})) } catch { self.error=error.localizedDescription }
                 inputs=inputs.map{moved[$0] ?? $0}
+                // Keep Library records pointing at files Nashi itself moved.
+                let movedPaths=Dictionary(moved.map{($0.key.path,$0.value.path)},uniquingKeysWith:{first,_ in first})
+                if !movedPaths.isEmpty {
+                    history=history.map{var record=$0;record.outputs=record.outputs.map{movedPaths[$0] ?? $0};return record}
+                    if let data=try? JSONEncoder().encode(history) { historyDefaults.set(data,forKey:"history") }
+                }
             }
         case .terminal:
             let directory=((try? urls[0].resourceValues(forKeys:[.isDirectoryKey]).isDirectory) ?? false) ? urls[0] : urls[0].deletingLastPathComponent()
@@ -178,12 +191,15 @@ struct JobRecord:Codable,Identifiable {
     }
 }
 
+// Compares folder identity, so a symlinked path or a missing trailing slash still matches.
+private func sameFolder(_ a:URL,_ b:URL)->Bool {
+    guard let x=try? a.resolvingSymlinksInPath().resourceValues(forKeys:[.fileResourceIdentifierKey]).fileResourceIdentifier,
+          let y=try? b.resolvingSymlinksInPath().resourceValues(forKeys:[.fileResourceIdentifierKey]).fileResourceIdentifier else { return false }
+    return x.isEqual(y)
+}
+
 private func withGrantedFolderAccess<T>(_ urls:[URL],_ action:() throws -> T) throws -> T {
-    func acquire(_ index:Int) throws -> T {
-        guard index<urls.count else { return try action() }
-        return try FolderAccessPreferences.withAccess(to:urls[index]) { try acquire(index+1) }
-    }
-    return try acquire(0)
+    try FolderAccessPreferences.withAccess(to:urls,action)
 }
 
 extension AppState:NSSharingServiceDelegate {

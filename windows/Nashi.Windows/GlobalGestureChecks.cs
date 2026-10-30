@@ -54,11 +54,19 @@ internal static class GlobalGestureChecks
                 }
                 finally{DesktopInput.HoldMouse(false);DesktopInput.Hold(modifier,false);}
             });
-            var until=DateTime.UtcNow.AddSeconds(12);while(!driver.IsCompleted&&DateTime.UtcNow<until)DesktopInput.Pump(30);if(!driver.IsCompleted)throw new TimeoutException("Global Explorer drag timed out.");driver.GetAwaiter().GetResult();DesktopInput.Pump(350);check(selected==expected,"Real Explorer OLE drag: "+expected+"; observed="+selected+"; "+state);check(received?.SingleOrDefault()==file,"Explorer drop preserved the selected file path");
+            var until=DateTime.UtcNow.AddSeconds(12);while(!driver.IsCompleted&&DateTime.UtcNow<until)DesktopInput.Pump(30);if(!driver.IsCompleted)throw new TimeoutException("Global Explorer drag timed out.");driver.GetAwaiter().GetResult();DesktopInput.Pump(350);check(selected==expected,"Real Explorer OLE drag: "+expected+"; observed="+selected+"; "+state);check(received?.SingleOrDefault()==file,"Explorer drop preserved the selected file path");check(state?.Contains("revealed=True")==true,"Real Explorer OLE drag revealed the "+mode+" wheel; "+state);
         }
         try
         {
             Drag(Key.LeftCtrl,"tools","compress");Drag(Key.LeftAlt,"actions","share");Drag(Key.LeftShift,"convert","convert:"+FeatureCatalog.Formats([file])[0]);
+            // A mouse drag that carries no files (e.g. Shift+drag text selection) must not show a wheel.
+            phase="plain Shift-drag";var plain=new Window{Width=320,Height=200,Left=bounds.Left,Top=bounds.Top,WindowStartupLocation=WindowStartupLocation.Manual,Content=new System.Windows.Controls.Border{Background=System.Windows.Media.Brushes.DarkSlateGray}};plain.Show();plain.Activate();DesktopInput.Pump(200);
+            try
+            {
+                var q=plain.PointToScreen(new Point(60,70));DesktopInput.MovePointer(q);DesktopInput.HoldMouse(true);DesktopInput.Pump(80);DesktopInput.MovePointer(new(q.X+60,q.Y+10));DesktopInput.Hold(Key.LeftShift,true);DesktopInput.Pump(260);
+                check(controller.ActiveWheel is not {Revealed:true},"A plain Shift-drag without files showed the global wheel");
+            }
+            finally{DesktopInput.HoldMouse(false);DesktopInput.Hold(Key.LeftShift,false);DesktopInput.Pump(250);plain.Close();}
             if(controller.LinkShortcutRegistered){DesktopInput.Key(owner,Key.D,control:true,shift:true);check(selected=="link-shortcut","Global copied-link shortcut Ctrl+Shift+D");}
             var main=owner as MainWindow;var beforeLaunch=main?.SelectedFiles.ToArray();var modal=new Window{Owner=owner,Width=300,Height=200,WindowStartupLocation=WindowStartupLocation.CenterOwner,Content=new System.Windows.Controls.Border{Background=System.Windows.Media.Brushes.DarkOliveGreen}};Exception? modalError=null;
             modal.Dispatcher.BeginInvoke(()=>

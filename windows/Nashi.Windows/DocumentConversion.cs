@@ -19,12 +19,12 @@ public sealed class DocumentConversion(OfficeRuntime runtime,Toolchain tools)
             progress?.Report(new(null,"Preparing "+Path.GetFileName(input)+"…"));
             if(FeatureCatalog.IsArchive(input)){outputs.AddRange(ArchiveEngine.Convert(input,format,tx.StagingDirectory,options.Password,progress,token));continue;}
             if(ext is "srt" or "vtt")
-            {var path=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+"."+format);await File.WriteAllTextAsync(path,SubtitleCodec.Convert(await File.ReadAllTextAsync(input,token),format),new UTF8Encoding(false),token);outputs.Add(path);continue;}
+            {var path=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+"."+format);await File.WriteAllTextAsync(path,SubtitleCodec.Convert(LegacyTextCodec.Decode(await File.ReadAllBytesAsync(input,token)),format),new UTF8Encoding(false),token);outputs.Add(path);continue;}
             var engine=runtime.Executable is {} office?new OfficeDocuments(office,tools.Ready?tools.Executable("deno"):"",AppContext.BaseDirectory):null;
             if(ext=="pages"){if(engine is null||!tools.Ready)throw new InvalidOperationException("Set up office and media tools once to enable native Pages interoperability.");source=await engine.PagesReadAsync(input,work,token);}
             if(ext=="rtfd"){source=await RichTextAttachments.Materialize(input,work,token);}
             if(ext=="textclipping")source=await MaterializeClipping(input,work,token);
-            if(ext is "txt" or "md"){var normalized=Path.Combine(work,Path.GetFileName(input));await File.WriteAllTextAsync(normalized,LegacyTextCodec.Decode(await File.ReadAllBytesAsync(input,token)),new UTF8Encoding(false),token);source=normalized;}
+            if(ext is "txt" or "md" or "csv" or "tsv"){var normalized=Path.Combine(work,Path.GetFileName(input));await LegacyTextCodec.ToUtf8Async(input,normalized,token);source=normalized;}
             if(ext=="epub")source=EpubToHtml(input,work,token);
             if(ext=="pdf"&&format is "txt" or "md")
             {var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+"."+format);await File.WriteAllTextAsync(output,await PdfDocumentMedia.Text(input,options.Password,token),new UTF8Encoding(false),token);outputs.Add(output);continue;}
@@ -33,7 +33,7 @@ public sealed class DocumentConversion(OfficeRuntime runtime,Toolchain tools)
             {var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+".epub");EpubFixed(await NativePdf.RenderAsync(input,options.Dpi,token,options.Password),output,Path.GetFileNameWithoutExtension(input));outputs.Add(output);continue;}
             if(ext=="pdf"&&format is not ("png" or "jpg" or "pptx"))
             {
-                source=Path.Combine(work,format=="xlsx"?"Tables.html":"PDF document.html");var html=options.Layout=="preserve"?await PdfPreservedHtml(input,work,options.Dpi,token,options.Password):format=="xlsx"?PdfTables(input,options.Password):OfficeDocuments.PdfHtml(input,options.Password);await File.WriteAllTextAsync(source,html,token);
+                source=Path.Combine(work,format=="xlsx"?"Tables.html":"PDF document.html");var html=options.Layout=="preserve"?await PdfPreservedHtml(input,work,options.Dpi,token,options.Password):format=="xlsx"?PdfTables(input,options.Password):await EditablePdfHtml(input,options,token);await File.WriteAllTextAsync(source,html,token);
             }
             if(format is "png" or "jpg")
             {
@@ -52,6 +52,20 @@ public sealed class DocumentConversion(OfficeRuntime runtime,Toolchain tools)
         return tx.Publish(outputs,token);
     }
     private static OfficeDocuments Require(OfficeDocuments? engine)=>engine??throw new InvalidOperationException("Choose Set up office tools once to enable document, slide and spreadsheet conversions.");
+    // Scanned pages and images PdfPig cannot decode come from a PDFium render of just those pages:
+    // the whole page when nothing else was found, otherwise only the image's area.
+    private static async Task<string> EditablePdfHtml(string input,DocumentOptions options,CancellationToken token)
+    {
+        var html=OfficeDocuments.PdfHtml(input,options.Password,null,out var needed);if(needed.Length==0)return html;
+        var pages=await NativePdf.RenderPagesAsync(input,needed,options.Dpi,token,options.Password);
+        return OfficeDocuments.PdfHtml(input,options.Password,(n,area)=>pages.TryGetValue(n,out var png)?area is {} a?CropRendered(png,a,options.Dpi):png:null,out _);
+    }
+    private static byte[]? CropRendered(byte[] png,OfficeDocuments.PdfArea area,int dpi)
+    {
+        var page=ImageEngine.FromPng(png);var scale=dpi/72d;var x=Math.Clamp((int)Math.Floor(area.Left*scale),0,page.PixelWidth);var y=Math.Clamp((int)Math.Floor(area.Top*scale),0,page.PixelHeight);
+        var width=Math.Min(page.PixelWidth-x,(int)Math.Ceiling(area.Width*scale));var height=Math.Min(page.PixelHeight-y,(int)Math.Ceiling(area.Height*scale));
+        return width<1||height<1?null:ImageEngine.PngBytes(new CroppedBitmap(page,new System.Windows.Int32Rect(x,y,width,height)));
+    }
     private static async Task<string> PdfPreservedHtml(string input,string work,int dpi,CancellationToken token,string password="")
     {
         var pages=await NativePdf.RenderAsync(input,dpi,token,password);return "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body style=\"margin:0\">"+string.Join("",pages.Select(p=>"<p style=\"page-break-after:always;margin:0\"><img style=\"width:100%;height:auto\" src=\"data:image/png;base64,"+Convert.ToBase64String(p)+"\"/></p>"))+"</body></html>";
@@ -76,7 +90,14 @@ public sealed class DocumentConversion(OfficeRuntime runtime,Toolchain tools)
         }
         var output=Path.Combine(work,"Book.html");File.WriteAllText(output,OfficeDocuments.SanitizedHtml(html.Append("</body></html>").ToString()));return output;
     }
-    private static XDocument ReadXml(string path){using var reader=System.Xml.XmlReader.Create(path,new(){DtdProcessing=System.Xml.DtdProcessing.Ignore,XmlResolver=null,MaxCharactersInDocument=20_000_000});return XDocument.Load(reader);}
+    // EPUB 2 chapters use XHTML named entities (&nbsp; &mdash;) that only the DTD declares,
+    // and the DTD stays unread. Turn them into character references before parsing.
+    private static XDocument ReadXml(string path)
+    {
+        var settings=new System.Xml.XmlReaderSettings{DtdProcessing=System.Xml.DtdProcessing.Ignore,XmlResolver=null,MaxCharactersInDocument=20_000_000};
+        if(new FileInfo(path).Length>80_000_000){using var large=System.Xml.XmlReader.Create(path,settings);return XDocument.Load(large);}
+        using var reader=System.Xml.XmlReader.Create(new StringReader(OfficeDocuments.NumericEntities(OfficeDocuments.XmlText(File.ReadAllBytes(path)))),settings);return XDocument.Load(reader);
+    }
     private static async Task<string> MaterializeClipping(string input,string work,CancellationToken token)
     {
         var bytes=await File.ReadAllBytesAsync(input,token);byte[]? resource=null;var sidecar=Path.Combine(Path.GetDirectoryName(input)!,"._"+Path.GetFileName(input));if(File.Exists(sidecar)&&new FileInfo(sidecar).Length<200_000_000)resource=LegacyTextCodec.AppleDoubleResource(await File.ReadAllBytesAsync(sidecar,token));

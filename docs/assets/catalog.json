@@ -90,6 +90,9 @@
       "bmp",
       "pdf"
     ],
+    "html" : [
+      "pdf"
+    ],
     "jpg" : [
       "png",
       "webp",

@@ -65,7 +65,7 @@ struct ImageEditPreview:View {
                     updateDrag(value,origin:origin,ratio:ratio)
                     if case .new=target,let rect=dragRect {
                         if annotationStyle != nil,let onStroke { onStroke(rect,stroke) }
-                        else if cropEnabled ? (rect.width>=1 && rect.height>=1):(rect.width>1 || rect.height>1) { onRect(rect) }
+                        else if cropEnabled ? (rect.width>=1 && rect.height>=1):(rect.width>0 && rect.height>0 && (rect.width>1 || rect.height>1)) { onRect(rect) }
                     }
                     target=nil;startingRect=nil;stroke=[];dragRect=nil
                     if cropEnabled { onCropInteraction?(false) }
@@ -111,7 +111,7 @@ struct ImageEditPreview:View {
             }
         case .redaction(let i,let resize): if let r=startingRect { onMoveRedaction?(i,changed(r,start:start,current:point,resize:resize)) }
         case .annotation(let i,let resize):
-            if let r=startingRect { let updated=changed(r,start:start,current:point,resize:resize);let points=startingPoints.map{p in ImagePoint(x:updated.x+(p.x-r.x)*(updated.width/max(1,r.width)),y:updated.y+(p.y-r.y)*(updated.height/max(1,r.height)))};onMoveAnnotation?(i,updated,points) }
+            if let r=startingRect { let updated=changed(r,start:start,current:point,resize:resize);let points=startingPoints.map{p in ImagePoint(x:updated.x+(r.width>0 ? (p.x-r.x)/r.width*updated.width:0),y:updated.y+(r.height>0 ? (p.y-r.y)/r.height*updated.height:0))};onMoveAnnotation?(i,updated,points) }
         case .ignored,nil:break
         }
     }

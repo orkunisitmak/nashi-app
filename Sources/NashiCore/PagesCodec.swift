@@ -298,7 +298,7 @@ private enum PagesDOCXReader {
     }
     static func xml(_ url: URL) throws -> XMLDocument {
         let bytes = try Data(contentsOf:url)
-        guard bytes.count <= 50_000_000, !String(decoding:bytes,as:UTF8.self).contains("<!ENTITY") else {throw NashiError.invalidInput("The document XML is not supported.")}
+        guard bytes.count <= 50_000_000, !String(decoding:bytes,as:UTF8.self).contains("<!ENTITY"), !DocumentText.declaresXMLEntities(bytes) else {throw NashiError.invalidInput("The document XML is not supported.")}
         return try XMLDocument(data:bytes,options:[.nodePreserveWhitespace,.nodeLoadExternalEntitiesNever])
     }
     static func relationMap(_ url: URL) throws -> [String:String] {

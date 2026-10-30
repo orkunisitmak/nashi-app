@@ -112,9 +112,9 @@ struct HomeView:View {
             HStack(spacing:22) {
                 VStack(alignment:.leading,spacing:12) {
                     NashiPill(title:targeted ? "A perfect landing spot":state.inputs.isEmpty ? "START HERE":"READY WHEN YOU ARE",symbol:targeted ? "arrow.down":"sparkle",color:.nashi)
-                    Text(targeted ? "Drop it like it’s… a file.":state.inputs.isEmpty ? "Drop something good.":state.inputs.count==1 ? state.inputs[0].lastPathComponent:"\(state.inputs.count) files, ready to go.")
+                    selectionTitle
                         .font(.system(size:23,weight:.bold,design:.rounded)).tracking(-0.5).lineLimit(2).textSelection(.enabled)
-                    Text(state.inputs.isEmpty ? "Images, videos, documents, and all the little things in between.":selectionDescription)
+                    selectionDescription
                         .font(.system(size:12)).foregroundStyle(.secondary).lineLimit(2)
                     HStack(spacing:9) {
                         Button { state.onChooseFiles?() } label:{Label(state.inputs.isEmpty ? "Choose files":"Add or change files",systemImage:"plus")}
@@ -154,9 +154,17 @@ struct HomeView:View {
             .scaleEffect(targeted && NashiMotion.enabled ? 1.008:1).nashiAnimation(value:targeted)
             .onDrop(of:WebLinkPayload.providerTypes,isTargeted:$targeted,perform:receiveDrop)
     }
-    private var selectionDescription:String {
-        if state.inputs.count==1 { return state.inputs[0].deletingLastPathComponent().abbreviatingWithTildeInPath }
-        return "Keep them together, or give each one a fresh start."
+    /// Copy goes through the catalog; file names and folders stay verbatim.
+    @ViewBuilder private var selectionTitle:some View {
+        if targeted { LText("Drop it like it’s… a file.") }
+        else if state.inputs.isEmpty { LText("Drop something good.") }
+        else if state.inputs.count==1 { Text(verbatim:state.inputs[0].lastPathComponent) }
+        else { LText("\(state.inputs.count) files, ready to go.") }
+    }
+    @ViewBuilder private var selectionDescription:some View {
+        if state.inputs.isEmpty { LText("Images, videos, documents, and all the little things in between.") }
+        else if state.inputs.count==1 { Text(verbatim:state.inputs[0].deletingLastPathComponent().abbreviatingWithTildeInPath) }
+        else { LText("Keep them together, or give each one a fresh start.") }
     }
     private func shortcut(_ key:String,_ title:String)->some View {
         HStack(spacing:5) { Text(ModifierChord.legacy(key)?.symbols ?? key).font(.system(size:12,weight:.semibold));LText(title).font(.system(size:10,weight:.medium)) }

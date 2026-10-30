@@ -101,8 +101,15 @@ public enum MediaEngine {
         }
         for key in metadata.keys.sorted() {
             guard let value = metadata[key], !key.isEmpty, !key.contains("\0"), !value.contains("\0") else { throw NashiError.invalidInput("Metadata fields cannot be empty or contain null characters.") }
-            let (specifier, field) = try metadataSpecifier(key)
+            let (requested, field) = try metadataSpecifier(key)
+            var specifier = requested
             guard !field.isEmpty, !field.contains("=") else { throw NashiError.invalidInput("Invalid metadata field: \(key)") }
+            if removeAll, specifier.hasPrefix("-metadata:s:"), let index = Int(specifier.dropFirst("-metadata:s:".count)) {
+                // Stream specifiers address output streams; unmapped tracks shift later ones down.
+                let removed = Set(info.streams.filter { $0.kind == "data" || $0.isAttachedPicture }.map(\.index))
+                guard !removed.contains(index) else { throw NashiError.invalidInput("Track \(index) is removed with all metadata: \(key)") }
+                specifier = "-metadata:s:\(index - removed.filter { $0 < index }.count)"
+            }
             arguments += [specifier, "\(field)=\(value)"]
         }
         if ["mp4", "mov", "m4a", "m4v"].contains(ext) { arguments += ["-movflags", "+use_metadata_tags"] }
@@ -319,7 +326,7 @@ public enum MediaEngine {
             points = (1..<count).map { info.duration * Double($0) / Double(count) }
         } else {
             guard options.splitInterval.isFinite, options.splitInterval > 0, info.duration / options.splitInterval <= 10000 else { throw NashiError.invalidInput("Enter a positive split interval producing at most 10,000 clips.") }
-            points = stride(from: options.splitInterval, to: info.duration - 0.000001, by: options.splitInterval).map { $0 }
+            points = stride(from: options.splitInterval, to: info.duration - 0.05 + 0.000001, by: options.splitInterval).map { $0 }
         }
         let boundaries = [0] + points + [info.duration]
         guard zip(boundaries, boundaries.dropFirst()).allSatisfy({ $0.1 - $0.0 >= 0.05 - 0.000001 }) else { throw NashiError.invalidInput("Split points must be at least 0.05 seconds apart and from either end.") }
@@ -382,7 +389,9 @@ public enum MediaEngine {
             let color = try ffmpegColor(options.backgroundColor)
             let out = try outputURL(input, ext: "mp4", suffix: " Visualization", options: options)
             let filter = "scale=\(w):\(h):force_original_aspect_ratio=decrease,pad=\(w):\(h):(ow-iw)/2:(oh-ih)/2:color=\(color),setsar=1"
-            try render(["-loop", "1", "-framerate", "30", "-i", image.path, "-i", input.path, "-map", "0:v:0", "-map", "1:a:0", "-vf", filter, "-t", decimal(info.duration), "-shortest"] + videoEncoding("mp4", quality: options.quality, sourceAudio: info.audio), to: out, token: token, duration: info.duration, progress: progress)
+            // Input options apply only to the next -i, so each input needs its own whitelist.
+            let localOnly = ["-protocol_whitelist", "file,pipe,crypto,data"]
+            try render(localOnly + ["-loop", "1", "-framerate", "30", "-i", image.path] + localOnly + ["-i", input.path, "-map", "0:v:0", "-map", "1:a:0", "-vf", filter, "-t", decimal(info.duration), "-shortest"] + videoEncoding("mp4", quality: options.quality, sourceAudio: info.audio), to: out, token: token, duration: info.duration, progress: progress)
             return [out]
         }
         let visual: String
@@ -426,7 +435,7 @@ public enum MediaEngine {
         var graph: [String] = []
         var previous = "0:v:0"
         for (index, selection) in selections.enumerated() {
-            let rect = try mode == "solid" ? redactionPixelRect(selection.rect, width: width, height: height) : pixelRect(selection.rect, width: width, height: height)
+            let rect = try redactionPixelRect(selection.rect, width: width, height: height)
             let range = try timeRange(selection.start, selection.end, duration: info.duration)
             let enable = "between(t,\(decimal(range.0)),\(decimal(range.1)))"
             let next = "redacted\(index)"
@@ -500,7 +509,8 @@ public enum MediaEngine {
                     if ["mp4", "mov", "m4v"].contains(ext) { arguments += ["-movflags", "+faststart"] }
                 } else {
                     arguments += ["-map", "0:a:0", "-vn"] + audioEncoding(ext, quality: options.quality, bitrate: Int(audioRate), source: info.audio)
-                    if audioRate < 24000 { arguments += ["-ac", "1", "-ar", "22050"] }
+                    // libopus cannot encode at 22.05 kHz; 24 kHz is its nearest supported rate.
+                    if audioRate < 24000 { arguments += ["-ac", "1", "-ar", ext == "opus" ? "24000" : "22050"] }
                 }
                 try render(arguments, to: out, token: token, duration: info.duration, progress: { value,_ in attemptProgress(OperationProgress.map(value, from: video ? 0.5 : 0, to: 1),"Encoding…") })
                 ownsOutput = true
@@ -667,7 +677,7 @@ public enum MediaEngine {
     }
     private static func timeRange(_ start: Double, _ end: Double?, duration: Double) throws -> (Double, Double) {
         let finish = end ?? duration
-        guard start.isFinite, finish.isFinite, start >= 0, finish > start, duration <= 0 || finish <= duration + 0.001 else { throw NashiError.invalidInput("The start and end times must describe a nonempty range inside the media.") }
+        guard start.isFinite, finish.isFinite, start >= 0, finish > start, duration <= 0 || (start < duration && finish <= duration + 0.001) else { throw NashiError.invalidInput("The start and end times must describe a nonempty range inside the media.") }
         return (start, min(finish, duration > 0 ? duration : finish))
     }
     private static func pixelRect(_ rect: EditRect, width: Int, height: Int) throws -> (x: Int, y: Int, w: Int, h: Int) {
@@ -675,11 +685,14 @@ public enum MediaEngine {
         return (Int(rect.x), Int(rect.y), Int(rect.width), Int(rect.height))
     }
     private static func redactionPixelRect(_ rect: EditRect, width: Int, height: Int) throws -> (x: Int, y: Int, w: Int, h: Int) {
-        _ = try pixelRect(rect,width:width,height:height)
+        // Redaction areas only need a positive size: the canvas keeps thin drags and
+        // 1 px resizes, and rejecting one area would fail the whole export.
+        guard [rect.x, rect.y, rect.width, rect.height].allSatisfy(\.isFinite), rect.x >= 0, rect.y >= 0, rect.width > 0, rect.height > 0, rect.x + rect.width <= Double(width) + 0.01, rect.y + rect.height <= Double(height) + 0.01 else { throw NashiError.invalidInput("Choose a rectangle inside the video.") }
         // Cover every pixel touched by the selection, matching image redaction.
         // Truncating origin and size separately can leave the far edge visible.
         let x=Int(floor(rect.x)),y=Int(floor(rect.y))
         let right=min(width,Int(ceil(rect.x+rect.width))),bottom=min(height,Int(ceil(rect.y+rect.height)))
+        guard right>x,bottom>y else { throw NashiError.invalidInput("Choose a rectangle inside the video.") }
         return (x,y,right-x,bottom-y)
     }
     private static func audioExtension(_ input: URL) -> String { let ext = input.pathExtension.lowercased(); return audioFormats.contains(ext) ? ext : "m4a" }

@@ -87,7 +87,7 @@ struct FormatPreferenceItem:Identifiable,Hashable {
     let group:String
     var title:String { switch id { case "gz":return "GZIP";case "md":return "Markdown";case "textclipping":return "Text Clipping";default:return id.uppercased() } }
     var isInputOnly:Bool { ["svg","ppt","xls","rtf","rtfd","textclipping","rar"].contains(id) }
-    var isOutputOnly:Bool { id=="html" }
+    var isOutputOnly:Bool { FeatureCatalog.conversionMatrix[id] == nil }
     var compatibilityLabel:String { isInputOnly ? "Input-only format.":isOutputOnly ? "Output-only format.":"Input and output format." }
     var symbol:String { switch group { case "Images":return "photo";case "Audio":return "waveform";case "Video":return "film";case "Archives":return "archivebox";case "Spreadsheets":return "tablecells";case "Subtitles":return "captions.bubble";default:return "doc.text" } }
     static let groups:[(String,[String])]=[
@@ -133,11 +133,12 @@ enum FolderAccessPreferences {
         if let data=try? JSONEncoder().encode(remaining) { defaults.set(data,forKey:key) }
     }
     /// The parent folder's bookmark covers all of its descendants.
-    static func withAccess<T>(to output:URL,defaults:UserDefaults = .standard,_ action:() throws -> T) rethrows -> T {
-        let path=output.standardizedFileURL.path
+    /// Each covering grant is opened once for the whole batch, so stack depth does not grow with the file count.
+    static func withAccess<T>(to outputs:[URL],defaults:UserDefaults = .standard,_ action:() throws -> T) rethrows -> T {
+        let paths=outputs.map{$0.standardizedFileURL.path}
         let folders=grants(defaults:defaults).compactMap(resolved).filter { url in
             let parent=url.standardizedFileURL.path
-            return path==parent || path.hasPrefix(parent=="/" ? "/":parent+"/")
+            return paths.contains { path in path==parent || path.hasPrefix(parent=="/" ? "/":parent+"/") }
         }
         let active=folders.filter{$0.startAccessingSecurityScopedResource()}
         defer { for url in active { url.stopAccessingSecurityScopedResource() } }

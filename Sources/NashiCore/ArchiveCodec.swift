@@ -15,12 +15,20 @@ enum ArchiveCodec {
         let a = try api.get()
         guard let reader = a.readNew() else { throw NashiError.failed("Could not initialize the archive reader.") }
         defer { _ = a.readFree(reader) }
-        try a.check(a.readSupportFilters(reader), handle: reader)
-        try a.check(a.readSupportFormats(reader), handle: reader)
-        if ["gz", "gzip"].contains(input.pathExtension.lowercased()) {
+        // Only in-process decompressors: other filters launch programs from PATH.
+        for filter in [a.readSupportGzip, a.readSupportBzip2, a.readSupportXz, a.readSupportLzma, a.readSupportCompress] {
+            try a.check(filter(reader), handle: reader)
+        }
+        let gzip = ["gz", "gzip"].contains(input.pathExtension.lowercased())
+        if gzip {
             let prefix = try Data(contentsOf: input, options: .mappedIfSafe).prefix(2)
             guard prefix.elementsEqual([0x1f, 0x8b]) else { throw NashiError.invalidInput("This file is not a GZIP stream.") }
+            // A .gz holds a tarball or one file; never sniff the payload as ZIP, mtree, etc.
+            try a.check(a.readSupportTar(reader), handle: reader)
             try a.check(a.readSupportRaw(reader), handle: reader)
+            try a.check(a.readSupportEmpty(reader), handle: reader)
+        } else {
+            try a.check(a.readSupportFormats(reader), handle: reader)
         }
         if !password.isEmpty { try a.check(password.withCString { a.readPassphrase(reader, $0) }, handle: reader) }
         try a.check(input.path.withCString { a.readOpen(reader, $0, 128 * 1024) }, handle: reader)
@@ -98,6 +106,13 @@ enum ArchiveCodec {
         guard entries > 0 else {
             // Empty ZIP/TAR archives are valid and extract to an empty folder.
             if a.format(reader) == 0 { throw NashiError.invalidInput("This file is not a readable archive.") }
+            // A gzip of an empty file restores that empty file, not an empty folder.
+            if gzip && a.format(reader) == 0x60000 {
+                let destination = try safeURL(input.deletingPathExtension().lastPathComponent, inside: root)
+                guard destination.standardizedFileURL != root.standardizedFileURL else { return }
+                try validateDestination(destination, root: root)
+                guard fm.createFile(atPath: destination.path, contents: nil) else { throw NashiError.failed("Could not create \(destination.lastPathComponent).") }
+            }
             return
         }
         for link in links.filter(\.hard) {
@@ -276,9 +291,15 @@ enum ArchiveCodec {
             return unsafeBitCast(pointer, to: type)
         }
         var readNew: New { symbol("archive_read_new", New.self) }
-        var readSupportFilters: Call { symbol("archive_read_support_filter_all", Call.self) }
+        var readSupportGzip: Call { symbol("archive_read_support_filter_gzip", Call.self) }
+        var readSupportBzip2: Call { symbol("archive_read_support_filter_bzip2", Call.self) }
+        var readSupportXz: Call { symbol("archive_read_support_filter_xz", Call.self) }
+        var readSupportLzma: Call { symbol("archive_read_support_filter_lzma", Call.self) }
+        var readSupportCompress: Call { symbol("archive_read_support_filter_compress", Call.self) }
         var readSupportFormats: Call { symbol("archive_read_support_format_all", Call.self) }
         var readSupportRaw: Call { symbol("archive_read_support_format_raw", Call.self) }
+        var readSupportTar: Call { symbol("archive_read_support_format_tar", Call.self) }
+        var readSupportEmpty: Call { symbol("archive_read_support_format_empty", Call.self) }
         var readPassphrase: OpenWrite { symbol("archive_read_add_passphrase", OpenWrite.self) }
         var readOpen: OpenRead { symbol("archive_read_open_filename", OpenRead.self) }
         var readNext: Next { symbol("archive_read_next_header", Next.self) }

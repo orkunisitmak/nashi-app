@@ -28,13 +28,13 @@ public enum ImageEngine {
         let output=OutputFiles.unique(for:input,extension:format,directory:options.outputDirectory)
         var complete=false;defer { if !complete { try? FileManager.default.removeItem(at:output) } }
         let metadata = options.preserveMetadata ? CGImageSourceCreateWithURL(input as CFURL,nil).map { imageProperties($0,input:input) as CFDictionary } : nil
-        try write(image,to:output,quality:options.quality,metadata:metadata)
+        try write(image,to:output,quality:options.quality,metadata:metadata,token:token)
         if options.preserveMetadata { try ImageMetadataEngine.copyMetadata(from:input,to:output,token:token) }
         complete=true
         return [output]
     }
 
-    public static func write(_ image: CGImage, to url: URL, quality: Double = 0.8, metadata: CFDictionary? = nil) throws {
+    public static func write(_ image: CGImage, to url: URL, quality: Double = 0.8, metadata: CFDictionary? = nil, token: CancellationToken = .init()) throws {
         let ext=url.pathExtension.lowercased()
         let type: String
         switch ext {
@@ -62,7 +62,7 @@ public enum ImageEngine {
             if ext == "webp" { args += ["-c:v","libwebp","-quality",String(Int(quality*100))] }
             if ext == "avif" { args += ["-c:v","libaom-av1","-still-picture","1","-cpu-used","6","-crf",String(Int((1-quality)*50)+8)] }
             args += [url.path]
-            try ProcessRunner.run(Dependencies.executable("ffmpeg"),args)
+            try ProcessRunner.run(Dependencies.executable("ffmpeg"),args,token:token)
         }
     }
 
@@ -152,8 +152,9 @@ public enum ImageEngine {
         guard options.width != nil || options.height != nil else { return image }
         for value in [options.width,options.height].compactMap({$0}) { guard value>0,value<=32000 else { throw NashiError.invalidInput("Image dimensions must be between 1 and 32,000 pixels.") } }
         let ratio = Double(image.height) / Double(image.width)
-        let width = options.width ?? Int(Double(options.height!) / ratio)
-        let height = options.height ?? Int(Double(width) * ratio)
+        // Round the derived side and keep at least one pixel for very thin images.
+        let width = options.width ?? max(1, Int((Double(options.height!) / ratio).rounded()))
+        let height = options.height ?? max(1, Int((Double(width) * ratio).rounded()))
         return try resized(image, width: width, height: height)
     }
 
@@ -219,12 +220,25 @@ public enum ImageEngine {
     private static func canvas(_ width:Int,_ height:Int) throws -> CGContext {
         guard width>0,height>0,width<=32000,height<=32000,let ctx=CGContext(data:nil,width:width,height:height,bitsPerComponent:8,bytesPerRow:0,space:imageColorSpace,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue) else { throw NashiError.failed("Could not allocate image canvas.") }; return ctx
     }
+    /// Reads #RGB, #RGBA, #RRGGBB or #RRGGBBAA (the "#" is optional); nil for anything else.
+    public static func parsedColor(_ hex: String) -> CGColor? {
+        var s=hex.trimmingCharacters(in:.whitespaces)
+        if s.hasPrefix("#") { s.removeFirst() }
+        // ASCII only: UInt64(_:radix:) also accepts a sign, and Character.isHexDigit full-width digits.
+        guard [3,4,6,8].contains(s.utf8.count),s.utf8.allSatisfy({(48...57).contains($0) || (65...70).contains($0) || (97...102).contains($0)}) else { return nil }
+        if s.count <= 4 { s = s.map { "\($0)\($0)" }.joined() }
+        guard var n=UInt64(s,radix:16) else { return nil }
+        if s.count == 6 { n = n<<8 | 0xFF }
+        return CGColor(colorSpace:imageColorSpace,components:[CGFloat((n>>24)&255)/255,CGFloat((n>>16)&255)/255,CGFloat((n>>8)&255)/255,CGFloat(n&255)/255])
+    }
+    /// Lenient for pickers and swatches: an unreadable value shows as white.
     public static func color(_ hex: String) -> CGColor {
-        var s=hex.trimmingCharacters(in:CharacterSet(charactersIn:"#"))
-        if s.count == 3 { s = s.map { "\($0)\($0)" }.joined() }
-        let n=UInt64(s,radix:16) ?? 0xFFFFFF
-        if s.count == 8 { return CGColor(colorSpace:imageColorSpace,components:[CGFloat((n>>24)&255)/255,CGFloat((n>>16)&255)/255,CGFloat((n>>8)&255)/255,CGFloat(n&255)/255])! }
-        return CGColor(colorSpace:imageColorSpace,components:[CGFloat((n>>16)&255)/255,CGFloat((n>>8)&255)/255,CGFloat(n&255)/255,1])!
+        parsedColor(hex) ?? CGColor(colorSpace:imageColorSpace,components:[1,1,1,1])!
+    }
+    /// Rendering refuses an unreadable color instead of silently painting another one.
+    static func validatedColor(_ hex: String) throws -> CGColor {
+        guard let color=parsedColor(hex) else { throw NashiError.invalidInput("“\(hex)” is not a color. Use #RGB, #RGBA, #RRGGBB or #RRGGBBAA.") }
+        return color
     }
 
     public static func annotatedImage(_ image: CGImage, options: OperationOptions) throws -> CGImage { try annotate(image,options:options) }
@@ -251,7 +265,7 @@ public enum ImageEngine {
             let r=CGRect(x:rect.x,y:Double(image.height)-rect.y-rect.height,width:rect.width,height:rect.height).standardized
             let point: (ImagePoint) -> CGPoint = { CGPoint(x:$0.x,y:Double(image.height)-$0.y) }
             ctx.saveGState();defer { ctx.restoreGState() }
-            ctx.setAlpha(max(0,min(1,item.opacity)));ctx.setStrokeColor(color(item.color));ctx.setFillColor(color(item.fillColor ?? item.color));ctx.setLineWidth(max(0.5,item.strokeWidth));ctx.setLineCap(.round);ctx.setLineJoin(.round)
+            ctx.setAlpha(max(0,min(1,item.opacity)));ctx.setStrokeColor(try validatedColor(item.color));ctx.setFillColor(try validatedColor(item.fillColor ?? item.color));ctx.setLineWidth(max(0.5,item.strokeWidth));ctx.setLineCap(.round);ctx.setLineJoin(.round)
             switch item.kind {
             case .rectangle:
                 if item.fillColor != nil { ctx.fill(r) };ctx.stroke(r)
@@ -272,7 +286,7 @@ public enum ImageEngine {
                 if item.kind == .highlight { ctx.setAlpha(max(0,min(1,item.opacity))*0.35);ctx.setBlendMode(.multiply);ctx.setLineWidth(max(12,item.strokeWidth)) }
                 if let first=points.first { ctx.move(to:first);for next in points.dropFirst() { ctx.addLine(to:next) };ctx.strokePath() }
             case .text:
-                drawText(item.text,in:r,context:ctx,color:color(item.color),fontSize:item.fontSize,fontFamily:item.fontFamily)
+                drawText(item.text,in:r,context:ctx,color:try validatedColor(item.color),fontSize:item.fontSize,fontFamily:item.fontFamily)
             case .number:
                 ctx.fillEllipse(in:r)
                 drawCenteredText(String(item.number),in:r,context:ctx,color:CGColor(gray:1,alpha:1),fontSize:min(r.width,r.height)*0.58)
@@ -350,7 +364,7 @@ public enum ImageEngine {
             let target=CGRect(x:pixels.minX,y:CGFloat(image.height)-pixels.maxY,width:pixels.width,height:pixels.height)
             // Solid redaction replaces the selected pixels; an editor color's
             // alpha must never blend the original content back into the result.
-            if settings.style == .solid { ctx.setFillColor(color(settings.color).copy(alpha:1)!);ctx.fill(target) }
+            if settings.style == .solid { ctx.setFillColor(try validatedColor(settings.color).copy(alpha:1)!);ctx.fill(target) }
             else if let part=image.cropping(to:pixels) {
                 let original=CIImage(cgImage:part),bounds=original.extent
                 let filtered:CIImage
@@ -410,12 +424,12 @@ public enum ImageEngine {
             }
         }
         let ctx=try canvas(width,height),bounds=CGRect(x:0,y:0,width:width,height:height)
-        ctx.setFillColor(color(settings.backgroundColor));ctx.fill(bounds)
+        ctx.setFillColor(try validatedColor(settings.backgroundColor));ctx.fill(bounds)
         switch settings.backdrop {
         case .solid: break
         case .gradient:
             let colors=settings.gradientColors.isEmpty ? [settings.backgroundColor,settings.backgroundColor] : settings.gradientColors
-            guard let gradient=CGGradient(colorsSpace:imageColorSpace,colors:colors.map(color) as CFArray,locations:nil) else { throw NashiError.invalidInput("Choose gradient colors.") }
+            guard let gradient=CGGradient(colorsSpace:imageColorSpace,colors:try colors.map(validatedColor) as CFArray,locations:nil) else { throw NashiError.invalidInput("Choose gradient colors.") }
             let angle=settings.gradientAngle * .pi/180,dx=cos(angle)*Double(width)/2,dy=sin(angle)*Double(height)/2
             ctx.drawLinearGradient(gradient,start:CGPoint(x:Double(width)/2-dx,y:Double(height)/2-dy),end:CGPoint(x:Double(width)/2+dx,y:Double(height)/2+dy),options:[.drawsBeforeStartLocation,.drawsAfterEndLocation])
         case .image:
@@ -450,7 +464,7 @@ public enum ImageEngine {
         let images=try inputs.map(load), columns=max(1,min(inputs.count,options.collageColumns)),rows=(inputs.count+columns-1)/columns
         let cellWidth=options.width ?? 600,cellHeight=options.height ?? 600,gap=max(0,options.padding)
         let width=columns*cellWidth+(columns+1)*gap,height=rows*cellHeight+(rows+1)*gap
-        let ctx=try canvas(width,height);ctx.setFillColor(color(options.backgroundColor));ctx.fill(CGRect(x:0,y:0,width:width,height:height))
+        let ctx=try canvas(width,height);ctx.setFillColor(try validatedColor(options.backgroundColor));ctx.fill(CGRect(x:0,y:0,width:width,height:height))
         for (index,image) in images.enumerated() {
             try token.check()
             let scale=min(Double(cellWidth)/Double(image.width),Double(cellHeight)/Double(image.height))
@@ -477,7 +491,7 @@ public enum ImageEngine {
         if settings.height == nil { guard calculatedHeight.isFinite,calculatedHeight>=1,calculatedHeight<=32000 else { throw NashiError.invalidInput("Collage dimensions must be between 1 and 32,000 pixels.") } }
         let width=settings.width,height=settings.height ?? Int(calculatedHeight.rounded())
         let ctx=try canvas(width,height),bounds=CGRect(x:0,y:0,width:width,height:height)
-        ctx.setFillColor(color(settings.backgroundColor));ctx.fill(bounds)
+        ctx.setFillColor(try validatedColor(settings.backgroundColor));ctx.fill(bounds)
         if let backdrop=settings.backgroundImage { drawFitted(try load(backdrop),in:bounds,context:ctx,fit:.fill) }
         let padding=Double(max(0,settings.outerPadding)),gap=Double(max(0,settings.spacing)),area=bounds.insetBy(dx:padding,dy:padding)
         guard area.width>0,area.height>0 else { throw NashiError.invalidInput("Collage padding leaves no space for images.") }
@@ -510,19 +524,23 @@ public enum ImageEngine {
         if let target { guard target>0 else { throw NashiError.invalidInput("Choose a positive target file size.") } }
         let ext=["jpg","jpeg","heic","webp","avif","png"].contains(input.pathExtension.lowercased()) ? input.pathExtension : "jpg"
         let output=OutputFiles.unique(for:input,extension:ext,suffix:" - Compressed",directory:options.outputDirectory)
+        // Attempts are encoded privately; a failed or cancelled pass leaves no partial output.
+        let temporary=output.deletingLastPathComponent().appendingPathComponent(".nashi-\(UUID().uuidString)").appendingPathExtension(output.pathExtension)
+        defer { try? FileManager.default.removeItem(at:temporary) }
         var quality=max(0.01,min(1,options.quality))
         for iteration in 0..<24 {
-            try token.check();try? FileManager.default.removeItem(at:output)
-            try write(image,to:output,quality:quality)
+            try token.check();try? FileManager.default.removeItem(at:temporary)
+            try write(image,to:temporary,quality:quality)
             // The same URL is replaced on each pass; resourceValues can retain its first size.
-            let size=((try FileManager.default.attributesOfItem(atPath:output.path))[.size] as? NSNumber)?.int64Value ?? 0
+            let size=((try FileManager.default.attributesOfItem(atPath:temporary.path))[.size] as? NSNumber)?.int64Value ?? 0
             if target == nil || size <= target! {
-                if image.width==originalWidth,image.height==originalHeight { try OutputFiles.retainSmallerOriginal(input,output:output,target:target) }
+                if image.width==originalWidth,image.height==originalHeight { try OutputFiles.retainSmallerOriginal(input,output:temporary,target:target) }
+                try FileManager.default.moveItem(at:temporary,to:output)
                 return [output]
             }
             if quality>0.15 && !["png"].contains(ext.lowercased()) { quality *= 0.72 }
             else { image=try resized(image,width:max(1,Int(Double(image.width)*0.8)),height:max(1,Int(Double(image.height)*0.8))) }
-            if iteration == 23 { try? FileManager.default.removeItem(at:output);throw NashiError.failed("The requested file size could not be reached. Choose a larger target.") }
+            if iteration == 23 { throw NashiError.failed("The requested file size could not be reached. Choose a larger target.") }
         }
         return [output]
     }

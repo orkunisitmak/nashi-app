@@ -58,6 +58,16 @@ final class ToolSetupTests:XCTestCase {
             XCTAssertEqual(try String(contentsOf:target.appendingPathComponent("partial"),encoding:.utf8),"keep")
         }
     }
+    func testRepairReplacesDanglingToolDirectoryLink() throws {
+        try temporary { root in
+            let target=root.appendingPathComponent("tools"),stage=root.appendingPathComponent("stage")
+            try FileManager.default.createSymbolicLink(atPath:target.path,withDestinationPath:root.appendingPathComponent("unmounted/tools").path)
+            try completeStage(stage,"new")
+            try ToolInstallation.publish(stage,to:target,complete:isComplete)
+            XCTAssertEqual(try String(contentsOf:target.appendingPathComponent("ready"),encoding:.utf8),"new")
+            XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath:root.path).filter{$0.hasPrefix(".previous-")},[])
+        }
+    }
     private func isComplete(_ directory:URL)->Bool { FileManager.default.fileExists(atPath:directory.appendingPathComponent("ready").path) }
     private func completeStage(_ path:URL,_ content:String)throws {
         try FileManager.default.createDirectory(at:path,withIntermediateDirectories:false)

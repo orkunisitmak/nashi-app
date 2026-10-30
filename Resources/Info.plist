@@ -8,6 +8,7 @@
 	<array>
 		<string>en</string>
 		<string>tr</string>
+		<string>fr</string>
 	</array>
 	<key>CFBundleDisplayName</key>
 	<string>Nashi</string>
@@ -35,13 +36,13 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.7.10</string>
+	<string>0.7.13</string>
 	<key>CFBundleSupportedPlatforms</key>
 	<array>
 		<string>MacOSX</string>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>41</string>
+	<string>44</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.utilities</string>
 	<key>LSMinimumSystemVersion</key>

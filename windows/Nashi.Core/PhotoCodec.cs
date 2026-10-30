@@ -48,6 +48,15 @@ public static class PhotoCodec
         using var image=new MagickImage(pixels,new MagickReadSettings{Format=MagickFormat.Png});image.Strip();image.Quality=(uint)Math.Clamp(quality,1,100);
         if(format=="heic"){if(encoder is null)throw new InvalidOperationException("Set up media tools once to enable HEIC encoding on Windows.");var width=(int)image.Width;var height=(int)image.Height;Task.Run(()=>HeifCodec.EncodeAsync(encoder,pixels,output,width,height,quality,token),token).GetAwaiter().GetResult();return;}image.Write(output,Format(format));
     }
+    /// Encodes straight (non-premultiplied) BGRA32 pixels without an intermediate PNG.
+    public static void EncodePixels(byte[] bgra,int width,int height,string output,string format,int quality=85,string? encoder=null,CancellationToken token=default)
+    {
+        if(width<1||height<1||bgra.Length<(long)width*height*4)throw new ArgumentException("Choose a nonempty image.");
+        MagickImage Read(){var image=new MagickImage();image.ReadPixels(bgra,new PixelReadSettings((uint)width,(uint)height,StorageType.Char,PixelMapping.BGRA));image.ColorSpace=ColorSpace.sRGB;return image;}
+        // HEIC goes through EncodePng's own MagickImage; release this pixel cache before that one is created.
+        if(format=="heic"){byte[] png;using(var source=Read())png=source.ToByteArray(MagickFormat.Png);EncodePng(png,output,format,quality,encoder,token);return;}
+        using var image=Read();image.Strip();image.Quality=(uint)Math.Clamp(quality,1,100);image.Write(output,Format(format));
+    }
     public static MagickFormat Format(string format)=>format switch{"jpg"=>MagickFormat.Jpeg,"webp"=>MagickFormat.WebP,"heic"=>MagickFormat.Heic,"avif"=>MagickFormat.Avif,"tiff"=>MagickFormat.Tiff,"bmp"=>MagickFormat.Bmp,"gif"=>MagickFormat.Gif,"png"=>MagickFormat.Png,_=>throw new ArgumentException("Unsupported image format.")};
     public static byte[] Adjust(byte[] png,PhotoAdjustments o)
     {
@@ -74,7 +83,10 @@ public static class PhotoCodec
         if(o.Hue!=0)image.Modulate(new Percentage(100),new Percentage(100),new Percentage(100+o.Hue/1.8));
         if(o.Dehaze!=0)image.BrightnessContrast(new Percentage(-o.Dehaze*8),new Percentage(o.Dehaze*25));
         if(o.NoiseReduction>0)image.MedianFilter((uint)Math.Clamp(Math.Ceiling(o.NoiseReduction*2),1,3));
-        if(o.Blur>0)image.GaussianBlur(Math.Min(50,o.Blur));
+        // Blur is the Gaussian standard deviation, like macOS CIGaussianBlur's radius.
+        // GaussianBlur(radius) keeps sigma at 1 (barely blurred, still readable when
+        // redacting) and its 2-D kernel is far slower than the separable Blur.
+        if(o.Blur>0)image.Blur(0,Math.Min(50,o.Blur));
         if(o.Sharpen>0||o.Clarity>0||o.Texture>0)image.UnsharpMask(0,1+Math.Max(0,o.Clarity)*3,Math.Max(0,o.Sharpen)+Math.Max(0,o.Texture),.02);
         if(o.Grain>0)image.AddNoise(NoiseType.Gaussian,Math.Min(1,o.Grain)*.15,Channels.RGB);
         if(o.Vignette>0)image.Vignette(0,Math.Max(1,Math.Min(image.Width,image.Height)*o.Vignette*.25),0,0);

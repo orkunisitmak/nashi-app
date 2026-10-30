@@ -291,6 +291,9 @@
       "png",
       "jpg"
     ],
+    "html": [
+      "pdf"
+    ],
     "epub": [
       "pdf",
       "docx",
@@ -508,6 +511,7 @@
     "rtf": [],
     "rtfd": [],
     "textclipping": [],
+    "html": [],
     "epub": [],
     "txt": [],
     "xlsx": [],
@@ -634,6 +638,7 @@
     "rtf": [],
     "rtfd": [],
     "textclipping": [],
+    "html": [],
     "epub": [],
     "txt": [],
     "xlsx": [],

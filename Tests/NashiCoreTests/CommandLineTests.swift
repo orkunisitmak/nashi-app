@@ -50,4 +50,12 @@ final class CommandLineTests:XCTestCase {
         for output in outputs { let text=try String(contentsOf:output,encoding:.utf8);XCTAssertTrue(text.contains("00:00:00.125 --> 00:00:01.250"));XCTAssertTrue(text.contains("Merhaba dünya")) }
         XCTAssertEqual(try Data(contentsOf:input),source)
     }
+    func testInspectFailsForMissingFilesOfEveryCategory() throws {
+        let root=try OutputFiles.temporaryDirectory();defer{try? FileManager.default.removeItem(at:root)}
+        let present=root.appendingPathComponent("present.txt");try Data("hello".utf8).write(to:present)
+        XCTAssertEqual(NashiCommandLine.run(arguments:["nashi-cli","inspect",present.path]),0)
+        for name in ["absent.txt","absent.docx","absent.zip","absent.bin","absent.png"] {
+            XCTAssertNotEqual(NashiCommandLine.run(arguments:["nashi-cli","inspect",root.appendingPathComponent(name).path]),0,name)
+        }
+    }
 }

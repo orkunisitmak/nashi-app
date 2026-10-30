@@ -21,6 +21,11 @@ internal static class DesktopInput
     internal static void MovePointer(Point point){SetCursorPos((int)point.X,(int)point.Y);var input=new Input{Data=new(){Mouse=new(){Flags=1}}};SendInput(1,[input],Marshal.SizeOf<Input>());}
     internal static void Hold(Key key,bool pressed){var input=new Input{Type=1,Data=new(){Keyboard=new(){Key=(ushort)KeyInterop.VirtualKeyFromKey(key),Flags=pressed?0u:2u}}};if(SendInput(1,[input],Marshal.SizeOf<Input>())!=1)throw new InvalidOperationException("Native key input unavailable.");}
     internal static void HoldMouse(bool pressed){var input=new Input{Data=new(){Mouse=new(){Flags=pressed?2u:4u}}};if(SendInput(1,[input],Marshal.SizeOf<Input>())!=1)throw new InvalidOperationException("Native mouse input unavailable.");}
+    internal static void Click(FrameworkElement view)
+    {
+        MovePointer(view.PointToScreen(new Point(view.ActualWidth/2,view.ActualHeight/2)));Pump(80);
+        try{HoldMouse(true);Pump(80);}finally{HoldMouse(false);}Pump();
+    }
     internal static void Pump(int milliseconds=140)
     {
         var frame=new DispatcherFrame();var timer=new DispatcherTimer(DispatcherPriority.Background){Interval=TimeSpan.FromMilliseconds(milliseconds)};

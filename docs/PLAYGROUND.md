@@ -8,7 +8,7 @@ The English and Turkish landing pages use an independent implementation of Nashi
 - Click a mode button, or focus a file and press Enter. Arrow keys, Home/End, Enter and Escape work in the wheel.
 - Shift-click selects multiple files. Batch wheels use the intersection of the app catalog's formats and tools.
 - Touch users tap a file, then a mode and a wheel option.
-- All 45 input extensions and 275 conversion routes can be explored using the sample-input selector.
+- All 46 input extensions and 276 conversion routes can be explored using the sample-input selector.
 - All 27 tools have an interactive window. The feature filters show tools by file family.
 - The wheel follows the native 320-point rounded geometry, including the area-centroid labels for three-, five- and eight-item menus. Conversion petals omit icons, and the center shows the hovered option. Tool names, Turkish translations, editor headings/hints/actions and the light/dark palette are generated from the desktop sources.
 - Appearance switches only the interactive demo; the landing page keeps its own theme.

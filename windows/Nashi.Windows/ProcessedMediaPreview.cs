@@ -23,6 +23,6 @@ public sealed partial class ToolEditor
         }
         catch(OperationCanceledException){}
         catch(Exception error){if(IsVisible)time.Text="Preview unavailable: "+error.Message;}
-        finally{processingPreview=false;if(processedButton is not null){processedButton.IsEnabled=true;processedButton.Content=tool=="splitVideo"?"Play Result":tool=="audioToVideo"?"Preview Visualization":"Preview Processed";}}
+        finally{processingPreview=false;if(processedButton is not null){processedButton.IsEnabled=true;processedButton.Content=tool=="splitVideo"?"Play Result":tool=="audioToVideo"?"Preview Visualization":"Preview Processed";L10n.Content(processedButton);}}
     }
 }

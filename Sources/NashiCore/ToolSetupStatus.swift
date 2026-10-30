@@ -28,7 +28,8 @@ enum ToolInstallation {
         guard complete(stage) else { throw NashiError.failed("The downloaded tools are incomplete. Please try setup again.") }
         if complete(target) { return }
         let backup = target.deletingLastPathComponent().appendingPathComponent(".previous-" + UUID().uuidString)
-        let existing = fm.fileExists(atPath: target.path)
+        // Does not follow links, so a dangling one is moved aside like any stale entry.
+        let existing = (try? fm.attributesOfItem(atPath: target.path)) != nil
         if existing { try fm.moveItem(at: target, to: backup) }
         do { try fm.moveItem(at: stage, to: target) }
         catch {

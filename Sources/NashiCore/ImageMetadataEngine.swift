@@ -25,8 +25,10 @@ public enum ImageMetadataEngine {
 
     public static func isWritable(_ displayKey:String)->Bool {
         guard let tag=try? tagName(displayKey),let colon=tag.lastIndex(of:":") else { return false }
-        let group=String(tag[..<colon]),name=String(tag[tag.index(after:colon)...])
-        guard !["File","System","ExifTool","Composite","ICC_Profile","JFIF","PNG","GIF","RIFF","VP8","VP8L"].contains(group),!appearanceTags.contains(name) else { return false }
+        // ExifTool matches group and tag names case-insensitively and accepts several group prefixes.
+        let groups=tag[..<colon].split(separator:":").map{$0.lowercased()},name=tag[tag.index(after:colon)...].lowercased()
+        let blocked=["File","System","ExifTool","Composite","ICC_Profile","JFIF","PNG","GIF","RIFF","VP8","VP8L"].map{$0.lowercased()}
+        guard !groups.contains(where:blocked.contains),!appearanceTags.contains(where:{$0.lowercased()==name}) else { return false }
         return true
     }
 

@@ -12,7 +12,7 @@ struct UIAuditOptions {
     var languages=["en","tr"]
     var hold=false
     init(arguments:[String])throws {
-        guard let start=arguments.firstIndex(of:"--ui-audit"),start+1<arguments.count,!arguments[start+1].hasPrefix("--") else {throw UIAuditError("Use --ui-audit OUTPUT [--scenes scene,...] [--appearance light|dark|both] [--language en|tr|both] [--hold]")}
+        guard let start=arguments.firstIndex(of:"--ui-audit"),start+1<arguments.count,!arguments[start+1].hasPrefix("--") else {throw UIAuditError("Use --ui-audit OUTPUT [--scenes scene,...] [--appearance light|dark|both] [--language en|tr|fr|both] [--hold]")}
         output=URL(fileURLWithPath:arguments[start+1],isDirectory:true).standardizedFileURL
         var index=start+2
         while index<arguments.count {
@@ -23,7 +23,7 @@ struct UIAuditOptions {
             switch key {
             case "--scenes":scenes=value.split(separator:",").map(String.init);guard !scenes.isEmpty,Set(scenes).count==scenes.count,scenes.allSatisfy(Self.scenes.contains) else{throw UIAuditError("Unknown or repeated audit scene. Supported: "+Self.scenes.joined(separator:","))}
             case "--appearance":guard ["light","dark","both"].contains(value) else{throw UIAuditError("Appearance must be light, dark or both")};appearances=value=="both" ? ["light","dark"]:[value]
-            case "--language":guard ["en","tr","both"].contains(value) else{throw UIAuditError("Language must be en, tr or both")};languages=value=="both" ? ["en","tr"]:[value]
+            case "--language":guard AppLocalization.supportedLanguages.contains(value) || value=="both" else{throw UIAuditError("Language must be en, tr, fr or both")};languages=value=="both" ? ["en","tr"]:[value]
             default:throw UIAuditError("Unknown audit argument: "+key)
             }
         }
@@ -196,7 +196,7 @@ struct UIAuditError:LocalizedError { let message:String;init(_ message:String){s
             if let value=language.accessibilityValue() as? String {values["languagePicker"]=value}
             else if let title=language.accessibilityTitle(){values["languagePicker"]=title}
         }
-        if let control=views.compactMap({$0 as? NSPopUpButton}).first(where:{["English","Türkçe"].contains($0.titleOfSelectedItem ?? "")}),let selected=control.titleOfSelectedItem {
+        if let control=views.compactMap({$0 as? NSPopUpButton}).first(where:{["English","Türkçe","Français"].contains($0.titleOfSelectedItem ?? "")}),let selected=control.titleOfSelectedItem {
             values["languagePicker"]=selected
         }
         if values["languagePicker"]==nil {
@@ -235,7 +235,7 @@ struct UIAuditError:LocalizedError { let message:String;init(_ message:String){s
             if scene=="settings.general" {
                 values.merge(renderedSelections(view),uniquingKeysWith:{$1})
                 if values["appearancePicker"] != appearance {issues.append("rendered appearance picker="+(values["appearancePicker"] ?? "unavailable"))}
-                if values["languagePicker"] != (language=="tr" ? "Türkçe":"English") {issues.append("rendered language picker="+(values["languagePicker"] ?? "unavailable"))}
+                if values["languagePicker"] != (["tr":"Türkçe","fr":"Français"][language] ?? "English") {issues.append("rendered language picker="+(values["languagePicker"] ?? "unavailable"))}
             }
             if issues.isEmpty {return values}
             try await Task.sleep(nanoseconds:40_000_000)

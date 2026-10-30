@@ -2,7 +2,7 @@
 
 These features are included in the published [0.7.5 release](https://github.com/orkunisitmak/nashi-app/releases/tag/v0.7.5-36). The native platform adaptations and evidence boundaries below still apply.
 
-`Resources/FeatureCatalog.json` is the shared availability contract: 45 input formats, 27 tools, single/multiple-selection rules and conversion intersections. `scripts/check-feature-parity.py` compares it with the Swift catalog on every source check. The catalog check establishes matching choices; engine and native desktop checks establish behavior.
+`Resources/FeatureCatalog.json` is the shared availability contract: 46 input formats, 27 tools, single/multiple-selection rules and conversion intersections. `scripts/check-feature-parity.py` compares it with the Swift catalog on every source check. The catalog check establishes matching choices; engine and native desktop checks establish behavior.
 
 | Area | Windows implementation | Verification |
 | --- | --- | --- |
@@ -27,6 +27,7 @@ Windows uses Explorer, Windows keyboard conventions and Windows Share. Apple Air
 
 - `dotnet run --project windows/Nashi.Verify -c Release` runs platform-independent engine/security tests; media tests require the explicit `NASHI_VERIFY_FFMPEG` / `NASHI_VERIFY_FFPROBE` paths or CI tool setup.
 - `Nashi --smoke-test` exercises a real isolated Windows desktop. Set `NASHI_SMOKE_DIRECTORY` for JSON, failure diagnostics, export fixtures and PNG render artifacts. Extended parity checks run on GitHub Actions.
+- `Nashi --smoke-test-interactions` runs the focused native Home/Library mouse, selected-file removal and keyboard/mouse conversion checks, including a JPG-to-PDF export; it writes `interactions.json` to `NASHI_SMOKE_DIRECTORY`. A worker-thread watchdog writes a failure report and exits with code 1 even if a modal dialog blocks the UI. The default limit is 120 seconds; `--timeout-seconds N` accepts 1–120 seconds for bounded diagnostic runs.
 - Set `NASHI_VERIFY_TOOLS_DIRECTORY` to reuse a separate, already verified media-tool installation in local native tests. This does not change the application's tool directory.
 - `parity-progress.json` records the last completed assertion; `parity.json` and `smoke.json` are written only after their complete suites pass. Failure diagnostics must not be presented as a successful suite.
 - Native tests use Windows SendInput and OLE plus WPF render captures. They are not a physical Windows computer-use session or a claim that every third-party media site is always available.

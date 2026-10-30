@@ -73,10 +73,17 @@ enum SubtitleCodec {
         return String(format: "%02lld:%02lld:%02lld%@%03lld", hour, min, sec, vtt ? "." : ",", ms)
     }
     private static func srtText(_ text: String) -> String {
-        text.replacingOccurrences(of: #"</?(?:c(?:\.[^ >]*)?|v|lang|ruby|rt)(?:\s+[^>]*)?>|<\d{2}:\d{2}[^>]*>"#, with: "", options: .regularExpression)
+        let withoutTags = text.replacingOccurrences(of: #"</?(?:c(?:\.[^ >]*)?|v|lang|ruby|rt)(?:\s+[^>]*)?>|<\d{2}:\d{2}[^>]*>"#, with: "", options: .regularExpression)
+        // WebVTT preserves no-break spaces and Unicode direction marks.
+        let webVTT = withoutTags.replacingOccurrences(of: "&nbsp;", with: "\u{00A0}")
+            .replacingOccurrences(of: "&lrm;", with: "\u{200E}")
+            .replacingOccurrences(of: "&rlm;", with: "\u{200F}")
+        return DocumentText.decodeEntities(webVTT)
     }
     private static func plainText(_ text: String) -> String {
-        DocumentText.decodeEntities(text.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression))
+        let withoutTags = text.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+        // Direction marks keep right-to-left lines readable in the exported text too.
+        return DocumentText.decodeEntities(withoutTags.replacingOccurrences(of: "&lrm;", with: "\u{200E}").replacingOccurrences(of: "&rlm;", with: "\u{200F}"))
     }
 }
 
@@ -117,14 +124,39 @@ enum DocumentText {
         return valid.replacingOccurrences(of: "&", with: "&amp;").replacingOccurrences(of: "<", with: "&lt;").replacingOccurrences(of: ">", with: "&gt;").replacingOccurrences(of: "\"", with: "&quot;").replacingOccurrences(of: "'", with: "&apos;")
     }
     static func decodeEntities(_ text: String) -> String {
+        // One pass over the original text: a decoded "&" must never start
+        // another reference ("&#38;lt;" is the literal text "&lt;").
         var result = text
-        let pattern = try! NSRegularExpression(pattern: #"&#(x[0-9A-Fa-f]+|\d+);"#)
+        let named = ["nbsp": " ", "lt": "<", "gt": ">", "quot": "\"", "apos": "'", "amp": "&"]
+        let pattern = try! NSRegularExpression(pattern: #"&(#x[0-9A-Fa-f]+|#\d+|nbsp|lt|gt|quot|apos|amp);"#)
         for match in pattern.matches(in: result, range: NSRange(result.startIndex..., in: result)).reversed() {
-            let number = (result as NSString).substring(with: match.range(at: 1))
-            let value = number.first == "x" ? UInt32(number.dropFirst(), radix: 16) : UInt32(number)
-            if let value, let scalar = UnicodeScalar(value), let range = Range(match.range, in: result) { result.replaceSubrange(range, with: String(scalar)) }
+            let name = (result as NSString).substring(with: match.range(at: 1))
+            let replacement: String?
+            if let value = named[name] { replacement = value }
+            else {
+                let number = name.dropFirst()
+                let value = number.first == "x" ? UInt32(number.dropFirst(), radix: 16) : UInt32(number)
+                replacement = value.flatMap(UnicodeScalar.init).map { String($0) }
+            }
+            if let replacement, let range = Range(match.range, in: result) { result.replaceSubrange(range, with: replacement) }
         }
-        for (entity, value) in [("&nbsp;", " "), ("&lt;", "<"), ("&gt;", ">"), ("&quot;", "\""), ("&apos;", "'"), ("&amp;", "&")] { result = result.replacingOccurrences(of: entity, with: value) }
         return result
+    }
+    /// Reports whether XML data declares entities in its DTD. Only the prolog
+    /// is read: parsing stops at the root element, before any expansion, and
+    /// the parser detects UTF-16 itself, unlike a UTF-8 text search.
+    static func declaresXMLEntities(_ data: Data) -> Bool {
+        final class Gate: NSObject, XMLParserDelegate {
+            var declared = false
+            func parser(_ parser: XMLParser, foundInternalEntityDeclarationWithName name: String, value: String?) { declared = true; parser.abortParsing() }
+            func parser(_ parser: XMLParser, foundExternalEntityDeclarationWithName name: String, publicID: String?, systemID: String?) { declared = true; parser.abortParsing() }
+            func parser(_ parser: XMLParser, foundUnparsedEntityDeclarationWithName name: String, publicID: String?, systemID: String?, notationName: String?) { declared = true; parser.abortParsing() }
+            func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName: String?, attributes: [String: String] = [:]) { parser.abortParsing() }
+        }
+        let parser = XMLParser(data: data), gate = Gate()
+        parser.shouldResolveExternalEntities = false
+        parser.delegate = gate
+        _ = parser.parse()
+        return gate.declared
     }
 }

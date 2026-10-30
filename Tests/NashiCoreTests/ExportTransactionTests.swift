@@ -48,6 +48,26 @@ final class ExportTransactionTests:XCTestCase {
         XCTAssertEqual(try FileManager.default.contentsOfDirectory(at:destination,includingPropertiesForKeys:nil).map(\.lastPathComponent),["Report.txt"])
     }
 
+    func testDanglingLinksInDestinationKeepTheirNamesAndDoNotBlockPublishing() throws {
+        let destination=root.appendingPathComponent("Exports",isDirectory:true)
+        try FileManager.default.createDirectory(at:destination,withIntermediateDirectories:true)
+        for name in ["Report.txt","Pages"] {
+            try FileManager.default.createSymbolicLink(atPath:destination.appendingPathComponent(name).path,withDestinationPath:"missing-\(name)")
+        }
+        let transaction=ExportTransaction();defer { transaction.cleanUp() }
+        let area=try transaction.makeArea(destination:destination)
+        let report=area.directory.appendingPathComponent("Report.txt"),folder=area.directory.appendingPathComponent("Pages",isDirectory:true)
+        try FileManager.default.createDirectory(at:folder,withIntermediateDirectories:true)
+        let page=folder.appendingPathComponent("Page 001.txt")
+        try Data("new report".utf8).write(to:report);try Data("a page".utf8).write(to:page)
+        try transaction.record([report,page],in:area)
+        let outputs=try transaction.publish(token:.init())
+        XCTAssertEqual(outputs.map{$0.path.replacingOccurrences(of:destination.path+"/",with:"")},["Report 2.txt","Pages 2/Page 001.txt"])
+        for name in ["Report.txt","Pages"] {
+            XCTAssertEqual(try FileManager.default.destinationOfSymbolicLink(atPath:destination.appendingPathComponent(name).path),"missing-\(name)")
+        }
+    }
+
     func testOptimizedSymlinkInputsProduceIndependentRegularFilesForCompressionAndMetadataRemoval() throws {
         let source=root.appendingPathComponent("Source.png")
         let context=try XCTUnwrap(CGContext(data:nil,width:8,height:8,bitsPerComponent:8,bytesPerRow:32,space:CGColorSpaceCreateDeviceRGB(),bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue))

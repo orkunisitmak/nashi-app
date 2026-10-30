@@ -27,7 +27,7 @@ public static class FileActions
         var folder=Directory.Exists(path)?path:Path.GetDirectoryName(path)!;
         var terminal=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Microsoft","WindowsApps","wt.exe");
         var info=new ProcessStartInfo(File.Exists(terminal)?terminal:Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System),"WindowsPowerShell","v1.0","powershell.exe")){UseShellExecute=false,WorkingDirectory=folder};
-        if(File.Exists(terminal)){info.ArgumentList.Add("-d");info.ArgumentList.Add(folder);}Process.Start(info);
+        if(File.Exists(terminal)){info.ArgumentList.Add("-d");info.ArgumentList.Add(folder);}Process.Start(info)?.Dispose();
     }
     public static async Task<IReadOnlyList<string>> MoveAsync(IReadOnlyList<string> inputs,string destination,IProgress<OperationProgress>? progress,CancellationToken token)
     {

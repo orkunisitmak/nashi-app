@@ -16,6 +16,33 @@ public partial class App:Application
         DispatcherUnhandledException+=(_,error)=>{var folder=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");if(folder is not null){Directory.CreateDirectory(folder);File.WriteAllText(Path.Combine(folder,"dispatcher-error.txt"),error.Exception.ToString());error.Handled=true;Shutdown(1);}};
         base.OnStartup(e);
         try{UpdateInstaller.CleanupStale();}catch(Exception error)when(error is IOException or UnauthorizedAccessException or System.Security.SecurityException){Console.Error.WriteLine(error);}
+        try{UpdateInstaller.CleanupStale();}catch(Exception error)when(error is IOException or UnauthorizedAccessException or System.Security.SecurityException){Console.Error.WriteLine(error);}
+        if(e.Args.Contains("--smoke-test-interactions"))
+        {
+            IsSmokeTest=true;ShutdownMode=ShutdownMode.OnExplicitShutdown;
+            var directory=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY")??Path.Combine(Path.GetTempPath(),"Nashi-Interactions-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(directory);
+            var failures=new List<string>();var checks=0;var finished=0;
+            void Report(IEnumerable<string> errors)=>File.WriteAllText(Path.Combine(directory,"interactions.json"),System.Text.Json.JsonSerializer.Serialize(new{checks=Volatile.Read(ref checks),failures=errors}));
+            using var watchdog=new System.Threading.Timer(_=>
+            {
+                if(Interlocked.CompareExchange(ref finished,1,0)!=0)return;
+                try{Report(["Focused native interaction checks timed out."]);}
+                finally
+                {
+                    try{DesktopInput.HoldMouse(false);DesktopInput.Hold(System.Windows.Input.Key.LeftCtrl,false);}catch{}
+                    Environment.Exit(1);
+                }
+            },null,Timeout.Infinite,Timeout.Infinite);
+            try
+            {
+                var timeout=120;var option=Array.IndexOf(e.Args,"--timeout-seconds");
+                if(option>=0&&(option+1>=e.Args.Length||!int.TryParse(e.Args[option+1],out timeout)||timeout is <1 or >120))throw new ArgumentException("Interaction timeout must be between 1 and 120 seconds.");
+                watchdog.Change(TimeSpan.FromSeconds(timeout),Timeout.InfiniteTimeSpan);
+                InteractionChecks.Run(directory,(passed,message)=>{Interlocked.Increment(ref checks);if(!passed)failures.Add(message);});
+            }
+            catch(Exception error){failures.Add(error.ToString());}
+            if(Interlocked.CompareExchange(ref finished,1,0)==0){Report(failures);Shutdown(failures.Count==0?0:1);}return;
+        }
         if(e.Args.Contains("--ui-audit"))
         {
             IsSmokeTest=true;ShutdownMode=ShutdownMode.OnExplicitShutdown;
@@ -52,7 +79,9 @@ public partial class App:Application
         if(e.Args.Length==1&&e.Args[0]=="--install-update"){ShutdownMode=ShutdownMode.OnExplicitShutdown;_ = InstallUpdateAsync();return;}
         instance=new SingleInstance();Exit+=(_,_)=>instance.Dispose();var paths=e.Args.Where(p=>File.Exists(p)||Directory.Exists(p)).ToArray();
         if(!instance.Primary){ShutdownMode=ShutdownMode.OnExplicitShutdown;_ = ForwardAndExit(paths);return;}
-        var window=new MainWindow(paths,offerToolSetup:!e.Args.Contains("--background"));instance.Start(incoming=>Dispatcher.BeginInvoke(()=>window.AcceptLaunch(incoming)));window.Show();
+        // Float shelves have no owner. Closing Nashi (not hiding it to the tray) must end the
+        // process instead of leaving it behind a shelf with a closed main window.
+        var window=new MainWindow(paths,offerToolSetup:!e.Args.Contains("--background"));MainWindow=window;ShutdownMode=ShutdownMode.OnMainWindowClose;instance.Start(incoming=>Dispatcher.BeginInvoke(()=>window.AcceptLaunch(incoming)));window.Show();
         windowManagement=new WindowManagement(notice:message=>MessageBox.Show(L10n.Text(message),L10n.Text("Window arrangement"),MessageBoxButton.OK,MessageBoxImage.Information),isEnabled:()=>window.WindowManagementEnabled);
     }
     internal static void UseSavedLanguage(Func<string>? readLanguage=null)

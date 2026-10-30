@@ -12,6 +12,8 @@ public sealed record ImageOptions(int? Width=null,int? Height=null,int Rotation=
     public string RedactionStyle{get;init;}="solid";public Rect[] Redactions{get;init;}=[];
     public long? TargetBytes{get;init;}public double? ReductionPercent{get;init;}
     public bool FlipHorizontal{get;init;}public bool FlipVertical{get;init;}
+    // Size presets apply to each image's own dimensions rather than the first image's.
+    public double? Scale{get;init;}public int? LongestEdge{get;init;}
     public string? EncoderPath{get;init;}
 }
 public static partial class ImageEngine
@@ -65,13 +67,16 @@ public static partial class ImageEngine
                     if(width<1||height<1||width>30000||height>30000||(long)width*height>100_000_000)throw new ArgumentException("Choose dimensions between 1 and 30,000 pixels (100 MP limit).");
                     image=new TransformedBitmap(image,new ScaleTransform((double)width/image.PixelWidth,(double)height/image.PixelHeight));break;
                 case "crop":if(options.Crop is not {} crop||crop.Width<1||crop.Height<1||crop.X<0||crop.Y<0||crop.X+crop.Width>image.PixelWidth||crop.Y+crop.Height>image.PixelHeight)throw new ArgumentException("Drag a crop inside the image.");image=new CroppedBitmap(image,crop);break;
-                case "rotate":image=new TransformedBitmap(image,new RotateTransform(options.Rotation));break;
+                case "rotate":image=Rotate(image,options.Rotation);break;
                 case "flip":image=new TransformedBitmap(image,new ScaleTransform(options.Horizontal?-1:1,options.Horizontal?1:-1));break;
                 case "editImage":
                     image=FromPng(PhotoCodec.Adjust(PngBytes(image),options.Adjustments));
                     image=TransformPhoto(image,options);break;
                 case "frameImage":image=Frame(image,options.Frame);ext="png";break;
-                case "redactImage":image=Redact(image,options.Redactions,options.RedactionStyle);ext="png";break;
+                // Like macOS, keep the source format: redacted pixels are replaced before encoding, and a
+                // 48 MP JPEG re-saved as PNG took ~5-10 s and grew from 8 MB to 52 MB. Writing HEIC needs the
+                // media tools on Windows, so without them a HEIC source keeps the previous PNG output.
+                case "redactImage":image=Redact(image,options.Redactions,options.RedactionStyle);if(ext=="heic"&&options.EncoderPath is null)ext="png";break;
                 case "convert":case "compress":case "removeMetadata":case "annotate":break;
                 default:throw new ArgumentException("Unsupported image tool.");
             }
@@ -81,11 +86,33 @@ public static partial class ImageEngine
         }
         return tx.Publish(outputs,token);
     }
+    // Flip, turn, then size, as on macOS: Width/Height describe the finished image,
+    // so Rotate Left/Right swapping the fields keeps the photo's proportions.
     internal static BitmapSource TransformPhoto(BitmapSource image,ImageOptions options)
     {
-        if(options.Width is {} ew&&options.Height is {} eh&&(ew!=image.PixelWidth||eh!=image.PixelHeight)){if(ew<1||eh<1||ew>30000||eh>30000||(long)ew*eh>100_000_000)throw new ArgumentException("Choose valid image dimensions.");image=new TransformedBitmap(image,new ScaleTransform((double)ew/image.PixelWidth,(double)eh/image.PixelHeight));}
         if(options.FlipHorizontal||options.FlipVertical)image=new TransformedBitmap(image,new ScaleTransform(options.FlipHorizontal?-1:1,options.FlipVertical?-1:1));
-        if(options.Rotation%360!=0)image=new TransformedBitmap(image,new RotateTransform(options.Rotation));image.Freeze();return image;
+        image=Rotate(image,options.Rotation);var (ew,eh)=TargetSize(image,options);
+        if(ew!=image.PixelWidth||eh!=image.PixelHeight){if(ew<1||eh<1||ew>30000||eh>30000||(long)ew*eh>100_000_000)throw new ArgumentException("Choose valid image dimensions.");image=new TransformedBitmap(image,new ScaleTransform((double)ew/image.PixelWidth,(double)eh/image.PixelHeight));}
+        image.Freeze();return image;
+    }
+    // One named side keeps the aspect ratio; presets scale every image by its own size.
+    private static (int Width,int Height) TargetSize(BitmapSource image,ImageOptions options)
+    {
+        int w=image.PixelWidth,h=image.PixelHeight;
+        var factor=options.Scale??(options.LongestEdge is {} edge?(double?)Math.Min(1,(double)edge/Math.Max(w,h)):null);
+        if(factor is {} f)return(Math.Max(1,(int)Math.Round(w*f)),Math.Max(1,(int)Math.Round(h*f)));
+        return(options.Width,options.Height) switch{({} width,{} height)=>(width,height),({} width,null)=>(width,Math.Max(1,(int)Math.Round(h*(double)width/w))),(null,{} height)=>(Math.Max(1,(int)Math.Round(w*(double)height/h)),height),_=>(w,h)};
+    }
+    // TransformedBitmap only accepts quarter turns. Other angles are drawn clockwise
+    // onto a transparent canvas large enough for the turned corners.
+    internal static BitmapSource Rotate(BitmapSource image,int degrees)
+    {
+        var angle=((degrees%360)+360)%360;if(angle==0)return image;if(angle%90==0)return new TransformedBitmap(image,new RotateTransform(angle));
+        var radians=angle*Math.PI/180;var cos=Math.Abs(Math.Cos(radians));var sin=Math.Abs(Math.Sin(radians));
+        var width=(int)Math.Ceiling(image.PixelWidth*cos+image.PixelHeight*sin);var height=(int)Math.Ceiling(image.PixelWidth*sin+image.PixelHeight*cos);
+        if(width>30000||height>30000||(long)width*height>100_000_000)throw new ArgumentException("Choose valid image dimensions.");
+        var visual=new DrawingVisual();using(var context=visual.RenderOpen()){context.PushTransform(new RotateTransform(angle,width/2d,height/2d));context.DrawImage(image,new Rect((width-image.PixelWidth)/2d,(height-image.PixelHeight)/2d,image.PixelWidth,image.PixelHeight));}
+        var result=new RenderTargetBitmap(width,height,96,96,PixelFormats.Pbgra32);result.Render(visual);result.Freeze();return result;
     }
     public static void Save(BitmapSource image,string output,string format,int quality=85,string? encoderPath=null,CancellationToken token=default)
     {
@@ -95,8 +122,11 @@ public static partial class ImageEngine
         // can reach the encoder through a retained decoder frame.
         BitmapSource converted=image.Format==PixelFormats.Bgra32?image:new FormatConvertedBitmap(image,PixelFormats.Bgra32,null,0);
         var stride=checked(converted.PixelWidth*4);var pixels=new byte[checked(stride*converted.PixelHeight)];converted.CopyPixels(pixels,stride,0);
+        // JPEG has no alpha and WPF drops it unflattened, turning transparent areas black.
+        if(format=="jpg")for(var n=0;n<pixels.Length;n+=4){var alpha=pixels[n+3];if(alpha==255)continue;for(var c=0;c<3;c++)pixels[n+c]=(byte)((pixels[n+c]*alpha+255*(255-alpha)+127)/255);pixels[n+3]=255;}
         image=BitmapSource.Create(converted.PixelWidth,converted.PixelHeight,96,96,PixelFormats.Bgra32,null,pixels,stride);image.Freeze();
-        if(format is "webp" or "heic" or "avif"){PhotoCodec.EncodePng(PngBytes(image),output,format,quality,encoderPath,token);return;}
+        // Hand the raw pixels to Magick: an intermediate WPF PNG of a 48 MP photo took 15-19 s alone.
+        if(format is "webp" or "heic" or "avif"){PhotoCodec.EncodePixels(pixels,image.PixelWidth,image.PixelHeight,output,format,quality,encoderPath,token);return;}
         if(format=="pdf")
         {
             using var png=new MemoryStream();var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(image));encoder.Save(png);png.Position=0;

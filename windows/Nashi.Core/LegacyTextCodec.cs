@@ -8,10 +8,48 @@ public static class LegacyTextCodec
     static LegacyTextCodec()=>Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
     public static string Decode(byte[] data)
     {
-        if(data.AsSpan().StartsWith(new byte[]{0xff,0xfe}))return Encoding.Unicode.GetString(data.AsSpan(2));if(data.AsSpan().StartsWith(new byte[]{0xfe,0xff}))return Encoding.BigEndianUnicode.GetString(data.AsSpan(2));
-        if(data.Length>=4&&data.Length%2==0){var count=Math.Min(data.Length,128*1024);var odd=0;var even=0;for(var i=0;i<count;i+=2){if(data[i]==0)even++;if(data[i+1]==0)odd++;}if(odd*6>=count&&odd>even*2)return Encoding.Unicode.GetString(data);if(even*6>=count&&even>odd*2)return Encoding.BigEndianUnicode.GetString(data);}
-        try{return new UTF8Encoding(false,true).GetString(data).TrimStart('\uFEFF');}catch(DecoderFallbackException){return Encoding.GetEncoding(1252).GetString(data);}
+        if(Unicode(data,data.Length,out var bom) is {} unicode)return unicode.GetString(data.AsSpan(bom));
+        try{return new UTF8Encoding(false,true).GetString(data).TrimStart('\uFEFF');}catch(DecoderFallbackException){return Ansi.GetString(data);}
     }
+    // Decode for files, streamed to UTF-8 so large tables are never held in memory.
+    public static async Task ToUtf8Async(string input,string output,CancellationToken token=default)
+    {
+        await using var source=File.OpenRead(input);var head=new byte[128*1024];var count=await source.ReadAtLeastAsync(head,head.Length,false,token);
+        var encoding=Unicode(head.AsSpan(0,count),source.Length,out var bom);
+        if(encoding is null){source.Position=0;encoding=await IsUtf8Async(source,token)?new UTF8Encoding(false):Ansi;}
+        source.Position=bom;using var reader=new StreamReader(source,encoding,false);await using var writer=new StreamWriter(output,false,new UTF8Encoding(false));
+        var buffer=new char[64*1024];var first=true;
+        for(int read;(read=await reader.ReadAsync(buffer,token))>0;first=false){var skip=first&&buffer[0]=='\uFEFF'?1:0;await writer.WriteAsync(buffer.AsMemory(skip,read-skip),token);}
+    }
+    // UTF-32 and UTF-16 by byte order mark, or UTF-16 without one by its NUL bytes.
+    private static Encoding? Unicode(ReadOnlySpan<byte> head,long length,out int bom)
+    {
+        bom=4;if(head.StartsWith(new byte[]{0xff,0xfe,0,0}))return new UTF32Encoding(false,false);if(head.StartsWith(new byte[]{0,0,0xfe,0xff}))return new UTF32Encoding(true,false);
+        bom=2;if(head.StartsWith(new byte[]{0xff,0xfe}))return new UnicodeEncoding(false,false);if(head.StartsWith(new byte[]{0xfe,0xff}))return new UnicodeEncoding(true,false);
+        bom=0;if(length>=4&&length%2==0){var count=(int)Math.Min(Math.Min(length,head.Length),128*1024)&~1;var odd=0;var even=0;for(var i=0;i<count;i+=2){if(head[i]==0)even++;if(head[i+1]==0)odd++;}if(odd*6>=count&&odd>even*2)return new UnicodeEncoding(false,false);if(even*6>=count&&even>odd*2)return new UnicodeEncoding(true,false);}
+        return null;
+    }
+    private static async Task<bool> IsUtf8Async(Stream stream,CancellationToken token)
+    {
+        var decoder=new UTF8Encoding(false,true).GetDecoder();var buffer=new byte[64*1024];
+        try{for(int read;(read=await stream.ReadAsync(buffer,token))>0;)decoder.GetCharCount(buffer,0,read,false);decoder.GetCharCount([],0,0,true);return true;}
+        catch(DecoderFallbackException){return false;}
+    }
+    // Notepad, Excel and 7-Zip write legacy text and ZIP names in the system code pages
+    // ("Language for non-Unicode programs"), which can differ from the regional format:
+    // 1254/857 in Turkish (\u011F \u015F \u0131 \u0130), 1252/437 in English. When Windows uses UTF-8 for those,
+    // and on other platforms, the current culture is the best guess.
+    internal static (int Ansi,int Oem) SystemCodePages{get;set;}=DefaultCodePages();
+    private static (int,int) DefaultCodePages()
+    {
+        if(OperatingSystem.IsWindows()&&GetACP() is var ansi&&ansi!=65001)return((int)ansi,(int)GetOEMCP());
+        var text=System.Globalization.CultureInfo.CurrentCulture.TextInfo;return(text.ANSICodePage,text.OEMCodePage);
+    }
+    [System.Runtime.InteropServices.DllImport("kernel32.dll")]private static extern uint GetACP();
+    [System.Runtime.InteropServices.DllImport("kernel32.dll")]private static extern uint GetOEMCP();
+    internal static Encoding Oem=>CodePage(SystemCodePages.Oem,437);
+    private static Encoding Ansi=>CodePage(SystemCodePages.Ansi,1252);
+    private static Encoding CodePage(int codePage,int fallback){try{return Encoding.GetEncoding(codePage);}catch(Exception error)when(error is ArgumentException or NotSupportedException){return Encoding.GetEncoding(fallback);}}
     public static (byte[] Bytes,string Extension) Clipping(byte[] data,byte[]? resourceFork=null)
     {
         if(data.Length>200_000_000)throw new InvalidDataException("The clipping exceeds 200 MB.");

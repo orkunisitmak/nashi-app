@@ -22,7 +22,11 @@ import AppKit
         guard !editing,!(window.firstResponder is NSButton) else{return false}
         if [125,126].contains(event.keyCode) {navigateLibrary(event.keyCode==125 ? 1:-1);return true}
         if [49,36,76].contains(event.keyCode),let row=filteredHistory.first(where:{$0.id==selectedHistoryID}) ?? filteredHistory.first {
-            if event.keyCode==49 {preview(row)}else if !working {inputs=row.outputs.map{URL(fileURLWithPath:$0)}.filter{FileManager.default.fileExists(atPath:$0.path)};libraryVisible=false};return true
+            if event.keyCode==49 {preview(row)}else if !working {
+                // Match the disabled Reuse button: a row whose files are all gone keeps the current selection.
+                let available=row.outputs.map{URL(fileURLWithPath:$0)}.filter{FileManager.default.fileExists(atPath:$0.path)}
+                if !available.isEmpty {inputs=available;libraryVisible=false}
+            };return true
         };return false
     }
 }

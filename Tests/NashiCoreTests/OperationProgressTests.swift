@@ -13,6 +13,12 @@ final class OperationProgressTests:XCTestCase {
         for chunk in ["out_ti","me_us=1000000\nframe=1\nout_time_us=", "5000000\nout_time_us=2000000\nout_time_us=N/A\n", "out_time_us=nan\nout_time_us=-4\nout_time_us=20000000\nprogress=end\n"] { parser.append(Data(chunk.utf8)) }
         XCTAssertEqual(events.values.map(\.0),[0.1,0.5,0.995])
     }
+    func testDiscardedOverlongLineTailIsNotParsedAsProgress() {
+        let events=Events(),parser=FFmpegProgressParser(duration:10,progress:{ events.add($0,$1) })
+        parser.append(Data(String(repeating:"x",count:20_000).utf8))
+        parser.append(Data("out_time_us=9000000\nout_time_us=1000000\n".utf8))
+        XCTAssertEqual(events.values.map(\.0),[0.1])
+    }
     func testUnknownDurationAndNestedScopesNeverInventPercentage() {
         for duration in [Double?.none,0,-1,.infinity,.nan] {
             let events=Events(),parser=FFmpegProgressParser(duration:duration,progress:{ events.add($0,$1) })
@@ -38,6 +44,29 @@ final class OperationProgressTests:XCTestCase {
         }
         XCTAssertEqual(seen.wait(timeout:.now()+0.5),.success,"A short progress line was buffered until process exit")
         release.signal();wait(for:[finished],timeout:4)
+    }
+    func testTerminateAllStopsRunningChildrenWithoutTheirTokens() throws {
+        // App termination cannot wait for the token-polling thread; terminateAll must stop the child itself.
+        let directory=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:directory) }
+        let ready=directory.appendingPathComponent("ready"),hold=directory.appendingPathComponent("hold")
+        XCTAssertEqual(mkfifo(ready.path,0o600),0);XCTAssertEqual(mkfifo(hold.path,0o600),0)
+        let outcome=Events(),finished=DispatchSemaphore(value:0)
+        DispatchQueue.global().async {
+            defer { finished.signal() }
+            do { try ProcessRunner.run(URL(fileURLWithPath:"/bin/sh"),["-c","echo $$ > \"$0\"; read -r _ < \"$1\"",ready.path,hold.path]);outcome.add(0,"completed") }
+            catch { outcome.add(1,"\(error)") }
+        }
+        let reader=try XCTUnwrap(FileHandle(forReadingAtPath:ready.path))   // blocks until the child has started
+        let pid=try XCTUnwrap(pid_t(String(decoding:reader.readDataToEndOfFile(),as:UTF8.self).trimmingCharacters(in:.whitespacesAndNewlines)))
+        try reader.close()
+        ProcessRunner.terminateAll()
+        if finished.wait(timeout:.now()+10) == .timedOut {
+            let fd=open(hold.path,O_WRONLY|O_NONBLOCK);if fd>=0 { close(fd) }   // release the child so it cannot leak
+            _=finished.wait(timeout:.now()+5);return XCTFail("terminateAll left the child running")
+        }
+        XCTAssertEqual(outcome.values.map(\.0),[1],"\(outcome.values)")
+        XCTAssertFalse(kill(pid,0)==0)
+        ProcessRunner.terminateAll()   // nothing left to stop; must be a no-op
     }
     func testDownloadProcessStreamsShortProgressAndStageLines() throws {
         let seen=DispatchSemaphore(value:0),events=Events()

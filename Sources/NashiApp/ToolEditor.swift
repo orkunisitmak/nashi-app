@@ -392,7 +392,7 @@ struct ToolEditor:View {
             Picker("Canvas",selection:collage(\.aspectRatio)) { Text("Square · 1:1").tag(1.0);Text("Landscape · 16:9").tag(16.0/9);Text("Portrait · 9:16").tag(9.0/16);Text("Portrait · 4:5").tag(4.0/5) }
             number("Canvas width",value:collage(\.width))
             Picker("Image fit",selection:collage(\.imageFit)) { Text("Fill cells (crop edges)").tag(ImageFit.fill);Text("Fit whole image").tag(ImageFit.fit) }
-            number("Spacing",value:collage(\.spacing));number("Outer padding",value:collage(\.outerPadding));slider("Corners",value:collage(\.cornerRadius),range:0...100)
+            number("Spacing",value:collage(\.spacing));number("Outer padding",value:collage(\.outerPadding));slider("Corners",value:collage(\.cornerRadius),range:0...100,reset:CollageOptions().cornerRadius)
             ColorPicker("Background",selection:colorBinding(collage(\.backgroundColor),preservingOpacity:true))
             HStack { Button("Background Image…") { let panel=NSOpenPanel();if panel.runModal() == .OK { var c=options.collage ?? .init();c.backgroundImage=panel.url;options.collage=c } };if options.collage?.backgroundImage != nil { Button("Remove Image") { var c=options.collage ?? .init();c.backgroundImage=nil;options.collage=c } } }
             orderControls
@@ -458,7 +458,7 @@ struct ToolEditor:View {
     }
     var pdfControls:some View {
         VStack(alignment:.leading,spacing:14) {
-            LazyVGrid(columns:[GridItem(.adaptive(minimum:110))],spacing:14) { ForEach(Array(pdfEditor.pages.enumerated()),id:\.offset) { index,page in VStack { Image(nsImage:page.thumbnail(of:NSSize(width:100,height:140),for:.mediaBox)).resizable().scaledToFit().frame(height:140);Text("\(index+1)").font(.caption) }.padding(8).background(pdfEditor.selectedPage==index ? Color.nashi.opacity(0.2):Color.primary.opacity(0.03)).cornerRadius(8).onTapGesture{pdfEditor.select(index)} } }
+            LazyVGrid(columns:[GridItem(.adaptive(minimum:110))],spacing:14) { ForEach(Array(pdfEditor.pages.enumerated()),id:\.offset) { index,page in VStack { Image(nsImage:page.thumbnail(of:NSSize(width:100,height:140),for:.cropBox)).resizable().scaledToFit().frame(height:140);Text("\(index+1)").font(.caption) }.padding(8).background(pdfEditor.selectedPage==index ? Color.nashi.opacity(0.2):Color.primary.opacity(0.03)).cornerRadius(8).onTapGesture{pdfEditor.select(index)} } }
             HStack {
                 Button("Rotate") { pdfEditor.rotateSelected() }.disabled(!pdfEditor.hasSelection)
                 Button("Duplicate") { pdfEditor.duplicateSelected() }.disabled(!pdfEditor.hasSelection)
@@ -704,8 +704,11 @@ struct ToolEditor:View {
     }
     func setCrop(_ rect:EditRect) {
         var r=rect
-        r.x=r.x.rounded(.down);r.y=r.y.rounded(.down)
-        r.width=r.width.rounded(.down);r.height=r.height.rounded(.down)
+        // Whole pixels, rounded down, except that floating-point noise just under an
+        // integer (a locked ratio's 0.9999999999999999) keeps that integer.
+        func pixels(_ v:Double)->Double { let n=v.rounded();return abs(v-n)<1e-6 ? n:v.rounded(.down) }
+        r.x=pixels(r.x);r.y=pixels(r.y)
+        r.width=max(1,pixels(r.width));r.height=max(1,pixels(r.height))
         options.crop=r;width=Int(r.width);height=Int(r.height)
     }
     func previewChannel(_ channel:Int) {
@@ -830,7 +833,7 @@ struct ToolEditor:View {
     func collage<T>(_ key:WritableKeyPath<CollageOptions,T>)->Binding<T> { Binding(get:{(options.collage ?? .init())[keyPath:key]},set:{var value=options.collage ?? .init();value[keyPath:key]=$0;options.collage=value}) }
     func relative(_ value:Binding<Double>)->Binding<Double> { Binding(get:{value.wrappedValue-1},set:{value.wrappedValue=$0+1}) }
     func number(_ label:String,value:Binding<Int>)->some View { HStack { Text(label);TextField("",value:value,format:.number).textFieldStyle(.roundedBorder).frame(minWidth:60) } }
-    func slider(_ title:String,value:Binding<Double>,range:ClosedRange<Double>,unit:String="")->some View { HStack { LText(title).font(.callout).frame(width:105,alignment:.leading);Slider(value:value,in:range).tint(.nashi);Text("\(value.wrappedValue,specifier:"%.2f") \(unit)").font(.caption.monospacedDigit()).frame(width:70,alignment:.trailing);Button { value.wrappedValue=["Playback speed":1,"Target loudness":-16,"Loudness range":11,"True peak limit":-1.5,"Left volume":1,"Right volume":1,"Padding":160,"Corners":24,"Shadow":24,"Stroke width":3,"Text size":24][title] ?? 0 } label:{Image(systemName:"arrow.counterclockwise").font(.caption)}.buttonStyle(.plain) } }
+    func slider(_ title:String,value:Binding<Double>,range:ClosedRange<Double>,unit:String="",reset:Double?=nil)->some View { HStack { LText(title).font(.callout).frame(width:105,alignment:.leading);Slider(value:value,in:range).tint(.nashi);Text("\(value.wrappedValue,specifier:"%.2f") \(unit)").font(.caption.monospacedDigit()).frame(width:70,alignment:.trailing);Button { value.wrappedValue=reset ?? ["Playback speed":1,"Target loudness":-16,"Loudness range":11,"True peak limit":-1.5,"Left volume":1,"Right volume":1,"Padding":160,"Corners":24,"Shadow":24,"Stroke width":3,"Text size":24,"Silence threshold":-50][title] ?? 0 } label:{Image(systemName:"arrow.counterclockwise").font(.caption)}.buttonStyle(.plain) } }
     func colorBinding(_ string:Binding<String>,preservingOpacity:Bool=false)->Binding<Color> {
         Binding(get:{Color(cgColor:ImageEngine.color(string.wrappedValue))},set:{
             string.wrappedValue=preservingOpacity ? ImageColorCodec.backgroundHex(NSColor($0)):hex($0)
@@ -839,7 +842,10 @@ struct ToolEditor:View {
     func hex(_ color:Color)->String { guard let rgb=NSColor(color).usingColorSpace(.sRGB) else{return "#FFFFFF"};return String(format:"#%02X%02X%02X",Int(rgb.redComponent*255),Int(rgb.greenComponent*255),Int(rgb.blueComponent*255)) }
     func timeLabel(_ time:Double)->String {
         guard time.isFinite,time>=0,time<Double(Int.max) else { return "—" }
-        return String(format:"%02ld:%06.3f",Int(time)/60,time.truncatingRemainder(dividingBy:60))
+        // Round to the displayed millisecond first so 59.9996 carries into the minute.
+        let rounded=(time*1000).rounded()/1000
+        guard rounded<Double(Int.max) else { return "—" }
+        return String(format:"%02ld:%06.3f",Int(rounded)/60,rounded.truncatingRemainder(dividingBy:60))
     }
 }
 

@@ -9,9 +9,10 @@ public static partial class ImageEngine
 {
     internal static byte[] PngBytes(BitmapSource source){var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(source));using var stream=new MemoryStream();encoder.Save(stream);return stream.ToArray();}
     internal static BitmapSource FromPng(byte[] png){using var stream=new MemoryStream(png);var bitmap=BitmapFrame.Create(stream,BitmapCreateOptions.None,BitmapCacheOption.OnLoad);bitmap.Freeze();return bitmap;}
+    private static void CheckCanvas(int width,int height){if(width<1||height<1||width>30000||height>30000||(long)width*height>100_000_000)throw new ArgumentException("Choose a canvas within 100 MP and 30,000 pixels.");}
     private static BitmapSource Render(int width,int height,Action<DrawingContext> draw)
     {
-        if(width<1||height<1||width>30000||height>30000||(long)width*height>100_000_000)throw new ArgumentException("Choose a canvas within 100 MP and 30,000 pixels.");
+        CheckCanvas(width,height);
         var visual=new DrawingVisual();using(var context=visual.RenderOpen())draw(context);var result=new RenderTargetBitmap(width,height,96,96,PixelFormats.Pbgra32);result.Render(visual);result.Freeze();return result;
     }
     internal static Brush ColorBrush(string color){try{return new SolidColorBrush((Color)ColorConverter.ConvertFromString(color));}catch(FormatException){throw new ArgumentException("Choose a hex background color, such as #FFFFFF or #00FFFFFF.");}}
@@ -58,6 +59,10 @@ public static partial class ImageEngine
     internal static BitmapSource Redact(BitmapSource image,Rect[] regions,string style)
     {
         if(regions.Length==0)throw new ArgumentException("Draw at least one area to redact.");
+        // Load can return a lazy EXIF-rotated chain; materialize it once so drawing and every crop reuse the pixels.
+        // Check the canvas first so an oversized source is rejected before its pixels are cached.
+        CheckCanvas(image.PixelWidth,image.PixelHeight);
+        if(image is not (BitmapFrame or CachedBitmap)){image=new CachedBitmap(image,BitmapCreateOptions.None,BitmapCacheOption.OnLoad);image.Freeze();}
         return Render(image.PixelWidth,image.PixelHeight,g=>
         {
             g.DrawImage(image,new Rect(0,0,image.PixelWidth,image.PixelHeight));foreach(var r in regions)

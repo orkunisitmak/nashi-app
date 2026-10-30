@@ -70,11 +70,19 @@ final class ExportTransaction {
     }
 
     private func uniqueDestination(for source:URL,in parent:URL) -> URL {
+        // lstat-based: a dangling link still occupies its name and moveItem refuses it.
+        let occupied={ (url:URL) in (try? self.manager.attributesOfItem(atPath:url.path)) != nil }
         if (try? source.resourceValues(forKeys:[.isDirectoryKey]).isDirectory) != true {
-            return OutputFiles.unique(for:parent.appendingPathComponent(source.lastPathComponent),extension:source.pathExtension,directory:parent)
+            let stem=source.deletingPathExtension().lastPathComponent,ext=source.pathExtension.lowercased()
+            var destination=OutputFiles.unique(for:parent.appendingPathComponent(source.lastPathComponent),extension:source.pathExtension,directory:parent)
+            var number=2
+            while occupied(destination) {
+                destination=parent.appendingPathComponent("\(stem) \(number)").appendingPathExtension(ext);number += 1
+            }
+            return destination
         }
         var destination=parent.appendingPathComponent(source.lastPathComponent,isDirectory:true),number=2
-        while manager.fileExists(atPath:destination.path) {
+        while occupied(destination) {
             destination=parent.appendingPathComponent("\(source.lastPathComponent) \(number)",isDirectory:true);number += 1
         }
         return destination

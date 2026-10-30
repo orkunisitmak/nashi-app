@@ -8,6 +8,8 @@ do {
     }
     if args.count==3,args[1]=="inspect" {
         let input=URL(fileURLWithPath:args[2]),category=FileCategory.detect(input)
+        // Categories without a reader would otherwise report a missing path as success.
+        guard FileManager.default.fileExists(atPath:input.path) else { throw NashiError.invalidInput("File not found: \(input.lastPathComponent)") }
         var result:[String:Any]=["category":category.rawValue]
         switch category {
         case .image:let cg=try ImageEngine.load(input);result["width"]=cg.width;result["height"]=cg.height

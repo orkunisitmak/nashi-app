@@ -22,6 +22,7 @@ public sealed partial class ToolEditor:Window
     internal bool Playing=>playing;
     internal RangeTimeline Timeline=>timeline;
     internal TextBox FieldForTest(string name)=>fields[name];
+    internal bool AcceptForTest()=>ReadSettings(false);
     private readonly string input;private readonly MediaInfo? media;private readonly StackPanel options=new(){Margin=new(18,0,0,0)};
     public ToolEditor(Window owner,string tool,string title,string input,MediaInfo? media=null,BitmapSource? preview=null,IReadOnlyList<string>? inputs=null,string[]? outputFormats=null)
     {
@@ -41,7 +42,7 @@ public sealed partial class ToolEditor:Window
         }
         else if(media is not null)
         {
-            player.Source=new Uri(input);previewStack.Children.Add(player);player.MediaOpened+=(_,_)=>{if(player.NaturalDuration.HasTimeSpan)duration=player.NaturalDuration.TimeSpan.TotalSeconds;};
+            player.Source=new Uri(input);previewStack.Children.Add(player);player.MediaOpened+=(_,_)=>UsePlayerDuration();
         }
         else previewStack.Children.Add(L10n.Label(new TextBlock{Text="Your files will be saved as new copies.\nChoose options, then save.",FontSize=21,TextWrapping=TextWrapping.Wrap,Margin=new(0,50,20,0)}));
         duration=media?.Duration??1;
@@ -79,7 +80,7 @@ public sealed partial class ToolEditor:Window
         if(tool=="rotate")Field("Degrees",90);
         if(tool is "crop" or "cropVideo" or "redactVideo" or "redactImage")
         {
-            options.Children.Add(new TextBlock{Text=tool=="redactVideo"?"Drag a region to cover with a solid block.":"Drag to select a crop. Hold Shift for a square; existing selections keep their ratio. Press Enter to save.",TextWrapping=TextWrapping.Wrap,Margin=new(4,4,4,16)});
+            options.Children.Add(new TextBlock{Text=L10n.Text(tool=="redactVideo"?"Drag a region to cover with a solid block.":"Drag to select a crop. Hold Shift for a square; existing selections keep their ratio. Press Enter to save."),TextWrapping=TextWrapping.Wrap,Margin=new(4,4,4,16)});
             var w=bitmap?.PixelWidth??media?.Video?.Width??1280;var h=bitmap?.PixelHeight??media?.Video?.Height??720;
             Field("X",0);Field("Y",0);Field("Width",w);Field("Height",h);
             if(tool=="redactVideo"){Field("Start",0);Field("End",duration);}
@@ -87,7 +88,7 @@ public sealed partial class ToolEditor:Window
         if(tool=="annotate")
         {
             drawingTool.ItemsSource=new[]{"Marker","Rectangle","Arrow","Line","Ellipse","Text","Number","Callout","Magnifier","Image","Freehand","Select / Move"};drawingTool.SelectedIndex=0;
-            options.Children.Add(L10n.Label(new TextBlock{Text="Drawing tool"}));options.Children.Add(drawingTool);TextField("Annotation text","Note");TextField("Ink color","#FF5200");Field("Stroke width",3);Field("Font size",24);options.Children.Add(L10n.Label(new TextBlock{Text="Drag to draw. One active tool per stroke.",TextWrapping=TextWrapping.Wrap,Margin=new(4,12,4,12)}));
+            options.Children.Add(L10n.Label(new TextBlock{Text="Drawing tool"}));options.Children.Add(drawingTool);TextField("Annotation text",L10n.Text("Note"));TextField("Ink color","#FF5200");Field("Stroke width",3);Field("Font size",24);options.Children.Add(L10n.Label(new TextBlock{Text="Drag to draw. One active tool per stroke.",TextWrapping=TextWrapping.Wrap,Margin=new(4,12,4,12)}));
             options.Children.Add(MainWindow.Button("Undo last mark",()=>{UndoAnnotation();}));
         }
         BuildPhotoOptions(inputs??[input]);BuildInputOrder(inputs??[input]);BuildCropOptions();BuildCompressionOptions();BuildDocumentOptions();BuildMediaOptions();
@@ -99,12 +100,30 @@ public sealed partial class ToolEditor:Window
         PreviewKeyDown+=OnKey;Closed+=(_,_)=>{clock.Stop();player.Close();previewLifetime.Cancel();DeletePreviewFiles();};
     }
     private static string Number(double n)=>n.ToString("0.###",CultureInfo.CurrentCulture);
+    // Fields show milliseconds, so the default End can round up to half a millisecond
+    // past ffprobe's duration. MediaEngine allows the same slack; it gets the clamped End.
+    private const double RangeSlack=.001;
+    // MediaEngine.TimeRange also refuses ranges shorter than 50 ms. Both round the length, so
+    // 1.1 to 1.15 (0.04999… in binary) still counts as 50 ms.
+    private const double MinRange=.05;
+    private bool Untouched(string key)=>fields.TryGetValue(key,out var box)&&box.Text==defaults[key];
+    private bool SizeUntouched=>Untouched("Width")&&Untouched("Height");
+    private double RangeEnd(){var end=Value("End",duration);return duration>0?Math.Min(end,duration):end;}
+    // MediaEngine checks ranges against ffprobe's duration, so the player's value only
+    // stands in when ffprobe reported none, and the range controls follow it.
+    private void UsePlayerDuration()
+    {
+        if(media is not {Duration:<=0}||!player.NaturalDuration.HasTimeSpan)return;
+        duration=player.NaturalDuration.TimeSpan.TotalSeconds;scrubber.Maximum=duration;
+        if(fields.TryGetValue("End",out var end)&&end.Text==defaults["End"])end.Text=defaults["End"]=Number(duration);
+        try{SyncTimeline();}catch(ArgumentException){}
+    }
     private void Field(string name,double value)=>TextField(name,Number(value));
     private void TextField(string name,string value){options.Children.Add(L10n.Label(new TextBlock{Text=name,Margin=new(4,12,4,0)}));var box=new TextBox{Text=value};System.Windows.Automation.AutomationProperties.SetAutomationId(box,name);if(name is "Start" or "End")box.LostKeyboardFocus+=(_,_)=>{try{SyncTimeline();}catch(ArgumentException){}};fields.Add(name,box);defaults.Add(name,value);options.Children.Add(box);}
     private Action? resetCompression,resetPhotoView,resetPreviewZoom,applyExportProfile;
     private void Reset()
     {
-        if(processingPreview){time.Text="Wait for the processed preview to finish before resetting.";return;}
+        if(processingPreview){time.Text=L10n.Text("Wait for the processed preview to finish before resetting.");return;}
         if(media is not null){if(processedPlayback)PlayOriginalPreview();player.Pause();playing=false;Seek(0);}
         resetCompression?.Invoke();resetPhotoView?.Invoke();resetPreviewZoom?.Invoke();
         foreach(var pair in defaults)fields[pair.Key].Text=pair.Value;
@@ -153,13 +172,20 @@ public sealed partial class ToolEditor:Window
     }
     private void EndDraw(object sender,MouseButtonEventArgs e)
     {
+        var committed=false;
         try
         {
-            if(tool=="redactImage"&&activeRectangle is {Width:>=1,Height:>=1} r)photoRegions.Add(new Rect(Canvas.GetLeft(r),Canvas.GetTop(r),r.Width,r.Height));
-            if(tool=="redactVideo"&&activeRectangle is {Width:>=2,Height:>=2} v){var (start,end)=ReadPlaybackRange();videoRegions.Add(new(Canvas.GetLeft(v),Canvas.GetTop(v),v.Width,v.Height,start,end));ReloadRanges();}
+            if(tool=="redactImage"&&activeRectangle is {Width:>=1,Height:>=1} r){photoRegions.Add(new Rect(Canvas.GetLeft(r),Canvas.GetTop(r),r.Width,r.Height));committed=true;}
+            if(tool=="redactVideo"&&activeRectangle is {Width:>=2,Height:>=2} v){var (start,end)=ReadPlaybackRange();videoRegions.Add(new(Canvas.GetLeft(v),Canvas.GetTop(v),v.Width,v.Height,start,end));committed=true;ReloadRanges();}
         }
-        catch(ArgumentException error){if(activeRectangle is not null)drawing.Children.Remove(activeRectangle);time.Text=error.Message;}
-        finally{dragging=false;cropGesture=null;activeStroke=null;activeRectangle=null;annotationShape=null;drawing.ReleaseMouseCapture();e.Handled=true;}
+        catch(ArgumentException error){time.Text=error.Message;}
+        finally
+        {
+            // A click or a too-small drag must not leave a cover that is never exported;
+            // Undo and Remove also pair canvas boxes with regions by position.
+            if(!committed&&tool is "redactImage" or "redactVideo"&&activeRectangle is not null)drawing.Children.Remove(activeRectangle);
+            dragging=false;cropGesture=null;activeStroke=null;activeRectangle=null;annotationShape=null;drawing.ReleaseMouseCapture();e.Handled=true;
+        }
     }
     private void Seek(double seconds){playingRange=false;player.Position=TimeSpan.FromSeconds(Math.Clamp(seconds,0,duration));time.Text=$"{player.Position:mm\\:ss\\.fff} / {TimeSpan.FromSeconds(duration):mm\\:ss\\.fff}";}
     private void TogglePlayback(){playingRange=false;if(playing){player.Pause();playing=false;}else{if(player.Position.TotalSeconds>=duration-.001)Seek(0);player.Play();playing=true;}}
@@ -186,14 +212,20 @@ public sealed partial class ToolEditor:Window
         try
         {
             if(tool=="compress"&&(Value("Target size (KB; 0 = auto)")<0||Value("Reduction (%; 0 = auto)")<0||Value("Reduction (%; 0 = auto)")>=100))throw new ArgumentException("Choose a positive size or a reduction below 100%. Zero uses automatic compression.");
-            if(tool is "trimVideo" or "trimAudio" or "redactAudio" && (Value("Start")<0||Value("End")>duration||Value("Start")>=Value("End")))throw new ArgumentException("Start must be before End, within the media duration.");
+            if(tool is "trimVideo" or "trimAudio"||tool=="redactAudio"&&bleepRanges.Count==0)ReadPlaybackRange();
             var x=Value("X");var y=Value("Y");var w=Value("Width");var h=Value("Height");
-            if(tool is "crop" or "cropVideo" or "redactVideo"&& (w<1||h<1))throw new ArgumentException("Drag an area first.");
-            MediaOptions=new(){Start=Value("Start"),End=fields.ContainsKey("End")?Value("End"):null,Quality=Value("Quality (%)",80)/100,Speed=Value("Speed",1),Width=fields.ContainsKey("Width")?(int)w:null,Height=fields.ContainsKey("Height")?(int)h:null,Channels=(int)Value("Channels",2),LeftVolume=Value("Left volume",1),RightVolume=Value("Right volume",1),EqualClips=(int)Value("Number of clips",2),TargetLoudness=Value("Target LUFS",-16),TruePeak=Value("True peak dB",-1.5),Regions=tool is "cropVideo" or "redactVideo"?[new(x,y,w,h,Value("Start"),fields.ContainsKey("End")?Value("End"):null)]:[],AudioRedactions=tool=="redactAudio"?[new(Value("Start"),Value("End"))]:[],SnapshotTimes=tool=="videoSnapshots"?fields["Times (seconds)"].Text.Split(';',StringSplitOptions.RemoveEmptyEntries).Select(s=>NumericInput.ParseFinite(s)).ToArray():[0]};
+            if(tool is "crop" or "cropVideo" or "redactVideo"&& (w<1||h<1)||tool=="redactVideo"&&bitmap is not null&&videoRegions.Count==0)throw new ArgumentException("Drag an area first.");
+            MediaOptions=new(){Start=Value("Start"),End=fields.ContainsKey("End")?RangeEnd():null,Quality=Value("Quality (%)",80)/100,Speed=Value("Speed",1),Width=fields.ContainsKey("Width")?(int)w:null,Height=fields.ContainsKey("Height")?(int)h:null,Channels=(int)Value("Channels",2),LeftVolume=Value("Left volume",1),RightVolume=Value("Right volume",1),EqualClips=(int)Value("Number of clips",2),TargetLoudness=Value("Target LUFS",-16),TruePeak=Value("True peak dB",-1.5),Regions=tool is "cropVideo" or "redactVideo"?[new(x,y,w,h,Value("Start"),fields.ContainsKey("End")?RangeEnd():null)]:[],AudioRedactions=tool=="redactAudio"?[new(Value("Start"),RangeEnd())]:[],SnapshotTimes=tool=="videoSnapshots"?fields["Times (seconds)"].Text.Split(';',StringSplitOptions.RemoveEmptyEntries).Select(s=>NumericInput.ParseFinite(s)).ToArray():[0]};
             BitmapSource? annotated=null;if(tool=="annotate"){var target=new RenderTargetBitmap(bitmap!.PixelWidth,bitmap.PixelHeight,96,96,PixelFormats.Pbgra32);target.Render(drawing);target.Freeze();annotated=target;}
-            ImageOptions=PhotoSettings(new(fields.ContainsKey("Width")?(int)w:null,fields.ContainsKey("Height")?(int)h:null,(int)Value("Degrees",tool=="rotate"?90:0),tool=="crop"?new Int32Rect((int)x,(int)y,(int)w,(int)h):null,(int)Value("Quality (%)",85),true,annotated));
+            // The size fields start from the first image. Untouched fields and presets are left to each
+            // image; in a batch an untouched side follows each image's proportions. A single image gets
+            // exactly the size typed.
+            var preset=tool=="compress"?CompressionPreset():null;var sized=tool is "resize" or "compress" or "editImage";var batch=collageInputs.Length>1;
+            int? Side(string key,double value)=>!fields.ContainsKey(key)||sized&&(preset is not null||SizeUntouched||batch&&Untouched(key))?null:(int)value;
+            ImageOptions=PhotoSettings(new(Side("Width",w),Side("Height",h),(int)Value("Degrees",tool=="rotate"?90:0),tool=="crop"?new Int32Rect((int)x,(int)y,(int)w,(int)h):null,(int)Value("Quality (%)",85),true,annotated))with{Scale=preset?.Scale,LongestEdge=preset?.LongestEdge};
             MediaOptions=MoreMediaSettings(MediaOptions);
             Format=format.SelectedItem as string??"png";
+            if(tool=="splitPDF"&&(!int.TryParse(fields["Pages per file"].Text,NumberStyles.AllowLeadingWhite|NumberStyles.AllowTrailingWhite,CultureInfo.CurrentCulture,out var perFile)||perFile is <1 or >1000))throw new ArgumentException("Choose between 1 and 1,000 pages per file."); // validate while the editor is still open
             if(tool=="organizePDF")Pages=fields["Page numbers"].Text.Split(',',StringSplitOptions.RemoveEmptyEntries).Select(s=>int.Parse(s.Trim(),CultureInfo.InvariantCulture)).ToArray();
             DocumentOptions=new((int)Value("DPI",144),documentLayout.SelectedItem as string??"editable",epubLayout.SelectedItem as string??"reflowable",archivePassword.Password);if(accept)DialogResult=true;return true;
         }
