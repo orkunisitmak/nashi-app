@@ -16,7 +16,7 @@ public sealed class GlobalDragController:IDisposable
 {
     [StructLayout(LayoutKind.Sequential)]internal struct NativePoint{public int X,Y;}
     [DllImport("user32.dll")]private static extern short GetAsyncKeyState(int key);
-    [DllImport("user32.dll")]private static extern bool GetCursorPos(out NativePoint point);
+    [DllImport("user32.dll")]internal static extern bool GetCursorPos(out NativePoint point);
     [DllImport("user32.dll")]private static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll")]private static extern bool RegisterHotKey(IntPtr window,int id,uint modifiers,uint key);
     [DllImport("user32.dll")]private static extern bool UnregisterHotKey(IntPtr window,int id);
@@ -46,8 +46,11 @@ public sealed class GlobalDragController:IDisposable
     {
         UpdateShortcut();if(!preferences.Value.Enabled||!OwnerAvailable){wheel?.Close();wheel=null;down=false;opened=false;hint=null;return;}var held=PrimaryMouseButton.IsPressed;GetCursorPos(out var point);
         if(!held){if(down){down=false;opened=false;hint=null;if(wheel is {IsVisible:true}){var old=wheel;var dismiss=new System.Windows.Threading.DispatcherTimer{Interval=TimeSpan.FromMilliseconds(150)};dismiss.Tick+=(_,_)=>{dismiss.Stop();if(old.IsVisible)old.Close();};dismiss.Start();}wheel=null;}return;}
-        if(!down){down=true;start=point;opened=false;hint=null;return;}if(opened||Math.Abs(point.X-start.X)+Math.Abs(point.Y-start.Y)<10)return;
-        hint??=Task.Run(()=>LinkAt(start));var chord=Chord();var p=preferences.Value;var kind=chord==p.ToolsModifier?"tools":chord==p.ConvertModifier?"convert":chord==p.ActionsModifier?"actions":null;if(kind is null)return;opened=true;if(InMoveSize())return;
+        if(!down){down=true;start=point;opened=false;hint=null;return;}
+        hint??=Task.Run(()=>LinkAt(start));var chord=Chord();var p=preferences.Value;var kind=chord==p.ToolsModifier?"tools":chord==p.ConvertModifier?"convert":chord==p.ActionsModifier?"actions":null;
+        if(wheel is {IsVisible:true}){if(kind is not null&&kind!=wheel.Mode)wheel.SetMode(kind);return;}
+        if(opened||Math.Abs(point.X-start.X)+Math.Abs(point.Y-start.Y)<10)return;
+        if(kind is null)return;opened=true;if(InMoveSize())return;
         var sourceHint=hint;wheel=new GlobalDropWheel(kind,p.WheelScale,(data,id)=>dropped(id,data,sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null),()=>sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null);wheel.Show();DesktopGeometry.PlaceWheel(wheel,point.X,point.Y,WheelPresentation.Diameter*p.WheelScale);
     }
     private static string? LinkAt(NativePoint point)
@@ -78,7 +81,8 @@ internal sealed class GlobalDropWheel:Window
     private const double HiddenOpacity=.02;
     internal bool Revealed{get;private set;}
     private void Reveal(){if(Revealed)return;Revealed=true;foreach(var label in canvas.Children.OfType<Border>())label.Visibility=Visibility.Visible;WheelPresentation.Animate(this,HiddenOpacity);if(Opacity<1&&!HasAnimatedProperties)Opacity=1;}
-    private readonly string mode;private readonly Action<IDataObject,string> chosen;private readonly Func<string?> hint;private readonly Canvas canvas=new(){Width=540,Height=540,Background=Brushes.Transparent,AllowDrop=true};private string selection="";private IReadOnlyList<ToolChoice> choices=[];
+    private string mode;internal string Mode=>mode;private readonly Action<IDataObject,string> chosen;private readonly Func<string?> hint;private readonly Canvas canvas=new(){Width=540,Height=540,Background=Brushes.Transparent,AllowDrop=true};private string selection="";private IReadOnlyList<ToolChoice> choices=[];
+    private string[] lastFiles=[];private WebMediaPayload? lastPayload;
     public GlobalDropWheel(string mode,double scale,Action<IDataObject,string> chosen,Func<string?> hint)
     {
         this.mode=mode;this.chosen=chosen;this.hint=hint;Title="Nashi · "+mode;Width=Height=WheelPresentation.Diameter*scale;WindowStyle=WindowStyle.None;AllowsTransparency=true;Background=Brushes.Transparent;ResizeMode=ResizeMode.NoResize;ShowInTaskbar=false;ShowActivated=false;Topmost=true;AllowDrop=true;Content=new Viewbox{Child=canvas};Build([]);Opacity=HiddenOpacity;
@@ -88,16 +92,26 @@ internal sealed class GlobalDropWheel:Window
         DragOver+=(_,e)=>{over++;Track(e);if(choices.Count>0)Reveal();};
         Drop+=(_,e)=>{dropCount++;Track(e);var id=selection;Close();if(id.Length>0)chosen(e.Data,id);e.Handled=true;};PreviewKeyDown+=(_,e)=>{if(e.Key==Key.Escape){Close();e.Handled=true;}};
     }
+    internal void SetMode(string newMode)
+    {
+        if(mode==newMode)return;mode=newMode;Title="Nashi · "+mode;var updated=Choices(lastFiles,lastPayload);choices=updated;Build(choices);
+        if(choices.Count>0&&!Revealed&&(lastFiles.Length>0||lastPayload is not null))Reveal();
+        try{if(GlobalDragController.GetCursorPos(out var pt)){var local=canvas.PointFromScreen(new Point(pt.X,pt.Y));UpdateSelection(local);}}catch(InvalidOperationException){}
+    }
+    private void UpdateSelection(Point p)
+    {
+        var distance=(p-new Point(270,270)).Length;
+        if(distance<108||distance>250||choices.Count==0){selection="";Highlight(-1);}
+        else{var angle=(Math.Atan2(p.Y-270,p.X-270)*180/Math.PI-WheelPresentation.StartAngle(choices.Count)+360+180d/choices.Count)%360;var index=(int)(angle/(360d/choices.Count));var id=choices[index].Id;if(id!=selection){selection=id;Feedback.Play();}Highlight(index);}
+    }
     private void Track(DragEventArgs e)
     {
-        var files=e.Data.GetData(DataFormats.FileDrop) as string[]??[];var updated=Choices(files,Payload(e.Data));
+        lastFiles=e.Data.GetData(DataFormats.FileDrop) as string[]??[];lastPayload=Payload(e.Data);var updated=Choices(lastFiles,lastPayload);
         // Replacing the hit-test target during DragEnter causes OLE to enter
         // again instead of advancing to DragOver. Keep the visual tree stable
         // until the payload actually changes, and select on entry as well.
         if(!updated.SequenceEqual(choices)){choices=updated;Build(choices);}
-        var p=e.GetPosition(canvas);var distance=(p-new Point(270,270)).Length;
-        if(distance<108||distance>250||choices.Count==0){selection="";Highlight(-1);}
-        else{var angle=(Math.Atan2(p.Y-270,p.X-270)*180/Math.PI-WheelPresentation.StartAngle(choices.Count)+360+180d/choices.Count)%360;var index=(int)(angle/(360d/choices.Count));var id=choices[index].Id;if(id!=selection){selection=id;Feedback.Play();}Highlight(index);}
+        UpdateSelection(e.GetPosition(canvas));
         e.Effects=selection.Length>0?DragDropEffects.Copy:DragDropEffects.None;e.Handled=true;
     }
     private WebMediaPayload? Payload(IDataObject data)=>DragPayload.Parse(data,hint());

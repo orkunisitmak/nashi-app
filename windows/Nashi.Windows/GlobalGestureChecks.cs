@@ -59,6 +59,20 @@ internal static class GlobalGestureChecks
         try
         {
             Drag(Key.LeftCtrl,"tools","compress");Drag(Key.LeftAlt,"actions","share");Drag(Key.LeftShift,"convert","convert:"+FeatureCatalog.Formats([file])[0]);
+            // Switching modifiers during a drag must switch the circular menu between convert, tools, and actions.
+            phase="switching modifiers during drag";selected=null;SetForegroundWindow(handle);DesktopInput.Pump(200);var startPos=new Point(bounds.Left+bounds.Width/2,bounds.Top+bounds.Height/2);
+            var switchDriver=Task.Run(()=>
+            {
+                DesktopInput.MovePointer(startPos);Thread.Sleep(100);DesktopInput.HoldMouse(true);Thread.Sleep(150);
+                try
+                {
+                    DesktopInput.MovePointer(new(startPos.X+45,startPos.Y+20));Thread.Sleep(150);DesktopInput.Hold(Key.LeftShift,true);var initialWheel=IntPtr.Zero;for(var n=0;n<30&&initialWheel==IntPtr.Zero;n++){Thread.Sleep(100);initialWheel=FindWindow(null,"Nashi · convert");}if(initialWheel==IntPtr.Zero)throw new Exception("The global convert wheel did not open during the Explorer drag.");
+                    DesktopInput.Hold(Key.LeftShift,false);Thread.Sleep(50);DesktopInput.Hold(Key.LeftCtrl,true);var switchedWheel=IntPtr.Zero;for(var n=0;n<30&&switchedWheel==IntPtr.Zero;n++){Thread.Sleep(100);switchedWheel=FindWindow(null,"Nashi · tools");}if(switchedWheel==IntPtr.Zero||!GetWindowRect(switchedWheel,out var r))throw new Exception("The global wheel did not switch to tools when Ctrl was pressed.");
+                    DesktopInput.MovePointer(new((r.Left+r.Right)/2d,r.Top+(r.Bottom-r.Top)*.18));Thread.Sleep(400);
+                }
+                finally{DesktopInput.HoldMouse(false);DesktopInput.Hold(Key.LeftCtrl,false);DesktopInput.Hold(Key.LeftShift,false);}
+            });
+            var switchUntil=DateTime.UtcNow.AddSeconds(12);while(!switchDriver.IsCompleted&&DateTime.UtcNow<switchUntil)DesktopInput.Pump(30);if(!switchDriver.IsCompleted)throw new TimeoutException("Global modifier switch drag timed out.");switchDriver.GetAwaiter().GetResult();DesktopInput.Pump(350);check(selected=="compress","Switching from Shift to Ctrl during drag dropped on tools wheel; observed="+selected);
             // A mouse drag that carries no files (e.g. Shift+drag text selection) must not show a wheel.
             phase="plain Shift-drag";var plain=new Window{Width=320,Height=200,Left=bounds.Left,Top=bounds.Top,WindowStartupLocation=WindowStartupLocation.Manual,Content=new System.Windows.Controls.Border{Background=System.Windows.Media.Brushes.DarkSlateGray}};plain.Show();plain.Activate();DesktopInput.Pump(200);
             try
