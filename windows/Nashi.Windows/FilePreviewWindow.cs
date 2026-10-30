@@ -9,7 +9,7 @@ namespace Nashi.Windows;
 internal sealed class FilePreviewWindow:Window
 {
     private readonly string[] paths;private int index;
-    private readonly Toolchain tools;private readonly OfficeRuntime office;private readonly string temporary=AtomicFile.CreateTemporaryDirectory("Nashi-quick-preview-");private CancellationTokenSource lifetime=new();
+    private readonly Toolchain tools;private readonly OfficeRuntime office;private string? temporary;private CancellationTokenSource lifetime=new();
     private readonly ContentControl content=new();private readonly TextBlock caption=new(){TextTrimming=TextTrimming.CharacterEllipsis,VerticalAlignment=VerticalAlignment.Center};
     private MediaElement? player;private bool playing;private readonly Slider scrub=new(){Minimum=0,Maximum=1,MinWidth=140};
     private PdfRasterDocument? pdfDocument;
@@ -39,7 +39,12 @@ internal sealed class FilePreviewWindow:Window
     internal void Navigate(int delta){if(paths.Length<2)return;index=(index+delta+paths.Length)%paths.Length;_ = Load();}
     private void CloseMedia(){player?.Stop();player?.Close();player=null;playing=false;transport.Visibility=Visibility.Collapsed;timer.Stop();}
     private void Toggle(){if(player is null)return;if(playing)player.Pause();else player.Play();playing=!playing;}
-    private async Task Cleanup(){for(var n=0;n<10;n++){try{if(Directory.Exists(temporary))Directory.Delete(temporary,true);return;}catch(IOException){await Task.Delay(250);}catch(UnauthorizedAccessException){return;}}}
+    private string Temporary()
+    {
+        temporary ??= AtomicFile.CreateTemporaryDirectory("Nashi-quick-preview-");
+        return temporary;
+    }
+    private async Task Cleanup(){var path=temporary;if(path is null)return;for(var n=0;n<10;n++){try{if(Directory.Exists(path))Directory.Delete(path,true);return;}catch(IOException){await Task.Delay(250);}catch(UnauthorizedAccessException){return;}}}
     private async Task Load()
     {
         lifetime.Cancel();lifetime.Dispose();lifetime=new();var token=lifetime.Token;CloseMedia();pdfDocument?.Dispose();pdfDocument=null;content.Content=L10n.Label(new TextBlock{Text="Preparing preview…",Margin=new(20)});
@@ -51,7 +56,7 @@ internal sealed class FilePreviewWindow:Window
             if(new[]{"docx","doc","rtf","rtfd","pages","xlsx","xls","ods","pptx","ppt","odp","epub"}.Contains(FeatureCatalog.Extension(path)))
             {
                 if(office.Executable is null){content.Content=L10n.Label(new TextBlock{Text="Set up office tools in Nashi to preview this document here, or use Open.",TextWrapping=TextWrapping.Wrap});return;}
-                Directory.CreateDirectory(temporary);path=(await new DocumentConversion(office,tools).ConvertAsync([path],"pdf",temporary,new(),null,token))[0];token.ThrowIfCancellationRequested();
+                var temporaryDirectory=Temporary();Directory.CreateDirectory(temporaryDirectory);path=(await new DocumentConversion(office,tools).ConvertAsync([path],"pdf",temporaryDirectory,new(),null,token))[0];token.ThrowIfCancellationRequested();
             }
             if(FeatureCatalog.IsImage(path))content.Content=new Image{Source=ImageEngine.Load(path),Stretch=Stretch.Uniform};
             else if(FeatureCatalog.Extension(path)=="pdf")

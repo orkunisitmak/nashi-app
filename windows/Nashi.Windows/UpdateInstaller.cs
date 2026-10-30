@@ -14,7 +14,12 @@ internal static class UpdateInstaller
         {
             foreach(var directory in Directory.EnumerateDirectories(parent,".nashi-update-*"))
             {
-                try { if(DateTime.UtcNow-Directory.GetLastWriteTimeUtc(directory)>TimeSpan.FromHours(24))Directory.Delete(directory,true); }
+                try
+                {
+                    var suffix=Path.GetFileName(directory)[".nashi-update-".Length..];
+                    if(!Guid.TryParseExact(suffix,"N",out _)||Path.GetFullPath(directory)==Path.GetFullPath(target)||(File.GetAttributes(directory)&FileAttributes.ReparsePoint)!=0)continue;
+                    if(DateTime.UtcNow-Directory.GetLastWriteTimeUtc(directory)>TimeSpan.FromHours(24))Directory.Delete(directory,true);
+                }
                 catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.Security.SecurityException) { }
             }
         }
@@ -61,7 +66,8 @@ internal static class UpdateInstaller
         {
             try
             {
-                if(Directory.Exists(target))Directory.Delete(target,true);
+                if(Directory.Exists(target))
+                    throw new IOException("Nashi update target unexpectedly exists at "+target+"; backup retained at "+backup+".",payloadError);
                 Directory.Move(backup,target);
             }
             catch(Exception restoreError)
