@@ -3,6 +3,19 @@ import AppKit
 @testable import NashiCore
 
 final class CommandLineTests:XCTestCase {
+    func testCapabilitiesDescribeSingleAndMultipleFileActionsWithoutFileAccess() throws {
+        let image=try XCTUnwrap(NashiCommandLine.capabilities(format:".JPEG"))
+        XCTAssertEqual(image["format"] as? String,"jpg")
+        XCTAssertEqual(image["multiple"] as? Bool,false)
+        XCTAssertTrue((image["destinations"] as? [String] ?? []).contains("png"))
+        XCTAssertTrue((image["tools"] as? [String] ?? []).contains(ToolKind.cropImage.rawValue))
+        let batch=try XCTUnwrap(NashiCommandLine.capabilities(format:"png",multiple:true))
+        XCTAssertEqual(batch["multiple"] as? Bool,true)
+        XCTAssertTrue((batch["tools"] as? [String] ?? []).contains(ToolKind.createCollage.rawValue))
+        XCTAssertFalse((batch["tools"] as? [String] ?? []).contains(ToolKind.editImage.rawValue))
+        XCTAssertNil(NashiCommandLine.capabilities(format:"invalid/format"))
+        XCTAssertNil(NashiCommandLine.capabilities(format:"unsupported"))
+    }
     func testDependencyDiscoveryReturnsTheExifToolScriptInsteadOfItsDirectory() throws {
         let script=try Dependencies.executable("exiftool")
         XCTAssertTrue(try script.resourceValues(forKeys:[.isRegularFileKey]).isRegularFile == true)

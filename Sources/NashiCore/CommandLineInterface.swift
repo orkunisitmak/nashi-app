@@ -3,6 +3,16 @@ import Foundation
 public enum NashiCommandLine {
     public static func run(arguments args:[String] = CommandLine.arguments) -> Int32 {
 do {
+    if args.count>=2,args[1]=="capabilities" {
+        guard args.count==3 || (args.count==4 && args[3]=="--multiple") else {
+            throw NashiError.invalidInput("Usage: nashi-cli capabilities FORMAT [--multiple]")
+        }
+        guard let summary=capabilities(format:args[2],multiple:args.count==4) else {
+            throw NashiError.invalidInput("Unknown or invalid input format.")
+        }
+        let data=try JSONSerialization.data(withJSONObject:summary,options:[.prettyPrinted,.sortedKeys])
+        print(String(decoding:data,as:UTF8.self));return 0
+    }
     if args.count==2,args[1]=="catalog" {
         let data=try JSONSerialization.data(withJSONObject:["conversionMatrix":FeatureCatalog.conversionMatrix,"tools":ToolKind.allCases.map(\.rawValue)],options:[.prettyPrinted,.sortedKeys]);print(String(decoding:data,as:UTF8.self));return 0
     }
@@ -22,7 +32,7 @@ do {
     if args.count==2,args[1]=="dependencies" {
         var result:[String:String]=[:];for name in ["ffmpeg","ffprobe","soffice","exiftool"] { result[name]=try Dependencies.executable(name).path };print(String(decoding:try JSONSerialization.data(withJSONObject:result,options:.sortedKeys),as:UTF8.self));return 0
     }
-    guard args.count>=4 else { print("Usage: nashi-cli convert FORMAT FILE... [--options JSON]\n       nashi-cli tool TOOL_ID FILE... [--options JSON]\n       nashi-cli catalog");return 64 }
+    guard args.count>=4 else { print("Usage: nashi-cli convert FORMAT FILE... [--options JSON]\n       nashi-cli tool TOOL_ID FILE... [--options JSON]\n       nashi-cli catalog\n       nashi-cli capabilities FORMAT [--multiple]");return 64 }
     var options=OperationOptions(), paths=Array(args.dropFirst(3))
     let jsonOutput=paths.contains("--json");paths.removeAll{$0=="--json"}
     if let i=paths.firstIndex(of:"--options"),i+1<paths.count {
@@ -49,6 +59,25 @@ do {
     return 0
 } catch { fputs("\(error.localizedDescription)\n",stderr);return 1 }
 
+    }
+
+    /// Describes the same format/tool choices offered by the desktop wheel,
+    /// without opening or modifying an input file.
+    public static func capabilities(format raw:String,multiple:Bool=false)->[String:Any]? {
+        let extensionName=raw.hasPrefix(".") ? String(raw.dropFirst()) : raw
+        guard !extensionName.isEmpty,extensionName.utf8.count<=12,
+            extensionName.unicodeScalars.allSatisfy({ CharacterSet.alphanumerics.contains($0) }) else { return nil }
+        let sample=URL(fileURLWithPath:"nashi-capabilities.\(extensionName)")
+        let normalized=FeatureCatalog.normalizedExtension(sample)
+        guard FeatureCatalog.conversionMatrix[normalized] != nil else { return nil }
+        let input=URL(fileURLWithPath:"nashi-capabilities.\(normalized)")
+        let inputs=multiple ? [input,input] : [input]
+        return [
+            "format":normalized,
+            "multiple":multiple,
+            "destinations":FeatureCatalog.formats(for:inputs),
+            "tools":FeatureCatalog.tools(for:inputs).map(\.rawValue),
+        ]
     }
 
     private static func mergeDefaults(_ defaults:[String:Any],with supplied:[String:Any])->[String:Any] {
