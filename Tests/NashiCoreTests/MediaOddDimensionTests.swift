@@ -32,9 +32,14 @@ final class MediaOddDimensionTests: XCTestCase {
         for (ext, codec) in [("webm", "libvpx-vp9"), ("avi", "mpeg4")] {
             let input = directory.appendingPathComponent("Odd area.\(ext)")
             try ProcessRunner.run(try Dependencies.executable("ffmpeg"), ["-hide_banner", "-v", "error", "-nostdin", "-n", "-f", "lavfi", "-i", "testsrc=size=97x65:rate=12:duration=2", "-c:v", codec, input.path])
-            var options = OperationOptions(); options.start = 0.25; options.end = 1.25; options.outputDirectory = directory.appendingPathComponent(ext)
-            let video = try MediaEngine.inspect(try XCTUnwrap(MediaEngine.tool(.trimVideo, inputs: [input], options: options, token: .init()).first)).video
-            XCTAssertEqual(video?.width, 97, ext); XCTAssertEqual(video?.height, 65, ext)
+            var trim = OperationOptions(); trim.start = 0.25; trim.end = 1.25
+            var speed = OperationOptions(); speed.speed = 2
+            var redact = OperationOptions(); redact.redactions = [EditRect(x: 0, y: 0, width: 32, height: 32)]
+            for (kind, options) in [(ToolKind.trimVideo, trim), (.changeVideoSpeed, speed), (.redactVideo, redact)] {
+                var options = options; options.outputDirectory = directory.appendingPathComponent("\(ext)-\(kind.rawValue)")
+                let video = try MediaEngine.inspect(try XCTUnwrap(MediaEngine.tool(kind, inputs: [input], options: options, token: .init()).first)).video
+                XCTAssertEqual(video?.width, 97, "\(ext) \(kind)"); XCTAssertEqual(video?.height, 65, "\(ext) \(kind)")
+            }
         }
     }
 }
