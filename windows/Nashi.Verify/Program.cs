@@ -174,7 +174,8 @@ if(Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG") is {} encoder && En
         {var edited=await engine.ToolAsync(tool,[oddArea],directory,oddOptions);Check((await engine.InspectAsync(edited[0])).Video is {Width:98,Height:66},"An odd-sized video could not be edited with "+tool);}
         // VP9 and MPEG-4 accept odd sizes, so WebM and AVI edits keep the original frame.
         foreach(var (oddExt,oddCodec) in new[]{("webm","libvpx-vp9"),("avi","mpeg4")})
-        {var oddOther=Path.Combine(directory,"Odd area."+oddExt);await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","testsrc=size=97x65:rate=12:duration=2","-c:v",oddCodec,oddOther]);var kept=await engine.ToolAsync("trimVideo",[oddOther],directory,new(){Start=.25,End=1.25});Check((await engine.InspectAsync(kept[0])).Video is {Width:97,Height:65},"An odd-sized "+oddExt+" edit was padded");}
+        {var oddOther=Path.Combine(directory,"Odd area."+oddExt);await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","testsrc=size=97x65:rate=12:duration=2","-c:v",oddCodec,oddOther]);foreach(var (tool,toolOptions) in new (string,MediaOptions)[]{("trimVideo",new(){Start=.25,End=1.25}),("changeVideoSpeed",new(){Speed=2}),("redactVideo",new(){Regions=[new(0,0,32,32)]})})
+        {var kept=await engine.ToolAsync(tool,[oddOther],directory,toolOptions);Check((await engine.InspectAsync(kept[0])).Video is {Width:97,Height:65},"An odd-sized "+oddExt+" "+tool+" edit was padded");}}
         var metadata=await engine.ToolAsync("removeMetadata",[source],directory,new());Check((await engine.InspectAsync(metadata[0])).Video is not null,"Metadata export failed");
         foreach(var ext in MediaEngine.AudioFormats)
         {
