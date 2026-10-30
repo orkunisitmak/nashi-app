@@ -53,8 +53,10 @@ public enum PDFEngine {
         }
         guard !result.isEmpty else { throw NashiError.invalidInput("Select at least one page.") };return result
     }
+    /// Runs PDF tools, preserving the legacy page-operation path when no complete workspace plan is supplied.
     public static func tool(_ kind:ToolKind, inputs:[URL], options:OperationOptions, token:CancellationToken, progress: ProgressHandler = {_,_ in}) throws -> [URL] {
         guard let first=inputs.first else { throw NashiError.invalidInput("Choose PDF files.") }
+        if kind == .organizePDF,!options.pdfWorkspacePages.isEmpty { return try workspace(inputs:inputs,options:options,token:token) }
         if kind == .mergePDF {
             let selections=try inputs.map { input -> [Int] in try token.check();return Array(0..<(try open(input,password:options.password)).pageCount) }
             let bytes=try pageEditedData(inputs,selections:selections,password:options.password,token:token)
@@ -176,7 +178,8 @@ public enum PDFEngine {
         return bytes
     }
 
-    private static func requiresPreservingWrite(_ document:PDFDocument)->Bool {
+    /// Detects catalog and page features that cannot survive plain PDFKit page reconstruction safely.
+    static func requiresPreservingWrite(_ document:PDFDocument)->Bool {
         if document.outlineRoot != nil || (0..<document.pageCount).contains(where:{ !(document.page(at:$0)?.annotations.isEmpty ?? true) }) { return true }
         guard let catalog=document.documentRef?.catalog else { return false }
         for key in ["AcroForm","Names","AF","Collection","OCProperties","StructTreeRoot","MarkInfo","Dests","PageLabels","OpenAction","AA","Perms","Metadata"] {

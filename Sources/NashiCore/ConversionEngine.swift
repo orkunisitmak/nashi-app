@@ -1,6 +1,7 @@
 import Foundation
 
 public enum ConversionEngine {
+    /// Stages each operation, treats a multi-source workspace as one export, and publishes atomically on success.
     public static func run(_ request: ConversionRequest, token: CancellationToken = .init(), progress: @escaping ProgressHandler = {_,_ in}) throws -> [URL] {
         guard !request.inputs.isEmpty else { throw NashiError.invalidInput("Choose at least one file.") }
         for url in request.inputs { guard url.isFileURL,FileManager.default.fileExists(atPath:url.path) else { throw NashiError.invalidInput("File not found: \(url.lastPathComponent)") } }
@@ -8,7 +9,7 @@ public enum ConversionEngine {
         let transaction=ExportTransaction()
         defer { transaction.cleanUp() }
         let groups:[[URL]]
-        if case .tool(let tool)=request.operation,[ToolKind.createPDF,.mergePDF,.createCollage,.joinVideos,.readQRCode].contains(tool) {
+        if case .tool(let tool)=request.operation,([ToolKind.createPDF,.mergePDF,.createCollage,.joinVideos,.readQRCode].contains(tool) || (tool == .organizePDF && !request.options.pdfWorkspacePages.isEmpty)) {
             groups=[request.inputs]
         } else { groups=request.inputs.map{[$0]} }
         for (index,inputs) in groups.enumerated() {

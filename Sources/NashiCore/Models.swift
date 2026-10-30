@@ -142,6 +142,10 @@ public struct OperationOptions: Codable, Sendable {
     public var pdfPageOrder: [Int] = []
     public var pdfPageRotations: [Int: Int] = [:]
     public var pdfUniformWidth: Bool = false
+    public var pdfWorkspacePages: [PDFWorkspacePage] = []
+    public var pdfExtractSelection: Bool = false
+    public var pdfWidthMode: PDFWidthMode = .original
+    public var pdfCustomWidth: Double = 595.276
     public var epubLayout: String = "reflowable"
     public var pdfOfficeLayout: String = "editable"
     public var dpi: Int = 300

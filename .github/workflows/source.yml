@@ -54,6 +54,8 @@ jobs:
         run: swift test --filter 'NashiUpdatesTests|WebMediaDragPayloadTests|InstagramPhotosTests|YouTubeThumbnailTests|WindowPlacementTests|AppLocalizationTests|ToolSetupTests'
       - name: HTML to PDF layout, offline isolation and cancellation
         run: swift test --filter HTMLToPDFTests
+      - name: PDF workspace, preservation and export regressions
+        run: swift test --filter 'PDFPageEditorStateTests|PDFWorkspaceTests|PDFPreservationRegressionTests|PDFEngineTests|PDFSafetyAuditTests|PDFCompressCancellationCleanupTests|PDFSplitCancellationCleanupTests'
       - name: Install FFmpeg for redaction regressions
         run: brew install ffmpeg
       - name: Redaction coverage and image opacity regressions

@@ -10,6 +10,7 @@ import ApplicationServices
 
 @main
 enum NashiApplication {
+    /// Dispatches explicit own-window QA/CLI modes before starting the normal desktop application.
     @MainActor static func main() {
         if CommandLine.arguments.count>1,["convert","tool","inspect","catalog","dependencies"].contains(CommandLine.arguments[1]) { exit(NashiCommandLine.run()) }
         let app=NSApplication.shared
@@ -20,6 +21,11 @@ enum NashiApplication {
                 withExtendedLifetime(runner){app.run()}
             }catch {fputs(error.localizedDescription+"\n",stderr);exit(64)}
             return
+        }
+        if let index=CommandLine.arguments.firstIndex(of:"--pdf-workspace-smoke"),CommandLine.arguments.count>index+1 {
+            let runner=PDFWorkspaceSmoke(output:URL(fileURLWithPath:CommandLine.arguments[index+1],isDirectory:true))
+            app.delegate=runner;app.setActivationPolicy(.accessory)
+            withExtendedLifetime(runner){app.run()};return
         }
         if let index=CommandLine.arguments.firstIndex(of:"--range-accessibility-smoke"),CommandLine.arguments.count>index+1 {
             let runner=MediaRangeAccessibilitySmoke(output:URL(fileURLWithPath:CommandLine.arguments[index+1],isDirectory:true))
@@ -98,8 +104,8 @@ enum NashiApplication {
 }
 
 @MainActor final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
-    let state=AppState()
-    let updater=AppUpdater()
+    let state:AppState
+    let updater:AppUpdater
     private var updateObservations=Set<AnyCancellable>()
     var statusItem:NSStatusItem!
     var home:NSWindow?
@@ -119,6 +125,11 @@ enum NashiApplication {
     var monitor:DragMonitor!
     var wheel:WheelController!
     var windowManagement:WindowManagementController!
+
+    /// Creates the normal application with its persisted state and updater connection.
+    override convenience init() { self.init(state:AppState(),updater:AppUpdater()) }
+    /// Allows own-window QA to exercise lifecycle decisions with isolated state and an unstarted updater.
+    init(state:AppState,updater:AppUpdater) { self.state=state;self.updater=updater;super.init() }
 
     func applicationDidFinishLaunching(_ notification:Notification) {
         NashiAppearance.apply()
@@ -323,10 +334,15 @@ enum NashiApplication {
         if let web=urls.first(where:{!$0.isFileURL}),let valid=try? WebDownloadEngine.link(web.absoluteString) { showWebDownload(valid,mode:.video) }
         else { if !state.working { state.inputs=urls };showHome();state.onOpenWheel?() }
     }
+    /// Defers termination during active jobs and lets unsaved PDF editors cancel application exit.
     func applicationShouldTerminate(_ sender:NSApplication)->NSApplication.TerminateReply {
         // Sparkle can resume an earlier install without the postponement callback.
         // Never terminate a conversion before it has committed its results.
-        (state.working || toolSetupWorking) ? .terminateCancel:.terminateNow
+        guard !state.working,!toolSetupWorking else{return .terminateCancel}
+        for panel in state.toolWindows.compactMap({$0 as? ToolPanel}) where panel.isVisible {
+            if panel.shouldClose?() == false {return .terminateCancel}
+        }
+        return .terminateNow
     }
     func applicationShouldHandleReopen(_ sender:NSApplication,hasVisibleWindows flag:Bool)->Bool { showHome();return true }
     func makeWindow<V:View>(title:String,size:NSSize,view:V)->NSWindow {
@@ -356,8 +372,13 @@ final class ToolPanel:NSPanel {
     override var canBecomeMain:Bool { true }
     // A borderless panel has no standard close button for AppKit to click or to validate
     // Close Window against. An owner with its own close flow (Welcome) takes it through that flow.
+    var shouldClose:(()->Bool)?
     var onPerformClose:(()->Void)?
+    /// Consults the editor discard guard before closing a borderless tool panel.
+    override func close() { guard shouldClose?() != false else{return};super.close() }
+    /// Routes Close Window through the owner's close flow, falling back to the editor discard guard.
     override func performClose(_ sender:Any?) { if let onPerformClose { onPerformClose() } else { close() } }
+    /// Keeps Close Window available for closable borderless panels without a standard titlebar button.
     override func validateUserInterfaceItem(_ item:NSValidatedUserInterfaceItem)->Bool {
         item.action == #selector(performClose(_:)) ? styleMask.contains(.closable):super.validateUserInterfaceItem(item)
     }

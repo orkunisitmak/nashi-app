@@ -216,6 +216,9 @@ async function selectDocument(bytes,selection) {
  for(const index of selection) {if(!emitted.has(index)){emitted.add(index);final.push(byIndex.get(index));}else final.push(copies.shift());}
  setPageOrder(doc,final);validate(doc);gc(doc);validateNoRemovedPages(doc);return doc;
 }
+/** Applies a validated workspace plan, retaining registered fields and attachments.
+ * Reorders output instances before crop/rotation/width transforms, then validates the saved graph again.
+ */
 async function transform(request) {
  if(!request||!Array.isArray(request.sources)||!request.sources.length||!Array.isArray(request.selections)||request.sources.length!==request.selections.length)throw new Error("Choose PDF sources and a page selection for each source.");
  if(request.sources.length>1000)throw new Error("Choose no more than 1,000 PDF files at once.");
@@ -230,9 +233,36 @@ async function transform(request) {
  }
  const result=documents[0];
  for(let i=1;i<documents.length;i++){check();importRich(result,documents[i],freshPrefix(result,"Nashi document "+(i+1)));}
+ if(request.outputOrder) {
+  const order=request.outputOrder;
+  if(!Array.isArray(order)||order.length!==total||new Set(order).size!==total||!order.every(x=>Number.isSafeInteger(x)&&x>=0&&x<total))throw new Error("Choose a valid output page order.");
+  if(order.some((value,index)=>value!==index)&&result.catalog.has(name('PageLabels')))unsupported('custom page labels while changing page order');
+  const pages=result.getPages();setPageOrder(result,order.map(index=>pages[index]));
+ }
+ for(const [key,box]of Object.entries(request.crops||{})) {
+  const index=Number(key);
+  if(!Number.isSafeInteger(index)||index<0||index>=total||!box||![box.x,box.y,box.width,box.height].every(Number.isFinite)||box.width<=0||box.height<=0)throw new Error("Choose valid PDF crop bounds.");
+  const page=result.getPage(index),media=page.getMediaBox(),epsilon=0.01;
+  if(box.x<media.x-epsilon||box.y<media.y-epsilon||box.x+box.width>media.x+media.width+epsilon||box.y+box.height>media.y+media.height+epsilon)throw new Error("Crop bounds must stay inside the PDF page.");
+  page.setCropBox(box.x,box.y,box.width,box.height);
+ }
  for(const [key,value]of Object.entries(request.rotations||{})) {
   const index=Number(key);if(!Number.isSafeInteger(index)||index<0||index>=result.getPageCount()||!Number.isSafeInteger(value)||value%90!==0)throw new Error("PDF rotations must be whole quarter turns on valid pages.");
   result.getPage(index).setRotation(degrees(((value%360)+360)%360));
+ }
+ if(request.widthMode && request.widthMode!=='original') {
+  const pages=result.getPages(),widths=pages.map(page=>{const box=page.getCropBox();return Math.abs(page.getRotation().angle)%180===90 ? box.height:box.width;});
+  if(!widths.every(value=>Number.isFinite(value)&&value>0))throw new Error("The PDF has no valid page sizes.");
+  const target=request.widthMode==='narrowest'?Math.min(...widths):request.widthMode==='widest'?Math.max(...widths):request.widthMode==='a4'?595.276:request.widthMode==='custom'?request.customWidth:NaN;
+  if(!Number.isFinite(target)||target<=0||target>14400)throw new Error("Choose a page width between 0 and 14,400 points.");
+  for(let i=0;i<pages.length;i++) {
+   check();const page=pages[i],box=page.getCropBox(),scale=target/widths[i];
+   // Transform the content stream instead of drawing the page again, preserving embedded fonts and Unicode maps.
+   page.scaleContent(scale,scale);
+   page.setMediaBox(box.x*scale,box.y*scale,box.width*scale,box.height*scale);
+   page.setCropBox(box.x*scale,box.y*scale,box.width*scale,box.height*scale);
+   for(const key of ['BleedBox','TrimBox','ArtBox'])if(page.node.has(name(key)))page.node.set(name(key),page.node.get(name('CropBox')));
+  }
  }
  validate(result);sortAttachmentNames(result);gc(result);validateNoRemovedPages(result);check();
  const bytes=await result.saveAsBase64({objectsPerTick:Infinity,updateFieldAppearances:false,useObjectStreams:true});check();

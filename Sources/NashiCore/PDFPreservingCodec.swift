@@ -8,6 +8,8 @@ enum PDFPreservingCodec {
     /// One selection for each source. Repeated indices create independently editable
     /// field copies. Rotations are absolute degrees indexed by the final output page.
     static func transform(_ inputs: [URL], selections: [[Int]], rotations: [Int: Int] = [:],
+                          outputOrder: [Int]? = nil, crops: [Int: PDFPageBox] = [:],
+                          widthMode:PDFWidthMode = .original, customWidth:Double = 595.276,
                           token: CancellationToken = .init()) throws -> Data {
         try token.check()
         guard !inputs.isEmpty, inputs.count == selections.count else {
@@ -31,10 +33,13 @@ enum PDFPreservingCodec {
             guard pageCount <= 10_000 else { throw NashiError.invalidInput("Choose no more than 10,000 output pages at once.") }
             sources.append(try Data(contentsOf: input, options: [.mappedIfSafe]).base64EncodedString())
         }
-        let request: [String: Any] = [
+        var request: [String: Any] = [
             "sources": sources, "selections": selections,
             "rotations": Dictionary(uniqueKeysWithValues: rotations.map { (String($0.key), $0.value) })
         ]
+        if let outputOrder { request["outputOrder"]=outputOrder }
+        request["widthMode"]=widthMode.rawValue;request["customWidth"]=customWidth
+        request["crops"]=Dictionary(uniqueKeysWithValues:crops.map{ key,box in (String(key),["x":box.x,"y":box.y,"width":box.width,"height":box.height]) })
         let json = try JSONSerialization.data(withJSONObject: request)
         let engine = try Runtime(token: token)
         let encoded = try engine.transform(String(decoding: json, as: UTF8.self))
@@ -80,6 +85,7 @@ enum PDFPreservingCodec {
             }
         }
 
+        /// Invokes the bundled object-graph writer and checks cancellation, runtime diagnostics and completion deadlines.
         func transform(_ json: String) throws -> String {
             try token.check()
             guard let run = context.objectForKeyedSubscript("NashiPDF")?.objectForKeyedSubscript("run"), !run.isUndefined else {
