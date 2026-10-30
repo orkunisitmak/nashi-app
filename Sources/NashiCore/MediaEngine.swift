@@ -310,16 +310,26 @@ public enum MediaEngine {
                 catch let error as NSError where error.domain == NSCocoaErrorDomain && error.code == NSFileReadNoSuchFileError {
                     // FFmpeg writes the first frame at or after -ss. Past the start of the last frame (the
                     // end, a long last frame or an audio tail) there is none, yet the player shows the last
-                    // frame, so decode to the end and keep it. Seeking past the video stream finds nothing.
+                    // frame there, so seek to the last frame's own timestamp instead.
                     try token.check()
-                    let seek = info.video?.duration.map { ["-ss", decimal(min(time, $0)), "-noaccurate_seek"] } ?? []
-                    try render(seek + ["-i", input.path, "-map", "0:v:0", "-update", "1", "-c:v", "png"], to: out, token: token)
+                    guard let last = try lastFrameStart(input, token: token), last < time else { throw error }
+                    try render(["-ss", decimal(last), "-i", input.path, "-map", "0:v:0", "-frames:v", "1", "-update", "1", "-c:v", "png"], to: out, token: token)
                 }
                 outputs.append(out)
                 progress(Double(index+1)/Double(options.snapshotTimes.count),"Saving frame \(index+1) of \(options.snapshotTimes.count)…")
             }
             return outputs
         } catch { outputs.forEach { try? FileManager.default.removeItem(at: $0) }; throw error }
+    }
+
+    /// Just before the last video frame's start, as an input -ss value. Reads packet timestamps without decoding.
+    private static func lastFrameStart(_ input: URL, token: CancellationToken) throws -> Double? {
+        let result = try ProcessRunner.run(Dependencies.executable("ffprobe"), ["-v", "error", "-select_streams", "v:0", "-show_entries", "packet=pts_time:format=start_time", "-of", "json=c=1", input.path], token: token)
+        guard let root = try JSONSerialization.jsonObject(with: result.output) as? [String: Any],
+              let last = (root["packets"] as? [[String: Any]] ?? []).compactMap({ number($0["pts_time"]) }).filter(\.isFinite).max() else { return nil }
+        // Input -ss counts from the container's start time; stay a millisecond early so rounding cannot skip the frame.
+        let start = number((root["format"] as? [String: Any])?["start_time"]).flatMap { $0.isFinite ? $0 : nil } ?? 0
+        return max(0, last - start - 0.001)
     }
 
     private static func split(_ input: URL, info: MediaInfo, options: OperationOptions, token: CancellationToken, progress: @escaping ProgressHandler = {_,_ in}) throws -> [URL] {
