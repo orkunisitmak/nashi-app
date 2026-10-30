@@ -1185,5 +1185,9 @@
   "Terminal opened.": "Terminal açıldı.",
   "No terminal app found.": "Terminal uygulaması bulunamadı.",
   "Shown in your file manager. Share it from there.": "Dosya yöneticinde gösterildi. Oradan paylaşabilirsin.",
-  "Couldn’t open your file manager.": "Dosya yöneticin açılamadı."
+  "Couldn’t open your file manager.": "Dosya yöneticin açılamadı.",
+  "Already there": "Zaten orada",
+  "Couldn’t open the folder picker.": "Klasör seçici açılamadı.",
+  "Choose a folder on this computer.": "Bu bilgisayardaki bir klasörü seç.",
+  "Couldn’t reach the clipboard.": "Panoya ulaşılamadı."
 }

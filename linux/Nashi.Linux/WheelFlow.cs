@@ -27,6 +27,9 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
         public const string Shared = "Shown in your file manager. Share it from there.";
         public const string NoFileManager = "Couldn’t open your file manager.";
         public const string Files = "{0} files";
+        public const string AlreadyThere = "Already there";
+        public const string NoPicker = "Couldn’t open the folder picker.";
+        public const string NotLocal = "Choose a folder on this computer.";
         public const string ConvertTo = "Convert to {0}";
         public const string NoFormats = "No conversions for this selection yet.";
         public const string NoFormatsFor = "No conversions for {0} files yet.";
@@ -44,12 +47,20 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
 
     public bool Busy { get; private set; }
 
-    /// Where Copy and Move go: the folder picker over `host` (null when cancelled). The checks swap in their own.
-    public Func<TopLevel, string, Task<string?>> PickFolder { get; set; } = async (host, title) =>
+    /// Where Copy and Move go: the folder picker over `host`; null when cancelled. It throws
+    /// InvalidOperationException with the message to show when it can't open or the folder isn't local.
+    /// The checks swap in their own.
+    public Func<TopLevel, string, Task<string?>> PickFolder { get; set; } = PickLocalFolderAsync;
+
+    public static async Task<string?> PickLocalFolderAsync(TopLevel host, string title)
     {
-        var picked = await host.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { Title = title });
-        return picked.Count > 0 ? picked[0].TryGetLocalPath() : null;
-    };
+        if (!host.StorageProvider.CanPickFolder) throw new InvalidOperationException(Copy.NoPicker);
+        IReadOnlyList<IStorageFolder> picked;
+        try { picked = await host.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { Title = title }); }
+        catch (Exception error) when (error is not OperationCanceledException) { throw new InvalidOperationException(Copy.NoPicker, error); }
+        if (picked.Count == 0) return null; // cancelled: nothing to say
+        return picked[0].TryGetLocalPath() ?? throw new InvalidOperationException(Copy.NotLocal);
+    }
 
     /// The launcher's X server time for activating the next pointer wheel (0 = CurrentTime); used once.
     public uint StartupTime { get; set; }
@@ -151,8 +162,8 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
     {
         if (Busy || files.Count == 0) return;
         Busy = true;
-        // Background mode has no window: a never-shown one lends the picker and the clipboard.
-        var host = owner ?? new Window();
+        // Background mode has no window: a tiny one at the pointer owns the picker and the clipboard while they work.
+        var host = owner ?? PickerHost();
         try
         {
             var name = files.Count == 1 ? Path.GetFileName(files[0]) : L10n.F(Copy.Files, files.Count);
@@ -162,15 +173,23 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
                     var move = id == "move";
                     if (await PickFolder(host, L10n.T(move ? Copy.MoveTo : Copy.CopyTo)) is not { } folder) return;
                     var selection = files;
-                    await Task.Run(() => move ? FileActions.MoveTo(selection, folder) : FileActions.CopyTo(selection, folder));
-                    SuccessToast.Action(L10n.T(move ? Copy.Moved : Copy.Copied), name, folder).Present();
+                    if (!move)
+                    {
+                        await Task.Run(() => FileActions.CopyTo(selection, folder));
+                        SuccessToast.Action(L10n.T(Copy.Copied), name, folder).Present();
+                        break;
+                    }
+                    var moved = await Task.Run(() => FileActions.MoveTo(selection, folder));
+                    var movedName = moved.Files.Count == 1 ? Path.GetFileName(moved.Files[0]) : L10n.F(Copy.Files, moved.Files.Count);
+                    SuccessToast.Action(L10n.T(moved.Files.Count == 0 ? Copy.AlreadyThere : Copy.Moved), moved.Files.Count == 0 ? name : movedName, folder).Present();
                     break;
                 case "copyPath":
                     var text = await FileActions.CopyPathsAsync(host.Clipboard, files);
                     SuccessToast.Action(L10n.T(files.Count == 1 ? Copy.PathCopied : Copy.PathsCopied), files.Count == 1 ? text : name, null).Present();
                     break;
                 case "terminal":
-                    if (FileActions.OpenTerminal(files[0])) SuccessToast.Action(L10n.T(Copy.TerminalOpened), Path.GetDirectoryName(files[0]), null).Present();
+                    var first = files[0];
+                    if (await Task.Run(() => FileActions.OpenTerminal(first))) SuccessToast.Action(L10n.T(Copy.TerminalOpened), Path.GetDirectoryName(files[0]), null).Present();
                     else notify(L10n.T(Copy.NoTerminal));
                     break;
                 case "share":
@@ -180,12 +199,29 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
                     break;
             }
         }
+        catch (InvalidOperationException error) { notify(L10n.T(error.Message)); }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException) { notify(L10n.F(Copy.Failed, L10n.T(error.Message))); }
         finally
         {
             Busy = false;
             if (owner is null) host.Close();
         }
+    }
+
+    /// A 1×1 transparent, borderless, topmost window at the pointer, activated like the pointer wheel, so the
+    /// folder picker has a real parent window. ActAsync closes it.
+    private Window PickerHost()
+    {
+        var host = new Window
+        {
+            Width = 1, Height = 1, CanResize = false, SystemDecorations = SystemDecorations.None, ShowInTaskbar = false, Topmost = true,
+            Background = Avalonia.Media.Brushes.Transparent, TransparencyLevelHint = [WindowTransparencyLevel.Transparent],
+            WindowStartupLocation = WindowStartupLocation.Manual, Title = "Nashi",
+        };
+        if (pointer is { } at) host.Position = at;
+        host.Opened += (_, _) => { host.Activate(); Desktop.Activate(host, 0); };
+        host.Show();
+        return host;
     }
 
     /// The first file's folder when Nashi may write there; otherwise the user picks one (null when cancelled).

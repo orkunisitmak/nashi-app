@@ -127,6 +127,7 @@
 "ALLOW HOME FOLDER ACCESS…" = "ANA KLASÖRE ERİŞİM İZNİ VER…";
 "ALLOW NASHI IN MACOS LOGIN ITEMS." = "MACOS GİRİŞ ÖĞELERİ BÖLÜMÜNDEN NASHI'YE İZİN VER.";
 "ALREADY AVAILABLE ON YOUR COMPUTER" = "BİLGİSAYARINDA ZATEN HAZIR";
+"ALREADY THERE" = "ZATEN ORADA";
 "AN EMBEDDED IMAGE IS MISSING OR TOO LARGE." = "GÖMÜLÜ BİR GÖRSEL EKSİK VEYA ÇOK BÜYÜK.";
 "AN EMPTY OUTPUT WAS PRODUCED." = "BOŞ BİR ÇIKTI OLUŞTU.";
 "AN HTTPS DOWNLOAD IS REQUIRED." = "İNDİRME HTTPS ÜZERİNDEN YAPILMALI.";
@@ -196,6 +197,7 @@
 "Allow Home Folder Access…" = "Ana Klasöre Erişim İzni Ver…";
 "Allow Nashi in macOS Login Items." = "macOS Giriş Öğeleri bölümünden Nashi'ye izin ver.";
 "Already available on your computer" = "Bilgisayarında zaten hazır";
+"Already there" = "Zaten orada";
 "An HTTPS download is required." = "İndirme HTTPS üzerinden yapılmalı.";
 "An RTFD attachment is missing or too large: %@" = "Bir RTFD eki eksik veya çok büyük: %@";
 "An RTFD attachment is missing or too large: %lld" = "Bir RTFD eki eksik veya çok büyük: %lld";
@@ -313,6 +315,7 @@
 "CHOOSE A DESTINATION OUTSIDE THE FOLDER BEING MOVED." = "TAŞINAN KLASÖRÜN DIŞINDA BİR HEDEF SEÇ.";
 "CHOOSE A FILE TO PREVIEW." = "ÖNİZLEMEK İÇİN BİR DOSYA SEÇ.";
 "CHOOSE A FINISHED VIDEO INSTEAD OF A LIVE OR UPCOMING STREAM." = "CANLI VEYA HENÜZ BAŞLAMAMIŞ BİR YAYIN YERİNE TAMAMLANMIŞ BİR VİDEO SEÇ.";
+"CHOOSE A FOLDER ON THIS COMPUTER." = "BU BİLGİSAYARDAKİ BİR KLASÖRÜ SEÇ.";
 "CHOOSE A HEX BACKGROUND COLOR, SUCH AS #FFFFFF OR #00FFFFFF." = "#FFFFFF VEYA #00FFFFFF GİBİ ONALTILIK BİR ARKA PLAN RENGİ SEÇ.";
 "CHOOSE A LARGER TARGET SIZE." = "DAHA BÜYÜK BİR HEDEF BOYUT SEÇ.";
 "CHOOSE A NONEMPTY IMAGE." = "BOŞ OLMAYAN BİR GÖRSEL SEÇ.";
@@ -425,8 +428,10 @@
 "CORNERS" = "KÖŞELER";
 "COULDN’T CHECK FOR UPDATES" = "GÜNCELLEMELER DENETLENEMEDİ";
 "COULDN’T FINISH" = "İŞLEM TAMAMLANAMADI";
+"COULDN’T OPEN THE FOLDER PICKER." = "KLASÖR SEÇİCİ AÇILAMADI.";
 "COULDN’T OPEN THIS TOOL" = "BU ARAÇ AÇILAMADI";
 "COULDN’T OPEN YOUR FILE MANAGER." = "DOSYA YÖNETİCİN AÇILAMADI.";
+"COULDN’T REACH THE CLIPBOARD." = "PANOYA ULAŞILAMADI.";
 "COVER STYLE" = "KAPLAMA STİLİ";
 "CREATE A NEW FLOAT" = "YENİ YÜZEN PENCERE OLUŞTUR";
 "CREATE COLLAGE" = "KOLAJ OLUŞTUR";
@@ -491,6 +496,7 @@
 "Choose a destination outside the folder being moved." = "Taşınan klasörün dışında bir hedef seç.";
 "Choose a file to preview." = "Önizlemek için bir dosya seç.";
 "Choose a finished video instead of a live or upcoming stream." = "Canlı veya henüz başlamamış bir yayın yerine tamamlanmış bir video seç.";
+"Choose a folder on this computer." = "Bu bilgisayardaki bir klasörü seç.";
 "Choose a hex background color, such as #FFFFFF or #00FFFFFF." = "#FFFFFF veya #00FFFFFF gibi onaltılık bir arka plan rengi seç.";
 "Choose a larger target size." = "Daha büyük bir hedef boyut seç.";
 "Choose a nonempty image." = "Boş olmayan bir görsel seç.";
@@ -611,8 +617,10 @@
 "Couldn’t finish" = "İşlem tamamlanamadı";
 "Couldn’t finish: %@" = "Tamamlanamadı: %@";
 "Couldn’t finish: %lld" = "Tamamlanamadı: %lld";
+"Couldn’t open the folder picker." = "Klasör seçici açılamadı.";
 "Couldn’t open this tool" = "Bu araç açılamadı";
 "Couldn’t open your file manager." = "Dosya yöneticin açılamadı.";
+"Couldn’t reach the clipboard." = "Panoya ulaşılamadı.";
 "Couldn’t set up tools: %@" = "Araçlar kurulamadı: %@";
 "Couldn’t set up tools: %lld" = "Araçlar kurulamadı: %lld";
 "Cover style" = "Kaplama stili";

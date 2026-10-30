@@ -30,16 +30,23 @@ public static class Desktop
     }
 
     /// Starts a program with an argument list in `folder` (null: here) without waiting; false when it is missing.
-    /// The checks swap in a recorder, so nothing is ever launched from them.
-    public static Func<string, IReadOnlyList<string>, string?, bool> Start { get; set; } = (program, args, folder) =>
+    /// `exited` (optional) gets its exit code later, on a pool thread. The checks swap in a recorder, so nothing is
+    /// ever launched from them.
+    public static Func<string, IReadOnlyList<string>, string?, Action<int>?, bool> Spawn { get; set; } = (program, args, folder, exited) =>
     {
-        try
+        var process = new Process { StartInfo = new ProcessStartInfo(program, args) { UseShellExecute = false, WorkingDirectory = folder ?? "" }, EnableRaisingEvents = true };
+        process.Exited += (_, _) =>
         {
-            using var process = Process.Start(new ProcessStartInfo(program, args) { UseShellExecute = false, WorkingDirectory = folder ?? "" });
-            return process is not null;
-        }
-        catch (Win32Exception) { return false; }
+            using (process) exited?.Invoke(process.ExitCode);
+        };
+        try { if (process.Start()) return true; }
+        catch (Win32Exception) { } // not installed
+        process.Dispose();
+        return false;
     };
+
+    /// Fire-and-forget Spawn.
+    public static bool Start(string program, IReadOnlyList<string> args, string? folder) => Spawn(program, args, folder, null);
 
     /// Runs a program with an argument list and waits: its stdout, or null when missing or failing (Integration.Run).
     public static Func<string, IReadOnlyList<string>, string?> Run { get; set; } = Integration.Run;

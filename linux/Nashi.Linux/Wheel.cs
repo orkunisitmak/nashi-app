@@ -81,7 +81,6 @@ public sealed class Wheel : Control
             var next = value >= 0 && value < segments.Count && segments[value].Enabled ? value : -1;
             if (next == highlighted) return;
             highlighted = next;
-            if (next >= 0) WheelFeedback.Tick();
             InvalidateVisual();
         }
     }
@@ -147,6 +146,14 @@ public sealed class Wheel : Control
         InvalidateVisual();
     }
 
+    // A highlight the user moved (pointer or keys) ticks, as macOS's selectionChanged; opening and page turns do not.
+    private void Highlight(int index)
+    {
+        var before = highlighted;
+        HighlightedIndex = index;
+        if (highlighted != before && highlighted >= 0) WheelFeedback.Tick();
+    }
+
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
@@ -155,10 +162,10 @@ public sealed class Wheel : Control
         e.Handled = true;
         switch (e.Key)
         {
-            case Key.Right or Key.Down: HighlightedIndex = Step(highlighted, 1); break;
-            case Key.Left or Key.Up: HighlightedIndex = Step(highlighted, -1); break;
-            case Key.Home: HighlightedIndex = Step(-1, 1); break;
-            case Key.End: HighlightedIndex = Step(0, -1); break;
+            case Key.Right or Key.Down: Highlight(Step(highlighted, 1)); break;
+            case Key.Left or Key.Up: Highlight(Step(highlighted, -1)); break;
+            case Key.Home: Highlight(Step(-1, 1)); break;
+            case Key.End: Highlight(Step(0, -1)); break;
             case Key.PageDown: TurnPage(1); break;
             case Key.PageUp: TurnPage(-1); break;
             case Key.Enter or Key.Space: Choose(highlighted); break;
@@ -172,7 +179,7 @@ public sealed class Wheel : Control
         base.OnPointerMoved(e);
         var segments = Segments;
         var index = IndexAt(e.GetPosition(this), Bounds.Size, segments.Count);
-        HighlightedIndex = index;
+        Highlight(index);
         ToolTip.SetTip(this, index >= 0 && !segments[index].Enabled ? L10n.T(Copy.Soon) : null);
     }
 
@@ -408,27 +415,64 @@ public static class WheelFeedback
     /// The time source for the tick's rate limit; the checks swap in their own.
     public static Func<DateTime> Clock { get; set; } = () => DateTime.UtcNow;
     public static readonly TimeSpan MinimumInterval = TimeSpan.FromSeconds(0.05);
+
+    // PulseAudio, PipeWire, then ALSA (which has no volume). Players found missing are skipped for the rest of the run.
+    private static readonly string[] Players = ["paplay", "pw-play", "aplay"];
+    private static readonly HashSet<string> missing = [];
+    private static readonly object gate = new();
     private static DateTime lastTick = DateTime.MinValue;
+    private static bool ticking;
+
+    /// Players found missing so far (the checks clear it).
+    public static ISet<string> Missing => missing;
 
     /// A choice: the sound at full volume.
-    public static void PlaySelection() => Play(1);
+    public static void PlaySelection() => Play(1, tick: false);
 
-    /// A highlight change, as macOS's selectionChanged: the same sound, softer (0.65), at most every 50 ms.
+    /// A highlight change, as macOS's selectionChanged: the same sound, softer (0.65), at most every 50 ms,
+    /// and dropped while the previous tick is still playing.
     public static void Tick()
     {
         var now = Clock();
-        if (now - lastTick < MinimumInterval && now >= lastTick) return;
-        lastTick = now;
-        Play(0.65);
+        lock (gate)
+        {
+            if (ticking || (now - lastTick < MinimumInterval && now >= lastTick)) return;
+            lastTick = now;
+        }
+        Play(0.65, tick: true);
     }
 
-    // Fire-and-forget through the first player present (PulseAudio, PipeWire, then ALSA, which has no volume);
-    // silently nothing when the setting is off, the file is missing or no player exists.
-    private static void Play(double volume)
+    // Fire-and-forget through the first player that starts; one that exits non-zero (no sound server, say) hands
+    // over to the next. Silently nothing when the setting is off, the file is missing or no player works.
+    private static void Play(double volume, bool tick)
     {
         if (!SoundEnabled || !File.Exists(Sound)) return;
-        _ = Desktop.Start("paplay", ["--volume=" + (int)(65536 * volume), Sound], null)
-            || Desktop.Start("pw-play", ["--volume=" + volume.ToString("0.##", CultureInfo.InvariantCulture), Sound], null)
-            || Desktop.Start("aplay", ["-q", Sound], null);
+        if (tick) lock (gate) ticking = true;
+        Try(0);
+
+        void Try(int from)
+        {
+            for (var i = from; i < Players.Length; i++)
+            {
+                var player = Players[i];
+                lock (gate) if (missing.Contains(player)) continue;
+                var next = i + 1;
+                if (Desktop.Spawn(player, Arguments(player, volume), null, code => { if (code == 0) Done(); else Try(next); })) return;
+                lock (gate) missing.Add(player);
+            }
+            Done();
+        }
+
+        void Done()
+        {
+            if (tick) lock (gate) ticking = false;
+        }
     }
+
+    private static string[] Arguments(string player, double volume) => player switch
+    {
+        "paplay" => ["--volume=" + (int)(65536 * volume), Sound],
+        "pw-play" => ["--volume=" + volume.ToString("0.##", CultureInfo.InvariantCulture), Sound],
+        _ => ["-q", Sound],
+    };
 }

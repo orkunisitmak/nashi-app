@@ -25,7 +25,17 @@ L10n.Language = "en"; // the English checks below must not depend on the machine
 // Nothing launches from the checks: programs are recorded, and only the listed ones "start".
 var launched = new List<(string Program, string[] Args, string? Folder)>();
 var startable = new HashSet<string>();
-Desktop.Start = (program, args, folder) => { launched.Add((program, [.. args], folder)); return startable.Contains(program); };
+var exitCodes = new Dictionary<string, int>(); // a listed program "exits" at once with this code; others keep running
+var running = new List<Action<int>>(); // the exit callbacks of the ones still running
+Desktop.Spawn = (program, args, folder, exited) =>
+{
+    launched.Add((program, [.. args], folder));
+    if (!startable.Contains(program)) return false;
+    if (exitCodes.TryGetValue(program, out var code)) exited?.Invoke(code);
+    else if (exited is not null) running.Add(exited);
+    return true;
+};
+FileActions.TerminalSettle = TimeSpan.FromMilliseconds(50);
 var ran = new List<(string Program, string[] Args)>();
 Func<string, IReadOnlyList<string>, string?> runResult = (_, _) => null;
 Desktop.Run = (program, args) => { ran.Add((program, [.. args])); return runResult(program, args); };
@@ -850,7 +860,17 @@ void IntegrationChecks(string root)
     Check(fds.Length == 3 && fds.All(f => f == "/dev/null"), "The background instance's stdin, stdout and stderr are /dev/null: " + string.Join(", ", fds));
     Check(File.Exists(marker + ".sid") && File.ReadAllText(marker + ".sid").Trim() == File.ReadAllText(marker + ".pid").Trim(), "The background instance leads its own session (setsid)");
     var source = File.ReadAllText(Path.Combine(RepoRoot(), "linux", "Nashi.Linux", "Integration.cs"));
-    Check(source.Contains("StartBackground(exe)") && System.Text.RegularExpressions.Regex.Matches(source, @"Process\.Start\(").Count == 2 && source.Contains("</dev/null >/dev/null 2>&1") && source.Contains("/usr/bin/setsid -f"), "The installer starts the background instance only through StartBackground (setsid -f, stdio on /dev/null)");
+    Check(source.Contains("StartBackground(exe)") && System.Text.RegularExpressions.Regex.Matches(source, @"Process\.Start\(").Count == 2 && source.Contains("-f \"$0\" --background </dev/null >/dev/null 2>&1") && source.Contains("\"/usr/bin/setsid\""), "The installer starts the background instance only through StartBackground (setsid -f, stdio on /dev/null)");
+    // Without setsid: nohup (SIGHUP ignored) in its own process group, stdio still on /dev/null.
+    foreach (var f in Directory.GetFiles(root, "started-in-background*")) File.Delete(f);
+    Check(Integration.StartBackground(slow, "/nonexistent/setsid"), "StartBackground without setsid still starts");
+    for (var i = 0; i < 100 && !File.Exists(marker); i++) Thread.Sleep(20);
+    var pid = File.Exists(marker + ".pid") ? File.ReadAllText(marker + ".pid").Trim() : "0";
+    var stat = File.Exists($"/proc/{pid}/stat") ? File.ReadAllText($"/proc/{pid}/stat") : "";
+    var group = stat.Length > 0 ? stat[(stat.LastIndexOf(')') + 2)..].Split(' ')[2] : "";
+    var ignored = File.Exists($"/proc/{pid}/status") ? File.ReadAllLines($"/proc/{pid}/status").FirstOrDefault(l => l.StartsWith("SigIgn:"))?.Split('\t')[1] : null;
+    var fallbackFds = Enumerable.Range(0, 3).Select(fd => File.Exists($"/proc/{pid}/fd/{fd}") || Directory.Exists($"/proc/{pid}/fd") ? File.ResolveLinkTarget($"/proc/{pid}/fd/{fd}", false)?.FullName : null).ToArray();
+    Check(group == pid && ignored is not null && (Convert.ToUInt64(ignored, 16) & 1) == 1 && fallbackFds.All(f => f == "/dev/null"), $"The fallback runs in its own process group with SIGHUP ignored and stdio on /dev/null (pgrp {group}, pid {pid}, SigIgn {ignored})");
     Check(Integration.Quote("/a \"b\" $c `d` \\e") == "\"/a \\\"b\\\" \\$c \\`d\\` \\\\e\"", "Quote escapes \\ \" $ and `");
 }
 
@@ -1038,26 +1058,43 @@ async Task ActionChecks(string root)
     var into = Directory.CreateDirectory(Path.Combine(work, "into")).FullName;
     File.WriteAllText(Path.Combine(into, "b.txt"), "older");
 
+    var home0 = new Window(); // never shown: it only lends the headless clipboard
     var copies = FileActions.CopyTo([a, b], into);
     Check(copies.SequenceEqual([Path.Combine(into, "a ğ, #1.png"), Path.Combine(into, "b 2.txt")]) && File.Exists(a) && File.Exists(b) && File.ReadAllText(Path.Combine(into, "b.txt")) == "older", "Copy keeps originals and gives the copies unique names");
 
     var to = Directory.CreateDirectory(Path.Combine(work, "to")).FullName;
     var moved = FileActions.MoveTo([a, b], to);
-    Check(moved.Count == 2 && !File.Exists(a) && !File.Exists(b) && File.ReadAllText(Path.Combine(to, "b.txt")) == "b", "Move moves every file");
-    var first = moved[0];
+    Check(moved.Files.Count == 2 && moved.AlreadyThere == 0 && !File.Exists(a) && !File.Exists(b) && File.ReadAllText(Path.Combine(to, "b.txt")) == "b", "Move moves every file");
+    var first = moved.Files[0];
     var gone = Path.Combine(to, "vanished.txt");
     try { FileActions.MoveTo([first, gone], into); Check(false, "Move with a missing second file fails"); }
     catch (FileNotFoundException) { Check(File.Exists(first) && !File.Exists(Path.Combine(into, "a ğ, #1 2.png")), "A failed second move rolls the first file back into place"); }
+    var stay = FileActions.MoveTo([first], to);
+    Check(stay.Files.Count == 0 && stay.AlreadyThere == 1 && File.Exists(first), "A file already in the folder is left alone and counted as already there, not moved");
 
-    var text = await FileActions.CopyPathsAsync(null, [first, moved[1]]);
-    Check(text == first + "\n" + moved[1], "Copy Path joins full paths with newlines");
+    // Linux allows ':' in names (Windows does not): copy and convert "a:b.png".
+    var colon = Path.Combine(work, "a:b.png");
+    using (var g = new MagickImage("gradient:red-blue", 16, 12)) g.Write("png:" + colon);
+    var colonCopy = FileActions.CopyTo([colon], into);
+    var colonJpg = Pumped(new OperationRunner(new Toolchain(work, "")).RunAsync("convert:jpg", [colon], Directory.CreateDirectory(Path.Combine(work, "colon-out")).FullName, new Progress<OperationProgress>(), default));
+    Check(colonCopy.Single() == Path.Combine(into, "a:b.png") && colonJpg.Single().EndsWith("/a:b.jpg") && File.Exists(colonJpg[0]), "A file named a:b.png copies and converts on Linux");
+    Check(!OperatingSystem.IsWindows() && SafePaths.Unique(work, "12:30 x\\y.png").EndsWith("/12:30 x\\y.png"), "SafePaths.Unique keeps ':' and '\\' in Linux names");
+    try { SafePaths.Unique(work, ".."); Check(false, "Unique rejects .."); } catch (ArgumentException) { Check(true, "Unique rejects .. on Linux"); }
 
-    launched.Clear();
-    startable.Clear();
-    startable.Add("konsole");
+    var text = Pumped(FileActions.CopyPathsAsync(home0.Clipboard, [first, moved.Files[1]]));
+    Check(text == first + "\n" + moved.Files[1], "Copy Path joins full paths with newlines");
+    try { await FileActions.CopyPathsAsync(null, [first]); Check(false, "Copy Path without a clipboard fails"); }
+    catch (InvalidOperationException error) { Check(error.Message == "Couldn’t reach the clipboard." && AppLocalization.Text(error.Message, "tr") != error.Message, "Copy Path without a clipboard is an error, never Path copied."); }
+
+    launched.Clear(); startable.Clear(); exitCodes.Clear(); running.Clear();
+    startable.UnionWith(["konsole"]);
+    exitCodes["konsole"] = 0;
     Check(FileActions.OpenTerminal(first) && launched.Select(l => l.Program).SequenceEqual(["x-terminal-emulator", "gnome-terminal", "konsole"]) && launched[2].Args.SequenceEqual(["--workdir", to]) && launched[1].Args.SequenceEqual(["--working-directory=" + to]) && launched.All(l => l.Folder == to), "Terminal tries x-terminal-emulator, gnome-terminal, konsole in order, in the file's folder");
     launched.Clear();
-    startable.Clear();
+    startable.UnionWith(["x-terminal-emulator", "gnome-terminal"]);
+    exitCodes["x-terminal-emulator"] = 1; // a broken alternative exits at once
+    Check(FileActions.OpenTerminal(first) && launched.Select(l => l.Program).SequenceEqual(["x-terminal-emulator", "gnome-terminal"]), "A terminal that exits non-zero at once counts as failed; one still running after the settle time counts as open");
+    launched.Clear(); startable.Clear(); exitCodes.Clear(); running.Clear();
     Check(!FileActions.OpenTerminal(first) && launched.Count == 4 && launched[3].Program == "xfce4-terminal", "Without any terminal, all four are tried and the action reports failure");
 
     ran.Clear(); launched.Clear();
@@ -1072,31 +1109,55 @@ async Task ActionChecks(string root)
     var wheel = new Wheel { Items = FileActions.Ids.Select(id => new WheelItem("action:" + id, FileActions.Title(id), FileActions.Available(id))).ToList() };
     WheelItem? chosen = null;
     wheel.Chosen += item => chosen = item;
+    void Key(Key key) => wheel.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = key });
     wheel.HighlightedIndex = 1;
     Check(wheel.HighlightedIndex == -1, "The Float petal never takes the highlight");
     wheel.HighlightedIndex = 0;
-    wheel.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Right });
+    Key(Avalonia.Input.Key.Right);
     Check(wheel.HighlightedIndex == 2, "Right from Share skips Float to Copy");
-    wheel.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Left });
+    Key(Avalonia.Input.Key.Left);
     Check(wheel.HighlightedIndex == 0, "Left from Copy skips Float back to Share");
 
-    // Sound: a choice plays the wav at full volume; a highlight change ticks softer, at most every 50 ms; off is off.
+    // Sound: a choice plays the wav at full volume through the first player that works; a user's highlight change
+    // ticks softer, at most every 50 ms and one at a time; opening and setting the highlight in code are silent.
     Check(File.Exists(WheelFeedback.Sound), "WheelSelection.wav ships beside the executable");
     var now = new DateTime(2026, 1, 1);
     WheelFeedback.Clock = () => now;
+    WheelFeedback.Missing.Clear();
     launched.Clear();
-    wheel.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
-    Check(chosen?.Id == "action:share" && launched.Select(l => l.Program).SequenceEqual(["paplay", "pw-play", "aplay"]) && launched[0].Args.SequenceEqual(["--volume=65536", WheelFeedback.Sound]), "Choosing plays WheelSelection.wav through paplay, then pw-play, then aplay");
+    Key(Avalonia.Input.Key.Enter);
+    Check(chosen?.Id == "action:share" && launched.Select(l => l.Program).SequenceEqual(["paplay", "pw-play", "aplay"]) && launched[0].Args.SequenceEqual(["--volume=65536", WheelFeedback.Sound]), "Choosing tries paplay, then pw-play, then aplay");
     launched.Clear();
-    startable.Add("paplay");
+    Key(Avalonia.Input.Key.Enter);
+    Check(launched.Count == 0 && WheelFeedback.Missing.SetEquals(["paplay", "pw-play", "aplay"]), "Missing players are remembered and not tried again");
+    WheelFeedback.Missing.Clear();
+    startable.UnionWith(["paplay", "pw-play"]);
+    exitCodes["paplay"] = 1; // no sound server
+    Key(Avalonia.Input.Key.Enter);
+    Check(launched.Select(l => l.Program).SequenceEqual(["paplay", "pw-play"]) && launched[1].Args.SequenceEqual(["--volume=1", WheelFeedback.Sound]), "A player that exits non-zero hands over to the next one");
+    exitCodes.Clear(); running.Clear(); launched.Clear();
+    wheel.Items = [.. wheel.Items];
+    wheel.HighlightedIndex = 3;
+    Check(launched.Count == 0, "Opening a wheel and setting its highlight in code play no tick");
     now += TimeSpan.FromSeconds(1);
-    wheel.HighlightedIndex = 2;
-    wheel.HighlightedIndex = 3; // within 50 ms: throttled
-    Check(launched.Count == 1 && launched[0].Args[0] == "--volume=42598", "A highlight change ticks at 0.65 volume, once per 50 ms");
+    Key(Avalonia.Input.Key.Right);
+    Check(launched.Count == 1 && launched[0].Program == "paplay" && launched[0].Args[0] == "--volume=42598", "A user's highlight change ticks at 0.65 volume");
+    now += TimeSpan.FromSeconds(1);
+    Key(Avalonia.Input.Key.Right);
+    Check(launched.Count == 1, "A tick is dropped while the previous one still plays");
+    foreach (var done in running.ToArray()) done(0);
+    running.Clear();
+    exitCodes["paplay"] = 0; // from here each tick ends at once
+    Key(Avalonia.Input.Key.Right);
+    Check(launched.Count == 2, "Once the previous tick ends, the next highlight change ticks again");
+    Key(Avalonia.Input.Key.Right);
+    Check(launched.Count == 2, "Ticks closer than 50 ms are dropped");
+    exitCodes.Clear();
     WheelFeedback.SoundEnabled = false;
     now += TimeSpan.FromSeconds(1);
     launched.Clear();
-    wheel.HighlightedIndex = 4;
+    Key(Avalonia.Input.Key.Right);
+    Key(Avalonia.Input.Key.Enter);
     Check(launched.Count == 0, "With the sound setting off nothing plays");
     WheelFeedback.SoundEnabled = true;
     startable.Clear();
@@ -1130,6 +1191,13 @@ async Task ActionChecks(string root)
     Check(Title() == "Path copied." && clip.IsCompleted && clip.Result == src, "Copy Path puts the full path on the clipboard and says Path copied.");
     Choose("action:move");
     Check(Title() == "Moved." && File.Exists(Path.Combine(picked, "home 2.png")) && !File.Exists(src), "Move from the Actions wheel moves into the picked folder and says Moved.");
+    home.Selection.Clear();
+    home.Selection.Add([Path.Combine(picked, "home 2.png")]);
+    Choose("action:move");
+    Check(Title() == "Already there" && File.Exists(Path.Combine(picked, "home 2.png")), "Moving a file into its own folder says Already there");
+    home.Flow.PickFolder = (_, _) => Task.FromResult<string?>(null);
+    Choose("action:copy");
+    Check(SuccessToast.Current is null && !home.Flow.Busy, "A cancelled folder picker returns quietly");
     SuccessToast.Current?.Close();
     home.Close();
 
@@ -1141,6 +1209,34 @@ async Task ActionChecks(string root)
     Dispatcher.UIThread.RunJobs();
     var bare = app.Flow.LastWheel;
     Check(bare is { Owner: null, Width: Wheel.Size } && bare.Wheel.Items.Count == 6 && bare.Wheel.Items[0].Id == "action:share", "--actions shows the bare actions wheel at the pointer");
+    // Background Copy: the picker gets a real, shown 1×1 topmost owner at the pointer, closed afterwards;
+    // a picker that can't open or a non-local folder is an error card, never silence.
+    Window? owner = null;
+    var ownerWasShown = false;
+    app.Flow.PickFolder = (host, _) =>
+    {
+        owner = host as Window;
+        ownerWasShown = owner is { IsVisible: true, Topmost: true, Width: 1, Height: 1, SystemDecorations: SystemDecorations.None };
+        throw new InvalidOperationException("Choose a folder on this computer.");
+    };
+    string? Card() => SuccessToast.Current?.FindControl<TextBlock>("TitleText")?.Text;
+    void Pick()
+    {
+        SuccessToast.Current?.Close();
+        bare!.Wheel.HighlightedIndex = bare.Wheel.Items.ToList().FindIndex(i => i.Id == "action:copy");
+        bare.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+        for (var i = 0; i < 100 && SuccessToast.Current is null; i++) { Thread.Sleep(10); Dispatcher.UIThread.RunJobs(); }
+    }
+    Pick();
+    Check(ownerWasShown && owner is { IsVisible: false }, "The background folder picker is owned by a shown 1×1 topmost window that closes afterwards");
+    Check(Card() == "Choose a folder on this computer.", "A non-local folder shows an error card");
+    app.Flow.PickFolder = WheelFlow.PickLocalFolderAsync; // the real one, over the headless platform
+    app.Handle(new InstanceMessage("actions", [png]));
+    Dispatcher.UIThread.RunJobs();
+    bare = app.Flow.LastWheel;
+    Pick();
+    Check(Card() == "Couldn’t open the folder picker.", "Without a folder picker an error card says so: " + Card());
+    SuccessToast.Current?.Close();
     bare?.Close();
     app.ShowWheel([png]);
     Dispatcher.UIThread.RunJobs();
@@ -1206,6 +1302,13 @@ void WheelRenders(string root)
         }
         finally { Application.Current!.RequestedThemeVariant = ThemeVariant.Light; }
     }
+}
+
+// Waits for a task whose continuations need the UI dispatcher (an await there would wait on itself).
+static T Pumped<T>(Task<T> task)
+{
+    for (var i = 0; i < 1000 && !task.IsCompleted; i++) { Thread.Sleep(5); Dispatcher.UIThread.RunJobs(); }
+    return task.GetAwaiter().GetResult();
 }
 
 static string RepoRoot()

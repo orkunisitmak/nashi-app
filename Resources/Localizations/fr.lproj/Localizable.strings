@@ -127,6 +127,7 @@
 "ALLOW HOME FOLDER ACCESS…" = "AUTORISER L’ACCÈS AU DOSSIER DE DÉPART…";
 "ALLOW NASHI IN MACOS LOGIN ITEMS." = "AUTORISEZ NASHI DANS LES ÉLÉMENTS D’OUVERTURE DE MACOS.";
 "ALREADY AVAILABLE ON YOUR COMPUTER" = "DÉJÀ DISPONIBLES SUR VOTRE ORDINATEUR";
+"ALREADY THERE" = "ALREADY THERE";
 "AN EMBEDDED IMAGE IS MISSING OR TOO LARGE." = "UNE IMAGE INTÉGRÉE EST MANQUANTE OU TROP VOLUMINEUSE.";
 "AN EMPTY OUTPUT WAS PRODUCED." = "UNE SORTIE VIDE A ÉTÉ PRODUITE.";
 "AN HTTPS DOWNLOAD IS REQUIRED." = "UN TÉLÉCHARGEMENT HTTPS EST REQUIS.";
@@ -196,6 +197,7 @@
 "Allow Home Folder Access…" = "Autoriser l’accès au dossier de départ…";
 "Allow Nashi in macOS Login Items." = "Autorisez Nashi dans les éléments d’ouverture de macOS.";
 "Already available on your computer" = "Déjà disponibles sur votre ordinateur";
+"Already there" = "Already there";
 "An HTTPS download is required." = "Un téléchargement HTTPS est requis.";
 "An RTFD attachment is missing or too large: %@" = "Une pièce jointe RTFD est manquante ou trop volumineuse : %@";
 "An RTFD attachment is missing or too large: %lld" = "Une pièce jointe RTFD est manquante ou trop volumineuse : %lld";
@@ -313,6 +315,7 @@
 "CHOOSE A DESTINATION OUTSIDE THE FOLDER BEING MOVED." = "CHOISISSEZ UNE DESTINATION EN DEHORS DU DOSSIER DÉPLACÉ.";
 "CHOOSE A FILE TO PREVIEW." = "CHOISISSEZ UN FICHIER À PRÉVISUALISER.";
 "CHOOSE A FINISHED VIDEO INSTEAD OF A LIVE OR UPCOMING STREAM." = "CHOISISSEZ UNE VIDÉO TERMINÉE PLUTÔT QU’UNE DIFFUSION EN DIRECT OU À VENIR.";
+"CHOOSE A FOLDER ON THIS COMPUTER." = "CHOOSE A FOLDER ON THIS COMPUTER.";
 "CHOOSE A HEX BACKGROUND COLOR, SUCH AS #FFFFFF OR #00FFFFFF." = "CHOISISSEZ UNE COULEUR D’ARRIÈRE-PLAN HEXADÉCIMALE, COMME #FFFFFF OU #00FFFFFF.";
 "CHOOSE A LARGER TARGET SIZE." = "CHOISISSEZ UNE TAILLE CIBLE PLUS GRANDE.";
 "CHOOSE A NONEMPTY IMAGE." = "CHOISISSEZ UNE IMAGE NON VIDE.";
@@ -425,8 +428,10 @@
 "CORNERS" = "COINS";
 "COULDN’T CHECK FOR UPDATES" = "IMPOSSIBLE DE RECHERCHER LES MISES À JOUR";
 "COULDN’T FINISH" = "IMPOSSIBLE DE TERMINER";
+"COULDN’T OPEN THE FOLDER PICKER." = "COULDN’T OPEN THE FOLDER PICKER.";
 "COULDN’T OPEN THIS TOOL" = "IMPOSSIBLE D’OUVRIR CET OUTIL";
 "COULDN’T OPEN YOUR FILE MANAGER." = "COULDN’T OPEN YOUR FILE MANAGER.";
+"COULDN’T REACH THE CLIPBOARD." = "COULDN’T REACH THE CLIPBOARD.";
 "COVER STYLE" = "STYLE DE POCHETTE";
 "CREATE A NEW FLOAT" = "CRÉER UN NOUVEAU FLOAT";
 "CREATE COLLAGE" = "CRÉER UN COLLAGE";
@@ -491,6 +496,7 @@
 "Choose a destination outside the folder being moved." = "Choisissez une destination en dehors du dossier déplacé.";
 "Choose a file to preview." = "Choisissez un fichier à prévisualiser.";
 "Choose a finished video instead of a live or upcoming stream." = "Choisissez une vidéo terminée plutôt qu’une diffusion en direct ou à venir.";
+"Choose a folder on this computer." = "Choose a folder on this computer.";
 "Choose a hex background color, such as #FFFFFF or #00FFFFFF." = "Choisissez une couleur d’arrière-plan hexadécimale, comme #FFFFFF ou #00FFFFFF.";
 "Choose a larger target size." = "Choisissez une taille cible plus grande.";
 "Choose a nonempty image." = "Choisissez une image non vide.";
@@ -611,8 +617,10 @@
 "Couldn’t finish" = "Impossible de terminer";
 "Couldn’t finish: %@" = "Couldn’t finish: %@";
 "Couldn’t finish: %lld" = "Couldn’t finish: %lld";
+"Couldn’t open the folder picker." = "Couldn’t open the folder picker.";
 "Couldn’t open this tool" = "Impossible d’ouvrir cet outil";
 "Couldn’t open your file manager." = "Couldn’t open your file manager.";
+"Couldn’t reach the clipboard." = "Couldn’t reach the clipboard.";
 "Couldn’t set up tools: %@" = "Couldn’t set up tools: %@";
 "Couldn’t set up tools: %lld" = "Couldn’t set up tools: %lld";
 "Cover style" = "Style de pochette";

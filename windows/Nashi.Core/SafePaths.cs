@@ -23,7 +23,9 @@ public static class SafePaths
 
     public static string Unique(string directory, string filename)
     {
-        if (Path.GetFileName(filename) != filename || filename.IndexOfAny(['/', '\\', ':', '\0']) >= 0)
+        // Windows forbids \ and : in names; on Linux and macOS only / and NUL are, so "12:30.png" is a plain name there.
+        if (OperatingSystem.IsWindows() ? Path.GetFileName(filename) != filename || filename.IndexOfAny(['/', '\\', ':', '\0']) >= 0
+                : filename is "" or "." or ".." || filename.IndexOfAny(['/', '\0']) >= 0)
             throw new ArgumentException("Choose a plain output filename.");
         var stem = Path.GetFileNameWithoutExtension(filename); var extension = Path.GetExtension(filename);
         for (var number = 1; number < 100_000; number++)

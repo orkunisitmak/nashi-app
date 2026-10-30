@@ -23,7 +23,19 @@ public static class FileActions
         _ => "Terminal",
     };
 
-    /// Copies into `folder` with unique names; originals are kept. On a failure the copies made so far are removed.
+    private static class Copy
+    {
+        public const string NoClipboard = "Couldn’t reach the clipboard.";
+    }
+
+    /// What Move did: the files now in the folder, and how many were already there (left alone, not moved).
+    public sealed record Moved(IReadOnlyList<string> Files, int AlreadyThere);
+
+    /// How long a terminal gets to fail (a broken alternative exits at once) before it counts as open.
+    public static TimeSpan TerminalSettle { get; set; } = TimeSpan.FromSeconds(1.5);
+
+    /// Copies into `folder` with unique names; originals are kept. On a failure the copies made so far, and a
+    /// half-written one, are removed.
     public static IReadOnlyList<string> CopyTo(IReadOnlyList<string> files, string folder)
     {
         var made = new List<string>();
@@ -32,7 +44,7 @@ public static class FileActions
             foreach (var file in files)
             {
                 var target = SafePaths.Unique(folder, Path.GetFileName(file));
-                File.Copy(file, target);
+                CopyFile(file, target);
                 made.Add(target);
             }
             return made;
@@ -44,48 +56,84 @@ public static class FileActions
         }
     }
 
-    /// Moves into `folder` with unique names, all or nothing: on a failure the files moved so far go back.
-    /// A file already in `folder` stays where it is.
-    public static IReadOnlyList<string> MoveTo(IReadOnlyList<string> files, string folder)
+    // CreateNew, so a target that appeared meanwhile is never touched, and one this wrote is ours to delete.
+    private static void CopyFile(string source, string target)
+    {
+        using var input = File.OpenRead(source);
+        var output = new FileStream(target, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920);
+        try
+        {
+            using (output) input.CopyTo(output);
+            File.SetUnixFileMode(target, File.GetUnixFileMode(source));
+            File.SetLastWriteTimeUtc(target, File.GetLastWriteTimeUtc(source));
+        }
+        catch
+        {
+            File.Delete(target);
+            throw;
+        }
+    }
+
+    /// Moves into `folder` with unique names, all or nothing: on a failure the files moved so far go back, and a
+    /// half-copied target (a move across file systems that failed midway) is removed. A file already in `folder`
+    /// stays where it is and counts as already there.
+    public static Moved MoveTo(IReadOnlyList<string> files, string folder)
     {
         var moved = new List<(string From, string To)>();
         var into = Path.GetFullPath(folder).TrimEnd('/');
+        var already = 0;
         try
         {
             foreach (var file in files.Select(Path.GetFullPath))
             {
-                if (Path.GetDirectoryName(file) == into) { moved.Add((file, file)); continue; }
+                if (Path.GetDirectoryName(file) == into) { already++; continue; }
                 var target = SafePaths.Unique(into, Path.GetFileName(file));
-                File.Move(file, target); // across file systems .NET copies, then deletes
+                try { File.Move(file, target); } // across file systems .NET copies, then deletes
+                catch
+                {
+                    // Unique found no target, so one that exists now while the original is still here is our partial copy.
+                    if (File.Exists(file) && File.Exists(target)) File.Delete(target);
+                    throw;
+                }
                 moved.Add((file, target));
             }
-            return moved.Select(m => m.To).ToList();
+            return new(moved.Select(m => m.To).ToList(), already);
         }
         catch
         {
             // ponytail: a rollback move that itself fails leaves that file in `folder` (never lost); add a report if it matters.
-            foreach (var (from, to) in Enumerable.Reverse(moved).Where(m => m.From != m.To))
+            foreach (var (from, to) in Enumerable.Reverse(moved))
                 try { File.Move(to, from); } catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
             throw;
         }
     }
 
-    /// The full paths, one per line, put on the clipboard as text (when there is one); returns the text.
+    /// The full paths, one per line, put on the clipboard as text; returns the text. No clipboard is an error.
     public static async Task<string> CopyPathsAsync(IClipboard? clipboard, IReadOnlyList<string> files)
     {
+        if (clipboard is null) throw new InvalidOperationException(Copy.NoClipboard);
         var text = string.Join("\n", files);
-        if (clipboard is not null) await clipboard.SetTextAsync(text);
+        await clipboard.SetTextAsync(text);
         return text;
     }
 
-    /// The system terminal in the file's folder: the first of these that starts.
+    /// The system terminal in the file's folder: the first of these that starts and does not fail within
+    /// TerminalSettle (blocks for up to that long per candidate; call it off the UI thread).
     public static bool OpenTerminal(string file)
     {
         var folder = Path.GetDirectoryName(Path.GetFullPath(file))!;
-        return Desktop.Start("x-terminal-emulator", [], folder)
-            || Desktop.Start("gnome-terminal", ["--working-directory=" + folder], folder)
-            || Desktop.Start("konsole", ["--workdir", folder], folder)
-            || Desktop.Start("xfce4-terminal", ["--working-directory=" + folder], folder);
+        return Terminal("x-terminal-emulator", [], folder)
+            || Terminal("gnome-terminal", ["--working-directory=" + folder], folder)
+            || Terminal("konsole", ["--workdir", folder], folder)
+            || Terminal("xfce4-terminal", ["--working-directory=" + folder], folder);
+    }
+
+    // Still running, or done with 0 (gnome-terminal hands the window to its server and exits), counts as open.
+    private static bool Terminal(string program, IReadOnlyList<string> args, string folder)
+    {
+        var exit = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
+        if (!Desktop.Spawn(program, args, folder, code => exit.TrySetResult(code))) return false;
+        return !exit.Task.Wait(TerminalSettle) || exit.Task.Result == 0;
     }
 
     /// Share, the Linux way: the file manager opens with the files selected (FileManager1.ShowItems), so they can be

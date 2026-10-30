@@ -147,17 +147,25 @@ public static class Integration
         catch (Win32Exception) { return null; }
     }
 
-    /// `exe --background`, fully detached: its own session (setsid -f, or sh's `&` without setsid) and stdio on
-    /// /dev/null, so neither the terminal nor the AppImage runtime that ran the installer waits for it to close them.
-    /// sh gets the program as $0, never inside the script text. True when it started.
-    public static bool StartBackground(string exe)
+    /// `exe --background`, fully detached, with stdio on /dev/null, so neither the terminal nor the AppImage runtime
+    /// that ran the installer waits for it to close them. With `setsid` (util-linux) it gets its own session.
+    /// Without it: SIGHUP ignored (nohup) and, under bash, its own process group (job control; dash has none without
+    /// a terminal). It still shares the installer's session then, so other signals to that session can reach it,
+    /// which setsid would have prevented. The shell gets the program as $0 and setsid as $1, never inside the
+    /// script text. True when it started.
+    public static bool StartBackground(string exe, string setsid = "/usr/bin/setsid")
     {
-        var script = File.Exists("/usr/bin/setsid")
-            ? "exec /usr/bin/setsid -f \"$0\" --background </dev/null >/dev/null 2>&1"
-            : "\"$0\" --background </dev/null >/dev/null 2>&1 &";
+        const string script = """
+            if [ -x "$1" ]; then exec "$1" -f "$0" --background </dev/null >/dev/null 2>&1; fi
+            set -m
+            if command -v nohup >/dev/null 2>&1; then nohup "$0" --background </dev/null >/dev/null 2>&1 &
+            else "$0" --background </dev/null >/dev/null 2>&1 &
+            fi
+            """;
         try
         {
-            using var sh = Process.Start(new ProcessStartInfo("/bin/sh", ["-c", script, exe]) { UseShellExecute = false });
+            var shell = File.Exists("/bin/bash") ? "/bin/bash" : "/bin/sh";
+            using var sh = Process.Start(new ProcessStartInfo(shell, ["-c", script, exe, setsid]) { UseShellExecute = false });
             if (sh is null) return false;
             sh.WaitForExit();
             return sh.ExitCode == 0;
