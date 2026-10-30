@@ -134,7 +134,7 @@ public sealed class FloatShelf:Window
         foreach(var iconMode in new[]{true,false}){var item=new MenuItem{Header=L10n.Text(iconMode?"Icons":"List"),IsCheckable=true,IsChecked=icons==iconMode};item.Click+=(_,_)=>{icons=iconMode;Reload();SetExpanded(false);SetExpanded(true);};menu.Items.Add(item);}
         var add=new MenuItem{Header=L10n.Text("Add Files…")};add.Click+=(_,_)=>Choose();menu.Items.Add(add);
         var clear=new MenuItem{Header=L10n.Text("Clear Float")};clear.Click+=(_,_)=>{paths.Clear();Reload();};menu.Items.Add(clear);
-        var pin=new MenuItem{Header=L10n.Text("Attach to Edge")};foreach(var side in new[]{"Top","Right","Bottom","Left","Detach"}){var item=new MenuItem{Header=L10n.Text(side),IsCheckable=true,IsChecked=edge==(side=="Detach"?null:side)};item.Click+=(_,_)=>{edge=side=="Detach"?null:side;DesktopGeometry.Snap(this,edge);};pin.Items.Add(item);}menu.Items.Add(pin);return menu;
+        var pin=new MenuItem{Header=L10n.Text("Attach to Edge")};foreach(var side in new[]{"Top","Right","Bottom","Left","Detach"}){var item=new MenuItem{Header=L10n.Text(side),IsCheckable=true,IsChecked=edge==(side=="Detach"?null:side)};item.Click+=(_,_)=>{edge=side=="Detach"?null:side;DesktopGeometry.Snap(this,edge);};pin.Items.Add(item);}menu.Items.Add(pin);MainWindow.ThemePopupMenu(menu);return menu;
     }
     private void Remove(){foreach(var p in files.SelectedItems.Cast<ListBoxItem>().Select(i=>(string)i.Tag).ToArray())paths.Remove(p);Reload();}
     private void Choose(){var picker=new OpenFileDialog{Multiselect=true};if(picker.ShowDialog(this)==true)Add(picker.FileNames);}

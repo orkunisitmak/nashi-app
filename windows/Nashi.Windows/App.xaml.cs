@@ -4,6 +4,7 @@ public partial class App:Application
 {
     private SingleInstance? instance;
     internal static bool IsSmokeTest{get;private set;}
+    internal static bool IsPillModeSmoke{get;private set;}
     private WindowManagement? windowManagement;
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -15,6 +16,29 @@ public partial class App:Application
         }
         DispatcherUnhandledException+=(_,error)=>{var folder=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");if(folder is not null){Directory.CreateDirectory(folder);File.WriteAllText(Path.Combine(folder,"dispatcher-error.txt"),error.Exception.ToString());error.Handled=true;Shutdown(1);}};
         base.OnStartup(e);
+#if DEBUG
+        if(e.Args.Contains("--tool-buttons-smoke"))
+        {
+            IsSmokeTest=true;ShutdownMode=ShutdownMode.OnExplicitShutdown;
+            var index=Array.IndexOf(e.Args,"--tool-buttons-smoke");var output=index+1<e.Args.Length?e.Args[index+1]:Path.Combine(Path.GetTempPath(),"Nashi-Tool-Buttons-Smoke");
+            try{Shutdown(ToolButtonsSmokeChecks.Run(output));}catch(Exception error){Console.Error.WriteLine(error);Shutdown(1);}return;
+        }
+        if(e.Args.Contains("--pill-mode-smoke"))
+        {
+            IsSmokeTest=true;IsPillModeSmoke=true;ShutdownMode=ShutdownMode.OnExplicitShutdown;
+            var index=Array.IndexOf(e.Args,"--pill-mode-smoke");var output=index+1<e.Args.Length?e.Args[index+1]:Path.Combine(Path.GetTempPath(),"Nashi-Pill-Smoke");
+            try{var code=PillModeSmokeChecks.Run(output);Shutdown(code);}catch(Exception error){Console.Error.WriteLine(error);Shutdown(1);}return;
+        }
+#endif
+#if DEBUG
+        if(e.Args.Contains("--pill-style-gallery"))
+        {
+            ShutdownMode=ShutdownMode.OnMainWindowClose;
+            var gallery=new PillStyleGallery();MainWindow=gallery;
+            var galleryIndex=Array.IndexOf(e.Args,"--pill-style-gallery");var capture=galleryIndex+1<e.Args.Length?e.Args[galleryIndex+1]:Environment.GetEnvironmentVariable("NASHI_PILL_GALLERY_OUTPUT");if(!string.IsNullOrWhiteSpace(capture))gallery.Loaded+=(_,_)=>gallery.Dispatcher.BeginInvoke(new Action(()=>gallery.Capture(capture)),System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            gallery.Show();return;
+        }
+#endif
         if(e.Args.Contains("--smoke-test-interactions"))
         {
             IsSmokeTest=true;ShutdownMode=ShutdownMode.OnExplicitShutdown;
@@ -40,6 +64,18 @@ public partial class App:Application
             }
             catch(Exception error){failures.Add(error.ToString());}
             if(Interlocked.CompareExchange(ref finished,1,0)==0){Report(failures);Shutdown(failures.Count==0?0:1);}return;
+        }
+        if(e.Args.Contains("--island-interaction-smoke"))
+        {
+            IsSmokeTest=true;ShutdownMode=ShutdownMode.OnExplicitShutdown;
+            try
+            {
+                var checks=0;
+                IslandInteractionChecks.Run((passed,message)=>{if(!passed)throw new InvalidOperationException(message);checks++;});
+                Console.WriteLine($"Island interaction checks: {checks} passed.");Shutdown(0);
+            }
+            catch(Exception error){Console.Error.WriteLine(error);Shutdown(1);}
+            return;
         }
         if(e.Args.Contains("--ui-audit"))
         {

@@ -6,6 +6,11 @@ namespace Nashi.Core;
 
 public static partial class DocumentEngine
 {
+    public static int PdfPageCount(string path,string password="")
+    {
+        using var document=PdfReader.Open(path,password,PdfDocumentOpenMode.Import);
+        return document.PageCount;
+    }
     public static IReadOnlyList<string> Pdf(string tool,IReadOnlyList<string> inputs,string destination,int[]? pages=null,CancellationToken token=default,Dictionary<int,int>? rotations=null,int pagesPerFile=1,int[]? pageRotations=null,string password="",bool uniformWidth=false,string pageRanges="")
     {
         using var tx=new ExportTransaction(destination);var outputs=new List<string>();

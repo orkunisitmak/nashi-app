@@ -6,6 +6,7 @@ public sealed partial class ToolEditor
     private Button? processedButton;private bool processingPreview,processedPlayback;
     internal string? ProcessedPreviewPath{get;private set;}
     internal bool ProcessedPlayback=>processedPlayback;
+    internal string UIAuditPreviewStatus=>time.Text;
     private void PlayOriginalPreview()
     {
         if(processingPreview||media is null)return;processedPlayback=false;drawing.IsEnabled=true;drawing.Visibility=System.Windows.Visibility.Visible;duration=media.Duration;scrubber.Maximum=duration;player.Source=new Uri(originalPreviewPath??input);Seek(0);player.Play();playing=true;

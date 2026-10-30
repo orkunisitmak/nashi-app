@@ -20,6 +20,11 @@ internal static class DesktopInput
     [DllImport("user32.dll")]private static extern bool SetCursorPos(int x,int y);
     internal static void MovePointer(Point point){SetCursorPos((int)point.X,(int)point.Y);var input=new Input{Data=new(){Mouse=new(){Flags=1}}};SendInput(1,[input],Marshal.SizeOf<Input>());}
     internal static void Hold(Key key,bool pressed){var input=new Input{Type=1,Data=new(){Keyboard=new(){Key=(ushort)KeyInterop.VirtualKeyFromKey(key),Flags=pressed?0u:2u}}};if(SendInput(1,[input],Marshal.SizeOf<Input>())!=1)throw new InvalidOperationException("Native key input unavailable.");}
+    internal static void TypeText(string text)
+    {
+        var inputs=new List<Input>(text.Length*2);foreach(var character in text){inputs.Add(new(){Type=1,Data=new(){Keyboard=new(){Scan=character,Flags=4}}});inputs.Add(new(){Type=1,Data=new(){Keyboard=new(){Scan=character,Flags=6}}});}
+        if(inputs.Count>0&&SendInput((uint)inputs.Count,inputs.ToArray(),Marshal.SizeOf<Input>())!=inputs.Count)throw new InvalidOperationException("Native text input unavailable.");
+    }
     internal static void HoldMouse(bool pressed){var input=new Input{Data=new(){Mouse=new(){Flags=pressed?2u:4u}}};if(SendInput(1,[input],Marshal.SizeOf<Input>())!=1)throw new InvalidOperationException("Native mouse input unavailable.");}
     internal static void Click(FrameworkElement view)
     {

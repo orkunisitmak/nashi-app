@@ -26,6 +26,8 @@ internal static class LocalizationChecks
         check(loaded.Language=="tr"&&!loaded.Feedback&&loaded.ToolsModifier=="Ctrl+Alt","Language persistence changed other preferences");
         var old=Path.Combine(root,"Legacy language preferences");Directory.CreateDirectory(old);File.WriteAllText(Path.Combine(old,"preferences.json"),"{\"Feedback\":false}");var legacy=new PreferencesStore(old);
         check(legacy.Value.Language=="en"&&!legacy.Value.Feedback,"Legacy preference migration changed other values");
+        var automaticPill=Path.Combine(root,"Legacy automatic pill preferences");Directory.CreateDirectory(automaticPill);File.WriteAllText(Path.Combine(automaticPill,"preferences.json"),"{\"PillModeEnabled\":true,\"PillVisibilityMode\":\"automatic\",\"PillHotEdgeEnabled\":true}");var migratedPill=new PreferencesStore(automaticPill);
+        check(migratedPill.Value.PillModeEnabled&&migratedPill.Value.PillVisibilityMode=="shortcut"&&migratedPill.RecoveryNotice is null,"Legacy automatic pill preferences did not migrate to shortcut toggle mode");
         check(AppLocalization.Normalize("fr")=="en"&&AppLocalization.Text("Home","en")=="Home","Unsupported language or English fallback failed");
     }
 }

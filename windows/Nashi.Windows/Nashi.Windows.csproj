@@ -1,13 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType><TargetFramework>net10.0-windows10.0.19041.0</TargetFramework><SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
-    <ApplicationManifest>app.manifest</ApplicationManifest><ApplicationIcon>../../Resources/Brand/NashiIcon.ico</ApplicationIcon><UseWPF>true</UseWPF><EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <ApplicationManifest>app.manifest</ApplicationManifest><ApplicationIcon>Assets/NashiMascot.ico</ApplicationIcon><UseWPF>true</UseWPF><EnableWindowsTargeting>true</EnableWindowsTargeting>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier><SelfContained>true</SelfContained>
     <AssemblyName>Nashi</AssemblyName><RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <PublishSingleFile>false</PublishSingleFile><DebugType>none</DebugType><DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
   <ItemGroup><ProjectReference Include="../Nashi.Core/Nashi.Core.csproj" /></ItemGroup>
   <ItemGroup>
+    <Resource Include="Assets/NashiMascot.png" />
     <Resource Include="../../Resources/Brand/NashiIcon.png" Link="Assets/NashiIcon.png" />
     <Resource Include="../../Resources/Brand/NashiMark.png" Link="Assets/NashiMark.png" />
     <Resource Include="../../Resources/Brand/NashiMarkHappy.png" Link="Assets/NashiMarkHappy.png" />

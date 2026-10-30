@@ -36,7 +36,7 @@ Both audit commands accept these optional filters:
 --language en|tr|fr|both
 ```
 
-Unknown scenes/options, empty selections, repeated scenes and invalid themes/languages fail. No filter means the complete matrix: **10 scenes × 2 appearances × 2 languages = 40 captures per platform**.
+Unknown scenes/options, empty selections, repeated scenes and invalid themes/languages fail. No filter means the complete platform matrix: **10 Mac scenes (40 captures) and 14 Windows scenes (56 captures)**, each across 2 appearances × 2 languages.
 
 | Scene ID | Production surface |
 | --- | --- |
@@ -50,6 +50,10 @@ Unknown scenes/options, empty selections, repeated scenes and invalid themes/lan
 | editor.crop-image | Image crop at minimum supported editor size |
 | editor.annotate-image | Annotation editor at minimum size |
 | editor.frame-image | Frame editor after its asynchronous preview is ready |
+| island.collapsed | Windows top-center capsule with compact file/media actions |
+| island.expanded.actions | Windows expanded island with file actions and widget tabs |
+| island.expanded.notes | Windows expanded island with the local notes widget |
+| island.actions-popup | Windows action popover, checked for its opaque black surface |
 
 Fixtures include long Turkish/Unicode filenames. The app's actual localization and theme are used. Editor probes only run in audit mode; normal SwiftUI rendering does not add geometry-reader traffic.
 

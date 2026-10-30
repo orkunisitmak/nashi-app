@@ -9,13 +9,17 @@ namespace Nashi.Windows;
 internal static class Theme
 {
     internal static bool Dark{get;private set;}
-    internal static Brush Primary=>new LinearGradientBrush(Color.FromRgb(227,184,89),Color.FromRgb(245,209,125),0);
+    internal static Brush Primary=>Brush("Gold");
     internal static Brush Brush(string name)=>(Brush)Application.Current.FindResource(name);
-    internal static void Apply(string appearance)
+    internal static void Apply(string appearance,string accent="gold")
     {
         Dark=appearance=="dark"||(appearance=="system"&&Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize","AppsUseLightTheme",1) is int value&&value==0);
-        foreach(var (key,light,dark) in new[]{("Paper","#F9F6ED","#111A14"),("Ink","#243B2B","#E7EBE6"),("Surface","#FFFEF7","#1C281F"),("Inset","#F1EDE0","#151F18"),("Muted","#596650","#A9B5A8"),("Line","#DCDDD1","#344237"),("Sage","#E0EBD2","#243928"),("Sand","#F6E7BE","#3C3421")})
+        foreach(var (key,light,dark) in new[]{("Paper","#F5F5F7","#16171A"),("Ink","#1D1D1F","#F5F5F7"),("Surface","#FFFFFF","#222327"),("Inset","#F0F0F2","#191A1E"),("Muted","#6E6E73","#A1A1A6"),("Line","#D2D2D7","#38393F"),("Sage","#F2EAD7","#302B20"),("Sand","#F4EBDD","#27231B")})
             Application.Current.Resources[key]=new SolidColorBrush((Color)ColorConverter.ConvertFromString(Dark?dark:light));
+        var gold=accent switch{"blue"=>Color.FromRgb(91,156,255),"violet"=>Color.FromRgb(174,125,255),"green"=>Color.FromRgb(82,190,139),_=>Color.FromRgb(211,180,107)};
+        Application.Current.Resources["Gold"]=new SolidColorBrush(gold);
+        Application.Current.Resources[SystemColors.HighlightBrushKey]=new SolidColorBrush((Color)ColorConverter.ConvertFromString(Dark?"#554323":"#F2EAD7"));
+        Application.Current.Resources[SystemColors.HighlightTextBrushKey]=new SolidColorBrush((Color)ColorConverter.ConvertFromString(Dark?"#F5F5F7":"#1D1D1F"));
         foreach(Window window in Application.Current.Windows)ApplyTitleBar(window);
     }
     internal static void Attach(Window window)

@@ -17,7 +17,7 @@ internal sealed class FileGarden:Grid
         mark=new Image{Width=65,Height=65,RenderTransform=new TranslateTransform(0,42)};Children.Add(mark);SetSelected(false);
     }
     internal void SetSelected(bool selected)=>mark.Source=Artwork(selected?"NashiMarkHappy":"NashiMark");
-    internal static BitmapImage Artwork(string name)=>new(new Uri("pack://application:,,,/Assets/"+name+".png"));
+    internal static BitmapImage Artwork(string name)=>new(new Uri("pack://application:,,,/Assets/"+(name is "NashiMark" or "NashiMarkHappy"?"NashiMascot":name)+".png"));
     private void AddCard(string label,double angle,double x,double y,string color)
     {
         var content=new StackPanel();
