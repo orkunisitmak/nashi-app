@@ -301,12 +301,15 @@ public enum MediaEngine {
     private static func snapshots(_ input: URL, info: MediaInfo, options: OperationOptions, token: CancellationToken, progress: @escaping ProgressHandler = {_,_ in}) throws -> [URL] {
         try requireVideo(info)
         guard !options.snapshotTimes.isEmpty else { throw NashiError.invalidInput("Choose at least one frame to save.") }
+        // FFmpeg seeks to the next frame start, so a playhead on the last frame (or an audio
+        // tail) would save nothing. The player shows the last frame there; seek inside it.
+        let lastFrame = max(0, (info.video?.duration ?? info.duration) - 1.5 / max(1, info.video?.frameRate ?? 30))
         var outputs: [URL] = []
         do {
             for (index, time) in options.snapshotTimes.enumerated() {
                 guard time.isFinite, time >= 0, info.duration <= 0 || time < info.duration else { throw NashiError.invalidInput("A snapshot time is outside the video.") }
                 let out = try outputURL(input, ext: "png", suffix: " Frame \(index + 1)", options: options)
-                try render(["-ss", decimal(time), "-i", input.path, "-map", "0:v:0", "-frames:v", "1", "-update", "1", "-c:v", "png"], to: out, token: token)
+                try render(["-ss", decimal(min(time, lastFrame)), "-i", input.path, "-map", "0:v:0", "-frames:v", "1", "-update", "1", "-c:v", "png"], to: out, token: token)
                 outputs.append(out)
                 progress(Double(index+1)/Double(options.snapshotTimes.count),"Saving frame \(index+1) of \(options.snapshotTimes.count)…")
             }
