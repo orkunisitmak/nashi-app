@@ -16,7 +16,7 @@ public sealed class GlobalDragController:IDisposable
 {
     [StructLayout(LayoutKind.Sequential)]internal struct NativePoint{public int X,Y;}
     [DllImport("user32.dll")]private static extern short GetAsyncKeyState(int key);
-    [DllImport("user32.dll")]private static extern bool GetCursorPos(out NativePoint point);
+    [DllImport("user32.dll")]private static extern bool GetCursorPos(out NativePoint point);[StructLayout(LayoutKind.Sequential)]private struct MouseHookData{public NativePoint Point;public uint MouseData,Flags,Time;public IntPtr Extra;}private delegate IntPtr MouseHookProc(int code,IntPtr message,IntPtr data);[DllImport("user32.dll",SetLastError=true)]private static extern IntPtr SetWindowsHookEx(int hook,MouseHookProc proc,IntPtr module,uint thread);[DllImport("user32.dll")]private static extern bool UnhookWindowsHookEx(IntPtr hook);[DllImport("user32.dll")]private static extern IntPtr CallNextHookEx(IntPtr hook,int code,IntPtr message,IntPtr data);[DllImport("kernel32.dll")]private static extern IntPtr GetModuleHandle(string? name);private static readonly string[] ScrollModes=["tools","convert","actions"];private MouseHookProc? mouseProc;private IntPtr mouseHook;private string? currentKind;private int scrollAccumulator;private bool dragRevealed;
     [DllImport("user32.dll")]private static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll")]private static extern bool RegisterHotKey(IntPtr window,int id,uint modifiers,uint key);
     [DllImport("user32.dll")]private static extern bool UnregisterHotKey(IntPtr window,int id);
@@ -35,7 +35,7 @@ public sealed class GlobalDragController:IDisposable
     public GlobalDragController(Window owner,PreferencesStore preferences,Action<string,IDataObject,string?> dropped,Action link)
     {
         this.owner=owner;this.preferences=preferences;this.dropped=dropped;this.link=link;timer=new(){Interval=TimeSpan.FromMilliseconds(40)};timer.Tick+=(_,_)=>Poll();
-        if(new WindowInteropHelper(owner).Handle!=IntPtr.Zero)Register();else owner.SourceInitialized+=(_,_)=>Register();timer.Start();
+        if(new WindowInteropHelper(owner).Handle!=IntPtr.Zero)Register();else owner.SourceInitialized+=(_,_)=>Register();timer.Start();mouseProc=MouseHook;mouseHook=SetWindowsHookEx(14,mouseProc,GetModuleHandle(null),0);
     }
     private void Register(){handle=new WindowInteropHelper(owner).Handle;source=HwndSource.FromHwnd(handle);source.AddHook(Hook);UpdateShortcut();}
     private void UpdateShortcut(){if(handle==IntPtr.Zero)return;var enabled=preferences.Value.Enabled;if(shortcutEnabled==enabled)return;shortcutEnabled=enabled;if(LinkShortcutRegistered)UnregisterHotKey(handle,7701);LinkShortcutRegistered=enabled&&RegisterHotKey(handle,7701,0x4000|0x2|0x4,0x44);}
@@ -44,11 +44,42 @@ public sealed class GlobalDragController:IDisposable
     private string Chord(){var parts=new List<string>();if(Held(0x11))parts.Add("Ctrl");if(Held(0x10))parts.Add("Shift");if(Held(0x12))parts.Add("Alt");return string.Join('+',parts);}
     private void Poll()
     {
-        UpdateShortcut();if(!preferences.Value.Enabled||!OwnerAvailable){wheel?.Close();wheel=null;down=false;opened=false;hint=null;return;}var held=PrimaryMouseButton.IsPressed;GetCursorPos(out var point);
-        if(!held){if(down){down=false;opened=false;hint=null;if(wheel is {IsVisible:true}){var old=wheel;var dismiss=new System.Windows.Threading.DispatcherTimer{Interval=TimeSpan.FromMilliseconds(150)};dismiss.Tick+=(_,_)=>{dismiss.Stop();if(old.IsVisible)old.Close();};dismiss.Start();}wheel=null;}return;}
-        if(!down){down=true;start=point;opened=false;hint=null;return;}if(opened||Math.Abs(point.X-start.X)+Math.Abs(point.Y-start.Y)<10)return;
+        UpdateShortcut();if(!preferences.Value.Enabled||!OwnerAvailable){wheel?.Close();wheel=null;down=false;opened=false;hint=null;ResetScroll();return;}var held=PrimaryMouseButton.IsPressed;GetCursorPos(out var point);
+        if(!held){if(down){down=false;opened=false;hint=null;ResetScroll();if(wheel is {IsVisible:true}){var old=wheel;var dismiss=new System.Windows.Threading.DispatcherTimer{Interval=TimeSpan.FromMilliseconds(150)};dismiss.Tick+=(_,_)=>{dismiss.Stop();if(old.IsVisible)old.Close();};dismiss.Start();}wheel=null;}return;}
+        if(!down){down=true;start=point;opened=false;hint=null;return;}if(opened){SwitchByModifier(point);return;}if(Math.Abs(point.X-start.X)+Math.Abs(point.Y-start.Y)<10)return;
         hint??=Task.Run(()=>LinkAt(start));var chord=Chord();var p=preferences.Value;var kind=chord==p.ToolsModifier?"tools":chord==p.ConvertModifier?"convert":chord==p.ActionsModifier?"actions":null;if(kind is null)return;opened=true;if(InMoveSize())return;
-        var sourceHint=hint;wheel=new GlobalDropWheel(kind,p.WheelScale,(data,id)=>dropped(id,data,sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null),()=>sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null);wheel.Show();DesktopGeometry.PlaceWheel(wheel,point.X,point.Y,WheelPresentation.Diameter*p.WheelScale);
+        OpenWheel(kind,point);}
+    private void OpenWheel(string kind,NativePoint point,bool byScroll=false)
+    {
+        var p=preferences.Value;currentKind=kind;if(wheel is {Revealed:true})dragRevealed=true;if(wheel is {IsClosed:false})wheel.Close();var sourceHint=hint;wheel=new GlobalDropWheel(kind,p.WheelScale,(data,id)=>dropped(id,data,sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null),()=>sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null);wheel.ReleaseUnsupported=byScroll;wheel.HintPending=()=>sourceHint is {IsCompleted:false};wheel.Show();DesktopGeometry.PlaceWheel(wheel,point.X,point.Y,WheelPresentation.Diameter*p.WheelScale);
+    }
+    private void ResetScroll(){currentKind=null;scrollAccumulator=0;dragRevealed=false;lastChord="";}
+    private string lastChord="";
+    /// While a drag wheel is open, pressing a different configured modifier switches to that wheel.
+    private void SwitchByModifier(NativePoint point)
+    {
+        var chord=Chord();if(chord==lastChord)return;lastChord=chord;if(chord.Length==0||currentKind is null||InMoveSize())return;
+        var p=preferences.Value;var kind=chord==p.ToolsModifier?"tools":chord==p.ConvertModifier?"convert":chord==p.ActionsModifier?"actions":null;
+        if(kind is not null&&kind!=currentKind)OpenWheel(kind,point);
+    }
+    /// Mouse wheel during a file drag cycles Tools -> Convert -> File actions without modifier keys.
+    /// Only wheel events are acted on; the hook never reads keystrokes. A wheel event is consumed only after
+    /// the drop wheel has verified a real file or link payload, so text selections and other drags keep scrolling.
+    private IntPtr MouseHook(int code,IntPtr message,IntPtr data)
+    {
+        if(code>=0&&message.ToInt32()==0x020A&&down&&preferences.Value.Enabled&&OwnerAvailable)
+        {
+            var info=Marshal.PtrToStructure<MouseHookData>(data);
+            if(Math.Abs(info.Point.X-start.X)+Math.Abs(info.Point.Y-start.Y)>=10&&PrimaryMouseButton.IsPressed&&!InMoveSize())
+            {var verified=dragRevealed||wheel is {Revealed:true};var scrollOpen=wheel is {IsClosed:false,IsVisible:true};if(verified||currentKind is null||scrollOpen){var delta=(int)(short)(info.MouseData>>16);var point=info.Point;owner.Dispatcher.BeginInvoke(()=>ScrollWheel(delta,point));}if(verified)return (IntPtr)1;}
+        }
+        return CallNextHookEx(mouseHook,code,message,data);
+    }
+    private void ScrollWheel(int delta,NativePoint point)
+    {
+        if(!down)return;scrollAccumulator+=delta;if(Math.Abs(scrollAccumulator)<120)return;var step=scrollAccumulator<0?1:-1;scrollAccumulator=0;
+        var index=currentKind is null?(step>0?0:ScrollModes.Length-1):(Array.IndexOf(ScrollModes,currentKind)+step+ScrollModes.Length)%ScrollModes.Length;
+        hint??=Task.Run(()=>LinkAt(start));opened=true;OpenWheel(ScrollModes[index],point,true);
     }
     private static string? LinkAt(NativePoint point)
     {
@@ -65,7 +96,7 @@ public sealed class GlobalDragController:IDisposable
             }
         }catch(ElementNotAvailableException){}catch(InvalidOperationException){}catch(COMException){}catch(System.Reflection.TargetInvocationException){}catch(MissingMethodException){}return null;
     }
-    public void Dispose(){timer.Stop();wheel?.Close();if(handle!=IntPtr.Zero)UnregisterHotKey(handle,7701);source?.RemoveHook(Hook);}
+    public void Dispose(){timer.Stop();if(mouseHook!=IntPtr.Zero){UnhookWindowsHookEx(mouseHook);mouseHook=IntPtr.Zero;}wheel?.Close();if(handle!=IntPtr.Zero)UnregisterHotKey(handle,7701);source?.RemoveHook(Hook);}
 }
 
 internal sealed class GlobalDropWheel:Window
@@ -77,15 +108,19 @@ internal sealed class GlobalDropWheel:Window
     // Fully transparent layered pixels ignore hit tests, so keep a tiny non-zero opacity.
     private const double HiddenOpacity=.02;
     internal bool Revealed{get;private set;}
+    /// A wheel opened by the mouse wheel (no modifier) releases the drop when no mode can use the payload,
+    /// so text and other unsupported OLE drags still reach the window underneath.
+    internal bool ReleaseUnsupported{get;set;}internal bool IsClosed{get;private set;}internal Func<bool>? HintPending{get;set;}
+    private void ReleaseIfUnsupported(DragEventArgs e){if(!ReleaseUnsupported||choices.Count>0)return;if(HintPending?.Invoke()==true)return;var files=e.Data.GetData(DataFormats.FileDrop) as string[]??[];if(files.Length>0||Payload(e.Data) is not null)return;ReleaseUnsupported=false;e.Effects=DragDropEffects.None;Dispatcher.BeginInvoke(new Action(()=>{if(!IsClosed)Close();}));}
     private void Reveal(){if(Revealed)return;Revealed=true;foreach(var label in canvas.Children.OfType<Border>())label.Visibility=Visibility.Visible;WheelPresentation.Animate(this,HiddenOpacity);if(Opacity<1&&!HasAnimatedProperties)Opacity=1;}
     private readonly string mode;private readonly Action<IDataObject,string> chosen;private readonly Func<string?> hint;private readonly Canvas canvas=new(){Width=540,Height=540,Background=Brushes.Transparent,AllowDrop=true};private string selection="";private IReadOnlyList<ToolChoice> choices=[];
     public GlobalDropWheel(string mode,double scale,Action<IDataObject,string> chosen,Func<string?> hint)
     {
-        this.mode=mode;this.chosen=chosen;this.hint=hint;Title="Nashi · "+mode;Width=Height=WheelPresentation.Diameter*scale;WindowStyle=WindowStyle.None;AllowsTransparency=true;Background=Brushes.Transparent;ResizeMode=ResizeMode.NoResize;ShowInTaskbar=false;ShowActivated=false;Topmost=true;AllowDrop=true;Content=new Viewbox{Child=canvas};Build([]);Opacity=HiddenOpacity;
+        this.mode=mode;this.chosen=chosen;this.hint=hint;Title="Nashi · "+mode;Width=Height=WheelPresentation.Diameter*scale;WindowStyle=WindowStyle.None;AllowsTransparency=true;Background=Brushes.Transparent;ResizeMode=ResizeMode.NoResize;ShowInTaskbar=false;ShowActivated=false;Topmost=true;AllowDrop=true;Content=new Viewbox{Child=canvas};Build([]);Opacity=HiddenOpacity;Closed+=(_,_)=>IsClosed=true;
         // Reveal only once the payload offers choices. On entry the pointer sits in the center,
         // so e.Effects is still None even for a valid file drag.
-        DragEnter+=(_,e)=>{entered++;Track(e);if(choices.Count>0)Reveal();};
-        DragOver+=(_,e)=>{over++;Track(e);if(choices.Count>0)Reveal();};
+        DragEnter+=(_,e)=>{entered++;Track(e);if(choices.Count>0)Reveal();ReleaseIfUnsupported(e);};
+        DragOver+=(_,e)=>{over++;Track(e);if(choices.Count>0)Reveal();ReleaseIfUnsupported(e);};
         Drop+=(_,e)=>{dropCount++;Track(e);var id=selection;Close();if(id.Length>0)chosen(e.Data,id);e.Handled=true;};PreviewKeyDown+=(_,e)=>{if(e.Key==Key.Escape){Close();e.Handled=true;}};
     }
     private void Track(DragEventArgs e)

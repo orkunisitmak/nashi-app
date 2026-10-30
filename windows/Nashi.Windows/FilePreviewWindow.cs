@@ -26,7 +26,7 @@ internal sealed class FilePreviewWindow:Window
         var root=new DockPanel{Margin=new(20)};Content=root;var header=new DockPanel{Margin=new(0,0,0,14)};DockPanel.SetDock(header,Dock.Top);root.Children.Add(header);
         var navigation=new StackPanel{Orientation=Orientation.Horizontal};DockPanel.SetDock(navigation,Dock.Right);header.Children.Add(navigation);
         navigation.Children.Add(MainWindow.Button("←",()=>Navigate(-1)));navigation.Children.Add(MainWindow.Button("→",()=>Navigate(1)));navigation.Children.Add(MainWindow.Button("Open",()=>{if(File.Exists(CurrentPath)||Directory.Exists(CurrentPath))MainWindow.OpenUrl(CurrentPath);}));header.Children.Add(caption);
-        var footer=new StackPanel();DockPanel.SetDock(footer,Dock.Bottom);root.Children.Add(footer);transport.Children.Add(MainWindow.Button("Play / pause",Toggle));transport.Children.Add(scrub);footer.Children.Add(transport);
+        var footer=new StackPanel();DockPanel.SetDock(footer,Dock.Bottom);root.Children.Add(footer);transport.Children.Add(MainWindow.Button("Play / pause",Toggle));transport.Children.Add(scrub);SliderLook.RoundThumb(scrub);footer.Children.Add(transport);
         footer.Children.Add(L10n.Label(new TextBlock{Text="←/→ files · Media: Space play/pause, ←/→ 1s, Alt+←/→ files · Esc closes",FontSize=11,Foreground=Theme.Brush("Muted"),Margin=new(0,12,0,0)}));root.Children.Add(content);
         scrub.ValueChanged+=(_,_)=>{if(!updating&&player is not null)player.Position=TimeSpan.FromSeconds(scrub.Value);};
         timer.Tick+=(_,_)=>{if(player is null)return;updating=true;scrub.Value=player.Position.TotalSeconds;updating=false;};

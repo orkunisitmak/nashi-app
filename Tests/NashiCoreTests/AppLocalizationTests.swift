@@ -10,6 +10,10 @@ final class AppLocalizationTests:XCTestCase {
         XCTAssertEqual(AppLocalization.text("Library",language:"tr"),"Kitaplık")
         XCTAssertEqual(AppLocalization.text("READ QR CODES",language:"tr"),"QR KODLARINI OKU")
         XCTAssertEqual(AppLocalization.text("Resize Image".uppercased(),language:"tr"),"GÖRSELİ BOYUTLANDIR")
+        XCTAssertEqual(AppLocalization.text("Crop Video",language:"tr"),"Görüntüyü Kırp")
+        XCTAssertEqual(AppLocalization.text("Crop Video · Nashi",language:"tr"),"Görüntüyü Kırp · Nashi")
+        XCTAssertEqual(AppLocalization.text("Trim Video",language:"tr"),"Süreyi Kırp")
+        XCTAssertEqual(AppLocalization.text("Trim Video · Nashi",language:"tr"),"Süreyi Kırp · Nashi")
     }
     func testWordBoundTemplatesDoNotSwallowProseOrTitles() {
         XCTAssertNotEqual(AppLocalization.text("Add or change files",language:"tr"),"Add or change dosya")
