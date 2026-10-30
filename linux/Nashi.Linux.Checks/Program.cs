@@ -53,6 +53,7 @@ try
     CapabilityChecks();
     ImageChecks(temp.FullName);
     await RunnerChecks(temp.FullName);
+    await DocumentChecks.RunAsync(temp.FullName, Check);
     HomeChecks();
     WheelChecks(temp.FullName);
     await ToolSetupChecks(temp.FullName);
@@ -127,7 +128,7 @@ void CapabilityChecks()
     Check(Capabilities.Tools(mixed).All(t => FeatureCatalog.Tools(mixed).Contains(t)), "Tools for PNG plus MP4 stay inside the catalog intersection");
     Check(Capabilities.Tools(pdf2).Contains("mergePDF"), "Tools for two PDFs include mergePDF");
     Check(Capabilities.Tools([]).Length == 0, "Tools for an empty selection is empty");
-    Check(Capabilities.Formats(pdf2).Length == 0 && Capabilities.Formats(["x.pdf"]).Length == 0, "Formats for PDFs are empty");
+    Check(Capabilities.Formats(pdf2).SequenceEqual(["jpg", "png"]) && Capabilities.Formats(["x.pdf"]).SequenceEqual(["jpg", "png"]), "Formats for PDFs are jpg and png");
     Check(Capabilities.Formats(docx).Length == 0, "Formats for a DOCX are empty");
 }
 
@@ -421,7 +422,9 @@ void WheelChecks(string root)
     home.Selection.Add([pdfOnly]);
     Chip("Convert").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
     Dispatcher.UIThread.RunJobs();
-    Check(SuccessToast.Current?.FindControl<TextBlock>("TitleText")?.Text == "No conversions for PDF files yet.", "A single PDF's empty format wheel says No conversions for PDF files yet.");
+    var pdfWheel = home.OwnedWindows.OfType<WheelWindow>().SingleOrDefault();
+    Check(pdfWheel is not null && pdfWheel.Wheel.Items.Select(i => i.Id).SequenceEqual(["convert:jpg", "convert:png"]), "A single PDF's format wheel offers JPG and PNG");
+    pdfWheel?.Close();
     home.Selection.Add([doc]);
     Chip("Convert").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
     Dispatcher.UIThread.RunJobs();

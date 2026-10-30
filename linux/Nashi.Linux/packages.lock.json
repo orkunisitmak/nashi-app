@@ -33,6 +33,12 @@
           "Avalonia": "11.3.22"
         }
       },
+      "bblanchon.PDFium.Linux": {
+        "type": "Direct",
+        "requested": "[155.0.8044, )",
+        "resolved": "155.0.8044",
+        "contentHash": "RIVbKZkwbcSNgGZRODi9Z5HBp4z5+poAt9W779P2TslXCtzhrpzi+LEOtPJzPiA+Hh234DPPI7e15E4ZO/d+Tw=="
+      },
       "Avalonia": {
         "type": "Transitive",
         "resolved": "11.3.22",
@@ -253,6 +259,12 @@
       }
     },
     "net10.0/linux-x64": {
+      "bblanchon.PDFium.Linux": {
+        "type": "Direct",
+        "requested": "[155.0.8044, )",
+        "resolved": "155.0.8044",
+        "contentHash": "RIVbKZkwbcSNgGZRODi9Z5HBp4z5+poAt9W779P2TslXCtzhrpzi+LEOtPJzPiA+Hh234DPPI7e15E4ZO/d+Tw=="
+      },
       "Avalonia.Angle.Windows.Natives": {
         "type": "Transitive",
         "resolved": "2.1.25547.20250602",

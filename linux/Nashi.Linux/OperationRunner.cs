@@ -20,6 +20,7 @@ public sealed class OperationRunner(Toolchain tools)
         {
             if (files.All(FeatureCatalog.IsImage)) return await Task.Run(() => ImageOperations.Convert(files, convert, destination, progress, token), token);
             if (files.All(f => FeatureCatalog.IsAudio(f) || FeatureCatalog.IsVideo(f))) return await Media(progress, (e, p) => e.ConvertAsync(files, convert, destination, new MediaOptions(), p, token));
+            if (files.All(DocumentOperations.Handles)) return await Task.Run(() => DocumentOperations.ConvertAsync(files, convert, destination, progress, token), token);
             if (files.All(FeatureCatalog.IsArchive)) return await Task.Run(() => Each(files, destination, token, (f, d) => ArchiveEngine.Convert(f, convert, d, null, progress, token)), token);
             return await Task.Run(() => Subtitles(files, convert, destination, token), token);
         }

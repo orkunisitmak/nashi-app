@@ -114,6 +114,11 @@
           "Avalonia.Skia": "11.3.22"
         }
       },
+      "bblanchon.PDFium.Linux": {
+        "type": "Transitive",
+        "resolved": "155.0.8044",
+        "contentHash": "RIVbKZkwbcSNgGZRODi9Z5HBp4z5+poAt9W779P2TslXCtzhrpzi+LEOtPJzPiA+Hh234DPPI7e15E4ZO/d+Tw=="
+      },
       "BouncyCastle.Cryptography": {
         "type": "Transitive",
         "resolved": "2.7.0",
@@ -251,7 +256,8 @@
           "Avalonia.Desktop": "[11.3.22, )",
           "Avalonia.Fonts.Inter": "[11.3.22, )",
           "Avalonia.Themes.Fluent": "[11.3.22, )",
-          "Nashi.Core": "[0.7.12, )"
+          "Nashi.Core": "[0.7.12, )",
+          "bblanchon.PDFium.Linux": "[155.0.8044, )"
         }
       },
       "nashi.core": {
@@ -280,6 +286,11 @@
         "dependencies": {
           "Avalonia": "11.3.22"
         }
+      },
+      "bblanchon.PDFium.Linux": {
+        "type": "Transitive",
+        "resolved": "155.0.8044",
+        "contentHash": "RIVbKZkwbcSNgGZRODi9Z5HBp4z5+poAt9W779P2TslXCtzhrpzi+LEOtPJzPiA+Hh234DPPI7e15E4ZO/d+Tw=="
       },
       "HarfBuzzSharp.NativeAssets.Linux": {
         "type": "Transitive",

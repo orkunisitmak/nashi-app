@@ -12,6 +12,7 @@ Bundled in the AppImage:
 - Tmds.DBus.Protocol 0.21.3, Tom Deseyn and contributors, MIT. https://github.com/tmds/Tmds.DBus
 - Magick.NET 15.0.0 (Q8-AnyCPU) and Magick.NET.Core, Apache-2.0, https://github.com/dlemstra/Magick.NET. Native dependency licenses: licenses/Magick.NET-THIRD-PARTY-NOTICES.txt.
 - PDFsharp 6.2.4, empira and contributors, MIT. https://github.com/empira/PDFsharp/blob/master/LICENSE
+- PDFium 155.0.8044.0 via bblanchon.PDFium.Linux 155.0.8044: CPU PDF rendering; Apache-2.0 packaging, PDFium BSD-style and bundled dependency notices. Binary provenance and complete licenses: licenses/PDFium-THIRD-PARTY-NOTICES.txt. No JavaScript platform or external link actions are enabled by Nashi's read-only form rendering.
 - PdfPig 0.1.16, Eliot Jones and contributors, Apache-2.0. https://github.com/UglyToad/PdfPig
 - ZXing.Net 0.16.11, Michael Jahn and contributors, Apache-2.0. https://github.com/micjahn/ZXing.Net
 - SharpCompress 0.50.5, Adam Hathcock and contributors, MIT. https://github.com/adamhathcock/sharpcompress

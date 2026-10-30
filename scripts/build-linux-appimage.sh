@@ -21,10 +21,11 @@ install -m 755 linux/packaging/AppRun "$app/AppRun"
 install -m 644 linux/packaging/nashi.desktop "$app/nashi.desktop"
 install -m 644 Resources/Brand/NashiIcon.png "$app/nashi.png"
 install -m 644 LICENSE linux/THIRD-PARTY-NOTICES.txt "$app/usr/share/doc/nashi/"
-# Every bundled third-party license text; WPF and PDFium are not part of the Linux app.
+# Every bundled third-party license text. WPF is not part of the Linux app, and its PDFium notices
+# (with the Linux library's hashes) come from linux/licenses, not the Windows copy.
 mkdir -p "$app/usr/share/doc/nashi/licenses"
 for f in windows/licenses/*.txt linux/licenses/*.txt; do
-  case "$(basename "$f")" in WPF-*|PDFium-*) continue;; esac
+  case "$f" in windows/licenses/WPF-*|windows/licenses/PDFium-*) continue;; esac
   install -m 644 "$f" "$app/usr/share/doc/nashi/licenses/"
 done
 

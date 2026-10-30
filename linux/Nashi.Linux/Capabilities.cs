@@ -9,6 +9,7 @@ public static class Capabilities
     internal static readonly string[] ImageFormats = ["png", "jpg", "webp", "avif", "bmp", "gif", "tiff", "pdf"];
     static readonly string[] ArchiveOutputs = ["zip", "tar", "gz"];
     static readonly string[] SubtitleOutputs = ["srt", "vtt", "txt"];
+    static readonly string[] PdfOutputs = ["png", "jpg"];
 
     public static string[] Formats(IReadOnlyList<string> files)
     {
@@ -26,6 +27,7 @@ public static class Capabilities
         if (files.All(p => FeatureCatalog.IsAudio(p) || FeatureCatalog.IsVideo(p)))
             return MediaEngine.AudioFormats.Concat(MediaEngine.VideoFormats);
         if (files.All(FeatureCatalog.IsArchive)) return ArchiveOutputs;
+        if (files.All(DocumentOperations.Handles)) return PdfOutputs;
         if (files.All(p => FeatureCatalog.Extension(p) is "srt" or "vtt")) return SubtitleOutputs;
         return [];
     }

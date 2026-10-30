@@ -2,5 +2,6 @@
   {"file":"Avalonia-MIT.txt","url":"https://raw.githubusercontent.com/AvaloniaUI/Avalonia/11.3.22/licence.md","sha256":"213814d306090074d234d760239ff0f67eb9b8d20eefb4d5631bb39dbe0b769b"},
   {"file":"SkiaSharp-HarfBuzzSharp-MIT.txt","url":"https://api.nuget.org/v3-flatcontainer/skiasharp/2.88.9/skiasharp.2.88.9.nupkg","member":"LICENSE.txt","sha256":"89101e35a8c66fd4d6dffc1763259161d35cb564c169714ec227a768c89f2938"},
   {"file":"SkiaSharp-HarfBuzzSharp-THIRD-PARTY-NOTICES.txt","url":"https://api.nuget.org/v3-flatcontainer/skiasharp/2.88.9/skiasharp.2.88.9.nupkg","member":"THIRD-PARTY-NOTICES.txt","sha256":"21504c46c4c58aa64c1055bd2dcbc5f9a136b4b8c412ed3cc6740e22c5b127f5"},
-  {"file":"Inter-OFL-1.1.txt","url":"https://raw.githubusercontent.com/rsms/inter/v4.0/LICENSE.txt","sha256":"262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a"}
+  {"file":"Inter-OFL-1.1.txt","url":"https://raw.githubusercontent.com/rsms/inter/v4.0/LICENSE.txt","sha256":"262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a"},
+  {"file":"PDFium-THIRD-PARTY-NOTICES.txt","url":"https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F8044/pdfium-linux-x64.tgz","member":"LICENSE and licenses/*, concatenated under a header; freetype.txt re-encoded from Latin-1 to UTF-8","sha256":"c4fa6c901b15353db789384082d6907bae2fcd13fffb6bd62174060d9c8dcc8a"}
 ]

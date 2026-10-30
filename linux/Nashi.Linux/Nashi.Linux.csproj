@@ -11,6 +11,10 @@
     <PackageReference Include="Avalonia.Desktop" Version="11.3.22" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.22" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.22" />
+    <PackageReference Include="bblanchon.PDFium.Linux" Version="155.0.8044" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Nashi.Linux.Checks" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../windows/Nashi.Core/Nashi.Core.csproj" />

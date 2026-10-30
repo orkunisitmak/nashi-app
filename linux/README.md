@@ -11,7 +11,7 @@ The [AppImage link](https://github.com/orkunisitmak/nashi-app/releases/latest/do
 - **Ctrl+Space** opens the conversion wheel for the selected files, with live progress. With nothing selected, it opens the file picker first. The **Actions** chip opens the actions wheel: Share (shows the files in your file manager), Copy, Move, Copy Path and Terminal. Float is not available yet.
 - The wheel looks and sounds like the macOS one: icons above upper-case labels, a gold highlight, a short opening animation (skipped when GNOME animations are off) and the selection sound through `paplay`, `pw-play` or `aplay` when one is installed.
 - Images: format conversion. HEIC output is not available on Linux because no encoder is available.
-- PDF: merge, create from images and compress.
+- PDF: merge, create from images and compress, and PDF to PNG or JPG (one image per page, rendered with PDFium).
 - Audio and video: convert, compress, mute and normalize. These need media tool setup from Home or a system `ffmpeg`.
 - Archives and subtitles.
 
@@ -46,7 +46,7 @@ Editors (crop, annotate, trim), Office documents, web download, Library, setting
 
 ## Build
 
-Requires the .NET 10 SDK, `curl` and `sha256sum`.
+Requires the .NET 10 SDK, `curl` and `sha256sum`. PDF rendering uses PDFium from the pinned `bblanchon.PDFium.Linux` package, which the build bundles.
 
 ```sh
 scripts/build-linux-appimage.sh
