@@ -634,10 +634,12 @@
 "DOWNLOAD LINK…" = "TÉLÉCHARGER LE LIEN…";
 "DOWNLOAD MEDIA TOOLS" = "TÉLÉCHARGER LES OUTILS MULTIMÉDIAS";
 "DOWNLOAD MISSING TOOLS" = "TÉLÉCHARGER LES OUTILS MANQUANTS";
+"DOWNLOAD MP3" = "TÉLÉCHARGER LE MP3";
 "DOWNLOAD OFFICE TOOLS" = "TÉLÉCHARGER LES OUTILS BUREAUTIQUES";
 "DOWNLOAD PHOTOS" = "TÉLÉCHARGER LES PHOTOS";
 "DOWNLOAD THE MISSING TOOLS TO ENABLE ALL CONVERSIONS, PREVIEWS AND WEB DOWNLOADS. TOOLS ALREADY FOUND ON YOUR COMPUTER ARE KEPT." = "TÉLÉCHARGEZ LES OUTILS MANQUANTS POUR ACTIVER TOUTES LES CONVERSIONS, LES APERÇUS ET LES TÉLÉCHARGEMENTS WEB. LES OUTILS DÉJÀ PRÉSENTS SUR VOTRE ORDINATEUR SONT CONSERVÉS.";
 "DOWNLOAD THUMBNAIL" = "TÉLÉCHARGER LA MINIATURE";
+"DOWNLOAD TRANSCRIPT" = "TÉLÉCHARGER LA TRANSCRIPTION";
 "DOWNLOAD VIDEO" = "TÉLÉCHARGER LA VIDÉO";
 "DOWNLOAD ↗" = "TÉLÉCHARGER ↗";
 "DOWNLOADING LIBREOFFICE 26.8.1…" = "TÉLÉCHARGEMENT DE LIBREOFFICE 26.8.1…";
@@ -693,6 +695,7 @@
 "Download Images" = "Télécharger les images";
 "Download LibreOffice 26.8.1 (~360 MB) from The Document Foundation? Its SHA-256 is checked, then the package is extracted into Nashi’s user tools folder. No administrator password or Office subscription is needed. LibreOffice retains its upstream licenses." = "Télécharger LibreOffice 26.8.1 (~360 Mo) depuis The Document Foundation ? Son SHA-256 est vérifié, puis le paquet est extrait dans le dossier d’outils utilisateur de Nashi. Aucun mot de passe administrateur ni abonnement Office n’est nécessaire. LibreOffice conserve ses licences amont.";
 "Download Link…" = "Télécharger le lien…";
+"Download MP3" = "Télécharger le MP3";
 "Download Thumbnail" = "Télécharger la miniature";
 "Download Video" = "Télécharger la vidéo";
 "Download a link" = "Télécharger un lien";
@@ -702,6 +705,7 @@
 "Download ended early." = "Le téléchargement s’est terminé prématurément.";
 "Download exceeded its limit." = "Le téléchargement a dépassé sa limite.";
 "Download from the web" = "Télécharger depuis le web";
+"Download image" = "Télécharger l’image";
 "Download is larger than the supported limit." = "Le téléchargement dépasse la limite prise en charge.";
 "Download media tools" = "Télécharger les outils multimédias";
 "Download missing tools" = "Télécharger les outils manquants";
@@ -709,6 +713,7 @@
 "Download photos" = "Télécharger les photos";
 "Download the missing tools to enable all conversions, previews and web downloads. Tools already found on your computer are kept." = "Téléchargez les outils manquants pour activer toutes les conversions, les aperçus et les téléchargements web. Les outils déjà présents sur votre ordinateur sont conservés.";
 "Download thumbnail" = "Télécharger la miniature";
+"Download transcript" = "Télécharger la transcription";
 "Download video" = "Télécharger la vidéo";
 "Download ↗" = "Télécharger ↗";
 "Download, verify and install Nashi %@? The app will restart. No account or token is needed." = "Télécharger, vérifier et installer Nashi %@ ? L’app redémarrera. Aucun compte ni jeton n’est nécessaire.";
@@ -827,6 +832,7 @@
 "FIND A RECENT FILE" = "RECHERCHER UN FICHIER RÉCENT";
 "FIND IN LIBRARY…" = "RECHERCHER DANS LA BIBLIOTHÈQUE…";
 "FIND MEDIA" = "RECHERCHER LE MÉDIA";
+"FINDING SUBTITLES…" = "RECHERCHE DES SOUS-TITRES…";
 "FINDING THE MEDIA…" = "RECHERCHE DU MÉDIA…";
 "FINE-GRAINED ACCESS TOKEN" = "JETON D’ACCÈS À GRANULARITÉ FINE";
 "FINE-TUNE" = "RÉGLAGES FINS";
@@ -894,6 +900,7 @@
 "Find a recent file" = "Rechercher un fichier récent";
 "Find in Library…" = "Rechercher dans la bibliothèque…";
 "Find media" = "Rechercher le média";
+"Finding subtitles…" = "Recherche des sous-titres…";
 "Finding the media…" = "Recherche du média…";
 "Fine-grained access token" = "Jeton d’accès à granularité fine";
 "Fine-tune" = "Réglages fins";
@@ -1946,6 +1953,7 @@
 "THIS SIZE CANNOT BE REACHED. CHOOSE A LARGER TARGET OR SMALLER DIMENSIONS." = "CETTE TAILLE EST IMPOSSIBLE À ATTEINDRE. CHOISISSEZ UNE CIBLE PLUS GRANDE OU DES DIMENSIONS PLUS PETITES.";
 "THIS TEXT IS TOO LARGE TO PASTE. CHOOSE A TEXT FILE INSTEAD." = "CE TEXTE EST TROP VOLUMINEUX POUR ÊTRE COLLÉ. CHOISISSEZ PLUTÔT UN FICHIER TEXTE.";
 "THIS TEXT IS TOO LARGE TO PREVIEW. USE OPEN TO READ THE COMPLETE FILE." = "CE TEXTE EST TROP VOLUMINEUX POUR L’APERÇU. UTILISEZ OUVRIR POUR LIRE LE FICHIER COMPLET.";
+"THIS VIDEO HAS NO SUBTITLES OR AUTOMATIC CAPTIONS IN YOUR LANGUAGES OR ENGLISH." = "CETTE VIDÉO N’A PAS DE SOUS-TITRES NI DE SOUS-TITRES AUTOMATIQUES DANS VOS LANGUES OU EN ANGLAIS.";
 "THIS WINDOW COULD NOT BE ARRANGED. THE APP MAY RESTRICT RESIZING." = "CETTE FENÊTRE N’A PAS PU ÊTRE DISPOSÉE. L’APP LIMITE PEUT-ÊTRE LE REDIMENSIONNEMENT.";
 "THIS WINDOWS CODEC CANNOT PLAY DIRECTLY. SET UP MEDIA TOOLS TO CREATE A LOCAL PREVIEW." = "CE CODEC WINDOWS NE PEUT PAS ÊTRE LU DIRECTEMENT. CONFIGUREZ LES OUTILS MULTIMÉDIAS POUR CRÉER UN APERÇU LOCAL.";
 "THOSE FILES ARE NO LONGER AVAILABLE." = "CES FICHIERS NE SONT PLUS DISPONIBLES.";
@@ -1962,6 +1970,7 @@
 "TOOLS · WHILE DRAGGING" = "OUTILS · PENDANT LE GLISSEMENT";
 "TOP" = "HAUT";
 "TRACK NAME" = "NOM DE LA PISTE";
+"TRANSCRIPT · TXT" = "TRANSCRIPTION · TXT";
 "TRANSPARENT" = "TRANSPARENT";
 "TRANSPARENT BACKGROUNDS SAVE AS PNG TO KEEP THEIR TRANSPARENCY." = "LES ARRIÈRE-PLANS TRANSPARENTS SONT ENREGISTRÉS EN PNG POUR CONSERVER LEUR TRANSPARENCE.";
 "TRIM" = "ÉLAGUER";
@@ -2036,6 +2045,7 @@
 "This size cannot be reached. Choose a larger target or smaller dimensions." = "Cette taille est impossible à atteindre. Choisissez une cible plus grande ou des dimensions plus petites.";
 "This text is too large to paste. Choose a text file instead." = "Ce texte est trop volumineux pour être collé. Choisissez plutôt un fichier texte.";
 "This text is too large to preview. Use Open to read the complete file." = "Ce texte est trop volumineux pour l’aperçu. Utilisez Ouvrir pour lire le fichier complet.";
+"This video has no subtitles or automatic captions in your languages or English." = "Cette vidéo n’a pas de sous-titres ni de sous-titres automatiques dans vos langues ou en anglais.";
 "This window could not be arranged. The app may restrict resizing." = "Cette fenêtre n’a pas pu être disposée. L’app limite peut-être le redimensionnement.";
 "Those files are no longer available." = "Ces fichiers ne sont plus disponibles.";
 "Thumbnail" = "Miniature";
@@ -2051,6 +2061,7 @@
 "Tools · while dragging" = "Outils · pendant le glissement";
 "Top" = "Haut";
 "Track name" = "Nom de la piste";
+"Transcript · TXT" = "Transcription · TXT";
 "Transparent" = "Transparent";
 "Transparent backgrounds save as PNG to keep their transparency." = "Les arrière-plans transparents sont enregistrés en PNG pour conserver leur transparence.";
 "Trim" = "Élaguer";

@@ -1128,5 +1128,11 @@
   "Note": "Not",
   "Save downloaded media to…": "İndirilen medyayı şuraya kaydet…",
   "Original image · ready to download": "Orijinal görsel · indirmeye hazır",
-  "YouTube thumbnail · best available full-size image": "YouTube küçük resmi · en iyi tam boyutlu görsel"
+  "YouTube thumbnail · best available full-size image": "YouTube küçük resmi · en iyi tam boyutlu görsel",
+  "Transcript · TXT": "Transkript · TXT",
+  "Download transcript": "Transkripti indir",
+  "Finding subtitles…": "Altyazılar aranıyor…",
+  "This video has no subtitles or automatic captions in your languages or English.": "Bu videoda senin dillerinde ya da İngilizce altyazı veya otomatik altyazı yok.",
+  "Download MP3": "MP3 indir",
+  "Download image": "Görseli indir"
 }

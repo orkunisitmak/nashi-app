@@ -634,10 +634,12 @@
 "DOWNLOAD LINK…" = "DOWNLOAD LINK…";
 "DOWNLOAD MEDIA TOOLS" = "DOWNLOAD MEDIA TOOLS";
 "DOWNLOAD MISSING TOOLS" = "DOWNLOAD MISSING TOOLS";
+"DOWNLOAD MP3" = "DOWNLOAD MP3";
 "DOWNLOAD OFFICE TOOLS" = "DOWNLOAD OFFICE TOOLS";
 "DOWNLOAD PHOTOS" = "DOWNLOAD PHOTOS";
 "DOWNLOAD THE MISSING TOOLS TO ENABLE ALL CONVERSIONS, PREVIEWS AND WEB DOWNLOADS. TOOLS ALREADY FOUND ON YOUR COMPUTER ARE KEPT." = "DOWNLOAD THE MISSING TOOLS TO ENABLE ALL CONVERSIONS, PREVIEWS AND WEB DOWNLOADS. TOOLS ALREADY FOUND ON YOUR COMPUTER ARE KEPT.";
 "DOWNLOAD THUMBNAIL" = "DOWNLOAD THUMBNAIL";
+"DOWNLOAD TRANSCRIPT" = "DOWNLOAD TRANSCRIPT";
 "DOWNLOAD VIDEO" = "DOWNLOAD VIDEO";
 "DOWNLOAD ↗" = "DOWNLOAD ↗";
 "DOWNLOADING LIBREOFFICE 26.8.1…" = "DOWNLOADING LIBREOFFICE 26.8.1…";
@@ -693,6 +695,7 @@
 "Download Images" = "Download Images";
 "Download LibreOffice 26.8.1 (~360 MB) from The Document Foundation? Its SHA-256 is checked, then the package is extracted into Nashi’s user tools folder. No administrator password or Office subscription is needed. LibreOffice retains its upstream licenses." = "Download LibreOffice 26.8.1 (~360 MB) from The Document Foundation? Its SHA-256 is checked, then the package is extracted into Nashi’s user tools folder. No administrator password or Office subscription is needed. LibreOffice retains its upstream licenses.";
 "Download Link…" = "Download Link…";
+"Download MP3" = "Download MP3";
 "Download Thumbnail" = "Download Thumbnail";
 "Download Video" = "Download Video";
 "Download a link" = "Download a link";
@@ -702,6 +705,7 @@
 "Download ended early." = "Download ended early.";
 "Download exceeded its limit." = "Download exceeded its limit.";
 "Download from the web" = "Download from the web";
+"Download image" = "Download image";
 "Download is larger than the supported limit." = "Download is larger than the supported limit.";
 "Download media tools" = "Download media tools";
 "Download missing tools" = "Download missing tools";
@@ -709,6 +713,7 @@
 "Download photos" = "Download photos";
 "Download the missing tools to enable all conversions, previews and web downloads. Tools already found on your computer are kept." = "Download the missing tools to enable all conversions, previews and web downloads. Tools already found on your computer are kept.";
 "Download thumbnail" = "Download thumbnail";
+"Download transcript" = "Download transcript";
 "Download video" = "Download video";
 "Download ↗" = "Download ↗";
 "Download, verify and install Nashi %@? The app will restart. No account or token is needed." = "Download, verify and install Nashi %@? The app will restart. No account or token is needed.";
@@ -827,6 +832,7 @@
 "FIND A RECENT FILE" = "FIND A RECENT FILE";
 "FIND IN LIBRARY…" = "FIND IN LIBRARY…";
 "FIND MEDIA" = "FIND MEDIA";
+"FINDING SUBTITLES…" = "FINDING SUBTITLES…";
 "FINDING THE MEDIA…" = "FINDING THE MEDIA…";
 "FINE-GRAINED ACCESS TOKEN" = "FINE-GRAINED ACCESS TOKEN";
 "FINE-TUNE" = "FINE-TUNE";
@@ -894,6 +900,7 @@
 "Find a recent file" = "Find a recent file";
 "Find in Library…" = "Find in Library…";
 "Find media" = "Find media";
+"Finding subtitles…" = "Finding subtitles…";
 "Finding the media…" = "Finding the media…";
 "Fine-grained access token" = "Fine-grained access token";
 "Fine-tune" = "Fine-tune";
@@ -1946,6 +1953,7 @@
 "THIS SIZE CANNOT BE REACHED. CHOOSE A LARGER TARGET OR SMALLER DIMENSIONS." = "THIS SIZE CANNOT BE REACHED. CHOOSE A LARGER TARGET OR SMALLER DIMENSIONS.";
 "THIS TEXT IS TOO LARGE TO PASTE. CHOOSE A TEXT FILE INSTEAD." = "THIS TEXT IS TOO LARGE TO PASTE. CHOOSE A TEXT FILE INSTEAD.";
 "THIS TEXT IS TOO LARGE TO PREVIEW. USE OPEN TO READ THE COMPLETE FILE." = "THIS TEXT IS TOO LARGE TO PREVIEW. USE OPEN TO READ THE COMPLETE FILE.";
+"THIS VIDEO HAS NO SUBTITLES OR AUTOMATIC CAPTIONS IN YOUR LANGUAGES OR ENGLISH." = "THIS VIDEO HAS NO SUBTITLES OR AUTOMATIC CAPTIONS IN YOUR LANGUAGES OR ENGLISH.";
 "THIS WINDOW COULD NOT BE ARRANGED. THE APP MAY RESTRICT RESIZING." = "THIS WINDOW COULD NOT BE ARRANGED. THE APP MAY RESTRICT RESIZING.";
 "THIS WINDOWS CODEC CANNOT PLAY DIRECTLY. SET UP MEDIA TOOLS TO CREATE A LOCAL PREVIEW." = "THIS WINDOWS CODEC CANNOT PLAY DIRECTLY. SET UP MEDIA TOOLS TO CREATE A LOCAL PREVIEW.";
 "THOSE FILES ARE NO LONGER AVAILABLE." = "THOSE FILES ARE NO LONGER AVAILABLE.";
@@ -1962,6 +1970,7 @@
 "TOOLS · WHILE DRAGGING" = "TOOLS · WHILE DRAGGING";
 "TOP" = "TOP";
 "TRACK NAME" = "TRACK NAME";
+"TRANSCRIPT · TXT" = "TRANSCRIPT · TXT";
 "TRANSPARENT" = "TRANSPARENT";
 "TRANSPARENT BACKGROUNDS SAVE AS PNG TO KEEP THEIR TRANSPARENCY." = "TRANSPARENT BACKGROUNDS SAVE AS PNG TO KEEP THEIR TRANSPARENCY.";
 "TRIM" = "TRIM";
@@ -2036,6 +2045,7 @@
 "This size cannot be reached. Choose a larger target or smaller dimensions." = "This size cannot be reached. Choose a larger target or smaller dimensions.";
 "This text is too large to paste. Choose a text file instead." = "This text is too large to paste. Choose a text file instead.";
 "This text is too large to preview. Use Open to read the complete file." = "This text is too large to preview. Use Open to read the complete file.";
+"This video has no subtitles or automatic captions in your languages or English." = "This video has no subtitles or automatic captions in your languages or English.";
 "This window could not be arranged. The app may restrict resizing." = "This window could not be arranged. The app may restrict resizing.";
 "Those files are no longer available." = "Those files are no longer available.";
 "Thumbnail" = "Thumbnail";
@@ -2051,6 +2061,7 @@
 "Tools · while dragging" = "Tools · while dragging";
 "Top" = "Top";
 "Track name" = "Track name";
+"Transcript · TXT" = "Transcript · TXT";
 "Transparent" = "Transparent";
 "Transparent backgrounds save as PNG to keep their transparency." = "Transparent backgrounds save as PNG to keep their transparency.";
 "Trim" = "Trim";
