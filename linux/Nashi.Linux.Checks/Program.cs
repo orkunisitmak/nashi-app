@@ -129,7 +129,7 @@ void CapabilityChecks()
     Check(Capabilities.Tools(pdf2).Contains("mergePDF"), "Tools for two PDFs include mergePDF");
     Check(Capabilities.Tools([]).Length == 0, "Tools for an empty selection is empty");
     Check(Capabilities.Formats(pdf2).SequenceEqual(FeatureCatalog.Formats(pdf2)) && Capabilities.Formats(["x.pdf"]).Contains("docx"), "Formats for PDFs are the catalog's, docx included");
-    Check(Capabilities.Formats(docx).SequenceEqual(FeatureCatalog.Formats(docx).Where(f => f != "pages")), "Formats for a DOCX are the catalog's except Pages");
+    Check(Capabilities.Formats(docx).SequenceEqual(FeatureCatalog.Formats(docx)), "Formats for a DOCX are the catalog's");
 }
 
 void ImageChecks(string root)

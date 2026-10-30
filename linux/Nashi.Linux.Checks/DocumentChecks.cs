@@ -15,17 +15,15 @@ static class DocumentChecks
 
     public static async Task RunAsync(string root, Action<bool, string> check)
     {
-        // So far: every PDF route, and Office inputs to everything but Pages.
-        string[] officeInputs = ["docx", "pptx", "ppt", "xlsx", "xls", "ods", "csv", "tsv", "rtf", "rtfd", "html"];
-        IEnumerable<string> Expected(string ext) => ext == "pdf" ? FeatureCatalog.Formats(["x.pdf"]) : officeInputs.Contains(ext) ? FeatureCatalog.Formats(["x." + ext]).Where(f => f != "pages")
-            : DocumentOperations.Handles("x." + ext) ? [] : FeatureCatalog.Formats(["x." + ext]).Where(f => f != "heic");
-        var mismatched = FeatureCatalog.Conversions.Keys.Where(ext => !Capabilities.Formats(["x." + ext]).SequenceEqual(Expected(ext))).ToList();
-        check(FeatureCatalog.Conversions.Count == 46 && mismatched.Count == 0, "Capabilities offer every PDF route and every Office route but Pages; differ: " + string.Join(" ", mismatched));
+        // The acceptance gate: every catalog input offers its catalog routes, minus HEIC output.
+        var mismatched = FeatureCatalog.Conversions.Keys.Where(ext =>
+            !Capabilities.Formats(["x." + ext]).SequenceEqual(FeatureCatalog.Formats(["x." + ext]).Where(f => f != "heic"))).ToList();
+        check(FeatureCatalog.Conversions.Count == 46 && mismatched.Count == 0, "Capabilities match the catalog for all 46 inputs, minus HEIC output; differ: " + string.Join(" ", mismatched));
         var saved = AppPaths.OfficeSearchPath;
         AppPaths.OfficeSearchPath = "";
-        check(AppPaths.Office() is null && Capabilities.Formats(["x.docx"]).SequenceEqual(FeatureCatalog.Formats(["x.docx"]).Where(f => f != "pages")), "Without LibreOffice the wheel still offers Office routes (choosing one opens setup)");
+        check(AppPaths.Office() is null && Capabilities.Formats(["x.docx"]).SequenceEqual(FeatureCatalog.Formats(["x.docx"])), "Without LibreOffice the wheel still offers Office routes (choosing one opens setup)");
         AppPaths.OfficeSearchPath = saved;
-        check(Capabilities.Formats(["a.docx", "b.rtf"]).SequenceEqual(FeatureCatalog.Formats(["a.docx", "b.rtf"]).Where(f => f != "pages")) && Capabilities.Formats(["a.pdf", "b.png"]).Length == 0, "Mixed documents keep the catalog intersection; documents plus images offer nothing");
+        check(Capabilities.Formats(["a.docx", "b.md"]).SequenceEqual(FeatureCatalog.Formats(["a.docx", "b.md"])) && Capabilities.Formats(["a.pdf", "b.png"]).Length == 0, "Mixed documents keep the catalog intersection; documents plus images offer nothing");
 
         var ffmpeg = Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG");
         var ffprobe = Environment.GetEnvironmentVariable("NASHI_VERIFY_FFPROBE");
@@ -216,6 +214,11 @@ static class DocumentChecks
                 return (Ext: s.Item2, Path: named);
             }));
             foreach (var (ext, path) in built) made[ext] = path;
+            if (deno is not null)
+            {
+                var pages = await new DocumentOperations(office, deno).ConvertAsync([made["docx"]], "pages", Path.Combine(dir, "made-pages"), null, default);
+                System.IO.File.Move(pages[0], made["pages"] = File("pages"));
+            }
         }
         return made;
     }

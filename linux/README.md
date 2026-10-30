@@ -11,14 +11,14 @@ The [AppImage link](https://github.com/orkunisitmak/nashi-app/releases/latest/do
 - **Ctrl+Space** opens the conversion wheel for the selected files, with live progress. With nothing selected, it opens the file picker first. The **Actions** chip opens the actions wheel: Share (shows the files in your file manager), Copy, Move, Copy Path and Terminal. Float is not available yet.
 - The wheel looks and sounds like the macOS one: icons above upper-case labels, a gold highlight, a short opening animation (skipped when GNOME animations are off) and the selection sound through `paplay`, `pw-play` or `aplay` when one is installed.
 - Images: format conversion. HEIC output is not available on Linux because no encoder is available.
-- PDF: merge, create from images and compress. PDF to PNG or JPG (one image per page, rendered with PDFium) and to TXT or Markdown work right away; PDF to DOCX, PPTX, XLSX, EPUB and Pages need LibreOffice, and Pages also needs Deno, which **Download missing tools** in setup fetches.
-- Office documents: Word, PowerPoint, Excel, OpenDocument, CSV/TSV, RTF/RTFD and HTML files convert to every format the macOS app offers for them except Pages, including pages as PNG or JPG images. These need LibreOffice (see below).
+- PDF: merge, create from images and compress. PDF to PNG or JPG (one image per page) and to TXT or Markdown work right away; PDF to DOCX, PPTX, XLSX, EPUB and Pages need LibreOffice.
+- Documents: every conversion the macOS app offers for Word, PowerPoint, Excel, OpenDocument, CSV/TSV, RTF/RTFD, HTML, EPUB, Markdown, plain text, text clippings and Pages files, including pages as PNG or JPG images. These need LibreOffice (see below). Pages files also need Deno, which **Download missing tools** in setup fetches.
 - Audio and video: convert, compress, mute and normalize. These need media tool setup from Home or a system `ffmpeg`.
 - Archives and subtitles.
 
 ## LibreOffice
 
-Office conversions run through the system LibreOffice (`soffice` or `libreoffice` on `PATH`). Nashi does not download it, because LibreOffice publishes no portable Linux build. Install it with your package manager:
+Office, text, EPUB and Pages conversions run through the system LibreOffice (`soffice` or `libreoffice` on `PATH`). Nashi does not download it, because LibreOffice publishes no portable Linux build. Install it with your package manager:
 
 ```sh
 sudo apt install libreoffice      # Debian, Ubuntu
@@ -70,3 +70,5 @@ The script publishes a self-contained build, downloads a pinned, SHA-256-verifie
 dotnet run --project windows/Nashi.Verify -c Release
 dotnet run --project linux/Nashi.Linux.Checks -c Release
 ```
+
+The Linux checks run every offered conversion route once on a small fixture. Routes that need a missing tool are skipped and counted: set `NASHI_VERIFY_FFMPEG`, `NASHI_VERIFY_FFPROBE` and `NASHI_VERIFY_DENO` to tool paths, and install LibreOffice, to run all of them.
