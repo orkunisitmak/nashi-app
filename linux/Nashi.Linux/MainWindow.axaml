@@ -58,7 +58,7 @@
               <Canvas Grid.Column="1" Width="166" Height="150" IsHitTestVisible="False">
                 <Ellipse Canvas.Left="11" Canvas.Top="3" Width="144" Height="144" Fill="{DynamicResource NashiSand}" />
                 <Border Canvas.Left="10.5" Canvas.Top="35.5" Width="77" Height="103" CornerRadius="15" Padding="13"
-                        Background="{DynamicResource NashiSurface}" BorderBrush="#1F30543B" BorderThickness="1"
+                        Background="{DynamicResource NashiSurface}" BorderBrush="{DynamicResource NashiBorder}" BorderThickness="1"
                         BoxShadow="0 5 12 0 #12000000" RenderTransform="rotate(-16deg)">
                   <StackPanel Spacing="10">
                     <PathIcon Data="{StaticResource IconDocument}" Width="22" Height="22" HorizontalAlignment="Left" Foreground="{DynamicResource NashiForest}" />
@@ -108,7 +108,7 @@
             </StackPanel>
             <TextBlock x:Name="StatusLine" Classes="secondary" FontSize="11" IsVisible="False" TextWrapping="Wrap" />
 
-            <!-- Convert opens the format wheel, Tools the tools wheel (also Ctrl+Space). -->
+            <!-- Convert opens the format wheel, Tools the tools wheel (also Ctrl+Space), Actions the actions wheel. -->
             <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,2,0,0">
               <Button Classes="chip" Click="OnConvert">
                 <StackPanel Orientation="Horizontal" Spacing="6">
@@ -122,7 +122,7 @@
                   <TextBlock Text="{l:T 'Tools'}" />
                 </StackPanel>
               </Button>
-              <Button Classes="chip" IsEnabled="False" ToolTip.Tip="{l:T 'Coming soon'}" ToolTip.ShowOnDisabled="True">
+              <Button Classes="chip" Click="OnActions">
                 <StackPanel Orientation="Horizontal" Spacing="6">
                   <PathIcon Data="{StaticResource IconActions}" />
                   <TextBlock Text="{l:T 'Actions'}" />

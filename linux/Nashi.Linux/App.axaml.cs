@@ -65,6 +65,10 @@ public sealed class App : Application
                 Flow.StartupTime = Desktop.StartupTime(message.Startup);
                 ShowWheel(message.Files ?? []);
                 break;
+            case "actions":
+                Flow.StartupTime = Desktop.StartupTime(message.Startup);
+                ShowWheel(message.Files ?? [], actions: true);
+                break;
             case "wheel-clipboard":
                 Flow.StartupTime = Desktop.StartupTime(message.Startup);
                 _ = ShowClipboardWheelAsync();
@@ -75,12 +79,14 @@ public sealed class App : Application
         }
     }
 
-    /// The tools wheel at the pointer for the files that exist (Selection's rules), or a "Nothing to convert" card.
-    public void ShowWheel(IEnumerable<string> paths)
+    /// The tools wheel (or, for --actions, the actions wheel) at the pointer for the files that exist (Selection's
+    /// rules), or a "Nothing to convert" card. As on macOS, the tools wheel has no Actions petal: actions have their own.
+    public void ShowWheel(IEnumerable<string> paths, bool actions = false)
     {
         var selection = new Selection();
         selection.Add(paths);
         if (selection.Files.Count == 0) SuccessToast.Notice(L10n.T(Copy.Nothing)).Present();
+        else if (actions) Flow.ShowActions(selection.Files);
         else Flow.ShowTools(selection.Files);
     }
 

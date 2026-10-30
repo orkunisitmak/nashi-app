@@ -413,17 +413,20 @@
 "CONVERT · WHILE DRAGGING" = "DÖNÜŞTÜR · SÜRÜKLERKEN";
 "CONVERT, FINE-TUNE, AND SEND THEM ON THEIR WAY." = "DÖNÜŞTÜR, İNCE AYAR YAP VE PAYLAŞ.";
 "COPIED LINK" = "KOPYALANAN BAĞLANTI";
+"COPIED." = "KOPYALANDI.";
 "COPY" = "KOPYALA";
 "COPY A FILE, SOME TEXT, AN IMAGE OR A PUBLIC MEDIA LINK FIRST." = "ÖNCE BİR DOSYA, METİN, GÖRSEL VEYA HERKESE AÇIK BİR MEDYA BAĞLANTISI KOPYALA.";
 "COPY A LINK → ⌃⇧D, OR DRAG IT WITH ⌘." = "BAĞLANTIYI KOPYALA → ⌃⇧D VEYA ⌘ İLE SÜRÜKLE.";
 "COPY A LINK, THEN CHOOSE DOWNLOAD LINK FROM THE NASHI MENU." = "BİR BAĞLANTI KOPYALA, SONRA NASHI MENÜSÜNDEN BAĞLANTIDAN İNDİR'İ SEÇ.";
 "COPY A PUBLIC MEDIA LINK FIRST." = "ÖNCE HERKESE AÇIK BİR MEDYA BAĞLANTISI KOPYALA.";
 "COPY PATH" = "YOLU KOPYALA";
+"COPY TO…" = "ŞURAYA KOPYALA…";
 "CORNER RADIUS" = "KÖŞE YUVARLAKLIĞI";
 "CORNERS" = "KÖŞELER";
 "COULDN’T CHECK FOR UPDATES" = "GÜNCELLEMELER DENETLENEMEDİ";
 "COULDN’T FINISH" = "İŞLEM TAMAMLANAMADI";
 "COULDN’T OPEN THIS TOOL" = "BU ARAÇ AÇILAMADI";
+"COULDN’T OPEN YOUR FILE MANAGER." = "DOSYA YÖNETİCİN AÇILAMADI.";
 "COVER STYLE" = "KAPLAMA STİLİ";
 "CREATE A NEW FLOAT" = "YENİ YÜZEN PENCERE OLUŞTUR";
 "CREATE COLLAGE" = "KOLAJ OLUŞTUR";
@@ -593,6 +596,7 @@
 "Converting to %@ is not supported on Linux." = "%@ biçimine dönüştürme Linux'ta desteklenmiyor.";
 "Converting to %lld is not supported on Linux." = "%lld biçimine dönüştürme Linux'ta desteklenmiyor.";
 "Copied link" = "Kopyalanan bağlantı";
+"Copied." = "Kopyalandı.";
 "Copy" = "Kopyala";
 "Copy Path" = "Yolu Kopyala";
 "Copy a file, some text, an image or a public media link first." = "Önce bir dosya, metin, görsel veya herkese açık bir medya bağlantısı kopyala.";
@@ -600,6 +604,7 @@
 "Copy a link, then choose Download Link from the Nashi menu." = "Bir bağlantı kopyala, sonra Nashi menüsünden Bağlantıdan İndir'i seç.";
 "Copy a public media link first." = "Önce herkese açık bir medya bağlantısı kopyala.";
 "Copy path" = "Yolu kopyala";
+"Copy to…" = "Şuraya kopyala…";
 "Corner radius" = "Köşe yuvarlaklığı";
 "Corners" = "Köşeler";
 "Couldn’t check for updates" = "Güncellemeler denetlenemedi";
@@ -607,6 +612,7 @@
 "Couldn’t finish: %@" = "Tamamlanamadı: %@";
 "Couldn’t finish: %lld" = "Tamamlanamadı: %lld";
 "Couldn’t open this tool" = "Bu araç açılamadı";
+"Couldn’t open your file manager." = "Dosya yöneticin açılamadı.";
 "Couldn’t set up tools: %@" = "Araçlar kurulamadı: %@";
 "Couldn’t set up tools: %lld" = "Araçlar kurulamadı: %lld";
 "Cover style" = "Kaplama stili";
@@ -1197,8 +1203,10 @@
 "MOVE LEFT" = "SOLA TAŞI";
 "MOVE REGULAR FILES AND FOLDERS WITHOUT SYMBOLIC LINKS." = "SEMBOLİK BAĞLANTI İÇERMEYEN NORMAL DOSYA VE KLASÖRLERİ TAŞI.";
 "MOVE RIGHT" = "SAĞA TAŞI";
+"MOVE TO…" = "ŞURAYA TAŞI…";
 "MOVE UP" = "YUKARI TAŞI";
 "MOVED OR REMOVED" = "TAŞINMIŞ VEYA SİLİNMİŞ";
+"MOVED." = "TAŞINDI.";
 "MUTE" = "SESSİZE AL";
 "MUTE VIDEO" = "VİDEOYU SESSİZE AL";
 "MUTE VIDEO · NASHI" = "VİDEOYU SESSİZE AL · NASHI";
@@ -1244,11 +1252,14 @@
 "Move left" = "Sola taşı";
 "Move regular files and folders without symbolic links." = "Sembolik bağlantı içermeyen normal dosya ve klasörleri taşı.";
 "Move right" = "Sağa taşı";
+"Move to…" = "Şuraya taşı…";
 "Move up" = "Yukarı taşı";
 "Moved or removed" = "Taşınmış veya silinmiş";
+"Moved." = "Taşındı.";
 "Mute" = "Sessize al";
 "Mute Video" = "Videoyu Sessize Al";
 "Mute Video · Nashi" = "Videoyu Sessize Al · Nashi";
+"NASHI ACTIONS" = "NASHI İŞLEMLERİ";
 "NASHI CHECKS ONCE AN HOUR WHILE IT’S RUNNING. YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL." = "NASHI ÇALIŞIRKEN SAATTE BİR DENETLER. İNDİRME VE KURULUM ZAMANINI SEN SEÇERSİN.";
 "NASHI IS ALREADY RUNNING BUT IS STILL STARTING. OPEN IT FROM THE SYSTEM TRAY OR TRY AGAIN IN A MOMENT." = "NASHI ZATEN ÇALIŞIYOR AMA HÂLÂ AÇILIYOR. SİSTEM TEPSİSİNDEN AÇ VEYA BİRAZDAN TEKRAR DENE.";
 "NASHI IS RUNNING BUT DID NOT ANSWER." = "NASHI ÇALIŞIYOR AMA YANIT VERMEDİ.";
@@ -1278,6 +1289,7 @@
 "NO PUBLIC DOWNLOADABLE MEDIA FOUND. SOME SITES REQUIRE SIGN-IN OR DO NOT EXPOSE DOWNLOADABLE MEDIA." = "HERKESE AÇIK, İNDİRİLEBİLİR MEDYA BULUNAMADI. BAZI SİTELER GİRİŞ GEREKTİRİR VEYA MEDYAYI İNDİRMEYE AÇMAZ.";
 "NO QR CODES FOUND. TRY A LARGER OR SHARPER IMAGE." = "QR KODU BULUNAMADI. DAHA BÜYÜK VEYA DAHA NET BİR GÖRSEL DENE.";
 "NO QR CODES THIS TIME." = "QR KODU BULUNAMADI.";
+"NO TERMINAL APP FOUND." = "TERMINAL UYGULAMASI BULUNAMADI.";
 "NO TEXT COULD BE EXTRACTED OR RECOGNIZED IN THIS PDF." = "BU PDF'DEN METİN ÇIKARILAMADI VEYA TANINAMADI.";
 "NO TIMED SUBTITLE CUES WERE FOUND." = "ZAMANLANMIŞ ALTYAZI SATIRI BULUNAMADI.";
 "NO TOOLS FOR THIS SELECTION YET." = "BU SEÇİM İÇİN HENÜZ ARAÇ YOK.";
@@ -1295,6 +1307,7 @@
 "NUMBER" = "NUMARA";
 "NUMBER OF CLIPS" = "KLİP SAYISI";
 "Nashi Settings" = "Nashi Ayarları";
+"Nashi actions" = "Nashi işlemleri";
 "Nashi checks once an hour while it’s running. You choose when to download and install." = "Nashi çalışırken saatte bir denetler. İndirme ve kurulum zamanını sen seçersin.";
 "Nashi is already running but is still starting. Open it from the system tray or try again in a moment." = "Nashi zaten çalışıyor ama hâlâ açılıyor. Sistem tepsisinden aç veya birazdan tekrar dene.";
 "Nashi is running but did not answer." = "Nashi çalışıyor ama yanıt vermedi.";
@@ -1327,6 +1340,7 @@
 "No media output was produced." = "Medya çıktısı oluşmadı.";
 "No output was produced." = "Çıktı oluşmadı.";
 "No public downloadable media found. Some sites require sign-in or do not expose downloadable media." = "Herkese açık, indirilebilir medya bulunamadı. Bazı siteler giriş gerektirir veya medyayı indirmeye açmaz.";
+"No terminal app found." = "Terminal uygulaması bulunamadı.";
 "No text could be extracted or recognized in this PDF." = "Bu PDF'den metin çıkarılamadı veya tanınamadı.";
 "No timed subtitle cues were found." = "Zamanlanmış altyazı satırı bulunamadı.";
 "No tools for %@ files yet." = "%@ dosyaları için henüz araç yok.";
@@ -1437,6 +1451,7 @@
 "PASTE ONE COMPLETE PUBLIC MEDIA LINK." = "HERKESE AÇIK BİR MEDYA BAĞLANTISININ TAMAMINI YAPIŞTIR.";
 "PASTED IMAGE" = "YAPIŞTIRILAN GÖRSEL";
 "PASTED TEXT" = "YAPIŞTIRILAN METİN";
+"PATH COPIED." = "YOL KOPYALANDI.";
 "PAUSE" = "DURAKLAT";
 "PDF FORM APPEARANCES COULD NOT BE PREPARED." = "PDF FORM GÖRÜNÜMLERİ HAZIRLANAMADI.";
 "PDF LAYOUT" = "PDF DÜZENİ";
@@ -1510,6 +1525,7 @@
 "Paste one complete public media link." = "Herkese açık bir medya bağlantısının tamamını yapıştır.";
 "Pasted image" = "Yapıştırılan görsel";
 "Pasted text" = "Yapıştırılan metin";
+"Path copied." = "Yol kopyalandı.";
 "Pause" = "Duraklat";
 "Photos" = "Fotoğraflar";
 "Pick a folder you work in. Fresh copies are saved beside the originals by default." = "Çalıştığın bir klasörü seç. Yeni kopyalar varsayılan olarak orijinallerin yanına kaydedilir.";
@@ -1787,6 +1803,7 @@
 "SHOW IN FOLDER" = "KLASÖRDE GÖSTER";
 "SHOW NASHI IN FINDER" = "NASHI'Yİ FINDER'DA GÖSTER";
 "SHOW ORIGINAL" = "ORİJİNALİ GÖSTER";
+"SHOWN IN YOUR FILE MANAGER. SHARE IT FROM THERE." = "DOSYA YÖNETİCİNDE GÖSTERİLDİ. ORADAN PAYLAŞABİLİRSİN.";
 "SILENCE THRESHOLD" = "SESSİZLİK EŞİĞİ";
 "SKIP TOUR" = "TURU GEÇ";
 "SKIPPED THE KEYBOARD SHORTCUT: COULDN’T READ YOUR EXISTING SHORTCUTS, SO THEY WERE LEFT AS THEY ARE." = "KLAVYE KISAYOLU ATLANDI: MEVCUT KISAYOLLARIN OKUNAMADI, O YÜZDEN OLDUĞU GİBİ BIRAKILDI.";
@@ -1930,6 +1947,7 @@
 "Show in Finder" = "Finder'da Göster";
 "Show in folder" = "Klasörde göster";
 "Show original" = "Orijinali göster";
+"Shown in your file manager. Share it from there." = "Dosya yöneticinde gösterildi. Oradan paylaşabilirsin.";
 "Silence threshold" = "Sessizlik eşiği";
 "Skip tour" = "Turu geç";
 "Skipped %@: only existing files can come in, not folders." = "%@ atlandı: yalnızca var olan dosyalar eklenebilir, klasörler eklenemez.";
@@ -1985,6 +2003,7 @@
 "TEMPERATURE" = "SICAKLIK";
 "TERMINAL" = "TERMINAL";
 "TERMINAL APP" = "TERMINAL UYGULAMASI";
+"TERMINAL OPENED." = "TERMINAL AÇILDI.";
 "TEXT" = "METİN";
 "TEXT OR CALLOUT" = "METİN VEYA AÇIKLAMA";
 "TEXT SIZE" = "METİN BOYUTU";
@@ -2070,6 +2089,7 @@
 "Temperature" = "Sıcaklık";
 "Terminal" = "Terminal";
 "Terminal app" = "Terminal uygulaması";
+"Terminal opened." = "Terminal açıldı.";
 "Text" = "Metin";
 "Text or callout" = "Metin veya açıklama";
 "Text size" = "Metin boyutu";

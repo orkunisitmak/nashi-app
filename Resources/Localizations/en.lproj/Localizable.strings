@@ -413,17 +413,20 @@
 "CONVERT · WHILE DRAGGING" = "CONVERT · WHILE DRAGGING";
 "CONVERT, FINE-TUNE, AND SEND THEM ON THEIR WAY." = "CONVERT, FINE-TUNE, AND SEND THEM ON THEIR WAY.";
 "COPIED LINK" = "COPIED LINK";
+"COPIED." = "COPIED.";
 "COPY" = "COPY";
 "COPY A FILE, SOME TEXT, AN IMAGE OR A PUBLIC MEDIA LINK FIRST." = "COPY A FILE, SOME TEXT, AN IMAGE OR A PUBLIC MEDIA LINK FIRST.";
 "COPY A LINK → ⌃⇧D, OR DRAG IT WITH ⌘." = "COPY A LINK → ⌃⇧D, OR DRAG IT WITH ⌘.";
 "COPY A LINK, THEN CHOOSE DOWNLOAD LINK FROM THE NASHI MENU." = "COPY A LINK, THEN CHOOSE DOWNLOAD LINK FROM THE NASHI MENU.";
 "COPY A PUBLIC MEDIA LINK FIRST." = "COPY A PUBLIC MEDIA LINK FIRST.";
 "COPY PATH" = "COPY PATH";
+"COPY TO…" = "COPY TO…";
 "CORNER RADIUS" = "CORNER RADIUS";
 "CORNERS" = "CORNERS";
 "COULDN’T CHECK FOR UPDATES" = "COULDN’T CHECK FOR UPDATES";
 "COULDN’T FINISH" = "COULDN’T FINISH";
 "COULDN’T OPEN THIS TOOL" = "COULDN’T OPEN THIS TOOL";
+"COULDN’T OPEN YOUR FILE MANAGER." = "COULDN’T OPEN YOUR FILE MANAGER.";
 "COVER STYLE" = "COVER STYLE";
 "CREATE A NEW FLOAT" = "CREATE A NEW FLOAT";
 "CREATE COLLAGE" = "CREATE COLLAGE";
@@ -593,6 +596,7 @@
 "Converting to %@ is not supported on Linux." = "Converting to %@ is not supported on Linux.";
 "Converting to %lld is not supported on Linux." = "Converting to %lld is not supported on Linux.";
 "Copied link" = "Copied link";
+"Copied." = "Copied.";
 "Copy" = "Copy";
 "Copy Path" = "Copy Path";
 "Copy a file, some text, an image or a public media link first." = "Copy a file, some text, an image or a public media link first.";
@@ -600,6 +604,7 @@
 "Copy a link, then choose Download Link from the Nashi menu." = "Copy a link, then choose Download Link from the Nashi menu.";
 "Copy a public media link first." = "Copy a public media link first.";
 "Copy path" = "Copy path";
+"Copy to…" = "Copy to…";
 "Corner radius" = "Corner radius";
 "Corners" = "Corners";
 "Couldn’t check for updates" = "Couldn’t check for updates";
@@ -607,6 +612,7 @@
 "Couldn’t finish: %@" = "Couldn’t finish: %@";
 "Couldn’t finish: %lld" = "Couldn’t finish: %lld";
 "Couldn’t open this tool" = "Couldn’t open this tool";
+"Couldn’t open your file manager." = "Couldn’t open your file manager.";
 "Couldn’t set up tools: %@" = "Couldn’t set up tools: %@";
 "Couldn’t set up tools: %lld" = "Couldn’t set up tools: %lld";
 "Cover style" = "Cover style";
@@ -1197,8 +1203,10 @@
 "MOVE LEFT" = "MOVE LEFT";
 "MOVE REGULAR FILES AND FOLDERS WITHOUT SYMBOLIC LINKS." = "MOVE REGULAR FILES AND FOLDERS WITHOUT SYMBOLIC LINKS.";
 "MOVE RIGHT" = "MOVE RIGHT";
+"MOVE TO…" = "MOVE TO…";
 "MOVE UP" = "MOVE UP";
 "MOVED OR REMOVED" = "MOVED OR REMOVED";
+"MOVED." = "MOVED.";
 "MUTE" = "MUTE";
 "MUTE VIDEO" = "MUTE VIDEO";
 "MUTE VIDEO · NASHI" = "MUTE VIDEO · NASHI";
@@ -1244,11 +1252,14 @@
 "Move left" = "Move left";
 "Move regular files and folders without symbolic links." = "Move regular files and folders without symbolic links.";
 "Move right" = "Move right";
+"Move to…" = "Move to…";
 "Move up" = "Move up";
 "Moved or removed" = "Moved or removed";
+"Moved." = "Moved.";
 "Mute" = "Mute";
 "Mute Video" = "Mute Video";
 "Mute Video · Nashi" = "Mute Video · Nashi";
+"NASHI ACTIONS" = "NASHI ACTIONS";
 "NASHI CHECKS ONCE AN HOUR WHILE IT’S RUNNING. YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL." = "NASHI CHECKS ONCE AN HOUR WHILE IT’S RUNNING. YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL.";
 "NASHI IS ALREADY RUNNING BUT IS STILL STARTING. OPEN IT FROM THE SYSTEM TRAY OR TRY AGAIN IN A MOMENT." = "NASHI IS ALREADY RUNNING BUT IS STILL STARTING. OPEN IT FROM THE SYSTEM TRAY OR TRY AGAIN IN A MOMENT.";
 "NASHI IS RUNNING BUT DID NOT ANSWER." = "NASHI IS RUNNING BUT DID NOT ANSWER.";
@@ -1278,6 +1289,7 @@
 "NO PUBLIC DOWNLOADABLE MEDIA FOUND. SOME SITES REQUIRE SIGN-IN OR DO NOT EXPOSE DOWNLOADABLE MEDIA." = "NO PUBLIC DOWNLOADABLE MEDIA FOUND. SOME SITES REQUIRE SIGN-IN OR DO NOT EXPOSE DOWNLOADABLE MEDIA.";
 "NO QR CODES FOUND. TRY A LARGER OR SHARPER IMAGE." = "NO QR CODES FOUND. TRY A LARGER OR SHARPER IMAGE.";
 "NO QR CODES THIS TIME." = "NO QR CODES THIS TIME.";
+"NO TERMINAL APP FOUND." = "NO TERMINAL APP FOUND.";
 "NO TEXT COULD BE EXTRACTED OR RECOGNIZED IN THIS PDF." = "NO TEXT COULD BE EXTRACTED OR RECOGNIZED IN THIS PDF.";
 "NO TIMED SUBTITLE CUES WERE FOUND." = "NO TIMED SUBTITLE CUES WERE FOUND.";
 "NO TOOLS FOR THIS SELECTION YET." = "NO TOOLS FOR THIS SELECTION YET.";
@@ -1295,6 +1307,7 @@
 "NUMBER" = "NUMBER";
 "NUMBER OF CLIPS" = "NUMBER OF CLIPS";
 "Nashi Settings" = "Nashi Settings";
+"Nashi actions" = "Nashi actions";
 "Nashi checks once an hour while it’s running. You choose when to download and install." = "Nashi checks once an hour while it’s running. You choose when to download and install.";
 "Nashi is already running but is still starting. Open it from the system tray or try again in a moment." = "Nashi is already running but is still starting. Open it from the system tray or try again in a moment.";
 "Nashi is running but did not answer." = "Nashi is running but did not answer.";
@@ -1327,6 +1340,7 @@
 "No media output was produced." = "No media output was produced.";
 "No output was produced." = "No output was produced.";
 "No public downloadable media found. Some sites require sign-in or do not expose downloadable media." = "No public downloadable media found. Some sites require sign-in or do not expose downloadable media.";
+"No terminal app found." = "No terminal app found.";
 "No text could be extracted or recognized in this PDF." = "No text could be extracted or recognized in this PDF.";
 "No timed subtitle cues were found." = "No timed subtitle cues were found.";
 "No tools for %@ files yet." = "No tools for %@ files yet.";
@@ -1437,6 +1451,7 @@
 "PASTE ONE COMPLETE PUBLIC MEDIA LINK." = "PASTE ONE COMPLETE PUBLIC MEDIA LINK.";
 "PASTED IMAGE" = "PASTED IMAGE";
 "PASTED TEXT" = "PASTED TEXT";
+"PATH COPIED." = "PATH COPIED.";
 "PAUSE" = "PAUSE";
 "PDF FORM APPEARANCES COULD NOT BE PREPARED." = "PDF FORM APPEARANCES COULD NOT BE PREPARED.";
 "PDF LAYOUT" = "PDF LAYOUT";
@@ -1510,6 +1525,7 @@
 "Paste one complete public media link." = "Paste one complete public media link.";
 "Pasted image" = "Pasted image";
 "Pasted text" = "Pasted text";
+"Path copied." = "Path copied.";
 "Pause" = "Pause";
 "Photos" = "Photos";
 "Pick a folder you work in. Fresh copies are saved beside the originals by default." = "Pick a folder you work in. Fresh copies are saved beside the originals by default.";
@@ -1787,6 +1803,7 @@
 "SHOW IN FOLDER" = "SHOW IN FOLDER";
 "SHOW NASHI IN FINDER" = "SHOW NASHI IN FINDER";
 "SHOW ORIGINAL" = "SHOW ORIGINAL";
+"SHOWN IN YOUR FILE MANAGER. SHARE IT FROM THERE." = "SHOWN IN YOUR FILE MANAGER. SHARE IT FROM THERE.";
 "SILENCE THRESHOLD" = "SILENCE THRESHOLD";
 "SKIP TOUR" = "SKIP TOUR";
 "SKIPPED THE KEYBOARD SHORTCUT: COULDN’T READ YOUR EXISTING SHORTCUTS, SO THEY WERE LEFT AS THEY ARE." = "SKIPPED THE KEYBOARD SHORTCUT: COULDN’T READ YOUR EXISTING SHORTCUTS, SO THEY WERE LEFT AS THEY ARE.";
@@ -1930,6 +1947,7 @@
 "Show in Finder" = "Show in Finder";
 "Show in folder" = "Show in folder";
 "Show original" = "Show original";
+"Shown in your file manager. Share it from there." = "Shown in your file manager. Share it from there.";
 "Silence threshold" = "Silence threshold";
 "Skip tour" = "Skip tour";
 "Skipped %@: only existing files can come in, not folders." = "Skipped %@: only existing files can come in, not folders.";
@@ -1985,6 +2003,7 @@
 "TEMPERATURE" = "TEMPERATURE";
 "TERMINAL" = "TERMINAL";
 "TERMINAL APP" = "TERMINAL APP";
+"TERMINAL OPENED." = "TERMINAL OPENED.";
 "TEXT" = "TEXT";
 "TEXT OR CALLOUT" = "TEXT OR CALLOUT";
 "TEXT SIZE" = "TEXT SIZE";
@@ -2070,6 +2089,7 @@
 "Temperature" = "Temperature";
 "Terminal" = "Terminal";
 "Terminal app" = "Terminal app";
+"Terminal opened." = "Terminal opened.";
 "Text" = "Text";
 "Text or callout" = "Text or callout";
 "Text size" = "Text size";

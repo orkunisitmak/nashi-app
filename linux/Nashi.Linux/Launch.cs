@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace Nashi.Linux;
 
-public enum LaunchMode { Home, Background, Wheel, WheelClipboard, InstallIntegration, UninstallIntegration, Version }
+public enum LaunchMode { Home, Background, Wheel, Actions, WheelClipboard, InstallIntegration, UninstallIntegration, Version }
 
 /// What one `Nashi` invocation asks for. File paths are made absolute here, so another process can use them.
 public sealed record Launch(LaunchMode Mode, IReadOnlyList<string> Files)
@@ -20,6 +20,7 @@ public sealed record Launch(LaunchMode Mode, IReadOnlyList<string> Files)
             "--install-integration" => new(LaunchMode.InstallIntegration, []),
             "--uninstall-integration" => new(LaunchMode.UninstallIntegration, []),
             "--wheel" => new(LaunchMode.Wheel, Absolute(args.Skip(1))),
+            "--actions" => new(LaunchMode.Actions, Absolute(args.Skip(1))),
             _ => new(LaunchMode.Wheel, Absolute(args)), // the desktop entry's %F
         };
     }
@@ -32,6 +33,7 @@ public sealed record Launch(LaunchMode Mode, IReadOnlyList<string> Files)
     {
         LaunchMode.Home => new("show", null, StartupId),
         LaunchMode.Wheel => new("wheel", [.. Files], StartupId),
+        LaunchMode.Actions => new("actions", [.. Files], StartupId),
         LaunchMode.WheelClipboard => new("wheel-clipboard", null, StartupId),
         _ => null,
     };
@@ -39,7 +41,7 @@ public sealed record Launch(LaunchMode Mode, IReadOnlyList<string> Files)
     static string? StartupId => Environment.GetEnvironmentVariable("DESKTOP_STARTUP_ID") is { Length: > 0 } id ? id : null;
 }
 
-/// One JSON line on the instance socket: show, wheel (with files), wheel-clipboard or quit.
+/// One JSON line on the instance socket: show, wheel or actions (with files), wheel-clipboard or quit.
 /// Startup is the sender's DESKTOP_STARTUP_ID; its _TIME<n> is the timestamp for activating the wheel.
 public sealed record InstanceMessage(string Cmd, string[]? Files = null, string? Startup = null);
 

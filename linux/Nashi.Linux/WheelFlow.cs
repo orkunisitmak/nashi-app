@@ -5,15 +5,28 @@ using Nashi.Core;
 
 namespace Nashi.Linux;
 
-/// Tools wheel ("Convert" first) → format wheel → OperationRunner with a progress toast → success card.
-/// Home passes itself as `owner` and gets the wheels over its window; the background mode passes null and gets
-/// them at the pointer. `notify` reports cancels and failures; missing media tools call `setUpTools`.
+/// Tools wheel ("Convert" first) → format wheel → OperationRunner with a progress toast → success card; and the
+/// Actions wheel → FileActions → success card. Home passes itself as `owner` and gets the wheels over its window,
+/// with the files as cards; the background mode passes null and gets bare wheels at the pointer.
+/// `notify` reports cancels and failures; missing media tools call `setUpTools`.
 public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> notify, Func<Task> setUpTools)
 {
     private static class Copy
     {
         public const string ConvertWheel = "Convert";
         public const string ToolsWheel = "Tools";
+        public const string ActionsWheel = "Actions";
+        public const string CopyTo = "Copy to…";
+        public const string MoveTo = "Move to…";
+        public const string Copied = "Copied.";
+        public const string Moved = "Moved.";
+        public const string PathCopied = "Path copied.";
+        public const string PathsCopied = "File paths copied.";
+        public const string TerminalOpened = "Terminal opened.";
+        public const string NoTerminal = "No terminal app found.";
+        public const string Shared = "Shown in your file manager. Share it from there.";
+        public const string NoFileManager = "Couldn’t open your file manager.";
+        public const string Files = "{0} files";
         public const string ConvertTo = "Convert to {0}";
         public const string NoFormats = "No conversions for this selection yet.";
         public const string NoFormatsFor = "No conversions for {0} files yet.";
@@ -30,6 +43,13 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
     private PixelPoint? pointer;
 
     public bool Busy { get; private set; }
+
+    /// Where Copy and Move go: the folder picker over `host` (null when cancelled). The checks swap in their own.
+    public Func<TopLevel, string, Task<string?>> PickFolder { get; set; } = async (host, title) =>
+    {
+        var picked = await host.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { Title = title });
+        return picked.Count > 0 ? picked[0].TryGetLocalPath() : null;
+    };
 
     /// The launcher's X server time for activating the next pointer wheel (0 = CurrentTime); used once.
     public uint StartupTime { get; set; }
@@ -53,6 +73,13 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
         ShowFormats();
     }
 
+    /// The Actions wheel: Share, Float (not yet), Copy, Move, Copy Path, Terminal.
+    public void ShowActions(IReadOnlyList<string> selection)
+    {
+        Begin(selection);
+        ShowWheel(L10n.T(Copy.ActionsWheel), FileActions.Ids.Select(id => new WheelItem("action:" + id, L10n.T(FileActions.Title(id)), FileActions.Available(id))).ToList(), "");
+    }
+
     private void Begin(IReadOnlyList<string> selection)
     {
         files = selection.ToArray();
@@ -73,7 +100,7 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
     {
         if (Busy || files.Count == 0) return;
         if (items.Count == 0) { SuccessToast.Notice(empty).Present(); return; }
-        var wheel = LastWheel = new WheelWindow(title, items);
+        var wheel = LastWheel = new WheelWindow(title, items, owner is not null ? files : null);
         wheel.Wheel.Chosen += OnChosen;
         if (owner is not null) wheel.Show(owner);
         else wheel.ShowAt(pointer, StartupTime);
@@ -85,6 +112,7 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
         try
         {
             if (item.Id == "convert") ShowFormats();
+            else if (item.Id.StartsWith("action:", StringComparison.Ordinal)) await ActAsync(item.Id["action:".Length..]);
             else await RunAsync(item);
         }
         catch (Exception error) { notify(L10n.F(Copy.Problem, L10n.T(error.Message))); }
@@ -117,6 +145,47 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
             }
         }
         finally { Busy = false; }
+    }
+
+    private async Task ActAsync(string id)
+    {
+        if (Busy || files.Count == 0) return;
+        Busy = true;
+        // Background mode has no window: a never-shown one lends the picker and the clipboard.
+        var host = owner ?? new Window();
+        try
+        {
+            var name = files.Count == 1 ? Path.GetFileName(files[0]) : L10n.F(Copy.Files, files.Count);
+            switch (id)
+            {
+                case "copy" or "move":
+                    var move = id == "move";
+                    if (await PickFolder(host, L10n.T(move ? Copy.MoveTo : Copy.CopyTo)) is not { } folder) return;
+                    var selection = files;
+                    await Task.Run(() => move ? FileActions.MoveTo(selection, folder) : FileActions.CopyTo(selection, folder));
+                    SuccessToast.Action(L10n.T(move ? Copy.Moved : Copy.Copied), name, folder).Present();
+                    break;
+                case "copyPath":
+                    var text = await FileActions.CopyPathsAsync(host.Clipboard, files);
+                    SuccessToast.Action(L10n.T(files.Count == 1 ? Copy.PathCopied : Copy.PathsCopied), files.Count == 1 ? text : name, null).Present();
+                    break;
+                case "terminal":
+                    if (FileActions.OpenTerminal(files[0])) SuccessToast.Action(L10n.T(Copy.TerminalOpened), Path.GetDirectoryName(files[0]), null).Present();
+                    else notify(L10n.T(Copy.NoTerminal));
+                    break;
+                case "share":
+                    var selected = files;
+                    if (await Task.Run(() => FileActions.Share(selected))) SuccessToast.Action(L10n.T(Copy.Shared), name, null).Present();
+                    else notify(L10n.T(Copy.NoFileManager));
+                    break;
+            }
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException) { notify(L10n.F(Copy.Failed, L10n.T(error.Message))); }
+        finally
+        {
+            Busy = false;
+            if (owner is null) host.Close();
+        }
     }
 
     /// The first file's folder when Nashi may write there; otherwise the user picks one (null when cancelled).

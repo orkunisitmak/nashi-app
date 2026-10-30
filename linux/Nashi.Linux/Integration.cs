@@ -5,7 +5,7 @@ using Nashi.Core;
 
 namespace Nashi.Linux;
 
-/// `--install-integration`: autostart in the background, an Open With entry, a Nautilus script and the GNOME
+/// `--install-integration`: autostart in the background, an Open With entry, two Nautilus scripts and the GNOME
 /// Ctrl+Alt+N shortcut. Idempotent; it writes only the files below and the one keybinding, and uninstall removes
 /// exactly those. External programs run with argument lists through `run` (program, args → stdout, or null on failure).
 public static class Integration
@@ -13,6 +13,7 @@ public static class Integration
     private static class Copy
     {
         public const string ScriptName = "Convert with Nashi";
+        public const string ActionsScriptName = "Nashi actions";
         public const string Wrote = "Wrote {0}";
         public const string Removed = "Removed {0}";
         public const string ShortcutAdded = "Added the Ctrl+Alt+N shortcut: copy files, then press it.";
@@ -52,8 +53,9 @@ public static class Integration
     public static string OpenWith(string home) => Path.Combine(home, ".local", "share", "applications", "nashi.desktop");
     public static string Icon(string home) => Path.Combine(home, ".local", "share", "icons", "hicolor", "256x256", "apps", "nashi.png");
     static string Scripts(string home) => Path.Combine(home, ".local", "share", "nautilus", "scripts");
-    static IEnumerable<string> ScriptNames => ["Convert with Nashi", AppLocalization.Text(Copy.ScriptName, "tr")];
+    static IEnumerable<string> ScriptNames => [Copy.ScriptName, AppLocalization.Text(Copy.ScriptName, "tr"), Copy.ActionsScriptName, AppLocalization.Text(Copy.ActionsScriptName, "tr")];
     public static string Script(string home) => Path.Combine(Scripts(home), L10n.T(Copy.ScriptName));
+    public static string ActionsScript(string home) => Path.Combine(Scripts(home), L10n.T(Copy.ActionsScriptName));
 
     /// Double-quoted for sh, desktop-entry Exec and GLib's g_shell_parse_argv: \ " $ ` are escaped.
     public static string Quote(string value) => "\"" + Regex.Replace(value, @"[\\""$`]", @"\$0") + "\"";
@@ -81,8 +83,9 @@ public static class Integration
             icon.Write(Icon(home), ImageMagick.MagickFormat.Png);
         }
         log.Add(L10n.F(Copy.Wrote, Icon(home)));
-        foreach (var other in ScriptNames.Select(n => Path.Combine(Scripts(home), n)).Where(p => p != Script(home) && File.Exists(p))) File.Delete(other); // the other language's name
+        foreach (var other in ScriptNames.Select(n => Path.Combine(Scripts(home), n)).Where(p => p != Script(home) && p != ActionsScript(home) && File.Exists(p))) File.Delete(other); // the other language's names
         Write(Script(home), $"#!/bin/sh\nexec {Quote(exe)} --wheel \"$@\"\n", Executable);
+        Write(ActionsScript(home), $"#!/bin/sh\nexec {Quote(exe)} --actions \"$@\"\n", Executable);
         run("update-desktop-database", [Path.GetDirectoryName(OpenWith(home))!]);
         log.Add(Shortcut(run, $"{Quote(exe)} --wheel-clipboard") ?? L10n.T(Copy.ShortcutAdded));
         return log;
@@ -144,23 +147,31 @@ public static class Integration
         catch (Win32Exception) { return null; }
     }
 
+    /// `exe --background`, fully detached: its own session (setsid -f, or sh's `&` without setsid) and stdio on
+    /// /dev/null, so neither the terminal nor the AppImage runtime that ran the installer waits for it to close them.
+    /// sh gets the program as $0, never inside the script text. True when it started.
+    public static bool StartBackground(string exe)
+    {
+        var script = File.Exists("/usr/bin/setsid")
+            ? "exec /usr/bin/setsid -f \"$0\" --background </dev/null >/dev/null 2>&1"
+            : "\"$0\" --background </dev/null >/dev/null 2>&1 &";
+        try
+        {
+            using var sh = Process.Start(new ProcessStartInfo("/bin/sh", ["-c", script, exe]) { UseShellExecute = false });
+            if (sh is null) return false;
+            sh.WaitForExit();
+            return sh.ExitCode == 0;
+        }
+        catch (Win32Exception) { return false; }
+    }
+
     /// The real thing for this user: install (and start the background instance) or uninstall (and stop it).
     public static IReadOnlyList<string> Apply(bool install)
     {
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var exe = ExecutablePath;
         var log = install ? Install(home, exe, Run).ToList() : Uninstall(home, Run).ToList();
-        if (install && !Instance.IsRunning(Instance.SocketPath))
-        {
-            // setsid: the background instance must outlive the terminal this ran in. No redirects: it keeps the streams open.
-            try
-            {
-                using var setsid = Process.Start(new ProcessStartInfo("setsid", ["-f", exe, "--background"]) { UseShellExecute = false });
-                setsid?.WaitForExit();
-                if (setsid?.ExitCode == 0) log.Add(L10n.T(Copy.Started));
-            }
-            catch (Win32Exception) { }
-        }
+        if (install && !Instance.IsRunning(Instance.SocketPath) && StartBackground(exe)) log.Add(L10n.T(Copy.Started));
         else if (!install && Instance.Send(Instance.SocketPath, new("quit"))) log.Add(L10n.T(Copy.Stopped));
         return log;
     }

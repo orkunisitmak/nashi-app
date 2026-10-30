@@ -49,6 +49,9 @@ public sealed partial class SuccessToast : Window
     public static SuccessToast Done(IReadOnlyList<string> outputs, string folder) =>
         new(Heading(outputs.Count), outputs.Count > 0 ? Path.GetFileName(outputs[0]) : L10n.T(Copy.Complete), folder, true, Visible);
 
+    /// A finished file action ("Copied.", "Moved."…): its detail, and Show in folder when there is a folder to show.
+    public static SuccessToast Action(string title, string? detail, string? folder) => new(title, detail, folder, true, Visible);
+
     /// A notice or error in the same card; the text is already localized.
     public static SuccessToast Notice(string message) => new(message, null, null, false, ErrorVisible);
 

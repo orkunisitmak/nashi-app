@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
@@ -21,6 +22,15 @@ void Check(bool condition, string name)
 }
 
 L10n.Language = "en"; // the English checks below must not depend on the machine's locale
+// Nothing launches from the checks: programs are recorded, and only the listed ones "start".
+var launched = new List<(string Program, string[] Args, string? Folder)>();
+var startable = new HashSet<string>();
+Desktop.Start = (program, args, folder) => { launched.Add((program, [.. args], folder)); return startable.Contains(program); };
+var ran = new List<(string Program, string[] Args)>();
+Func<string, IReadOnlyList<string>, string?> runResult = (_, _) => null;
+Desktop.Run = (program, args) => { ran.Add((program, [.. args])); return runResult(program, args); };
+WheelFeedback.SystemReducesMotion = false;
+WheelFeedback.ReduceMotion = true; // renders show the wheel at rest; MotionChecks turns it on
 var temp = Directory.CreateTempSubdirectory("nashi-linux-checks-");
 try
 {
@@ -39,6 +49,11 @@ try
     LocalizationChecks(temp.FullName);
     AppearanceChecks(temp.FullName);
     await BackgroundChecks(temp.FullName);
+    IconChecks();
+    LabelChecks();
+    MotionChecks();
+    await ActionChecks(temp.FullName);
+    WheelRenders(temp.FullName);
 }
 finally
 {
@@ -369,7 +384,6 @@ void WheelChecks(string root)
     home.Show();
     Dispatcher.UIThread.RunJobs();
     Button Chip(string text) => home.GetVisualDescendants().OfType<Button>().First(b => b.GetVisualDescendants().OfType<TextBlock>().Any(t => t.Text == text));
-    Check(!Chip("Actions").IsEnabled, "The Actions chip is disabled until it does something");
     Check(!home.GetVisualDescendants().OfType<Button>().First(x => x.Name == "SettingsButton").IsEnabled, "The Settings button is disabled until it does something");
     var png = Path.Combine(root, "wheel.png");
     File.WriteAllText(png, "x");
@@ -414,7 +428,14 @@ void WheelChecks(string root)
     Dispatcher.UIThread.RunJobs();
     var tools = home.OwnedWindows.OfType<WheelWindow>().SingleOrDefault();
     Check(tools is not null && tools.Wheel.Items.Select(i => i.Id).SequenceEqual(["convert", "compress"]), "Ctrl+Space opens the tools wheel with Convert first");
+    Check(tools is { Width: Wheel.Size + 2 * WheelWindow.CardColumn } && tools.FindControl<ContentControl>("LeftCard")?.Content is not null && tools.FindControl<ContentControl>("RightCard")?.Content is null, "Home's wheel shows the one selected file as a card beside it");
     tools?.Close();
+    Chip("Actions").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+    Dispatcher.UIThread.RunJobs();
+    var actions = home.OwnedWindows.OfType<WheelWindow>().SingleOrDefault();
+    Check(actions is not null && actions.Wheel.Items.Select(i => i.Id).SequenceEqual(FileActions.Ids.Select(id => "action:" + id)) && actions.Wheel.Items.Single(i => !i.Enabled).Id == "action:float", "The Actions chip opens the actions wheel: Share, Float (disabled), Copy, Move, Copy Path, Terminal");
+    Check(actions?.Wheel.Items[0].Title == "Share", "Share is called Share on Linux (no AirDrop)");
+    actions?.Close();
 
     var toast = new ProgressToast("Convert to JPG", null);
     toast.Show(home);
@@ -607,7 +628,7 @@ void AppearanceChecks(string root)
         Dispatcher.UIThread.RunJobs();
         var frame = home.CaptureRenderedFrame();
         var canvas = (home.Background as ISolidColorBrush)?.Color;
-        Check(canvas is { } c && Near(c.R, 0x11) && Near(c.G, 0x1A) && Near(c.B, 0x14), "Dark Home background is the dark canvas #111A14");
+        Check(canvas is { } c && Near(c.R, 0x14) && Near(c.G, 0x14) && Near(c.B, 0x14), "Dark Home background is the graphite canvas #141414");
         Check(home.Foreground is ISolidColorBrush { Color: { R: > 200 } }, "Dark Home text is light");
         Save(frame, "home-dark.png");
         home.Close();
@@ -645,6 +666,8 @@ void LaunchChecks()
     Check(wheel.Mode == LaunchMode.Wheel && wheel.Files.SequenceEqual(["/a b.png", "/-x.png".Replace("/-", Path.GetFullPath("-x.png")[..^6] + "-"), "/--version-not".Replace("/--", Path.GetFullPath("--version-not")[..^13] + "--")]), "--wheel takes every later argument as a file, even with a leading dash");
     var bare = Launch.Parse(["/x/a.png", "rel.png"]);
     Check(bare.Mode == LaunchMode.Wheel && bare.Files.SequenceEqual(["/x/a.png", Path.GetFullPath("rel.png")]) && bare.Message!.Cmd == "wheel" && bare.Message.Files!.SequenceEqual(bare.Files), "Bare files (the desktop entry's %F) open the wheel with absolute paths");
+    var acts = Launch.Parse(["--actions", "/a b.png", "rel.png"]);
+    Check(acts.Mode == LaunchMode.Actions && acts.Files.SequenceEqual(["/a b.png", Path.GetFullPath("rel.png")]) && acts.Message!.Cmd == "actions" && acts.Message.Files!.SequenceEqual(acts.Files), "--actions forwards actions with absolute paths");
     Check(Launch.Parse(["--wheel-clipboard"]).Mode == LaunchMode.WheelClipboard && Launch.Parse(["--wheel-clipboard"]).Message!.Cmd == "wheel-clipboard", "--wheel-clipboard forwards wheel-clipboard");
     Check(Launch.Parse(["--install-integration"]).Mode == LaunchMode.InstallIntegration && Launch.Parse(["--uninstall-integration"]).Mode == LaunchMode.UninstallIntegration, "Integration flags parse");
     Check(Desktop.StartupTime("nautilus-1234-ece-laptop-_TIME98765") == 98765 && Desktop.StartupTime("gnome-shell/Nashi/5-0-host_TIME4294967295") == uint.MaxValue, "DESKTOP_STARTUP_ID _TIME<n> parses to the timestamp");
@@ -771,12 +794,19 @@ void IntegrationChecks(string root)
     var printed = shell.StandardOutput.ReadToEnd();
     shell.WaitForExit();
     Check(printed == "--wheel\na b.png\n-x.png\n$HOME `x`.png\nğ\"q'.png\n", "The script passes the selected files intact after --wheel: " + printed.Replace("\n", "|"));
+    var actionsScript = Integration.ActionsScript(home);
+    Check(Path.GetFileName(actionsScript) == "Nashi actions" && (File.GetUnixFileMode(actionsScript) & UnixFileMode.UserExecute) != 0, "The Nautilus actions script is named Nashi actions and executable");
+    var actionShell = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("sh", [actionsScript, "a b.png", "ğ\"q'.png"]) { RedirectStandardOutput = true })!;
+    var actionPrinted = actionShell.StandardOutput.ReadToEnd();
+    actionShell.WaitForExit();
+    Check(actionPrinted == "--actions\na b.png\nğ\"q'.png\n", "The actions script passes the files intact after --actions: " + actionPrinted.Replace("\n", "|"));
+    Check(AppLocalization.Text("Nashi actions", "tr") == "Nashi işlemleri", "The Turkish actions script is Nashi işlemleri");
     Check(settings["list"] == $"['{other}', '{Integration.KeybindingPath}']", "The shortcut list keeps the existing entry and adds Nashi's once: " + settings["list"]);
     Check(settings[keyed + " binding"] == "'<Primary><Alt>n'" && settings[keyed + " command"] == $"'\"{exe}\" --wheel-clipboard'", "Ctrl+Alt+N runs the quoted executable with --wheel-clipboard");
     Check(log.Any(l => l.StartsWith("Wrote ")) && log[^1].StartsWith("Added the Ctrl+Alt+N"), "Install prints what it wrote");
 
     var removed = Integration.Uninstall(home, Fake);
-    Check(!File.Exists(Integration.Autostart(home)) && !File.Exists(Integration.OpenWith(home)) && !File.Exists(Integration.Icon(home)) && !File.Exists(script), "Uninstall removes Nashi's files");
+    Check(!File.Exists(Integration.Autostart(home)) && !File.Exists(Integration.OpenWith(home)) && !File.Exists(Integration.Icon(home)) && !File.Exists(script) && !File.Exists(actionsScript), "Uninstall removes Nashi's files");
     Check(File.Exists(Path.Combine(scripts, "Someone else's script")), "Uninstall keeps other Nautilus scripts");
     Check(settings["list"] == $"['{other}']" && !settings.Keys.Any(k => k.StartsWith(keyed)), "Uninstall removes only Nashi's keybinding");
     Check(removed[^1] == "Removed the Ctrl+Alt+N shortcut.", "Uninstall prints what it removed");
@@ -804,6 +834,23 @@ void IntegrationChecks(string root)
     var bare = Directory.CreateDirectory(Path.Combine(root, "home-bare")).FullName;
     var noGnome = Integration.Install(bare, exe, (_, _) => null);
     Check(noGnome[^1].StartsWith("Skipped the keyboard shortcut") && File.Exists(Integration.Script(bare)), "Without gsettings the shortcut is skipped with a note and the rest installs");
+    // The background instance starts detached: stdio on /dev/null (nothing for a terminal or the AppImage runtime to
+    // wait on), in its own session, and the call returns at once.
+    var marker = Path.Combine(root, "started-in-background");
+    var slow = Path.Combine(apps, "Slow Nashi");
+    File.WriteAllText(slow, $"#!/bin/sh\nps -o sid= -p $$ | tr -d ' ' > {Integration.Quote(marker + ".sid")}\necho $$ > {Integration.Quote(marker + ".pid")}\nprintf '%s' \"$*\" > {Integration.Quote(marker)}\nsleep 1\n");
+    File.SetUnixFileMode(slow, (UnixFileMode)0b111_101_101);
+    var clock = System.Diagnostics.Stopwatch.StartNew();
+    var started = Integration.StartBackground(slow);
+    var returned = clock.Elapsed;
+    for (var i = 0; i < 100 && !File.Exists(marker); i++) Thread.Sleep(20);
+    Check(started && File.Exists(marker) && File.ReadAllText(marker) == "--background" && returned < TimeSpan.FromSeconds(0.9), "StartBackground runs exe --background and returns without waiting for it");
+    // Read while it sleeps: its own descriptors, as the kernel sees them.
+    var fds = File.Exists(marker + ".pid") ? Enumerable.Range(0, 3).Select(fd => File.ResolveLinkTarget($"/proc/{File.ReadAllText(marker + ".pid").Trim()}/fd/{fd}", false)?.FullName).ToArray() : [];
+    Check(fds.Length == 3 && fds.All(f => f == "/dev/null"), "The background instance's stdin, stdout and stderr are /dev/null: " + string.Join(", ", fds));
+    Check(File.Exists(marker + ".sid") && File.ReadAllText(marker + ".sid").Trim() == File.ReadAllText(marker + ".pid").Trim(), "The background instance leads its own session (setsid)");
+    var source = File.ReadAllText(Path.Combine(RepoRoot(), "linux", "Nashi.Linux", "Integration.cs"));
+    Check(source.Contains("StartBackground(exe)") && System.Text.RegularExpressions.Regex.Matches(source, @"Process\.Start\(").Count == 2 && source.Contains("</dev/null >/dev/null 2>&1") && source.Contains("/usr/bin/setsid -f"), "The installer starts the background instance only through StartBackground (setsid -f, stdio on /dev/null)");
     Check(Integration.Quote("/a \"b\" $c `d` \\e") == "\"/a \\\"b\\\" \\$c \\`d\\` \\\\e\"", "Quote escapes \\ \" $ and `");
 }
 
@@ -918,6 +965,247 @@ async Task BackgroundChecks(string root)
     if (!string.IsNullOrEmpty(smoke) && errorFrame is not null) errorFrame.Save(Path.Combine(smoke, "toast-error-light.png"));
     error.Close();
     Check(SuccessToast.Visible == TimeSpan.FromSeconds(3) && SuccessToast.ErrorVisible == TimeSpan.FromSeconds(6) && SuccessToast.Fade == TimeSpan.FromSeconds(0.28), "Cards stay 3 s (errors 6 s) and fade over 0.28 s");
+}
+
+void IconChecks()
+{
+    // Every id the Linux wheel can show: its tools, Convert, the actions and the paging petals; formats have none.
+    var ids = new[] { "convert", "compress", "muteVideo", "normalizeAudio", "extractArchive", "createPDF", "mergePDF", "page:previous", "page:next" }
+        .Concat(FileActions.Ids.Select(id => "action:" + id)).Concat(FeatureCatalog.ToolNames.Keys).ToList();
+    foreach (var probe in new[] { "x.png", "x.mp4", "x.mp3", "x.zip" }) ids.AddRange(Capabilities.Tools([probe]));
+    var missing = ids.Distinct().Where(id => WheelIcons.Key(id) is not { } key || !WheelIcons.Paths.ContainsKey(key)).ToList();
+    Check(missing.Count == 0, "Every tool, action and paging id maps to a playground icon; missing: " + string.Join(", ", missing));
+    Check(WheelIcons.Paths.Values.All(d => StreamGeometry.Parse(d).Bounds.Width > 0), "Every copied icon path parses");
+    Check(Capabilities.Formats(["x.png"]).Concat(Capabilities.Formats(["x.mp4"])).All(f => WheelIcons.ForId("convert:" + f) is null), "Format petals have no icon, as in the playground");
+    var catalog = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(RepoRoot(), "Resources", "FeatureCatalog.json"))).RootElement.GetProperty("fileActions").EnumerateArray().Select(e => e.GetString()).ToArray();
+    Check(catalog.SequenceEqual(FileActions.Ids), "FileActions.Ids match the catalog's fileActions");
+}
+
+void LabelChecks()
+{
+    var title = AppLocalization.Uppercase("Ses kanallarını dönüştür", "tr");
+    Check(title == "SES KANALLARINI DÖNÜŞTÜR", "Turkish upper case: SES KANALLARINI DÖNÜŞTÜR");
+    for (var i = 0; i < 8; i++)
+    {
+        var label = Wheel.Layout(8, i, title, hasIcon: true);
+        Check(label.Fits && label.Lines.Count <= 2 && label.FontSize >= 6.5 && Wheel.Rects(label).All(r => Wheel.Contains(Wheel.Petal(8, i), r)), $"A long Turkish label fits petal {i} of 8 in at most two lines at ≥ 6.5 pt ({label.FontSize} pt, {label.Lines.Count} lines)");
+    }
+    var english = Wheel.Layout(8, 0, "COMPRESS", hasIcon: true);
+    Check(english.Fits && english.Lines.Count == 1 && english.FontSize == 9.5, "A short label keeps one line at 9.5 pt");
+    var format = Wheel.Layout(8, 3, "WEBP", hasIcon: false);
+    Check(format.Fits && format.FontSize == 13 && !format.HasIcon, "A format label is 13 pt with no icon");
+    foreach (var language in new[] { "en", "tr" })
+        foreach (var id in FeatureCatalog.ToolNames.Keys.Concat(FileActions.Ids.Select(a => "action:" + a)))
+        {
+            var name = id.StartsWith("action:") ? FileActions.Title(id[7..]) : FeatureCatalog.ToolNames[id];
+            var upper = AppLocalization.Uppercase(AppLocalization.Text(name, language), language);
+            var label = Wheel.Layout(8, 5, upper, true);
+            Check(label.Fits && label.Lines.Count <= 2, $"{language} {upper} fits an eight-petal wheel");
+        }
+}
+
+void MotionChecks()
+{
+    WheelFeedback.ReduceMotion = false;
+    try
+    {
+        var moving = new WheelWindow("Tools", [new("compress", "Compress")]);
+        var root = moving.FindControl<Grid>("Root")!;
+        Check(root.Opacity == 0 && root.Transitions?.Count == 2 && root.Transitions.All(t => t is Avalonia.Animation.ITransition) && WheelFeedback.Opening == TimeSpan.FromSeconds(0.2), "With motion on, the wheel opens with a 0.2 s scale and fade");
+        moving.Show();
+        Dispatcher.UIThread.RunJobs();
+        Check(root.Opacity == 1 || root.Transitions is { Count: 2 }, "Opening sets the target opacity");
+        moving.Close();
+        WheelFeedback.SystemReducesMotion = true;
+        var still = new WheelWindow("Tools", [new("compress", "Compress")]);
+        Check(still.FindControl<Grid>("Root") is { Opacity: 1, Transitions: null }, "The system's reduce-motion setting skips the animation");
+        still.Close();
+    }
+    finally { WheelFeedback.ReduceMotion = true; WheelFeedback.SystemReducesMotion = false; }
+    WheelFeedback.ReduceMotion = true;
+    var reduced = new WheelWindow("Tools", [new("compress", "Compress")]);
+    Check(reduced.FindControl<Grid>("Root") is { Opacity: 1, Transitions: null }, "The app's reduce-motion setting skips the animation");
+    reduced.Close();
+}
+
+async Task ActionChecks(string root)
+{
+    var work = Directory.CreateDirectory(Path.Combine(root, "actions")).FullName;
+    var a = Path.Combine(work, "a ğ, #1.png");
+    var b = Path.Combine(work, "b.txt");
+    File.WriteAllText(a, "a");
+    File.WriteAllText(b, "b");
+    var into = Directory.CreateDirectory(Path.Combine(work, "into")).FullName;
+    File.WriteAllText(Path.Combine(into, "b.txt"), "older");
+
+    var copies = FileActions.CopyTo([a, b], into);
+    Check(copies.SequenceEqual([Path.Combine(into, "a ğ, #1.png"), Path.Combine(into, "b 2.txt")]) && File.Exists(a) && File.Exists(b) && File.ReadAllText(Path.Combine(into, "b.txt")) == "older", "Copy keeps originals and gives the copies unique names");
+
+    var to = Directory.CreateDirectory(Path.Combine(work, "to")).FullName;
+    var moved = FileActions.MoveTo([a, b], to);
+    Check(moved.Count == 2 && !File.Exists(a) && !File.Exists(b) && File.ReadAllText(Path.Combine(to, "b.txt")) == "b", "Move moves every file");
+    var first = moved[0];
+    var gone = Path.Combine(to, "vanished.txt");
+    try { FileActions.MoveTo([first, gone], into); Check(false, "Move with a missing second file fails"); }
+    catch (FileNotFoundException) { Check(File.Exists(first) && !File.Exists(Path.Combine(into, "a ğ, #1 2.png")), "A failed second move rolls the first file back into place"); }
+
+    var text = await FileActions.CopyPathsAsync(null, [first, moved[1]]);
+    Check(text == first + "\n" + moved[1], "Copy Path joins full paths with newlines");
+
+    launched.Clear();
+    startable.Clear();
+    startable.Add("konsole");
+    Check(FileActions.OpenTerminal(first) && launched.Select(l => l.Program).SequenceEqual(["x-terminal-emulator", "gnome-terminal", "konsole"]) && launched[2].Args.SequenceEqual(["--workdir", to]) && launched[1].Args.SequenceEqual(["--working-directory=" + to]) && launched.All(l => l.Folder == to), "Terminal tries x-terminal-emulator, gnome-terminal, konsole in order, in the file's folder");
+    launched.Clear();
+    startable.Clear();
+    Check(!FileActions.OpenTerminal(first) && launched.Count == 4 && launched[3].Program == "xfce4-terminal", "Without any terminal, all four are tried and the action reports failure");
+
+    ran.Clear(); launched.Clear();
+    runResult = (program, _) => program == "dbus-send" ? "method return" : null;
+    Check(FileActions.Share([first]) && ran.Single().Program == "dbus-send" && ran[0].Args.Contains("org.freedesktop.FileManager1.ShowItems") && ran[0].Args.Contains("array:string:file://" + to.Replace(" ", "%20") + "/a%20%C4%9F%2C%20%231.png") && launched.Count == 0, "Share asks the file manager to show the file, with commas and # escaped in its URI");
+    runResult = (_, _) => null;
+    startable.Add("xdg-open");
+    Check(FileActions.Share([first]) && launched.Single().Program == "xdg-open" && launched[0].Args.SequenceEqual([to]), "Without FileManager1, Share opens the folder with xdg-open");
+    startable.Clear(); launched.Clear();
+
+    // Float stays disabled: no gold, skipped by the keys, never chosen.
+    var wheel = new Wheel { Items = FileActions.Ids.Select(id => new WheelItem("action:" + id, FileActions.Title(id), FileActions.Available(id))).ToList() };
+    WheelItem? chosen = null;
+    wheel.Chosen += item => chosen = item;
+    wheel.HighlightedIndex = 1;
+    Check(wheel.HighlightedIndex == -1, "The Float petal never takes the highlight");
+    wheel.HighlightedIndex = 0;
+    wheel.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Right });
+    Check(wheel.HighlightedIndex == 2, "Right from Share skips Float to Copy");
+    wheel.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Left });
+    Check(wheel.HighlightedIndex == 0, "Left from Copy skips Float back to Share");
+
+    // Sound: a choice plays the wav at full volume; a highlight change ticks softer, at most every 50 ms; off is off.
+    Check(File.Exists(WheelFeedback.Sound), "WheelSelection.wav ships beside the executable");
+    var now = new DateTime(2026, 1, 1);
+    WheelFeedback.Clock = () => now;
+    launched.Clear();
+    wheel.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
+    Check(chosen?.Id == "action:share" && launched.Select(l => l.Program).SequenceEqual(["paplay", "pw-play", "aplay"]) && launched[0].Args.SequenceEqual(["--volume=65536", WheelFeedback.Sound]), "Choosing plays WheelSelection.wav through paplay, then pw-play, then aplay");
+    launched.Clear();
+    startable.Add("paplay");
+    now += TimeSpan.FromSeconds(1);
+    wheel.HighlightedIndex = 2;
+    wheel.HighlightedIndex = 3; // within 50 ms: throttled
+    Check(launched.Count == 1 && launched[0].Args[0] == "--volume=42598", "A highlight change ticks at 0.65 volume, once per 50 ms");
+    WheelFeedback.SoundEnabled = false;
+    now += TimeSpan.FromSeconds(1);
+    launched.Clear();
+    wheel.HighlightedIndex = 4;
+    Check(launched.Count == 0, "With the sound setting off nothing plays");
+    WheelFeedback.SoundEnabled = true;
+    startable.Clear();
+    WheelFeedback.Clock = () => DateTime.UtcNow;
+
+    // Through Home: the Actions chip → Copy → the picked folder → the success card; Copy Path → the clipboard.
+    var home = new MainWindow { Width = 820, Height = 780 };
+    home.Show();
+    Dispatcher.UIThread.RunJobs();
+    var src = Path.Combine(work, "home.png");
+    File.WriteAllText(src, "x");
+    home.Selection.Add([src]);
+    var picked = Directory.CreateDirectory(Path.Combine(work, "picked")).FullName;
+    home.Flow.PickFolder = (_, title) => Task.FromResult<string?>(title == "Copy to…" || title == "Move to…" ? picked : null);
+    string? Title() => SuccessToast.Current?.FindControl<TextBlock>("TitleText")?.Text;
+    void Choose(string id)
+    {
+        SuccessToast.Current?.Close();
+        home.Flow.ShowActions(home.Selection.Files);
+        var w = home.Flow.LastWheel!;
+        w.Wheel.HighlightedIndex = w.Wheel.Items.ToList().FindIndex(i => i.Id == id);
+        w.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+        // Pumped by hand: an await here would wait on this same dispatcher.
+        for (var i = 0; i < 100; i++) { Thread.Sleep(10); Dispatcher.UIThread.RunJobs(); if (!home.Flow.Busy && SuccessToast.Current is not null) break; }
+    }
+    Choose("action:copy");
+    Check(Title() == "Copied." && File.Exists(Path.Combine(picked, "home.png")) && File.Exists(src), "Copy from the Actions wheel copies into the picked folder and says Copied.");
+    Choose("action:copyPath");
+    var clip = home.Clipboard!.TryGetTextAsync();
+    for (var i = 0; i < 200 && !clip.IsCompleted; i++) { Thread.Sleep(5); Dispatcher.UIThread.RunJobs(); }
+    Check(Title() == "Path copied." && clip.IsCompleted && clip.Result == src, "Copy Path puts the full path on the clipboard and says Path copied.");
+    Choose("action:move");
+    Check(Title() == "Moved." && File.Exists(Path.Combine(picked, "home 2.png")) && !File.Exists(src), "Move from the Actions wheel moves into the picked folder and says Moved.");
+    SuccessToast.Current?.Close();
+    home.Close();
+
+    // Background: --actions opens a bare actions wheel at the pointer; the tools wheel there has no Actions petal.
+    var app = (App)Application.Current!;
+    var png = Path.Combine(work, "bg.png");
+    File.WriteAllText(png, "x");
+    app.Handle(new InstanceMessage("actions", [png]));
+    Dispatcher.UIThread.RunJobs();
+    var bare = app.Flow.LastWheel;
+    Check(bare is { Owner: null, Width: Wheel.Size } && bare.Wheel.Items.Count == 6 && bare.Wheel.Items[0].Id == "action:share", "--actions shows the bare actions wheel at the pointer");
+    bare?.Close();
+    app.ShowWheel([png]);
+    Dispatcher.UIThread.RunJobs();
+    Check(app.Flow.LastWheel?.Wheel.Items.All(i => !i.Id.StartsWith("action:")) == true && app.Flow.LastWheel.Width == Wheel.Size, "The pointer tools wheel has no actions and no cards, as on macOS");
+    app.Flow.LastWheel?.Close();
+}
+
+void WheelRenders(string root)
+{
+    var smoke = Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");
+    var work = Directory.CreateDirectory(Path.Combine(root, "renders")).FullName;
+    var jpg = Path.Combine(work, "orchard.jpg");
+    var png = Path.Combine(work, "woodboard.png");
+    using (var image = new MagickImage("gradient:#cfe0c0-#2f6a3a", 400, 300)) image.Write(jpg);
+    using (var image = new MagickImage("gradient:#d8b27a-#7a4f2a", 400, 300)) image.Write(png);
+    var pdf = Path.Combine(work, "notes.pdf");
+    File.WriteAllText(pdf, "x");
+    foreach (var (theme, name) in new[] { (ThemeVariant.Light, "light"), (ThemeVariant.Dark, "dark") })
+    {
+        Application.Current!.RequestedThemeVariant = theme;
+        try
+        {
+            var home = new MainWindow { Width = 820, Height = 780 };
+            home.Show();
+            Dispatcher.UIThread.RunJobs();
+            void Render(Action<IReadOnlyList<string>> show, IReadOnlyList<string> files, string file, int highlight)
+            {
+                show(files);
+                var w = home.Flow.LastWheel!;
+                Dispatcher.UIThread.RunJobs();
+                for (var i = 0; i < 400 && !w.Thumbnails.IsCompleted; i++) { Thread.Sleep(10); Dispatcher.UIThread.RunJobs(); }
+                Dispatcher.UIThread.RunJobs();
+                w.Wheel.HighlightedIndex = highlight;
+                Dispatcher.UIThread.RunJobs();
+                w.CaptureRenderedFrame(); // the compositor shows a change one frame later
+                var frame = w.CaptureRenderedFrame();
+                Check(frame is not null && w.Width == Wheel.Size + 2 * WheelWindow.CardColumn, $"{file} renders with file cards");
+                if (!string.IsNullOrEmpty(smoke) && frame is not null) { Directory.CreateDirectory(smoke); frame.Save(Path.Combine(smoke, file)); }
+                w.Close();
+            }
+            Render(home.Flow.ShowTools, [jpg, png], $"wheel-tools-jpg-{name}.png", 1);
+            Render(home.Flow.ShowActions, [jpg, png], $"wheel-actions-{name}.png", -1);
+            Render(home.Flow.ShowFormats, [jpg, png], $"wheel-formats-{name}.png", 2);
+            Render(home.Flow.ShowActions, [pdf, jpg], $"wheel-actions-sheet-{name}.png", 3);
+            // The macOS image tools wheel of the reference (2.png), eight petals, and the same in Turkish.
+            foreach (var language in new[] { "en", "tr" })
+            {
+                L10n.Language = language;
+                string[] eight = ["compress", "removeMetadata", "editImage", "annotateImage", "frameImage", "cropImage", "redactImage", "audioChannels"];
+                var full = new WheelWindow(L10n.T("Tools"), eight.Select(id => new WheelItem(id, L10n.T(FeatureCatalog.ToolNames[id]))).ToList(), [jpg, png]);
+                full.Show(home);
+                for (var i = 0; i < 400 && !full.Thumbnails.IsCompleted; i++) { Thread.Sleep(10); Dispatcher.UIThread.RunJobs(); }
+                full.Wheel.HighlightedIndex = 4;
+                Dispatcher.UIThread.RunJobs();
+                full.CaptureRenderedFrame();
+                var frame = full.CaptureRenderedFrame();
+                Check(frame is not null, $"The eight-petal {language} tools wheel renders");
+                if (!string.IsNullOrEmpty(smoke) && frame is not null) frame.Save(Path.Combine(smoke, $"wheel-tools-eight-{language}-{name}.png"));
+                full.Close();
+            }
+            L10n.Language = "en";
+            home.Close();
+        }
+        finally { Application.Current!.RequestedThemeVariant = ThemeVariant.Light; }
+    }
 }
 
 static string RepoRoot()

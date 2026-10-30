@@ -1175,5 +1175,15 @@
   "Skipped the keyboard shortcut: GNOME settings are not available.": "Klavye kısayolu atlandı: GNOME ayarları kullanılamıyor.",
   "Started Nashi in the background.": "Nashi arka planda başlatıldı.",
   "Stopped the background Nashi.": "Arka plandaki Nashi durduruldu.",
-  "Skipped the keyboard shortcut: couldn’t read your existing shortcuts, so they were left as they are.": "Klavye kısayolu atlandı: mevcut kısayolların okunamadı, o yüzden olduğu gibi bırakıldı."
+  "Skipped the keyboard shortcut: couldn’t read your existing shortcuts, so they were left as they are.": "Klavye kısayolu atlandı: mevcut kısayolların okunamadı, o yüzden olduğu gibi bırakıldı.",
+  "Nashi actions": "Nashi işlemleri",
+  "Copy to…": "Şuraya kopyala…",
+  "Move to…": "Şuraya taşı…",
+  "Copied.": "Kopyalandı.",
+  "Moved.": "Taşındı.",
+  "Path copied.": "Yol kopyalandı.",
+  "Terminal opened.": "Terminal açıldı.",
+  "No terminal app found.": "Terminal uygulaması bulunamadı.",
+  "Shown in your file manager. Share it from there.": "Dosya yöneticinde gösterildi. Oradan paylaşabilirsin.",
+  "Couldn’t open your file manager.": "Dosya yöneticin açılamadı."
 }

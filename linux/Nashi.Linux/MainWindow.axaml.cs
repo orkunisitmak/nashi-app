@@ -47,6 +47,9 @@ public sealed partial class MainWindow : Window
     private readonly Toolchain tools;
     private readonly WheelFlow flow;
 
+    /// Home's wheels: tools, formats and actions over this window.
+    public WheelFlow Flow => flow;
+
     public Selection Selection { get; } = new();
 
     /// Closing hides the window instead (the background instance keeps running).
@@ -146,7 +149,7 @@ public sealed partial class MainWindow : Window
         e.Handled = true;
         try
         {
-            if (e.Key == Key.Space) { await ShowWheelAsync(formats: false); return; }
+            if (e.Key == Key.Space) { await ShowWheelAsync(flow.ShowTools); return; }
             AddFiles(await Desktop.ClipboardFilesAsync(Clipboard!));
         }
         catch (Exception error) { Notify(L10n.F(Copy.Problem, L10n.T(error.Message))); }
@@ -189,12 +192,13 @@ public sealed partial class MainWindow : Window
     }
 
     private void RefreshToolsButton() => SetUpToolsButton.Content = AppPaths.MediaReady(tools) ? L10n.T(Copy.ToolsReady) : L10n.T(Copy.SetUpTools);
-    private async void OnConvert(object? sender, RoutedEventArgs e) => await ShowWheelAsync(formats: true);
-    private async void OnTools(object? sender, RoutedEventArgs e) => await ShowWheelAsync(formats: false);
+    private async void OnConvert(object? sender, RoutedEventArgs e) => await ShowWheelAsync(flow.ShowFormats);
+    private async void OnTools(object? sender, RoutedEventArgs e) => await ShowWheelAsync(flow.ShowTools);
+    private async void OnActions(object? sender, RoutedEventArgs e) => await ShowWheelAsync(flow.ShowActions);
 
-    /// The format wheel (Convert chip) or the tools wheel (Tools chip, Ctrl+Space). With nothing selected yet,
-    /// the file picker opens first, then the wheel.
-    private async Task ShowWheelAsync(bool formats)
+    /// The format wheel (Convert chip), the tools wheel (Tools chip, Ctrl+Space) or the actions wheel (Actions chip).
+    /// With nothing selected yet, the file picker opens first, then the wheel.
+    private async Task ShowWheelAsync(Action<IReadOnlyList<string>> show)
     {
         try
         {
@@ -206,8 +210,7 @@ public sealed partial class MainWindow : Window
                 AddFiles(picked);
                 if (Selection.Files.Count == 0) return;
             }
-            if (formats) flow.ShowFormats(Selection.Files);
-            else flow.ShowTools(Selection.Files);
+            show(Selection.Files);
         }
         catch (Exception error) { Notify(L10n.F(Copy.Problem, L10n.T(error.Message))); }
     }
