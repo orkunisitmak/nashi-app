@@ -15,12 +15,12 @@ static class DocumentChecks
 
     public static async Task RunAsync(string root, Action<bool, string> check)
     {
-        // So far: PDF to images, and Office inputs to everything but Pages.
+        // So far: every PDF route, and Office inputs to everything but Pages.
         string[] officeInputs = ["docx", "pptx", "ppt", "xlsx", "xls", "ods", "csv", "tsv", "rtf", "rtfd", "html"];
-        IEnumerable<string> Expected(string ext) => ext == "pdf" ? ["jpg", "png"] : officeInputs.Contains(ext) ? FeatureCatalog.Formats(["x." + ext]).Where(f => f != "pages")
+        IEnumerable<string> Expected(string ext) => ext == "pdf" ? FeatureCatalog.Formats(["x.pdf"]) : officeInputs.Contains(ext) ? FeatureCatalog.Formats(["x." + ext]).Where(f => f != "pages")
             : DocumentOperations.Handles("x." + ext) ? [] : FeatureCatalog.Formats(["x." + ext]).Where(f => f != "heic");
         var mismatched = FeatureCatalog.Conversions.Keys.Where(ext => !Capabilities.Formats(["x." + ext]).SequenceEqual(Expected(ext))).ToList();
-        check(FeatureCatalog.Conversions.Count == 46 && mismatched.Count == 0, "Capabilities offer PDF images and every Office route but Pages; differ: " + string.Join(" ", mismatched));
+        check(FeatureCatalog.Conversions.Count == 46 && mismatched.Count == 0, "Capabilities offer every PDF route and every Office route but Pages; differ: " + string.Join(" ", mismatched));
         var saved = AppPaths.OfficeSearchPath;
         AppPaths.OfficeSearchPath = "";
         check(AppPaths.Office() is null && Capabilities.Formats(["x.docx"]).SequenceEqual(FeatureCatalog.Formats(["x.docx"]).Where(f => f != "pages")), "Without LibreOffice the wheel still offers Office routes (choosing one opens setup)");
@@ -70,7 +70,7 @@ static class DocumentChecks
         var offered = FeatureCatalog.Conversions.Keys.Sum(e => Capabilities.Formats(["x." + e]).Length);
         Console.WriteLine($"Route checks: {results.Count} of {offered} offered routes run ({total} catalog routes, {heic} HEIC outputs not offered); skipped {skipped.Values.Sum()}" + string.Concat(skipped.OrderBy(s => s.Key).Select(s => $", {s.Value} need {s.Key}")));
         foreach (var (route, error) in results.OrderBy(r => r.Route, StringComparer.Ordinal)) check(error is null, "Route " + route + " makes a valid file: " + error);
-        check(results.Count >= 2, "Routes ran without any optional tool (pdf→png and jpg at least)");
+        check(results.Count >= 4, "Routes ran without any optional tool (pdf→png, jpg, txt, md at least)");
 
         // PDF to images: one per page, named like Windows.
         var pages = await runner.RunAsync("convert:png", [made["pdf"]], Path.Combine(outputs, "pdf-pages"), none, default);
@@ -85,9 +85,12 @@ static class DocumentChecks
             var dest = Path.Combine(outputs, "no-office");
             var error = await Catch(() => runner.RunAsync("convert:docx", [made["rtf"]], dest, none, default));
             check(error is MissingToolsException { Message: MissingToolsException.Office } && !Directory.Exists(dest), "Without LibreOffice an Office route asks for setup before writing anything");
-            check((await runner.RunAsync("convert:png", [made["pdf"]], Path.Combine(outputs, "no-office-png"), none, default)).Count == 2, "pdf→png needs no LibreOffice");
+            check((await runner.RunAsync("convert:txt", [made["pdf"]], Path.Combine(outputs, "no-office-txt"), none, default)).Count == 1, "pdf→txt needs no LibreOffice");
         }
         finally { AppPaths.OfficeSearchPath = saved; }
+        var bare = new OperationRunner(new Toolchain(Directory.CreateDirectory(Path.Combine(root, "no-deno")).FullName, ""));
+        var noDeno = Path.Combine(outputs, "no-deno");
+        check(await Catch(() => bare.RunAsync("convert:pages", [made["pdf"]], noDeno, none, default)) is MissingToolsException { Message: MissingToolsException.Pages or MissingToolsException.Office } && !Directory.Exists(noDeno), "Without Deno a Pages route asks for setup before writing anything");
 
         if (office is not null) await CancelChecks(runner, made["docx"], outputs, check);
         else Console.WriteLine("Route checks: LibreOffice cancellation check skipped (no soffice)");

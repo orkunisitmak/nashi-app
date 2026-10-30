@@ -11,7 +11,7 @@ The [AppImage link](https://github.com/orkunisitmak/nashi-app/releases/latest/do
 - **Ctrl+Space** opens the conversion wheel for the selected files, with live progress. With nothing selected, it opens the file picker first. The **Actions** chip opens the actions wheel: Share (shows the files in your file manager), Copy, Move, Copy Path and Terminal. Float is not available yet.
 - The wheel looks and sounds like the macOS one: icons above upper-case labels, a gold highlight, a short opening animation (skipped when GNOME animations are off) and the selection sound through `paplay`, `pw-play` or `aplay` when one is installed.
 - Images: format conversion. HEIC output is not available on Linux because no encoder is available.
-- PDF: merge, create from images and compress, and PDF to PNG or JPG (one image per page, rendered with PDFium).
+- PDF: merge, create from images and compress. PDF to PNG or JPG (one image per page, rendered with PDFium) and to TXT or Markdown work right away; PDF to DOCX, PPTX, XLSX, EPUB and Pages need LibreOffice, and Pages also needs Deno, which **Download missing tools** in setup fetches.
 - Office documents: Word, PowerPoint, Excel, OpenDocument, CSV/TSV, RTF/RTFD and HTML files convert to every format the macOS app offers for them except Pages, including pages as PNG or JPG images. These need LibreOffice (see below).
 - Audio and video: convert, compress, mute and normalize. These need media tool setup from Home or a system `ffmpeg`.
 - Archives and subtitles.
@@ -54,7 +54,7 @@ Showing the wheel at the pointer needs an X11 session. On Wayland the wheel open
 
 ## Coming
 
-Editors (crop, annotate, trim), conversion options (DPI, PDF layout, fixed-layout EPUB, PDF passwords), web download, Library, settings and automatic updates.
+Editors (crop, annotate, trim), conversion options (DPI, PDF layout, fixed-layout EPUB, PDF passwords), OCR for scanned PDFs, web download, Library, settings and automatic updates.
 
 ## Build
 

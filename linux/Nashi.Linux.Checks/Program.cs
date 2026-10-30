@@ -128,7 +128,7 @@ void CapabilityChecks()
     Check(Capabilities.Tools(mixed).All(t => FeatureCatalog.Tools(mixed).Contains(t)), "Tools for PNG plus MP4 stay inside the catalog intersection");
     Check(Capabilities.Tools(pdf2).Contains("mergePDF"), "Tools for two PDFs include mergePDF");
     Check(Capabilities.Tools([]).Length == 0, "Tools for an empty selection is empty");
-    Check(Capabilities.Formats(pdf2).SequenceEqual(["jpg", "png"]) && Capabilities.Formats(["x.pdf"]).SequenceEqual(["jpg", "png"]), "Formats for PDFs are jpg and png");
+    Check(Capabilities.Formats(pdf2).SequenceEqual(FeatureCatalog.Formats(pdf2)) && Capabilities.Formats(["x.pdf"]).Contains("docx"), "Formats for PDFs are the catalog's, docx included");
     Check(Capabilities.Formats(docx).SequenceEqual(FeatureCatalog.Formats(docx).Where(f => f != "pages")), "Formats for a DOCX are the catalog's except Pages");
 }
 
@@ -444,7 +444,7 @@ void WheelChecks(string root)
     Chip("Convert").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
     Dispatcher.UIThread.RunJobs();
     var pdfWheel = home.OwnedWindows.OfType<WheelWindow>().SingleOrDefault();
-    Check(pdfWheel is not null && pdfWheel.Wheel.Items.Select(i => i.Id).SequenceEqual(["convert:jpg", "convert:png"]), "A single PDF's format wheel offers JPG and PNG");
+    Check(pdfWheel is not null && pdfWheel.Wheel.Items.Select(i => i.Id).SequenceEqual(FeatureCatalog.Formats([pdfOnly]).Select(f => "convert:" + f)), "A single PDF's format wheel offers every catalog route (the empty PDF wheel is gone)");
     pdfWheel?.Close();
     home.Selection.Add([png]);
     Chip("Convert").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));

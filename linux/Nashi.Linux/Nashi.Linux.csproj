@@ -26,6 +26,9 @@
     <!-- Also a plain resource: the integration installer runs without Avalonia. -->
     <EmbeddedResource Include="../../Resources/Brand/NashiIcon.png" LogicalName="Nashi.Icon.png" />
     <!-- A file beside the executable: paplay/aplay play it by path. -->
+    <!-- The Pages bridge Windows runs: Deno executes the same audited bundle as macOS. -->
+    <None Include="../../Resources/PagesInterop.js" Link="PagesInterop.js" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="../../scripts/pages-windows.js" Link="pages-windows.js" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="../../Resources/Sounds/WheelSelection.wav" Link="Sounds/WheelSelection.wav" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
