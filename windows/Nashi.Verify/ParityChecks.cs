@@ -6,6 +6,22 @@ internal static class ParityChecks
 {
     public static void Run(Action<bool,string> check,string root)
     {
+        foreach(var (flag,expected) in new[]{("0",1),("false",1),("off",1),("1",0),("true",0),("on",0),("",0)})
+        {
+            var styleStrike=Path.Combine(root,"Style strike "+flag+".docx");using(var archive=ZipFile.Open(styleStrike,ZipArchiveMode.Create))
+            {
+                void Part(string name,string text){using var writer=new StreamWriter(archive.CreateEntry(name).Open(),new UTF8Encoding(false));writer.Write(text);}
+                var strike="<w:strike"+(flag.Length==0?"":" w:val=\""+flag+"\"")+"/>";
+                Part("word/styles.xml","<w:styles xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:style w:styleId=\"Parent\"><w:rPr><w:strike/></w:rPr></w:style><w:style w:styleId=\"Child\"><w:basedOn w:val=\"Parent\"/><w:rPr>"+strike+"</w:rPr></w:style><w:style w:type=\"character\" w:styleId=\"RunToggle\"><w:rPr>"+strike+"</w:rPr></w:style></w:styles>");
+                Part("word/document.xml","<w:document xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:body><w:p><w:pPr><w:pStyle w:val=\"Child\"/></w:pPr><w:r><w:t>Style toggle</w:t></w:r><w:r><w:rPr><w:strike w:val=\"false\"/></w:rPr><w:t>Direct off</w:t></w:r><w:r><w:rPr><w:strike/></w:rPr><w:t>Direct on</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"Parent\"/></w:pPr><w:r><w:rPr><w:rStyle w:val=\"RunToggle\"/></w:rPr><w:t>Character toggle</w:t></w:r></w:p></w:body></w:document>");
+            }
+            using var model=System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(OfficeDocuments.ReadDocx(styleStrike)));var runs=model.RootElement.GetProperty("blocks")[0].GetProperty("runs");
+            check(runs[0].GetProperty("character").GetProperty("strikethru").GetInt32()==expected,"Word style strikethrough toggle '"+flag+"' lost its inherited state");
+            check(runs[1].GetProperty("character").GetProperty("strikethru").GetInt32()==0&&runs[2].GetProperty("character").GetProperty("strikethru").GetInt32()==1,"Direct strikethrough did not override style formatting");
+            check(model.RootElement.GetProperty("blocks")[1].GetProperty("runs")[0].GetProperty("character").GetProperty("strikethru").GetInt32()==expected,"Character style strikethrough did not toggle the paragraph's state");
+            var paragraph=System.Xml.Linq.XDocument.Parse(OfficeDocuments.ModelHtml(model.RootElement)).Descendants("p").First();var spans=paragraph.Elements("span").ToArray();
+            check(!paragraph.Attribute("style")!.Value.Contains("text-decoration:")&&!spans[1].Attribute("style")!.Value.Contains("line-through")&&spans[2].Attribute("style")!.Value.Contains("line-through"),"Paragraph-level text decoration prevented a run from clearing inherited strikethrough");
+        }
         check(FeatureCatalog.Conversions.Count==46&&FeatureCatalog.ToolNames.Count==27,"Mac/Windows catalog count diverged");
         check(FeatureCatalog.Formats(["a.htm","b.html"]).SequenceEqual(new[]{"pdf"})&&FeatureCatalog.Tools(["a.html"]).Length==0,"HTML inputs lost their PDF route");
         check(FeatureCatalog.Formats(["a.jpeg","b.png"]).Contains("webp"),"Mixed image conversion intersection failed");
@@ -99,6 +115,18 @@ internal static class ParityChecks
             Part("word/styles.xml","<w:styles xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:style w:styleId=\"Heading\"><w:rPr><w:b/><w:sz w:val=\"36\"/></w:rPr></w:style></w:styles>");Part("word/_rels/document.xml.rels","<Relationships><Relationship Id=\"link1\" Target=\"https://example.com/pear\" TargetMode=\"External\"/><Relationship Id=\"header1\" Target=\"header1.xml\"/></Relationships>");Part("word/header1.xml","<w:hdr xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:p><w:r><w:t>Fruit header</w:t></w:r></w:p></w:hdr>");
         }
         using(var model=System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(OfficeDocuments.ReadDocx(docx)))){var html=OfficeDocuments.ModelHtml(model.RootElement);check(html.Contains("font-weight:bold")&&html.Contains("font-size:18pt")&&html.Contains("font-style:italic")&&html.Contains("text-align:center"),"Pages interchange lost inherited typography or alignment");check(html.Contains("href=\"https://example.com/pear\"")&&html.Contains("Fruit header")&&html.Contains("size:612pt 792pt"),"Pages interchange lost hyperlinks, header or page dimensions");}
+        foreach(var (value,enabled) in new[]{("false",false),("off",false),("0",false),("true",true),("on",true),("1",true),("",true)})
+        {
+            var strikeDocx=Path.Combine(root,"Strike flag "+(value.Length==0?"implicit":value)+".docx");
+            using(var archive=ZipFile.Open(strikeDocx,ZipArchiveMode.Create))
+            {
+                using var writer=new StreamWriter(archive.CreateEntry("word/document.xml").Open(),new UTF8Encoding(false));
+                writer.Write("<w:document xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:body><w:p><w:r><w:rPr><w:strike"+(value.Length==0?"":" w:val=\""+value+"\"")+"/></w:rPr><w:t>Retained text</w:t></w:r></w:p></w:body></w:document>");
+            }
+            using var model=System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(OfficeDocuments.ReadDocx(strikeDocx)));
+            var html=OfficeDocuments.ModelHtml(model.RootElement);
+            check(html.Contains("Retained text")&&html.Contains("line-through")==enabled,"Word strikethrough flag '"+value+"' changed the exported text's formatting");
+        }
         var srt="1\r\n00:00:01,005 --> 00:00:02,230\r\n<b>Türkçe 🍐</b>\r\n\r\n2\r\n00:00:03,000 --> 00:00:04,000\r\nSecond line\r\n";
         var vtt=SubtitleCodec.Convert(srt,"vtt");check(vtt.StartsWith("WEBVTT",StringComparison.Ordinal)&&vtt.Contains("00:00:01.005"),"SRT/VTT timestamps changed");check(SubtitleCodec.Parse(SubtitleCodec.Convert(vtt,"srt")).Length==2,"Subtitle round trip lost cues");check(SubtitleCodec.Convert(vtt,"txt").Contains("Türkçe 🍐")&&!SubtitleCodec.Convert(vtt,"txt").Contains("<b>"),"Subtitle plain text failed");
         var encodedVtt="WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nTom &amp; Jerry\n\n";
