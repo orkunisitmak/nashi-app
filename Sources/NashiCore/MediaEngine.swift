@@ -301,7 +301,7 @@ public enum MediaEngine {
     private static func snapshots(_ input: URL, info: MediaInfo, options: OperationOptions, token: CancellationToken, progress: @escaping ProgressHandler = {_,_ in}) throws -> [URL] {
         try requireVideo(info)
         guard !options.snapshotTimes.isEmpty else { throw NashiError.invalidInput("Choose at least one frame to save.") }
-        var outputs: [URL] = []
+        var outputs: [URL] = [], lastVideo: Double?? = nil
         do {
             for (index, time) in options.snapshotTimes.enumerated() {
                 guard time.isFinite, time >= 0, info.duration <= 0 || time <= info.duration else { throw NashiError.invalidInput("A snapshot time is outside the video.") }
@@ -310,10 +310,12 @@ public enum MediaEngine {
                 catch let error as NSError where error.domain == NSCocoaErrorDomain && error.code == NSFileReadNoSuchFileError {
                     // FFmpeg writes the first frame at or after -ss. Past the start of the last frame (the
                     // end, a long last frame or an audio tail) there is none, yet the player shows the last
-                    // frame there, so seek to the last frame's own timestamp instead.
+                    // frame there. Packet times can be missing or early (B-frames in AVI), so decode the last
+                    // second of video to the end and keep the final frame.
                     try token.check()
-                    guard let last = try lastFrameStart(input, token: token), last < time else { throw error }
-                    try render(["-ss", decimal(last), "-i", input.path, "-map", "0:v:0", "-frames:v", "1", "-update", "1", "-c:v", "png"], to: out, token: token)
+                    if lastVideo == nil { lastVideo = .some(try lastVideoTimestamp(input, duration: info.duration, token: token)) }
+                    guard let last = lastVideo ?? nil else { throw error }
+                    try render((last > 1 ? ["-ss", decimal(last - 1)] : []) + ["-i", input.path, "-map", "0:v:0", "-update", "1", "-c:v", "png"], to: out, token: token)
                 }
                 outputs.append(out)
                 progress(Double(index+1)/Double(options.snapshotTimes.count),"Saving frame \(index+1) of \(options.snapshotTimes.count)…")
@@ -322,14 +324,17 @@ public enum MediaEngine {
         } catch { outputs.forEach { try? FileManager.default.removeItem(at: $0) }; throw error }
     }
 
-    /// Just before the last video frame's start, as an input -ss value. Reads packet timestamps without decoding.
-    private static func lastFrameStart(_ input: URL, token: CancellationToken) throws -> Double? {
-        let result = try ProcessRunner.run(Dependencies.executable("ffprobe"), ["-v", "error", "-select_streams", "v:0", "-show_entries", "packet=pts_time:format=start_time", "-of", "json=c=1", input.path], token: token)
-        guard let root = try JSONSerialization.jsonObject(with: result.output) as? [String: Any],
-              let last = (root["packets"] as? [[String: Any]] ?? []).compactMap({ number($0["pts_time"]) }).filter(\.isFinite).max() else { return nil }
-        // Input -ss counts from the container's start time; stay a millisecond early so rounding cannot skip the frame.
-        let start = number((root["format"] as? [String: Any])?["start_time"]).flatMap { $0.isFinite ? $0 : nil } ?? 0
-        return max(0, last - start - 0.001)
+    /// The last video packet's time from the container start, read without decoding: the final minute first, then the whole file.
+    private static func lastVideoTimestamp(_ input: URL, duration: Double, token: CancellationToken) throws -> Double? {
+        for interval in duration > 60 ? ["\(decimal(duration - 60))%", nil] : [nil] {
+            let result = try ProcessRunner.run(Dependencies.executable("ffprobe"), ["-v", "error", "-select_streams", "v:0"] + (interval.map { ["-read_intervals", $0] } ?? []) + ["-show_entries", "packet=pts_time,dts_time:format=start_time", "-of", "json=c=1", input.path], token: token)
+            guard let root = try JSONSerialization.jsonObject(with: result.output) as? [String: Any] else { return nil }
+            // B-frames in AVI leave many packets without a PTS; their DTS still places them.
+            guard let last = (root["packets"] as? [[String: Any]] ?? []).compactMap({ number($0["pts_time"]) ?? number($0["dts_time"]) }).filter(\.isFinite).max() else { continue }
+            // Input -ss counts from the container's start time.
+            return last - (number((root["format"] as? [String: Any])?["start_time"]).flatMap { $0.isFinite ? $0 : nil } ?? 0)
+        }
+        return nil
     }
 
     private static func split(_ input: URL, info: MediaInfo, options: OperationOptions, token: CancellationToken, progress: @escaping ProgressHandler = {_,_ in}) throws -> [URL] {
