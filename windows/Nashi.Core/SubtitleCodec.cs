@@ -7,10 +7,11 @@ public static partial class SubtitleCodec
     public sealed record Cue(long Start,long End,string Text,string Settings="");
     [GeneratedRegex(@"^\s*((?:\d+:)?\d{2}:\d{2}[.,]\d{1,3})\s*-->\s*((?:\d+:)?\d{2}:\d{2}[.,]\d{1,3})(?:\s+(.*))?\s*$")]private static partial Regex Timing();
     // Only real cue tags are markup. "5 < 6 and 7 > 3" is text and must survive export.
-    [GeneratedRegex(@"</?(?:b|i|u|c|v|lang|ruby|rt|font)(?:[ .][^>]*)?>|<\d{2}:\d{2}(?::\d{2})?\.\d{3}>")]private static partial Regex Tags();
+    [GeneratedRegex(@"</?(?:b|i|u|c|v|lang|ruby|rt|font)(?:[ .][^<>]*)?>|<\d{2,}:\d{2}(?::\d{2})?\.\d{3}>",RegexOptions.IgnoreCase)]private static partial Regex Tags();
     [GeneratedRegex(@"&(?!(?:[A-Za-z][A-Za-z0-9]*|#\d+|#[xX][0-9A-Fa-f]+);)")]private static partial Regex BareAmpersand();
-    [GeneratedRegex(@"<(?!/?(?:b|i|u|c|v|lang|ruby|rt|font)(?:[ .>]|$)|\d{2}:\d{2}(?::\d{2})?\.\d{3}>)",RegexOptions.Multiline)]private static partial Regex BareLessThan();
-    // WebVTT reads an unescaped "<" as the start of a tag and drops the rest of the line.
+    [GeneratedRegex(@"<(?!/?(?:b|i|u|c|v|lang|ruby|rt|font)(?:[ .][^<>\n]*)?>|\d{2,}:\d{2}(?::\d{2})?\.\d{3}>)",RegexOptions.IgnoreCase)]private static partial Regex BareLessThan();
+    // WebVTT reads an unescaped "<" as the start of a tag and drops the rest of the line,
+    // so only a complete known tag or timestamp keeps its "<".
     private static string VttText(string text)=>BareLessThan().Replace(BareAmpersand().Replace(text,"&amp;"),"&lt;");
     [GeneratedRegex(@"<(?:/?(?:c|v|lang|ruby|rt)(?:[ .][^>]*)?|\d{2}:\d{2}(?::\d{2})?\.\d{3})>")]private static partial Regex VttOnlyTags();
     public static Cue[] Parse(string source)
