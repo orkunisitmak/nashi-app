@@ -1160,5 +1160,19 @@
   "Skipped {0}: only existing files can come in, not folders.": "{0} atlandı: yalnızca var olan dosyalar eklenebilir, klasörler eklenemez.",
   "Something went wrong: {0}": "Bir şeyler ters gitti: {0}",
   "Remove {0} from selection": "{0} dosyasını seçimden çıkar",
-  "Remove {0}": "{0} dosyasını çıkar"
+  "Remove {0}": "{0} dosyasını çıkar",
+  "Nashi — Complete": "Nashi — Tamamlandı",
+  "Your task is complete.": "İşin tamam.",
+  "No conversions for {0} files yet.": "{0} dosyaları için henüz dönüştürme yok.",
+  "No tools for {0} files yet.": "{0} dosyaları için henüz araç yok.",
+  "Nothing to convert": "Dönüştürülecek bir şey yok",
+  "Nashi is running but did not answer.": "Nashi çalışıyor ama yanıt vermedi.",
+  "Convert with Nashi": "Nashi ile dönüştür",
+  "Wrote {0}": "Yazıldı: {0}",
+  "Removed {0}": "Kaldırıldı: {0}",
+  "Added the Ctrl+Alt+N shortcut: copy files, then press it.": "Ctrl+Alt+N kısayolu eklendi: dosyaları kopyala, sonra kısayola bas.",
+  "Removed the Ctrl+Alt+N shortcut.": "Ctrl+Alt+N kısayolu kaldırıldı.",
+  "Skipped the keyboard shortcut: GNOME settings are not available.": "Klavye kısayolu atlandı: GNOME ayarları kullanılamıyor.",
+  "Started Nashi in the background.": "Nashi arka planda başlatıldı.",
+  "Stopped the background Nashi.": "Arka plandaki Nashi durduruldu."
 }

@@ -117,6 +117,7 @@
 "ADD SELECTED RANGE" = "SEÇİLİ ARALIĞI EKLE";
 "ADD SPLIT" = "BÖLME NOKTASI EKLE";
 "ADD TO AN EXISTING FLOAT" = "MEVCUT YÜZEN PENCEREYE EKLE";
+"ADDED THE CTRL+ALT+N SHORTCUT: COPY FILES, THEN PRESS IT." = "CTRL+ALT+N KISAYOLU EKLENDİ: DOSYALARI KOPYALA, SONRA KISAYOLA BAS.";
 "ADDING PAGES…" = "SAYFALAR EKLENİYOR…";
 "ADDITIONAL OPTIONS" = "DİĞER SEÇENEKLER";
 "ALL" = "TÜMÜ";
@@ -183,6 +184,7 @@
 "Add or change files" = "Dosya ekle veya değiştir";
 "Add selected range" = "Seçili aralığı ekle";
 "Add to an existing Float" = "Mevcut yüzen pencereye ekle";
+"Added the Ctrl+Alt+N shortcut: copy files, then press it." = "Ctrl+Alt+N kısayolu eklendi: dosyaları kopyala, sonra kısayola bas.";
 "Adding pages…" = "Sayfalar ekleniyor…";
 "Additional options" = "Diğer seçenekler";
 "All" = "Tümü";
@@ -407,6 +409,7 @@
 "CONVERT" = "DÖNÜŞTÜR";
 "CONVERT AUDIO CHANNELS" = "SES KANALLARINI DÖNÜŞTÜR";
 "CONVERT TO" = "ŞUNA DÖNÜŞTÜR";
+"CONVERT WITH NASHI" = "NASHI İLE DÖNÜŞTÜR";
 "CONVERT · WHILE DRAGGING" = "DÖNÜŞTÜR · SÜRÜKLERKEN";
 "CONVERT, FINE-TUNE, AND SEND THEM ON THEIR WAY." = "DÖNÜŞTÜR, İNCE AYAR YAP VE PAYLAŞ.";
 "COPIED LINK" = "KOPYALANAN BAĞLANTI";
@@ -584,6 +587,7 @@
 "Convert to" = "Şuna dönüştür";
 "Convert to %@" = "%@ biçimine dönüştür";
 "Convert to %lld" = "%lld biçimine dönüştür";
+"Convert with Nashi" = "Nashi ile dönüştür";
 "Convert · while dragging" = "Dönüştür · sürüklerken";
 "Convert, fine-tune, and send them on their way." = "Dönüştür, ince ayar yap ve paylaş.";
 "Converting to %@ is not supported on Linux." = "%@ biçimine dönüştürme Linux'ta desteklenmiyor.";
@@ -1247,6 +1251,7 @@
 "Mute Video · Nashi" = "Videoyu Sessize Al · Nashi";
 "NASHI CHECKS ONCE AN HOUR WHILE IT’S RUNNING. YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL." = "NASHI ÇALIŞIRKEN SAATTE BİR DENETLER. İNDİRME VE KURULUM ZAMANINI SEN SEÇERSİN.";
 "NASHI IS ALREADY RUNNING BUT IS STILL STARTING. OPEN IT FROM THE SYSTEM TRAY OR TRY AGAIN IN A MOMENT." = "NASHI ZATEN ÇALIŞIYOR AMA HÂLÂ AÇILIYOR. SİSTEM TEPSİSİNDEN AÇ VEYA BİRAZDAN TEKRAR DENE.";
+"NASHI IS RUNNING BUT DID NOT ANSWER." = "NASHI ÇALIŞIYOR AMA YANIT VERMEDİ.";
 "NASHI IS STILL RUNNING." = "NASHI HÂLÂ ÇALIŞIYOR.";
 "NASHI SAVES RESULTS BESIDE THE ORIGINALS. ALLOW A FOLDER ONCE TO INCLUDE EVERY FOLDER INSIDE IT." = "NASHI SONUÇLARI ORİJİNALLERİN YANINA KAYDEDER. BİR KLASÖRE VERİLEN İZİN, İÇİNDEKİ KLASÖRLERİ DE KAPSAR.";
 "NASHI SETTINGS" = "NASHI AYARLARI";
@@ -1254,6 +1259,7 @@
 "NASHI UPDATE COULD NOT FINISH" = "NASHI GÜNCELLEMESİ TAMAMLANAMADI";
 "NASHI USES FFMPEG FOR AUDIO AND VIDEO. DOWNLOADS COME STRAIGHT FROM THE UPSTREAM PROJECTS AND ARE CHECKED BEFORE ANYTHING IS INSTALLED." = "NASHI, SES VE VİDEO İÇİN FFMPEG KULLANIR. İNDİRMELER DOĞRUDAN ÖZGÜN PROJELERDEN GELİR VE KURULMADAN ÖNCE DOĞRULANIR.";
 "NASHI · FEATURES & SHORTCUTS" = "NASHI · ÖZELLİKLER VE KISAYOLLAR";
+"NASHI — COMPLETE" = "NASHI — TAMAMLANDI";
 "NASHI — PROGRESS" = "NASHI — İLERLEME";
 "NEXT" = "İLERİ";
 "NEXT FRAME" = "SONRAKİ KARE";
@@ -1285,17 +1291,20 @@
 "NORMALIZE VOLUME" = "SES DÜZEYİNİ EŞİTLE";
 "NOTE" = "NOT";
 "NOTHING HERE YET. PASTE SOMETHING OR MAKE YOUR FIRST FRESH COPY." = "BURADA HENÜZ BİR ŞEY YOK. BİR DOSYA YAPIŞTIR VEYA İLK KOPYANI OLUŞTUR.";
+"NOTHING TO CONVERT" = "DÖNÜŞTÜRÜLECEK BİR ŞEY YOK";
 "NUMBER" = "NUMARA";
 "NUMBER OF CLIPS" = "KLİP SAYISI";
 "Nashi Settings" = "Nashi Ayarları";
 "Nashi checks once an hour while it’s running. You choose when to download and install." = "Nashi çalışırken saatte bir denetler. İndirme ve kurulum zamanını sen seçersin.";
 "Nashi is already running but is still starting. Open it from the system tray or try again in a moment." = "Nashi zaten çalışıyor ama hâlâ açılıyor. Sistem tepsisinden aç veya birazdan tekrar dene.";
+"Nashi is running but did not answer." = "Nashi çalışıyor ama yanıt vermedi.";
 "Nashi is still running." = "Nashi hâlâ çalışıyor.";
 "Nashi saves results beside the originals. Allow a folder once to include every folder inside it." = "Nashi sonuçları orijinallerin yanına kaydeder. Bir klasöre verilen izin, içindeki klasörleri de kapsar.";
 "Nashi update" = "Nashi güncellemesi";
 "Nashi update could not finish" = "Nashi güncellemesi tamamlanamadı";
 "Nashi uses FFmpeg for audio and video. Downloads come straight from the upstream projects and are checked before anything is installed." = "Nashi, ses ve video için FFmpeg kullanır. İndirmeler doğrudan özgün projelerden gelir ve kurulmadan önce doğrulanır.";
 "Nashi · Features & shortcuts" = "Nashi · Özellikler ve kısayollar";
+"Nashi — Complete" = "Nashi — Tamamlandı";
 "Nashi — Progress" = "Nashi — İlerleme";
 "Next" = "İleri";
 "Next frame" = "Sonraki kare";
@@ -1309,6 +1318,8 @@
 "Nicely done. 1 file is ready." = "Hazır! 1 dosyan hazır.";
 "No QR codes found. Try a larger or sharper image." = "QR kodu bulunamadı. Daha büyük veya daha net bir görsel dene.";
 "No QR codes this time." = "QR kodu bulunamadı.";
+"No conversions for %@ files yet." = "%@ dosyaları için henüz dönüştürme yok.";
+"No conversions for %lld files yet." = "%lld dosyaları için henüz dönüştürme yok.";
 "No conversions for this selection yet." = "Bu seçim için henüz dönüştürme yok.";
 "No folders allowed yet." = "Henüz izin verilen klasör yok.";
 "No matches. Try a file name or tool." = "Eşleşme bulunamadı. Dosya adı veya araç adıyla ara.";
@@ -1318,6 +1329,8 @@
 "No public downloadable media found. Some sites require sign-in or do not expose downloadable media." = "Herkese açık, indirilebilir medya bulunamadı. Bazı siteler giriş gerektirir veya medyayı indirmeye açmaz.";
 "No text could be extracted or recognized in this PDF." = "Bu PDF'den metin çıkarılamadı veya tanınamadı.";
 "No timed subtitle cues were found." = "Zamanlanmış altyazı satırı bulunamadı.";
+"No tools for %@ files yet." = "%@ dosyaları için henüz araç yok.";
+"No tools for %lld files yet." = "%lld dosyaları için henüz araç yok.";
 "No tools for this selection yet." = "Bu seçim için henüz araç yok.";
 "No unprotected downloadable format is available." = "Korumasız, indirilebilir bir biçim yok.";
 "No update checks yet" = "Henüz güncelleme denetlenmedi";
@@ -1329,6 +1342,7 @@
 "Normalize Volume" = "Ses Düzeyini Eşitle";
 "Note" = "Not";
 "Nothing here yet. Paste something or make your first fresh copy." = "Burada henüz bir şey yok. Bir dosya yapıştır veya ilk kopyanı oluştur.";
+"Nothing to convert" = "Dönüştürülecek bir şey yok";
 "Number" = "Numara";
 "Number of clips" = "Klip sayısı";
 "OFFICE CABINET IS MISSING A FILE." = "OFFICE PAKETİNDE BİR DOSYA EKSİK.";
@@ -1590,6 +1604,7 @@
 "REMOVE SELECTED RANGE" = "SEÇİLİ ARALIĞI KALDIR";
 "REMOVE SILENCE AT THE BEGINNING AND END" = "BAŞLANGIÇ VE SONDAKİ SESSİZLİĞİ KALDIR";
 "REMOVE SILENCE FROM BEGINNING AND END" = "BAŞLANGIÇ VE SONDAKİ SESSİZLİĞİ KALDIR";
+"REMOVED THE CTRL+ALT+N SHORTCUT." = "CTRL+ALT+N KISAYOLU KALDIRILDI.";
 "RENDERED PAGES EXCEED 512 MB. CHOOSE A LOWER DPI OR SPLIT THE PDF FIRST." = "OLUŞTURULAN SAYFALAR 512 MB'I AŞIYOR. DAHA DÜŞÜK BİR DPI SEÇ VEYA ÖNCE PDF'Yİ BÖL.";
 "REPLACE SELECTED AUDIO WITH" = "SEÇİLİ SESİ ŞUNUNLA DEĞİŞTİR";
 "REPORT SAVED." = "RAPOR KAYDEDİLDİ.";
@@ -1655,6 +1670,9 @@
 "Remove selected range" = "Seçili aralığı kaldır";
 "Remove silence at the beginning and end" = "Başlangıç ve sondaki sessizliği kaldır";
 "Remove silence from beginning and end" = "Başlangıç ve sondaki sessizliği kaldır";
+"Removed %@" = "Kaldırıldı: %@";
+"Removed %lld" = "Kaldırıldı: %lld";
+"Removed the Ctrl+Alt+N shortcut." = "Ctrl+Alt+N kısayolu kaldırıldı.";
 "Rendered pages exceed 512 MB. Choose a lower DPI or split the PDF first." = "Oluşturulan sayfalar 512 MB'ı aşıyor. Daha düşük bir DPI seç veya önce PDF'yi böl.";
 "Rendering page %@" = "Sayfa %@ işleniyor";
 "Rendering page %lld" = "Sayfa %lld işleniyor";
@@ -1771,6 +1789,7 @@
 "SHOW ORIGINAL" = "ORİJİNALİ GÖSTER";
 "SILENCE THRESHOLD" = "SESSİZLİK EŞİĞİ";
 "SKIP TOUR" = "TURU GEÇ";
+"SKIPPED THE KEYBOARD SHORTCUT: GNOME SETTINGS ARE NOT AVAILABLE." = "KLAVYE KISAYOLU ATLANDI: GNOME AYARLARI KULLANILAMIYOR.";
 "SLIDES" = "SUNUMLAR";
 "SMALL · 1280 PX" = "KÜÇÜK · 1280 PX";
 "SMALL · 1280 PX LONGEST EDGE" = "KÜÇÜK · UZUN KENAR 1280 PX";
@@ -1799,9 +1818,11 @@
 "START" = "BAŞLANGIÇ";
 "START HERE" = "BURADAN BAŞLA";
 "START MUST BE BEFORE END, WITHIN THE MEDIA DURATION." = "BAŞLANGIÇ, BİTİŞ'TEN ÖNCE VE MEDYA SÜRESİ İÇİNDE OLMALI.";
+"STARTED NASHI IN THE BACKGROUND." = "NASHI ARKA PLANDA BAŞLATILDI.";
 "STARTING DOWNLOAD…" = "İNDİRME BAŞLIYOR…";
 "STEREO" = "STEREO";
 "STILL IMAGE" = "SABİT GÖRSEL";
+"STOPPED THE BACKGROUND NASHI." = "ARKA PLANDAKİ NASHI DURDURULDU.";
 "STRAIGHT TO THE GOOD STUFF." = "DOĞRUDAN İSTEDİĞİN BÖLÜME.";
 "STROKE WIDTH" = "ÇİZGİ KALINLIĞI";
 "STRONG" = "GÜÇLÜ";
@@ -1912,6 +1933,7 @@
 "Skip tour" = "Turu geç";
 "Skipped %@: only existing files can come in, not folders." = "%@ atlandı: yalnızca var olan dosyalar eklenebilir, klasörler eklenemez.";
 "Skipped %lld: only existing files can come in, not folders." = "%lld atlandı: yalnızca var olan dosyalar eklenebilir, klasörler eklenemez.";
+"Skipped the keyboard shortcut: GNOME settings are not available." = "Klavye kısayolu atlandı: GNOME ayarları kullanılamıyor.";
 "Slides" = "Sunumlar";
 "Small · 1280 px" = "Küçük · 1280 px";
 "Small · 1280 px longest edge" = "Küçük · uzun kenar 1280 px";
@@ -1941,9 +1963,11 @@
 "Staging cannot be a symbolic link." = "Geçici klasör sembolik bağlantı olamaz.";
 "Start" = "Başlangıç";
 "Start must be before End, within the media duration." = "Başlangıç, Bitiş'ten önce ve medya süresi içinde olmalı.";
+"Started Nashi in the background." = "Nashi arka planda başlatıldı.";
 "Starting download…" = "İndirme başlıyor…";
 "Stereo" = "Stereo";
 "Still image" = "Sabit görsel";
+"Stopped the background Nashi." = "Arka plandaki Nashi durduruldu.";
 "Straight to the good stuff." = "Doğrudan istediğin bölüme.";
 "Stroke width" = "Çizgi kalınlığı";
 "Strong" = "Güçlü";
@@ -2243,6 +2267,8 @@
 "Windows could not add Nashi to the system tray." = "Windows, Nashi'yi sistem tepsisine ekleyemedi.";
 "Windows could not create a tray icon." = "Windows tepsi simgesini oluşturamadı.";
 "Working…" = "İşleniyor…";
+"Wrote %@" = "Yazıldı: %@";
+"Wrote %lld" = "Yazıldı: %lld";
 "YOU CAN ALSO CHOOSE FILES FROM THE MAIN WINDOW." = "ANA PENCEREDEN DE DOSYA SEÇEBİLİRSİN.";
 "YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL." = "NE ZAMAN İNDİRİP KURACAĞINA SEN KARAR VER.";
 "YOU HAVE THE LATEST PUBLISHED WINDOWS VERSION." = "YAYINLANAN EN GÜNCEL WINDOWS SÜRÜMÜNÜ KULLANIYORSUN.";
@@ -2258,6 +2284,7 @@
 "YOUR LIBRARY" = "KİTAPLIĞIN";
 "YOUR NEXT FRESH COPY WILL LAND HERE." = "BİR SONRAKİ YENİ KOPYAN BURADA GÖRÜNECEK.";
 "YOUR ORIGINAL STAYS SAFE" = "ORİJİNAL DOSYAN GÜVENDE";
+"YOUR TASK IS COMPLETE." = "İŞİN TAMAM.";
 "YOUR TOOLS ARE READY." = "ARAÇLARIN HAZIR.";
 "YOUR TOOLS ARE READY. LET’S PUT THAT NEXT FILE TO GOOD USE." = "ARAÇLARIN HAZIR. SIRADAKİ DOSYAYI BİRLİKTE HAZIRLAYALIM.";
 "YOUTUBE THUMBNAIL · BEST AVAILABLE FULL-SIZE IMAGE" = "YOUTUBE KÜÇÜK RESMİ · EN İYİ TAM BOYUTLU GÖRSEL";
@@ -2278,6 +2305,7 @@
 "Your kind of flow." = "Senin tarzın, senin akışın.";
 "Your next fresh copy will land here." = "Bir sonraki yeni kopyan burada görünecek.";
 "Your original stays safe" = "Orijinal dosyan güvende";
+"Your task is complete." = "İşin tamam.";
 "Your tools are ready." = "Araçların hazır.";
 "Your tools are ready. Let’s put that next file to good use." = "Araçların hazır. Sıradaki dosyayı birlikte hazırlayalım.";
 "You’re all set.\nMake something good." = "Her şey hazır.\nGüzel bir şey yap.";

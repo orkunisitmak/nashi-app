@@ -117,6 +117,7 @@
 "ADD SELECTED RANGE" = "ADD SELECTED RANGE";
 "ADD SPLIT" = "ADD SPLIT";
 "ADD TO AN EXISTING FLOAT" = "ADD TO AN EXISTING FLOAT";
+"ADDED THE CTRL+ALT+N SHORTCUT: COPY FILES, THEN PRESS IT." = "ADDED THE CTRL+ALT+N SHORTCUT: COPY FILES, THEN PRESS IT.";
 "ADDING PAGES…" = "ADDING PAGES…";
 "ADDITIONAL OPTIONS" = "ADDITIONAL OPTIONS";
 "ALL" = "ALL";
@@ -183,6 +184,7 @@
 "Add or change files" = "Add or change files";
 "Add selected range" = "Add selected range";
 "Add to an existing Float" = "Add to an existing Float";
+"Added the Ctrl+Alt+N shortcut: copy files, then press it." = "Added the Ctrl+Alt+N shortcut: copy files, then press it.";
 "Adding pages…" = "Adding pages…";
 "Additional options" = "Additional options";
 "All" = "All";
@@ -407,6 +409,7 @@
 "CONVERT" = "CONVERT";
 "CONVERT AUDIO CHANNELS" = "CONVERT AUDIO CHANNELS";
 "CONVERT TO" = "CONVERT TO";
+"CONVERT WITH NASHI" = "CONVERT WITH NASHI";
 "CONVERT · WHILE DRAGGING" = "CONVERT · WHILE DRAGGING";
 "CONVERT, FINE-TUNE, AND SEND THEM ON THEIR WAY." = "CONVERT, FINE-TUNE, AND SEND THEM ON THEIR WAY.";
 "COPIED LINK" = "COPIED LINK";
@@ -584,6 +587,7 @@
 "Convert to" = "Convert to";
 "Convert to %@" = "Convert to %@";
 "Convert to %lld" = "Convert to %lld";
+"Convert with Nashi" = "Convert with Nashi";
 "Convert · while dragging" = "Convert · while dragging";
 "Convert, fine-tune, and send them on their way." = "Convert, fine-tune, and send them on their way.";
 "Converting to %@ is not supported on Linux." = "Converting to %@ is not supported on Linux.";
@@ -1247,6 +1251,7 @@
 "Mute Video · Nashi" = "Mute Video · Nashi";
 "NASHI CHECKS ONCE AN HOUR WHILE IT’S RUNNING. YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL." = "NASHI CHECKS ONCE AN HOUR WHILE IT’S RUNNING. YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL.";
 "NASHI IS ALREADY RUNNING BUT IS STILL STARTING. OPEN IT FROM THE SYSTEM TRAY OR TRY AGAIN IN A MOMENT." = "NASHI IS ALREADY RUNNING BUT IS STILL STARTING. OPEN IT FROM THE SYSTEM TRAY OR TRY AGAIN IN A MOMENT.";
+"NASHI IS RUNNING BUT DID NOT ANSWER." = "NASHI IS RUNNING BUT DID NOT ANSWER.";
 "NASHI IS STILL RUNNING." = "NASHI IS STILL RUNNING.";
 "NASHI SAVES RESULTS BESIDE THE ORIGINALS. ALLOW A FOLDER ONCE TO INCLUDE EVERY FOLDER INSIDE IT." = "NASHI SAVES RESULTS BESIDE THE ORIGINALS. ALLOW A FOLDER ONCE TO INCLUDE EVERY FOLDER INSIDE IT.";
 "NASHI SETTINGS" = "NASHI SETTINGS";
@@ -1254,6 +1259,7 @@
 "NASHI UPDATE COULD NOT FINISH" = "NASHI UPDATE COULD NOT FINISH";
 "NASHI USES FFMPEG FOR AUDIO AND VIDEO. DOWNLOADS COME STRAIGHT FROM THE UPSTREAM PROJECTS AND ARE CHECKED BEFORE ANYTHING IS INSTALLED." = "NASHI USES FFMPEG FOR AUDIO AND VIDEO. DOWNLOADS COME STRAIGHT FROM THE UPSTREAM PROJECTS AND ARE CHECKED BEFORE ANYTHING IS INSTALLED.";
 "NASHI · FEATURES & SHORTCUTS" = "NASHI · FEATURES & SHORTCUTS";
+"NASHI — COMPLETE" = "NASHI — COMPLETE";
 "NASHI — PROGRESS" = "NASHI — PROGRESS";
 "NEXT" = "NEXT";
 "NEXT FRAME" = "NEXT FRAME";
@@ -1285,17 +1291,20 @@
 "NORMALIZE VOLUME" = "NORMALIZE VOLUME";
 "NOTE" = "NOTE";
 "NOTHING HERE YET. PASTE SOMETHING OR MAKE YOUR FIRST FRESH COPY." = "NOTHING HERE YET. PASTE SOMETHING OR MAKE YOUR FIRST FRESH COPY.";
+"NOTHING TO CONVERT" = "NOTHING TO CONVERT";
 "NUMBER" = "NUMBER";
 "NUMBER OF CLIPS" = "NUMBER OF CLIPS";
 "Nashi Settings" = "Nashi Settings";
 "Nashi checks once an hour while it’s running. You choose when to download and install." = "Nashi checks once an hour while it’s running. You choose when to download and install.";
 "Nashi is already running but is still starting. Open it from the system tray or try again in a moment." = "Nashi is already running but is still starting. Open it from the system tray or try again in a moment.";
+"Nashi is running but did not answer." = "Nashi is running but did not answer.";
 "Nashi is still running." = "Nashi is still running.";
 "Nashi saves results beside the originals. Allow a folder once to include every folder inside it." = "Nashi saves results beside the originals. Allow a folder once to include every folder inside it.";
 "Nashi update" = "Nashi update";
 "Nashi update could not finish" = "Nashi update could not finish";
 "Nashi uses FFmpeg for audio and video. Downloads come straight from the upstream projects and are checked before anything is installed." = "Nashi uses FFmpeg for audio and video. Downloads come straight from the upstream projects and are checked before anything is installed.";
 "Nashi · Features & shortcuts" = "Nashi · Features & shortcuts";
+"Nashi — Complete" = "Nashi — Complete";
 "Nashi — Progress" = "Nashi — Progress";
 "Next" = "Next";
 "Next frame" = "Next frame";
@@ -1309,6 +1318,8 @@
 "Nicely done. 1 file is ready." = "Nicely done. 1 file is ready.";
 "No QR codes found. Try a larger or sharper image." = "No QR codes found. Try a larger or sharper image.";
 "No QR codes this time." = "No QR codes this time.";
+"No conversions for %@ files yet." = "No conversions for %@ files yet.";
+"No conversions for %lld files yet." = "No conversions for %lld files yet.";
 "No conversions for this selection yet." = "No conversions for this selection yet.";
 "No folders allowed yet." = "No folders allowed yet.";
 "No matches. Try a file name or tool." = "No matches. Try a file name or tool.";
@@ -1318,6 +1329,8 @@
 "No public downloadable media found. Some sites require sign-in or do not expose downloadable media." = "No public downloadable media found. Some sites require sign-in or do not expose downloadable media.";
 "No text could be extracted or recognized in this PDF." = "No text could be extracted or recognized in this PDF.";
 "No timed subtitle cues were found." = "No timed subtitle cues were found.";
+"No tools for %@ files yet." = "No tools for %@ files yet.";
+"No tools for %lld files yet." = "No tools for %lld files yet.";
 "No tools for this selection yet." = "No tools for this selection yet.";
 "No unprotected downloadable format is available." = "No unprotected downloadable format is available.";
 "No update checks yet" = "No update checks yet";
@@ -1329,6 +1342,7 @@
 "Normalize Volume" = "Normalize Volume";
 "Note" = "Note";
 "Nothing here yet. Paste something or make your first fresh copy." = "Nothing here yet. Paste something or make your first fresh copy.";
+"Nothing to convert" = "Nothing to convert";
 "Number" = "Number";
 "Number of clips" = "Number of clips";
 "OFFICE CABINET IS MISSING A FILE." = "OFFICE CABINET IS MISSING A FILE.";
@@ -1590,6 +1604,7 @@
 "REMOVE SELECTED RANGE" = "REMOVE SELECTED RANGE";
 "REMOVE SILENCE AT THE BEGINNING AND END" = "REMOVE SILENCE AT THE BEGINNING AND END";
 "REMOVE SILENCE FROM BEGINNING AND END" = "REMOVE SILENCE FROM BEGINNING AND END";
+"REMOVED THE CTRL+ALT+N SHORTCUT." = "REMOVED THE CTRL+ALT+N SHORTCUT.";
 "RENDERED PAGES EXCEED 512 MB. CHOOSE A LOWER DPI OR SPLIT THE PDF FIRST." = "RENDERED PAGES EXCEED 512 MB. CHOOSE A LOWER DPI OR SPLIT THE PDF FIRST.";
 "REPLACE SELECTED AUDIO WITH" = "REPLACE SELECTED AUDIO WITH";
 "REPORT SAVED." = "REPORT SAVED.";
@@ -1655,6 +1670,9 @@
 "Remove selected range" = "Remove selected range";
 "Remove silence at the beginning and end" = "Remove silence at the beginning and end";
 "Remove silence from beginning and end" = "Remove silence from beginning and end";
+"Removed %@" = "Removed %@";
+"Removed %lld" = "Removed %lld";
+"Removed the Ctrl+Alt+N shortcut." = "Removed the Ctrl+Alt+N shortcut.";
 "Rendered pages exceed 512 MB. Choose a lower DPI or split the PDF first." = "Rendered pages exceed 512 MB. Choose a lower DPI or split the PDF first.";
 "Rendering page %@" = "Rendering page %@";
 "Rendering page %lld" = "Rendering page %lld";
@@ -1771,6 +1789,7 @@
 "SHOW ORIGINAL" = "SHOW ORIGINAL";
 "SILENCE THRESHOLD" = "SILENCE THRESHOLD";
 "SKIP TOUR" = "SKIP TOUR";
+"SKIPPED THE KEYBOARD SHORTCUT: GNOME SETTINGS ARE NOT AVAILABLE." = "SKIPPED THE KEYBOARD SHORTCUT: GNOME SETTINGS ARE NOT AVAILABLE.";
 "SLIDES" = "SLIDES";
 "SMALL · 1280 PX" = "SMALL · 1280 PX";
 "SMALL · 1280 PX LONGEST EDGE" = "SMALL · 1280 PX LONGEST EDGE";
@@ -1799,9 +1818,11 @@
 "START" = "START";
 "START HERE" = "START HERE";
 "START MUST BE BEFORE END, WITHIN THE MEDIA DURATION." = "START MUST BE BEFORE END, WITHIN THE MEDIA DURATION.";
+"STARTED NASHI IN THE BACKGROUND." = "STARTED NASHI IN THE BACKGROUND.";
 "STARTING DOWNLOAD…" = "STARTING DOWNLOAD…";
 "STEREO" = "STEREO";
 "STILL IMAGE" = "STILL IMAGE";
+"STOPPED THE BACKGROUND NASHI." = "STOPPED THE BACKGROUND NASHI.";
 "STRAIGHT TO THE GOOD STUFF." = "STRAIGHT TO THE GOOD STUFF.";
 "STROKE WIDTH" = "STROKE WIDTH";
 "STRONG" = "STRONG";
@@ -1912,6 +1933,7 @@
 "Skip tour" = "Skip tour";
 "Skipped %@: only existing files can come in, not folders." = "Skipped %@: only existing files can come in, not folders.";
 "Skipped %lld: only existing files can come in, not folders." = "Skipped %lld: only existing files can come in, not folders.";
+"Skipped the keyboard shortcut: GNOME settings are not available." = "Skipped the keyboard shortcut: GNOME settings are not available.";
 "Slides" = "Slides";
 "Small · 1280 px" = "Small · 1280 px";
 "Small · 1280 px longest edge" = "Small · 1280 px longest edge";
@@ -1941,9 +1963,11 @@
 "Staging cannot be a symbolic link." = "Staging cannot be a symbolic link.";
 "Start" = "Start";
 "Start must be before End, within the media duration." = "Start must be before End, within the media duration.";
+"Started Nashi in the background." = "Started Nashi in the background.";
 "Starting download…" = "Starting download…";
 "Stereo" = "Stereo";
 "Still image" = "Still image";
+"Stopped the background Nashi." = "Stopped the background Nashi.";
 "Straight to the good stuff." = "Straight to the good stuff.";
 "Stroke width" = "Stroke width";
 "Strong" = "Strong";
@@ -2243,6 +2267,8 @@
 "Windows could not add Nashi to the system tray." = "Windows could not add Nashi to the system tray.";
 "Windows could not create a tray icon." = "Windows could not create a tray icon.";
 "Working…" = "Working…";
+"Wrote %@" = "Wrote %@";
+"Wrote %lld" = "Wrote %lld";
 "YOU CAN ALSO CHOOSE FILES FROM THE MAIN WINDOW." = "YOU CAN ALSO CHOOSE FILES FROM THE MAIN WINDOW.";
 "YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL." = "YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL.";
 "YOU HAVE THE LATEST PUBLISHED WINDOWS VERSION." = "YOU HAVE THE LATEST PUBLISHED WINDOWS VERSION.";
@@ -2258,6 +2284,7 @@
 "YOUR LIBRARY" = "YOUR LIBRARY";
 "YOUR NEXT FRESH COPY WILL LAND HERE." = "YOUR NEXT FRESH COPY WILL LAND HERE.";
 "YOUR ORIGINAL STAYS SAFE" = "YOUR ORIGINAL STAYS SAFE";
+"YOUR TASK IS COMPLETE." = "YOUR TASK IS COMPLETE.";
 "YOUR TOOLS ARE READY." = "YOUR TOOLS ARE READY.";
 "YOUR TOOLS ARE READY. LET’S PUT THAT NEXT FILE TO GOOD USE." = "YOUR TOOLS ARE READY. LET’S PUT THAT NEXT FILE TO GOOD USE.";
 "YOUTUBE THUMBNAIL · BEST AVAILABLE FULL-SIZE IMAGE" = "YOUTUBE THUMBNAIL · BEST AVAILABLE FULL-SIZE IMAGE";
@@ -2278,6 +2305,7 @@
 "Your kind of flow." = "Your kind of flow.";
 "Your next fresh copy will land here." = "Your next fresh copy will land here.";
 "Your original stays safe" = "Your original stays safe";
+"Your task is complete." = "Your task is complete.";
 "Your tools are ready." = "Your tools are ready.";
 "Your tools are ready. Let’s put that next file to good use." = "Your tools are ready. Let’s put that next file to good use.";
 "You’re all set.\nMake something good." = "You’re all set.\nMake something good.";

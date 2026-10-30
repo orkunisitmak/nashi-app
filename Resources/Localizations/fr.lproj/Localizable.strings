@@ -117,6 +117,7 @@
 "ADD SELECTED RANGE" = "AJOUTER LA PLAGE SÉLECTIONNÉE";
 "ADD SPLIT" = "AJOUTER UNE COUPURE";
 "ADD TO AN EXISTING FLOAT" = "AJOUTER À UN FLOAT EXISTANT";
+"ADDED THE CTRL+ALT+N SHORTCUT: COPY FILES, THEN PRESS IT." = "ADDED THE CTRL+ALT+N SHORTCUT: COPY FILES, THEN PRESS IT.";
 "ADDING PAGES…" = "AJOUT DES PAGES…";
 "ADDITIONAL OPTIONS" = "OPTIONS SUPPLÉMENTAIRES";
 "ALL" = "TOUT";
@@ -183,6 +184,7 @@
 "Add or change files" = "Modifier la sélection";
 "Add selected range" = "Ajouter la plage sélectionnée";
 "Add to an existing Float" = "Ajouter à un Float existant";
+"Added the Ctrl+Alt+N shortcut: copy files, then press it." = "Added the Ctrl+Alt+N shortcut: copy files, then press it.";
 "Adding pages…" = "Ajout des pages…";
 "Additional options" = "Options supplémentaires";
 "All" = "Tout";
@@ -407,6 +409,7 @@
 "CONVERT" = "CONVERTIR";
 "CONVERT AUDIO CHANNELS" = "CONVERTIR LES CANAUX AUDIO";
 "CONVERT TO" = "CONVERTIR EN";
+"CONVERT WITH NASHI" = "CONVERT WITH NASHI";
 "CONVERT · WHILE DRAGGING" = "CONVERTIR · PENDANT LE GLISSEMENT";
 "CONVERT, FINE-TUNE, AND SEND THEM ON THEIR WAY." = "CONVERTISSEZ, PEAUFINEZ ET ENVOYEZ-LES SUR LEUR CHEMIN.";
 "COPIED LINK" = "LIEN COPIÉ";
@@ -584,6 +587,7 @@
 "Convert to" = "Convertir en";
 "Convert to %@" = "Convertir en %@";
 "Convert to %lld" = "Convertir en %lld";
+"Convert with Nashi" = "Convert with Nashi";
 "Convert · while dragging" = "Convertir · pendant le glissement";
 "Convert, fine-tune, and send them on their way." = "Convertissez, peaufinez et envoyez-les sur leur chemin.";
 "Converting to %@ is not supported on Linux." = "Converting to %@ is not supported on Linux.";
@@ -1247,6 +1251,7 @@
 "Mute Video · Nashi" = "Couper le son de la vidéo · Nashi";
 "NASHI CHECKS ONCE AN HOUR WHILE IT’S RUNNING. YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL." = "NASHI VÉRIFIE UNE FOIS PAR HEURE PENDANT SON EXÉCUTION. VOUS CHOISISSEZ QUAND TÉLÉCHARGER ET INSTALLER.";
 "NASHI IS ALREADY RUNNING BUT IS STILL STARTING. OPEN IT FROM THE SYSTEM TRAY OR TRY AGAIN IN A MOMENT." = "NASHI EST DÉJÀ OUVERT MAIS DÉMARRE ENCORE. OUVREZ-LE DEPUIS LA ZONE DE NOTIFICATION OU RÉESSAYEZ DANS UN INSTANT.";
+"NASHI IS RUNNING BUT DID NOT ANSWER." = "NASHI IS RUNNING BUT DID NOT ANSWER.";
 "NASHI IS STILL RUNNING." = "NASHI EST TOUJOURS EN COURS D’EXÉCUTION.";
 "NASHI SAVES RESULTS BESIDE THE ORIGINALS. ALLOW A FOLDER ONCE TO INCLUDE EVERY FOLDER INSIDE IT." = "NASHI ENREGISTRE LES RÉSULTATS À CÔTÉ DES ORIGINAUX. AUTORISEZ UN DOSSIER UNE SEULE FOIS POUR INCLURE TOUS LES DOSSIERS QU’IL CONTIENT.";
 "NASHI SETTINGS" = "RÉGLAGES DE NASHI";
@@ -1254,6 +1259,7 @@
 "NASHI UPDATE COULD NOT FINISH" = "LA MISE À JOUR DE NASHI N’A PAS PU SE TERMINER";
 "NASHI USES FFMPEG FOR AUDIO AND VIDEO. DOWNLOADS COME STRAIGHT FROM THE UPSTREAM PROJECTS AND ARE CHECKED BEFORE ANYTHING IS INSTALLED." = "NASHI USES FFMPEG FOR AUDIO AND VIDEO. DOWNLOADS COME STRAIGHT FROM THE UPSTREAM PROJECTS AND ARE CHECKED BEFORE ANYTHING IS INSTALLED.";
 "NASHI · FEATURES & SHORTCUTS" = "NASHI · FONCTIONNALITÉS ET RACCOURCIS";
+"NASHI — COMPLETE" = "NASHI — COMPLETE";
 "NASHI — PROGRESS" = "NASHI — PROGRESS";
 "NEXT" = "SUIVANT";
 "NEXT FRAME" = "IMAGE SUIVANTE";
@@ -1285,17 +1291,20 @@
 "NORMALIZE VOLUME" = "NORMALISER LE VOLUME";
 "NOTE" = "NOTE";
 "NOTHING HERE YET. PASTE SOMETHING OR MAKE YOUR FIRST FRESH COPY." = "RIEN ICI POUR L’INSTANT. COLLEZ QUELQUE CHOSE OU CRÉEZ VOTRE PREMIÈRE COPIE.";
+"NOTHING TO CONVERT" = "NOTHING TO CONVERT";
 "NUMBER" = "NUMÉRO";
 "NUMBER OF CLIPS" = "NOMBRE DE CLIPS";
 "Nashi Settings" = "Réglages de Nashi";
 "Nashi checks once an hour while it’s running. You choose when to download and install." = "Nashi vérifie une fois par heure pendant son exécution. Vous choisissez quand télécharger et installer.";
 "Nashi is already running but is still starting. Open it from the system tray or try again in a moment." = "Nashi est déjà ouvert mais démarre encore. Ouvrez-le depuis la zone de notification ou réessayez dans un instant.";
+"Nashi is running but did not answer." = "Nashi is running but did not answer.";
 "Nashi is still running." = "Nashi est toujours en cours d’exécution.";
 "Nashi saves results beside the originals. Allow a folder once to include every folder inside it." = "Nashi enregistre les résultats à côté des originaux. Autorisez un dossier une seule fois pour inclure tous les dossiers qu’il contient.";
 "Nashi update" = "Mise à jour de Nashi";
 "Nashi update could not finish" = "La mise à jour de Nashi n’a pas pu se terminer";
 "Nashi uses FFmpeg for audio and video. Downloads come straight from the upstream projects and are checked before anything is installed." = "Nashi uses FFmpeg for audio and video. Downloads come straight from the upstream projects and are checked before anything is installed.";
 "Nashi · Features & shortcuts" = "Nashi · Fonctionnalités et raccourcis";
+"Nashi — Complete" = "Nashi — Complete";
 "Nashi — Progress" = "Nashi — Progress";
 "Next" = "Suivant";
 "Next frame" = "Image suivante";
@@ -1309,6 +1318,8 @@
 "Nicely done. 1 file is ready." = "Bien joué. 1 fichier est prêt.";
 "No QR codes found. Try a larger or sharper image." = "Aucun code QR trouvé. Essayez une image plus grande ou plus nette.";
 "No QR codes this time." = "Aucun code QR cette fois.";
+"No conversions for %@ files yet." = "No conversions for %@ files yet.";
+"No conversions for %lld files yet." = "No conversions for %lld files yet.";
 "No conversions for this selection yet." = "No conversions for this selection yet.";
 "No folders allowed yet." = "Aucun dossier autorisé pour l’instant.";
 "No matches. Try a file name or tool." = "Aucun résultat. Essayez un nom de fichier ou d’outil.";
@@ -1318,6 +1329,8 @@
 "No public downloadable media found. Some sites require sign-in or do not expose downloadable media." = "Aucun média public téléchargeable trouvé. Certains sites exigent une connexion ou n’exposent pas de médias téléchargeables.";
 "No text could be extracted or recognized in this PDF." = "Aucun texte n’a pu être extrait ou reconnu dans ce PDF.";
 "No timed subtitle cues were found." = "Aucune réplique de sous-titre horodatée n’a été trouvée.";
+"No tools for %@ files yet." = "No tools for %@ files yet.";
+"No tools for %lld files yet." = "No tools for %lld files yet.";
 "No tools for this selection yet." = "No tools for this selection yet.";
 "No unprotected downloadable format is available." = "Aucun format téléchargeable non protégé n’est disponible.";
 "No update checks yet" = "Aucune recherche de mise à jour pour l’instant";
@@ -1329,6 +1342,7 @@
 "Normalize Volume" = "Normaliser le volume";
 "Note" = "Note";
 "Nothing here yet. Paste something or make your first fresh copy." = "Rien ici pour l’instant. Collez quelque chose ou créez votre première copie.";
+"Nothing to convert" = "Nothing to convert";
 "Number" = "Numéro";
 "Number of clips" = "Nombre de clips";
 "OFFICE CABINET IS MISSING A FILE." = "IL MANQUE UN FICHIER DANS LE CABINET OFFICE.";
@@ -1590,6 +1604,7 @@
 "REMOVE SELECTED RANGE" = "RETIRER LA PLAGE SÉLECTIONNÉE";
 "REMOVE SILENCE AT THE BEGINNING AND END" = "SUPPRIMER LE SILENCE AU DÉBUT ET À LA FIN";
 "REMOVE SILENCE FROM BEGINNING AND END" = "SUPPRIMER LE SILENCE AU DÉBUT ET À LA FIN";
+"REMOVED THE CTRL+ALT+N SHORTCUT." = "REMOVED THE CTRL+ALT+N SHORTCUT.";
 "RENDERED PAGES EXCEED 512 MB. CHOOSE A LOWER DPI OR SPLIT THE PDF FIRST." = "LES PAGES RENDUES DÉPASSENT 512 MO. CHOISISSEZ UN DPI PLUS BAS OU DIVISEZ D’ABORD LE PDF.";
 "REPLACE SELECTED AUDIO WITH" = "REMPLACER L’AUDIO SÉLECTIONNÉ PAR";
 "REPORT SAVED." = "RAPPORT ENREGISTRÉ.";
@@ -1655,6 +1670,9 @@
 "Remove selected range" = "Retirer la plage sélectionnée";
 "Remove silence at the beginning and end" = "Supprimer le silence au début et à la fin";
 "Remove silence from beginning and end" = "Supprimer le silence au début et à la fin";
+"Removed %@" = "Removed %@";
+"Removed %lld" = "Removed %lld";
+"Removed the Ctrl+Alt+N shortcut." = "Removed the Ctrl+Alt+N shortcut.";
 "Rendered pages exceed 512 MB. Choose a lower DPI or split the PDF first." = "Les pages rendues dépassent 512 Mo. Choisissez un DPI plus bas ou divisez d’abord le PDF.";
 "Rendering page %@" = "Rendu de la page %@";
 "Rendering page %lld" = "Rendu de la page %lld";
@@ -1771,6 +1789,7 @@
 "SHOW ORIGINAL" = "AFFICHER L’ORIGINAL";
 "SILENCE THRESHOLD" = "SEUIL DE SILENCE";
 "SKIP TOUR" = "PASSER LA VISITE";
+"SKIPPED THE KEYBOARD SHORTCUT: GNOME SETTINGS ARE NOT AVAILABLE." = "SKIPPED THE KEYBOARD SHORTCUT: GNOME SETTINGS ARE NOT AVAILABLE.";
 "SLIDES" = "DIAPOSITIVES";
 "SMALL · 1280 PX" = "PETIT · 1280 PX";
 "SMALL · 1280 PX LONGEST EDGE" = "PETIT · 1280 PX SUR LE PLUS GRAND CÔTÉ";
@@ -1799,9 +1818,11 @@
 "START" = "DÉBUT";
 "START HERE" = "COMMENCEZ ICI";
 "START MUST BE BEFORE END, WITHIN THE MEDIA DURATION." = "LE DÉBUT DOIT PRÉCÉDER LA FIN, DANS LA DURÉE DU MÉDIA.";
+"STARTED NASHI IN THE BACKGROUND." = "STARTED NASHI IN THE BACKGROUND.";
 "STARTING DOWNLOAD…" = "DÉMARRAGE DU TÉLÉCHARGEMENT…";
 "STEREO" = "STÉRÉO";
 "STILL IMAGE" = "IMAGE FIXE";
+"STOPPED THE BACKGROUND NASHI." = "STOPPED THE BACKGROUND NASHI.";
 "STRAIGHT TO THE GOOD STUFF." = "DROIT AU BUT.";
 "STROKE WIDTH" = "ÉPAISSEUR DU TRAIT";
 "STRONG" = "FORTE";
@@ -1912,6 +1933,7 @@
 "Skip tour" = "Passer la visite";
 "Skipped %@: only existing files can come in, not folders." = "Skipped %@: only existing files can come in, not folders.";
 "Skipped %lld: only existing files can come in, not folders." = "Skipped %lld: only existing files can come in, not folders.";
+"Skipped the keyboard shortcut: GNOME settings are not available." = "Skipped the keyboard shortcut: GNOME settings are not available.";
 "Slides" = "Diapositives";
 "Small · 1280 px" = "Petit · 1280 px";
 "Small · 1280 px longest edge" = "Petit · 1280 px sur le plus grand côté";
@@ -1941,9 +1963,11 @@
 "Staging cannot be a symbolic link." = "Le dossier intermédiaire ne peut pas être un lien symbolique.";
 "Start" = "Début";
 "Start must be before End, within the media duration." = "Le début doit précéder la fin, dans la durée du média.";
+"Started Nashi in the background." = "Started Nashi in the background.";
 "Starting download…" = "Démarrage du téléchargement…";
 "Stereo" = "Stéréo";
 "Still image" = "Image fixe";
+"Stopped the background Nashi." = "Stopped the background Nashi.";
 "Straight to the good stuff." = "Droit au but.";
 "Stroke width" = "Épaisseur du trait";
 "Strong" = "Forte";
@@ -2243,6 +2267,8 @@
 "Windows could not add Nashi to the system tray." = "Windows n’a pas pu ajouter Nashi à la zone de notification.";
 "Windows could not create a tray icon." = "Windows n’a pas pu créer d’icône dans la zone de notification.";
 "Working…" = "Traitement en cours…";
+"Wrote %@" = "Wrote %@";
+"Wrote %lld" = "Wrote %lld";
 "YOU CAN ALSO CHOOSE FILES FROM THE MAIN WINDOW." = "VOUS POUVEZ AUSSI CHOISIR DES FICHIERS DEPUIS LA FENÊTRE PRINCIPALE.";
 "YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL." = "VOUS CHOISISSEZ QUAND TÉLÉCHARGER ET INSTALLER.";
 "YOU HAVE THE LATEST PUBLISHED WINDOWS VERSION." = "VOUS DISPOSEZ DE LA DERNIÈRE VERSION PUBLIÉE POUR WINDOWS.";
@@ -2258,6 +2284,7 @@
 "YOUR LIBRARY" = "VOTRE BIBLIOTHÈQUE";
 "YOUR NEXT FRESH COPY WILL LAND HERE." = "VOTRE PROCHAINE COPIE ARRIVERA ICI.";
 "YOUR ORIGINAL STAYS SAFE" = "VOTRE ORIGINAL RESTE INTACT";
+"YOUR TASK IS COMPLETE." = "YOUR TASK IS COMPLETE.";
 "YOUR TOOLS ARE READY." = "VOS OUTILS SONT PRÊTS.";
 "YOUR TOOLS ARE READY. LET’S PUT THAT NEXT FILE TO GOOD USE." = "VOS OUTILS SONT PRÊTS. METTONS CE PROCHAIN FICHIER À PROFIT.";
 "YOUTUBE THUMBNAIL · BEST AVAILABLE FULL-SIZE IMAGE" = "MINIATURE YOUTUBE · MEILLEURE IMAGE EN TAILLE RÉELLE DISPONIBLE";
@@ -2278,6 +2305,7 @@
 "Your kind of flow." = "Votre façon de travailler.";
 "Your next fresh copy will land here." = "Votre prochaine copie arrivera ici.";
 "Your original stays safe" = "Votre original reste intact";
+"Your task is complete." = "Your task is complete.";
 "Your tools are ready." = "Vos outils sont prêts.";
 "Your tools are ready. Let’s put that next file to good use." = "Vos outils sont prêts. Mettons ce prochain fichier à profit.";
 "You’re all set.\nMake something good." = "Tout est prêt.\nCréez quelque chose de bien.";
