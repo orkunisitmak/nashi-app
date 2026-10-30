@@ -30,6 +30,8 @@ try
     var math="1\n00:00:01,000 --> 00:00:02,000\nx <b + 1 and y > 3 <v Ann Lee>hi</v> <c.red.big>ok</c>\n";
     Check(SubtitleCodec.Convert(math,"vtt").Contains("x &lt;b + 1 and y > 3 <v Ann Lee>hi</v> <c.red.big>ok</c>"),"VTT escaping treated text after a tag name as an annotation or broke voice/class tags");
     Check(SubtitleCodec.Convert(math,"txt")=="x <b + 1 and y > 3 hi ok\n","TXT export removed text that only starts like a tag");
+    var tabbed="1\n00:00:01,000 --> 00:00:02,000\n<font\tcolor=\"red\">Hi</font> <v\tAnn>yo</v>\n";
+    Check(SubtitleCodec.Convert(tabbed,"vtt").Contains("<font\tcolor=\"red\">Hi</font> <v\tAnn>yo</v>")&&SubtitleCodec.Convert(tabbed,"txt")=="Hi yo\n","Tab-separated tag attributes were not treated as markup");
     Check(SubtitleCodec.Convert(srt,"srt").Contains("5 < 6 and 7 > 3")&&SubtitleCodec.Convert("WEBVTT\n\n00:01.000 --> 00:02.000\n<v Ann>Tom &amp; <b>Jerry</b></v>\n","srt").Contains("Tom & <b>Jerry</b>"),"SRT export changed plain comparison text or SRT formatting tags");
     foreach(var area in new[]{new WindowFrame(0,24,1511,910),new WindowFrame(-1920,-1030,1920,1006),new WindowFrame(1512,40,1727,1090)})
     {

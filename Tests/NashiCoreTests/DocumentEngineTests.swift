@@ -23,6 +23,9 @@ final class DocumentEngineTests: XCTestCase {
         let math = try file("Math.srt", "1\n00:00:01,000 --> 00:00:02,000\nx <b + 1 and y > 3 <v Ann Lee>hi</v> <c.red.big>ok</c>\n")
         XCTAssertTrue(try DocumentText.read(convert(math, "vtt")).contains("x &lt;b + 1 and y > 3 <v Ann Lee>hi</v> <c.red.big>ok</c>"))
         XCTAssertEqual(try DocumentText.read(convert(math, "txt")), "x <b + 1 and y > 3 hi ok\n")
+        let tabbed = try file("Tabbed.srt", "1\n00:00:01,000 --> 00:00:02,000\n<font\tcolor=\"red\">Hi</font> <v\tAnn>yo</v>\n")
+        XCTAssertTrue(try DocumentText.read(convert(tabbed, "vtt")).contains("<font\tcolor=\"red\">Hi</font> <v\tAnn>yo</v>"))
+        XCTAssertEqual(try DocumentText.read(convert(tabbed, "txt")), "Hi yo\n")
         let tagged = try file("Tags.vtt", "WEBVTT\n\n00:01.000 --> 00:02.000\nTom &amp; Jerry &lt;3 <c.red>hi</c> <00:01.500>late\n")
         XCTAssertTrue(try DocumentText.read(convert(tagged, "vtt")).contains("Tom &amp; Jerry &lt;3 <c.red>hi</c> <00:01.500>late"))
     }

@@ -82,13 +82,13 @@ enum SubtitleCodec {
     }
     // Only real cue tags are markup: b/i/u/c/ruby/rt take classes only, v/lang take an annotation, font takes
     // attributes. "5 < 6 and 7 > 3" and "x <b + 1 and y > 3" are text and must survive export.
-    private static let cueTag = #"/?(?:(?:b|i|u|c|ruby|rt)(?:\.[^<>\s]*)?|(?:v|lang)(?:\.[^<>\s]*)?(?: [^<>\n]*)?|font(?: [^<>\n]*)?)>|\d{2,}:\d{2}(?::\d{2})?\.\d{3}>"#
+    private static let cueTag = #"/?(?:(?:b|i|u|c|ruby|rt)(?:\.[^<>\s]*)?|(?:v|lang)(?:\.[^<>\s]*)?(?:[ \t\f][^<>\n]*)?|font(?:[ \t\f][^<>\n]*)?)>|\d{2,}:\d{2}(?::\d{2})?\.\d{3}>"#
     private static func vttText(_ text: String) -> String {
         // WebVTT reads a bare "<" as the start of a tag and drops the rest of the line, so only a complete
         // known tag or timestamp keeps its "<". WebVTT tag names are case-sensitive, so <I> from SRT becomes <i>.
         let ampersands = text.replacingOccurrences(of: #"&(?!(?:[A-Za-z][A-Za-z0-9]*|#\d+|#[xX][0-9A-Fa-f]+);)"#, with: "&amp;", options: .regularExpression)
         let escaped = ampersands.replacingOccurrences(of: "(?i)<(?!" + cueTag + ")", with: "&lt;", options: .regularExpression)
-        let names = try! NSRegularExpression(pattern: #"<(/?)(b|i|u|c|v|lang|ruby|rt|font)(?=[ .>])"#, options: .caseInsensitive)
+        let names = try! NSRegularExpression(pattern: #"<(/?)(b|i|u|c|v|lang|ruby|rt|font)(?=[ \t\f.>])"#, options: .caseInsensitive)
         var result = escaped
         for match in names.matches(in: result, range: NSRange(result.startIndex..., in: result)).reversed() {
             let range = Range(match.range, in: result)!
