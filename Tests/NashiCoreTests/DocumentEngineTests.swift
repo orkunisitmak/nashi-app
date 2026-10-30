@@ -18,8 +18,11 @@ final class DocumentEngineTests: XCTestCase {
         XCTAssertTrue(vtt.contains("5 &lt; 6 and 7 > 3"))
         XCTAssertEqual(try DocumentText.read(convert(input, "txt")), "I <3 you & him really\n\n5 < 6 and 7 > 3\n")
         let edge = try file("Edge.srt", "1\n100:00:01,000 --> 100:00:03,000\n<I>Hello</I> <i love you <100:00:02.000>late\n")
-        XCTAssertTrue(try DocumentText.read(convert(edge, "vtt")).contains("<I>Hello</I> &lt;i love you <100:00:02.000>late"))
+        XCTAssertTrue(try DocumentText.read(convert(edge, "vtt")).contains("<i>Hello</i> &lt;i love you <100:00:02.000>late"))
         XCTAssertEqual(try DocumentText.read(convert(edge, "txt")), "Hello <i love you late\n")
+        let math = try file("Math.srt", "1\n00:00:01,000 --> 00:00:02,000\nx <b + 1 and y > 3 <v Ann Lee>hi</v> <c.red.big>ok</c>\n")
+        XCTAssertTrue(try DocumentText.read(convert(math, "vtt")).contains("x &lt;b + 1 and y > 3 <v Ann Lee>hi</v> <c.red.big>ok</c>"))
+        XCTAssertEqual(try DocumentText.read(convert(math, "txt")), "x <b + 1 and y > 3 hi ok\n")
         let tagged = try file("Tags.vtt", "WEBVTT\n\n00:01.000 --> 00:02.000\nTom &amp; Jerry &lt;3 <c.red>hi</c> <00:01.500>late\n")
         XCTAssertTrue(try DocumentText.read(convert(tagged, "vtt")).contains("Tom &amp; Jerry &lt;3 <c.red>hi</c> <00:01.500>late"))
     }

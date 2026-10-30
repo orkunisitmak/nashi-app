@@ -25,8 +25,11 @@ try
     Check(SubtitleCodec.Convert("WEBVTT\n\n00:01.000 --> 00:02.000\nTom &amp; Jerry &lt;3 <c.red>hi</c> <00:01.500>late\n","vtt").Contains("Tom &amp; Jerry &lt;3 <c.red>hi</c> <00:01.500>late"),"VTT to VTT re-escaped entities or cue tags");
     Check(SubtitleCodec.Convert(srt,"txt")=="I <3 you & him really\n\n5 < 6 and 7 > 3\n","TXT export stripped text that only looks like a tag");
     var edge="1\n100:00:01,000 --> 100:00:03,000\n<I>Hello</I> <i love you <100:00:02.000>late\n";
-    Check(SubtitleCodec.Convert(edge,"vtt").Contains("<I>Hello</I> &lt;i love you <100:00:02.000>late"),"VTT escaping mishandled an uppercase tag, an unterminated tag start or a three-digit hour timestamp");
+    Check(SubtitleCodec.Convert(edge,"vtt").Contains("<i>Hello</i> &lt;i love you <100:00:02.000>late"),"VTT escaping mishandled an uppercase tag, an unterminated tag start or a three-digit hour timestamp");
     Check(SubtitleCodec.Convert(edge,"txt")=="Hello <i love you late\n","TXT export mishandled an uppercase tag, an unterminated tag start or a three-digit hour timestamp");
+    var math="1\n00:00:01,000 --> 00:00:02,000\nx <b + 1 and y > 3 <v Ann Lee>hi</v> <c.red.big>ok</c>\n";
+    Check(SubtitleCodec.Convert(math,"vtt").Contains("x &lt;b + 1 and y > 3 <v Ann Lee>hi</v> <c.red.big>ok</c>"),"VTT escaping treated text after a tag name as an annotation or broke voice/class tags");
+    Check(SubtitleCodec.Convert(math,"txt")=="x <b + 1 and y > 3 hi ok\n","TXT export removed text that only starts like a tag");
     Check(SubtitleCodec.Convert(srt,"srt").Contains("5 < 6 and 7 > 3")&&SubtitleCodec.Convert("WEBVTT\n\n00:01.000 --> 00:02.000\n<v Ann>Tom &amp; <b>Jerry</b></v>\n","srt").Contains("Tom & <b>Jerry</b>"),"SRT export changed plain comparison text or SRT formatting tags");
     foreach(var area in new[]{new WindowFrame(0,24,1511,910),new WindowFrame(-1920,-1030,1920,1006),new WindowFrame(1512,40,1727,1090)})
     {
