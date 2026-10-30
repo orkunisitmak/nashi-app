@@ -6,6 +6,20 @@ internal static class ParityChecks
 {
     public static void Run(Action<bool,string> check,string root)
     {
+        foreach(var (flag,expected) in new[]{("0",1),("false",1),("off",1),("1",0),("true",0),("on",0),("",0)})
+        {
+            var styleStrike=Path.Combine(root,"Style strike "+flag+".docx");using(var archive=ZipFile.Open(styleStrike,ZipArchiveMode.Create))
+            {
+                void Part(string name,string text){using var writer=new StreamWriter(archive.CreateEntry(name).Open(),new UTF8Encoding(false));writer.Write(text);}
+                var strike="<w:strike"+(flag.Length==0?"":" w:val=\""+flag+"\"")+"/>";
+                Part("word/styles.xml","<w:styles xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:style w:styleId=\"Parent\"><w:rPr><w:strike/></w:rPr></w:style><w:style w:styleId=\"Child\"><w:basedOn w:val=\"Parent\"/><w:rPr>"+strike+"</w:rPr></w:style><w:style w:type=\"character\" w:styleId=\"RunToggle\"><w:rPr>"+strike+"</w:rPr></w:style></w:styles>");
+                Part("word/document.xml","<w:document xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:body><w:p><w:pPr><w:pStyle w:val=\"Child\"/></w:pPr><w:r><w:t>Style toggle</w:t></w:r><w:r><w:rPr><w:strike w:val=\"false\"/></w:rPr><w:t>Direct off</w:t></w:r><w:r><w:rPr><w:strike/></w:rPr><w:t>Direct on</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val=\"Parent\"/></w:pPr><w:r><w:rPr><w:rStyle w:val=\"RunToggle\"/></w:rPr><w:t>Character toggle</w:t></w:r></w:p></w:body></w:document>");
+            }
+            using var model=System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(OfficeDocuments.ReadDocx(styleStrike)));var runs=model.RootElement.GetProperty("blocks")[0].GetProperty("runs");
+            check(runs[0].GetProperty("character").GetProperty("strikethru").GetInt32()==expected,"Word style strikethrough toggle '"+flag+"' lost its inherited state");
+            check(runs[1].GetProperty("character").GetProperty("strikethru").GetInt32()==0&&runs[2].GetProperty("character").GetProperty("strikethru").GetInt32()==1,"Direct strikethrough did not override style formatting");
+            check(model.RootElement.GetProperty("blocks")[1].GetProperty("runs")[0].GetProperty("character").GetProperty("strikethru").GetInt32()==expected,"Character style strikethrough did not toggle the paragraph's state");
+        }
         check(FeatureCatalog.Conversions.Count==46&&FeatureCatalog.ToolNames.Count==27,"Mac/Windows catalog count diverged");
         check(FeatureCatalog.Formats(["a.htm","b.html"]).SequenceEqual(new[]{"pdf"})&&FeatureCatalog.Tools(["a.html"]).Length==0,"HTML inputs lost their PDF route");
         check(FeatureCatalog.Formats(["a.jpeg","b.png"]).Contains("webp"),"Mixed image conversion intersection failed");
