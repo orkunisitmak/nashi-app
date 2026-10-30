@@ -1,19 +1,33 @@
 using Avalonia;
+using Avalonia.Animation;
+using Avalonia.Animation.Easings;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
+using Avalonia.Media;
+using Avalonia.Media.Imaging;
+using Avalonia.Media.Transformation;
 using Avalonia.Threading;
+using ImageMagick;
+using Nashi.Core;
+using Path = System.IO.Path;
 
 namespace Nashi.Linux;
 
-/// A borderless, transparent window that holds one wheel over the main window.
-/// It closes on Esc, on a click outside the petals, when it loses focus, and after a choice.
+/// A borderless, transparent window that holds one wheel over the main window, with up to two of the files as
+/// cards beside it, or bare at the pointer. It opens with a short scale and fade (unless motion is reduced), and
+/// closes on Esc, on a click outside the petals, when it loses focus, and after a choice.
 /// At the pointer (ShowAt) it also grabs input on X11 and closes when abandoned.
 public sealed partial class WheelWindow : Window
 {
+    /// The room one file card takes beside the wheel.
+    public const double CardColumn = 150;
+
     public WheelWindow() : this("", []) { }
 
-    public WheelWindow(string title, IReadOnlyList<WheelItem> items)
+    public WheelWindow(string title, IReadOnlyList<WheelItem> items, IReadOnlyList<string>? cards = null)
     {
         InitializeComponent();
         Ring.Title = title;
@@ -22,9 +36,119 @@ public sealed partial class WheelWindow : Window
         Ring.Dismissed += Close;
         Opened += (_, _) => Ring.Focus();
         Deactivated += (_, _) => { if (IsVisible) Close(); };
+
+        var shown = (cards ?? []).Take(2).ToArray();
+        var loads = new List<Task>();
+        if (shown.Length > 0) Width = Wheel.Size + 2 * CardColumn;
+        if (shown.Length > 0) LeftCard.Content = FileCard(shown[0], loads);
+        if (shown.Length > 1) RightCard.Content = FileCard(shown[1], loads);
+        Thumbnails = Task.WhenAll(loads);
+
+        if (!WheelFeedback.MotionEnabled) return;
+        // playground.css wheel-in, at the macOS length: from 94 % and transparent to full size, ease-out.
+        Root.Opacity = 0;
+        Root.RenderTransform = TransformOperations.Parse("scale(0.94)");
+        Root.Transitions =
+        [
+            new DoubleTransition { Property = OpacityProperty, Duration = WheelFeedback.Opening, Easing = new CubicEaseOut() },
+            new TransformOperationsTransition { Property = RenderTransformProperty, Duration = WheelFeedback.Opening, Easing = new CubicEaseOut() },
+        ];
+        Opened += (_, _) =>
+        {
+            Root.Opacity = 1;
+            Root.RenderTransform = TransformOperations.Parse("scale(1)");
+        };
     }
 
     public Wheel Wheel => Ring;
+
+    /// Completes when the cards' thumbnails are decoded (or replaced by type icons).
+    public Task Thumbnails { get; }
+
+    // The playground's selected file (.demo-file): a thumbnail with a white border, or a sheet with the type icon,
+    // above the name in a pill.
+    private Control FileCard(string path, List<Task> loads)
+    {
+        var holder = new Panel { Width = 94, Height = 85 };
+        holder.Children.Add(Sheet(path));
+        if (FeatureCatalog.IsImage(path)) loads.Add(LoadThumbnail(holder, path));
+        var name = new Border
+        {
+            CornerRadius = new CornerRadius(4),
+            Padding = new Thickness(6, 3),
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Child = new TextBlock { Text = Path.GetFileName(path), FontSize = 11, MaxWidth = 113, TextTrimming = TextTrimming.CharacterEllipsis },
+        };
+        name.Bind(Border.BackgroundProperty, this.GetResourceObservable("NashiSage"));
+        var card = new Border
+        {
+            Width = 126,
+            Padding = new Thickness(9),
+            CornerRadius = new CornerRadius(11),
+            BorderThickness = new Thickness(1),
+            Child = new StackPanel { Spacing = 9, Children = { holder, name } },
+        };
+        card.Bind(Border.BackgroundProperty, this.GetResourceObservable("NashiSageChip"));
+        card.Bind(Border.BorderBrushProperty, this.GetResourceObservable("NashiBorder"));
+        return card;
+    }
+
+    private Control Sheet(string path)
+    {
+        var icon = new Avalonia.Controls.Shapes.Path { Data = WheelIcons.ForFile(path), StrokeThickness = WheelIcons.Stroke, StrokeLineCap = PenLineCap.Round, StrokeJoin = PenLineJoin.Round };
+        var label = new TextBlock { Text = FeatureCatalog.Extension(path).ToUpperInvariant(), FontSize = 11, FontWeight = Avalonia.Media.FontWeight.Bold, HorizontalAlignment = HorizontalAlignment.Center };
+        icon.Bind(Shape.StrokeProperty, this.GetResourceObservable("NashiTextSecondary"));
+        label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable("NashiTextSecondary"));
+        var sheet = new Border
+        {
+            Width = 67,
+            Height = 83,
+            CornerRadius = new CornerRadius(4, 14, 4, 4),
+            BorderThickness = new Thickness(1),
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Child = new StackPanel
+            {
+                Spacing = 8,
+                VerticalAlignment = VerticalAlignment.Center,
+                Children = { new Viewbox { Width = 26, Height = 26, Child = new Canvas { Width = 24, Height = 24, Children = { icon } } }, label },
+            },
+        };
+        sheet.Bind(Border.BackgroundProperty, this.GetResourceObservable("NashiSurface"));
+        sheet.Bind(Border.BorderBrushProperty, this.GetResourceObservable("NashiBorder"));
+        return sheet;
+    }
+
+    // Decoded off the UI thread; a file that will not decode keeps its sheet.
+    private static async Task LoadThumbnail(Panel holder, string path)
+    {
+        byte[] png;
+        try
+        {
+            png = await Task.Run(() =>
+            {
+                using var image = PhotoCodec.Read(path);
+                image.AutoOrient();
+                image.Thumbnail(new MagickGeometry(172, 128)); // 2× the 86×64 picture inside the white border
+                return image.ToByteArray(MagickFormat.Png);
+            });
+        }
+        catch (Exception error) when (error is MagickException or IOException or UnauthorizedAccessException or InvalidDataException or NotSupportedException) { return; }
+        using var stream = new MemoryStream(png);
+        holder.Children.Clear();
+        holder.Children.Add(new Border
+        {
+            Width = 94,
+            Height = 72,
+            Background = Brushes.White,
+            BorderBrush = Brushes.White,
+            BorderThickness = new Thickness(4),
+            CornerRadius = new CornerRadius(5),
+            BoxShadow = BoxShadows.Parse("0 8 8 0 #26000000"),
+            VerticalAlignment = VerticalAlignment.Center,
+            Child = new Image { Source = new Bitmap(stream), Stretch = Stretch.UniformToFill },
+        });
+    }
 
     private Action? releaseGrab;
     private DispatcherTimer? idle;
@@ -84,6 +208,13 @@ public sealed partial class WheelWindow : Window
         if (!IsVisible) return;
         releaseGrab = Desktop.Grab(this);
         if (releaseGrab is null && attempts > 1) DispatcherTimer.RunOnce(() => TryGrab(attempts - 1), TimeSpan.FromMilliseconds(40));
+    }
+
+    /// A click beside the wheel (on a card or the clear space around it) closes it, like one outside the petals.
+    protected override void OnPointerReleased(PointerReleasedEventArgs e)
+    {
+        base.OnPointerReleased(e);
+        if (!e.Handled && e.InitialPressMouseButton == MouseButton.Left) Close();
     }
 
     /// While grabbed, presses anywhere on screen arrive here; one outside the window closes it like a menu.

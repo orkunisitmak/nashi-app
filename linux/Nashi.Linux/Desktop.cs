@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
@@ -26,6 +28,21 @@ public static class Desktop
         }
         catch (Exception error) when (error is DllNotFoundException or EntryPointNotFoundException) { return null; }
     }
+
+    /// Starts a program with an argument list in `folder` (null: here) without waiting; false when it is missing.
+    /// The checks swap in a recorder, so nothing is ever launched from them.
+    public static Func<string, IReadOnlyList<string>, string?, bool> Start { get; set; } = (program, args, folder) =>
+    {
+        try
+        {
+            using var process = Process.Start(new ProcessStartInfo(program, args) { UseShellExecute = false, WorkingDirectory = folder ?? "" });
+            return process is not null;
+        }
+        catch (Win32Exception) { return false; }
+    };
+
+    /// Runs a program with an argument list and waits: its stdout, or null when missing or failing (Integration.Run).
+    public static Func<string, IReadOnlyList<string>, string?> Run { get; set; } = Integration.Run;
 
     /// Top-left for a window of `size` centered on `center`, kept fully inside `area`.
     public static PixelPoint Place(PixelPoint center, PixelSize size, PixelRect area) =>

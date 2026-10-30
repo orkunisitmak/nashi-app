@@ -7,5 +7,10 @@
         SystemDecorations="None" ShowInTaskbar="False" WindowStartupLocation="CenterOwner"
         Background="Transparent" TransparencyLevelHint="Transparent"
         TransparencyBackgroundFallback="{DynamicResource NashiCanvas}">
-  <local:Wheel x:Name="Ring" />
+  <!-- Home's wheel has the selected files as cards on either side (macOS's in-app look); the pointer wheel is bare. -->
+  <Grid x:Name="Root" ColumnDefinitions="*,320,*" RenderTransformOrigin="50%,50%">
+    <ContentControl x:Name="LeftCard" HorizontalAlignment="Center" VerticalAlignment="Center" />
+    <local:Wheel x:Name="Ring" Grid.Column="1" />
+    <ContentControl x:Name="RightCard" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" />
+  </Grid>
 </Window>

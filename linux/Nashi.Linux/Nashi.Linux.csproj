@@ -21,5 +21,7 @@
     <AvaloniaResource Include="../../Resources/Brand/NashiIcon.png" Link="Assets/NashiIcon.png" />
     <!-- Also a plain resource: the integration installer runs without Avalonia. -->
     <EmbeddedResource Include="../../Resources/Brand/NashiIcon.png" LogicalName="Nashi.Icon.png" />
+    <!-- A file beside the executable: paplay/aplay play it by path. -->
+    <None Include="../../Resources/Sounds/WheelSelection.wav" Link="Sounds/WheelSelection.wav" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
