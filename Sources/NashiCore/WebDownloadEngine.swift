@@ -132,8 +132,7 @@ public enum WebDownloadEngine {
                 throw NashiError.failed("The selected video size could not be applied.")
             }
             try token.check()
-            try FileManager.default.removeItem(at:file)
-            try FileManager.default.moveItem(at:replacement,to:file)
+            _ = try FileManager.default.replaceItemAt(file,withItemAt:replacement)
         }
     }
 
@@ -165,7 +164,7 @@ public enum WebDownloadEngine {
 
     static func downloadDirect(_ info:WebMediaInfo,mode:WebDownloadMode,directory:URL,token:CancellationToken,
                                        progress:@escaping ProgressHandler) async throws -> [URL] {
-        let delegate=TransferDelegate(token:token,progress:progress)
+        let delegate=TransferDelegate(token:token,maximumBytes:20*1024*1024*1024,progress:progress)
         let configuration=URLSessionConfiguration.ephemeral;configuration.timeoutIntervalForRequest=45;configuration.timeoutIntervalForResource=21_600
         let session=URLSession(configuration:configuration,delegate:delegate,delegateQueue:nil)
         let watchdog=Task.detached {
@@ -212,14 +211,29 @@ public enum WebDownloadEngine {
     }
     public static func cleanFilename(_ proposed:String,mime:String?)->String {
         var name=(proposed as NSString).lastPathComponent
-        name=String(name.unicodeScalars.filter{!CharacterSet.controlCharacters.contains($0) && !CharacterSet(charactersIn:"/:\\").contains($0)}.prefix(170))
+        name=String(name.unicodeScalars.filter{!CharacterSet.controlCharacters.contains($0) && !CharacterSet(charactersIn:"/:\\").contains($0)})
         while name.hasPrefix(".") { name.removeFirst() }
         if name.isEmpty { name="Downloaded media" }
         let ext=(name as NSString).pathExtension.lowercased()
         let preferred=mime.flatMap{UTType(mimeType:$0)?.preferredFilenameExtension}
         let allowed=["jpg","jpeg","png","webp","heic","heif","avif","bmp","tif","tiff","svg","gif","mp4","mov","webm","mkv","m4v","mp3","m4a","wav","flac","ogg","opus","aac","aiff"]
-        if !allowed.contains(ext),let preferred,allowed.contains(preferred) { name=(name as NSString).deletingPathExtension+"."+preferred }
-        return name
+        if !allowed.contains(ext) {
+            let basename=(name as NSString).deletingPathExtension
+            name=preferred.flatMap{allowed.contains($0) ? basename+"."+$0:nil} ?? basename
+        }
+        let finalExtension=(name as NSString).pathExtension
+        let suffix=finalExtension.isEmpty ? "":"."+finalExtension
+        let basename=(name as NSString).deletingPathExtension
+        let budget=max(1,240-suffix.utf8.count)
+        var shortened=""
+        var usedBytes=0
+        for character in basename {
+            let character=String(character),byteCount=character.utf8.count
+            guard usedBytes+byteCount<=budget else { break }
+            shortened.append(character);usedBytes+=byteCount
+        }
+        if shortened.isEmpty { shortened="Downloaded" }
+        return shortened+suffix
     }
     public static func friendlyError(_ diagnostic:String)->String {
         let lower=diagnostic.lowercased()
@@ -249,8 +263,8 @@ public enum WebDownloadEngine {
     }
 
     private final class TransferDelegate:NSObject,URLSessionDownloadDelegate,@unchecked Sendable {
-        let token:CancellationToken,progress:ProgressHandler
-        init(token:CancellationToken,progress:@escaping ProgressHandler) { self.token=token;self.progress=progress }
+        let token:CancellationToken,maximumBytes:Int64,progress:ProgressHandler
+        init(token:CancellationToken,maximumBytes:Int64,progress:@escaping ProgressHandler) { self.token=token;self.maximumBytes=maximumBytes;self.progress=progress }
         private let transferLock=NSLock()
         private var cancelled=false
         private var task:URLSessionDownloadTask?
@@ -286,7 +300,7 @@ public enum WebDownloadEngine {
         func urlSession(_ session:URLSession,task:URLSessionTask,didCompleteWithError error:Error?) {
             transferLock.lock();let continuation=self.continuation;self.continuation=nil;self.task=nil;transferLock.unlock()
             guard let continuation else { return }
-            if let error=error ?? downloadError {
+            if let error=downloadError ?? error {
                 if let downloaded { try? FileManager.default.removeItem(at:downloaded.0) }
                 continuation.resume(throwing:error)
             } else if let downloaded { continuation.resume(returning:downloaded) }
@@ -295,6 +309,10 @@ public enum WebDownloadEngine {
         }
         func urlSession(_ session:URLSession,downloadTask:URLSessionDownloadTask,didWriteData bytesWritten:Int64,totalBytesWritten:Int64,totalBytesExpectedToWrite:Int64) {
             if token.isCancelled { downloadTask.cancel();return }
+            if totalBytesExpectedToWrite>maximumBytes || totalBytesWritten>maximumBytes {
+                downloadError=NashiError.invalidInput("The direct download exceeds the 20 GB limit.")
+                downloadTask.cancel();return
+            }
             let fraction=totalBytesExpectedToWrite>0 ? min(1,Double(totalBytesWritten)/Double(totalBytesExpectedToWrite)):0
             progress(totalBytesExpectedToWrite>0 ? fraction:OperationProgress.indeterminate,"Downloading · \(ByteCountFormatter.string(fromByteCount:totalBytesWritten,countStyle:.file))")
         }
