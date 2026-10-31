@@ -203,7 +203,7 @@ public sealed partial class MainWindow : Window
     {
         try
         {
-            if (flow.Busy) return;
+            // No busy check: a wheel opens during a run, and what is chosen waits its turn (WheelFlow queues it).
             if (Selection.Files.Count == 0)
             {
                 var picked = await PickFiles();

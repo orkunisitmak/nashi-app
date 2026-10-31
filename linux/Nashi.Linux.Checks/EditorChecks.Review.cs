@@ -44,6 +44,37 @@ static partial class EditorChecks
         check(File.Exists(output), "When the busy run ends, the waiting Save runs");
         SuccessToast.Current?.Close();
 
+        // Nothing is silent while busy: the wheel still opens, a direct run and an action wait their turn with a card.
+        bool Waiting() => flow.LastToast is { IsVisible: true } t && t.GetVisualDescendants().OfType<TextBlock>().Any(x => x.Text == "Waiting for the current task to finish…");
+        void Pump(Func<bool> until) { for (var i = 0; i < 300 && !until(); i++) { Thread.Sleep(20); Dispatcher.UIThread.RunJobs(); } }
+        var hold = new TaskCompletionSource();
+        flow.Current = hold.Task;
+        var wheelBefore = flow.LastWheel;
+        flow.ShowTools([source]);
+        Dispatcher.UIThread.RunJobs();
+        check(flow.LastWheel != wheelBefore && flow.LastWheel!.IsVisible, "While a run is busy the tools wheel still opens");
+        Choose(flow.LastWheel!, "convert");
+        Choose(flow.LastWheel!, "convert:jpg");
+        Pump(Waiting);
+        var jpg = Path.Combine(folder, Name + ".jpg");
+        check(Waiting() && !File.Exists(jpg), "A conversion chosen while busy waits, saying so");
+        hold.SetResult();
+        Pump(() => File.Exists(jpg) && !flow.Busy);
+        check(File.Exists(jpg) && !flow.Busy && flow.Current.IsCompleted, "Then it runs, and Busy ends with the queue");
+        SuccessToast.Current?.Close();
+        var holdAgain = new TaskCompletionSource();
+        flow.Current = holdAgain.Task;
+        flow.ShowActions([source]);
+        Dispatcher.UIThread.RunJobs();
+        Choose(flow.LastWheel!, "action:copyPath");
+        Pump(Waiting);
+        check(Waiting() && SuccessToast.Current is null, "An action chosen while busy waits, saying so");
+        holdAgain.SetResult();
+        string? Title() => SuccessToast.Current?.FindControl<TextBlock>("TitleText")?.Text;
+        Pump(() => Title() == "Path copied.");
+        check(Title() == "Path copied." && !flow.Busy, "Then the action runs");
+        SuccessToast.Current?.Close();
+
         // The colour profile stays on edited copies; their metadata goes.
         var tagged = Path.Combine(folder, Name + " tagged.jpg");
         using (var image = new MagickImage("gradient:red-blue", 64, 48))

@@ -47,6 +47,7 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
     private IReadOnlyList<string> files = [];
     private PixelPoint? pointer;
 
+    /// A run or action is working (others chosen meanwhile wait their turn, with a card saying so).
     public bool Busy { get; private set; }
 
     /// Where Copy and Move go: the folder picker over `host`; null when cancelled. It throws
@@ -120,7 +121,7 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
 
     private void ShowWheel(string title, IReadOnlyList<WheelItem> items, string empty)
     {
-        if (Busy || files.Count == 0) return;
+        if (files.Count == 0) return;
         if (items.Count == 0) { SuccessToast.Notice(empty).Present(); return; }
         var wheel = LastWheel = new WheelWindow(title, items, owner is not null ? files : null);
         wheel.Wheel.Chosen += OnChosen;
@@ -171,18 +172,41 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
             if (job is null) return;
             selection = panel.Inputs;
         }
-        else if (Busy) return;
-        // A saved job is never dropped: when a run is busy it waits for it, with its progress card up meanwhile.
+        // Never dropped: when a run is busy this one waits for it, with its progress card up meanwhile.
+        await QueuedAsync(previous => ExecuteAsync(item, selection, job, previous));
+    }
+
+    /// Runs `work` after everything chosen before it. Busy goes false only when nothing else is queued, and before
+    /// the next waiter resumes (it resumes asynchronously), so no run can slip in between.
+    private async Task QueuedAsync(Func<Task, Task> work)
+    {
         var previous = Current;
-        var done = new TaskCompletionSource();
+        var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         Current = done.Task;
-        try { await ExecuteAsync(item, selection, job, previous); }
-        finally { done.SetResult(); }
+        try { await work(previous); }
+        finally
+        {
+            if (Current == done.Task) Busy = false;
+            done.SetResult();
+        }
+    }
+
+    /// A card while `previous` finishes; false when its Cancel was pressed.
+    private async Task<bool> WaitTurnAsync(Task previous, string title)
+    {
+        if (previous.IsCompleted) return true;
+        using var cancellation = new CancellationTokenSource();
+        var toast = LastToast = new ProgressToast(title, cancellation.Cancel);
+        if (owner is not null) toast.Show(owner);
+        else toast.Show();
+        toast.Update(new(null, L10n.T(Copy.Waiting)));
+        await Task.WhenAny(previous, Task.Delay(Timeout.Infinite, cancellation.Token));
+        toast.Close();
+        return !cancellation.IsCancellationRequested;
     }
 
     private async Task ExecuteAsync(WheelItem item, IReadOnlyList<string> selection, Editors.EditorJob? job, Task previous)
     {
-        try
         {
             var title = item.Id.StartsWith("convert:", StringComparison.Ordinal) ? L10n.F(Copy.ConvertTo, item.Title) : item.Title;
             using var cancellation = new CancellationTokenSource();
@@ -211,13 +235,22 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
                 else notify(error is OperationCanceledException ? L10n.T(Copy.Cancelled) : L10n.F(Copy.Failed, L10n.T(error.Message)));
             }
         }
-        finally { Busy = false; }
     }
 
-    private async Task ActAsync(string id)
+    private Task ActAsync(string id)
     {
-        if (Busy || files.Count == 0) return;
-        Busy = true;
+        if (files.Count == 0) return Task.CompletedTask;
+        var selection = files;
+        return QueuedAsync(async previous =>
+        {
+            if (!await WaitTurnAsync(previous, L10n.T(FileActions.Title(id)))) { notify(L10n.T(Copy.Cancelled)); return; }
+            Busy = true;
+            await ActOnAsync(id, selection);
+        });
+    }
+
+    private async Task ActOnAsync(string id, IReadOnlyList<string> files)
+    {
         // Background mode has no window: a tiny one at the pointer owns the picker and the clipboard while they work.
         var host = owner ?? PickerHost();
         try
@@ -259,7 +292,6 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException) { notify(L10n.F(Copy.Failed, L10n.T(error.Message))); }
         finally
         {
-            Busy = false;
             if (owner is null) host.Close();
         }
     }
