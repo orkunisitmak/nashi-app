@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 namespace Nashi.Core;
@@ -16,15 +16,34 @@ public sealed class MetadataService(string root)
             var unpack=ArchiveEngine.Extract(zip,stage,null,null,token)[0];var exe=Directory.GetFiles(unpack,"exiftool(-k).exe",SearchOption.AllDirectories).Single();var folder=Path.GetDirectoryName(exe)!;File.Move(exe,Path.Combine(folder,"exiftool.exe"));token.ThrowIfCancellationRequested();Directory.Move(folder,Path.Combine(root,"metadata-13.59"));progress?.Report(new(1,"Metadata tools ready"));
         }finally{if(Directory.Exists(stage))Directory.Delete(stage,true);}
     }
+        private async Task<ProcessResult> RunExifToolAsync(IEnumerable<string> arguments,CancellationToken token)
+    {
+        var exe=Executable??throw new InvalidOperationException("Metadata tools are not ready.");
+        if(OperatingSystem.IsWindows())
+        {
+            var argFile=Path.Combine(Path.GetTempPath(),"exifargs-"+Guid.NewGuid().ToString("N")+".txt");
+            try
+            {
+                await File.WriteAllLinesAsync(argFile,arguments,System.Text.Encoding.UTF8,token);
+                return await ProcessRunner.RunAsync(exe,["-@",argFile],token);
+            }
+            finally
+            {
+                try{if(File.Exists(argFile))File.Delete(argFile);}catch{}
+            }
+        }
+        return await ProcessRunner.RunAsync(exe,arguments,token);
+    }
+
     public async Task<IReadOnlyDictionary<string,string>> ReadAsync(string input,CancellationToken token=default)
     {
-        var result=await ProcessRunner.RunAsync(Executable??throw new InvalidOperationException("Set up metadata tools once."),["-json","-G","-s","-charset","filename=UTF8","--",Path.GetFullPath(input)],token);using var json=JsonDocument.Parse(result.Output);return json.RootElement[0].EnumerateObject().ToDictionary(p=>p.Name,p=>p.Value.ToString());
+        var result=await RunExifToolAsync(["-json","-G","-s","-charset","filename=UTF8","--",Path.GetFullPath(input)],token);using var json=JsonDocument.Parse(result.Output);return json.RootElement[0].EnumerateObject().ToDictionary(p=>p.Name,p=>p.Value.ToString());
     }
     public async Task CopyImageTagsAsync(string source,string output,CancellationToken token)
     {
         // Pixels are already oriented and converted to sRGB. Do not reattach a
         // stale orientation, source ICC profile, preview or image dimensions.
-        await ProcessRunner.RunAsync(Executable??throw new InvalidOperationException("Metadata tools are not ready."),["-overwrite_original","-charset","filename=UTF8","-tagsFromFile",Path.GetFullPath(source),"-all:all","--ICC_Profile","--Orientation","--ThumbnailImage","--PreviewImage","--JpgFromRaw","--ImageWidth","--ImageHeight","--ExifImageWidth","--ExifImageHeight","-Orientation=1","-ColorSpace=sRGB","--",Path.GetFullPath(output)],token);
+        await RunExifToolAsync(["-overwrite_original","-charset","filename=UTF8","-tagsFromFile",Path.GetFullPath(source),"-all:all","--ICC_Profile","--Orientation","--ThumbnailImage","--PreviewImage","--JpgFromRaw","--ImageWidth","--ImageHeight","--ExifImageWidth","--ExifImageHeight","-Orientation=1","-ColorSpace=sRGB","--",Path.GetFullPath(output)],token);
     }
     public async Task<IReadOnlyList<string>> WriteAsync(IReadOnlyList<string> inputs,string destination,bool removeAll,IReadOnlyDictionary<string,string>? updates=null,IReadOnlyList<string>? removals=null,IProgress<OperationProgress>? progress=null,CancellationToken token=default)
     {
@@ -35,7 +54,7 @@ public sealed class MetadataService(string root)
             token.ThrowIfCancellationRequested();var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+" Metadata"+Path.GetExtension(input));
             if(FeatureCatalog.Extension(input)=="pdf"&&removeAll){var fresh=DocumentEngine.Pdf("removeMetadata",[input],tx.StagingDirectory,token:token)[0];File.Move(fresh,output);}else File.Copy(input,output);
             var args=new List<string>{"-overwrite_original","-P","-charset","filename=UTF8"};if(removeAll){args.Add("-all=");if(FeatureCatalog.IsImage(input)||FeatureCatalog.Extension(input)=="gif")args.AddRange(["-tagsfromfile","@","-Orientation","-ICC_Profile"]);}if(removals is not null)args.AddRange(removals.Select(k=>"-"+k+"="));if(updates is not null)args.AddRange(updates.Select(p=>"-"+p.Key+"="+p.Value));args.AddRange(["--",output]);
-            await ProcessRunner.RunAsync(Executable??throw new InvalidOperationException("Set up metadata tools once."),args,token);outputs.Add(output);progress?.Report(new(outputs.Count/(double)inputs.Count*.98,"Saving metadata…"));
+            await RunExifToolAsync(args,token);outputs.Add(output);progress?.Report(new(outputs.Count/(double)inputs.Count*.98,"Saving metadata…"));
         }
         return tx.Publish(outputs,token);
     }

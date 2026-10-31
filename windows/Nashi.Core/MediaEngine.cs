@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text.Json;
 
 namespace Nashi.Core;
@@ -343,11 +343,103 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
         await RenderAsync(args,output,duration,p=>progress(p with{Fraction=.95+(p.Fraction??0)*.05,Label="Joining clips…"}),token);
     }
 
+        private string? detectedHardwareH264Encoder;
+    private bool checkedHardware;
+
+    public string? HardwareEncoder
+    {
+        get
+        {
+            if(checkedHardware) return detectedHardwareH264Encoder;
+            checkedHardware = true;
+            string[] candidates = OperatingSystem.IsWindows()
+                ? ["h264_nvenc", "h264_amf", "h264_qsv"]
+                : OperatingSystem.IsMacOS()
+                    ? ["h264_videotoolbox"]
+                    : [];
+            foreach(var encoder in candidates)
+            {
+                try
+                {
+                    var task = ProcessRunner.RunAsync(ffmpeg, [
+                        "-hide_banner", "-nostdin", "-v", "error",
+                        "-f", "lavfi", "-i", "color=black:s=256x256:d=0.04",
+                        "-c:v", encoder,
+                        "-frames:v", "1",
+                        "-f", "null", OperatingSystem.IsWindows() ? "NUL" : "/dev/null"
+                    ]);
+                    task.Wait(1500);
+                    if(task.IsCompletedSuccessfully)
+                    {
+                        detectedHardwareH264Encoder = encoder;
+                        break;
+                    }
+                }
+                catch { }
+            }
+            return detectedHardwareH264Encoder;
+        }
+    }
+
+    private string[] GetH264Encoding(MediaOptions o)
+    {
+        var hw = HardwareEncoder;
+        if(hw == "h264_nvenc")
+            return ["-c:v","h264_nvenc","-preset","p4","-cq",Number(35-o.Quality*23),"-pix_fmt","yuv420p","-c:a","aac","-b:a",o.AudioBitrate+"k"];
+        if(hw == "h264_amf")
+            return ["-c:v","h264_amf","-rc","cqp","-qp_p",Number(35-o.Quality*23),"-pix_fmt","yuv420p","-c:a","aac","-b:a",o.AudioBitrate+"k"];
+        if(hw == "h264_qsv")
+            return ["-c:v","h264_qsv","-global_quality",Number(35-o.Quality*23),"-pix_fmt","nv12","-c:a","aac","-b:a",o.AudioBitrate+"k"];
+        if(hw == "h264_videotoolbox")
+            return ["-c:v","h264_videotoolbox","-q:v",Number(o.Quality*100),"-pix_fmt","yuv420p","-c:a","aac","-b:a",o.AudioBitrate+"k"];
+
+        return ["-c:v","libx264","-preset","medium","-crf",Number(35-o.Quality*23),"-pix_fmt","yuv420p","-c:a","aac","-b:a",o.AudioBitrate+"k"];
+    }
+
     private async Task RenderAsync(IEnumerable<string> arguments,string output,double? duration,Action<OperationProgress> progress,CancellationToken token)
     {
-        var parser=new FFmpegProgress(duration,progress,"Processing media…");
-        await ProcessRunner.RunAsync(ffmpeg,["-hide_banner","-nostdin","-v","error","-n","-nostats","-stats_period","0.2","-progress","pipe:1",..arguments,output],token,parser.ReadLine);
-        token.ThrowIfCancellationRequested();if(!File.Exists(output)||new FileInfo(output).Length==0)throw new IOException("No media output was produced.");
+        var argsList = arguments.ToList();
+        try
+        {
+            var parser=new FFmpegProgress(duration,progress,"Processing media…");
+            await ProcessRunner.RunAsync(ffmpeg,["-hide_banner","-nostdin","-v","error","-n","-nostats","-stats_period","0.2","-progress","pipe:1",..argsList,output],token,parser.ReadLine);
+            token.ThrowIfCancellationRequested();
+            if(File.Exists(output)&&new FileInfo(output).Length>0) return;
+        }
+        catch(Exception) when(detectedHardwareH264Encoder is not null && !token.IsCancellationRequested)
+        {
+            if(File.Exists(output)) try { File.Delete(output); } catch { }
+            var fallbackArgs = new List<string>();
+            for(int i = 0; i < argsList.Count; i++)
+            {
+                if(argsList[i] == "-c:v" && i + 1 < argsList.Count && argsList[i+1] == detectedHardwareH264Encoder)
+                {
+                    fallbackArgs.AddRange(["-c:v", "libx264", "-preset", "medium"]);
+                    i++;
+                }
+                else if(argsList[i] is "-rc" or "-qp_p" or "-global_quality" or "-cq")
+                {
+                    if(argsList[i] is "-qp_p" or "-global_quality" or "-cq" && i + 1 < argsList.Count)
+                    {
+                        fallbackArgs.AddRange(["-crf", argsList[i+1]]);
+                        i++;
+                    }
+                    else if(argsList[i] == "-rc" && i + 1 < argsList.Count)
+                    {
+                        i++;
+                    }
+                }
+                else
+                {
+                    fallbackArgs.Add(argsList[i]);
+                }
+            }
+            var fallbackParser = new FFmpegProgress(duration, progress, "Processing media (CPU fallback)…");
+            await ProcessRunner.RunAsync(ffmpeg,["-hide_banner","-nostdin","-v","error","-n","-nostats","-stats_period","0.2","-progress","pipe:1",..fallbackArgs,output],token,fallbackParser.ReadLine);
+            token.ThrowIfCancellationRequested();
+            if(File.Exists(output)&&new FileInfo(output).Length>0) return;
+        }
+        if(!File.Exists(output)||new FileInfo(output).Length==0)throw new IOException("No media output was produced.");
     }
     private static Action<OperationProgress> Scoped(IProgress<OperationProgress>? progress,int index,int count)=>p=>progress?.Report(p with{Fraction=p.Fraction is null?null:(index+p.Fraction)/count*.98,Label=count>1?$"File {index+1} of {count} · {p.Label}":p.Label});
     private static string Output(string directory,string input,string ext,string suffix)=>SafePaths.Unique(directory,Path.GetFileNameWithoutExtension(input)+suffix+"."+ext);
@@ -364,12 +456,12 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
         "ogg"=>["-c:a","libvorbis","-q:a",Number(o.Quality*9)],"opus"=>["-c:a","libopus","-b:a",Math.Min(256,o.AudioBitrate)+"k"],
         "wma"=>["-c:a","wmav2","-b:a",Math.Min(320,o.AudioBitrate)+"k"],_=>throw new ArgumentException("Unsupported audio format.")
     };
-    private static string[] VideoEncoding(string ext,MediaOptions o)=>ext switch
+    private string[] VideoEncoding(string ext,MediaOptions o)=>ext switch
     {
         "webm"=>["-c:v","libvpx-vp9","-crf",Number(45-o.Quality*30),"-b:v","0","-c:a","libopus","-b:a",Math.Min(256,o.AudioBitrate)+"k"],
         "avi"=>["-c:v","mpeg4","-q:v",Number(25-o.Quality*22),"-c:a","libmp3lame"],
         "wmv"=>["-c:v","wmv2","-q:v",Number(25-o.Quality*22),"-c:a","wmav2"],
-        _=>["-c:v","libx264","-preset","medium","-crf",Number(35-o.Quality*23),"-pix_fmt","yuv420p","-c:a","aac","-b:a",o.AudioBitrate+"k"]
+        _=>GetH264Encoding(o)
     };
     private static string Scale(MediaOptions o)=>$"scale={o.Width?.ToString(CultureInfo.InvariantCulture)??"-2"}:{o.Height?.ToString(CultureInfo.InvariantCulture)??"-2"}:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2";
     private static string Tempo(double speed){var parts=new List<string>();while(speed>2){parts.Add("atempo=2");speed/=2;}while(speed<.5){parts.Add("atempo=0.5");speed*=2;}parts.Add("atempo="+Number(speed));return string.Join(',',parts);}
