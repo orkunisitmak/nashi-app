@@ -98,15 +98,18 @@ enum ModifierPreferences {
     }
     @discardableResult static func set(_ shortcut:DragShortcut,for wheel:WheelShortcut,defaults:UserDefaults = .standard)->Bool {
         guard !shortcut.isEmpty,conflict(shortcut,for:wheel,defaults:defaults) == nil else { return false }
-        defaults.set(shortcut.chord.rawValue,forKey:wheel.storageKey)
+        // A zero mask sends older builds to their default instead of a chord two triggers may share.
+        defaults.set(shortcut.trigger == nil ? shortcut.chord.rawValue:0,forKey:wheel.storageKey)
         defaults.set(shortcut.name,forKey:wheel.legacyKey)
         return true
     }
-    static func wheel(for flags:NSEvent.ModifierFlags,pressed:(DragTrigger)->Bool = {_ in false},defaults:UserDefaults = .standard)->WheelShortcut? {
+    /// Without `pressed` only the modifiers are known, so a plain shortcut wins over one that also needs a trigger.
+    static func wheel(for flags:NSEvent.ModifierFlags,pressed:((DragTrigger)->Bool)?=nil,defaults:UserDefaults = .standard)->WheelShortcut? {
         let current=ModifierChord(flags)
         let shortcuts=WheelShortcut.allCases.map{(wheel:$0,shortcut:shortcut(for:$0,defaults:defaults))}
+        let plain=shortcuts.first{!current.isEmpty && $0.shortcut.chord==current && $0.shortcut.trigger==nil}?.wheel
+        guard let pressed else { return plain ?? shortcuts.first{!current.isEmpty && $0.shortcut.chord==current}?.wheel }
         // A held trigger is the more specific match when its modifiers also form a plain shortcut.
-        return shortcuts.first{$0.shortcut.chord==current && $0.shortcut.trigger.map(pressed)==true}?.wheel
-            ?? shortcuts.first{!current.isEmpty && $0.shortcut.chord==current && $0.shortcut.trigger==nil}?.wheel
+        return shortcuts.first{$0.shortcut.chord==current && $0.shortcut.trigger.map(pressed)==true}?.wheel ?? plain
     }
 }

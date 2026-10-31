@@ -243,7 +243,7 @@ final class WheelAccessibilityItem:NSAccessibilityElement {
         timer=Timer(timeInterval:0.025,repeats:true) { [weak self] _ in Task { @MainActor in self?.tick() } }
         RunLoop.main.add(timer!,forMode:.common)
     }
-    static func mode(for flags:NSEvent.ModifierFlags,pressed:(DragTrigger)->Bool = {_ in false})->WheelMode? {
+    static func mode(for flags:NSEvent.ModifierFlags,pressed:((DragTrigger)->Bool)?=nil)->WheelMode? {
         switch ModifierPreferences.wheel(for:flags,pressed:pressed) {
         case .conversions:return .convert
         case .tools:return .tools

@@ -52,7 +52,12 @@ import SwiftUI
 
         ModifierPreferences.set(DragShortcut(chord:ModifierChord(.command),trigger:.mouse(4)),for:.actions,defaults:defaults)
         try check(wheel(.command) == .tools && wheel(.command,.mouse(4)) == .actions,"A held trigger beats its plain modifier shortcut")
-        defaults.removePersistentDomain(forName:suite)
+        ModifierPreferences.set(DragShortcut(chord:ModifierChord(.command),trigger:.mouse(3)),for:.conversions,defaults:defaults)
+        try check(ModifierPreferences.wheel(for:.command,defaults:defaults) == .tools,"Without trigger state a plain shortcut keeps priority")
+        try check(ModifierPreferences.chord(for:.conversions,defaults:defaults) == .init(.shift) && ModifierPreferences.chord(for:.actions,defaults:defaults) == .init(.control),"Older builds use each wheel's default for triggers sharing a chord")
+        ModifierPreferences.set(DragShortcut(chord:ModifierChord(.option),trigger:.key(3)),for:.tools,defaults:defaults)
+        try check(ModifierPreferences.wheel(for:.option,defaults:defaults) == .tools,"Without trigger state a triggered shortcut still matches its modifiers")
+        for wheel in WheelShortcut.allCases { defaults.removeObject(forKey:wheel.storageKey);defaults.removeObject(forKey:wheel.legacyKey) }
 
         window=NSWindow(contentRect:NSRect(x:200,y:200,width:320,height:80),styleMask:[.titled],backing:.buffered,defer:false)
         window.contentView=NSHostingView(rootView:Host(defaults:defaults).nashiLanguage());window.isReleasedWhenClosed=false
