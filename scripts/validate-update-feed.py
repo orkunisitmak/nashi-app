@@ -4,6 +4,7 @@ from pathlib import Path
 import re
 import sys
 import xml.etree.ElementTree as ET
+from urllib.parse import urlsplit
 
 SPARKLE = "{http://www.andymatuschak.org/xml-namespaces/sparkle}"
 
@@ -30,7 +31,7 @@ def validate(feed_path, build_number, must_be_newer=False):
     enclosure = matching[0].find("enclosure")
     if enclosure is None or not enclosure.get(SPARKLE + "edSignature") or int(enclosure.get("length", "0")) <= 0:
         raise ValueError("The release download is missing its Ed25519 signature or length; check that the signing key matches the public key")
-    archive_name = enclosure.get("url", "").rsplit("/", 1)[-1]
+    archive_name = urlsplit(enclosure.get("url", "")).path.rsplit("/", 1)[-1]
     if not (Path(feed_path).parent / archive_name).is_file():
         raise ValueError("The signed release archive is missing")
 
