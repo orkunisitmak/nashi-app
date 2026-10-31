@@ -41,6 +41,7 @@ public sealed class ToolEditorWindow : Window
         {
             "cropImage" => new CropEditor(files),
             "editImage" => new PhotoEditor(files),
+            "frameImage" => new FrameEditor(files),
             _ => null,
         };
     }
