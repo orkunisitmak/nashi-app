@@ -61,8 +61,63 @@ enum PDFOfficeCodec {
     }
 
     static func text(_ page: PDFPage, token: CancellationToken) throws -> String {
-        if let text = page.string, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return text }
+        if let text = page.string, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return withAnnotationText(text, page: page) }
         return try recognizedCells(page, token: token).sorted { $0.rect.midY > $1.rect.midY }.map(\.text).joined(separator: "\n")
+    }
+
+    /// Text a viewer shows from annotations rather than the page content: filled
+    /// form fields, check boxes and FreeText notes. PDFKit's page text leaves it
+    /// out, while OCR of a page picture (used when there is no text layer) keeps it.
+    static func annotationCells(_ page: PDFPage) -> [TextCell] {
+        page.annotations.compactMap { annotation in
+            // Hidden (2) and NoView (32) annotations are not shown on the page.
+            guard ((annotation.value(forAnnotationKey: .flags) as? NSNumber)?.intValue ?? 0) & 34 == 0 else { return nil }
+            let fieldFlags = (annotation.value(forAnnotationKey: .widgetFieldFlags) as? NSNumber)?.intValue ?? 0
+            let text: String, topAligned: Bool
+            switch (annotation.type, annotation.widgetFieldType) {
+            // A password field (8192) shows its value masked.
+            case ("Widget", .text) where fieldFlags & 8192 == 0: text = annotation.widgetStringValue ?? ""; topAligned = fieldFlags & 4096 != 0
+            case ("Widget", .choice): text = annotation.widgetStringValue ?? ""; topAligned = false
+            case ("Widget", .button) where annotation.widgetControlType == .checkBoxControl: text = annotation.buttonWidgetState == .onState ? "☒" : "☐"; topAligned = false
+            case ("Widget", .button) where annotation.widgetControlType == .radioButtonControl: text = annotation.buttonWidgetState == .onState ? "◉" : "○"; topAligned = false
+            case ("FreeText", _): text = annotation.contents ?? ""; topAligned = true
+            default: return nil
+            }
+            let bounds = annotation.bounds
+            guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, bounds.width > 0, bounds.height > 0, !bounds.isInfinite else { return nil }
+            let size = annotation.font.map { $0.pointSize > 0 ? $0.pointSize : 12 } ?? 12
+            let height = min(bounds.height, size * 1.25)
+            return TextCell(text: text, rect: CGRect(x: bounds.minX, y: topAligned ? bounds.maxY - height : bounds.midY - height / 2, width: bounds.width, height: height))
+        }
+    }
+
+    /// Puts annotation text beside the page-text line it sits on, or on its own
+    /// line in top-to-bottom order.
+    private static func withAnnotationText(_ text: String, page: PDFPage) -> String {
+        let cells = annotationCells(page)
+        guard !cells.isEmpty else { return text }
+        let ns = text as NSString
+        var lines: [(text: String, rect: CGRect?, before: [TextCell], after: [TextCell])] = []
+        ns.enumerateSubstrings(in: NSRange(location: 0, length: ns.length), options: [.byLines, .substringNotRequired]) { _, range, _, _ in
+            let rect = range.length > 0 ? page.selection(for: range)?.bounds(for: page) : nil
+            lines.append((ns.substring(with: range), rect.flatMap { $0.isNull || $0.isInfinite || $0.height <= 0 ? nil : $0 }, [], []))
+        }
+        for cell in cells.sorted(by: { abs($0.rect.midY - $1.rect.midY) > 3 ? $0.rect.midY > $1.rect.midY : $0.rect.minX < $1.rect.minX }) {
+            let beside = lines.indices.filter { index in
+                guard let rect = lines[index].rect else { return false }
+                return abs(rect.midY - cell.rect.midY) < max(3, min(rect.height, cell.rect.height) * 0.45)
+            }.min { abs(lines[$0].rect!.midY - cell.rect.midY) < abs(lines[$1].rect!.midY - cell.rect.midY) }
+            if let index = beside {
+                if cell.rect.maxX <= lines[index].rect!.minX + 2 { lines[index].before.append(cell) } else { lines[index].after.append(cell) }
+            } else {
+                let below = lines.firstIndex { $0.rect.map { $0.midY < cell.rect.midY } ?? false } ?? lines.endIndex
+                lines.insert(("", cell.rect, [], [cell]), at: below)
+            }
+        }
+        return lines.map { line in
+            (line.before.sorted { $0.rect.minX < $1.rect.minX }.map(\.text) + [line.text] + line.after.sorted { $0.rect.minX < $1.rect.minX }.map(\.text))
+                .filter { !$0.isEmpty }.joined(separator: " ")
+        }.joined(separator: "\n")
     }
 
     /// PDF text is literal. Without escapes Markdown reads "*", "_", "[", "<",
@@ -212,6 +267,6 @@ enum PDFOfficeCodec {
             }
             if let cell = current, !cell.text.trimmingCharacters(in: .whitespaces).isEmpty { cells.append(.init(text: cell.text.trimmingCharacters(in: .whitespaces), rect: cell.rect)) }
         }
-        return cells
+        return cells + annotationCells(page)
     }
 }
