@@ -173,7 +173,10 @@ public sealed class ToolEditorWindow : Window
     private Control Body()
     {
         var side = new StackPanel { Spacing = 18, Margin = new Thickness(24) };
-        side.Children.Add(Ui.Section(panel.SideBySide ? Copy.MakeItYours : System.IO.Path.GetFileName(panel.Inputs[0])));
+        // A file name stays as it is written (macOS shows it, not upper-cased).
+        var section = Ui.Section(Copy.MakeItYours);
+        if (!panel.SideBySide) section.Text = panel.Inputs.Count > 1 ? L10n.F(Copy.Files, panel.Inputs.Count) : System.IO.Path.GetFileName(panel.Inputs[0]);
+        side.Children.Add(section);
         side.Children.Add(options);
         options.Content = new TextBlock { Text = L10n.T(Copy.Preparing), FontSize = 11, Classes = { "secondary" } };
         side.Children.Add(message);
