@@ -104,13 +104,23 @@ public sealed class MainWindow:Window
         var picked=await StorageProvider.OpenFilePickerAsync(new(){AllowMultiple=true,Title="Choose files"});
         Add(picked.Select(f=>f.TryGetLocalPath()).OfType<string>());
     }
+    /// As on Windows: files are added, an image or plain text becomes a file in Library/Imports,
+    /// and a web link opens the Web tab with that link.
     private async Task Paste()
     {
         if(Clipboard is null)return;
-        using var data=await Clipboard.TryGetDataAsync();if(data is null)return;
-        if(await data.TryGetFilesAsync() is {Length:>0} items){Add(items.Select(i=>i.TryGetLocalPath()).OfType<string>());return;}
-        // File managers such as Nautilus put file:// URIs on the clipboard as text.
-        if(await data.TryGetTextAsync() is {} text)Add(text.Split('\n',StringSplitOptions.TrimEntries|StringSplitOptions.RemoveEmptyEntries).Select(line=>Uri.TryCreate(line,UriKind.Absolute,out var uri)&&uri.IsFile?uri.LocalPath:line).Where(Path.IsPathFullyQualified));
+        try
+        {
+            using var data=await Clipboard.TryGetDataAsync();if(data is null){status.Text="Copy a file, some text, an image or a public media link first.";return;}
+            if(await data.TryGetFilesAsync() is {Length:>0} items){Add(items.Select(i=>i.TryGetLocalPath()).OfType<string>());return;}
+            var text=await data.TryGetTextAsync();
+            if(ClipboardImport.Paths(text) is {Length:>0} paths){Add(paths);return;}
+            if(ClipboardImport.Link(text) is {} link){if(Content is TabControl pages)pages.SelectedIndex=1;web.Link.Text=link;return;}
+            if(!string.IsNullOrWhiteSpace(text)){Add([ClipboardImport.SaveText(text)]);status.Text="Pasted text";return;}
+            if(await data.TryGetBitmapAsync() is {} bitmap){using(bitmap){var file=ClipboardImport.Destination("png");bitmap.Save(file);Add([file]);status.Text="Pasted image";}return;}
+            status.Text="Copy a file, some text, an image or a public media link first.";
+        }
+        catch(Exception error)when(error is IOException or UnauthorizedAccessException or InvalidOperationException){status.Text=error.Message;}
     }
     private void Add(IEnumerable<string> paths)
     {

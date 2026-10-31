@@ -231,6 +231,8 @@ internal static class OperationChecks
                 var same=FileActions.MoveAsync([Path.Combine(target,"Loose.txt")],target,progress,token).GetAwaiter().GetResult();Check(same.Single()==Path.Combine(target,"Loose.txt"),"Moving into the same folder changes nothing");
                 try{FileActions.MoveAsync([Path.Combine(target,"Album")],Path.Combine(target,"Album","Inner"),progress,token).GetAwaiter().GetResult();Check(false,"A folder cannot move into itself");}catch(ArgumentException){Check(true,"A folder cannot move into itself");}
                 Check(FileActions.UriList(["/tmp/a b/ç.txt"])=="file:///tmp/a%20b/%C3%A7.txt","File URIs for the clipboard");
+                Check(ClipboardImport.Paths("copy\n"+FileActions.UriList([png]).Replace("\r\n","\n"))is [var pasted]&&pasted==png&&ClipboardImport.Paths("hello world").Length==0,"Pasted file URIs");
+                Check(ClipboardImport.Link(" https://youtu.be/jNQXAC9IVRw ")=="https://youtu.be/jNQXAC9IVRw"&&ClipboardImport.Link("ftp://x/y") is null&&ClipboardImport.Link("two\nlines") is null,"Pasted links");
             }
             Check(Hash(png)==originalHash,"Original is unchanged");
             Console.WriteLine($"{{\"passed\":{passed},\"scope\":\"Linux preview image, PDF, QR, archive, audio and video exports\"}}");
