@@ -1,5 +1,6 @@
 import Foundation
 import Darwin
+import CoreServices
 
 /// Streaming local archive I/O. Entries are materialized only inside a newly
 /// created staging directory; links are deferred until regular files are done.
@@ -41,8 +42,15 @@ enum ArchiveCodec {
         while true {
             try token.check()
             var entry: OpaquePointer?
-            let status = a.readNext(reader, &entry)
-            if status == 1 { break }
+            var status=a.readNext(reader,&entry)
+            var retryCount=0
+            while status==ArchiveAPI.retry,retryCount<3 {
+                retryCount+=1
+                entry=nil
+                status=a.readNext(reader,&entry)
+            }
+            guard status != ArchiveAPI.retry else { throw NashiError.failed("The archive reader could not load the next entry after 3 retries.") }
+            if status==ArchiveAPI.eof { break }
             try a.check(status, handle: reader)
             guard let entry, let rawName = a.entryPath(entry) else { throw NashiError.failed("The archive contains an unnamed entry.") }
             var name = String(cString: rawName)
@@ -109,10 +117,13 @@ enum ArchiveCodec {
             // A gzip of an empty file restores that empty file, not an empty folder.
             if gzip && a.format(reader) == 0x60000 {
                 let destination = try safeURL(input.deletingPathExtension().lastPathComponent, inside: root)
-                guard destination.standardizedFileURL != root.standardizedFileURL else { return }
+                guard destination.standardizedFileURL != root.standardizedFileURL else { try quarantineTree(root);return }
                 try validateDestination(destination, root: root)
                 guard fm.createFile(atPath: destination.path, contents: nil) else { throw NashiError.failed("Could not create \(destination.lastPathComponent).") }
+                try quarantineTree(root)
+                return
             }
+            try quarantineTree(root)
             return
         }
         for link in links.filter(\.hard) {
@@ -142,6 +153,7 @@ enum ArchiveCodec {
                 throw NashiError.invalidInput("An archive link points outside the extraction folder.")
             }
         }
+        try quarantineTree(root)
     }
 
     static func create(from root: URL, at output: URL, format: String, compressionLevel: Int = 6, token: CancellationToken) throws {
@@ -219,6 +231,29 @@ enum ArchiveCodec {
         try a.check(a.writeClose(writer), handle: writer)
     }
 
+    private static func quarantineTree(_ root:URL) throws {
+        func quarantine(_ url:URL) throws {
+            var values=URLResourceValues()
+            values.quarantineProperties=[
+                kLSQuarantineAgentNameKey as String: Bundle.main.object(forInfoDictionaryKey:"CFBundleName") as? String ?? "Nashi",
+                kLSQuarantineAgentBundleIdentifierKey as String: Bundle.main.bundleIdentifier ?? "Nashi",
+                kLSQuarantineTypeKey as String: kLSQuarantineTypeOtherDownload as String,
+                kLSQuarantineTimeStampKey as String: Date()
+            ]
+            var mutableURL=url
+            try mutableURL.setResourceValues(values)
+        }
+        try quarantine(root)
+        guard let enumerator=FileManager.default.enumerator(at:root,includingPropertiesForKeys:[.isDirectoryKey,.isRegularFileKey,.isSymbolicLinkKey]) else {
+            throw NashiError.failed("Could not inspect the extracted archive.")
+        }
+        for case let item as URL in enumerator {
+            let values=try item.resourceValues(forKeys:[.isDirectoryKey,.isRegularFileKey,.isSymbolicLinkKey])
+            guard values.isSymbolicLink != true,values.isDirectory == true || values.isRegularFile == true else { continue }
+            try quarantine(item)
+        }
+    }
+
     static func safeURL(_ path: String, inside root: URL) throws -> URL {
         let normalized = path.replacingOccurrences(of: "\\", with: "/")
         guard !normalized.hasPrefix("/"), !normalized.contains("\0"),
@@ -269,6 +304,9 @@ enum ArchiveCodec {
     /// libarchive ships with macOS and supports ZIP, TAR, gzip and RAR without
     /// running a shell or trusting a textual archive listing.
     private final class ArchiveAPI: @unchecked Sendable {
+        static let eof:Int32=1
+        static let retry:Int32 = -10
+        static let warn:Int32 = -20
         typealias New = @convention(c) () -> OpaquePointer?
         typealias Call = @convention(c) (OpaquePointer?) -> Int32
         typealias OpenRead = @convention(c) (OpaquePointer?, UnsafePointer<CChar>?, Int) -> Int32
@@ -337,7 +375,7 @@ enum ArchiveCodec {
         var entrySetSize: SetInt64 { symbol("archive_entry_set_size", SetInt64.self) }
         var entrySetMtime: SetTime { symbol("archive_entry_set_mtime", SetTime.self) }
         func check(_ status: Int32, handle: OpaquePointer?) throws {
-            guard status >= -20 else { throw failure(handle) }
+            guard status >= Self.warn,status != Self.retry else { throw failure(handle) }
         }
         func failure(_ handle: OpaquePointer?) -> NashiError {
             let message = errorString(handle).map { String(cString: $0) } ?? "The archive could not be read or written."
