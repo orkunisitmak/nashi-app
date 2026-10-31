@@ -27,8 +27,17 @@ public static class AppPaths
         catch (FileNotFoundException) { return false; }
     }
 
-    /// What the setup window's download brings: media tools plus Deno for Pages.
-    public static bool DownloadsReady(Toolchain tools) => MediaReady(tools) && Deno(tools) is not null;
+    /// Media tools and Deno for Pages (the Toolchain download).
+    public static bool MediaAndDenoReady(Toolchain tools) => MediaReady(tools) && Deno(tools) is not null;
+
+    /// What the setup window's download brings: media tools, Deno for Pages and ExifTool for Metadata.
+    public static bool DownloadsReady(Toolchain tools) => MediaAndDenoReady(tools) && Metadata().Executable is not null;
+
+    /// Where ExifTool lives (MetadataService's pinned 13.59 under the tools folder). The checks point it elsewhere.
+    public static string? MetadataRoot { get; set; }
+
+    /// ExifTool, for the Metadata editor; Executable is null until setup downloads it.
+    public static MetadataService Metadata() => new(MetadataRoot ?? Tools);
 
     /// Every tool Nashi uses is in place: the downloads and the system LibreOffice.
     public static bool AllReady(Toolchain tools) => DownloadsReady(tools) && Office() is not null;

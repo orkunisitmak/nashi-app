@@ -847,8 +847,11 @@
 "EPUB LAYOUT" = "EPUB DÜZENİ";
 "EPUB layout" = "EPUB düzeni";
 "ESC TO CLOSE" = "KAPATMAK İÇİN ESC";
+"EVERY TAG WILL BE REMOVED. ENCODED PIXELS, COLOR PROFILE AND DISPLAY ORIENTATION ARE PRESERVED." = "TÜM ETİKETLER KALDIRILACAK. KODLANMIŞ PİKSELLER, RENK PROFİLİ VE GÖRÜNTÜ YÖNÜ KORUNUR.";
 "EVERYTHING HAS A NEXT FORM." = "HER DOSYANIN YENİ BİR HÂLİ VAR.";
 "EVERYTHING NASHI NEEDS FOR AUDIO, VIDEO AND DOCUMENTS IS IN PLACE." = "NASHI'NİN SES, VİDEO VE BELGELER İÇİN İHTİYAÇ DUYDUĞU HER ŞEY HAZIR.";
+"EVERYTHING NASHI NEEDS FOR AUDIO, VIDEO, METADATA AND DOCUMENTS IS IN PLACE." = "NASHI'NİN SES, VİDEO, META VERİ VE BELGELER İÇİN İHTİYACI OLAN HER ŞEY HAZIR.";
+"EXIFTOOL, FOR READING AND EDITING PHOTO METADATA" = "EXİFTOOL, FOTOĞRAF META VERİLERİNİ OKUMAK VE DÜZENLEMEK İÇİN";
 "EXPAND FLOAT" = "FLOAT’I GENİŞLET";
 "EXPANDED UPDATE IS TOO LARGE." = "AÇILAN GÜNCELLEME ÇOK BÜYÜK.";
 "EXPORT CLIPS" = "KLİPLERİ KAYDET";
@@ -882,8 +885,11 @@
 "Every redaction area must have positive dimensions and fit completely inside the %@ × %lld pixel image. Adjust the areas for this image and try again." = "Her sansür alanının boyutları pozitif olmalı ve %@ × %lld piksellik görselin tamamen içinde kalmalı. Bu görsel için alanları ayarlayıp yeniden dene.";
 "Every redaction area must have positive dimensions and fit completely inside the %lld × %@ pixel image. Adjust the areas for this image and try again." = "Her sansür alanının boyutları pozitif olmalı ve %lld × %@ piksellik görselin tamamen içinde kalmalı. Bu görsel için alanları ayarlayıp yeniden dene.";
 "Every redaction area must have positive dimensions and fit completely inside the %lld × %lld pixel image. Adjust the areas for this image and try again." = "Her sansür alanının boyutları pozitif olmalı ve %lld × %lld piksellik görselin tamamen içinde kalmalı. Bu görsel için alanları ayarlayıp yeniden dene.";
+"Every tag will be removed. Encoded pixels, color profile and display orientation are preserved." = "Tüm etiketler kaldırılacak. Kodlanmış pikseller, renk profili ve görüntü yönü korunur.";
 "Everything Nashi needs for audio, video and documents is in place." = "Nashi'nin ses, video ve belgeler için ihtiyaç duyduğu her şey hazır.";
+"Everything Nashi needs for audio, video, metadata and documents is in place." = "Nashi'nin ses, video, meta veri ve belgeler için ihtiyacı olan her şey hazır.";
 "Everything has a next form." = "Her dosyanın yeni bir hâli var.";
+"ExifTool, for reading and editing photo metadata" = "ExifTool, fotoğraf meta verilerini okumak ve düzenlemek için";
 "Expand Float" = "Float’ı genişlet";
 "Expanded update is too large." = "Açılan güncelleme çok büyük.";
 "Export One Video" = "Tek Video Olarak Kaydet";
@@ -1265,6 +1271,8 @@
 "MEDIUM · 1920 PX LONGEST EDGE" = "ORTA · UZUN KENAR 1920 PX";
 "MERGE PDFS" = "PDF'LERİ BİRLEŞTİR";
 "METADATA" = "META VERİLER";
+"METADATA TOOLS" = "META VERİ ARAÇLARI";
+"METADATA TOOLS ARE NEEDED FOR THIS. DOWNLOAD THE MISSING TOOLS IN SETUP." = "BUNUN İÇİN META VERİ ARAÇLARI GEREKİYOR. EKSİK ARAÇLARI KURULUMDA İNDİR.";
 "METADATA TOOLS ARE NOT READY." = "META VERİ ARAÇLARI HAZIR DEĞİL.";
 "METADATA TOOLS CHECKSUM MISMATCH." = "META VERİ ARAÇLARININ SAĞLAMA TOPLAMI EŞLEŞMİYOR.";
 "METADATA · NASHI" = "META VERİLER · NASHI";
@@ -1313,6 +1321,8 @@
 "Medium · 1920 px longest edge" = "Orta · uzun kenar 1920 px";
 "Merge PDFs" = "PDF'leri Birleştir";
 "Metadata" = "Meta Veriler";
+"Metadata tools" = "Meta veri araçları";
+"Metadata tools are needed for this. Download the missing tools in setup." = "Bunun için meta veri araçları gerekiyor. Eksik araçları kurulumda indir.";
 "Metadata tools are not ready." = "Meta veri araçları hazır değil.";
 "Metadata tools checksum mismatch." = "Meta veri araçlarının sağlama toplamı eşleşmiyor.";
 "Metadata · Nashi" = "Meta Veriler · Nashi";
@@ -1345,6 +1355,7 @@
 "NASHI UPDATE" = "NASHI GÜNCELLEMESİ";
 "NASHI UPDATE COULD NOT FINISH" = "NASHI GÜNCELLEMESİ TAMAMLANAMADI";
 "NASHI USES FFMPEG FOR AUDIO AND VIDEO, DENO FOR PAGES FILES AND LIBREOFFICE FOR OFFICE DOCUMENTS. DOWNLOADS COME STRAIGHT FROM THE UPSTREAM PROJECTS AND ARE CHECKED BEFORE ANYTHING IS INSTALLED." = "NASHI SES VE VİDEO İÇİN FFMPEG'İ, PAGES DOSYALARI İÇİN DENO'YU, OFFICE BELGELERİ İÇİN LIBREOFFICE'İ KULLANIR. İNDİRMELER DOĞRUDAN KAYNAK PROJELERDEN GELİR VE KURULMADAN ÖNCE DOĞRULANIR.";
+"NASHI USES FFMPEG FOR AUDIO AND VIDEO, DENO FOR PAGES FILES, EXIFTOOL FOR METADATA AND LIBREOFFICE FOR OFFICE DOCUMENTS. DOWNLOADS COME STRAIGHT FROM THE UPSTREAM PROJECTS AND ARE CHECKED BEFORE ANYTHING IS INSTALLED." = "NASHI SES VE VİDEO İÇİN FFMPEG, PAGES DOSYALARI İÇİN DENO, META VERİLER İÇİN EXİFTOOL VE OFFICE BELGELERİ İÇİN LIBREOFFICE KULLANIR. İNDİRMELER DOĞRUDAN KAYNAK PROJELERDEN GELİR VE KURULMADAN ÖNCE DOĞRULANIR.";
 "NASHI · FEATURES & SHORTCUTS" = "NASHI · ÖZELLİKLER VE KISAYOLLAR";
 "NASHI — COMPLETE" = "NASHI — TAMAMLANDI";
 "NASHI — PROGRESS" = "NASHI — İLERLEME";
@@ -1361,6 +1372,7 @@
 "NO MATCHES. TRY A FILE NAME OR TOOL." = "EŞLEŞME BULUNAMADI. DOSYA ADI VEYA ARAÇ ADIYLA ARA.";
 "NO MATCHING REGIONS WERE DETECTED. YOU CAN STILL DRAW AREAS BY HAND." = "EŞLEŞEN BÖLGE BULUNAMADI. ALANLARI YİNE DE ELLE ÇİZEBİLİRSİN.";
 "NO MEDIA OUTPUT WAS PRODUCED." = "MEDYA ÇIKTISI OLUŞMADI.";
+"NO METADATA FOUND." = "META VERİ BULUNAMADI.";
 "NO OUTPUT WAS PRODUCED." = "ÇIKTI OLUŞMADI.";
 "NO PUBLIC DOWNLOADABLE MEDIA FOUND. SOME SITES REQUIRE SIGN-IN OR DO NOT EXPOSE DOWNLOADABLE MEDIA." = "HERKESE AÇIK, İNDİRİLEBİLİR MEDYA BULUNAMADI. BAZI SİTELER GİRİŞ GEREKTİRİR VEYA MEDYAYI İNDİRMEYE AÇMAZ.";
 "NO QR CODES FOUND. TRY A LARGER OR SHARPER IMAGE." = "QR KODU BULUNAMADI. DAHA BÜYÜK VEYA DAHA NET BİR GÖRSEL DENE.";
@@ -1393,6 +1405,7 @@
 "Nashi update" = "Nashi güncellemesi";
 "Nashi update could not finish" = "Nashi güncellemesi tamamlanamadı";
 "Nashi uses FFmpeg for audio and video, Deno for Pages files and LibreOffice for Office documents. Downloads come straight from the upstream projects and are checked before anything is installed." = "Nashi ses ve video için FFmpeg'i, Pages dosyaları için Deno'yu, Office belgeleri için LibreOffice'i kullanır. İndirmeler doğrudan kaynak projelerden gelir ve kurulmadan önce doğrulanır.";
+"Nashi uses FFmpeg for audio and video, Deno for Pages files, ExifTool for metadata and LibreOffice for Office documents. Downloads come straight from the upstream projects and are checked before anything is installed." = "Nashi ses ve video için FFmpeg, Pages dosyaları için Deno, meta veriler için ExifTool ve Office belgeleri için LibreOffice kullanır. İndirmeler doğrudan kaynak projelerden gelir ve kurulmadan önce doğrulanır.";
 "Nashi · Features & shortcuts" = "Nashi · Özellikler ve kısayollar";
 "Nashi — Complete" = "Nashi — Tamamlandı";
 "Nashi — Progress" = "Nashi — İlerleme";
@@ -1415,6 +1428,7 @@
 "No matches. Try a file name or tool." = "Eşleşme bulunamadı. Dosya adı veya araç adıyla ara.";
 "No matching regions were detected. You can still draw areas by hand." = "Eşleşen bölge bulunamadı. Alanları yine de elle çizebilirsin.";
 "No media output was produced." = "Medya çıktısı oluşmadı.";
+"No metadata found." = "Meta veri bulunamadı.";
 "No output was produced." = "Çıktı oluşmadı.";
 "No public downloadable media found. Some sites require sign-in or do not expose downloadable media." = "Herkese açık, indirilebilir medya bulunamadı. Bazı siteler giriş gerektirir veya medyayı indirmeye açmaz.";
 "No terminal app found." = "Terminal uygulaması bulunamadı.";
@@ -1910,6 +1924,7 @@
 "SMALLER FILES WITH STRONGER COMPRESSION." = "DAHA GÜÇLÜ SIKIŞTIRMAYLA DAHA KÜÇÜK DOSYALAR.";
 "SMALLEST" = "EN KÜÇÜK";
 "SOLID" = "DÜZ";
+"SOME TOOLS ARE STILL MISSING AFTER THE DOWNLOAD." = "İNDİRMEDEN SONRA BAZI ARAÇLAR HÂLÂ EKSİK.";
 "SOUND AND HAPTIC FEEDBACK" = "SES VE DOKUNSAL GERİ BİLDİRİM";
 "SOUND FEEDBACK" = "SESLİ GERİ BİLDİRİM";
 "SOUND FOLLOWS YOUR MAC’S VOLUME. HAPTICS NEED A COMPATIBLE FORCE TOUCH TRACKPAD." = "SES, MAC'İNİN SES DÜZEYİNİ KULLANIR. TİTREŞİM İÇİN UYUMLU BİR FORCE TOUCH TRACKPAD GEREKİR.";
@@ -2060,6 +2075,7 @@
 "Smaller files with stronger compression." = "Daha güçlü sıkıştırmayla daha küçük dosyalar.";
 "Smallest" = "En küçük";
 "Solid" = "Düz";
+"Some tools are still missing after the download." = "İndirmeden sonra bazı araçlar hâlâ eksik.";
 "Something went wrong: %@" = "Bir şeyler ters gitti: %@";
 "Something went wrong: %lld" = "Bir şeyler ters gitti: %lld";
 "Sound and haptic feedback" = "Ses ve dokunsal geri bildirim";
@@ -2131,6 +2147,7 @@
 "THE SIGNED PACKAGE VERSION DOES NOT MATCH THIS UPDATE." = "İMZALI PAKETİN SÜRÜMÜ BU GÜNCELLEMEYLE EŞLEŞMİYOR.";
 "THE UPDATE DOES NOT CONTAIN NASHI." = "GÜNCELLEME NASHI'Yİ İÇERMİYOR.";
 "THE UPDATE SIGNATURE IS INVALID. YOUR EXISTING APP WAS KEPT." = "GÜNCELLEME İMZASI GEÇERSİZ. MEVCUT UYGULAMAN KORUNDU.";
+"THESE CHANGES APPLY TO EVERY SELECTED IMAGE." = "BU DEĞİŞİKLİKLER SEÇİLİ TÜM GÖRSELLERE UYGULANIR.";
 "THESE FILES HAVE MOVED OR WERE DELETED." = "BU DOSYALAR TAŞINMIŞ VEYA SİLİNMİŞ.";
 "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE." = "BU KIRPMA, SEÇİLEN TÜM GÖRSELLERE UYGULANIR VE HER GÖRSELİN SINIRLARINA SIĞMALIDIR.";
 "THIS EPUB COULD NOT BE READ." = "BU EPUB OKUNAMADI.";
@@ -2226,6 +2243,7 @@
 "The signed package version does not match this update." = "İmzalı paketin sürümü bu güncellemeyle eşleşmiyor.";
 "The update does not contain Nashi." = "Güncelleme Nashi'yi içermiyor.";
 "The update signature is invalid. Your existing app was kept." = "Güncelleme imzası geçersiz. Mevcut uygulaman korundu.";
+"These changes apply to every selected image." = "Bu değişiklikler seçili tüm görsellere uygulanır.";
 "These files have moved or were deleted." = "Bu dosyalar taşınmış veya silinmiş.";
 "This EPUB could not be read." = "Bu EPUB okunamadı.";
 "This PDF contains no pages." = "Bu PDF'de sayfa yok.";

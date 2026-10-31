@@ -45,6 +45,9 @@ WheelFeedback.StartPlayer = (program, args, exited) => Desktop.Spawn(program, ar
 WheelFeedback.SystemReducesMotion = false;
 WheelFeedback.ReduceMotion = true; // renders show the wheel at rest; MotionChecks turns it on
 var temp = Directory.CreateTempSubdirectory("nashi-linux-checks-");
+// No ExifTool unless a check provides one: never the user's tools folder.
+var noMetadata = Directory.CreateDirectory(Path.Combine(temp.FullName, "no-metadata")).FullName;
+AppPaths.MetadataRoot = noMetadata;
 try
 {
     LaunchChecks();
@@ -295,9 +298,9 @@ async Task ToolSetupChecks(string root)
     foreach (var name in new[] { "ffmpeg", "ffprobe" }) File.WriteAllText(Path.Combine(presentDir, name), "x");
     var present = new Toolchain(presentDir, "");
     Check(!AppPaths.MediaReady(missing) && AppPaths.MediaReady(present), "Media readiness is ffmpeg plus ffprobe");
-    Check(!AppPaths.DownloadsReady(present), "The setup download also covers Deno, for Pages");
+    Check(!AppPaths.MediaAndDenoReady(present), "The setup download also covers Deno, for Pages");
     File.WriteAllText(Path.Combine(presentDir, "deno"), "x");
-    Check(AppPaths.DownloadsReady(present) && AppPaths.Deno(present) == Path.Combine(presentDir, "deno"), "Deno in the tools folder makes the downloads ready");
+    Check(AppPaths.MediaAndDenoReady(present) && AppPaths.Deno(present) == Path.Combine(presentDir, "deno"), "Deno in the tools folder makes the media and Deno downloads ready");
     // LibreOffice comes from PATH only: a fake executable soffice stands in for it.
     var savedOffice = AppPaths.OfficeSearchPath;
     var officeDir = Directory.CreateDirectory(Path.Combine(root, "office-bin")).FullName;
@@ -312,18 +315,25 @@ async Task ToolSetupChecks(string root)
     AppPaths.OfficeSearchPath = snap;
     Check(AppPaths.Office() is null, "A Snap LibreOffice is skipped (its sandbox has a private /tmp)");
 
+    // ExifTool is MetadataService's pinned folder under the tools root.
+    var metadataPresent = Directory.CreateDirectory(Path.Combine(root, "metadata-present", "metadata-13.59")).Parent!.FullName;
+    File.WriteAllText(Path.Combine(metadataPresent, "metadata-13.59", "exiftool"), "x");
+    Check(AppPaths.Metadata().Executable is null && !AppPaths.DownloadsReady(present), "Without ExifTool the downloads are not ready");
+    AppPaths.MetadataRoot = metadataPresent;
+    Check(AppPaths.Metadata().Executable == Path.Combine(metadataPresent, "metadata-13.59", "exiftool") && AppPaths.DownloadsReady(present), "ExifTool in its pinned folder completes the downloads");
     List<string> Texts(Window w) => w.GetVisualDescendants().OfType<TextBlock>().Where(t => t.IsEffectivelyVisible).Select(t => t.Text ?? "").ToList();
     foreach (var (toolchain, label) in new[] { (missing, "missing"), (present, "ready") })
     {
         AppPaths.OfficeSearchPath = label == "ready" ? officeDir : "";
+        AppPaths.MetadataRoot = label == "ready" ? metadataPresent : noMetadata;
         var window = new ToolSetupWindow(toolchain);
         window.Show();
         Dispatcher.UIThread.RunJobs();
         var texts = Texts(window);
         var action = window.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => b.IsEffectivelyVisible && b.Content as string == "Download missing tools");
         var hint = texts.Any(t => t.Contains("sudo apt install libreoffice"));
-        if (label == "missing") Check(texts.Count(t => t == "Missing") == 2 && texts.Contains("Office tools") && hint && texts.Contains("Set up tools") && action is not null, "Setup window offers a download for media tools and says how to install LibreOffice");
-        else Check(texts.Contains("Ready") && texts.Contains("Installed") && !hint && texts.Contains("Tools ready") && action is null, "Setup window shows Ready, LibreOffice Installed and no download when tools are present");
+        if (label == "missing") Check(texts.Count(t => t == "Missing") == 3 && texts.Contains("Office tools") && texts.Contains("Metadata tools") && hint && texts.Contains("Set up tools") && action is not null, "Setup window offers a download for media and metadata tools and says how to install LibreOffice");
+        else Check(texts.Count(t => t == "Ready") == 2 && texts.Contains("Installed") && !hint && texts.Contains("Tools ready") && action is null, "Setup window shows media and metadata Ready, LibreOffice Installed and no download when tools are present");
         var frame = window.CaptureRenderedFrame();
         Check(frame is not null, "Setup window renders (" + label + ")");
         Smoke(frame, $"tool-setup-{label}-light");
@@ -359,6 +369,7 @@ async Task ToolSetupChecks(string root)
     fake.Close();
 
     AppPaths.OfficeSearchPath = officeDir;
+    AppPaths.MetadataRoot = metadataPresent;
     var home = new MainWindow(present) { Width = 820, Height = 780 };
     home.Show();
     Dispatcher.UIThread.RunJobs();
@@ -374,6 +385,7 @@ async Task ToolSetupChecks(string root)
     foreach (var w in needs.OwnedWindows.ToArray()) w.Close();
     needs.Close();
     AppPaths.OfficeSearchPath = savedOffice;
+    AppPaths.MetadataRoot = noMetadata;
 }
 
 void WheelChecks(string root)

@@ -847,8 +847,11 @@
 "EPUB LAYOUT" = "EPUB LAYOUT";
 "EPUB layout" = "EPUB layout";
 "ESC TO CLOSE" = "ESC TO CLOSE";
+"EVERY TAG WILL BE REMOVED. ENCODED PIXELS, COLOR PROFILE AND DISPLAY ORIENTATION ARE PRESERVED." = "EVERY TAG WILL BE REMOVED. ENCODED PIXELS, COLOR PROFILE AND DISPLAY ORIENTATION ARE PRESERVED.";
 "EVERYTHING HAS A NEXT FORM." = "EVERYTHING HAS A NEXT FORM.";
 "EVERYTHING NASHI NEEDS FOR AUDIO, VIDEO AND DOCUMENTS IS IN PLACE." = "EVERYTHING NASHI NEEDS FOR AUDIO, VIDEO AND DOCUMENTS IS IN PLACE.";
+"EVERYTHING NASHI NEEDS FOR AUDIO, VIDEO, METADATA AND DOCUMENTS IS IN PLACE." = "EVERYTHING NASHI NEEDS FOR AUDIO, VIDEO, METADATA AND DOCUMENTS IS IN PLACE.";
+"EXIFTOOL, FOR READING AND EDITING PHOTO METADATA" = "EXIFTOOL, FOR READING AND EDITING PHOTO METADATA";
 "EXPAND FLOAT" = "EXPAND FLOAT";
 "EXPANDED UPDATE IS TOO LARGE." = "EXPANDED UPDATE IS TOO LARGE.";
 "EXPORT CLIPS" = "EXPORT CLIPS";
@@ -882,8 +885,11 @@
 "Every redaction area must have positive dimensions and fit completely inside the %@ × %lld pixel image. Adjust the areas for this image and try again." = "Every redaction area must have positive dimensions and fit completely inside the %@ × %lld pixel image. Adjust the areas for this image and try again.";
 "Every redaction area must have positive dimensions and fit completely inside the %lld × %@ pixel image. Adjust the areas for this image and try again." = "Every redaction area must have positive dimensions and fit completely inside the %lld × %@ pixel image. Adjust the areas for this image and try again.";
 "Every redaction area must have positive dimensions and fit completely inside the %lld × %lld pixel image. Adjust the areas for this image and try again." = "Every redaction area must have positive dimensions and fit completely inside the %lld × %lld pixel image. Adjust the areas for this image and try again.";
+"Every tag will be removed. Encoded pixels, color profile and display orientation are preserved." = "Every tag will be removed. Encoded pixels, color profile and display orientation are preserved.";
 "Everything Nashi needs for audio, video and documents is in place." = "Everything Nashi needs for audio, video and documents is in place.";
+"Everything Nashi needs for audio, video, metadata and documents is in place." = "Everything Nashi needs for audio, video, metadata and documents is in place.";
 "Everything has a next form." = "Everything has a next form.";
+"ExifTool, for reading and editing photo metadata" = "ExifTool, for reading and editing photo metadata";
 "Expand Float" = "Expand Float";
 "Expanded update is too large." = "Expanded update is too large.";
 "Export One Video" = "Export One Video";
@@ -1265,6 +1271,8 @@
 "MEDIUM · 1920 PX LONGEST EDGE" = "MEDIUM · 1920 PX LONGEST EDGE";
 "MERGE PDFS" = "MERGE PDFS";
 "METADATA" = "METADATA";
+"METADATA TOOLS" = "METADATA TOOLS";
+"METADATA TOOLS ARE NEEDED FOR THIS. DOWNLOAD THE MISSING TOOLS IN SETUP." = "METADATA TOOLS ARE NEEDED FOR THIS. DOWNLOAD THE MISSING TOOLS IN SETUP.";
 "METADATA TOOLS ARE NOT READY." = "METADATA TOOLS ARE NOT READY.";
 "METADATA TOOLS CHECKSUM MISMATCH." = "METADATA TOOLS CHECKSUM MISMATCH.";
 "METADATA · NASHI" = "METADATA · NASHI";
@@ -1313,6 +1321,8 @@
 "Medium · 1920 px longest edge" = "Medium · 1920 px longest edge";
 "Merge PDFs" = "Merge PDFs";
 "Metadata" = "Metadata";
+"Metadata tools" = "Metadata tools";
+"Metadata tools are needed for this. Download the missing tools in setup." = "Metadata tools are needed for this. Download the missing tools in setup.";
 "Metadata tools are not ready." = "Metadata tools are not ready.";
 "Metadata tools checksum mismatch." = "Metadata tools checksum mismatch.";
 "Metadata · Nashi" = "Metadata · Nashi";
@@ -1345,6 +1355,7 @@
 "NASHI UPDATE" = "NASHI UPDATE";
 "NASHI UPDATE COULD NOT FINISH" = "NASHI UPDATE COULD NOT FINISH";
 "NASHI USES FFMPEG FOR AUDIO AND VIDEO, DENO FOR PAGES FILES AND LIBREOFFICE FOR OFFICE DOCUMENTS. DOWNLOADS COME STRAIGHT FROM THE UPSTREAM PROJECTS AND ARE CHECKED BEFORE ANYTHING IS INSTALLED." = "NASHI USES FFMPEG FOR AUDIO AND VIDEO, DENO FOR PAGES FILES AND LIBREOFFICE FOR OFFICE DOCUMENTS. DOWNLOADS COME STRAIGHT FROM THE UPSTREAM PROJECTS AND ARE CHECKED BEFORE ANYTHING IS INSTALLED.";
+"NASHI USES FFMPEG FOR AUDIO AND VIDEO, DENO FOR PAGES FILES, EXIFTOOL FOR METADATA AND LIBREOFFICE FOR OFFICE DOCUMENTS. DOWNLOADS COME STRAIGHT FROM THE UPSTREAM PROJECTS AND ARE CHECKED BEFORE ANYTHING IS INSTALLED." = "NASHI USES FFMPEG FOR AUDIO AND VIDEO, DENO FOR PAGES FILES, EXIFTOOL FOR METADATA AND LIBREOFFICE FOR OFFICE DOCUMENTS. DOWNLOADS COME STRAIGHT FROM THE UPSTREAM PROJECTS AND ARE CHECKED BEFORE ANYTHING IS INSTALLED.";
 "NASHI · FEATURES & SHORTCUTS" = "NASHI · FEATURES & SHORTCUTS";
 "NASHI — COMPLETE" = "NASHI — COMPLETE";
 "NASHI — PROGRESS" = "NASHI — PROGRESS";
@@ -1361,6 +1372,7 @@
 "NO MATCHES. TRY A FILE NAME OR TOOL." = "NO MATCHES. TRY A FILE NAME OR TOOL.";
 "NO MATCHING REGIONS WERE DETECTED. YOU CAN STILL DRAW AREAS BY HAND." = "NO MATCHING REGIONS WERE DETECTED. YOU CAN STILL DRAW AREAS BY HAND.";
 "NO MEDIA OUTPUT WAS PRODUCED." = "NO MEDIA OUTPUT WAS PRODUCED.";
+"NO METADATA FOUND." = "NO METADATA FOUND.";
 "NO OUTPUT WAS PRODUCED." = "NO OUTPUT WAS PRODUCED.";
 "NO PUBLIC DOWNLOADABLE MEDIA FOUND. SOME SITES REQUIRE SIGN-IN OR DO NOT EXPOSE DOWNLOADABLE MEDIA." = "NO PUBLIC DOWNLOADABLE MEDIA FOUND. SOME SITES REQUIRE SIGN-IN OR DO NOT EXPOSE DOWNLOADABLE MEDIA.";
 "NO QR CODES FOUND. TRY A LARGER OR SHARPER IMAGE." = "NO QR CODES FOUND. TRY A LARGER OR SHARPER IMAGE.";
@@ -1393,6 +1405,7 @@
 "Nashi update" = "Nashi update";
 "Nashi update could not finish" = "Nashi update could not finish";
 "Nashi uses FFmpeg for audio and video, Deno for Pages files and LibreOffice for Office documents. Downloads come straight from the upstream projects and are checked before anything is installed." = "Nashi uses FFmpeg for audio and video, Deno for Pages files and LibreOffice for Office documents. Downloads come straight from the upstream projects and are checked before anything is installed.";
+"Nashi uses FFmpeg for audio and video, Deno for Pages files, ExifTool for metadata and LibreOffice for Office documents. Downloads come straight from the upstream projects and are checked before anything is installed." = "Nashi uses FFmpeg for audio and video, Deno for Pages files, ExifTool for metadata and LibreOffice for Office documents. Downloads come straight from the upstream projects and are checked before anything is installed.";
 "Nashi · Features & shortcuts" = "Nashi · Features & shortcuts";
 "Nashi — Complete" = "Nashi — Complete";
 "Nashi — Progress" = "Nashi — Progress";
@@ -1415,6 +1428,7 @@
 "No matches. Try a file name or tool." = "No matches. Try a file name or tool.";
 "No matching regions were detected. You can still draw areas by hand." = "No matching regions were detected. You can still draw areas by hand.";
 "No media output was produced." = "No media output was produced.";
+"No metadata found." = "No metadata found.";
 "No output was produced." = "No output was produced.";
 "No public downloadable media found. Some sites require sign-in or do not expose downloadable media." = "No public downloadable media found. Some sites require sign-in or do not expose downloadable media.";
 "No terminal app found." = "No terminal app found.";
@@ -1910,6 +1924,7 @@
 "SMALLER FILES WITH STRONGER COMPRESSION." = "SMALLER FILES WITH STRONGER COMPRESSION.";
 "SMALLEST" = "SMALLEST";
 "SOLID" = "SOLID";
+"SOME TOOLS ARE STILL MISSING AFTER THE DOWNLOAD." = "SOME TOOLS ARE STILL MISSING AFTER THE DOWNLOAD.";
 "SOUND AND HAPTIC FEEDBACK" = "SOUND AND HAPTIC FEEDBACK";
 "SOUND FEEDBACK" = "SOUND FEEDBACK";
 "SOUND FOLLOWS YOUR MAC’S VOLUME. HAPTICS NEED A COMPATIBLE FORCE TOUCH TRACKPAD." = "SOUND FOLLOWS YOUR MAC’S VOLUME. HAPTICS NEED A COMPATIBLE FORCE TOUCH TRACKPAD.";
@@ -2060,6 +2075,7 @@
 "Smaller files with stronger compression." = "Smaller files with stronger compression.";
 "Smallest" = "Smallest";
 "Solid" = "Solid";
+"Some tools are still missing after the download." = "Some tools are still missing after the download.";
 "Something went wrong: %@" = "Something went wrong: %@";
 "Something went wrong: %lld" = "Something went wrong: %lld";
 "Sound and haptic feedback" = "Sound and haptic feedback";
@@ -2131,6 +2147,7 @@
 "THE SIGNED PACKAGE VERSION DOES NOT MATCH THIS UPDATE." = "THE SIGNED PACKAGE VERSION DOES NOT MATCH THIS UPDATE.";
 "THE UPDATE DOES NOT CONTAIN NASHI." = "THE UPDATE DOES NOT CONTAIN NASHI.";
 "THE UPDATE SIGNATURE IS INVALID. YOUR EXISTING APP WAS KEPT." = "THE UPDATE SIGNATURE IS INVALID. YOUR EXISTING APP WAS KEPT.";
+"THESE CHANGES APPLY TO EVERY SELECTED IMAGE." = "THESE CHANGES APPLY TO EVERY SELECTED IMAGE.";
 "THESE FILES HAVE MOVED OR WERE DELETED." = "THESE FILES HAVE MOVED OR WERE DELETED.";
 "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE." = "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE.";
 "THIS EPUB COULD NOT BE READ." = "THIS EPUB COULD NOT BE READ.";
@@ -2226,6 +2243,7 @@
 "The signed package version does not match this update." = "The signed package version does not match this update.";
 "The update does not contain Nashi." = "The update does not contain Nashi.";
 "The update signature is invalid. Your existing app was kept." = "The update signature is invalid. Your existing app was kept.";
+"These changes apply to every selected image." = "These changes apply to every selected image.";
 "These files have moved or were deleted." = "These files have moved or were deleted.";
 "This EPUB could not be read." = "This EPUB could not be read.";
 "This PDF contains no pages." = "This PDF contains no pages.";

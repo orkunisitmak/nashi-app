@@ -21,6 +21,17 @@
         </Border>
       </Grid>
     </Border>
+    <Border Classes="card" Padding="18,14">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Spacing="3" VerticalAlignment="Center">
+          <TextBlock x:Name="MetadataName" FontSize="14" FontWeight="SemiBold" />
+          <TextBlock x:Name="MetadataDetail" Classes="secondary" FontSize="11" TextWrapping="Wrap" />
+        </StackPanel>
+        <Border x:Name="MetadataPill" Grid.Column="1" Classes="pill gold" VerticalAlignment="Center">
+          <TextBlock x:Name="MetadataStatus" />
+        </Border>
+      </Grid>
+    </Border>
     <!-- LibreOffice is installed by the user's package manager: this row says how, it never downloads. -->
     <Border Classes="card" Padding="18,14">
       <StackPanel Spacing="8">

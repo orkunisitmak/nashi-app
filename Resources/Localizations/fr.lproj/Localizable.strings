@@ -847,8 +847,11 @@
 "EPUB LAYOUT" = "MISE EN PAGE EPUB";
 "EPUB layout" = "Mise en page EPUB";
 "ESC TO CLOSE" = "ÉCHAP POUR FERMER";
+"EVERY TAG WILL BE REMOVED. ENCODED PIXELS, COLOR PROFILE AND DISPLAY ORIENTATION ARE PRESERVED." = "EVERY TAG WILL BE REMOVED. ENCODED PIXELS, COLOR PROFILE AND DISPLAY ORIENTATION ARE PRESERVED.";
 "EVERYTHING HAS A NEXT FORM." = "TOUT A UNE PROCHAINE FORME.";
 "EVERYTHING NASHI NEEDS FOR AUDIO, VIDEO AND DOCUMENTS IS IN PLACE." = "EVERYTHING NASHI NEEDS FOR AUDIO, VIDEO AND DOCUMENTS IS IN PLACE.";
+"EVERYTHING NASHI NEEDS FOR AUDIO, VIDEO, METADATA AND DOCUMENTS IS IN PLACE." = "EVERYTHING NASHI NEEDS FOR AUDIO, VIDEO, METADATA AND DOCUMENTS IS IN PLACE.";
+"EXIFTOOL, FOR READING AND EDITING PHOTO METADATA" = "EXIFTOOL, FOR READING AND EDITING PHOTO METADATA";
 "EXPAND FLOAT" = "DÉVELOPPER FLOAT";
 "EXPANDED UPDATE IS TOO LARGE." = "LA MISE À JOUR DÉCOMPRESSÉE EST TROP VOLUMINEUSE.";
 "EXPORT CLIPS" = "EXPORTER LES CLIPS";
@@ -882,8 +885,11 @@
 "Every redaction area must have positive dimensions and fit completely inside the %@ × %lld pixel image. Adjust the areas for this image and try again." = "Every redaction area must have positive dimensions and fit completely inside the %@ × %lld pixel image. Adjust the areas for this image and try again.";
 "Every redaction area must have positive dimensions and fit completely inside the %lld × %@ pixel image. Adjust the areas for this image and try again." = "Every redaction area must have positive dimensions and fit completely inside the %lld × %@ pixel image. Adjust the areas for this image and try again.";
 "Every redaction area must have positive dimensions and fit completely inside the %lld × %lld pixel image. Adjust the areas for this image and try again." = "Every redaction area must have positive dimensions and fit completely inside the %lld × %lld pixel image. Adjust the areas for this image and try again.";
+"Every tag will be removed. Encoded pixels, color profile and display orientation are preserved." = "Every tag will be removed. Encoded pixels, color profile and display orientation are preserved.";
 "Everything Nashi needs for audio, video and documents is in place." = "Everything Nashi needs for audio, video and documents is in place.";
+"Everything Nashi needs for audio, video, metadata and documents is in place." = "Everything Nashi needs for audio, video, metadata and documents is in place.";
 "Everything has a next form." = "Tout a une prochaine forme.";
+"ExifTool, for reading and editing photo metadata" = "ExifTool, for reading and editing photo metadata";
 "Expand Float" = "Développer Float";
 "Expanded update is too large." = "La mise à jour décompressée est trop volumineuse.";
 "Export One Video" = "Exporter une seule vidéo";
@@ -1265,6 +1271,8 @@
 "MEDIUM · 1920 PX LONGEST EDGE" = "MOYEN · 1920 PX SUR LE PLUS GRAND CÔTÉ";
 "MERGE PDFS" = "FUSIONNER DES PDF";
 "METADATA" = "MÉTADONNÉES";
+"METADATA TOOLS" = "METADATA TOOLS";
+"METADATA TOOLS ARE NEEDED FOR THIS. DOWNLOAD THE MISSING TOOLS IN SETUP." = "METADATA TOOLS ARE NEEDED FOR THIS. DOWNLOAD THE MISSING TOOLS IN SETUP.";
 "METADATA TOOLS ARE NOT READY." = "LES OUTILS DE MÉTADONNÉES NE SONT PAS PRÊTS.";
 "METADATA TOOLS CHECKSUM MISMATCH." = "SOMME DE CONTRÔLE DES OUTILS DE MÉTADONNÉES INCORRECTE.";
 "METADATA · NASHI" = "MÉTADONNÉES · NASHI";
@@ -1313,6 +1321,8 @@
 "Medium · 1920 px longest edge" = "Moyen · 1920 px sur le plus grand côté";
 "Merge PDFs" = "Fusionner des PDF";
 "Metadata" = "Métadonnées";
+"Metadata tools" = "Metadata tools";
+"Metadata tools are needed for this. Download the missing tools in setup." = "Metadata tools are needed for this. Download the missing tools in setup.";
 "Metadata tools are not ready." = "Les outils de métadonnées ne sont pas prêts.";
 "Metadata tools checksum mismatch." = "Somme de contrôle des outils de métadonnées incorrecte.";
 "Metadata · Nashi" = "Métadonnées · Nashi";
@@ -1345,6 +1355,7 @@
 "NASHI UPDATE" = "MISE À JOUR DE NASHI";
 "NASHI UPDATE COULD NOT FINISH" = "LA MISE À JOUR DE NASHI N’A PAS PU SE TERMINER";
 "NASHI USES FFMPEG FOR AUDIO AND VIDEO, DENO FOR PAGES FILES AND LIBREOFFICE FOR OFFICE DOCUMENTS. DOWNLOADS COME STRAIGHT FROM THE UPSTREAM PROJECTS AND ARE CHECKED BEFORE ANYTHING IS INSTALLED." = "NASHI USES FFMPEG FOR AUDIO AND VIDEO, DENO FOR PAGES FILES AND LIBREOFFICE FOR OFFICE DOCUMENTS. DOWNLOADS COME STRAIGHT FROM THE UPSTREAM PROJECTS AND ARE CHECKED BEFORE ANYTHING IS INSTALLED.";
+"NASHI USES FFMPEG FOR AUDIO AND VIDEO, DENO FOR PAGES FILES, EXIFTOOL FOR METADATA AND LIBREOFFICE FOR OFFICE DOCUMENTS. DOWNLOADS COME STRAIGHT FROM THE UPSTREAM PROJECTS AND ARE CHECKED BEFORE ANYTHING IS INSTALLED." = "NASHI USES FFMPEG FOR AUDIO AND VIDEO, DENO FOR PAGES FILES, EXIFTOOL FOR METADATA AND LIBREOFFICE FOR OFFICE DOCUMENTS. DOWNLOADS COME STRAIGHT FROM THE UPSTREAM PROJECTS AND ARE CHECKED BEFORE ANYTHING IS INSTALLED.";
 "NASHI · FEATURES & SHORTCUTS" = "NASHI · FONCTIONNALITÉS ET RACCOURCIS";
 "NASHI — COMPLETE" = "NASHI — COMPLETE";
 "NASHI — PROGRESS" = "NASHI — PROGRESS";
@@ -1361,6 +1372,7 @@
 "NO MATCHES. TRY A FILE NAME OR TOOL." = "AUCUN RÉSULTAT. ESSAYEZ UN NOM DE FICHIER OU D’OUTIL.";
 "NO MATCHING REGIONS WERE DETECTED. YOU CAN STILL DRAW AREAS BY HAND." = "AUCUNE ZONE CORRESPONDANTE N’A ÉTÉ DÉTECTÉE. VOUS POUVEZ TOUJOURS DESSINER DES ZONES À LA MAIN.";
 "NO MEDIA OUTPUT WAS PRODUCED." = "AUCUNE SORTIE MULTIMÉDIA N’A ÉTÉ PRODUITE.";
+"NO METADATA FOUND." = "NO METADATA FOUND.";
 "NO OUTPUT WAS PRODUCED." = "AUCUNE SORTIE N’A ÉTÉ PRODUITE.";
 "NO PUBLIC DOWNLOADABLE MEDIA FOUND. SOME SITES REQUIRE SIGN-IN OR DO NOT EXPOSE DOWNLOADABLE MEDIA." = "AUCUN MÉDIA PUBLIC TÉLÉCHARGEABLE TROUVÉ. CERTAINS SITES EXIGENT UNE CONNEXION OU N’EXPOSENT PAS DE MÉDIAS TÉLÉCHARGEABLES.";
 "NO QR CODES FOUND. TRY A LARGER OR SHARPER IMAGE." = "AUCUN CODE QR TROUVÉ. ESSAYEZ UNE IMAGE PLUS GRANDE OU PLUS NETTE.";
@@ -1393,6 +1405,7 @@
 "Nashi update" = "Mise à jour de Nashi";
 "Nashi update could not finish" = "La mise à jour de Nashi n’a pas pu se terminer";
 "Nashi uses FFmpeg for audio and video, Deno for Pages files and LibreOffice for Office documents. Downloads come straight from the upstream projects and are checked before anything is installed." = "Nashi uses FFmpeg for audio and video, Deno for Pages files and LibreOffice for Office documents. Downloads come straight from the upstream projects and are checked before anything is installed.";
+"Nashi uses FFmpeg for audio and video, Deno for Pages files, ExifTool for metadata and LibreOffice for Office documents. Downloads come straight from the upstream projects and are checked before anything is installed." = "Nashi uses FFmpeg for audio and video, Deno for Pages files, ExifTool for metadata and LibreOffice for Office documents. Downloads come straight from the upstream projects and are checked before anything is installed.";
 "Nashi · Features & shortcuts" = "Nashi · Fonctionnalités et raccourcis";
 "Nashi — Complete" = "Nashi — Complete";
 "Nashi — Progress" = "Nashi — Progress";
@@ -1415,6 +1428,7 @@
 "No matches. Try a file name or tool." = "Aucun résultat. Essayez un nom de fichier ou d’outil.";
 "No matching regions were detected. You can still draw areas by hand." = "Aucune zone correspondante n’a été détectée. Vous pouvez toujours dessiner des zones à la main.";
 "No media output was produced." = "Aucune sortie multimédia n’a été produite.";
+"No metadata found." = "No metadata found.";
 "No output was produced." = "Aucune sortie n’a été produite.";
 "No public downloadable media found. Some sites require sign-in or do not expose downloadable media." = "Aucun média public téléchargeable trouvé. Certains sites exigent une connexion ou n’exposent pas de médias téléchargeables.";
 "No terminal app found." = "No terminal app found.";
@@ -1910,6 +1924,7 @@
 "SMALLER FILES WITH STRONGER COMPRESSION." = "SMALLER FILES WITH STRONGER COMPRESSION.";
 "SMALLEST" = "LE PLUS PETIT";
 "SOLID" = "PLEIN";
+"SOME TOOLS ARE STILL MISSING AFTER THE DOWNLOAD." = "SOME TOOLS ARE STILL MISSING AFTER THE DOWNLOAD.";
 "SOUND AND HAPTIC FEEDBACK" = "RETOUR SONORE ET HAPTIQUE";
 "SOUND FEEDBACK" = "RETOUR SONORE";
 "SOUND FOLLOWS YOUR MAC’S VOLUME. HAPTICS NEED A COMPATIBLE FORCE TOUCH TRACKPAD." = "LE SON SUIT LE VOLUME DE VOTRE MAC. LE RETOUR HAPTIQUE NÉCESSITE UN TRACKPAD FORCE TOUCH COMPATIBLE.";
@@ -2060,6 +2075,7 @@
 "Smaller files with stronger compression." = "Smaller files with stronger compression.";
 "Smallest" = "Le plus petit";
 "Solid" = "Plein";
+"Some tools are still missing after the download." = "Some tools are still missing after the download.";
 "Something went wrong: %@" = "Something went wrong: %@";
 "Something went wrong: %lld" = "Something went wrong: %lld";
 "Sound and haptic feedback" = "Retour sonore et haptique";
@@ -2131,6 +2147,7 @@
 "THE SIGNED PACKAGE VERSION DOES NOT MATCH THIS UPDATE." = "LA VERSION DU PAQUET SIGNÉ NE CORRESPOND PAS À CETTE MISE À JOUR.";
 "THE UPDATE DOES NOT CONTAIN NASHI." = "LA MISE À JOUR NE CONTIENT PAS NASHI.";
 "THE UPDATE SIGNATURE IS INVALID. YOUR EXISTING APP WAS KEPT." = "LA SIGNATURE DE LA MISE À JOUR EST INVALIDE. VOTRE APP EXISTANTE A ÉTÉ CONSERVÉE.";
+"THESE CHANGES APPLY TO EVERY SELECTED IMAGE." = "THESE CHANGES APPLY TO EVERY SELECTED IMAGE.";
 "THESE FILES HAVE MOVED OR WERE DELETED." = "CES FICHIERS ONT ÉTÉ DÉPLACÉS OU SUPPRIMÉS.";
 "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE." = "CE RECADRAGE S’APPLIQUE À TOUTES LES IMAGES SÉLECTIONNÉES ET DOIT TENIR DANS CHACUNE D’ELLES.";
 "THIS EPUB COULD NOT BE READ." = "THIS EPUB COULD NOT BE READ.";
@@ -2226,6 +2243,7 @@
 "The signed package version does not match this update." = "La version du paquet signé ne correspond pas à cette mise à jour.";
 "The update does not contain Nashi." = "La mise à jour ne contient pas Nashi.";
 "The update signature is invalid. Your existing app was kept." = "La signature de la mise à jour est invalide. Votre app existante a été conservée.";
+"These changes apply to every selected image." = "These changes apply to every selected image.";
 "These files have moved or were deleted." = "Ces fichiers ont été déplacés ou supprimés.";
 "This EPUB could not be read." = "This EPUB could not be read.";
 "This PDF contains no pages." = "Ce PDF ne contient aucune page.";

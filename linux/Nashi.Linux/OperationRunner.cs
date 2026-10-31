@@ -3,12 +3,14 @@ using Nashi.Core;
 
 namespace Nashi.Linux;
 
-/// A tool the choice needs was not found: ffmpeg and ffprobe for media, LibreOffice for Office work, Deno for Pages.
+/// A tool the choice needs was not found: ffmpeg and ffprobe for media, LibreOffice for Office work, Deno for Pages,
+/// ExifTool for Metadata.
 public sealed class MissingToolsException(string message = MissingToolsException.Media) : Exception(message)
 {
     public const string Media = "Media tools are needed for this. Install ffmpeg, or set up media tools first.";
     public const string Office = "LibreOffice is needed for this. Install it, then try again.";
     public const string Pages = "Pages documents need Deno. Download the missing tools in setup.";
+    public const string Metadata = "Metadata tools are needed for this. Download the missing tools in setup.";
 }
 
 /// Turns a wheel choice plus selected files into output files, using the shared engine.

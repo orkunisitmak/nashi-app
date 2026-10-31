@@ -1234,5 +1234,14 @@
   "Enter a positive, finite target size.": "Pozitif, sonlu bir hedef boyut gir.",
   "Smaller files with less quality loss.": "Daha az kalite kaybıyla daha küçük dosyalar.",
   "Smaller files with stronger compression.": "Daha güçlü sıkıştırmayla daha küçük dosyalar.",
-  "Original size: {0} in {1} files": "Orijinal boyut: {1} dosyada {0}"
+  "Original size: {0} in {1} files": "Orijinal boyut: {1} dosyada {0}",
+  "Every tag will be removed. Encoded pixels, color profile and display orientation are preserved.": "Tüm etiketler kaldırılacak. Kodlanmış pikseller, renk profili ve görüntü yönü korunur.",
+  "Everything Nashi needs for audio, video, metadata and documents is in place.": "Nashi'nin ses, video, meta veri ve belgeler için ihtiyacı olan her şey hazır.",
+  "ExifTool, for reading and editing photo metadata": "ExifTool, fotoğraf meta verilerini okumak ve düzenlemek için",
+  "Metadata tools": "Meta veri araçları",
+  "Metadata tools are needed for this. Download the missing tools in setup.": "Bunun için meta veri araçları gerekiyor. Eksik araçları kurulumda indir.",
+  "Nashi uses FFmpeg for audio and video, Deno for Pages files, ExifTool for metadata and LibreOffice for Office documents. Downloads come straight from the upstream projects and are checked before anything is installed.": "Nashi ses ve video için FFmpeg, Pages dosyaları için Deno, meta veriler için ExifTool ve Office belgeleri için LibreOffice kullanır. İndirmeler doğrudan kaynak projelerden gelir ve kurulmadan önce doğrulanır.",
+  "No metadata found.": "Meta veri bulunamadı.",
+  "Some tools are still missing after the download.": "İndirmeden sonra bazı araçlar hâlâ eksik.",
+  "These changes apply to every selected image.": "Bu değişiklikler seçili tüm görsellere uygulanır."
 }

@@ -4,7 +4,7 @@ using Nashi.Core;
 
 namespace Nashi.Linux;
 
-/// Media tool status plus a download of whatever is missing, with progress, Cancel, error text and Retry.
+/// Media tool and ExifTool status plus a download of whatever is missing, with progress, Cancel, error text and Retry.
 /// LibreOffice has its own row: Installed, or Missing with how to install it (there is no portable Linux build to download).
 public sealed partial class ToolSetupWindow : Window
 {
@@ -12,10 +12,12 @@ public sealed partial class ToolSetupWindow : Window
     {
         public const string Heading = "Set up tools";
         public const string HeadingReady = "Tools ready";
-        public const string Detail = "Nashi uses FFmpeg for audio and video, Deno for Pages files and LibreOffice for Office documents. Downloads come straight from the upstream projects and are checked before anything is installed.";
-        public const string DetailReady = "Everything Nashi needs for audio, video and documents is in place.";
+        public const string Detail = "Nashi uses FFmpeg for audio and video, Deno for Pages files, ExifTool for metadata and LibreOffice for Office documents. Downloads come straight from the upstream projects and are checked before anything is installed.";
+        public const string DetailReady = "Everything Nashi needs for audio, video, metadata and documents is in place.";
         public const string Tool = "Media tools";
         public const string ToolDetail = "FFmpeg, FFprobe and Deno (for Pages)";
+        public const string Metadata = "Metadata tools";
+        public const string MetadataDetail = "ExifTool, for reading and editing photo metadata";
         public const string Office = "Office tools";
         public const string OfficeDetail = "LibreOffice, for Office documents, text, EPUB and Pages";
         public const string OfficeHint = "Install LibreOffice with your package manager, for example sudo apt install libreoffice or sudo dnf install libreoffice, then try again. Nashi does not download it.";
@@ -30,7 +32,7 @@ public sealed partial class ToolSetupWindow : Window
         public const string Starting = "Getting started…";
         public const string Cancelled = "Cancelled. Nothing was installed.";
         public const string Failed = "Couldn’t set up tools: {0}";
-        public const string StillMissing = "Media tools are still missing after the download.";
+        public const string StillMissing = "Some tools are still missing after the download.";
     }
 
     private readonly Toolchain tools;
@@ -45,10 +47,17 @@ public sealed partial class ToolSetupWindow : Window
         InitializeComponent();
         Desktop.Translucent(this);
         this.tools = tools;
-        this.install = install ?? ((progress, token) => tools.InstallAsync(progress, token));
+        // Only what is missing: media tools and Deno through the Toolchain, ExifTool through MetadataService.
+        this.install = install ?? (async (progress, token) =>
+        {
+            if (!AppPaths.MediaAndDenoReady(tools)) await tools.InstallAsync(progress, token);
+            await AppPaths.Metadata().InstallAsync(progress, token);
+        });
         Title = L10n.T(Copy.Heading);
         ToolName.Text = L10n.T(Copy.Tool);
         ToolDetail.Text = L10n.T(Copy.ToolDetail);
+        MetadataName.Text = L10n.T(Copy.Metadata);
+        MetadataDetail.Text = L10n.T(Copy.MetadataDetail);
         OfficeName.Text = L10n.T(Copy.Office);
         OfficeDetail.Text = L10n.T(Copy.OfficeDetail);
         OfficeHint.Text = L10n.T(Copy.OfficeHint);
@@ -62,18 +71,21 @@ public sealed partial class ToolSetupWindow : Window
 
     private void Refresh()
     {
-        var media = AppPaths.DownloadsReady(tools);
+        var media = AppPaths.MediaAndDenoReady(tools);
+        var metadata = AppPaths.Metadata().Executable is not null;
         var office = AppPaths.Office() is not null;
-        HeadingText.Text = media && office ? L10n.T(Copy.HeadingReady) : L10n.T(Copy.Heading);
-        DetailText.Text = media && office ? L10n.T(Copy.DetailReady) : L10n.T(Copy.Detail);
+        HeadingText.Text = media && metadata && office ? L10n.T(Copy.HeadingReady) : L10n.T(Copy.Heading);
+        DetailText.Text = media && metadata && office ? L10n.T(Copy.DetailReady) : L10n.T(Copy.Detail);
         StatusText.Text = media ? L10n.T(Copy.Ready) : L10n.T(Copy.Missing);
         StatusPill.Classes.Set("gold", !media);
+        MetadataStatus.Text = metadata ? L10n.T(Copy.Ready) : L10n.T(Copy.Missing);
+        MetadataPill.Classes.Set("gold", !metadata);
         OfficeStatus.Text = office ? L10n.T(Copy.Installed) : L10n.T(Copy.Missing);
         OfficePill.Classes.Set("gold", !office);
         OfficeHint.IsVisible = !office;
         ProgressPanel.IsVisible = Installing;
         CancelButton.IsVisible = Installing;
-        ActionButton.IsVisible = !media && !Installing;
+        ActionButton.IsVisible = !(media && metadata) && !Installing;
         ActionButton.Content = error is null ? L10n.T(Copy.Download) : L10n.T(Copy.Retry);
         ErrorText.IsVisible = error is not null;
         ErrorText.Text = error;
