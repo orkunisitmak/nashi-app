@@ -55,7 +55,9 @@ public enum ProcessRunner {
             }
             Thread.sleep(forTimeInterval: 0.03)
         }
-        process.waitUntilExit(); group.wait()
+        process.waitUntilExit()
+        // A descendant can inherit the pipes after the child exits; keep honouring cancellation.
+        while group.wait(timeout: .now() + 0.03) == .timedOut { if token.isCancelled { break } }
         try token.check()
         guard process.terminationStatus == 0 else {
             let diagnostic = String(decoding: captured.errors.suffix(6000), as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
