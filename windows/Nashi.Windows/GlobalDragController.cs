@@ -92,13 +92,15 @@ internal sealed class GlobalDropWheel:Window
     {
         // DragOver fires on every pointer move, so shortcuts are only resolved when the dragged files change.
         var dragged=e.Data.GetData(DataFormats.FileDrop) as string[]??[];if(!dragged.SequenceEqual(draggedFiles)){draggedFiles=dragged;resolvedFiles=ShellShortcut.Resolve(dragged);}
-        var files=resolvedFiles;var updated=Choices(files,DragPayload.Parse(e.Data),Payload(e.Data));
+        var files=resolvedFiles;var web=Payload(e.Data);var updated=Choices(files,DragPayload.Parse(e.Data),web);
         // Replacing the hit-test target during DragEnter causes OLE to enter
         // again instead of advancing to DragOver. Keep the visual tree stable
         // until the payload actually changes, and select on entry as well.
         // A file this mode has no tool for (an .ico, for example) still shows the wheel, with a message, so it does not look broken.
         var unsupported=files.Length>0&&files.All(p=>!Directory.Exists(p)||FeatureCatalog.Extension(p) is "pages" or "rtfd")&&updated.Count==0;
-        if(!updated.SequenceEqual(choices)||unsupported!=noTools){choices=updated;noTools=unsupported;Build(choices);}
+        // A link only offers downloads in Tools mode; Convert and File actions say so instead of repeating the downloads.
+        var linkOnly=web is not null&&updated.Count==0;unsupported|=linkOnly;
+        if(!updated.SequenceEqual(choices)||unsupported!=noTools||linkOnly!=noLink){choices=updated;noTools=unsupported;noLink=linkOnly;Build(choices);}
         var p=e.GetPosition(canvas);var distance=(p-new Point(270,270)).Length;
         if(distance<108||distance>250||choices.Count==0){selection="";Highlight(-1);}
         else{var angle=(Math.Atan2(p.Y-270,p.X-270)*180/Math.PI-WheelPresentation.StartAngle(choices.Count)+360+180d/choices.Count)%360;var index=(int)(angle/(360d/choices.Count));var id=choices[index].Id;if(id!=selection){selection=id;Feedback.Play();}Highlight(index);}
@@ -115,10 +117,10 @@ internal sealed class GlobalDropWheel:Window
             if(mode=="actions")return [new("share","Share","◉"),new("float","Float","▣"),new("copy","Copy","▱"),new("move","Move","↗"),new("copyPath","Copy Path","↪"),new("terminal","Terminal",">_")];
             return FeatureCatalog.Tools(files).Select(t=>new ToolChoice(t,FeatureCatalog.ToolNames[t],MainWindow.ToolSymbol(t))).ToArray();
         }
-        if(web is null)return [];return web.Kind switch{"youtube"=>[new("download:video","Download Video","↓"),new("download:thumbnail","Download Thumbnail","▣"),new("download:audio","Download Audio","♫")],"instagramPhotos"=>[new("download:photos","Download Images","▣")],"instagramReel"=>[new("download:video","Download Video","↓"),new("download:audio","Download Audio","♫")],"image"=>[new("download:image","Download Image","↓")],_=>[new("download:video","Download Video","↓"),new("download:audio","Download Audio","♫") ]};
+        if(web is null||mode!="tools")return [];return web.Kind switch{"youtube"=>[new("download:video","Download Video","↓"),new("download:thumbnail","Download Thumbnail","▣"),new("download:audio","Download Audio","♫")],"instagramPhotos"=>[new("download:photos","Download Images","▣")],"instagramReel"=>[new("download:video","Download Video","↓"),new("download:audio","Download Audio","♫")],"image"=>[new("download:image","Download Image","↓")],_=>[new("download:video","Download Video","↓"),new("download:audio","Download Audio","♫") ]};
     }
     private void Highlight(int index){var paths=canvas.Children.OfType<System.Windows.Shapes.Path>().ToArray();for(var n=0;n<paths.Length;n++){paths[n].Fill=Theme.Brush(n==index?"Sage":"Inset");paths[n].Stroke=Theme.Brush(n==index?"Gold":"Line");}}
-    private bool noTools;
+    private bool noTools,noLink;
     private void Build(IReadOnlyList<ToolChoice> tools)
     {
         canvas.Children.Clear();canvas.Children.Add(new Ellipse{Width=540,Height=540,Fill=WheelPresentation.Backdrop});var count=tools.Count;
@@ -127,6 +129,6 @@ internal sealed class GlobalDropWheel:Window
             var angle=(WheelPresentation.StartAngle(count)+360d*i/count)*Math.PI/180;var half=(180d/count-1)*Math.PI/180;Point P(double r,double a)=>new(270+r*Math.Cos(a),270+r*Math.Sin(a));var a=angle-half;var b=angle+half;var geometry=new StreamGeometry();using(var g=geometry.Open()){g.BeginFigure(P(108,a),true,true);g.LineTo(P(250,a),true,false);g.ArcTo(P(250,b),new(250,250),0,b-a>Math.PI,SweepDirection.Clockwise,true,false);g.LineTo(P(108,b),true,false);g.ArcTo(P(108,a),new(108,108),0,b-a>Math.PI,SweepDirection.Counterclockwise,true,false);}canvas.Children.Add(new System.Windows.Shapes.Path{Data=geometry,Fill=Theme.Brush("Inset"),Stroke=Theme.Brush("Line")});
             var (stack,location)=WheelPresentation.Caption(tools[i],geometry,angle,half,count);var label=new Border{Child=stack,Width=stack.DesiredSize.Width,Height=stack.DesiredSize.Height,IsHitTestVisible=false};Canvas.SetLeft(label,location.X-label.Width/2);Canvas.SetTop(label,location.Y-label.Height/2);canvas.Children.Add(label);
         }
-        var center=new Border{Width=180,Height=180,IsHitTestVisible=false,Visibility=Revealed?Visibility.Visible:Visibility.Hidden,Child=L10n.Label(new TextBlock{Text=count==0?(noTools?"No tools for this file type":"Keep dragging\nDrop a file or link"):mode=="convert"?"Convert":mode=="actions"?"File actions":"Tools",TextWrapping=TextWrapping.Wrap,TextAlignment=TextAlignment.Center,VerticalAlignment=VerticalAlignment.Center,FontSize=20,FontWeight=FontWeights.SemiBold,Foreground=Theme.Brush("Ink")} )};Canvas.SetLeft(center,180);Canvas.SetTop(center,180);canvas.Children.Add(center);
+        var center=new Border{Width=180,Height=180,IsHitTestVisible=false,Visibility=Revealed?Visibility.Visible:Visibility.Hidden,Child=L10n.Label(new TextBlock{Text=count==0?(noLink?"Not supported for links":noTools?"No tools for this file type":"Keep dragging\nDrop a file or link"):mode=="convert"?"Convert":mode=="actions"?"File actions":"Tools",TextWrapping=TextWrapping.Wrap,TextAlignment=TextAlignment.Center,VerticalAlignment=VerticalAlignment.Center,FontSize=20,FontWeight=FontWeights.SemiBold,Foreground=Theme.Brush("Ink")} )};Canvas.SetLeft(center,180);Canvas.SetTop(center,180);canvas.Children.Add(center);
     }
 }
