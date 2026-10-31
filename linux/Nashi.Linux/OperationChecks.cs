@@ -143,6 +143,12 @@ internal static class OperationChecks
             using(var raster=PdfRaster.Open(pdf)){using var thumb=new MagickImage(raster.Thumbnail(0,260));Check(thumb.Width==260,"Thumbnail long side");}
             var srt=Path.Combine(root,"Talk.srt");File.WriteAllText(srt,"1\n00:00:01,000 --> 00:00:02,500\nHello\n\n2\n00:00:03,000 --> 00:00:04,000\n<i>World</i>\n");
             Check(Operations.Formats([srt]).SequenceEqual(new[]{"vtt","txt"}),"Subtitle formats");
+            if(Operations.Executable("tesseract") is not null)
+            {
+                using var sign=new MagickImage(MagickColors.White,900,300);new ImageMagick.Drawing.Drawables().FillColor(MagickColors.Black).FontPointSize(90).Text(40,180,"GİZLİ 12345").Draw(sign);
+                var boxes=TextBoxes.Find(sign.ToByteArray(MagickFormat.Png));
+                Check(boxes.Count>=2&&boxes.All(b=>b.Y is > 60 and < 200)&&boxes.Min(b=>b.X)<80,"Find text boxes for redaction");
+            }
             if(Operations.Office is not null)Documents(root,progress,token);
             else Console.Error.WriteLine("LibreOffice not found: document conversions skipped.");
             var vtt=File.ReadAllText(Operations.RunAsync(new("convert","VTT","vtt"),[srt],Path.Combine(root,"subtitle-vtt"),progress,token).GetAwaiter().GetResult().Single());
@@ -198,6 +204,9 @@ internal static class OperationChecks
                 Check(Operations.Media.InspectAsync(visual,token).GetAwaiter().GetResult().Video is not null,"Audio visualizer video");
                 var croppedClip=Operations.RunAsync(new("cropVideo","Crop Video"),[clip],Path.Combine(root,"crop-video"),progress,token,new(Media:new(){Regions=[new(80,60,160,120)]})).GetAwaiter().GetResult().Single();
                 var croppedInfo=Operations.Media.InspectAsync(croppedClip,token).GetAwaiter().GetResult();Check(croppedInfo.Video is {Width:160,Height:120}&&croppedInfo.HasAudio,"Crop video keeps the box and the sound");
+                var timed=Operations.RunAsync(new("redactVideo","Redact Video"),[clip],Path.Combine(root,"redact-video-range"),progress,token,new(Media:new(){Regions=[new(0,0,100,100,1.2,null)],RedactionMode="solid"})).GetAwaiter().GetResult().Single();
+                using(var early=new MagickImage(Operations.VideoFrameAsync(timed,.4,token).GetAwaiter().GetResult()))using(var late=new MagickImage(Operations.VideoFrameAsync(timed,1.6,token).GetAwaiter().GetResult()))
+                {using var e=early.GetPixels();using var l=late.GetPixels();var before=e.GetPixel(50,50).ToColor()!;var after=l.GetPixel(50,50).ToColor()!;Check(before.R+before.G+before.B>60&&after.R<20&&after.G<20&&after.B<20,"Video redaction only inside its time range");}
                 var hidden=Operations.RunAsync(new("redactVideo","Redact Video"),[clip],Path.Combine(root,"redact-video"),progress,token,new(Media:new(){Regions=[new(0,0,100,100)],RedactionMode="solid"})).GetAwaiter().GetResult().Single();
                 using(var frame=new MagickImage(Operations.VideoFrameAsync(hidden,1,token).GetAwaiter().GetResult())){using var pixels=frame.GetPixels();var c=pixels.GetPixel(50,50).ToColor()!;var open=pixels.GetPixel(250,200).ToColor()!;Check(frame.Width==320&&c.R<20&&c.G<20&&c.B<20&&open.R+open.G+open.B>60,"Redact video covers the box");}
                 foreach(var (style,quiet) in new[]{("mute",true),("bleep",false)})

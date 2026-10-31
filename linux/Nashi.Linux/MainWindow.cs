@@ -214,8 +214,8 @@ public sealed class MainWindow:Window
             }
             else
             {
-                RedactDialog editor;try{editor=await RedactDialog.CreateAsync(choice.Title,inputs[0],picture);}catch(Exception error)when(error is ArgumentException or ImageMagick.MagickException){status.Text=error.Message;return;}
-                await editor.ShowDialog(this);if(editor.Result is not {} areas)return;media=new(){Regions=areas.Areas.Select(Region).ToArray(),RedactionMode=areas.Style};
+                RedactDialog editor;try{editor=await RedactDialog.CreateAsync(choice.Title,inputs[0],picture,info.Duration);}catch(Exception error)when(error is ArgumentException or ImageMagick.MagickException){status.Text=error.Message;return;}
+                await editor.ShowDialog(this);if(editor.Result is not {} areas)return;var (start,end)=editor.Range;media=new(){Regions=areas.Areas.Select(a=>Region(a) with{Start=start,End=end}).ToArray(),RedactionMode=areas.Style};
             }
         }
         else if(choice.Id=="changeVideoSpeed"){if(await Ask(choice.Title,[("0.5×",.5),("1.5×",1.5),("2×",2d)],1) is not {} speed)return;media=new(){Speed=speed};}

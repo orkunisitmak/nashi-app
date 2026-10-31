@@ -48,6 +48,7 @@ internal static class Localizer
         ["I / O mark the selected handle · ←/→ move it one second · Enter trims"]="I / O seçili tutamacı işaretler · ←/→ bir saniye kaydırır · Enter kırpar",
         ["Media is re-encoded until it fits the target; audio keeps its sample rate."]="Medya hedefe sığana kadar yeniden kodlanır; ses örnekleme hızını korur.",
         ["Order"]="Sıra",["Out"]="Çıkış",["Play selection"]="Seçimi çal",["Reading a frame…"]="Kare okunuyor…",["Replace with"]="Şununla değiştir",["Selection"]="Seçim",["Stop"]="Durdur",["Updating…"]="Güncelleniyor…",
+        ["Find text"]="Metni bul",["Finding text…"]="Metin aranıyor…",["No text found."]="Metin bulunamadı.",["From"]="Başlangıç",["To"]="Bitiş",["end"]="son",["Enter a start before the end, within the video."]="Videonun içinde, bitişten önce bir başlangıç girin.",
         ["Set up media tools"]="Medya araçlarını kur",["Move to…"]="Taşı…",["Copy"]="Kopyala",["Cancel"]="İptal",["Save"]="Kaydet",["Undo"]="Geri al",["Clear"]="Temizle",["Tool"]="Araç",["Color"]="Renk",["Text"]="Metin",["Cover"]="Kapat",["Redact"]="Sansürle",
     };
     /// For sentences built from numbers or names, which a catalog lookup cannot match.

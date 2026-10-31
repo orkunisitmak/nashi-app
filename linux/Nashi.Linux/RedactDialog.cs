@@ -22,6 +22,12 @@ internal sealed class RedactDialog:Window
     private readonly DispatcherTimer debounce=new(){Interval=TimeSpan.FromMilliseconds(80)};
     private int generation;
     public Redaction? Result{get;private set;}
+    /// Video only: when the boxes are shown, in seconds. Empty fields mean the whole clip.
+    public (double Start,double? End) Range{get;private set;}
+    private readonly TextBox from=new(){Watermark="0:00",Width=90},to=new(){Watermark="end",Width=90};
+    private readonly Button findText=new(){Content="Find text"};
+    private double? duration;
+    internal RegionCanvas Canvas=>canvas;
 
     private RedactDialog(string title,string note,Bitmap preview,byte[] png,PixelSize pixels)
     {
@@ -32,10 +38,12 @@ internal sealed class RedactDialog:Window
         var clear=new Button{Content="Clear"};clear.Click+=(_,_)=>{canvas.Clear();canvas.Focus();};
         var ok=new Button{Content="Redact",IsDefault=true,FontWeight=Avalonia.Media.FontWeight.SemiBold,Background=NashiTheme.Primary,Foreground=new SolidColorBrush(Color.Parse("#243B2B"))};ok.Click+=(_,_)=>Accept();
         var cancel=new Button{Content="Cancel",IsCancel=true};cancel.Click+=(_,_)=>Close();
+        var tools=new StackPanel{Orientation=Avalonia.Layout.Orientation.Horizontal,Spacing=10,Children={new TextBlock{Text="Cover",VerticalAlignment=VerticalAlignment.Center},style,undo,clear,findText,count}};
+        findText.Click+=async(_,_)=>await FindText();findText.IsVisible=Operations.Executable("tesseract") is not null;
         var bar=new DockPanel{Margin=new(16,10),Children=
         {
             new StackPanel{Orientation=Avalonia.Layout.Orientation.Horizontal,Spacing=8,Children={cancel,ok}},
-            new StackPanel{Orientation=Avalonia.Layout.Orientation.Horizontal,Spacing=10,Children={new TextBlock{Text="Cover",VerticalAlignment=VerticalAlignment.Center},style,undo,clear,count}}
+            tools
         }};
         DockPanel.SetDock(bar.Children[0],Dock.Right);
         var root=new DockPanel{Children={bar,new TextBlock{Text=note+" · drag over what to hide, click a box to move or resize it, Delete removes it",Margin=new(16,10,16,0),FontSize=12,Opacity=.75,TextTrimming=TextTrimming.CharacterEllipsis},canvas}};
@@ -49,6 +57,17 @@ internal sealed class RedactDialog:Window
 
     public static Task<RedactDialog> CreateAsync(string title,string input)=>Load(title,$"{Path.GetFileName(input)}",()=>PhotoCodec.Read(input));
     /// Video boxes cover the whole clip; the frame only helps to place them.
+    public static async Task<RedactDialog> CreateAsync(string title,string input,byte[] frame,double length)
+    {
+        var dialog=await CreateAsync(title,input,frame);dialog.duration=length;dialog.ShowRange();return dialog;
+    }
+    private void ShowRange()
+    {
+        if(Content is not DockPanel root||root.Children[0] is not DockPanel bar||bar.Children[1] is not StackPanel tools)return;
+        to.Watermark=TrimDialog.Format(duration??0);
+        tools.Children.Insert(tools.Children.Count-1,new TextBlock{Text="From",VerticalAlignment=VerticalAlignment.Center});tools.Children.Insert(tools.Children.Count-1,from);
+        tools.Children.Insert(tools.Children.Count-1,new TextBlock{Text="To",VerticalAlignment=VerticalAlignment.Center});tools.Children.Insert(tools.Children.Count-1,to);
+    }
     public static Task<RedactDialog> CreateAsync(string title,string input,byte[] frame)=>Load(title,Path.GetFileName(input)+Localizer.Pick(" · boxes cover the whole video"," · kutular videonun tamamını kapatır"),()=>new MagickImage(frame));
     private static async Task<RedactDialog> Load(string title,string note,Func<MagickImage> load)
     {
@@ -59,7 +78,30 @@ internal sealed class RedactDialog:Window
     }
 
     private Redaction Current()=>new(canvas.Areas.Select(a=>new ImageEdit(a.X/canvas.Pixels.Width,a.Y/canvas.Pixels.Height,a.Width/canvas.Pixels.Width,a.Height/canvas.Pixels.Height)).ToArray(),Covers[Math.Max(0,style.SelectedIndex)].Style);
-    private void Accept(){if(canvas.Areas.Count==0)return;Result=Current();Close();}
+    private void Accept()
+    {
+        if(canvas.Areas.Count==0)return;
+        if(duration is {} length)
+        {
+            var start=string.IsNullOrWhiteSpace(from.Text)?0:TrimDialog.Parse(from.Text);var end=string.IsNullOrWhiteSpace(to.Text)?length:TrimDialog.Parse(to.Text);
+            if(start is not {} a||end is not {} b||a<0||b>length+.05||b<=a){count.Text=Localizer.T("Enter a start before the end, within the video.");return;}
+            Range=(a,b>=length-.05?null:b);
+        }
+        Result=Current();Close();
+    }
+    /// Tesseract's word boxes become redaction boxes; remove any you want to keep visible.
+    private async Task FindText()
+    {
+        findText.IsEnabled=false;count.Text=Localizer.T("Finding text…");
+        try
+        {
+            var boxes=await Task.Run(()=>TextBoxes.Find(source));var scale=canvas.Pixels.Width/(double)original.PixelSize.Width;
+            foreach(var b in boxes)canvas.Areas.Add(new Rect(b.X*scale,b.Y*scale,b.Width*scale,b.Height*scale));
+            canvas.InvalidateVisual();Changed();if(boxes.Count==0)count.Text=Localizer.T("No text found.");
+        }
+        catch(Exception error)when(error is IOException or InvalidOperationException or System.ComponentModel.Win32Exception){count.Text=error.Message;}
+        finally{findText.IsEnabled=true;}
+    }
     private void Changed(){count.Text=canvas.Areas.Count switch{0=>Localizer.Pick("No boxes yet","Henüz kutu yok"),1=>Localizer.Pick("1 box","1 kutu"),var n=>Localizer.Pick($"{n} boxes",$"{n} kutu")};debounce.Stop();debounce.Start();}
 
     /// Only the newest request is shown, so dragging never flickers back to an older state.

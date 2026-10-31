@@ -19,7 +19,7 @@ internal static class EditorChecks
             root=Path.GetFullPath(root);Directory.CreateDirectory(root);
             if(Directory.EnumerateFileSystemEntries(root).Any())throw new InvalidOperationException("Choose an empty folder.");
             AppBuilder.Configure<App>().UseSkia().UseHeadless(new AvaloniaHeadlessPlatformOptions{UseHeadlessDrawing=false}).SetupWithoutStarting();
-            Annotate(root);Organize(root);Metadata();Web();
+            Annotate(root);Organize(root);Metadata();Web();Redact(root);
             Console.WriteLine($"{{\"passed\":{passed},\"scope\":\"Linux editors with pointer and keyboard input\"}}");
             return 0;
         }
@@ -113,6 +113,26 @@ internal static class EditorChecks
         panel.Link.Text="not a link";Pump();Wait(panel.FindAsync());Check(panel.Summary.Text=="Paste one complete public media link.","A broken link is explained");
         window.Close();Pump();
     }
+    private static void Redact(string root)
+    {
+        if(Operations.Executable("tesseract") is not null)
+        {
+            var sign=Path.Combine(root,"Sign.png");using(var image=new MagickImage(MagickColors.White,900,300)){new ImageMagick.Drawing.Drawables().FillColor(MagickColors.Black).FontPointSize(90).Text(40,180,"SECRET 4242").Draw(image);image.Write(sign,MagickFormat.Png);}
+            var dialog=Wait(RedactDialog.CreateAsync("Redact Photo",sign));dialog.Show();Pump();
+            var find=Descendants(dialog).OfType<Button>().Single(b=>b.Content as string is "Find text" or "Metni bul");
+            find.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));for(var i=0;i<400&&dialog.Canvas.Areas.Count==0;i++){Thread.Sleep(25);Pump();}
+            Check(dialog.Canvas.Areas.Count>=2&&dialog.Canvas.Areas.All(a=>a.Y is > 50 and < 210),"Find text puts a box over each word");
+            dialog.KeyPress(Avalonia.Input.Key.Enter,RawInputModifiers.None,PhysicalKey.None,null);Pump();Check(dialog.Result is {Areas.Length:>=2},"Enter keeps the found boxes");
+        }
+        var frame=new MagickImage(MagickColors.Gray,320,240).ToByteArray(MagickFormat.Png);
+        var video=Wait(RedactDialog.CreateAsync("Redact Video","clip.mp4",frame,10));video.Show();Pump();
+        var fields=Descendants(video).OfType<TextBox>().Where(t=>t.TemplatedParent is null).ToArray();Check(fields.Length==2,"Video redaction shows From and To");
+        video.Canvas.Areas.Add(new Rect(10,10,50,50));fields[0].Text="0:08";fields[1].Text="0:03";
+        video.KeyPress(Avalonia.Input.Key.Enter,RawInputModifiers.None,PhysicalKey.None,null);Pump();Check(video.IsVisible&&video.Result is null,"A start after the end is refused");
+        fields[0].Text="0:02";fields[1].Text="";video.KeyPress(Avalonia.Input.Key.Enter,RawInputModifiers.None,PhysicalKey.None,null);Pump();
+        Check(video.Result is not null&&video.Range==(2,null),"An empty end means until the end of the clip");
+    }
+    private static IEnumerable<Avalonia.Visual> Descendants(Avalonia.Visual root){foreach(var child in Avalonia.VisualTree.VisualExtensions.GetVisualChildren(root)){yield return child;foreach(var d in Descendants(child))yield return d;}}
     private static T Wait<T>(Task<T> task){while(!task.IsCompleted){Dispatcher.UIThread.RunJobs();Thread.Sleep(5);}return task.GetAwaiter().GetResult();}
     private static void Wait(Task task)=>Wait(task.ContinueWith(t=>{t.GetAwaiter().GetResult();return 0;}));
     private static void Pump(){Dispatcher.UIThread.RunJobs();AvaloniaHeadlessPlatform.ForceRenderTimerTick();Dispatcher.UIThread.RunJobs();}
