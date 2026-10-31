@@ -41,19 +41,23 @@ public sealed class MainWindow:Window
         DragDrop.SetAllowDrop(this,true);AddHandler(DragDrop.DragOverEvent,(_,e)=>e.DragEffects=e.DataTransfer.Contains(DataFormat.File)?DragDropEffects.Copy:DragDropEffects.None);
         AddHandler(DragDrop.DropEvent,(_,e)=>Add(e.DataTransfer.TryGetFiles()?.Select(f=>f.TryGetLocalPath()).OfType<string>()??[]));
         if(library.RecoveryNotice is {} notice)status.Text=notice;
-        var capture=args.SkipWhile(a=>a!="--capture").Skip(1).FirstOrDefault();
-        Add(args.Where(a=>!a.StartsWith('-')&&a!=capture).Select(Path.GetFullPath));Refresh();RefreshLibrary();
-        if(capture is not null)Opened+=async(_,_)=>await Capture(Path.GetFullPath(capture),args.Contains("--dark")?"dark":args.Contains("--light")?"light":null);
+        string? Value(string flag)=>args.SkipWhile(a=>a!=flag).Skip(1).FirstOrDefault();
+        var capture=Value("--capture");var dialog=Value("--dialog");
+        Add(args.Where(a=>!a.StartsWith('-')&&a!=capture&&a!=dialog).Select(Path.GetFullPath));Refresh();RefreshLibrary();
+        if(capture is not null)Opened+=async(_,_)=>await Capture(Path.GetFullPath(capture),args.Contains("--dark")?"dark":args.Contains("--light")?"light":null,dialog);
     }
 
     /// Render check without a visible desktop (a locked session or CI): saves the window and exits.
-    private async Task Capture(string file,string? appearance)
+    /// With --dialog, an editor is opened on the first file with a sample edit and captured instead.
+    private async Task Capture(string file,string? appearance,string? dialog)
     {
         if(appearance is not null)NashiTheme.Apply(Application.Current!,appearance);
         await Task.Delay(800);
-        var size=new PixelSize((int)Bounds.Width,(int)Bounds.Height);using var bitmap=new RenderTargetBitmap(size);bitmap.Render(this);bitmap.Save(file);
+        try{if(dialog is null)Snap(this,file);else if(await CaptureDialog.OpenAsync(dialog,files) is {} editor){editor.Show(this);await Task.Delay(1200);Snap(editor,file);editor.Close();}}
+        catch(Exception error){Console.Error.WriteLine(error);}
         Close();
     }
+    private static void Snap(Window window,string file){var size=new PixelSize((int)window.Bounds.Width,(int)window.Bounds.Height);using var bitmap=new RenderTargetBitmap(size);bitmap.Render(window);bitmap.Save(file);}
 
     private Control Layout()
     {
@@ -108,7 +112,7 @@ public sealed class MainWindow:Window
     {
         fileList.ItemsSource=files.ToArray();fileList.IsVisible=files.Count>0;
         selection.Text=files.Count switch{0=>"Drop something good.",1=>Path.GetFileName(files[0]),var n=>$"{n} files, ready to go."};
-        hint.Text=files.Count==0?"Images, videos, audio, PDFs and archives. Drop files here, choose them or paste with Ctrl+V.":"Pick a format or a tool below. Originals are never overwritten.";
+        hint.Text=files.Count==0?"Images, videos, audio, PDFs, subtitles and archives. Drop files here, choose them or paste with Ctrl+V.":"Pick a format or a tool below. Originals are never overwritten.";
         var ready=running is null&&files.Count>0;
         var formatChoices=ready?Operations.Formats(files):[];var toolChoices=ready?Operations.Tools(files):[];
         formats.Children.Clear();foreach(var format in formatChoices)formats.Children.Add(Action(format.ToUpperInvariant(),new("convert",format.ToUpperInvariant(),format)));
@@ -128,7 +132,12 @@ public sealed class MainWindow:Window
             catch(Exception error){status.Text=error.Message;}
             return;
         }
-        MediaOptions? media=null;ImageEdit? edit=null;PhotoEdit? photo=null;FrameOptions? frame=null;CollageOptions? collage=null;Redaction? redact=null;
+        MediaOptions? media=null;ImageEdit? edit=null;PhotoEdit? photo=null;FrameOptions? frame=null;CollageOptions? collage=null;Redaction? redact=null;PdfOrganization? organize=null;
+        if(choice.Id=="organizePDF")
+        {
+            PdfOrganizeDialog editor;status.Text="Reading pages…";try{editor=await PdfOrganizeDialog.CreateAsync(choice.Title,inputs[0]);}catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or DllNotFoundException){status.Text=error.Message;return;}
+            status.Text="";await editor.ShowDialog(this);if(editor.Result is not {} result)return;organize=result;
+        }
         if(choice.Id=="frameImage")
         {
             FrameDialog editor;try{editor=await FrameDialog.CreateAsync(choice.Title,inputs[0]);}catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or ImageMagick.MagickException){status.Text=error.Message;return;}
@@ -193,7 +202,7 @@ public sealed class MainWindow:Window
         var report=new Progress<OperationProgress>(p=>{if(p.Fraction is {} f){progress.IsIndeterminate=false;progress.Value=f;}status.Text=p.Label;});
         try
         {
-            var outputs=await Operations.RunAsync(choice,inputs,destination,report,running.Token,new(media,edit,photo,frame,collage,redact));
+            var outputs=await Operations.RunAsync(choice,inputs,destination,report,running.Token,new(media,edit,photo,frame,collage,redact,organize));
             library.Record(choice.Id=="convert"?"Convert to "+choice.Format!.ToUpperInvariant():choice.Title,outputs);
             lastFolder=destination;reveal.IsVisible=true;
             status.Text=outputs.Count==1?$"Saved {Path.GetFileName(outputs[0])}":$"Saved {outputs.Count} files";

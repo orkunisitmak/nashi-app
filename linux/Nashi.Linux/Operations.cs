@@ -7,14 +7,14 @@ namespace Nashi.Linux;
 
 public sealed record Choice(string Id,string Title,string? Format=null);
 /// Choices made in a tool's dialog; each tool reads only its own part.
-public sealed record ToolSettings(MediaOptions? Media=null,ImageEdit? Crop=null,PhotoEdit? Photo=null,FrameOptions? Frame=null,CollageOptions? Collage=null,Redaction? Redact=null);
+public sealed record ToolSettings(MediaOptions? Media=null,ImageEdit? Crop=null,PhotoEdit? Photo=null,FrameOptions? Frame=null,CollageOptions? Collage=null,Redaction? Redact=null,PdfOrganization? Organize=null);
 
 /// The Linux preview offers only workflows implemented here; the shared catalog decides
 /// which of them apply to a selection, so the rules match macOS and Windows.
 public static class Operations
 {
     private static readonly string[] ImageOutputs=["jpg","png","webp","tiff","avif","bmp","heic","pdf"];
-    private static readonly string[] ImplementedTools=["compress","removeMetadata","cropImage","editImage","redactImage","frameImage","createCollage","createPDF","mergePDF","splitPDF","muteVideo","normalizeAudio","changeVideoSpeed","joinVideos","audioChannels","videoSnapshots","splitVideo","audioToVideo","trimVideo","trimAudio","cropVideo","redactVideo","redactAudio","extractArchive","readQRCode"];
+    private static readonly string[] ImplementedTools=["compress","removeMetadata","cropImage","editImage","redactImage","frameImage","createCollage","createPDF","mergePDF","splitPDF","organizePDF","muteVideo","normalizeAudio","changeVideoSpeed","joinVideos","audioChannels","videoSnapshots","splitVideo","audioToVideo","trimVideo","trimAudio","cropVideo","redactVideo","redactAudio","extractArchive","readQRCode"];
 
     public static string? Executable(string name)
     {
@@ -35,7 +35,7 @@ public static class Operations
         if(files.All(FeatureCatalog.IsImage))return formats.Where(ImageOutputs.Contains).Where(f=>f!="heic"||Executable("ffmpeg") is not null).ToArray();
         if(files.All(f=>FeatureCatalog.IsVideo(f)||FeatureCatalog.IsAudio(f)))return Media is null?[]:formats.Where(f=>MediaEngine.AudioFormats.Contains(f)||MediaEngine.VideoFormats.Contains(f)).ToArray();
         if(files.All(FeatureCatalog.IsArchive))return formats.Where(f=>f is "zip" or "tar" or "gz").ToArray();
-        if(files.All(IsPdf))return formats.Where(f=>f is "txt" or "md").ToArray();
+        if(files.All(IsPdf))return formats.Where(f=>f is "txt" or "md" or "png" or "jpg").ToArray();
         if(files.All(IsSubtitle))return formats.Where(f=>f is "srt" or "vtt" or "txt").ToArray();
         return [];
     }
@@ -44,19 +44,19 @@ public static class Operations
         var media=files.All(f=>FeatureCatalog.IsVideo(f)||FeatureCatalog.IsAudio(f));
         return FeatureCatalog.Tools(files).Where(ImplementedTools.Contains)
             .Where(id=>!media||Media is not null)
-            .Where(id=>id!="readQRCode"||files.All(FeatureCatalog.IsImage))
+            .Where(id=>id!="readQRCode"||files.All(f=>FeatureCatalog.IsImage(f)||IsPdf(f)))
             .Select(id=>new Choice(id,FeatureCatalog.ToolNames[id])).ToArray();
     }
 
     public static async Task<IReadOnlyList<string>> RunAsync(Choice choice,IReadOnlyList<string> inputs,string destination,IProgress<OperationProgress> progress,CancellationToken token,ToolSettings? settings=null)
     {
-        var (media,edit,photo,frame,collage,redact)=settings??new();
+        var (media,edit,photo,frame,collage,redact,organize)=settings??new();
         if(choice.Id=="convert")
         {
             var format=choice.Format!;
             if(inputs.All(FeatureCatalog.IsImage))return await Task.Run(()=>format=="pdf"?ImagesToPdf(inputs,destination,progress,token):Images(inputs,destination,format,85,true,progress,token),token);
             if(inputs.All(FeatureCatalog.IsArchive))return await Task.Run(()=>inputs.SelectMany(i=>ArchiveEngine.Convert(i,format,destination,null,progress,token)).ToArray(),token);
-            if(inputs.All(IsPdf))return await Task.Run(()=>PdfText(inputs,destination,format,token),token);
+            if(inputs.All(IsPdf))return await Task.Run(()=>format is "png" or "jpg"?PdfPages(inputs,destination,format,144,progress,token):PdfText(inputs,destination,format,token),token);
             if(inputs.All(IsSubtitle))return await Task.Run(()=>Subtitles(inputs,destination,format,token),token);
             return await RequireMedia().ConvertAsync(inputs,format,destination,new MediaOptions(),progress,token);
         }
@@ -72,6 +72,7 @@ public static class Operations
             "removeMetadata" when inputs.All(FeatureCatalog.IsImage)=>await Task.Run(()=>Images(inputs,destination,null,92,false,progress,token),token),
             "createPDF"=>await Task.Run(()=>ImagesToPdf(inputs,destination,progress,token),token),
             "mergePDF"=>await Task.Run(()=>DocumentEngine.Pdf("mergePDFs",inputs,destination,null,token),token),
+            "organizePDF"=>await Task.Run(()=>{var o=organize??throw new ArgumentException("Keep at least one page.");return DocumentEngine.Pdf("organizePDF",inputs,destination,o.Pages,token,pageRotations:o.Rotations,uniformWidth:o.UniformWidth);},token),
             "splitPDF"=>await Task.Run(()=>DocumentEngine.Pdf("splitPDF",inputs,destination,null,token),token),
             "extractArchive"=>await Task.Run(()=>inputs.SelectMany(i=>ArchiveEngine.Extract(i,destination,null,progress,token)).ToArray(),token),
             "compress" or "removeMetadata" or "muteVideo" or "normalizeAudio" or "changeVideoSpeed" or "joinVideos" or "audioChannels" or "videoSnapshots" or "splitVideo" or "audioToVideo" or "trimVideo" or "trimAudio" or "cropVideo" or "redactVideo" or "redactAudio"=>await RequireMedia().ToolAsync(choice.Id,inputs,destination,media??new MediaOptions(),progress,token),
@@ -147,7 +148,8 @@ public static class Operations
             {
                 token.ThrowIfCancellationRequested();
                 using var source=PhotoCodec.Read(input);var width=source.Width;var height=source.Height;
-                using var png=new MemoryStream(source.ToByteArray(MagickFormat.Png));using var image=XImage.FromStream(png);
+                // PDFsharp reads only 8-bit RGB(A) PNGs; grayscale, palette and 16-bit PNGs would fail.
+                using var png=new MemoryStream(source.ToByteArray(source.HasAlpha?MagickFormat.Png32:MagickFormat.Png24));using var image=XImage.FromStream(png);
                 var page=pdf.AddPage();page.Width=XUnit.FromPoint(width*72/96d);page.Height=XUnit.FromPoint(height*72/96d);
                 using(var g=XGraphics.FromPdfPage(page))g.DrawImage(image,0,0,page.Width.Point,page.Height.Point);
                 progress?.Report(new(++completed/(double)inputs.Count*.98,"Adding pages…"));
@@ -164,6 +166,22 @@ public static class Operations
     {
         var text=OfficeDocuments.PdfText(input);return string.IsNullOrWhiteSpace(text)?throw new InvalidDataException("This PDF has no selectable text."):text;
     });
+    /// Every page as its own image, named "<PDF> Page N".
+    public static IReadOnlyList<string> PdfPages(IReadOnlyList<string> inputs,string destination,string format,int dpi,IProgress<OperationProgress>? progress,CancellationToken token)
+    {
+        using var tx=new ExportTransaction(destination);var outputs=new List<string>();
+        foreach(var input in inputs)
+        {
+            using var pdf=PdfRaster.Open(input);
+            for(var i=0;i<pdf.PageCount;i++)
+            {
+                token.ThrowIfCancellationRequested();var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+$" Page {i+1}.{format}");
+                using var image=new MagickImage(pdf.RenderPage(i,dpi,token));image.Quality=92;image.Write(output,PhotoCodec.Format(format));outputs.Add(output);
+                progress?.Report(new(outputs.Count/(double)Math.Max(outputs.Count,pdf.PageCount*inputs.Count)*.98,$"Page {i+1} of {pdf.PageCount}…"));
+            }
+        }
+        return tx.Publish(outputs,token);
+    }
     private static IReadOnlyList<string> Subtitles(IReadOnlyList<string> inputs,string destination,string format,CancellationToken token)=>Texts(inputs,destination,format,token,input=>SubtitleCodec.Convert(LegacyTextCodec.Decode(File.ReadAllBytes(input)),format));
     private static IReadOnlyList<string> Texts(IReadOnlyList<string> inputs,string destination,string format,CancellationToken token,Func<string,string> read)
     {
@@ -176,15 +194,21 @@ public static class Operations
         return tx.Publish(outputs,token);
     }
 
-    /// Images only in the Linux preview; PDF pages need a renderer first.
+    /// Images and every PDF page.
     public static string[] ReadQr(IReadOnlyList<string> inputs)
     {
         var reader=new BarcodeReaderGeneric{AutoRotate=true,Options={TryHarder=true,TryInverted=true,PossibleFormats=[BarcodeFormat.QR_CODE]}};var found=new List<string>();
-        foreach(var input in inputs.Where(FeatureCatalog.IsImage))
+        void Decode(MagickImage image)
         {
-            using var image=PhotoCodec.Read(input);using var pixels=image.GetPixels();var rgb=pixels.ToByteArray(PixelMapping.RGB)!;
+            using var pixels=image.GetPixels();var rgb=pixels.ToByteArray(PixelMapping.RGB)!;
             var results=reader.DecodeMultiple(new RGBLuminanceSource(rgb,(int)image.Width,(int)image.Height,RGBLuminanceSource.BitmapFormat.RGB24));
             if(results is not null)found.AddRange(results.Select(r=>r.Text));
+        }
+        foreach(var input in inputs)
+        {
+            if(FeatureCatalog.IsImage(input)){using var image=PhotoCodec.Read(input);Decode(image);}
+            // Each page at 180 DPI, as on Windows.
+            else if(IsPdf(input)){using var pdf=PdfRaster.Open(input);for(var i=0;i<pdf.PageCount;i++){using var page=new MagickImage(pdf.RenderPage(i,180));Decode(page);}}
         }
         return found.Distinct().ToArray();
     }

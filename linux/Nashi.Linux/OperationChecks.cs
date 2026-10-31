@@ -75,7 +75,16 @@ internal static class OperationChecks
                 var output=Operations.RunAsync(new(tool,tool),[pdf],Path.Combine(root,"pdf-"+tool),progress,token).GetAwaiter().GetResult().Single();
                 using var document=PdfDocument.Open(output);Check(output.EndsWith(suffix,StringComparison.Ordinal)&&document.NumberOfPages==2,"PDF "+tool);
             }
-            Check(Operations.Formats([pdf]).SequenceEqual(new[]{"txt","md"}),"PDF text formats");
+            Check(Operations.Formats([pdf]).SequenceEqual(new[]{"jpg","png","txt","md"}),"PDF formats");
+            var pageImages=Operations.RunAsync(new("convert","PNG","png"),[pdf],Path.Combine(root,"pdf-png"),progress,token).GetAwaiter().GetResult();
+            using(var first=new MagickImage(pageImages[0])){using var pixels=first.GetPixels();var c=pixels.GetPixel((int)first.Width/2,(int)first.Height/2).ToColor()!;
+                // Pear.png is 320×200 px placed at 96 DPI, so the page is 240×150 pt and renders to 480×300 px at 144 DPI.
+                Check(pageImages.Count==2&&Path.GetFileName(pageImages[1])=="Images Page 2.png"&&first.Width==480&&first.Height==300&&Math.Abs(c.R-0xE3)<6&&Math.Abs(c.B-0x59)<8,"PDF pages to PNG");}
+            Check(Operations.Tools([pdf]).Any(t=>t.Id=="organizePDF")&&!Operations.Tools([pdf,pdf]).Any(t=>t.Id=="organizePDF"),"Organize PDF offered for one PDF");
+            var organized=Operations.RunAsync(new("organizePDF","Organize PDF"),[pdf],Path.Combine(root,"organize"),progress,token,new(Organize:new([2,1,1],[0,90,0],false))).GetAwaiter().GetResult().Single();
+            using(var document=PdfDocument.Open(organized))Check(Path.GetFileName(organized)=="Images Organized.pdf"&&document.NumberOfPages==3&&document.GetPage(2).Rotation.Value==90&&document.GetPage(1).Rotation.Value==0,"Organize order, duplicate and rotation");
+            using(var raster=PdfRaster.Open(organized)){using var turned=new MagickImage(raster.RenderPage(1,72));Check(raster.PageCount==3&&turned.Width==150&&turned.Height==240,"Rotated page renders turned");}
+            using(var raster=PdfRaster.Open(pdf)){using var thumb=new MagickImage(raster.Thumbnail(0,260));Check(thumb.Width==260,"Thumbnail long side");}
             var srt=Path.Combine(root,"Talk.srt");File.WriteAllText(srt,"1\n00:00:01,000 --> 00:00:02,500\nHello\n\n2\n00:00:03,000 --> 00:00:04,000\n<i>World</i>\n");
             Check(Operations.Formats([srt]).SequenceEqual(new[]{"vtt","txt"}),"Subtitle formats");
             var vtt=File.ReadAllText(Operations.RunAsync(new("convert","VTT","vtt"),[srt],Path.Combine(root,"subtitle-vtt"),progress,token).GetAwaiter().GetResult().Single());
@@ -87,6 +96,9 @@ internal static class OperationChecks
             var matrix=new MultiFormatWriter().encode("https://github.com/orkunisitmak/nashi-app",BarcodeFormat.QR_CODE,240,240,new Dictionary<EncodeHintType,object>{[EncodeHintType.MARGIN]=4});
             using(var image=new MagickImage(MagickColors.White,240,240)){using var pixels=image.GetPixels();for(var y=0;y<240;y++)for(var x=0;x<240;x++)if(matrix[x,y])pixels.SetPixel(x,y,[0,0,0]);image.Write(qr,MagickFormat.Png);}
             Check(Operations.ReadQr([qr]).SequenceEqual(new[]{"https://github.com/orkunisitmak/nashi-app"}),"QR decode");
+            var qrPdf=Operations.RunAsync(new("createPDF","Create PDF"),[png,qr],Path.Combine(root,"qr-pdf"),progress,token).GetAwaiter().GetResult().Single();
+            using(var document=PdfDocument.Open(qrPdf))Check(document.NumberOfPages==2,"Grayscale PNG to PDF");
+            Check(Operations.Tools([qrPdf]).Any(t=>t.Id=="readQRCode")&&Operations.ReadQr([qrPdf]).SequenceEqual(new[]{"https://github.com/orkunisitmak/nashi-app"}),"QR code on a PDF page");
 
             var zip=DocumentEngine.Zip([png],Path.Combine(root,"zip"));
             Check(Operations.Formats([zip]).Contains("tar"),"Archive formats");
