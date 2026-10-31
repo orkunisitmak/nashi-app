@@ -97,12 +97,14 @@
 "A FRESH START" = "A FRESH START";
 "A GOOD READ, YOUR WAY." = "A GOOD READ, YOUR WAY.";
 "A HAPPIER HOME FOR ALL THE LITTLE FILE JOBS. CONVERT, EDIT, AND SHARE — RIGHT ON YOUR MAC." = "A HAPPIER HOME FOR ALL THE LITTLE FILE JOBS. CONVERT, EDIT, AND SHARE — RIGHT ON YOUR MAC.";
+"A LAUNCHAGENT PLIST WITH THIS IDENTIFIER ALREADY EXISTS AND BELONGS TO ANOTHER APPLICATION." = "A LAUNCHAGENT PLIST WITH THIS IDENTIFIER ALREADY EXISTS AND BELONGS TO ANOTHER APPLICATION.";
 "A LINK. A FILE. YOURS TO WORK WITH." = "A LINK. A FILE. YOURS TO WORK WITH.";
 "A LITTLE CODE, DECODED." = "A LITTLE CODE, DECODED.";
 "A LITTLE FRESHER. READY WHEN YOU ARE." = "A LITTLE FRESHER. READY WHEN YOU ARE.";
 "A LITTLE LESS FILE FUSS. A LITTLE MORE FLOW." = "A LITTLE LESS FILE FUSS. A LITTLE MORE FLOW.";
 "A LITTLE LESS FILE FUSS. A LITTLE MORE FLOW.\nCONVERT, EDIT, AND ORGANIZE — RIGHT ON YOUR MAC." = "A LITTLE LESS FILE FUSS. A LITTLE MORE FLOW.\nCONVERT, EDIT, AND ORGANIZE — RIGHT ON YOUR MAC.";
 "A LITTLE PEAR. A LOT OF POSSIBILITY." = "A LITTLE PEAR. A LOT OF POSSIBILITY.";
+"A LaunchAgent plist with this identifier already exists and belongs to another application." = "A LaunchAgent plist with this identifier already exists and belongs to another application.";
 "A NEW FORM.\nIN A TAP." = "A NEW FORM.\nIN A TAP.";
 "A PAGE RANGE IS OUTSIDE THE PDF." = "A PAGE RANGE IS OUTSIDE THE PDF.";
 "A PDF PAGE COULD NOT BE READ." = "A PDF PAGE COULD NOT BE READ.";
@@ -1250,6 +1252,7 @@
 "LARGE · 2560 PX LONGEST EDGE" = "LARGE · 2560 PX LONGEST EDGE";
 "LAUNCH AT LOGIN" = "LAUNCH AT LOGIN";
 "LAUNCH AT LOGIN IS UNAVAILABLE FOR THIS COPY." = "LAUNCH AT LOGIN IS UNAVAILABLE FOR THIS COPY.";
+"LAUNCH MINIMIZED" = "LAUNCH MINIMIZED";
 "LAYOUT" = "LAYOUT";
 "LEFT" = "LEFT";
 "LEFT HALF" = "LEFT HALF";
@@ -1282,6 +1285,7 @@
 "Last checked %lld" = "Last checked %lld";
 "Launch at login" = "Launch at login";
 "Launch at login is unavailable for this copy." = "Launch at login is unavailable for this copy.";
+"Launch minimized" = "Launch minimized";
 "Layout" = "Layout";
 "Left" = "Left";
 "Left half" = "Left half";
@@ -2012,6 +2016,7 @@
 "START HERE" = "START HERE";
 "START MUST BE BEFORE END, WITHIN THE MEDIA DURATION." = "START MUST BE BEFORE END, WITHIN THE MEDIA DURATION.";
 "STARTING DOWNLOAD…" = "STARTING DOWNLOAD…";
+"STARTUP IS MANAGED EXTERNALLY (E.G. BY BLOCKBLOCK OR A CUSTOM LAUNCHAGENT). PLEASE DISABLE IT IN THAT TOOL." = "STARTUP IS MANAGED EXTERNALLY (E.G. BY BLOCKBLOCK OR A CUSTOM LAUNCHAGENT). PLEASE DISABLE IT IN THAT TOOL.";
 "STEREO" = "STEREO";
 "STILL IMAGE" = "STILL IMAGE";
 "STRAIGHT TO THE GOOD STUFF." = "STRAIGHT TO THE GOOD STUFF.";
@@ -2166,6 +2171,7 @@
 "Start" = "Start";
 "Start must be before End, within the media duration." = "Start must be before End, within the media duration.";
 "Starting download…" = "Starting download…";
+"Startup is managed externally (e.g. by BlockBlock or a custom LaunchAgent). Please disable it in that tool." = "Startup is managed externally (e.g. by BlockBlock or a custom LaunchAgent). Please disable it in that tool.";
 "Stereo" = "Stereo";
 "Still image" = "Still image";
 "Straight to the good stuff." = "Straight to the good stuff.";

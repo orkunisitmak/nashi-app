@@ -97,12 +97,14 @@
 "A FRESH START" = "YENİ BİR BAŞLANGIÇ";
 "A GOOD READ, YOUR WAY." = "KEYİFLİ BİR OKUMA, SENİN TARZINDA.";
 "A HAPPIER HOME FOR ALL THE LITTLE FILE JOBS. CONVERT, EDIT, AND SHARE — RIGHT ON YOUR MAC." = "KÜÇÜK DOSYA İŞLERİNİN YENİ ADRESİ. MAC'İNDE DÖNÜŞTÜR, DÜZENLE VE PAYLAŞ.";
+"A LAUNCHAGENT PLIST WITH THIS IDENTIFIER ALREADY EXISTS AND BELONGS TO ANOTHER APPLICATION." = "BU TANITICIYA SAHİP BİR LAUNCHAGENT PLİST DOSYASI ZATEN MEVCUT VE BAŞKA BİR UYGULAMAYA AİT.";
 "A LINK. A FILE. YOURS TO WORK WITH." = "BİR BAĞLANTI. BİR DOSYA. KONTROL SENDE.";
 "A LITTLE CODE, DECODED." = "KÜÇÜK BİR KOD, ÇÖZÜLDÜ.";
 "A LITTLE FRESHER. READY WHEN YOU ARE." = "YENİ SÜRÜM HAZIR. SEN HAZIR OLDUĞUNDA.";
 "A LITTLE LESS FILE FUSS. A LITTLE MORE FLOW." = "DOSYA İŞİ AZALSIN, AKIŞIN HIZLANSIN.";
 "A LITTLE LESS FILE FUSS. A LITTLE MORE FLOW.\nCONVERT, EDIT, AND ORGANIZE — RIGHT ON YOUR MAC." = "DOSYA İŞİ AZALSIN, AKIŞIN HIZLANSIN.\nMAC'İNDE DÖNÜŞTÜR, DÜZENLE VE ORGANİZE ET.";
 "A LITTLE PEAR. A LOT OF POSSIBILITY." = "KÜÇÜK BİR ARMUT. BİR SÜRÜ OLASILIK.";
+"A LaunchAgent plist with this identifier already exists and belongs to another application." = "Bu tanıtıcıya sahip bir LaunchAgent plist dosyası zaten mevcut ve başka bir uygulamaya ait.";
 "A NEW FORM.\nIN A TAP." = "TEK DOKUNUŞ.\nYENİ BİR BİÇİM.";
 "A PAGE RANGE IS OUTSIDE THE PDF." = "BİR SAYFA ARALIĞI PDF'NİN DIŞINDA.";
 "A PDF PAGE COULD NOT BE READ." = "BİR PDF SAYFASI OKUNAMADI.";
@@ -1250,6 +1252,7 @@
 "LARGE · 2560 PX LONGEST EDGE" = "BÜYÜK · UZUN KENAR 2560 PX";
 "LAUNCH AT LOGIN" = "OTURUM AÇILDIĞINDA BAŞLAT";
 "LAUNCH AT LOGIN IS UNAVAILABLE FOR THIS COPY." = "BU KOPYADA OTOMATİK BAŞLATMA KULLANILAMIYOR.";
+"LAUNCH MINIMIZED" = "KÜÇÜLTÜLMÜŞ OLARAK BAŞLAT";
 "LAYOUT" = "DÜZEN";
 "LEFT" = "SOL";
 "LEFT HALF" = "SOL YARI";
@@ -1282,6 +1285,7 @@
 "Last checked %lld" = "Son denetim: %lld";
 "Launch at login" = "Oturum açıldığında başlat";
 "Launch at login is unavailable for this copy." = "Bu kopyada otomatik başlatma kullanılamıyor.";
+"Launch minimized" = "Küçültülmüş olarak başlat";
 "Layout" = "Düzen";
 "Left" = "Sol";
 "Left half" = "Sol yarı";
@@ -2012,6 +2016,7 @@
 "START HERE" = "BURADAN BAŞLA";
 "START MUST BE BEFORE END, WITHIN THE MEDIA DURATION." = "BAŞLANGIÇ, BİTİŞ'TEN ÖNCE VE MEDYA SÜRESİ İÇİNDE OLMALI.";
 "STARTING DOWNLOAD…" = "İNDİRME BAŞLIYOR…";
+"STARTUP IS MANAGED EXTERNALLY (E.G. BY BLOCKBLOCK OR A CUSTOM LAUNCHAGENT). PLEASE DISABLE IT IN THAT TOOL." = "BAŞLANGIÇ HARİCİ OLARAK YÖNETİLİYOR (ÖR. BLOCKBLOCK VEYA ÖZEL BİR LAUNCHAGENT). LÜTFEN BU ARAÇ ÜZERİNDEN DEVRE DIŞI BIRAKIN.";
 "STEREO" = "STEREO";
 "STILL IMAGE" = "SABİT GÖRSEL";
 "STRAIGHT TO THE GOOD STUFF." = "DOĞRUDAN İSTEDİĞİN BÖLÜME.";
@@ -2166,6 +2171,7 @@
 "Start" = "Başlangıç";
 "Start must be before End, within the media duration." = "Başlangıç, Bitiş'ten önce ve medya süresi içinde olmalı.";
 "Starting download…" = "İndirme başlıyor…";
+"Startup is managed externally (e.g. by BlockBlock or a custom LaunchAgent). Please disable it in that tool." = "Başlangıç harici olarak yönetiliyor (ör. BlockBlock veya özel bir LaunchAgent). Lütfen bu araç üzerinden devre dışı bırakın.";
 "Stereo" = "Stereo";
 "Still image" = "Sabit görsel";
 "Straight to the good stuff." = "Doğrudan istediğin bölüme.";
