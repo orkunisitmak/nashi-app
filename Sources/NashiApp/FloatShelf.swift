@@ -264,8 +264,14 @@ enum FloatShelfViewMode:Int { case icons,list }
         let values=ShelfDropSurface.fileURLs(draggingInfo.draggingPasteboard);guard !values.isEmpty else { return false };append(values);return true
     }
     private func refreshAfterDrag() {
-        let selected=Set(selectedIndices.map{items[$0].id})
+        let selected=Set(selectedIndices.map{items[$0].id}),count=items.count
+        // The destination may have moved or trashed the dragged files; drop references to vanished paths.
+        items.removeAll{ item in
+            guard !FileManager.default.fileExists(atPath:item.url.path) else { return false }
+            item.releaseScope();return true
+        }
         reload(preserving:selected)
+        if isExpanded,items.count != count { setExpanded(true,forceLayout:true) }
     }
 
     private func handleKey(_ event:NSEvent)->Bool {
