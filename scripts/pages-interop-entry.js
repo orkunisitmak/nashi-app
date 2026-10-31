@@ -112,7 +112,14 @@ export function read(data) {
     if (!raw) return {text: image.accessibilityDescription ?? ""};
     return {type: "image", data: base64(raw), fileName: image.fileName ?? "image.png", width: geometry.width, height: geometry.height, alt: image.accessibilityDescription};
   };
-  const tableBlock = table => ({type: "table", headerRows: table.headerRowCount, merges: table.merges(), columnWidths: Array.from({length:table.columnCount},(_,column)=>table.columnWidth(column)), rows: Array.from({length:table.rowCount},(_,row)=>Array.from({length:table.columnCount},(_,column)=>({text: table.cellText(row,column), formatting: table.cellFormatting(row,column)})))});
+  const tableBlock = table => {
+    // cellText -> cellValue decodes every cell of the table on each call;
+    // decode once so reading a table stays linear in its cell count.
+    const values = new Map();
+    for (const cell of table.cells()) { const key = `${cell.row},${cell.column}`; if (!values.has(key)) values.set(key, cell.value); }
+    table.cellValue = (row, column) => values.get(`${row},${column}`);
+    return {type: "table", headerRows: table.headerRowCount, merges: table.merges(), columnWidths: Array.from({length:table.columnCount},(_,column)=>table.columnWidth(column)), rows: Array.from({length:table.rowCount},(_,row)=>Array.from({length:table.columnCount},(_,column)=>({text: table.cellText(row,column), formatting: table.cellFormatting(row,column)})))};
+  };
   const storageBlocks = storage => {
     const result = [];
     const sheetObject = storage.stylesheetId !== undefined ? document.object(storage.stylesheetId) : undefined;
