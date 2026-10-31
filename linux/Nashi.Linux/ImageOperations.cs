@@ -23,7 +23,8 @@ public static class ImageOperations
             {
                 token.ThrowIfCancellationRequested();
                 using var image = PhotoCodec.Read(inputs[n]);
-                using var png = new MemoryStream(image.ToByteArray(MagickFormat.Png));
+                // Truecolor: PDFsharp refuses the grey and palette PNGs Magick writes for black-and-white images (a QR code).
+                using var png = new MemoryStream(image.ToByteArray(image.HasAlpha ? MagickFormat.Png32 : MagickFormat.Png24));
                 using var xImage = XImage.FromStream(png);
                 var page = pdf.AddPage();
                 page.Width = XUnit.FromPoint(image.Width * 72 / 96d);

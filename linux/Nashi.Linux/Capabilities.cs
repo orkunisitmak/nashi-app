@@ -8,8 +8,9 @@ namespace Nashi.Linux;
 public static class Capabilities
 {
     static readonly IReadOnlySet<string> SupportedTools = new HashSet<string> { "compress", "muteVideo", "normalizeAudio", "extractArchive", "createPDF", "mergePDF" };
-    /// The image editors (Editors/*), offered when every file is an image.
-    internal static readonly IReadOnlySet<string> ImageEditors = new HashSet<string> { "cropImage", "editImage", "frameImage", "redactImage", "compress", "removeMetadata" };
+    /// The image editors (Editors/*), offered when every file is an image; Read QR Codes also takes PDFs (the
+    /// catalog offers it for images and PDFs only).
+    internal static readonly IReadOnlySet<string> ImageEditors = new HashSet<string> { "cropImage", "editImage", "frameImage", "redactImage", "compress", "removeMetadata", "readQRCode" };
     internal static readonly string[] ImageFormats = ["png", "jpg", "webp", "avif", "bmp", "gif", "tiff", "pdf"];
     static readonly string[] ArchiveOutputs = ["zip", "tar", "gz"];
     static readonly string[] SubtitleOutputs = ["srt", "vtt", "txt"];
@@ -21,7 +22,7 @@ public static class Capabilities
     }
 
     public static string[] Tools(IReadOnlyList<string> files) =>
-        FeatureCatalog.Tools(files).Where(t => SupportedTools.Contains(t) || ImageEditors.Contains(t) && files.All(FeatureCatalog.IsImage)).ToArray();
+        FeatureCatalog.Tools(files).Where(t => SupportedTools.Contains(t) || ImageEditors.Contains(t) && (files.All(FeatureCatalog.IsImage) || t == "readQRCode")).ToArray();
 
     static IEnumerable<string> Routes(IReadOnlyList<string> files)
     {

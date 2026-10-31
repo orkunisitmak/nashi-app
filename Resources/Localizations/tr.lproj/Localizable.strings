@@ -10,6 +10,7 @@
 "%@ files" = "%@ dosya";
 "%@ files ready." = "%@ dosya hazır.";
 "%@ files, ready to go." = "%@ dosya hazır.";
+"%@ found" = "%@ bulundu";
 "%@ is enabled" = "%@ izni açık";
 "%@ is not available for this selection on Linux." = "%@ bu seçim için Linux'ta kullanılamıyor.";
 "%@ items" = "%@ öğe";
@@ -31,6 +32,7 @@
 "%lld files" = "%lld dosya";
 "%lld files ready." = "%lld dosya hazır.";
 "%lld files, ready to go." = "%lld dosya hazır.";
+"%lld found" = "%lld bulundu";
 "%lld is enabled" = "%lld izni açık";
 "%lld is not available for this selection on Linux." = "%lld bu seçim için Linux'ta kullanılamıyor.";
 "%lld items" = "%lld öğe";
@@ -441,6 +443,8 @@
 "CONVERT WITH NASHI" = "NASHI İLE DÖNÜŞTÜR";
 "CONVERT · WHILE DRAGGING" = "DÖNÜŞTÜR · SÜRÜKLERKEN";
 "CONVERT, FINE-TUNE, AND SEND THEM ON THEIR WAY." = "DÖNÜŞTÜR, İNCE AYAR YAP VE PAYLAŞ.";
+"COPIED" = "KOPYALANDI";
+"COPIED ALL" = "TÜMÜ KOPYALANDI";
 "COPIED LINK" = "KOPYALANAN BAĞLANTI";
 "COPIED." = "KOPYALANDI.";
 "COPY" = "KOPYALA";
@@ -448,6 +452,7 @@
 "COPY A LINK → ⌃⇧D, OR DRAG IT WITH ⌘." = "BAĞLANTIYI KOPYALA → ⌃⇧D VEYA ⌘ İLE SÜRÜKLE.";
 "COPY A LINK, THEN CHOOSE DOWNLOAD LINK FROM THE NASHI MENU." = "BİR BAĞLANTI KOPYALA, SONRA NASHI MENÜSÜNDEN BAĞLANTIDAN İNDİR'İ SEÇ.";
 "COPY A PUBLIC MEDIA LINK FIRST." = "ÖNCE HERKESE AÇIK BİR MEDYA BAĞLANTISI KOPYALA.";
+"COPY ALL" = "TÜMÜNÜ KOPYALA";
 "COPY PATH" = "YOLU KOPYALA";
 "COPY TO…" = "ŞURAYA KOPYALA…";
 "CORNER RADIUS" = "KÖŞE YUVARLAKLIĞI";
@@ -639,6 +644,8 @@
 "Convert, fine-tune, and send them on their way." = "Dönüştür, ince ayar yap ve paylaş.";
 "Converting to %@ is not supported on Linux." = "%@ biçimine dönüştürme Linux'ta desteklenmiyor.";
 "Converting to %lld is not supported on Linux." = "%lld biçimine dönüştürme Linux'ta desteklenmiyor.";
+"Copied" = "Kopyalandı";
+"Copied all" = "Tümü kopyalandı";
 "Copied link" = "Kopyalanan bağlantı";
 "Copied." = "Kopyalandı.";
 "Copy" = "Kopyala";
@@ -647,6 +654,7 @@
 "Copy a link → ⌃⇧D, or drag it with ⌘." = "Bağlantıyı kopyala → ⌃⇧D veya ⌘ ile sürükle.";
 "Copy a link, then choose Download Link from the Nashi menu." = "Bir bağlantı kopyala, sonra Nashi menüsünden Bağlantıdan İndir'i seç.";
 "Copy a public media link first." = "Önce herkese açık bir medya bağlantısı kopyala.";
+"Copy all" = "Tümünü kopyala";
 "Copy path" = "Yolu kopyala";
 "Copy to…" = "Şuraya kopyala…";
 "Corner radius" = "Köşe yuvarlaklığı";

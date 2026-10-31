@@ -10,6 +10,7 @@
 "%@ files" = "%@ files";
 "%@ files ready." = "%@ files ready.";
 "%@ files, ready to go." = "%@ files, ready to go.";
+"%@ found" = "%@ found";
 "%@ is enabled" = "%@ is enabled";
 "%@ is not available for this selection on Linux." = "%@ is not available for this selection on Linux.";
 "%@ items" = "%@ items";
@@ -31,6 +32,7 @@
 "%lld files" = "%lld files";
 "%lld files ready." = "%lld files ready.";
 "%lld files, ready to go." = "%lld files, ready to go.";
+"%lld found" = "%lld found";
 "%lld is enabled" = "%lld is enabled";
 "%lld is not available for this selection on Linux." = "%lld is not available for this selection on Linux.";
 "%lld items" = "%lld items";
@@ -441,6 +443,8 @@
 "CONVERT WITH NASHI" = "CONVERT WITH NASHI";
 "CONVERT · WHILE DRAGGING" = "CONVERT · WHILE DRAGGING";
 "CONVERT, FINE-TUNE, AND SEND THEM ON THEIR WAY." = "CONVERT, FINE-TUNE, AND SEND THEM ON THEIR WAY.";
+"COPIED" = "COPIED";
+"COPIED ALL" = "COPIED ALL";
 "COPIED LINK" = "COPIED LINK";
 "COPIED." = "COPIED.";
 "COPY" = "COPY";
@@ -448,6 +452,7 @@
 "COPY A LINK → ⌃⇧D, OR DRAG IT WITH ⌘." = "COPY A LINK → ⌃⇧D, OR DRAG IT WITH ⌘.";
 "COPY A LINK, THEN CHOOSE DOWNLOAD LINK FROM THE NASHI MENU." = "COPY A LINK, THEN CHOOSE DOWNLOAD LINK FROM THE NASHI MENU.";
 "COPY A PUBLIC MEDIA LINK FIRST." = "COPY A PUBLIC MEDIA LINK FIRST.";
+"COPY ALL" = "COPY ALL";
 "COPY PATH" = "COPY PATH";
 "COPY TO…" = "COPY TO…";
 "CORNER RADIUS" = "CORNER RADIUS";
@@ -639,6 +644,8 @@
 "Convert, fine-tune, and send them on their way." = "Convert, fine-tune, and send them on their way.";
 "Converting to %@ is not supported on Linux." = "Converting to %@ is not supported on Linux.";
 "Converting to %lld is not supported on Linux." = "Converting to %lld is not supported on Linux.";
+"Copied" = "Copied";
+"Copied all" = "Copied all";
 "Copied link" = "Copied link";
 "Copied." = "Copied.";
 "Copy" = "Copy";
@@ -647,6 +654,7 @@
 "Copy a link → ⌃⇧D, or drag it with ⌘." = "Copy a link → ⌃⇧D, or drag it with ⌘.";
 "Copy a link, then choose Download Link from the Nashi menu." = "Copy a link, then choose Download Link from the Nashi menu.";
 "Copy a public media link first." = "Copy a public media link first.";
+"Copy all" = "Copy all";
 "Copy path" = "Copy path";
 "Copy to…" = "Copy to…";
 "Corner radius" = "Corner radius";

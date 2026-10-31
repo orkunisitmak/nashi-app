@@ -1243,5 +1243,9 @@
   "Nashi uses FFmpeg for audio and video, Deno for Pages files, ExifTool for metadata and LibreOffice for Office documents. Downloads come straight from the upstream projects and are checked before anything is installed.": "Nashi ses ve video için FFmpeg, Pages dosyaları için Deno, meta veriler için ExifTool ve Office belgeleri için LibreOffice kullanır. İndirmeler doğrudan kaynak projelerden gelir ve kurulmadan önce doğrulanır.",
   "No metadata found.": "Meta veri bulunamadı.",
   "Some tools are still missing after the download.": "İndirmeden sonra bazı araçlar hâlâ eksik.",
-  "These changes apply to every selected image.": "Bu değişiklikler seçili tüm görsellere uygulanır."
+  "These changes apply to every selected image.": "Bu değişiklikler seçili tüm görsellere uygulanır.",
+  "Copied": "Kopyalandı",
+  "Copied all": "Tümü kopyalandı",
+  "Copy all": "Tümünü kopyala",
+  "{0} found": "{0} bulundu"
 }

@@ -69,6 +69,9 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
     /// The wheel this flow showed last (it may be closed by now).
     public WheelWindow? LastWheel { get; private set; }
 
+    /// The QR reader this flow opened last (it may be closed by now).
+    public Editors.QrReaderWindow? LastReader { get; private set; }
+
     /// The editor this flow opened last (it may be closed by now).
     public Editors.ToolEditorWindow? LastEditor { get; private set; }
 
@@ -137,6 +140,11 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
     {
         if (Busy || files.Count == 0) return;
         var selection = files;
+        if (item.Id == "readQRCode")
+        {
+            (LastReader = new Editors.QrReaderWindow(selection)).Present(owner);
+            return;
+        }
         Editors.EditorJob? job = null;
         // An image tool opens its editor first; Save hands back the job, Cancel or Esc ends here with nothing made.
         Editors.EditorPanel? panel;
