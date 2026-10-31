@@ -9,7 +9,10 @@ internal static class Program
     [STAThread]
     public static int Main(string[] args)
     {
+        // The bundled ImageMagick has its own fontconfig, which does not find the system configuration by itself.
+        if(Environment.GetEnvironmentVariable("FONTCONFIG_FILE") is null&&File.Exists("/etc/fonts/fonts.conf"))Environment.SetEnvironmentVariable("FONTCONFIG_FILE","/etc/fonts/fonts.conf");
         if(args is ["--verify-operations",var root])return OperationChecks.Run(root);
+        if(args is ["--verify-editors",var folder])return EditorChecks.Run(folder);
         return AppBuilder.Configure<App>().UsePlatformDetect().LogToTrace().StartWithClassicDesktopLifetime(args);
     }
 }

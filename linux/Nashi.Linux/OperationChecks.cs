@@ -21,7 +21,7 @@ internal static class OperationChecks
             var originalHash=Hash(png);
 
             Check(Operations.Formats([png]).SequenceEqual(new[]{"jpg","webp","heic","tiff","avif","bmp","pdf"}),"PNG conversion formats");
-            Check(Operations.Tools([png]).Select(t=>t.Id).SequenceEqual(new[]{"compress","removeMetadata","editImage","frameImage","cropImage","redactImage","readQRCode"}),"PNG tools");
+            Check(Operations.Tools([png]).Select(t=>t.Id).SequenceEqual(new[]{"compress","removeMetadata","editImage","annotateImage","frameImage","cropImage","redactImage","readQRCode"}),"PNG tools");
             foreach(var format in Operations.Formats([png]))
             {
                 var output=Operations.RunAsync(new("convert",format,format),[png],Path.Combine(root,"convert-"+format),progress,token).GetAwaiter().GetResult().Single();
@@ -40,6 +40,44 @@ internal static class OperationChecks
             try{Operations.Crop(new MagickImage(MagickColors.White,10,10),new(.8,0,.5,1));Check(false,"Crop outside the image is rejected");}catch(ArgumentException){Check(true,"Crop outside the image is rejected");}
             var edited=Operations.RunAsync(new("editImage","Edit Photo"),[png],Path.Combine(root,"edit"),progress,token,new(Photo:new(new PhotoAdjustments{Exposure=-1,Saturation=0},90,true))).GetAwaiter().GetResult().Single();
             using(var result=new MagickImage(edited)){using var pixels=result.GetPixels();var c=pixels.GetPixel(10,10).ToColor()!;Check(result.Width==200&&result.Height==320&&Math.Abs(c.R-c.B)<3&&c.R is > 70 and < 120,"Edit photo rotates, desaturates and darkens");}
+            Check(Operations.Tools([png]).Any(t=>t.Id=="annotateImage")&&!Operations.Tools([png,jpg]).Any(t=>t.Id=="annotateImage"),"Annotate offered for one image");
+            {
+                var canvas=Path.Combine(root,"Canvas.png");using(var image=new MagickImage(MagickColors.White,400,300))image.Write(canvas,MagickFormat.Png);
+                var lens=Path.Combine(root,"Lens.png");using(var image=new MagickImage(MagickColors.White,400,300)){new ImageMagick.Drawing.Drawables().FillColor(MagickColors.Black).Rectangle(195,145,205,155).Draw(image);image.Write(lens,MagickFormat.Png);}
+                MagickColor At(string file,int x,int y){using var image=new MagickImage(file);using var pixels=image.GetPixels();return (MagickColor)pixels.GetPixel(x,y).ToColor()!;}
+                string Draw(string file,string name,params Mark[] marks)=>Operations.RunAsync(new("annotateImage","Annotate Photo"),[file],Path.Combine(root,"annotate-"+name),progress,token,new(Annotate:new(marks))).GetAwaiter().GetResult().Single();
+                var box=Draw(canvas,"rectangle",new Mark("rectangle",100,100,300,200,"#FF0000",6));
+                Check(At(box,100,150).R>200&&At(box,100,150).G<60&&At(box,200,150).G>250,"Annotate rectangle is an outline, not a fill");
+                var oval=Draw(canvas,"ellipse",new Mark("ellipse",100,100,300,200,"#0000FF",6));
+                Check(At(oval,100,150).B>200&&At(oval,100,150).R<60&&At(oval,200,150).R>250&&At(oval,102,102).R>250,"Annotate ellipse");
+                var marker=Draw(canvas,"marker",new Mark("marker",0,0,0,0,"#000000",5,Points:[(50,50),(350,50)]));
+                var ink=At(marker,200,50);Check(ink.R is > 60 and < 200&&At(marker,200,120).R>250,"Annotate marker is translucent");
+                var dot=Draw(canvas,"dot",new Mark("freehand",0,0,0,0,"#000000",10,Points:[(200,150)]),new Mark("marker",0,0,0,0,"#000000",4,Points:[(20,20),(80,20)]));
+                Check(At(dot,200,150).R<40&&At(dot,50,20).R<200,"Annotate a click and a two-point stroke");
+                var pen=Draw(canvas,"freehand",new Mark("freehand",0,0,0,0,"#000000",4,Points:[(50,250),(200,240),(350,250)]));
+                Check(At(pen,50,250).R<40&&At(pen,200,150).R>250,"Annotate freehand");
+                var arrow=Draw(canvas,"arrow",new Mark("arrow",50,150,350,150,"#00AA00",4));
+                // The head is 16 px long and 16 px wide just before the tip, wider than the 4 px shaft.
+                Check(At(arrow,340,150).G>150&&At(arrow,340,155).G>150&&At(arrow,200,155).R>250&&At(arrow,200,150).R<60,"Annotate arrow head");
+                var text=Draw(canvas,"text",new Mark("text",20,20,0,0,"#000000",4,"Şğİ Nashi",48));
+                using(var image=new MagickImage(text)){using var pixels=image.GetPixels();var dark=0;for(var y=20;y<80;y++)for(var x=20;x<300;x++)if(pixels.GetPixel(x,y).ToColor()!.R<100)dark++;Check(dark>500,"Annotate text with Turkish letters");}
+                var number=Draw(canvas,"number",new Mark("number",200,150,0,0,"#2E9E4F",4,"1",40));
+                Check(At(number,200-20,150).G>120&&At(number,200-20,150).R<80&&At(number,200+30,150).R>250,"Annotate number badge");
+                var callout=Draw(canvas,"callout",new Mark("callout",50,50,350,150,"#111111",4,"Hello",40));
+                Check(At(callout,60,140).R<30&&At(callout,345,60).R<30&&At(callout,200,250).R>250,"Annotate callout box");
+                var magnified=Draw(lens,"magnifier",new Mark("magnifier",180,130,220,170,"#FF0000",2));
+                // The 10 px black square becomes 20 px wide at the same center.
+                Check(At(magnified,192,150).R<40&&At(lens,192,150).R>250&&At(magnified,215,150).R>200,"Annotate magnifier zooms 2×");
+                var sticker=Path.Combine(root,"Sticker.png");using(var image=new MagickImage(new MagickColor("#0000FF"),10,10))image.Write(sticker,MagickFormat.Png);
+                var placed=Draw(canvas,"image",new Mark("image",300,20,380,100,Picture:File.ReadAllBytes(sticker)));
+                Check(At(placed,340,60).B>240&&At(placed,340,60).R<10&&At(placed,290,60).R>250,"Annotate places an image");
+                var stack=Draw(canvas,"order",new Mark("callout",50,50,350,250,"#000000",4,"",40),new Mark("rectangle",100,100,300,200,"#FF0000",6));
+                Check(At(stack,100,150).R>200&&At(stack,100,150).G<60,"Annotate draws marks in order");
+                try{Annotations.Apply(new MagickImage(MagickColors.White,10,10),new([new("line",0,0,5,5,"red")]));Check(false,"Annotate rejects bad colors");}catch(ArgumentException){Check(true,"Annotate rejects bad colors");}
+                try{Annotations.Apply(new MagickImage(MagickColors.White,10,10),new([]));Check(false,"Annotate needs a mark");}catch(ArgumentException){Check(true,"Annotate needs a mark");}
+                var moved=MarkGeometry.Moved(new Mark("freehand",1,1,2,2,Points:[(1,1),(2,2)]),10,5);var scaled=MarkGeometry.Scaled(new([new Mark("text",10,10,10,10,FontSize:40)]),.5).Marks[0];
+                Check(moved.Points![1]==(12,7)&&moved.X1==11&&scaled.X1==5&&scaled.FontSize==20,"Annotation move and preview scale");
+            }
             var framed=Operations.RunAsync(new("frameImage","Add BG"),[jpg],Path.Combine(root,"frame"),progress,token,new(Frame:new(Padding:40,Color:"#123456",Shadow:0,CornerRadius:30))).GetAwaiter().GetResult().Single();
             using(var result=new MagickImage(framed)){using var pixels=result.GetPixels();var corner=pixels.GetPixel(2,2).ToColor()!;var middle=pixels.GetPixel(200,140).ToColor()!;var rounded=pixels.GetPixel(41,41).ToColor()!;
                 Check(result.Width==400&&result.Height==280&&FeatureCatalog.Extension(framed)=="png"&&corner.R==0x12&&corner.B==0x56&&Math.Abs(middle.R-0xE3)<4&&rounded.B==0x56,"Frame size, background, image and rounded corner");}

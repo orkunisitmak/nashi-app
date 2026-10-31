@@ -16,6 +16,7 @@ internal sealed class PdfOrganizeDialog:Window
     private sealed class Entry(int number,Bitmap image){public int Number{get;}=number;public Bitmap Image{get;}=image;public int Rotation{get;set;}}
     private readonly List<Entry> entries=[];private readonly HashSet<Entry> selected=[];
     private readonly WrapPanel gallery=new(){Margin=new(4)};
+    internal WrapPanel Gallery=>gallery;
     private readonly CheckBox uniform=new(){Content="Make all pages the same width"};
     private readonly TextBlock state=new(){FontSize=12,Opacity=.75,VerticalAlignment=VerticalAlignment.Center};
     private Entry? anchor,dragging;private Point dragStart;
@@ -32,9 +33,11 @@ internal sealed class PdfOrganizeDialog:Window
         foreach(var child in tools.Children.OfType<Control>())child.Margin=new(0,0,8,8);
         var bar=new DockPanel{Margin=new(16,10),Children={new StackPanel{Orientation=Orientation.Horizontal,Spacing=8,Children={cancel,save}},new StackPanel{Orientation=Orientation.Horizontal,Spacing=16,Children={uniform,state}}}};DockPanel.SetDock(bar.Children[0],Dock.Right);
         var header=new StackPanel{Margin=new(16,12,16,4),Spacing=8,Children={new TextBlock{Text=Path.GetFileName(file),FontSize=12,Opacity=.75,TextTrimming=TextTrimming.CharacterEllipsis},tools}};
+        gallery.PointerMoved+=(_,e)=>Drag(e);gallery.PointerReleased+=(_,e)=>Drop(e);gallery.Background=Brushes.Transparent;
         var root=new DockPanel{Children={bar,header,new ScrollViewer{Content=gallery,Margin=new(12,0)}}};DockPanel.SetDock(bar,Dock.Bottom);DockPanel.SetDock(header,Dock.Top);
         this[!BackgroundProperty]=new Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("Paper");Content=root;
-        KeyDown+=OnKey;Closed+=(_,_)=>{foreach(var image in entries.Select(e=>e.Image).Distinct())image.Dispose();};
+        // Tunnel, so the gallery's scroll viewer does not take the arrow keys first.
+        AddHandler(KeyDownEvent,OnKey,Avalonia.Interactivity.RoutingStrategies.Tunnel);Closed+=(_,_)=>{foreach(var image in entries.Select(e=>e.Image).Distinct())image.Dispose();};
     }
 
     public static async Task<PdfOrganizeDialog> CreateAsync(string title,string file)
@@ -58,7 +61,7 @@ internal sealed class PdfOrganizeDialog:Window
             var card=new Border{Width=158,Margin=new(6),Padding=new(8),CornerRadius=new(12),BorderThickness=new(on?3:1),Cursor=new Cursor(StandardCursorType.Hand),
                 Child=new StackPanel{Spacing=6,Children={new Border{Child=picture,Height=170},new TextBlock{Text=$"Page {entry.Number}"+(entry.Rotation>0?$" · {entry.Rotation}°":""),HorizontalAlignment=HorizontalAlignment.Center}}}};
             card[!Border.BackgroundProperty]=Resource(on?"Sage":"Surface");card.BorderBrush=on?new SolidColorBrush(Color.FromRgb(227,184,89)):null;if(!on)card[!Border.BorderBrushProperty]=Resource("Line");
-            card.PointerPressed+=(_,e)=>Press(entry,e);card.PointerMoved+=(_,e)=>Drag(entry,e);card.PointerReleased+=(_,e)=>Drop(e);
+            card.Tag=entry;card.PointerPressed+=(_,e)=>Press(entry,e);
             gallery.Children.Add(card);
         }
         state.Text=$"{entries.Count} page{(entries.Count==1?"":"s")}"+(selected.Count>0?$" · {selected.Count} selected":"");
@@ -71,9 +74,19 @@ internal sealed class PdfOrganizeDialog:Window
         {var a=entries.IndexOf(anchor);var b=entries.IndexOf(entry);selected.Clear();selected.UnionWith(entries.Skip(Math.Min(a,b)).Take(Math.Abs(a-b)+1));}
         else if(modifiers.HasFlag(KeyModifiers.Control)){if(!selected.Remove(entry))selected.Add(entry);anchor=entry;}
         else{if(!selected.Contains(entry)){selected.Clear();selected.Add(entry);}anchor=entry;}
-        dragging=entry;dragStart=e.GetPosition(gallery);Reload();Focus();
+        // The gallery keeps the pointer for the drag; the cards are only restyled, not rebuilt.
+        dragging=entry;dragStart=e.GetPosition(gallery);e.Pointer.Capture(gallery);e.Handled=true;Restyle();Focus();
     }
-    private void Drag(Entry entry,PointerEventArgs e)
+    private void Restyle()
+    {
+        foreach(var card in gallery.Children.OfType<Border>())
+        {
+            var on=card.Tag is Entry entry&&selected.Contains(entry);card.BorderThickness=new(on?3:1);
+            card[!Border.BackgroundProperty]=Resource(on?"Sage":"Surface");if(on)card.BorderBrush=new SolidColorBrush(Color.FromRgb(227,184,89));else card[!Border.BorderBrushProperty]=Resource("Line");
+        }
+        state.Text=$"{entries.Count} page{(entries.Count==1?"":"s")}"+(selected.Count>0?$" · {selected.Count} selected":"");
+    }
+    private void Drag(PointerEventArgs e)
     {
         if(dragging is null||!e.GetCurrentPoint(gallery).Properties.IsLeftButtonPressed)return;
         var point=e.GetPosition(gallery);if(Math.Abs(point.X-dragStart.X)+Math.Abs(point.Y-dragStart.Y)<12)return;
@@ -82,7 +95,7 @@ internal sealed class PdfOrganizeDialog:Window
     /// Drops the selection before the card under the pointer (after it when released on its right half).
     private void Drop(PointerReleasedEventArgs e)
     {
-        var source=dragging;dragging=null;Cursor=Cursor.Default;if(source is null)return;
+        var source=dragging;dragging=null;Cursor=Cursor.Default;e.Pointer.Capture(null);if(source is null)return;
         var point=e.GetPosition(gallery);if(Math.Abs(point.X-dragStart.X)+Math.Abs(point.Y-dragStart.Y)<12)return;
         var target=gallery.Children.Select((card,index)=>(card,index)).FirstOrDefault(c=>c.card.Bounds.Contains(point));
         if(target.card is null)return;

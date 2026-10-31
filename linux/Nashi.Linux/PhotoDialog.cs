@@ -109,7 +109,7 @@ internal sealed class PhotoDialog:Window
         var current=++generation;if(rendering)return;rendering=true;var edit=Current();state.Text="Updating…";
         try
         {
-            var png=await Task.Run(()=>{using var image=new MagickImage(source,new MagickReadSettings{Format=MagickFormat.Png});edit.Apply(image);return image.ToByteArray(MagickFormat.Png);});
+            var png=await Task.Run(()=>{using var image=new MagickImage(source,new MagickReadSettings{Format=MagickFormat.Png});edit.Apply(image);return Picture.Encode(image);});
             if(current!=generation||original.IsChecked==true)return;
             using var stream=new MemoryStream(png);var previous=preview.Source;preview.Source=new Bitmap(stream);if(previous!=originalBitmap)(previous as IDisposable)?.Dispose();state.Text="";
         }

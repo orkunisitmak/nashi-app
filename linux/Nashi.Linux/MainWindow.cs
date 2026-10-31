@@ -44,16 +44,16 @@ public sealed class MainWindow:Window
         string? Value(string flag)=>args.SkipWhile(a=>a!=flag).Skip(1).FirstOrDefault();
         var capture=Value("--capture");var dialog=Value("--dialog");
         Add(args.Where(a=>!a.StartsWith('-')&&a!=capture&&a!=dialog).Select(Path.GetFullPath));Refresh();RefreshLibrary();
-        if(capture is not null)Opened+=async(_,_)=>await Capture(Path.GetFullPath(capture),args.Contains("--dark")?"dark":args.Contains("--light")?"light":null,dialog);
+        if(capture is not null)Opened+=async(_,_)=>await Capture(Path.GetFullPath(capture),args.Contains("--dark")?"dark":args.Contains("--light")?"light":null,dialog,args.ToArray());
     }
 
     /// Render check without a visible desktop (a locked session or CI): saves the window and exits.
     /// With --dialog, an editor is opened on the first file with a sample edit and captured instead.
-    private async Task Capture(string file,string? appearance,string? dialog)
+    private async Task Capture(string file,string? appearance,string? dialog,string[] args)
     {
         if(appearance is not null)NashiTheme.Apply(Application.Current!,appearance);
         await Task.Delay(800);
-        try{if(dialog is null)Snap(this,file);else if(await CaptureDialog.OpenAsync(dialog,files) is {} editor){editor.Show(this);await Task.Delay(1200);Snap(editor,file);editor.Close();}}
+        try{if(dialog is null)Snap(this,file);else if(await CaptureDialog.OpenAsync(dialog,files) is {} editor){editor.Show(this);await Task.Delay(args.Contains("--slow")?5000:1500);Snap(editor,file);editor.Close();}}
         catch(Exception error){Console.Error.WriteLine(error);}
         Close();
     }
@@ -132,7 +132,12 @@ public sealed class MainWindow:Window
             catch(Exception error){status.Text=error.Message;}
             return;
         }
-        MediaOptions? media=null;ImageEdit? edit=null;PhotoEdit? photo=null;FrameOptions? frame=null;CollageOptions? collage=null;Redaction? redact=null;PdfOrganization? organize=null;
+        MediaOptions? media=null;ImageEdit? edit=null;PhotoEdit? photo=null;FrameOptions? frame=null;CollageOptions? collage=null;Redaction? redact=null;PdfOrganization? organize=null;Annotation? annotate=null;
+        if(choice.Id=="annotateImage")
+        {
+            AnnotateDialog editor;try{editor=await AnnotateDialog.CreateAsync(choice.Title,inputs[0]);}catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or ImageMagick.MagickException){status.Text=error.Message;return;}
+            await editor.ShowDialog(this);if(editor.Result is not {} marks)return;annotate=marks;
+        }
         if(choice.Id=="organizePDF")
         {
             PdfOrganizeDialog editor;status.Text="Reading pages…";try{editor=await PdfOrganizeDialog.CreateAsync(choice.Title,inputs[0]);}catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or DllNotFoundException){status.Text=error.Message;return;}
@@ -202,7 +207,7 @@ public sealed class MainWindow:Window
         var report=new Progress<OperationProgress>(p=>{if(p.Fraction is {} f){progress.IsIndeterminate=false;progress.Value=f;}status.Text=p.Label;});
         try
         {
-            var outputs=await Operations.RunAsync(choice,inputs,destination,report,running.Token,new(media,edit,photo,frame,collage,redact,organize));
+            var outputs=await Operations.RunAsync(choice,inputs,destination,report,running.Token,new(media,edit,photo,frame,collage,redact,organize,annotate));
             library.Record(choice.Id=="convert"?"Convert to "+choice.Format!.ToUpperInvariant():choice.Title,outputs);
             lastFolder=destination;reveal.IsVisible=true;
             status.Text=outputs.Count==1?$"Saved {Path.GetFileName(outputs[0])}":$"Saved {outputs.Count} files";

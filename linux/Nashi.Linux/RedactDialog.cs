@@ -69,7 +69,7 @@ internal sealed class RedactDialog:Window
         if(redaction.Areas.Length==0){Show(original);return;}
         var scale=original.PixelSize.Width/(double)canvas.Pixels.Width;
         byte[] png;
-        try{png=await Task.Run(()=>{using var image=new MagickImage(source);Compositions.Redact(image,redaction,scale);return image.ToByteArray(MagickFormat.Png);});}
+        try{png=await Task.Run(()=>{using var image=new MagickImage(source);Compositions.Redact(image,redaction,scale);return Picture.Encode(image);});}
         catch(Exception error)when(error is ArgumentException or MagickException){return;}
         if(current!=generation||!IsVisible)return;
         using var stream=new MemoryStream(png);Show(new Bitmap(stream));

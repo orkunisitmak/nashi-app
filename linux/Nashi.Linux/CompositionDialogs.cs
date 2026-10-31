@@ -44,7 +44,7 @@ internal abstract class PreviewDialog:Window
         var current=++generation;if(rendering)return;rendering=true;state.Text="Updating…";
         try
         {
-            var draw=Snapshot();var png=await Task.Run(()=>{using var image=draw();return image.ToByteArray(MagickFormat.Png);});
+            var draw=Snapshot();var png=await Task.Run(()=>{using var image=draw();return Picture.Encode(image);});
             if(current!=generation)return;using var stream=new MemoryStream(png);var previous=preview.Source;preview.Source=new Bitmap(stream);(previous as IDisposable)?.Dispose();state.Text="";
         }
         catch(Exception error)when(error is ArgumentException or MagickException or InvalidDataException or IOException){if(current==generation)state.Text=error.Message;}

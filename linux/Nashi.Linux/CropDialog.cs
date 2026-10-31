@@ -61,13 +61,19 @@ internal sealed class CropDialog:Window
 internal static class Picture
 {
     public const uint PreviewEdge=2048;
+    /// Live previews are never saved, so they skip PNG compression: a 1600 px frame took a second with the default level.
+    public static byte[] Encode(ImageMagick.MagickImage image)
+    {
+        image.Settings.SetDefine(ImageMagick.MagickFormat.Png,"compression-level","1");image.Settings.SetDefine(ImageMagick.MagickFormat.Png,"compression-filter","0");
+        return image.ToByteArray(ImageMagick.MagickFormat.Png);
+    }
     public static async Task<(Bitmap Preview,PixelSize Pixels)> LoadAsync(Func<ImageMagick.MagickImage> load)
     {
         var (png,width,height)=await Task.Run(()=>
         {
             using var image=load();var w=(int)image.Width;var h=(int)image.Height;
             if(Math.Max(w,h)>PreviewEdge)image.Resize(new ImageMagick.MagickGeometry(PreviewEdge,PreviewEdge));
-            return (image.ToByteArray(ImageMagick.MagickFormat.Png),w,h);
+            return (Encode(image),w,h);
         });
         using var stream=new MemoryStream(png);return (new Bitmap(stream),new(width,height));
     }
@@ -85,6 +91,8 @@ internal abstract class PictureCanvas(Bitmap preview,PixelSize pixels):Control
         get{var scale=Math.Min(Bounds.Width/Pixels.Width,Bounds.Height/Pixels.Height);var w=Pixels.Width*scale;var h=Pixels.Height*scale;return new((Bounds.Width-w)/2,(Bounds.Height-h)/2,w,h);}
     }
     protected double Scale=>Image.Width/Pixels.Width;
+    /// Where an image pixel appears on this control, for the editor checks.
+    internal Point ToControl(double x,double y){var i=Image;return new(i.X+x*Scale,i.Y+y*Scale);}
     protected Point ToPixels(Point p){var i=Image;return new(Math.Clamp((p.X-i.X)/Scale,0,Pixels.Width),Math.Clamp((p.Y-i.Y)/Scale,0,Pixels.Height));}
     protected Rect ToScreen(Rect r){var i=Image;return new(i.X+r.X*Scale,i.Y+r.Y*Scale,r.Width*Scale,r.Height*Scale);}
     protected Rect Clamp(Rect r)
