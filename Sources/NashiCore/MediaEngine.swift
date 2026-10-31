@@ -485,7 +485,7 @@ public enum MediaEngine {
         let temp = try OutputFiles.temporaryDirectory()
         defer { try? FileManager.default.removeItem(at: temp) }
         var budget = max(1000, Double(target) * 0.93 - (video ? 2048 : 1024))
-        var ownsOutput = false
+        var ownsOutput = false, previous: [String] = []
         do {
             for attempt in 0..<6 {
                 progress(OperationProgress.indeterminate,"Compression attempt \(attempt+1)…")
@@ -493,7 +493,7 @@ public enum MediaEngine {
                 try token.check()
                 let totalRate = min(500_000_000, budget * 8 / info.duration)
                 let audioRate = info.hasAudio ? min(128000.0, max(8000, totalRate * (video ? 0.18 : 1))) : 0
-                var arguments = ["-i", input.path, "-map_metadata", "-1", "-map_chapters", "-1"]
+                var arguments = ["-i", input.path, "-map_metadata", "-1", "-map_chapters", "-1"], firstPass: [String]?
                 if video {
                     let videoRate = max(1000, Int(totalRate - audioRate))
                     arguments += ["-map", "0:v:0", "-map", "0:a:0?"]
@@ -501,9 +501,8 @@ public enum MediaEngine {
                     let codec = ext == "webm" ? "libvpx-vp9" : ext == "wmv" ? "wmv2" : ext == "avi" ? "mpeg4" : "libx264"
                     arguments += ["-c:v", codec, "-b:v", String(videoRate), "-pix_fmt", "yuv420p"]
                     if codec == "libx264" { arguments += ["-preset", "medium"] }
-                    let log = temp.appendingPathComponent("pass-\(attempt)").path
-                    let firstPass = arguments + ["-an", "-pass", "1", "-passlogfile", log, "-f", "null", "/dev/null"]
-                    try ffmpeg(firstPass, token: token, overwrite: true, duration: info.duration, progress: { value,_ in attemptProgress(OperationProgress.map(value, from: 0, to: 0.5),"Analyzing video…") })
+                    let log = temp.appendingPathComponent("pass").path
+                    firstPass = arguments + ["-an", "-pass", "1", "-passlogfile", log, "-f", "null", "/dev/null"]
                     arguments += ["-pass", "2", "-passlogfile", log]
                     if info.hasAudio { arguments += audioEncoding(ext == "webm" ? "opus" : ext == "wmv" ? "wma" : ext == "avi" ? "mp3" : "m4a", quality: options.quality, bitrate: Int(audioRate), source: info.audio) }
                     if ["mp4", "mov", "m4v"].contains(ext) { arguments += ["-movflags", "+faststart"] }
@@ -512,6 +511,10 @@ public enum MediaEngine {
                     // libopus cannot encode at 22.05 kHz; 24 kHz is its nearest supported rate.
                     if audioRate < 24000 { arguments += ["-ac", "1", "-ar", ext == "opus" ? "24000" : "22050"] }
                 }
+                // Bitrates stop at their encoder floors; repeating the last attempt cannot make the file smaller.
+                guard arguments != previous else { break }
+                previous = arguments
+                if let firstPass { try ffmpeg(firstPass, token: token, overwrite: true, duration: info.duration, progress: { value,_ in attemptProgress(OperationProgress.map(value, from: 0, to: 0.5),"Analyzing video…") }) }
                 try render(arguments, to: out, token: token, duration: info.duration, progress: { value,_ in attemptProgress(OperationProgress.map(value, from: video ? 0.5 : 0, to: 1),"Encoding…") })
                 ownsOutput = true
                 let actual = Int64(try out.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0)
