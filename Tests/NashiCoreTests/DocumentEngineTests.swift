@@ -11,6 +11,29 @@ final class DocumentEngineTests: XCTestCase {
     override func setUpWithError() throws { root = try OutputFiles.temporaryDirectory() }
     override func tearDownWithError() throws { if let root { try? FileManager.default.removeItem(at: root) } }
 
+    func testSubtitleTextThatOnlyLooksLikeMarkupSurvivesVTTAndTXT() throws {
+        let input = try file("Markup.srt", "1\n00:00:01,000 --> 00:00:02,000\nI <3 you & him <i>really</i>\n\n2\n00:00:03,000 --> 00:00:04,000\n5 < 6 and 7 > 3\n")
+        let vtt = try DocumentText.read(convert(input, "vtt"))
+        XCTAssertTrue(vtt.contains("I &lt;3 you &amp; him <i>really</i>"))
+        XCTAssertTrue(vtt.contains("5 &lt; 6 and 7 > 3"))
+        XCTAssertEqual(try DocumentText.read(convert(input, "txt")), "I <3 you & him really\n\n5 < 6 and 7 > 3\n")
+        let edge = try file("Edge.srt", "1\n100:00:01,000 --> 100:00:03,000\n<I>Hello</I> <i love you <100:00:02.000>late\n")
+        XCTAssertTrue(try DocumentText.read(convert(edge, "vtt")).contains("<i>Hello</i> &lt;i love you <100:00:02.000>late"))
+        XCTAssertEqual(try DocumentText.read(convert(edge, "txt")), "Hello <i love you late\n")
+        let math = try file("Math.srt", "1\n00:00:01,000 --> 00:00:02,000\nx <b + 1 and y > 3 <v Ann Lee>hi</v> <c.red.big>ok</c>\n")
+        XCTAssertTrue(try DocumentText.read(convert(math, "vtt")).contains("x &lt;b + 1 and y > 3 <v Ann Lee>hi</v> <c.red.big>ok</c>"))
+        XCTAssertEqual(try DocumentText.read(convert(math, "txt")), "x <b + 1 and y > 3 hi ok\n")
+        let tabbed = try file("Tabbed.srt", "1\n00:00:01,000 --> 00:00:02,000\n<font\tcolor=\"red\">Hi</font> <v\tAnn>yo</v>\n")
+        XCTAssertTrue(try DocumentText.read(convert(tabbed, "vtt")).contains("<font\tcolor=\"red\">Hi</font> <v\tAnn>yo</v>"))
+        XCTAssertEqual(try DocumentText.read(convert(tabbed, "txt")), "Hi yo\n")
+        let voices = try file("Voices.vtt", "WEBVTT\n\n00:01.000 --> 00:02.000\n<v\tAnn>Tom</v> <V Bob>Al</V> <c.red>x</c>\n")
+        XCTAssertTrue(try DocumentText.read(convert(voices, "srt")).contains("Tom Al x"))
+        let srtLike = try file("SrtLike.srt", "1\n00:00:01,000 --> 00:00:02,000\nx <c + 1 and y > 3\n<v Ann\nnext line> ok\n")
+        XCTAssertTrue(try DocumentText.read(convert(srtLike, "srt")).contains("x <c + 1 and y > 3\n<v Ann\nnext line> ok"))
+        let tagged = try file("Tags.vtt", "WEBVTT\n\n00:01.000 --> 00:02.000\nTom &amp; Jerry &lt;3 <c.red>hi</c> <00:01.500>late\n")
+        XCTAssertTrue(try DocumentText.read(convert(tagged, "vtt")).contains("Tom &amp; Jerry &lt;3 <c.red>hi</c> <00:01.500>late"))
+    }
+
     func testSubtitleRoundTripKeepsTimingUnicodeAndCueText() throws {
         let input = try file("Captions.srt", "1\n00:00:01,250 --> 00:00:03,875\n<b>Merhaba Şişli</b>\nSecond line\n\n2\n01:02:03,004 --> 01:02:04,999\nA &amp; B\n")
         let vtt = try convert(input, "vtt")

@@ -85,15 +85,32 @@ enum SubtitleCodec {
             .replacingOccurrences(of: "-->", with: "--&gt;")
     }
     private static func srtText(_ text: String) -> String {
-        let withoutTags = text.replacingOccurrences(of: #"</?(?:c(?:\.[^ >]*)?|v|lang|ruby|rt)(?:\s+[^>]*)?>|<\d{2}:\d{2}[^>]*>"#, with: "", options: .regularExpression)
+        let withoutTags = text.replacingOccurrences(of: #"(?i)<(?:/?(?:(?:c|ruby|rt)(?:\.[^<>\s]*)?|(?:v|lang)(?:\.[^<>\s]*)?(?:[ \t\f][^<>\n]*)?)>|\d{2,}:\d{2}(?::\d{2})?\.\d{3}>)"#, with: "", options: .regularExpression)
         // WebVTT preserves no-break spaces and Unicode direction marks.
         let webVTT = withoutTags.replacingOccurrences(of: "&nbsp;", with: "\u{00A0}")
             .replacingOccurrences(of: "&lrm;", with: "\u{200E}")
             .replacingOccurrences(of: "&rlm;", with: "\u{200F}")
         return DocumentText.decodeEntities(webVTT, html: true)
     }
+    // Only real cue tags are markup: b/i/u/c/ruby/rt take classes only, v/lang take an annotation, font takes
+    // attributes. "5 < 6 and 7 > 3" and "x <b + 1 and y > 3" are text and must survive export.
+    private static let cueTag = #"/?(?:(?:b|i|u|c|ruby|rt)(?:\.[^<>\s]*)?|(?:v|lang)(?:\.[^<>\s]*)?(?:[ \t\f][^<>\n]*)?|font(?:[ \t\f][^<>\n]*)?)>|\d{2,}:\d{2}(?::\d{2})?\.\d{3}>"#
+    private static func vttText(_ text: String) -> String {
+        // WebVTT reads a bare "<" as the start of a tag and drops the rest of the line, so only a complete
+        // known tag or timestamp keeps its "<". WebVTT tag names are case-sensitive, so <I> from SRT becomes <i>.
+        let ampersands = text.replacingOccurrences(of: #"&(?!(?:[A-Za-z][A-Za-z0-9]*|#\d+|#[xX][0-9A-Fa-f]+);)"#, with: "&amp;", options: .regularExpression)
+        let escaped = ampersands.replacingOccurrences(of: "(?i)<(?!" + cueTag + ")", with: "&lt;", options: .regularExpression)
+        let names = try! NSRegularExpression(pattern: #"<(/?)(b|i|u|c|v|lang|ruby|rt|font)(?=[ \t\f.>])"#, options: .caseInsensitive)
+        var result = escaped
+        for match in names.matches(in: result, range: NSRange(result.startIndex..., in: result)).reversed() {
+            let range = Range(match.range, in: result)!
+            result.replaceSubrange(range, with: result[range].lowercased())
+        }
+        return result
+    }
     private static func plainText(_ text: String) -> String {
-        let withoutTags = text.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+        // Only real cue tags are markup. "5 < 6 and 7 > 3" is text and must survive export.
+        let withoutTags = text.replacingOccurrences(of: "(?i)<(?:" + cueTag + ")", with: "", options: .regularExpression)
         // Direction marks keep right-to-left lines readable in the exported text too.
         return DocumentText.decodeEntities(withoutTags.replacingOccurrences(of: "&lrm;", with: "\u{200E}").replacingOccurrences(of: "&rlm;", with: "\u{200F}"), html: true)
     }
