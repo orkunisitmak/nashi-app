@@ -1,53 +1,66 @@
-<!-- Nashi palette from Sources/NashiApp/DesignSystem.swift (sRGB, light / dark), made neutral for Linux:
-     graphite instead of green in dark, warm grey instead of sage in light. Gold and the light canvas are unchanged. -->
+<!-- Nashi on Linux: translucent black (dark) or white (light) glass with gold as the only accent. No green anywhere
+     but the brand mark's leaf. Surfaces, borders, chips and text are white (dark) or black (light) at an opacity,
+     so they read over the translucent canvas and whatever shows through it. -->
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <ResourceDictionary.ThemeDictionaries>
     <ResourceDictionary x:Key="Light">
-      <SolidColorBrush x:Key="NashiCanvas" Color="#F9F6ED" />
-      <SolidColorBrush x:Key="NashiSurface" Color="#FFFDF7" />
-      <SolidColorBrush x:Key="NashiInset" Color="#F1EDE0" />
-      <SolidColorBrush x:Key="NashiForest" Color="#3D3A35" />
-      <SolidColorBrush x:Key="NashiSand" Color="#F6E7BE" />
-      <SolidColorBrush x:Key="NashiSage" Color="#EAE6DD" />
+      <!-- The canvas: white at 80 % over a blurred desktop; 90 % where the desktop shows through unblurred;
+           opaque where the window can't be translucent at all (Translucency). -->
+      <SolidColorBrush x:Key="NashiCanvas" Color="#CCFFFFFF" />
+      <SolidColorBrush x:Key="NashiCanvasClear" Color="#E6FFFFFF" />
+      <SolidColorBrush x:Key="NashiCanvasOpaque" Color="#F7F7F7" />
+      <SolidColorBrush x:Key="NashiSurface" Color="#0B000000" />
+      <SolidColorBrush x:Key="NashiInset" Color="#12000000" />
+      <SolidColorBrush x:Key="NashiBorder" Color="#14000000" />
+      <SolidColorBrush x:Key="NashiChip" Color="#0D000000" />
+      <SolidColorBrush x:Key="NashiChipHover" Color="#17000000" />
+      <!-- A sheet of paper: the garden's cards and the wheel's file sheets, solid enough to overlap. -->
+      <SolidColorBrush x:Key="NashiSheet" Color="#F2FFFFFF" />
+      <SolidColorBrush x:Key="NashiSand" Color="#33E3B859" />
       <SolidColorBrush x:Key="NashiGoldInk" Color="#704F17" />
-      <SolidColorBrush x:Key="NashiBorder" Color="#13000000" />
-      <SolidColorBrush x:Key="NashiText" Color="#D9000000" />
+      <SolidColorBrush x:Key="NashiText" Color="#000000" />
       <SolidColorBrush x:Key="NashiTextSecondary" Color="#8C000000" />
-      <SolidColorBrush x:Key="NashiTextTertiary" Color="#47000000" />
-      <SolidColorBrush x:Key="NashiHover" Color="#09000000" />
-      <SolidColorBrush x:Key="NashiForestTint" Color="#173D3A35" />
-      <SolidColorBrush x:Key="NashiSageChip" Color="#A6E6E1D6" />
+      <SolidColorBrush x:Key="NashiTextTertiary" Color="#59000000" />
+      <SolidColorBrush x:Key="NashiHover" Color="#0A000000" />
+      <!-- The wheel: white glass petals and disc with hairlines, black labels. -->
+      <SolidColorBrush x:Key="NashiWheelPetal" Color="#C7FFFFFF" />
+      <SolidColorBrush x:Key="NashiWheelDisc" Color="#C7FFFFFF" />
+      <SolidColorBrush x:Key="NashiWheelBackdrop" Color="#66FFFFFF" />
+      <SolidColorBrush x:Key="NashiWheelLabel" Color="#000000" />
+      <Color x:Key="NashiWheelLine">#1F000000</Color>
+      <Color x:Key="NashiWheelGlow">#1A000000</Color>
     </ResourceDictionary>
     <ResourceDictionary x:Key="Dark">
-      <SolidColorBrush x:Key="NashiCanvas" Color="#141414" />
-      <SolidColorBrush x:Key="NashiSurface" Color="#1E1E1E" />
-      <SolidColorBrush x:Key="NashiInset" Color="#191919" />
-      <SolidColorBrush x:Key="NashiForest" Color="#D6D6D6" />
-      <SolidColorBrush x:Key="NashiSand" Color="#3C3421" />
-      <SolidColorBrush x:Key="NashiSage" Color="#2A2A2A" />
+      <SolidColorBrush x:Key="NashiCanvas" Color="#C7000000" />
+      <SolidColorBrush x:Key="NashiCanvasClear" Color="#E0000000" />
+      <SolidColorBrush x:Key="NashiCanvasOpaque" Color="#121212" />
+      <SolidColorBrush x:Key="NashiSurface" Color="#12FFFFFF" />
+      <SolidColorBrush x:Key="NashiInset" Color="#1AFFFFFF" />
+      <SolidColorBrush x:Key="NashiBorder" Color="#1AFFFFFF" />
+      <SolidColorBrush x:Key="NashiChip" Color="#14FFFFFF" />
+      <SolidColorBrush x:Key="NashiChipHover" Color="#1FFFFFFF" />
+      <SolidColorBrush x:Key="NashiSheet" Color="#F2242424" />
+      <SolidColorBrush x:Key="NashiSand" Color="#26E3B859" />
       <SolidColorBrush x:Key="NashiGoldInk" Color="#E8C475" />
-      <SolidColorBrush x:Key="NashiBorder" Color="#14FFFFFF" />
-      <SolidColorBrush x:Key="NashiText" Color="#D9FFFFFF" />
-      <SolidColorBrush x:Key="NashiTextSecondary" Color="#8CFFFFFF" />
-      <SolidColorBrush x:Key="NashiTextTertiary" Color="#47FFFFFF" />
-      <SolidColorBrush x:Key="NashiHover" Color="#09FFFFFF" />
-      <SolidColorBrush x:Key="NashiForestTint" Color="#14FFFFFF" />
-      <SolidColorBrush x:Key="NashiSageChip" Color="#2A2A2A" />
+      <SolidColorBrush x:Key="NashiText" Color="#FFFFFF" />
+      <SolidColorBrush x:Key="NashiTextSecondary" Color="#99FFFFFF" />
+      <SolidColorBrush x:Key="NashiTextTertiary" Color="#61FFFFFF" />
+      <SolidColorBrush x:Key="NashiHover" Color="#0FFFFFFF" />
+      <!-- The wheel: black glass petals and disc with hairlines, white labels. -->
+      <SolidColorBrush x:Key="NashiWheelPetal" Color="#BF000000" />
+      <SolidColorBrush x:Key="NashiWheelDisc" Color="#BF000000" />
+      <SolidColorBrush x:Key="NashiWheelBackdrop" Color="#59000000" />
+      <SolidColorBrush x:Key="NashiWheelLabel" Color="#FFFFFF" />
+      <Color x:Key="NashiWheelLine">#29FFFFFF</Color>
+      <Color x:Key="NashiWheelGlow">#38FFFFFF</Color>
     </ResourceDictionary>
   </ResourceDictionary.ThemeDictionaries>
-  <!-- NashiArtwork.gold, NashiArtwork.ink, buttonInk and goldEnd are the same in both appearances. -->
+  <!-- Gold is the one accent: the selected petal, the primary button, the START HERE pill. -->
   <SolidColorBrush x:Key="NashiGold" Color="#E3B859" />
-  <!-- The wheel is charcoal in both appearances, with a gold selected petal. -->
-  <SolidColorBrush x:Key="NashiWheelPetal" Color="#F22B2B2B" />
-  <SolidColorBrush x:Key="NashiWheelLabel" Color="#F5F5F5" />
-  <SolidColorBrush x:Key="NashiWheelDisc" Color="#1F1F1F" />
-  <SolidColorBrush x:Key="NashiWheelBackdrop" Color="#EB1F1F1F" />
-  <Color x:Key="NashiWheelLine">#1FFFFFFF</Color>
-  <Color x:Key="NashiWheelGlow">#38FFFFFF</Color>
-  <SolidColorBrush x:Key="NashiGoldTint" Color="#17E3B859" />
-  <SolidColorBrush x:Key="NashiInk" Color="#334024" />
-  <SolidColorBrush x:Key="NashiButtonInk" Color="#2B361C" />
+  <SolidColorBrush x:Key="NashiGoldTint" Color="#1FE3B859" />
+  <!-- Neutral dark ink on gold. -->
+  <SolidColorBrush x:Key="NashiButtonInk" Color="#2A2620" />
   <LinearGradientBrush x:Key="NashiPrimaryFill" StartPoint="0%,50%" EndPoint="100%,50%">
     <GradientStop Offset="0" Color="#E3B859" />
     <GradientStop Offset="1" Color="#F5D17D" />

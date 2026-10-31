@@ -7,16 +7,15 @@
         SystemDecorations="None" ShowInTaskbar="False" ShowActivated="False" Topmost="True"
         WindowStartupLocation="Manual"
         Background="Transparent" TransparencyLevelHint="Transparent"
-        TransparencyBackgroundFallback="{DynamicResource NashiCanvas}">
-  <!-- Sources/NashiApp/SuccessToast.swift: sage at 60% over the canvas, radius 22, mark + title + detail + action. -->
-  <Border x:Name="Card" Classes="card" Background="{DynamicResource NashiCanvas}">
+        TransparencyBackgroundFallback="{DynamicResource NashiCanvasOpaque}">
+  <!-- Sources/NashiApp/SuccessToast.swift's layout (radius 22, mark + title + detail + action) on translucent glass. -->
+  <Border x:Name="Card" Classes="card" Background="{DynamicResource NashiCanvasClear}">
     <Border.Transitions>
       <Transitions>
         <DoubleTransition Property="Opacity" Duration="0:0:0.28" Easing="CubicEaseOut" />
       </Transitions>
     </Border.Transitions>
     <Panel>
-      <Border Background="{DynamicResource NashiSage}" Opacity="0.6" CornerRadius="{StaticResource NashiCardRadius}" />
       <Grid ColumnDefinitions="Auto,*,Auto" Margin="18,0">
         <Image x:Name="MarkImage" Width="44" Height="44" VerticalAlignment="Center" />
         <StackPanel Grid.Column="1" Margin="13,0" Spacing="5" VerticalAlignment="Center">

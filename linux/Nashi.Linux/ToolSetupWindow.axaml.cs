@@ -43,6 +43,7 @@ public sealed partial class ToolSetupWindow : Window
     public ToolSetupWindow(Toolchain tools, Func<IProgress<OperationProgress>, CancellationToken, Task>? install = null)
     {
         InitializeComponent();
+        Desktop.Translucent(this);
         this.tools = tools;
         this.install = install ?? ((progress, token) => tools.InstallAsync(progress, token));
         Title = L10n.T(Copy.Heading);

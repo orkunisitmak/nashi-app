@@ -236,15 +236,34 @@ void HomeChecks()
     Check(texts.Contains("Your files. Their next form."), "Home shows the hero title");
     Check(window.GetVisualDescendants().OfType<Button>().Any(b => b.GetVisualDescendants().OfType<TextBlock>().Any(t => t.Text == "Choose files")), "Home shows Choose files");
     var canvas = (window.Background as ISolidColorBrush)?.Color;
-    Check(canvas is { } c && Near(c.R, 0xF9) && Near(c.G, 0xF6) && Near(c.B, 0xED), "Home background is light canvas #F9F6ED");
+    var level = window.ActualTransparencyLevel;
+    Check(canvas is { } c && c.A == 0xCC && c.R == 0xFF && c.G == 0xFF && c.B == 0xFF && level != WindowTransparencyLevel.Transparent || canvas is { A: 0xE6, R: 0xFF } && level == WindowTransparencyLevel.Transparent, "Home background is translucent white: 80 % over blur, 90 % when nothing blurs it (" + level + ")");
+    Color Light(string key) => window.TryFindResource(key, ThemeVariant.Light, out var v) && v is ISolidColorBrush brush ? brush.Color : default;
+    bool Black(Color c, double from, double to) => c.R == 0 && c.G == 0 && c.B == 0 && c.A >= from * 255 - 1 && c.A <= to * 255 + 1;
+    Check(Black(Light("NashiSurface"), 0.04, 0.05) && Black(Light("NashiBorder"), 0.08, 0.08) && Light("NashiText") == Colors.Black && Black(Light("NashiTextSecondary"), 0.55, 0.55) && Black(Light("NashiChip"), 0.05, 0.05),
+        "Light cards are black at 4–5 %, borders black at 8 %, text black, secondary text black at 55 %, chips black at 5 %");
+    Check(Light("NashiWheelPetal") is { R: 255, G: 255, B: 255, A: >= 0xB3 and <= 0xCC } && Light("NashiWheelDisc") == Light("NashiWheelPetal") && Light("NashiWheelLabel") == Colors.Black, "Light wheel petals and disc are white glass at 70–80 % with black labels");
+    Check(window.TransparencyLevelHint.SequenceEqual([WindowTransparencyLevel.AcrylicBlur, WindowTransparencyLevel.Blur, WindowTransparencyLevel.Transparent]), "Home asks for acrylic blur, then blur, then plain transparency");
+    Check(window.TransparencyBackgroundFallback is ISolidColorBrush { Color.A: 255 }, "Without any transparency Home falls back to an opaque canvas");
     Check(frame is not null, "Home renders a frame");
+    // The frame is see-through where only the canvas is (a corner of the window): the desktop would show there.
+    var corner = Pixel(frame!, 4, 770);
+    Check(corner.A is > 0xC0 and < 0xF0 && corner.R > 0xF0, "Home's rendered canvas is translucent white (alpha " + corner.A + ")");
+    window.Classes.Set("clear", true);
+    Dispatcher.UIThread.RunJobs();
+    Check(window.Background is ISolidColorBrush { Color: { A: 0xE6, R: 0xFF } }, "The unblurred canvas is denser white (90 %)");
+    window.Classes.Set("clear", level == WindowTransparencyLevel.Transparent);
 
-    var smoke = Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");
-    if (!string.IsNullOrEmpty(smoke) && frame is not null)
-    {
-        Directory.CreateDirectory(smoke);
-        frame.Save(Path.Combine(smoke, "home-light.png"));
-    }
+    // Nothing green is left in the Linux UI: no forest or sage resources, no green colour in any view or the palette.
+    var ui = Path.Combine(RepoRoot(), "linux", "Nashi.Linux");
+    var sources = Directory.EnumerateFiles(ui, "*.axaml", SearchOption.AllDirectories).Concat(Directory.EnumerateFiles(ui, "*.cs"))
+        .Where(f => !f.Contains("/bin/") && !f.Contains("/obj/")).ToList();
+    var named = sources.Where(f => System.Text.RegularExpressions.Regex.IsMatch(File.ReadAllText(f), "Nashi(Forest|Sage)")).Select(Path.GetFileName).ToList();
+    var greens = sources.SelectMany(f => System.Text.RegularExpressions.Regex.Matches(File.ReadAllText(f), "#(?:[0-9A-Fa-f]{2})?([0-9A-Fa-f]{6})\\b").Select(m => (File: Path.GetFileName(f), Hex: m.Value, Rgb: Convert.ToInt32(m.Groups[1].Value, 16))))
+        .Where(x => ((x.Rgb >> 8) & 0xFF) > ((x.Rgb >> 16) & 0xFF) + 10 && ((x.Rgb >> 8) & 0xFF) > (x.Rgb & 0xFF) + 10).Select(x => x.File + " " + x.Hex).ToList();
+    Check(named.Count == 0 && greens.Count == 0 && sources.Count > 10, "No forest, sage or other green in the Linux UI: " + string.Join(", ", named.Concat(greens)));
+
+    Smoke(frame, "home-light");
 
     var picked = Path.Combine(temp.FullName, "chip.png");
     File.WriteAllText(picked, "x");
@@ -290,7 +309,6 @@ async Task ToolSetupChecks(string root)
     AppPaths.OfficeSearchPath = snap;
     Check(AppPaths.Office() is null, "A Snap LibreOffice is skipped (its sandbox has a private /tmp)");
 
-    var smoke = Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");
     List<string> Texts(Window w) => w.GetVisualDescendants().OfType<TextBlock>().Where(t => t.IsEffectivelyVisible).Select(t => t.Text ?? "").ToList();
     foreach (var (toolchain, label) in new[] { (missing, "missing"), (present, "ready") })
     {
@@ -305,11 +323,7 @@ async Task ToolSetupChecks(string root)
         else Check(texts.Contains("Ready") && texts.Contains("Installed") && !hint && texts.Contains("Tools ready") && action is null, "Setup window shows Ready, LibreOffice Installed and no download when tools are present");
         var frame = window.CaptureRenderedFrame();
         Check(frame is not null, "Setup window renders (" + label + ")");
-        if (!string.IsNullOrEmpty(smoke) && frame is not null)
-        {
-            Directory.CreateDirectory(smoke);
-            frame.Save(Path.Combine(smoke, $"tool-setup-{label}-light.png"));
-        }
+        Smoke(frame, $"tool-setup-{label}-light");
         window.Close();
     }
 
@@ -386,12 +400,7 @@ void WheelChecks(string root)
     Check(window.Wheel.HighlightedIndex == 0, "Right wraps around to the first item");
     var frame = window.CaptureRenderedFrame();
     Check(frame is not null, "Wheel renders a frame");
-    var smoke = Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");
-    if (!string.IsNullOrEmpty(smoke) && frame is not null)
-    {
-        Directory.CreateDirectory(smoke);
-        frame.Save(Path.Combine(smoke, "wheel-light.png"));
-    }
+    Smoke(frame, "wheel-light");
     window.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
     Dispatcher.UIThread.RunJobs();
     Check(chosen == items[0] && !window.IsVisible, "Enter chooses the highlighted item and closes the wheel");
@@ -478,7 +487,7 @@ void WheelChecks(string root)
     Dispatcher.UIThread.RunJobs();
     Check(toast.GetVisualDescendants().OfType<TextBlock>().Any(t => t.Text == "Saving images…") && toast.Topmost, "Progress toast shows the step and stays on top");
     var toastFrame = toast.CaptureRenderedFrame();
-    if (!string.IsNullOrEmpty(smoke) && toastFrame is not null) toastFrame.Save(Path.Combine(smoke, "toast-progress-light.png"));
+    Smoke(toastFrame, "toast-progress-light");
     toast.Close();
 
     // Ctrl+V reads files through the shared clipboard reader, including the uri-list text form.
@@ -580,8 +589,6 @@ async Task RunnerChecks(string root)
 
 static bool Throws<T>(Action a) where T : Exception { try { a(); return false; } catch (T) { return true; } }
 
-static bool Near(byte actual, byte expected) => Math.Abs(actual - expected) <= 1;
-
 void LocalizationChecks(string root)
 {
     Check(L10n.Language == "en", "Checks run in English");
@@ -625,8 +632,7 @@ void LocalizationChecks(string root)
         var texts = window.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
         Check(!texts.Contains("Your files. Their next form.") && texts.Contains(AppLocalization.Text("Your files. Their next form.", "tr")), "Turkish Home has no English hero title");
         Check(texts.Contains("Dosya seç") && texts.Contains(AppLocalization.Text("START HERE", "tr")), "Turkish Home shows Dosya seç and the Turkish eyebrow");
-        var smoke = Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");
-        if (!string.IsNullOrEmpty(smoke) && frame is not null) { Directory.CreateDirectory(smoke); frame.Save(Path.Combine(smoke, "home-tr.png")); }
+        Smoke(frame, "home-tr");
 
         // Turkish wheel: tool names translated, petals upper-cased with İ.
         var wheel = new WheelWindow(L10n.T("Tools"), [new("compress", L10n.T(FeatureCatalog.ToolNames["compress"])), new("convert", L10n.T("Convert"))]);
@@ -648,44 +654,43 @@ void AppearanceChecks(string root)
     Application.Current!.RequestedThemeVariant = ThemeVariant.Dark;
     try
     {
-        var smoke = Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");
-        void Save(Avalonia.Media.Imaging.WriteableBitmap? frame, string name)
-        {
-            if (string.IsNullOrEmpty(smoke) || frame is null) return;
-            Directory.CreateDirectory(smoke);
-            frame.Save(Path.Combine(smoke, name));
-        }
+        void Save(Avalonia.Media.Imaging.WriteableBitmap? frame, string name) => Smoke(frame, Path.GetFileNameWithoutExtension(name));
         Color Resource(Window w, string key) => w.TryFindResource(key, w.ActualThemeVariant, out var v) && v is ISolidColorBrush b ? b.Color : default;
-        bool IsDark(Color c) => c.A == 255 && c.R < 60 && c.G < 60 && c.B < 60;
+        // White at an opacity: dark mode's surfaces, borders, chips and text.
+        bool White(Color c, double from, double to) => c.R == 255 && c.G == 255 && c.B == 255 && c.A >= from * 255 - 1 && c.A <= to * 255 + 1;
 
         var home = new MainWindow { Width = 820, Height = 780 };
         home.Show();
         Dispatcher.UIThread.RunJobs();
         var frame = home.CaptureRenderedFrame();
         var canvas = (home.Background as ISolidColorBrush)?.Color;
-        Check(canvas is { } c && Near(c.R, 0x14) && Near(c.G, 0x14) && Near(c.B, 0x14), "Dark Home background is the graphite canvas #141414");
-        Check(home.Foreground is ISolidColorBrush { Color: { R: > 200 } }, "Dark Home text is light");
+        Check(canvas is { R: 0, G: 0, B: 0 } c && (c.A == 0xC7 || c.A == 0xE0), "Dark Home background is translucent black (78 %; 88 % when nothing blurs it)");
+        Check(home.Foreground is ISolidColorBrush { Color: { R: 255, G: 255, B: 255, A: 255 } }, "Dark Home text is pure white");
+        Check(White(Resource(home, "NashiSurface"), 0.06, 0.08) && White(Resource(home, "NashiBorder"), 0.1, 0.1) && White(Resource(home, "NashiTextSecondary"), 0.6, 0.6) && White(Resource(home, "NashiChip"), 0.08, 0.08),
+            "Dark cards are white at 6–8 %, borders white at 10 %, secondary text white at 60 %, chips white at 8 %");
+        var corner = Pixel(frame!, 4, 770);
+        Check(corner.A is > 0xB0 and < 0xE8 && corner.R < 0x10, "Dark Home's rendered canvas is translucent black (alpha " + corner.A + ")");
         Save(frame, "home-dark.png");
         home.Close();
 
         var setup = new ToolSetupWindow(new Toolchain(Directory.CreateDirectory(Path.Combine(root, "dark-tools")).FullName, ""));
         setup.Show();
         Dispatcher.UIThread.RunJobs();
-        Check(IsDark(Resource(setup, "NashiCanvas")) && IsDark(Resource(setup, "NashiSurface")), "Dark setup window resolves dark canvas and surface");
+        Check(Resource(setup, "NashiCanvas") is { R: 0, A: 0xC7 } && White(Resource(setup, "NashiSurface"), 0.06, 0.08) && setup.TransparencyLevelHint.Count == 3, "Dark setup window is translucent black glass with white-tint cards");
         Save(setup.CaptureRenderedFrame(), "tool-setup-dark.png");
         setup.Close();
 
         var toast = new ProgressToast("Convert to JPG", null);
         toast.Show();
         Dispatcher.UIThread.RunJobs();
-        Check(IsDark(Resource(toast, "NashiSurface")) && toast.FindControl<Border>("Card")?.Background is ISolidColorBrush { Color: { R: < 60 } }, "Dark toast card uses the dark surface");
+        Check(toast.FindControl<Border>("Card")?.Background is ISolidColorBrush { Color: { R: 0, G: 0, B: 0, A: > 0xC0 and < 0xFF } }, "Dark toast card is translucent black");
         Save(toast.CaptureRenderedFrame(), "toast-dark.png");
         toast.Close();
 
         var wheel = new WheelWindow("Convert", [new("convert:jpg", "JPG"), new("convert:png", "PNG")]);
         wheel.Show();
         Dispatcher.UIThread.RunJobs();
-        Check(IsDark(Resource(wheel, "NashiSurface")) && Resource(wheel, "NashiText").R > 200, "Dark wheel resolves dark surface and light text");
+        Check(Resource(wheel, "NashiWheelPetal") is { R: 0, A: >= 0xB3 and <= 0xCC } && Resource(wheel, "NashiWheelDisc") == Resource(wheel, "NashiWheelPetal") && Resource(wheel, "NashiWheelLabel") == Colors.White, "Dark wheel petals and disc are black glass at 70–80 % with white labels");
         Save(wheel.CaptureRenderedFrame(), "wheel-dark.png");
         wheel.Close();
     }
@@ -902,7 +907,6 @@ void IntegrationChecks(string root)
 async Task BackgroundChecks(string root)
 {
     var app = (App)Application.Current!;
-    var smoke = Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");
     string? Title() => SuccessToast.Current?.FindControl<TextBlock>("TitleText")?.Text;
 
     // The pointer-mode wheel: missing and folder paths are filtered; nothing left says so in a card.
@@ -983,7 +987,7 @@ async Task BackgroundChecks(string root)
         Check(card.Width == 560 && card.Height == 88, "Success card is 560×88");
         var frame = card.CaptureRenderedFrame();
         Check(frame is not null, $"Success card renders ({name})");
-        if (!string.IsNullOrEmpty(smoke) && frame is not null) { Directory.CreateDirectory(smoke); frame.Save(Path.Combine(smoke, $"toast-{name}.png")); }
+        Smoke(frame, $"toast-{name}");
         card.Close();
     }
     string[] three = [Path.Combine(root, "a.jpg"), Path.Combine(root, "b.jpg"), Path.Combine(root, "c.jpg")];
@@ -1010,7 +1014,7 @@ async Task BackgroundChecks(string root)
     Dispatcher.UIThread.RunJobs();
     Check(!error.GetVisualDescendants().OfType<Button>().Any(b => b.IsEffectivelyVisible) && SuccessToast.Current == error, "An error card has no action and replaces the current card");
     var errorFrame = error.CaptureRenderedFrame();
-    if (!string.IsNullOrEmpty(smoke) && errorFrame is not null) errorFrame.Save(Path.Combine(smoke, "toast-error-light.png"));
+    Smoke(errorFrame, "toast-error-light");
     error.Close();
     Check(SuccessToast.Visible == TimeSpan.FromSeconds(3) && SuccessToast.ErrorVisible == TimeSpan.FromSeconds(6) && SuccessToast.Fade == TimeSpan.FromSeconds(0.28), "Cards stay 3 s (errors 6 s) and fade over 0.28 s");
 }
@@ -1316,7 +1320,6 @@ async Task ActionChecks(string root)
 
 void WheelRenders(string root)
 {
-    var smoke = Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");
     var work = Directory.CreateDirectory(Path.Combine(root, "renders")).FullName;
     var jpg = Path.Combine(work, "orchard.jpg");
     var png = Path.Combine(work, "woodboard.png");
@@ -1344,7 +1347,7 @@ void WheelRenders(string root)
                 w.CaptureRenderedFrame(); // the compositor shows a change one frame later
                 var frame = w.CaptureRenderedFrame();
                 Check(frame is not null && w.Width == Wheel.Size + 2 * WheelWindow.CardColumn, $"{file} renders with file cards");
-                if (!string.IsNullOrEmpty(smoke) && frame is not null) { Directory.CreateDirectory(smoke); frame.Save(Path.Combine(smoke, file)); }
+                Smoke(frame, Path.GetFileNameWithoutExtension(file));
                 w.Close();
             }
             Render(home.Flow.ShowTools, [jpg, png], $"wheel-tools-jpg-{name}.png", 1);
@@ -1364,14 +1367,65 @@ void WheelRenders(string root)
                 full.CaptureRenderedFrame();
                 var frame = full.CaptureRenderedFrame();
                 Check(frame is not null, $"The eight-petal {language} tools wheel renders");
-                if (!string.IsNullOrEmpty(smoke) && frame is not null) frame.Save(Path.Combine(smoke, $"wheel-tools-eight-{language}-{name}.png"));
+                Smoke(frame, $"wheel-tools-eight-{language}-{name}");
                 full.Close();
+                if (language == "tr") Render(home.Flow.ShowActions, [jpg, png], $"wheel-actions-tr-{name}.png", 2);
             }
             L10n.Language = "en";
             home.Close();
         }
         finally { Application.Current!.RequestedThemeVariant = ThemeVariant.Light; }
     }
+}
+
+// One pixel of a rendered frame (premultiplied BGRA from Skia, returned unpremultiplied).
+static Color Pixel(Avalonia.Media.Imaging.WriteableBitmap frame, int x, int y)
+{
+    using var buffer = frame.Lock();
+    var bytes = new byte[4];
+    System.Runtime.InteropServices.Marshal.Copy(buffer.Address + y * buffer.RowBytes + x * 4, bytes, 0, 4);
+    var a = bytes[3];
+    byte Un(byte v) => a == 0 ? (byte)0 : (byte)Math.Min(255, Math.Round(v * 255.0 / a));
+    return buffer.Format == Avalonia.Platform.PixelFormat.Rgba8888 ? Color.FromArgb(a, Un(bytes[0]), Un(bytes[1]), Un(bytes[2])) : Color.FromArgb(a, Un(bytes[2]), Un(bytes[1]), Un(bytes[0]));
+}
+
+// A headless render saved to NASHI_SMOKE_DIRECTORY as is (transparent where the window is) and over a sample photo,
+// which shows the translucency a real desktop would see through the window.
+static void Smoke(Avalonia.Media.Imaging.WriteableBitmap? frame, string name)
+{
+    var smoke = Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");
+    if (string.IsNullOrEmpty(smoke) || frame is null) return;
+    Directory.CreateDirectory(smoke);
+    // WriteableBitmap.Save drops the alpha channel, so the PNG is written from the unpremultiplied pixels.
+    var size = frame.PixelSize;
+    var rgba = new byte[size.Width * size.Height * 4];
+    for (var y = 0; y < size.Height; y++)
+        for (var x = 0; x < size.Width; x++)
+        {
+            var c = Pixel(frame, x, y);
+            var at = (y * size.Width + x) * 4;
+            (rgba[at], rgba[at + 1], rgba[at + 2], rgba[at + 3]) = (c.R, c.G, c.B, c.A);
+        }
+    using var window = new MagickImage();
+    window.ReadPixels(rgba, new PixelReadSettings((uint)size.Width, (uint)size.Height, StorageType.Char, PixelMapping.RGBA));
+    window.Write(Path.Combine(smoke, name + ".png"), MagickFormat.Png32);
+    using var photo = SamplePhoto(size.Width, size.Height);
+    photo.Composite(window, CompositeOperator.Over);
+    photo.Write(Path.Combine(smoke, name + "-over-photo.png"));
+}
+
+// A busy, colourful "desktop photo": a sky-to-field gradient with sun, hills and stripes of text-like bars.
+static MagickImage SamplePhoto(int width, int height)
+{
+    var photo = new MagickImage("gradient:#3d7fd6-#f2a65a", (uint)width, (uint)height);
+    new ImageMagick.Drawing.Drawables()
+        .FillColor(new MagickColor("#ffe58a")).Circle(width * 0.78, height * 0.22, width * 0.78 + height * 0.12, height * 0.22)
+        .FillColor(new MagickColor("#2e5e3a")).Ellipse(width * 0.25, height * 1.05, width * 0.45, height * 0.35, 0, 360)
+        .FillColor(new MagickColor("#6b3fa0")).Ellipse(width * 0.8, height * 1.1, width * 0.5, height * 0.4, 0, 360)
+        .FillColor(new MagickColor("#ffffff")).Rectangle(width * 0.05, height * 0.1, width * 0.4, height * 0.13)
+        .FillColor(new MagickColor("#101010")).Rectangle(width * 0.05, height * 0.17, width * 0.33, height * 0.2)
+        .Draw(photo);
+    return photo;
 }
 
 // Waits for a task whose continuations need the UI dispatcher (an await there would wait on itself).

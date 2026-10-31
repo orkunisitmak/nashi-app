@@ -7,8 +7,8 @@
         SystemDecorations="None" ShowInTaskbar="False" ShowActivated="False" Topmost="True"
         WindowStartupLocation="Manual"
         Background="Transparent" TransparencyLevelHint="Transparent"
-        TransparencyBackgroundFallback="{DynamicResource NashiCanvas}">
-  <Border x:Name="Card" Classes="card" Padding="22,18" Background="{DynamicResource NashiSurface}">
+        TransparencyBackgroundFallback="{DynamicResource NashiCanvasOpaque}">
+  <Border x:Name="Card" Classes="card" Padding="22,18" Background="{DynamicResource NashiCanvasClear}">
     <Grid ColumnDefinitions="*,Auto">
       <StackPanel Spacing="6" VerticalAlignment="Center">
         <TextBlock x:Name="TitleText" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" />

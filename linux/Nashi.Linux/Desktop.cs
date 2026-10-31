@@ -15,6 +15,17 @@ namespace Nashi.Linux;
 /// The desktop around Nashi: the X11 pointer, on-screen placement, and file paths on the clipboard.
 public static class Desktop
 {
+    /// The translucent window look: blur behind where the compositor offers it (KWin), else plain transparency (mutter
+    /// on X11 blurs nothing), where the denser "clear" canvas keeps text readable over a sharp desktop. Without a
+    /// compositor the window falls back to the opaque canvas (TransparencyBackgroundFallback).
+    public static void Translucent(Window window)
+    {
+        window.TransparencyLevelHint = [WindowTransparencyLevel.AcrylicBlur, WindowTransparencyLevel.Blur, WindowTransparencyLevel.Transparent];
+        void Update() => window.Classes.Set("clear", window.ActualTransparencyLevel == WindowTransparencyLevel.Transparent);
+        window.PropertyChanged += (_, e) => { if (e.Property == TopLevel.ActualTransparencyLevelProperty) Update(); };
+        Update();
+    }
+
     /// The global pointer position on X11; null on Wayland or without an X display.
     public static PixelPoint? Pointer()
     {

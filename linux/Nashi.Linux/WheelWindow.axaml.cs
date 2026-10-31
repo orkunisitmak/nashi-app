@@ -79,7 +79,7 @@ public sealed partial class WheelWindow : Window
             HorizontalAlignment = HorizontalAlignment.Center,
             Child = new TextBlock { Text = Path.GetFileName(path), FontSize = 11, MaxWidth = 113, TextTrimming = TextTrimming.CharacterEllipsis },
         };
-        name.Bind(Border.BackgroundProperty, this.GetResourceObservable("NashiSage"));
+        name.Bind(Border.BackgroundProperty, this.GetResourceObservable("NashiChip"));
         var card = new Border
         {
             Width = 126,
@@ -88,7 +88,7 @@ public sealed partial class WheelWindow : Window
             BorderThickness = new Thickness(1),
             Child = new StackPanel { Spacing = 9, Children = { holder, name } },
         };
-        card.Bind(Border.BackgroundProperty, this.GetResourceObservable("NashiSageChip"));
+        card.Bind(Border.BackgroundProperty, this.GetResourceObservable("NashiWheelPetal"));
         card.Bind(Border.BorderBrushProperty, this.GetResourceObservable("NashiBorder"));
         return card;
     }
@@ -114,7 +114,7 @@ public sealed partial class WheelWindow : Window
                 Children = { new Viewbox { Width = 26, Height = 26, Child = new Canvas { Width = 24, Height = 24, Children = { icon } } }, label },
             },
         };
-        sheet.Bind(Border.BackgroundProperty, this.GetResourceObservable("NashiSurface"));
+        sheet.Bind(Border.BackgroundProperty, this.GetResourceObservable("NashiSheet"));
         sheet.Bind(Border.BorderBrushProperty, this.GetResourceObservable("NashiBorder"));
         return sheet;
     }

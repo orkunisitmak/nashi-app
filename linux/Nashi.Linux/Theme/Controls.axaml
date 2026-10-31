@@ -18,9 +18,15 @@
     <StreamGeometry x:Key="IconPhoto">M1,3 H15 V13 H1 Z M3,11 L6.5,7 L9,9.5 L10.5,8 L13,11 Z M11,4.5 A1.3,1.3 0 1 1 11,7.1 A1.3,1.3 0 1 1 11,4.5 Z</StreamGeometry>
   </Styles.Resources>
 
+  <!-- Translucent glass (Desktop.Translucent): the canvas over a blurred desktop, denser when nothing blurs it,
+       opaque without a compositor. -->
   <Style Selector="Window">
     <Setter Property="Background" Value="{DynamicResource NashiCanvas}" />
+    <Setter Property="TransparencyBackgroundFallback" Value="{DynamicResource NashiCanvasOpaque}" />
     <Setter Property="Foreground" Value="{DynamicResource NashiText}" />
+  </Style>
+  <Style Selector="Window.clear">
+    <Setter Property="Background" Value="{DynamicResource NashiCanvasClear}" />
   </Style>
   <Style Selector="TextBlock.secondary">
     <Setter Property="Foreground" Value="{DynamicResource NashiTextSecondary}" />
@@ -119,24 +125,24 @@
     <Setter Property="Foreground" Value="{DynamicResource NashiText}" />
   </Style>
 
-  <!-- pill: forest by default, .gold for the eyebrow -->
+  <!-- pill: neutral glass by default, .gold for the eyebrow -->
   <Style Selector="Border.pill">
     <Setter Property="CornerRadius" Value="999" />
     <Setter Property="Padding" Value="9,5" />
-    <Setter Property="Background" Value="{DynamicResource NashiForestTint}" />
+    <Setter Property="Background" Value="{DynamicResource NashiChip}" />
     <Setter Property="HorizontalAlignment" Value="Left" />
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
   <Style Selector="Border.pill TextBlock">
     <Setter Property="FontSize" Value="10" />
     <Setter Property="FontWeight" Value="SemiBold" />
-    <Setter Property="Foreground" Value="{DynamicResource NashiForest}" />
+    <Setter Property="Foreground" Value="{DynamicResource NashiText}" />
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
   <Style Selector="Border.pill PathIcon">
     <Setter Property="Width" Value="9" />
     <Setter Property="Height" Value="9" />
-    <Setter Property="Foreground" Value="{DynamicResource NashiForest}" />
+    <Setter Property="Foreground" Value="{DynamicResource NashiText}" />
   </Style>
   <Style Selector="Border.pill.gold">
     <Setter Property="Background" Value="{DynamicResource NashiGoldTint}" />
@@ -148,10 +154,10 @@
     <Setter Property="Foreground" Value="{DynamicResource NashiGoldInk}" />
   </Style>
 
-  <!-- chip: the small sage Convert / Tools / Actions buttons -->
+  <!-- chip: the small glass Convert / Tools / Actions buttons -->
   <Style Selector="Button.chip">
-    <Setter Property="Background" Value="{DynamicResource NashiSageChip}" />
-    <Setter Property="Foreground" Value="{DynamicResource NashiForest}" />
+    <Setter Property="Background" Value="{DynamicResource NashiChip}" />
+    <Setter Property="Foreground" Value="{DynamicResource NashiText}" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="8" />
     <Setter Property="Padding" Value="9,6" />
@@ -160,11 +166,11 @@
     <Setter Property="Cursor" Value="Hand" />
   </Style>
   <Style Selector="Button.chip:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.chip:pressed /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="{DynamicResource NashiSage}" />
-    <Setter Property="Foreground" Value="{DynamicResource NashiForest}" />
+    <Setter Property="Background" Value="{DynamicResource NashiChipHover}" />
+    <Setter Property="Foreground" Value="{DynamicResource NashiText}" />
   </Style>
   <Style Selector="Button.chip PathIcon">
-    <Setter Property="Foreground" Value="{DynamicResource NashiForest}" />
+    <Setter Property="Foreground" Value="{DynamicResource NashiText}" />
     <Setter Property="Width" Value="10" />
     <Setter Property="Height" Value="10" />
   </Style>

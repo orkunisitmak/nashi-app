@@ -63,6 +63,7 @@ public sealed partial class MainWindow : Window
     public MainWindow(Toolchain tools)
     {
         InitializeComponent();
+        Desktop.Translucent(this);
         this.tools = tools;
         flow = new WheelFlow(tools, this, Notify, ShowToolSetupAsync);
         PickFiles = async () => LocalPaths(await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions { Title = L10n.T(Copy.PickerTitle), AllowMultiple = true })).ToList();

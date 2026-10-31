@@ -58,16 +58,16 @@
               <Canvas Grid.Column="1" Width="166" Height="150" IsHitTestVisible="False">
                 <Ellipse Canvas.Left="11" Canvas.Top="3" Width="144" Height="144" Fill="{DynamicResource NashiSand}" />
                 <Border Canvas.Left="10.5" Canvas.Top="35.5" Width="77" Height="103" CornerRadius="15" Padding="13"
-                        Background="{DynamicResource NashiSurface}" BorderBrush="{DynamicResource NashiBorder}" BorderThickness="1"
+                        Background="{DynamicResource NashiSheet}" BorderBrush="{DynamicResource NashiBorder}" BorderThickness="1"
                         BoxShadow="0 5 12 0 #12000000" RenderTransform="rotate(-16deg)">
                   <StackPanel Spacing="10">
-                    <PathIcon Data="{StaticResource IconDocument}" Width="22" Height="22" HorizontalAlignment="Left" Foreground="{DynamicResource NashiForest}" />
-                    <TextBlock Text="PDF" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource NashiForest}" />
-                    <Border Width="37" Height="4" CornerRadius="2" HorizontalAlignment="Left" Background="{DynamicResource NashiForest}" Opacity="0.18" />
+                    <PathIcon Data="{StaticResource IconDocument}" Width="22" Height="22" HorizontalAlignment="Left" Foreground="{DynamicResource NashiText}" />
+                    <TextBlock Text="PDF" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource NashiText}" />
+                    <Border Width="37" Height="4" CornerRadius="2" HorizontalAlignment="Left" Background="{DynamicResource NashiText}" Opacity="0.18" />
                   </StackPanel>
                 </Border>
                 <Border Canvas.Left="75.5" Canvas.Top="21.5" Width="77" Height="103" CornerRadius="15" Padding="13"
-                        Background="{DynamicResource NashiSurface}" BorderBrush="#1FE3B859" BorderThickness="1"
+                        Background="{DynamicResource NashiSheet}" BorderBrush="#1FE3B859" BorderThickness="1"
                         BoxShadow="0 5 12 0 #12000000" RenderTransform="rotate(7deg)">
                   <StackPanel Spacing="10">
                     <PathIcon Data="{StaticResource IconPhoto}" Width="22" Height="22" HorizontalAlignment="Left" Foreground="{DynamicResource NashiGold}" />
@@ -90,7 +90,7 @@
                   </ItemsControl.ItemsPanel>
                   <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="local:FileChip">
-                      <Border Background="{DynamicResource NashiCanvas}" CornerRadius="9" Padding="9,4,4,4">
+                      <Border Background="{DynamicResource NashiChip}" CornerRadius="9" Padding="9,4,4,4">
                         <StackPanel Orientation="Horizontal" Spacing="4">
                           <TextBlock Text="{Binding Name}" FontSize="10" FontWeight="Medium" MaxWidth="220" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                           <Button Classes="quiet" Padding="4" CornerRadius="6" Tag="{Binding Path}" Click="OnRemoveFile"

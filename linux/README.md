@@ -6,7 +6,7 @@ The [AppImage link](https://github.com/orkunisitmak/nashi-app/releases/latest/do
 
 ## What works in milestone 1
 
-- Home with the file garden, light and dark appearance, and English or Turkish.
+- Home with the file garden, in translucent black (dark) or white (light) glass with gold as the only accent, and English or Turkish. The desktop shows through blurred where the compositor blurs (KWin), through a denser canvas where it only blends (GNOME), and the window is opaque without a compositor.
 - File intake: **Choose files**, drag from your file manager, or **Ctrl+V** to paste copied files.
 - **Ctrl+Space** opens the conversion wheel for the selected files, with live progress. With nothing selected, it opens the file picker first. The **Actions** chip opens the actions wheel: Share (shows the files in your file manager), Copy, Move, Copy Path and Terminal. Float is not available yet.
 - The wheel looks and sounds like the macOS one: icons above upper-case labels, a gold highlight, a short opening animation (skipped when GNOME animations are off) and the selection sound: softer on every petal change (arrow keys, Tab or the pointer), full on a choice. It plays in-process through PulseAudio (`libpulse-simple`, which PipeWire also serves), else through `paplay`, `pw-play` or `aplay` when one is installed.

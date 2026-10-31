@@ -6,7 +6,7 @@
         Width="320" Height="320" CanResize="False"
         SystemDecorations="None" ShowInTaskbar="False" WindowStartupLocation="CenterOwner"
         Background="Transparent" TransparencyLevelHint="Transparent"
-        TransparencyBackgroundFallback="{DynamicResource NashiCanvas}">
+        TransparencyBackgroundFallback="{DynamicResource NashiCanvasOpaque}">
   <!-- Home's wheel has the selected files as cards on either side (macOS's in-app look); the pointer wheel is bare. -->
   <Grid x:Name="Root" ColumnDefinitions="*,320,*" RenderTransformOrigin="50%,50%">
     <ContentControl x:Name="LeftCard" HorizontalAlignment="Center" VerticalAlignment="Center" />
