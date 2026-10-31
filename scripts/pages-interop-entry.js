@@ -36,6 +36,9 @@ export function write(json) {
   const bodyStyle = document.stylesheet.style("Body") ?? document.stylesheet.style("Normal") ?? document.stylesheet.styles().find(style => style.type === 2022);
   const baseId = typeof bodyStyle?.id === "bigint" ? bodyStyle.id : undefined;
   let ordinal = 0;
+  // Clone every table from the seed's own table; by default the library would
+  // clone the first table in the document, i.e. our previous one with its merges.
+  const tableSource = document.tables().find(table => table.infoObject !== undefined)?.infoObject?.identifier;
   const appendParagraph = block => {
     check();
     const runs = block.runs ?? [{text: block.text ?? ""}];
@@ -74,7 +77,7 @@ export function write(json) {
     // table. The licensed seed's unused tables remain unanchored and empty.
     appendParagraph({runs: []});
     const pos = document.bodyText.length - 1;
-    const table = document.insertInlineTable(Math.max(0,pos), {withContent: false, name: `Table ${ordinal}`});
+    const table = document.insertInlineTable(Math.max(0,pos), {withContent: false, name: `Table ${ordinal}`, copyOf: tableSource});
     if (table.rowCount < rowCount) table.insertRows(table.rowCount, rowCount - table.rowCount);
     if (table.rowCount > rowCount) table.deleteRows(rowCount, table.rowCount - rowCount);
     if (table.columnCount < columnCount) table.insertColumns(table.columnCount, columnCount - table.columnCount);
