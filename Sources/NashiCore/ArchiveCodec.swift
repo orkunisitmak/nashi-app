@@ -37,6 +37,7 @@ enum ArchiveCodec {
         var links: [DeferredLink] = []
         var entries = 0
         var expandedBytes:Int64=0
+        var directoryDates: [(URL, Int64)] = []
         var buffer = [UInt8](repeating: 0, count: 128 * 1024)
         while true {
             try token.check()
@@ -75,6 +76,8 @@ enum ArchiveCodec {
             let kind = a.entryFiletype(entry) & 0o170000
             if kind == 0o040000 {
                 try fm.createDirectory(at: destination, withIntermediateDirectories: true)
+                let mtime = a.entryMtime(entry)
+                if mtime > 0 { directoryDates.append((destination, mtime)) }
                 continue
             }
             guard kind == 0o100000 || kind == 0 else {
@@ -141,6 +144,10 @@ enum ArchiveCodec {
             guard contains(link.destination.resolvingSymlinksInPath(), root: root) else {
                 throw NashiError.invalidInput("An archive link points outside the extraction folder.")
             }
+        }
+        // Directory dates go last: adding entries to a directory changes its date.
+        for (directory, mtime) in directoryDates {
+            try? fm.setAttributes([.modificationDate: Date(timeIntervalSince1970: TimeInterval(mtime))], ofItemAtPath: directory.path)
         }
     }
 
