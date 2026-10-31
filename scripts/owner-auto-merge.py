@@ -23,10 +23,12 @@ def eligible(pr, head):
 
 
 def checks_passed(checks, head):
-    passed = {c["name"] for c in checks
-              if c.get("head_sha") == head and c.get("app", {}).get("id") == ACTIONS_APP_ID
-              and c.get("status") == "completed" and c.get("conclusion") == "success"}
-    return REQUIRED_CHECKS <= passed
+    # Every Actions run of a required name on this head must succeed: another PR
+    # from the same commit must not stand in for a failed or pending run.
+    runs = [c for c in checks if c["name"] in REQUIRED_CHECKS and c.get("head_sha") == head
+            and c.get("app", {}).get("id") == ACTIONS_APP_ID]
+    return ({c["name"] for c in runs} == REQUIRED_CHECKS
+            and all(c.get("status") == "completed" and c.get("conclusion") == "success" for c in runs))
 
 
 class GitHub:
