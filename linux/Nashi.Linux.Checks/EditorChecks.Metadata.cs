@@ -22,8 +22,7 @@ static partial class EditorChecks
             flow.ShowTools([photo]);
             Dispatcher.UIThread.RunJobs();
             var wheel = flow.LastWheel!;
-            wheel.Wheel.HighlightedIndex = wheel.Wheel.Items.ToList().FindIndex(i => i.Id == "removeMetadata");
-            wheel.KeyPressQwerty(Avalonia.Input.PhysicalKey.Enter, Avalonia.Input.RawInputModifiers.None);
+            Choose(wheel, "removeMetadata");
             Dispatcher.UIThread.RunJobs();
             check(setups == 1 && flow.LastEditor is null, "Choosing Metadata without ExifTool opens setup, not an editor");
 

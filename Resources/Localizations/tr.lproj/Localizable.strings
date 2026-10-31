@@ -738,6 +738,7 @@
 "DRAG A REGION TO COVER WITH A SOLID BLOCK." = "DÜZ BİR BLOKLA KAPATILACAK ALANI SÜRÜKLEYEREK SEÇ.";
 "DRAG A WINDOW BY ITS TITLE BAR OR RESIZE BORDER, THEN TAP SHIFT OR COMMAND. HOVER OVER A LAYOUT AND RELEASE THE MOUSE TO PLACE IT. ESCAPE CANCELS." = "PENCEREYİ BAŞLIK ÇUBUĞUNDAN VEYA KENARINDAN SÜRÜKLERKEN SHIFT YA DA COMMAND'A BAS. BİR DÜZENİN ÜZERİNE GELİP FAREYİ BIRAK. ESCAPE İPTAL EDER.";
 "DRAG ACROSS THE PREVIEW TO SELECT THE AREA TO KEEP." = "KORUNACAK ALANI SEÇMEK İÇİN ÖNİZLEMEDE SÜRÜKLE.";
+"DRAG AN ANNOTATION TO MOVE IT; PRESS DELETE TO REMOVE IT. TURN OFF SELECT / MOVE TO DRAW." = "BİR İŞARETİ TAŞIMAK İÇİN SÜRÜKLE, KALDIRMAK İÇİN DELETE'E BAS. ÇİZMEK İÇİN SEÇ / TAŞI'YI KAPAT.";
 "DRAG AN AREA FIRST." = "ÖNCE BİR ALAN SÜRÜKLE.";
 "DRAG AN EXISTING ANNOTATION TO MOVE IT; DRAG ITS HANDLES TO RESIZE. TURN OFF SELECT / MOVE TO DRAW." = "BİR İŞARETİ TAŞIMAK İÇİN İÇİNİ, BOYUTLANDIRMAK İÇİN TUTAMAĞINI SÜRÜKLE. ÇİZMEK İÇİN SEÇ / TAŞI'YI KAPAT.";
 "DRAG INSIDE TO MOVE. DRAG NEAR A CORNER TO RESIZE. DRAG OUTSIDE TO START A NEW SELECTION." = "TAŞIMAK İÇİN ALANIN İÇİNİ, BOYUTLANDIRMAK İÇİN KÖŞEYİ SÜRÜKLE. YENİ SEÇİM İÇİN ALANIN DIŞINDA SÜRÜKLE.";
@@ -815,6 +816,7 @@
 "Drag a region to cover with a solid block." = "Düz bir blokla kapatılacak alanı sürükleyerek seç.";
 "Drag a window by its title bar or resize border, then tap Shift or Command. Hover over a layout and release the mouse to place it. Escape cancels." = "Pencereyi başlık çubuğundan veya kenarından sürüklerken Shift ya da Command'a bas. Bir düzenin üzerine gelip fareyi bırak. Escape iptal eder.";
 "Drag across the preview to select the area to keep." = "Korunacak alanı seçmek için önizlemede sürükle.";
+"Drag an annotation to move it; press Delete to remove it. Turn off Select / Move to draw." = "Bir işareti taşımak için sürükle, kaldırmak için Delete'e bas. Çizmek için Seç / Taşı'yı kapat.";
 "Drag an area first." = "Önce bir alan sürükle.";
 "Drag an existing annotation to move it; drag its handles to resize. Turn off Select / Move to draw." = "Bir işareti taşımak için içini, boyutlandırmak için tutamağını sürükle. Çizmek için Seç / Taşı'yı kapat.";
 "Drag inside to move. Drag near a corner to resize. Drag outside to start a new selection." = "Taşımak için alanın içini, boyutlandırmak için köşeyi sürükle. Yeni seçim için alanın dışında sürükle.";
@@ -1089,6 +1091,7 @@
 "HEIGHT" = "YÜKSEKLİK";
 "HELLO" = "MERHABA";
 "HIGHER QUALITY" = "DAHA YÜKSEK KALİTE";
+"HIGHLIGHT" = "VURGULAYICI";
 "HIGHLIGHTS" = "PARLAK ALANLAR";
 "HOLD A KEY WHILE DRAGGING IN FINDER" = "FINDER'DA SÜRÜKLERKEN BİR KISAYOL TUŞUNA BAS";
 "HOME" = "ANA SAYFA";
@@ -1096,6 +1099,7 @@
 "Height" = "Yükseklik";
 "Hello" = "Merhaba";
 "Higher Quality" = "Daha Yüksek Kalite";
+"Highlight" = "Vurgulayıcı";
 "Highlights" = "Parlak alanlar";
 "Hold a key while dragging in Finder" = "Finder'da sürüklerken bir kısayol tuşuna bas";
 "Home" = "Ana Sayfa";

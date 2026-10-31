@@ -36,6 +36,7 @@ static partial class EditorChecks
         Compress(work, photo);
         Metadata(work, photo);
         Qr(work, photo);
+        Annotate(work, photo);
         check(Hash(photo).SequenceEqual(hash), "Editors never modify the original");
         return Task.CompletedTask;
     }
@@ -105,6 +106,15 @@ static partial class EditorChecks
         window.MouseMove(On(window, new Point((from.X + to.X) / 2, (from.Y + to.Y) / 2)), modifiers | RawInputModifiers.LeftMouseButton);
         window.MouseMove(On(window, to), modifiers | RawInputModifiers.LeftMouseButton);
         window.MouseUp(On(window, to), MouseButton.Left, modifiers);
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    /// Chooses a petal with the keyboard, turning pages until it shows.
+    public static void Choose(WheelWindow wheel, string id)
+    {
+        for (var i = 0; i < wheel.Wheel.PageCount && !wheel.Wheel.Segments.Any(s => s.Id == id); i++) wheel.KeyPressQwerty(PhysicalKey.PageDown, RawInputModifiers.None);
+        wheel.Wheel.HighlightedIndex = wheel.Wheel.Segments.ToList().FindIndex(s => s.Id == id);
+        wheel.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
         Dispatcher.UIThread.RunJobs();
     }
 
@@ -216,8 +226,7 @@ static partial class EditorChecks
         app.Flow.ShowTools([flowPhoto]);
         Dispatcher.UIThread.RunJobs();
         var wheel = app.Flow.LastWheel!;
-        wheel.Wheel.HighlightedIndex = wheel.Wheel.Items.ToList().FindIndex(i => i.Id == "cropImage");
-        wheel.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+        Choose(wheel, "cropImage");
         Dispatcher.UIThread.RunJobs();
         var editor = app.Flow.LastEditor;
         check(editor is { IsVisible: true, Owner: null } && editor.Panel is CropEditor, "Crop Image from the pointer wheel opens the crop editor as its own window");

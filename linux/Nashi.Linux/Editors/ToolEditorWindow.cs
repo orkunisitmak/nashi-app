@@ -45,6 +45,7 @@ public sealed class ToolEditorWindow : Window
             "redactImage" => new RedactEditor(files),
             "compress" => new CompressEditor(files),
             "removeMetadata" => AppPaths.Metadata().Executable is null ? throw new MissingToolsException(MissingToolsException.Metadata) : new MetadataEditor(files),
+            "annotateImage" => new AnnotateEditor(files),
             _ => null,
         };
     }

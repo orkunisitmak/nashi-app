@@ -738,6 +738,7 @@
 "DRAG A REGION TO COVER WITH A SOLID BLOCK." = "DRAG A REGION TO COVER WITH A SOLID BLOCK.";
 "DRAG A WINDOW BY ITS TITLE BAR OR RESIZE BORDER, THEN TAP SHIFT OR COMMAND. HOVER OVER A LAYOUT AND RELEASE THE MOUSE TO PLACE IT. ESCAPE CANCELS." = "DRAG A WINDOW BY ITS TITLE BAR OR RESIZE BORDER, THEN TAP SHIFT OR COMMAND. HOVER OVER A LAYOUT AND RELEASE THE MOUSE TO PLACE IT. ESCAPE CANCELS.";
 "DRAG ACROSS THE PREVIEW TO SELECT THE AREA TO KEEP." = "DRAG ACROSS THE PREVIEW TO SELECT THE AREA TO KEEP.";
+"DRAG AN ANNOTATION TO MOVE IT; PRESS DELETE TO REMOVE IT. TURN OFF SELECT / MOVE TO DRAW." = "DRAG AN ANNOTATION TO MOVE IT; PRESS DELETE TO REMOVE IT. TURN OFF SELECT / MOVE TO DRAW.";
 "DRAG AN AREA FIRST." = "DRAG AN AREA FIRST.";
 "DRAG AN EXISTING ANNOTATION TO MOVE IT; DRAG ITS HANDLES TO RESIZE. TURN OFF SELECT / MOVE TO DRAW." = "DRAG AN EXISTING ANNOTATION TO MOVE IT; DRAG ITS HANDLES TO RESIZE. TURN OFF SELECT / MOVE TO DRAW.";
 "DRAG INSIDE TO MOVE. DRAG NEAR A CORNER TO RESIZE. DRAG OUTSIDE TO START A NEW SELECTION." = "DRAG INSIDE TO MOVE. DRAG NEAR A CORNER TO RESIZE. DRAG OUTSIDE TO START A NEW SELECTION.";
@@ -815,6 +816,7 @@
 "Drag a region to cover with a solid block." = "Drag a region to cover with a solid block.";
 "Drag a window by its title bar or resize border, then tap Shift or Command. Hover over a layout and release the mouse to place it. Escape cancels." = "Drag a window by its title bar or resize border, then tap Shift or Command. Hover over a layout and release the mouse to place it. Escape cancels.";
 "Drag across the preview to select the area to keep." = "Drag across the preview to select the area to keep.";
+"Drag an annotation to move it; press Delete to remove it. Turn off Select / Move to draw." = "Drag an annotation to move it; press Delete to remove it. Turn off Select / Move to draw.";
 "Drag an area first." = "Drag an area first.";
 "Drag an existing annotation to move it; drag its handles to resize. Turn off Select / Move to draw." = "Drag an existing annotation to move it; drag its handles to resize. Turn off Select / Move to draw.";
 "Drag inside to move. Drag near a corner to resize. Drag outside to start a new selection." = "Drag inside to move. Drag near a corner to resize. Drag outside to start a new selection.";
@@ -1089,6 +1091,7 @@
 "HEIGHT" = "HEIGHT";
 "HELLO" = "HELLO";
 "HIGHER QUALITY" = "HIGHER QUALITY";
+"HIGHLIGHT" = "HIGHLIGHT";
 "HIGHLIGHTS" = "HIGHLIGHTS";
 "HOLD A KEY WHILE DRAGGING IN FINDER" = "HOLD A KEY WHILE DRAGGING IN FINDER";
 "HOME" = "HOME";
@@ -1096,6 +1099,7 @@
 "Height" = "Height";
 "Hello" = "Hello";
 "Higher Quality" = "Higher Quality";
+"Highlight" = "Highlight";
 "Highlights" = "Highlights";
 "Hold a key while dragging in Finder" = "Hold a key while dragging in Finder";
 "Home" = "Home";

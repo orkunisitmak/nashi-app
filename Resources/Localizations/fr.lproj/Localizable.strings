@@ -738,6 +738,7 @@
 "DRAG A REGION TO COVER WITH A SOLID BLOCK." = "FAITES GLISSER POUR SÉLECTIONNER UNE ZONE À RECOUVRIR D’UN BLOC PLEIN.";
 "DRAG A WINDOW BY ITS TITLE BAR OR RESIZE BORDER, THEN TAP SHIFT OR COMMAND. HOVER OVER A LAYOUT AND RELEASE THE MOUSE TO PLACE IT. ESCAPE CANCELS." = "FAITES GLISSER UNE FENÊTRE PAR SA BARRE DE TITRE OU SON BORD DE REDIMENSIONNEMENT, PUIS APPUYEZ SUR MAJ OU COMMANDE. SURVOLEZ UNE DISPOSITION ET RELÂCHEZ LA SOURIS POUR PLACER LA FENÊTRE. ÉCHAP ANNULE.";
 "DRAG ACROSS THE PREVIEW TO SELECT THE AREA TO KEEP." = "FAITES GLISSER SUR L’APERÇU POUR SÉLECTIONNER LA ZONE À CONSERVER.";
+"DRAG AN ANNOTATION TO MOVE IT; PRESS DELETE TO REMOVE IT. TURN OFF SELECT / MOVE TO DRAW." = "DRAG AN ANNOTATION TO MOVE IT; PRESS DELETE TO REMOVE IT. TURN OFF SELECT / MOVE TO DRAW.";
 "DRAG AN AREA FIRST." = "FAITES D’ABORD GLISSER UNE ZONE.";
 "DRAG AN EXISTING ANNOTATION TO MOVE IT; DRAG ITS HANDLES TO RESIZE. TURN OFF SELECT / MOVE TO DRAW." = "FAITES GLISSER UNE ANNOTATION EXISTANTE POUR LA DÉPLACER ; FAITES GLISSER SES POIGNÉES POUR LA REDIMENSIONNER. DÉSACTIVEZ SÉLECTIONNER / DÉPLACER POUR DESSINER.";
 "DRAG INSIDE TO MOVE. DRAG NEAR A CORNER TO RESIZE. DRAG OUTSIDE TO START A NEW SELECTION." = "FAITES GLISSER À L’INTÉRIEUR POUR DÉPLACER. FAITES GLISSER PRÈS D’UN COIN POUR REDIMENSIONNER. FAITES GLISSER À L’EXTÉRIEUR POUR DÉMARRER UNE NOUVELLE SÉLECTION.";
@@ -815,6 +816,7 @@
 "Drag a region to cover with a solid block." = "Faites glisser pour sélectionner une zone à recouvrir d’un bloc plein.";
 "Drag a window by its title bar or resize border, then tap Shift or Command. Hover over a layout and release the mouse to place it. Escape cancels." = "Faites glisser une fenêtre par sa barre de titre ou son bord de redimensionnement, puis appuyez sur Maj ou Commande. Survolez une disposition et relâchez la souris pour placer la fenêtre. Échap annule.";
 "Drag across the preview to select the area to keep." = "Faites glisser sur l’aperçu pour sélectionner la zone à conserver.";
+"Drag an annotation to move it; press Delete to remove it. Turn off Select / Move to draw." = "Drag an annotation to move it; press Delete to remove it. Turn off Select / Move to draw.";
 "Drag an area first." = "Faites d’abord glisser une zone.";
 "Drag an existing annotation to move it; drag its handles to resize. Turn off Select / Move to draw." = "Faites glisser une annotation existante pour la déplacer ; faites glisser ses poignées pour la redimensionner. Désactivez Sélectionner / Déplacer pour dessiner.";
 "Drag inside to move. Drag near a corner to resize. Drag outside to start a new selection." = "Faites glisser à l’intérieur pour déplacer. Faites glisser près d’un coin pour redimensionner. Faites glisser à l’extérieur pour démarrer une nouvelle sélection.";
@@ -1089,6 +1091,7 @@
 "HEIGHT" = "HAUTEUR";
 "HELLO" = "BONJOUR";
 "HIGHER QUALITY" = "MEILLEURE QUALITÉ";
+"HIGHLIGHT" = "HIGHLIGHT";
 "HIGHLIGHTS" = "HAUTES LUMIÈRES";
 "HOLD A KEY WHILE DRAGGING IN FINDER" = "MAINTENEZ UNE TOUCHE EN FAISANT GLISSER DANS LE FINDER";
 "HOME" = "ACCUEIL";
@@ -1096,6 +1099,7 @@
 "Height" = "Hauteur";
 "Hello" = "Bonjour";
 "Higher Quality" = "Meilleure qualité";
+"Highlight" = "Highlight";
 "Highlights" = "Hautes lumières";
 "Hold a key while dragging in Finder" = "Maintenez une touche en faisant glisser dans le Finder";
 "Home" = "Accueil";

@@ -1247,5 +1247,7 @@
   "Copied": "Kopyalandı",
   "Copied all": "Tümü kopyalandı",
   "Copy all": "Tümünü kopyala",
-  "{0} found": "{0} bulundu"
+  "{0} found": "{0} bulundu",
+  "Drag an annotation to move it; press Delete to remove it. Turn off Select / Move to draw.": "Bir işareti taşımak için sürükle, kaldırmak için Delete'e bas. Çizmek için Seç / Taşı'yı kapat.",
+  "Highlight": "Vurgulayıcı"
 }
