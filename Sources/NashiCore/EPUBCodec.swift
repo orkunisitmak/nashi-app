@@ -18,7 +18,8 @@ enum EPUBCodec {
         try fm.createDirectory(at: pages, withIntermediateDirectories: true)
         try "application/epub+zip".write(to: work.appendingPathComponent("mimetype"), atomically: true, encoding: .utf8)
         try "<?xml version=\"1.0\"?><container version=\"1.0\" xmlns=\"urn:oasis:names:tc:opendocument:xmlns:container\"><rootfiles><rootfile full-path=\"OEBPS/content.opf\" media-type=\"application/oebps-package+xml\"/></rootfiles></container>".write(to: meta.appendingPathComponent("container.xml"), atomically: true, encoding: .utf8)
-        var manifest = "", spine = "", navigation = ""
+        var manifestParts:[String]=[],spineParts:[String]=[],navigationParts:[String]=[]
+        manifestParts.reserveCapacity(pdf.pageCount);spineParts.reserveCapacity(pdf.pageCount);navigationParts.reserveCapacity(pdf.pageCount)
         let escapedTitle = DocumentText.escapeXML(title)
         for index in 0..<pdf.pageCount {
             try token.check()
@@ -35,10 +36,11 @@ enum EPUBCodec {
             <?xml version="1.0" encoding="UTF-8"?><html xmlns="http://www.w3.org/1999/xhtml" lang="und"><head><title>\(escapedTitle) — Page \(index + 1)</title><meta name="viewport" content="width=\(width),height=\(height)"/><style>html,body{margin:0;padding:0;width:\(width)px;height:\(height)px;overflow:hidden;background:white}img{position:absolute;left:0;top:0;width:\(width)px;height:\(height)px}</style></head><body><img src="\(name).png" width="\(width)" height="\(height)" alt="\(alternative)"/></body></html>
             """
             try xhtml.write(to: pages.appendingPathComponent(name + ".xhtml"), atomically: true, encoding: .utf8)
-            manifest += "<item id=\"page\(index + 1)\" href=\"pages/\(name).xhtml\" media-type=\"application/xhtml+xml\"/><item id=\"image\(index + 1)\" href=\"pages/\(name).png\" media-type=\"image/png\"/>"
-            spine += "<itemref idref=\"page\(index + 1)\"/>"
-            navigation += "<li><a href=\"pages/\(name).xhtml\">Page \(index + 1)</a></li>"
+            manifestParts.append("<item id=\"page\(index + 1)\" href=\"pages/\(name).xhtml\" media-type=\"application/xhtml+xml\"/><item id=\"image\(index + 1)\" href=\"pages/\(name).png\" media-type=\"image/png\"/>")
+            spineParts.append("<itemref idref=\"page\(index + 1)\"/>")
+            navigationParts.append("<li><a href=\"pages/\(name).xhtml\">Page \(index + 1)</a></li>")
         }
+        let manifest=manifestParts.joined(),spine=spineParts.joined(),navigation=navigationParts.joined()
         let oebps = pages.deletingLastPathComponent()
         let nav = "<?xml version=\"1.0\"?><html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\"><head><title>\(escapedTitle)</title></head><body><nav epub:type=\"toc\" id=\"toc\"><h1>\(escapedTitle)</h1><ol>\(navigation)</ol></nav><nav epub:type=\"page-list\"><h2>Pages</h2><ol>\(navigation)</ol></nav></body></html>"
         try nav.write(to: oebps.appendingPathComponent("nav.xhtml"), atomically: true, encoding: .utf8)
@@ -65,7 +67,7 @@ enum EPUBCodec {
         try rejectEntityDeclarations(opf)
         let package = try XMLDocument(contentsOf: opf, options: [.nodeLoadExternalEntitiesNever])
         var manifest: [String: URL] = [:]
-        var styles = ""
+        var styleParts:[String]=[]
         for node in try package.nodes(forXPath: "//*[local-name()='manifest']/*[local-name()='item']") {
             guard let element = node as? XMLElement, let id = element.attribute(forName: "id")?.stringValue,
                   let href = element.attribute(forName: "href")?.stringValue?.removingPercentEncoding,
@@ -73,7 +75,7 @@ enum EPUBCodec {
             let url = opf.deletingLastPathComponent().appendingPathComponent(href).standardizedFileURL
             guard isInside(url, root: root) else { throw NashiError.invalidInput("An EPUB resource points outside its package.") }
             manifest[id] = url
-            if element.attribute(forName: "media-type")?.stringValue == "text/css", let css = try? DocumentText.read(url) { styles += "<style>\(css)</style>" }
+            if element.attribute(forName: "media-type")?.stringValue == "text/css", let css = try? DocumentText.read(url) { styleParts.append("<style>\(css)</style>") }
         }
         var chapters: [String] = []
         for node in try package.nodes(forXPath: "//*[local-name()='spine']/*[local-name()='itemref']") {
@@ -93,6 +95,7 @@ enum EPUBCodec {
         }
         guard !chapters.isEmpty else { throw NashiError.invalidInput("The EPUB contains no readable chapters.") }
         let title = try package.nodes(forXPath: "//*[local-name()='metadata']/*[local-name()='title']").first?.stringValue ?? input.deletingPathExtension().lastPathComponent
+        let styles=styleParts.joined()
         let html = "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>\(DocumentText.escapeXML(title))</title>\(styles)</head><body>" + chapters.enumerated().map { index, chapter in "<section\(index > 0 ? " style=\"page-break-before:always\"" : "")>\(chapter)</section>" }.joined() + "</body></html>"
         let output = work.appendingPathComponent("EPUB document.html")
         try html.write(to: output, atomically: true, encoding: .utf8)
@@ -110,31 +113,42 @@ enum EPUBCodec {
         try "application/epub+zip".write(to: work.appendingPathComponent("mimetype"), atomically: true, encoding: .utf8)
         try "<?xml version=\"1.0\"?><container version=\"1.0\" xmlns=\"urn:oasis:names:tc:opendocument:xmlns:container\"><rootfiles><rootfile full-path=\"OEBPS/content.opf\" media-type=\"application/oebps-package+xml\"/></rootfiles></container>".write(to: meta.appendingPathComponent("container.xml"), atomically: true, encoding: .utf8)
         let html = try XMLDocument(contentsOf: input, options: [.documentTidyHTML, .nodePreserveWhitespace, .nodeLoadExternalEntitiesNever])
-        var manifest = "", imageIndex = 0
+        let htmlRoot=input.deletingLastPathComponent().standardizedFileURL.resolvingSymlinksInPath()
+        let htmlRootPrefix=htmlRoot.path.hasSuffix("/") ? htmlRoot.path:htmlRoot.path+"/"
+        var imageManifestParts:[String]=[],imageIndex = 0
         for node in try html.nodes(forXPath: "//*[local-name()='img']/@src") {
             try token.check()
             guard let source = node.stringValue, !source.isEmpty else { continue }
             let data: Data
             let mime: String
             let ext: String
-            if source.hasPrefix("data:"), let comma = source.firstIndex(of: ","), let decoded = Data(base64Encoded: String(source[source.index(after: comma)...])) {
+            if source.hasPrefix("data:") {
+                guard let comma=source.firstIndex(of:",") else { node.stringValue="";continue }
+                let encoded=String(source[source.index(after:comma)...])
+                guard encoded.utf8.count<=67_000_000,
+                      let decoded=Data(base64Encoded:encoded),
+                      decoded.count<=50_000_000 else { node.stringValue="";continue }
                 data = decoded
                 mime = String(source.dropFirst(5).prefix(while: { $0 != ";" && $0 != "," }))
                 ext = UTType(mimeType: mime)?.preferredFilenameExtension ?? "png"
             } else {
-                let url: URL
-                if source.hasPrefix("file:") { guard let parsed = URL(string: source) else { continue }; url = parsed }
-                else if source.contains("://") { node.stringValue = ""; continue }
-                else { url = input.deletingLastPathComponent().appendingPathComponent(source.removingPercentEncoding ?? source) }
-                guard let loaded = try? Data(contentsOf: url) else { continue }
+                guard let components=URLComponents(string:source),components.scheme==nil,components.host==nil,
+                      !components.path.isEmpty,!components.path.hasPrefix("/") else { node.stringValue="";continue }
+                let candidate=htmlRoot.appendingPathComponent(components.path).standardizedFileURL
+                let url=candidate.resolvingSymlinksInPath()
+                guard url.path.hasPrefix(htmlRootPrefix),
+                      let values=try? url.resourceValues(forKeys:[.fileSizeKey,.isRegularFileKey]),
+                      values.isRegularFile==true,(values.fileSize ?? Int.max)<=50_000_000,
+                      let loaded=try? Data(contentsOf:url) else { node.stringValue="";continue }
                 data = loaded; ext = url.pathExtension.lowercased(); mime = UTType(filenameExtension: ext)?.preferredMIMEType ?? "image/png"
             }
             imageIndex += 1
             let name = "image-\(imageIndex).\(ext)"
             try data.write(to: oebps.appendingPathComponent(name))
             node.stringValue = name
-            manifest += "<item id=\"image\(imageIndex)\" href=\"\(name)\" media-type=\"\(mime)\"/>"
+            imageManifestParts.append("<item id=\"image\(imageIndex)\" href=\"\(name)\" media-type=\"\(mime)\"/>")
         }
+        let manifest=imageManifestParts.joined()
         let body = try html.nodes(forXPath: "//*[local-name()='body']").first
         // The HTML parser turns references such as &#12; into characters XML
         // forbids; one of them would leave the whole book unreadable.
