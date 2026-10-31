@@ -109,7 +109,13 @@ enum HTMLPDFRenderer {
             }
             let type = UTType(filenameExtension: file.pathExtension)
             let html = type?.conforms(to: .html) == true
-            task.didReceive(URLResponse(url: url, mimeType: html ? "text/html" : type?.preferredMIMEType ?? "application/octet-stream", expectedContentLength: data.count, textEncodingName: html ? HTMLPDFRenderer.charset(data) : nil))
+            let mime = html ? "text/html" : type?.preferredMIMEType ?? "application/octet-stream"
+            let charset = html ? HTMLPDFRenderer.charset(data).map { "; charset=" + $0 } ?? "" : ""
+            // Every document gets its own opaque origin, so a script cannot read a frame, style sheet
+            // or image that shows a file beside the page and copy it into the PDF.
+            let headers = ["Content-Type": mime + charset, "Content-Length": String(data.count), "Content-Security-Policy": "sandbox allow-scripts"]
+            guard let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: headers) else { return task.didFailWithError(URLError(.cannotParseResponse)) }
+            task.didReceive(response)
             task.didReceive(data)
             task.didFinish()
         }
