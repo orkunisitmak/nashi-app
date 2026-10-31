@@ -32,6 +32,7 @@ static partial class EditorChecks
         Crop(work, photo);
         Photo(work, photo);
         Frame(work, photo);
+        Redact(work, photo);
         check(Hash(photo).SequenceEqual(hash), "Editors never modify the original");
         return Task.CompletedTask;
     }
