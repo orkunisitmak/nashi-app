@@ -1,0 +1,4 @@
+*.svg text eol=lf
+LICENSE text eol=lf
+SOURCE.json text eol=lf
+README.md text eol=lf

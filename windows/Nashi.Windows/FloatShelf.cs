@@ -65,7 +65,7 @@ public sealed class FloatShelf:Window
     private void LanguageChanged(object? sender,PropertyChangedEventArgs e){Reload();files.ContextMenu=Menu();stack.ContextMenu=Menu();}
     private Button Control(string text,string help,Action click)
     {
-        var b=new Button{Content=text,ToolTip=L10n.Text(help),Width=24,Height=24,Padding=new(0),FontSize=16,VerticalAlignment=VerticalAlignment.Top,HorizontalContentAlignment=HorizontalAlignment.Center,VerticalContentAlignment=VerticalAlignment.Center,Background=Brushes.Transparent,BorderThickness=new(0)};
+        var b=new Button{Content=AppIcons.Icon(text=="×"?"remove":"more",16),ToolTip=L10n.Text(help),Width=24,Height=24,Padding=new(0),VerticalAlignment=VerticalAlignment.Top,HorizontalContentAlignment=HorizontalAlignment.Center,VerticalContentAlignment=VerticalAlignment.Center,Background=Brushes.Transparent,BorderThickness=new(0)};
         System.Windows.Automation.AutomationProperties.SetName(b,L10n.Text(help));b.Click+=(_,_)=>click();return b;
     }
     private void ScheduleHover(bool inside){hover.Stop();hoverInside=inside;hover.Interval=TimeSpan.FromMilliseconds(inside?200:650);hover.Start();}
@@ -164,6 +164,8 @@ internal static class FloatArtwork
             try{var bitmap=new BitmapImage();bitmap.BeginInit();bitmap.CacheOption=BitmapCacheOption.OnLoad;bitmap.DecodePixelWidth=128;bitmap.UriSource=new Uri(path);bitmap.EndInit();bitmap.Freeze();return new Image{Source=bitmap,Width=size,Height=size,Stretch=Stretch.Uniform};}catch(Exception error)when(error is IOException or NotSupportedException or System.IO.FileFormatException){}
         }
         var folder=Directory.Exists(path);var card=new Border{Width=size,Height=size,CornerRadius=new(folder?5:8),Background=folder?new SolidColorBrush(Color.FromRgb(73,177,214)):Theme.Brush("Sand"),BorderBrush=Theme.Brush("Line"),BorderThickness=new(1)};
-        card.Child=new TextBlock{Text=folder?"▰":Path.GetExtension(path).TrimStart('.').ToUpperInvariant(),FontSize=Math.Max(9,size/6d),FontWeight=FontWeights.SemiBold,TextAlignment=TextAlignment.Center,VerticalAlignment=VerticalAlignment.Center,TextTrimming=TextTrimming.CharacterEllipsis,Margin=new(3)};return card;
+        var artwork=new Image{Width=Math.Min(42,size-8),Height=Math.Min(42,size-8),Stretch=Stretch.Uniform,HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center};
+        FileArtwork.Bind(artwork,path);
+        card.Child=artwork;return card;
     }
 }
