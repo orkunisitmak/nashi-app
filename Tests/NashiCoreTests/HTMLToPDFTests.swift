@@ -142,6 +142,45 @@ final class HTMLToPDFTests: XCTestCase {
         XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: site.path).sorted(), ["Breaks.html", "Long.html", "Tall.html", "assets"])
     }
 
+    func testCancelledConversionStopsAScriptThatNeverReturns() throws {
+        let spin = site.appendingPathComponent("Spin.html")
+        try "<!doctype html><meta charset=\"utf-8\"><p>Spin</p><script>for (;;) {}</script>".write(to: spin, atomically: true, encoding: .utf8)
+        let before = Set(Self.contentProcesses().keys)
+        let token = CancellationToken(), lock = NSLock()
+        nonisolated(unsafe) var failure: Error?, finished = false
+        DispatchQueue.global().asyncAfter(deadline: .now() + 1.5) { token.cancel() }
+        // The app converts on a background thread while the main run loop keeps turning.
+        DispatchQueue.global().async {
+            do { _ = try ConversionEngine.run(.init(inputs: [spin], operation: .convert("pdf")), token: token) } catch { lock.withLock { failure = error } }
+            lock.withLock { finished = true }
+        }
+        XCTAssertTrue(wait(seconds: 30) { lock.withLock { finished } })
+        guard case NashiError.cancelled? = lock.withLock({ failure }) else { return XCTFail("\(String(describing: failure))") }
+        _ = wait(seconds: 2) { false }
+        // A content process left running the page script uses a full CPU core.
+        let first = Self.contentProcesses().filter { !before.contains($0.key) }
+        _ = wait(seconds: 1) { false }
+        let second = Self.contentProcesses()
+        let busy = first.filter { (second[$0.key] ?? $0.value) - $0.value > 0.5 }.map(\.key)
+        for process in busy { kill(process, SIGKILL) }
+        XCTAssertEqual(busy, [], "The page script kept running after the conversion was cancelled.")
+    }
+
+    /// CPU seconds used so far by each WebKit content process.
+    private static func contentProcesses() -> [pid_t: Double] {
+        var pids = [pid_t](repeating: 0, count: 8192), timebase = mach_timebase_info_data_t()
+        mach_timebase_info(&timebase)
+        let count = Int(proc_listallpids(&pids, Int32(pids.count * MemoryLayout<pid_t>.size)))
+        var result: [pid_t: Double] = [:]
+        for pid in pids.prefix(max(count, 0)) where pid > 0 {
+            var path = [CChar](repeating: 0, count: 4096), info = proc_taskinfo()
+            guard proc_pidpath(pid, &path, UInt32(path.count)) > 0, String(cString: path).hasSuffix("/com.apple.WebKit.WebContent"),
+                  proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &info, Int32(MemoryLayout<proc_taskinfo>.size)) == Int32(MemoryLayout<proc_taskinfo>.size) else { continue }
+            result[pid] = Double(info.pti_total_user + info.pti_total_system) * Double(timebase.numer) / Double(timebase.denom) / 1e9
+        }
+        return result
+    }
+
     /// Keeps the main run loop turning, as WebKit and URLSession callbacks need it.
     private func wait(seconds: TimeInterval = 10, until condition: () -> Bool) -> Bool {
         let deadline = Date().addingTimeInterval(seconds)

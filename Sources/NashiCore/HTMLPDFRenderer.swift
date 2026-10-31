@@ -194,6 +194,9 @@ enum HTMLPDFRenderer {
             // A cancelled job keeps the view until AppKit stops printing from it.
             if !printing {
                 view?.stopLoading(); view?.navigationDelegate = nil; view?.uiDelegate = nil
+                // A page script that never returns keeps its content process busy after the view is
+                // gone, and WebKit offers no public way to stop it. The process serves only this view.
+                if let view, view.responds(to: Selector(("_webProcessIdentifier"))), let process = view.value(forKey: "_webProcessIdentifier") as? pid_t, process > 0 { kill(process, SIGKILL) }
                 window?.contentView = nil; window?.close()
                 view = nil; window = nil; navigation = nil
                 if let rules { try? FileManager.default.removeItem(at: rules) }
