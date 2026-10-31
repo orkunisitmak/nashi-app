@@ -47,6 +47,8 @@ public abstract class EditorPanel(string tool, IReadOnlyList<string> inputs)
     /// Off the UI thread, before Options: anything besides the preview copy (metadata, more images).
     public virtual Task LoadAsync(CancellationToken token) => Task.CompletedTask;
     public abstract Control Options();
+    /// Source pixels per preview pixel of what Preview renders (the collage renders its own canvas smaller).
+    public virtual double PreviewScale => Source!.Scale;
     /// A snapshot of the options that renders the preview off the UI thread; null shows the source as is.
     public virtual Func<MagickImage>? Preview() => null;
     /// Why Save can't go ahead (already localized), or null.

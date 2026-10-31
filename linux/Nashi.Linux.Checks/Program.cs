@@ -123,7 +123,13 @@ void CapabilityChecks()
     var pngFormats = Capabilities.Formats(png);
     Check(pngFormats.Contains("jpg") && pngFormats.Contains("webp") && pngFormats.Contains("pdf"), "Formats for a PNG include jpg, webp and pdf");
     Check(!pngFormats.Contains("png"), "Formats for a PNG exclude png");
-    Check(Capabilities.Tools(png).SequenceEqual(FeatureCatalog.Tools(png).Where(t => t == "compress" || Capabilities.ImageEditors.Contains(t))), "Tools for a PNG are the landed image tools, in catalog order");
+    // The image tools gate: every image input, alone, in pairs and mixed with PNG, offers exactly the catalog's tools.
+    string[] images = ["jpg", "png", "webp", "heic", "tiff", "svg", "avif", "bmp"];
+    var differ = images.SelectMany(e => new[] { new[] { "x." + e }, ["x." + e, "y." + e], ["x." + e, "y.png"] })
+        .Where(s => !Capabilities.Tools(s).SequenceEqual(FeatureCatalog.Tools(s))).Select(s => string.Join("+", s)).ToList();
+    Check(differ.Count == 0, "Image tools match the catalog for every image type, one or two, and mixed with PNG; differ: " + string.Join(" ", differ));
+    Check(Capabilities.Tools(png).SequenceEqual(FeatureCatalog.Tools(png)) && Capabilities.Tools(["a.jpg", "b.jpg"]).Contains("createCollage"), "A PNG offers every catalog image tool; two JPGs add Create Collage");
+    Check(Capabilities.Tools(["x.jpg", "y.pdf"]).SequenceEqual(["compress", "readQRCode"]), "Images with a PDF offer Compress and Read QR Codes (Metadata edits images only)");
     var mp4Tools = Capabilities.Tools(mp4);
     Check(mp4Tools.Contains("compress") && mp4Tools.Contains("muteVideo"), "Tools for an MP4 include compress and muteVideo");
     Check(Capabilities.Formats(mp4).SequenceEqual(FeatureCatalog.Formats(mp4)), "Formats for an MP4 keep catalog order");

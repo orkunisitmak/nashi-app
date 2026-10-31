@@ -748,6 +748,7 @@
 "DRAG THE STACK TO CARRY ALL FILES. DRAG THE PAPERCLIP TO MOVE FLOAT." = "DRAG THE STACK TO CARRY ALL FILES. DRAG THE PAPERCLIP TO MOVE FLOAT.";
 "DRAG TO DRAW WITH THE SELECTED TOOL. USE SELECT / MOVE TO EDIT AN EXISTING ANNOTATION." = "DRAG TO DRAW WITH THE SELECTED TOOL. USE SELECT / MOVE TO EDIT AN EXISTING ANNOTATION.";
 "DRAG TO DRAW. ONE ACTIVE TOOL PER STROKE." = "DRAG TO DRAW. ONE ACTIVE TOOL PER STROKE.";
+"DRAG TO REORDER." = "DRAG TO REORDER.";
 "DRAW A REGION TO REDACT." = "DRAW A REGION TO REDACT.";
 "DRAW AT LEAST ONE AREA TO REDACT." = "DRAW AT LEAST ONE AREA TO REDACT.";
 "DRAWING TOOL" = "DRAWING TOOL";
@@ -826,6 +827,7 @@
 "Drag the stack to carry all files. Drag the paperclip to move Float." = "Drag the stack to carry all files. Drag the paperclip to move Float.";
 "Drag to draw with the selected tool. Use Select / Move to edit an existing annotation." = "Drag to draw with the selected tool. Use Select / Move to edit an existing annotation.";
 "Drag to draw. One active tool per stroke." = "Drag to draw. One active tool per stroke.";
+"Drag to reorder." = "Drag to reorder.";
 "Draw a region to redact." = "Draw a region to redact.";
 "Draw at least one area to redact." = "Draw at least one area to redact.";
 "Drawing tool" = "Drawing tool";
@@ -1486,6 +1488,7 @@
 "OPEN PERMISSION SETTINGS…" = "OPEN PERMISSION SETTINGS…";
 "OPEN WHEEL" = "OPEN WHEEL";
 "OPTIONAL. YOU CAN CHANGE THIS IN SETTINGS." = "OPTIONAL. YOU CAN CHANGE THIS IN SETTINGS.";
+"ORDER" = "ORDER";
 "ORGANIZE PDF" = "ORGANIZE PDF";
 "ORIGINAL" = "ORIGINAL";
 "ORIGINAL DIMENSIONS" = "ORIGINAL DIMENSIONS";
@@ -1493,6 +1496,7 @@
 "ORIGINAL STAYS SAFE" = "ORIGINAL STAYS SAFE";
 "ORIGINALS REMAIN SAFE. CHOOSE WHERE NEW COPIES SHOULD LAND." = "ORIGINALS REMAIN SAFE. CHOOSE WHERE NEW COPIES SHOULD LAND.";
 "OTHER" = "OTHER";
+"OUTER PADDING" = "OUTER PADDING";
 "OUTPUT" = "OUTPUT";
 "OUTPUT FORMAT" = "OUTPUT FORMAT";
 "OUTPUT-ONLY FORMAT." = "OUTPUT-ONLY FORMAT.";
@@ -1528,6 +1532,7 @@
 "Open permission settings…" = "Open permission settings…";
 "Open wheel" = "Open wheel";
 "Optional. You can change this in Settings." = "Optional. You can change this in Settings.";
+"Order" = "Order";
 "Organize PDF" = "Organize PDF";
 "Original" = "Original";
 "Original dimensions" = "Original dimensions";
@@ -1541,6 +1546,7 @@
 "Original stays safe" = "Original stays safe";
 "Originals remain safe. Choose where new copies should land." = "Originals remain safe. Choose where new copies should land.";
 "Other" = "Other";
+"Outer padding" = "Outer padding";
 "Output" = "Output";
 "Output format" = "Output format";
 "Output-only format." = "Output-only format.";

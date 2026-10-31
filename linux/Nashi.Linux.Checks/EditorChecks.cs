@@ -37,6 +37,7 @@ static partial class EditorChecks
         Metadata(work, photo);
         Qr(work, photo);
         Annotate(work, photo);
+        Collage(work, photo);
         check(Hash(photo).SequenceEqual(hash), "Editors never modify the original");
         return Task.CompletedTask;
     }

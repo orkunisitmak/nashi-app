@@ -748,6 +748,7 @@
 "DRAG THE STACK TO CARRY ALL FILES. DRAG THE PAPERCLIP TO MOVE FLOAT." = "FAITES GLISSER LA PILE POUR EMPORTER TOUS LES FICHIERS. FAITES GLISSER LE TROMBONE POUR DÉPLACER FLOAT.";
 "DRAG TO DRAW WITH THE SELECTED TOOL. USE SELECT / MOVE TO EDIT AN EXISTING ANNOTATION." = "FAITES GLISSER POUR DESSINER AVEC L’OUTIL SÉLECTIONNÉ. UTILISEZ SÉLECTIONNER / DÉPLACER POUR MODIFIER UNE ANNOTATION EXISTANTE.";
 "DRAG TO DRAW. ONE ACTIVE TOOL PER STROKE." = "FAITES GLISSER POUR DESSINER. UN SEUL OUTIL ACTIF PAR TRAIT.";
+"DRAG TO REORDER." = "DRAG TO REORDER.";
 "DRAW A REGION TO REDACT." = "DESSINEZ UNE ZONE À CAVIARDER.";
 "DRAW AT LEAST ONE AREA TO REDACT." = "DESSINEZ AU MOINS UNE ZONE À CAVIARDER.";
 "DRAWING TOOL" = "OUTIL DE DESSIN";
@@ -826,6 +827,7 @@
 "Drag the stack to carry all files. Drag the paperclip to move Float." = "Faites glisser la pile pour emporter tous les fichiers. Faites glisser le trombone pour déplacer Float.";
 "Drag to draw with the selected tool. Use Select / Move to edit an existing annotation." = "Faites glisser pour dessiner avec l’outil sélectionné. Utilisez Sélectionner / Déplacer pour modifier une annotation existante.";
 "Drag to draw. One active tool per stroke." = "Faites glisser pour dessiner. Un seul outil actif par trait.";
+"Drag to reorder." = "Drag to reorder.";
 "Draw a region to redact." = "Dessinez une zone à caviarder.";
 "Draw at least one area to redact." = "Dessinez au moins une zone à caviarder.";
 "Drawing tool" = "Outil de dessin";
@@ -1486,6 +1488,7 @@
 "OPEN PERMISSION SETTINGS…" = "OUVRIR LES RÉGLAGES D’AUTORISATION…";
 "OPEN WHEEL" = "OUVRIR LA ROUE";
 "OPTIONAL. YOU CAN CHANGE THIS IN SETTINGS." = "FACULTATIF. VOUS POUVEZ LE MODIFIER DANS LES RÉGLAGES.";
+"ORDER" = "ORDER";
 "ORGANIZE PDF" = "ORGANISER UN PDF";
 "ORIGINAL" = "ORIGINAL";
 "ORIGINAL DIMENSIONS" = "DIMENSIONS D’ORIGINE";
@@ -1493,6 +1496,7 @@
 "ORIGINAL STAYS SAFE" = "L’ORIGINAL RESTE INTACT";
 "ORIGINALS REMAIN SAFE. CHOOSE WHERE NEW COPIES SHOULD LAND." = "LES ORIGINAUX RESTENT INTACTS. CHOISISSEZ OÙ PLACER LES NOUVELLES COPIES.";
 "OTHER" = "AUTRE";
+"OUTER PADDING" = "OUTER PADDING";
 "OUTPUT" = "SORTIE";
 "OUTPUT FORMAT" = "FORMAT DE SORTIE";
 "OUTPUT-ONLY FORMAT." = "FORMAT DE SORTIE UNIQUEMENT.";
@@ -1528,6 +1532,7 @@
 "Open permission settings…" = "Ouvrir les réglages d’autorisation…";
 "Open wheel" = "Ouvrir la roue";
 "Optional. You can change this in Settings." = "Facultatif. Vous pouvez le modifier dans les Réglages.";
+"Order" = "Order";
 "Organize PDF" = "Organiser un PDF";
 "Original" = "Original";
 "Original dimensions" = "Dimensions d’origine";
@@ -1541,6 +1546,7 @@
 "Original stays safe" = "L’original reste intact";
 "Originals remain safe. Choose where new copies should land." = "Les originaux restent intacts. Choisissez où placer les nouvelles copies.";
 "Other" = "Autre";
+"Outer padding" = "Outer padding";
 "Output" = "Sortie";
 "Output format" = "Format de sortie";
 "Output-only format." = "Format de sortie uniquement.";

@@ -46,6 +46,7 @@ public sealed class ToolEditorWindow : Window
             "compress" => new CompressEditor(files),
             "removeMetadata" => AppPaths.Metadata().Executable is null ? throw new MissingToolsException(MissingToolsException.Metadata) : new MetadataEditor(files),
             "annotateImage" => new AnnotateEditor(files),
+            "createCollage" => new CollageEditor(files),
             _ => null,
         };
     }
@@ -307,7 +308,7 @@ public sealed class ToolEditorWindow : Window
             if (id != generation) return;
             var old = result;
             result = ImageCanvas.Bitmap(pixels);
-            resultSize = new Size(pixels.Width * source.Scale, pixels.Height * source.Scale);
+            resultSize = new Size(Math.Round(pixels.Width * panel.PreviewScale), Math.Round(pixels.Height * panel.PreviewScale));
             ShowPreview();
             if (old is not null && !ReferenceEquals(old, original)) old.Dispose();
             panel.Say(null);
