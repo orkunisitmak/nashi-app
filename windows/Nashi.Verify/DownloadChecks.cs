@@ -25,6 +25,9 @@ internal static class DownloadChecks
             check(WebDownload.ProgressFraction("NASHI:12:NA") is null&&WebDownload.ProgressFraction("NASHI:1:0") is null&&WebDownload.ProgressFraction("[download] 5%") is null&&WebDownload.ProgressFraction("NASHI:NaN:1048576.0") is null&&WebDownload.ProgressFraction("NASHI:5:NaN") is null&&WebDownload.ProgressFraction("NASHI:5:Infinity") is null,"Unusable yt-dlp progress lines must be ignored");
         }
         finally{System.Globalization.CultureInfo.CurrentCulture=culture;}
+        check(WebDownload.FilenameArguments().SequenceEqual(["--windows-filenames","-o","%(title).160B [%(id)s].%(ext)s"]),"Web downloads must preserve Unicode titles and their source IDs in filenames");
+        check(WebDownload.YoutubeFailure(new("https://www.youtube.com/watch?v=fixture"),"ERROR: HTTP Error 403: Forbidden")?.Contains("PO token",StringComparison.Ordinal)==true,"YouTube 403 failures must explain current-tool and access requirements");
+        check(WebDownload.YoutubeFailure(new("https://example.com/video"),"HTTP Error 403: Forbidden") is null&&WebDownload.YoutubeFailure(new("https://youtu.be/fixture"),"unrelated failure") is null,"Unrelated yt-dlp failures must preserve their original diagnostics");
         // Like the Mac: servers also send image/jpg, image/pjpeg or upper-case types for JPEG photos.
         try
         {

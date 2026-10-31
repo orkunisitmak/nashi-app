@@ -7,11 +7,14 @@ namespace Nashi.Core;
 
 /// First-use setup downloads directly from upstream. Nashi does not redistribute
 /// the upstream executable archives or silently import browser credentials.
-/// With a search path, tools the user already installed are reused and setup
-/// downloads only the missing packages; downloaded tools still take priority.
+/// With a search path, FFmpeg tools the user already installed are reused.
+/// yt-dlp and Deno are always Nashi's hash-verified official executables so their
+/// versions and bundled EJS integration cannot silently vary with stale PATH tools.
 public sealed class Toolchain(string directory,string? searchPath=null)
 {
     private static readonly string[] Names=["ffmpeg","ffprobe","yt-dlp","deno"];
+    internal const string ToolsetMarkerName=".nashi-toolset";
+    internal const string ToolsetVersion="2026.10.26-1";
     public string DirectoryPath=>Path.GetFullPath(directory);
     public string Executable(string name)
     {
@@ -23,6 +26,7 @@ public sealed class Toolchain(string directory,string? searchPath=null)
     private string? Find(string name,string bundled){var path=Path.Combine(bundled,FileName(name));return Usable(path)?path:Installed(name);}
     private string? Installed(string name)
     {
+        if(name is "yt-dlp" or "deno")return null;
         foreach(var entry in (searchPath??"").Split(Path.PathSeparator,StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries))
         {
             // Relative entries such as "." would resolve against whatever folder Nashi was started from.
@@ -38,7 +42,14 @@ public sealed class Toolchain(string directory,string? searchPath=null)
         return null;
     }
     private bool Complete(string directory)=>Names.All(n=>Find(n,directory) is not null);
-    public bool Ready=>Complete(DirectoryPath);
+    private static bool HasBundledTools(string directory)=>Names.Any(n=>Usable(Path.Combine(directory,FileName(n))));
+    private static bool Current(string directory)
+    {
+        if(!HasBundledTools(directory))return true; // PATH tools remain managed by their package manager.
+        try{return File.ReadAllText(Path.Combine(directory,ToolsetMarkerName)).Trim()==ToolsetVersion;}
+        catch(Exception error)when(error is IOException or UnauthorizedAccessException){return false;}
+    }
+    public bool Ready=>Complete(DirectoryPath)&&Current(DirectoryPath);
     public async Task InstallAsync(IProgress<OperationProgress>? progress=null,CancellationToken token=default)
     {
         token.ThrowIfCancellationRequested();if(Ready){progress?.Report(new(1,"Media tools ready"));return;}
@@ -46,7 +57,9 @@ public sealed class Toolchain(string directory,string? searchPath=null)
         var stage=Path.Combine(parent,"tools-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(stage);
         try
         {
-            var packages=Packages().Where(p=>p.Files.Any(f=>Installed(Path.GetFileNameWithoutExtension(f)) is null)).ToArray();
+            // A missing/outdated marker means this Nashi release must refresh every bundled package.
+            // Packages supplied exclusively by PATH stay under the user's package-manager control.
+            var packages=Packages().Where(p=>p.Files.Any(f=>Usable(Path.Combine(DirectoryPath,f)))||p.Files.Any(f=>Installed(Path.GetFileNameWithoutExtension(f)) is null)).ToArray();
             for(var n=0;n<packages.Length;n++)
             {
                 var package=packages[n];var archive=Path.Combine(stage,"package-"+n);
@@ -72,18 +85,19 @@ public sealed class Toolchain(string directory,string? searchPath=null)
             token.ThrowIfCancellationRequested();
             // Publish replaces the whole folder, so carry over downloaded tools whose package was skipped because PATH has them.
             if(Directory.Exists(DirectoryPath))foreach(var file in Directory.GetFiles(DirectoryPath)){var kept=Path.Combine(stage,Path.GetFileName(file));if(!File.Exists(kept)&&ToolInstallation.UsableFile(file))File.Copy(file,kept);}
-            ToolInstallation.Publish(stage,DirectoryPath,Complete);progress?.Report(new(1,"Media tools ready"));
+            File.WriteAllText(Path.Combine(stage,ToolsetMarkerName),ToolsetVersion+Environment.NewLine);
+            ToolInstallation.Publish(stage,DirectoryPath,path=>Complete(path)&&Current(path));progress?.Report(new(1,"Media tools ready"));
         }
         finally{if(Directory.Exists(stage))Directory.Delete(stage,true);}
     }
     // Linux FFmpeg is pinned to a month-end BtbN build because daily builds are deleted after 14 days.
     private static Package[] Packages()=>OperatingSystem.IsWindows()?[
         new Package("FFmpeg 9.0","https://github.com/GyanD/codexffmpeg/releases/download/9.0.2/ffmpeg-9.0.2-full_build.zip","759d0a9831c436a0eb331ad36f236c06cb04aaa0005da46571f0e9d3d9206f6b",["ffmpeg.exe","ffprobe.exe"]),
-        new Package("yt-dlp","https://github.com/yt-dlp/yt-dlp/releases/download/2026.08.19/yt-dlp.exe","66674953fe251b89f4d08c5f0e35e0728679bd67ab3d7d05c0562af101dd3e7a",["yt-dlp.exe"]),
+        new Package("yt-dlp 2026.10.26","https://github.com/yt-dlp/yt-dlp/releases/download/2026.10.26/yt-dlp.exe","f5389d3698ecde4ef06f4e6b1ce0294fe9ac1396228c8990b8d3416d6d177a7d",["yt-dlp.exe"]),
         new Package("Deno","https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-pc-windows-msvc.zip","a0c3101b4158d1dfb7d6a78a7bf0f3de80c96bb423c152beec8beb22786f2238",["deno.exe"])
     ]:OperatingSystem.IsLinux()&&RuntimeInformation.OSArchitecture==Architecture.X64?[
         new Package("FFmpeg 9.0","https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-09-30-13-08/ffmpeg-n9.0.2-17-g2a571b6068-linux64-gpl-9.0.tar.xz","68ee646831adaae2495618346f3bba94ff207ff83bbd34d643e7004730d66269",["ffmpeg","ffprobe"]),
-        new Package("yt-dlp","https://github.com/yt-dlp/yt-dlp/releases/download/2026.08.19/yt-dlp_linux","58162f9bfdc27458ea47bfcb311cf47028f17d8154a8bf7d689861d46399230a",["yt-dlp"]),
+        new Package("yt-dlp 2026.10.26","https://github.com/yt-dlp/yt-dlp/releases/download/2026.10.26/yt-dlp_linux","767ba9dce7052aa196f8b12652f433d76de128ba168966fa84b6394d5e6c6795",["yt-dlp"]),
         new Package("Deno","https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip","c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490",["deno"])
     ]:throw new PlatformNotSupportedException("Media tools setup supports Windows and Linux x64.");
     // .NET cannot read xz, so SharpCompress streams the tar and only the wanted files reach the disk.

@@ -26,7 +26,9 @@ internal static class ToolSetupChecks
             void Tool(string name)=>Write(Path.Combine(platform,name),"x");
             foreach(var name in new[]{"ffmpeg","ffprobe","yt-dlp"})Tool(name+suffix);Tool(OperatingSystem.IsWindows()?"deno":"deno.exe");
             check(!new Toolchain(platform).Ready,"A tool named for another platform must not count as installed");
-            Tool("deno"+suffix);check(new Toolchain(platform).Ready&&new Toolchain(platform).Executable("deno")==Path.Combine(platform,"deno"+suffix),"Tools must use this platform's executable names");
+            Tool("deno"+suffix);check(!new Toolchain(platform).Ready,"Bundled tools without a version marker must be refreshed");
+            Write(Path.Combine(platform,Toolchain.ToolsetMarkerName),"older-toolset");check(!new Toolchain(platform).Ready,"An outdated bundled toolset must not count as ready");
+            Write(Path.Combine(platform,Toolchain.ToolsetMarkerName),Toolchain.ToolsetVersion);check(new Toolchain(platform).Ready&&new Toolchain(platform).Executable("deno")==Path.Combine(platform,"deno"+suffix),"Current tools must use this platform's executable names");
             if(!OperatingSystem.IsWindows())
             {
                 File.SetUnixFileMode(Path.Combine(platform,"deno"),UnixFileMode.UserRead|UnixFileMode.UserWrite);check(!new Toolchain(platform).Ready,"A tool without the executable bit must not count as installed");
@@ -53,14 +55,15 @@ internal static class ToolSetupChecks
             foreach(var name in new[]{"ffmpeg","ffprobe","yt-dlp","deno"})Write(Path.Combine(installed,name+suffix),"tool");
             check(!new Toolchain(bundled).Ready,"Tools on PATH must stay unused without a search path");
             var found=new Toolchain(bundled,string.Join(Path.PathSeparator,"","relative",'"'+installed+'"'));
-            check(found.Ready&&found.Executable("yt-dlp")==Path.Combine(installed,"yt-dlp"+suffix),"Installed tools on the search path must be reused");
+            check(!found.Ready,"PATH yt-dlp and Deno tools must not bypass Nashi's verified pinned executables");
             check(new WebDownload(found).FfmpegLocation==installed,"yt-dlp must use the FFmpeg found on the search path");
-            check(found.InstallAsync().IsCompletedSuccessfully&&!Directory.Exists(bundled),"Tools on the search path must not be downloaded again");
+            Directory.CreateDirectory(bundled);Write(Path.Combine(bundled,"yt-dlp"+suffix),"pinned");Write(Path.Combine(bundled,"deno"+suffix),"pinned");Write(Path.Combine(bundled,Toolchain.ToolsetMarkerName),Toolchain.ToolsetVersion);
+            check(found.Ready&&found.Executable("yt-dlp")==Path.Combine(bundled,"yt-dlp"+suffix)&&found.Executable("deno")==Path.Combine(bundled,"deno"+suffix),"Nashi's verified yt-dlp and Deno must take priority while PATH FFmpeg is reused");
             var previous=Environment.CurrentDirectory;Environment.CurrentDirectory=installed;
             try{check(!new Toolchain(bundled,".").Ready,"Relative search path entries must be ignored");}finally{Environment.CurrentDirectory=previous;}
-            Directory.CreateDirectory(bundled);Write(Path.Combine(bundled,"ffmpeg"+suffix),"pinned");
+            Write(Path.Combine(bundled,"ffmpeg"+suffix),"pinned");
             check(found.Executable("ffmpeg")==Path.Combine(bundled,"ffmpeg"+suffix)&&found.Executable("ffprobe")==Path.Combine(installed,"ffprobe"+suffix),"Downloaded tools must take priority over the search path");
-            Write(Path.Combine(installed,"deno"+suffix),"");check(!found.Ready,"Empty search path placeholder must not count as installed tool");
+            Write(Path.Combine(installed,"ffprobe"+suffix),"");check(!found.Ready,"Empty search path placeholder must not count as installed tool");
             if(!OperatingSystem.IsWindows())
             {
                 var snapBin=Path.Combine(directory,"snap bin");Directory.CreateDirectory(snapBin);
