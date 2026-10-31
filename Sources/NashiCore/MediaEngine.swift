@@ -258,7 +258,7 @@ public enum MediaEngine {
             arguments += ["-map", "0:a:0", "-vn"]
             if options.trimSilence { arguments += ["-af", "silenceremove=start_periods=1:start_duration=0.02:start_threshold=\(decimal(options.silenceThresholdDb))dB,areverse,silenceremove=start_periods=1:start_duration=0.02:start_threshold=\(decimal(options.silenceThresholdDb))dB,areverse"] }
             arguments += audioEncoding(ext, quality: options.quality, source: info.audio, pcmCodec: try pcmCodec(for: ext, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset)
-        } else { arguments += ["-map", "0:v:0", "-map", "0:a:0?"] + videoEncoding(ext, quality: options.quality, sourceAudio: info.audio) }
+        } else { arguments += ["-map", "0:v:0", "-map", "0:a:0?", "-vf", evenSize(ext)] + videoEncoding(ext, quality: options.quality, sourceAudio: info.audio) }
         try render(arguments, to: out, token: token, duration: audio && options.trimSilence ? nil : interval.1 - interval.0, progress: progress)
         return [out]
     }
@@ -278,7 +278,7 @@ public enum MediaEngine {
         try requireVideo(info)
         guard options.speed.isFinite, options.speed >= 0.05, options.speed <= 100 else { throw NashiError.invalidInput("Playback speed must be between 0.05× and 100×.") }
         let out = try outputURL(input, ext: videoExtension(input), suffix: " \(decimal(options.speed))x", options: options)
-        var arguments = ["-i", input.path, "-map", "0:v:0", "-map", "0:a:0?", "-vf", "setpts=(PTS-STARTPTS)/\(decimal(options.speed))", "-r", decimal((info.video?.frameRate ?? 30) * options.speed), "-fps_mode", "cfr"]
+        var arguments = ["-i", input.path, "-map", "0:v:0", "-map", "0:a:0?", "-vf", "setpts=(PTS-STARTPTS)/\(decimal(options.speed)),\(evenSize(out.pathExtension))", "-r", decimal((info.video?.frameRate ?? 30) * options.speed), "-fps_mode", "cfr"]
         if info.hasAudio { arguments += ["-af", tempoFilter(options.speed)] }
         arguments += videoEncoding(out.pathExtension, quality: options.quality, sourceAudio: info.audio)
         try render(arguments, to: out, token: token, duration: info.duration / options.speed, progress: progress)
@@ -477,7 +477,8 @@ public enum MediaEngine {
             previous = next
         }
         let out = try outputURL(input, ext: videoExtension(input), suffix: " Redacted", options: options)
-        try render(["-i", input.path, "-filter_complex", graph.joined(separator: ";"), "-map", "[\(previous)]", "-map", "0:a:0?"] + videoEncoding(out.pathExtension, quality: options.quality, copyAudio: true), to: out, token: token, duration: info.duration, progress: progress)
+        graph.append("[\(previous)]\(evenSize(out.pathExtension))[even]")
+        try render(["-i", input.path, "-filter_complex", graph.joined(separator: ";"), "-map", "[even]", "-map", "0:a:0?"] + videoEncoding(out.pathExtension, quality: options.quality, copyAudio: true), to: out, token: token, duration: info.duration, progress: progress)
         return [out]
     }
 
@@ -683,6 +684,10 @@ public enum MediaEngine {
         default: throw NashiError.invalidInput("Choose Match Source, 16-bit, 24-bit, 32-bit integer, or 32-bit float audio.")
         }
     }
+
+    // libx264 (yuv420p) and wmv2 need even dimensions, and recordings of a selected screen area are
+    // often odd. VP9 (WebM) and MPEG-4 (AVI) keep odd sizes, so those pass through unchanged.
+    private static func evenSize(_ ext: String) -> String { ["webm", "avi"].contains(ext.lowercased()) ? "null" : "pad=ceil(iw/2)*2:ceil(ih/2)*2" }
 
     private static func tempoFilter(_ speed: Double) -> String {
         var rate = speed, factors: [Double] = []
