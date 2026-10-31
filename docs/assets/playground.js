@@ -55,7 +55,7 @@ const measureContext=document.createElement('canvas').getContext('2d'),layoutCac
 function measureLabel(text,font){measureContext.font=`600 ${font}px ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;return measureContext.measureText(text);}
 function wheelHit(x,y){const w=state.wheel;if(!w)return -1;const r=w.element.getBoundingClientRect(),px=(x-r.left)*320/r.width,py=(y-r.top)*320/r.height;return w.paths.findIndex(path=>measureContext.isPointInPath(path,px,py));}
 function openWheel(mode,x,y,page=0){
- const prev=state.wheel;closeWheel();if(!selection().length)state.selected=[state.files[0]?.id].filter(Boolean);
+ const prev=state.wheel;closeWheel();if(!selection().length&&state.files[0])selectFile(state.files[0]);
  const items=itemsFor(mode);if(!items.length){toast(L('Try another wheel','Başka bir çarkı dene'),L('No matching options for this file.','Bu dosya için eşleşen seçenek yok.'));return;}
  const visible=items.slice(page*9,page*9+9),size=Math.min(320,innerWidth-12),sr=stage.getBoundingClientRect();x??=sr.left+sr.width/2;y??=sr.top+sr.height/2;
  const left=Math.max(6,Math.min(innerWidth-size-6,x-size/2)),top=Math.max(7,Math.min(innerHeight-size-32,y-size/2));
