@@ -147,47 +147,51 @@ enum OfficeInputSanitizer {
         return walk.compactMap { $0 as? URL }.filter { markupExtensions.contains($0.pathExtension.lowercased()) }
     }
 
-    /// Replaces a host-path resource reference with a document-internal anchor
-    /// the converter cannot resolve. Matches file:, absolute, home-relative and
-    /// parent-directory escapes in href, any namespace-prefixed href and src
-    /// attributes. XML permits single quotes and whitespace around `=`, and a
-    /// prefixed name such as `x:href` is the same XLink reference to the
-    /// converter, so all of those spellings are covered. The lookbehind keeps
-    /// unrelated attributes such as `data-src` out of the rewrite.
-    private static let referencePattern = regex("(?<![-_A-Za-z0-9:])((?:[A-Za-z_][-A-Za-z0-9._]*:)?(?:href|src))\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)')")
-
-    /// An `xml:base` attribute makes the converter resolve every relative
-    /// reference below it against that base, so a host-path base smuggles
-    /// otherwise innocent `href="kept.png"` targets out of the staged package.
-    /// The prefix is fixed by XML (an unrelated `base` attribute is not an XML
-    /// base), so only this exact name is considered, and only a base the
-    /// converter would resolve outside the document is rewritten: a relative
-    /// base such as `images/` describes the document's own layout and survives.
-    private static let xmlBasePattern = regex("(?<![-_A-Za-z0-9:])(xml:base)\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)')")
-
-    private static func stripReferences(_ text: String) -> String {
-        neutralise(xmlBasePattern, in: neutralise(referencePattern, in: text))
+    /// Whether an attribute name is one the converter resolves as a reference:
+    /// `href`, `src`, any namespace-prefixed spelling of them (`xlink:href` is how
+    /// ODF writes the reference that matters here), and `xml:base`, which re-anchors
+    /// every relative target below it. Names are compared case-insensitively because
+    /// that is how the rewrite was written before this pass existed, and the wider
+    /// reading only ever strips more. The prefix has to be a name of its own, so
+    /// `data-src` and `x-linkhref` are not references: they are other attributes, and
+    /// rewriting one of them corrupts the document without removing anything the
+    /// converter would follow.
+    private static func isReferenceName(_ name: String) -> Bool {
+        let lowered = name.lowercased()
+        if lowered == "xml:base" || lowered == "href" || lowered == "src" { return true }
+        guard let colon = lowered.firstIndex(of: ":") else { return false }
+        let prefix = lowered[..<colon]
+        guard let head = prefix.first, head.isLetter || head == "_", !prefix.contains(where: { $0 == " " || $0 == "\t" || $0 == "\n" }) else { return false }
+        let local = lowered[lowered.index(after: colon)...]
+        return local == "href" || local == "src"
     }
 
-    /// Rewrites each attribute a pattern names whose value the converter would
-    /// resolve outside the staged document. The attribute name and its original
-    /// quote style are restored, so the part stays parseable markup.
+    private static func stripReferences(_ text: String) -> String {
+        neutraliseReferences(in: text)
+    }
+
+    /// Rewrites every attribute named by `isReferenceName` whose value the converter
+    /// would resolve outside the staged document. The attribute keeps its name and
+    /// its original quote style, so the part stays parseable markup.
     ///
-    /// A pattern is only searched inside a tag. An `href=` typed into a paragraph is
-    /// document text, not an attribute, and rewriting it deletes the markup around
-    /// it: an unquoted value match runs to the next quote in the file, which can sit
-    /// past a `</text:p>` inside a later tag, so the replacement swallows that
-    /// closing tag and the element that follows it and leaves the staged part
-    /// unparseable. Tags are located first (see `tagRanges(in:)`) and the search is
-    /// confined to them.
-    private static func neutralise(_ pattern: NSRegularExpression, in text: String) -> String {
+    /// The attributes come from one pass over each tag (see `markupAttributes(in:)`),
+    /// which is what makes this a rewrite of an attribute rather than of a spelling.
+    /// Searching a tag's text finds `href=` inside another attribute's value too -
+    /// `Title='href="file:///tmp/other.png"'` is legal XML and a parser hands that
+    /// value over as one string - and it finds an `href=` typed into a paragraph,
+    /// whose match runs to the next quote in the file, which can sit past a
+    /// `</text:p>` inside a later tag, so the replacement swallows that closing tag
+    /// and the element behind it and leaves the staged part unparseable. Tags are
+    /// located first (see `tagRanges(in:)`) and only their attributes are read.
+    private static func neutraliseReferences(in text: String) -> String {
         var result = text
-        let matches = tagRanges(in: text).flatMap { pattern.matches(in: text, range: NSRange($0, in: text)) }
-        for match in matches.sorted(by: { $0.range.location > $1.range.location }) {
-            guard match.numberOfRanges > 3, let name = substring(match.range(at: 1), in: text),
-                  let found = attributeValue(match, in: text, doubleQuoted: 2, singleQuoted: 3),
-                  isHostPath(found.value), let range = Range(match.range, in: result) else { continue }
-            result.replaceSubrange(range, with: name + "=" + found.quote + "about:blank" + found.quote)
+        // Right to left, so each rewrite leaves the ranges before it pointing where
+        // they pointed. They are all ranges of `text`, which is not mutated here.
+        for tag in tagRanges(in: text).reversed() {
+            for attribute in markupAttributes(in: text[tag]).reversed() {
+                guard isReferenceName(attribute.name), isHostPath(attribute.value) else { continue }
+                result.replaceSubrange(attribute.valueRange, with: String(attribute.quote) + "about:blank" + String(attribute.quote))
+            }
         }
         return result
     }
@@ -251,6 +255,75 @@ enum OfficeInputSanitizer {
         guard next < text.endIndex else { return false }
         let character = text[next]
         return character.isLetter || character == "_" || character == "/" || character == "!" || character == "?"
+    }
+
+    /// One attribute of a tag as the converter's parser sees it: the name, the value
+    /// with its character references still literal, and the range the quoted value
+    /// occupies - quotes included, so a rewrite can hand the same quote back.
+    private struct MarkupAttribute {
+        let name: String
+        let value: String
+        let valueRange: Range<String.Index>
+        let quote: Character
+    }
+
+    /// Whitespace XML allows between an attribute, its `=` and its value, plus the `/`
+    /// that closes an empty element.
+    private static func isMarkupTrivia(_ character: Character) -> Bool {
+        character == " " || character == "\t" || character == "\n" || character == "\r" || character == "\u{0C}" || character == "/"
+    }
+
+    /// A character that can stand inside an attribute name. XML names carry letters,
+    /// digits, `.`, `-`, `_` and the namespace separator; everything else - `=`, a
+    /// quote, a bracket - ends the name, which is what keeps `href` out of `data-href`.
+    private static func isAttributeNameCharacter(_ character: Character) -> Bool {
+        !isMarkupTrivia(character) && character != "=" && character != ">" && character != "<" && character != #"""# && character != "'"
+    }
+
+    /// The attributes of one tag, read in a single pass that steps over each quoted
+    /// value instead of searching it.
+    ///
+    /// A name found by searching a tag's text is not necessarily a name. An author's
+    /// own attribute can carry the spelling of another attribute inside its value
+    /// (`Note="TargetMode='Internal'"`), and a search that takes the first hit reads
+    /// that text as the element's own `TargetMode`, even though no parser hands it
+    /// over as one: a parser pairs a name with the quoted value behind its `=` and
+    /// never looks inside a value. Only that reading says which names the converter
+    /// will see, and that is the difference between a decoy hiding a host path and a
+    /// decoy being document text.
+    ///
+    /// XML requires a quoted value, so a name that is not followed by `="\u2026"` or
+    /// `='\u2026'` ends the pass, and so does a value left open at the end of the tag:
+    /// past either there is no attribute list for a parser to read, which is the same
+    /// verdict the converter gives the part - it is not markup, so nothing behind it
+    /// resolves.
+    private static func markupAttributes(in tag: Substring) -> [MarkupAttribute] {
+        var attributes: [MarkupAttribute] = []
+        var index = tag.startIndex
+        if index < tag.endIndex, tag[index] == "<" { index = tag.index(after: index) }
+        // The name of the element, or the `/` of a closing tag, comes first.
+        while index < tag.endIndex, !isMarkupTrivia(tag[index]) { index = tag.index(after: index) }
+        while index < tag.endIndex {
+            while index < tag.endIndex, isMarkupTrivia(tag[index]) { index = tag.index(after: index) }
+            guard index < tag.endIndex, tag[index] != ">", tag[index] != "/" else { return attributes }
+            let nameStart = index
+            while index < tag.endIndex, isAttributeNameCharacter(tag[index]) { index = tag.index(after: index) }
+            let name = tag[nameStart..<index]
+            while index < tag.endIndex, isMarkupTrivia(tag[index]) { index = tag.index(after: index) }
+            guard index < tag.endIndex, tag[index] == "=" else { return attributes }
+            index = tag.index(after: index)
+            while index < tag.endIndex, isMarkupTrivia(tag[index]) { index = tag.index(after: index) }
+            guard index < tag.endIndex, tag[index] == #"""# || tag[index] == "'" else { return attributes }
+            let quote = tag[index]
+            let opening = index
+            guard let closing = tag[tag.index(after: index)...].firstIndex(of: quote) else { return attributes }
+            attributes.append(MarkupAttribute(name: String(name),
+                                             value: String(tag[tag.index(after: opening)..<closing]),
+                                             valueRange: opening..<tag.index(after: closing),
+                                             quote: quote))
+            index = tag.index(after: closing)
+        }
+        return attributes
     }
 
     /// A `<!DOCTYPE` declaration can carry an internal DTD subset that defines an
@@ -343,14 +416,29 @@ enum OfficeInputSanitizer {
     /// Drops an OOXML relationship that points outside the package through a
     /// host path. Relative targets and hyperlinks stay: LibreOffice resolves
     /// them against the staged document only, and links are inert on import.
-    private static let relationshipPattern = regex("<Relationship\\b(?:[^<>'\"]|\"[^\"]*\"|'[^']*')*(?:/>|>.*?</Relationship>)")
-    // Both names carry the boundary `referencePattern` keeps. `x:Target` and
-    // `data-TargetMode` are other attributes, and reading one of them as the real
-    // one hands the relationship its converter-visible meaning back: a prefixed
-    // `Target` can stand in for a host path and hide it, and a prefixed
-    // `TargetMode="Internal"` can claim a host path is document-internal.
-    private static let targetPattern = regex("(?<![-_A-Za-z0-9:])Target\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)')")
-    private static let targetModePattern = regex("(?<![-_A-Za-z0-9:])TargetMode\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)')")
+    ///
+    /// The element name may carry a namespace prefix. A `.rels` part is free to bind
+    /// the relationships namespace to one (`<pr:Relationships
+    /// xmlns:pr="http://schemas.openxmlformats.org/package/2006/relationships">`),
+    /// and the import resolves a relationship by that namespace rather than by the
+    /// letters in front of the colon, so a prefixed element carries a target exactly
+    /// as the unprefixed one does; only a match that ignores the prefix misses it.
+    /// The closing tag carries whatever prefix the element was opened with, and the
+    /// alternation below reads it through the captured prefix: an element is only
+    /// closed by its own name. The optional form is kept beside it because the
+    /// unprefixed spelling has no prefix to carry, not because a mismatch would be
+    /// well-formed - it is not, and such a part has nothing for the import to resolve.
+    private static let relationshipPattern = regex("<([A-Za-z_][-A-Za-z0-9._]*:)?Relationship\\b(?:[^<>/\"\']|\"[^\"]*\"|\'[^\']*\')*(?:/>|>(?:.*?)</(?:\\1)?Relationship>)")
+
+    /// The two names that give a relationship its meaning, and the spelling the
+    /// package format uses. Compared as whole names, because a name that merely
+    /// contains one is another attribute: `x:Target` and `data-TargetMode` read as
+    /// themselves, and reading one of them as the real one hands the relationship its
+    /// converter-visible meaning back - a prefixed `Target` can stand in for a host
+    /// path and hide it, and a prefixed `TargetMode="Internal"` can claim a host path
+    /// is document-internal.
+    private static let targetName = "Target"
+    private static let targetModeName = "TargetMode"
 
     private static func stripRelationships(_ text: String) -> String {
         var result = text
@@ -362,14 +450,24 @@ enum OfficeInputSanitizer {
         return result
     }
 
+    /// Whether the element is a relationship the converter would resolve on the host.
+    ///
+    /// `Target` and `TargetMode` are read from the element's attribute list (see
+    /// `markupAttributes(in:)`) rather than by searching its text, which is the whole
+    /// difference here: the first search hit was taken as the mode, so an author's own
+    /// attribute carrying `TargetMode=\'Internal\'` inside its quoted value stood in
+    /// front of the real attributes and told the sanitizer the relationship did not
+    /// leave the package. It does. An attribute that repeats also has to be settled -
+    /// the import keeps the first occurrence, so the first one wins here.
     private static func isHostTarget(_ element: String) -> Bool {
-        let full = NSRange(element.startIndex..., in: element)
-        guard let mode = targetModePattern.firstMatch(in: element, range: full),
-              let modeValue = attributeValue(mode, in: element, doubleQuoted: 1, singleQuoted: 2),
-              isExternalMode(modeValue.value),
-              let found = targetPattern.firstMatch(in: element, range: full),
-              let value = attributeValue(found, in: element, doubleQuoted: 1, singleQuoted: 2) else { return false }
-        return isHostPath(value.value)
+        var target: String?
+        var mode: String?
+        for attribute in markupAttributes(in: element[...]) {
+            if attribute.name == targetModeName { mode = mode ?? attribute.value }
+            else if attribute.name == targetName { target = target ?? attribute.value }
+        }
+        guard let mode, isExternalMode(mode), let target else { return false }
+        return isHostPath(target)
     }
 
     /// `Ext&#101;rnal` is `External` to the converter: it decodes character

@@ -638,4 +638,84 @@ final class OfficeInputSanitizerTests: XCTestCase {
             XCTAssertTrue(text.contains(kept), "removal reached a relationship that is not a host path: \(kept)")
         }
     }
+
+    func testAQuotedDecoyInFrontOfTheRealAttributesCannotHideAHostPath() throws {
+        // What the maintainer named: a decoy that reads as `TargetMode='Internal'` and
+        // one that reads as `Target='media/a.png'` (the value an author would give the
+        // real attribute), each carried inside another attribute's quoted value in
+        // front of the real attributes. A scan over the element's text hits the decoys
+        // first, and the relationship they describe is the one the import resolves.
+        let base = try package([
+            "word/document.xml": "<w:document/>",
+            "word/_rels/document.xml.rels": """
+            <?xml version="1.0"?>
+            <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">\
+            <Relationship Id="r1" Note="TargetMode='Internal'" \
+            Target="file:///tmp/\(secret).png" TargetMode="External" Type="image"/>\
+            <Relationship Id="r2" Note="Target='media/a.png'" \
+            Target="\\\\server\\share\\x.png" TargetMode="External" Type="image"/>\
+            </Relationships>
+            """
+        ])
+        defer { try? FileManager.default.removeItem(at: base.base) }
+        let parts = try sanitizedParts(base.input, extensions: ["xml", "rels"], base: base.base)
+        XCTAssertTrue(parts["word/_rels/document.xml.rels"]?.contains(secret) == false,
+                      "a quoted decoy in front of the real attributes hid the host target: \(parts["word/_rels/document.xml.rels"] ?? "")")
+        XCTAssertTrue(parts["word/_rels/document.xml.rels"]?.contains("server") == false,
+                      "the second decoy hid a drive-root target: \(parts["word/_rels/document.xml.rels"] ?? "")")
+    }
+
+    func testAPrefixedRelationshipCarriesATargetJustLikeThePlainOne() throws {
+        // The relationships namespace can be bound to a prefix, and a `.rels` part that
+        // does so is the same format: the import resolves a relationship by that
+        // namespace, not by the letters in front of the colon.
+        let base = try package([
+            "word/document.xml": "<w:document/>",
+            "word/_rels/document.xml.rels": """
+            <?xml version="1.0"?>
+            <pr:Relationships xmlns:pr="http://schemas.openxmlformats.org/package/2006/relationships">\
+            <pr:Relationship Id="r1" Target="file:///tmp/\(secret).png" TargetMode="External" Type="image"/>\
+            <pr:Relationship Id="r2" Target="media/kept.png" TargetMode="External" Type="image"/>\
+            <pr:Relationship Id="r3" Target="file:///tmp/paired-\(secret).png" TargetMode="External"\
+            Type="image">\
+            <pr:Target/>\
+            </pr:Relationship>\
+            </pr:Relationships>
+            """
+        ])
+        defer { try? FileManager.default.removeItem(at: base.base) }
+        let parts = try sanitizedParts(base.input, extensions: ["xml", "rels"], base: base.base)
+        let staged = parts["word/_rels/document.xml.rels"] ?? ""
+        XCTAssertTrue(staged.contains(secret) == false,
+                      "a prefixed relationship kept its host target: \(staged)")
+        XCTAssertTrue(staged.contains("media/kept.png"),
+                      "the prefixed relative target was rewritten with it: \(staged)")
+    }
+
+    func testMarkupTextInsideAnAttributeValueIsNotRewritten() throws {
+        // The same scan settles the Minor about `href=`-shaped text inside a value:
+        // an author's own attribute can describe another attribute, but only the real
+        // xlink:href is a reference the converter resolves.
+        let base = try package([
+            "content.xml": """
+            <?xml version="1.0"?>
+            <office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" \
+            xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" \
+            xmlns:xlink="http://www.w3.org/1999/xlink">\
+            <office:body><draw:frame \
+            draw:name='href="file:///tmp/decoy-\(secret).png"' \
+            xlink:href="file:///tmp/real-\(secret).png"/>\
+            </office:body></office:document-content>
+            """
+        ])
+        defer { try? FileManager.default.removeItem(at: base.base) }
+        let parts = try sanitizedParts(base.input, extensions: ["xml"], base: base.base)
+        let staged = parts["content.xml"] ?? ""
+        XCTAssertTrue(staged.contains("draw:name='href=\"file:///tmp/decoy-\(secret).png\"'"),
+                      "href-shaped text inside another attribute was rewritten: \(staged)")
+        XCTAssertTrue(staged.contains("xlink:href=\"about:blank\""),
+                      "the real host reference beside the decoy survived: \(staged)")
+        XCTAssertFalse(staged.contains("real-\(secret)"),
+                       "the real host path remained in the staged part: \(staged)")
+    }
 }
