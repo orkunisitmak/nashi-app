@@ -21,6 +21,9 @@ static partial class EditorChecks
         return path;
     }
 
+    /// Loaders for in-memory images: the collage disposes what each returns, so they hand out copies.
+    static Func<MagickImage>[] Loaders(params MagickImage[] images) => [.. images.Select(i => (Func<MagickImage>)(() => (MagickImage)i.Clone()))];
+
     static void Collage(string work, string photo)
     {
         var folder = Directory.CreateDirectory(Path.Combine(work, "collage")).FullName;
@@ -31,18 +34,18 @@ static partial class EditorChecks
         using var r = PhotoCodec.Read(red);
         using var b = PhotoCodec.Read(blue);
         using var y = PhotoCodec.Read(yellow);
-        using (var square = ImageTools.Collage([r, b], new CollageOptions { Spacing = 0, Padding = 0 }))
+        using (var square = ImageTools.Collage(Loaders(r, b), new CollageOptions { Spacing = 0, Padding = 0 }))
             check(square.Width == 2048 && square.Height == 2048 && Near(At(square, 500, 1000), 255, 0, 0, 0) && Near(At(square, 1500, 1000), 0, 0, 255, 0), "A grid collage is 2048 × 2048 with the images in order, left to right");
-        using (var wide = ImageTools.Collage([r, b], new CollageOptions { AspectRatio = 16 / 9.0, Order = [1, 0] }))
+        using (var wide = ImageTools.Collage(Loaders(r, b), new CollageOptions { AspectRatio = 16 / 9.0, Order = [1, 0] }))
             check(wide.Width == 2048 && wide.Height == 1152 && Near(At(wide, 500, 576), 0, 0, 255, 0) && Near(At(wide, 1500, 576), 255, 0, 0, 0), "16:9 makes 2048 × 1152, and the order puts blue first");
-        using (var fit = ImageTools.Collage([r, b], new CollageOptions { Fill = false, Spacing = 0, Padding = 0, Color = "#000000" }))
+        using (var fit = ImageTools.Collage(Loaders(r, b), new CollageOptions { Fill = false, Spacing = 0, Padding = 0, Color = "#000000" }))
             check(Near(At(fit, 500, 100), 0, 0, 0, 0) && Near(At(fit, 500, 1000), 255, 0, 0, 0), "Fit keeps each whole image, with the background around it");
-        using (var column = ImageTools.Collage([r, b, y], new CollageOptions { Layout = "column", Spacing = 0, Padding = 0, Width = 300, AspectRatio = 1 }))
+        using (var column = ImageTools.Collage(Loaders(r, b, y), new CollageOptions { Layout = "column", Spacing = 0, Padding = 0, Width = 300, AspectRatio = 1 }))
             check(Near(At(column, 150, 50), 255, 0, 0, 0) && Near(At(column, 150, 150), 0, 0, 255, 0) && Near(At(column, 150, 250), 255, 255, 0, 0), "Column stacks the images top to bottom");
         var cells = ImageTools.CollageCells(3, "featured", 2, new Rect(0, 0, 900, 600), 0);
         check(cells[0] == new Rect(0, 0, 600, 600) && cells[1] == new Rect(600, 0, 300, 300) && cells[2] == new Rect(600, 300, 300, 300), "Featured gives the first image the left two thirds");
         check(ImageTools.CollageCells(3, "row", 2, new Rect(0, 0, 300, 100), 0).Select(c => c.X).SequenceEqual([0, 100, 200]), "Row lays the images side by side");
-        check(Throws(() => ImageTools.Collage([r], new CollageOptions())) && Throws(() => ImageTools.Collage([r, b], new CollageOptions { Order = [0, 0] })), "A collage needs two images and a real order");
+        check(Throws(() => ImageTools.Collage(Loaders(r), new CollageOptions())) && Throws(() => ImageTools.Collage(Loaders(r, b), new CollageOptions { Order = [0, 0] })), "A collage needs two images and a real order");
 
         var window = Open(new CollageEditor([red, blue, yellow]));
         var editor = (CollageEditor)window.Panel;

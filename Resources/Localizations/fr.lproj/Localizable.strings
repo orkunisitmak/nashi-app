@@ -1971,6 +1971,7 @@
 "STILL IMAGE" = "IMAGE FIXE";
 "STOPPED THE BACKGROUND NASHI." = "STOPPED THE BACKGROUND NASHI.";
 "STRAIGHT TO THE GOOD STUFF." = "DROIT AU BUT.";
+"STRENGTH" = "STRENGTH";
 "STROKE WIDTH" = "ÉPAISSEUR DU TRAIT";
 "STRONG" = "FORTE";
 "STYLE" = "STYLE";
@@ -2123,6 +2124,7 @@
 "Still image" = "Image fixe";
 "Stopped the background Nashi." = "Stopped the background Nashi.";
 "Straight to the good stuff." = "Droit au but.";
+"Strength" = "Strength";
 "Stroke width" = "Épaisseur du trait";
 "Strong" = "Forte";
 "Style" = "Style";
@@ -2406,6 +2408,7 @@
 "Vignette" = "Vignettage";
 "Visualization" = "Visualisation";
 "WAIT FOR THE PROCESSED PREVIEW TO FINISH BEFORE RESETTING." = "ATTENDEZ LA FIN DE L’APERÇU TRAITÉ AVANT DE RÉINITIALISER.";
+"WAITING FOR THE CURRENT TASK TO FINISH…" = "WAITING FOR THE CURRENT TASK TO FINISH…";
 "WAVEFORM" = "FORME D’ONDE";
 "WELCOME TO NASHI" = "BIENVENUE DANS NASHI";
 "WELCOME…" = "BIENVENUE…";
@@ -2421,6 +2424,7 @@
 "WINDOWS COULD NOT CREATE A TRAY ICON." = "WINDOWS N’A PAS PU CRÉER D’ICÔNE DANS LA ZONE DE NOTIFICATION.";
 "WORKING…" = "TRAITEMENT EN COURS…";
 "Wait for the processed preview to finish before resetting." = "Attendez la fin de l’aperçu traité avant de réinitialiser.";
+"Waiting for the current task to finish…" = "Waiting for the current task to finish…";
 "Waveform" = "Forme d’onde";
 "Welcome to Nashi" = "Bienvenue dans Nashi";
 "Welcome…" = "Bienvenue…";

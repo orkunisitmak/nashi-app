@@ -227,6 +227,11 @@ public sealed class AnnotateEditor(IReadOnlyList<string> inputs) : EditorPanel("
         return () => ImageTools.Annotate(source.Preview, scaled, Stamp);
     }
 
+    public override void Dispose()
+    {
+        lock (stamps) { foreach (var image in stamps.Values) image.Dispose(); stamps.Clear(); }
+    }
+
     public override void Reset()
     {
         marks.Clear();
@@ -237,6 +242,6 @@ public sealed class AnnotateEditor(IReadOnlyList<string> inputs) : EditorPanel("
     public override EditorJob Job()
     {
         var all = marks.ToList();
-        return Each(" - Annotated", (_, image) => ImageTools.Annotate(image, all), png: true);
+        return Each(" - Annotated", (_, image) => ImageTools.Annotate(image, all, consume: true), png: true);
     }
 }

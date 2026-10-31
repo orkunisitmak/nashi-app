@@ -142,11 +142,16 @@ public sealed class FrameEditor(IReadOnlyList<string> inputs) : EditorPanel("fra
         return () => ImageTools.Frame(source.Preview, o, 1 / source.Scale, Background);
     }
 
+    public override void Dispose()
+    {
+        lock (backgrounds) { foreach (var image in backgrounds.Values) image.Dispose(); backgrounds.Clear(); }
+    }
+
     public override void Reset() => options = new();
 
     public override EditorJob Job()
     {
         var o = options;
-        return Each(" - Framed", (_, image) => ImageTools.Frame(image, o), png: ImageTools.Color(o.Color).Alpha < 255);
+        return Each(" - Framed", (_, image) => ImageTools.Frame(image, o, consume: true), png: ImageTools.Color(o.Color).Alpha < 255);
     }
 }

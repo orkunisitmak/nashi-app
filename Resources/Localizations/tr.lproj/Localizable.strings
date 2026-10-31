@@ -1971,6 +1971,7 @@
 "STILL IMAGE" = "SABİT GÖRSEL";
 "STOPPED THE BACKGROUND NASHI." = "ARKA PLANDAKİ NASHI DURDURULDU.";
 "STRAIGHT TO THE GOOD STUFF." = "DOĞRUDAN İSTEDİĞİN BÖLÜME.";
+"STRENGTH" = "GÜÇ";
 "STROKE WIDTH" = "ÇİZGİ KALINLIĞI";
 "STRONG" = "GÜÇLÜ";
 "STYLE" = "STİL";
@@ -2123,6 +2124,7 @@
 "Still image" = "Sabit görsel";
 "Stopped the background Nashi." = "Arka plandaki Nashi durduruldu.";
 "Straight to the good stuff." = "Doğrudan istediğin bölüme.";
+"Strength" = "Güç";
 "Stroke width" = "Çizgi kalınlığı";
 "Strong" = "Güçlü";
 "Style" = "Stil";
@@ -2406,6 +2408,7 @@
 "Vignette" = "Vinyet";
 "Visualization" = "Görselleştirme";
 "WAIT FOR THE PROCESSED PREVIEW TO FINISH BEFORE RESETTING." = "SIFIRLAMADAN ÖNCE İŞLENMİŞ ÖNİZLEMENİN BİTMESİNİ BEKLE.";
+"WAITING FOR THE CURRENT TASK TO FINISH…" = "GEÇERLİ GÖREVİN BİTMESİ BEKLENİYOR…";
 "WAVEFORM" = "DALGA BİÇİMİ";
 "WELCOME TO NASHI" = "NASHI'YE HOŞ GELDİN";
 "WELCOME…" = "HOŞ GELDİN…";
@@ -2421,6 +2424,7 @@
 "WINDOWS COULD NOT CREATE A TRAY ICON." = "WINDOWS TEPSİ SİMGESİNİ OLUŞTURAMADI.";
 "WORKING…" = "İŞLENİYOR…";
 "Wait for the processed preview to finish before resetting." = "Sıfırlamadan önce işlenmiş önizlemenin bitmesini bekle.";
+"Waiting for the current task to finish…" = "Geçerli görevin bitmesi bekleniyor…";
 "Waveform" = "Dalga biçimi";
 "Welcome to Nashi" = "Nashi'ye Hoş Geldin";
 "Welcome…" = "Hoş Geldin…";

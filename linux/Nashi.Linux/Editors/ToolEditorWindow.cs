@@ -33,6 +33,10 @@ public sealed class ToolEditorWindow : Window
         public const string Close = "Close";
     }
 
+    /// Whether the choice opens an editor for these files (Read QR Codes has its own window).
+    public static bool Opens(string tool, IReadOnlyList<string> files) =>
+        tool != "readQRCode" && Capabilities.ImageEditors.Contains(tool) && files.Count > 0 && files.All(FeatureCatalog.IsImage);
+
     /// The editor for a wheel choice on these files, or null when the choice runs without one.
     public static EditorPanel? For(string tool, IReadOnlyList<string> files)
     {
@@ -54,7 +58,8 @@ public sealed class ToolEditorWindow : Window
     private readonly EditorPanel panel;
     private readonly ImageCanvas canvas = new() { MinHeight = 320 };
     private readonly ContentControl options = new();
-    private readonly TextBlock message = new() { FontSize = 11, TextWrapping = TextWrapping.Wrap, IsVisible = false, Foreground = Ui.Gold };
+    private readonly TextBlock message = new();
+    private readonly Control warning;
     private readonly TextBlock dimensions = new() { FontSize = 10, FontFamily = new FontFamily("monospace"), Classes = { "secondary" }, VerticalAlignment = VerticalAlignment.Center };
     private readonly Button save = new() { Classes = { "primary" }, IsEnabled = false };
     private readonly Segments compare = new([Copy.Original, Copy.Result], Copy.Result) { IsVisible = false };
@@ -80,6 +85,8 @@ public sealed class ToolEditorWindow : Window
     public ToolEditorWindow(EditorPanel panel)
     {
         this.panel = panel;
+        warning = Ui.Warning(message);
+        warning.IsVisible = false;
         Desktop.Translucent(this);
         var name = FeatureCatalog.ToolNames.GetValueOrDefault(panel.Tool, panel.Tool);
         Title = L10n.T(name) + " · Nashi";
@@ -104,11 +111,11 @@ public sealed class ToolEditorWindow : Window
         canvas.Panel = panel;
         panel.PickImage ??= PickImageAsync;
         panel.Changed += OnChanged;
-        panel.Message += text => { message.Text = text; message.IsVisible = text is not null; };
+        panel.Message += text => { message.Text = text; warning.IsVisible = text is not null; };
         compare.Chosen += _ => ShowPreview();
         debounce.Tick += (_, _) => { debounce.Stop(); Render(); };
         KeyDown += OnKey;
-        Closed += (_, _) => { debounce.Stop(); lifetime.Cancel(); panel.Source?.Preview.Dispose(); };
+        Closed += (_, _) => { debounce.Stop(); lifetime.Cancel(); _ = ReleaseAsync(); };
         Loading = LoadAsync();
     }
 
@@ -179,7 +186,7 @@ public sealed class ToolEditorWindow : Window
         side.Children.Add(section);
         side.Children.Add(options);
         options.Content = new TextBlock { Text = L10n.T(Copy.Preparing), FontSize = 11, Classes = { "secondary" } };
-        side.Children.Add(message);
+        side.Children.Add(warning);
         var scroller = new ScrollViewer { Content = side, HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled };
         if (!panel.SideBySide) return scroller;
 
@@ -255,7 +262,7 @@ public sealed class ToolEditorWindow : Window
             OnChanged();
         }
         catch (OperationCanceledException) { }
-        catch (Exception error) { message.Text = L10n.T(error.Message); message.IsVisible = true; options.Content = null; }
+        catch (Exception error) { message.Text = L10n.T(error.Message); warning.IsVisible = true; options.Content = null; }
     }
 
     /// Builds the options again from the panel's settings (after the checks set them directly).
@@ -275,6 +282,18 @@ public sealed class ToolEditorWindow : Window
         debounce.Stop();
         debounce.Start();
         ShowPreview();
+    }
+
+    /// Frees the preview copies once the render that may be using them is done (it holds the gate while it works).
+    private async Task ReleaseAsync()
+    {
+        await gate.WaitAsync();
+        try
+        {
+            panel.Source?.Preview.Dispose();
+            panel.Dispose();
+        }
+        finally { gate.Release(); }
     }
 
     /// Renders now rather than after the debounce (the checks use it).

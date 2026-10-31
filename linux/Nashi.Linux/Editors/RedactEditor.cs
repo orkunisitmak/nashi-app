@@ -26,6 +26,7 @@ public sealed class RedactEditor(IReadOnlyList<string> inputs) : EditorPanel("re
         public const string Many = "{0} areas selected";
         public const string Undo = "Undo Area";
         public const string Delete = "Delete Area";
+        public const string Strength = "Strength";
     }
 
     public static readonly string[] Colors = ["#000000", "#FFFFFF", "#3A3A3C", "#E3B859", "#FF6B79", "#4B79A1"];
@@ -33,6 +34,7 @@ public sealed class RedactEditor(IReadOnlyList<string> inputs) : EditorPanel("re
     private readonly List<Rect> areas = [];
     private string style = "solid";
     private string color = "#000000";
+    private double strength = 1;
     private int selected = -1;
     private Rect? drawing;
     private Point anchor;
@@ -47,7 +49,7 @@ public sealed class RedactEditor(IReadOnlyList<string> inputs) : EditorPanel("re
     public override bool CanSave => areas.Count > 0 && drawing is null;
     public IReadOnlyList<Rect> Areas => areas;
     public int Selected => selected;
-    public RedactOptions Settings => new() { Style = style, Color = color, Areas = [.. areas] };
+    public RedactOptions Settings => new() { Style = style, Color = color, Strength = strength, Areas = [.. areas] };
 
     public override Control Options()
     {
@@ -55,6 +57,8 @@ public sealed class RedactEditor(IReadOnlyList<string> inputs) : EditorPanel("re
         var styles = new Segments([("solid", Copy.Solid), ("blur", Copy.Blur), ("pixelate", Copy.Pixelate)], style);
         styles.Chosen += value => { style = value; Change(); };
         stack.Children.Add(styles);
+        // Blur and blocks grow with each area; strength scales that (1, strong, by default).
+        stack.Children.Add(Ui.Slider(Copy.Strength, .25, 2, strength, 1, v => { strength = v; Change(); }, "×"));
         stack.Children.Add(Ui.Labeled(Copy.Color, Ui.Swatches(Colors, color, hex => { color = hex; Change(); })));
         stack.Children.Add(Ui.Caption(Copy.Drag));
         stack.Children.Add(Ui.Caption(Copy.Select));
@@ -157,6 +161,7 @@ public sealed class RedactEditor(IReadOnlyList<string> inputs) : EditorPanel("re
         selected = -1;
         style = "solid";
         color = "#000000";
+        strength = 1;
     }
 
     public override EditorJob Job()

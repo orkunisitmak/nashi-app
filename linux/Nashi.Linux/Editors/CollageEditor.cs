@@ -187,10 +187,14 @@ public sealed class CollageEditor(IReadOnlyList<string> inputs) : EditorPanel("c
         var scale = Scale;
         return () =>
         {
-            var images = files.Select(Preview).ToList();
             using var background = o.BackgroundImage is { } b ? (MagickImage)Preview(b).Clone() : null;
-            return ImageTools.Collage(images, o, scale, background);
+            return ImageTools.Collage([.. files.Select(f => (Func<MagickImage>)(() => (MagickImage)Preview(f).Clone()))], o, scale, background);
         };
+    }
+
+    public override void Dispose()
+    {
+        lock (previews) { foreach (var image in previews.Values) image.Dispose(); previews.Clear(); }
     }
 
     public override void Reset()
@@ -208,18 +212,13 @@ public sealed class CollageEditor(IReadOnlyList<string> inputs) : EditorPanel("c
         return (files, destination, progress, token) => Task.Run(() =>
         {
             using var tx = new ExportTransaction(destination);
-            var images = new List<MagickImage>();
-            try
-            {
-                foreach (var file in files) { token.ThrowIfCancellationRequested(); images.Add(PhotoCodec.Read(file)); }
-                using var background = o.BackgroundImage is { } b ? PhotoCodec.Read(b) : null;
-                using var collage = ImageTools.Collage(images, o, 1, background);
-                progress.Report(new(.9, "Saving collage…"));
-                var output = SafePaths.Unique(tx.StagingDirectory, System.IO.Path.GetFileNameWithoutExtension(files[0]) + " - Collage.png");
-                ImageOperations.Write(collage, output, "png", 92, strip: true);
-                return tx.Publish([output], token);
-            }
-            finally { foreach (var image in images) image.Dispose(); }
+            using var background = o.BackgroundImage is { } b ? PhotoCodec.Read(b) : null;
+            // One full-size image at a time: each loads, draws and goes before the next.
+            using var collage = ImageTools.Collage([.. files.Select(f => (Func<MagickImage>)(() => { token.ThrowIfCancellationRequested(); return PhotoCodec.Read(f); }))], o, 1, background);
+            progress.Report(new(.9, "Saving collage…"));
+            var output = SafePaths.Unique(tx.StagingDirectory, System.IO.Path.GetFileNameWithoutExtension(files[0]) + " - Collage.png");
+            ImageOperations.Write(collage, output, "png", 92, strip: true);
+            return tx.Publish([output], token);
         }, token);
     }
 }

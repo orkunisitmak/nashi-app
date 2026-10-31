@@ -218,7 +218,7 @@
     <Setter Property="Background" Value="{DynamicResource NashiInset}" />
   </Style>
   <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
-    <Setter Property="BorderBrush" Value="{DynamicResource NashiGold}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource NashiText}" />
     <Setter Property="BorderThickness" Value="1" />
   </Style>
   <Style Selector="ComboBox:pointerover /template/ Border#Background">

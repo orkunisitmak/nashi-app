@@ -1971,6 +1971,7 @@
 "STILL IMAGE" = "STILL IMAGE";
 "STOPPED THE BACKGROUND NASHI." = "STOPPED THE BACKGROUND NASHI.";
 "STRAIGHT TO THE GOOD STUFF." = "STRAIGHT TO THE GOOD STUFF.";
+"STRENGTH" = "STRENGTH";
 "STROKE WIDTH" = "STROKE WIDTH";
 "STRONG" = "STRONG";
 "STYLE" = "STYLE";
@@ -2123,6 +2124,7 @@
 "Still image" = "Still image";
 "Stopped the background Nashi." = "Stopped the background Nashi.";
 "Straight to the good stuff." = "Straight to the good stuff.";
+"Strength" = "Strength";
 "Stroke width" = "Stroke width";
 "Strong" = "Strong";
 "Style" = "Style";
@@ -2406,6 +2408,7 @@
 "Vignette" = "Vignette";
 "Visualization" = "Visualization";
 "WAIT FOR THE PROCESSED PREVIEW TO FINISH BEFORE RESETTING." = "WAIT FOR THE PROCESSED PREVIEW TO FINISH BEFORE RESETTING.";
+"WAITING FOR THE CURRENT TASK TO FINISH…" = "WAITING FOR THE CURRENT TASK TO FINISH…";
 "WAVEFORM" = "WAVEFORM";
 "WELCOME TO NASHI" = "WELCOME TO NASHI";
 "WELCOME…" = "WELCOME…";
@@ -2421,6 +2424,7 @@
 "WINDOWS COULD NOT CREATE A TRAY ICON." = "WINDOWS COULD NOT CREATE A TRAY ICON.";
 "WORKING…" = "WORKING…";
 "Wait for the processed preview to finish before resetting." = "Wait for the processed preview to finish before resetting.";
+"Waiting for the current task to finish…" = "Waiting for the current task to finish…";
 "Waveform" = "Waveform";
 "Welcome to Nashi" = "Welcome to Nashi";
 "Welcome…" = "Welcome…";

@@ -224,7 +224,7 @@ public sealed class QrReaderWindow : Window
             body.Children.Add(new SelectableTextBlock { Text = result.Text, FontSize = 13, TextWrapping = TextWrapping.Wrap });
             cards.Children.Add(new Border { Classes = { "card" }, CornerRadius = new CornerRadius(18), Padding = new Thickness(18), Child = body });
         }
-        foreach (var error in errors) cards.Children.Add(new TextBlock { Text = error, FontSize = 11, TextWrapping = TextWrapping.Wrap, Foreground = Ui.Gold });
+        foreach (var error in errors) cards.Children.Add(Ui.Warning(new TextBlock { Text = error }));
     }
 
     private async Task CopyAsync(string text, Button button, string done)

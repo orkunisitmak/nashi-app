@@ -87,8 +87,9 @@ public static partial class ImageTools
 {
     // ---- Add BG
 
-    /// `load` opens the background image (the editor passes a cached preview copy).
-    public static MagickImage Frame(MagickImage image, FrameOptions o, double scale = 1, Func<string, MagickImage>? load = null)
+    /// `load` opens the background image (the editor passes a cached preview copy). With `consume` the image is
+    /// disposed once copied, so a full-size frame holds at most two full-size copies at a time.
+    public static MagickImage Frame(MagickImage image, FrameOptions o, double scale = 1, Func<string, MagickImage>? load = null, bool consume = false)
     {
         if (!new[] { o.X, o.Y, o.ImageScale, o.CornerRadius, o.BackgroundBlur, o.ShadowRadius, o.ShadowOpacity, o.GradientAngle }.All(double.IsFinite) || o.ImageScale <= 0)
             throw new ArgumentException("Frame settings must be finite, and image scale must be positive.");
@@ -101,7 +102,11 @@ public static partial class ImageTools
             if (width / (double)height < ratio) width = (int)Math.Ceiling(height * ratio);
             else height = (int)Math.Ceiling(width / ratio);
         }
+        int imageWidth = (int)image.Width, imageHeight = (int)image.Height;
+        var photo = ToSkia(image);
+        if (consume) image.Dispose();
         using var bitmap = Canvas(width, height);
+        using (photo)
         using (var canvas = new SKCanvas(bitmap))
         {
             var bounds = new SKRect(0, 0, width, height);
@@ -125,8 +130,8 @@ public static partial class ImageTools
                 DrawFitted(canvas, backdrop, bounds, fill: true);
             }
             int availableWidth = Math.Max(1, width - padding * 2), availableHeight = Math.Max(1, height - padding * 2);
-            var fit = Math.Min(1, Math.Min(availableWidth / (double)image.Width, availableHeight / (double)image.Height)) * o.ImageScale;
-            double w = image.Width * fit, h = image.Height * fit;
+            var fit = Math.Min(1, Math.Min(availableWidth / (double)imageWidth, availableHeight / (double)imageHeight)) * o.ImageScale;
+            double w = imageWidth * fit, h = imageHeight * fit;
             double x = (width - w) * Math.Clamp(o.X, 0, 1), y = (height - h) * Math.Clamp(o.Y, 0, 1);
             var rect = new SKRect((float)x, (float)y, (float)(x + w), (float)(y + h));
             var radius = (float)Math.Max(0, Math.Min(o.CornerRadius * scale, Math.Min(w, h) / 2));
@@ -141,7 +146,6 @@ public static partial class ImageTools
                 canvas.DrawRoundRect(rounded, paint);
                 canvas.Restore();
             }
-            using var photo = ToSkia(image);
             canvas.Save();
             canvas.ClipRoundRect(rounded, antialias: true);
             using (var paint = new SKPaint { FilterQuality = SKFilterQuality.High, IsAntialias = true }) canvas.DrawBitmap(photo, rect, paint);
@@ -152,11 +156,13 @@ public static partial class ImageTools
 
     // ---- Create Collage
 
-    public static MagickImage Collage(IReadOnlyList<MagickImage> inputs, CollageOptions o, double scale = 1, MagickImage? background = null)
+    /// The images, in order, on one canvas. Each loader is called once, its image drawn and disposed before the next
+    /// one loads, so a collage of large photos holds one of them at a time.
+    public static MagickImage Collage(IReadOnlyList<Func<MagickImage>> inputs, CollageOptions o, double scale = 1, MagickImage? background = null)
     {
         if (inputs.Count < 2) throw new ArgumentException("Choose at least two images for a collage.");
         if (!double.IsFinite(o.AspectRatio) || o.AspectRatio <= 0 || !double.IsFinite(o.CornerRadius)) throw new ArgumentException("Collage ratio and corner radius must be valid.");
-        IReadOnlyList<MagickImage> images = inputs;
+        IReadOnlyList<Func<MagickImage>> images = inputs;
         if (o.Order.Length > 0)
         {
             if (o.Order.Length != inputs.Count || !o.Order.Order().SequenceEqual(Enumerable.Range(0, inputs.Count))) throw new ArgumentException("Image order must include every image exactly once.");
@@ -179,7 +185,9 @@ public static partial class ImageTools
             {
                 var cell = new SKRect((float)cells[n].X, (float)cells[n].Y, (float)cells[n].Right, (float)cells[n].Bottom);
                 var radius = (float)Math.Max(0, Math.Min(o.CornerRadius * scale, Math.Min(cell.Width, cell.Height) / 2));
-                using var image = ToSkia(images[n]);
+                SKBitmap image;
+                using (var loaded = images[n]()) image = ToSkia(loaded);
+                using var _ = image;
                 canvas.Save();
                 canvas.ClipRoundRect(new SKRoundRect(cell, radius), antialias: true);
                 DrawFitted(canvas, image, cell, o.Fill);
@@ -215,15 +223,15 @@ public static partial class ImageTools
     // ---- Annotate Photo
 
     /// The marks drawn over the image (macOS ImageEngine.drawAnnotations). `load` opens image stamps.
-    public static MagickImage Annotate(MagickImage image, IReadOnlyList<Mark> marks, Func<string, MagickImage>? load = null)
+    /// With `consume` the image is disposed once copied: the marks draw on that copy, so a full-size annotation holds
+    /// at most two full-size copies (plus a snapshot for magnifiers, when there are any).
+    public static MagickImage Annotate(MagickImage image, IReadOnlyList<Mark> marks, Func<string, MagickImage>? load = null, bool consume = false)
     {
-        using var source = ToSkia(image);
-        using var bitmap = Canvas(source.Width, source.Height);
+        using var bitmap = ToSkia(image);
+        if (consume) image.Dispose();
         using (var canvas = new SKCanvas(bitmap))
-        {
-            canvas.DrawBitmap(source, 0, 0);
-            foreach (var mark in marks) Draw(canvas, mark, source, load);
-        }
+        using (var source = marks.Any(m => m.Kind == "magnifier") ? bitmap.Copy() : null)
+            foreach (var mark in marks) Draw(canvas, mark, source ?? bitmap, load);
         return FromSkia(bitmap);
     }
 

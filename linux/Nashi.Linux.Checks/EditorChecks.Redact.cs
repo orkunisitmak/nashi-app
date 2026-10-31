@@ -13,6 +13,31 @@ static partial class EditorChecks
 {
     // ---- Redact Photo
 
+    /// The spread of brightness in an area, sampled every 4 px (0 for flat, about 127 for black text on white).
+    static double Deviation(MagickImage image, Rect area)
+    {
+        var values = new List<double>();
+        for (var y = (int)area.Y; y < area.Bottom; y += 4)
+            for (var x = (int)area.X; x < area.Right; x += 4) { var c = At(image, x, y); values.Add(.2126 * c.R + .7152 * c.G + .0722 * c.B); }
+        var mean = values.Average();
+        return Math.Sqrt(values.Average(v => (v - mean) * (v - mean)));
+    }
+
+    // Text a tenth of a 4000 px image's height must not survive blur or pixelate.
+    static void Legibility(string work)
+    {
+        using var page = new MagickImage(MagickColors.White, 1500, 4000);
+        using var text = ImageTools.Annotate(page, [new Mark("text", new Rect(100, 1800, 1300, 480)) { Text = "NASHI", FontSize = 400, Color = "#000000" }]);
+        var area = new Rect(80, 1750, 1340, 560);
+        var before = Deviation(text, area);
+        using var blurred = ImageTools.Redact(text, new RedactOptions { Style = "blur", Areas = [area] });
+        using var blocks = ImageTools.Redact(text, new RedactOptions { Style = "pixelate", Areas = [area] });
+        var (blur, pixel) = (Deviation(blurred, area), Deviation(blocks, area));
+        // Blur leaves a near-flat grey; pixelate leaves three rows of blocks over the letters (the spread that is left is
+        // mostly the white margin against the averaged text).
+        check(before > 90 && blur < 20 && pixel < 55, $"400 px text in a 4000 px image is unreadable after blur and pixelate: brightness spread {before:0} → {blur:0.0} and {pixel:0.0}");
+    }
+
     static void Redact(string work, string photo)
     {
         // A noisy fixture: blur and pixelate must change it, and only inside the areas.
@@ -45,6 +70,7 @@ static partial class EditorChecks
             var changed = Enumerable.Range(0, 8).Count(i => At(pixelated, 20 + i, 11) != At(source, 20 + i, 11)) >= 7;
             check(block && changed && Outside(pixelated), "Pixelate fills the area with blocks and leaves the rest untouched");
         }
+        Legibility(work);
         check(Throws(() => ImageTools.Redact(source, new RedactOptions { Areas = [new Rect(190, 0, 20, 10)] })) && Throws(() => ImageTools.Redact(source, new RedactOptions())), "Redact refuses an area outside the image and an empty list");
 
         var window = Open(new RedactEditor([photo]));

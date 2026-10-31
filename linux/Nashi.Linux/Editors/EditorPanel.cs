@@ -56,6 +56,8 @@ public abstract class EditorPanel(string tool, IReadOnlyList<string> inputs)
     /// A snapshot of the options as the full-size export.
     public abstract EditorJob Job();
     public virtual void Reset() { }
+    /// Frees cached preview copies; the window calls it once no render can still use them.
+    public virtual void Dispose() { }
 
     public virtual void Press(Point point, KeyModifiers modifiers, double tolerance) { }
     public virtual void Drag(Point point, KeyModifiers modifiers) { }
@@ -76,6 +78,22 @@ public abstract class EditorPanel(string tool, IReadOnlyList<string> inputs)
 static class Ui
 {
     public static readonly IBrush Gold = new SolidColorBrush(Color.Parse("#E3B859"));
+
+    /// A warning or error: plain text (white in dark, black in light) after a small warning sign. Never gold, which
+    /// is only for the primary action and the selection.
+    public static Control Warning(TextBlock text)
+    {
+        text.FontSize = 11;
+        text.TextWrapping = TextWrapping.Wrap;
+        text.Bind(TextBlock.ForegroundProperty, text.GetResourceObservable("NashiText"));
+        var sign = new PathIcon { Data = Geometry.Parse("F1 M8,1 L15.5,14.5 H0.5 Z M7.2,5.5 V10 H8.8 V5.5 Z M7.2,11.2 V12.8 H8.8 V11.2 Z"), Width = 11, Height = 11, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 1, 0, 0) };
+        sign.Bind(PathIcon.ForegroundProperty, sign.GetResourceObservable("NashiTextSecondary"));
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), ColumnSpacing = 7 };
+        grid.Children.Add(sign);
+        Grid.SetColumn(text, 1);
+        grid.Children.Add(text);
+        return grid;
+    }
 
     public static TextBlock Section(string english) => new()
     {

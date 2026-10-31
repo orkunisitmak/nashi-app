@@ -40,6 +40,7 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
         public const string Failed = "Couldn’t finish: {0}";
         public const string Problem = "Something went wrong: {0}";
         public const string NothingMade = "Nothing was created.";
+        public const string Waiting = "Waiting for the current task to finish…";
     }
 
     private readonly OperationRunner runner = new(tools);
@@ -68,6 +69,9 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
 
     /// The wheel this flow showed last (it may be closed by now).
     public WheelWindow? LastWheel { get; private set; }
+
+    /// The progress card this flow showed last (it may be closed by now).
+    public ProgressToast? LastToast { get; private set; }
 
     /// The QR reader this flow opened last (it may be closed by now).
     public Editors.QrReaderWindow? LastReader { get; private set; }
@@ -136,10 +140,20 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
         catch (Exception error) { notify(L10n.F(Copy.Problem, L10n.T(error.Message))); }
     }
 
+    /// The run in progress (or the last one); a saved editor's job waits for it, then runs. The checks set it.
+    internal Task Current { get; set; } = Task.CompletedTask;
+
     private async Task RunAsync(WheelItem item)
     {
-        if (Busy || files.Count == 0) return;
+        if (files.Count == 0) return;
         var selection = files;
+        // One editor at a time, as on macOS: choosing another tool while one is open brings that one back.
+        if (LastEditor is { IsVisible: true } open && (item.Id == "readQRCode" || Editors.ToolEditorWindow.Opens(item.Id, selection)))
+        {
+            open.Activate();
+            Desktop.Activate(open, 0);
+            return;
+        }
         if (item.Id == "readQRCode")
         {
             (LastReader = new Editors.QrReaderWindow(selection)).Present(owner);
@@ -154,19 +168,36 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
         {
             var editor = LastEditor = new Editors.ToolEditorWindow(panel);
             job = await editor.RunAsync(owner, 0);
-            if (job is null || Busy) return;
+            if (job is null) return;
             selection = panel.Inputs;
         }
-        Busy = true;
+        else if (Busy) return;
+        // A saved job is never dropped: when a run is busy it waits for it, with its progress card up meanwhile.
+        var previous = Current;
+        var done = new TaskCompletionSource();
+        Current = done.Task;
+        try { await ExecuteAsync(item, selection, job, previous); }
+        finally { done.SetResult(); }
+    }
+
+    private async Task ExecuteAsync(WheelItem item, IReadOnlyList<string> selection, Editors.EditorJob? job, Task previous)
+    {
         try
         {
             var title = item.Id.StartsWith("convert:", StringComparison.Ordinal) ? L10n.F(Copy.ConvertTo, item.Title) : item.Title;
             using var cancellation = new CancellationTokenSource();
-            var toast = new ProgressToast(title, cancellation.Cancel);
+            var toast = LastToast = new ProgressToast(title, cancellation.Cancel);
             if (owner is not null) toast.Show(owner);
             else toast.Show();
             try
             {
+                if (!previous.IsCompleted)
+                {
+                    toast.Update(new(null, L10n.T(Copy.Waiting)));
+                    await previous;
+                    cancellation.Token.ThrowIfCancellationRequested();
+                }
+                Busy = true;
                 var outputs = await runner.RunBesideSourcesAsync(item.Id, selection, folder => DestinationAsync(folder, owner ?? toast), new Progress<OperationProgress>(toast.Update), cancellation.Token, job);
                 toast.Close();
                 if (outputs is null) return;

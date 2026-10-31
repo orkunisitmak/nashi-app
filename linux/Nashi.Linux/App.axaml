@@ -10,11 +10,12 @@
     </ResourceDictionary>
   </Application.Resources>
   <Application.Styles>
-    <!-- Gold is the accent of every Fluent control the editors use (checked, focused, selected, slider fill). -->
+    <!-- Fluent's accent (sliders, check boxes, focus, text selection) is the palette's ink: black in light, white in
+         dark. Gold stays for the primary action and the selection, which Nashi's own styles draw. -->
     <FluentTheme>
       <FluentTheme.Palettes>
-        <ColorPaletteResources x:Key="Light" Accent="#E3B859" />
-        <ColorPaletteResources x:Key="Dark" Accent="#E3B859" />
+        <ColorPaletteResources x:Key="Light" Accent="#000000" />
+        <ColorPaletteResources x:Key="Dark" Accent="#FFFFFF" />
       </FluentTheme.Palettes>
     </FluentTheme>
     <StyleInclude Source="avares://Nashi/Theme/Controls.axaml" />

@@ -1252,5 +1252,7 @@
   "Highlight": "Vurgulayıcı",
   "Drag to reorder.": "Sırayı değiştirmek için sürükle.",
   "Order": "Sıra",
-  "Outer padding": "Dış boşluk"
+  "Outer padding": "Dış boşluk",
+  "Strength": "Güç",
+  "Waiting for the current task to finish…": "Geçerli görevin bitmesi bekleniyor…"
 }
