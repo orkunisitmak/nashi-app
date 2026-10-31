@@ -206,6 +206,8 @@
 "Allow Folder…" = "Autoriser un dossier…";
 "Allow Home Folder Access…" = "Autoriser l’accès au dossier de départ…";
 "Allow Nashi in macOS Login Items." = "Autorisez Nashi dans les éléments d’ouverture de macOS.";
+"Already assigned to %@." = "Déjà attribué à %@.";
+"Already assigned to %lld." = "Déjà attribué à %lld.";
 "Already available on your computer" = "Déjà disponibles sur votre ordinateur";
 "An HTTPS download is required." = "Un téléchargement HTTPS est requis.";
 "An RTFD attachment is missing or too large: %@" = "Une pièce jointe RTFD est manquante ou trop volumineuse : %@";
@@ -393,6 +395,7 @@
 "CLEAR" = "EFFACER";
 "CLEAR FLOAT" = "VIDER LE FLOAT";
 "CLEAR SELECTION" = "EFFACER LA SÉLECTION";
+"CLICK A SHORTCUT, THEN PRESS ANY KEYS OR A MOUSE BUTTON. USE IT WHILE DRAGGING FILES." = "CLIQUEZ SUR UN RACCOURCI, PUIS APPUYEZ SUR LES TOUCHES OU LE BOUTON DE SOURIS DE VOTRE CHOIX. UTILISEZ-LE PENDANT QUE VOUS FAITES GLISSER DES FICHIERS.";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "LE PRESSE-PAPIERS EST OCCUPÉ. RÉESSAYEZ.";
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "LE PRESSE-PAPIERS EST OCCUPÉ. RÉESSAYEZ DE COLLER.";
 "CLOSE FLOAT WITHOUT DELETING FILES" = "FERMER FLOAT SANS SUPPRIMER LES FICHIERS";
@@ -559,6 +562,7 @@
 "Clear" = "Effacer";
 "Clear Float" = "Vider le Float";
 "Clear Selection" = "Effacer la sélection";
+"Click a shortcut, then press any keys or a mouse button. Use it while dragging files." = "Cliquez sur un raccourci, puis appuyez sur les touches ou le bouton de souris de votre choix. Utilisez-le pendant que vous faites glisser des fichiers.";
 "Clip %@" = "Clip %@";
 "Clip %lld" = "Clip %lld";
 "Clipboard is busy. Try Paste again." = "Le presse-papiers est occupé. Réessayez de coller.";
@@ -1198,6 +1202,7 @@
 "METADATA TOOLS ARE NOT READY." = "LES OUTILS DE MÉTADONNÉES NE SONT PAS PRÊTS.";
 "METADATA TOOLS CHECKSUM MISMATCH." = "SOMME DE CONTRÔLE DES OUTILS DE MÉTADONNÉES INCORRECTE.";
 "METADATA · NASHI" = "MÉTADONNÉES · NASHI";
+"MIDDLE CLICK" = "CLIC CENTRAL";
 "MIDDLE THIRD" = "TIERS CENTRAL";
 "MONO" = "MONO";
 "MONOSPACED" = "MONOCHASSE";
@@ -1240,9 +1245,12 @@
 "Metadata tools are not ready." = "Les outils de métadonnées ne sont pas prêts.";
 "Metadata tools checksum mismatch." = "Somme de contrôle des outils de métadonnées incorrecte.";
 "Metadata · Nashi" = "Métadonnées · Nashi";
+"Middle Click" = "Clic central";
 "Middle third" = "Tiers central";
 "Mono" = "Mono";
 "Monospaced" = "Monochasse";
+"Mouse %@" = "Souris %@";
+"Mouse %lld" = "Souris %lld";
 "Move" = "Déplacer";
 "Move & share" = "Déplacer et partager";
 "Move Here" = "Déplacer ici";
@@ -1469,6 +1477,7 @@
 "PRESERVE METADATA" = "CONSERVER LES MÉTADONNÉES";
 "PRESERVE ORIGINAL PAGES" = "CONSERVER LES PAGES D’ORIGINE";
 "PRESET" = "PRÉRÉGLAGE";
+"PRESS KEYS OR A MOUSE BUTTON…" = "APPUYEZ SUR DES TOUCHES OU UN BOUTON DE SOURIS…";
 "PREVIEW" = "APERÇU";
 "PREVIEW LEFT" = "APERÇU À GAUCHE";
 "PREVIEW POSITION" = "POSITION DE L’APERÇU";
@@ -1533,6 +1542,7 @@
 "Preserve metadata" = "Conserver les métadonnées";
 "Preserve original pages" = "Conserver les pages d’origine";
 "Preset" = "Préréglage";
+"Press keys or a mouse button…" = "Appuyez sur des touches ou un bouton de souris…";
 "Preview" = "Aperçu";
 "Preview Left" = "Aperçu à gauche";
 "Preview Processed" = "Aperçu du résultat traité";
@@ -1612,6 +1622,7 @@
 "REVEAL FINISHED FILES IN EXPLORER" = "AFFICHER LES FICHIERS TERMINÉS DANS L’EXPLORATEUR";
 "REVEAL FINISHED FILES IN FINDER" = "AFFICHER LES FICHIERS TERMINÉS DANS LE FINDER";
 "RIGHT" = "DROITE";
+"RIGHT CLICK" = "CLIC DROIT";
 "RIGHT HALF" = "MOITIÉ DROITE";
 "RIGHT THIRD" = "TIERS DROIT";
 "RIGHT TWO-THIRDS" = "DEUX TIERS DROITE";
@@ -1676,6 +1687,7 @@
 "Reveal finished files in Explorer" = "Afficher les fichiers terminés dans l’Explorateur";
 "Reveal finished files in Finder" = "Afficher les fichiers terminés dans le Finder";
 "Right" = "Droite";
+"Right Click" = "Clic droit";
 "Right half" = "Moitié droite";
 "Right third" = "Tiers droit";
 "Right two-thirds" = "Deux tiers droite";
@@ -1963,7 +1975,6 @@
 "System" = "Système";
 "TAP COMMAND WHILE DRAGGING TO CROP, COMPRESS, ANNOTATE, AND GIVE YOUR FILE A LITTLE LOVE." = "APPUYEZ SUR COMMANDE EN GLISSANT POUR RECADRER, COMPRESSER, ANNOTER ET CHOYER VOTRE FICHIER.";
 "TAP CONTROL WHILE DRAGGING TO COPY, MOVE, SHARE, OR CARRY FILES IN A FLOATING SHELF." = "APPUYEZ SUR CONTRÔLE PENDANT LE GLISSEMENT POUR COPIER, DÉPLACER, PARTAGER OU EMPORTER VOS FICHIERS DANS UN PANNEAU FLOTTANT.";
-"TAP THE CHOSEN MODIFIER COMBINATION WHILE DRAGGING FILES." = "APPUYEZ SUR LA COMBINAISON DE MODIFICATEURS CHOISIE PENDANT QUE VOUS FAITES GLISSER DES FICHIERS.";
 "TARGET" = "CIBLE";
 "TARGET LOUDNESS" = "VOLUME SONORE CIBLE";
 "TARGET LUFS" = "LUFS CIBLE";
@@ -2051,7 +2062,6 @@
 "TURN OFF UNIFORM WIDTH TO PRESERVE THIS PDF’S FORM FIELDS, ATTACHMENTS, LINKS OR NAVIGATION." = "DÉSACTIVEZ LA LARGEUR UNIFORME POUR PRÉSERVER LES CHAMPS DE FORMULAIRE, PIÈCES JOINTES, LIENS OU LA NAVIGATION DE CE PDF.";
 "Tap Command while dragging to crop, compress, annotate, and give your file a little love." = "Appuyez sur Commande en glissant pour recadrer, compresser, annoter et choyer votre fichier.";
 "Tap Control while dragging to copy, move, share, or carry files in a floating shelf." = "Appuyez sur Contrôle pendant le glissement pour copier, déplacer, partager ou emporter vos fichiers dans un panneau flottant.";
-"Tap the chosen modifier combination while dragging files." = "Appuyez sur la combinaison de modificateurs choisie pendant que vous faites glisser des fichiers.";
 "Target" = "Cible";
 "Target LUFS" = "LUFS cible";
 "Target loudness" = "Volume sonore cible";
