@@ -6,14 +6,22 @@ public static partial class ImageEngine
 {
     private static void CompressImage(BitmapSource source,string input,string output,string format,ImageOptions options,CancellationToken token,IProgress<OperationProgress>? progress)
     {
-        var target=CompressionTarget(new FileInfo(input).Length,options.TargetBytes,options.ReductionPercent);var image=TransformPhoto(source,options);var originalDimensions=image.PixelWidth==source.PixelWidth&&image.PixelHeight==source.PixelHeight;var quality=Math.Clamp(options.Quality,1,100);
-        for(var n=0;n<24;n++)
+        var original=new FileInfo(input).Length;var target=CompressionTarget(original,options.TargetBytes,options.ReductionPercent);var image=TransformPhoto(source,options);var quality=Math.Clamp(options.Quality,1,100);var lossy=format!="png";var attempt=0;
+        void Encode(int q,double scale)
         {
-            token.ThrowIfCancellationRequested();if(File.Exists(output))File.Delete(output);progress?.Report(new(null,$"Fitting image · attempt {n+1}…"));Save(image,output,format,quality,options.EncoderPath,token);
-            if(target is null||new FileInfo(output).Length<=target){if(originalDimensions&&FeatureCatalog.Extension(input)==format&&new FileInfo(input).Length<new FileInfo(output).Length)File.Copy(input,output,true);return;}
-            if(quality>15&&format!="png")quality=Math.Max(1,(int)(quality*.72));else{image=new TransformedBitmap(image,new ScaleTransform(Math.Max(1,(int)(image.PixelWidth*.8))/(double)image.PixelWidth,Math.Max(1,(int)(image.PixelHeight*.8))/(double)image.PixelHeight));originalDimensions=false;}
+            token.ThrowIfCancellationRequested();if(File.Exists(output))File.Delete(output);
+            var frame=scale<1?new TransformedBitmap(image,new ScaleTransform(Math.Max(1,(int)(image.PixelWidth*scale))/(double)image.PixelWidth,Math.Max(1,(int)(image.PixelHeight*scale))/(double)image.PixelHeight)):image;Save(frame,output,format,q,options.EncoderPath,token);
         }
-        throw new IOException("The requested image size could not be reached. Choose a larger target.");
+        // The source file can stand in for the output only when no edit reached the pixels; flips, 180° turns and annotations keep the size but must still be encoded and measured.
+        var keepsOriginal=options.Annotated is null&&!options.FlipHorizontal&&!options.FlipVertical&&((options.Rotation%360)+360)%360==0&&image.PixelWidth==source.PixelWidth&&image.PixelHeight==source.PixelHeight&&FeatureCatalog.Extension(input)==format;
+        var outcome=target is {} limit?TargetSizeSearch.Run(keepsOriginal?original:long.MaxValue,limit,quality,lossy,true,(q,scale)=>{progress?.Report(new(null,$"Fitting image · attempt {++attempt}…"));Encode(q,scale);return new FileInfo(output).Length;},token):null;
+        if(outcome is {Status:TargetSizeStatus.BestEffortAboveTarget})
+        {
+            if(File.Exists(output))File.Delete(output);
+            throw new IOException("The requested image size could not be reached. Choose a larger target.");
+        }
+        var best=outcome?.Best;if(best is null)Encode(quality,1);else if(new FileInfo(output).Length!=best.Bytes){Encode(best.Quality,best.Scale);if(new FileInfo(output).Length>target){File.Delete(output);throw new IOException("The requested image size could not be reached. Choose a larger target.");}}
+        if((best?.Scale??1)==1&&keepsOriginal&&original<new FileInfo(output).Length)File.Copy(input,output,true);
     }
     internal static long? CompressionTarget(long original,long? bytes,double? percent)
     {
