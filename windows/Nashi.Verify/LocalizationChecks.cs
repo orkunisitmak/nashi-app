@@ -26,6 +26,14 @@ internal static class LocalizationChecks
         check(loaded.Language=="tr"&&!loaded.Feedback&&loaded.ToolsModifier=="Ctrl+Alt","Language persistence changed other preferences");
         var old=Path.Combine(root,"Legacy language preferences");Directory.CreateDirectory(old);File.WriteAllText(Path.Combine(old,"preferences.json"),"{\"Feedback\":false}");var legacy=new PreferencesStore(old);
         check(legacy.Value.Language=="en"&&!legacy.Value.Feedback,"Legacy preference migration changed other values");
-        check(AppLocalization.Normalize("fr")=="en"&&AppLocalization.Text("Home","en")=="Home","Unsupported language or English fallback failed");
+        check(AppLocalization.Normalize("de")=="en"&&AppLocalization.Text("Home","en")=="Home"&&AppLocalization.Text("Library","de")=="Library","Unsupported language or English fallback failed");
+        check(AppLocalization.Normalize("fr")=="fr"&&AppLocalization.Text("Library","fr")=="Bibliothèque"&&AppLocalization.Text("Language","fr")=="Langue","French UI catalog not loaded");
+        check(AppLocalization.Text("3 files","fr")=="3 fichiers"&&AppLocalization.Text("Convert to JPG","fr")=="Convertir en JPG"&&AppLocalization.Text("Convert to JPG · Nashi","fr")=="Convertir en JPG · Nashi","French templates failed");
+        check(AppLocalization.Uppercase("Bibliothèque","fr")=="BIBLIOTHÈQUE"&&AppLocalization.Matches("Crop Image","recad","fr")&&AppLocalization.Matches("Crop Image","crop","fr"),"French upper case or search failed");
+        foreach(var value in new[]{"Home.png","MP4","Ctrl+Shift","⌘S","00:01.250"})check(AppLocalization.Text(value,"fr")==value,"French translation changed a format, path or shortcut");
+        foreach(var (source,target) in AppLocalization.French)check(Regex.Matches(source,@"\{[0-9]\}").Select(m=>m.Value).Order().SequenceEqual(Regex.Matches(target,@"\{[0-9]\}").Select(m=>m.Value).Order()),"French translation placeholders differ: "+source);
+        check(AppLocalization.French.Keys.All(AppLocalization.Turkish.ContainsKey),"French.json has keys that Turkish.json lacks");
+        check(AppLocalization.Turkish.Keys.All(AppLocalization.French.ContainsKey),"Turkish.json has keys that French.json lacks");
+        var frenchDirectory=Path.Combine(root,"French preferences");new PreferencesStore(frenchDirectory).Save(new Preferences{Language="fr",Feedback=false});check(new PreferencesStore(frenchDirectory).Value.Language=="fr","French setting did not persist");
     }
 }
