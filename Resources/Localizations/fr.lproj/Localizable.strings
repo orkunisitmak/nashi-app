@@ -1752,6 +1752,10 @@
 "Portrait · 9:16" = "Portrait · 9:16";
 "Position X" = "Position X";
 "Position Y" = "Position Y";
+"Prepared %@ of %@ files" = "Fichiers préparés : %@ sur %@";
+"Prepared %@ of %lld files" = "Fichiers préparés : %@ sur %lld";
+"Prepared %lld of %@ files" = "Fichiers préparés : %lld sur %@";
+"Prepared %lld of %lld files" = "Fichiers préparés : %lld sur %lld";
 "Preparing %@…" = "Préparation de %@…";
 "Preparing %lld…" = "Préparation de %lld…";
 "Preparing a local preview…" = "Préparation d’un aperçu local…";
@@ -1780,6 +1784,8 @@
 "Processed preview unavailable for this Windows codec." = "Aperçu traité indisponible pour ce codec Windows.";
 "Processed preview · export uses the original file." = "Aperçu traité · l’export utilise le fichier d’origine.";
 "Processed preview. Choose Original to edit areas." = "Aperçu traité. Choisissez Original pour modifier les zones.";
+"Processing %@…" = "Traitement de %@…";
+"Processing %lld…" = "Traitement de %lld…";
 "Processing…" = "Traitement en cours…";
 "Protected media cannot be downloaded." = "Les médias protégés ne peuvent pas être téléchargés.";
 "Public repository · No token needed" = "Dépôt public · Aucun jeton nécessaire";
@@ -1975,6 +1981,7 @@
 "SAVING COLLAGE…" = "ENREGISTREMENT DU COLLAGE…";
 "SAVING DOCUMENT…" = "ENREGISTREMENT DU DOCUMENT…";
 "SAVING IMAGES…" = "ENREGISTREMENT DES IMAGES…";
+"SAVING YOUR FILES…" = "ENREGISTREMENT DE VOS FICHIERS…";
 "SCAN AGAIN" = "ANALYSER À NOUVEAU";
 "SCAN COMPLETE." = "ANALYSE TERMINÉE.";
 "SEARCH FORMATS" = "RECHERCHER DES FORMATS";
@@ -2129,6 +2136,7 @@
 "Saving collage…" = "Enregistrement du collage…";
 "Saving document…" = "Enregistrement du document…";
 "Saving images…" = "Enregistrement des images…";
+"Saving your files…" = "Enregistrement de vos fichiers…";
 "Scan again" = "Analyser à nouveau";
 "Scan complete." = "Analyse terminée.";
 "Search formats" = "Rechercher des formats";

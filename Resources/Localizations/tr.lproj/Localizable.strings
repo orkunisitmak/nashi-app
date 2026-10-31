@@ -1752,6 +1752,10 @@
 "Portrait · 9:16" = "Dikey · 9:16";
 "Position X" = "X konumu";
 "Position Y" = "Y konumu";
+"Prepared %@ of %@ files" = "%@/%@ dosya hazırlandı";
+"Prepared %@ of %lld files" = "%@/%lld dosya hazırlandı";
+"Prepared %lld of %@ files" = "%lld/%@ dosya hazırlandı";
+"Prepared %lld of %lld files" = "%lld/%lld dosya hazırlandı";
 "Preparing %@…" = "%@ hazırlanıyor…";
 "Preparing %lld…" = "%lld hazırlanıyor…";
 "Preparing a local preview…" = "Yerel önizleme hazırlanıyor…";
@@ -1780,6 +1784,8 @@
 "Processed preview unavailable for this Windows codec." = "Bu Windows codec'i için işlenmiş önizleme kullanılamıyor.";
 "Processed preview · export uses the original file." = "İşlenmiş önizleme · dışa aktarmada orijinal dosya kullanılır.";
 "Processed preview. Choose Original to edit areas." = "İşlenmiş önizleme. Alanları düzenlemek için Orijinal'i seç.";
+"Processing %@…" = "%@ işleniyor…";
+"Processing %lld…" = "%lld işleniyor…";
 "Processing…" = "İşleniyor…";
 "Protected media cannot be downloaded." = "Korumalı medya indirilemez.";
 "Public repository · No token needed" = "Herkese açık depo · Token gerekmez";
@@ -1975,6 +1981,7 @@
 "SAVING COLLAGE…" = "KOLAJ KAYDEDİLİYOR…";
 "SAVING DOCUMENT…" = "BELGE KAYDEDİLİYOR…";
 "SAVING IMAGES…" = "GÖRSELLER KAYDEDİLİYOR…";
+"SAVING YOUR FILES…" = "DOSYALARIN KAYDEDİLİYOR…";
 "SCAN AGAIN" = "YENİDEN TARA";
 "SCAN COMPLETE." = "TARAMA TAMAMLANDI.";
 "SEARCH FORMATS" = "BİÇİMLERDE ARA";
@@ -2129,6 +2136,7 @@
 "Saving collage…" = "Kolaj kaydediliyor…";
 "Saving document…" = "Belge kaydediliyor…";
 "Saving images…" = "Görseller kaydediliyor…";
+"Saving your files…" = "Dosyaların kaydediliyor…";
 "Scan again" = "Yeniden tara";
 "Scan complete." = "Tarama tamamlandı.";
 "Search formats" = "Biçimlerde ara";
