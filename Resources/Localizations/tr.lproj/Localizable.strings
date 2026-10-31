@@ -880,6 +880,7 @@
 "FILE ACTIONS" = "DOSYA İŞLEMLERİ";
 "FILE ACTIONS WHEEL" = "DOSYA İŞLEMLERİ ÇARKI";
 "FILE ACTIONS · WHILE DRAGGING" = "DOSYA İŞLEMLERİ · SÜRÜKLERKEN";
+"FILE NAME" = "DOSYA ADI";
 "FILE ORDER" = "DOSYA SIRASI";
 "FILE PATHS COPIED." = "DOSYA YOLLARI KOPYALANDI.";
 "FILE SIZE" = "DOSYA BOYUTU";
@@ -946,6 +947,7 @@
 "File actions" = "Dosya işlemleri";
 "File actions wheel" = "Dosya işlemleri çarkı";
 "File actions · while dragging" = "Dosya işlemleri · sürüklerken";
+"File name" = "Dosya adı";
 "File order" = "Dosya sırası";
 "File paths copied." = "Dosya yolları kopyalandı.";
 "File size" = "Dosya boyutu";
@@ -1301,6 +1303,7 @@
 "NASHI · FEATURES & SHORTCUTS" = "NASHI · ÖZELLİKLER VE KISAYOLLAR";
 "NEXT" = "İLERİ";
 "NEXT FRAME" = "SONRAKİ KARE";
+"NEXT IMAGE" = "SONRAKİ GÖRSEL";
 "NEXT PAGE" = "SONRAKİ SAYFA";
 "NEXT, DOWNLOAD THE MISSING TOOLS FOR MEDIA AND OFFICE FILES. TOOLS ALREADY ON YOUR COMPUTER DO NOT NEED ANOTHER DOWNLOAD." = "ŞİMDİ MEDYA VE OFFICE DOSYALARI İÇİN EKSİK ARAÇLARI İNDİR. BİLGİSAYARINDA BULUNAN ARAÇLARI YENİDEN İNDİRMEN GEREKMEZ.";
 "NICE FILES.\nNO FUSS." = "DOSYALAR HAZIR.\nZAHMET YOK.";
@@ -1347,6 +1350,7 @@
 "Nashi · Features & shortcuts" = "Nashi · Özellikler ve kısayollar";
 "Next" = "İleri";
 "Next frame" = "Sonraki kare";
+"Next image" = "Sonraki görsel";
 "Next page" = "Sonraki sayfa";
 "Next, download the missing tools for media and Office files. Tools already on your computer do not need another download." = "Şimdi medya ve Office dosyaları için eksik araçları indir. Bilgisayarında bulunan araçları yeniden indirmen gerekmez.";
 "Nice files.\nNo fuss." = "Dosyalar hazır.\nZahmet yok.";
@@ -1517,9 +1521,11 @@
 "PREVIEW PROCESSED" = "İŞLENMİŞİ ÖNİZLE";
 "PREVIEW READY · EXPORT USES YOUR ORIGINAL FILE." = "ÖNİZLEME HAZIR · DIŞA AKTARIRKEN ORİJİNAL DOSYAN KULLANILIR.";
 "PREVIEW RIGHT" = "SAĞI ÖNİZLE";
+"PREVIEW UNAVAILABLE" = "ÖNİZLEME YOK";
 "PREVIEW USES THE FIRST 12 SECONDS. EXPORT INCLUDES THE FULL RECORDING." = "ÖNİZLEME İLK 12 SANİYEYİ KULLANIR. DIŞA AKTARMA KAYDIN TAMAMINI İÇERİR.";
 "PREVIEW VISUALIZATION" = "GÖRSELLEŞTİRMEYİ ÖNİZLE";
 "PREVIOUS FRAME" = "ÖNCEKİ KARE";
+"PREVIOUS IMAGE" = "ÖNCEKİ GÖRSEL";
 "PREVIOUS PAGE" = "ÖNCEKİ SAYFA";
 "PROCESSED PREVIEW UNAVAILABLE FOR THIS WINDOWS CODEC." = "BU WINDOWS CODEC'İ İÇİN İŞLENMİŞ ÖNİZLEME KULLANILAMIYOR.";
 "PROCESSED PREVIEW · EXPORT USES THE ORIGINAL FILE." = "İŞLENMİŞ ÖNİZLEME · DIŞA AKTARMADA ORİJİNAL DOSYA KULLANILIR.";
@@ -1529,7 +1535,11 @@
 "PUBLIC UPDATES WORK WITHOUT A TOKEN." = "HERKESE AÇIK GÜNCELLEMELER İÇİN TOKEN GEREKMEZ.";
 "Padding" = "İç boşluk";
 "Page %@" = "Sayfa %@";
+"Page %@ of %@" = "Sayfa %@ / %@";
+"Page %@ of %lld" = "Sayfa %@ / %lld";
 "Page %lld" = "Sayfa %lld";
+"Page %lld of %@" = "Sayfa %lld / %@";
+"Page %lld of %lld" = "Sayfa %lld / %lld";
 "Page numbers" = "Sayfa numaraları";
 "Page ranges" = "Sayfa aralıkları";
 "Page ranges, for example 1-3, 5" = "Sayfa aralıkları, örneğin 1-3, 5";
@@ -1582,10 +1592,12 @@
 "Preview Visualization" = "Görselleştirmeyi Önizle";
 "Preview position" = "Önizleme konumu";
 "Preview ready · export uses your original file." = "Önizleme hazır · dışa aktarırken orijinal dosyan kullanılır.";
+"Preview unavailable" = "Önizleme yok";
 "Preview unavailable: %@" = "Önizleme kullanılamıyor: %@";
 "Preview unavailable: %lld" = "Önizleme kullanılamıyor: %lld";
 "Preview uses the first 12 seconds. Export includes the full recording." = "Önizleme ilk 12 saniyeyi kullanır. Dışa aktarma kaydın tamamını içerir.";
 "Previous frame" = "Önceki kare";
+"Previous image" = "Önceki görsel";
 "Previous page" = "Önceki sayfa";
 "Processed preview unavailable for this Windows codec." = "Bu Windows codec'i için işlenmiş önizleme kullanılamıyor.";
 "Processed preview · export uses the original file." = "İşlenmiş önizleme · dışa aktarmada orijinal dosya kullanılır.";
@@ -2301,6 +2313,7 @@
 "WINDOW MANAGEMENT · DRAG A TITLE BAR, THEN SHIFT OR ALT" = "PENCERE DÜZENİ · BAŞLIK ÇUBUĞUNU SÜRÜKLERKEN SHIFT VEYA ALT'A BAS";
 "WINDOWS COULD NOT ADD NASHI TO THE SYSTEM TRAY." = "WINDOWS, NASHI'Yİ SİSTEM TEPSİSİNE EKLEYEMEDİ.";
 "WINDOWS COULD NOT CREATE A TRAY ICON." = "WINDOWS TEPSİ SİMGESİNİ OLUŞTURAMADI.";
+"WITHOUT .PDF. LEAVE EMPTY FOR THE DEFAULT NAME." = "UZANTISIZ YAZIN (.PDF EKLENİR). VARSAYILAN AD İÇİN BOŞ BIRAKIN.";
 "WORKING…" = "İŞLENİYOR…";
 "Wait for the processed preview to finish before resetting." = "Sıfırlamadan önce işlenmiş önizlemenin bitmesini bekle.";
 "Waveform" = "Dalga biçimi";
@@ -2316,6 +2329,7 @@
 "Window management · drag a title bar, then Shift or Alt" = "Pencere düzeni · başlık çubuğunu sürüklerken Shift veya Alt'a bas";
 "Windows could not add Nashi to the system tray." = "Windows, Nashi'yi sistem tepsisine ekleyemedi.";
 "Windows could not create a tray icon." = "Windows tepsi simgesini oluşturamadı.";
+"Without .pdf. Leave empty for the default name." = "Uzantısız yazın (.pdf eklenir). Varsayılan ad için boş bırakın.";
 "Working…" = "İşleniyor…";
 "YOU CAN ALSO CHOOSE FILES FROM THE MAIN WINDOW." = "ANA PENCEREDEN DE DOSYA SEÇEBİLİRSİN.";
 "YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL." = "NE ZAMAN İNDİRİP KURACAĞINA SEN KARAR VER.";

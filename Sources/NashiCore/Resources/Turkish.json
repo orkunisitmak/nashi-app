@@ -1193,6 +1193,12 @@
   "Save downloaded media to…": "İndirilen medyayı şuraya kaydet…",
   "Original image · ready to download": "Orijinal görsel · indirmeye hazır",
   "YouTube thumbnail · best available full-size image": "YouTube küçük resmi · en iyi tam boyutlu görsel",
+  "Previous image": "Önceki görsel",
+  "Next image": "Sonraki görsel",
+  "Page {0} of {1}": "Sayfa {0} / {1}",
+  "File name": "Dosya adı",
+  "Without .pdf. Leave empty for the default name.": "Uzantısız yazın (.pdf eklenir). Varsayılan ad için boş bırakın.",
+  "Preview unavailable": "Önizleme yok",
   "No tools for this file type": "Bu dosya türü için araç yok",
   "Details": "Ayrıntılar",
   "Copy details": "Ayrıntıları kopyala"
