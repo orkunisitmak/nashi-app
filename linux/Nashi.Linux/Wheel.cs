@@ -1,4 +1,7 @@
+using System.Buffers.Binary;
 using System.Globalization;
+using System.Runtime.InteropServices;
+using System.Text;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -146,7 +149,8 @@ public sealed class Wheel : Control
         InvalidateVisual();
     }
 
-    // A highlight the user moved (pointer or keys) ticks, as macOS's selectionChanged; opening and page turns do not.
+    // Every highlight the user moves (pointer, arrows, Tab) ticks, as macOS's selectionChanged; opening and page turns
+    // do not.
     private void Highlight(int index)
     {
         var before = highlighted;
@@ -164,6 +168,7 @@ public sealed class Wheel : Control
         {
             case Key.Right or Key.Down: Highlight(Step(highlighted, 1)); break;
             case Key.Left or Key.Up: Highlight(Step(highlighted, -1)); break;
+            case Key.Tab: Highlight(Step(highlighted, e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? -1 : 1)); break;
             case Key.Home: Highlight(Step(-1, 1)); break;
             case Key.End: Highlight(Step(0, -1)); break;
             case Key.PageDown: TurnPage(1); break;
@@ -412,42 +417,35 @@ public static class WheelFeedback
 
     public static string Sound => Path.Combine(AppContext.BaseDirectory, "Sounds", "WheelSelection.wav");
 
-    /// The time source for the tick's rate limit; the checks swap in their own.
-    public static Func<DateTime> Clock { get; set; } = () => DateTime.UtcNow;
-    public static readonly TimeSpan MinimumInterval = TimeSpan.FromSeconds(0.05);
+    /// Plays the sound at a volume (0 to 1): in-process through PulseAudio (PipeWire serves it too), else through
+    /// paplay, pw-play or aplay. The checks swap in their own, so nothing reaches the speakers.
+    public static Action<double> Player { get; set; } = volume => { if (!Pulse.Play(volume)) PlayThroughPlayers(volume); };
 
     // PulseAudio, PipeWire, then ALSA (which has no volume). Players found missing are skipped for the rest of the run.
     private static readonly string[] Players = ["paplay", "pw-play", "aplay"];
     private static readonly HashSet<string> missing = [];
     private static readonly object gate = new();
-    private static DateTime lastTick = DateTime.MinValue;
-    private static bool ticking;
 
     /// Players found missing so far (the checks clear it).
     public static ISet<string> Missing => missing;
 
     /// A choice: the sound at full volume.
-    public static void PlaySelection() => Play(1, tick: false);
+    public static void PlaySelection() => Play(1);
 
-    /// A highlight change, as macOS's selectionChanged: the same sound, softer (0.65), at most every 50 ms,
-    /// and dropped while the previous tick is still playing.
-    public static void Tick()
+    /// Every highlight change the user makes, as macOS's selectionChanged: the same sound, softer (0.65). None is
+    /// dropped; a newer one restarts the sound.
+    public static void Tick() => Play(0.65);
+
+    // Silently nothing when the setting is off or the file is missing.
+    private static void Play(double volume)
     {
-        var now = Clock();
-        lock (gate)
-        {
-            if (ticking || (now - lastTick < MinimumInterval && now >= lastTick)) return;
-            lastTick = now;
-        }
-        Play(0.65, tick: true);
+        if (SoundEnabled && File.Exists(Sound)) Player(volume);
     }
 
-    // Fire-and-forget through the first player that starts; one that exits non-zero (no sound server, say) hands
-    // over to the next. Silently nothing when the setting is off, the file is missing or no player works.
-    private static void Play(double volume, bool tick)
+    /// The fallback: fire-and-forget through the first player that starts; one that exits non-zero (no sound server,
+    /// say) hands over to the next. Nothing when no player works.
+    public static void PlayThroughPlayers(double volume)
     {
-        if (!SoundEnabled || !File.Exists(Sound)) return;
-        if (tick) lock (gate) ticking = true;
         Try(0);
 
         void Try(int from)
@@ -457,16 +455,46 @@ public static class WheelFeedback
                 var player = Players[i];
                 lock (gate) if (missing.Contains(player)) continue;
                 var next = i + 1;
-                if (Desktop.Spawn(player, Arguments(player, volume), null, code => { if (code == 0) Done(); else Try(next); })) return;
+                if (Desktop.Spawn(player, Arguments(player, volume), null, code => { if (code != 0) Try(next); })) return;
                 lock (gate) missing.Add(player);
             }
-            Done();
         }
+    }
 
-        void Done()
+    /// 16-bit PCM from a WAV file, or null for anything else. Chunks other than fmt and data (LIST, say) are skipped.
+    public static Pcm? DecodeWav(byte[] wav)
+    {
+        if (wav.Length < 12 || Encoding.ASCII.GetString(wav, 0, 4) != "RIFF" || Encoding.ASCII.GetString(wav, 8, 4) != "WAVE") return null;
+        int format = 0, channels = 0, rate = 0, bits = 0;
+        for (var at = 12; at + 8 <= wav.Length;)
         {
-            if (tick) lock (gate) ticking = false;
+            var id = Encoding.ASCII.GetString(wav, at, 4);
+            var body = at + 8;
+            var size = (int)Math.Min(BinaryPrimitives.ReadUInt32LittleEndian(wav.AsSpan(at + 4)), (uint)(wav.Length - body));
+            if (id == "fmt " && size >= 16)
+            {
+                format = BinaryPrimitives.ReadUInt16LittleEndian(wav.AsSpan(body));
+                channels = BinaryPrimitives.ReadUInt16LittleEndian(wav.AsSpan(body + 2));
+                rate = BinaryPrimitives.ReadInt32LittleEndian(wav.AsSpan(body + 4));
+                bits = BinaryPrimitives.ReadUInt16LittleEndian(wav.AsSpan(body + 14));
+            }
+            else if (id == "data")
+            {
+                // 1 is PCM; 0xFFFE (extensible) with 16 bits is PCM too.
+                if (format is not (1 or 0xFFFE) || bits != 16 || channels < 1 || rate < 1) return null;
+                var samples = new short[size / 2];
+                for (var i = 0; i < samples.Length; i++) samples[i] = BinaryPrimitives.ReadInt16LittleEndian(wav.AsSpan(body + i * 2));
+                return new Pcm(rate, channels, samples);
+            }
+            at = body + size + (size & 1);
         }
+        return null;
+    }
+
+    /// The samples at a volume, as macOS's player.volume: scaled and clamped.
+    public static void Scale(ReadOnlySpan<short> from, Span<short> to, double volume)
+    {
+        for (var i = 0; i < from.Length; i++) to[i] = (short)Math.Clamp(Math.Round(from[i] * volume), short.MinValue, short.MaxValue);
     }
 
     private static string[] Arguments(string player, double volume) => player switch
@@ -475,4 +503,110 @@ public static class WheelFeedback
         "pw-play" => ["--volume=" + volume.ToString("0.##", CultureInfo.InvariantCulture), Sound],
         _ => ["-q", Sound],
     };
+}
+
+/// Decoded 16-bit PCM: interleaved samples.
+public sealed record Pcm(int Rate, int Channels, short[] Samples);
+
+// One persistent PulseAudio stream through libpulse-simple (PipeWire-pulse serves it too), fed 10 ms at a time by a
+// background thread. A new request flushes what is queued and restarts the sound, so quick ticks never pile up.
+// A short target buffer (30 ms) keeps the latency low. The wav is decoded once.
+internal static class Pulse
+{
+    /// The server to use; null is the default one. The checks point it at nothing to test the fallback.
+    internal static string? Server { get; set; }
+
+    private static readonly object gate = new();
+    private static readonly Lazy<Pcm?> pcm = new(() => File.Exists(WheelFeedback.Sound) ? WheelFeedback.DecodeWav(File.ReadAllBytes(WheelFeedback.Sound)) : null);
+    private static nint stream;
+    private static bool failed;
+    private static double? pending;
+
+    /// Queues the sound; false when PulseAudio is not there (or broke), so the caller falls back.
+    public static bool Play(double volume)
+    {
+        lock (gate)
+        {
+            if (failed) return false;
+            if (stream == 0 && !Open()) return false;
+            pending = volume;
+            Monitor.Pulse(gate);
+            return true;
+        }
+    }
+
+    private static bool Open()
+    {
+        try
+        {
+            if (pcm.Value is not { } sound) return Fail();
+            var spec = new SampleSpec { Format = 3 /* PA_SAMPLE_S16LE */, Rate = (uint)sound.Rate, Channels = (byte)sound.Channels };
+            var attr = new BufferAttr { MaxLength = uint.MaxValue, TLength = (uint)(sound.Rate * sound.Channels * 2 * 30 / 1000), PreBuf = uint.MaxValue, MinReq = uint.MaxValue, FragSize = uint.MaxValue };
+            stream = pa_simple_new(Server, "Nashi", 1 /* PA_STREAM_PLAYBACK */, null, "Wheel", ref spec, 0, ref attr, out _);
+            if (stream == 0) return Fail();
+            new Thread(() => Run(stream, sound)) { IsBackground = true, Name = "Nashi sound" }.Start();
+            return true;
+        }
+        catch (Exception e) when (e is DllNotFoundException or EntryPointNotFoundException or BadImageFormatException or IOException)
+        {
+            return Fail();
+        }
+    }
+
+    private static bool Fail()
+    {
+        failed = true;
+        return false;
+    }
+
+    private static void Run(nint handle, Pcm sound)
+    {
+        var chunk = sound.Rate / 100 * sound.Channels;
+        var buffer = new short[chunk];
+        while (true)
+        {
+            double volume;
+            lock (gate)
+            {
+                while (pending is null) Monitor.Wait(gate);
+                volume = pending.Value;
+                pending = null;
+            }
+            pa_simple_flush(handle, out _);
+            for (var at = 0; at < sound.Samples.Length; at += chunk)
+            {
+                lock (gate) if (pending is not null) break;
+                var count = Math.Min(chunk, sound.Samples.Length - at);
+                WheelFeedback.Scale(sound.Samples.AsSpan(at, count), buffer, volume);
+                if (pa_simple_write(handle, buffer, (nuint)(count * 2), out _) >= 0) continue;
+                lock (gate)
+                {
+                    failed = true; // the server went away: from now on the players play
+                    stream = 0;
+                }
+                pa_simple_free(handle);
+                return;
+            }
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct SampleSpec
+    {
+        public int Format;
+        public uint Rate;
+        public byte Channels;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct BufferAttr
+    {
+        public uint MaxLength, TLength, PreBuf, MinReq, FragSize;
+    }
+
+    [DllImport("libpulse-simple.so.0")]
+    private static extern nint pa_simple_new(string? server, string name, int direction, string? device, string streamName, ref SampleSpec spec, nint map, ref BufferAttr attr, out int error);
+    [DllImport("libpulse-simple.so.0")] private static extern int pa_simple_write(nint stream, short[] data, nuint bytes, out int error);
+    [DllImport("libpulse-simple.so.0")] private static extern int pa_simple_flush(nint stream, out int error);
+    [DllImport("libpulse-simple.so.0")] private static extern void pa_simple_free(nint stream);
 }

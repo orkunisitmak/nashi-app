@@ -39,6 +39,7 @@ FileActions.TerminalSettle = TimeSpan.FromMilliseconds(50);
 var ran = new List<(string Program, string[] Args)>();
 Func<string, IReadOnlyList<string>, string?> runResult = (_, _) => null;
 Desktop.Run = (program, args) => { ran.Add((program, [.. args])); return runResult(program, args); };
+WheelFeedback.Player = _ => { }; // nothing reaches the speakers
 WheelFeedback.SystemReducesMotion = false;
 WheelFeedback.ReduceMotion = true; // renders show the wheel at rest; MotionChecks turns it on
 var temp = Directory.CreateTempSubdirectory("nashi-linux-checks-");
@@ -1145,15 +1146,77 @@ async Task ActionChecks(string root)
     Key(Avalonia.Input.Key.Left);
     Check(wheel.HighlightedIndex == 0, "Left from Copy skips Float back to Share");
 
-    // Sound: a choice plays the wav at full volume through the first player that works; a user's highlight change
-    // ticks softer, at most every 50 ms and one at a time; opening and setting the highlight in code are silent.
+    // Sound: a choice plays the wav at full volume; every highlight change the user makes (arrows, Tab, the pointer
+    // into another petal) plays it at 0.65, none dropped; opening and setting the highlight in code are silent.
     Check(File.Exists(WheelFeedback.Sound), "WheelSelection.wav ships beside the executable");
-    var now = new DateTime(2026, 1, 1);
-    WheelFeedback.Clock = () => now;
+    var plays = new List<double>();
+    WheelFeedback.Player = plays.Add;
+    Key(Avalonia.Input.Key.Enter);
+    Check(chosen?.Id == "action:share" && plays.SequenceEqual([1.0]), "Choosing plays the sound at full volume");
+    plays.Clear();
+    wheel.Items = [.. wheel.Items];
+    wheel.HighlightedIndex = 3;
+    Check(plays.Count == 0, "Opening a wheel and setting its highlight in code play no tick");
+    var eight = new Wheel { Items = [.. Enumerable.Range(0, 8).Select(i => new WheelItem("p" + i, "P" + i))] };
+    void Press(Key key, KeyModifiers modifiers = KeyModifiers.None) => eight.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = key, KeyModifiers = modifiers });
+    for (var i = 0; i < 8; i++) Press(Avalonia.Input.Key.Right);
+    Check(plays.Count == 8 && plays.All(v => v == 0.65) && eight.HighlightedIndex == 0, "Eight quick Right presses round 8 petals: 8 ticks at 0.65, none dropped");
+    plays.Clear();
+    for (var i = 0; i < 8; i++) Press(Avalonia.Input.Key.Tab);
+    for (var i = 0; i < 8; i++) Press(Avalonia.Input.Key.Tab, KeyModifiers.Shift);
+    Check(plays.Count == 16 && eight.HighlightedIndex == 0, "Tab and Shift+Tab move the highlight and tick on every move");
+    plays.Clear();
+    var eightWindow = new Window { Width = Wheel.Size, Height = Wheel.Size, Content = eight };
+    eightWindow.Show();
+    Dispatcher.UIThread.RunJobs();
+    Point PetalCenter(int index)
+    {
+        var angle = (90 - index * 45) * Math.PI / 180;
+        var r = (Wheel.Inner + Wheel.Radius) / 2;
+        return new(Wheel.Size / 2 + r * Math.Cos(angle), Wheel.Size / 2 - r * Math.Sin(angle));
+    }
+    foreach (var index in new[] { 1, 2, 3, 4, 5, 6, 7, 0 }) eightWindow.MouseMove(PetalCenter(index), RawInputModifiers.None);
+    Check(plays.Count == 8 && eight.HighlightedIndex == 0, "The pointer sweeping across 8 petals quickly ticks 8 times, none dropped");
+    eightWindow.MouseMove(PetalCenter(0) + new Vector(1, 1), RawInputModifiers.None);
+    Check(plays.Count == 8, "Moving within the same petal does not tick");
+    eightWindow.Close();
+    WheelFeedback.SoundEnabled = false;
+    plays.Clear();
+    Key(Avalonia.Input.Key.Right);
+    Key(Avalonia.Input.Key.Enter);
+    Check(plays.Count == 0, "With the sound setting off nothing plays");
+    WheelFeedback.SoundEnabled = true;
+
+    // The wav decodes once to 16-bit PCM (its LIST chunk skipped); the tick volume scales and clamps the samples.
+    var wav = WheelFeedback.DecodeWav(File.ReadAllBytes(WheelFeedback.Sound));
+    Check(wav is { Rate: 48000, Channels: 2 } && wav.Samples.Length == 192000 / 2 && wav.Samples.Any(v => v != 0), "WheelSelection.wav decodes as 48 kHz stereo 16-bit PCM");
+    byte[] Riff(short format, short bits, short[] data)
+    {
+        using var buffer = new MemoryStream();
+        using var w = new BinaryWriter(buffer);
+        w.Write("RIFF"u8); w.Write(0); w.Write("WAVE"u8);
+        w.Write("LIST"u8); w.Write(3); w.Write("abc\0"u8); // odd size, padded
+        w.Write("fmt "u8); w.Write(16); w.Write(format); w.Write((short)1); w.Write(8000); w.Write(16000); w.Write((short)2); w.Write(bits);
+        w.Write("data"u8); w.Write(data.Length * 2); foreach (var v in data) w.Write(v);
+        return buffer.ToArray();
+    }
+    var made = WheelFeedback.DecodeWav(Riff(1, 16, [1, -2, short.MaxValue, short.MinValue]));
+    Check(made is { Rate: 8000, Channels: 1 } && made.Samples.SequenceEqual(new short[] { 1, -2, short.MaxValue, short.MinValue }), "A PCM wav after an odd-sized chunk decodes sample for sample");
+    Check(WheelFeedback.DecodeWav(Riff(3, 32, [0, 0])) is null && WheelFeedback.DecodeWav(Riff(1, 8, [0])) is null && WheelFeedback.DecodeWav("RIFF"u8.ToArray()) is null, "Float, 8-bit and truncated wavs are refused");
+    var scaled = new short[4];
+    WheelFeedback.Scale(new short[] { 1000, -1000, short.MaxValue, short.MinValue }, scaled, 0.65);
+    var louder = new short[2];
+    WheelFeedback.Scale(new short[] { 30000, -30000 }, louder, 2);
+    Check(scaled.SequenceEqual(new short[] { 650, -650, 21299, -21299 }) && louder.SequenceEqual(new short[] { short.MaxValue, short.MinValue }), "The tick volume scales the samples and clamps them");
+
+    // Without a PulseAudio server the in-process player says so (nothing plays) and the players take over.
+    Pulse.Server = "unix:/nonexistent/nashi-checks";
+    Check(!Pulse.Play(0.65), "Without a PulseAudio server the in-process player declines, so the players take over");
+    WheelFeedback.Player = WheelFeedback.PlayThroughPlayers;
     WheelFeedback.Missing.Clear();
     launched.Clear();
     Key(Avalonia.Input.Key.Enter);
-    Check(chosen?.Id == "action:share" && launched.Select(l => l.Program).SequenceEqual(["paplay", "pw-play", "aplay"]) && launched[0].Args.SequenceEqual(["--volume=65536", WheelFeedback.Sound]), "Choosing tries paplay, then pw-play, then aplay");
+    Check(launched.Select(l => l.Program).SequenceEqual(["paplay", "pw-play", "aplay"]) && launched[0].Args.SequenceEqual(["--volume=65536", WheelFeedback.Sound]), "The fallback tries paplay, then pw-play, then aplay");
     launched.Clear();
     Key(Avalonia.Input.Key.Enter);
     Check(launched.Count == 0 && WheelFeedback.Missing.SetEquals(["paplay", "pw-play", "aplay"]), "Missing players are remembered and not tried again");
@@ -1163,32 +1226,12 @@ async Task ActionChecks(string root)
     Key(Avalonia.Input.Key.Enter);
     Check(launched.Select(l => l.Program).SequenceEqual(["paplay", "pw-play"]) && launched[1].Args.SequenceEqual(["--volume=1", WheelFeedback.Sound]), "A player that exits non-zero hands over to the next one");
     exitCodes.Clear(); running.Clear(); launched.Clear();
-    wheel.Items = [.. wheel.Items];
-    wheel.HighlightedIndex = 3;
-    Check(launched.Count == 0, "Opening a wheel and setting its highlight in code play no tick");
-    now += TimeSpan.FromSeconds(1);
+    startable.Add("paplay");
     Key(Avalonia.Input.Key.Right);
-    Check(launched.Count == 1 && launched[0].Program == "paplay" && launched[0].Args[0] == "--volume=42598", "A user's highlight change ticks at 0.65 volume");
-    now += TimeSpan.FromSeconds(1);
     Key(Avalonia.Input.Key.Right);
-    Check(launched.Count == 1, "A tick is dropped while the previous one still plays");
-    foreach (var done in running.ToArray()) done(0);
-    running.Clear();
-    exitCodes["paplay"] = 0; // from here each tick ends at once
-    Key(Avalonia.Input.Key.Right);
-    Check(launched.Count == 2, "Once the previous tick ends, the next highlight change ticks again");
-    Key(Avalonia.Input.Key.Right);
-    Check(launched.Count == 2, "Ticks closer than 50 ms are dropped");
-    exitCodes.Clear();
-    WheelFeedback.SoundEnabled = false;
-    now += TimeSpan.FromSeconds(1);
-    launched.Clear();
-    Key(Avalonia.Input.Key.Right);
-    Key(Avalonia.Input.Key.Enter);
-    Check(launched.Count == 0, "With the sound setting off nothing plays");
-    WheelFeedback.SoundEnabled = true;
-    startable.Clear();
-    WheelFeedback.Clock = () => DateTime.UtcNow;
+    Check(launched.Count == 2 && launched.All(l => l.Program == "paplay" && l.Args[0] == "--volume=42598"), "Through the fallback too, every highlight change ticks at 0.65, even while one still plays");
+    startable.Clear(); running.Clear(); launched.Clear();
+    WheelFeedback.Player = _ => { };
 
     // Through Home: the Actions chip → Copy → the picked folder → the success card; Copy Path → the clipboard.
     var home = new MainWindow { Width = 820, Height = 780 };
