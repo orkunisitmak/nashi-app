@@ -7,7 +7,7 @@ namespace Nashi.Linux;
 
 public sealed record Choice(string Id,string Title,string? Format=null);
 /// Choices made in a tool's dialog; each tool reads only its own part.
-public sealed record ToolSettings(MediaOptions? Media=null,ImageEdit? Crop=null,PhotoEdit? Photo=null,FrameOptions? Frame=null,CollageOptions? Collage=null,Redaction? Redact=null,PdfOrganization? Organize=null,Annotation? Annotate=null);
+public sealed record ToolSettings(MediaOptions? Media=null,ImageEdit? Crop=null,PhotoEdit? Photo=null,FrameOptions? Frame=null,CollageOptions? Collage=null,Redaction? Redact=null,PdfOrganization? Organize=null,Annotation? Annotate=null,DocumentOptions? Document=null);
 
 /// The Linux preview offers only workflows implemented here; the shared catalog decides
 /// which of them apply to a selection, so the rules match macOS and Windows.
@@ -26,6 +26,10 @@ public static class Operations
         }
         return null;
     }
+    public static string? Office=>Executable("soffice")??Executable("libreoffice");
+    /// Media and web tools: the user's installed ffmpeg, ffprobe, yt-dlp and deno first, downloads only for what is missing.
+    public static Toolchain Toolset=>new(Path.Combine(LinuxPaths.DataDirectory,"tools"),Environment.GetEnvironmentVariable("PATH"));
+    private static readonly string[] OfficeFree=["jpg","png","txt","md"];
     public static MediaEngine? Media=>Executable("ffmpeg") is {} ffmpeg&&Executable("ffprobe") is {} ffprobe?new(ffmpeg,ffprobe):null;
 
     public static string[] Formats(IReadOnlyList<string> files)
@@ -35,8 +39,11 @@ public static class Operations
         if(files.All(FeatureCatalog.IsImage))return formats.Where(ImageOutputs.Contains).Where(f=>f!="heic"||Executable("ffmpeg") is not null).ToArray();
         if(files.All(f=>FeatureCatalog.IsVideo(f)||FeatureCatalog.IsAudio(f)))return Media is null?[]:formats.Where(f=>MediaEngine.AudioFormats.Contains(f)||MediaEngine.VideoFormats.Contains(f)).ToArray();
         if(files.All(FeatureCatalog.IsArchive))return formats.Where(f=>f is "zip" or "tar" or "gz").ToArray();
-        if(files.All(IsPdf))return formats.Where(f=>f is "txt" or "md" or "png" or "jpg").ToArray();
-        if(files.All(IsSubtitle))return formats.Where(f=>f is "srt" or "vtt" or "txt").ToArray();
+        if(files.All(IsSubtitle))return formats;
+        // Documents go through LibreOffice; PDF pages and text do not need it. Pages files also need deno.
+        var office=Office is not null;var pages=office&&Toolset.Ready;
+        if(files.All(IsPdf))return formats.Where(f=>OfficeFree.Contains(f)||office&&(f!="pages"||pages)).ToArray();
+        if(files.All(IsDocument))return office?formats.Where(f=>f!="pages"&&!files.Any(i=>FeatureCatalog.Extension(i)=="pages")||pages).ToArray():[];
         return [];
     }
     public static Choice[] Tools(IReadOnlyList<string> files)
@@ -50,15 +57,15 @@ public static class Operations
 
     public static async Task<IReadOnlyList<string>> RunAsync(Choice choice,IReadOnlyList<string> inputs,string destination,IProgress<OperationProgress> progress,CancellationToken token,ToolSettings? settings=null)
     {
-        var (media,edit,photo,frame,collage,redact,organize,annotate)=settings??new();
+        var (media,edit,photo,frame,collage,redact,organize,annotate,document)=settings??new();
         if(choice.Id=="convert")
         {
             var format=choice.Format!;
             if(inputs.All(FeatureCatalog.IsImage))return await Task.Run(()=>format=="pdf"?ImagesToPdf(inputs,destination,progress,token):Images(inputs,destination,format,85,true,progress,token),token);
-            if(inputs.All(FeatureCatalog.IsArchive))return await Task.Run(()=>inputs.SelectMany(i=>ArchiveEngine.Convert(i,format,destination,null,progress,token)).ToArray(),token);
-            if(inputs.All(IsPdf))return await Task.Run(()=>format is "png" or "jpg"?PdfPages(inputs,destination,format,144,progress,token):PdfText(inputs,destination,format,token),token);
-            if(inputs.All(IsSubtitle))return await Task.Run(()=>Subtitles(inputs,destination,format,token),token);
-            return await RequireMedia().ConvertAsync(inputs,format,destination,new MediaOptions(),progress,token);
+            if(inputs.All(f=>FeatureCatalog.IsVideo(f)||FeatureCatalog.IsAudio(f)))return await RequireMedia().ConvertAsync(inputs,format,destination,new MediaOptions(),progress,token);
+            // Archives, subtitles, PDFs and documents: the conversion code ported from Windows.
+            if(format!="txt"&&format!="md"&&format!="png"&&format!="jpg"&&!inputs.All(f=>FeatureCatalog.IsArchive(f)||IsSubtitle(f))&&Office is null)throw new InvalidOperationException("Install LibreOffice with your package manager to convert documents.");
+            return await new DocumentConversion(Office,Toolset).ConvertAsync(inputs,format,destination,document??new DocumentOptions(),progress,token);
         }
         return choice.Id switch
         {
@@ -162,39 +169,7 @@ public static class Operations
 
     private static bool IsPdf(string file)=>FeatureCatalog.Extension(file)=="pdf";
     private static bool IsSubtitle(string file)=>FeatureCatalog.Extension(file) is "srt" or "vtt";
-    /// Plain text for both TXT and Markdown, as on Windows.
-    private static IReadOnlyList<string> PdfText(IReadOnlyList<string> inputs,string destination,string format,CancellationToken token)=>Texts(inputs,destination,format,token,input=>
-    {
-        var text=OfficeDocuments.PdfText(input);return string.IsNullOrWhiteSpace(text)?throw new InvalidDataException("This PDF has no selectable text."):text;
-    });
-    /// Every page as its own image, named "<PDF> Page N".
-    public static IReadOnlyList<string> PdfPages(IReadOnlyList<string> inputs,string destination,string format,int dpi,IProgress<OperationProgress>? progress,CancellationToken token)
-    {
-        using var tx=new ExportTransaction(destination);var outputs=new List<string>();
-        foreach(var input in inputs)
-        {
-            using var pdf=PdfRaster.Open(input);
-            for(var i=0;i<pdf.PageCount;i++)
-            {
-                token.ThrowIfCancellationRequested();var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+$" Page {i+1}.{format}");
-                using var image=new MagickImage(pdf.RenderPage(i,dpi,token));image.Quality=92;image.Write(output,PhotoCodec.Format(format));outputs.Add(output);
-                progress?.Report(new(outputs.Count/(double)Math.Max(outputs.Count,pdf.PageCount*inputs.Count)*.98,$"Page {i+1} of {pdf.PageCount}…"));
-            }
-        }
-        return tx.Publish(outputs,token);
-    }
-    private static IReadOnlyList<string> Subtitles(IReadOnlyList<string> inputs,string destination,string format,CancellationToken token)=>Texts(inputs,destination,format,token,input=>SubtitleCodec.Convert(LegacyTextCodec.Decode(File.ReadAllBytes(input)),format));
-    private static IReadOnlyList<string> Texts(IReadOnlyList<string> inputs,string destination,string format,CancellationToken token,Func<string,string> read)
-    {
-        using var tx=new ExportTransaction(destination);var outputs=new List<string>();
-        foreach(var input in inputs)
-        {
-            token.ThrowIfCancellationRequested();var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+"."+format);
-            File.WriteAllText(output,read(input),new System.Text.UTF8Encoding(false));outputs.Add(output);
-        }
-        return tx.Publish(outputs,token);
-    }
-
+    public static bool IsDocument(string file)=>FeatureCatalog.Extension(file) is "docx" or "pages" or "md" or "rtf" or "rtfd" or "textclipping" or "html" or "epub" or "txt" or "xlsx" or "xls" or "ods" or "csv" or "tsv" or "ppt" or "pptx";
     /// Images and every PDF page.
     public static string[] ReadQr(IReadOnlyList<string> inputs)
     {

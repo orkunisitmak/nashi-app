@@ -113,7 +113,7 @@ internal static class OperationChecks
                 var output=Operations.RunAsync(new(tool,tool),[pdf],Path.Combine(root,"pdf-"+tool),progress,token).GetAwaiter().GetResult().Single();
                 using var document=PdfDocument.Open(output);Check(output.EndsWith(suffix,StringComparison.Ordinal)&&document.NumberOfPages==2,"PDF "+tool);
             }
-            Check(Operations.Formats([pdf]).SequenceEqual(new[]{"jpg","png","txt","md"}),"PDF formats");
+            Check(Operations.Formats([pdf]).SequenceEqual(Operations.Office is null?new[]{"jpg","png","txt","md"}:Operations.Toolset.Ready?new[]{"docx","pages","pptx","xlsx","jpg","png","epub","txt","md"}:new[]{"docx","pptx","xlsx","jpg","png","epub","txt","md"}),"PDF formats");
             var pageImages=Operations.RunAsync(new("convert","PNG","png"),[pdf],Path.Combine(root,"pdf-png"),progress,token).GetAwaiter().GetResult();
             using(var first=new MagickImage(pageImages[0])){using var pixels=first.GetPixels();var c=pixels.GetPixel((int)first.Width/2,(int)first.Height/2).ToColor()!;
                 // Pear.png is 320×200 px placed at 96 DPI, so the page is 240×150 pt and renders to 480×300 px at 144 DPI.
@@ -125,6 +125,8 @@ internal static class OperationChecks
             using(var raster=PdfRaster.Open(pdf)){using var thumb=new MagickImage(raster.Thumbnail(0,260));Check(thumb.Width==260,"Thumbnail long side");}
             var srt=Path.Combine(root,"Talk.srt");File.WriteAllText(srt,"1\n00:00:01,000 --> 00:00:02,500\nHello\n\n2\n00:00:03,000 --> 00:00:04,000\n<i>World</i>\n");
             Check(Operations.Formats([srt]).SequenceEqual(new[]{"vtt","txt"}),"Subtitle formats");
+            if(Operations.Office is not null)Documents(root,progress,token);
+            else Console.Error.WriteLine("LibreOffice not found: document conversions skipped.");
             var vtt=File.ReadAllText(Operations.RunAsync(new("convert","VTT","vtt"),[srt],Path.Combine(root,"subtitle-vtt"),progress,token).GetAwaiter().GetResult().Single());
             Check(vtt.StartsWith("WEBVTT",StringComparison.Ordinal)&&vtt.Contains("00:00:01.000 --> 00:00:02.500"),"SRT to VTT");
             var plain=File.ReadAllText(Operations.RunAsync(new("convert","TXT","txt"),[srt],Path.Combine(root,"subtitle-txt"),progress,token).GetAwaiter().GetResult().Single());
@@ -195,6 +197,48 @@ internal static class OperationChecks
             return 0;
         }
         catch(Exception error){Console.Error.WriteLine($"FAILED after {passed} checks: {error}");return 1;}
+    }
+    /// Real LibreOffice, PDFium, PdfPig, deno and Tesseract round trips, checked by reading the results back.
+    private static void Documents(string root,IProgress<OperationProgress> progress,CancellationToken token)
+    {
+        string Convert(string input,string format,DocumentOptions? options=null)=>Operations.RunAsync(new("convert",format.ToUpperInvariant(),format),[input],Path.Combine(root,"doc-"+Path.GetFileNameWithoutExtension(input)+"-"+format),progress,token,new(Document:options)).GetAwaiter().GetResult().Single();
+        string PdfWords(string file){using var document=PdfDocument.Open(file);return string.Join(" ",document.GetPages().Select(p=>p.Text));}
+        string ZipText(string file,string entry){using var zip=System.IO.Compression.ZipFile.OpenRead(file);using var reader=new StreamReader(zip.GetEntry(entry)!.Open());return reader.ReadToEnd();}
+        var md=Path.Combine(root,"Notlar.md");File.WriteAllText(md,"# Başlık\n\nMerhaba **dünya**, çalışıyor.\n\n- bir\n- iki\n");
+        Check(Operations.Formats([md]).Contains("docx")&&Operations.Formats([md]).Contains("pdf"),"Markdown formats");
+        var docx=Convert(md,"docx");Check(ZipText(docx,"word/document.xml").Contains("dünya"),"Markdown to DOCX");
+        var docPdf=Convert(docx,"pdf");Check(PdfWords(docPdf).Contains("Merhaba"),"DOCX to PDF");
+        var png=Convert(docx,"png");Check(new MagickImageInfo(png).Width>500,"DOCX to PNG pages");
+        var html=Convert(docx,"html");Check(File.ReadAllText(html).Contains("dünya"),"DOCX to HTML");
+        var htmlPdf=Convert(html,"pdf");Check(PdfWords(htmlPdf).Contains("Merhaba"),"HTML to PDF");
+        var epub=Convert(md,"epub");Check(ZipText(epub,"mimetype")=="application/epub+zip","Markdown to EPUB");
+        var epubText=Convert(epub,"txt");Check(File.ReadAllText(epubText).Contains("Merhaba"),"EPUB to text");
+        var rtf=Path.Combine(root,"Mektup.rtf");File.WriteAllText(rtf,"{\\rtf1\\ansi\\ansicpg1254 {\\b Kal\\'fdn} metin \\u351?ey\\par}");
+        Check(ZipText(Convert(rtf,"docx"),"word/document.xml").Contains("şey"),"RTF to DOCX keeps Turkish letters");
+        if(Operations.Toolset.Ready)
+        {
+            var pages=Convert(docx,"pages");Check(new FileInfo(pages).Length>1000,"DOCX to Pages");
+            var back=Convert(pages,"docx");Check(ZipText(back,"word/document.xml").Contains("Merhaba"),"Pages to DOCX");
+        }
+        var csv=Path.Combine(root,"Tablo.csv");File.WriteAllText(csv,"Ad,Puan\nAyşe,90\nMehmet,85\n");
+        var xlsx=Convert(csv,"xlsx");Check(ZipText(xlsx,"xl/sharedStrings.xml").Contains("Ayşe"),"CSV to XLSX");
+        var ods=Convert(xlsx,"ods");Check(ZipText(ods,"content.xml").Contains("Mehmet"),"XLSX to ODS");
+        var csvBack=Convert(ods,"csv");Check(File.ReadAllText(csvBack).Contains("Ayşe,90"),"ODS to CSV");
+        var sheetPdf=Convert(xlsx,"pdf");Check(PdfWords(sheetPdf).Contains("Mehmet"),"XLSX to PDF");
+        var editable=Convert(docPdf,"docx",new(Layout:"editable"));Check(ZipText(editable,"word/document.xml").Contains("Merhaba"),"PDF to editable DOCX");
+        var picture=Convert(docPdf,"docx",new(Layout:"preserve"));Check(ZipText(picture,"[Content_Types].xml").Contains("png")||System.IO.Compression.ZipFile.OpenRead(picture).Entries.Any(e=>e.FullName.StartsWith("word/media/",StringComparison.Ordinal)),"PDF to DOCX keeping the look");
+        var slides=Convert(docPdf,"pptx");Check(System.IO.Compression.ZipFile.OpenRead(slides).Entries.Any(e=>e.FullName.StartsWith("ppt/slides/slide",StringComparison.Ordinal)),"PDF to PPTX");
+        var slidesPdf=Convert(slides,"pdf");using(var a=PdfDocument.Open(docPdf))using(var b=PdfDocument.Open(slidesPdf))Check(a.NumberOfPages==b.NumberOfPages,"PPTX to PDF keeps the pages");
+        var fixedEpub=Convert(docPdf,"epub",new(EpubLayout:"fixed"));Check(System.IO.Compression.ZipFile.OpenRead(fixedEpub).Entries.Any(e=>e.FullName=="OEBPS/page0.png"),"PDF to fixed EPUB");
+        var tables=Convert(sheetPdf,"xlsx");Check(ZipText(tables,"xl/sharedStrings.xml").Contains("Mehmet"),"PDF tables to XLSX");
+        // A scanned page: the words are only pixels, so text comes from OCR.
+        if(Operations.Executable("tesseract") is not null)
+        {
+            var scan=Path.Combine(root,"Tarama.png");
+            using(var image=new MagickImage(MagickColors.White,1400,400)){new ImageMagick.Drawing.Drawables().FillColor(MagickColors.Black).FontPointSize(110).Text(60,240,"NASHI ÇALIŞIYOR").Draw(image);image.Write(scan,MagickFormat.Png);}
+            var scanned=Operations.ImagesToPdf([scan],Path.Combine(root,"scan-pdf"),null,token).Single();
+            var recognized=File.ReadAllText(Convert(scanned,"txt"));Check(recognized.Contains("NASHI",StringComparison.OrdinalIgnoreCase),"Scanned PDF text through OCR");
+        }
     }
     private static string Hash(string file)=>Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(file)));
     private static void Check(bool condition,string name){if(!condition)throw new InvalidDataException(name);passed++;}

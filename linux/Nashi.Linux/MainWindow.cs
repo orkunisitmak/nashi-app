@@ -76,7 +76,7 @@ public sealed class MainWindow:Window
         var appearance=new ComboBox{ItemsSource=new[]{"System","Light","Dark"},SelectedIndex=library.Appearance switch{"light"=>1,"dark"=>2,_=>0},MinWidth=120};
         appearance.SelectionChanged+=(_,_)=>{var value=new[]{"system","light","dark"}[appearance.SelectedIndex];library.SetAppearance(value);NashiTheme.Apply(Application.Current!,value);};
         var settings=new StackPanel{Spacing=12,Margin=new(20),Children={Label("Appearance"),appearance,
-            new TextBlock{TextWrapping=TextWrapping.Wrap,Text=$"Media tools: {(Operations.Media is null?"install ffmpeg with your package manager":"ffmpeg found")}.\nLibrary and settings: {LinuxPaths.DataDirectory}\nNashi {typeof(MainWindow).Assembly.GetName().Version?.ToString(3)} · Linux preview"}}};
+            new TextBlock{TextWrapping=TextWrapping.Wrap,Text=$"Media tools: {(Operations.Media is null?"install ffmpeg with your package manager":"ffmpeg found")}.\nDocuments: {(Operations.Office is null?"install libreoffice with your package manager":"LibreOffice found")}.\nLibrary and settings: {LinuxPaths.DataDirectory}\nNashi {typeof(MainWindow).Assembly.GetName().Version?.ToString(3)} · Linux preview"}}};
         var tabs=new TabControl{Items={Tab("Home",home),Tab("Library",libraryPage),Tab("Settings",settings)}};
         tabs.SelectionChanged+=(_,_)=>{if(tabs.SelectedIndex==1)RefreshLibrary();};
         return tabs;
@@ -112,7 +112,7 @@ public sealed class MainWindow:Window
     {
         fileList.ItemsSource=files.ToArray();fileList.IsVisible=files.Count>0;
         selection.Text=files.Count switch{0=>"Drop something good.",1=>Path.GetFileName(files[0]),var n=>$"{n} files, ready to go."};
-        hint.Text=files.Count==0?"Images, videos, audio, PDFs, subtitles and archives. Drop files here, choose them or paste with Ctrl+V.":"Pick a format or a tool below. Originals are never overwritten.";
+        hint.Text=files.Count==0?"Images, videos, audio, PDFs, documents, spreadsheets, slides, subtitles and archives. Drop files here, choose them or paste with Ctrl+V.":"Pick a format or a tool below. Originals are never overwritten.";
         var ready=running is null&&files.Count>0;
         var formatChoices=ready?Operations.Formats(files):[];var toolChoices=ready?Operations.Tools(files):[];
         formats.Children.Clear();foreach(var format in formatChoices)formats.Children.Add(Action(format.ToUpperInvariant(),new("convert",format.ToUpperInvariant(),format)));
@@ -132,7 +132,18 @@ public sealed class MainWindow:Window
             catch(Exception error){status.Text=error.Message;}
             return;
         }
-        MediaOptions? media=null;ImageEdit? edit=null;PhotoEdit? photo=null;FrameOptions? frame=null;CollageOptions? collage=null;Redaction? redact=null;PdfOrganization? organize=null;Annotation? annotate=null;
+        MediaOptions? media=null;ImageEdit? edit=null;PhotoEdit? photo=null;FrameOptions? frame=null;CollageOptions? collage=null;Redaction? redact=null;PdfOrganization? organize=null;Annotation? annotate=null;DocumentOptions? document=null;
+        if(choice.Id=="convert"&&choice.Format is "docx" or "pages" or "epub"&&inputs.All(f=>FeatureCatalog.Extension(f)=="pdf"))
+        {
+            // As on Windows: rebuild editable text, or keep each page's exact look as a picture.
+            if(await Ask("PDF to "+choice.Title,[("Editable text and images",0),("Keep the exact look (page pictures)",1)],0) is not {} layout)return;
+            document=new(Layout:layout==1?"preserve":"editable");
+        }
+        if(choice.Id=="convert"&&choice.Format=="epub")
+        {
+            if(await Ask("EPUB layout",[("Reflowable (text adapts to the reader)",0),("Fixed pages",1)],0) is not {} epub)return;
+            document=(document??new())with{EpubLayout=epub==1?"fixed":"reflowable"};
+        }
         if(choice.Id=="annotateImage")
         {
             AnnotateDialog editor;try{editor=await AnnotateDialog.CreateAsync(choice.Title,inputs[0]);}catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or ImageMagick.MagickException){status.Text=error.Message;return;}
@@ -207,7 +218,7 @@ public sealed class MainWindow:Window
         var report=new Progress<OperationProgress>(p=>{if(p.Fraction is {} f){progress.IsIndeterminate=false;progress.Value=f;}status.Text=p.Label;});
         try
         {
-            var outputs=await Operations.RunAsync(choice,inputs,destination,report,running.Token,new(media,edit,photo,frame,collage,redact,organize,annotate));
+            var outputs=await Operations.RunAsync(choice,inputs,destination,report,running.Token,new(media,edit,photo,frame,collage,redact,organize,annotate,document));
             library.Record(choice.Id=="convert"?"Convert to "+choice.Format!.ToUpperInvariant():choice.Title,outputs);
             lastFolder=destination;reveal.IsVisible=true;
             status.Text=outputs.Count==1?$"Saved {Path.GetFileName(outputs[0])}":$"Saved {outputs.Count} files";
