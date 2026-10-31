@@ -305,14 +305,15 @@ import Sparkle
 
     public func updater(_ updater: SPUUpdater, willDownloadUpdate item: SUAppcastItem, with request: NSMutableURLRequest) {
         guard repository != nil else { return }
+        // Assigning allHTTPHeaderFields merges, so remove Sparkle's headers one by one.
+        request.allHTTPHeaderFields?.keys.forEach { request.setValue(nil, forHTTPHeaderField: $0) }
         do {
             guard let bridge, let url = request.url else { throw ConnectionError.reconnect }
             request.url = try bridge.archiveURL(for: url)
-            request.allHTTPHeaderFields = ["User-Agent": "Nashi updater"]
+            request.setValue("Nashi updater", forHTTPHeaderField: "User-Agent")
         } catch {
             // Fail closed even for Sparkle's resumed/delta download paths.
             request.url = URL(string: "http://127.0.0.1:1/unavailable")!
-            request.allHTTPHeaderFields = [:]
             lastError = error.localizedDescription
         }
     }
