@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 namespace Nashi.Core;
@@ -53,7 +53,25 @@ public sealed class MetadataService(string root)
         {
             token.ThrowIfCancellationRequested();var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+" Metadata"+Path.GetExtension(input));
             if(FeatureCatalog.Extension(input)=="pdf"&&removeAll){var fresh=DocumentEngine.Pdf("removeMetadata",[input],tx.StagingDirectory,token:token)[0];File.Move(fresh,output);}else File.Copy(input,output);
-            var args=new List<string>{"-overwrite_original","-P","-charset","filename=UTF8"};if(removeAll){args.Add("-all=");if(FeatureCatalog.IsImage(input)||FeatureCatalog.Extension(input)=="gif")args.AddRange(["-tagsfromfile","@","-Orientation","-ICC_Profile"]);}if(removals is not null)args.AddRange(removals.Select(k=>"-"+k+"="));if(updates is not null)args.AddRange(updates.Select(p=>"-"+p.Key+"="+p.Value));args.AddRange(["--",output]);
+            var args=new List<string>{"-overwrite_original","-P","-charset","filename=UTF8"};if(removeAll){args.Add("-all=");if(FeatureCatalog.IsImage(input)||FeatureCatalog.Extension(input)=="gif")args.AddRange(["-tagsfromfile","@","-Orientation","-ICC_Profile"]);}if(removals is not null)args.AddRange(removals.Select(k=>"-"+k+"="));
+            if(updates is not null)
+            {
+                var hasMultiline = updates.Values.Any(v => v.Contains('\n') || v.Contains('\r'));
+                if (hasMultiline)
+                {
+                    args.Add("-E");
+                    foreach (var (k, v) in updates)
+                    {
+                        var val = v.Replace("&", "&amp;").Replace("\r\n", "&#10;").Replace("\r", "&#10;").Replace("\n", "&#10;");
+                        args.Add("-" + k + "=" + val);
+                    }
+                }
+                else
+                {
+                    args.AddRange(updates.Select(p => "-" + p.Key + "=" + p.Value));
+                }
+            }
+            args.AddRange(["--",output]);
             await RunExifToolAsync(args,token);outputs.Add(output);progress?.Report(new(outputs.Count/(double)inputs.Count*.98,"Saving metadata…"));
         }
         return tx.Publish(outputs,token);

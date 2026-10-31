@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Text.Json;
 
 namespace Nashi.Core;
@@ -87,6 +87,7 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
     {
         if (inputs.Count == 0 || (!AudioFormats.Contains(format) && !VideoFormats.Contains(format))) throw new ArgumentException("Choose files and a supported media format.");
         Validate(options);
+        await DetectHardwareEncoderAsync(token).ConfigureAwait(false);
         using var transaction = new ExportTransaction(destination); var outputs = new List<string>();
         for (var index = 0; index < inputs.Count; index++)
         {
@@ -119,6 +120,7 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
     {
         if (inputs.Count == 0 || !Tools.Contains(tool)) throw new ArgumentException("Choose media and a supported tool.");
         Validate(options);
+        await DetectHardwareEncoderAsync(token).ConfigureAwait(false);
         using var transaction = new ExportTransaction(destination); var outputs = new List<string>();
         if (tool == "joinVideos") outputs.Add(await JoinAsync(inputs,transaction.StagingDirectory,options,progress,token));
         else for (var index=0;index<inputs.Count;index++)
@@ -343,41 +345,55 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
         await RenderAsync(args,output,duration,p=>progress(p with{Fraction=.95+(p.Fraction??0)*.05,Label="Joining clips…"}),token);
     }
 
-        private string? detectedHardwareH264Encoder;
-    private bool checkedHardware;
+        private static string? detectedHardwareH264Encoder;
+    private static bool checkedHardware;
+    private static readonly SemaphoreSlim probeLock = new(1, 1);
 
-    public string? HardwareEncoder
+    public string? HardwareEncoder => detectedHardwareH264Encoder;
+
+    public async Task<string?> DetectHardwareEncoderAsync(CancellationToken token = default)
     {
-        get
+        if(checkedHardware) return detectedHardwareH264Encoder;
+        await probeLock.WaitAsync(token).ConfigureAwait(false);
+        try
         {
             if(checkedHardware) return detectedHardwareH264Encoder;
-            checkedHardware = true;
-            string[] candidates = OperatingSystem.IsWindows()
-                ? ["h264_nvenc", "h264_amf", "h264_qsv"]
+            var candidates = OperatingSystem.IsWindows()
+                ? new[] { "h264_nvenc", "h264_amf", "h264_qsv" }
                 : OperatingSystem.IsMacOS()
-                    ? ["h264_videotoolbox"]
-                    : [];
+                    ? new[] { "h264_videotoolbox" }
+                    : Array.Empty<string>();
+
             foreach(var encoder in candidates)
             {
                 try
                 {
-                    var task = ProcessRunner.RunAsync(ffmpeg, [
+                    using var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
+                    cts.CancelAfter(1500);
+                    await ProcessRunner.RunAsync(ffmpeg, [
                         "-hide_banner", "-nostdin", "-v", "error",
                         "-f", "lavfi", "-i", "color=black:s=256x256:d=0.04",
                         "-c:v", encoder,
                         "-frames:v", "1",
                         "-f", "null", OperatingSystem.IsWindows() ? "NUL" : "/dev/null"
-                    ]);
-                    task.Wait(1500);
-                    if(task.IsCompletedSuccessfully)
-                    {
-                        detectedHardwareH264Encoder = encoder;
-                        break;
-                    }
+                    ], cts.Token).ConfigureAwait(false);
+
+                    detectedHardwareH264Encoder = encoder;
+                    break;
                 }
-                catch { }
+                catch(OperationCanceledException) when(!token.IsCancellationRequested)
+                {
+                }
+                catch
+                {
+                }
             }
+            checkedHardware = true;
             return detectedHardwareH264Encoder;
+        }
+        finally
+        {
+            probeLock.Release();
         }
     }
 
@@ -396,6 +412,10 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
         return ["-c:v","libx264","-preset","medium","-crf",Number(35-o.Quality*23),"-pix_fmt","yuv420p","-c:a","aac","-b:a",o.AudioBitrate+"k"];
     }
 
+    private bool UsesHardwareEncoder(List<string> args) =>
+        detectedHardwareH264Encoder is not null &&
+        args.Zip(args.Skip(1)).Any(p => p.First == "-c:v" && p.Second == detectedHardwareH264Encoder);
+
     private async Task RenderAsync(IEnumerable<string> arguments,string output,double? duration,Action<OperationProgress> progress,CancellationToken token)
     {
         var argsList = arguments.ToList();
@@ -405,8 +425,12 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
             await ProcessRunner.RunAsync(ffmpeg,["-hide_banner","-nostdin","-v","error","-n","-nostats","-stats_period","0.2","-progress","pipe:1",..argsList,output],token,parser.ReadLine);
             token.ThrowIfCancellationRequested();
             if(File.Exists(output)&&new FileInfo(output).Length>0) return;
+            if(UsesHardwareEncoder(argsList) && !token.IsCancellationRequested)
+            {
+                throw new IOException("Hardware encoder produced empty output.");
+            }
         }
-        catch(Exception) when(detectedHardwareH264Encoder is not null && !token.IsCancellationRequested)
+        catch(Exception) when(UsesHardwareEncoder(argsList) && !token.IsCancellationRequested)
         {
             if(File.Exists(output)) try { File.Delete(output); } catch { }
             var fallbackArgs = new List<string>();
@@ -417,11 +441,28 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
                     fallbackArgs.AddRange(["-c:v", "libx264", "-preset", "medium"]);
                     i++;
                 }
-                else if(argsList[i] is "-rc" or "-qp_p" or "-global_quality" or "-cq")
+                else if(argsList[i] == "-preset" && i + 1 < argsList.Count && argsList[i+1] == "p4")
+                {
+                    i++;
+                }
+                else if(argsList[i] is "-rc" or "-qp_p" or "-global_quality" or "-cq" or "-q:v")
                 {
                     if(argsList[i] is "-qp_p" or "-global_quality" or "-cq" && i + 1 < argsList.Count)
                     {
                         fallbackArgs.AddRange(["-crf", argsList[i+1]]);
+                        i++;
+                    }
+                    else if(argsList[i] == "-q:v" && i + 1 < argsList.Count)
+                    {
+                        if(double.TryParse(argsList[i+1], NumberStyles.Float, CultureInfo.InvariantCulture, out var vtQ))
+                        {
+                            var crf = Math.Round(35.0 - (vtQ / 100.0) * 23.0);
+                            fallbackArgs.AddRange(["-crf", crf.ToString(CultureInfo.InvariantCulture)]);
+                        }
+                        else
+                        {
+                            fallbackArgs.AddRange(["-crf", "23"]);
+                        }
                         i++;
                     }
                     else if(argsList[i] == "-rc" && i + 1 < argsList.Count)

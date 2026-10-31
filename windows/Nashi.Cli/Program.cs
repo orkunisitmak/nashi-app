@@ -11,6 +11,21 @@ public static class Program
     [STAThread]
     public static async Task<int> Main(string[] args)
     {
+        var isJson = args.Contains("--json");
+
+        int Fail(string message)
+        {
+            if (isJson)
+            {
+                Console.WriteLine(JsonSerializer.Serialize(new { error = message }, new JsonSerializerOptions { WriteIndented = true }));
+            }
+            else
+            {
+                Console.Error.WriteLine(message);
+            }
+            return 1;
+        }
+
         try
         {
             if (args.Length == 0 || args[0] is "--help" or "-h" or "help")
@@ -42,8 +57,7 @@ public static class Program
                 var file = Path.GetFullPath(args[1]);
                 if (!File.Exists(file))
                 {
-                    Console.Error.WriteLine($"File not found: {Path.GetFileName(file)}");
-                    return 1;
+                    return Fail($"File not found: {Path.GetFileName(file)}");
                 }
                 var ext = FeatureCatalog.Extension(file);
                 var result = new Dictionary<string, object?>();
@@ -85,8 +99,9 @@ public static class Program
                         result["width"] = info.Video?.Width;
                         result["height"] = info.Video?.Height;
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        return Fail($"Media inspection failed: {ex.Message}");
                     }
                 }
                 else
@@ -116,128 +131,193 @@ public static class Program
                 var paths = args.Skip(2).ToList();
                 var jsonOutput = paths.Remove("--json");
 
+                string? optionsJson = null;
                 var optIndex = paths.IndexOf("--options");
                 if (optIndex >= 0 && optIndex + 1 < paths.Count)
                 {
+                    optionsJson = paths[optIndex + 1];
+                    try
+                    {
+                        using var doc = JsonDocument.Parse(optionsJson);
+                    }
+                    catch (Exception ex)
+                    {
+                        return Fail($"Invalid --options JSON: {ex.Message}");
+                    }
                     paths.RemoveAt(optIndex + 1);
                     paths.RemoveAt(optIndex);
                 }
 
                 if (paths.Count == 0)
                 {
-                    Console.Error.WriteLine("No input files specified.");
-                    return 1;
+                    return Fail("No input files specified.");
                 }
 
                 foreach (var p in paths)
                 {
                     if (!File.Exists(p))
                     {
-                        Console.Error.WriteLine($"Input file not found: {p}");
-                        return 1;
+                        return Fail($"Input file not found: {p}");
                     }
                 }
 
-                var outputPaths = new List<string>();
+                var stageDir = Path.Combine(Path.GetTempPath(), "nashi-stage-" + Guid.NewGuid().ToString("N"));
+                Directory.CreateDirectory(stageDir);
+                var stagedOutputs = new List<(string stageFile, string finalFile)>();
 
-                if (action == "convert")
+                try
                 {
-                    var destFormat = target.ToLowerInvariant();
-                    foreach (var input in paths)
+                    if (action == "convert")
                     {
-                        var inExt = FeatureCatalog.Extension(input);
-                        var outDir = Path.GetDirectoryName(Path.GetFullPath(input)) ?? Environment.CurrentDirectory;
-
-                        if (FeatureCatalog.IsImage(input) || inExt is "gif" || destFormat is "ico" || ImageEngine.Formats.Contains(destFormat))
+                        var destFormat = target.ToLowerInvariant();
+                        foreach (var input in paths)
                         {
-                            var imgOpts = new ImageOptions();
-                            var produced = ImageEngine.Apply("convert", [input], outDir, imgOpts, format: destFormat);
-                            outputPaths.AddRange(produced);
+                            var inExt = FeatureCatalog.Extension(input);
+                            var outDir = Path.GetDirectoryName(Path.GetFullPath(input)) ?? Environment.CurrentDirectory;
+
+                            // Validate source -> dest in feature matrix
+                            if (!FeatureCatalog.Conversions.TryGetValue(inExt, out var targets) || !targets.Contains(destFormat))
+                            {
+                                return Fail($"Unsupported conversion: {inExt} -> {destFormat}");
+                            }
+
+                            if (FeatureCatalog.IsImage(input) || inExt is "gif" || destFormat is "ico" || ImageEngine.Formats.Contains(destFormat))
+                            {
+                                var imgOpts = optionsJson is not null
+                                    ? JsonSerializer.Deserialize<ImageOptions>(optionsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ImageOptions()
+                                    : new ImageOptions();
+                                var produced = ImageEngine.Apply("convert", [input], stageDir, imgOpts, format: destFormat);
+                                foreach (var f in produced)
+                                {
+                                    stagedOutputs.Add((f, Path.Combine(outDir, Path.GetFileName(f))));
+                                }
+                            }
+                            else if (FeatureCatalog.IsVideo(input) || FeatureCatalog.IsAudio(input))
+                            {
+                                var ffmpeg = toolchain.Executable("ffmpeg");
+                                var ffprobe = toolchain.Executable("ffprobe");
+                                var engine = new MediaEngine(ffmpeg, ffprobe);
+                                var mediaOpts = optionsJson is not null
+                                    ? JsonSerializer.Deserialize<MediaOptions>(optionsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new MediaOptions()
+                                    : new MediaOptions();
+                                var produced = await engine.ConvertAsync([input], destFormat, stageDir, mediaOpts);
+                                foreach (var f in produced)
+                                {
+                                    stagedOutputs.Add((f, Path.Combine(outDir, Path.GetFileName(f))));
+                                }
+                            }
+                            else if (inExt is "zip" or "tar" or "gz" or "rar")
+                            {
+                                var produced = ArchiveEngine.Convert(input, destFormat, stageDir);
+                                foreach (var f in produced)
+                                {
+                                    stagedOutputs.Add((f, Path.Combine(outDir, Path.GetFileName(f))));
+                                }
+                            }
+                            else
+                            {
+                                return Fail($"Unsupported conversion: {inExt} -> {destFormat}");
+                            }
                         }
-                        else if (FeatureCatalog.IsVideo(input) || FeatureCatalog.IsAudio(input))
+                    }
+                    else if (action == "tool")
+                    {
+                        var toolId = target switch
+                        {
+                            "annotateImage" => "annotate",
+                            "cropImage" => "crop",
+                            _ => target
+                        };
+                        var firstInput = paths[0];
+                        var inExt = FeatureCatalog.Extension(firstInput);
+                        var outDir = Path.GetDirectoryName(Path.GetFullPath(firstInput)) ?? Environment.CurrentDirectory;
+
+                        if (toolId is "createPDF" or "createCollage" || (FeatureCatalog.IsImage(firstInput) && toolId is "rotate" or "crop" or "compress" or "removeMetadata" or "annotate" or "editImage" or "redactImage" or "frameImage"))
+                        {
+                            var imgOpts = optionsJson is not null
+                                ? JsonSerializer.Deserialize<ImageOptions>(optionsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ImageOptions()
+                                : new ImageOptions();
+                            var produced = ImageEngine.Apply(toolId, paths, stageDir, imgOpts);
+                            foreach (var f in produced)
+                            {
+                                stagedOutputs.Add((f, Path.Combine(outDir, Path.GetFileName(f))));
+                            }
+                        }
+                        else if (inExt is "pdf" || toolId is "mergePDF" or "splitPDF" or "organizePDF")
+                        {
+                            var produced = DocumentEngine.Pdf(toolId, paths, stageDir);
+                            foreach (var f in produced)
+                            {
+                                stagedOutputs.Add((f, Path.Combine(outDir, Path.GetFileName(f))));
+                            }
+                        }
+                        else if (MediaEngine.Tools.Contains(toolId))
                         {
                             var ffmpeg = toolchain.Executable("ffmpeg");
                             var ffprobe = toolchain.Executable("ffprobe");
                             var engine = new MediaEngine(ffmpeg, ffprobe);
-                            var mediaOpts = new MediaOptions();
-                            var produced = await engine.ConvertAsync([input], destFormat, outDir, mediaOpts);
-                            outputPaths.AddRange(produced);
+                            var mediaOpts = optionsJson is not null
+                                ? JsonSerializer.Deserialize<MediaOptions>(optionsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new MediaOptions()
+                                : new MediaOptions();
+                            var produced = await engine.ToolAsync(toolId, paths, stageDir, mediaOpts);
+                            foreach (var f in produced)
+                            {
+                                stagedOutputs.Add((f, Path.Combine(outDir, Path.GetFileName(f))));
+                            }
                         }
-                        else if (inExt is "zip" or "tar" or "gz" or "rar")
+                        else if (toolId is "extractArchive")
                         {
-                            var produced = ArchiveEngine.Convert(input, destFormat, outDir);
-                            outputPaths.AddRange(produced);
+                            foreach (var archive in paths)
+                            {
+                                var extracted = ArchiveEngine.Extract(archive, stageDir);
+                                foreach (var f in extracted)
+                                {
+                                    stagedOutputs.Add((f, Path.Combine(outDir, Path.GetFileName(f))));
+                                }
+                            }
                         }
                         else
                         {
-                            Console.Error.WriteLine($"Unsupported conversion: {inExt} -> {destFormat}");
-                            return 1;
+                            return Fail($"Unsupported or unknown tool: {toolId}");
                         }
                     }
-                }
-                else if (action == "tool")
-                {
-                    var toolId = target;
-                    var firstInput = paths[0];
-                    var inExt = FeatureCatalog.Extension(firstInput);
-                    var outDir = Path.GetDirectoryName(Path.GetFullPath(firstInput)) ?? Environment.CurrentDirectory;
 
-                    if (toolId is "createPDF" or "createCollage" || (FeatureCatalog.IsImage(firstInput) && toolId is "rotate" or "crop" or "compress" or "editImage" or "redactImage" or "frameImage"))
+                    // Publish all staged outputs atomically
+                    var published = new List<string>();
+                    foreach (var (stageFile, finalFile) in stagedOutputs)
                     {
-                        var imgOpts = new ImageOptions();
-                        var produced = ImageEngine.Apply(toolId, paths, outDir, imgOpts);
-                        outputPaths.AddRange(produced);
+                        var destFile = SafePaths.Unique(Path.GetDirectoryName(finalFile)!, Path.GetFileName(finalFile));
+                        File.Move(stageFile, destFile);
+                        published.Add(destFile);
                     }
-                    else if (inExt is "pdf" || toolId is "mergePDF" or "splitPDF" or "organizePDF")
+
+                    if (jsonOutput)
                     {
-                        var produced = DocumentEngine.Pdf(toolId, paths, outDir);
-                        outputPaths.AddRange(produced);
-                    }
-                    else if (MediaEngine.Tools.Contains(toolId))
-                    {
-                        var ffmpeg = toolchain.Executable("ffmpeg");
-                        var ffprobe = toolchain.Executable("ffprobe");
-                        var engine = new MediaEngine(ffmpeg, ffprobe);
-                        var mediaOpts = new MediaOptions();
-                        var produced = await engine.ToolAsync(toolId, paths, outDir, mediaOpts);
-                        outputPaths.AddRange(produced);
-                    }
-                    else if (toolId is "extractArchive")
-                    {
-                        foreach (var archive in paths)
-                        {
-                            var extracted = ArchiveEngine.Extract(archive, outDir);
-                            outputPaths.AddRange(extracted);
-                        }
+                        Console.WriteLine(JsonSerializer.Serialize(published, new JsonSerializerOptions { WriteIndented = true }));
                     }
                     else
                     {
-                        Console.Error.WriteLine($"Unsupported or unknown tool: {toolId}");
-                        return 1;
+                        foreach (var p in published)
+                        {
+                            Console.WriteLine(p);
+                        }
                     }
+                    return 0;
                 }
-
-                if (jsonOutput)
+                finally
                 {
-                    Console.WriteLine(JsonSerializer.Serialize(outputPaths, new JsonSerializerOptions { WriteIndented = true }));
-                }
-                else
-                {
-                    foreach (var p in outputPaths)
+                    if (Directory.Exists(stageDir))
                     {
-                        Console.WriteLine(p);
+                        try { Directory.Delete(stageDir, true); } catch { }
                     }
                 }
-                return 0;
             }
 
-            Console.Error.WriteLine("Unknown command. Run 'nashi-cli --help' for usage.");
-            return 64;
+            return Fail("Unknown command. Run 'nashi-cli --help' for usage.");
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine(ex.Message);
-            return 1;
+            return Fail(ex.Message);
         }
     }
 }
