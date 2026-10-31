@@ -59,12 +59,12 @@ internal sealed class PdfOrganizeDialog:Window
             var picture=new LayoutTransformControl{LayoutTransform=new RotateTransform(entry.Rotation),HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center,Child=new Image{Source=entry.Image,MaxWidth=turned?170:130,MaxHeight=turned?130:170,Stretch=Stretch.Uniform}};
             var on=selected.Contains(entry);
             var card=new Border{Width=158,Margin=new(6),Padding=new(8),CornerRadius=new(12),BorderThickness=new(on?3:1),Cursor=new Cursor(StandardCursorType.Hand),
-                Child=new StackPanel{Spacing=6,Children={new Border{Child=picture,Height=170},new TextBlock{Text=$"Page {entry.Number}"+(entry.Rotation>0?$" · {entry.Rotation}°":""),HorizontalAlignment=HorizontalAlignment.Center}}}};
+                Child=new StackPanel{Spacing=6,Children={new Border{Child=picture,Height=170},new TextBlock{Text=Localizer.Pick($"Page {entry.Number}",$"Sayfa {entry.Number}")+(entry.Rotation>0?$" · {entry.Rotation}°":""),HorizontalAlignment=HorizontalAlignment.Center}}}};
             card[!Border.BackgroundProperty]=Resource(on?"Sage":"Surface");card.BorderBrush=on?new SolidColorBrush(Color.FromRgb(227,184,89)):null;if(!on)card[!Border.BorderBrushProperty]=Resource("Line");
             card.Tag=entry;card.PointerPressed+=(_,e)=>Press(entry,e);
             gallery.Children.Add(card);
         }
-        state.Text=$"{entries.Count} page{(entries.Count==1?"":"s")}"+(selected.Count>0?$" · {selected.Count} selected":"");
+        state.Text=Localizer.Pick($"{entries.Count} page{(entries.Count==1?"":"s")}"+(selected.Count>0?$" · {selected.Count} selected":""),$"{entries.Count} sayfa"+(selected.Count>0?$" · {selected.Count} seçili":""));
     }
 
     private void Press(Entry entry,PointerPressedEventArgs e)
@@ -84,7 +84,7 @@ internal sealed class PdfOrganizeDialog:Window
             var on=card.Tag is Entry entry&&selected.Contains(entry);card.BorderThickness=new(on?3:1);
             card[!Border.BackgroundProperty]=Resource(on?"Sage":"Surface");if(on)card.BorderBrush=new SolidColorBrush(Color.FromRgb(227,184,89));else card[!Border.BorderBrushProperty]=Resource("Line");
         }
-        state.Text=$"{entries.Count} page{(entries.Count==1?"":"s")}"+(selected.Count>0?$" · {selected.Count} selected":"");
+        state.Text=Localizer.Pick($"{entries.Count} page{(entries.Count==1?"":"s")}"+(selected.Count>0?$" · {selected.Count} selected":""),$"{entries.Count} sayfa"+(selected.Count>0?$" · {selected.Count} seçili":""));
     }
     private void Drag(PointerEventArgs e)
     {

@@ -24,7 +24,7 @@ internal sealed class AnnotateDialog:Window
     private readonly ComboBox color=new(){ItemsSource=Colors.Select(c=>c.Label).ToArray(),SelectedIndex=0,MinWidth=100};
     private readonly NumericUpDown stroke=new(){Minimum=1,Maximum=200,Increment=1,FormatString="0",Width=110};
     private readonly NumericUpDown font=new(){Minimum=6,Maximum=600,Increment=2,FormatString="0",Width=110};
-    private readonly TextBox text=new(){Text="Note",Width=160};
+    private readonly TextBox text=new(){Text=Localizer.T("Note"),Width=160};
     private readonly Button picture=new(){Content="Choose image…"};
     private readonly TextBlock count=new(){VerticalAlignment=VerticalAlignment.Center,MinWidth=80};
     private readonly DispatcherTimer debounce=new(){Interval=TimeSpan.FromMilliseconds(60)};
@@ -92,7 +92,7 @@ internal sealed class AnnotateDialog:Window
     public void Choose(string kind)=>tool.SelectedIndex=Array.FindIndex(Tools,t=>t.Kind==kind);
 
     private void Accept(){if(canvas.Marks.Count==0){count.Text="Draw a mark first.";return;}Result=new(canvas.Marks.ToArray());Close();}
-    private void Changed(){count.Text=canvas.Marks.Count switch{0=>"No marks yet",1=>"1 mark",var n=>$"{n} marks"};debounce.Stop();debounce.Start();}
+    private void Changed(){count.Text=canvas.Marks.Count switch{0=>"No marks yet",1=>"1 mark",var n=>Localizer.Pick($"{n} marks",$"{n} işaret")};debounce.Stop();debounce.Start();}
 
     /// Only the newest request is shown, so drawing never flickers back to an older state.
     private async Task Render()

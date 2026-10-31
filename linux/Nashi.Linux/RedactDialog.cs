@@ -49,7 +49,7 @@ internal sealed class RedactDialog:Window
 
     public static Task<RedactDialog> CreateAsync(string title,string input)=>Load(title,$"{Path.GetFileName(input)}",()=>PhotoCodec.Read(input));
     /// Video boxes cover the whole clip; the frame only helps to place them.
-    public static Task<RedactDialog> CreateAsync(string title,string input,byte[] frame)=>Load(title,$"{Path.GetFileName(input)} · boxes cover the whole video",()=>new MagickImage(frame));
+    public static Task<RedactDialog> CreateAsync(string title,string input,byte[] frame)=>Load(title,Path.GetFileName(input)+Localizer.Pick(" · boxes cover the whole video"," · kutular videonun tamamını kapatır"),()=>new MagickImage(frame));
     private static async Task<RedactDialog> Load(string title,string note,Func<MagickImage> load)
     {
         var (preview,pixels)=await Picture.LoadAsync(load);
@@ -60,7 +60,7 @@ internal sealed class RedactDialog:Window
 
     private Redaction Current()=>new(canvas.Areas.Select(a=>new ImageEdit(a.X/canvas.Pixels.Width,a.Y/canvas.Pixels.Height,a.Width/canvas.Pixels.Width,a.Height/canvas.Pixels.Height)).ToArray(),Covers[Math.Max(0,style.SelectedIndex)].Style);
     private void Accept(){if(canvas.Areas.Count==0)return;Result=Current();Close();}
-    private void Changed(){count.Text=canvas.Areas.Count switch{0=>"No boxes yet",1=>"1 box",var n=>$"{n} boxes"};debounce.Stop();debounce.Start();}
+    private void Changed(){count.Text=canvas.Areas.Count switch{0=>Localizer.Pick("No boxes yet","Henüz kutu yok"),1=>Localizer.Pick("1 box","1 kutu"),var n=>Localizer.Pick($"{n} boxes",$"{n} kutu")};debounce.Stop();debounce.Start();}
 
     /// Only the newest request is shown, so dragging never flickers back to an older state.
     private async Task Render()

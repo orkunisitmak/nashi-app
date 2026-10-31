@@ -35,7 +35,7 @@ internal sealed class MetadataDialog:Window
         var details=new StackPanel{Spacing=4};
         foreach(var pair in metadata.Where(p=>!fields.ContainsKey(p.Key)).OrderBy(p=>p.Key,StringComparer.Ordinal))
             details.Children.Add(new SelectableTextBlock{Text=(media?MediaMetadata.Label(pair.Key):pair.Key)+"  ·  "+pair.Value,TextWrapping=TextWrapping.Wrap,FontSize=12});
-        list.Children.Add(new Expander{Header=$"All metadata ({details.Children.Count})",Content=details,Margin=new(0,16,0,8),HorizontalAlignment=HorizontalAlignment.Stretch});
+        list.Children.Add(new Expander{Header=Localizer.Pick("All metadata","Tüm metadata")+$" ({details.Children.Count})",Content=details,Margin=new(0,16,0,8),HorizontalAlignment=HorizontalAlignment.Stretch});
         removeAll.IsCheckedChanged+=(_,_)=>{foreach(var field in fields.Values)field.IsEnabled=removeAll.IsChecked!=true;};
         var save=new Button{Content="Save new copy",IsDefault=true,FontWeight=FontWeight.SemiBold,Background=NashiTheme.Primary,Foreground=new SolidColorBrush(Color.Parse("#243B2B"))};save.Click+=(_,_)=>Accept();
         var cancel=new Button{Content="Cancel",IsCancel=true};cancel.Click+=(_,_)=>Close();

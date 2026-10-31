@@ -46,8 +46,8 @@ public sealed class MainWindow:Window
         AddHandler(DragDrop.DropEvent,(_,e)=>Add(e.DataTransfer.TryGetFiles()?.Select(f=>f.TryGetLocalPath()).OfType<string>()??[]));
         if(library.RecoveryNotice is {} notice)status.Text=notice;
         string? Value(string flag)=>args.SkipWhile(a=>a!=flag).Skip(1).FirstOrDefault();
-        var capture=Value("--capture");var dialog=Value("--dialog");var tab=Value("--tab");
-        Add(args.Where(a=>!a.StartsWith('-')&&a!=capture&&a!=dialog&&a!=tab).Select(Path.GetFullPath));
+        var capture=Value("--capture");var dialog=Value("--dialog");var tab=Value("--tab");var lang=Value("--lang");
+        Add(args.Where(a=>!a.StartsWith('-')&&a!=capture&&a!=dialog&&a!=tab&&a!=lang).Select(Path.GetFullPath));
         if(tab is not null&&Content is TabControl pages)pages.SelectedIndex=Math.Max(0,Array.IndexOf(["home","web","library","settings"],tab));Refresh();RefreshLibrary();
         if(capture is not null)Opened+=async(_,_)=>await Capture(Path.GetFullPath(capture),args.Contains("--dark")?"dark":args.Contains("--light")?"light":null,dialog,args.ToArray());
     }
@@ -76,7 +76,7 @@ public sealed class MainWindow:Window
         }});
         selection.HorizontalAlignment=hint.HorizontalAlignment=HorizontalAlignment.Center;hint.TextAlignment=TextAlignment.Center;
         Button Act(string text,Func<Task> action){var b=new Button{Content=text,Margin=new(0,0,8,8)};b.Click+=async(_,_)=>await action();return b;}
-        actions.Children.Add(Act("Copy",CopyFiles));actions.Children.Add(Act("Move to…",MoveFiles));actions.Children.Add(Act("Copy path",async()=>{if(Clipboard is not null){await Clipboard.SetTextAsync(FileActions.PathList(files));status.Text=files.Count==1?"Path copied.":$"{files.Count} paths copied.";}}));
+        actions.Children.Add(Act("Copy",CopyFiles));actions.Children.Add(Act("Move to…",MoveFiles));actions.Children.Add(Act("Copy path",async()=>{if(Clipboard is not null){await Clipboard.SetTextAsync(FileActions.PathList(files));status.Text=files.Count==1?"Path copied.":Localizer.Pick($"{files.Count} paths copied.",$"{files.Count} yol kopyalandı.");}}));
         actions.Children.Add(Act("Open terminal here",()=>{status.Text=FileActions.Terminal(files[0])?"":"No terminal app was found.";return Task.CompletedTask;}));
         var home=new StackPanel{Spacing=14,Margin=new(20),Children={drop,fileList,formatsLabel,formats,toolsLabel,tools,actionsLabel,actions,progress,
             new StackPanel{Orientation=Orientation.Horizontal,Spacing=8,Children={cancel,reveal}},status}};
@@ -84,7 +84,9 @@ public sealed class MainWindow:Window
         var libraryPage=new StackPanel{Spacing=12,Margin=new(20),Children={search,libraryItems}};
         var appearance=new ComboBox{ItemsSource=new[]{"System","Light","Dark"},SelectedIndex=library.Appearance switch{"light"=>1,"dark"=>2,_=>0},MinWidth=120};
         appearance.SelectionChanged+=(_,_)=>{var value=new[]{"system","light","dark"}[appearance.SelectedIndex];library.SetAppearance(value);NashiTheme.Apply(Application.Current!,value);};
-        var settings=new StackPanel{Spacing=12,Margin=new(20),Children={Label("Appearance"),appearance}};
+        var language=new ComboBox{ItemsSource=new[]{"English","Türkçe"},SelectedIndex=Localizer.Language=="tr"?1:0,MinWidth=120};
+        language.SelectionChanged+=(_,_)=>{Save(preferences.Value with{Language=language.SelectedIndex==1?"tr":"en"});status.Text="Restart Nashi to use the new language everywhere.";};
+        var settings=new StackPanel{Spacing=12,Margin=new(20),Children={Label("Appearance"),appearance,Label("Language"),language}};
         Settings(settings);
         var tabs=new TabControl{Items={Tab("Home",home),Tab("Web",web),Tab("Library",libraryPage),Tab("Settings",settings)}};
         tabs.SelectionChanged+=(_,_)=>{if(tabs.SelectedIndex==2)RefreshLibrary();};
@@ -120,7 +122,7 @@ public sealed class MainWindow:Window
     private void Refresh()
     {
         fileList.ItemsSource=files.ToArray();fileList.IsVisible=files.Count>0;
-        selection.Text=files.Count switch{0=>"Drop something good.",1=>Path.GetFileName(files[0]),var n=>$"{n} files, ready to go."};
+        selection.Text=files.Count switch{0=>"Drop something good.",1=>Path.GetFileName(files[0]),var n=>Localizer.Pick($"{n} files, ready to go.",$"{n} dosya hazır.")};
         hint.Text=files.Count==0?"Images, videos, audio, PDFs, documents, spreadsheets, slides, subtitles and archives. Drop files here, choose them or paste with Ctrl+V.":"Pick a format or a tool below. Originals are never overwritten.";
         var ready=running is null&&files.Count>0;
         var formatChoices=ready?Operations.Formats(files):[];var toolChoices=ready?Operations.Tools(files):[];
@@ -245,7 +247,7 @@ public sealed class MainWindow:Window
             var outputs=await work(destination,report,running.Token);
             library.Record(title,outputs);
             lastFolder=destination;reveal.IsVisible=true;
-            status.Text=outputs.Count==1?$"Saved {Path.GetFileName(outputs[0])}":$"Saved {outputs.Count} files";web.Status=status.Text+" in "+destination;
+            status.Text=outputs.Count==1?Localizer.Pick($"Saved {Path.GetFileName(outputs[0])}",$"{Path.GetFileName(outputs[0])} kaydedildi"):Localizer.Pick($"Saved {outputs.Count} files",$"{outputs.Count} dosya kaydedildi");web.Status=status.Text+" → "+destination;
         }
         catch(OperationCanceledException){status.Text="Cancelled. Nothing was saved.";web.Status=status.Text;}
         catch(Exception error){status.Text=error.Message;web.Status=error.Message;}
@@ -259,7 +261,7 @@ public sealed class MainWindow:Window
         var transfer=new DataTransfer();
         foreach(var path in files)if((Directory.Exists(path)?await StorageProvider.TryGetFolderFromPathAsync(path) as IStorageItem:await StorageProvider.TryGetFileFromPathAsync(path)) is {} item)transfer.Add(DataTransferItem.CreateFile(item));
         var extra=new DataTransferItem();extra.Set(DataFormat.CreateStringPlatformFormat("x-special/gnome-copied-files"),"copy\n"+FileActions.UriList(files).Replace("\r\n","\n"));extra.SetText(FileActions.PathList(files));transfer.Add(extra);
-        await Clipboard.SetDataAsync(transfer);status.Text=files.Count==1?"Copied. Paste it in your file manager.":$"{files.Count} files copied. Paste them in your file manager.";
+        await Clipboard.SetDataAsync(transfer);status.Text=files.Count==1?"Copied. Paste it in your file manager.":Localizer.Pick($"{files.Count} files copied. Paste them in your file manager.",$"{files.Count} dosya kopyalandı. Dosya yöneticinize yapıştırın.");
     }
     private async Task MoveFiles()
     {
@@ -292,11 +294,11 @@ public sealed class MainWindow:Window
             string Found(bool ok,string yes,string no)=>ok?"✓ "+yes:"– "+no;
             var tools=Operations.Toolset;
             toolsState.Text=string.Join("\n",
-                Found(Operations.Media is not null,"FFmpeg (media tools)","FFmpeg: choose Set up media tools, or install ffmpeg"),
-                Found(tools.Ready,"yt-dlp and Deno (web downloads, Pages)","yt-dlp and Deno: choose Set up media tools"),
-                Found(Operations.Office is not null,"LibreOffice (documents, spreadsheets, slides)","LibreOffice: install libreoffice with your package manager"),
-                Found(Operations.Exif.Executable is not null,"ExifTool (metadata fields)",Operations.Executable("perl") is null?"ExifTool needs perl":"ExifTool: offered the first time you edit metadata"),
-                Found(Operations.Executable("tesseract") is not null,"Tesseract (text in scanned PDFs)","Tesseract: install tesseract and a language pack for scanned PDFs"));
+                Found(Operations.Media is not null,Localizer.Pick("FFmpeg (media tools)","FFmpeg (medya araçları)"),Localizer.Pick("FFmpeg: choose Set up media tools, or install ffmpeg","FFmpeg: Medya araçlarını kur'u seçin veya ffmpeg kurun")),
+                Found(tools.Ready,Localizer.Pick("yt-dlp and Deno (web downloads, Pages)","yt-dlp ve Deno (web indirmeleri, Pages)"),Localizer.Pick("yt-dlp and Deno: choose Set up media tools","yt-dlp ve Deno: Medya araçlarını kur'u seçin")),
+                Found(Operations.Office is not null,Localizer.Pick("LibreOffice (documents, spreadsheets, slides)","LibreOffice (belgeler, tablolar, sunumlar)"),Localizer.Pick("LibreOffice: install libreoffice with your package manager","LibreOffice: paket yöneticinizle libreoffice kurun")),
+                Found(Operations.Exif.Executable is not null,Localizer.Pick("ExifTool (metadata fields)","ExifTool (metadata alanları)"),Operations.Executable("perl") is null?Localizer.Pick("ExifTool needs perl","ExifTool için perl gerekir"):Localizer.Pick("ExifTool: offered the first time you edit metadata","ExifTool: metadata'yı ilk düzenlediğinizde önerilir")),
+                Found(Operations.Executable("tesseract") is not null,Localizer.Pick("Tesseract (text in scanned PDFs)","Tesseract (taranmış PDF'lerde metin)"),Localizer.Pick("Tesseract: install tesseract and a language pack for scanned PDFs","Tesseract: taranmış PDF'ler için tesseract ve bir dil paketi kurun")));
             setup.IsVisible=!tools.Ready;
         }
         setup.Click+=async(_,_)=>
@@ -308,8 +310,8 @@ public sealed class MainWindow:Window
         page.Children.Add(Label("Output"));page.Children.Add(new StackPanel{Orientation=Orientation.Horizontal,Spacing=8,Children={output,chooseOutput}});page.Children.Add(outputFolder);
         page.Children.Add(Label("Downloads"));page.Children.Add(new StackPanel{Orientation=Orientation.Horizontal,Spacing=8,Children={chooseDownloads,downloads}});
         page.Children.Add(Label("Tools"));page.Children.Add(toolsState);page.Children.Add(setup);
-        page.Children.Add(Muted($"Library and settings: {LinuxPaths.DataDirectory}"));
-        page.Children.Add(Muted($"Nashi {typeof(MainWindow).Assembly.GetName().Version?.ToString(3)} · Linux preview"));
+        page.Children.Add(Muted(Localizer.Pick("Library and settings: ","Kitaplık ve ayarlar: ")+LinuxPaths.DataDirectory));
+        page.Children.Add(Muted($"Nashi {typeof(MainWindow).Assembly.GetName().Version?.ToString(3)} · "+Localizer.Pick("Linux preview","Linux önizleme")));
     }
     private void Save(Preferences value){try{preferences.Save(value);}catch(Exception error)when(error is IOException or UnauthorizedAccessException or ArgumentException){status.Text=error.Message;}}
 

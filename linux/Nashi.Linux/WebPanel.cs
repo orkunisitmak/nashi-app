@@ -211,7 +211,7 @@ internal sealed class WebPanel : StackPanel
                 if (!Operations.Toolset.Ready) { Summary.Text = "Set up media tools first (Settings)."; return; }
                 var photos = await engine.InspectPhotosAsync(_payload.Url, pending.Token);
                 if (input != Link.Text || pending.IsCancellationRequested) return;
-                Summary.Text = $"{photos.Length} photos · full-frame images · saved in post order";
+                Summary.Text = Localizer.Pick($"{photos.Length} photos · full-frame images · saved in post order", $"{photos.Length} fotoğraf · tam kare görseller · gönderi sırasıyla kaydedilir");
                 var boxes = new List<CheckBox>();
                 var all = new Button { Content = "All" }; all.Click += (_, _) => { foreach (var b in boxes) b.IsChecked = true; };
                 var none = new Button { Content = "None" }; none.Click += (_, _) => { foreach (var b in boxes) b.IsChecked = false; };
@@ -219,7 +219,7 @@ internal sealed class WebPanel : StackPanel
                 foreach (var photo in photos)
                 {
                     _selectedPhotos.Add(photo.Id);
-                    var box = new CheckBox { Content = $"Photo {photo.Id}  ·  {photo.Width} × {photo.Height}", IsChecked = true };
+                    var box = new CheckBox { Content = Localizer.Pick("Photo ", "Fotoğraf ") + $"{photo.Id}  ·  {photo.Width} × {photo.Height}", IsChecked = true };
                     var id = photo.Id;
                     box.IsCheckedChanged += (_, _) => { if (box.IsChecked == true) _selectedPhotos.Add(id); else _selectedPhotos.Remove(id); };
                     boxes.Add(box); Photos.Children.Add(box);

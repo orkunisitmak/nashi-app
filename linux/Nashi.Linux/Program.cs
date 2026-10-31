@@ -25,6 +25,8 @@ internal sealed class App:Application
         if(ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var library=new LibraryStore(LinuxPaths.DataDirectory);
+            var forced=desktop.Args?.SkipWhile(a=>a!="--lang").Skip(1).FirstOrDefault();
+            Localizer.Language=forced is "tr" or "en"?forced:Localizer.Initial(new PreferencesStore(LinuxPaths.DataDirectory),LinuxPaths.DataDirectory);Localizer.Install();
             NashiTheme.Apply(this,library.Appearance);
             desktop.MainWindow=new MainWindow(library,desktop.Args??[]);
         }
