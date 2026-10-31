@@ -132,7 +132,12 @@ public sealed class MainWindow:Window
             catch(Exception error){status.Text=error.Message;}
             return;
         }
-        MediaOptions? media=null;ImageEdit? edit=null;PhotoEdit? photo=null;FrameOptions? frame=null;CollageOptions? collage=null;Redaction? redact=null;PdfOrganization? organize=null;Annotation? annotate=null;DocumentOptions? document=null;
+        MediaOptions? media=null;ImageEdit? edit=null;PhotoEdit? photo=null;FrameOptions? frame=null;CollageOptions? collage=null;Redaction? redact=null;PdfOrganization? organize=null;Annotation? annotate=null;DocumentOptions? document=null;MetadataEdit? metadata=null;
+        if(choice.Id=="removeMetadata")
+        {
+            try{if(await EditMetadata(inputs) is not {} picked)return;metadata=picked.RemoveAll&&inputs.Length>1?null:picked;}
+            catch(Exception error)when(error is IOException or InvalidDataException or InvalidOperationException or System.Text.Json.JsonException){status.Text=error.Message;return;}
+        }
         if(choice.Id=="convert"&&choice.Format is "docx" or "pages" or "epub"&&inputs.All(f=>FeatureCatalog.Extension(f)=="pdf"))
         {
             // As on Windows: rebuild editable text, or keep each page's exact look as a picture.
@@ -218,7 +223,7 @@ public sealed class MainWindow:Window
         var report=new Progress<OperationProgress>(p=>{if(p.Fraction is {} f){progress.IsIndeterminate=false;progress.Value=f;}status.Text=p.Label;});
         try
         {
-            var outputs=await Operations.RunAsync(choice,inputs,destination,report,running.Token,new(media,edit,photo,frame,collage,redact,organize,annotate,document));
+            var outputs=await Operations.RunAsync(choice,inputs,destination,report,running.Token,new(media,edit,photo,frame,collage,redact,organize,annotate,document,metadata));
             library.Record(choice.Id=="convert"?"Convert to "+choice.Format!.ToUpperInvariant():choice.Title,outputs);
             lastFolder=destination;reveal.IsVisible=true;
             status.Text=outputs.Count==1?$"Saved {Path.GetFileName(outputs[0])}":$"Saved {outputs.Count} files";
@@ -226,6 +231,33 @@ public sealed class MainWindow:Window
         catch(OperationCanceledException){status.Text="Cancelled. Nothing was saved.";}
         catch(Exception error){status.Text=error.Message;}
         finally{running.Dispose();running=null;progress.IsVisible=cancel.IsVisible=false;Refresh();}
+    }
+
+    /// As on Windows: one file opens the editor, several files have all metadata removed.
+    /// Images and PDFs use ExifTool, offered once as a verified download; without it only removal is possible.
+    private async Task<MetadataEdit?> EditMetadata(string[] inputs)
+    {
+        var all=new MetadataEdit(true,new Dictionary<string,string>());
+        if(Operations.IsMediaOnly(inputs))
+        {
+            if(inputs.Length>1)return all;
+            status.Text="Reading tags…";var values=await MediaMetadata.Read(Operations.Toolset,inputs[0]);status.Text="";
+            var editor=new MetadataDialog(values,true);await editor.ShowDialog(this);return editor.Result;
+        }
+        var exif=Operations.Exif;
+        if(exif.Executable is null)
+        {
+            if(Operations.Executable("perl") is null)return all;
+            if(await Ask("Metadata",[("Download ExifTool (~11 MB) to edit fields",1),("Only remove all metadata",0)],0) is not {} choice)return null;
+            if(choice==0)return all;
+            running=new CancellationTokenSource();progress.IsVisible=cancel.IsVisible=true;progress.IsIndeterminate=true;
+            try{await exif.InstallAsync(new Progress<OperationProgress>(p=>{if(p.Fraction is {} f){progress.IsIndeterminate=false;progress.Value=f;}status.Text=p.Label;}),running.Token);}
+            catch(OperationCanceledException){status.Text="Cancelled.";return null;}
+            finally{running.Dispose();running=null;progress.IsVisible=cancel.IsVisible=false;}
+        }
+        if(inputs.Length>1)return all;
+        status.Text="Reading tags…";var tags=await exif.ReadAsync(inputs[0]);status.Text="";
+        var dialog=new MetadataDialog(tags,false);await dialog.ShowDialog(this);return dialog.Result;
     }
 
     /// One-choice dialog for tools whose only option is a small preset list. Null means cancelled.

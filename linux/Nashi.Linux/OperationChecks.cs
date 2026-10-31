@@ -192,6 +192,7 @@ internal static class OperationChecks
                 }
                 Check(TrimDialog.Parse("1:15")==75&&TrimDialog.Parse("1:01:15.5")==3675.5&&TrimDialog.Parse("x") is null&&TrimDialog.Format(75.25)=="1:15.2","Time fields");
             }
+            Metadata(root,png,progress,token);
             Check(Hash(png)==originalHash,"Original is unchanged");
             Console.WriteLine($"{{\"passed\":{passed},\"scope\":\"Linux preview image, PDF, QR, archive, audio and video exports\"}}");
             return 0;
@@ -238,6 +239,34 @@ internal static class OperationChecks
             using(var image=new MagickImage(MagickColors.White,1400,400)){new ImageMagick.Drawing.Drawables().FillColor(MagickColors.Black).FontPointSize(110).Text(60,240,"NASHI ÇALIŞIYOR").Draw(image);image.Write(scan,MagickFormat.Png);}
             var scanned=Operations.ImagesToPdf([scan],Path.Combine(root,"scan-pdf"),null,token).Single();
             var recognized=File.ReadAllText(Convert(scanned,"txt"));Check(recognized.Contains("NASHI",StringComparison.OrdinalIgnoreCase),"Scanned PDF text through OCR");
+        }
+    }
+    /// ExifTool edits and removal on a JPEG and a PDF; the encoded pixels must stay identical.
+    private static void Metadata(string root,string png,IProgress<OperationProgress> progress,CancellationToken token)
+    {
+        var exif=Operations.Exif;
+        if(exif.Executable is null){if(Operations.Executable("perl") is null){Console.Error.WriteLine("perl not found: ExifTool checks skipped.");return;}exif.InstallAsync(null,token).GetAwaiter().GetResult();}
+        Check(exif.Executable is not null,"ExifTool set up from its verified download");
+        var jpg=Path.Combine(root,"Tagged.jpg");using(var image=new MagickImage(png)){image.Format=MagickFormat.Jpeg;image.Write(jpg);}
+        ToolSettings Edit(bool all,params (string,string)[] fields)=>new(Metadata:new(all,fields.ToDictionary(f=>f.Item1,f=>f.Item2)));
+        var tagged=Operations.RunAsync(new("removeMetadata","Metadata"),[jpg],Path.Combine(root,"exif-edit"),progress,token,Edit(false,("EXIF:Artist","Oğuz Test"),("EXIF:Copyright","CC0"))).GetAwaiter().GetResult().Single();
+        var tags=exif.ReadAsync(tagged,token).GetAwaiter().GetResult();
+        Check(tags.GetValueOrDefault("EXIF:Artist")=="Oğuz Test"&&tags.GetValueOrDefault("EXIF:Copyright")=="CC0"&&Path.GetFileName(tagged)=="Tagged Metadata.jpg","Edit EXIF fields");
+        string Pixels(string file){using var image=new MagickImage(file);return image.Signature;}
+        Check(Pixels(tagged)==Pixels(jpg),"Metadata edit keeps the encoded pixels");
+        var cleaned=Operations.RunAsync(new("removeMetadata","Metadata"),[tagged],Path.Combine(root,"exif-clean"),progress,token,Edit(true)).GetAwaiter().GetResult().Single();
+        Check(!exif.ReadAsync(cleaned,token).GetAwaiter().GetResult().ContainsKey("EXIF:Artist")&&Pixels(cleaned)==Pixels(jpg),"Remove all EXIF without re-encoding");
+        var pdf=Operations.ImagesToPdf([png],Path.Combine(root,"exif-pdf"),null,token).Single();
+        var titled=Operations.RunAsync(new("removeMetadata","Metadata"),[pdf],Path.Combine(root,"exif-pdf-edit"),progress,token,Edit(false,("PDF:Title","Kitap"),("PDF:Author","Nashi"))).GetAwaiter().GetResult().Single();
+        using(var document=PdfDocument.Open(titled))Check(document.Information.Title=="Kitap"&&document.Information.Author=="Nashi","Edit PDF title and author");
+        if(Operations.Media is not null)
+        {
+            var wav=Path.Combine(root,"Tone.wav");var mp3=Path.Combine(root,"Song.mp3");
+            ProcessRunner.RunAsync(Operations.Executable("ffmpeg")!,["-hide_banner","-loglevel","error","-i",wav,"-metadata","title=Eski","-metadata","artist=Biri",mp3],token).GetAwaiter().GetResult();
+            var before=MediaMetadata.Read(Operations.Toolset,mp3,token).GetAwaiter().GetResult();Check(before.GetValueOrDefault("title")=="Eski","Read media tags");
+            var renamed=Operations.RunAsync(new("removeMetadata","Metadata"),[mp3],Path.Combine(root,"media-tags"),progress,token,Edit(false,("title","Yeni Şarkı"))).GetAwaiter().GetResult().Single();
+            var after=MediaMetadata.Read(Operations.Toolset,renamed,token).GetAwaiter().GetResult();
+            Check(after.GetValueOrDefault("title")=="Yeni Şarkı"&&after.GetValueOrDefault("artist")=="Biri","Edit one media tag and keep the others");
         }
     }
     private static string Hash(string file)=>Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(file)));

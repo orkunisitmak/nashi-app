@@ -7,7 +7,7 @@ namespace Nashi.Linux;
 
 public sealed record Choice(string Id,string Title,string? Format=null);
 /// Choices made in a tool's dialog; each tool reads only its own part.
-public sealed record ToolSettings(MediaOptions? Media=null,ImageEdit? Crop=null,PhotoEdit? Photo=null,FrameOptions? Frame=null,CollageOptions? Collage=null,Redaction? Redact=null,PdfOrganization? Organize=null,Annotation? Annotate=null,DocumentOptions? Document=null);
+public sealed record ToolSettings(MediaOptions? Media=null,ImageEdit? Crop=null,PhotoEdit? Photo=null,FrameOptions? Frame=null,CollageOptions? Collage=null,Redaction? Redact=null,PdfOrganization? Organize=null,Annotation? Annotate=null,DocumentOptions? Document=null,MetadataEdit? Metadata=null);
 
 /// The Linux preview offers only workflows implemented here; the shared catalog decides
 /// which of them apply to a selection, so the rules match macOS and Windows.
@@ -29,6 +29,9 @@ public static class Operations
     public static string? Office=>Executable("soffice")??Executable("libreoffice");
     /// Media and web tools: the user's installed ffmpeg, ffprobe, yt-dlp and deno first, downloads only for what is missing.
     public static Toolchain Toolset=>new(Path.Combine(LinuxPaths.DataDirectory,"tools"),Environment.GetEnvironmentVariable("PATH"));
+    /// ExifTool, downloaded once into the tools folder like on Windows (it needs the system perl).
+    public static MetadataService Exif=>new(Path.Combine(LinuxPaths.DataDirectory,"tools"));
+    public static bool IsMediaOnly(IReadOnlyList<string> files)=>files.All(f=>FeatureCatalog.IsAudio(f)||FeatureCatalog.IsVideo(f)&&FeatureCatalog.Extension(f)!="gif");
     private static readonly string[] OfficeFree=["jpg","png","txt","md"];
     public static MediaEngine? Media=>Executable("ffmpeg") is {} ffmpeg&&Executable("ffprobe") is {} ffprobe?new(ffmpeg,ffprobe):null;
 
@@ -57,7 +60,7 @@ public static class Operations
 
     public static async Task<IReadOnlyList<string>> RunAsync(Choice choice,IReadOnlyList<string> inputs,string destination,IProgress<OperationProgress> progress,CancellationToken token,ToolSettings? settings=null)
     {
-        var (media,edit,photo,frame,collage,redact,organize,annotate,document)=settings??new();
+        var (media,edit,photo,frame,collage,redact,organize,annotate,document,metadata)=settings??new();
         if(choice.Id=="convert")
         {
             var format=choice.Format!;
@@ -75,6 +78,10 @@ public static class Operations
             "redactImage"=>await Task.Run(()=>Images(inputs,destination,null,92,true,progress,token,image=>Compositions.Redact(image,redact??throw new ArgumentException("Draw at least one area to redact."))),token),
             "frameImage"=>await Task.Run(()=>Images(inputs,destination,"png",92,true,progress,token,image=>Replace(image,Compositions.Frame(image,frame??new()))),token),
             "createCollage"=>await Task.Run(()=>Collage(inputs,destination,collage??new(),progress,token),token),
+            "removeMetadata" when IsMediaOnly(inputs)=>await RequireMedia().ToolAsync("removeMetadata",inputs,destination,new MediaOptions{RemoveAllMetadata=metadata?.RemoveAll??true,Metadata=new(metadata?.Updates??new Dictionary<string,string>())},progress,token),
+            // ExifTool edits tags in place of a re-encode, so image pixels and PDF content stay byte-identical.
+            "removeMetadata" when Exif.Executable is not null=>await Exif.WriteAsync(inputs,destination,metadata?.RemoveAll??true,metadata is {RemoveAll:false} m?m.Updates:null,progress:progress,token:token),
+            "removeMetadata" when metadata is {RemoveAll:false}=>throw new InvalidOperationException("Set up ExifTool to edit metadata fields."),
             "compress" or "removeMetadata" when inputs.All(IsPdf)=>await Task.Run(()=>DocumentEngine.Pdf(choice.Id,inputs,destination,null,token),token),
             "compress" when inputs.All(FeatureCatalog.IsImage)=>await Task.Run(()=>Images(inputs,destination,null,70,false,progress,token),token),
             "removeMetadata" when inputs.All(FeatureCatalog.IsImage)=>await Task.Run(()=>Images(inputs,destination,null,92,false,progress,token),token),

@@ -19,7 +19,7 @@ internal static class EditorChecks
             root=Path.GetFullPath(root);Directory.CreateDirectory(root);
             if(Directory.EnumerateFileSystemEntries(root).Any())throw new InvalidOperationException("Choose an empty folder.");
             AppBuilder.Configure<App>().UseSkia().UseHeadless(new AvaloniaHeadlessPlatformOptions{UseHeadlessDrawing=false}).SetupWithoutStarting();
-            Annotate(root);Organize(root);
+            Annotate(root);Organize(root);Metadata();
             Console.WriteLine($"{{\"passed\":{passed},\"scope\":\"Linux editors with pointer and keyboard input\"}}");
             return 0;
         }
@@ -92,6 +92,15 @@ internal static class EditorChecks
         dialog.Close();Pump();
     }
 
+    private static void Metadata()
+    {
+        var dialog=new MetadataDialog(new Dictionary<string,string>{["SourceFile"]="/tmp/Song.mp3",["title"]="Eski",["artist"]="Biri",["Stream 1 · codec_name"]="mp3"},true);dialog.Show();Pump();
+        Check(dialog.Fields.ContainsKey("title")&&dialog.Fields["title"].Text=="Eski"&&!dialog.Fields.ContainsKey("Stream 1 · codec_name"),"Metadata editor lists editable media fields");
+        var title=dialog.Fields["title"];title.Focus();title.SelectAll();Pump();dialog.KeyTextInput("Yeni Şarkı");Pump();
+        Check(dialog.Current is {RemoveAll:false} edit&&edit.Updates.Count==1&&edit.Updates["title"]=="Yeni Şarkı","Typing changes only that field");
+        dialog.RemoveAllBox.IsChecked=true;Pump();Check(!title.IsEnabled&&dialog.Current is {RemoveAll:true,Updates.Count:0},"Remove all disables the fields");
+        dialog.KeyPress(Avalonia.Input.Key.Escape,RawInputModifiers.None,PhysicalKey.None,null);Pump();Check(!dialog.IsVisible,"Escape closes the editor");
+    }
     private static T Wait<T>(Task<T> task){while(!task.IsCompleted){Dispatcher.UIThread.RunJobs();Thread.Sleep(5);}return task.GetAwaiter().GetResult();}
     private static void Wait(Task task)=>Wait(task.ContinueWith(t=>{t.GetAwaiter().GetResult();return 0;}));
     private static void Pump(){Dispatcher.UIThread.RunJobs();AvaloniaHeadlessPlatform.ForceRenderTimerTick();Dispatcher.UIThread.RunJobs();}
