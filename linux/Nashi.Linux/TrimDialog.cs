@@ -29,7 +29,7 @@ internal sealed class TrimDialog:Window
     public TrimDialog(string title,string input,MediaInfo info)
     {
         source=input;duration=info.Duration;Title=title;SizeToContent=SizeToContent.WidthAndHeight;CanResize=false;WindowStartupLocation=WindowStartupLocation.CenterOwner;
-        if(info.Video is not null&&Operations.Executable("ffmpeg") is {} ffmpeg){video=ffmpeg;frames=Directory.CreateTempSubdirectory("nashi-trim-").FullName;}
+        if(info.Video is not null&&Operations.Ffmpeg is {} ffmpeg){video=ffmpeg;frames=Directory.CreateTempSubdirectory("nashi-trim-").FullName;}
         start.Maximum=end.Maximum=duration;end.Value=duration;active=start;
         start.ValueChanged+=(_,_)=>{if(start.Value>end.Value-.1)start.Value=Math.Max(0,end.Value-.1);Changed(start);};
         end.ValueChanged+=(_,_)=>{if(end.Value<start.Value+.1)end.Value=Math.Min(duration,start.Value+.1);Changed(end);};

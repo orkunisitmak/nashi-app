@@ -15,6 +15,10 @@ namespace Nashi.Linux;
 public sealed class MainWindow:Window
 {
     private readonly LibraryStore library;
+    private readonly PreferencesStore preferences=new(LinuxPaths.DataDirectory);
+    private readonly WrapPanel actions=new();
+    private readonly TextBlock actionsLabel=Label("File actions");
+    private readonly WebPanel web=new();
     private readonly List<string> files=[];
     private readonly ListBox fileList=new(){SelectionMode=SelectionMode.Multiple,MaxHeight=220,ItemTemplate=new Avalonia.Controls.Templates.FuncDataTemplate<string>((path,_)=>{var row=new TextBlock{Text=Path.GetFileName(path),TextTrimming=TextTrimming.CharacterEllipsis};ToolTip.SetTip(row,path);return row;})};
     private readonly TextBlock selection=new(){FontSize=22,FontWeight=FontWeight.SemiBold};
@@ -42,8 +46,9 @@ public sealed class MainWindow:Window
         AddHandler(DragDrop.DropEvent,(_,e)=>Add(e.DataTransfer.TryGetFiles()?.Select(f=>f.TryGetLocalPath()).OfType<string>()??[]));
         if(library.RecoveryNotice is {} notice)status.Text=notice;
         string? Value(string flag)=>args.SkipWhile(a=>a!=flag).Skip(1).FirstOrDefault();
-        var capture=Value("--capture");var dialog=Value("--dialog");
-        Add(args.Where(a=>!a.StartsWith('-')&&a!=capture&&a!=dialog).Select(Path.GetFullPath));Refresh();RefreshLibrary();
+        var capture=Value("--capture");var dialog=Value("--dialog");var tab=Value("--tab");
+        Add(args.Where(a=>!a.StartsWith('-')&&a!=capture&&a!=dialog&&a!=tab).Select(Path.GetFullPath));
+        if(tab is not null&&Content is TabControl pages)pages.SelectedIndex=Math.Max(0,Array.IndexOf(["home","web","library","settings"],tab));Refresh();RefreshLibrary();
         if(capture is not null)Opened+=async(_,_)=>await Capture(Path.GetFullPath(capture),args.Contains("--dark")?"dark":args.Contains("--light")?"light":null,dialog,args.ToArray());
     }
 
@@ -70,15 +75,19 @@ public sealed class MainWindow:Window
             selection,hint,new StackPanel{Orientation=Orientation.Horizontal,Spacing=8,HorizontalAlignment=HorizontalAlignment.Center,Children={choose,remove,clear}}
         }});
         selection.HorizontalAlignment=hint.HorizontalAlignment=HorizontalAlignment.Center;hint.TextAlignment=TextAlignment.Center;
-        var home=new StackPanel{Spacing=14,Margin=new(20),Children={drop,fileList,formatsLabel,formats,toolsLabel,tools,progress,
+        Button Act(string text,Func<Task> action){var b=new Button{Content=text,Margin=new(0,0,8,8)};b.Click+=async(_,_)=>await action();return b;}
+        actions.Children.Add(Act("Copy",CopyFiles));actions.Children.Add(Act("Move to…",MoveFiles));actions.Children.Add(Act("Copy path",async()=>{if(Clipboard is not null){await Clipboard.SetTextAsync(FileActions.PathList(files));status.Text=files.Count==1?"Path copied.":$"{files.Count} paths copied.";}}));
+        actions.Children.Add(Act("Open terminal here",()=>{status.Text=FileActions.Terminal(files[0])?"":"No terminal app was found.";return Task.CompletedTask;}));
+        var home=new StackPanel{Spacing=14,Margin=new(20),Children={drop,fileList,formatsLabel,formats,toolsLabel,tools,actionsLabel,actions,progress,
             new StackPanel{Orientation=Orientation.Horizontal,Spacing=8,Children={cancel,reveal}},status}};
+        web.Run=(title,work)=>RunWork(title,work,preferences.Value.DownloadFolder);
         var libraryPage=new StackPanel{Spacing=12,Margin=new(20),Children={search,libraryItems}};
         var appearance=new ComboBox{ItemsSource=new[]{"System","Light","Dark"},SelectedIndex=library.Appearance switch{"light"=>1,"dark"=>2,_=>0},MinWidth=120};
         appearance.SelectionChanged+=(_,_)=>{var value=new[]{"system","light","dark"}[appearance.SelectedIndex];library.SetAppearance(value);NashiTheme.Apply(Application.Current!,value);};
-        var settings=new StackPanel{Spacing=12,Margin=new(20),Children={Label("Appearance"),appearance,
-            new TextBlock{TextWrapping=TextWrapping.Wrap,Text=$"Media tools: {(Operations.Media is null?"install ffmpeg with your package manager":"ffmpeg found")}.\nDocuments: {(Operations.Office is null?"install libreoffice with your package manager":"LibreOffice found")}.\nLibrary and settings: {LinuxPaths.DataDirectory}\nNashi {typeof(MainWindow).Assembly.GetName().Version?.ToString(3)} · Linux preview"}}};
-        var tabs=new TabControl{Items={Tab("Home",home),Tab("Library",libraryPage),Tab("Settings",settings)}};
-        tabs.SelectionChanged+=(_,_)=>{if(tabs.SelectedIndex==1)RefreshLibrary();};
+        var settings=new StackPanel{Spacing=12,Margin=new(20),Children={Label("Appearance"),appearance}};
+        Settings(settings);
+        var tabs=new TabControl{Items={Tab("Home",home),Tab("Web",web),Tab("Library",libraryPage),Tab("Settings",settings)}};
+        tabs.SelectionChanged+=(_,_)=>{if(tabs.SelectedIndex==2)RefreshLibrary();};
         return tabs;
     }
 
@@ -117,7 +126,7 @@ public sealed class MainWindow:Window
         var formatChoices=ready?Operations.Formats(files):[];var toolChoices=ready?Operations.Tools(files):[];
         formats.Children.Clear();foreach(var format in formatChoices)formats.Children.Add(Action(format.ToUpperInvariant(),new("convert",format.ToUpperInvariant(),format)));
         tools.Children.Clear();foreach(var tool in toolChoices)tools.Children.Add(Action(tool.Title,tool));
-        formatsLabel.IsVisible=formats.IsVisible=formatChoices.Length>0;toolsLabel.IsVisible=tools.IsVisible=toolChoices.Length>0;
+        formatsLabel.IsVisible=formats.IsVisible=formatChoices.Length>0;toolsLabel.IsVisible=tools.IsVisible=toolChoices.Length>0;actionsLabel.IsVisible=actions.IsVisible=ready;
         if(ready&&formatChoices.Length==0&&toolChoices.Length==0)status.Text="These files have no Linux preview action yet. Try one kind of file at a time.";
     }
     private Button Action(string title,Choice choice){var button=new Button{Content=title,Margin=new(0,0,8,8),MinWidth=72,HorizontalContentAlignment=HorizontalAlignment.Center};button.Click+=async(_,_)=>await Run(choice);return button;}
@@ -218,20 +227,91 @@ public sealed class MainWindow:Window
             else if(choice.Id=="redactAudio"){var bleep=new BleepDialog(choice.Title,inputs[0],info);await bleep.ShowDialog(this);if(bleep.Result is not {} picked)return;media=new(){AudioRedactions=picked.Ranges,RedactionMode=picked.Mode};}
             else{var trim=new TrimDialog(choice.Title,inputs[0],info);await trim.ShowDialog(this);if(trim.Result is not {} range)return;media=new(){Start=range.Start,End=range.End};}
         }
-        var destination=Path.GetDirectoryName(inputs[0])!;
-        running=new CancellationTokenSource();progress.IsVisible=cancel.IsVisible=true;progress.IsIndeterminate=true;reveal.IsVisible=false;status.Text=choice.Title+"…";Refresh();
-        var report=new Progress<OperationProgress>(p=>{if(p.Fraction is {} f){progress.IsIndeterminate=false;progress.Value=f;}status.Text=p.Label;});
+        var settings=new ToolSettings(media,edit,photo,frame,collage,redact,organize,annotate,document,metadata);
+        await RunWork(choice.Id=="convert"?"Convert to "+choice.Format!.ToUpperInvariant():choice.Title,(destination,report,token)=>Operations.RunAsync(choice,inputs,destination,report,token,settings),Destination(inputs));
+    }
+    /// Settings → Output: next to the original (default) or one chosen folder.
+    private string Destination(IReadOnlyList<string> inputs)=>preferences.Value.OutputMode=="folder"&&Directory.Exists(preferences.Value.OutputFolder)?preferences.Value.OutputFolder:Path.GetDirectoryName(inputs[0])!;
+
+    /// Shared by tools, conversions, moves and downloads: progress, Cancel, Library and "Show in folder".
+    private async Task RunWork(string title,Func<string,IProgress<OperationProgress>,CancellationToken,Task<IReadOnlyList<string>>> work,string destination)
+    {
+        if(running is not null)return;
+        running=new CancellationTokenSource();progress.IsVisible=cancel.IsVisible=true;progress.IsIndeterminate=true;reveal.IsVisible=false;status.Text=title+"…";web.Status=title+"…";Refresh();
+        var report=new Progress<OperationProgress>(p=>{if(p.Fraction is {} f){progress.IsIndeterminate=false;progress.Value=f;}status.Text=p.Label;web.Status=p.Label;});
         try
         {
-            var outputs=await Operations.RunAsync(choice,inputs,destination,report,running.Token,new(media,edit,photo,frame,collage,redact,organize,annotate,document,metadata));
-            library.Record(choice.Id=="convert"?"Convert to "+choice.Format!.ToUpperInvariant():choice.Title,outputs);
+            Directory.CreateDirectory(destination);
+            var outputs=await work(destination,report,running.Token);
+            library.Record(title,outputs);
             lastFolder=destination;reveal.IsVisible=true;
-            status.Text=outputs.Count==1?$"Saved {Path.GetFileName(outputs[0])}":$"Saved {outputs.Count} files";
+            status.Text=outputs.Count==1?$"Saved {Path.GetFileName(outputs[0])}":$"Saved {outputs.Count} files";web.Status=status.Text+" in "+destination;
         }
-        catch(OperationCanceledException){status.Text="Cancelled. Nothing was saved.";}
-        catch(Exception error){status.Text=error.Message;}
+        catch(OperationCanceledException){status.Text="Cancelled. Nothing was saved.";web.Status=status.Text;}
+        catch(Exception error){status.Text=error.Message;web.Status=error.Message;}
         finally{running.Dispose();running=null;progress.IsVisible=cancel.IsVisible=false;Refresh();}
     }
+
+    private async Task CopyFiles()
+    {
+        if(Clipboard is null||files.Count==0)return;
+        // GNOME Files, Dolphin and Thunar paste these as file copies; other apps get the paths as text.
+        var transfer=new DataTransfer();
+        foreach(var path in files)if((Directory.Exists(path)?await StorageProvider.TryGetFolderFromPathAsync(path) as IStorageItem:await StorageProvider.TryGetFileFromPathAsync(path)) is {} item)transfer.Add(DataTransferItem.CreateFile(item));
+        var extra=new DataTransferItem();extra.Set(DataFormat.CreateStringPlatformFormat("x-special/gnome-copied-files"),"copy\n"+FileActions.UriList(files).Replace("\r\n","\n"));extra.SetText(FileActions.PathList(files));transfer.Add(extra);
+        await Clipboard.SetDataAsync(transfer);status.Text=files.Count==1?"Copied. Paste it in your file manager.":$"{files.Count} files copied. Paste them in your file manager.";
+    }
+    private async Task MoveFiles()
+    {
+        if(files.Count==0)return;
+        var folders=await StorageProvider.OpenFolderPickerAsync(new(){Title="Move to…",AllowMultiple=false});
+        if(folders.FirstOrDefault()?.TryGetLocalPath() is not {} target)return;
+        var inputs=files.ToArray();
+        await RunWork("Move",async(destination,report,token)=>{var moved=await FileActions.MoveAsync(inputs,destination,report,token);files.Clear();files.AddRange(moved);return moved;},target);
+    }
+
+    private void Settings(StackPanel page)
+    {
+        var output=new ComboBox{ItemsSource=new[]{"Next to the original","In one folder"},SelectedIndex=preferences.Value.OutputMode=="folder"?1:0,MinWidth=200};
+        var outputFolder=Muted(preferences.Value.OutputFolder.Length>0?preferences.Value.OutputFolder:"No folder chosen");
+        async Task<string?> PickFolder(string title)=>(await StorageProvider.OpenFolderPickerAsync(new(){Title=title,AllowMultiple=false})).FirstOrDefault()?.TryGetLocalPath();
+        var chooseOutput=new Button{Content="Choose folder…"};
+        chooseOutput.Click+=async(_,_)=>{if(await PickFolder("Save results to…") is {} folder){Save(preferences.Value with{OutputFolder=folder,OutputMode="folder"});outputFolder.Text=folder;output.SelectedIndex=1;}};
+        output.SelectionChanged+=async(_,_)=>
+        {
+            if(output.SelectedIndex==0){Save(preferences.Value with{OutputMode="beside"});return;}
+            if(!Directory.Exists(preferences.Value.OutputFolder)){if(await PickFolder("Save results to…") is {} folder){Save(preferences.Value with{OutputFolder=folder});outputFolder.Text=folder;}else{output.SelectedIndex=0;return;}}
+            Save(preferences.Value with{OutputMode="folder"});
+        };
+        var downloads=Muted(preferences.Value.DownloadFolder);var chooseDownloads=new Button{Content="Change…"};
+        chooseDownloads.Click+=async(_,_)=>{if(await PickFolder("Save downloaded media to…") is {} folder){Save(preferences.Value with{DownloadFolder=folder});downloads.Text=folder;}};
+        var toolsState=new TextBlock{TextWrapping=TextWrapping.Wrap};
+        var setup=new Button{Content="Set up media tools"};
+        void Describe()
+        {
+            string Found(bool ok,string yes,string no)=>ok?"✓ "+yes:"– "+no;
+            var tools=Operations.Toolset;
+            toolsState.Text=string.Join("\n",
+                Found(Operations.Media is not null,"FFmpeg (media tools)","FFmpeg: choose Set up media tools, or install ffmpeg"),
+                Found(tools.Ready,"yt-dlp and Deno (web downloads, Pages)","yt-dlp and Deno: choose Set up media tools"),
+                Found(Operations.Office is not null,"LibreOffice (documents, spreadsheets, slides)","LibreOffice: install libreoffice with your package manager"),
+                Found(Operations.Exif.Executable is not null,"ExifTool (metadata fields)",Operations.Executable("perl") is null?"ExifTool needs perl":"ExifTool: offered the first time you edit metadata"),
+                Found(Operations.Executable("tesseract") is not null,"Tesseract (text in scanned PDFs)","Tesseract: install tesseract and a language pack for scanned PDFs"));
+            setup.IsVisible=!tools.Ready;
+        }
+        setup.Click+=async(_,_)=>
+        {
+            if(await Ask("Set up media tools",[("Download FFmpeg, yt-dlp and Deno from their official releases (SHA-256 verified)",1),("Not now",0)],0) is not 1)return;
+            await RunWork("Set up media tools",async(_,report,token)=>{await Operations.Toolset.InstallAsync(report,token);return [];},Path.Combine(LinuxPaths.DataDirectory,"tools"));Describe();
+        };
+        Describe();
+        page.Children.Add(Label("Output"));page.Children.Add(new StackPanel{Orientation=Orientation.Horizontal,Spacing=8,Children={output,chooseOutput}});page.Children.Add(outputFolder);
+        page.Children.Add(Label("Downloads"));page.Children.Add(new StackPanel{Orientation=Orientation.Horizontal,Spacing=8,Children={chooseDownloads,downloads}});
+        page.Children.Add(Label("Tools"));page.Children.Add(toolsState);page.Children.Add(setup);
+        page.Children.Add(Muted($"Library and settings: {LinuxPaths.DataDirectory}"));
+        page.Children.Add(Muted($"Nashi {typeof(MainWindow).Assembly.GetName().Version?.ToString(3)} · Linux preview"));
+    }
+    private void Save(Preferences value){try{preferences.Save(value);}catch(Exception error)when(error is IOException or UnauthorizedAccessException or ArgumentException){status.Text=error.Message;}}
 
     /// As on Windows: one file opens the editor, several files have all metadata removed.
     /// Images and PDFs use ExifTool, offered once as a verified download; without it only removal is possible.

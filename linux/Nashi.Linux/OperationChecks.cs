@@ -148,16 +148,16 @@ internal static class OperationChecks
             if(Operations.Media is not null)
             {
                 var wav=Path.Combine(root,"Tone.wav");
-                ProcessRunner.RunAsync(Operations.Executable("ffmpeg")!,["-hide_banner","-loglevel","error","-f","lavfi","-i","sine=frequency=440:duration=2","-ar","44100",wav],token).GetAwaiter().GetResult();
+                ProcessRunner.RunAsync(Operations.Ffmpeg!,["-hide_banner","-loglevel","error","-f","lavfi","-i","sine=frequency=440:duration=2","-ar","44100",wav],token).GetAwaiter().GetResult();
                 Check(File.Exists(wav),"Audio fixture");
                 var mp3=Operations.RunAsync(new("convert","mp3","mp3"),[wav],Path.Combine(root,"media"),progress,token).GetAwaiter().GetResult().Single();
                 Check(new FileInfo(mp3).Length>0,"Audio conversion");
                 var normalized=Operations.RunAsync(new("normalizeAudio","Normalize Volume"),[wav],Path.Combine(root,"normalize"),progress,token).GetAwaiter().GetResult();
                 Check(normalized.Count==1,"Normalize audio");
                 var mono=Operations.RunAsync(new("audioChannels","Convert Audio Channels"),[wav],Path.Combine(root,"channels"),progress,token,new(Media:new(){Channels=1})).GetAwaiter().GetResult().Single();
-                Check(ProcessRunner.RunAsync(Operations.Executable("ffprobe")!,["-v","error","-select_streams","a:0","-show_entries","stream=channels","-of","csv=p=0",mono],token).GetAwaiter().GetResult().Output.Trim()=="1","Mono output");
+                Check(ProcessRunner.RunAsync(Operations.Ffprobe!,["-v","error","-select_streams","a:0","-show_entries","stream=channels","-of","csv=p=0",mono],token).GetAwaiter().GetResult().Output.Trim()=="1","Mono output");
                 var clip=Path.Combine(root,"Clip.mp4");
-                ProcessRunner.RunAsync(Operations.Executable("ffmpeg")!,["-hide_banner","-loglevel","error","-f","lavfi","-i","testsrc=s=320x240:d=2","-f","lavfi","-i","sine=duration=2","-shortest","-pix_fmt","yuv420p",clip],token).GetAwaiter().GetResult();
+                ProcessRunner.RunAsync(Operations.Ffmpeg!,["-hide_banner","-loglevel","error","-f","lavfi","-i","testsrc=s=320x240:d=2","-f","lavfi","-i","sine=duration=2","-shortest","-pix_fmt","yuv420p",clip],token).GetAwaiter().GetResult();
                 Check(Operations.Tools([clip,clip]).Any(t=>t.Id=="joinVideos")&&Operations.Tools([clip]).Any(t=>t.Id=="changeVideoSpeed"),"Video tools offered");
                 var fast=Operations.RunAsync(new("changeVideoSpeed","Change Video Speed"),[clip],Path.Combine(root,"speed"),progress,token,new(Media:new(){Speed=2})).GetAwaiter().GetResult().Single();
                 var fastDuration=Operations.Media.InspectAsync(fast,token).GetAwaiter().GetResult().Duration;
@@ -186,13 +186,25 @@ internal static class OperationChecks
                 {
                     var bleeped=Operations.RunAsync(new("redactAudio","Bleep Audio"),[wav],Path.Combine(root,"bleep-"+style),progress,token,new(Media:new(){AudioRedactions=[new(.5,1.2)],RedactionMode=style})).GetAwaiter().GetResult().Single();
                     // Loudest sample inside and outside the range, in dB, from FFmpeg's volumedetect.
-                    double Peak(double start,double length)=>double.Parse(System.Text.RegularExpressions.Regex.Match(ProcessRunner.RunAsync(Operations.Executable("ffmpeg")!,["-hide_banner","-ss",start.ToString(System.Globalization.CultureInfo.InvariantCulture),"-t",length.ToString(System.Globalization.CultureInfo.InvariantCulture),"-i",bleeped,"-af","volumedetect","-f","null","-"],token).GetAwaiter().GetResult().Error,@"max_volume: (-?[\d.]+|-inf) dB").Groups[1].Value.Replace("-inf","-200"),System.Globalization.CultureInfo.InvariantCulture);
+                    double Peak(double start,double length)=>double.Parse(System.Text.RegularExpressions.Regex.Match(ProcessRunner.RunAsync(Operations.Ffmpeg!,["-hide_banner","-ss",start.ToString(System.Globalization.CultureInfo.InvariantCulture),"-t",length.ToString(System.Globalization.CultureInfo.InvariantCulture),"-i",bleeped,"-af","volumedetect","-f","null","-"],token).GetAwaiter().GetResult().Error,@"max_volume: (-?[\d.]+|-inf) dB").Groups[1].Value.Replace("-inf","-200"),System.Globalization.CultureInfo.InvariantCulture);
                     var inside=Peak(.6,.5);var outside=Peak(1.5,.3);
                     Check(FeatureCatalog.Extension(bleeped)=="wav"&&outside>-30&&(quiet?inside<-80:inside is > -25 and < -5),"Bleep audio "+style);
                 }
                 Check(TrimDialog.Parse("1:15")==75&&TrimDialog.Parse("1:01:15.5")==3675.5&&TrimDialog.Parse("x") is null&&TrimDialog.Format(75.25)=="1:15.2","Time fields");
             }
             Metadata(root,png,progress,token);
+            if(Environment.GetEnvironmentVariable("NASHI_VERIFY_WEB")=="1")Web(root,progress,token);
+            {
+                var source=Path.Combine(root,"move-source");var nested=Path.Combine(source,"Album","Inner");Directory.CreateDirectory(nested);
+                File.WriteAllText(Path.Combine(nested,"note.txt"),"merhaba");File.CreateSymbolicLink(Path.Combine(source,"Album","link"),"/etc/hostname");
+                var loose=Path.Combine(source,"Loose.txt");File.WriteAllText(loose,"tek");var target=Path.Combine(root,"move-target");
+                var moved=FileActions.MoveAsync([Path.Combine(source,"Album"),loose],target,progress,token).GetAwaiter().GetResult();
+                Check(moved.Count==2&&File.ReadAllText(Path.Combine(target,"Album","Inner","note.txt"))=="merhaba"&&new FileInfo(Path.Combine(target,"Album","link")).LinkTarget=="/etc/hostname"&&File.ReadAllText(Path.Combine(target,"Loose.txt"))=="tek","Move keeps folders, files and links");
+                Check(!Directory.Exists(Path.Combine(source,"Album"))&&!File.Exists(loose),"Move removes the originals after publishing");
+                var same=FileActions.MoveAsync([Path.Combine(target,"Loose.txt")],target,progress,token).GetAwaiter().GetResult();Check(same.Single()==Path.Combine(target,"Loose.txt"),"Moving into the same folder changes nothing");
+                try{FileActions.MoveAsync([Path.Combine(target,"Album")],Path.Combine(target,"Album","Inner"),progress,token).GetAwaiter().GetResult();Check(false,"A folder cannot move into itself");}catch(ArgumentException){Check(true,"A folder cannot move into itself");}
+                Check(FileActions.UriList(["/tmp/a b/ç.txt"])=="file:///tmp/a%20b/%C3%A7.txt","File URIs for the clipboard");
+            }
             Check(Hash(png)==originalHash,"Original is unchanged");
             Console.WriteLine($"{{\"passed\":{passed},\"scope\":\"Linux preview image, PDF, QR, archive, audio and video exports\"}}");
             return 0;
@@ -262,12 +274,28 @@ internal static class OperationChecks
         if(Operations.Media is not null)
         {
             var wav=Path.Combine(root,"Tone.wav");var mp3=Path.Combine(root,"Song.mp3");
-            ProcessRunner.RunAsync(Operations.Executable("ffmpeg")!,["-hide_banner","-loglevel","error","-i",wav,"-metadata","title=Eski","-metadata","artist=Biri",mp3],token).GetAwaiter().GetResult();
+            ProcessRunner.RunAsync(Operations.Ffmpeg!,["-hide_banner","-loglevel","error","-i",wav,"-metadata","title=Eski","-metadata","artist=Biri",mp3],token).GetAwaiter().GetResult();
             var before=MediaMetadata.Read(Operations.Toolset,mp3,token).GetAwaiter().GetResult();Check(before.GetValueOrDefault("title")=="Eski","Read media tags");
             var renamed=Operations.RunAsync(new("removeMetadata","Metadata"),[mp3],Path.Combine(root,"media-tags"),progress,token,Edit(false,("title","Yeni Şarkı"))).GetAwaiter().GetResult().Single();
             var after=MediaMetadata.Read(Operations.Toolset,renamed,token).GetAwaiter().GetResult();
             Check(after.GetValueOrDefault("title")=="Yeni Şarkı"&&after.GetValueOrDefault("artist")=="Biri","Edit one media tag and keep the others");
         }
+    }
+    /// Opt-in (NASHI_VERIFY_WEB=1): real public downloads. The image is pinned by commit and SHA-256, as on Windows.
+    private static void Web(string root,IProgress<OperationProgress> progress,CancellationToken token)
+    {
+        var web=new WebDownload(Operations.Toolset);
+        var image=web.DownloadAsync("https://raw.githubusercontent.com/orkunisitmak/nashi-app/4f051ab04bc48ea2efb5338abed4990536cb4d97/Resources/Brand/NashiMark.png","image",Path.Combine(root,"web-image"),progress,token).GetAwaiter().GetResult().Single();
+        Check(Hash(image).Equals("27128b31fa9f3b7cf6c21c4b377be387b1503159b0227335144a17c2badf489a",StringComparison.OrdinalIgnoreCase),"Pinned public image download");
+        Check(WebMediaPayload.Parse("https://youtu.be/jNQXAC9IVRw?si=x") is {Kind:"youtube",Url:"https://www.youtube.com/watch?v=jNQXAC9IVRw"}&&WebMediaPayload.Parse("https://www.instagram.com/someone/p/ABC123/") is {Kind:"instagramPhotos"},"Link kinds");
+        var thumbnail=web.DownloadAsync("https://youtu.be/jNQXAC9IVRw","thumbnail",Path.Combine(root,"web-thumb"),progress,token).GetAwaiter().GetResult().Single();
+        Check(new MagickImageInfo(thumbnail).Width>=480,"YouTube thumbnail");
+        var info=web.InspectAsync("https://www.youtube.com/watch?v=jNQXAC9IVRw",token).GetAwaiter().GetResult();
+        Check(info.Title.Contains("zoo",StringComparison.OrdinalIgnoreCase)&&info.Duration is > 15 and < 25,"Inspect a YouTube video with yt-dlp");
+        var audio=web.DownloadAsync("https://www.youtube.com/watch?v=jNQXAC9IVRw","audio",Path.Combine(root,"web-audio"),progress,token).GetAwaiter().GetResult().Single();
+        Check(FeatureCatalog.Extension(audio)=="mp3"&&Operations.Media!.InspectAsync(audio,token).GetAwaiter().GetResult().Duration is > 15 and < 25,"Download YouTube audio as MP3");
+        var video=web.DownloadAsync("https://www.youtube.com/watch?v=jNQXAC9IVRw","video",Path.Combine(root,"web-video"),progress,token,maximumHeight:144).GetAwaiter().GetResult().Single();
+        Check(Operations.Media!.InspectAsync(video,token).GetAwaiter().GetResult().Video is {Height:<=144},"Download YouTube video with a height limit");
     }
     private static string Hash(string file)=>Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(file)));
     private static void Check(bool condition,string name){if(!condition)throw new InvalidDataException(name);passed++;}

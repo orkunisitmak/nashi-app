@@ -19,7 +19,7 @@ internal static class EditorChecks
             root=Path.GetFullPath(root);Directory.CreateDirectory(root);
             if(Directory.EnumerateFileSystemEntries(root).Any())throw new InvalidOperationException("Choose an empty folder.");
             AppBuilder.Configure<App>().UseSkia().UseHeadless(new AvaloniaHeadlessPlatformOptions{UseHeadlessDrawing=false}).SetupWithoutStarting();
-            Annotate(root);Organize(root);Metadata();
+            Annotate(root);Organize(root);Metadata();Web();
             Console.WriteLine($"{{\"passed\":{passed},\"scope\":\"Linux editors with pointer and keyboard input\"}}");
             return 0;
         }
@@ -100,6 +100,18 @@ internal static class EditorChecks
         Check(dialog.Current is {RemoveAll:false} edit&&edit.Updates.Count==1&&edit.Updates["title"]=="Yeni Şarkı","Typing changes only that field");
         dialog.RemoveAllBox.IsChecked=true;Pump();Check(!title.IsEnabled&&dialog.Current is {RemoveAll:true,Updates.Count:0},"Remove all disables the fields");
         dialog.KeyPress(Avalonia.Input.Key.Escape,RawInputModifiers.None,PhysicalKey.None,null);Pump();Check(!dialog.IsVisible,"Escape closes the editor");
+    }
+    private static void Web()
+    {
+        var window=new Window{Content=new WebPanel()};window.Show();Pump();var panel=(WebPanel)window.Content!;
+        string[] Kinds()=>panel.Kind.ItemsSource!.Cast<string>().ToArray();
+        panel.Link.Text="https://youtu.be/jNQXAC9IVRw";Pump();
+        Check(Kinds().SequenceEqual(new[]{"video","audio","thumbnail"})&&panel.Kind.SelectedItem as string=="video"&&panel.Quality.IsEffectivelyVisible,"YouTube link offers video, audio and thumbnail");
+        panel.Kind.SelectedIndex=1;Pump();Check(!panel.Quality.IsEffectivelyVisible,"Quality is only for video");
+        panel.Link.Text="https://www.instagram.com/reel/ABC123/";Pump();Check(Kinds().SequenceEqual(new[]{"video","audio"})&&panel.Kind.SelectedItem as string=="audio","A Reel keeps the chosen kind");
+        panel.Link.Text="https://www.instagram.com/someone/p/ABC123/";Pump();Check(Kinds().SequenceEqual(new[]{"photos"}),"An Instagram post offers its photos");
+        panel.Link.Text="not a link";Pump();Wait(panel.FindAsync());Check(panel.Summary.Text=="Paste one complete public media link.","A broken link is explained");
+        window.Close();Pump();
     }
     private static T Wait<T>(Task<T> task){while(!task.IsCompleted){Dispatcher.UIThread.RunJobs();Thread.Sleep(5);}return task.GetAwaiter().GetResult();}
     private static void Wait(Task task)=>Wait(task.ContinueWith(t=>{t.GetAwaiter().GetResult();return 0;}));

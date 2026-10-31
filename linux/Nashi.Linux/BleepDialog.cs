@@ -30,7 +30,7 @@ internal sealed class BleepDialog:Window
     {
         source=input;Title=title;Width=900;Height=560;MinWidth=640;MinHeight=460;WindowStartupLocation=WindowStartupLocation.CenterOwner;
         player=Operations.Executable("ffplay");
-        if(Operations.Executable("ffmpeg") is not null)folder=Directory.CreateTempSubdirectory("nashi-wave-").FullName;
+        if(Operations.Ffmpeg is not null)folder=Directory.CreateTempSubdirectory("nashi-wave-").FullName;
         wave=new(info.Duration){Height=150,Focusable=true};wave.Changed+=Changed;
         startText.LostFocus+=(_,_)=>Typed();endText.LostFocus+=(_,_)=>Typed();
         play.IsEnabled=player is not null;if(player is null)ToolTip.SetTip(play,"Install ffplay (part of FFmpeg) to listen.");
@@ -101,7 +101,7 @@ internal sealed class BleepDialog:Window
     }
     private async Task Waveform()
     {
-        if(folder is null||Operations.Executable("ffmpeg") is not {} ffmpeg)return;var file=Path.Combine(folder,"wave.png");
+        if(folder is null||Operations.Ffmpeg is not {} ffmpeg)return;var file=Path.Combine(folder,"wave.png");
         try{await ProcessRunner.RunAsync(ffmpeg,["-hide_banner","-loglevel","error","-i",source,"-filter_complex","aformat=channel_layouts=mono,showwavespic=s=1600x300:colors=0xE3B859","-frames:v","1","-y",file]);}
         catch(Exception error)when(error is IOException or InvalidOperationException){return;}
         if(!IsVisible||!File.Exists(file))return;using var stream=File.OpenRead(file);wave.Wave=new Bitmap(stream);

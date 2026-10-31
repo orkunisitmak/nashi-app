@@ -33,13 +33,17 @@ public static class Operations
     public static MetadataService Exif=>new(Path.Combine(LinuxPaths.DataDirectory,"tools"));
     public static bool IsMediaOnly(IReadOnlyList<string> files)=>files.All(f=>FeatureCatalog.IsAudio(f)||FeatureCatalog.IsVideo(f)&&FeatureCatalog.Extension(f)!="gif");
     private static readonly string[] OfficeFree=["jpg","png","txt","md"];
-    public static MediaEngine? Media=>Executable("ffmpeg") is {} ffmpeg&&Executable("ffprobe") is {} ffprobe?new(ffmpeg,ffprobe):null;
+    /// FFmpeg from Settings → Set up media tools, or the system's.
+    public static string? Ffmpeg=>Find("ffmpeg");
+    public static string? Ffprobe=>Find("ffprobe");
+    private static string? Find(string name){try{return Toolset.Executable(name);}catch(FileNotFoundException){return null;}}
+    public static MediaEngine? Media=>Ffmpeg is {} ffmpeg&&Ffprobe is {} ffprobe?new(ffmpeg,ffprobe):null;
 
     public static string[] Formats(IReadOnlyList<string> files)
     {
         var formats=FeatureCatalog.Formats(files);
         // The bundled ImageMagick decodes HEIC but encodes it through FFmpeg, as on Windows.
-        if(files.All(FeatureCatalog.IsImage))return formats.Where(ImageOutputs.Contains).Where(f=>f!="heic"||Executable("ffmpeg") is not null).ToArray();
+        if(files.All(FeatureCatalog.IsImage))return formats.Where(ImageOutputs.Contains).Where(f=>f!="heic"||Ffmpeg is not null).ToArray();
         if(files.All(f=>FeatureCatalog.IsVideo(f)||FeatureCatalog.IsAudio(f)))return Media is null?[]:formats.Where(f=>MediaEngine.AudioFormats.Contains(f)||MediaEngine.VideoFormats.Contains(f)).ToArray();
         if(files.All(FeatureCatalog.IsArchive))return formats.Where(f=>f is "zip" or "tar" or "gz").ToArray();
         if(files.All(IsSubtitle))return formats;
@@ -101,7 +105,7 @@ public static class Operations
         try
         {
             var file=Path.Combine(folder,"frame.png");
-            await ProcessRunner.RunAsync(Executable("ffmpeg")??throw new FileNotFoundException("Install FFmpeg with your package manager to use media tools."),["-hide_banner","-loglevel","error","-ss",seconds.ToString("0.###",System.Globalization.CultureInfo.InvariantCulture),"-i",input,"-frames:v","1","-y",file],token);
+            await ProcessRunner.RunAsync(Ffmpeg??throw new FileNotFoundException("Install FFmpeg with your package manager to use media tools."),["-hide_banner","-loglevel","error","-ss",seconds.ToString("0.###",System.Globalization.CultureInfo.InvariantCulture),"-i",input,"-frames:v","1","-y",file],token);
             return File.Exists(file)?await File.ReadAllBytesAsync(file,token):throw new InvalidDataException("Could not read a frame from this video.");
         }
         finally{try{Directory.Delete(folder,true);}catch(IOException){}catch(UnauthorizedAccessException){}}
@@ -121,7 +125,7 @@ public static class Operations
             image.Quality=(uint)quality;
             if(ext is "jpg" or "bmp"&&image.HasAlpha){image.BackgroundColor=MagickColors.White;image.Alpha(AlphaAction.Remove);}
             var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+"."+ext);
-            if(ext=="heic")PhotoCodec.EncodePng(image.ToByteArray(MagickFormat.Png),output,ext,quality,Executable("ffmpeg"),token);
+            if(ext=="heic")PhotoCodec.EncodePng(image.ToByteArray(MagickFormat.Png),output,ext,quality,Ffmpeg,token);
             else image.Write(output,PhotoCodec.Format(ext));
             outputs.Add(output);
             progress?.Report(new(outputs.Count/(double)inputs.Count*.98,"Saving images…"));
