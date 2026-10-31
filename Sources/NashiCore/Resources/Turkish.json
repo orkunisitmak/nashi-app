@@ -1163,6 +1163,7 @@
   "No conversions for {0} files yet.": "{0} dosyaları için henüz dönüştürme yok.",
   "No tools for {0} files yet.": "{0} dosyaları için henüz araç yok.",
   "Nothing to convert": "Dönüştürülecek bir şey yok",
+  "Nothing was created.": "Hiçbir şey oluşturulmadı.",
   "Nashi is running but did not answer.": "Nashi çalışıyor ama yanıt vermedi.",
   "Convert with Nashi": "Nashi ile dönüştür",
   "Wrote {0}": "Yazıldı: {0}",

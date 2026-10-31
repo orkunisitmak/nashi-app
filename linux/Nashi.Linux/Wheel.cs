@@ -1,4 +1,6 @@
 using System.Buffers.Binary;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -442,10 +444,43 @@ public static class WheelFeedback
         if (SoundEnabled && File.Exists(Sound)) Player(volume);
     }
 
-    /// The fallback: fire-and-forget through the first player that starts; one that exits non-zero (no sound server,
-    /// say) hands over to the next. Nothing when no player works.
+    /// Starts a player program: a way to stop it, or null when it would not start. The checks swap in their own.
+    public static Func<string, IReadOnlyList<string>, Action<int>, Action?> StartPlayer { get; set; } = (program, args, exited) =>
+    {
+        var process = new Process { StartInfo = new ProcessStartInfo(program, args) { UseShellExecute = false }, EnableRaisingEvents = true };
+        process.Exited += (_, _) =>
+        {
+            using (process) exited(process.ExitCode);
+        };
+        try
+        {
+            if (process.Start()) return () =>
+            {
+                try { process.Kill(); }
+                catch (Exception error) when (error is InvalidOperationException or Win32Exception) { } // already gone
+            };
+        }
+        catch (Win32Exception) { } // not installed
+        process.Dispose();
+        return null;
+    };
+
+    private static Action? playing; // stops the fallback player that is running, if any
+    private static int generation;
+
+    /// The fallback: the first player that starts; one that exits non-zero (no sound server, say) hands over to the
+    /// next. At most one runs: a newer sound stops the one playing and restarts, so quick ticks never pile up processes.
+    /// Nothing when no player works.
     public static void PlayThroughPlayers(double volume)
     {
+        int mine;
+        Action? stop;
+        lock (gate)
+        {
+            (stop, playing) = (playing, null);
+            mine = ++generation;
+        }
+        stop?.Invoke();
         Try(0);
 
         void Try(int from)
@@ -453,9 +488,34 @@ public static class WheelFeedback
             for (var i = from; i < Players.Length; i++)
             {
                 var player = Players[i];
-                lock (gate) if (missing.Contains(player)) continue;
+                lock (gate)
+                {
+                    if (generation != mine) return;
+                    if (missing.Contains(player)) continue;
+                }
                 var next = i + 1;
-                if (Desktop.Spawn(player, Arguments(player, volume), null, code => { if (code != 0) Try(next); })) return;
+                var ended = false;
+                var started = StartPlayer(player, Arguments(player, volume), code =>
+                {
+                    lock (gate)
+                    {
+                        ended = true;
+                        if (generation != mine) return; // stopped for a newer sound: no hand-over
+                        playing = null;
+                    }
+                    if (code != 0) Try(next);
+                });
+                if (started is not null)
+                {
+                    var stale = false;
+                    lock (gate)
+                    {
+                        if (generation != mine) stale = true;
+                        else if (!ended) playing = started;
+                    }
+                    if (stale) started();
+                    return;
+                }
                 lock (gate) missing.Add(player);
             }
         }
@@ -510,59 +570,80 @@ public sealed record Pcm(int Rate, int Channels, short[] Samples);
 
 // One persistent PulseAudio stream through libpulse-simple (PipeWire-pulse serves it too), fed 10 ms at a time by a
 // background thread. A new request flushes what is queued and restarts the sound, so quick ticks never pile up.
-// A short target buffer (30 ms) keeps the latency low. The wav is decoded once.
+// A short target buffer (30 ms) keeps the latency low. Everything that can block (reading and decoding the wav once,
+// connecting to the server, writing) happens on that thread, never on the UI thread: a stalled server can't freeze
+// the wheel. When the stream can't open or breaks, that sound goes to the players and the next ticks do too, until a
+// retry: after 1 s, then 2, 4… up to a minute.
 internal static class Pulse
 {
     /// The server to use; null is the default one. The checks point it at nothing to test the fallback.
     internal static string? Server { get; set; }
+    /// The time source for the retry backoff; the checks swap in their own.
+    internal static Func<DateTime> Clock { get; set; } = () => DateTime.UtcNow;
 
     private static readonly object gate = new();
     private static readonly Lazy<Pcm?> pcm = new(() => File.Exists(WheelFeedback.Sound) ? WheelFeedback.DecodeWav(File.ReadAllBytes(WheelFeedback.Sound)) : null);
-    private static nint stream;
-    private static bool failed;
+    private static Thread? writer;
     private static double? pending;
+    private static int failures;
+    private static DateTime retryAt = DateTime.MinValue;
 
-    /// Queues the sound; false when PulseAudio is not there (or broke), so the caller falls back.
+    /// True while a failure's backoff runs (the players play meanwhile).
+    internal static bool Down
+    {
+        get { lock (gate) return Clock() < retryAt; }
+    }
+
+    /// The wait before the next try after `failures` failures in a row: 1 s, doubling, at most 60 s.
+    internal static TimeSpan Backoff(int failures) => TimeSpan.FromSeconds(Math.Min(60, 1 << Math.Min(failures - 1, 6)));
+
+    /// Hands the sound to the writer thread; false while PulseAudio is down (backing off), so the caller falls back.
     public static bool Play(double volume)
     {
         lock (gate)
         {
-            if (failed) return false;
-            if (stream == 0 && !Open()) return false;
+            if (Clock() < retryAt) return false;
             pending = volume;
+            if (writer is null)
+            {
+                writer = new Thread(Run) { IsBackground = true, Name = "Nashi sound" };
+                writer.Start();
+            }
             Monitor.Pulse(gate);
             return true;
         }
     }
 
-    private static bool Open()
+    private static nint Open()
     {
         try
         {
-            if (pcm.Value is not { } sound) return Fail();
+            if (pcm.Value is not { } sound) return 0;
             var spec = new SampleSpec { Format = 3 /* PA_SAMPLE_S16LE */, Rate = (uint)sound.Rate, Channels = (byte)sound.Channels };
             var attr = new BufferAttr { MaxLength = uint.MaxValue, TLength = (uint)(sound.Rate * sound.Channels * 2 * 30 / 1000), PreBuf = uint.MaxValue, MinReq = uint.MaxValue, FragSize = uint.MaxValue };
-            stream = pa_simple_new(Server, "Nashi", 1 /* PA_STREAM_PLAYBACK */, null, "Wheel", ref spec, 0, ref attr, out _);
-            if (stream == 0) return Fail();
-            new Thread(() => Run(stream, sound)) { IsBackground = true, Name = "Nashi sound" }.Start();
-            return true;
+            return pa_simple_new(Server, "Nashi", 1 /* PA_STREAM_PLAYBACK */, null, "Wheel", ref spec, 0, ref attr, out _);
         }
-        catch (Exception e) when (e is DllNotFoundException or EntryPointNotFoundException or BadImageFormatException or IOException)
+        catch (Exception e) when (e is DllNotFoundException or EntryPointNotFoundException or BadImageFormatException or IOException or UnauthorizedAccessException)
         {
-            return Fail();
+            return 0;
         }
     }
 
-    private static bool Fail()
+    // This sound goes to the players; the next ones too until the backoff ends.
+    private static void Failed(double volume)
     {
-        failed = true;
-        return false;
+        WheelFeedback.PlayThroughPlayers(volume);
+        lock (gate)
+        {
+            failures++;
+            retryAt = Clock() + Backoff(failures);
+            pending = null;
+        }
     }
 
-    private static void Run(nint handle, Pcm sound)
+    private static void Run()
     {
-        var chunk = sound.Rate / 100 * sound.Channels;
-        var buffer = new short[chunk];
+        nint handle = 0;
         while (true)
         {
             double volume;
@@ -572,6 +653,15 @@ internal static class Pulse
                 volume = pending.Value;
                 pending = null;
             }
+            if (handle == 0 && (handle = Open()) == 0)
+            {
+                Failed(volume);
+                continue;
+            }
+            lock (gate) failures = 0;
+            var sound = pcm.Value!;
+            var chunk = sound.Rate / 100 * sound.Channels;
+            var buffer = new short[chunk];
             pa_simple_flush(handle, out _);
             for (var at = 0; at < sound.Samples.Length; at += chunk)
             {
@@ -579,13 +669,10 @@ internal static class Pulse
                 var count = Math.Min(chunk, sound.Samples.Length - at);
                 WheelFeedback.Scale(sound.Samples.AsSpan(at, count), buffer, volume);
                 if (pa_simple_write(handle, buffer, (nuint)(count * 2), out _) >= 0) continue;
-                lock (gate)
-                {
-                    failed = true; // the server went away: from now on the players play
-                    stream = 0;
-                }
-                pa_simple_free(handle);
-                return;
+                pa_simple_free(handle); // the server went away: reopen on a later tick
+                handle = 0;
+                Failed(volume);
+                break;
             }
         }
     }

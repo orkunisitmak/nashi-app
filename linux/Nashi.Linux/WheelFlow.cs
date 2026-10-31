@@ -39,6 +39,7 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
         public const string Cancelled = "Cancelled. Originals kept.";
         public const string Failed = "Couldn’t finish: {0}";
         public const string Problem = "Something went wrong: {0}";
+        public const string NothingMade = "Nothing was created.";
     }
 
     private readonly OperationRunner runner = new(tools);
@@ -145,7 +146,8 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
                 var outputs = await runner.RunBesideSourcesAsync(item.Id, files, folder => DestinationAsync(folder, owner ?? toast), new Progress<OperationProgress>(toast.Update), cancellation.Token);
                 toast.Close();
                 if (outputs is null) return;
-                SuccessToast.Done(outputs, Path.GetDirectoryName(outputs[0])!, runner.Note).Present();
+                if (outputs.Count == 0) SuccessToast.Notice(L10n.T(Copy.NothingMade)).Present();
+                else SuccessToast.Done(outputs, Path.GetDirectoryName(outputs[0])!, runner.Note).Present();
             }
             catch (Exception error)
             {

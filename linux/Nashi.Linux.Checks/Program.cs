@@ -40,6 +40,8 @@ var ran = new List<(string Program, string[] Args)>();
 Func<string, IReadOnlyList<string>, string?> runResult = (_, _) => null;
 Desktop.Run = (program, args) => { ran.Add((program, [.. args])); return runResult(program, args); };
 WheelFeedback.Player = _ => { }; // nothing reaches the speakers
+var stoppedPlayers = new List<string>(); // fallback players are recorded through Desktop.Spawn, never started
+WheelFeedback.StartPlayer = (program, args, exited) => Desktop.Spawn(program, args, null, exited) ? () => { lock (stoppedPlayers) stoppedPlayers.Add(program); } : null;
 WheelFeedback.SystemReducesMotion = false;
 WheelFeedback.ReduceMotion = true; // renders show the wheel at rest; MotionChecks turns it on
 var temp = Directory.CreateTempSubdirectory("nashi-linux-checks-");
@@ -1006,6 +1008,7 @@ async Task BackgroundChecks(string root)
         Render("success-tr", three);
         var notice = SuccessToast.Notice(L10n.F("No conversions for {0} files yet.", "PDF"));
         Check(notice.FindControl<TextBlock>("TitleText")?.Text == "PDF dosyaları için henüz dönüştürme yok.", "Turkish empty-wheel card names the type");
+        Check(L10n.T("Nothing was created.") == "Hiçbir şey oluşturulmadı.", "Turkish card for a run that created nothing");
     }
     finally { L10n.Language = "en"; }
 
@@ -1213,9 +1216,26 @@ async Task ActionChecks(string root)
     WheelFeedback.Scale(new short[] { 30000, -30000 }, louder, 2);
     Check(scaled.SequenceEqual(new short[] { 650, -650, 21299, -21299 }) && louder.SequenceEqual(new short[] { short.MaxValue, short.MinValue }), "The tick volume scales the samples and clamps them");
 
-    // Without a PulseAudio server the in-process player says so (nothing plays) and the players take over.
+    // PulseAudio is opened on the writer thread, never the caller's: Play only hands over. Without a server that
+    // tick goes to the players and PulseAudio backs off (1 s, doubling, at most 60 s), then is tried again.
+    Check(Pulse.Backoff(1) == TimeSpan.FromSeconds(1) && Pulse.Backoff(2) == TimeSpan.FromSeconds(2) && Pulse.Backoff(4) == TimeSpan.FromSeconds(8) && Pulse.Backoff(7) == TimeSpan.FromSeconds(60) && Pulse.Backoff(40) == TimeSpan.FromSeconds(60), "PulseAudio retries back off 1, 2, 4… s, at most a minute");
+    var pulseNow = new DateTime(2026, 1, 1);
+    Pulse.Clock = () => pulseNow;
     Pulse.Server = "unix:/nonexistent/nashi-checks";
-    Check(!Pulse.Play(0.65), "Without a PulseAudio server the in-process player declines, so the players take over");
+    WheelFeedback.Missing.Clear();
+    launched.Clear();
+    var handOver = System.Diagnostics.Stopwatch.StartNew();
+    var accepted = Pulse.Play(0.65);
+    handOver.Stop();
+    for (var i = 0; i < 500 && !Pulse.Down; i++) Thread.Sleep(10);
+    for (var i = 0; i < 200 && WheelFeedback.Missing.Count < 3; i++) Thread.Sleep(10);
+    Check(accepted && handOver.ElapsedMilliseconds < 100 && Pulse.Down && !Pulse.Play(0.65), "Play only hands the sound to the writer thread; without a server PulseAudio backs off and declines");
+    Check(launched.FirstOrDefault().Program == "paplay" && launched[0].Args[0] == "--volume=42598", "The tick that found no server still plays, through the players");
+    pulseNow += Pulse.Backoff(1) + TimeSpan.FromMilliseconds(1);
+    Check(!Pulse.Down && Pulse.Play(0.65), "After the backoff the next tick tries PulseAudio again");
+    for (var i = 0; i < 500 && !Pulse.Down; i++) Thread.Sleep(10);
+    pulseNow += TimeSpan.FromSeconds(1.5);
+    Check(Pulse.Down, "A second failure in a row waits longer (2 s)");
     WheelFeedback.Player = WheelFeedback.PlayThroughPlayers;
     WheelFeedback.Missing.Clear();
     launched.Clear();
@@ -1231,9 +1251,13 @@ async Task ActionChecks(string root)
     Check(launched.Select(l => l.Program).SequenceEqual(["paplay", "pw-play"]) && launched[1].Args.SequenceEqual(["--volume=1", WheelFeedback.Sound]), "A player that exits non-zero hands over to the next one");
     exitCodes.Clear(); running.Clear(); launched.Clear();
     startable.Add("paplay");
+    Key(Avalonia.Input.Key.Right); // stops pw-play, still running from the hand-over above
+    stoppedPlayers.Clear();
     Key(Avalonia.Input.Key.Right);
-    Key(Avalonia.Input.Key.Right);
-    Check(launched.Count == 2 && launched.All(l => l.Program == "paplay" && l.Args[0] == "--volume=42598"), "Through the fallback too, every highlight change ticks at 0.65, even while one still plays");
+    Check(launched.Count == 2 && launched.All(l => l.Program == "paplay" && l.Args[0] == "--volume=42598"), "Through the fallback too, every highlight change ticks at 0.65");
+    Check(stoppedPlayers.SequenceEqual(["paplay"]), "At most one fallback player runs: a newer tick stops the playing one and restarts");
+    running[0](1); // the stopped one exits non-zero: no hand-over to pw-play
+    Check(launched.Count == 2, "A player stopped for a newer sound does not hand over to the next player");
     startable.Clear(); running.Clear(); launched.Clear();
     WheelFeedback.Player = _ => { };
 
