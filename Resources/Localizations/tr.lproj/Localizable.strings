@@ -13,6 +13,7 @@
 "%@ input" = "%@ girdisi";
 "%@ is enabled" = "%@ izni açık";
 "%@ is not installed." = "%@ kurulu değil.";
+"%@ is structural or read-only metadata." = "%@ yapısal ya da salt okunur bir meta veri.";
 "%@ items" = "%@ öğe";
 "%@ photos" = "%@ fotoğraf";
 "%@ selected" = "%@ seçili";
@@ -38,6 +39,7 @@
 "%lld input" = "%lld girdisi";
 "%lld is enabled" = "%lld izni açık";
 "%lld is not installed." = "%lld kurulu değil.";
+"%lld is structural or read-only metadata." = "%lld yapısal ya da salt okunur bir meta veri.";
 "%lld items" = "%lld öğe";
 "%lld photos" = "%lld fotoğraf";
 "%lld selected" = "%lld seçili";
@@ -1327,9 +1329,12 @@
 "MEDIUM · 1920 PX LONGEST EDGE" = "ORTA · UZUN KENAR 1920 PX";
 "MERGE PDFS" = "PDF'LERİ BİRLEŞTİR";
 "METADATA" = "META VERİLER";
+"METADATA CHANGES WOULD ALTER ENCODED IMAGE DATA OR ITS APPEARANCE. NO OUTPUT WAS SAVED." = "META VERİ DEĞİŞİKLİKLERİ GÖRSELİN KODLANMIŞ VERİSİNİ YA DA GÖRÜNÜMÜNÜ DEĞİŞTİRİRDİ. ÇIKTI KAYDEDİLMEDİ.";
 "METADATA TOOLS ARE NOT READY." = "META VERİ ARAÇLARI HAZIR DEĞİL.";
 "METADATA TOOLS CHECKSUM MISMATCH." = "META VERİ ARAÇLARININ SAĞLAMA TOPLAMI EŞLEŞMİYOR.";
+"METADATA TRANSFER DID NOT PRESERVE THE IMAGE'S DISPLAY ORIENTATION. NO OUTPUT WAS SAVED." = "META VERİ AKTARIMI GÖRSELİN GÖRÜNTÜ YÖNÜNÜ KORUMADI. ÇIKTI KAYDEDİLMEDİ.";
 "METADATA · NASHI" = "META VERİLER · NASHI";
+"METADATA-ONLY EDITING IS UNAVAILABLE FOR THIS IMAGE FORMAT." = "BU GÖRSEL BİÇİMİNDE YALNIZCA META VERİLER DÜZENLENEMİYOR.";
 "MIDDLE THIRD" = "ORTA ÜÇTE BİR";
 "MONO" = "MONO";
 "MONOSPACED" = "EŞ ARALIKLI";
@@ -1371,9 +1376,12 @@
 "Medium · 1920 px longest edge" = "Orta · uzun kenar 1920 px";
 "Merge PDFs" = "PDF'leri Birleştir";
 "Metadata" = "Meta Veriler";
+"Metadata changes would alter encoded image data or its appearance. No output was saved." = "Meta veri değişiklikleri görselin kodlanmış verisini ya da görünümünü değiştirirdi. Çıktı kaydedilmedi.";
 "Metadata tools are not ready." = "Meta veri araçları hazır değil.";
 "Metadata tools checksum mismatch." = "Meta veri araçlarının sağlama toplamı eşleşmiyor.";
+"Metadata transfer did not preserve the image's display orientation. No output was saved." = "Meta veri aktarımı görselin görüntü yönünü korumadı. Çıktı kaydedilmedi.";
 "Metadata · Nashi" = "Meta Veriler · Nashi";
+"Metadata-only editing is unavailable for this image format." = "Bu görsel biçiminde yalnızca meta veriler düzenlenemiyor.";
 "Middle third" = "Orta üçte bir";
 "Mono" = "Mono";
 "Monospaced" = "Eş aralıklı";
@@ -2208,6 +2216,7 @@
 "THE REQUESTED PDF SIZE COULD NOT BE REACHED. CHOOSE A LARGER TARGET." = "İSTENEN PDF BOYUTUNA İNİLEMEDİ. DAHA BÜYÜK BİR HEDEF SEÇ.";
 "THE SAME CONVERSION AND TOOL CATALOG AS MACOS." = "MACOS İLE AYNI DÖNÜŞTÜRME VE ARAÇ SEÇENEKLERİ.";
 "THE SIGNED PACKAGE VERSION DOES NOT MATCH THIS UPDATE." = "İMZALI PAKETİN SÜRÜMÜ BU GÜNCELLEMEYLE EŞLEŞMİYOR.";
+"THE SOURCE CHANGED DURING THIS OPERATION. NO OUTPUT WAS SAVED." = "KAYNAK DOSYA BU İŞLEM SIRASINDA DEĞİŞTİ. ÇIKTI KAYDEDİLMEDİ.";
 "THE UPDATE DOES NOT CONTAIN NASHI." = "GÜNCELLEME NASHI'Yİ İÇERMİYOR.";
 "THE UPDATE NEEDS ANOTHER TRY" = "GÜNCELLEMEYİ YENİDEN DENEMEK GEREKİYOR";
 "THE UPDATE SIGNATURE IS INVALID. YOUR EXISTING APP WAS KEPT." = "GÜNCELLEME İMZASI GEÇERSİZ. MEVCUT UYGULAMAN KORUNDU.";
@@ -2306,7 +2315,9 @@
 "The image order must include every image once." = "Görsel sırasında her görsel bir kez yer almalı.";
 "The media server redirected to an insecure URL." = "Medya sunucusu güvenli olmayan bir adrese yönlendirdi.";
 "The metadata field %@ could not be removed." = "%@ meta veri alanı kaldırılamadı.";
+"The metadata field %@ was not written. No output was saved." = "%@ meta veri alanı yazılamadı. Çıktı kaydedilmedi.";
 "The metadata field %lld could not be removed." = "%lld meta veri alanı kaldırılamadı.";
+"The metadata field %lld was not written. No output was saved." = "%lld meta veri alanı yazılamadı. Çıktı kaydedilmedi.";
 "The processing tool could not start." = "İşleme aracı başlatılamadı.";
 "The requested PDF size could not be reached." = "İstenen PDF boyutuna inilemedi.";
 "The requested PDF size could not be reached. Choose a larger target." = "İstenen PDF boyutuna inilemedi. Daha büyük bir hedef seç.";
@@ -2314,6 +2325,7 @@
 "The requested image size could not be reached. Choose a larger target." = "İstenen görsel boyutuna inilemedi. Daha büyük bir hedef seç.";
 "The same conversion and tool catalog as macOS." = "macOS ile aynı dönüştürme ve araç seçenekleri.";
 "The signed package version does not match this update." = "İmzalı paketin sürümü bu güncellemeyle eşleşmiyor.";
+"The source changed during this operation. No output was saved." = "Kaynak dosya bu işlem sırasında değişti. Çıktı kaydedilmedi.";
 "The text encoding of %@ could not be read." = "%@ dosyasının metin kodlaması okunamadı.";
 "The text encoding of %lld could not be read." = "%lld dosyasının metin kodlaması okunamadı.";
 "The update does not contain Nashi." = "Güncelleme Nashi'yi içermiyor.";

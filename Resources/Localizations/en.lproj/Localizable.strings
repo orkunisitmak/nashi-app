@@ -13,6 +13,7 @@
 "%@ input" = "%@ input";
 "%@ is enabled" = "%@ is enabled";
 "%@ is not installed." = "%@ is not installed.";
+"%@ is structural or read-only metadata." = "%@ is structural or read-only metadata.";
 "%@ items" = "%@ items";
 "%@ photos" = "%@ photos";
 "%@ selected" = "%@ selected";
@@ -38,6 +39,7 @@
 "%lld input" = "%lld input";
 "%lld is enabled" = "%lld is enabled";
 "%lld is not installed." = "%lld is not installed.";
+"%lld is structural or read-only metadata." = "%lld is structural or read-only metadata.";
 "%lld items" = "%lld items";
 "%lld photos" = "%lld photos";
 "%lld selected" = "%lld selected";
@@ -1327,9 +1329,12 @@
 "MEDIUM · 1920 PX LONGEST EDGE" = "MEDIUM · 1920 PX LONGEST EDGE";
 "MERGE PDFS" = "MERGE PDFS";
 "METADATA" = "METADATA";
+"METADATA CHANGES WOULD ALTER ENCODED IMAGE DATA OR ITS APPEARANCE. NO OUTPUT WAS SAVED." = "METADATA CHANGES WOULD ALTER ENCODED IMAGE DATA OR ITS APPEARANCE. NO OUTPUT WAS SAVED.";
 "METADATA TOOLS ARE NOT READY." = "METADATA TOOLS ARE NOT READY.";
 "METADATA TOOLS CHECKSUM MISMATCH." = "METADATA TOOLS CHECKSUM MISMATCH.";
+"METADATA TRANSFER DID NOT PRESERVE THE IMAGE'S DISPLAY ORIENTATION. NO OUTPUT WAS SAVED." = "METADATA TRANSFER DID NOT PRESERVE THE IMAGE'S DISPLAY ORIENTATION. NO OUTPUT WAS SAVED.";
 "METADATA · NASHI" = "METADATA · NASHI";
+"METADATA-ONLY EDITING IS UNAVAILABLE FOR THIS IMAGE FORMAT." = "METADATA-ONLY EDITING IS UNAVAILABLE FOR THIS IMAGE FORMAT.";
 "MIDDLE THIRD" = "MIDDLE THIRD";
 "MONO" = "MONO";
 "MONOSPACED" = "MONOSPACED";
@@ -1371,9 +1376,12 @@
 "Medium · 1920 px longest edge" = "Medium · 1920 px longest edge";
 "Merge PDFs" = "Merge PDFs";
 "Metadata" = "Metadata";
+"Metadata changes would alter encoded image data or its appearance. No output was saved." = "Metadata changes would alter encoded image data or its appearance. No output was saved.";
 "Metadata tools are not ready." = "Metadata tools are not ready.";
 "Metadata tools checksum mismatch." = "Metadata tools checksum mismatch.";
+"Metadata transfer did not preserve the image's display orientation. No output was saved." = "Metadata transfer did not preserve the image's display orientation. No output was saved.";
 "Metadata · Nashi" = "Metadata · Nashi";
+"Metadata-only editing is unavailable for this image format." = "Metadata-only editing is unavailable for this image format.";
 "Middle third" = "Middle third";
 "Mono" = "Mono";
 "Monospaced" = "Monospaced";
@@ -2208,6 +2216,7 @@
 "THE REQUESTED PDF SIZE COULD NOT BE REACHED. CHOOSE A LARGER TARGET." = "THE REQUESTED PDF SIZE COULD NOT BE REACHED. CHOOSE A LARGER TARGET.";
 "THE SAME CONVERSION AND TOOL CATALOG AS MACOS." = "THE SAME CONVERSION AND TOOL CATALOG AS MACOS.";
 "THE SIGNED PACKAGE VERSION DOES NOT MATCH THIS UPDATE." = "THE SIGNED PACKAGE VERSION DOES NOT MATCH THIS UPDATE.";
+"THE SOURCE CHANGED DURING THIS OPERATION. NO OUTPUT WAS SAVED." = "THE SOURCE CHANGED DURING THIS OPERATION. NO OUTPUT WAS SAVED.";
 "THE UPDATE DOES NOT CONTAIN NASHI." = "THE UPDATE DOES NOT CONTAIN NASHI.";
 "THE UPDATE NEEDS ANOTHER TRY" = "THE UPDATE NEEDS ANOTHER TRY";
 "THE UPDATE SIGNATURE IS INVALID. YOUR EXISTING APP WAS KEPT." = "THE UPDATE SIGNATURE IS INVALID. YOUR EXISTING APP WAS KEPT.";
@@ -2306,7 +2315,9 @@
 "The image order must include every image once." = "The image order must include every image once.";
 "The media server redirected to an insecure URL." = "The media server redirected to an insecure URL.";
 "The metadata field %@ could not be removed." = "The metadata field %@ could not be removed.";
+"The metadata field %@ was not written. No output was saved." = "The metadata field %@ was not written. No output was saved.";
 "The metadata field %lld could not be removed." = "The metadata field %lld could not be removed.";
+"The metadata field %lld was not written. No output was saved." = "The metadata field %lld was not written. No output was saved.";
 "The processing tool could not start." = "The processing tool could not start.";
 "The requested PDF size could not be reached." = "The requested PDF size could not be reached.";
 "The requested PDF size could not be reached. Choose a larger target." = "The requested PDF size could not be reached. Choose a larger target.";
@@ -2314,6 +2325,7 @@
 "The requested image size could not be reached. Choose a larger target." = "The requested image size could not be reached. Choose a larger target.";
 "The same conversion and tool catalog as macOS." = "The same conversion and tool catalog as macOS.";
 "The signed package version does not match this update." = "The signed package version does not match this update.";
+"The source changed during this operation. No output was saved." = "The source changed during this operation. No output was saved.";
 "The text encoding of %@ could not be read." = "The text encoding of %@ could not be read.";
 "The text encoding of %lld could not be read." = "The text encoding of %lld could not be read.";
 "The update does not contain Nashi." = "The update does not contain Nashi.";
