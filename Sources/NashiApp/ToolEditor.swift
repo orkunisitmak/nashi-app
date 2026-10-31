@@ -21,6 +21,7 @@ struct ToolEditor:View {
     @State private var options=OperationOptions()
     @State private var image:NSImage?
     @State private var baseImage:CGImage?
+    @State private var collagePreviewImages:[URL:CGImage]=[:]
     @State private var showOriginal=false
     @State private var previewSize:CGSize?
     @State private var channelPreviewURL:URL?
@@ -577,7 +578,24 @@ struct ToolEditor:View {
         do {
             try checkGeneration(generation,token:token)
             if category == .image {
-                let cg=try await Task.detached { try ImageEngine.load(input) }.value
+                let cg:CGImage
+                if tool == .createCollage {
+                    let sources=inputs
+                    let thumbnails=try await Task.detached {
+                        var cache:[URL:CGImage]=[:]
+                        for source in sources where cache[source] == nil {
+                            try token.check()
+                            cache[source]=try ImageEngine.loadThumbnail(source,maxPixelSize:1_024)
+                        }
+                        try token.check()
+                        return cache
+                    }.value
+                    collagePreviewImages=thumbnails
+                    guard let first=thumbnails[input] else { throw NashiError.invalidInput("The first collage image could not be loaded.") }
+                    cg=first
+                } else {
+                    cg=try await Task.detached { try ImageEngine.load(input) }.value
+                }
                 try checkGeneration(generation,token:token)
                 baseImage=cg;image=NSImage(cgImage:cg,size:.zero);imageSize=CGSize(width:cg.width,height:cg.height);width=cg.width;height=cg.height
                 if tool == .compress { setCompressionDimensions(compressionSize) }
@@ -622,7 +640,7 @@ struct ToolEditor:View {
         }
     }
     func reset() {
-        disposeMedia();previewToken=CancellationToken();visualizationToken=CancellationToken()
+        disposeMedia();previewToken=CancellationToken();visualizationToken=CancellationToken();collagePreviewImages=[:]
         isLoading=true;readyToApply=false;inputs=originalInputs;options=OperationOptions()
         pdfEditor.reset();selectedSplitClip=nil;aspect="Free";cropInteracting=false;equalClips=2
         width=0;height=0;image=nil;baseImage=nil;imageSize=CGSize(width:100,height:100);pixelAspect=1;previewSize=nil;previewZoom=1;showOriginal=false
@@ -694,10 +712,21 @@ struct ToolEditor:View {
             try await Task.sleep(nanoseconds:120_000_000);try Task.checkCancellation()
             var o=options
             if tool == .redactImage { var r=o.imageRedaction ?? .init();r.style=o.redactionMode=="black" ? .solid:o.redactionMode=="pixelate" ? .pixelate:.blur;r.color=o.backgroundColor;o.imageRedaction=r }
-            let kind=tool,sources=inputs
-            let cg=try await Task.detached { if kind == .createCollage { return try ImageEngine.collageImage(sources.map{try ImageEngine.load($0)},settings:o.collage ?? .init()) };return try ImageEngine.preview(baseImage,tool:kind,options:o) }.value
+            let kind=tool,sources=inputs,cachedImages=collagePreviewImages
+            let cg=try await Task.detached {
+                if kind == .createCollage {
+                    let images=try sources.map { source -> CGImage in
+                        guard let image=cachedImages[source] else { throw NashiError.invalidInput("A collage preview image could not be loaded.") }
+                        return image
+                    }
+                    return try ImageEngine.collageImage(images,settings:o.collage ?? .init())
+                }
+                return try ImageEngine.preview(baseImage,tool:kind,options:o)
+            }.value
             try checkGeneration(generation,token:token);image=NSImage(cgImage:cg,size:.zero);previewSize=CGSize(width:cg.width,height:cg.height)
-        } catch { /* A later edit cancels an obsolete preview; Apply reports export errors. */ }
+        } catch {
+            if generation==editorGeneration,!token.isCancelled,!Task.isCancelled { previewError=error.localizedDescription }
+        }
     }
     var annotationStyle:ImageAnnotation {
         var a=ImageAnnotation(kind:annotationKind,rect:.init(x:0,y:0,width:0,height:0));a.text=annotationText;a.color=hex(annotationColor);a.number=options.imageAnnotations.count+1;a.strokeWidth=annotationStroke;a.fontSize=annotationFont;a.fontFamily=annotationFontFamily

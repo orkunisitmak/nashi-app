@@ -162,6 +162,30 @@ enum PagesCodec {
     }
 }
 
+/// Caps retained base64-encoded DOCX images before building the Pages JSON model.
+/// The complete model is copied through JSON and JavaScriptCore, so a small
+/// uncompressed input can require several times its size in process memory.
+struct PagesDOCXImageBudget {
+    let maximumBytes: Int64
+    let maximumImages: Int
+    private(set) var totalBytes: Int64 = 0
+    private(set) var imageCount = 0
+
+    init(maximumBytes: Int64 = 64_000_000, maximumImages: Int = 256) {
+        self.maximumBytes = maximumBytes
+        self.maximumImages = maximumImages
+    }
+
+    mutating func accountForImage(bytes: Int64) throws {
+        guard bytes >= 0, bytes <= maximumBytes, imageCount < maximumImages,
+              totalBytes <= maximumBytes - bytes else {
+            throw NashiError.invalidInput("This Word document contains too much embedded image data to convert safely.")
+        }
+        totalBytes += bytes
+        imageCount += 1
+    }
+}
+
 /// Reads the editable OOXML document structure produced by the local office
 /// converter. Images are loaded only from inside the safely extracted package.
 private enum PagesDOCXReader {
@@ -200,6 +224,7 @@ private enum PagesDOCXReader {
     }
 
     private final class Reader {
+        private var imageBudget = PagesDOCXImageBudget()
         let package: URL, relationships: [String:String], styles: [String:XMLElement], defaultCharacter: [String:Any], defaultParagraph: [String:Any], token: CancellationToken
         init(package: URL, relationships: [String:String], styles: [String:XMLElement], defaultCharacter: [String:Any], defaultParagraph: [String:Any], token: CancellationToken) { self.package=package;self.relationships=relationships;self.styles=styles;self.defaultCharacter=defaultCharacter;self.defaultParagraph=defaultParagraph;self.token=token }
 
@@ -356,7 +381,14 @@ private enum PagesDOCXReader {
         }
         func image(_ element: XMLElement) throws -> [String:Any]? {
             let id = element.descendants("blip").first?.attr("embed") ?? element.descendants("imagedata").first?.attr("id")
-            guard let id, let target=relationships[id],let file=localPath(target),let data=try? Data(contentsOf:file), data.count <= 100_000_000 else { return nil }
+            guard let id,let target=relationships[id],let file=localPath(target),
+                  let values=try? file.resourceValues(forKeys:[.fileSizeKey,.isRegularFileKey]),
+                  values.isRegularFile==true, let size=values.fileSize, size>=0, size<=100_000_000 else { return nil }
+            try token.check()
+            // Account for every embed before allocating another copy of image data.
+            // Fail explicitly rather than silently producing a Pages file missing images.
+            try imageBudget.accountForImage(bytes:Int64(size))
+            guard let data=try? Data(contentsOf:file),data.count==size else { return nil }
             var result: [String:Any] = ["type":"image","data":data.base64EncodedString(),"fileName":file.lastPathComponent]
             if let extent=element.descendants("extent").first { if let w=extent.number("cx") { result["width"]=w/12700 };if let h=extent.number("cy") {result["height"]=h/12700} }
             if let alt=element.descendants("docPr").first?.attr("descr") {result["alt"]=alt}
