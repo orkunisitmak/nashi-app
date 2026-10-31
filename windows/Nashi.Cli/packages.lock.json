@@ -1,0 +1,99 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0-windows10.0.19041": {
+      "bblanchon.PDFium.Win32": {
+        "type": "Transitive",
+        "resolved": "155.0.8044",
+        "contentHash": "TBqSYojufnh6IvzIZmsWrNwuHXMtk47AYxQPcUzVVSE971dz/dyQkdal6Z4CpFEstTE6n387NU98XYGVZCcKWA=="
+      },
+      "BouncyCastle.Cryptography": {
+        "type": "Transitive",
+        "resolved": "2.7.0",
+        "contentHash": "U+12df8UEWHgBi04YVf/Lgi2dy3SItlIYvHjjEVa/BngCQIzDCDRBk50DDByCfDvSbe5pRNFr3b7UrVK2kMcLw=="
+      },
+      "Magick.NET-Q8-AnyCPU": {
+        "type": "Transitive",
+        "resolved": "15.0.0",
+        "contentHash": "yECRj8M7/D7dIndVmvEbMsolIBC+lyd+Er3wM/p8MSCaTAqjXjYvqmfETu9u/QuJBKM/ofgZBUtRs4HqRicrow==",
+        "dependencies": {
+          "Magick.NET.Core": "15.0.0"
+        }
+      },
+      "Magick.NET.Core": {
+        "type": "Transitive",
+        "resolved": "15.0.0",
+        "contentHash": "mP/VovMRuXBX2Rcnn1wWu0Zur6cjsf8IQhmTUCrasEk8cyAtN5sjHE7NxiH88whw8/2mjRvuphKUwj6bAZslpQ=="
+      },
+      "Microsoft.Extensions.DependencyInjection.Abstractions": {
+        "type": "Transitive",
+        "resolved": "8.0.2",
+        "contentHash": "3iE7UF7MQkCv1cxzCahz+Y/guQbTqieyxyaWKhrRO91itI9cOKO76OHeQDahqG4MmW5umr3CcCvGmK92lWNlbg=="
+      },
+      "Microsoft.Extensions.Logging.Abstractions": {
+        "type": "Transitive",
+        "resolved": "8.0.3",
+        "contentHash": "dL0QGToTxggRLMYY4ZYX5AMwBb+byQBd/5dMiZE07Nv73o6I5Are3C7eQTh7K2+A4ct0PVISSr7TZANbiNb2yQ==",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "8.0.2"
+        }
+      },
+      "PdfPig": {
+        "type": "Transitive",
+        "resolved": "0.1.16",
+        "contentHash": "qQcbsNMYVY+K5ELptax2S8thNMk0+rSQq3H/KdYj3LLcko8yTCz8y5KIvsKxIyAuTN0ZYNnfsZkM+0EvxTwHVA=="
+      },
+      "PDFsharp": {
+        "type": "Transitive",
+        "resolved": "6.2.4",
+        "contentHash": "GhTr9F1uOYXHCIEOB5PXIgqn5a8WLsJL2m0eewTA0IvY1j6N4HGXHKKmEyB90/N6vrjmYamf41V9zbmdW2HY3g==",
+        "dependencies": {
+          "Microsoft.Extensions.Logging.Abstractions": "8.0.3"
+        }
+      },
+      "SharpCompress": {
+        "type": "Transitive",
+        "resolved": "0.50.5",
+        "contentHash": "wAEAxPV67rmS3IlIm+tvGNPJXEtZNqlwkZrwJZAvz0AagZP0qLtT4mM2hk8S+uO0Kx+wYoy/FsADQpHwsN5y3g=="
+      },
+      "ZXing.Net": {
+        "type": "Transitive",
+        "resolved": "0.16.11",
+        "contentHash": "OZfAVu88hl87BffQ+rlWCj/vLvAhhCK4QnFaoveeF/MY8SjHNSYBQ3qyUEWlPKNgBQGh1syXhCDg10vUnCsqkg=="
+      },
+      "Nashi": {
+        "type": "Project",
+        "dependencies": {
+          "Nashi.Core": "[0.7.13, )",
+          "bblanchon.PDFium.Win32": "[155.0.8044, )"
+        }
+      },
+      "nashi.core": {
+        "type": "Project",
+        "dependencies": {
+          "BouncyCastle.Cryptography": "[2.7.0, )",
+          "Magick.NET-Q8-AnyCPU": "[15.0.0, )",
+          "PDFsharp": "[6.2.4, )",
+          "PdfPig": "[0.1.16, )",
+          "SharpCompress": "[0.50.5, )",
+          "ZXing.Net": "[0.16.11, )"
+        }
+      }
+    },
+    "net10.0-windows10.0.19041/win-x64": {
+      "bblanchon.PDFium.Win32": {
+        "type": "Transitive",
+        "resolved": "155.0.8044",
+        "contentHash": "TBqSYojufnh6IvzIZmsWrNwuHXMtk47AYxQPcUzVVSE971dz/dyQkdal6Z4CpFEstTE6n387NU98XYGVZCcKWA=="
+      },
+      "Magick.NET-Q8-AnyCPU": {
+        "type": "Transitive",
+        "resolved": "15.0.0",
+        "contentHash": "yECRj8M7/D7dIndVmvEbMsolIBC+lyd+Er3wM/p8MSCaTAqjXjYvqmfETu9u/QuJBKM/ofgZBUtRs4HqRicrow==",
+        "dependencies": {
+          "Magick.NET.Core": "15.0.0"
+        }
+      }
+    }
+  }
+}

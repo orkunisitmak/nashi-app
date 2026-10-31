@@ -110,6 +110,7 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
     {
         if (inputs.Count == 0 || (!AudioFormats.Contains(format) && !VideoFormats.Contains(format))) throw new ArgumentException("Choose files and a supported media format.");
         Validate(options);
+        await DetectHardwareEncoderAsync(token).ConfigureAwait(false);
         using var transaction = new ExportTransaction(destination); var outputs = new List<string>();
         for (var index = 0; index < inputs.Count; index++)
         {
@@ -153,6 +154,7 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
     {
         if (inputs.Count == 0 || !Tools.Contains(tool)) throw new ArgumentException("Choose media and a supported tool.");
         Validate(options);
+        await DetectHardwareEncoderAsync(token).ConfigureAwait(false);
         using var transaction = new ExportTransaction(destination); var outputs = new List<string>();
         if (tool == "joinVideos") outputs.Add(await JoinAsync(inputs,transaction.StagingDirectory,options,progress,token));
         else for (var index=0;index<inputs.Count;index++)
@@ -395,11 +397,142 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
         await RenderAsync(args,output,duration,p=>progress(p with{Fraction=.95+(p.Fraction??0)*.05,Label="Joining clips…"}),token);
     }
 
+        private static string? detectedHardwareH264Encoder;
+    private static bool checkedHardware;
+    private static readonly SemaphoreSlim probeLock = new(1, 1);
+
+    public string? HardwareEncoder => detectedHardwareH264Encoder;
+
+    public async Task<string?> DetectHardwareEncoderAsync(CancellationToken token = default)
+    {
+        if(checkedHardware) return detectedHardwareH264Encoder;
+        await probeLock.WaitAsync(token).ConfigureAwait(false);
+        try
+        {
+            if(checkedHardware) return detectedHardwareH264Encoder;
+            var candidates = OperatingSystem.IsWindows()
+                ? new[] { "h264_nvenc", "h264_amf", "h264_qsv" }
+                : OperatingSystem.IsMacOS()
+                    ? new[] { "h264_videotoolbox" }
+                    : Array.Empty<string>();
+
+            foreach(var encoder in candidates)
+            {
+                try
+                {
+                    using var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
+                    cts.CancelAfter(1500);
+                    await ProcessRunner.RunAsync(ffmpeg, [
+                        "-hide_banner", "-nostdin", "-v", "error",
+                        "-f", "lavfi", "-i", "color=black:s=256x256:d=0.04",
+                        "-c:v", encoder,
+                        "-frames:v", "1",
+                        "-f", "null", OperatingSystem.IsWindows() ? "NUL" : "/dev/null"
+                    ], cts.Token).ConfigureAwait(false);
+
+                    detectedHardwareH264Encoder = encoder;
+                    break;
+                }
+                catch(OperationCanceledException) when(!token.IsCancellationRequested)
+                {
+                }
+                catch
+                {
+                }
+            }
+            checkedHardware = true;
+            return detectedHardwareH264Encoder;
+        }
+        finally
+        {
+            probeLock.Release();
+        }
+    }
+
+    private string[] GetH264Encoding(MediaOptions o)
+    {
+        var hw = HardwareEncoder;
+        if(hw == "h264_nvenc")
+            return ["-c:v","h264_nvenc","-preset","p4","-cq",Number(35-o.Quality*23),"-pix_fmt","yuv420p","-c:a","aac","-b:a",o.AudioBitrate+"k"];
+        if(hw == "h264_amf")
+            return ["-c:v","h264_amf","-rc","cqp","-qp_p",Number(35-o.Quality*23),"-pix_fmt","yuv420p","-c:a","aac","-b:a",o.AudioBitrate+"k"];
+        if(hw == "h264_qsv")
+            return ["-c:v","h264_qsv","-global_quality",Number(35-o.Quality*23),"-pix_fmt","nv12","-c:a","aac","-b:a",o.AudioBitrate+"k"];
+        if(hw == "h264_videotoolbox")
+            return ["-c:v","h264_videotoolbox","-q:v",Number(o.Quality*100),"-pix_fmt","yuv420p","-c:a","aac","-b:a",o.AudioBitrate+"k"];
+
+        return ["-c:v","libx264","-preset","medium","-crf",Number(35-o.Quality*23),"-pix_fmt","yuv420p","-c:a","aac","-b:a",o.AudioBitrate+"k"];
+    }
+
+    private bool UsesHardwareEncoder(List<string> args) =>
+        detectedHardwareH264Encoder is not null &&
+        args.Zip(args.Skip(1)).Any(p => p.First == "-c:v" && p.Second == detectedHardwareH264Encoder);
+
     private async Task RenderAsync(IEnumerable<string> arguments,string output,double? duration,Action<OperationProgress> progress,CancellationToken token)
     {
-        var parser=new FFmpegProgress(duration,progress,"Processing media…");
-        await ProcessRunner.RunAsync(ffmpeg,["-hide_banner","-nostdin","-v","error","-n","-nostats","-stats_period","0.2","-progress","pipe:1",..arguments,output],token,parser.ReadLine);
-        token.ThrowIfCancellationRequested();if(!File.Exists(output)||new FileInfo(output).Length==0)throw new IOException("No media output was produced.");
+        var argsList = arguments.ToList();
+        try
+        {
+            var parser=new FFmpegProgress(duration,progress,"Processing media…");
+            await ProcessRunner.RunAsync(ffmpeg,["-hide_banner","-nostdin","-v","error","-n","-nostats","-stats_period","0.2","-progress","pipe:1",..argsList,output],token,parser.ReadLine);
+            token.ThrowIfCancellationRequested();
+            if(File.Exists(output)&&new FileInfo(output).Length>0) return;
+            if(UsesHardwareEncoder(argsList) && !token.IsCancellationRequested)
+            {
+                throw new IOException("Hardware encoder produced empty output.");
+            }
+        }
+        catch(Exception) when(UsesHardwareEncoder(argsList) && !token.IsCancellationRequested)
+        {
+            if(File.Exists(output)) try { File.Delete(output); } catch { }
+            var fallbackArgs = new List<string>();
+            for(int i = 0; i < argsList.Count; i++)
+            {
+                if(argsList[i] == "-c:v" && i + 1 < argsList.Count && argsList[i+1] == detectedHardwareH264Encoder)
+                {
+                    fallbackArgs.AddRange(["-c:v", "libx264", "-preset", "medium"]);
+                    i++;
+                }
+                else if(argsList[i] == "-preset" && i + 1 < argsList.Count && argsList[i+1] == "p4")
+                {
+                    i++;
+                }
+                else if(argsList[i] is "-rc" or "-qp_p" or "-global_quality" or "-cq" or "-q:v")
+                {
+                    if(argsList[i] is "-qp_p" or "-global_quality" or "-cq" && i + 1 < argsList.Count)
+                    {
+                        fallbackArgs.AddRange(["-crf", argsList[i+1]]);
+                        i++;
+                    }
+                    else if(argsList[i] == "-q:v" && i + 1 < argsList.Count)
+                    {
+                        if(double.TryParse(argsList[i+1], NumberStyles.Float, CultureInfo.InvariantCulture, out var vtQ))
+                        {
+                            var crf = Math.Round(35.0 - (vtQ / 100.0) * 23.0);
+                            fallbackArgs.AddRange(["-crf", crf.ToString(CultureInfo.InvariantCulture)]);
+                        }
+                        else
+                        {
+                            fallbackArgs.AddRange(["-crf", "23"]);
+                        }
+                        i++;
+                    }
+                    else if(argsList[i] == "-rc" && i + 1 < argsList.Count)
+                    {
+                        i++;
+                    }
+                }
+                else
+                {
+                    fallbackArgs.Add(argsList[i]);
+                }
+            }
+            var fallbackParser = new FFmpegProgress(duration, progress, "Processing media (CPU fallback)…");
+            await ProcessRunner.RunAsync(ffmpeg,["-hide_banner","-nostdin","-v","error","-n","-nostats","-stats_period","0.2","-progress","pipe:1",..fallbackArgs,output],token,fallbackParser.ReadLine);
+            token.ThrowIfCancellationRequested();
+            if(File.Exists(output)&&new FileInfo(output).Length>0) return;
+        }
+        if(!File.Exists(output)||new FileInfo(output).Length==0)throw new IOException("No media output was produced.");
     }
     private static Action<OperationProgress> Scoped(IProgress<OperationProgress>? progress,int index,int count)=>p=>progress?.Report(p with{Fraction=p.Fraction is null?null:(index+p.Fraction)/count*.98,Label=count>1?$"File {index+1} of {count} · {p.Label}":p.Label});
     private static string Output(string directory,string input,string ext,string suffix)=>SafePaths.Unique(directory,Path.GetFileNameWithoutExtension(input)+suffix+"."+ext);
@@ -416,12 +549,12 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
         "ogg"=>["-c:a","libvorbis","-q:a",Number(o.Quality*9)],"opus"=>["-c:a","libopus","-b:a",Math.Min(256,o.AudioBitrate)+"k",..OpusLayout(o)],
         "wma"=>["-c:a","wmav2","-b:a",Math.Min(320,o.AudioBitrate)+"k"],_=>throw new ArgumentException("Unsupported audio format.")
     };
-    private static string[] VideoEncoding(string ext,MediaOptions o)=>ext switch
+    private string[] VideoEncoding(string ext,MediaOptions o)=>ext switch
     {
         "webm"=>["-c:v","libvpx-vp9","-crf",Number(45-o.Quality*30),"-b:v","0","-pix_fmt","yuv420p","-c:a","libopus","-b:a",Math.Min(256,o.AudioBitrate)+"k",..OpusLayout(o)],
         "avi"=>["-c:v","mpeg4","-q:v",Number(25-o.Quality*22),"-c:a","libmp3lame"],
         "wmv"=>["-c:v","wmv2","-q:v",Number(25-o.Quality*22),"-c:a","wmav2"],
-        _=>["-c:v","libx264","-preset","medium","-crf",Number(35-o.Quality*23),"-pix_fmt","yuv420p","-c:a","aac","-b:a",o.AudioBitrate+"k"]
+        _=>GetH264Encoding(o)
     };
     // libopus rejects surround layouts outside Vorbis order, such as the 5.1(side) of FLAC and AC-3 sources (as on macOS).
     private static string[] OpusLayout(MediaOptions o)=>o.SourceChannels switch{3=>["-ch_layout","3.0"],4=>["-ch_layout","quad"],5=>["-ch_layout","5.0"],6=>["-ch_layout","5.1"],7=>["-ch_layout","6.1"],8=>["-ch_layout","7.1"],_=>[]};

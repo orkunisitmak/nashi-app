@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Nashi.Core;
@@ -18,7 +18,7 @@ public sealed record ImageOptions(int? Width=null,int? Height=null,int Rotation=
 }
 public static partial class ImageEngine
 {
-    public static readonly string[] Formats=["png","jpg","webp","heic","avif","bmp","gif","tiff","pdf"];
+    public static readonly string[] Formats=["png","jpg","webp","heic","avif","bmp","gif","tiff","pdf","ico"];
     public static BitmapSource Load(string file)
     {
         if(FeatureCatalog.Extension(file) is "webp" or "heic" or "avif" or "svg")return FromPng(PhotoCodec.Png(file));
@@ -126,6 +126,7 @@ public static partial class ImageEngine
         if(format=="jpg")for(var n=0;n<pixels.Length;n+=4){var alpha=pixels[n+3];if(alpha==255)continue;for(var c=0;c<3;c++)pixels[n+c]=(byte)((pixels[n+c]*alpha+255*(255-alpha)+127)/255);pixels[n+3]=255;}
         image=BitmapSource.Create(converted.PixelWidth,converted.PixelHeight,96,96,PixelFormats.Bgra32,null,pixels,stride);image.Freeze();
         // Hand the raw pixels to Magick: an intermediate WPF PNG of a 48 MP photo took 15-19 s alone.
+        if(format=="ico"){SaveIco(image,output);return;}
         if(format is "webp" or "heic" or "avif"){PhotoCodec.EncodePixels(pixels,image.PixelWidth,image.PixelHeight,output,format,quality,encoderPath,token);return;}
         if(format=="pdf")
         {
@@ -136,5 +137,64 @@ public static partial class ImageEngine
         BitmapEncoder target=format switch{"jpg"=>new JpegBitmapEncoder{QualityLevel=Math.Clamp(quality,1,100)},"bmp"=>new BmpBitmapEncoder(),"gif"=>new GifBitmapEncoder(),"tiff"=>new TiffBitmapEncoder(),_=>new PngBitmapEncoder()};
         // New frames omit source metadata deliberately; originals stay unchanged.
         target.Frames.Add(BitmapFrame.Create(image,null,null,null));using var file=new FileStream(output,FileMode.CreateNew);target.Save(file);
+    }
+
+    public static void SaveIco(BitmapSource image, string output)
+    {
+        int[] sizes = [16, 24, 32, 48, 64, 128, 256];
+        var frames = new List<(int Size, byte[] PngBytes)>();
+
+        foreach (var size in sizes)
+        {
+            double scale = Math.Min((double)size / image.PixelWidth, (double)size / image.PixelHeight);
+            int targetW = Math.Max(1, (int)Math.Round(image.PixelWidth * scale));
+            int targetH = Math.Max(1, (int)Math.Round(image.PixelHeight * scale));
+            double offsetX = (size - targetW) / 2.0;
+            double offsetY = (size - targetH) / 2.0;
+
+            var visual = new DrawingVisual();
+            using (var dc = visual.RenderOpen())
+            {
+                dc.DrawImage(image, new Rect(offsetX, offsetY, targetW, targetH));
+            }
+            var target = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32);
+            target.Render(visual);
+            target.Freeze();
+
+            using var ms = new MemoryStream();
+            var encoder = new PngBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(target));
+            encoder.Save(ms);
+            frames.Add((size, ms.ToArray()));
+        }
+
+        using var file = new FileStream(output, FileMode.CreateNew, FileAccess.Write);
+        using var writer = new BinaryWriter(file);
+
+        // ICO Header (6 bytes)
+        writer.Write((ushort)0); // Reserved, must be 0
+        writer.Write((ushort)1); // Image type: 1 = ICO (icon)
+        writer.Write((ushort)frames.Count); // Number of images
+
+        // Directory Entries (16 bytes each)
+        int dataOffset = 6 + 16 * frames.Count;
+        foreach (var (size, bytes) in frames)
+        {
+            writer.Write((byte)(size == 256 ? 0 : size)); // Width: 0 means 256
+            writer.Write((byte)(size == 256 ? 0 : size)); // Height: 0 means 256
+            writer.Write((byte)0); // Color count: 0 for 32bpp
+            writer.Write((byte)0); // Reserved, must be 0
+            writer.Write((ushort)1); // Color planes: 1
+            writer.Write((ushort)32); // Bits per pixel: 32
+            writer.Write((uint)bytes.Length); // Image size in bytes
+            writer.Write((uint)dataOffset); // Offset of image data from beginning of file
+            dataOffset += bytes.Length;
+        }
+
+        // Image Data
+        foreach (var (_, bytes) in frames)
+        {
+            writer.Write(bytes);
+        }
     }
 }

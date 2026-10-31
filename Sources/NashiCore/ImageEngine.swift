@@ -59,6 +59,7 @@ public enum ImageEngine {
         case "gif": type="com.compuserve.gif"
         case "webp": type="org.webmproject.webp"
         case "avif": type="public.avif"
+        case "ico": type="com.microsoft.ico"
         default: throw NashiError.unsupported("Unsupported image output: \(ext)")
         }
         if (CGImageDestinationCopyTypeIdentifiers() as! [String]).contains(type),let destination=CGImageDestinationCreateWithURL(url as CFURL,type as CFString,1,nil) {
