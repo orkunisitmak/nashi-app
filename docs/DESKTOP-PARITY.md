@@ -36,7 +36,7 @@ Both implementations use the same 46 input-format / 27-tool catalog. `scripts/ch
 | Preview batch / media | Arrows navigate files; for media arrows seek, Option+arrows change files | Arrows navigate files; for media arrows seek, Alt+arrows change files |
 | Settings / updates | Command+, / Command+U | Ctrl+, / Ctrl+U |
 
-Drag chords are configurable; macOS also accepts a key or mouse button. Text entry keeps normal editing shortcuts; tool shortcuts are scoped to their own active editor. Library search Down moves focus into its matching results.
+Drag shortcuts are configurable and can use a key or mouse button. Text entry keeps normal editing shortcuts; tool shortcuts are scoped to their own active editor. Library search Down moves focus into its matching results.
 
 ## Native platform differences
 
