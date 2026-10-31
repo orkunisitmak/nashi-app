@@ -9,7 +9,7 @@ public static class Capabilities
 {
     static readonly IReadOnlySet<string> SupportedTools = new HashSet<string> { "compress", "muteVideo", "normalizeAudio", "extractArchive", "createPDF", "mergePDF" };
     /// The image editors (Editors/*), offered when every file is an image.
-    internal static readonly IReadOnlySet<string> ImageEditors = new HashSet<string> { "cropImage", "editImage", "frameImage", "redactImage" };
+    internal static readonly IReadOnlySet<string> ImageEditors = new HashSet<string> { "cropImage", "editImage", "frameImage", "redactImage", "compress" };
     internal static readonly string[] ImageFormats = ["png", "jpg", "webp", "avif", "bmp", "gif", "tiff", "pdf"];
     static readonly string[] ArchiveOutputs = ["zip", "tar", "gz"];
     static readonly string[] SubtitleOutputs = ["srt", "vtt", "txt"];

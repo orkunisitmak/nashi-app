@@ -841,6 +841,7 @@
 "ENCODED PIXELS, COLOR PROFILE AND DISPLAY ORIENTATION ARE PRESERVED." = "LES PIXELS ENCODÉS, LE PROFIL COLORIMÉTRIQUE ET L’ORIENTATION D’AFFICHAGE SONT CONSERVÉS.";
 "END" = "FIN";
 "ENTER A FINITE NUMBER." = "SAISISSEZ UN NOMBRE FINI.";
+"ENTER A POSITIVE, FINITE TARGET SIZE." = "ENTER A POSITIVE, FINITE TARGET SIZE.";
 "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%." = "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%.";
 "ENTER PAGE NUMBERS WITHIN THIS PDF, IN THE DESIRED ORDER." = "SAISISSEZ DES NUMÉROS DE PAGE DE CE PDF, DANS L’ORDRE SOUHAITÉ.";
 "EPUB LAYOUT" = "MISE EN PAGE EPUB";
@@ -871,6 +872,7 @@
 "Encoded pixels, color profile and display orientation are preserved." = "Les pixels encodés, le profil colorimétrique et l’orientation d’affichage sont conservés.";
 "End" = "Fin";
 "Enter a finite number." = "Saisissez un nombre fini.";
+"Enter a positive, finite target size." = "Enter a positive, finite target size.";
 "Enter a reduction greater than 0% and less than 100%." = "Enter a reduction greater than 0% and less than 100%.";
 "Enter a valid number for %@." = "Saisissez un nombre valide pour %@.";
 "Enter a valid number for %lld." = "Saisissez un nombre valide pour %lld.";
@@ -1505,7 +1507,11 @@
 "Original dimensions" = "Dimensions d’origine";
 "Original image · ready to download" = "Image originale · prête à télécharger";
 "Original size: %@" = "Taille d’origine : %@";
+"Original size: %@ in %@ files" = "Original size: %@ in %@ files";
+"Original size: %@ in %lld files" = "Original size: %@ in %lld files";
 "Original size: %lld" = "Taille d’origine : %lld";
+"Original size: %lld in %@ files" = "Original size: %lld in %@ files";
+"Original size: %lld in %lld files" = "Original size: %lld in %lld files";
 "Original stays safe" = "L’original reste intact";
 "Originals remain safe. Choose where new copies should land." = "Les originaux restent intacts. Choisissez où placer les nouvelles copies.";
 "Other" = "Autre";
@@ -1900,6 +1906,8 @@
 "SMALL · 1280 PX" = "PETIT · 1280 PX";
 "SMALL · 1280 PX LONGEST EDGE" = "PETIT · 1280 PX SUR LE PLUS GRAND CÔTÉ";
 "SMALLER FILE" = "FICHIER PLUS LÉGER";
+"SMALLER FILES WITH LESS QUALITY LOSS." = "SMALLER FILES WITH LESS QUALITY LOSS.";
+"SMALLER FILES WITH STRONGER COMPRESSION." = "SMALLER FILES WITH STRONGER COMPRESSION.";
 "SMALLEST" = "LE PLUS PETIT";
 "SOLID" = "PLEIN";
 "SOUND AND HAPTIC FEEDBACK" = "RETOUR SONORE ET HAPTIQUE";
@@ -2048,6 +2056,8 @@
 "Small · 1280 px" = "Petit · 1280 px";
 "Small · 1280 px longest edge" = "Petit · 1280 px sur le plus grand côté";
 "Smaller File" = "Fichier plus léger";
+"Smaller files with less quality loss." = "Smaller files with less quality loss.";
+"Smaller files with stronger compression." = "Smaller files with stronger compression.";
 "Smallest" = "Le plus petit";
 "Solid" = "Plein";
 "Something went wrong: %@" = "Something went wrong: %@";

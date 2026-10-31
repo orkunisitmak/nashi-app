@@ -1230,5 +1230,9 @@
   "Choose an image": "Bir görsel seç",
   "Click an area to select it, drag it to move it, and press Delete to remove it.": "Bir alanı seçmek için tıkla, taşımak için sürükle, kaldırmak için Delete'e bas.",
   "Delete Area": "Alanı Sil",
-  "Position": "Konum"
+  "Position": "Konum",
+  "Enter a positive, finite target size.": "Pozitif, sonlu bir hedef boyut gir.",
+  "Smaller files with less quality loss.": "Daha az kalite kaybıyla daha küçük dosyalar.",
+  "Smaller files with stronger compression.": "Daha güçlü sıkıştırmayla daha küçük dosyalar.",
+  "Original size: {0} in {1} files": "Orijinal boyut: {1} dosyada {0}"
 }

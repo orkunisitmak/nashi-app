@@ -43,6 +43,7 @@ public sealed class ToolEditorWindow : Window
             "editImage" => new PhotoEditor(files),
             "frameImage" => new FrameEditor(files),
             "redactImage" => new RedactEditor(files),
+            "compress" => new CompressEditor(files),
             _ => null,
         };
     }

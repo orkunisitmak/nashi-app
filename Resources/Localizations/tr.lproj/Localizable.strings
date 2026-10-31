@@ -841,6 +841,7 @@
 "ENCODED PIXELS, COLOR PROFILE AND DISPLAY ORIENTATION ARE PRESERVED." = "KODLANMIŞ PİKSELLER, RENK PROFİLİ VE GÖRÜNTÜ YÖNÜ KORUNUR.";
 "END" = "BİTİŞ";
 "ENTER A FINITE NUMBER." = "GEÇERLİ BİR SAYI GİR.";
+"ENTER A POSITIVE, FINITE TARGET SIZE." = "POZİTİF, SONLU BİR HEDEF BOYUT GİR.";
 "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%." = "%0'DAN BÜYÜK VE %100'DEN KÜÇÜK BİR AZALTMA GİR.";
 "ENTER PAGE NUMBERS WITHIN THIS PDF, IN THE DESIRED ORDER." = "BU PDF'DEKİ SAYFA NUMARALARINI İSTEDİĞİN SIRAYLA GİR.";
 "EPUB LAYOUT" = "EPUB DÜZENİ";
@@ -871,6 +872,7 @@
 "Encoded pixels, color profile and display orientation are preserved." = "Kodlanmış pikseller, renk profili ve görüntü yönü korunur.";
 "End" = "Bitiş";
 "Enter a finite number." = "Geçerli bir sayı gir.";
+"Enter a positive, finite target size." = "Pozitif, sonlu bir hedef boyut gir.";
 "Enter a reduction greater than 0% and less than 100%." = "%0'dan büyük ve %100'den küçük bir azaltma gir.";
 "Enter a valid number for %@." = "%@ için geçerli bir sayı gir.";
 "Enter a valid number for %lld." = "%lld için geçerli bir sayı gir.";
@@ -1505,7 +1507,11 @@
 "Original dimensions" = "Orijinal boyutlar";
 "Original image · ready to download" = "Orijinal görsel · indirmeye hazır";
 "Original size: %@" = "Orijinal boyut: %@";
+"Original size: %@ in %@ files" = "Orijinal boyut: %@ dosyada %@";
+"Original size: %@ in %lld files" = "Orijinal boyut: %lld dosyada %@";
 "Original size: %lld" = "Orijinal boyut: %lld";
+"Original size: %lld in %@ files" = "Orijinal boyut: %@ dosyada %lld";
+"Original size: %lld in %lld files" = "Orijinal boyut: %lld dosyada %lld";
 "Original stays safe" = "Orijinal dosyan güvende";
 "Originals remain safe. Choose where new copies should land." = "Orijinaller güvende. Yeni kopyaların nereye kaydedileceğini seç.";
 "Other" = "Diğer";
@@ -1900,6 +1906,8 @@
 "SMALL · 1280 PX" = "KÜÇÜK · 1280 PX";
 "SMALL · 1280 PX LONGEST EDGE" = "KÜÇÜK · UZUN KENAR 1280 PX";
 "SMALLER FILE" = "DAHA KÜÇÜK DOSYA";
+"SMALLER FILES WITH LESS QUALITY LOSS." = "DAHA AZ KALİTE KAYBIYLA DAHA KÜÇÜK DOSYALAR.";
+"SMALLER FILES WITH STRONGER COMPRESSION." = "DAHA GÜÇLÜ SIKIŞTIRMAYLA DAHA KÜÇÜK DOSYALAR.";
 "SMALLEST" = "EN KÜÇÜK";
 "SOLID" = "DÜZ";
 "SOUND AND HAPTIC FEEDBACK" = "SES VE DOKUNSAL GERİ BİLDİRİM";
@@ -2048,6 +2056,8 @@
 "Small · 1280 px" = "Küçük · 1280 px";
 "Small · 1280 px longest edge" = "Küçük · uzun kenar 1280 px";
 "Smaller File" = "Daha Küçük Dosya";
+"Smaller files with less quality loss." = "Daha az kalite kaybıyla daha küçük dosyalar.";
+"Smaller files with stronger compression." = "Daha güçlü sıkıştırmayla daha küçük dosyalar.";
 "Smallest" = "En küçük";
 "Solid" = "Düz";
 "Something went wrong: %@" = "Bir şeyler ters gitti: %@";

@@ -5,7 +5,7 @@ using PdfSharp.Pdf;
 
 namespace Nashi.Linux;
 
-/// Image convert and compress for the Linux wheel. Outputs match the Windows engine's naming.
+/// Image convert and compress for the Linux wheel. Converted copies match the Windows engine's naming.
 public static class ImageOperations
 {
     public static IReadOnlyList<string> Convert(IReadOnlyList<string> inputs, string format, string destination, IProgress<OperationProgress>? progress, CancellationToken token)
@@ -48,23 +48,22 @@ public static class ImageOperations
         return tx.Publish(outputs, token);
     }
 
-    public static IReadOnlyList<string> Compress(IReadOnlyList<string> inputs, string destination, IProgress<OperationProgress>? progress, CancellationToken token)
+    /// One compressed copy per image ("photo - Compressed.jpg"), with the Compress editor's options or its Balanced
+    /// defaults. JPG, PNG, WebP and AVIF keep their format; the rest become JPG.
+    public static IReadOnlyList<string> Compress(IReadOnlyList<string> inputs, string destination, IProgress<OperationProgress>? progress, CancellationToken token, CompressOptions? options = null)
     {
         if (inputs.Count == 0) throw new ArgumentException("Choose at least one image.");
+        options ??= new CompressOptions();
         using var tx = new ExportTransaction(destination);
         var outputs = new List<string>();
         for (var n = 0; n < inputs.Count; n++)
         {
             token.ThrowIfCancellationRequested();
             var input = inputs[n];
-            var sourceExt = FeatureCatalog.Extension(input);
-            if (sourceExt == "jpeg") sourceExt = "jpg";
-            var ext = sourceExt;
-            if (ext is not ("jpg" or "png" or "webp" or "heic" or "avif") || !Capabilities.ImageFormats.Contains(ext)) ext = "jpg";
-            var output = SafePaths.Unique(tx.StagingDirectory, Path.GetFileNameWithoutExtension(input) + " Compressed." + ext);
-            using (var image = PhotoCodec.Read(input)) Write(image, output, ext, 70, strip: true);
-            // Never hand back a bigger file than the original.
-            if (sourceExt == ext && new FileInfo(input).Length < new FileInfo(output).Length) File.Copy(input, output, true);
+            var ext = FeatureCatalog.Extension(input);
+            if (ext is not ("jpg" or "png" or "webp" or "avif") || !Capabilities.ImageFormats.Contains(ext)) ext = "jpg";
+            var output = SafePaths.Unique(tx.StagingDirectory, Path.GetFileNameWithoutExtension(input) + " - Compressed." + ext);
+            ImageTools.Compress(input, output, ext, options, token, progress);
             outputs.Add(output);
             progress?.Report(new((n + 1) / (double)inputs.Count * .98, "Saving images…"));
         }
