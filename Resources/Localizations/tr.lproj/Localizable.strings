@@ -2344,8 +2344,8 @@
 "TRIM AUDIO" = "SESİ KIRP";
 "TRIM AUDIO · NASHI" = "SESİ KIRP · NASHI";
 "TRIM TIMELINE" = "KIRPMA ZAMAN ÇİZELGESİ";
-"TRIM VIDEO" = "VİDEOYU KIRP";
-"TRIM VIDEO · NASHI" = "VİDEOYU KIRP · NASHI";
+"TRIM VIDEO" = "VİDEOYU KISALT";
+"TRIM VIDEO · NASHI" = "VİDEOYU KISALT · NASHI";
 "TRUE PEAK DB" = "GERÇEK TEPE DÜZEYİ DB";
 "TRUE PEAK LIMIT" = "TEPE DÜZEYİ SINIRI";
 "TRY A CLEARER IMAGE OR ANOTHER PDF." = "DAHA NET BİR GÖRSEL VEYA BAŞKA BİR PDF DENE.";
@@ -2480,8 +2480,8 @@
 "Trim" = "Kırp";
 "Trim Audio" = "Sesi Kırp";
 "Trim Audio · Nashi" = "Sesi Kırp · Nashi";
-"Trim Video" = "Videoyu Kırp";
-"Trim Video · Nashi" = "Videoyu Kırp · Nashi";
+"Trim Video" = "Videoyu Kısalt";
+"Trim Video · Nashi" = "Videoyu Kısalt · Nashi";
 "Trim timeline" = "Kırpma zaman çizelgesi";
 "True peak dB" = "Gerçek tepe düzeyi dB";
 "True peak limit" = "Tepe düzeyi sınırı";
