@@ -31,8 +31,11 @@ def validate(feed_path, build_number, must_be_newer=False):
     if enclosure is None or not enclosure.get(SPARKLE + "edSignature") or int(enclosure.get("length", "0")) <= 0:
         raise ValueError("The release download is missing its Ed25519 signature or length; check that the signing key matches the public key")
     archive_name = enclosure.get("url", "").rsplit("/", 1)[-1]
-    if not (Path(feed_path).parent / archive_name).is_file():
+    archive = Path(feed_path).parent / archive_name
+    if not archive.is_file():
         raise ValueError("The signed release archive is missing")
+    if archive.stat().st_size != int(enclosure.get("length", "0")):
+        raise ValueError("The signed release archive size does not match its feed enclosure length")
 
 
 if __name__ == "__main__":
