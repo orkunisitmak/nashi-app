@@ -28,7 +28,15 @@ enum ArchiveCodec {
             try a.check(a.readSupportRaw(reader), handle: reader)
             try a.check(a.readSupportEmpty(reader), handle: reader)
         } else {
-            try a.check(a.readSupportFormats(reader), handle: reader)
+            // Named containers must be that format, not whatever libarchive sniffs.
+            switch input.pathExtension.lowercased() {
+            case "zip", "epub", "docx", "pptx", "xlsx": try a.check(a.readSupportZIP(reader), handle: reader)
+            case "tar": try a.check(a.readSupportTar(reader), handle: reader)
+            case "rar":
+                try a.check(a.readSupportRAR(reader), handle: reader)
+                try a.check(a.readSupportRAR5(reader), handle: reader)
+            default: try a.check(a.readSupportFormats(reader), handle: reader)
+            }
         }
         if !password.isEmpty { try a.check(password.withCString { a.readPassphrase(reader, $0) }, handle: reader) }
         try a.check(input.path.withCString { a.readOpen(reader, $0, 128 * 1024) }, handle: reader)
@@ -296,6 +304,9 @@ enum ArchiveCodec {
         var readSupportXz: Call { symbol("archive_read_support_filter_xz", Call.self) }
         var readSupportLzma: Call { symbol("archive_read_support_filter_lzma", Call.self) }
         var readSupportCompress: Call { symbol("archive_read_support_filter_compress", Call.self) }
+        var readSupportZIP: Call { symbol("archive_read_support_format_zip", Call.self) }
+        var readSupportRAR: Call { symbol("archive_read_support_format_rar", Call.self) }
+        var readSupportRAR5: Call { symbol("archive_read_support_format_rar5", Call.self) }
         var readSupportFormats: Call { symbol("archive_read_support_format_all", Call.self) }
         var readSupportRaw: Call { symbol("archive_read_support_format_raw", Call.self) }
         var readSupportTar: Call { symbol("archive_read_support_format_tar", Call.self) }
