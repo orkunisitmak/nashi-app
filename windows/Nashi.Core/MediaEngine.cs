@@ -3,12 +3,16 @@ using System.Text.Json;
 
 namespace Nashi.Core;
 
-public sealed record MediaStream(int Index, string Kind, string Codec, int? Width, int? Height, bool AttachedPicture,int Bits=0,string SampleFormat="",double FrameRate=30,int SampleRate=0);
+public sealed record MediaStream(int Index, string Kind, string Codec, int? Width, int? Height, bool AttachedPicture,int Bits=0,string SampleFormat="",double FrameRate=30,int SampleRate=0,int Channels=0);
 public sealed record MediaInfo(double Duration, long Bytes, IReadOnlyList<MediaStream> Streams)
 {
     public MediaStream? Video => Streams.FirstOrDefault(s => s.Kind == "video" && !s.AttachedPicture);
     public MediaStream? Audio => Streams.FirstOrDefault(s => s.Kind == "audio");
     public bool HasAudio => Streams.Any(s => s.Kind == "audio");
+    /// Ogg keeps Vorbis and Opus comments on the audio stream rather than in file-level tags.
+    public bool OggStreamTags { get; init; }
+    /// Apple devices store location, make, model and capture date as com.apple.quicktime.* file tags.
+    public bool QuickTimeKeys { get; init; }
 }
 public sealed record MediaRegion(double X, double Y, double Width, double Height, double Start = 0, double? End = null);
 public sealed record MediaRange(double Start, double End);
@@ -45,6 +49,8 @@ public sealed record MediaOptions
     public MediaRange[] AudioRedactions { get; init; } = [];
     public bool RemoveAllMetadata{get;init;}=true;
     public Dictionary<string,string> Metadata { get; init; } = [];
+    /// Channels of the audio reaching the encoder; set from the source, 0 when unknown.
+    internal int SourceChannels { get; init; }
 }
 
 /// File-only FFmpeg operations. The UI and CLI call the same transaction and
@@ -74,12 +80,29 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
             // FFmpeg auto-rotates decoded frames before crop/scale filters. The
             // editor and validation use those same displayed dimensions.
             if(double.IsFinite(rotation)&&Math.Abs(Math.Abs(rotation)%180-90)<.001)(width,height)=(height,width);
-            streams.Add(new(stream.GetProperty("index").GetInt32(), GetString(stream,"codec_type"), GetString(stream,"codec_name"), width, height, attached,GetInt(stream,"bits_per_raw_sample")??GetInt(stream,"bits_per_sample")??0,GetString(stream,"sample_fmt"),ParseFrameRate(GetString(stream,"avg_frame_rate")),int.TryParse(GetString(stream,"sample_rate"),NumberStyles.Integer,CultureInfo.InvariantCulture,out var sampleRate)&&sampleRate>0?sampleRate:0));
+            streams.Add(new(stream.GetProperty("index").GetInt32(), GetString(stream,"codec_type"), GetString(stream,"codec_name"), width, height, attached,GetInt(stream,"bits_per_raw_sample")??GetInt(stream,"bits_per_sample")??0,GetString(stream,"sample_fmt"),ParseFrameRate(GetString(stream,"avg_frame_rate")),int.TryParse(GetString(stream,"sample_rate"),NumberStyles.Integer,CultureInfo.InvariantCulture,out var sampleRate)&&sampleRate>0?sampleRate:0,GetInt(stream,"channels") is {} channels&&channels is >0 and <=512?channels:0));
         }
         var duration = root.TryGetProperty("format", out var format) && double.TryParse(GetString(format,"duration"), CultureInfo.InvariantCulture, out var seconds) && double.IsFinite(seconds) ? Math.Max(0,seconds) : 0;
-        return new(duration, new FileInfo(input).Length, streams);
+        var oggTags=format.ValueKind==JsonValueKind.Object&&GetString(format,"format_name").Split(',').Contains("ogg")&&root.GetProperty("streams").EnumerateArray().FirstOrDefault(s=>GetString(s,"codec_type")=="audio") is {ValueKind:JsonValueKind.Object} audio&&audio.TryGetProperty("tags",out var audioTags)&&audioTags.ValueKind==JsonValueKind.Object&&audioTags.EnumerateObject().Any();
+        var quickTimeKeys=format.ValueKind==JsonValueKind.Object&&format.TryGetProperty("tags",out var formatTags)&&formatTags.ValueKind==JsonValueKind.Object&&formatTags.EnumerateObject().Any(t=>t.Name.StartsWith("com.apple.quicktime.",StringComparison.Ordinal));
+        return new(duration, new FileInfo(input).Length, streams){OggStreamTags=oggTags,QuickTimeKeys=quickTimeKeys};
     }
 
+    // The last video packet's time from the container start, read without decoding: the final minute first, then the whole file.
+    private async Task<double?> LastVideoTimestampAsync(string input,double duration,CancellationToken token)
+    {
+        foreach(var interval in duration>60?new[]{Number(duration-60)+"%",null}:[null])
+        {
+            var result=await ProcessRunner.RunAsync(ffprobe,["-v","error","-select_streams","v:0",..(interval is null?Array.Empty<string>():["-read_intervals",interval]),"-show_entries","packet=pts_time,dts_time:format=start_time","-of","json=c=1",input],token);
+            using var json=JsonDocument.Parse(result.Output);double? last=null;
+            // B-frames in AVI leave many packets without a PTS; their DTS still places them.
+            if(json.RootElement.TryGetProperty("packets",out var packets))foreach(var packet in packets.EnumerateArray())if((double.TryParse(GetString(packet,"pts_time"),NumberStyles.Float,CultureInfo.InvariantCulture,out var time)||double.TryParse(GetString(packet,"dts_time"),NumberStyles.Float,CultureInfo.InvariantCulture,out time))&&double.IsFinite(time)&&(last is null||time>last))last=time;
+            if(last is null)continue;
+            // Input -ss counts from the container's start time.
+            return last-(json.RootElement.TryGetProperty("format",out var format)&&double.TryParse(GetString(format,"start_time"),NumberStyles.Float,CultureInfo.InvariantCulture,out var start)&&double.IsFinite(start)?start:0);
+        }
+        return null;
+    }
     private static double ParseFrameRate(string value){var parts=value.Split('/');if(parts.Length==2&&double.TryParse(parts[0],CultureInfo.InvariantCulture,out var numerator)&&double.TryParse(parts[1],CultureInfo.InvariantCulture,out var denominator)&&denominator>0&&double.IsFinite(numerator/denominator)&&numerator/denominator>=1)return numerator/denominator;return 30;}
 
     public async Task<IReadOnlyList<string>> ConvertAsync(IReadOnlyList<string> inputs, string format, string destination,
@@ -92,21 +115,32 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
         {
             var input = Path.GetFullPath(inputs[index]); var info = await InspectAsync(input,token);
             var output = Output(transaction.StagingDirectory,input,format,"");
-            var arguments = new List<string> { "-i",input };
+            List<string> arguments = ["-i",input,..WmaChannels(format,SourceDepth(options,info))];
             if (AudioFormats.Contains(format))
-            { RequireAudio(info); arguments.AddRange(["-map","0:a:0","-vn"]); arguments.AddRange(AudioEncoding(format,SourceDepth(options,info))); }
+            {
+                RequireAudio(info);
+                // Album art is an attached picture stream, not a tag; keep it where the container stores JPEG/PNG art (as on macOS).
+                var art=options.PreserveMetadata&&format is "mp3" or "m4a" or "flac"?info.Streams.FirstOrDefault(s=>s.AttachedPicture&&s.Codec is "mjpeg" or "png"):null;
+                arguments.AddRange(["-map","0:a:0",..(art is null?["-vn"]:new[]{"-map","0:"+art.Index.ToString(CultureInfo.InvariantCulture),"-c:v","copy"})]);arguments.AddRange(AudioEncoding(format,SourceDepth(options,info)));
+            }
             else
             {
                 RequireVideo(info);
-                if (format == "gif") arguments.AddRange(["-filter_complex",$"[0:v]fps={options.GifFrameRate},scale=w='min({options.GifWidth},iw)':h=-2,split[p0][p1];[p0]palettegen[pal];[p1][pal]paletteuse=dither=sierra2_4a","-an","-loop","0"]);
+                // GIF viewers ignore a pixel aspect, so non-square pixels are resized to their displayed shape (as on macOS).
+                if (format == "gif") arguments.AddRange(["-filter_complex",$"[0:v]fps={options.GifFrameRate},scale=w='min({options.GifWidth},iw)':h=-2:reset_sar=1,split[p0][p1];[p0]palettegen[pal];[p1][pal]paletteuse=dither=sierra2_4a","-an","-loop","0"]);
                 else
                 {
                     arguments.AddRange(["-map","0:v:0","-map","0:a:0?"]);
-                    if (options.Width is not null || options.Height is not null) arguments.AddRange(["-vf",Scale(options)]);
-                    arguments.AddRange(VideoEncoding(format,options));
+                    arguments.AddRange(["-vf",options.Width is not null || options.Height is not null?Scale(options):"pad=ceil(iw/2)*2:ceil(ih/2)*2"]);
+                    arguments.AddRange(VideoEncoding(format,SourceDepth(options,info)));
                 }
             }
+            if (format is "wma" or "wmv") arguments.AddRange(WmaRate(info));
             arguments.AddRange(options.PreserveMetadata ? ["-map_metadata","0"] : ["-map_metadata","-1","-map_metadata:s","-1","-map_chapters","-1"]);
+            // Other containers write file-level tags, so copy Ogg's stream comments there too (as on macOS).
+            if(options.PreserveMetadata&&info.OggStreamTags)arguments.AddRange(["-map_metadata","0:s:a:0"]);
+            // The MP4 and MOV muxer writes only its fixed tag list unless asked for the source's own keys (as on macOS).
+            if(options.PreserveMetadata&&info.QuickTimeKeys&&format is "mp4" or "mov" or "m4v")arguments.AddRange(["-movflags","+use_metadata_tags"]);
             await RenderAsync(arguments,output,info.Duration,Scoped(progress,index,inputs.Count),token);
             outputs.Add(output);
         }
@@ -132,7 +166,8 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
 
     private async Task<IReadOnlyList<string>> ApplyAsync(string tool,string input,MediaInfo info,string directory,MediaOptions options,Action<OperationProgress> progress,CancellationToken token)
     {
-        options=SourceDepth(options,info);progress(new(null,"Preparing "+Path.GetFileName(input)+"…"));
+        // Audio Channels encodes its own mono or stereo mix.
+        options=SourceDepth(options,info);if(tool=="audioChannels")options=options with{SourceChannels=options.Channels};progress(new(null,"Preparing "+Path.GetFileName(input)+"…"));
         var ext=Path.GetExtension(input).TrimStart('.').ToLowerInvariant();if(ext=="aif")ext="aiff";
         var output=Output(directory,input,ext," "+ToolSuffix(tool));
         var args=new List<string>{"-i",input};double? duration=info.Duration;
@@ -176,17 +211,28 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
                 if(info.HasAudio)args.AddRange(["-af",Tempo(options.Speed)]);
                 args.AddRange(VideoEncoding(ext,options));break;
             case "audioChannels":
-                RequireAudio(info);var filter=options.Channels==1?$"aformat=channel_layouts=stereo,pan=mono|c0={Number(options.LeftVolume/2)}*c0+{Number(options.RightVolume/2)}*c1":$"aformat=channel_layouts=stereo,pan=stereo|c0={Number(options.LeftVolume)}*c0|c1={Number(options.RightVolume)}*c1";
+                RequireAudio(info);
+                // Mix a mono source directly, as macOS does: aformat=stereo would first upmix it 3 dB quieter per channel.
+                var filter=info.Audio?.Channels==1?(options.Channels==1?$"volume={Number((options.LeftVolume+options.RightVolume)/2)}":$"pan=stereo|c0={Number(options.LeftVolume)}*c0|c1={Number(options.RightVolume)}*c0"):options.Channels==1?$"aformat=channel_layouts=stereo,pan=mono|c0={Number(options.LeftVolume/2)}*c0+{Number(options.RightVolume/2)}*c1":$"aformat=channel_layouts=stereo,pan=stereo|c0={Number(options.LeftVolume)}*c0|c1={Number(options.RightVolume)}*c1";
                 args.AddRange(["-map","0:a:0","-vn","-af",filter,"-ac",options.Channels.ToString(CultureInfo.InvariantCulture),..AudioEncoding(ext,options)]);break;
             case "normalizeAudio":return [await NormalizeAsync(input,info,directory,ext,options,progress,token)];
             case "compress":return [await CompressAsync(input,info,directory,options,progress,token)];
             case "videoSnapshots":
-                RequireVideo(info);if(options.SnapshotTimes.Length==0)throw new ArgumentException("Choose at least one frame.");var frames=new List<string>();
+                RequireVideo(info);if(options.SnapshotTimes.Length==0)throw new ArgumentException("Choose at least one frame.");var frames=new List<string>();double? lastVideo=null;var lastVideoRead=false;
                 for(var n=0;n<options.SnapshotTimes.Length;n++)
                 {
-                    var time=options.SnapshotTimes[n];if(!double.IsFinite(time)||time<0||(info.Duration>0&&time>=info.Duration))throw new ArgumentException("A frame lies outside the video.");
+                    var time=options.SnapshotTimes[n];if(!double.IsFinite(time)||time<0||(info.Duration>0&&time>info.Duration))throw new ArgumentException("A frame lies outside the video.");
                     var file=Output(directory,input,"png"," Frame "+(n+1));
-                    await RenderAsync(["-ss",Number(time),"-i",input,"-map","0:v:0","-frames:v","1","-update","1","-c:v","png"],file,null,progress,token);frames.Add(file);
+                    // Image viewers ignore a PNG pixel aspect, so non-square pixels are resized to their displayed shape (as on macOS).
+                    try{await RenderAsync(["-ss",Number(time),"-i",input,"-map","0:v:0","-frames:v","1","-update","1","-vf","scale=-1:ih:reset_sar=1","-c:v","png"],file,null,progress,token);}
+                    catch(IOException)when(!File.Exists(file)||new FileInfo(file).Length==0)
+                    {
+                        // FFmpeg writes the first frame at or after -ss. Past the start of the last frame (the end, a long last
+                        // frame or an audio tail) there is none, yet the player shows the last frame there. Packet times can be
+                        // missing or early (B-frames in AVI), so decode the last second of video to the end and keep the final frame.
+                        File.Delete(file);if(!lastVideoRead){lastVideo=await LastVideoTimestampAsync(input,info.Duration,token);lastVideoRead=true;}if(lastVideo is not {} last)throw;
+                        await RenderAsync([..(last>1?new[]{"-ss",Number(last-1)}:[]),"-i",input,"-map","0:v:0","-update","1","-vf","scale=-1:ih:reset_sar=1","-c:v","png"],file,null,progress,token);
+                    }frames.Add(file);
                     progress(new((double)(n+1)/options.SnapshotTimes.Length,"Saving frame "+(n+1)));
                 }
                 return frames;
@@ -224,15 +270,18 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
                     if(options.RedactionMode=="solid")graph.Add($"[{previous}]drawbox=x={rect.X}:y={rect.Y}:w={rect.Width}:h={rect.Height}:color=black:t=fill:enable='{enabled}'[{next}]");
                     else
                     {
+                        // overlay rounds x and y down to even pixels in 4:2:0 video; start the patch there so it lands where it was cut (as on macOS).
+                        rect=(rect.X/2*2,rect.Y/2*2,rect.Width+rect.X%2,rect.Height+rect.Y%2);
                         var effect=options.RedactionMode=="blur"?"gblur=sigma=20:steps=2":$"scale={Math.Max(1,rect.Width/16)}:{Math.Max(1,rect.Height/16)}:flags=neighbor,scale={rect.Width}:{rect.Height}:flags=neighbor";
-                        graph.Add($"[{previous}]split[b{n}][c{n}];[c{n}]crop={rect.Width}:{rect.Height}:{rect.X}:{rect.Y}:exact=1,{effect}[e{n}];[b{n}][e{n}]overlay={rect.X}:{rect.Y}:enable='{enabled}'[{next}]");
+                        // overlay blends the patch by its alpha; an opaque patch replaces the area in videos with transparency (as on macOS).
+                        graph.Add($"[{previous}]split[b{n}][c{n}];[c{n}]crop={rect.Width}:{rect.Height}:{rect.X}:{rect.Y}:exact=1,{effect},format=yuv420p[e{n}];[b{n}][e{n}]overlay={rect.X}:{rect.Y}:enable='{enabled}'[{next}]");
                     }
                     previous=next;
                 }
                 args.AddRange(["-filter_complex",string.Join(';',graph),"-map","["+previous+"]","-map","0:a:0?",..VideoEncoding(ext,options)]);break;
             default:throw new ArgumentException("Unsupported media tool.");
         }
-        await RenderAsync(args,output,duration,progress,token);return [output];
+        args.AddRange(WmaChannels(Path.GetExtension(output).TrimStart('.').ToLowerInvariant(),options));await RenderAsync(args,output,duration,progress,token);return [output];
     }
 
     private async Task<string> NormalizeAsync(string input,MediaInfo info,string directory,string ext,MediaOptions options,Action<OperationProgress> progress,CancellationToken token)
@@ -259,6 +308,8 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
         int? rate=ext switch{"wav" or "aiff" or "flac"=>source,"ogg"=>Math.Min(source,192000),"mp3" or "m4a" or "aac" or "wma"=>Math.Min(source,48000),_=>null};
         return rate is {} value?["-ar",value.ToString(CultureInfo.InvariantCulture)]:[];
     }
+    // WMA stops at 48 kHz. FFmpeg fits other encoders' rates (AAC, MP3) on its own, but not WMA's, so hi-res sources failed.
+    private static string[] WmaRate(MediaInfo info)=>info.Audio is {SampleRate:>48000}?["-ar","48000"]:[];
 
     private async Task<string> CompressAsync(string input,MediaInfo info,string directory,MediaOptions options,Action<OperationProgress> progress,CancellationToken token)
     {
@@ -326,7 +377,8 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
         for(var index=0;index<inputs.Count;index++)
         {
             var args=new List<string>{"-i",Path.GetFullPath(inputs[index])};if(audio&&!infos[index].HasAudio)args.AddRange(["-f","lavfi","-i","anullsrc=r=48000:cl=stereo"]);
-            args.AddRange(["-map","0:v:0","-vf",$"scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30,setpts=PTS-STARTPTS"]);
+            // reset_sar fits the displayed shape, so clips with non-square pixels (DV, DVD, HDV) keep it after setsar=1 (as on macOS).
+            args.AddRange(["-map","0:v:0","-vf",$"scale={width}:{height}:force_original_aspect_ratio=decrease:reset_sar=1,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30,setpts=PTS-STARTPTS"]);
             if(audio)args.AddRange(["-map",infos[index].HasAudio?"0:a:0":"1:a:0","-ac","2","-ar","48000","-af","asetpts=PTS-STARTPTS"]);else args.Add("-an");
             args.AddRange(["-t",Number(infos[index].Duration),..VideoEncoding("mp4",options)]);var file=Path.Combine(work,$"clip-{index}.mp4");
             await RenderAsync(args,file,infos[index].Duration,p=>progress?.Report(p with{Fraction=(index+(p.Fraction??0))/inputs.Count*.95,Label=$"Joining clip {index+1} of {inputs.Count}"}),token);clips.Add(file);
@@ -354,24 +406,29 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
     private static string ToolSuffix(string tool)=>tool switch{"muteVideo"=>"Muted","removeMetadata"=>"Metadata","trimAudio" or "trimVideo"=>"Trimmed","cropVideo"=>"Cropped","changeVideoSpeed"=>"Speed","audioChannels"=>"Channels","redactVideo" or "redactAudio"=>"Redacted",_=>tool};
     internal static MediaOptions SourceDepth(MediaOptions options,MediaInfo info)
     {
-        if(options.SampleDepth!="matchSource")return options;var audio=info.Streams.FirstOrDefault(s=>s.Kind=="audio");
+        var audio=info.Streams.FirstOrDefault(s=>s.Kind=="audio");options=options with{SourceChannels=audio?.Channels??0};if(options.SampleDepth!="matchSource")return options;
         var depth=audio?.Codec.Contains("pcm_f",StringComparison.Ordinal)==true?"float32":audio?.Bits>24?"pcm32":audio?.Bits>16?"pcm24":"pcm16";return options with{SampleDepth=depth};
     }
     private static string[] AudioEncoding(string ext,MediaOptions o)=>ext switch
     {
         "mp3"=>["-c:a","libmp3lame","-b:a",o.AudioBitrate+"k"],"m4a" or "aac"=>["-c:a","aac","-b:a",o.AudioBitrate+"k"],
         "wav"=>["-c:a",o.SampleDepth switch{"pcm24"=>"pcm_s24le","pcm32"=>"pcm_s32le","float32"=>"pcm_f32le",_=>"pcm_s16le"}],"aiff"=>["-c:a",o.SampleDepth switch{"pcm24"=>"pcm_s24be","pcm32"=>"pcm_s32be","float32"=>"pcm_f32be",_=>"pcm_s16be"}],"flac"=>["-c:a","flac","-compression_level","8"],
-        "ogg"=>["-c:a","libvorbis","-q:a",Number(o.Quality*9)],"opus"=>["-c:a","libopus","-b:a",Math.Min(256,o.AudioBitrate)+"k"],
+        "ogg"=>["-c:a","libvorbis","-q:a",Number(o.Quality*9)],"opus"=>["-c:a","libopus","-b:a",Math.Min(256,o.AudioBitrate)+"k",..OpusLayout(o)],
         "wma"=>["-c:a","wmav2","-b:a",Math.Min(320,o.AudioBitrate)+"k"],_=>throw new ArgumentException("Unsupported audio format.")
     };
     private static string[] VideoEncoding(string ext,MediaOptions o)=>ext switch
     {
-        "webm"=>["-c:v","libvpx-vp9","-crf",Number(45-o.Quality*30),"-b:v","0","-c:a","libopus","-b:a",Math.Min(256,o.AudioBitrate)+"k"],
+        "webm"=>["-c:v","libvpx-vp9","-crf",Number(45-o.Quality*30),"-b:v","0","-pix_fmt","yuv420p","-c:a","libopus","-b:a",Math.Min(256,o.AudioBitrate)+"k",..OpusLayout(o)],
         "avi"=>["-c:v","mpeg4","-q:v",Number(25-o.Quality*22),"-c:a","libmp3lame"],
         "wmv"=>["-c:v","wmv2","-q:v",Number(25-o.Quality*22),"-c:a","wmav2"],
         _=>["-c:v","libx264","-preset","medium","-crf",Number(35-o.Quality*23),"-pix_fmt","yuv420p","-c:a","aac","-b:a",o.AudioBitrate+"k"]
     };
-    private static string Scale(MediaOptions o)=>$"scale={o.Width?.ToString(CultureInfo.InvariantCulture)??"-2"}:{o.Height?.ToString(CultureInfo.InvariantCulture)??"-2"}:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2";
+    // libopus rejects surround layouts outside Vorbis order, such as the 5.1(side) of FLAC and AC-3 sources (as on macOS).
+    private static string[] OpusLayout(MediaOptions o)=>o.SourceChannels switch{3=>["-ch_layout","3.0"],4=>["-ch_layout","quad"],5=>["-ch_layout","5.0"],6=>["-ch_layout","5.1"],7=>["-ch_layout","6.1"],8=>["-ch_layout","7.1"],_=>[]};
+    // WMA (also in WMV) stores at most two channels, so surround is downmixed instead of failing the export.
+    // Stream copies ignore -ac, and Audio Channels already mixes to its own count.
+    private static string[] WmaChannels(string ext,MediaOptions o)=>ext is "wma" or "wmv"&&o.SourceChannels>2?["-ac","2"]:[];
+    private static string Scale(MediaOptions o)=>$"scale={o.Width?.ToString(CultureInfo.InvariantCulture)??"-2"}:{(o.Height is {} h?$"'min({h.ToString(CultureInfo.InvariantCulture)},ih)'":"-2")}:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2";
     private static string Tempo(double speed){var parts=new List<string>();while(speed>2){parts.Add("atempo=2");speed/=2;}while(speed<.5){parts.Add("atempo=0.5");speed*=2;}parts.Add("atempo="+Number(speed));return string.Join(',',parts);}
     private static MediaRange TimeRange(double start,double? end,double duration){var stop=end??duration;if(!double.IsFinite(start)||!double.IsFinite(stop)||start<0||Math.Round(stop-start,6)<.05||duration>0&&stop>duration+.001)throw new ArgumentException("Choose a valid time range.");return new(start,stop);}
     private static (int X,int Y,int Width,int Height) PixelRect(MediaRegion r,MediaInfo info){var w=info.Video?.Width??0;var h=info.Video?.Height??0;if(!new[]{r.X,r.Y,r.Width,r.Height}.All(double.IsFinite)||r.X<0||r.Y<0||r.Width<2||r.Height<2||r.X+r.Width>w||r.Y+r.Height>h)throw new ArgumentException("Choose a rectangle inside the video.");return((int)r.X,(int)r.Y,(int)r.Width,(int)r.Height);}

@@ -43,6 +43,22 @@ final class DocumentAuditRegressionTests: XCTestCase {
         XCTAssertEqual(srt, "1\n00:00:01,000 --> 00:00:02,000\nTom & Jerry \u{00A0}A\u{200E}B\u{200F}C <end>\n")
     }
 
+    func testWebVTTNamedCharacterReferencesRenderInSRTAndText() throws {
+        let source = "WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nCaf&eacute; &hellip; &copy; &Omega; &bogus; &amp;eacute;\n\n"
+        let input = try fixture("Named.vtt", data: Data(source.utf8))
+        XCTAssertEqual(try SubtitleCodec.convert(input, to: "srt", token: .init()), "1\n00:00:01,000 --> 00:00:02,000\nCafé … © Ω &bogus; &eacute;\n")
+        XCTAssertEqual(try SubtitleCodec.convert(input, to: "txt", token: .init()), "Café … © Ω &bogus; &eacute;\n")
+        XCTAssertEqual(DocumentText.decodeEntities("&eacute; &amp;"), "&eacute; &")
+    }
+
+    func testWebVTTNumericCharacterReferencesFollowHTMLRules() throws {
+        let source = "WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nIt&#146;s 9&#150;5 &#X41; a&#0;b&#xD800;c&#99999999999;d\n\n"
+        let input = try fixture("Numeric.vtt", data: Data(source.utf8))
+        XCTAssertEqual(try SubtitleCodec.convert(input, to: "srt", token: .init()), "1\n00:00:01,000 --> 00:00:02,000\nIt’s 9–5 A a\u{FFFD}b\u{FFFD}c\u{FFFD}d\n")
+        XCTAssertEqual(try SubtitleCodec.convert(input, to: "txt", token: .init()), "It’s 9–5 A a\u{FFFD}b\u{FFFD}c\u{FFFD}d\n")
+        XCTAssertEqual(DocumentText.decodeEntities("&#146;&#X41;"), "\u{92}&#X41;")
+    }
+
     func testWebVTTDirectionMarksSurviveTextExport() throws {
         let source = "WEBVTT\n\n00:00:01.000 --> 00:00:02.000\n<v Bob>&rlm;שלום</v> A&lrm;B &amp;lrm;\n\n"
         let input = try fixture("Marks.vtt", data: Data(source.utf8))
@@ -87,5 +103,14 @@ final class DocumentAuditRegressionTests: XCTestCase {
         let input = try fixture("Long recording.vtt", data: Data(source.utf8))
         let result = try SubtitleCodec.convert(input, to: "srt", token: .init())
         XCTAssertTrue(result.contains("2562047788:00:00,001 --> 2562047788:00:00,999"))
+    }
+
+    func testSRTTextThatWebVTTReservesIsEscapedInVTT() throws {
+        let source = "1\n00:00:01,000 --> 00:00:02,000\n<i>Keep</i> <font color=\"#FF0000\">x</font> < y, I <3 you\nNext --> stop\n\n"
+        let input = try fixture("Reserved.srt", data: Data(source.utf8))
+        let vtt = try SubtitleCodec.convert(input, to: "vtt", token: .init())
+        XCTAssertEqual(vtt, "WEBVTT\n\n00:00:01.000 --> 00:00:02.000\n<i>Keep</i> <font color=\"#FF0000\">x</font> &lt; y, I &lt;3 you\nNext --&gt; stop\n")
+        let back = try fixture("Reserved.vtt", data: Data(vtt.utf8))
+        XCTAssertTrue(try SubtitleCodec.convert(back, to: "srt", token: .init()).hasSuffix("< y, I <3 you\nNext --> stop\n"))
     }
 }

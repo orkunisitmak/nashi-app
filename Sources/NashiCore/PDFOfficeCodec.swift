@@ -26,9 +26,9 @@ enum PDFOfficeCodec {
         }
         context.setFillColor(CGColor(gray: 1, alpha: 1)); context.fill(CGRect(x: 0, y: 0, width: width, height: height))
         context.scaleBy(x: scale, y: scale)
-        if crop != nil { context.translateBy(x: -bounds.minX, y: -bounds.minY) }
-        else { context.concatenate(cgPage.getDrawingTransform(.cropBox, rect: bounds, rotate: 0, preserveAspectRatio: true)) }
-        context.drawPDFPage(cgPage)
+        if crop != nil { context.translateBy(x: -bounds.minX, y: -bounds.minY); context.drawPDFPage(cgPage) }
+        // A whole page keeps its annotations, such as stamps and filled form fields, as viewers show it.
+        else { page.draw(with: .cropBox, to: context) }
         try token.check()
         guard let image = context.makeImage(), let data = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) else { throw NashiError.failed("The PDF page image could not be written.") }
         return data
@@ -48,7 +48,8 @@ enum PDFOfficeCodec {
             for index in 0..<pdf.pageCount {
                 try token.check()
                 guard let page = pdf.page(at: index) else { continue }
-                pages.append(try text(page, token: token))
+                let value = try text(page, token: token)
+                pages.append(format == "md" ? markdown(value) : value)
             }
             let output = work.appendingPathComponent("Extracted text").appendingPathExtension(format)
             let content = pages.joined(separator: format == "md" ? "\n\n---\n\n" : "\n\n\u{0c}\n\n")
@@ -62,6 +63,14 @@ enum PDFOfficeCodec {
     static func text(_ page: PDFPage, token: CancellationToken) throws -> String {
         if let text = page.string, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return text }
         return try recognizedCells(page, token: token).sorted { $0.rect.midY > $1.rect.midY }.map(\.text).joined(separator: "\n")
+    }
+
+    /// PDF text is literal. Without escapes Markdown reads "*", "_", "[", "<",
+    /// "&" or a leading "#", "-" or "1." in it as formatting and hides them.
+    static func markdown(_ text: String) -> String {
+        text.replacingOccurrences(of: #"[\\`*_\[\]<>&~|]"#, with: #"\\$0"#, options: .regularExpression)
+            .replacingOccurrences(of: #"(?m)^([ \t]*)([#+=-])"#, with: #"$1\\$2"#, options: .regularExpression)
+            .replacingOccurrences(of: #"(?m)^([ \t]*\d+)([.)])"#, with: #"$1\\$2"#, options: .regularExpression)
     }
 
     static func recognizedCells(_ page: PDFPage, token: CancellationToken) throws -> [TextCell] {

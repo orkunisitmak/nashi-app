@@ -36,9 +36,15 @@ public static partial class DocumentEngine
                 using var result=new PdfDocument();for(var n=0;n<pages.Length;n++){var page=pages[n];var added=result.AddPage(source.Pages[page-1]);added.Rotate=(added.Rotate+(pageRotations is not null?pageRotations[n]:rotations?.GetValueOrDefault(page)??0))%360;}
                 var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+" Organized.pdf");result.Save(output);if(uniformWidth&&tool=="organizePDF")UniformWidths(output,token);outputs.Add(output);
             }
-            else if(tool is "compress" or "removeMetadata")
+            else if(tool=="compress")
             {
-                using var result=new PdfDocument();foreach(var page in source.Pages)result.AddPage(page);result.Options.CompressContentStreams=true;result.Info.Title="";result.Info.Author="";result.Info.Subject="";result.Info.Keywords="";
+                // Compression keeps the document properties, as on macOS; only metadata cleanup clears them.
+                using var result=new PdfDocument();foreach(var page in source.Pages)result.AddPage(page);result.Options.CompressContentStreams=true;result.Info.Title=source.Info.Title;result.Info.Author=source.Info.Author;result.Info.Subject=source.Info.Subject;result.Info.Keywords=source.Info.Keywords;result.Info.Creator=source.Info.Creator;
+                var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+" Compressed.pdf");result.Save(output);outputs.Add(output);
+            }
+            else if(tool=="removeMetadata")
+            {
+                using var result=new PdfDocument();var copies=new Dictionary<PdfPage,PdfPage>();foreach(var page in source.Pages)copies[page]=result.AddPage(page);CopyOutlines(source,result,copies);result.Options.CompressContentStreams=true;result.Info.Title="";result.Info.Author="";result.Info.Subject="";result.Info.Keywords="";
                 var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+(tool=="compress"?" Compressed.pdf":" Metadata.pdf"));result.Save(output);outputs.Add(output);
             }
             else throw new ArgumentException("Unknown PDF tool.");
@@ -59,6 +65,39 @@ public static partial class DocumentEngine
         var form=catalog.GetDictionary("/AcroForm");var fields=form is not null&&(form.Elements.GetArray("/Fields") is {Elements.Count:>0}||form.Elements.ContainsKey("/XFA"));
         if(!fields&&!widgets&&!attachments)return;
         throw new InvalidDataException(tool=="removeMetadata"?"This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported.":"This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported.");
+    }
+    private static void CopyOutlines(PdfDocument source,PdfDocument result,Dictionary<PdfPage,PdfPage> copies)
+    {
+        static PdfItem? Value(PdfItem? item)=>item is PdfSharp.Pdf.Advanced.PdfReference reference?reference.Value:item;var visited=new HashSet<object>(ReferenceEqualityComparer.Instance);
+        static string? Key(PdfItem? item)=>item switch{PdfName name=>name.Value,PdfString text=>text.Value,PdfStringObject text=>text.Value,_=>null};Dictionary<string,PdfItem?>? names=null;
+        PdfArray? Target(PdfItem? item)
+        {
+            item=Value(item);if(Key(item) is not {} key)return item as PdfArray;
+            if(names is null)
+            {
+                names=new(StringComparer.Ordinal);var catalog=source.Internals.Catalog.Elements;var seen=new HashSet<object>(ReferenceEqualityComparer.Instance);
+                if(Value(catalog["/Dests"]) is PdfDictionary dests)foreach(var name in dests.Elements.Keys)names.TryAdd(name,dests.Elements[name]);
+                void Walk(PdfDictionary? node,int depth){if(node is null||depth>=64||!seen.Add(node))return;if(Value(node.Elements["/Names"]) is PdfArray pairs)for(var i=0;i+1<pairs.Elements.Count;i+=2)if(Key(Value(pairs.Elements[i])) is {} name)names.TryAdd(name,pairs.Elements[i+1]);if(Value(node.Elements["/Kids"]) is PdfArray kids)foreach(var kid in kids.Elements)Walk(Value(kid) as PdfDictionary,depth+1);}
+                Walk(Value((Value(catalog["/Names"]) as PdfDictionary)?.Elements["/Dests"]) as PdfDictionary,0);
+            }
+            if(!names.TryGetValue(key,out var found)&&!names.TryGetValue(key.StartsWith('/')?key[1..]:"/"+key,out found))return null;
+            var value=Value(found);return (value is PdfDictionary wrapper?Value(wrapper.Elements["/D"]):value) as PdfArray;
+        }
+        void Copy(PdfDictionary? item,PdfOutlineCollection into,int depth)
+        {
+            for(;item is not null&&depth<512&&visited.Add(item);item=Value(item.Elements["/Next"]) as PdfDictionary)
+            {
+                var action=Value(item.Elements["/A"]) as PdfDictionary;var target=Target(item.Elements["/Dest"])??(action?.Elements.GetName("/S")=="/GoTo"?Target(action.Elements["/D"]):null);var outline=new PdfOutline{Title=Value(item.Elements["/Title"]) is PdfString or PdfStringObject or PdfName?item.Elements.GetString("/Title"):"",Opened=Value(item.Elements["/Count"]) is PdfInteger{Value:>0}};into.Add(outline);
+                double? At(int index)=>target!.Elements.Count>index&&Value(target.Elements[index]) is PdfInteger or PdfReal?target.Elements.GetReal(index):null;
+                if(target is {Elements.Count:>0}&&Value(target.Elements[0]) is PdfPage page&&copies.TryGetValue(page,out var copy)){outline.DestinationPage=copy;if(target.Elements.Count>1&&Value(target.Elements[1]) is PdfName fit&&Enum.TryParse<PdfPageDestinationType>(fit.Value.TrimStart('/'),true,out var type)&&Enum.IsDefined(type)&&string.Equals(type.ToString(),fit.Value.TrimStart('/'),StringComparison.OrdinalIgnoreCase))
+                {
+                    outline.PageDestinationType=type;
+                    if(type==PdfPageDestinationType.Xyz){outline.Left=At(2);outline.Top=At(3);outline.Zoom=At(4);}else if(type is PdfPageDestinationType.FitH or PdfPageDestinationType.FitBH)outline.Top=At(2);else if(type is PdfPageDestinationType.FitV or PdfPageDestinationType.FitBV)outline.Left=At(2);else if(type==PdfPageDestinationType.FitR){outline.Left=At(2);outline.Bottom=At(3)??0;outline.Right=At(4)??0;outline.Top=At(5);}
+                }}
+                Copy(Value(item.Elements["/First"]) as PdfDictionary,outline.Outlines,depth+1);
+            }
+        }
+        var root=Value(source.Internals.Catalog.Elements["/Outlines"]) as PdfDictionary;if(Value(root?.Elements["/First"]) is PdfDictionary first&&visited.Add(root!)){Copy(first,result.Outlines,0);result.Internals.Catalog.Elements["/PageMode"]=Value(source.Internals.Catalog.Elements["/PageMode"]) as PdfName??new PdfName("/UseNone");}
     }
     public static string Zip(IReadOnlyList<string> inputs,string destination,IProgress<OperationProgress>? progress=null,CancellationToken token=default)
     {

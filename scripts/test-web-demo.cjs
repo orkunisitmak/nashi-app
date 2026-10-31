@@ -35,10 +35,48 @@ const ids=['compress','removeMetadata','editImage','annotateImage','frameImage',
  await test('Real audio trim exports WAV with the selected duration',async()=>{await openTool('trimAudio');await page.getByLabel('Başlangıç (saniye)',{exact:true}).fill('2');await page.getByLabel('Bitiş (saniye)',{exact:true}).fill('5');await save();await page.locator('#demo-library').click();const u=await page.locator('.library-item a').first().getAttribute('href');const result=await page.evaluate(async u=>{const v=new DataView(await(await fetch(u)).arrayBuffer());return{header:String.fromCharCode(...new Uint8Array(v.buffer,0,4)),duration:v.getUint32(40,true)/v.getUint32(28,true)};},u);assert.equal(result.header,'RIFF');assert.equal(result.duration,3);await page.locator('.close-editor').click();});
  await test('Input validation rejects an invalid PDF without creating a result',async()=>{await page.locator('input[type=file]').setInputFiles({name:'broken.pdf',mimeType:'application/pdf',buffer:Buffer.from('broken PDF fixture')});await page.locator('[data-mode="tools"]').click();await page.getByRole('menuitem',{name:"PDF'yi Böl",exact:true}).click();await page.waitForFunction(()=>document.querySelector('dialog .editor-dialog-status'));assert.equal(await page.locator('dialog .export-button').isEnabled(),false);await page.locator('.close-editor').click();await page.locator('#demo-reset').click();});
  await test('Instagram Reels omit thumbnails; photo posts offer a carousel',async()=>{await page.locator('#try-download').click();await page.getByLabel('Medya bağlantısı').fill('https://www.instagram.com/reel/example/');assert.equal(await page.locator('dialog .annotation-bar button').count(),2);assert.ok(!(await page.getByRole('button',{name:'Thumbnail',exact:true}).count()));await page.getByLabel('Medya bağlantısı').fill('https://www.instagram.com/p/example/');assert.equal(await page.locator('dialog .annotation-bar button').count(),1);assert.ok(await page.getByRole('button',{name:'Carousel görselleri',exact:true}).isVisible());await page.locator('.close-editor').click();});
+ await test('Web media preview ignores provider names in unrelated URL text',async()=>{
+  await page.locator('#try-download').click();
+  const link=page.getByLabel('Medya bağlantısı');
+  for(const url of [
+    'https://notyoutube.com/watch?v=demo',
+    'https://example.net/?next=https://youtube.com/watch?v=demo',
+    'https://www.instagram.com.evil.example/reel/demo',
+    'javascript:alert("youtube.com")'
+  ]){
+    await link.fill(url);
+    assert.equal(await page.locator('dialog .annotation-bar button').count(),1,url);
+    assert.ok(await page.getByRole('button',{name:'Orijinal medya',exact:true}).isVisible(),url);
+  }
+  await link.fill('https://www.youtube.com/watch?v=demo');
+  assert.equal(await page.locator('dialog .annotation-bar button').count(),3);
+  assert.ok(await page.getByRole('button',{name:'Thumbnail',exact:true}).isVisible());
+  await page.locator('.close-editor').click();
+ });
  await test('All six file actions open the right preview or shelf',async()=>{await page.locator('[data-group="image"]').click();for(const id of ['airdrop','copy','move','terminal']){await page.locator('[data-mode="actions"]').click();const names={airdrop:'AirDrop',copy:'Kopyala',move:'Taşı',terminal:'Terminal'};await page.getByRole('menuitem',{name:names[id],exact:true}).click();assert.equal(await page.locator('dialog').count(),1);await page.locator('.close-editor').click();}await page.locator('[data-mode="actions"]').click();await page.getByRole('menuitem',{name:'Yüzen Pencere',exact:true}).click();assert.equal(await page.locator('.float-shelf').count(),1);});
  await test('English strings, layout and real image export',async()=>{await page.goto(base+'/');await page.locator('.demo-file').first().waitFor();await page.locator('[data-mode="convert"]').click();await page.getByRole('menuitem',{name:'PNG',exact:true}).click();await page.waitForFunction(()=>Number(document.querySelector('#library-count').textContent)===1);assert.equal(await page.locator('html').getAttribute('lang'),'en');});
  await page.goto(base+'/tr/');await page.locator('.demo-file').first().waitFor();await page.screenshot({path:path.join(output,'desktop-hero.png')});await page.locator('#playground').scrollIntoViewIfNeeded();await page.locator('[data-mode="tools"]').click();await page.screenshot({path:path.join(output,'desktop-wheel.png')});await page.keyboard.press('Escape');
  await test('390px touch viewport fits; tap selects, opens wheel and exports',async()=>{await page.setViewportSize({width:390,height:844});await page.locator('[data-group="image"]').click();assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.locator('.demo-file').nth(1).click();await page.locator('[data-mode="convert"]').click();const r=await page.locator('.demo-wheel').boundingBox();assert.ok(r.x>=0&&r.x+r.width<=390);await page.getByRole('menuitem',{name:'JPG',exact:true}).click();await page.waitForFunction(()=>Number(document.querySelector('#library-count').textContent)>0);await page.screenshot({path:path.join(output,'mobile-playground.png')});await openTool('cropImage');assert.ok(await page.evaluate(()=>document.querySelector('dialog').scrollWidth<=innerWidth));await page.screenshot({path:path.join(output,'mobile-crop.png')});await page.locator('.close-editor').click();});
+ await test('Keyboard and modifier wheel actions preserve multi-selection',async()=>{
+  await page.locator('[data-group="image"]').click();
+  await page.locator('.demo-file').nth(1).click({modifiers:['Shift']});
+  assert.equal(await page.locator('.demo-file[aria-pressed="true"]').count(),2);
+  await page.locator('.demo-file').first().focus();
+  await page.keyboard.press('Enter');
+  assert.equal(await page.locator('.demo-file[aria-pressed="true"]').count(),2);
+  await page.keyboard.press('Escape');
+  await page.locator('.demo-file').first().click({modifiers:['Control']});
+  assert.equal(await page.locator('.demo-file[aria-pressed="true"]').count(),2);
+  await page.keyboard.press('Escape');
+ });
+ await test('Clicking one selected file collapses Shift multi-selection',async()=>{
+  await page.locator('[data-group="image"]').click();
+  await page.locator('.demo-file').nth(1).click({modifiers:['Shift']});
+  assert.equal(await page.locator('.demo-file[aria-pressed="true"]').count(),2);
+  await page.locator('.demo-file').first().click();
+  assert.equal(await page.locator('.demo-file[aria-pressed="true"]').count(),1);
+  assert.equal(await page.locator('.demo-file').first().getAttribute('aria-pressed'),'true');
+ });
  if(errors.length)failures.push({name:'No browser errors',error:errors.join('\n')});
  const report={url:base,passed:passed.length,checks:passed,failures,consoleErrors:errors};await fs.writeFile(path.join(output,'report.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify({passed:passed.length,failed:failures.length,errors:errors.length}));await browser.close();if(failures.length)process.exitCode=1;
 })().catch(e=>{console.error(e);process.exitCode=1;});

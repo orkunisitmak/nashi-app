@@ -104,13 +104,14 @@ public enum WebDownloadEngine {
             }
         }
         try Task.checkCancellation();try token.check()
+        // Confine the reported paths to staging before the size fit replaces them.
+        try transaction.record(results,in:area)
         if mode == .video,let maximumHeight {
             try await Task.detached {
                 try enforceVideoHeight(results,maximum:maximumHeight,directory:area.directory,token:token,progress:progress)
             }.value
         }
         progress(OperationProgress.indeterminate,"Finishing your file…")
-        try transaction.record(results,in:area)
         let output=try transaction.publish(token:token)
         progress(1,"Saved to \(destination.lastPathComponent)")
         return output
@@ -148,6 +149,9 @@ public enum WebDownloadEngine {
         var args=try baseArguments()+["--no-simulate","--no-overwrites","--windows-filenames","--trim-filenames","180",
              "--downloader","native","--newline","--progress","--progress-template","download:NASHI_PROGRESS:%(progress._percent_str)s",
              "--print","before_dl:NASHI_STAGE:Preparing media…","--print","post_process:NASHI_STAGE:Finishing media…",
+             // yt-dlp tests formats in a temporary file under its home path, which defaults to the
+             // working directory. Apps start in "/", which is read-only, so keep everything in the stage.
+             "--paths","home:\(directory.path)","--paths","temp:\(directory.path)",
              "--output",directory.appendingPathComponent("%(title).120B [%(id).40B].%(ext)s").path,
              "--print","after_move:NASHI_FILE:%(filepath)j"]
         switch mode {
@@ -201,7 +205,8 @@ public enum WebDownloadEngine {
         if mime.hasPrefix("image/") { return .image }
         if mime.hasPrefix("video/") { return .video }
         if mime.hasPrefix("audio/") { return .audio }
-        guard mime.isEmpty || mime=="application/octet-stream" else { return nil }
+        // Amazon S3's default for untyped uploads is binary/octet-stream.
+        guard mime.isEmpty || mime=="application/octet-stream" || mime=="binary/octet-stream" else { return nil }
         if ["png","jpg","jpeg","webp","heic","heif","avif","bmp","tif","tiff"].contains(ext) { return .image }
         if ["mp4","mov","webm","mkv","m4v","gif"].contains(ext) { return .video }
         if ["mp3","m4a","wav","flac","ogg","opus","aac","aiff"].contains(ext) { return .audio }
@@ -226,6 +231,23 @@ public enum WebDownloadEngine {
         if lower.contains("429") || lower.contains("rate limit") || lower.contains("too many requests") { return "The site is limiting requests. Wait a little and try again." }
         if lower.contains("403") || lower.contains("forbidden") || lower.contains("not available") || lower.contains("unavailable") { return "The site did not allow this download. The link may have expired or need a login." }
         return "The site could not provide this media. Try a fresh public share link or a direct media URL."
+    }
+    /// The last meaningful lines of yt-dlp's diagnostics, ERROR lines first, for a Details disclosure.
+    /// Links are removed because they can carry signed tokens, and the home folder is shortened to ~.
+    public static func diagnosticDetails(_ diagnostic:String,home:String=NSHomeDirectory())->String? {
+        let links=try! NSRegularExpression(pattern:#"[A-Za-z][A-Za-z0-9+.-]*://[^\s'"<>]+"#)
+        let lines=diagnostic.split(whereSeparator:\.isNewline).compactMap { raw -> String? in
+            var line=raw.trimmingCharacters(in:.whitespaces)
+            guard !line.isEmpty,!line.hasPrefix("NASHI_"),!line.hasPrefix("[debug]") else { return nil }
+            line=links.stringByReplacingMatches(in:line,range:NSRange(line.startIndex...,in:line),withTemplate:"<link>")
+            if !home.isEmpty,home != "/" { line=line.replacingOccurrences(of:home,with:"~") }
+            return String(line.unicodeScalars.filter{!CharacterSet.controlCharacters.contains($0)}.prefix(300))
+        }
+        let errors=lines.filter{$0.hasPrefix("ERROR:")}
+        let others=lines.filter{!$0.hasPrefix("ERROR:") && !$0.hasPrefix("[download]")}
+        let selected=Array(errors.suffix(4))+Array(others.suffix(max(0,6-min(errors.count,4))))
+        guard !selected.isEmpty else { return nil }
+        return String(selected.joined(separator:"\n").prefix(1_500))
     }
 
     private final class TransferDelegate:NSObject,URLSessionDownloadDelegate,@unchecked Sendable {
@@ -282,4 +304,11 @@ public enum WebDownloadEngine {
             completionHandler(request.url.flatMap{try? WebDownloadEngine.link($0.absoluteString)} == nil ? nil:request)
         }
     }
+}
+
+/// A failed web download that keeps the friendly sentence first and yt-dlp's own words as details.
+public struct WebDownloadFailure:LocalizedError,Sendable {
+    public let message:String
+    public let details:String?
+    public var errorDescription:String? { message }
 }

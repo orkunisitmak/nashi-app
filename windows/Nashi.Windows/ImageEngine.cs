@@ -52,7 +52,7 @@ public static partial class ImageEngine
         if(tool=="createPDF")
         {
             var file=Path.Combine(tx.StagingDirectory,"Images.pdf");using var pdf=new PdfDocument();
-            foreach(var input in inputs){token.ThrowIfCancellationRequested();var source=Load(input);using var png=new MemoryStream(PngBytes(source));using var image=XImage.FromStream(png);var page=pdf.AddPage();page.Width=XUnit.FromPoint(source.PixelWidth*72/96d);page.Height=XUnit.FromPoint(source.PixelHeight*72/96d);using var g=XGraphics.FromPdfPage(page);g.DrawImage(image,0,0,page.Width.Point,page.Height.Point);progress?.Report(new(++completed/(double)inputs.Count*.98,"Adding pages…"));}
+            foreach(var input in inputs){token.ThrowIfCancellationRequested();var source=Load(input);var f=source.Format;var gray=f==PixelFormats.BlackWhite||f==PixelFormats.Gray2||f==PixelFormats.Gray4||f==PixelFormats.Gray16||f==PixelFormats.Gray32Float;using var png=new MemoryStream(PngBytes(gray||f==PixelFormats.Indexed2||f.BitsPerPixel>32?new FormatConvertedBitmap(source,gray?PixelFormats.Gray8:PixelFormats.Bgra32,null,0):source));using var image=XImage.FromStream(png);var page=pdf.AddPage();page.Width=XUnit.FromPoint(source.PixelWidth*72/96d);page.Height=XUnit.FromPoint(source.PixelHeight*72/96d);using var g=XGraphics.FromPdfPage(page);g.DrawImage(image,0,0,page.Width.Point,page.Height.Point);progress?.Report(new(++completed/(double)inputs.Count*.98,"Adding pages…"));}
             pdf.Save(file);return tx.Publish([file],token);
         }
         foreach(var input in inputs)

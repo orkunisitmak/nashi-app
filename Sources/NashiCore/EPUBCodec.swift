@@ -24,6 +24,8 @@ enum EPUBCodec {
             try token.check()
             guard let page = pdf.page(at: index) else { continue }
             let bounds = PDFOfficeCodec.visualBounds(page)
+            // Checked before Int conversion; no page over 64,000 points fits the 32,000 pixel raster even at 36 DPI.
+            guard bounds.width.isFinite, bounds.height.isFinite, bounds.width <= 64000, bounds.height <= 64000 else { throw NashiError.failed("The PDF page is too large to render at this resolution.") }
             let width = max(1, Int(ceil(bounds.width))), height = max(1, Int(ceil(bounds.height)))
             let name = String(format: "page-%04d", index + 1)
             try autoreleasepool {
@@ -136,8 +138,10 @@ enum EPUBCodec {
             manifest += "<item id=\"image\(imageIndex)\" href=\"\(name)\" media-type=\"\(mime)\"/>"
         }
         let body = try html.nodes(forXPath: "//*[local-name()='body']").first
-        let content = (body?.children ?? []).map(\.xmlString).joined()
-        let style = try html.nodes(forXPath: "//*[local-name()='style']").map(\.xmlString).joined()
+        // The HTML parser turns references such as &#12; into characters XML
+        // forbids; one of them would leave the whole book unreadable.
+        let content = xmlCharacters((body?.children ?? []).map(\.xmlString).joined())
+        let style = xmlCharacters(try html.nodes(forXPath: "//*[local-name()='style']").map(\.xmlString).joined())
         let escapedTitle = DocumentText.escapeXML(title)
         let xhtml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\"><head><title>\(escapedTitle)</title>\(style)</head><body>\(content)</body></html>"
         try xhtml.write(to: oebps.appendingPathComponent("book.xhtml"), atomically: true, encoding: .utf8)
@@ -148,6 +152,10 @@ enum EPUBCodec {
         try package.write(to: oebps.appendingPathComponent("content.opf"), atomically: true, encoding: .utf8)
         try ProcessRunner.run(URL(fileURLWithPath: "/usr/bin/zip"), ["-q", "-0", "-X", output.path, "mimetype"], directory: work, token: token)
         try ProcessRunner.run(URL(fileURLWithPath: "/usr/bin/zip"), ["-q", "-r", "-X", output.path, "META-INF", "OEBPS"], directory: work, token: token)
+    }
+
+    private static func xmlCharacters(_ text: String) -> String {
+        String(String.UnicodeScalarView(text.unicodeScalars.filter { $0.value == 9 || $0.value == 10 || $0.value == 13 || ($0.value >= 0x20 && $0.value != 0xfffe && $0.value != 0xffff) }))
     }
 
     private static func isInside(_ url: URL, root: URL) -> Bool {

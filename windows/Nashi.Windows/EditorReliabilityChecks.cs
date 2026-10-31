@@ -128,6 +128,17 @@ internal static class EditorReliabilityChecks
                 check(canvas.Children.Count==shapes,"A click without a drag left a redaction box that is never exported");
             }
             finally{cover.Close();}
+            var annotate=new ToolEditor(owner,"annotate","Annotate Photo",image,preview:pixels);
+            try
+            {
+                annotate.Show();DesktopInput.Pump();var canvas=Children(annotate).OfType<Canvas>().First(c=>c.Children.Count>0&&c.Children[0] is Image);var mode=Children(annotate).OfType<ComboBox>().Single(c=>c.Items.Contains("Marker"));
+                var notImage=Path.Combine(root,"Reliability not an image.png");File.WriteAllText(notImage,"not an image");
+                foreach(var unreadable in new[]{notImage,Path.Combine(root,"Reliability missing.png")}){Exception? failure=null;try{annotate.ChooseAnnotationImageForTest(unreadable);}catch(Exception error){failure=error;}check(failure is IOException or NotSupportedException&&mode.SelectedItem as string=="Marker","An unreadable annotation image was not rejected when chosen: "+Path.GetFileName(unreadable)+" "+failure?.GetType().Name);}
+                var sticker=Path.Combine(root,"Reliability sticker.png");File.Copy(image,sticker,true);annotate.ChooseAnnotationImageForTest(sticker);File.Delete(sticker);var shapes=canvas.Children.Count;
+                Exception? placing=null;try{foreach(var routed in new[]{UIElement.MouseLeftButtonDownEvent,UIElement.MouseLeftButtonUpEvent})canvas.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice,0,MouseButton.Left){RoutedEvent=routed});}catch(Exception error){placing=error;}
+                check(placing is null&&mode.SelectedItem as string=="Image"&&canvas.Children.Count==shapes+1&&canvas.Children[^1] is Image{Source:System.Windows.Media.Imaging.BitmapSource{PixelWidth:100}},"Placing an annotation image reread the file after it was chosen: "+placing?.GetType().Name);
+            }
+            finally{annotate.Close();}
             var video=new ToolEditor(owner,"redactVideo","Redact Video",audio,new MediaInfo(5,new FileInfo(audio).Length,[new MediaStream(0,"video","h264",100,60,false)]),pixels);
             try
             {

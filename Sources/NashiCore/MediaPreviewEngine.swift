@@ -58,7 +58,9 @@ public enum MediaPreviewEngine {
         guard sampleRate > 0, estimated.isFinite, estimated > 0, estimated < Double(Int64.max / 4) else { throw NashiError.invalidInput("A waveform requires a finite media duration.") }
         let samples = Int64(estimated)
         let desiredBlock = max(1, Int64(ceil(Double(samples) / Double(bins))))
-        let frameSize = min(1024, desiredBlock)
+        // Equal frames of at most 1024 samples per bin; a fixed 1024 can leave up to half the bins unused.
+        let framesPerBlock = (desiredBlock + 1023) / 1024
+        let frameSize = (desiredBlock + framesPerBlock - 1) / framesPerBlock
         let frameCount = (samples + frameSize - 1) / frameSize
         let framesPerBin = max(1, (frameCount + Int64(bins) - 1) / Int64(bins))
         guard framesPerBin <= Int64(Int32.max) else { throw NashiError.invalidInput("The media is too long for the requested waveform resolution.") }

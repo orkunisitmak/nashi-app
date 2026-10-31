@@ -11,7 +11,8 @@ struct JobRecord:Codable,Identifiable {
 }
 
 @MainActor final class AppState:NSObject,ObservableObject {
-    @Published var inputs:[URL]=[]
+    // Cleared here rather than in a later Home update, which would also drop the error of the action that changed the selection.
+    @Published var inputs:[URL]=[] { didSet { if !working { outputs=[];error=nil } } }
     @Published var working=false
     @Published var progress=0.0
     @Published var progressIsDeterminate=false
@@ -32,6 +33,7 @@ struct JobRecord:Codable,Identifiable {
     func navigateLibrary(_ direction:Int) {let rows=filteredHistory;guard !rows.isEmpty else{return};let old=rows.firstIndex{$0.id==selectedHistoryID};selectedHistoryID=rows[min(rows.count-1,max(0,(old ?? (direction>0 ? -1:1))+direction))].id}
     func pasteContent(_ pasteboard:NSPasteboard = .general) {
         guard !working else{return}
+        activeTool=nil;activeInputs=[]
         do {let result=try ClipboardImport.read(pasteboard)
             if let link=result.link {onWebDownload?(link,.video);return}
             inputs=result.urls;outputs=[];error=nil;libraryVisible=false
@@ -126,6 +128,8 @@ struct JobRecord:Codable,Identifiable {
     func perform(_ action:FileAction,urls:[URL]?=nil) {
         let urls=urls ?? inputs
         guard !urls.isEmpty else { return }
+        // Not a tool job: its error must not show in the editor of the last one.
+        if !working { activeTool=nil;activeInputs=[] }
         switch action {
         case .copyPath:
             NSPasteboard.general.clearContents()
@@ -139,19 +143,18 @@ struct JobRecord:Codable,Identifiable {
             if let service=NSSharingService(named:.sendViaAirDrop),service.canPerform(withItems:urls) { sharingService=service;service.delegate=self;service.perform(withItems:urls) }
             else { error="AirDrop is unavailable on this Mac." }
         case .move:
-            let panel=NSOpenPanel();panel.canChooseFiles=false;panel.canChooseDirectories=true;panel.canCreateDirectories=true;panel.prompt="Move Here"
+            let panel=NSOpenPanel();panel.canChooseFiles=false;panel.canChooseDirectories=true;panel.canCreateDirectories=true;panel.prompt=L10n.text("Move Here")
             NSApp.activate(ignoringOtherApps:true)
             if panel.runModal() == .OK,let directory=panel.url {
-                var moved:[URL:URL]=[:]
+                var moved:[URL:URL]=[:],failure:Error?
                 do { for source in urls {
-                    var target=directory.appendingPathComponent(source.lastPathComponent)
+                    let target=directory.appendingPathComponent(source.lastPathComponent)
                     if target.standardizedFileURL == source.standardizedFileURL || sameFolder(source.deletingLastPathComponent(),directory) { continue }
-                    // Same names as OutputFiles.unique, but attributesOfItem does not follow links, so a dangling link also takes a name.
-                    var index=2
-                    while (try? FileManager.default.attributesOfItem(atPath:target.path)) != nil { target=directory.appendingPathComponent("\(source.deletingPathExtension().lastPathComponent) \(index)").appendingPathExtension(source.pathExtension.lowercased());index+=1 }
-                    try FileManager.default.moveItem(at:source,to:target);moved[source]=target
-                };reportSuccess(.action("Files moved.",files:urls.map{moved[$0] ?? $0})) } catch { self.error=error.localizedDescription }
+                    moved[source]=try OutputFiles.move(source,into:directory)
+                } } catch { failure=error }
+                // Point the selection at the moved files first: changing it clears the previous result, not this one.
                 inputs=inputs.map{moved[$0] ?? $0}
+                if let failure { self.error=failure.localizedDescription } else { reportSuccess(.action("Files moved.",files:urls.map{moved[$0] ?? $0})) }
                 // Keep Library records pointing at files Nashi itself moved.
                 let movedPaths=Dictionary(moved.map{($0.key.path,$0.value.path)},uniquingKeysWith:{first,_ in first})
                 if !movedPaths.isEmpty {

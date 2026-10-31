@@ -47,8 +47,91 @@ final class WebDownloadTests:XCTestCase {
         let token=CancellationToken();token.cancel()
         XCTAssertThrowsError(try WebDownloadProcess.run(URL(fileURLWithPath:"/bin/sleep"),["30"],token:token,timeout:30))
     }
+    func testDownloadChildReceivesOnlyStandardStreams() throws {
+        let directory=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:directory) }
+        let probe=directory.appendingPathComponent("probe")
+        try "#!/bin/sh\ns=\"\";for fd in $1; do if { true >&\"$fd\"; } 2>/dev/null; then s=\"$s $fd:open\"; else s=\"$s $fd:closed\"; fi; done\necho \"NASHI_STAGE:fds=$s\"\n".write(to:probe,atomically:true,encoding:.utf8)
+        try FileManager.default.setAttributes([.posixPermissions:0o755],ofItemAtPath:probe.path)
+        // Another run's pipe and an open file: a child holding them would keep that pipe from reaching EOF.
+        let other=Pipe(),file=try XCTUnwrap(FileHandle(forWritingAtPath:probe.path));defer { try? file.close() }
+        let fds="1 2 \(other.fileHandleForWriting.fileDescriptor) \(file.fileDescriptor)",label=NSMutableString()
+        _=try WebDownloadProcess.run(probe,[fds],token:.init(),timeout:30) { _,text in label.setString(text) }
+        XCTAssertEqual(label as String,"fds= 1:open 2:open \(other.fileHandleForWriting.fileDescriptor):closed \(file.fileDescriptor):closed")
+    }
+    func testDownloadKeepsTemporaryFilesInTheStageInsteadOfTheWorkingDirectory() throws {
+        let info=try WebDownloadEngine.parseMetadata(Data(#"{"formats":[{"height":1080}]}"#.utf8),url:URL(string:"https://example.org/watch")!)
+        let args=try WebDownloadEngine.downloadArguments(info,mode:.video,maximumHeight:nil,directory:URL(fileURLWithPath:"/tmp/stage"))
+        let paths=args.indices.filter{args[$0]=="--paths"}.map{args[$0+1]}
+        XCTAssertEqual(Set(paths),["home:/tmp/stage","temp:/tmp/stage"])
+    }
+    func testDiagnosticDetailsPutErrorsFirstAndDropLinksAndHome() throws {
+        let stderr="""
+        [youtube] abc: Downloading webpage
+        WARNING: [youtube] Falling back to https://www.youtube.com/watch?v=abc&token=secret
+        NASHI_PROGRESS: 12.0%
+        [download]  12.0% of 10MiB
+        ERROR: [Errno 30] Read-only file system: '/Volumes/Home/tester/Downloads/.Nashi-1/tmpz7.tmp'
+
+        """
+        let details=try XCTUnwrap(WebDownloadEngine.diagnosticDetails(stderr,home:"/Volumes/Home/tester"))
+        let lines=details.components(separatedBy:"\n")
+        XCTAssertEqual(lines.first,"ERROR: [Errno 30] Read-only file system: '~/Downloads/.Nashi-1/tmpz7.tmp'")
+        XCTAssertEqual(lines.dropFirst(),["[youtube] abc: Downloading webpage","WARNING: [youtube] Falling back to <link>"])
+        XCTAssertFalse(details.contains("secret"));XCTAssertFalse(details.contains("NASHI_"));XCTAssertFalse(details.contains("[download]"))
+        XCTAssertNil(WebDownloadEngine.diagnosticDetails("\n  \nNASHI_STAGE:Preparing media…\n"))
+        let flood=String(repeating:"ERROR: "+String(repeating:"x",count:1_000)+"\n",count:50)
+        let capped=try XCTUnwrap(WebDownloadEngine.diagnosticDetails(flood))
+        XCTAssertLessThanOrEqual(capped.count,1_500);XCTAssertEqual(capped.components(separatedBy:"\n").count,4)
+    }
+    func testFailedProcessKeepsFriendlyMessageAndDetails() throws {
+        XCTAssertThrowsError(try WebDownloadProcess.run(URL(fileURLWithPath:"/bin/sh"),["-c","echo 'ERROR: Something specific broke' >&2;exit 1"],token:.init(),timeout:10)) { error in
+            let failure=error as? WebDownloadFailure
+            XCTAssertEqual(failure?.localizedDescription,WebDownloadEngine.friendlyError("ERROR: Something specific broke"))
+            XCTAssertEqual(failure?.details,"ERROR: Something specific broke")
+        }
+    }
+    func testTrimmedDiagnosticsKeepOnlyWholeLines() throws {
+        func progress(_ count:Int)->String { "i=0;while [ $i -lt \(count) ];do echo 'NASHI_PROGRESS:  12.3%' >&2;i=$((i+1));done;" }
+        let link="https://media.example.org/video?"+String(repeating:"p",count:1_450)+"&signature=secret"
+        // Only the last 16,000 bytes are kept; this trim lands near the end of the warning's link.
+        let script=progress(1_000)+"echo 'WARNING: Retrying \(link)' >&2;"+progress(690)+"echo 'ERROR: HTTP Error 403: Forbidden' >&2;exit 1"
+        XCTAssertThrowsError(try WebDownloadProcess.run(URL(fileURLWithPath:"/bin/sh"),["-c",script],token:.init(),timeout:30)) { error in
+            XCTAssertEqual((error as? WebDownloadFailure)?.details,"ERROR: HTTP Error 403: Forbidden")
+        }
+    }
     func testErrorsDoNotExposeSourceSecrets() {
         let message=WebDownloadEngine.friendlyError("ERROR 403: https://example.org/private?token=secret")
         XCTAssertFalse(message.contains("secret"));XCTAssertFalse(message.contains("https://"))
+    }
+    // F1920: the size fit replaced a reported file outside staging before record rejected it.
+    func testSizeFitNeverReplacesAReportedFileOutsideStaging() async throws {
+        let fm=FileManager.default,root=fm.temporaryDirectory.appendingPathComponent("nashi-web-confine-\(UUID().uuidString)",isDirectory:true)
+        try fm.createDirectory(at:root,withIntermediateDirectories:true)
+        addTeardownBlock { try? fm.removeItem(at:root) }
+        let plan=root.appendingPathComponent("plan.sh")
+        let tools=["yt-dlp":"out=\"\";prev=\"\"\nfor a in \"$@\"; do [ \"$prev\" = --output ] && out=\"$a\";prev=\"$a\"; done\nstage=$(dirname \"$out\")\n. '\(plan.path)'\n",
+                   "ffprobe":"for f; do :; done\nif grep -q H1080 \"$f\"; then h=1080; else h=480; fi\nprintf '{\"format\":{\"duration\":\"1\"},\"streams\":[{\"index\":0,\"codec_type\":\"video\",\"codec_name\":\"h264\",\"width\":640,\"height\":%s}]}' $h\n",
+                   "ffmpeg":"for o; do :; done\nprintf H480 > \"$o\"\n","deno":"exit 0\n"]
+        for (name,body) in tools {
+            let tool=root.appendingPathComponent(name);try Data(("#!/bin/sh\n"+body).utf8).write(to:tool)
+            try fm.setAttributes([.posixPermissions:0o755],ofItemAtPath:tool.path)
+            let variable="NASHI_"+name.uppercased(),previous=ProcessInfo.processInfo.environment[variable]
+            setenv(variable,tool.path,1)
+            addTeardownBlock { if let previous { setenv(variable,previous,1) } else { unsetenv(variable) } }
+        }
+        let info=try WebDownloadEngine.parseMetadata(Data(#"{"formats":[{"height":1080}]}"#.utf8),url:URL(string:"https://example.org/watch")!)
+        let outside=root.appendingPathComponent("Outside/secret.mp4");try fm.createDirectory(at:outside.deletingLastPathComponent(),withIntermediateDirectories:true)
+        for (index,report) in [outside.path,"$stage/../../Outside/secret.mp4"].enumerated() {
+            try Data("H1080 original".utf8).write(to:outside)
+            try Data("printf H1080 > \"$stage/a.mp4\"\necho NASHI_FILE:\\\"$stage/a.mp4\\\"\necho NASHI_FILE:\\\"\(report)\\\"\n".utf8).write(to:plan)
+            let destination=root.appendingPathComponent("Downloads \(index)",isDirectory:true)
+            do { _=try await WebDownloadEngine.download(info,mode:.video,maximumHeight:720,destination:destination) { _,_ in };XCTFail("outside path accepted: \(report)") } catch {}
+            XCTAssertEqual(try String(contentsOf:outside,encoding:.utf8),"H1080 original",report)
+            XCTAssertEqual(try fm.contentsOfDirectory(atPath:destination.path),[],report)
+        }
+        // Control: a staged file over the limit is still fitted and published.
+        try Data("printf H1080 > \"$stage/a.mp4\"\necho NASHI_FILE:\\\"$stage/a.mp4\\\"\n".utf8).write(to:plan)
+        let files=try await WebDownloadEngine.download(info,mode:.video,maximumHeight:720,destination:root.appendingPathComponent("Downloads",isDirectory:true)) { _,_ in }
+        XCTAssertEqual(files.map(\.lastPathComponent),["a.mp4"]);XCTAssertEqual(try String(contentsOf:files[0],encoding:.utf8),"H480")
     }
 }

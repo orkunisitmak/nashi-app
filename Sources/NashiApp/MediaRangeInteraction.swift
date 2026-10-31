@@ -78,7 +78,7 @@ struct MediaRangeInteraction: NSViewRepresentable {
         view.duration=duration;view.ranges=ranges;view.onSeek=onSeek;view.onChange=onChange;view.onPending=onPending;view.onAdd=onAdd
         view.editingEnabled=context.environment.isEnabled
         view.refreshAccessibility()
-        view.setAccessibilityLabel("\(label.isEmpty ? "Media range":label) timeline")
+        view.setAccessibilityLabel(L10n.text(label.isEmpty ? "Media range timeline":"\(label) timeline"))
         if changed { view.window?.invalidateCursorRects(for:view) }
     }
     static func dismantleNSView(_ view:LaneView,coordinator:()) { view.cancel();view.onSeek=nil;view.onChange=nil;view.onPending=nil;view.onAdd=nil }
