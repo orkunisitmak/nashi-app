@@ -14,6 +14,7 @@
 "%@ input" = "Entrée %@";
 "%@ is enabled" = "%@ est activé";
 "%@ is not installed." = "%@ n’est pas installé.";
+"%@ is structural or read-only metadata." = "%@ est une métadonnée structurelle ou en lecture seule.";
 "%@ items" = "%@ éléments";
 "%@ photos" = "%@ photos";
 "%@ ready to paste." = "%@ prêts à coller.";
@@ -42,6 +43,7 @@
 "%lld input" = "Entrée %lld";
 "%lld is enabled" = "%lld est activé";
 "%lld is not installed." = "%lld n’est pas installé.";
+"%lld is structural or read-only metadata." = "%lld est une métadonnée structurelle ou en lecture seule.";
 "%lld items" = "%lld éléments";
 "%lld photos" = "%lld photos";
 "%lld ready to paste." = "%lld prêts à coller.";
@@ -1357,9 +1359,12 @@
 "MEDIUM · 1920 PX LONGEST EDGE" = "MOYEN · 1920 PX SUR LE PLUS GRAND CÔTÉ";
 "MERGE PDFS" = "FUSIONNER DES PDF";
 "METADATA" = "MÉTADONNÉES";
+"METADATA CHANGES WOULD ALTER ENCODED IMAGE DATA OR ITS APPEARANCE. NO OUTPUT WAS SAVED." = "LES MODIFICATIONS DE MÉTADONNÉES ALTÉRERAIENT LES DONNÉES ENCODÉES DE L’IMAGE OU SON APPARENCE. AUCUN FICHIER N’A ÉTÉ ENREGISTRÉ.";
 "METADATA TOOLS ARE NOT READY." = "LES OUTILS DE MÉTADONNÉES NE SONT PAS PRÊTS.";
 "METADATA TOOLS CHECKSUM MISMATCH." = "SOMME DE CONTRÔLE DES OUTILS DE MÉTADONNÉES INCORRECTE.";
+"METADATA TRANSFER DID NOT PRESERVE THE IMAGE'S DISPLAY ORIENTATION. NO OUTPUT WAS SAVED." = "LE TRANSFERT DES MÉTADONNÉES N’A PAS CONSERVÉ L’ORIENTATION D’AFFICHAGE DE L’IMAGE. AUCUN FICHIER N’A ÉTÉ ENREGISTRÉ.";
 "METADATA · NASHI" = "MÉTADONNÉES · NASHI";
+"METADATA-ONLY EDITING IS UNAVAILABLE FOR THIS IMAGE FORMAT." = "LA MODIFICATION DES SEULES MÉTADONNÉES N’EST PAS DISPONIBLE POUR CE FORMAT D’IMAGE.";
 "MIDDLE THIRD" = "TIERS CENTRAL";
 "MONO" = "MONO";
 "MONOSPACED" = "MONOCHASSE";
@@ -1401,9 +1406,12 @@
 "Medium · 1920 px longest edge" = "Moyen · 1920 px sur le plus grand côté";
 "Merge PDFs" = "Fusionner des PDF";
 "Metadata" = "Métadonnées";
+"Metadata changes would alter encoded image data or its appearance. No output was saved." = "Les modifications de métadonnées altéreraient les données encodées de l’image ou son apparence. Aucun fichier n’a été enregistré.";
 "Metadata tools are not ready." = "Les outils de métadonnées ne sont pas prêts.";
 "Metadata tools checksum mismatch." = "Somme de contrôle des outils de métadonnées incorrecte.";
+"Metadata transfer did not preserve the image's display orientation. No output was saved." = "Le transfert des métadonnées n’a pas conservé l’orientation d’affichage de l’image. Aucun fichier n’a été enregistré.";
 "Metadata · Nashi" = "Métadonnées · Nashi";
+"Metadata-only editing is unavailable for this image format." = "La modification des seules métadonnées n’est pas disponible pour ce format d’image.";
 "Middle third" = "Tiers central";
 "Mono" = "Mono";
 "Monospaced" = "Monochasse";
@@ -2254,6 +2262,7 @@
 "THE REQUESTED PDF SIZE COULD NOT BE REACHED. CHOOSE A LARGER TARGET." = "LA TAILLE DE PDF DEMANDÉE N’A PAS PU ÊTRE ATTEINTE. CHOISISSEZ UNE CIBLE PLUS GRANDE.";
 "THE SAME CONVERSION AND TOOL CATALOG AS MACOS." = "LE MÊME CATALOGUE DE CONVERSIONS ET D’OUTILS QUE SUR MACOS.";
 "THE SIGNED PACKAGE VERSION DOES NOT MATCH THIS UPDATE." = "LA VERSION DU PAQUET SIGNÉ NE CORRESPOND PAS À CETTE MISE À JOUR.";
+"THE SOURCE CHANGED DURING THIS OPERATION. NO OUTPUT WAS SAVED." = "LE FICHIER SOURCE A CHANGÉ PENDANT L’OPÉRATION. AUCUN FICHIER N’A ÉTÉ ENREGISTRÉ.";
 "THE UPDATE DOES NOT CONTAIN NASHI." = "LA MISE À JOUR NE CONTIENT PAS NASHI.";
 "THE UPDATE NEEDS ANOTHER TRY" = "LA MISE À JOUR DOIT ÊTRE RELANCÉE";
 "THE UPDATE SIGNATURE IS INVALID. YOUR EXISTING APP WAS KEPT." = "LA SIGNATURE DE LA MISE À JOUR EST INVALIDE. VOTRE APP EXISTANTE A ÉTÉ CONSERVÉE.";
@@ -2357,7 +2366,9 @@
 "The image order must include every image once." = "L’ordre des images doit inclure chaque image une fois.";
 "The media server redirected to an insecure URL." = "Le serveur multimédia a redirigé vers une URL non sécurisée.";
 "The metadata field %@ could not be removed." = "Le champ de métadonnées %@ n’a pas pu être supprimé.";
+"The metadata field %@ was not written. No output was saved." = "Le champ de métadonnées %@ n’a pas été écrit. Aucun fichier n’a été enregistré.";
 "The metadata field %lld could not be removed." = "Le champ de métadonnées %lld n’a pas pu être supprimé.";
+"The metadata field %lld was not written. No output was saved." = "Le champ de métadonnées %lld n’a pas été écrit. Aucun fichier n’a été enregistré.";
 "The operation was cancelled." = "L’opération a été annulée.";
 "The processing tool could not start." = "L’outil de traitement n’a pas pu démarrer.";
 "The requested PDF size could not be reached." = "La taille de PDF demandée n’a pas pu être atteinte.";
@@ -2366,6 +2377,7 @@
 "The requested image size could not be reached. Choose a larger target." = "La taille d’image demandée n’a pas pu être atteinte. Choisissez une cible plus grande.";
 "The same conversion and tool catalog as macOS." = "Le même catalogue de conversions et d’outils que sur macOS.";
 "The signed package version does not match this update." = "La version du paquet signé ne correspond pas à cette mise à jour.";
+"The source changed during this operation. No output was saved." = "Le fichier source a changé pendant l’opération. Aucun fichier n’a été enregistré.";
 "The text encoding of %@ could not be read." = "L’encodage du texte de %@ n’a pas pu être lu.";
 "The text encoding of %lld could not be read." = "L’encodage du texte de %lld n’a pas pu être lu.";
 "The update does not contain Nashi." = "La mise à jour ne contient pas Nashi.";
