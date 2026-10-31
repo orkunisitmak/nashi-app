@@ -148,12 +148,10 @@ public sealed partial class ToolEditor:Window
         drawing.Focus();origin=e.GetPosition(drawing);dragging=drawing.CaptureMouse();
         if(BeginCropGesture(origin)){e.Handled=true;return;}
         if(tool=="annotate"){try{AnnotationStart();}catch(ArgumentException error){dragging=false;drawing.ReleaseMouseCapture();if(App.IsSmokeTest)throw;MessageBox.Show(this,L10n.Text(error.Message),L10n.Text("Check drawing settings"));}e.Handled=true;return;}
-        if(tool=="annotate"&&drawingTool.SelectedIndex==0){activeStroke=new Polyline{Stroke=new SolidColorBrush(Color.FromArgb(160,234,181,40)),StrokeThickness=Math.Max(3,drawing.Width/100),StrokeLineJoin=PenLineJoin.Round};activeStroke.Points.Add(origin);drawing.Children.Add(activeStroke);}
-        else
-        {
-            if(tool is not ("annotate" or "redactImage" or "redactVideo")&&selection is not null)drawing.Children.Remove(selection);
-            activeRectangle=new Rectangle{Stroke=tool=="annotate"?Brushes.OrangeRed:Brushes.Gold,StrokeThickness=Math.Max(2,drawing.Width/350),Fill=tool is "redactVideo" or "redactImage"?Brushes.Black:new SolidColorBrush(Color.FromArgb(35,224,189,82)),IsHitTestVisible=false};drawing.Children.Add(activeRectangle);Canvas.SetLeft(activeRectangle,origin.X);Canvas.SetTop(activeRectangle,origin.Y);if(tool!="annotate")selection=activeRectangle;
-        }
+        // The legacy polyline branch below the annotation early-return was
+        // unreachable; only crop/redact rectangles are drawn from here on.
+        if(tool is not ("redactImage" or "redactVideo")&&selection is not null)drawing.Children.Remove(selection);
+        activeRectangle=new Rectangle{Stroke=Brushes.Gold,StrokeThickness=Math.Max(2,drawing.Width/350),Fill=tool is "redactVideo" or "redactImage"?Brushes.Black:new SolidColorBrush(Color.FromArgb(35,224,189,82)),IsHitTestVisible=false};drawing.Children.Add(activeRectangle);Canvas.SetLeft(activeRectangle,origin.X);Canvas.SetTop(activeRectangle,origin.Y);selection=activeRectangle;
         e.Handled=true;
     }
     private void MoveDraw(object sender,MouseEventArgs e)
