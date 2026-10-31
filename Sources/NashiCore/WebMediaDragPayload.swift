@@ -95,7 +95,8 @@ public struct WebMediaDragPayload:Equatable,Sendable {
     private static func attributes(_ html:String,tag:String,attribute:String)->[String] {
         // Only extract text attributes; never instantiate an HTML view or fetch
         // subresources from the untrusted drag fragment.
-        let pattern="<"+tag+"\\b[^>]*?\\s"+attribute+"\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s>]+))"
+        // Skip whole quoted values so text inside another attribute is never matched.
+        let pattern="<"+tag+"\\b(?:[^>\"']|\"[^\"]*\"|'[^']*')*?\\s"+attribute+"\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s>]+))"
         guard let regex=try? NSRegularExpression(pattern:pattern,options:[.caseInsensitive,.dotMatchesLineSeparators]) else { return [] }
         return regex.matches(in:html,range:NSRange(html.startIndex...,in:html)).prefix(32).compactMap { match in
             (1...3).compactMap{Range(match.range(at:$0),in:html).map{String(html[$0])}}.first
