@@ -112,7 +112,11 @@ public enum MediaEngine {
             }
             arguments += [specifier, "\(field)=\(value)"]
         }
-        if ["mp4", "mov", "m4a", "m4v"].contains(ext) { arguments += ["-movflags", "+use_metadata_tags"] }
+        // QuickTime keys replace the iTunes tag list, which also carries cover art. Use them only when the
+        // output keeps Apple's com.apple.quicktime.* metadata, which the iTunes list cannot store.
+        var fileTags = removeAll ? [:] : info.metadata
+        for (key, value) in metadata { if let (specifier, field) = try? metadataSpecifier(key), specifier == "-metadata" { fileTags[field] = value.isEmpty ? nil : value } }
+        if ["mp4", "mov", "m4a", "m4v"].contains(ext), fileTags.keys.contains(where: { $0.hasPrefix("com.apple.quicktime.") }) { arguments += ["-movflags", "+use_metadata_tags"] }
         try render(arguments, to: output, token: token, duration: info.duration, progress: progress)
         return [output]
     }
