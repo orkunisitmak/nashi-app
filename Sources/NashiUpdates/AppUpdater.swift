@@ -172,7 +172,15 @@ import Sparkle
         }
         // Validate before replacing working credentials or persisting the selection.
         try await validateGitHubAccess(selected, token)
-        if let token { try await credentials.storeToken(token, for: selected) }
+        if let token {
+            do { try await credentials.storeToken(token, for: selected) }
+            catch {
+                // A broker that timed out can still finish the write later. Queue a removal
+                // behind it so a repository that was never connected keeps no new token.
+                if selected != repository, !enteredToken.isEmpty { try? await credentials.removeToken(for: selected) }
+                throw error
+            }
+        }
         else { try await credentials.removeToken(for: selected) }
         if let previous = repository, previous != selected { try await credentials.removeToken(for: previous) }
         if repository == nil, let controller {
