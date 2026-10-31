@@ -5,6 +5,7 @@ import SwiftUI
 struct DragShortcutRecorder: View {
     let wheel:WheelShortcut
     var defaults:UserDefaults = .standard
+    var onRecording:(Bool)->Void = {_ in}
     let onChange:()->Void
     @State private var monitor:Any?
     @State private var held=NSEvent.ModifierFlags()
@@ -39,8 +40,9 @@ struct DragShortcutRecorder: View {
             }
             return nil
         }
+        onRecording(true)
     }
-    private func stop() { if let monitor { NSEvent.removeMonitor(monitor);self.monitor=nil } }
+    private func stop() { if let monitor { NSEvent.removeMonitor(monitor);self.monitor=nil;onRecording(false) } }
     private func save(_ shortcut:DragShortcut) {
         stop();conflict=ModifierPreferences.conflict(shortcut,for:wheel,defaults:defaults)
         if ModifierPreferences.set(shortcut,for:wheel,defaults:defaults) { onChange() }
