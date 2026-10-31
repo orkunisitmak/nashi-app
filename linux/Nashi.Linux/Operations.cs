@@ -7,7 +7,7 @@ namespace Nashi.Linux;
 
 public sealed record Choice(string Id,string Title,string? Format=null);
 /// Choices made in a tool's dialog; each tool reads only its own part.
-public sealed record ToolSettings(MediaOptions? Media=null,ImageEdit? Crop=null,PhotoEdit? Photo=null,FrameOptions? Frame=null,CollageOptions? Collage=null,Redaction? Redact=null,PdfOrganization? Organize=null,Annotation? Annotate=null,DocumentOptions? Document=null,MetadataEdit? Metadata=null,CompressionOptions? Compress=null);
+public sealed record ToolSettings(MediaOptions? Media=null,ImageEdit? Crop=null,PhotoEdit? Photo=null,FrameOptions? Frame=null,CollageOptions? Collage=null,Redaction? Redact=null,PdfOrganization? Organize=null,Annotation? Annotate=null,DocumentOptions? Document=null,MetadataEdit? Metadata=null,CompressionOptions? Compress=null,OutputProfile? Profile=null);
 
 /// The Linux preview offers only workflows implemented here; the shared catalog decides
 /// which of them apply to a selection, so the rules match macOS and Windows.
@@ -64,15 +64,17 @@ public static class Operations
 
     public static async Task<IReadOnlyList<string>> RunAsync(Choice choice,IReadOnlyList<string> inputs,string destination,IProgress<OperationProgress> progress,CancellationToken token,ToolSettings? settings=null)
     {
-        var (media,edit,photo,frame,collage,redact,organize,annotate,document,metadata,compress)=settings??new();
+        var (media,edit,photo,frame,collage,redact,organize,annotate,document,metadata,compress,profile)=settings??new();
         if(choice.Id=="convert")
         {
             var format=choice.Format!;
-            if(inputs.All(FeatureCatalog.IsImage))return await Task.Run(()=>format=="pdf"?ImagesToPdf(inputs,destination,progress,token):Images(inputs,destination,format,85,true,progress,token),token);
-            if(inputs.All(f=>FeatureCatalog.IsVideo(f)||FeatureCatalog.IsAudio(f)))return await RequireMedia().ConvertAsync(inputs,format,destination,new MediaOptions(),progress,token);
+            // Settings → Format defaults; without a saved profile these are the Windows defaults.
+            var p=profile??new OutputProfile();
+            if(inputs.All(FeatureCatalog.IsImage))return await Task.Run(()=>format=="pdf"?ImagesToPdf(inputs,destination,progress,token):Images(inputs,destination,format,(int)Math.Round(p.Quality*100),p.PreserveMetadata,progress,token),token);
+            if(inputs.All(f=>FeatureCatalog.IsVideo(f)||FeatureCatalog.IsAudio(f)))return await RequireMedia().ConvertAsync(inputs,format,destination,new MediaOptions{Quality=p.Quality,AudioBitrate=p.AudioBitrate,SampleDepth=p.SampleDepth,Height=p.MaxVideoHeight>0?p.MaxVideoHeight:null,GifFrameRate=p.GifFrameRate,GifWidth=p.GifWidth,PreserveMetadata=p.PreserveMetadata},progress,token);
             // Archives, subtitles, PDFs and documents: the conversion code ported from Windows.
             if(format!="txt"&&format!="md"&&format!="png"&&format!="jpg"&&!inputs.All(f=>FeatureCatalog.IsArchive(f)||IsSubtitle(f))&&Office is null)throw new InvalidOperationException("Install LibreOffice with your package manager to convert documents.");
-            return await new DocumentConversion(Office,Toolset).ConvertAsync(inputs,format,destination,document??new DocumentOptions(),progress,token);
+            return await new DocumentConversion(Office,Toolset).ConvertAsync(inputs,format,destination,document??new DocumentOptions(p.Dpi,p.Layout,p.EpubLayout),progress,token);
         }
         return choice.Id switch
         {

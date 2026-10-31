@@ -29,6 +29,8 @@ internal static class OperationChecks
                 if(format!="pdf"){using var result=new MagickImage(output);Check(result.Width==320&&result.Height==200,"Dimensions "+format);}
             }
             var jpg=Directory.GetFiles(Path.Combine(root,"convert-jpg")).Single();
+            var low=Operations.RunAsync(new("convert","JPG","jpg"),[png],Path.Combine(root,"convert-profile"),progress,token,new(Profile:new(Quality:.3))).GetAwaiter().GetResult().Single();
+            Check(new MagickImageInfo(low).Quality is > 20 and < 40,"Format default quality is used");
             var again=Operations.RunAsync(new("convert","jpg","jpg"),[jpg],Path.Combine(root,"convert-jpg"),progress,token).GetAwaiter().GetResult().Single();
             Check(again!=jpg&&File.Exists(jpg)&&Path.GetFileName(again)=="Pear 2.jpg","Existing output is never overwritten");
 
@@ -176,6 +178,8 @@ internal static class OperationChecks
                 Check(File.Exists(wav),"Audio fixture");
                 var mp3=Operations.RunAsync(new("convert","mp3","mp3"),[wav],Path.Combine(root,"media"),progress,token).GetAwaiter().GetResult().Single();
                 Check(new FileInfo(mp3).Length>0,"Audio conversion");
+                var lean=Operations.RunAsync(new("convert","MP3","mp3"),[wav],Path.Combine(root,"media-profile"),progress,token,new(Profile:new(AudioBitrate:64))).GetAwaiter().GetResult().Single();
+                Check(new FileInfo(lean).Length<new FileInfo(mp3).Length/2,"Format default audio bitrate is used");
                 var normalized=Operations.RunAsync(new("normalizeAudio","Normalize Volume"),[wav],Path.Combine(root,"normalize"),progress,token).GetAwaiter().GetResult();
                 Check(normalized.Count==1,"Normalize audio");
                 var mono=Operations.RunAsync(new("audioChannels","Convert Audio Channels"),[wav],Path.Combine(root,"channels"),progress,token,new(Media:new(){Channels=1})).GetAwaiter().GetResult().Single();
