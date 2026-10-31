@@ -21,4 +21,6 @@ Bundled in the AppImage:
 
 LibreOffice is not bundled: Office conversions use the system LibreOffice, under its own licenses.
 
+ExifTool 13.59 (Phil Harvey, Artistic License or GPL, the same terms as Perl) is downloaded the same way for Metadata, from https://sourceforge.net/projects/exiftool/files/Image-ExifTool-13.59.tar.gz/ with a pinned SHA-256; it runs on the system Perl and keeps its upstream notices in the tools folder.
+
 Media tools (FFmpeg and others) are downloaded separately from pinned upstream releases after the user chooses setup, or taken from the system. Each downloaded tool's own license file (where the upstream archive has one) is kept in the tools folder, and docs/dependencies.md lists the versions and licenses.
