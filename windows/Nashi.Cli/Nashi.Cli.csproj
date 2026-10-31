@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>nashi</AssemblyName>
+    <RootNamespace>Nashi.Cli</RootNamespace>
+    <NoWarn>$(NoWarn);CA1416;CS1998</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Nashi.Core/Nashi.Core.csproj" />
+  </ItemGroup>
+</Project>
