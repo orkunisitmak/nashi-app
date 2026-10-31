@@ -181,7 +181,7 @@ enum ArchiveCodec {
             let attributes = try fm.attributesOfItem(atPath: item.path)
             guard let entry = a.entryNew() else { throw NashiError.failed("Could not create an archive entry.") }
             defer { a.entryFree(entry) }
-            name.withCString { a.entrySetPath(entry, $0) }
+            portableName(name).withCString { a.entrySetPath(entry, $0) }
             a.entrySetPerm(entry, (attributes[.posixPermissions] as? NSNumber)?.uint32Value ?? 0o644)
             a.entrySetMtime(entry, Int64((attributes[.modificationDate] as? Date ?? Date()).timeIntervalSince1970), 0)
             let type = attributes[.type] as? FileAttributeType
@@ -192,7 +192,7 @@ enum ArchiveCodec {
                 let target = try fm.destinationOfSymbolicLink(atPath: item.path)
                 try validateSymbolicTarget(target, at: item, root: root)
                 a.entrySetType(entry, 0o120000); a.entrySetSize(entry, 0)
-                target.withCString { a.entrySetSymlink(entry, $0) }
+                portableName(target).withCString { a.entrySetSymlink(entry, $0) }
             case .typeRegular:
                 a.entrySetType(entry, 0o100000)
                 a.entrySetSize(entry, (attributes[.size] as? NSNumber)?.int64Value ?? 0)
@@ -217,6 +217,15 @@ enum ArchiveCodec {
             try a.check(a.writeFinish(writer), handle: writer)
         }
         try a.check(a.writeClose(writer), handle: writer)
+    }
+
+    /// macOS hands names back decomposed ("e" + U+0301, Hangul as jamo), which Windows and
+    /// Linux treat as different names. Store the precomposed spelling when it names the same
+    /// file, so characters the file system leaves alone (CJK compatibility ideographs) are kept.
+    private static func portableName(_ name: String) -> String {
+        let composed = name.precomposedStringWithCanonicalMapping
+        func stored(_ path: String) -> [UInt8] { Array(String(cString: FileManager.default.fileSystemRepresentation(withPath: path)).utf8) }
+        return stored(composed) == stored(name) ? composed : name
     }
 
     static func safeURL(_ path: String, inside root: URL) throws -> URL {
@@ -330,8 +339,10 @@ enum ArchiveCodec {
         var writeFree: Call { symbol("archive_write_free", Call.self) }
         var entryNew: New { symbol("archive_entry_new", New.self) }
         var entryFree: FreeEntry { symbol("archive_entry_free", FreeEntry.self) }
-        var entrySetPath: SetString { symbol("archive_entry_set_pathname_utf8", SetString.self) }
-        var entrySetSymlink: SetString { symbol("archive_entry_set_symlink_utf8", SetString.self) }
+        // The *_utf8 setters of the macOS libarchive decompose names on write; the plain
+        // setters store the UTF-8 bytes they are given.
+        var entrySetPath: SetString { symbol("archive_entry_copy_pathname", SetString.self) }
+        var entrySetSymlink: SetString { symbol("archive_entry_copy_symlink", SetString.self) }
         var entrySetPerm: SetUInt { symbol("archive_entry_set_perm", SetUInt.self) }
         var entrySetType: SetUInt { symbol("archive_entry_set_filetype", SetUInt.self) }
         var entrySetSize: SetInt64 { symbol("archive_entry_set_size", SetInt64.self) }
