@@ -69,6 +69,19 @@ internal static class OperationChecks
             using(var document=PdfDocument.Open(merged))Check(document.NumberOfPages==4,"Merged PDF pages");
             var parts=Operations.RunAsync(new("splitPDF","Split PDF"),[merged],Path.Combine(root,"split"),progress,token).GetAwaiter().GetResult();
             Check(parts.Count==4,"Split PDF files");
+            Check(Operations.Tools([pdf]).Select(t=>t.Id).Intersect(new[]{"compress","removeMetadata"}).Count()==2,"PDF compress and metadata offered");
+            foreach(var (tool,suffix) in new[]{("compress"," Compressed.pdf"),("removeMetadata"," Metadata.pdf")})
+            {
+                var output=Operations.RunAsync(new(tool,tool),[pdf],Path.Combine(root,"pdf-"+tool),progress,token).GetAwaiter().GetResult().Single();
+                using var document=PdfDocument.Open(output);Check(output.EndsWith(suffix,StringComparison.Ordinal)&&document.NumberOfPages==2,"PDF "+tool);
+            }
+            Check(Operations.Formats([pdf]).SequenceEqual(new[]{"txt","md"}),"PDF text formats");
+            var srt=Path.Combine(root,"Talk.srt");File.WriteAllText(srt,"1\n00:00:01,000 --> 00:00:02,500\nHello\n\n2\n00:00:03,000 --> 00:00:04,000\n<i>World</i>\n");
+            Check(Operations.Formats([srt]).SequenceEqual(new[]{"vtt","txt"}),"Subtitle formats");
+            var vtt=File.ReadAllText(Operations.RunAsync(new("convert","VTT","vtt"),[srt],Path.Combine(root,"subtitle-vtt"),progress,token).GetAwaiter().GetResult().Single());
+            Check(vtt.StartsWith("WEBVTT",StringComparison.Ordinal)&&vtt.Contains("00:00:01.000 --> 00:00:02.500"),"SRT to VTT");
+            var plain=File.ReadAllText(Operations.RunAsync(new("convert","TXT","txt"),[srt],Path.Combine(root,"subtitle-txt"),progress,token).GetAwaiter().GetResult().Single());
+            Check(plain=="Hello\n\nWorld\n","Subtitle to text");
 
             var qr=Path.Combine(root,"Code.png");
             var matrix=new MultiFormatWriter().encode("https://github.com/orkunisitmak/nashi-app",BarcodeFormat.QR_CODE,240,240,new Dictionary<EncodeHintType,object>{[EncodeHintType.MARGIN]=4});
@@ -100,6 +113,9 @@ internal static class OperationChecks
                 var joined=Operations.RunAsync(new("joinVideos","Join Videos"),[clip,clip],Path.Combine(root,"join"),progress,token).GetAwaiter().GetResult().Single();
                 var joinedDuration=Operations.Media.InspectAsync(joined,token).GetAwaiter().GetResult().Duration;
                 Check(joinedDuration is > 3.6 and < 4.4,"Joined duration");
+                Check(Operations.Tools([wav]).Any(t=>t.Id=="removeMetadata")&&Operations.Tools([clip]).Any(t=>t.Id=="removeMetadata"),"Media metadata cleanup offered");
+                var clean=Operations.RunAsync(new("removeMetadata","Remove Metadata"),[clip],Path.Combine(root,"media-metadata"),progress,token).GetAwaiter().GetResult().Single();
+                Check(Operations.Media.InspectAsync(clean,token).GetAwaiter().GetResult().Duration is > 1.8 and < 2.2,"Media metadata cleanup keeps the clip");
                 var trimmed=Operations.RunAsync(new("trimVideo","Trim Video"),[clip],Path.Combine(root,"trim"),progress,token,new(Media:new(){Start=.5,End=1.5})).GetAwaiter().GetResult().Single();
                 Check(Operations.Media.InspectAsync(trimmed,token).GetAwaiter().GetResult().Duration is > .8 and < 1.25,"Trim keeps the In/Out range");
                 var cut=Operations.RunAsync(new("trimAudio","Trim Audio"),[wav],Path.Combine(root,"trim-audio"),progress,token,new(Media:new(){Start=0,End=1})).GetAwaiter().GetResult().Single();

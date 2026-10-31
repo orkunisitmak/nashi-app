@@ -35,7 +35,8 @@ public static class Operations
         if(files.All(FeatureCatalog.IsImage))return formats.Where(ImageOutputs.Contains).Where(f=>f!="heic"||Executable("ffmpeg") is not null).ToArray();
         if(files.All(f=>FeatureCatalog.IsVideo(f)||FeatureCatalog.IsAudio(f)))return Media is null?[]:formats.Where(f=>MediaEngine.AudioFormats.Contains(f)||MediaEngine.VideoFormats.Contains(f)).ToArray();
         if(files.All(FeatureCatalog.IsArchive))return formats.Where(f=>f is "zip" or "tar" or "gz").ToArray();
-        if(files.All(f=>FeatureCatalog.Extension(f)=="pdf"))return formats.Where(f=>f=="txt").ToArray();
+        if(files.All(IsPdf))return formats.Where(f=>f is "txt" or "md").ToArray();
+        if(files.All(IsSubtitle))return formats.Where(f=>f is "srt" or "vtt" or "txt").ToArray();
         return [];
     }
     public static Choice[] Tools(IReadOnlyList<string> files)
@@ -43,8 +44,7 @@ public static class Operations
         var media=files.All(f=>FeatureCatalog.IsVideo(f)||FeatureCatalog.IsAudio(f));
         return FeatureCatalog.Tools(files).Where(ImplementedTools.Contains)
             .Where(id=>!media||Media is not null)
-            .Where(id=>id is not ("removeMetadata" or "readQRCode")||files.All(FeatureCatalog.IsImage))
-            .Where(id=>id!="compress"||!files.Any(f=>FeatureCatalog.Extension(f)=="pdf"))
+            .Where(id=>id!="readQRCode"||files.All(FeatureCatalog.IsImage))
             .Select(id=>new Choice(id,FeatureCatalog.ToolNames[id])).ToArray();
     }
 
@@ -56,7 +56,8 @@ public static class Operations
             var format=choice.Format!;
             if(inputs.All(FeatureCatalog.IsImage))return await Task.Run(()=>format=="pdf"?ImagesToPdf(inputs,destination,progress,token):Images(inputs,destination,format,85,true,progress,token),token);
             if(inputs.All(FeatureCatalog.IsArchive))return await Task.Run(()=>inputs.SelectMany(i=>ArchiveEngine.Convert(i,format,destination,null,progress,token)).ToArray(),token);
-            if(inputs.All(f=>FeatureCatalog.Extension(f)=="pdf"))return await Task.Run(()=>PdfText(inputs,destination,token),token);
+            if(inputs.All(IsPdf))return await Task.Run(()=>PdfText(inputs,destination,format,token),token);
+            if(inputs.All(IsSubtitle))return await Task.Run(()=>Subtitles(inputs,destination,format,token),token);
             return await RequireMedia().ConvertAsync(inputs,format,destination,new MediaOptions(),progress,token);
         }
         return choice.Id switch
@@ -66,13 +67,14 @@ public static class Operations
             "redactImage"=>await Task.Run(()=>Images(inputs,destination,null,92,true,progress,token,image=>Compositions.Redact(image,redact??throw new ArgumentException("Draw at least one area to redact."))),token),
             "frameImage"=>await Task.Run(()=>Images(inputs,destination,"png",92,true,progress,token,image=>Replace(image,Compositions.Frame(image,frame??new()))),token),
             "createCollage"=>await Task.Run(()=>Collage(inputs,destination,collage??new(),progress,token),token),
+            "compress" or "removeMetadata" when inputs.All(IsPdf)=>await Task.Run(()=>DocumentEngine.Pdf(choice.Id,inputs,destination,null,token),token),
             "compress" when inputs.All(FeatureCatalog.IsImage)=>await Task.Run(()=>Images(inputs,destination,null,70,false,progress,token),token),
-            "removeMetadata"=>await Task.Run(()=>Images(inputs,destination,null,92,false,progress,token),token),
+            "removeMetadata" when inputs.All(FeatureCatalog.IsImage)=>await Task.Run(()=>Images(inputs,destination,null,92,false,progress,token),token),
             "createPDF"=>await Task.Run(()=>ImagesToPdf(inputs,destination,progress,token),token),
             "mergePDF"=>await Task.Run(()=>DocumentEngine.Pdf("mergePDFs",inputs,destination,null,token),token),
             "splitPDF"=>await Task.Run(()=>DocumentEngine.Pdf("splitPDF",inputs,destination,null,token),token),
             "extractArchive"=>await Task.Run(()=>inputs.SelectMany(i=>ArchiveEngine.Extract(i,destination,null,progress,token)).ToArray(),token),
-            "compress" or "muteVideo" or "normalizeAudio" or "changeVideoSpeed" or "joinVideos" or "audioChannels" or "videoSnapshots" or "splitVideo" or "audioToVideo" or "trimVideo" or "trimAudio" or "cropVideo" or "redactVideo" or "redactAudio"=>await RequireMedia().ToolAsync(choice.Id,inputs,destination,media??new MediaOptions(),progress,token),
+            "compress" or "removeMetadata" or "muteVideo" or "normalizeAudio" or "changeVideoSpeed" or "joinVideos" or "audioChannels" or "videoSnapshots" or "splitVideo" or "audioToVideo" or "trimVideo" or "trimAudio" or "cropVideo" or "redactVideo" or "redactAudio"=>await RequireMedia().ToolAsync(choice.Id,inputs,destination,media??new MediaOptions(),progress,token),
             _=>throw new NotSupportedException("This tool is not available in the Linux preview yet.")
         };
     }
@@ -155,14 +157,21 @@ public static class Operations
         return tx.Publish([file],token);
     }
 
-    private static IReadOnlyList<string> PdfText(IReadOnlyList<string> inputs,string destination,CancellationToken token)
+    private static bool IsPdf(string file)=>FeatureCatalog.Extension(file)=="pdf";
+    private static bool IsSubtitle(string file)=>FeatureCatalog.Extension(file) is "srt" or "vtt";
+    /// Plain text for both TXT and Markdown, as on Windows.
+    private static IReadOnlyList<string> PdfText(IReadOnlyList<string> inputs,string destination,string format,CancellationToken token)=>Texts(inputs,destination,format,token,input=>
+    {
+        var text=OfficeDocuments.PdfText(input);return string.IsNullOrWhiteSpace(text)?throw new InvalidDataException("This PDF has no selectable text."):text;
+    });
+    private static IReadOnlyList<string> Subtitles(IReadOnlyList<string> inputs,string destination,string format,CancellationToken token)=>Texts(inputs,destination,format,token,input=>SubtitleCodec.Convert(LegacyTextCodec.Decode(File.ReadAllBytes(input)),format));
+    private static IReadOnlyList<string> Texts(IReadOnlyList<string> inputs,string destination,string format,CancellationToken token,Func<string,string> read)
     {
         using var tx=new ExportTransaction(destination);var outputs=new List<string>();
         foreach(var input in inputs)
         {
-            token.ThrowIfCancellationRequested();var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+".txt");
-            var text=OfficeDocuments.PdfText(input);if(string.IsNullOrWhiteSpace(text))throw new InvalidDataException("This PDF has no selectable text.");
-            File.WriteAllText(output,text);outputs.Add(output);
+            token.ThrowIfCancellationRequested();var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+"."+format);
+            File.WriteAllText(output,read(input),new System.Text.UTF8Encoding(false));outputs.Add(output);
         }
         return tx.Publish(outputs,token);
     }
