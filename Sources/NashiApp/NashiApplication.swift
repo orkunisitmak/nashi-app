@@ -119,6 +119,25 @@ enum NashiApplication {
     var monitor:DragMonitor!
     var wheel:WheelController!
     var windowManagement:WindowManagementController!
+    private var terminationSignal:DispatchSourceSignal?
+    private var terminationWait:AnyCancellable?
+
+    func applicationWillFinishLaunching(_ notification:Notification) {
+        // kill, launchctl and the shutdown command send SIGTERM. Its default action would end Nashi mid-job,
+        // leaving the job's tools running and its hidden staging folder in the output folder.
+        let source=DispatchSource.makeSignalSource(signal:SIGTERM,queue:.main)
+        source.setEventHandler { [weak self] in self?.terminateAfterStoppingJob() }
+        // An empty handler, not SIG_IGN: tools inherit an ignored SIGTERM and Cancel could no longer stop them.
+        source.resume();signal(SIGTERM) { _ in };terminationSignal=source
+    }
+    private func terminateAfterStoppingJob() {
+        // A cancelled job stops its tools and removes its staging folder before it stops working.
+        state.token.cancel()
+        terminationWait=state.$working.first { !$0 }.receive(on:DispatchQueue.main).sink { [weak self] _ in
+            guard let self else { return }
+            if self.toolSetupWorking { signal(SIGTERM,SIG_DFL);raise(SIGTERM) } else { NSApp.terminate(nil) }
+        }
+    }
 
     func applicationDidFinishLaunching(_ notification:Notification) {
         NashiAppearance.apply()
