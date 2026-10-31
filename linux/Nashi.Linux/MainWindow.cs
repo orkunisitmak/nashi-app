@@ -77,6 +77,7 @@ public sealed class MainWindow:Window
         selection.HorizontalAlignment=hint.HorizontalAlignment=HorizontalAlignment.Center;hint.TextAlignment=TextAlignment.Center;
         Button Act(string text,Func<Task> action){var b=new Button{Content=text,Margin=new(0,0,8,8)};b.Click+=async(_,_)=>await action();return b;}
         actions.Children.Add(Act("Copy",CopyFiles));actions.Children.Add(Act("Move to…",MoveFiles));actions.Children.Add(Act("Copy path",async()=>{if(Clipboard is not null){await Clipboard.SetTextAsync(FileActions.PathList(files));status.Text=files.Count==1?"Path copied.":Localizer.Pick($"{files.Count} paths copied.",$"{files.Count} yol kopyalandı.");}}));
+        actions.Children.Add(Act("Float",()=>{new FloatShelf(files.ToArray()).Show();return Task.CompletedTask;}));
         actions.Children.Add(Act("Open terminal here",()=>{status.Text=FileActions.Terminal(files[0])?"":"No terminal app was found.";return Task.CompletedTask;}));
         var home=new StackPanel{Spacing=14,Margin=new(20),Children={drop,fileList,formatsLabel,formats,toolsLabel,tools,actionsLabel,actions,progress,
             new StackPanel{Orientation=Orientation.Horizontal,Spacing=8,Children={cancel,reveal}},status}};

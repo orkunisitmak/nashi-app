@@ -19,7 +19,7 @@ internal static class EditorChecks
             root=Path.GetFullPath(root);Directory.CreateDirectory(root);
             if(Directory.EnumerateFileSystemEntries(root).Any())throw new InvalidOperationException("Choose an empty folder.");
             AppBuilder.Configure<App>().UseSkia().UseHeadless(new AvaloniaHeadlessPlatformOptions{UseHeadlessDrawing=false}).SetupWithoutStarting();
-            Annotate(root);Organize(root);Metadata();Web();Redact(root);
+            Annotate(root);Organize(root);Metadata();Web();Redact(root);Float(root);
             Console.WriteLine($"{{\"passed\":{passed},\"scope\":\"Linux editors with pointer and keyboard input\"}}");
             return 0;
         }
@@ -131,6 +131,17 @@ internal static class EditorChecks
         video.KeyPress(Avalonia.Input.Key.Enter,RawInputModifiers.None,PhysicalKey.None,null);Pump();Check(video.IsVisible&&video.Result is null,"A start after the end is refused");
         fields[0].Text="0:02";fields[1].Text="";video.KeyPress(Avalonia.Input.Key.Enter,RawInputModifiers.None,PhysicalKey.None,null);Pump();
         Check(video.Result is not null&&video.Range==(2,null),"An empty end means until the end of the clip");
+    }
+    private static void Float(string root)
+    {
+        var a=Path.Combine(root,"a.txt");var b=Path.Combine(root,"b.txt");File.WriteAllText(a,"a");File.WriteAllText(b,"b");
+        var shelf=new FloatShelf([a,b,a,Path.Combine(root,"missing.txt")]);shelf.Show();Pump();
+        Check(shelf.Items.Count==2&&shelf.Topmost,"Float holds each existing file once and stays on top");
+        shelf.Add([b,Path.Combine(root,"Photo.png")]);Check(shelf.Items.Count==3,"Adding to Float skips files it already has");
+        shelf.List.SelectedItems!.Add(a);Pump();shelf.KeyPress(Avalonia.Input.Key.Delete,RawInputModifiers.None,PhysicalKey.None,null);Pump();
+        Check(shelf.Items.Count==2&&!shelf.Items.Contains(a)&&File.Exists(a),"Delete removes from Float, not from disk");
+        shelf.Toggle();Pump();Check(shelf.Height<60,"Float collapses to a strip");shelf.Toggle();Pump();Check(shelf.Height>300,"Float expands again");
+        shelf.Close();Pump();
     }
     private static IEnumerable<Avalonia.Visual> Descendants(Avalonia.Visual root){foreach(var child in Avalonia.VisualTree.VisualExtensions.GetVisualChildren(root)){yield return child;foreach(var d in Descendants(child))yield return d;}}
     private static T Wait<T>(Task<T> task){while(!task.IsCompleted){Dispatcher.UIThread.RunJobs();Thread.Sleep(5);}return task.GetAwaiter().GetResult();}

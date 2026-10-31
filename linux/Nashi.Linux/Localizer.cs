@@ -51,6 +51,7 @@ internal static class Localizer
         ["Find text"]="Metni bul",["Finding text…"]="Metin aranıyor…",["No text found."]="Metin bulunamadı.",["From"]="Başlangıç",["To"]="Bitiş",["end"]="son",["Enter a start before the end, within the video."]="Videonun içinde, bitişten önce bir başlangıç girin.",
         ["Pasted text"]="Metin yapıştırıldı",["Pasted image"]="Görsel yapıştırıldı",
         ["Format defaults"]="Biçim varsayılanları",["Restore defaults"]="Varsayılanlara dön",
+        ["Float"]="Float",["Open"]="Aç",["Collapse"]="Daralt",["Float · 1 file"]="Float · 1 dosya",["Drag files out to use them anywhere. Drop files here to add them."]="Dosyaları istediğiniz yere sürükleyip bırakın. Eklemek için dosyaları buraya bırakın.",
         ["Set up media tools"]="Medya araçlarını kur",["Move to…"]="Taşı…",["Copy"]="Kopyala",["Cancel"]="İptal",["Save"]="Kaydet",["Undo"]="Geri al",["Clear"]="Temizle",["Tool"]="Araç",["Color"]="Renk",["Text"]="Metin",["Cover"]="Kapat",["Redact"]="Sansürle",
     };
     /// For sentences built from numbers or names, which a catalog lookup cannot match.
