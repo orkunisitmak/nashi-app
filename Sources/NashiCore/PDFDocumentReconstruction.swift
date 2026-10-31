@@ -153,6 +153,10 @@ enum PDFDocumentReconstruction {
                 if !nativeText && !rows.isEmpty && rect.width * rect.height > box.width * box.height * 0.8 { continue }
                 blocks.append(.image(rect))
             }
+            for annotation in PDFOfficeCodec.picturedAnnotations(page) {
+                let rect = annotation.bounds.intersection(box)
+                if !rect.isNull, rect.width > 1, rect.height > 1 { blocks.append(.image(rect)) }
+            }
             blocks.sort { abs($0.bounds.maxY - $1.bounds.maxY) > 2 ? $0.bounds.maxY > $1.bounds.maxY : $0.bounds.minX < $1.bounds.minX }
             pageLayouts += "<style:page-layout style:name=\"PageLayout\(index)\"><style:page-layout-properties fo:page-width=\"\(box.width)pt\" fo:page-height=\"\(box.height)pt\" fo:margin=\"\(margin)pt\"/></style:page-layout>"
             masters += "<style:master-page style:name=\"PageMaster\(index)\" style:page-layout-name=\"PageLayout\(index)\"/>"
