@@ -182,7 +182,10 @@ final class UpdateCredentialBrokerClient: @unchecked Sendable {
         return SHA256.hash(data: try Data(contentsOf: url, options: .mappedIfSafe)).map { String(format: "%02x", $0) }.joined()
     }
     static func bundleHash(_ bundle: URL) throws -> String {
-        guard let files = FileManager.default.enumerator(at: bundle, includingPropertiesForKeys: [.isRegularFileKey, .isDirectoryKey, .isSymbolicLinkKey]) else { throw UpdateCredentialBrokerError.identity }
+        // An unreadable directory must fail closed instead of being silently left out of the seal.
+        var enumerationFailed = false
+        guard let files = FileManager.default.enumerator(at: bundle, includingPropertiesForKeys: [.isRegularFileKey, .isDirectoryKey, .isSymbolicLinkKey],
+                                                         options: [], errorHandler: { _, _ in enumerationFailed = true; return false }) else { throw UpdateCredentialBrokerError.identity }
         var entries: [(String, URL)] = []
         for case let file as URL in files {
             let values = try file.resourceValues(forKeys: [.isRegularFileKey, .isDirectoryKey, .isSymbolicLinkKey])
@@ -191,7 +194,7 @@ final class UpdateCredentialBrokerClient: @unchecked Sendable {
             guard values.isRegularFile == true, entries.count < 256 else { throw UpdateCredentialBrokerError.identity }
             entries.append((String(file.path.dropFirst(bundle.path.count + 1)), file))
         }
-        guard !entries.isEmpty else { throw UpdateCredentialBrokerError.identity }
+        guard !enumerationFailed, !entries.isEmpty else { throw UpdateCredentialBrokerError.identity }
         var seal = Data()
         for (relative, file) in entries.sorted(by: { $0.0 < $1.0 }) {
             guard !relative.contains("\0"), !relative.contains("\n"), !relative.contains("\\") else { throw UpdateCredentialBrokerError.identity }
