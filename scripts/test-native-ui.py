@@ -98,8 +98,12 @@ def main():
     invoke(["--file-artwork-smoke", output / "artwork"])
     artwork = json.loads((output / "artwork/file-artwork.json").read_text())
     assert artwork["passed"] >= 11 and artwork["asyncProviderCalls"] == 1
+    invoke(["--drag-shortcut-smoke", output / "shortcuts"])
+    shortcuts = json.loads((output / "shortcuts/drag-shortcuts.json").read_text())
+    assert shortcuts["passed"] and len(shortcuts["checks"]) >= 18
     print(f"PASS: 40 native UI captures; {len(gallery['validatorChecks'])} audit guardrails; "
-          f"{len(ranges['checks'])} range checks; {artwork['passed']} artwork checks; parser/output safety")
+          f"{len(ranges['checks'])} range checks; {artwork['passed']} artwork checks; "
+          f"{len(shortcuts['checks'])} drag shortcut checks; parser/output safety")
 
 
 if __name__ == "__main__":

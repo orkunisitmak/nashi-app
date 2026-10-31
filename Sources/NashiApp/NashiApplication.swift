@@ -43,6 +43,10 @@ enum NashiApplication {
             let runner=LocalizationSmoke(output:URL(fileURLWithPath:CommandLine.arguments[index+1],isDirectory:true));app.delegate=runner;app.setActivationPolicy(.accessory)
             withExtendedLifetime(runner){app.run()};return
         }
+        if let index=CommandLine.arguments.firstIndex(of:"--drag-shortcut-smoke"),CommandLine.arguments.count>index+1 {
+            let runner=DragShortcutSmoke(output:URL(fileURLWithPath:CommandLine.arguments[index+1],isDirectory:true));app.delegate=runner;app.setActivationPolicy(.accessory)
+            withExtendedLifetime(runner){app.run()};return
+        }
         if CommandLine.arguments.contains("--window-management-status") {
             let status:[String:Any]=["bundleIdentifier":Bundle.main.bundleIdentifier ?? "", "displayName":Bundle.main.object(forInfoDictionaryKey:"CFBundleDisplayName") as? String ?? "", "accessibilityTrusted":AXIsProcessTrusted()]
             if let data=try? JSONSerialization.data(withJSONObject:status,options:[.sortedKeys]),let text=String(data:data,encoding:.utf8) { print(text) }
