@@ -241,6 +241,8 @@
 "Allow Home Folder Access" = "Allow Home Folder Access";
 "Allow Home Folder Access…" = "Allow Home Folder Access…";
 "Allow Nashi in macOS Login Items." = "Allow Nashi in macOS Login Items.";
+"Already assigned to %@." = "Already assigned to %@.";
+"Already assigned to %lld." = "Already assigned to %lld.";
 "Already available on your computer" = "Already available on your computer";
 "Already optimized. Original quality retained." = "Already optimized. Original quality retained.";
 "Always a little fresher." = "Always a little fresher.";
@@ -437,6 +439,7 @@
 "CLEAR" = "CLEAR";
 "CLEAR FLOAT" = "CLEAR FLOAT";
 "CLEAR SELECTION" = "CLEAR SELECTION";
+"CLICK A SHORTCUT, THEN PRESS ANY KEYS OR A MOUSE BUTTON. USE IT WHILE DRAGGING FILES." = "CLICK A SHORTCUT, THEN PRESS ANY KEYS OR A MOUSE BUTTON. USE IT WHILE DRAGGING FILES.";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "CLIPBOARD IS BUSY. TRY AGAIN.";
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "CLIPBOARD IS BUSY. TRY PASTE AGAIN.";
 "CLOSE" = "CLOSE";
@@ -616,6 +619,7 @@
 "Clear" = "Clear";
 "Clear Float" = "Clear Float";
 "Clear Selection" = "Clear Selection";
+"Click a shortcut, then press any keys or a mouse button. Use it while dragging files." = "Click a shortcut, then press any keys or a mouse button. Use it while dragging files.";
 "Clip %@" = "Clip %@";
 "Clip %lld" = "Clip %lld";
 "Clipboard is busy. Try Paste again." = "Clipboard is busy. Try Paste again.";
@@ -1308,6 +1312,7 @@
 "METADATA TOOLS ARE NOT READY." = "METADATA TOOLS ARE NOT READY.";
 "METADATA TOOLS CHECKSUM MISMATCH." = "METADATA TOOLS CHECKSUM MISMATCH.";
 "METADATA · NASHI" = "METADATA · NASHI";
+"MIDDLE CLICK" = "MIDDLE CLICK";
 "MIDDLE THIRD" = "MIDDLE THIRD";
 "MONO" = "MONO";
 "MONOSPACED" = "MONOSPACED";
@@ -1352,9 +1357,12 @@
 "Metadata tools are not ready." = "Metadata tools are not ready.";
 "Metadata tools checksum mismatch." = "Metadata tools checksum mismatch.";
 "Metadata · Nashi" = "Metadata · Nashi";
+"Middle Click" = "Middle Click";
 "Middle third" = "Middle third";
 "Mono" = "Mono";
 "Monospaced" = "Monospaced";
+"Mouse %@" = "Mouse %@";
+"Mouse %lld" = "Mouse %lld";
 "Move" = "Move";
 "Move & share" = "Move & share";
 "Move Here" = "Move Here";
@@ -1609,6 +1617,7 @@
 "PRESERVE METADATA" = "PRESERVE METADATA";
 "PRESERVE ORIGINAL PAGES" = "PRESERVE ORIGINAL PAGES";
 "PRESET" = "PRESET";
+"PRESS KEYS OR A MOUSE BUTTON…" = "PRESS KEYS OR A MOUSE BUTTON…";
 "PREVIEW" = "PREVIEW";
 "PREVIEW LEFT" = "PREVIEW LEFT";
 "PREVIEW POSITION" = "PREVIEW POSITION";
@@ -1683,6 +1692,7 @@
 "Preserve metadata" = "Preserve metadata";
 "Preserve original pages" = "Preserve original pages";
 "Preset" = "Preset";
+"Press keys or a mouse button…" = "Press keys or a mouse button…";
 "Preview" = "Preview";
 "Preview Left" = "Preview Left";
 "Preview Processed" = "Preview Processed";
@@ -1767,6 +1777,7 @@
 "REVEAL FINISHED FILES IN EXPLORER" = "REVEAL FINISHED FILES IN EXPLORER";
 "REVEAL FINISHED FILES IN FINDER" = "REVEAL FINISHED FILES IN FINDER";
 "RIGHT" = "RIGHT";
+"RIGHT CLICK" = "RIGHT CLICK";
 "RIGHT HALF" = "RIGHT HALF";
 "RIGHT THIRD" = "RIGHT THIRD";
 "RIGHT TWO-THIRDS" = "RIGHT TWO-THIRDS";
@@ -1834,6 +1845,7 @@
 "Reveal finished files in Explorer" = "Reveal finished files in Explorer";
 "Reveal finished files in Finder" = "Reveal finished files in Finder";
 "Right" = "Right";
+"Right Click" = "Right Click";
 "Right half" = "Right half";
 "Right third" = "Right third";
 "Right two-thirds" = "Right two-thirds";
@@ -2137,7 +2149,6 @@
 "System" = "System";
 "TAP COMMAND WHILE DRAGGING TO CROP, COMPRESS, ANNOTATE, AND GIVE YOUR FILE A LITTLE LOVE." = "TAP COMMAND WHILE DRAGGING TO CROP, COMPRESS, ANNOTATE, AND GIVE YOUR FILE A LITTLE LOVE.";
 "TAP CONTROL WHILE DRAGGING TO COPY, MOVE, SHARE, OR CARRY FILES IN A FLOATING SHELF." = "TAP CONTROL WHILE DRAGGING TO COPY, MOVE, SHARE, OR CARRY FILES IN A FLOATING SHELF.";
-"TAP THE CHOSEN MODIFIER COMBINATION WHILE DRAGGING FILES." = "TAP THE CHOSEN MODIFIER COMBINATION WHILE DRAGGING FILES.";
 "TARGET" = "TARGET";
 "TARGET LOUDNESS" = "TARGET LOUDNESS";
 "TARGET LUFS" = "TARGET LUFS";
@@ -2227,7 +2238,6 @@
 "TURN OFF UNIFORM WIDTH TO PRESERVE THIS PDF’S FORM FIELDS, ATTACHMENTS, LINKS OR NAVIGATION." = "TURN OFF UNIFORM WIDTH TO PRESERVE THIS PDF’S FORM FIELDS, ATTACHMENTS, LINKS OR NAVIGATION.";
 "Tap Command while dragging to crop, compress, annotate, and give your file a little love." = "Tap Command while dragging to crop, compress, annotate, and give your file a little love.";
 "Tap Control while dragging to copy, move, share, or carry files in a floating shelf." = "Tap Control while dragging to copy, move, share, or carry files in a floating shelf.";
-"Tap the chosen modifier combination while dragging files." = "Tap the chosen modifier combination while dragging files.";
 "Target" = "Target";
 "Target LUFS" = "Target LUFS";
 "Target loudness" = "Target loudness";

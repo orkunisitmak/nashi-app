@@ -34,7 +34,7 @@
   "Subtle animations": "Hafif animasyonlar",
   "macOS Reduce Motion is on. Nashi keeps motion off.": "macOS Hareketi Azalt açık. Nashi animasyonları kapalı tutar.",
   "Drag shortcuts": "Sürükleme kısayolları",
-  "Tap the chosen modifier combination while dragging files.": "Dosyaları sürüklerken seçtiğin tuş birleşimine bas.",
+  "Click a shortcut, then press any keys or a mouse button. Use it while dragging files.": "Bir kısayola tıkla, sonra istediğin tuşlara veya fare tuşuna bas. Dosyaları sürüklerken kullan.",
   "Window management": "Pencere düzeni",
   "Window arrangement": "Pencere düzeni",
   "Arrange window": "Pencereyi düzenle",
@@ -1256,6 +1256,11 @@
   "Original image · ready to download": "Orijinal görsel · indirmeye hazır",
   "YouTube thumbnail · best available full-size image": "YouTube küçük resmi · en iyi tam boyutlu görsel",
   "No tools for this file type": "Bu dosya türü için araç yok",
+  "Press keys or a mouse button…": "Tuşlara veya fare tuşuna bas…",
+  "Already assigned to {0}.": "Zaten {0} için atanmış.",
+  "Right Click": "Sağ tık",
+  "Middle Click": "Orta tık",
+  "Mouse {0}": "Fare {0}",
   "Details": "Ayrıntılar",
   "Copy details": "Ayrıntıları kopyala"
 }

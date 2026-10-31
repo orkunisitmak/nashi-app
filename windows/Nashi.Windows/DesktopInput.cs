@@ -24,6 +24,7 @@ internal static class DesktopInput
     private static uint KeyFlags(int vk,bool up)=>(up?2u:0u)|(vk is >=0x21 and <=0x28 or 0x2D or 0x2E?1u:0u);
     internal static void Hold(Key key,bool pressed){var vk=KeyInterop.VirtualKeyFromKey(key);var input=new Input{Type=1,Data=new(){Keyboard=new(){Key=(ushort)vk,Flags=KeyFlags(vk,!pressed)}}};if(SendInput(1,[input],Marshal.SizeOf<Input>())!=1)throw new InvalidOperationException("Native key input unavailable.");}
     internal static void HoldMouse(bool pressed){var input=new Input{Data=new(){Mouse=new(){Flags=pressed?2u:4u}}};if(SendInput(1,[input],Marshal.SizeOf<Input>())!=1)throw new InvalidOperationException("Native mouse input unavailable.");}
+    internal static void HoldSideButton(bool pressed){var input=new Input{Data=new(){Mouse=new(){Data=1,Flags=pressed?0x80u:0x100u}}};if(SendInput(1,[input],Marshal.SizeOf<Input>())!=1)throw new InvalidOperationException("Native mouse input unavailable.");}
     internal static void Click(FrameworkElement view)
     {
         MovePointer(view.PointToScreen(new Point(view.ActualWidth/2,view.ActualHeight/2)));Pump(80);
