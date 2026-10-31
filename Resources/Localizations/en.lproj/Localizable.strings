@@ -4,6 +4,7 @@
 "%@  Convert" = "%@  Convert";
 "%@  File actions" = "%@  File actions";
 "%@  Tools" = "%@  Tools";
+"%@ (Not installed)" = "%@ (Not installed)";
 "%@ QR code found." = "%@ QR code found.";
 "%@ QR codes found." = "%@ QR codes found.";
 "%@ exports" = "%@ exports";
@@ -24,6 +25,7 @@
 "%lld  Convert" = "%lld  Convert";
 "%lld  File actions" = "%lld  File actions";
 "%lld  Tools" = "%lld  Tools";
+"%lld (Not installed)" = "%lld (Not installed)";
 "%lld QR code found." = "%lld QR code found.";
 "%lld QR codes found." = "%lld QR codes found.";
 "%lld exports" = "%lld exports";

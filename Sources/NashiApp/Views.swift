@@ -37,7 +37,7 @@ struct SettingsView:View {
     private var terminalApplications:[(String,String)] {
         var apps=[("com.apple.Terminal","Terminal")]
         if NSWorkspace.shared.urlForApplication(withBundleIdentifier:"com.googlecode.iterm2") != nil { apps.append(("com.googlecode.iterm2","iTerm2")) }
-        if !apps.contains(where:{$0.0==terminalApplication}) { apps.append((terminalApplication,"\(terminalApplication) (Not installed)")) }
+        if !apps.contains(where:{$0.0==terminalApplication}) { apps.append((terminalApplication,AppLocalization.text("\(terminalApplication) (Not installed)",language:appLanguage))) }
         return apps
     }
     var body:some View {
