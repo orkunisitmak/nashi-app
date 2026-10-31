@@ -229,6 +229,10 @@ internal static class ParityChecks
         // Only the centre is measured: edge pixels are clamped, so border stripes cannot fully average out.
         using(var stripes=new MagickImage(MagickColors.White,200,80)){for(var x=0;x<200;x+=8)new ImageMagick.Drawing.Drawables().FillColor(MagickColors.Black).Rectangle(x,0,x+3,79).Draw(stripes);
             using var blurred=new MagickImage(PhotoCodec.Adjust(stripes.ToByteArray(MagickFormat.Png),new(){Blur=24}));using var centre=blurred.CloneArea(new MagickGeometry(50,20,100,40));var spread=centre.Statistics().GetChannel(PixelChannel.Red)!.StandardDeviation/Quantum.Max;check(spread<.02,$"Redaction blur left stripe detail visible (spread {spread:0.000})");}
+        // Vignette darkens the edges like macOS CIVignette and keeps transparency. Expected values are the Mac's
+        // for a 200 × 100 grey (128) photo at Vignette 1; a PNG without bKGD reads with a white background.
+        using(var grey=new MagickImage(new MagickColor(128,128,128,128),200,100)){grey.BackgroundColor=MagickColors.White;using var vignetted=new MagickImage(PhotoCodec.Adjust(grey.ToByteArray(MagickFormat.Png),new(){Vignette=1}));using var pixels=vignetted.GetPixels();
+            foreach(var (x,y,expected) in new[]{(0,0,0),(10,50,23),(50,50,98),(25,25,50),(100,50,128)}){var colour=pixels.GetPixel(x,y).ToColor()!;check(Math.Abs(colour.R-expected)<=2&&colour.G==colour.R&&colour.B==colour.R&&colour.A==128,$"Vignette differs from macOS at {x},{y}: {colour}, expected grey {expected} at alpha 128");}}
         // A killed tool can still hold a staged file when the user cancels.
         Exception? outcome=null;var hidden=false;FileStream? held=null;string? staging=null;var cleanup=new System.Diagnostics.Stopwatch();
         try{using var tx=new ExportTransaction(Path.Combine(root,"Held export"));staging=tx.StagingDirectory;hidden=File.GetAttributes(staging).HasFlag(FileAttributes.Hidden);held=File.Create(Path.Combine(staging,"partial.mp4"));cleanup.Start();throw new OperationCanceledException();}
