@@ -20,6 +20,17 @@ internal static class ParityChecks
             check(runs[0].GetProperty("character").GetProperty("italic").GetBoolean()&&runs[2].GetProperty("character").GetProperty("backgroundColor").GetProperty("b").GetDouble()==0,"Character style inheritance or direct highlighting was lost");
         }
         check(FeatureCatalog.Conversions.Count==46&&FeatureCatalog.ToolNames.Count==27,"Mac/Windows catalog count diverged");
+        if (OperatingSystem.IsWindows())
+        {
+            var reserved = Path.Combine(root, "Reserved output names"); Directory.CreateDirectory(reserved);
+            var con = SafePaths.Unique(reserved, "CON.txt");
+            var aux = SafePaths.Unique(reserved, "AUX.jpg");
+            check(Path.GetFileName(con) == "CON 2.txt" && Path.GetFileName(aux) == "AUX 2.jpg",
+                "Windows reserved device names were offered as output files.");
+            File.WriteAllText(con, "synthetic"); File.WriteAllText(aux, "synthetic");
+            check(SafePaths.Unique(reserved, "CON.txt") == Path.Combine(reserved, "CON 3.txt"),
+                "Reserved output name fallback overwrote a previous export.");
+        }
         check(FeatureCatalog.Formats(["a.htm","b.html"]).SequenceEqual(new[]{"pdf"})&&FeatureCatalog.Tools(["a.html"]).Length==0,"HTML inputs lost their PDF route");
         check(FeatureCatalog.Formats(["a.jpeg","b.png"]).Contains("webp"),"Mixed image conversion intersection failed");
         check(!FeatureCatalog.Formats(["a.png","b.mp4"]).Any(),"Unrelated inputs offered an invalid format");
