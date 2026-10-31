@@ -127,7 +127,7 @@ public sealed partial class MainWindow:Window
     {
         var changed=LibraryVisible!=visible;
         if(!busy)L10n.SetText(status,"Files stay on your computer.");
-        selectedLibraryId=selectedLibraryId??library.Entries.FirstOrDefault()?.Id;home.Visibility=visible?Visibility.Collapsed:Visibility.Visible;libraryPage.Visibility=visible?Visibility.Visible:Visibility.Collapsed;homeScroll.IsHitTestVisible=!visible;libraryScroll.IsHitTestVisible=visible;
+        selectedLibraryId=selectedLibraryId??library.Entries.FirstOrDefault()?.Id;home.Visibility=visible?Visibility.Collapsed:Visibility.Visible;libraryPage.Visibility=visible?Visibility.Visible:Visibility.Collapsed;homeScroll.Visibility=visible?Visibility.Collapsed:Visibility.Visible;libraryScroll.Visibility=visible?Visibility.Visible:Visibility.Collapsed;homeScroll.IsHitTestVisible=!visible;libraryScroll.IsHitTestVisible=visible;
         homeButton.SetResourceReference(Control.BackgroundProperty,visible?"Surface":"Sage");libraryButton.SetResourceReference(Control.BackgroundProperty,visible?"Sage":"Surface");if(visible)RenderLibrary();if(changed&&IsLoaded)Theme.Entrance(visible?libraryPage:home);
     }
     private void Record(string label,IReadOnlyList<string> paths)

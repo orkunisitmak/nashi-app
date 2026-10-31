@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
 namespace Nashi.Windows;
 
 internal static class Theme
@@ -20,6 +21,7 @@ internal static class Theme
     }
     internal static void Attach(Window window)
     {
+        window.Icon ??= BitmapFrame.Create(new Uri("pack://application:,,,/Assets/NashiIcon.png"));
         window.SetResourceReference(Window.BackgroundProperty,"Paper");window.SetResourceReference(Window.ForegroundProperty,"Ink");
         window.Loaded+=(_,_)=>{if(window.WindowStyle!=WindowStyle.None)DesktopGeometry.FitToWorkArea(window);L10n.Bind(window,Window.TitleProperty,window.Title);L10n.Attach(window);};
         window.SourceInitialized+=(_,_)=>ApplyTitleBar(window);
