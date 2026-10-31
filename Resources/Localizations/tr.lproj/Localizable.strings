@@ -6,6 +6,7 @@
 "%@  Tools" = "%@  Araçlar";
 "%@ QR code found." = "%@ QR kodu bulundu.";
 "%@ QR codes found." = "%@ QR kodu bulundu.";
+"%@ areas selected" = "%@ alan seçildi";
 "%@ files" = "%@ dosya";
 "%@ files ready." = "%@ dosya hazır.";
 "%@ files, ready to go." = "%@ dosya hazır.";
@@ -17,11 +18,16 @@
 "%@ ways to change it" = "%@ farklı biçime çevir";
 "%@ · Nashi" = "%@ · Nashi";
 "%@ · Original stays safe" = "%@ · Orijinal dosyan güvende";
+"%@: The crop rectangle must fit completely inside the %@ × %@ pixel image." = "%@: Kırpma alanı %@ × %@ piksellik görselin tamamen içinde kalmalı.";
+"%@: The crop rectangle must fit completely inside the %@ × %lld pixel image." = "%@: Kırpma alanı %@ × %lld piksellik görselin tamamen içinde kalmalı.";
+"%@: The crop rectangle must fit completely inside the %lld × %@ pixel image." = "%@: Kırpma alanı %lld × %@ piksellik görselin tamamen içinde kalmalı.";
+"%@: The crop rectangle must fit completely inside the %lld × %lld pixel image." = "%@: Kırpma alanı %lld × %lld piksellik görselin tamamen içinde kalmalı.";
 "%lld  Convert" = "%lld  Dönüştür";
 "%lld  File actions" = "%lld  Dosya işlemleri";
 "%lld  Tools" = "%lld  Araçlar";
 "%lld QR code found." = "%lld QR kodu bulundu.";
 "%lld QR codes found." = "%lld QR kodu bulundu.";
+"%lld areas selected" = "%lld alan seçildi";
 "%lld files" = "%lld dosya";
 "%lld files ready." = "%lld dosya hazır.";
 "%lld files, ready to go." = "%lld dosya hazır.";
@@ -33,8 +39,14 @@
 "%lld ways to change it" = "%lld farklı biçime çevir";
 "%lld · Nashi" = "%lld · Nashi";
 "%lld · Original stays safe" = "%lld · Orijinal dosyan güvende";
+"%lld: The crop rectangle must fit completely inside the %@ × %@ pixel image." = "%lld: Kırpma alanı %@ × %@ piksellik görselin tamamen içinde kalmalı.";
+"%lld: The crop rectangle must fit completely inside the %@ × %lld pixel image." = "%lld: Kırpma alanı %@ × %lld piksellik görselin tamamen içinde kalmalı.";
+"%lld: The crop rectangle must fit completely inside the %lld × %@ pixel image." = "%lld: Kırpma alanı %lld × %@ piksellik görselin tamamen içinde kalmalı.";
+"%lld: The crop rectangle must fit completely inside the %lld × %lld pixel image." = "%lld: Kırpma alanı %lld × %lld piksellik görselin tamamen içinde kalmalı.";
+"1 AREA SELECTED" = "1 ALAN SEÇİLDİ";
 "1 FILE READY." = "1 DOSYA HAZIR.";
 "1 ITEM" = "1 ÖĞE";
+"1 area selected" = "1 alan seçildi";
 "1 file ready." = "1 dosya hazır.";
 "1 item" = "1 öğe";
 "1/3 LEFT · MIDDLE · RIGHT   /   1/2 LEFT · RIGHT   /   2/3 LEFT · RIGHT" = "1/3 SOL · ORTA · SAĞ   /   1/2 SOL · SAĞ   /   2/3 SOL · SAĞ";
@@ -138,6 +150,7 @@
 "ANNOTATE PHOTO" = "FOTOĞRAFI İŞARETLE";
 "ANNOTATE PHOTO · NASHI" = "FOTOĞRAFI İŞARETLE · NASHI";
 "ANNOTATE · NASHI" = "İŞARETLE · NASHI";
+"ANNOTATION COORDINATES MUST BE FINITE." = "İŞARET KOORDİNATLARI SONLU OLMALI.";
 "ANNOTATION TEXT" = "İŞARET METNİ";
 "ANOTHER TASK IS RUNNING. YOUR LINK IS READY WHEN IT FINISHES." = "BAŞKA BİR İŞLEM SÜRÜYOR. İŞLEM BİTTİĞİNDE BAĞLANTIN HAZIR OLACAK.";
 "APPEARANCE" = "GÖRÜNÜM";
@@ -167,6 +180,7 @@
 "AUDIO VISUALIZER" = "SESİ GÖRSELLEŞTİR";
 "AUDIO · MP3" = "SES · MP3";
 "AUTHORIZE SAVED TOKEN…" = "KAYITLI TOKENA İZİN VER…";
+"AUTO" = "OTOMATİK";
 "AVAILABLE FILES SELECTED. SOME FILES HAVE MOVED OR WERE DELETED." = "MEVCUT DOSYALAR SEÇİLDİ. BAZI DOSYALAR TAŞINMIŞ VEYA SİLİNMİŞ.";
 "About" = "Hakkında";
 "Accessibility" = "Erişilebilirlik";
@@ -210,6 +224,7 @@
 "Annotate Photo" = "Fotoğrafı İşaretle";
 "Annotate Photo · Nashi" = "Fotoğrafı İşaretle · Nashi";
 "Annotate · Nashi" = "İşaretle · Nashi";
+"Annotation coordinates must be finite." = "İşaret koordinatları sonlu olmalı.";
 "Annotation text" = "İşaret metni";
 "Another task is running. Your link is ready when it finishes." = "Başka bir işlem sürüyor. İşlem bittiğinde bağlantın hazır olacak.";
 "Appearance" = "Görünüm";
@@ -241,6 +256,7 @@
 "Audio to Video" = "Sesten Video Oluştur";
 "Audio · MP3" = "Ses · MP3";
 "Authorize Saved Token…" = "Kayıtlı Tokena İzin Ver…";
+"Auto" = "Otomatik";
 "Available files selected. Some files have moved or were deleted." = "Mevcut dosyalar seçildi. Bazı dosyalar taşınmış veya silinmiş.";
 "BACK" = "GERİ";
 "BACKGROUND" = "ARKA PLAN";
@@ -289,6 +305,7 @@
 "CANCELLING…" = "İPTAL EDİLİYOR…";
 "CANNOT START UPDATE INSTALLER." = "GÜNCELLEME YÜKLEYİCİSİ BAŞLATILAMADI.";
 "CANVAS" = "TUVAL";
+"CANVAS ASPECT RATIO MUST BE POSITIVE." = "TUVAL EN BOY ORANI POZİTİF OLMALI.";
 "CANVAS HEIGHT" = "TUVAL YÜKSEKLİĞİ";
 "CANVAS WIDTH" = "TUVAL GENİŞLİĞİ";
 "CHANGE SPEED" = "HIZI DEĞİŞTİR";
@@ -323,6 +340,7 @@
 "CHOOSE A PDF WITH 1 TO 1,000 PAGES." = "1 İLE 1.000 SAYFA ARASINDA BİR PDF SEÇ.";
 "CHOOSE A PLAIN OUTPUT FILENAME." = "SADE BİR ÇIKTI DOSYA ADI SEÇ.";
 "CHOOSE A POSITIVE SIZE OR A REDUCTION BELOW 100%. ZERO USES AUTOMATIC COMPRESSION." = "POZİTİF BİR BOYUT VEYA %100'ÜN ALTINDA BİR KÜÇÜLTME SEÇ. SIFIR, OTOMATİK SIKIŞTIRMA KULLANIR.";
+"CHOOSE A POSITIVE TARGET FILE SIZE." = "POZİTİF BİR HEDEF DOSYA BOYUTU SEÇ.";
 "CHOOSE A POSITIVE TARGET SIZE OR A REDUCTION BETWEEN 0 AND 100%." = "POZİTİF BİR HEDEF BOYUT VEYA %0 İLE %100 ARASINDA BİR KÜÇÜLTME SEÇ.";
 "CHOOSE A RECTANGLE INSIDE THE VIDEO." = "VİDEONUN İÇİNDE KALAN BİR DİKDÖRTGEN SEÇ.";
 "CHOOSE A SUPPORTED MAXIMUM VIDEO HEIGHT." = "DESTEKLENEN BİR MAKSİMUM VİDEO YÜKSEKLİĞİ SEÇ.";
@@ -330,13 +348,17 @@
 "CHOOSE A VALID RANGE FIRST." = "ÖNCE GEÇERLİ BİR ARALIK SEÇ.";
 "CHOOSE A VALID RANGE." = "GEÇERLİ BİR ARALIK SEÇ.";
 "CHOOSE A VALID TIME RANGE." = "GEÇERLİ BİR ZAMAN ARALIĞI SEÇ.";
+"CHOOSE AN ANNOTATION TOOL." = "BİR İŞARET ARACI SEÇ.";
 "CHOOSE AN EXISTING MEDIA FILE." = "VAR OLAN BİR MEDYA DOSYASI SEÇ.";
+"CHOOSE AN IMAGE" = "BİR GÖRSEL SEÇ";
+"CHOOSE AN IMAGE FOR THE ANNOTATION." = "İŞARET İÇİN BİR GÖRSEL SEÇ.";
 "CHOOSE AN IMAGE." = "BİR GÖRSEL SEÇ.";
 "CHOOSE AN INPUT FORMAT TO SEE ITS AVAILABLE OUTPUTS." = "KULLANILABİLİR ÇIKTILARINI GÖRMEK İÇİN BİR GİRDİ BİÇİMİ SEÇ.";
 "CHOOSE AN INSTAGRAM PHOTO POST LINK." = "BİR INSTAGRAM FOTOĞRAF GÖNDERİSİ BAĞLANTISI SEÇ.";
 "CHOOSE ANNOTATION IMAGE…" = "İŞARET GÖRSELİ SEÇ…";
 "CHOOSE AT LEAST ONE FRAME." = "EN AZ BİR KARE SEÇ.";
 "CHOOSE AT LEAST ONE IMAGE." = "EN AZ BİR GÖRSEL SEÇ.";
+"CHOOSE AT LEAST TWO IMAGES FOR A COLLAGE." = "KOLAJ İÇİN EN AZ İKİ GÖRSEL SEÇ.";
 "CHOOSE AT LEAST TWO PDFS." = "EN AZ İKİ PDF SEÇ.";
 "CHOOSE AT LEAST TWO VIDEOS." = "EN AZ İKİ VİDEO SEÇ.";
 "CHOOSE AT MOST 10,000 CLIPS." = "EN FAZLA 10.000 KLİP SEÇ.";
@@ -383,11 +405,15 @@
 "CLEAR" = "TEMİZLE";
 "CLEAR FLOAT" = "YÜZEN PENCEREYİ TEMİZLE";
 "CLEAR SELECTION" = "SEÇİMİ TEMİZLE";
+"CLICK AN AREA TO SELECT IT, DRAG IT TO MOVE IT, AND PRESS DELETE TO REMOVE IT." = "BİR ALANI SEÇMEK İÇİN TIKLA, TAŞIMAK İÇİN SÜRÜKLE, KALDIRMAK İÇİN DELETE'E BAS.";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "PANO MEŞGUL. TEKRAR DENE.";
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "PANO MEŞGUL. YENİDEN YAPIŞTIRMAYI DENE.";
 "CLOSE" = "KAPAT";
 "CLOSE FLOAT WITHOUT DELETING FILES" = "DOSYALARI SİLMEDEN FLOAT’I KAPAT";
 "CLOSE WINDOW" = "PENCEREYİ KAPAT";
+"COLLAGE DIMENSIONS MUST BE BETWEEN 1 AND 32,000 PIXELS." = "KOLAJ BOYUTLARI 1 İLE 32.000 PİKSEL ARASINDA OLMALI.";
+"COLLAGE PADDING LEAVES NO SPACE FOR IMAGES." = "KOLAJ KENAR BOŞLUĞU GÖRSELLERE YER BIRAKMIYOR.";
+"COLLAGE RATIO AND CORNER RADIUS MUST BE VALID." = "KOLAJ ORANI VE KÖŞE YARIÇAPI GEÇERLİ OLMALI.";
 "COLLAPSE FLOAT" = "FLOAT’I DARALT";
 "COLOR" = "RENK";
 "COLUMN" = "SÜTUN";
@@ -440,8 +466,10 @@
 "CREATED" = "OLUŞTURULMA";
 "CROP" = "KIRP";
 "CROP AREA" = "KIRPMA ALANI";
+"CROP COORDINATES MUST BE FINITE." = "KIRPMA KOORDİNATLARI SONLU OLMALI.";
 "CROP IMAGE" = "GÖRSELİ KIRP";
 "CROP IMAGE · NASHI" = "GÖRSELİ KIRP · NASHI";
+"CROP ORIGINS MUST BE NONNEGATIVE AND DIMENSIONS AT LEAST 1 × 1 PIXEL." = "KIRPMA BAŞLANGICI NEGATİF OLAMAZ VE BOYUTLAR EN AZ 1 × 1 PİKSEL OLMALI.";
 "CROP VIDEO" = "VİDEOYU KIRP";
 "CTRL+O  CHOOSE FILES\nCTRL+V  PASTE FILES, TEXT, AN IMAGE OR LINK\nCTRL+SPACE / ENTER  OPEN TOOLS\nCTRL+1 / CTRL+2  HOME / LIBRARY\nCTRL+F  FIND IN LIBRARY\nCTRL+SHIFT+D  USE A COPIED DOWNLOAD LINK\nCTRL+U  CHECK FOR UPDATES\n\nWHEEL: ARROWS / TAB TO CHOOSE, ENTER TO OPEN, ESC TO CLOSE\nMEDIA: SPACE PLAY/PAUSE, ←/→ 1 SECOND, SHIFT+←/→ 1/30S, I/O SET RANGE\nCROP: DRAG, SHIFT LOCKS RATIO, ENTER SAVES\nEDITING TEXT: NORMAL PASTE AND ARROW KEYS ARE PRESERVED." = "CTRL+O  DOSYA SEÇ\nCTRL+V  DOSYA, METİN, GÖRSEL VEYA BAĞLANTI YAPIŞTIR\nCTRL+SPACE / ENTER  ARAÇLARI AÇ\nCTRL+1 / CTRL+2  ANA SAYFA / KİTAPLIK\nCTRL+F  KİTAPLIKTA ARA\nCTRL+SHIFT+D  KOPYALANAN İNDİRME BAĞLANTISINI KULLAN\nCTRL+U  GÜNCELLEMELERİ DENETLE\n\nÇARK: SEÇMEK İÇİN OKLAR / TAB, AÇMAK İÇİN ENTER, KAPATMAK İÇİN ESC\nMEDYA: SPACE OYNAT/DURAKLAT, ←/→ 1 SANİYE, SHIFT+←/→ 1/30 SN, I/O ARALIĞI AYARLA\nKIRPMA: SÜRÜKLE, SHIFT ORANI KİLİTLER, ENTER KAYDEDER\nMETİN DÜZENLERKEN: NORMAL YAPIŞTIRMA VE OK TUŞLARI OLDUĞU GİBİ ÇALIŞIR.";
 "CTRL+O  CHOOSE FILES\nCTRL+V  PASTE FILES, TEXT, AN IMAGE OR LINK\nCTRL+SPACE / ENTER  OPEN TOOLS AND CONVERSIONS\nDELETE  REMOVE SELECTED FILES FROM NASHI\nCTRL+1 / CTRL+2  HOME / LIBRARY\nCTRL+F  FIND IN LIBRARY\nCTRL+SHIFT+D  USE A COPIED DOWNLOAD LINK\nCTRL+U  CHECK FOR UPDATES\n\nWHEEL: ARROWS / TAB TO CHOOSE, ENTER TO OPEN, ESC TO CLOSE\nMEDIA: SPACE PLAY/PAUSE, ←/→ 1 SECOND, SHIFT+←/→ 1/30S, I/O SET RANGE\nCROP: DRAG, SHIFT LOCKS RATIO, ENTER SAVES\nEDITING TEXT: NORMAL PASTE AND ARROW KEYS ARE PRESERVED." = "CTRL+O  DOSYA SEÇ\nCTRL+V  DOSYA, METİN, GÖRSEL VEYA BAĞLANTI YAPIŞTIR\nCTRL+SPACE / ENTER  ARAÇLARI VE DÖNÜŞTÜRMELERİ AÇ\nDELETE  SEÇİLİ DOSYALARI NASHI LİSTESİNDEN KALDIR\nCTRL+1 / CTRL+2  ANA SAYFA / KİTAPLIK\nCTRL+F  KİTAPLIKTA ARA\nCTRL+SHIFT+D  KOPYALANAN İNDİRME BAĞLANTISINI KULLAN\nCTRL+U  GÜNCELLEMELERİ DENETLE\n\nÇARK: SEÇMEK İÇİN OKLAR / TAB, AÇMAK İÇİN ENTER, KAPATMAK İÇİN ESC\nMEDYA: SPACE OYNAT/DURAKLAT, ←/→ 1 SANİYE, SHIFT+←/→ 1/30 SN, I/O ARALIĞI AYARLA\nKIRPMA: SÜRÜKLE, SHIFT ORANI KİLİTLER, ENTER KAYDEDER\nMETİN DÜZENLERKEN: NORMAL YAPIŞTIRMA VE OK TUŞLARI OLDUĞU GİBİ ÇALIŞIR.";
@@ -457,6 +485,7 @@
 "Cancelling…" = "İptal ediliyor…";
 "Cannot start update installer." = "Güncelleme yükleyicisi başlatılamadı.";
 "Canvas" = "Tuval";
+"Canvas aspect ratio must be positive." = "Tuval en boy oranı pozitif olmalı.";
 "Canvas height" = "Tuval yüksekliği";
 "Canvas width" = "Tuval genişliği";
 "Change Speed" = "Hızı Değiştir";
@@ -502,6 +531,7 @@
 "Choose a nonempty image." = "Boş olmayan bir görsel seç.";
 "Choose a plain output filename." = "Sade bir çıktı dosya adı seç.";
 "Choose a positive size or a reduction below 100%. Zero uses automatic compression." = "Pozitif bir boyut veya %100'ün altında bir küçültme seç. Sıfır, otomatik sıkıştırma kullanır.";
+"Choose a positive target file size." = "Pozitif bir hedef dosya boyutu seç.";
 "Choose a positive target size or a reduction between 0 and 100%." = "Pozitif bir hedef boyut veya %0 ile %100 arasında bir küçültme seç.";
 "Choose a rectangle inside the video." = "Videonun içinde kalan bir dikdörtgen seç.";
 "Choose a supported maximum video height." = "Desteklenen bir maksimum video yüksekliği seç.";
@@ -510,13 +540,17 @@
 "Choose a valid range." = "Geçerli bir aralık seç.";
 "Choose a valid time range." = "Geçerli bir zaman aralığı seç.";
 "Choose an Instagram photo post link." = "Bir Instagram fotoğraf gönderisi bağlantısı seç.";
+"Choose an annotation tool." = "Bir işaret aracı seç.";
 "Choose an existing media file." = "Var olan bir medya dosyası seç.";
+"Choose an image" = "Bir görsel seç";
+"Choose an image for the annotation." = "İşaret için bir görsel seç.";
 "Choose an image." = "Bir görsel seç.";
 "Choose an input format to see its available outputs." = "Kullanılabilir çıktılarını görmek için bir girdi biçimi seç.";
 "Choose annotation image…" = "İşaret görseli seç…";
 "Choose at least one frame." = "En az bir kare seç.";
 "Choose at least one image." = "En az bir görsel seç.";
 "Choose at least two PDFs." = "En az iki PDF seç.";
+"Choose at least two images for a collage." = "Kolaj için en az iki görsel seç.";
 "Choose at least two videos." = "En az iki video seç.";
 "Choose at most 10,000 clips." = "En fazla 10.000 klip seç.";
 "Choose background image…" = "Arka plan görseli seç…";
@@ -553,6 +587,7 @@
 "Clear" = "Temizle";
 "Clear Float" = "Yüzen Pencereyi Temizle";
 "Clear Selection" = "Seçimi Temizle";
+"Click an area to select it, drag it to move it, and press Delete to remove it." = "Bir alanı seçmek için tıkla, taşımak için sürükle, kaldırmak için Delete'e bas.";
 "Clip %@" = "Klip %@";
 "Clip %lld" = "Klip %lld";
 "Clipboard is busy. Try Paste again." = "Pano meşgul. Yeniden yapıştırmayı dene.";
@@ -560,6 +595,9 @@
 "Close" = "Kapat";
 "Close Float without deleting files" = "Dosyaları silmeden Float’ı kapat";
 "Close Window" = "Pencereyi Kapat";
+"Collage dimensions must be between 1 and 32,000 pixels." = "Kolaj boyutları 1 ile 32.000 piksel arasında olmalı.";
+"Collage padding leaves no space for images." = "Kolaj kenar boşluğu görsellere yer bırakmıyor.";
+"Collage ratio and corner radius must be valid." = "Kolaj oranı ve köşe yarıçapı geçerli olmalı.";
 "Collapse Float" = "Float’ı daralt";
 "Color" = "Renk";
 "Column" = "Sütun";
@@ -635,6 +673,8 @@
 "Crop Image · Nashi" = "Görseli Kırp · Nashi";
 "Crop Video" = "Videoyu Kırp";
 "Crop area" = "Kırpma alanı";
+"Crop coordinates must be finite." = "Kırpma koordinatları sonlu olmalı.";
+"Crop origins must be nonnegative and dimensions at least 1 × 1 pixel." = "Kırpma başlangıcı negatif olamaz ve boyutlar en az 1 × 1 piksel olmalı.";
 "Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved." = "Ctrl+O  Dosya seç\nCtrl+V  Dosya, metin, görsel veya bağlantı yapıştır\nCtrl+Space / Enter  Araçları aç\nCtrl+1 / Ctrl+2  Ana Sayfa / Kitaplık\nCtrl+F  Kitaplıkta ara\nCtrl+Shift+D  Kopyalanan indirme bağlantısını kullan\nCtrl+U  Güncellemeleri denetle\n\nÇark: seçmek için oklar / Tab, açmak için Enter, kapatmak için Esc\nMedya: Space oynat/duraklat, ←/→ 1 saniye, Shift+←/→ 1/30 sn, I/O aralığı ayarla\nKırpma: sürükle, Shift oranı kilitler, Enter kaydeder\nMetin düzenlerken: normal yapıştırma ve ok tuşları olduğu gibi çalışır.";
 "Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools and conversions\nDelete  Remove selected files from Nashi\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved." = "Ctrl+O  Dosya seç\nCtrl+V  Dosya, metin, görsel veya bağlantı yapıştır\nCtrl+Space / Enter  Araçları ve dönüştürmeleri aç\nDelete  Seçili dosyaları Nashi listesinden kaldır\nCtrl+1 / Ctrl+2  Ana Sayfa / Kitaplık\nCtrl+F  Kitaplıkta ara\nCtrl+Shift+D  Kopyalanan indirme bağlantısını kullan\nCtrl+U  Güncellemeleri denetle\n\nÇark: seçmek için oklar / Tab, açmak için Enter, kapatmak için Esc\nMedya: Space oynat/duraklat, ←/→ 1 saniye, Shift+←/→ 1/30 sn, I/O aralığı ayarla\nKırpma: sürükle, Shift oranı kilitler, Enter kaydeder\nMetin düzenlerken: normal yapıştırma ve ok tuşları olduğu gibi çalışır.";
 "Ctrl+Shift+D  Use a copied link  ·  Public, downloadable media" = "Ctrl+Shift+D  Kopyalanan bağlantıyı kullan  ·  Herkese açık, indirilebilir medya";
@@ -646,6 +686,7 @@
 "DEGREES" = "DERECE";
 "DEHAZE" = "PUS GİDERME";
 "DELETE" = "SİL";
+"DELETE AREA" = "ALANI SİL";
 "DELETE CLIP" = "KLİBİ SİL";
 "DETACH" = "AYIR";
 "DETAIL" = "AYRINTI";
@@ -692,6 +733,7 @@
 "DRAG AN AREA FIRST." = "ÖNCE BİR ALAN SÜRÜKLE.";
 "DRAG AN EXISTING ANNOTATION TO MOVE IT; DRAG ITS HANDLES TO RESIZE. TURN OFF SELECT / MOVE TO DRAW." = "BİR İŞARETİ TAŞIMAK İÇİN İÇİNİ, BOYUTLANDIRMAK İÇİN TUTAMAĞINI SÜRÜKLE. ÇİZMEK İÇİN SEÇ / TAŞI'YI KAPAT.";
 "DRAG INSIDE TO MOVE. DRAG NEAR A CORNER TO RESIZE. DRAG OUTSIDE TO START A NEW SELECTION." = "TAŞIMAK İÇİN ALANIN İÇİNİ, BOYUTLANDIRMAK İÇİN KÖŞEYİ SÜRÜKLE. YENİ SEÇİM İÇİN ALANIN DIŞINDA SÜRÜKLE.";
+"DRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE." = "TAŞIMAK İÇİN ALANIN İÇİNİ, BOYUTLANDIRMAK İÇİN TUTAMAĞI SÜRÜKLE.";
 "DRAG ON THE PREVIEW TO ADD AN AREA. EACH AREA IS SAVED INTO THE NEW COPY." = "ALAN EKLEMEK İÇİN ÖNİZLEMEDE SÜRÜKLE. HER ALAN YENİ KOPYAYA İŞLENİR.";
 "DRAG SHORTCUTS" = "SÜRÜKLEME KISAYOLLARI";
 "DRAG THE STACK TO CARRY ALL FILES. DRAG THE PAPERCLIP TO MOVE FLOAT." = "TÜM DOSYALARI TAŞIMAK İÇİN YIĞINI, FLOAT’IN YERİNİ DEĞİŞTİRMEK İÇİN ATACI SÜRÜKLEYİN.";
@@ -712,6 +754,7 @@
 "Degrees" = "Derece";
 "Dehaze" = "Pus giderme";
 "Delete" = "Sil";
+"Delete Area" = "Alanı Sil";
 "Delete Clip" = "Klibi Sil";
 "Detach" = "Ayır";
 "Detail" = "Ayrıntı";
@@ -767,6 +810,7 @@
 "Drag an area first." = "Önce bir alan sürükle.";
 "Drag an existing annotation to move it; drag its handles to resize. Turn off Select / Move to draw." = "Bir işareti taşımak için içini, boyutlandırmak için tutamağını sürükle. Çizmek için Seç / Taşı'yı kapat.";
 "Drag inside to move. Drag near a corner to resize. Drag outside to start a new selection." = "Taşımak için alanın içini, boyutlandırmak için köşeyi sürükle. Yeni seçim için alanın dışında sürükle.";
+"Drag inside to move; drag a handle to resize." = "Taşımak için alanın içini, boyutlandırmak için tutamağı sürükle.";
 "Drag on the preview to add an area. Each area is saved into the new copy." = "Alan eklemek için önizlemede sürükle. Her alan yeni kopyaya işlenir.";
 "Drag shortcuts" = "Sürükleme kısayolları";
 "Drag the stack to carry all files. Drag the paperclip to move Float." = "Tüm dosyaları taşımak için yığını, Float’ın yerini değiştirmek için atacı sürükleyin.";
@@ -797,6 +841,7 @@
 "ENCODED PIXELS, COLOR PROFILE AND DISPLAY ORIENTATION ARE PRESERVED." = "KODLANMIŞ PİKSELLER, RENK PROFİLİ VE GÖRÜNTÜ YÖNÜ KORUNUR.";
 "END" = "BİTİŞ";
 "ENTER A FINITE NUMBER." = "GEÇERLİ BİR SAYI GİR.";
+"ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%." = "%0'DAN BÜYÜK VE %100'DEN KÜÇÜK BİR AZALTMA GİR.";
 "ENTER PAGE NUMBERS WITHIN THIS PDF, IN THE DESIRED ORDER." = "BU PDF'DEKİ SAYFA NUMARALARINI İSTEDİĞİN SIRAYLA GİR.";
 "EPUB LAYOUT" = "EPUB DÜZENİ";
 "EPUB layout" = "EPUB düzeni";
@@ -826,10 +871,15 @@
 "Encoded pixels, color profile and display orientation are preserved." = "Kodlanmış pikseller, renk profili ve görüntü yönü korunur.";
 "End" = "Bitiş";
 "Enter a finite number." = "Geçerli bir sayı gir.";
+"Enter a reduction greater than 0% and less than 100%." = "%0'dan büyük ve %100'den küçük bir azaltma gir.";
 "Enter a valid number for %@." = "%@ için geçerli bir sayı gir.";
 "Enter a valid number for %lld." = "%lld için geçerli bir sayı gir.";
 "Enter page numbers within this PDF, in the desired order." = "Bu PDF'deki sayfa numaralarını istediğin sırayla gir.";
 "Esc to close" = "Kapatmak için Esc";
+"Every redaction area must have positive dimensions and fit completely inside the %@ × %@ pixel image. Adjust the areas for this image and try again." = "Her sansür alanının boyutları pozitif olmalı ve %@ × %@ piksellik görselin tamamen içinde kalmalı. Bu görsel için alanları ayarlayıp yeniden dene.";
+"Every redaction area must have positive dimensions and fit completely inside the %@ × %lld pixel image. Adjust the areas for this image and try again." = "Her sansür alanının boyutları pozitif olmalı ve %@ × %lld piksellik görselin tamamen içinde kalmalı. Bu görsel için alanları ayarlayıp yeniden dene.";
+"Every redaction area must have positive dimensions and fit completely inside the %lld × %@ pixel image. Adjust the areas for this image and try again." = "Her sansür alanının boyutları pozitif olmalı ve %lld × %@ piksellik görselin tamamen içinde kalmalı. Bu görsel için alanları ayarlayıp yeniden dene.";
+"Every redaction area must have positive dimensions and fit completely inside the %lld × %lld pixel image. Adjust the areas for this image and try again." = "Her sansür alanının boyutları pozitif olmalı ve %lld × %lld piksellik görselin tamamen içinde kalmalı. Bu görsel için alanları ayarlayıp yeniden dene.";
 "Everything Nashi needs for audio, video and documents is in place." = "Nashi'nin ses, video ve belgeler için ihtiyaç duyduğu her şey hazır.";
 "Everything has a next form." = "Her dosyanın yeni bir hâli var.";
 "Expand Float" = "Float’ı genişlet";
@@ -902,7 +952,9 @@
 "FORMAT PREFERENCES" = "BİÇİM TERCİHLERİ";
 "FORMATS" = "BİÇİMLER";
 "FRAME IMAGE" = "ÇERÇEVE EKLE";
+"FRAME PADDING OR IMAGE SCALE IS TOO LARGE." = "ÇERÇEVE BOŞLUĞU VEYA GÖRSEL ÖLÇEĞİ ÇOK BÜYÜK.";
 "FRAME RATE" = "KARE HIZI";
+"FRAME SETTINGS MUST BE FINITE, AND IMAGE SCALE MUST BE POSITIVE." = "ÇERÇEVE AYARLARI SONLU, GÖRSEL ÖLÇEĞİ POZİTİF OLMALI.";
 "FRAME TIMING AND REPEAT COUNT ARE PRESERVED." = "KARE SÜRELERİ VE TEKRAR SAYISI KORUNUR.";
 "FREE" = "SERBEST";
 "FREEHAND" = "SERBEST ÇİZİM";
@@ -974,7 +1026,9 @@
 "Format preferences" = "Biçim tercihleri";
 "Formats" = "Biçimler";
 "Frame Image" = "Çerçeve Ekle";
+"Frame padding or image scale is too large." = "Çerçeve boşluğu veya görsel ölçeği çok büyük.";
 "Frame rate" = "Kare hızı";
+"Frame settings must be finite, and image scale must be positive." = "Çerçeve ayarları sonlu, görsel ölçeği pozitif olmalı.";
 "Frame timing and repeat count are preserved." = "Kare süreleri ve tekrar sayısı korunur.";
 "Free" = "Serbest";
 "Freehand" = "Serbest çizim";
@@ -1035,6 +1089,7 @@
 "IMAGE COMPRESSION" = "GÖRSEL SIKIŞTIRMA";
 "IMAGE EXCEEDS 200 MB." = "GÖRSEL 200 MB'I AŞIYOR.";
 "IMAGE FIT" = "GÖRSEL YERLEŞİMİ";
+"IMAGE ORDER MUST INCLUDE EVERY IMAGE EXACTLY ONCE." = "GÖRSEL SIRASI HER GÖRSELİ TAM BİR KEZ İÇERMELİ.";
 "IMAGE SCALE" = "GÖRSEL ÖLÇEĞİ";
 "IMAGE SIZE" = "GÖRSEL BOYUTU";
 "IMAGES" = "GÖRSELLER";
@@ -1065,6 +1120,7 @@
 "Image compression" = "Görsel sıkıştırma";
 "Image exceeds 200 MB." = "Görsel 200 MB'ı aşıyor.";
 "Image fit" = "Görsel yerleşimi";
+"Image order must include every image exactly once." = "Görsel sırası her görseli tam bir kez içermeli.";
 "Image scale" = "Görsel ölçeği";
 "Image size" = "Görsel boyutu";
 "Images" = "Görseller";
@@ -1182,6 +1238,7 @@
 "MACOS REDUCE MOTION IS ON. NASHI KEEPS MOTION OFF." = "MACOS HAREKETİ AZALT AÇIK. NASHI ANİMASYONLARI KAPALI TUTAR.";
 "MADE FOR LINUX" = "LİNUX İÇİN YAPILDI";
 "MADE FOR YOUR MAC" = "MAC'İN İÇİN TASARLANDI";
+"MAGNIFICATION MUST BE POSITIVE." = "BÜYÜTME POZİTİF OLMALI.";
 "MAGNIFIER" = "BÜYÜTEÇ";
 "MAKE ALL PAGES THE SAME WIDTH" = "TÜM SAYFALARI AYNI GENİŞLİKTE YAP";
 "MAKE EPUB" = "EPUB OLUŞTUR";
@@ -1228,6 +1285,7 @@
 "MUTE VIDEO · NASHI" = "VİDEOYU SESSİZE AL · NASHI";
 "Made for Linux" = "Linux için yapıldı";
 "Made for your Mac" = "Mac'in için tasarlandı";
+"Magnification must be positive." = "Büyütme pozitif olmalı.";
 "Magnifier" = "Büyüteç";
 "Make EPUB" = "EPUB Oluştur";
 "Make all pages the same width" = "Tüm sayfaları aynı genişlikte yap";
@@ -1501,6 +1559,7 @@
 "PORTRAIT" = "DİKEY";
 "PORTRAIT · 4:5" = "DİKEY · 4:5";
 "PORTRAIT · 9:16" = "DİKEY · 9:16";
+"POSITION" = "KONUM";
 "POSITION X" = "X KONUMU";
 "POSITION Y" = "Y KONUMU";
 "PREPARING A LOCAL PREVIEW…" = "YEREL ÖNİZLEME HAZIRLANIYOR…";
@@ -1561,6 +1620,7 @@
 "Portrait" = "Dikey";
 "Portrait · 4:5" = "Dikey · 4:5";
 "Portrait · 9:16" = "Dikey · 9:16";
+"Position" = "Konum";
 "Position X" = "X konumu";
 "Position Y" = "Y konumu";
 "Preparing %@…" = "%@ hazırlanıyor…";
@@ -1619,7 +1679,9 @@
 "REDACT IMAGE" = "GÖRSELİ SANSÜRLE";
 "REDACT PHOTO" = "FOTOĞRAFI SANSÜRLE";
 "REDACT VIDEO" = "VİDEOYU SANSÜRLE";
+"REDACTION STRENGTH MUST BE FINITE." = "SANSÜR GÜCÜ SONLU OLMALI.";
 "REDO" = "YİNELE";
+"REDUCE COLLAGE SPACING OR INCREASE THE CANVAS." = "KOLAJ ARALIĞINI AZALT VEYA TUVALİ BÜYÜT.";
 "REDUCE PADDING OR SPACING TO FIT THE IMAGES." = "GÖRSELLERİN SIĞMASI İÇİN KENAR BOŞLUĞUNU VEYA ARALIĞI AZALT.";
 "REDUCE SPACING TO FIT THE FEATURED LAYOUT." = "ÖNE ÇIKAN DÜZENE SIĞMASI İÇİN ARALIĞI AZALT.";
 "REDUCTION (%; 0 = AUTO)" = "KÜÇÜLTME (%; 0 = OTOMATİK)";
@@ -1649,6 +1711,7 @@
 "RESIZE IMAGE" = "GÖRSELİ BOYUTLANDIR";
 "RESTORE CLIPS" = "KLİPLERİ GERİ GETİR";
 "RESTORE DEFAULTS" = "VARSAYILANLARA DÖN";
+"RESULT" = "SONUÇ";
 "RETRY" = "YENİDEN DENE";
 "REVEAL FINISHED FILES IN EXPLORER" = "TAMAMLANAN DOSYALARI DOSYA GEZGİNİ'NDE GÖSTER";
 "REVEAL FINISHED FILES IN FINDER" = "TAMAMLANAN DOSYALARI FINDER'DA GÖSTER";
@@ -1681,7 +1744,9 @@
 "Redact Image" = "Görseli Sansürle";
 "Redact Photo" = "Fotoğrafı Sansürle";
 "Redact Video" = "Videoyu Sansürle";
+"Redaction strength must be finite." = "Sansür gücü sonlu olmalı.";
 "Redo" = "Yinele";
+"Reduce collage spacing or increase the canvas." = "Kolaj aralığını azalt veya tuvali büyüt.";
 "Reduce padding or spacing to fit the images." = "Görsellerin sığması için kenar boşluğunu veya aralığı azalt.";
 "Reduce spacing to fit the featured layout." = "Öne çıkan düzene sığması için aralığı azalt.";
 "Reduction (%; 0 = auto)" = "Küçültme (%; 0 = otomatik)";
@@ -1720,6 +1785,7 @@
 "Restore Clips" = "Klipleri Geri Getir";
 "Restore Defaults" = "Varsayılanlara Dön";
 "Restore defaults" = "Varsayılanlara dön";
+"Result" = "Sonuç";
 "Retry" = "Yeniden dene";
 "Reveal finished files in Explorer" = "Tamamlanan dosyaları Dosya Gezgini'nde göster";
 "Reveal finished files in Finder" = "Tamamlanan dosyaları Finder'da göster";
@@ -1818,6 +1884,7 @@
 "SHARE…" = "PAYLAŞ…";
 "SHARPEN" = "KESKİNLEŞTİRME";
 "SHARPNESS" = "KESKİNLİK";
+"SHIFT LOCKS THE RATIO · RETURN CROPS" = "SHIFT ORANI KİLİTLER · ENTER KIRPAR";
 "SHIFT LOCKS THE RATIO · RETURN CROPS\nDRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE." = "SHIFT ORANI KİLİTLER · ENTER KIRPAR\nTAŞIMAK İÇİN ALANIN İÇİNİ, BOYUTLANDIRMAK İÇİN TUTAMAĞI SÜRÜKLE.";
 "SHOW IN EXPLORER" = "DOSYA GEZGİNİ'NDE GÖSTER";
 "SHOW IN FINDER" = "FINDER'DA GÖSTER";
@@ -1962,6 +2029,7 @@
 "Share…" = "Paylaş…";
 "Sharpen" = "Keskinleştirme";
 "Sharpness" = "Keskinlik";
+"Shift locks the ratio · Return crops" = "Shift oranı kilitler · Enter kırpar";
 "Shift locks the ratio · Return crops\nDrag inside to move; drag a handle to resize." = "Shift oranı kilitler · Enter kırpar\nTaşımak için alanın içini, boyutlandırmak için tutamağı sürükle.";
 "Show Nashi in Finder" = "Nashi'yi Finder'da Göster";
 "Show Original" = "Orijinali Göster";
@@ -2041,10 +2109,12 @@
 "THE DOWNLOAD STOPPED RESPONDING. PLEASE TRY AGAIN." = "İNDİRME YANIT VERMİYOR. LÜTFEN TEKRAR DENE.";
 "THE DOWNLOADED FILE CONTAINS NO VIDEO." = "İNDİRİLEN DOSYADA VİDEO YOK.";
 "THE DOWNLOADED TOOLS ARE INCOMPLETE. PLEASE TRY SETUP AGAIN." = "İNDİRİLEN ARAÇLAR EKSİK. KURULUMU TEKRAR DENE.";
+"THE IMAGE COULD NOT BE READ." = "GÖRSEL OKUNAMADI.";
 "THE IMAGE DOWNLOAD ENDED EARLY." = "GÖRSEL İNDİRMESİ ERKEN SONA ERDİ.";
 "THE IMAGE ORDER MUST INCLUDE EVERY IMAGE ONCE." = "GÖRSEL SIRASINDA HER GÖRSEL BİR KEZ YER ALMALI.";
 "THE MEDIA SERVER REDIRECTED TO AN INSECURE URL." = "MEDYA SUNUCUSU GÜVENLİ OLMAYAN BİR ADRESE YÖNLENDİRDİ.";
 "THE PROCESSING TOOL COULD NOT START." = "İŞLEME ARACI BAŞLATILAMADI.";
+"THE REQUESTED FILE SIZE COULD NOT BE REACHED. CHOOSE A LARGER TARGET." = "İSTENEN DOSYA BOYUTUNA ULAŞILAMADI. DAHA BÜYÜK BİR HEDEF SEÇ.";
 "THE REQUESTED IMAGE SIZE COULD NOT BE REACHED. CHOOSE A LARGER TARGET." = "İSTENEN GÖRSEL BOYUTUNA İNİLEMEDİ. DAHA BÜYÜK BİR HEDEF SEÇ.";
 "THE REQUESTED PDF SIZE COULD NOT BE REACHED. CHOOSE A LARGER TARGET." = "İSTENEN PDF BOYUTUNA İNİLEMEDİ. DAHA BÜYÜK BİR HEDEF SEÇ.";
 "THE SAME CONVERSION AND TOOL CATALOG AS MACOS." = "MACOS İLE AYNI DÖNÜŞTÜRME VE ARAÇ SEÇENEKLERİ.";
@@ -2122,6 +2192,10 @@
 "The archive entry leaves its destination." = "Arşivdeki bir öğe hedef klasörün dışına çıkıyor.";
 "The clipping exceeds 200 MB." = "Metin kırpıntısı 200 MB'ı aşıyor.";
 "The clipping has no readable text. Include its original resource fork/AppleDouble sidecar, or paste its text into Nashi." = "Metin kırpıntısında okunabilir metin yok. Orijinal resource fork/AppleDouble dosyasını da ekle veya metnini Nashi'ye yapıştır.";
+"The crop rectangle must fit completely inside the %@ × %@ pixel image." = "Kırpma alanı %@ × %@ piksellik görselin tamamen içinde kalmalı.";
+"The crop rectangle must fit completely inside the %@ × %lld pixel image." = "Kırpma alanı %@ × %lld piksellik görselin tamamen içinde kalmalı.";
+"The crop rectangle must fit completely inside the %lld × %@ pixel image." = "Kırpma alanı %lld × %@ piksellik görselin tamamen içinde kalmalı.";
+"The crop rectangle must fit completely inside the %lld × %lld pixel image." = "Kırpma alanı %lld × %lld piksellik görselin tamamen içinde kalmalı.";
 "The document has no editable body." = "Belgede düzenlenebilir bir içerik yok.";
 "The document is missing %@" = "Belgede şu öğe eksik: %@";
 "The document is missing %lld" = "Belgede şu öğe eksik: %lld";
@@ -2130,11 +2204,13 @@
 "The download stopped responding. Please try again." = "İndirme yanıt vermiyor. Lütfen tekrar dene.";
 "The downloaded file contains no video." = "İndirilen dosyada video yok.";
 "The downloaded tools are incomplete. Please try setup again." = "İndirilen araçlar eksik. Kurulumu tekrar dene.";
+"The image could not be read." = "Görsel okunamadı.";
 "The image download ended early." = "Görsel indirmesi erken sona erdi.";
 "The image order must include every image once." = "Görsel sırasında her görsel bir kez yer almalı.";
 "The media server redirected to an insecure URL." = "Medya sunucusu güvenli olmayan bir adrese yönlendirdi.";
 "The processing tool could not start." = "İşleme aracı başlatılamadı.";
 "The requested PDF size could not be reached. Choose a larger target." = "İstenen PDF boyutuna inilemedi. Daha büyük bir hedef seç.";
+"The requested file size could not be reached. Choose a larger target." = "İstenen dosya boyutuna ulaşılamadı. Daha büyük bir hedef seç.";
 "The requested image size could not be reached. Choose a larger target." = "İstenen görsel boyutuna inilemedi. Daha büyük bir hedef seç.";
 "The same conversion and tool catalog as macOS." = "macOS ile aynı dönüştürme ve araç seçenekleri.";
 "The signed package version does not match this update." = "İmzalı paketin sürümü bu güncellemeyle eşleşmiyor.";

@@ -69,6 +69,9 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
     /// The wheel this flow showed last (it may be closed by now).
     public WheelWindow? LastWheel { get; private set; }
 
+    /// The editor this flow opened last (it may be closed by now).
+    public Editors.ToolEditorWindow? LastEditor { get; private set; }
+
     /// Tools for the files, with Convert first when they have formats.
     public void ShowTools(IReadOnlyList<string> selection)
     {
@@ -133,6 +136,19 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
     private async Task RunAsync(WheelItem item)
     {
         if (Busy || files.Count == 0) return;
+        var selection = files;
+        Editors.EditorJob? job = null;
+        // An image tool opens its editor first; Save hands back the job, Cancel or Esc ends here with nothing made.
+        Editors.EditorPanel? panel;
+        try { panel = Editors.ToolEditorWindow.For(item.Id, selection); }
+        catch (MissingToolsException) { await setUpTools(); return; }
+        if (panel is not null)
+        {
+            var editor = LastEditor = new Editors.ToolEditorWindow(panel);
+            job = await editor.RunAsync(owner, 0);
+            if (job is null || Busy) return;
+            selection = panel.Inputs;
+        }
         Busy = true;
         try
         {
@@ -143,7 +159,7 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
             else toast.Show();
             try
             {
-                var outputs = await runner.RunBesideSourcesAsync(item.Id, files, folder => DestinationAsync(folder, owner ?? toast), new Progress<OperationProgress>(toast.Update), cancellation.Token);
+                var outputs = await runner.RunBesideSourcesAsync(item.Id, selection, folder => DestinationAsync(folder, owner ?? toast), new Progress<OperationProgress>(toast.Update), cancellation.Token, job);
                 toast.Close();
                 if (outputs is null) return;
                 if (outputs.Count == 0) SuccessToast.Notice(L10n.T(Copy.NothingMade)).Present();

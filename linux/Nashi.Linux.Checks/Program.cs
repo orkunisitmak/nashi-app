@@ -67,6 +67,7 @@ try
     LabelChecks();
     MotionChecks();
     await ActionChecks(temp.FullName);
+    await EditorChecks.RunAsync(temp.FullName, Check, Smoke);
     WheelRenders(temp.FullName);
 }
 finally
@@ -119,7 +120,7 @@ void CapabilityChecks()
     var pngFormats = Capabilities.Formats(png);
     Check(pngFormats.Contains("jpg") && pngFormats.Contains("webp") && pngFormats.Contains("pdf"), "Formats for a PNG include jpg, webp and pdf");
     Check(!pngFormats.Contains("png"), "Formats for a PNG exclude png");
-    Check(Capabilities.Tools(png).SequenceEqual(["compress"]), "Tools for a PNG is compress only");
+    Check(Capabilities.Tools(png).SequenceEqual(FeatureCatalog.Tools(png).Where(t => t == "compress" || Capabilities.ImageEditors.Contains(t))), "Tools for a PNG are the landed image tools, in catalog order");
     var mp4Tools = Capabilities.Tools(mp4);
     Check(mp4Tools.Contains("compress") && mp4Tools.Contains("muteVideo"), "Tools for an MP4 include compress and muteVideo");
     Check(Capabilities.Formats(mp4).SequenceEqual(FeatureCatalog.Formats(mp4)), "Formats for an MP4 keep catalog order");
@@ -258,7 +259,7 @@ void HomeChecks()
 
     // Nothing green is left in the Linux UI: no forest or sage resources, no green colour in any view or the palette.
     var ui = Path.Combine(RepoRoot(), "linux", "Nashi.Linux");
-    var sources = Directory.EnumerateFiles(ui, "*.axaml", SearchOption.AllDirectories).Concat(Directory.EnumerateFiles(ui, "*.cs"))
+    var sources = Directory.EnumerateFiles(ui, "*.axaml", SearchOption.AllDirectories).Concat(Directory.EnumerateFiles(ui, "*.cs", SearchOption.AllDirectories))
         .Where(f => !f.Contains("/bin/") && !f.Contains("/obj/")).ToList();
     var named = sources.Where(f => System.Text.RegularExpressions.Regex.IsMatch(File.ReadAllText(f), "Nashi(Forest|Sage)")).Select(Path.GetFileName).ToList();
     var greens = sources.SelectMany(f => System.Text.RegularExpressions.Regex.Matches(File.ReadAllText(f), "#(?:[0-9A-Fa-f]{2})?([0-9A-Fa-f]{6})\\b").Select(m => (File: Path.GetFileName(f), Hex: m.Value, Rgb: Convert.ToInt32(m.Groups[1].Value, 16))))
@@ -473,7 +474,7 @@ void WheelChecks(string root)
     home.KeyPressQwerty(PhysicalKey.Space, RawInputModifiers.Control);
     Dispatcher.UIThread.RunJobs();
     var tools = home.OwnedWindows.OfType<WheelWindow>().SingleOrDefault();
-    Check(tools is not null && tools.Wheel.Items.Select(i => i.Id).SequenceEqual(["convert", "compress"]), "Ctrl+Space opens the tools wheel with Convert first");
+    Check(tools is not null && tools.Wheel.Items.Select(i => i.Id).SequenceEqual(["convert", .. Capabilities.Tools([png])]), "Ctrl+Space opens the tools wheel with Convert first");
     Check(tools is { Width: Wheel.Size + 2 * WheelWindow.CardColumn } && tools.FindControl<ContentControl>("LeftCard")?.Content is not null && tools.FindControl<ContentControl>("RightCard")?.Content is null, "Home's wheel shows the one selected file as a card beside it");
     tools?.Close();
     Chip("Actions").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
@@ -606,7 +607,7 @@ void LocalizationChecks(string root)
         // Every literal the Linux UI can show has a Turkish entry.
         var linux = Path.Combine(RepoRoot(), "linux", "Nashi.Linux");
         var literals = new SortedSet<string>(StringComparer.Ordinal);
-        foreach (var file in Directory.EnumerateFiles(linux, "*", SearchOption.TopDirectoryOnly))
+        foreach (var file in Directory.EnumerateFiles(linux, "*", SearchOption.AllDirectories).Where(f => !f.Contains("/bin/") && !f.Contains("/obj/")))
         {
             var source = File.ReadAllText(file);
             if (file.EndsWith(".axaml"))
@@ -920,7 +921,7 @@ async Task BackgroundChecks(string root)
     app.ShowWheel([png, Path.Combine(root, "missing.png")]);
     Dispatcher.UIThread.RunJobs();
     var wheel = app.Flow.LastWheel;
-    Check(wheel is { IsVisible: true, Owner: null, Topmost: true } && wheel.Wheel.Items.Select(i => i.Id).SequenceEqual(["convert", "compress"]), "--wheel shows the topmost tools wheel, Convert first, with no main window");
+    Check(wheel is { IsVisible: true, Owner: null, Topmost: true } && wheel.Wheel.Items.Select(i => i.Id).SequenceEqual(["convert", .. Capabilities.Tools([png])]), "--wheel shows the topmost tools wheel, Convert first, with no main window");
     wheel!.Wheel.HighlightedIndex = 0;
     wheel.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
     Dispatcher.UIThread.RunJobs();

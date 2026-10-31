@@ -10,7 +10,13 @@
     </ResourceDictionary>
   </Application.Resources>
   <Application.Styles>
-    <FluentTheme />
+    <!-- Gold is the accent of every Fluent control the editors use (checked, focused, selected, slider fill). -->
+    <FluentTheme>
+      <FluentTheme.Palettes>
+        <ColorPaletteResources x:Key="Light" Accent="#E3B859" />
+        <ColorPaletteResources x:Key="Dark" Accent="#E3B859" />
+      </FluentTheme.Palettes>
+    </FluentTheme>
     <StyleInclude Source="avares://Nashi/Theme/Controls.axaml" />
   </Application.Styles>
 </Application>

@@ -6,6 +6,7 @@
 "%@  Tools" = "%@  Outils";
 "%@ QR code found." = "%@ code QR trouvé.";
 "%@ QR codes found." = "%@ codes QR trouvés.";
+"%@ areas selected" = "%@ areas selected";
 "%@ files" = "%@ fichiers";
 "%@ files ready." = "%@ files ready.";
 "%@ files, ready to go." = "%@ fichiers, prêts à partir.";
@@ -17,11 +18,16 @@
 "%@ ways to change it" = "%@ façons de le transformer";
 "%@ · Nashi" = "%@ · Nashi";
 "%@ · Original stays safe" = "%@ · L’original reste intact";
+"%@: The crop rectangle must fit completely inside the %@ × %@ pixel image." = "%@: The crop rectangle must fit completely inside the %@ × %@ pixel image.";
+"%@: The crop rectangle must fit completely inside the %@ × %lld pixel image." = "%@: The crop rectangle must fit completely inside the %@ × %lld pixel image.";
+"%@: The crop rectangle must fit completely inside the %lld × %@ pixel image." = "%@: The crop rectangle must fit completely inside the %lld × %@ pixel image.";
+"%@: The crop rectangle must fit completely inside the %lld × %lld pixel image." = "%@: The crop rectangle must fit completely inside the %lld × %lld pixel image.";
 "%lld  Convert" = "%lld  Convertir";
 "%lld  File actions" = "%lld  Actions sur les fichiers";
 "%lld  Tools" = "%lld  Outils";
 "%lld QR code found." = "%lld code QR trouvé.";
 "%lld QR codes found." = "%lld codes QR trouvés.";
+"%lld areas selected" = "%lld areas selected";
 "%lld files" = "%lld fichiers";
 "%lld files ready." = "%lld files ready.";
 "%lld files, ready to go." = "%lld fichiers, prêts à partir.";
@@ -33,8 +39,14 @@
 "%lld ways to change it" = "%lld façons de le transformer";
 "%lld · Nashi" = "%lld · Nashi";
 "%lld · Original stays safe" = "%lld · L’original reste intact";
+"%lld: The crop rectangle must fit completely inside the %@ × %@ pixel image." = "%lld: The crop rectangle must fit completely inside the %@ × %@ pixel image.";
+"%lld: The crop rectangle must fit completely inside the %@ × %lld pixel image." = "%lld: The crop rectangle must fit completely inside the %@ × %lld pixel image.";
+"%lld: The crop rectangle must fit completely inside the %lld × %@ pixel image." = "%lld: The crop rectangle must fit completely inside the %lld × %@ pixel image.";
+"%lld: The crop rectangle must fit completely inside the %lld × %lld pixel image." = "%lld: The crop rectangle must fit completely inside the %lld × %lld pixel image.";
+"1 AREA SELECTED" = "1 AREA SELECTED";
 "1 FILE READY." = "1 FILE READY.";
 "1 ITEM" = "1 ÉLÉMENT";
+"1 area selected" = "1 area selected";
 "1 file ready." = "1 file ready.";
 "1 item" = "1 élément";
 "1/3 LEFT · MIDDLE · RIGHT   /   1/2 LEFT · RIGHT   /   2/3 LEFT · RIGHT" = "1/3 GAUCHE · MILIEU · DROITE   /   1/2 GAUCHE · DROITE   /   2/3 GAUCHE · DROITE";
@@ -138,6 +150,7 @@
 "ANNOTATE PHOTO" = "ANNOTER LA PHOTO";
 "ANNOTATE PHOTO · NASHI" = "ANNOTER LA PHOTO · NASHI";
 "ANNOTATE · NASHI" = "ANNOTER · NASHI";
+"ANNOTATION COORDINATES MUST BE FINITE." = "ANNOTATION COORDINATES MUST BE FINITE.";
 "ANNOTATION TEXT" = "TEXTE DE L’ANNOTATION";
 "ANOTHER TASK IS RUNNING. YOUR LINK IS READY WHEN IT FINISHES." = "UNE AUTRE TÂCHE EST EN COURS. VOTRE LIEN SERA PRÊT DÈS QU’ELLE SERA TERMINÉE.";
 "APPEARANCE" = "APPARENCE";
@@ -167,6 +180,7 @@
 "AUDIO VISUALIZER" = "VISUALISEUR AUDIO";
 "AUDIO · MP3" = "AUDIO · MP3";
 "AUTHORIZE SAVED TOKEN…" = "AUTORISER LE JETON ENREGISTRÉ…";
+"AUTO" = "AUTO";
 "AVAILABLE FILES SELECTED. SOME FILES HAVE MOVED OR WERE DELETED." = "FICHIERS DISPONIBLES SÉLECTIONNÉS. CERTAINS FICHIERS ONT ÉTÉ DÉPLACÉS OU SUPPRIMÉS.";
 "About" = "À propos";
 "Accessibility" = "Accessibilité";
@@ -210,6 +224,7 @@
 "Annotate Photo" = "Annoter la photo";
 "Annotate Photo · Nashi" = "Annoter la photo · Nashi";
 "Annotate · Nashi" = "Annoter · Nashi";
+"Annotation coordinates must be finite." = "Annotation coordinates must be finite.";
 "Annotation text" = "Texte de l’annotation";
 "Another task is running. Your link is ready when it finishes." = "Une autre tâche est en cours. Votre lien sera prêt dès qu’elle sera terminée.";
 "Appearance" = "Apparence";
@@ -241,6 +256,7 @@
 "Audio to Video" = "Audio vers vidéo";
 "Audio · MP3" = "Audio · MP3";
 "Authorize Saved Token…" = "Autoriser le jeton enregistré…";
+"Auto" = "Auto";
 "Available files selected. Some files have moved or were deleted." = "Fichiers disponibles sélectionnés. Certains fichiers ont été déplacés ou supprimés.";
 "BACK" = "RETOUR";
 "BACKGROUND" = "ARRIÈRE-PLAN";
@@ -289,6 +305,7 @@
 "CANCELLING…" = "CANCELLING…";
 "CANNOT START UPDATE INSTALLER." = "IMPOSSIBLE DE DÉMARRER LE PROGRAMME D’INSTALLATION DE LA MISE À JOUR.";
 "CANVAS" = "CANEVAS";
+"CANVAS ASPECT RATIO MUST BE POSITIVE." = "CANVAS ASPECT RATIO MUST BE POSITIVE.";
 "CANVAS HEIGHT" = "HAUTEUR DU CANEVAS";
 "CANVAS WIDTH" = "LARGEUR DU CANEVAS";
 "CHANGE SPEED" = "CHANGER LA VITESSE";
@@ -323,6 +340,7 @@
 "CHOOSE A PDF WITH 1 TO 1,000 PAGES." = "CHOISISSEZ UN PDF DE 1 À 1 000 PAGES.";
 "CHOOSE A PLAIN OUTPUT FILENAME." = "CHOISISSEZ UN NOM DE FICHIER DE SORTIE SIMPLE.";
 "CHOOSE A POSITIVE SIZE OR A REDUCTION BELOW 100%. ZERO USES AUTOMATIC COMPRESSION." = "CHOISISSEZ UNE TAILLE POSITIVE OU UNE RÉDUCTION INFÉRIEURE À 100 %. ZÉRO UTILISE LA COMPRESSION AUTOMATIQUE.";
+"CHOOSE A POSITIVE TARGET FILE SIZE." = "CHOOSE A POSITIVE TARGET FILE SIZE.";
 "CHOOSE A POSITIVE TARGET SIZE OR A REDUCTION BETWEEN 0 AND 100%." = "CHOISISSEZ UNE TAILLE CIBLE POSITIVE OU UNE RÉDUCTION COMPRISE ENTRE 0 ET 100 %.";
 "CHOOSE A RECTANGLE INSIDE THE VIDEO." = "CHOISISSEZ UN RECTANGLE À L’INTÉRIEUR DE LA VIDÉO.";
 "CHOOSE A SUPPORTED MAXIMUM VIDEO HEIGHT." = "CHOISISSEZ UNE HAUTEUR VIDÉO MAXIMALE PRISE EN CHARGE.";
@@ -330,13 +348,17 @@
 "CHOOSE A VALID RANGE FIRST." = "CHOISISSEZ D’ABORD UNE PLAGE VALIDE.";
 "CHOOSE A VALID RANGE." = "CHOISISSEZ UNE PLAGE VALIDE.";
 "CHOOSE A VALID TIME RANGE." = "CHOISISSEZ UNE PLAGE DE TEMPS VALIDE.";
+"CHOOSE AN ANNOTATION TOOL." = "CHOOSE AN ANNOTATION TOOL.";
 "CHOOSE AN EXISTING MEDIA FILE." = "CHOISISSEZ UN FICHIER MÉDIA EXISTANT.";
+"CHOOSE AN IMAGE" = "CHOOSE AN IMAGE";
+"CHOOSE AN IMAGE FOR THE ANNOTATION." = "CHOOSE AN IMAGE FOR THE ANNOTATION.";
 "CHOOSE AN IMAGE." = "CHOISISSEZ UNE IMAGE.";
 "CHOOSE AN INPUT FORMAT TO SEE ITS AVAILABLE OUTPUTS." = "CHOISISSEZ UN FORMAT D’ENTRÉE POUR VOIR LES SORTIES DISPONIBLES.";
 "CHOOSE AN INSTAGRAM PHOTO POST LINK." = "CHOISISSEZ UN LIEN DE PUBLICATION DE PHOTOS INSTAGRAM.";
 "CHOOSE ANNOTATION IMAGE…" = "CHOISIR L’IMAGE D’ANNOTATION…";
 "CHOOSE AT LEAST ONE FRAME." = "CHOISISSEZ AU MOINS UNE IMAGE.";
 "CHOOSE AT LEAST ONE IMAGE." = "CHOOSE AT LEAST ONE IMAGE.";
+"CHOOSE AT LEAST TWO IMAGES FOR A COLLAGE." = "CHOOSE AT LEAST TWO IMAGES FOR A COLLAGE.";
 "CHOOSE AT LEAST TWO PDFS." = "CHOISISSEZ AU MOINS DEUX PDF.";
 "CHOOSE AT LEAST TWO VIDEOS." = "CHOISISSEZ AU MOINS DEUX VIDÉOS.";
 "CHOOSE AT MOST 10,000 CLIPS." = "CHOISISSEZ 10 000 CLIPS AU MAXIMUM.";
@@ -383,11 +405,15 @@
 "CLEAR" = "EFFACER";
 "CLEAR FLOAT" = "VIDER LE FLOAT";
 "CLEAR SELECTION" = "EFFACER LA SÉLECTION";
+"CLICK AN AREA TO SELECT IT, DRAG IT TO MOVE IT, AND PRESS DELETE TO REMOVE IT." = "CLICK AN AREA TO SELECT IT, DRAG IT TO MOVE IT, AND PRESS DELETE TO REMOVE IT.";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "LE PRESSE-PAPIERS EST OCCUPÉ. RÉESSAYEZ.";
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "LE PRESSE-PAPIERS EST OCCUPÉ. RÉESSAYEZ DE COLLER.";
 "CLOSE" = "CLOSE";
 "CLOSE FLOAT WITHOUT DELETING FILES" = "FERMER FLOAT SANS SUPPRIMER LES FICHIERS";
 "CLOSE WINDOW" = "FERMER LA FENÊTRE";
+"COLLAGE DIMENSIONS MUST BE BETWEEN 1 AND 32,000 PIXELS." = "COLLAGE DIMENSIONS MUST BE BETWEEN 1 AND 32,000 PIXELS.";
+"COLLAGE PADDING LEAVES NO SPACE FOR IMAGES." = "COLLAGE PADDING LEAVES NO SPACE FOR IMAGES.";
+"COLLAGE RATIO AND CORNER RADIUS MUST BE VALID." = "COLLAGE RATIO AND CORNER RADIUS MUST BE VALID.";
 "COLLAPSE FLOAT" = "RÉDUIRE FLOAT";
 "COLOR" = "COULEUR";
 "COLUMN" = "COLONNE";
@@ -440,8 +466,10 @@
 "CREATED" = "CRÉATION";
 "CROP" = "RECADRER";
 "CROP AREA" = "ZONE DE RECADRAGE";
+"CROP COORDINATES MUST BE FINITE." = "CROP COORDINATES MUST BE FINITE.";
 "CROP IMAGE" = "RECADRER L’IMAGE";
 "CROP IMAGE · NASHI" = "RECADRER L’IMAGE · NASHI";
+"CROP ORIGINS MUST BE NONNEGATIVE AND DIMENSIONS AT LEAST 1 × 1 PIXEL." = "CROP ORIGINS MUST BE NONNEGATIVE AND DIMENSIONS AT LEAST 1 × 1 PIXEL.";
 "CROP VIDEO" = "RECADRER LA VIDÉO";
 "CTRL+O  CHOOSE FILES\nCTRL+V  PASTE FILES, TEXT, AN IMAGE OR LINK\nCTRL+SPACE / ENTER  OPEN TOOLS\nCTRL+1 / CTRL+2  HOME / LIBRARY\nCTRL+F  FIND IN LIBRARY\nCTRL+SHIFT+D  USE A COPIED DOWNLOAD LINK\nCTRL+U  CHECK FOR UPDATES\n\nWHEEL: ARROWS / TAB TO CHOOSE, ENTER TO OPEN, ESC TO CLOSE\nMEDIA: SPACE PLAY/PAUSE, ←/→ 1 SECOND, SHIFT+←/→ 1/30S, I/O SET RANGE\nCROP: DRAG, SHIFT LOCKS RATIO, ENTER SAVES\nEDITING TEXT: NORMAL PASTE AND ARROW KEYS ARE PRESERVED." = "CTRL+O  CHOISIR DES FICHIERS\nCTRL+V  COLLER DES FICHIERS, DU TEXTE, UNE IMAGE OU UN LIEN\nCTRL+ESPACE / ENTRÉE  OUVRIR LES OUTILS\nCTRL+1 / CTRL+2  ACCUEIL / BIBLIOTHÈQUE\nCTRL+F  RECHERCHER DANS LA BIBLIOTHÈQUE\nCTRL+MAJ+D  UTILISER UN LIEN DE TÉLÉCHARGEMENT COPIÉ\nCTRL+U  RECHERCHER LES MISES À JOUR\n\nROUE : FLÈCHES / TAB POUR CHOISIR, ENTRÉE POUR OUVRIR, ÉCHAP POUR FERMER\nMÉDIAS : ESPACE LECTURE/PAUSE, ←/→ 1 SECONDE, MAJ+←/→ 1/30 S, I/O DÉFINIR LA PLAGE\nRECADRAGE : GLISSER, MAJ VERROUILLE LES PROPORTIONS, ENTRÉE ENREGISTRE\nMODIFICATION DE TEXTE : LE COLLAGE ET LES FLÈCHES FONCTIONNENT NORMALEMENT.";
 "CTRL+O  CHOOSE FILES\nCTRL+V  PASTE FILES, TEXT, AN IMAGE OR LINK\nCTRL+SPACE / ENTER  OPEN TOOLS AND CONVERSIONS\nDELETE  REMOVE SELECTED FILES FROM NASHI\nCTRL+1 / CTRL+2  HOME / LIBRARY\nCTRL+F  FIND IN LIBRARY\nCTRL+SHIFT+D  USE A COPIED DOWNLOAD LINK\nCTRL+U  CHECK FOR UPDATES\n\nWHEEL: ARROWS / TAB TO CHOOSE, ENTER TO OPEN, ESC TO CLOSE\nMEDIA: SPACE PLAY/PAUSE, ←/→ 1 SECOND, SHIFT+←/→ 1/30S, I/O SET RANGE\nCROP: DRAG, SHIFT LOCKS RATIO, ENTER SAVES\nEDITING TEXT: NORMAL PASTE AND ARROW KEYS ARE PRESERVED." = "CTRL+O  CHOISIR DES FICHIERS\nCTRL+V  COLLER DES FICHIERS, DU TEXTE, UNE IMAGE OU UN LIEN\nCTRL+ESPACE / ENTRÉE  OUVRIR LES OUTILS ET LES CONVERSIONS\nSUPPR  RETIRER LES FICHIERS SÉLECTIONNÉS DE NASHI\nCTRL+1 / CTRL+2  ACCUEIL / BIBLIOTHÈQUE\nCTRL+F  RECHERCHER DANS LA BIBLIOTHÈQUE\nCTRL+MAJ+D  UTILISER UN LIEN DE TÉLÉCHARGEMENT COPIÉ\nCTRL+U  RECHERCHER LES MISES À JOUR\n\nROUE : FLÈCHES / TAB POUR CHOISIR, ENTRÉE POUR OUVRIR, ÉCHAP POUR FERMER\nMÉDIAS : ESPACE LECTURE/PAUSE, ←/→ 1 SECONDE, MAJ+←/→ 1/30 S, I/O DÉFINIR LA PLAGE\nRECADRAGE : GLISSER, MAJ VERROUILLE LES PROPORTIONS, ENTRÉE ENREGISTRE\nMODIFICATION DE TEXTE : LE COLLAGE ET LES FLÈCHES FONCTIONNENT NORMALEMENT.";
@@ -457,6 +485,7 @@
 "Cancelling…" = "Cancelling…";
 "Cannot start update installer." = "Impossible de démarrer le programme d’installation de la mise à jour.";
 "Canvas" = "Canevas";
+"Canvas aspect ratio must be positive." = "Canvas aspect ratio must be positive.";
 "Canvas height" = "Hauteur du canevas";
 "Canvas width" = "Largeur du canevas";
 "Change Speed" = "Changer la vitesse";
@@ -502,6 +531,7 @@
 "Choose a nonempty image." = "Choisissez une image non vide.";
 "Choose a plain output filename." = "Choisissez un nom de fichier de sortie simple.";
 "Choose a positive size or a reduction below 100%. Zero uses automatic compression." = "Choisissez une taille positive ou une réduction inférieure à 100 %. Zéro utilise la compression automatique.";
+"Choose a positive target file size." = "Choose a positive target file size.";
 "Choose a positive target size or a reduction between 0 and 100%." = "Choisissez une taille cible positive ou une réduction comprise entre 0 et 100 %.";
 "Choose a rectangle inside the video." = "Choisissez un rectangle à l’intérieur de la vidéo.";
 "Choose a supported maximum video height." = "Choisissez une hauteur vidéo maximale prise en charge.";
@@ -510,13 +540,17 @@
 "Choose a valid range." = "Choisissez une plage valide.";
 "Choose a valid time range." = "Choisissez une plage de temps valide.";
 "Choose an Instagram photo post link." = "Choisissez un lien de publication de photos Instagram.";
+"Choose an annotation tool." = "Choose an annotation tool.";
 "Choose an existing media file." = "Choisissez un fichier média existant.";
+"Choose an image" = "Choose an image";
+"Choose an image for the annotation." = "Choose an image for the annotation.";
 "Choose an image." = "Choisissez une image.";
 "Choose an input format to see its available outputs." = "Choisissez un format d’entrée pour voir les sorties disponibles.";
 "Choose annotation image…" = "Choisir l’image d’annotation…";
 "Choose at least one frame." = "Choisissez au moins une image.";
 "Choose at least one image." = "Choose at least one image.";
 "Choose at least two PDFs." = "Choisissez au moins deux PDF.";
+"Choose at least two images for a collage." = "Choose at least two images for a collage.";
 "Choose at least two videos." = "Choisissez au moins deux vidéos.";
 "Choose at most 10,000 clips." = "Choisissez 10 000 clips au maximum.";
 "Choose background image…" = "Choisir l’image d’arrière-plan…";
@@ -553,6 +587,7 @@
 "Clear" = "Effacer";
 "Clear Float" = "Vider le Float";
 "Clear Selection" = "Effacer la sélection";
+"Click an area to select it, drag it to move it, and press Delete to remove it." = "Click an area to select it, drag it to move it, and press Delete to remove it.";
 "Clip %@" = "Clip %@";
 "Clip %lld" = "Clip %lld";
 "Clipboard is busy. Try Paste again." = "Le presse-papiers est occupé. Réessayez de coller.";
@@ -560,6 +595,9 @@
 "Close" = "Close";
 "Close Float without deleting files" = "Fermer Float sans supprimer les fichiers";
 "Close Window" = "Fermer la fenêtre";
+"Collage dimensions must be between 1 and 32,000 pixels." = "Collage dimensions must be between 1 and 32,000 pixels.";
+"Collage padding leaves no space for images." = "Collage padding leaves no space for images.";
+"Collage ratio and corner radius must be valid." = "Collage ratio and corner radius must be valid.";
 "Collapse Float" = "Réduire Float";
 "Color" = "Couleur";
 "Column" = "Colonne";
@@ -635,6 +673,8 @@
 "Crop Image · Nashi" = "Recadrer l’image · Nashi";
 "Crop Video" = "Recadrer la vidéo";
 "Crop area" = "Zone de recadrage";
+"Crop coordinates must be finite." = "Crop coordinates must be finite.";
+"Crop origins must be nonnegative and dimensions at least 1 × 1 pixel." = "Crop origins must be nonnegative and dimensions at least 1 × 1 pixel.";
 "Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved." = "Ctrl+O  Choisir des fichiers\nCtrl+V  Coller des fichiers, du texte, une image ou un lien\nCtrl+Espace / Entrée  Ouvrir les outils\nCtrl+1 / Ctrl+2  Accueil / Bibliothèque\nCtrl+F  Rechercher dans la bibliothèque\nCtrl+Maj+D  Utiliser un lien de téléchargement copié\nCtrl+U  Rechercher les mises à jour\n\nRoue : flèches / Tab pour choisir, Entrée pour ouvrir, Échap pour fermer\nMédias : Espace lecture/pause, ←/→ 1 seconde, Maj+←/→ 1/30 s, I/O définir la plage\nRecadrage : glisser, Maj verrouille les proportions, Entrée enregistre\nModification de texte : le collage et les flèches fonctionnent normalement.";
 "Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools and conversions\nDelete  Remove selected files from Nashi\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved." = "Ctrl+O  Choisir des fichiers\nCtrl+V  Coller des fichiers, du texte, une image ou un lien\nCtrl+Espace / Entrée  Ouvrir les outils et les conversions\nSuppr  Retirer les fichiers sélectionnés de Nashi\nCtrl+1 / Ctrl+2  Accueil / Bibliothèque\nCtrl+F  Rechercher dans la bibliothèque\nCtrl+Maj+D  Utiliser un lien de téléchargement copié\nCtrl+U  Rechercher les mises à jour\n\nRoue : flèches / Tab pour choisir, Entrée pour ouvrir, Échap pour fermer\nMédias : Espace lecture/pause, ←/→ 1 seconde, Maj+←/→ 1/30 s, I/O définir la plage\nRecadrage : glisser, Maj verrouille les proportions, Entrée enregistre\nModification de texte : le collage et les flèches fonctionnent normalement.";
 "Ctrl+Shift+D  Use a copied link  ·  Public, downloadable media" = "Ctrl+Maj+D  Utiliser un lien copié  ·  Médias publics téléchargeables";
@@ -646,6 +686,7 @@
 "DEGREES" = "DEGRÉS";
 "DEHAZE" = "CORRECTION DE LA BRUME";
 "DELETE" = "SUPPRIMER";
+"DELETE AREA" = "DELETE AREA";
 "DELETE CLIP" = "SUPPRIMER LE CLIP";
 "DETACH" = "DÉTACHER";
 "DETAIL" = "DÉTAIL";
@@ -692,6 +733,7 @@
 "DRAG AN AREA FIRST." = "FAITES D’ABORD GLISSER UNE ZONE.";
 "DRAG AN EXISTING ANNOTATION TO MOVE IT; DRAG ITS HANDLES TO RESIZE. TURN OFF SELECT / MOVE TO DRAW." = "FAITES GLISSER UNE ANNOTATION EXISTANTE POUR LA DÉPLACER ; FAITES GLISSER SES POIGNÉES POUR LA REDIMENSIONNER. DÉSACTIVEZ SÉLECTIONNER / DÉPLACER POUR DESSINER.";
 "DRAG INSIDE TO MOVE. DRAG NEAR A CORNER TO RESIZE. DRAG OUTSIDE TO START A NEW SELECTION." = "FAITES GLISSER À L’INTÉRIEUR POUR DÉPLACER. FAITES GLISSER PRÈS D’UN COIN POUR REDIMENSIONNER. FAITES GLISSER À L’EXTÉRIEUR POUR DÉMARRER UNE NOUVELLE SÉLECTION.";
+"DRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE." = "DRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE.";
 "DRAG ON THE PREVIEW TO ADD AN AREA. EACH AREA IS SAVED INTO THE NEW COPY." = "FAITES GLISSER SUR L’APERÇU POUR AJOUTER UNE ZONE. CHAQUE ZONE EST ENREGISTRÉE DANS LA NOUVELLE COPIE.";
 "DRAG SHORTCUTS" = "RACCOURCIS DE GLISSER-DÉPOSER";
 "DRAG THE STACK TO CARRY ALL FILES. DRAG THE PAPERCLIP TO MOVE FLOAT." = "FAITES GLISSER LA PILE POUR EMPORTER TOUS LES FICHIERS. FAITES GLISSER LE TROMBONE POUR DÉPLACER FLOAT.";
@@ -712,6 +754,7 @@
 "Degrees" = "Degrés";
 "Dehaze" = "Correction de la brume";
 "Delete" = "Supprimer";
+"Delete Area" = "Delete Area";
 "Delete Clip" = "Supprimer le clip";
 "Detach" = "Détacher";
 "Detail" = "Détail";
@@ -767,6 +810,7 @@
 "Drag an area first." = "Faites d’abord glisser une zone.";
 "Drag an existing annotation to move it; drag its handles to resize. Turn off Select / Move to draw." = "Faites glisser une annotation existante pour la déplacer ; faites glisser ses poignées pour la redimensionner. Désactivez Sélectionner / Déplacer pour dessiner.";
 "Drag inside to move. Drag near a corner to resize. Drag outside to start a new selection." = "Faites glisser à l’intérieur pour déplacer. Faites glisser près d’un coin pour redimensionner. Faites glisser à l’extérieur pour démarrer une nouvelle sélection.";
+"Drag inside to move; drag a handle to resize." = "Drag inside to move; drag a handle to resize.";
 "Drag on the preview to add an area. Each area is saved into the new copy." = "Faites glisser sur l’aperçu pour ajouter une zone. Chaque zone est enregistrée dans la nouvelle copie.";
 "Drag shortcuts" = "Raccourcis de glisser-déposer";
 "Drag the stack to carry all files. Drag the paperclip to move Float." = "Faites glisser la pile pour emporter tous les fichiers. Faites glisser le trombone pour déplacer Float.";
@@ -797,6 +841,7 @@
 "ENCODED PIXELS, COLOR PROFILE AND DISPLAY ORIENTATION ARE PRESERVED." = "LES PIXELS ENCODÉS, LE PROFIL COLORIMÉTRIQUE ET L’ORIENTATION D’AFFICHAGE SONT CONSERVÉS.";
 "END" = "FIN";
 "ENTER A FINITE NUMBER." = "SAISISSEZ UN NOMBRE FINI.";
+"ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%." = "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%.";
 "ENTER PAGE NUMBERS WITHIN THIS PDF, IN THE DESIRED ORDER." = "SAISISSEZ DES NUMÉROS DE PAGE DE CE PDF, DANS L’ORDRE SOUHAITÉ.";
 "EPUB LAYOUT" = "MISE EN PAGE EPUB";
 "EPUB layout" = "Mise en page EPUB";
@@ -826,10 +871,15 @@
 "Encoded pixels, color profile and display orientation are preserved." = "Les pixels encodés, le profil colorimétrique et l’orientation d’affichage sont conservés.";
 "End" = "Fin";
 "Enter a finite number." = "Saisissez un nombre fini.";
+"Enter a reduction greater than 0% and less than 100%." = "Enter a reduction greater than 0% and less than 100%.";
 "Enter a valid number for %@." = "Saisissez un nombre valide pour %@.";
 "Enter a valid number for %lld." = "Saisissez un nombre valide pour %lld.";
 "Enter page numbers within this PDF, in the desired order." = "Saisissez des numéros de page de ce PDF, dans l’ordre souhaité.";
 "Esc to close" = "Échap pour fermer";
+"Every redaction area must have positive dimensions and fit completely inside the %@ × %@ pixel image. Adjust the areas for this image and try again." = "Every redaction area must have positive dimensions and fit completely inside the %@ × %@ pixel image. Adjust the areas for this image and try again.";
+"Every redaction area must have positive dimensions and fit completely inside the %@ × %lld pixel image. Adjust the areas for this image and try again." = "Every redaction area must have positive dimensions and fit completely inside the %@ × %lld pixel image. Adjust the areas for this image and try again.";
+"Every redaction area must have positive dimensions and fit completely inside the %lld × %@ pixel image. Adjust the areas for this image and try again." = "Every redaction area must have positive dimensions and fit completely inside the %lld × %@ pixel image. Adjust the areas for this image and try again.";
+"Every redaction area must have positive dimensions and fit completely inside the %lld × %lld pixel image. Adjust the areas for this image and try again." = "Every redaction area must have positive dimensions and fit completely inside the %lld × %lld pixel image. Adjust the areas for this image and try again.";
 "Everything Nashi needs for audio, video and documents is in place." = "Everything Nashi needs for audio, video and documents is in place.";
 "Everything has a next form." = "Tout a une prochaine forme.";
 "Expand Float" = "Développer Float";
@@ -902,7 +952,9 @@
 "FORMAT PREFERENCES" = "PRÉFÉRENCES DE FORMAT";
 "FORMATS" = "FORMATS";
 "FRAME IMAGE" = "ENCADRER L’IMAGE";
+"FRAME PADDING OR IMAGE SCALE IS TOO LARGE." = "FRAME PADDING OR IMAGE SCALE IS TOO LARGE.";
 "FRAME RATE" = "FRÉQUENCE D’IMAGES";
+"FRAME SETTINGS MUST BE FINITE, AND IMAGE SCALE MUST BE POSITIVE." = "FRAME SETTINGS MUST BE FINITE, AND IMAGE SCALE MUST BE POSITIVE.";
 "FRAME TIMING AND REPEAT COUNT ARE PRESERVED." = "LE MINUTAGE DES IMAGES ET LE NOMBRE DE RÉPÉTITIONS SONT CONSERVÉS.";
 "FREE" = "LIBRE";
 "FREEHAND" = "MAIN LEVÉE";
@@ -974,7 +1026,9 @@
 "Format preferences" = "Préférences de format";
 "Formats" = "Formats";
 "Frame Image" = "Encadrer l’image";
+"Frame padding or image scale is too large." = "Frame padding or image scale is too large.";
 "Frame rate" = "Fréquence d’images";
+"Frame settings must be finite, and image scale must be positive." = "Frame settings must be finite, and image scale must be positive.";
 "Frame timing and repeat count are preserved." = "Le minutage des images et le nombre de répétitions sont conservés.";
 "Free" = "Libre";
 "Freehand" = "Main levée";
@@ -1035,6 +1089,7 @@
 "IMAGE COMPRESSION" = "COMPRESSION D’IMAGE";
 "IMAGE EXCEEDS 200 MB." = "L’IMAGE DÉPASSE 200 MO.";
 "IMAGE FIT" = "AJUSTEMENT DE L’IMAGE";
+"IMAGE ORDER MUST INCLUDE EVERY IMAGE EXACTLY ONCE." = "IMAGE ORDER MUST INCLUDE EVERY IMAGE EXACTLY ONCE.";
 "IMAGE SCALE" = "ÉCHELLE DE L’IMAGE";
 "IMAGE SIZE" = "TAILLE DE L’IMAGE";
 "IMAGES" = "IMAGES";
@@ -1065,6 +1120,7 @@
 "Image compression" = "Compression de l’image";
 "Image exceeds 200 MB." = "L’image dépasse 200 Mo.";
 "Image fit" = "Ajustement de l’image";
+"Image order must include every image exactly once." = "Image order must include every image exactly once.";
 "Image scale" = "Échelle de l’image";
 "Image size" = "Taille de l’image";
 "Images" = "Images";
@@ -1182,6 +1238,7 @@
 "MACOS REDUCE MOTION IS ON. NASHI KEEPS MOTION OFF." = "L’OPTION RÉDUIRE LES ANIMATIONS DE MACOS EST ACTIVÉE. NASHI DÉSACTIVE LES ANIMATIONS.";
 "MADE FOR LINUX" = "MADE FOR LINUX";
 "MADE FOR YOUR MAC" = "CONÇU POUR VOTRE MAC";
+"MAGNIFICATION MUST BE POSITIVE." = "MAGNIFICATION MUST BE POSITIVE.";
 "MAGNIFIER" = "LOUPE";
 "MAKE ALL PAGES THE SAME WIDTH" = "DONNER LA MÊME LARGEUR À TOUTES LES PAGES";
 "MAKE EPUB" = "CRÉER UN EPUB";
@@ -1228,6 +1285,7 @@
 "MUTE VIDEO · NASHI" = "COUPER LE SON DE LA VIDÉO · NASHI";
 "Made for Linux" = "Made for Linux";
 "Made for your Mac" = "Conçu pour votre Mac";
+"Magnification must be positive." = "Magnification must be positive.";
 "Magnifier" = "Loupe";
 "Make EPUB" = "Créer un EPUB";
 "Make all pages the same width" = "Donner la même largeur à toutes les pages";
@@ -1501,6 +1559,7 @@
 "PORTRAIT" = "PORTRAIT";
 "PORTRAIT · 4:5" = "PORTRAIT · 4:5";
 "PORTRAIT · 9:16" = "PORTRAIT · 9:16";
+"POSITION" = "POSITION";
 "POSITION X" = "POSITION X";
 "POSITION Y" = "POSITION Y";
 "PREPARING A LOCAL PREVIEW…" = "PRÉPARATION D’UN APERÇU LOCAL…";
@@ -1561,6 +1620,7 @@
 "Portrait" = "Portrait";
 "Portrait · 4:5" = "Portrait · 4:5";
 "Portrait · 9:16" = "Portrait · 9:16";
+"Position" = "Position";
 "Position X" = "Position X";
 "Position Y" = "Position Y";
 "Preparing %@…" = "Préparation de %@…";
@@ -1619,7 +1679,9 @@
 "REDACT IMAGE" = "CAVIARDER L’IMAGE";
 "REDACT PHOTO" = "CAVIARDER LA PHOTO";
 "REDACT VIDEO" = "CAVIARDER LA VIDÉO";
+"REDACTION STRENGTH MUST BE FINITE." = "REDACTION STRENGTH MUST BE FINITE.";
 "REDO" = "RÉTABLIR";
+"REDUCE COLLAGE SPACING OR INCREASE THE CANVAS." = "REDUCE COLLAGE SPACING OR INCREASE THE CANVAS.";
 "REDUCE PADDING OR SPACING TO FIT THE IMAGES." = "RÉDUISEZ LES MARGES OU L’ESPACEMENT POUR QUE LES IMAGES TIENNENT.";
 "REDUCE SPACING TO FIT THE FEATURED LAYOUT." = "RÉDUISEZ L’ESPACEMENT POUR QUE LA MISE EN PAGE EN VEDETTE TIENNE.";
 "REDUCTION (%; 0 = AUTO)" = "RÉDUCTION (% ; 0 = AUTO)";
@@ -1649,6 +1711,7 @@
 "RESIZE IMAGE" = "REDIMENSIONNER L’IMAGE";
 "RESTORE CLIPS" = "RESTAURER LES CLIPS";
 "RESTORE DEFAULTS" = "RÉTABLIR LES RÉGLAGES PAR DÉFAUT";
+"RESULT" = "RESULT";
 "RETRY" = "RETRY";
 "REVEAL FINISHED FILES IN EXPLORER" = "AFFICHER LES FICHIERS TERMINÉS DANS L’EXPLORATEUR";
 "REVEAL FINISHED FILES IN FINDER" = "AFFICHER LES FICHIERS TERMINÉS DANS LE FINDER";
@@ -1681,7 +1744,9 @@
 "Redact Image" = "Caviarder l’image";
 "Redact Photo" = "Caviarder la photo";
 "Redact Video" = "Caviarder la vidéo";
+"Redaction strength must be finite." = "Redaction strength must be finite.";
 "Redo" = "Rétablir";
+"Reduce collage spacing or increase the canvas." = "Reduce collage spacing or increase the canvas.";
 "Reduce padding or spacing to fit the images." = "Réduisez les marges ou l’espacement pour que les images tiennent.";
 "Reduce spacing to fit the featured layout." = "Réduisez l’espacement pour que la mise en page en vedette tienne.";
 "Reduction (%; 0 = auto)" = "Réduction (% ; 0 = auto)";
@@ -1720,6 +1785,7 @@
 "Restore Clips" = "Restaurer les clips";
 "Restore Defaults" = "Rétablir les réglages par défaut";
 "Restore defaults" = "Rétablir les réglages par défaut";
+"Result" = "Result";
 "Retry" = "Retry";
 "Reveal finished files in Explorer" = "Afficher les fichiers terminés dans l’Explorateur";
 "Reveal finished files in Finder" = "Afficher les fichiers terminés dans le Finder";
@@ -1818,6 +1884,7 @@
 "SHARE…" = "PARTAGER…";
 "SHARPEN" = "ACCENTUER";
 "SHARPNESS" = "NETTETÉ";
+"SHIFT LOCKS THE RATIO · RETURN CROPS" = "SHIFT LOCKS THE RATIO · RETURN CROPS";
 "SHIFT LOCKS THE RATIO · RETURN CROPS\nDRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE." = "MAJ VERROUILLE LES PROPORTIONS · RETOUR RECADRE\nFAITES GLISSER À L’INTÉRIEUR POUR DÉPLACER ; FAITES GLISSER UNE POIGNÉE POUR REDIMENSIONNER.";
 "SHOW IN EXPLORER" = "AFFICHER DANS L’EXPLORATEUR";
 "SHOW IN FINDER" = "AFFICHER DANS LE FINDER";
@@ -1962,6 +2029,7 @@
 "Share…" = "Partager…";
 "Sharpen" = "Accentuer";
 "Sharpness" = "Netteté";
+"Shift locks the ratio · Return crops" = "Shift locks the ratio · Return crops";
 "Shift locks the ratio · Return crops\nDrag inside to move; drag a handle to resize." = "Maj verrouille les proportions · Retour recadre\nFaites glisser à l’intérieur pour déplacer ; faites glisser une poignée pour redimensionner.";
 "Show Nashi in Finder" = "Afficher Nashi dans le Finder";
 "Show Original" = "Afficher l’original";
@@ -2041,10 +2109,12 @@
 "THE DOWNLOAD STOPPED RESPONDING. PLEASE TRY AGAIN." = "LE TÉLÉCHARGEMENT NE RÉPOND PLUS. VEUILLEZ RÉESSAYER.";
 "THE DOWNLOADED FILE CONTAINS NO VIDEO." = "LE FICHIER TÉLÉCHARGÉ NE CONTIENT PAS DE VIDÉO.";
 "THE DOWNLOADED TOOLS ARE INCOMPLETE. PLEASE TRY SETUP AGAIN." = "LES OUTILS TÉLÉCHARGÉS SONT INCOMPLETS. VEUILLEZ RELANCER LA CONFIGURATION.";
+"THE IMAGE COULD NOT BE READ." = "THE IMAGE COULD NOT BE READ.";
 "THE IMAGE DOWNLOAD ENDED EARLY." = "LE TÉLÉCHARGEMENT DE L’IMAGE S’EST TERMINÉ PRÉMATURÉMENT.";
 "THE IMAGE ORDER MUST INCLUDE EVERY IMAGE ONCE." = "L’ORDRE DES IMAGES DOIT INCLURE CHAQUE IMAGE UNE FOIS.";
 "THE MEDIA SERVER REDIRECTED TO AN INSECURE URL." = "LE SERVEUR MULTIMÉDIA A REDIRIGÉ VERS UNE URL NON SÉCURISÉE.";
 "THE PROCESSING TOOL COULD NOT START." = "L’OUTIL DE TRAITEMENT N’A PAS PU DÉMARRER.";
+"THE REQUESTED FILE SIZE COULD NOT BE REACHED. CHOOSE A LARGER TARGET." = "THE REQUESTED FILE SIZE COULD NOT BE REACHED. CHOOSE A LARGER TARGET.";
 "THE REQUESTED IMAGE SIZE COULD NOT BE REACHED. CHOOSE A LARGER TARGET." = "LA TAILLE D’IMAGE DEMANDÉE N’A PAS PU ÊTRE ATTEINTE. CHOISISSEZ UNE CIBLE PLUS GRANDE.";
 "THE REQUESTED PDF SIZE COULD NOT BE REACHED. CHOOSE A LARGER TARGET." = "LA TAILLE DE PDF DEMANDÉE N’A PAS PU ÊTRE ATTEINTE. CHOISISSEZ UNE CIBLE PLUS GRANDE.";
 "THE SAME CONVERSION AND TOOL CATALOG AS MACOS." = "LE MÊME CATALOGUE DE CONVERSIONS ET D’OUTILS QUE SUR MACOS.";
@@ -2122,6 +2192,10 @@
 "The archive entry leaves its destination." = "L’entrée de l’archive sort de sa destination.";
 "The clipping exceeds 200 MB." = "Le fragment dépasse 200 Mo.";
 "The clipping has no readable text. Include its original resource fork/AppleDouble sidecar, or paste its text into Nashi." = "Le fragment ne contient aucun texte lisible. Incluez son fichier annexe d’origine (resource fork/AppleDouble) ou collez son texte dans Nashi.";
+"The crop rectangle must fit completely inside the %@ × %@ pixel image." = "The crop rectangle must fit completely inside the %@ × %@ pixel image.";
+"The crop rectangle must fit completely inside the %@ × %lld pixel image." = "The crop rectangle must fit completely inside the %@ × %lld pixel image.";
+"The crop rectangle must fit completely inside the %lld × %@ pixel image." = "The crop rectangle must fit completely inside the %lld × %@ pixel image.";
+"The crop rectangle must fit completely inside the %lld × %lld pixel image." = "The crop rectangle must fit completely inside the %lld × %lld pixel image.";
 "The document has no editable body." = "Le document n’a pas de corps modifiable.";
 "The document is missing %@" = "Il manque %@ au document";
 "The document is missing %lld" = "Il manque %lld au document";
@@ -2130,11 +2204,13 @@
 "The download stopped responding. Please try again." = "Le téléchargement ne répond plus. Veuillez réessayer.";
 "The downloaded file contains no video." = "Le fichier téléchargé ne contient pas de vidéo.";
 "The downloaded tools are incomplete. Please try setup again." = "Les outils téléchargés sont incomplets. Veuillez relancer la configuration.";
+"The image could not be read." = "The image could not be read.";
 "The image download ended early." = "Le téléchargement de l’image s’est terminé prématurément.";
 "The image order must include every image once." = "L’ordre des images doit inclure chaque image une fois.";
 "The media server redirected to an insecure URL." = "Le serveur multimédia a redirigé vers une URL non sécurisée.";
 "The processing tool could not start." = "L’outil de traitement n’a pas pu démarrer.";
 "The requested PDF size could not be reached. Choose a larger target." = "La taille de PDF demandée n’a pas pu être atteinte. Choisissez une cible plus grande.";
+"The requested file size could not be reached. Choose a larger target." = "The requested file size could not be reached. Choose a larger target.";
 "The requested image size could not be reached. Choose a larger target." = "La taille d’image demandée n’a pas pu être atteinte. Choisissez une cible plus grande.";
 "The same conversion and tool catalog as macOS." = "Le même catalogue de conversions et d’outils que sur macOS.";
 "The signed package version does not match this update." = "La version du paquet signé ne correspond pas à cette mise à jour.";

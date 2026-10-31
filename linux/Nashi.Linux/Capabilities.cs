@@ -3,10 +3,13 @@ using Nashi.Core;
 namespace Nashi.Linux;
 
 /// What the Linux wheel offers for a selection: only the routes the Linux runner implements.
-/// For files of one kind that is every catalog route except HEIC output (Magick.NET on Linux has no HEIC encoder).
+/// For files of one kind that is every catalog route except HEIC output (Magick.NET on Linux has no HEIC encoder),
+/// and every image tool.
 public static class Capabilities
 {
     static readonly IReadOnlySet<string> SupportedTools = new HashSet<string> { "compress", "muteVideo", "normalizeAudio", "extractArchive", "createPDF", "mergePDF" };
+    /// The image editors (Editors/*), offered when every file is an image.
+    internal static readonly IReadOnlySet<string> ImageEditors = new HashSet<string> { "cropImage" };
     internal static readonly string[] ImageFormats = ["png", "jpg", "webp", "avif", "bmp", "gif", "tiff", "pdf"];
     static readonly string[] ArchiveOutputs = ["zip", "tar", "gz"];
     static readonly string[] SubtitleOutputs = ["srt", "vtt", "txt"];
@@ -18,7 +21,7 @@ public static class Capabilities
     }
 
     public static string[] Tools(IReadOnlyList<string> files) =>
-        FeatureCatalog.Tools(files).Where(SupportedTools.Contains).ToArray();
+        FeatureCatalog.Tools(files).Where(t => SupportedTools.Contains(t) || ImageEditors.Contains(t) && files.All(FeatureCatalog.IsImage)).ToArray();
 
     static IEnumerable<string> Routes(IReadOnlyList<string> files)
     {

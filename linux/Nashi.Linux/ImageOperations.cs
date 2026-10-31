@@ -71,7 +71,7 @@ public static class ImageOperations
         return tx.Publish(outputs, token);
     }
 
-    static void Write(MagickImage image, string output, string format, int quality, bool strip)
+    internal static void Write(MagickImage image, string output, string format, int quality, bool strip)
     {
         // Convert drops EXIF/GPS but keeps the colour profile so colours don't shift; Compress drops everything.
         var icc = strip ? null : image.GetColorProfile();
@@ -80,6 +80,8 @@ public static class ImageOperations
         // JPEG and BMP have no usable alpha; flatten onto white rather than turning transparency black.
         if (format is "jpg" or "bmp" && image.HasAlpha) image.ColorAlpha(MagickColors.White);
         image.Quality = (uint)quality;
-        image.Write(output, PhotoCodec.Format(format));
+        // Through a stream: ImageMagick reads "name:" in a path as a format prefix, so "-ğüş: photo.png" would go astray.
+        using var file = new FileStream(output, FileMode.Create, FileAccess.Write);
+        image.Write(file, PhotoCodec.Format(format));
     }
 }

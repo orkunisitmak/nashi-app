@@ -51,13 +51,14 @@ public sealed class OperationRunner(Toolchain tools)
 
     /// Runs the choice with each file's outputs beside it: one run per source folder, in the order the folders first
     /// appear, so files from two folders get their outputs in their own folders. A choice that makes one file out of
-    /// many (Create PDF, Merge PDFs, images to one PDF) writes it beside the first file. `destination` maps a source folder
+    /// many (Create PDF, Merge PDFs, Create Collage, images to one PDF) writes it beside the first file. `destination` maps a source folder
     /// to where its outputs go: the folder itself, or one the user picks when it is read-only; null cancels before any
     /// work and returns null. A failure or cancel in a later folder removes what earlier folders published.
-    public async Task<IReadOnlyList<string>?> RunBesideSourcesAsync(string choiceId, IReadOnlyList<string> files, Func<string, Task<string?>> destination, IProgress<OperationProgress> progress, CancellationToken token)
+    /// `job` (an editor's Save) runs instead of the choice's own route.
+    public async Task<IReadOnlyList<string>?> RunBesideSourcesAsync(string choiceId, IReadOnlyList<string> files, Func<string, Task<string?>> destination, IProgress<OperationProgress> progress, CancellationToken token, Editors.EditorJob? job = null)
     {
         static string Folder(string file) => Path.GetDirectoryName(Path.GetFullPath(file))!;
-        var combines = choiceId is "createPDF" or "mergePDF" || (choiceId == "convert:pdf" && files.All(FeatureCatalog.IsImage));
+        var combines = choiceId is "createPDF" or "mergePDF" or "createCollage" || (choiceId == "convert:pdf" && files.All(FeatureCatalog.IsImage));
         IReadOnlyList<IReadOnlyList<string>> groups = combines ? [files] : [.. files.GroupBy(Folder).Select(g => (IReadOnlyList<string>)[.. g])];
         var targets = new List<string>();
         foreach (var group in groups)
@@ -71,7 +72,9 @@ public sealed class OperationRunner(Toolchain tools)
         {
             for (var n = 0; n < groups.Count; n++)
             {
-                outputs.AddRange(await RunAsync(choiceId, groups[n], targets[n], groups.Count == 1 ? progress : new Slice(progress, n, groups.Count), token));
+                var slice = groups.Count == 1 ? progress : new Slice(progress, n, groups.Count);
+                if (job is not null) { Note = null; outputs.AddRange(await job(groups[n], targets[n], slice, token)); }
+                else outputs.AddRange(await RunAsync(choiceId, groups[n], targets[n], slice, token));
                 note ??= Note;
             }
         }
