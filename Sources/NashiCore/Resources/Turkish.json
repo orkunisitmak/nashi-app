@@ -1173,5 +1173,7 @@
   "Already assigned to {0}.": "Zaten {0} için atanmış.",
   "Right Click": "Sağ tık",
   "Middle Click": "Orta tık",
-  "Mouse {0}": "Fare {0}"
+  "Mouse {0}": "Fare {0}",
+  "Details": "Ayrıntılar",
+  "Copy details": "Ayrıntıları kopyala"
 }

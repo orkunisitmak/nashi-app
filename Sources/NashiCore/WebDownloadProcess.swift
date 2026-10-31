@@ -58,7 +58,10 @@ enum WebDownloadProcess {
         try token.check()
         if timedOut { throw NashiError.failed("The site took too long to respond. Try the link again.") }
         if capture.overflow { throw NashiError.failed("The site returned too much metadata. Try an individual media link.") }
-        guard waitStatus==0 else { throw NashiError.failed(WebDownloadEngine.friendlyError(capture.errorText)) }
+        guard waitStatus==0 else {
+            let diagnostic=capture.errorText
+            throw WebDownloadFailure(message:WebDownloadEngine.friendlyError(diagnostic),details:WebDownloadEngine.diagnosticDetails(diagnostic))
+        }
         return capture.output
     }
 

@@ -435,6 +435,7 @@
 "COPY A LINK, THEN CHOOSE DOWNLOAD LINK FROM THE NASHI MENU." = "COPIEZ UN LIEN, PUIS CHOISISSEZ TÉLÉCHARGER LE LIEN DANS LE MENU NASHI.";
 "COPY A PUBLIC MEDIA LINK FIRST." = "COPIEZ D’ABORD UN LIEN MÉDIA PUBLIC.";
 "COPY A VIDEO SHARE LINK OR AN IMAGE ADDRESS FIRST." = "COPIEZ D’ABORD LE LIEN DE PARTAGE D’UNE VIDÉO OU L’ADRESSE D’UNE IMAGE.";
+"COPY DETAILS" = "COPIER LES DÉTAILS";
 "COPY PATH" = "COPIER LE CHEMIN";
 "CORNER RADIUS" = "RAYON DES COINS";
 "CORNERS" = "COINS";
@@ -617,6 +618,7 @@
 "Copy a link, then choose Download Link from the Nashi menu." = "Copiez un lien, puis choisissez Télécharger le lien dans le menu Nashi.";
 "Copy a public media link first." = "Copiez d’abord un lien média public.";
 "Copy a video share link or an image address first." = "Copiez d’abord le lien de partage d’une vidéo ou l’adresse d’une image.";
+"Copy details" = "Copier les détails";
 "Copy path" = "Copier le chemin";
 "Corner radius" = "Rayon des coins";
 "Corners" = "Coins";
@@ -651,6 +653,7 @@
 "DELETE CLIP" = "SUPPRIMER LE CLIP";
 "DETACH" = "DÉTACHER";
 "DETAIL" = "DÉTAIL";
+"DETAILS" = "DÉTAILS";
 "DETECT FACES" = "DÉTECTER LES VISAGES";
 "DETECT TEXT" = "DÉTECTER LE TEXTE";
 "DETECTION UNAVAILABLE" = "DÉTECTION INDISPONIBLE";
@@ -718,6 +721,7 @@
 "Delete Clip" = "Supprimer le clip";
 "Detach" = "Détacher";
 "Detail" = "Détail";
+"Details" = "Détails";
 "Detect Faces" = "Détecter les visages";
 "Detect Text" = "Détecter le texte";
 "Detect faces" = "Détecter les visages";

@@ -1173,5 +1173,7 @@
   "Already assigned to {0}.": "Déjà attribué à {0}.",
   "Right Click": "Clic droit",
   "Middle Click": "Clic central",
-  "Mouse {0}": "Souris {0}"
+  "Mouse {0}": "Souris {0}",
+  "Details": "Détails",
+  "Copy details": "Copier les détails"
 }

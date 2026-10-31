@@ -47,6 +47,38 @@ final class WebDownloadTests:XCTestCase {
         let token=CancellationToken();token.cancel()
         XCTAssertThrowsError(try WebDownloadProcess.run(URL(fileURLWithPath:"/bin/sleep"),["30"],token:token,timeout:30))
     }
+    func testDownloadKeepsTemporaryFilesInTheStageInsteadOfTheWorkingDirectory() throws {
+        let info=try WebDownloadEngine.parseMetadata(Data(#"{"formats":[{"height":1080}]}"#.utf8),url:URL(string:"https://example.org/watch")!)
+        let args=try WebDownloadEngine.downloadArguments(info,mode:.video,maximumHeight:nil,directory:URL(fileURLWithPath:"/tmp/stage"))
+        let paths=args.indices.filter{args[$0]=="--paths"}.map{args[$0+1]}
+        XCTAssertEqual(Set(paths),["home:/tmp/stage","temp:/tmp/stage"])
+    }
+    func testDiagnosticDetailsPutErrorsFirstAndDropLinksAndHome() throws {
+        let stderr="""
+        [youtube] abc: Downloading webpage
+        WARNING: [youtube] Falling back to https://www.youtube.com/watch?v=abc&token=secret
+        NASHI_PROGRESS: 12.0%
+        [download]  12.0% of 10MiB
+        ERROR: [Errno 30] Read-only file system: '/Volumes/Home/tester/Downloads/.Nashi-1/tmpz7.tmp'
+
+        """
+        let details=try XCTUnwrap(WebDownloadEngine.diagnosticDetails(stderr,home:"/Volumes/Home/tester"))
+        let lines=details.components(separatedBy:"\n")
+        XCTAssertEqual(lines.first,"ERROR: [Errno 30] Read-only file system: '~/Downloads/.Nashi-1/tmpz7.tmp'")
+        XCTAssertEqual(lines.dropFirst(),["[youtube] abc: Downloading webpage","WARNING: [youtube] Falling back to <link>"])
+        XCTAssertFalse(details.contains("secret"));XCTAssertFalse(details.contains("NASHI_"));XCTAssertFalse(details.contains("[download]"))
+        XCTAssertNil(WebDownloadEngine.diagnosticDetails("\n  \nNASHI_STAGE:Preparing media…\n"))
+        let flood=String(repeating:"ERROR: "+String(repeating:"x",count:1_000)+"\n",count:50)
+        let capped=try XCTUnwrap(WebDownloadEngine.diagnosticDetails(flood))
+        XCTAssertLessThanOrEqual(capped.count,1_500);XCTAssertEqual(capped.components(separatedBy:"\n").count,4)
+    }
+    func testFailedProcessKeepsFriendlyMessageAndDetails() throws {
+        XCTAssertThrowsError(try WebDownloadProcess.run(URL(fileURLWithPath:"/bin/sh"),["-c","echo 'ERROR: Something specific broke' >&2;exit 1"],token:.init(),timeout:10)) { error in
+            let failure=error as? WebDownloadFailure
+            XCTAssertEqual(failure?.localizedDescription,WebDownloadEngine.friendlyError("ERROR: Something specific broke"))
+            XCTAssertEqual(failure?.details,"ERROR: Something specific broke")
+        }
+    }
     func testErrorsDoNotExposeSourceSecrets() {
         let message=WebDownloadEngine.friendlyError("ERROR 403: https://example.org/private?token=secret")
         XCTAssertFalse(message.contains("secret"));XCTAssertFalse(message.contains("https://"))

@@ -9,7 +9,8 @@ import NashiCore
     @Published var maximumHeight=0
     @Published var inspecting=false
     @Published var downloading=false
-    @Published var error:String?
+    @Published var error:String? { didSet { errorDetails=nil } }
+    @Published var errorDetails:String?
     @Published var completed:[URL]=[]
     @Published var selectedPhotos=Set<Int>()
     @Published var shortcutAvailable=false
@@ -55,7 +56,7 @@ import NashiCore
                 self.pendingMode=nil;self.inspecting=false
             } catch {
                 guard let self,self.revision==current,!token.isCancelled,!Task.isCancelled else { return }
-                self.error=error.localizedDescription;self.inspecting=false
+                self.error=error.localizedDescription;self.errorDetails=(error as? WebDownloadFailure)?.details;self.inspecting=false
             }
         }
     }
@@ -84,6 +85,7 @@ import NashiCore
                 state.recordWebDownload(files,site:info.url.host ?? "Web")
             } catch {
                 state.stopProgressUpdates();self.error=token.isCancelled ? "Download cancelled. No partial files were kept.":error.localizedDescription
+                if !token.isCancelled { self.errorDetails=(error as? WebDownloadFailure)?.details }
                 if !token.isCancelled { state.error=error.localizedDescription }
             }
         }
@@ -170,6 +172,14 @@ struct WebDownloadView:View {
                     }
                     if !model.completed.isEmpty { Label("Ready on your Mac",systemImage:"checkmark.circle.fill").foregroundStyle(NashiPalette.forest);Text(model.completed.map(\.lastPathComponent).joined(separator:"\n")).font(.caption).textSelection(.enabled) }
                     if let error=model.error { Label { LText(error) } icon:{ Image(systemName:"exclamationmark.circle") }.font(.callout).foregroundStyle(.orange).fixedSize(horizontal:false,vertical:true) }
+                    if let details=model.errorDetails {
+                        DisclosureGroup {
+                            VStack(alignment:.leading,spacing:8) {
+                                Text(verbatim:details).font(.caption.monospaced()).foregroundStyle(.secondary).textSelection(.enabled).fixedSize(horizontal:false,vertical:true)
+                                Button("Copy details") { NSPasteboard.general.clearContents();NSPasteboard.general.setString(details,forType:.string) }
+                            }.padding(.top,6)
+                        } label:{ LText("Details").font(.caption) }
+                    }
                     if state.working,!model.downloading { Text("Another task is running. Your link is ready when it finishes.").font(.caption).foregroundStyle(.secondary) }
                     VStack(alignment:.leading,spacing:7) {
                         LText(model.shortcutAvailable ? "Copy a link → ⌃⇧D, or drag it with ⌘.":"Copy a link, then choose Download Link from the Nashi menu.").font(.caption)

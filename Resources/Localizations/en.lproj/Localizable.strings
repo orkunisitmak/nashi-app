@@ -435,6 +435,7 @@
 "COPY A LINK, THEN CHOOSE DOWNLOAD LINK FROM THE NASHI MENU." = "COPY A LINK, THEN CHOOSE DOWNLOAD LINK FROM THE NASHI MENU.";
 "COPY A PUBLIC MEDIA LINK FIRST." = "COPY A PUBLIC MEDIA LINK FIRST.";
 "COPY A VIDEO SHARE LINK OR AN IMAGE ADDRESS FIRST." = "COPY A VIDEO SHARE LINK OR AN IMAGE ADDRESS FIRST.";
+"COPY DETAILS" = "COPY DETAILS";
 "COPY PATH" = "COPY PATH";
 "CORNER RADIUS" = "CORNER RADIUS";
 "CORNERS" = "CORNERS";
@@ -617,6 +618,7 @@
 "Copy a link, then choose Download Link from the Nashi menu." = "Copy a link, then choose Download Link from the Nashi menu.";
 "Copy a public media link first." = "Copy a public media link first.";
 "Copy a video share link or an image address first." = "Copy a video share link or an image address first.";
+"Copy details" = "Copy details";
 "Copy path" = "Copy path";
 "Corner radius" = "Corner radius";
 "Corners" = "Corners";
@@ -651,6 +653,7 @@
 "DELETE CLIP" = "DELETE CLIP";
 "DETACH" = "DETACH";
 "DETAIL" = "DETAIL";
+"DETAILS" = "DETAILS";
 "DETECT FACES" = "DETECT FACES";
 "DETECT TEXT" = "DETECT TEXT";
 "DETECTION UNAVAILABLE" = "DETECTION UNAVAILABLE";
@@ -718,6 +721,7 @@
 "Delete Clip" = "Delete Clip";
 "Detach" = "Detach";
 "Detail" = "Detail";
+"Details" = "Details";
 "Detect Faces" = "Detect Faces";
 "Detect Text" = "Detect Text";
 "Detect faces" = "Detect faces";

@@ -435,6 +435,7 @@
 "COPY A LINK, THEN CHOOSE DOWNLOAD LINK FROM THE NASHI MENU." = "BİR BAĞLANTI KOPYALA, SONRA NASHI MENÜSÜNDEN BAĞLANTIDAN İNDİR'İ SEÇ.";
 "COPY A PUBLIC MEDIA LINK FIRST." = "ÖNCE HERKESE AÇIK BİR MEDYA BAĞLANTISI KOPYALA.";
 "COPY A VIDEO SHARE LINK OR AN IMAGE ADDRESS FIRST." = "ÖNCE BİR VİDEO PAYLAŞIM BAĞLANTISI VEYA GÖRSEL ADRESİ KOPYALA.";
+"COPY DETAILS" = "AYRINTILARI KOPYALA";
 "COPY PATH" = "YOLU KOPYALA";
 "CORNER RADIUS" = "KÖŞE YUVARLAKLIĞI";
 "CORNERS" = "KÖŞELER";
@@ -617,6 +618,7 @@
 "Copy a link, then choose Download Link from the Nashi menu." = "Bir bağlantı kopyala, sonra Nashi menüsünden Bağlantıdan İndir'i seç.";
 "Copy a public media link first." = "Önce herkese açık bir medya bağlantısı kopyala.";
 "Copy a video share link or an image address first." = "Önce bir video paylaşım bağlantısı veya görsel adresi kopyala.";
+"Copy details" = "Ayrıntıları kopyala";
 "Copy path" = "Yolu kopyala";
 "Corner radius" = "Köşe yuvarlaklığı";
 "Corners" = "Köşeler";
@@ -651,6 +653,7 @@
 "DELETE CLIP" = "KLİBİ SİL";
 "DETACH" = "AYIR";
 "DETAIL" = "AYRINTI";
+"DETAILS" = "AYRINTILAR";
 "DETECT FACES" = "YÜZLERİ ALGILA";
 "DETECT TEXT" = "METNİ ALGILA";
 "DETECTION UNAVAILABLE" = "ALGILAMA KULLANILAMIYOR";
@@ -718,6 +721,7 @@
 "Delete Clip" = "Klibi Sil";
 "Detach" = "Ayır";
 "Detail" = "Ayrıntı";
+"Details" = "Ayrıntılar";
 "Detect Faces" = "Yüzleri Algıla";
 "Detect Text" = "Metni Algıla";
 "Detect faces" = "Yüzleri algıla";
