@@ -19,7 +19,9 @@ enum PDFOfficeCodec {
         try token.check()
         let bounds = crop ?? visualBounds(page)
         let scale = CGFloat(max(36, min(600, dpi))) / 72
-        let width = max(1, Int(ceil(bounds.width * scale))), height = max(1, Int(ceil(bounds.height * scale)))
+        // Check the size before Int conversion: a huge or non-finite page box traps there.
+        let w = ceil(bounds.width * scale), h = ceil(bounds.height * scale)
+        let width = w.isFinite && w <= 32000 ? max(1, Int(w)) : .max, height = h.isFinite && h <= 32000 ? max(1, Int(h)) : .max
         guard width <= 32000, height <= 32000, let cgPage = page.pageRef,
               let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else {
             throw NashiError.failed("The PDF page is too large to render at this resolution.")
