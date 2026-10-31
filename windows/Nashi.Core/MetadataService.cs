@@ -5,10 +5,12 @@ namespace Nashi.Core;
 public sealed class MetadataService(string root)
 {
     public static readonly string[] EditableTags=["EXIF:Artist","EXIF:Copyright","EXIF:ImageDescription","EXIF:Make","EXIF:Model","EXIF:Software","EXIF:DateTimeOriginal","EXIF:CreateDate","EXIF:ModifyDate","EXIF:UserComment","XMP:Title","XMP:Description","XMP:Creator","XMP:Rights","PDF:Title","PDF:Author","PDF:Subject","PDF:Keywords","QuickTime:Title","QuickTime:Artist","QuickTime:Comment","ID3:Title","ID3:Artist","ID3:Album","ID3:Year","ID3:Genre","ID3:Comment"];
-    public string? Executable=>File.Exists(Path.Combine(root,"metadata-13.59","exiftool.exe"))?Path.Combine(root,"metadata-13.59","exiftool.exe"):null;
+    public string? Executable=>!OperatingSystem.IsWindows()?SystemTools.Find("exiftool"):File.Exists(Path.Combine(root,"metadata-13.59","exiftool.exe"))?Path.Combine(root,"metadata-13.59","exiftool.exe"):null;
     public async Task InstallAsync(IProgress<OperationProgress>? progress,CancellationToken token)
     {
-        if(Executable is not null)return;Directory.CreateDirectory(root);var stage=Path.Combine(root,".metadata-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(stage);
+        if(Executable is not null)return;
+        if(!OperatingSystem.IsWindows())throw new PlatformNotSupportedException("Install ExifTool using your Linux package manager.");
+        Directory.CreateDirectory(root);var stage=Path.Combine(root,".metadata-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(stage);
         try
         {
             var zip=Path.Combine(stage,"exiftool.zip");await VerifiedDownload.FetchAsync(new("https://downloads.sourceforge.net/project/exiftool/exiftool-13.59_64.zip"),zip,30_000_000,p=>progress?.Report(new(p*.8,"Downloading ExifTool…")),token);

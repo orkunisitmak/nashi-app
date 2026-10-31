@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Nashi
+Comment=Your files, a little sweeter
+Exec=Nashi %F
+Icon=nashi
+Terminal=false
+Categories=Utility;
+MimeType=image/png;image/jpeg;image/webp;image/avif;image/tiff;image/svg+xml;application/pdf;video/mp4;audio/mpeg;application/zip;
+StartupWMClass=Nashi

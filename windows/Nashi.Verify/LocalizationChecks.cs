@@ -20,12 +20,20 @@ internal static class LocalizationChecks
         check(AppLocalization.Text("3 files","tr")=="3 dosya"&&AppLocalization.Text("Convert to JPG","tr")=="JPG biçimine dönüştür","Word-bound templates stopped translating single values");
         check(AppLocalization.Text("Convert to JPG · Nashi","tr")=="JPG biçimine dönüştür · Nashi"&&AppLocalization.Text("Make it yours · Nashi","tr")==AppLocalization.Text("Make it yours","tr")+" · Nashi","Window titles were not translated before the app suffix");
         foreach(var value in new[]{"Home.png","MP4","Ctrl+Shift","⌘S","00:01.250"})check(AppLocalization.Text(value,"tr")==value,"Translation changed a format, path or shortcut");
-        foreach(var (source,target) in AppLocalization.Turkish)check(Regex.Matches(source,@"\{[0-9]\}").Select(m=>m.Value).Order().SequenceEqual(Regex.Matches(target,@"\{[0-9]\}").Select(m=>m.Value).Order()),"Translation placeholders differ: "+source);
+        foreach(var language in AppLocalization.SupportedLanguages.Where(l=>l!="en"))foreach(var (source,target) in AppLocalization.Catalog(language))check(Regex.Matches(source,@"\{[0-9]\}").Select(m=>m.Value).Order().SequenceEqual(Regex.Matches(target,@"\{[0-9]\}").Select(m=>m.Value).Order()),"Translation placeholders differ: "+source);
+        check(AppLocalization.Normalize("fr")=="fr"&&AppLocalization.SupportedLanguages.SequenceEqual(new[]{"en","tr","fr"}),"Original French language is supported");
+        check(AppLocalization.Text("Library","fr")=="Bibliothèque"&&AppLocalization.Text("Language","fr")=="Langue","Original French catalog is embedded and loaded");
+        foreach(var source in FeatureCatalog.ToolNames.Values)check(AppLocalization.Text(source,"fr")!=source,"Missing original French tool copy: "+source);
+        check(AppLocalization.Text("CROP IMAGE","fr")=="RECADRER L’IMAGE"&&AppLocalization.Uppercase("épingler Shift","fr")=="ÉPINGLER SHIFT","French accents and key names survive uppercase UI labels");
+        check(AppLocalization.Matches("Library","bibliotheque","fr")&&AppLocalization.Matches("Crop Image","recadrer","fr"),"French localized search ignores accents");
+        check(AppLocalization.Text("Original size: "+raw,"fr")=="Taille d’origine\u00a0: "+raw,"French interpolation preserves inserted file/user values");
+        check(AppLocalization.Text("Nicely done. 12 files are ready.","fr")=="Bien joué. 12 fichiers sont prêts."&&AppLocalization.Text("Convert to JPG · Nashi","fr")=="Convertir en JPG · Nashi","French templates retain counts, formats and window suffixes");
         var directory=Path.Combine(root,"Localization preferences");var store=new PreferencesStore(directory);check(store.Value.Language=="en","Existing users changed language without choosing");
         store.Save(store.Value with{Language="tr",Feedback=false,ToolsModifier="Ctrl+Alt"});var loaded=new PreferencesStore(directory).Value;
         check(loaded.Language=="tr"&&!loaded.Feedback&&loaded.ToolsModifier=="Ctrl+Alt","Language persistence changed other preferences");
+        store.Save(store.Value with{Language="fr"});var french=new PreferencesStore(directory).Value;check(french.Language=="fr"&&!french.Feedback&&french.ToolsModifier=="Ctrl+Alt","French language persistence preserves other preferences");
         var old=Path.Combine(root,"Legacy language preferences");Directory.CreateDirectory(old);File.WriteAllText(Path.Combine(old,"preferences.json"),"{\"Feedback\":false}");var legacy=new PreferencesStore(old);
         check(legacy.Value.Language=="en"&&!legacy.Value.Feedback,"Legacy preference migration changed other values");
-        check(AppLocalization.Normalize("fr")=="en"&&AppLocalization.Text("Home","en")=="Home","Unsupported language or English fallback failed");
+        check(AppLocalization.Normalize("de")=="en"&&AppLocalization.Text("Home","en")=="Home","Unsupported language or English fallback failed");
     }
 }

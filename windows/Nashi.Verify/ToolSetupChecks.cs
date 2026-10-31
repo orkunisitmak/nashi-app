@@ -19,6 +19,7 @@ internal static class ToolSetupChecks
             File.Delete(Path.Combine(target,"ready"));File.WriteAllText(Path.Combine(target,"partial"),"rollback");
             try{ToolInstallation.Publish(second,target,p=>{if(p==second){Directory.Delete(second,true);return true;}return false;});throw new Exception("Vanished stage published");}catch(IOException){check(File.ReadAllText(Path.Combine(target,"partial"))=="rollback","Failed replacement did not restore installed tools");}
             File.WriteAllText(Path.Combine(target,"zero.exe"),"");check(!ToolInstallation.UsableFile(Path.Combine(target,"zero.exe")),"Empty placeholder must not count as installed tool");
+            if(OperatingSystem.IsWindows()){
             var bundled=Path.Combine(directory,"bundled");var installed=Path.Combine(directory,"installed");Directory.CreateDirectory(installed);
             foreach(var name in new[]{"ffmpeg","ffprobe","yt-dlp","deno"})File.WriteAllText(Path.Combine(installed,name+".exe"),"tool");
             check(!new Toolchain(bundled).Ready,"Tools on PATH must stay unused without a search path");
@@ -30,6 +31,16 @@ internal static class ToolSetupChecks
             Directory.CreateDirectory(bundled);File.WriteAllText(Path.Combine(bundled,"ffmpeg.exe"),"pinned");
             check(found.Executable("ffmpeg")==Path.Combine(bundled,"ffmpeg.exe")&&found.Executable("ffprobe")==Path.Combine(installed,"ffprobe.exe"),"Downloaded tools must take priority over the search path");
             File.WriteAllText(Path.Combine(installed,"deno.exe"),"");check(!found.Ready,"Empty search path placeholder must not count as installed tool");
+            }else{
+                var installed=Path.Combine(directory,"native tools");Directory.CreateDirectory(installed);
+                foreach(var name in new[]{"ffmpeg","ffprobe","yt-dlp","deno"}){var path=Path.Combine(installed,name);File.WriteAllText(path,"#!/bin/sh\nexit 0\n");File.SetUnixFileMode(path,UnixFileMode.UserRead|UnixFileMode.UserWrite|UnixFileMode.UserExecute);}
+                var bundled=Path.Combine(directory,"unused Windows tools");var found=new Toolchain(bundled,installed);
+                check(found.Ready&&found.Executable("yt-dlp")==Path.Combine(installed,"yt-dlp"),"Linux tools use extensionless executables on the explicit search path");
+                check(found.InstallAsync().IsCompletedSuccessfully&&!Directory.Exists(bundled),"Existing Linux tools need no Windows downloads");
+                check(!new Toolchain(bundled,".").Ready,"Linux tool search ignores relative directories");
+                File.SetUnixFileMode(Path.Combine(installed,"deno"),UnixFileMode.UserRead|UnixFileMode.UserWrite);
+                check(!found.Ready,"Linux non-executable placeholders do not count as tools");
+            }
         }
         finally{Directory.Delete(directory,true);}
     }

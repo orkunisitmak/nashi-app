@@ -21,7 +21,7 @@ public sealed class ExportTransaction : IDisposable
         File.SetAttributes(StagingDirectory, File.GetAttributes(StagingDirectory) | FileAttributes.Hidden);
     }
 
-    public IReadOnlyList<string> Publish(IEnumerable<string> outputs, CancellationToken token)
+    public IReadOnlyList<string> Publish(IEnumerable<string> outputs, CancellationToken token, bool allowEmptyFiles = false)
     {
         var files = outputs.ToList();
         if (files.Count == 0) throw new InvalidDataException("No output was produced.");
@@ -31,7 +31,7 @@ public sealed class ExportTransaction : IDisposable
             var full = Path.GetFullPath(item);
             if (!full.StartsWith(StagingDirectory + Path.DirectorySeparatorChar, StringComparison.Ordinal))
                 throw new InvalidDataException("An output is outside its staging directory.");
-            if (!Directory.Exists(full) && (!File.Exists(full) || new FileInfo(full).Length == 0))
+            if (!Directory.Exists(full) && (!File.Exists(full) || (!allowEmptyFiles && new FileInfo(full).Length == 0)))
                 throw new InvalidDataException("An empty output was produced.");
             if ((File.GetAttributes(full) & FileAttributes.ReparsePoint) != 0)
                 throw new InvalidDataException("An output cannot be a symbolic link.");

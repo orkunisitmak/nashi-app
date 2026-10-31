@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>WinExe</OutputType><AssemblyName>Nashi</AssemblyName><RuntimeIdentifiers>linux-x64;linux-arm64</RuntimeIdentifiers><RestorePackagesWithLockFile>true</RestorePackagesWithLockFile></PropertyGroup>
+  <ItemGroup><Compile Include="../../windows/Nashi.Windows/MediaMetadata.cs" Link="MediaMetadata.cs" /></ItemGroup>
+  <ItemGroup><ProjectReference Include="../Nashi.Linux.Engine/Nashi.Linux.Engine.csproj" /></ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.4" />
+  </ItemGroup>
+  <ItemGroup>
+    <AvaloniaResource Include="../../Resources/Brand/NashiIcon.png" Link="Assets/NashiIcon.png" />
+    <AvaloniaResource Include="../../Resources/Brand/NashiMark.png" Link="Assets/NashiMark.png" />
+    <Content Include="../../Resources/PagesInterop.js" Link="PagesInterop.js" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../scripts/pages-windows.js" Link="pages-windows.js" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../Resources/licenses/cupertino-files/**" Link="licenses/cupertino-files/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
