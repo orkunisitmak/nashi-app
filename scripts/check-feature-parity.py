@@ -6,9 +6,15 @@ source = (root / 'Sources/NashiCore/FeatureCatalog.swift').read_text()
 expected = {}
 for name in ['conversionMatrix', 'singleTools', 'multipleTools']:
     block = source.split('let '+name+':',1)[1].split('= [',1)[1].split('\n    ]',1)[0]
-    expected[name] = {key:(re.findall(r'"([^"]+)"',value) if name=='conversionMatrix' else re.findall(r'\.([A-Za-z]+)',value)) for key,value in re.findall(r'"([a-z0-9]+)": \[([^\]]*)\]',block)}
+    entries = re.findall(r'"([a-z0-9]+)": \[([^\]]*)\]',block)
+    if len(entries) != len(re.findall(r'(?m)^\s*"[^"\n]*"\s*:',block)):
+        raise SystemExit(f'{name}: a Swift catalog entry could not be parsed')
+    expected[name] = {key:(re.findall(r'"([^"]+)"',value) if name=='conversionMatrix' else re.findall(r'\.([A-Za-z]+)',value)) for key,value in entries}
 block = source.split('let toolNames:',1)[1].split('= [',1)[1].split('\n    ]',1)[0]
-expected['toolNames'] = dict(re.findall(r'\.([A-Za-z]+): "([^"]+)"',block))
+entries = re.findall(r'\.([A-Za-z]+): "([^"]+)"',block)
+if len(entries) != len(re.findall(r'(?m)^\s*\.\w+\s*:',block)):
+    raise SystemExit('toolNames: a Swift catalog entry could not be parsed')
+expected['toolNames'] = dict(entries)
 actual = json.loads((root/'Resources/FeatureCatalog.json').read_text())
 for name, value in expected.items():
     if actual.get(name) != value:
