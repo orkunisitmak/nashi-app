@@ -8,8 +8,13 @@ public static class AppLocalization
     public static string Normalize(string? language)=>language=="tr"?"tr":"en";
     public static bool Matches(string source,string query,string language)
     {
+        return Contains(source,query,language)||Contains(Text(source,language),query,language);
+    }
+    // Case- and accent-insensitive in the app language, like macOS: "izmir" finds "İzmir", "cafe" finds "Café".
+    public static bool Contains(string source,string query,string language)
+    {
         var compare=CultureInfo.GetCultureInfo(Normalize(language)).CompareInfo;
-        return compare.IndexOf(source,query,CompareOptions.IgnoreCase|CompareOptions.IgnoreNonSpace)>=0||compare.IndexOf(Text(source,language),query,CompareOptions.IgnoreCase|CompareOptions.IgnoreNonSpace)>=0;
+        return compare.IndexOf(source,query,CompareOptions.IgnoreCase|CompareOptions.IgnoreNonSpace)>=0;
     }
     public static IReadOnlyDictionary<string,string> Turkish{get;}=Load();
     private static Dictionary<string,string> Load()

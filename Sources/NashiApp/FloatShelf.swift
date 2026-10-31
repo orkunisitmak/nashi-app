@@ -61,13 +61,17 @@ enum FloatShelfViewMode:Int { case icons,list }
 
     func append(_ urls:[URL]) {
         let previousSelection=Set(selectedIndices.map{items[$0].id})
-        var present=Set(items.map{$0.url.standardizedFileURL.path})
+        var present=Set(items.flatMap{Self.pathKeys($0.url)})
         for url in urls where url.isFileURL {
-            let canonical=url.standardizedFileURL
-            if present.insert(canonical.path).inserted { items.append(ShelfFile(url:canonical)) }
+            let canonical=url.standardizedFileURL,keys=Self.pathKeys(canonical)
+            if present.isDisjoint(with:keys) { present.formUnion(keys);items.append(ShelfFile(url:canonical)) }
         }
         reload(preserving:previousSelection)
         if isExpanded { setExpanded(true,forceLayout:true) }
+    }
+    /// A case variant or symlinked spelling of an existing file's path is the same file.
+    private static func pathKeys(_ url:URL)->[String] {
+        [url.standardizedFileURL.path]+[(try? url.resourceValues(forKeys:[.canonicalPathKey]))?.canonicalPath].compactMap{$0}
     }
 
     func attach(to edge:FloatShelfEdge?) {
@@ -185,6 +189,12 @@ enum FloatShelfViewMode:Int { case icons,list }
         carryGrip.toolTip=L10n.text("Drag the stack to carry all files. Drag the paperclip to move Float.")
         collapseButton.toolTip=L10n.text(isExpanded ? "Collapse Float":"Expand Float")
         collapseButton.setAccessibilityLabel(L10n.text(isExpanded ? "Collapse Float":"Expand Float")+" · \(count)")
+        // Set here, not once in buildContent, so a language switch relabels them too.
+        if let close=header.subviews.first(where:{$0.identifier?.rawValue=="float.closeControl"}) as? NSButton {
+            close.toolTip=L10n.text("Close Float without deleting files");close.image?.accessibilityDescription=close.toolTip
+        }
+        pinButton.toolTip=L10n.text("Float options");pinButton.image?.accessibilityDescription=pinButton.toolTip
+        collection.setAccessibilityLabel(L10n.text("Files in Float"))
         window?.title="Float · \(count)";window?.invalidateShadow()
     }
     private func setFrame(_ frame:NSRect,animate:Bool) {
@@ -283,16 +293,17 @@ enum FloatShelfViewMode:Int { case icons,list }
         if event.keyCode==49 { showQuickLook();return true }
         if event.keyCode==36 || event.keyCode==76 { openSelection();return true }
         if event.keyCode==51 || event.keyCode==117 { removeSelection();return true }
-        if event.keyCode==53 { if !collection.selectionIndexPaths.isEmpty { collection.selectionIndexPaths=[];updateLabels() } else { setExpanded(false) };return true }
+        // A held Escape is one press: its auto-repeat must not also collapse the shelf.
+        if event.keyCode==53 { if event.isARepeat { return true };if !collection.selectionIndexPaths.isEmpty { collection.selectionIndexPaths=[];updateLabels() } else { setExpanded(false) };return true }
         guard !event.modifierFlags.contains(.control),!event.modifierFlags.contains(.option),let value=event.characters,!value.isEmpty,value.unicodeScalars.allSatisfy({CharacterSet.alphanumerics.contains($0) || $0==" "}) else { return false }
-        let time=ProcessInfo.processInfo.systemUptime,query=value.lowercased()
+        let time=ProcessInfo.processInfo.systemUptime,query=Self.typeSelectKey(value)
         if time-lastTypeTime>1 { typeBuffer="" };lastTypeTime=time
         let repeated=typeBuffer==query
         typeBuffer=repeated ? query:typeBuffer+query
         let start=repeated ? (selectedIndices.first ?? -1)+1:0
         for offset in items.indices {
             let index=(start+offset)%items.count
-            if items[index].url.lastPathComponent.lowercased().hasPrefix(typeBuffer) {
+            if Self.typeSelectKey(items[index].url.lastPathComponent).hasPrefix(typeBuffer) {
                 let path=IndexPath(item:index,section:0)
                 collection.selectionIndexPaths=[path];collection.scrollToItems(at:[path],scrollPosition:.centeredVertically)
                 updateLabels();updatePreviewIfVisible();return true
@@ -300,6 +311,9 @@ enum FloatShelfViewMode:Int { case icons,list }
         }
         return !items.isEmpty
     }
+    /// Lowercases for type-select. "İ".lowercased() is "i" + COMBINING DOT ABOVE, which would
+    /// never match a typed "i"; drop that dot so İ/i match like every other letter pair.
+    private static func typeSelectKey(_ text:String)->String { text.lowercased().replacingOccurrences(of:"i\u{307}",with:"i") }
 
     private func makeContextMenu()->NSMenu {
         let menu=NSMenu(title:"Float");menu.delegate=self
@@ -331,7 +345,7 @@ enum FloatShelfViewMode:Int { case icons,list }
         return !items.isEmpty
     }
     @objc private func openSelection() {
-        for url in actionURLs { if !NSWorkspace.shared.open(url) { statusLabel.stringValue="Could not open \(url.lastPathComponent)." } }
+        for url in actionURLs { if !NSWorkspace.shared.open(url) { statusLabel.stringValue=L10n.text("Could not open \(url.lastPathComponent).") } }
     }
     @objc private func revealSelection() { if !actionURLs.isEmpty { NSWorkspace.shared.activateFileViewerSelecting(actionURLs) } }
     @objc private func copyFiles() { NSPasteboard.general.clearContents();NSPasteboard.general.writeObjects(actionURLs.map{$0 as NSURL}) }

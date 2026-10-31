@@ -40,13 +40,30 @@ public sealed class ExportTransaction : IDisposable
         {
             token.ThrowIfCancellationRequested();
             var destination = SafePaths.Unique(Destination, Path.GetFileName(item));
-            if (Directory.Exists(item)) Directory.Move(item, destination);
-            else File.Move(item, destination, overwrite: false);
+            MoveWithRetry(item, destination);
+
             published.Add(destination);
         }
         token.ThrowIfCancellationRequested();
         committed = true;
         return published.ToArray();
+    }
+
+    private static void MoveWithRetry(string source, string destination)
+    {
+        for (var attempt = 0; ; attempt++)
+        {
+            try
+            {
+                if (Directory.Exists(source)) Directory.Move(source, destination);
+                else File.Move(source, destination, overwrite: false);
+                return;
+            }
+            catch (Exception ex) when (attempt < 4 && ex is IOException or UnauthorizedAccessException)
+            {
+                Thread.Sleep(25 * (attempt + 1));
+            }
+        }
     }
 
     /// Cleanup never replaces the batch's real outcome. A tool killed on cancel can hold a

@@ -46,7 +46,7 @@ struct UpdateSettingsView:View {
                 HStack(spacing:12) {
                     Image(systemName:"externaldrive.badge.person.crop").foregroundStyle(NashiPalette.forest)
                     VStack(alignment:.leading,spacing:4) {
-                        Text(updater.repository?.slug ?? updater.officialRepository?.slug ?? "GitHub release connection").font(.headline)
+                        Group { if let slug=updater.repository?.slug ?? updater.officialRepository?.slug { Text(verbatim:slug) } else { LText("GitHub release connection") } }.font(.headline)
                         Text(updater.repository == nil ? (updater.officialRepository == nil ? "Connect a private or public updates repository.":"Official public releases · No account or token needed"):updater.requiresToken ? "Private repository · Token saved in Keychain":"Public repository · No token needed")
                             .font(.caption).foregroundStyle(.secondary)
                     }
@@ -71,8 +71,8 @@ struct UpdateSettingsView:View {
                             Divider()
                             HStack {
                                 VStack(alignment:.leading,spacing:5) {
-                                    Text(statusTitle).font(.headline)
-                                    if let date=updater.lastCheckedAt { Text("Last checked \(date.formatted(date:.abbreviated,time:.shortened))").font(.caption).foregroundStyle(.secondary) }
+                                    LText(statusTitle).font(.headline)
+                                    if let date=updater.lastCheckedAt { Text("Last checked \(date,format:Date.FormatStyle(date:.abbreviated,time:.shortened))").font(.caption).foregroundStyle(.secondary) }
                                     else { Text("No update checks yet").font(.caption).foregroundStyle(.secondary) }
                                 }
                                 Spacer()
@@ -166,7 +166,7 @@ struct UpdateConnectionView:View {
                     HStack {
                         VStack(alignment:.leading,spacing:5) {
                             Text(updater.isPreparingCheck ? "Checking releases…":"Ready for a fresh version?").font(.headline)
-                            if let checked=updater.lastCheckedAt { Text("Last checked \(checked.formatted(date:.abbreviated,time:.shortened))").font(.caption).foregroundStyle(.secondary) }
+                            if let checked=updater.lastCheckedAt { Text("Last checked \(checked,format:Date.FormatStyle(date:.abbreviated,time:.shortened))").font(.caption).foregroundStyle(.secondary) }
                         }
                         Spacer()
                         Button(updater.availableVersion == nil ? "Check for Updates…":"Update…") { updater.checkForUpdates() }

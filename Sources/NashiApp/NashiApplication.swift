@@ -347,7 +347,7 @@ enum NashiApplication {
 extension AppDelegate:NSMenuItemValidation {
     func validateMenuItem(_ menuItem:NSMenuItem)->Bool {
         if menuItem.action == #selector(checkForUpdates) { return !updater.isConfigured || (updater.canCheckForUpdates && !updater.isBusy) }
-        if menuItem.action == #selector(quit) { return !state.working }
+        if menuItem.action == #selector(quit) { return !state.working && !toolSetupWorking }
         return true
     }
 }

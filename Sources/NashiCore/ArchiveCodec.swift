@@ -44,8 +44,9 @@ enum ArchiveCodec {
             let status = a.readNext(reader, &entry)
             if status == 1 { break }
             try a.check(status, handle: reader)
-            guard let entry, let rawName = a.entryPath(entry) else { throw NashiError.failed("The archive contains an unnamed entry.") }
-            var name = String(cString: rawName)
+            // Only ZIP stores names in a DOS code page; other formats keep rejecting names they cannot decode.
+            guard let entry, let entryName = a.entryPath(entry).map({ String(cString: $0) }) ?? (a.format(reader) & 0xff0000 == 0x50000 ? a.entryRawPath(entry).map(legacyName) : nil) else { throw NashiError.failed("The archive contains an unnamed entry.") }
+            var name = entryName
             if a.format(reader) == 0x90000 {
                 // A gzip stream can hold one ordinary file instead of a tar.
                 name = input.deletingPathExtension().lastPathComponent
@@ -149,7 +150,10 @@ enum ArchiveCodec {
         guard let writer = a.writeNew() else { throw NashiError.failed("Could not initialize the archive writer.") }
         defer { _ = a.writeFree(writer) }
         switch format {
-        case "zip": try a.check(a.writeZIP(writer), handle: writer)
+        case "zip":
+            try a.check(a.writeZIP(writer), handle: writer)
+            // Without this, UTF-8 names lack the ZIP UTF-8 flag and other systems read them as CP437.
+            try a.check(a.writeOptions(writer, "zip:hdrcharset=UTF-8"), handle: writer)
         case "tar": try a.check(a.writeTar(writer), handle: writer)
         case "gz", "gzip", "tgz":
             try a.check(a.writeTar(writer), handle: writer)
@@ -228,6 +232,17 @@ enum ArchiveCodec {
         let url = root.appendingPathComponent(relative).standardizedFileURL
         guard contains(url, root: root) else { throw NashiError.invalidInput("An archive path leaves its extraction folder.") }
         return url
+    }
+
+    /// ZIP names without the UTF-8 flag are in the creator's DOS code page
+    /// (CP437 by the ZIP spec, CP857 on Turkish Windows), which libarchive
+    /// cannot convert in the C locale. Like 7-Zip, keep valid UTF-8.
+    private static func legacyName(_ raw: UnsafePointer<CChar>) -> String {
+        let data = Data(bytes: raw, count: strlen(raw))
+        if let name = String(data: data, encoding: .utf8) { return name }
+        let turkish = Locale.current.language.languageCode == .turkish || Locale.current.region == .turkey
+        let dos: CFStringEncodings = turkish ? .dosTurkish : .dosLatinUS
+        return String(data: data, encoding: .init(rawValue: CFStringConvertEncodingToNSStringEncoding(CFStringEncoding(dos.rawValue)))) ?? String(decoding: data, as: UTF8.self)
     }
 
     private static func contains(_ url: URL, root: URL) -> Bool {
@@ -309,6 +324,7 @@ enum ArchiveCodec {
         var format: Call { symbol("archive_format", Call.self) }
         var errorString: StringGet { symbol("archive_error_string", StringGet.self) }
         var entryPath: StringGet { symbol("archive_entry_pathname_utf8", StringGet.self) }
+        var entryRawPath: StringGet { symbol("archive_entry_pathname", StringGet.self) }
         var entrySymlink: StringGet { symbol("archive_entry_symlink_utf8", StringGet.self) }
         var entryHardlink: StringGet { symbol("archive_entry_hardlink_utf8", StringGet.self) }
         var entryFiletype: UIntGet { symbol("archive_entry_filetype", UIntGet.self) }

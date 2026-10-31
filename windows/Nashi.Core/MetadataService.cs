@@ -2,18 +2,35 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 namespace Nashi.Core;
-public sealed class MetadataService(string root)
+public sealed class MetadataService(string root,string? perlSearchPath=null)
 {
     public static readonly string[] EditableTags=["EXIF:Artist","EXIF:Copyright","EXIF:ImageDescription","EXIF:Make","EXIF:Model","EXIF:Software","EXIF:DateTimeOriginal","EXIF:CreateDate","EXIF:ModifyDate","EXIF:UserComment","XMP:Title","XMP:Description","XMP:Creator","XMP:Rights","PDF:Title","PDF:Author","PDF:Subject","PDF:Keywords","QuickTime:Title","QuickTime:Artist","QuickTime:Comment","ID3:Title","ID3:Artist","ID3:Album","ID3:Year","ID3:Genre","ID3:Comment"];
-    public string? Executable=>File.Exists(Path.Combine(root,"metadata-13.59","exiftool.exe"))?Path.Combine(root,"metadata-13.59","exiftool.exe"):null;
+    // Windows gets ExifTool with Strawberry Perl; Linux gets the plain Perl script and needs a system perl.
+    private static readonly string FileName=OperatingSystem.IsWindows()?"exiftool.exe":"exiftool";
+    // The exiftool script starts with "#!/usr/bin/env perl" and loads lib/Image/ExifTool.pm beside itself.
+    private bool Ready(string directory)=>File.Exists(Path.Combine(directory,FileName))&&ToolInstallation.CanExecute(Path.Combine(directory,FileName))&&(OperatingSystem.IsWindows()||File.Exists(Path.Combine(directory,"lib","Image","ExifTool.pm"))&&PerlUsable());
+    private bool PerlUsable()
+    {
+        foreach(var entry in (perlSearchPath??Environment.GetEnvironmentVariable("PATH")??"").Split(Path.PathSeparator,StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries))
+        {
+            if(!Path.IsPathFullyQualified(entry))continue;var perl=Path.Combine(entry,"perl");
+            // perl is often a symlink (perl -> perl5.x), so usability is checked on its target like Toolchain does.
+            try{var checkedPath=new FileInfo(perl).ResolveLinkTarget(true) is FileInfo target?target.FullName:perl;if(ToolInstallation.UsableFile(checkedPath)&&ToolInstallation.CanExecute(checkedPath))return true;}catch(IOException){}catch(UnauthorizedAccessException){}
+        }
+        return false;
+    }
+    public string? Executable=>Ready(Path.Combine(root,"metadata-13.59"))?Path.Combine(root,"metadata-13.59",FileName):null;
     public async Task InstallAsync(IProgress<OperationProgress>? progress,CancellationToken token)
     {
-        if(Executable is not null)return;Directory.CreateDirectory(root);var stage=Path.Combine(root,".metadata-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(stage);
+        if(Executable is not null)return;var windows=OperatingSystem.IsWindows();
+        if(!windows&&!PerlUsable())throw new InvalidOperationException("ExifTool needs Perl. Install perl and try again.");
+        var (url,sha256,script)=windows?("https://downloads.sourceforge.net/project/exiftool/exiftool-13.59_64.zip","44b512b25af500724ba579d0a53c8fc5851628b692dd5e5d94ae4a15c2cba9ec","exiftool(-k).exe"):("https://downloads.sourceforge.net/project/exiftool/Image-ExifTool-13.59.tar.gz","668ea3acececb7235fbd0f4900e72d5f12c9b07e5c778fd36cb1e9b5828fd65a","exiftool");
+        Directory.CreateDirectory(root);var stage=Path.Combine(root,".metadata-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(stage);
         try
         {
-            var zip=Path.Combine(stage,"exiftool.zip");await VerifiedDownload.FetchAsync(new("https://downloads.sourceforge.net/project/exiftool/exiftool-13.59_64.zip"),zip,30_000_000,p=>progress?.Report(new(p*.8,"Downloading ExifTool…")),token);
-            await using(var file=File.OpenRead(zip))if(Convert.ToHexString(await SHA256.HashDataAsync(file,token)).ToLowerInvariant()!="44b512b25af500724ba579d0a53c8fc5851628b692dd5e5d94ae4a15c2cba9ec")throw new InvalidDataException("Metadata tools checksum mismatch.");
-            var unpack=ArchiveEngine.Extract(zip,stage,null,null,token)[0];var exe=Directory.GetFiles(unpack,"exiftool(-k).exe",SearchOption.AllDirectories).Single();var folder=Path.GetDirectoryName(exe)!;File.Move(exe,Path.Combine(folder,"exiftool.exe"));token.ThrowIfCancellationRequested();Directory.Move(folder,Path.Combine(root,"metadata-13.59"));progress?.Report(new(1,"Metadata tools ready"));
+            var zip=Path.Combine(stage,windows?"exiftool.zip":"exiftool.tar.gz");await VerifiedDownload.FetchAsync(new(url),zip,30_000_000,p=>progress?.Report(new(p*.8,"Downloading ExifTool…")),token);
+            await using(var file=File.OpenRead(zip))if(Convert.ToHexString(await SHA256.HashDataAsync(file,token)).ToLowerInvariant()!=sha256)throw new InvalidDataException("Metadata tools checksum mismatch.");
+            var unpack=ArchiveEngine.Extract(zip,stage,null,null,token)[0];var exe=Directory.GetFiles(unpack,script,SearchOption.AllDirectories).Single();var folder=Path.GetDirectoryName(exe)!;if(windows)File.Move(exe,Path.Combine(folder,"exiftool.exe"));ToolInstallation.MakeExecutable(Path.Combine(folder,FileName));token.ThrowIfCancellationRequested();ToolInstallation.Publish(folder,Path.Combine(root,"metadata-13.59"),Ready);progress?.Report(new(1,"Metadata tools ready"));
         }finally{if(Directory.Exists(stage))Directory.Delete(stage,true);}
     }
     public async Task<IReadOnlyDictionary<string,string>> ReadAsync(string input,CancellationToken token=default)

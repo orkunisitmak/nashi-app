@@ -86,7 +86,6 @@ struct HomeView:View {
             .nashiAnimation(value:state.inputs.isEmpty).nashiAnimation(value:state.working)
             .nashiAnimation(value:updater.availableVersion)
             .onChange(of:state.libraryFocusRequest) { _ in librarySearchFocused=true }
-            .onChange(of:state.inputs) { _ in if !state.working { state.outputs=[];state.error=nil } }
     }
     private var libraryPage:some View {
         ScrollViewReader { scroll in
@@ -95,7 +94,7 @@ struct HomeView:View {
                     Text("Your Library").font(.system(size:30,weight:.bold,design:.rounded))
                     Text("Freshly made, pasted, and ready for another round.").font(.callout).foregroundStyle(.secondary)
                     TextField("Find a file or tool · ⌘F",text:$state.libraryQuery).textFieldStyle(.roundedBorder).focused($librarySearchFocused)
-                    if let error=state.error {HStack{Label(error,systemImage:"exclamationmark.circle").font(.caption).foregroundStyle(.orange);Spacer();Button("Dismiss"){state.error=nil}.buttonStyle(NashiButtonStyle(.quiet,compact:true))}}
+                    if let error=state.error {HStack{Label { LText(error) } icon:{ Image(systemName:"exclamationmark.circle") }.font(.caption).foregroundStyle(.orange);Spacer();Button("Dismiss"){state.error=nil}.buttonStyle(NashiButtonStyle(.quiet,compact:true))}}
                     if state.filteredHistory.isEmpty {LText(state.history.isEmpty ? "Nothing here yet. Paste something or make your first fresh copy.":"No matches. Try a file name or tool.").foregroundStyle(.secondary).padding(20)}
                     ForEach(state.filteredHistory) {job in
                         RecentFileRow(job:job,canReuse:!state.working,onPreview:{state.preview(job)},onReuse:{urls in guard !state.working else{return};state.inputs=urls;state.libraryVisible=false})
@@ -173,7 +172,7 @@ struct HomeView:View {
     private var selectionActions:some View {
         VStack(alignment:.leading,spacing:12) {
             HStack(spacing:12) {
-                Button { HomeActionMenu.show(formats.map{format in (format=="gz" ? "GZIP":format.uppercased(),{state.select(.convert(format))})}) } label:{HomeActionTile(title:"Convert",subtitle:formats.isEmpty ? "No output formats":"\(formats.count) ways to change it",symbol:"arrow.triangle.2.circlepath",color:.nashi)}
+                Button { HomeActionMenu.show(formats.map{format in (format=="gz" ? "GZIP":format.uppercased(),{state.select(.convert(format))})}) } label:{HomeActionTile(title:"Convert",subtitle:formats.isEmpty ? "No output formats":formats.count==1 ? "1 way to change it":"\(formats.count) ways to change it",symbol:"arrow.triangle.2.circlepath",color:.nashi)}
                     .buttonStyle(.plain).disabled(formats.isEmpty || state.working)
                 Button { HomeActionMenu.show(tools.map{tool in (tool.title,{state.select(.tool(tool))})}) } label:{HomeActionTile(title:"Fine-tune",subtitle:tools.isEmpty ? "No tools for this selection":"Edit, compress, and more",symbol:"slider.horizontal.3",color:NashiPalette.forest)}
                     .buttonStyle(.plain).disabled(tools.isEmpty || state.working)
@@ -253,7 +252,7 @@ private struct RecentFileRow:View {
             if let first=urls.first { AsyncFileArtwork(url:first).frame(width:29,height:29).padding(5).background(NashiPalette.inset,in:RoundedRectangle(cornerRadius:11)) }
             VStack(alignment:.leading,spacing:4) {
                 Text(urls.first?.lastPathComponent ?? job.title).font(.system(size:12,weight:.semibold)).lineLimit(1)
-                HStack(spacing:3) { if available.isEmpty { Text("Moved or removed") } else { LText(job.title);Text("· "+job.date.formatted(.relative(presentation:.named))) } }.font(.system(size:10)).foregroundStyle(.secondary).lineLimit(1)
+                HStack(spacing:3) { if available.isEmpty { Text("Moved or removed") } else { LText(job.title);Text("· \(job.date,format:.relative(presentation:.named))") } }.font(.system(size:10)).foregroundStyle(.secondary).lineLimit(1)
             }
             Spacer()
             if urls.count>1 { Text("\(urls.count) files").font(.caption2).foregroundStyle(.secondary) }
@@ -299,7 +298,7 @@ struct JobProgressView:View {
                         ProgressView().controlSize(.small)
                         VStack(alignment:.leading,spacing:4) { Text("A fresh file is on its way.").font(.system(size:13,weight:.semibold,design:.rounded));LText(state.progressLabel).font(.system(size:11)).foregroundStyle(.secondary).lineLimit(1) }
                         Spacer()
-                        if state.progressIsDeterminate { Text("\(Int(state.progress*100))%").font(.system(size:12,weight:.semibold,design:.rounded)).monospacedDigit().foregroundStyle(.secondary) }
+                        if state.progressIsDeterminate { Text(Int(state.progress*100),format:.percent).font(.system(size:12,weight:.semibold,design:.rounded)).monospacedDigit().foregroundStyle(.secondary) }
                         Button("Cancel") { state.token.cancel() }.buttonStyle(NashiButtonStyle(.secondary,compact:true))
                     }
                     JobProgressBar(state:state)
