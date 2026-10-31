@@ -186,6 +186,9 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
         try { await work(previous); }
         finally
         {
+            // A link never completes before its predecessor: a wait cancelled from its card still holds its place
+            // until the run before it ends, so nothing queued behind it can start alongside that run.
+            await Task.WhenAny(previous);
             if (Current == done.Task) Busy = false;
             done.SetResult();
         }
@@ -207,33 +210,31 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
 
     private async Task ExecuteAsync(WheelItem item, IReadOnlyList<string> selection, Editors.EditorJob? job, Task previous)
     {
+        var title = item.Id.StartsWith("convert:", StringComparison.Ordinal) ? L10n.F(Copy.ConvertTo, item.Title) : item.Title;
+        using var cancellation = new CancellationTokenSource();
+        var toast = LastToast = new ProgressToast(title, cancellation.Cancel);
+        if (owner is not null) toast.Show(owner);
+        else toast.Show();
+        try
         {
-            var title = item.Id.StartsWith("convert:", StringComparison.Ordinal) ? L10n.F(Copy.ConvertTo, item.Title) : item.Title;
-            using var cancellation = new CancellationTokenSource();
-            var toast = LastToast = new ProgressToast(title, cancellation.Cancel);
-            if (owner is not null) toast.Show(owner);
-            else toast.Show();
-            try
+            if (!previous.IsCompleted)
             {
-                if (!previous.IsCompleted)
-                {
-                    toast.Update(new(null, L10n.T(Copy.Waiting)));
-                    await previous;
-                    cancellation.Token.ThrowIfCancellationRequested();
-                }
-                Busy = true;
-                var outputs = await runner.RunBesideSourcesAsync(item.Id, selection, folder => DestinationAsync(folder, owner ?? toast), new Progress<OperationProgress>(toast.Update), cancellation.Token, job);
-                toast.Close();
-                if (outputs is null) return;
-                if (outputs.Count == 0) SuccessToast.Notice(L10n.T(Copy.NothingMade)).Present();
-                else SuccessToast.Done(outputs, Path.GetDirectoryName(outputs[0])!, runner.Note).Present();
+                toast.Update(new(null, L10n.T(Copy.Waiting)));
+                await previous;
+                cancellation.Token.ThrowIfCancellationRequested();
             }
-            catch (Exception error)
-            {
-                toast.Close();
-                if (error is MissingToolsException) await setUpTools();
-                else notify(error is OperationCanceledException ? L10n.T(Copy.Cancelled) : L10n.F(Copy.Failed, L10n.T(error.Message)));
-            }
+            Busy = true;
+            var outputs = await runner.RunBesideSourcesAsync(item.Id, selection, folder => DestinationAsync(folder, owner ?? toast), new Progress<OperationProgress>(toast.Update), cancellation.Token, job);
+            toast.Close();
+            if (outputs is null) return;
+            if (outputs.Count == 0) SuccessToast.Notice(L10n.T(Copy.NothingMade)).Present();
+            else SuccessToast.Done(outputs, Path.GetDirectoryName(outputs[0])!, runner.Note).Present();
+        }
+        catch (Exception error)
+        {
+            toast.Close();
+            if (error is MissingToolsException) await setUpTools();
+            else notify(error is OperationCanceledException ? L10n.T(Copy.Cancelled) : L10n.F(Copy.Failed, L10n.T(error.Message)));
         }
     }
 

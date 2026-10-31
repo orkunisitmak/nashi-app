@@ -75,6 +75,39 @@ static partial class EditorChecks
         check(Title() == "Path copied." && !flow.Busy, "Then the action runs");
         SuccessToast.Current?.Close();
 
+        // A wait cancelled from its card says so at once but keeps its place: what is queued behind it still waits
+        // for the run in front. A is a real Copy held at its folder picker; B a Copy cancelled while waiting; C a conversion.
+        var notes = new List<string>();
+        var queue = new WheelFlow(new Toolchain(Directory.CreateDirectory(Path.Combine(folder, "queue-tools")).FullName, ""), null, notes.Add, () => Task.CompletedTask);
+        var queued = Directory.CreateDirectory(Path.Combine(folder, "queue")).FullName;
+        var picked = Directory.CreateDirectory(Path.Combine(folder, "queue-picked")).FullName;
+        var queueSource = Quadrants(Path.Combine(queued, Name + ".png"), 40, 30);
+        var gate = new TaskCompletionSource<string?>();
+        var picks = 0;
+        queue.PickFolder = (_, _) => { picks++; return gate.Task; };
+        queue.ShowActions([queueSource]);
+        Dispatcher.UIThread.RunJobs();
+        Choose(queue.LastWheel!, "action:copy");
+        Pump(() => picks == 1);
+        queue.ShowActions([queueSource]);
+        Dispatcher.UIThread.RunJobs();
+        Choose(queue.LastWheel!, "action:copy");
+        Pump(() => queue.LastToast is { IsVisible: true });
+        var cancelB = queue.LastToast!;
+        queue.ShowTools([queueSource]);
+        Dispatcher.UIThread.RunJobs();
+        Choose(queue.LastWheel!, "convert");
+        Choose(queue.LastWheel!, "convert:jpg");
+        cancelB.FindControl<Button>("ActionButton")!.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        var queuedJpg = Path.Combine(queued, Name + ".jpg");
+        Pump(() => notes.Count > 0);
+        for (var i = 0; i < 20; i++) { Thread.Sleep(10); Dispatcher.UIThread.RunJobs(); }
+        check(notes.SequenceEqual(["Cancelled. Originals kept."]) && queue.Busy && !File.Exists(queuedJpg) && picks == 1, "Cancelling a waiting action says so at once; Busy stays on and the conversion behind it still waits for the held run");
+        gate.SetResult(picked);
+        Pump(() => File.Exists(queuedJpg) && !queue.Busy);
+        check(File.Exists(Path.Combine(picked, Name + ".png")) && File.Exists(queuedJpg) && !queue.Busy && picks == 1 && Directory.GetFiles(picked).Length == 1, "Released, the held Copy finishes, the conversion runs after it, and the cancelled Copy wrote nothing");
+        SuccessToast.Current?.Close();
+
         // The colour profile stays on edited copies; their metadata goes.
         var tagged = Path.Combine(folder, Name + " tagged.jpg");
         using (var image = new MagickImage("gradient:red-blue", 64, 48))
