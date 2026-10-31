@@ -142,11 +142,10 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
             else toast.Show();
             try
             {
-                var destination = await DestinationAsync(files[0], owner ?? toast);
-                if (destination is null) { toast.Close(); return; }
-                var outputs = await runner.RunAsync(item.Id, files, destination, new Progress<OperationProgress>(toast.Update), cancellation.Token);
+                var outputs = await runner.RunBesideSourcesAsync(item.Id, files, folder => DestinationAsync(folder, owner ?? toast), new Progress<OperationProgress>(toast.Update), cancellation.Token);
                 toast.Close();
-                SuccessToast.Done(outputs, destination, runner.Note).Present();
+                if (outputs is null) return;
+                SuccessToast.Done(outputs, Path.GetDirectoryName(outputs[0])!, runner.Note).Present();
             }
             catch (Exception error)
             {
@@ -224,11 +223,10 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
         return host;
     }
 
-    /// The first file's folder when Nashi may write there; otherwise the user picks one (null when cancelled).
-    private static async Task<string?> DestinationAsync(string first, TopLevel host)
+    /// The source folder when Nashi may write there; otherwise the user picks one (null when cancelled).
+    private static async Task<string?> DestinationAsync(string folder, TopLevel host)
     {
-        var folder = Path.GetDirectoryName(first);
-        if (folder is not null && Writable(folder)) return folder;
+        if (Writable(folder)) return folder;
         var picked = await host.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { Title = L10n.T(Copy.SaveTo) });
         return picked.Count > 0 ? picked[0].TryGetLocalPath() : null;
     }

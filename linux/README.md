@@ -42,7 +42,7 @@ This starts Nashi in the background now and at every login, with no window. Then
 - **Ctrl+Alt+N** after copying files (Ctrl+C in Files) shows the wheel for the copied files.
 - **Open With → Nashi** works for images, audio, video, PDF and ZIP files.
 
-Choose a tool and a format as in the app. New files are saved next to the first file, or in a folder you pick when that one is read-only. A card at the bottom of the screen says when they are ready and offers **Show in folder**.
+Choose a tool and a format as in the app. New files are saved directly next to the file they came from, each in its own folder (an archive extracts into one folder named after it, next to it; Merge and Create PDF save beside the first file). When a folder is read-only you pick another one for its files. A card at the bottom of the screen says when they are ready and offers **Show in folder**.
 
 It writes only `~/.config/autostart/nashi.desktop`, `~/.local/share/applications/nashi.desktop`, `~/.local/share/icons/hicolor/256x256/apps/nashi.png`, the two Nautilus scripts and one GNOME custom shortcut. Keep the AppImage where it is, since those entries point at its path. To remove all of that and stop the background instance:
 

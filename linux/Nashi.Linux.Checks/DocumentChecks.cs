@@ -93,6 +93,7 @@ static class DocumentChecks
         var noDeno = Path.Combine(outputs, "no-deno");
         check(await Catch(() => bare.RunAsync("convert:pages", [made["pdf"]], noDeno, none, default)) is MissingToolsException { Message: MissingToolsException.Pages or MissingToolsException.Office } && !Directory.Exists(noDeno), "Without Deno a Pages route asks for setup before writing anything");
 
+        await BesideChecks(root, runner, made, office is not null, media is not null, check);
         await EpubChecks(root, check);
         MarkdownFilterChecks(root, check);
         // A LibreOffice that has the Markdown filter but fails the export (while plain text would work) reports the error.
@@ -111,6 +112,65 @@ static class DocumentChecks
             await CancelChecks(runner, made["docx"], outputs, check);
         }
         else Console.WriteLine("Route checks: LibreOffice cancellation check skipped (no soffice)");
+    }
+
+    /// Outputs land directly beside their source, for every route class: no new folder (except the one an archive
+    /// extracts into), no staging left behind, no LibreOffice job folder left in temp. Two folders keep their own outputs.
+    static async Task BesideChecks(string root, OperationRunner runner, Dictionary<string, string> made, bool office, bool media, Action<bool, string> check)
+    {
+        var none = new Progress<OperationProgress>();
+        Func<string, Task<string?>> same = folder => Task.FromResult<string?>(folder);
+        var routes = new List<(string Class, string Choice, string Ext)>
+        {
+            ("image", "convert:jpg", "png"), ("image compress", "compress", "png"), ("pdf to images", "convert:png", "pdf"),
+            ("pdf to text", "convert:txt", "pdf"), ("archive extract", "extractArchive", "zip"), ("archive convert", "convert:tar", "zip"),
+            ("subtitles", "convert:vtt", "srt"),
+        };
+        if (office) routes.AddRange([("office", "convert:pdf", "docx"), ("office to images", "convert:jpg", "docx")]);
+        if (media) routes.AddRange([("audio", "convert:mp3", "wav"), ("video", "convert:webm", "mp4"), ("video tool", "muteVideo", "mp4")]);
+        string[] OfficeJobFolders() => Directory.GetDirectories(Path.GetTempPath(), "NashiOffice-*");
+        var jobsBefore = OfficeJobFolders();
+        var n = 0;
+        foreach (var (kind, choice, ext) in routes)
+        {
+            var folder = Directory.CreateDirectory(Path.Combine(root, "beside", (n++).ToString())).FullName;
+            var source = Path.Combine(folder, Path.GetFileName(made[ext]));
+            File.Copy(made[ext], source);
+            var before = Directory.GetFileSystemEntries(folder);
+            IReadOnlyList<string>? outputs;
+            try { outputs = await runner.RunBesideSourcesAsync(choice, [source], same, none, default); }
+            catch (Exception error) { check(false, $"Beside: {kind} ({ext} {choice}) runs: {error.Message}"); continue; }
+            var added = Directory.GetFileSystemEntries(folder).Except(before).ToArray();
+            var folders = added.Where(Directory.Exists).ToArray();
+            var extracts = choice == "extractArchive";
+            check(outputs is { Count: > 0 } && outputs.All(o => Path.GetDirectoryName(o) == folder) && added.Order().SequenceEqual(outputs.Order()),
+                $"Beside: {kind} ({ext} {choice}) writes its outputs directly beside the source: " + string.Join(", ", added.Select(Path.GetFileName)));
+            check(extracts ? folders.Select(Path.GetFileName).SequenceEqual([Path.GetFileNameWithoutExtension(source) + " Extracted"]) : folders.Length == 0,
+                $"Beside: {kind} makes no new folder" + (extracts ? " except the one named after the archive" : ""));
+            check(!Directory.EnumerateFileSystemEntries(folder, ".nashi-*").Any(), $"Beside: {kind} leaves no .nashi- staging behind");
+        }
+        check(OfficeJobFolders().Except(jobsBefore).ToArray() is [], "No LibreOffice job folder is left in temp");
+
+        // Two folders: each keeps its own outputs. A combining choice (merge) writes one file beside the first source.
+        var a = Directory.CreateDirectory(Path.Combine(root, "beside", "a")).FullName;
+        var b = Directory.CreateDirectory(Path.Combine(root, "beside", "b")).FullName;
+        File.Copy(made["png"], Path.Combine(a, "one.png"));
+        File.Copy(made["png"], Path.Combine(b, "two.png"));
+        File.Copy(made["pdf"], Path.Combine(a, "one.pdf"));
+        File.Copy(made["pdf"], Path.Combine(b, "two.pdf"));
+        var asked = new List<string>();
+        var two = await runner.RunBesideSourcesAsync("convert:jpg", [Path.Combine(a, "one.png"), Path.Combine(b, "two.png")], f => { asked.Add(f); return Task.FromResult<string?>(f); }, none, default);
+        check(two is [var ja, var jb] && ja == Path.Combine(a, "one.jpg") && jb == Path.Combine(b, "two.jpg") && File.Exists(ja) && File.Exists(jb) && asked.SequenceEqual([a, b]), "Two sources in two folders get their outputs in their own folders");
+        var merged = await runner.RunBesideSourcesAsync("mergePDF", [Path.Combine(b, "two.pdf"), Path.Combine(a, "one.pdf")], same, none, default);
+        check(merged is [var m] && Path.GetDirectoryName(m) == b, "Merging PDFs from two folders writes one file beside the first");
+        var picked = Directory.CreateDirectory(Path.Combine(root, "beside", "picked")).FullName;
+        var elsewhere = await runner.RunBesideSourcesAsync("convert:webp", [Path.Combine(a, "one.png"), Path.Combine(b, "two.png")], f => Task.FromResult<string?>(f == b ? picked : f), none, default);
+        check(elsewhere is [var wa, var wb] && Path.GetDirectoryName(wa) == a && Path.GetDirectoryName(wb) == picked, "A read-only folder's outputs go to the picked folder; the others stay beside their source");
+        var cancelled = await runner.RunBesideSourcesAsync("convert:bmp", [Path.Combine(a, "one.png"), Path.Combine(b, "two.png")], f => Task.FromResult<string?>(f == b ? null : f), none, default);
+        check(cancelled is null && !File.Exists(Path.Combine(a, "one.bmp")) && !File.Exists(Path.Combine(b, "two.bmp")), "Cancelling the folder picker for one folder writes nothing anywhere");
+        File.WriteAllText(Path.Combine(b, "broken.png"), "not a picture");
+        var failure = await Catch(() => runner.RunBesideSourcesAsync("convert:gif", [Path.Combine(a, "one.png"), Path.Combine(b, "broken.png")], same, none, default));
+        check(failure is not null && !File.Exists(Path.Combine(a, "one.gif")) && !Directory.EnumerateFileSystemEntries(a, ".nashi-*").Any() && !Directory.EnumerateFileSystemEntries(b, ".nashi-*").Any(), "A failure in the second folder removes the first folder's outputs and leaves no staging");
     }
 
     /// Cancel while soffice runs: the destination stays empty and every soffice process of the job is gone.

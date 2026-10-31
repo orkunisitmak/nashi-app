@@ -49,6 +49,52 @@ public sealed class OperationRunner(Toolchain tools)
         }
     }
 
+    /// Runs the choice with each file's outputs beside it: one run per source folder, in the order the folders first
+    /// appear, so files from two folders get their outputs in their own folders. A choice that makes one file out of
+    /// many (Create PDF, Merge PDFs, images to one PDF) writes it beside the first file. `destination` maps a source folder
+    /// to where its outputs go: the folder itself, or one the user picks when it is read-only; null cancels before any
+    /// work and returns null. A failure or cancel in a later folder removes what earlier folders published.
+    public async Task<IReadOnlyList<string>?> RunBesideSourcesAsync(string choiceId, IReadOnlyList<string> files, Func<string, Task<string?>> destination, IProgress<OperationProgress> progress, CancellationToken token)
+    {
+        static string Folder(string file) => Path.GetDirectoryName(Path.GetFullPath(file))!;
+        var combines = choiceId is "createPDF" or "mergePDF" || (choiceId == "convert:pdf" && files.All(FeatureCatalog.IsImage));
+        IReadOnlyList<IReadOnlyList<string>> groups = combines ? [files] : [.. files.GroupBy(Folder).Select(g => (IReadOnlyList<string>)[.. g])];
+        var targets = new List<string>();
+        foreach (var group in groups)
+        {
+            if (await destination(Folder(group[0])) is not { } target) return null;
+            targets.Add(target);
+        }
+        var outputs = new List<string>();
+        string? note = null;
+        try
+        {
+            for (var n = 0; n < groups.Count; n++)
+            {
+                outputs.AddRange(await RunAsync(choiceId, groups[n], targets[n], groups.Count == 1 ? progress : new Slice(progress, n, groups.Count), token));
+                note ??= Note;
+            }
+        }
+        catch
+        {
+            foreach (var done in outputs) Remove(done);
+            throw;
+        }
+        Note = note;
+        return outputs;
+    }
+
+    // An output we published: a file, or an extracted folder.
+    static void Remove(string path)
+    {
+        try
+        {
+            if (Directory.Exists(path)) Directory.Delete(path, recursive: true);
+            else File.Delete(path);
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
+    }
+
     /// One ExportTransaction around many per-file engine calls, so a cancel or failure leaves nothing behind.
     static IReadOnlyList<string> Each(IReadOnlyList<string> files, string destination, CancellationToken token, Func<string, string, IReadOnlyList<string>> work)
     {
@@ -90,7 +136,7 @@ public sealed class OperationRunner(Toolchain tools)
         }
         catch
         {
-            foreach (var done in outputs) try { File.Delete(done); } catch (IOException) { }
+            foreach (var done in outputs) Remove(done);
             throw;
         }
         return outputs;
