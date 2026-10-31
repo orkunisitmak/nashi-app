@@ -40,6 +40,7 @@ public sealed class ToolEditorWindow : Window
         return tool switch
         {
             "cropImage" => new CropEditor(files),
+            "editImage" => new PhotoEditor(files),
             _ => null,
         };
     }
