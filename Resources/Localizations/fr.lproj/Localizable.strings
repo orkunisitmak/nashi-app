@@ -285,6 +285,8 @@
 "Audio · MP3" = "Audio · MP3";
 "Authorize Saved Token…" = "Autoriser le jeton enregistré…";
 "Auto" = "Auto";
+"Automatic (%@)" = "Automatique (%@)";
+"Automatic (%lld)" = "Automatique (%lld)";
 "Available files selected. Some files have moved or were deleted." = "Fichiers disponibles sélectionnés. Certains fichiers ont été déplacés ou supprimés.";
 "BACK" = "RETOUR";
 "BACKGROUND" = "ARRIÈRE-PLAN";
@@ -328,6 +330,8 @@
 "Build %@" = "Build %@";
 "Build %lld" = "Build %lld";
 "Built for your files. Made for your Mac." = "Conçu pour vos fichiers. Fait pour votre Mac.";
+"CALCULATE OR CONVERT" = "CALCULER OU CONVERTIR";
+"CALCULATOR" = "CALCULATRICE";
 "CALLOUT" = "LÉGENDE";
 "CANCEL" = "ANNULER";
 "CANCEL DOWNLOAD" = "ANNULER LE TÉLÉCHARGEMENT";
@@ -431,6 +435,7 @@
 "CHOOSE ZIP, TAR OR GZIP." = "CHOISISSEZ ZIP, TAR OU GZIP.";
 "CLARITY" = "CLARTÉ";
 "CLEAR" = "EFFACER";
+"CLEAR CALCULATION" = "EFFACER LE CALCUL";
 "CLEAR FLOAT" = "VIDER LE FLOAT";
 "CLEAR SELECTION" = "EFFACER LA SÉLECTION";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "LE PRESSE-PAPIERS EST OCCUPÉ. RÉESSAYEZ.";
@@ -470,6 +475,7 @@
 "CONVERT · WHILE DRAGGING" = "CONVERTIR · PENDANT LE GLISSEMENT";
 "CONVERT, FINE-TUNE, AND SEND THEM ON THEIR WAY." = "CONVERTISSEZ, PEAUFINEZ ET ENVOYEZ-LES SUR LEUR CHEMIN.";
 "CONVERTING DOWNLOADED AUDIO…" = "CONVERSION DE L’AUDIO TÉLÉCHARGÉ…";
+"COPIED" = "COPIÉ";
 "COPIED ALL" = "TOUT COPIÉ";
 "COPIED LINK" = "LIEN COPIÉ";
 "COPY" = "COPIER";
@@ -505,6 +511,8 @@
 "CTRL+SHIFT+D  USE A COPIED LINK  ·  PUBLIC, DOWNLOADABLE MEDIA" = "CTRL+MAJ+D  UTILISER UN LIEN COPIÉ  ·  MÉDIAS PUBLICS TÉLÉCHARGEABLES";
 "CUSTOM DIMENSIONS" = "DIMENSIONS PERSONNALISÉES";
 "CUT" = "COUPER";
+"Calculate or convert" = "Calculer ou convertir";
+"Calculator" = "Calculatrice";
 "Callout" = "Légende";
 "Cancel" = "Annuler";
 "Cancel download" = "Annuler le téléchargement";
@@ -612,6 +620,7 @@
 "Clear" = "Effacer";
 "Clear Float" = "Vider le Float";
 "Clear Selection" = "Effacer la sélection";
+"Clear calculation" = "Effacer le calcul";
 "Clip %@" = "Clip %@";
 "Clip %lld" = "Clip %lld";
 "Clipboard is busy. Try Paste again." = "Le presse-papiers est occupé. Réessayez de coller.";
@@ -667,6 +676,7 @@
 "Convert · while dragging" = "Convertir · pendant le glissement";
 "Convert, fine-tune, and send them on their way." = "Convertissez, peaufinez et envoyez-les sur leur chemin.";
 "Converting downloaded audio…" = "Conversion de l’audio téléchargé…";
+"Copied" = "Copié";
 "Copied all" = "Tout copié";
 "Copied link" = "Lien copié";
 "Copy" = "Copier";
@@ -888,6 +898,7 @@
 "EPUB layout" = "Mise en page EPUB";
 "ESC TO CLOSE" = "ÉCHAP POUR FERMER";
 "EVERYTHING HAS A NEXT FORM." = "TOUT A UNE PROCHAINE FORME.";
+"EXCHANGE RATES ARE UNAVAILABLE. CHECK YOUR CONNECTION AND TRY AGAIN." = "LES TAUX DE CHANGE SONT INDISPONIBLES. VÉRIFIEZ VOTRE CONNEXION ET RÉESSAYEZ.";
 "EXPAND FLOAT" = "DÉVELOPPER FLOAT";
 "EXPANDED UPDATE IS TOO LARGE." = "LA MISE À JOUR DÉCOMPRESSÉE EST TROP VOLUMINEUSE.";
 "EXPORT CLIPS" = "EXPORTER LES CLIPS";
@@ -922,6 +933,9 @@
 "Equal clips: %lld" = "Clips égaux : %lld";
 "Esc to close" = "Échap pour fermer";
 "Everything has a next form." = "Tout a une prochaine forme.";
+"Exchange rates are unavailable. Check your connection and try again." = "Les taux de change sont indisponibles. Vérifiez votre connexion et réessayez.";
+"Exchange rates: %@" = "Taux de change : %@";
+"Exchange rates: %lld" = "Taux de change : %lld";
 "Expand Float" = "Développer Float";
 "Expanded update is too large." = "La mise à jour décompressée est trop volumineuse.";
 "Export One Video" = "Exporter une seule vidéo";
@@ -1106,6 +1120,10 @@
 "Gamma must be positive; contrast and saturation cannot be negative." = "Le gamma doit être positif ; le contraste et la saturation ne peuvent pas être négatifs.";
 "General" = "Général";
 "Get started" = "Démarrer";
+"Getting today’s exchange rates for %@ → %@…" = "Récupération des taux du jour pour %@ → %@…";
+"Getting today’s exchange rates for %@ → %lld…" = "Récupération des taux du jour pour %@ → %lld…";
+"Getting today’s exchange rates for %lld → %@…" = "Récupération des taux du jour pour %lld → %@…";
+"Getting today’s exchange rates for %lld → %lld…" = "Récupération des taux du jour pour %lld → %lld…";
 "GitHub release connection" = "Connexion aux versions GitHub";
 "GitHub repository" = "Dépôt GitHub";
 "Give it a little breathing room." = "Laissez-lui un peu d’air.";
@@ -1239,6 +1257,7 @@
 "LITTLE TWEAKS.\nBIG DIFFERENCE." = "DE PETITES RETOUCHES.\nUNE GRANDE DIFFÉRENCE.";
 "LITTLE TWEAKS. A WHOLE NEW LOOK." = "DE PETITES RETOUCHES. UN TOUT NOUVEAU LOOK.";
 "LOCAL BY DESIGN" = "LOCAL PAR CONCEPTION";
+"LOCAL CURRENCY" = "DEVISE LOCALE";
 "LOOKING FOR LITTLE SQUARES…" = "À LA RECHERCHE DE PETITS CARRÉS…";
 "LOUDNESS RANGE" = "PLAGE DE VOLUME SONORE";
 "Landscape" = "Paysage";
@@ -1273,6 +1292,7 @@
 "Local by design" = "Local par conception";
 "Local by design · MIT source\nVersion %@" = "Local par conception · Source MIT\nVersion %@";
 "Local by design · MIT source\nVersion %lld" = "Local par conception · Source MIT\nVersion %lld";
+"Local currency" = "Devise locale";
 "Looking for little squares…" = "À la recherche de petits carrés…";
 "Loudness range" = "Plage de volume sonore";
 "MACOS REDUCE MOTION IS ON. NASHI KEEPS MOTION OFF." = "L’OPTION RÉDUIRE LES ANIMATIONS DE MACOS EST ACTIVÉE. NASHI DÉSACTIVE LES ANIMATIONS.";
@@ -1287,6 +1307,7 @@
 "MANAGE…" = "GÉRER…";
 "MARKER" = "SURLIGNEUR";
 "MATCH SOURCE" = "IDENTIQUE À LA SOURCE";
+"MATH, UNITS, AND CURRENCIES. ANSWERS APPEAR AS YOU TYPE." = "CALCULS, UNITÉS ET DEVISES. LE RÉSULTAT S’AFFICHE PENDANT LA SAISIE.";
 "MAXIMIZE" = "AGRANDIR";
 "MAXIMUM HEIGHT" = "HAUTEUR MAXIMALE";
 "MAXIMUM VIDEO HEIGHT" = "HAUTEUR VIDÉO MAXIMALE";
@@ -1331,6 +1352,7 @@
 "Marker" = "Surligneur";
 "Match Source" = "Identique à la source";
 "Match source" = "Identique à la source";
+"Math, units, and currencies. Answers appear as you type." = "Calculs, unités et devises. Le résultat s’affiche pendant la saisie.";
 "Maximize" = "Agrandir";
 "Maximum height" = "Hauteur maximale";
 "Maximum video height" = "Hauteur vidéo maximale";
@@ -1760,6 +1782,7 @@
 "RESIZE IMAGE" = "REDIMENSIONNER L’IMAGE";
 "RESTORE CLIPS" = "RESTAURER LES CLIPS";
 "RESTORE DEFAULTS" = "RÉTABLIR LES RÉGLAGES PAR DÉFAUT";
+"RETURN COPIES THE ANSWER" = "RETOUR COPIE LE RÉSULTAT";
 "REVEAL FINISHED FILES IN EXPLORER" = "AFFICHER LES FICHIERS TERMINÉS DANS L’EXPLORATEUR";
 "REVEAL FINISHED FILES IN FINDER" = "AFFICHER LES FICHIERS TERMINÉS DANS LE FINDER";
 "RIGHT" = "DROITE";
@@ -1827,6 +1850,7 @@
 "Restore Clips" = "Restaurer les clips";
 "Restore Defaults" = "Rétablir les réglages par défaut";
 "Restore defaults" = "Rétablir les réglages par défaut";
+"Return copies the answer" = "Retour copie le résultat";
 "Reveal finished files in Explorer" = "Afficher les fichiers terminés dans l’Explorateur";
 "Reveal finished files in Finder" = "Afficher les fichiers terminés dans le Finder";
 "Right" = "Droite";
@@ -2219,8 +2243,10 @@
 "TRUE PEAK DB" = "CRÊTE RÉELLE EN DB";
 "TRUE PEAK LIMIT" = "LIMITE DE CRÊTE RÉELLE";
 "TRY A CLEARER IMAGE OR ANOTHER PDF." = "ESSAYEZ UNE IMAGE PLUS NETTE OU UN AUTRE PDF.";
+"TRY AGAIN" = "RÉESSAYER";
 "TRY FEEDBACK" = "ESSAYER LE RETOUR";
 "TURN OFF UNIFORM WIDTH TO PRESERVE THIS PDF’S FORM FIELDS, ATTACHMENTS, LINKS OR NAVIGATION." = "DÉSACTIVEZ LA LARGEUR UNIFORME POUR PRÉSERVER LES CHAMPS DE FORMULAIRE, PIÈCES JOINTES, LIENS OU LA NAVIGATION DE CE PDF.";
+"TYPE ON HOME: 10+10, 1 USD, 1 USD TO TRY OR 5 KM IN MI. CURRENCY AMOUNTS CONVERT TO THIS CURRENCY UNLESS YOU NAME ANOTHER. EXCHANGE RATES DOWNLOAD ONLY WHEN YOU CONVERT A CURRENCY." = "SAISISSEZ SUR L’ACCUEIL : 10+10, 1 USD, 1 USD TO TRY OU 5 KM IN MI. LES MONTANTS SONT CONVERTIS DANS CETTE DEVISE, SAUF SI VOUS EN INDIQUEZ UNE AUTRE. LES TAUX DE CHANGE NE SONT TÉLÉCHARGÉS QUE LORSQUE VOUS CONVERTISSEZ UNE DEVISE.";
 "Tap Command while dragging to crop, compress, annotate, and give your file a little love." = "Appuyez sur Commande en glissant pour recadrer, compresser, annoter et choyer votre fichier.";
 "Tap Control while dragging to copy, move, share, or carry files in a floating shelf." = "Appuyez sur Contrôle pendant le glissement pour copier, déplacer, partager ou emporter vos fichiers dans un panneau flottant.";
 "Tap the chosen modifier combination while dragging files." = "Appuyez sur la combinaison de modificateurs choisie pendant que vous faites glisser des fichiers.";
@@ -2313,8 +2339,10 @@
 "True peak dB" = "Crête réelle en dB";
 "True peak limit" = "Limite de crête réelle";
 "Try a clearer image or another PDF." = "Essayez une image plus nette ou un autre PDF.";
+"Try again" = "Réessayer";
 "Try feedback" = "Essayer le retour";
 "Turn off uniform width to preserve this PDF’s form fields, attachments, links or navigation." = "Désactivez la largeur uniforme pour préserver les champs de formulaire, pièces jointes, liens ou la navigation de ce PDF.";
+"Type on Home: 10+10, 1 USD, 1 USD to TRY or 5 km in mi. Currency amounts convert to this currency unless you name another. Exchange rates download only when you convert a currency." = "Saisissez sur l’accueil : 10+10, 1 USD, 1 USD to TRY ou 5 km in mi. Les montants sont convertis dans cette devise, sauf si vous en indiquez une autre. Les taux de change ne sont téléchargés que lorsque vous convertissez une devise.";
 "UNDO" = "ANNULER";
 "UNDO AREA" = "ANNULER LA ZONE";
 "UNDO LAST MARK" = "ANNULER LE DERNIER REPÈRE";
