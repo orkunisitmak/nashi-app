@@ -73,7 +73,7 @@ public static partial class ImageEngine
                 {
                     var crop=new CroppedBitmap(image,new Int32Rect((int)r.X,(int)r.Y,(int)r.Width,(int)r.Height));BitmapSource effect;
                     if(style=="pixelate"){effect=new TransformedBitmap(crop,new ScaleTransform(Math.Max(1,r.Width/16)/r.Width,Math.Max(1,r.Height/16)/r.Height));var visual=new DrawingVisual();RenderOptions.SetBitmapScalingMode(visual,BitmapScalingMode.NearestNeighbor);using(var c=visual.RenderOpen())c.DrawImage(effect,new Rect(0,0,r.Width,r.Height));var pixels=new RenderTargetBitmap((int)r.Width,(int)r.Height,96,96,PixelFormats.Pbgra32);pixels.Render(visual);effect=pixels;}
-                    else effect=FromPng(Nashi.Core.PhotoCodec.Adjust(PngBytes(crop),new(){Blur=24}));g.DrawImage(effect,r);
+                    else effect=FromPng(Nashi.Core.PhotoCodec.BlurRegion(PngBytes(crop),Math.Max(14,Math.Min(r.Width,r.Height)/5)));g.DrawImage(effect,r);
                 }
             }
         });

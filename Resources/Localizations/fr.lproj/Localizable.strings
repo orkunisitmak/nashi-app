@@ -695,6 +695,7 @@
 "DRAG AN EXISTING ANNOTATION TO MOVE IT; DRAG ITS HANDLES TO RESIZE. TURN OFF SELECT / MOVE TO DRAW." = "FAITES GLISSER UNE ANNOTATION EXISTANTE POUR LA DÉPLACER ; FAITES GLISSER SES POIGNÉES POUR LA REDIMENSIONNER. DÉSACTIVEZ SÉLECTIONNER / DÉPLACER POUR DESSINER.";
 "DRAG INSIDE TO MOVE. DRAG NEAR A CORNER TO RESIZE. DRAG OUTSIDE TO START A NEW SELECTION." = "FAITES GLISSER À L’INTÉRIEUR POUR DÉPLACER. FAITES GLISSER PRÈS D’UN COIN POUR REDIMENSIONNER. FAITES GLISSER À L’EXTÉRIEUR POUR DÉMARRER UNE NOUVELLE SÉLECTION.";
 "DRAG ON THE PREVIEW TO ADD AN AREA. EACH AREA IS SAVED INTO THE NEW COPY." = "FAITES GLISSER SUR L’APERÇU POUR AJOUTER UNE ZONE. CHAQUE ZONE EST ENREGISTRÉE DANS LA NOUVELLE COPIE.";
+"DRAG OVER EACH AREA TO COVER, THEN PICK HOW IT IS HIDDEN." = "FAITES GLISSER SUR CHAQUE ZONE À COUVRIR, PUIS CHOISISSEZ COMMENT ELLE EST MASQUÉE.";
 "DRAG SHORTCUTS" = "RACCOURCIS DE GLISSER-DÉPOSER";
 "DRAG THE STACK TO CARRY ALL FILES. DRAG THE PAPERCLIP TO MOVE FLOAT." = "FAITES GLISSER LA PILE POUR EMPORTER TOUS LES FICHIERS. FAITES GLISSER LE TROMBONE POUR DÉPLACER FLOAT.";
 "DRAG TO DRAW WITH THE SELECTED TOOL. USE SELECT / MOVE TO EDIT AN EXISTING ANNOTATION." = "FAITES GLISSER POUR DESSINER AVEC L’OUTIL SÉLECTIONNÉ. UTILISEZ SÉLECTIONNER / DÉPLACER POUR MODIFIER UNE ANNOTATION EXISTANTE.";
@@ -772,6 +773,7 @@
 "Drag an existing annotation to move it; drag its handles to resize. Turn off Select / Move to draw." = "Faites glisser une annotation existante pour la déplacer ; faites glisser ses poignées pour la redimensionner. Désactivez Sélectionner / Déplacer pour dessiner.";
 "Drag inside to move. Drag near a corner to resize. Drag outside to start a new selection." = "Faites glisser à l’intérieur pour déplacer. Faites glisser près d’un coin pour redimensionner. Faites glisser à l’extérieur pour démarrer une nouvelle sélection.";
 "Drag on the preview to add an area. Each area is saved into the new copy." = "Faites glisser sur l’aperçu pour ajouter une zone. Chaque zone est enregistrée dans la nouvelle copie.";
+"Drag over each area to cover, then pick how it is hidden." = "Faites glisser sur chaque zone à couvrir, puis choisissez comment elle est masquée.";
 "Drag shortcuts" = "Raccourcis de glisser-déposer";
 "Drag the stack to carry all files. Drag the paperclip to move Float." = "Faites glisser la pile pour emporter tous les fichiers. Faites glisser le trombone pour déplacer Float.";
 "Drag to draw with the selected tool. Use Select / Move to edit an existing annotation." = "Faites glisser pour dessiner avec l’outil sélectionné. Utilisez Sélectionner / Déplacer pour modifier une annotation existante.";

@@ -63,22 +63,26 @@ public static class PhotoCodec
         foreach(var property in typeof(PhotoAdjustments).GetProperties()){var n=(double)property.GetValue(o)!;if(!double.IsFinite(n)||Math.Abs(n)>100)throw new ArgumentException("Choose finite photo adjustments within their ranges.");}
         if(o.Gamma<=0||o.Contrast<0||o.Saturation<0)throw new ArgumentException("Gamma must be positive; contrast and saturation cannot be negative.");
         using var image=new MagickImage(png,new MagickReadSettings{Format=MagickFormat.Png});
+        // Warmth and tint add colour, which a grey image has no channels for.
+        if(image.ChannelCount<3&&(o.Temperature!=0||o.Tint!=0)){image.ColorSpace=ColorSpace.sRGB;image.ColorType=image.HasAlpha?ColorType.TrueColorAlpha:ColorType.TrueColor;}
         if(o.Exposure!=0)image.Evaluate(Channels.RGB,EvaluateOperator.Multiply,Math.Pow(2,o.Exposure));
         image.BrightnessContrast(new Percentage(o.Brightness*100),new Percentage((o.Contrast-1)*50));
         if(o.Gamma!=1)image.GammaCorrect(o.Gamma,Channels.RGB);
         if(o.Shadows!=0||o.Highlights!=0||o.Whites!=0||o.Blacks!=0||o.Saturation!=1||o.Vibrance!=0||o.Temperature!=0||o.Tint!=0||o.Fade!=0)
         {
-        var pixels=image.GetPixels();
-        for(var y=0;y<image.Height;y++)for(var x=0;x<image.Width;x++)
+        var pixels=image.GetPixels();var data=pixels.GetValues()??throw new InvalidDataException("Image pixels could not be read.");var channels=(int)image.ChannelCount;
+        var grey=channels<3;   // grey (and grey+alpha) pixels hold one colour value, not R, G and B side by side
+        for(var offset=0;offset+(grey?0:2)<data.Length;offset+=channels)
         {
-            var p=pixels.GetPixel(x,y);var r=p.GetChannel(0)/255d;var g=p.GetChannel(1)/255d;var b=p.GetChannel(2)/255d;var lum=.2126*r+.7152*g+.0722*b;
+            var r=data[offset]/255d;var g=grey?r:data[offset+1]/255d;var b=grey?r:data[offset+2]/255d;var lum=.2126*r+.7152*g+.0722*b;
             var tone=o.Shadows*Math.Pow(1-lum,2)*.3+o.Highlights*lum*lum*.3+o.Whites*Math.Pow(lum,4)*.3+o.Blacks*Math.Pow(1-lum,4)*.3;
             var saturation=o.Saturation+o.Vibrance*(1-(Math.Max(r,Math.Max(g,b))-Math.Min(r,Math.Min(g,b))));
             r=lum+(r-lum)*saturation+tone+o.Temperature*.12+o.Tint*.06;g=lum+(g-lum)*saturation+tone-o.Tint*.1;b=lum+(b-lum)*saturation+tone-o.Temperature*.12+o.Tint*.06;
             var fade=Math.Clamp(o.Fade,0,1)*.3;r=r*(1-fade)+fade;g=g*(1-fade)+fade;b=b*(1-fade)+fade;
-            p.SetChannel(0,(byte)Math.Clamp(Math.Round(r*255),0,255));p.SetChannel(1,(byte)Math.Clamp(Math.Round(g*255),0,255));p.SetChannel(2,(byte)Math.Clamp(Math.Round(b*255),0,255));
+            if(grey){data[offset]=(byte)Math.Clamp(Math.Round((.2126*r+.7152*g+.0722*b)*255),0,255);continue;}
+            data[offset]=(byte)Math.Clamp(Math.Round(r*255),0,255);data[offset+1]=(byte)Math.Clamp(Math.Round(g*255),0,255);data[offset+2]=(byte)Math.Clamp(Math.Round(b*255),0,255);
         }
-        pixels.Dispose();
+        pixels.SetPixels(data);pixels.Dispose();
         }
         if(o.Hue!=0)image.Modulate(new Percentage(100),new Percentage(100),new Percentage(100+o.Hue/1.8));
         if(o.Dehaze!=0)image.BrightnessContrast(new Percentage(-o.Dehaze*8),new Percentage(o.Dehaze*25));
@@ -91,6 +95,26 @@ public static class PhotoCodec
         if(o.Grain>0)image.AddNoise(NoiseType.Gaussian,Math.Min(1,o.Grain)*.15,Channels.RGB);
         if(o.Vignette>0)image.Vignette(0,Math.Max(1,Math.Min(image.Width,image.Height)*o.Vignette*.25),0,0);
         return image.ToByteArray(MagickFormat.Png);
+    }
+    /// Lossless PNG with maximum zlib effort, adaptive filtering and no unused alpha channel
+    /// (WPF's encoder writes unfiltered 32-bit PNGs that are several times larger).
+    /// Never overwrites an existing file. The output is always 8-bit RGB or RGBA: left alone, Magick picks grey or
+    /// 1-4 bit palette PNGs for simple images, which PdfSharp (Image to PDF) cannot read.
+    public static void OptimizePngPixels(byte[] bgra,int width,int height,string output)
+    {
+        if(width<1||height<1||bgra.Length<(long)width*height*4)throw new ArgumentException("Choose a nonempty image.");
+        using var image=new MagickImage();image.ReadPixels(bgra,new PixelReadSettings((uint)width,(uint)height,StorageType.Char,PixelMapping.BGRA));image.ColorSpace=ColorSpace.sRGB;
+        if(image.HasAlpha&&image.IsOpaque)image.HasAlpha=false;
+        image.Strip();image.Quality=95;image.Depth=8;image.Settings.SetDefine(MagickFormat.Png,"color-type",image.HasAlpha?"6":"2");
+        using var file=new FileStream(output,FileMode.CreateNew,FileAccess.Write,FileShare.None);image.Write(file,MagickFormat.Png);
+    }
+    /// Strong blur for redaction: works on a reduced copy so large sigmas stay fast and unrecognizable.
+    public static byte[] BlurRegion(byte[] png,double sigma)
+    {
+        if(!double.IsFinite(sigma)||sigma<=0)throw new ArgumentOutOfRangeException(nameof(sigma));
+        using var image=new MagickImage(png,new MagickReadSettings{Format=MagickFormat.Png});var width=image.Width;var height=image.Height;
+        var factor=Math.Max(1,sigma/4);var small=(uint)Math.Max(1,Math.Round(width/factor));var smallHeight=(uint)Math.Max(1,Math.Round(height/factor));
+        image.Resize(small,smallHeight);image.GaussianBlur(0,Math.Max(1,sigma/factor));image.Resize(width,height);image.HasAlpha=false;return image.ToByteArray(MagickFormat.Png);
     }
     public static IReadOnlyDictionary<string,string> Metadata(string input)
     {
