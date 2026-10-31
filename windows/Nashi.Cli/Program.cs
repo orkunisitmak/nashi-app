@@ -256,7 +256,13 @@ public static class Program
     /// <returns>Process exit code (0 on success).</returns>
     private static async Task<int> RunResizeAsync(string dimensionsArg, string[] filesAndOptions)
     {
-        var (inputs, outputDir, fit, quality, formatOverride) = ParseResizeArguments(filesAndOptions);
+        var (inputs, outputDir, fit, quality, formatOverride, parseError) = ParseResizeArguments(filesAndOptions);
+        if (parseError is not null)
+        {
+            Console.Error.WriteLine($"Error: {parseError}");
+            return 64;
+        }
+
         if (inputs.Count == 0)
         {
             Console.Error.WriteLine("Error: No valid input files specified.");
@@ -273,6 +279,7 @@ public static class Program
             return 64;
         }
 
+        int processedCount = 0;
         foreach (var file in inputs)
         {
             var fullPath = Path.GetFullPath(file);
@@ -323,17 +330,31 @@ public static class Program
 
             if (fit == "crop" && reqW is not null && reqH is not null)
             {
-                double scale = Math.Max((double)targetW / origW, (double)targetH / origH);
-                int scaledW = Math.Max(targetW, (int)Math.Round(origW * scale));
-                int scaledH = Math.Max(targetH, (int)Math.Round(origH * scale));
+                // Crop-first optimization: Crop source image to target aspect ratio before resizing,
+                // preventing huge intermediate memory allocations for extreme aspect ratio inputs.
+                double targetAspect = (double)targetW / targetH;
+                double sourceAspect = (double)origW / origH;
+                int cropX = 0, cropY = 0;
+                int croppedW = origW, croppedH = origH;
 
-                image.Resize((uint)scaledW, (uint)scaledH);
+                if (sourceAspect > targetAspect)
+                {
+                    croppedW = Math.Clamp((int)Math.Round(origH * targetAspect), 1, origW);
+                    cropX = Math.Max(0, (origW - croppedW) / 2);
+                }
+                else if (sourceAspect < targetAspect)
+                {
+                    croppedH = Math.Clamp((int)Math.Round(origW / targetAspect), 1, origH);
+                    cropY = Math.Max(0, (origH - croppedH) / 2);
+                }
 
-                int cropX = Math.Max(0, (scaledW - targetW) / 2);
-                int cropY = Math.Max(0, (scaledH - targetH) / 2);
+                if (croppedW != origW || croppedH != origH)
+                {
+                    image.Crop(new MagickGeometry(cropX, cropY, (uint)croppedW, (uint)croppedH));
+                    image.ResetPage();
+                }
 
-                image.Crop(new MagickGeometry(cropX, cropY, (uint)targetW, (uint)targetH));
-                image.ResetPage();
+                image.Resize((uint)targetW, (uint)targetH);
             }
             else if (fit == "stretch")
             {
@@ -374,10 +395,17 @@ public static class Program
             var destPath = SafePaths.Unique(outputDir, destName);
 
             image.Write(destPath);
+            processedCount++;
             Console.WriteLine($"Resized: {destPath} ({image.Width}x{image.Height}, quality {quality}, fit: {fit})");
         }
 
-        Console.WriteLine("Done.");
+        if (processedCount == 0)
+        {
+            Console.Error.WriteLine("Error: No valid images were processed.");
+            return 1;
+        }
+
+        Console.WriteLine($"Done. Processed {processedCount} image(s).");
         return 0;
     }
 
@@ -392,9 +420,25 @@ public static class Program
         var parts = spec.Split('x');
         if (parts.Length == 2)
         {
-            int? w = int.TryParse(parts[0], out var pw) && pw > 0 ? pw : null;
-            int? h = int.TryParse(parts[1], out var ph) && ph > 0 ? ph : null;
-            if (w is not null || h is not null) return (w, h, null);
+            bool hasW = parts[0].Length > 0;
+            bool hasH = parts[1].Length > 0;
+            if (hasW && hasH)
+            {
+                if (int.TryParse(parts[0], out var w) && w > 0 &&
+                    int.TryParse(parts[1], out var h) && h > 0)
+                {
+                    return (w, h, null);
+                }
+                return (null, null, null);
+            }
+            if (hasW && int.TryParse(parts[0], out var singleW) && singleW > 0)
+            {
+                return (singleW, null, null);
+            }
+            if (hasH && int.TryParse(parts[1], out var singleH) && singleH > 0)
+            {
+                return (null, singleH, null);
+            }
         }
         else if (parts.Length == 1 && int.TryParse(parts[0], out var singleW) && singleW > 0)
         {
@@ -404,7 +448,7 @@ public static class Program
         return (null, null, null);
     }
 
-    private static (List<string> Inputs, string? OutputDir, string Fit, int Quality, string? Format) ParseResizeArguments(string[] args)
+    private static (List<string> Inputs, string? OutputDir, string Fit, int Quality, string? Format, string? Error) ParseResizeArguments(string[] args)
     {
         var inputs = new List<string>();
         string? outputDir = null;
@@ -421,12 +465,18 @@ public static class Program
             }
             else if (arg is "--fit" && i + 1 < args.Length)
             {
-                fit = args[++i].ToLowerInvariant() switch
+                var val = args[++i].ToLowerInvariant();
+                fit = val switch
                 {
+                    "crop" => "crop",
                     "contain" or "fit" => "contain",
                     "stretch" or "fill" or "exact" => "stretch",
-                    _ => "crop"
+                    _ => null!
                 };
+                if (fit is null)
+                {
+                    return (inputs, outputDir, "crop", quality, format, $"Unknown --fit value '{val}'. Supported options: crop, contain, stretch.");
+                }
             }
             else if (arg is "-q" or "--quality" && i + 1 < args.Length && int.TryParse(args[++i], out var q))
             {
@@ -442,7 +492,7 @@ public static class Program
             }
         }
 
-        return (inputs, outputDir, fit, quality, format);
+        return (inputs, outputDir, fit, quality, format, null);
     }
 
 
