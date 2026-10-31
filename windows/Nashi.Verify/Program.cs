@@ -99,6 +99,16 @@ try
     try{await PublicUpdates.VerifyAsync(fake,update);throw new Exception("Unsigned update accepted");}catch(InvalidDataException){checks++;}
     foreach(var url in new[]{"https://evil.example/replace.zip","file:///temp/file.zip","https://github.com/another/repo/releases/download/test/file.zip"})
     {try{PublicUpdates.Validate(update with{Url=url});throw new Exception("Untrusted update URL accepted");}catch(InvalidDataException){checks++;}}
+    foreach(var url in new[]{"http://169.254.169.254/latest/meta-data/","http://10.0.0.1/","http://172.16.0.1/","http://192.168.1.1/","http://100.64.0.1/","http://0.0.0.0/","http://2130706433/","http://0x7f.1/","http://\uFF11\uFF12\uFF17.0.0.1/","http://localhost./","http://media.localhost/","http://nas.local/","http://[::1]/","http://[::ffff:169.254.169.254]/","http://[fd00::1]/","http://[fe80::1]/","http://[64:ff9b::a9fe:a9fe]/","http://[2002:a9fe:a9fe::]/","http://[2001:0:4136:e378::1]/"})
+    {try{WebDownload.Validate(url);throw new Exception("Private web link accepted: "+url);}catch(ArgumentException){checks++;}}
+    foreach(var url in new[]{"https://www.youtube.com/watch?v=dQw4w9WgXcQ","https://8.8.8.8/","https://[2606:4700:4700::1111]/","https://[64:ff9b::808:808]/"})Check(WebDownload.Validate(url).AbsoluteUri.Length>0,"Public web link rejected: "+url);
+    var service=new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback,0);service.Start();var servicePort=((System.Net.IPEndPoint)service.LocalEndpoint).Port;var serviceHit=service.AcceptTcpClientAsync();
+    await using(var proxy=PublicWebProxy.Start())using(var client=new HttpClient(new HttpClientHandler{Proxy=new System.Net.WebProxy(proxy.Url),UseProxy=true}){Timeout=TimeSpan.FromSeconds(15)})
+    {
+        foreach(var url in new[]{$"http://127.0.0.1:{servicePort}/",$"http://localhost:{servicePort}/",$"http://[::ffff:127.0.0.1]:{servicePort}/","http://169.254.169.254/latest/meta-data/"})Check((await client.GetAsync(url)).StatusCode==System.Net.HttpStatusCode.Forbidden,"yt-dlp proxy allowed a private link: "+url);
+        try{await client.GetAsync($"https://127.0.0.1:{servicePort}/");throw new Exception("yt-dlp proxy opened a tunnel to loopback");}catch(HttpRequestException){checks++;}
+    }
+    Check(!serviceHit.IsCompleted,"yt-dlp proxy connected to a loopback service");service.Stop();
     Console.WriteLine(JsonSerializer.Serialize(new { passed = checks, scope = "Cross-platform Windows engine safety foundation; no Windows GUI claimed" }));
 }
 finally { Directory.Delete(root, recursive: true); }

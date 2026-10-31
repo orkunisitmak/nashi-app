@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.Sockets;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 namespace Nashi.Core;
@@ -24,13 +26,20 @@ public static class WebPhotos
     }
     public static async Task<string> DownloadImageAsync(string url,string directory,IProgress<OperationProgress>? progress,CancellationToken token,string name="Image")
     {
-        var uri=WebDownload.Validate(url);using var handler=new HttpClientHandler{AllowAutoRedirect=false};using var client=new HttpClient(handler){Timeout=TimeSpan.FromMinutes(10)};client.DefaultRequestHeaders.UserAgent.ParseAdd("Nashi");
+        var uri=WebDownload.Validate(url);using var handler=new SocketsHttpHandler{AllowAutoRedirect=false,ConnectCallback=ConnectPublicAsync};using var client=new HttpClient(handler){Timeout=TimeSpan.FromMinutes(10)};client.DefaultRequestHeaders.UserAgent.ParseAdd("Nashi");
         HttpResponseMessage? response=null;try
         {
             for(var n=0;n<6;n++){response=await client.GetAsync(uri,HttpCompletionOption.ResponseHeadersRead,token);if((int)response.StatusCode is >=300 and <400&&response.Headers.Location is {} location){var next=location.IsAbsoluteUri?location:new Uri(uri,location);WebDownload.Validate(next.AbsoluteUri);if(uri.Scheme=="https"&&next.Scheme!="https")throw new InvalidDataException("The media server redirected to an insecure URL.");response.Dispose();response=null;uri=next;continue;}break;}
             if(response is null)throw new IOException("Too many image redirects.");response.EnsureSuccessStatusCode();var mime=response.Content.Headers.ContentType?.MediaType??"";var extension=mime switch{"image/png"=>"png","image/bmp"=>"bmp","image/tiff"=>"tiff","image/jpeg"=>"jpg","image/webp"=>"webp","image/avif"=>"avif","image/gif"=>"gif","image/heic" or "image/heif"=>"heic","image/svg+xml"=>"svg",_=>throw new InvalidDataException("This link did not return a downloadable image.")};
             var length=response.Content.Headers.ContentLength;if(length>200_000_000)throw new InvalidDataException("Image exceeds 200 MB.");var file=SafePaths.Unique(directory,name+"."+extension);await using(var source=await response.Content.ReadAsStreamAsync(token))await using(var target=new FileStream(file,FileMode.CreateNew,FileAccess.Write,FileShare.None,81920,true)){var buffer=new byte[81920];long total=0;int count;while((count=await source.ReadAsync(buffer,token))>0){total+=count;if(total>200_000_000)throw new InvalidDataException("Image exceeds 200 MB.");await target.WriteAsync(buffer.AsMemory(0,count),token);progress?.Report(new(length is >0?(double)total/length.Value*.98:null,"Downloading image…"));}if(total==0||length is {} expected&&total!=expected)throw new IOException("The image download ended early.");}return file;
         }finally{response?.Dispose();}
+    }
+    // Validate only sees the name, so check where it resolves too. A proxy connection is left to the proxy.
+    private static async ValueTask<Stream> ConnectPublicAsync(SocketsHttpConnectionContext context,CancellationToken token)
+    {
+        var addresses=await Dns.GetHostAddressesAsync(context.DnsEndPoint.Host,token);var direct=string.Equals(context.DnsEndPoint.Host,context.InitialRequestMessage.RequestUri?.IdnHost,StringComparison.OrdinalIgnoreCase);
+        if(addresses.Length==0||direct&&!addresses.All(PublicWebHost.IsPublic))throw new HttpRequestException("Paste a public http(s) media or page link.");
+        var socket=new Socket(SocketType.Stream,ProtocolType.Tcp){NoDelay=true};try{await socket.ConnectAsync(addresses,context.DnsEndPoint.Port,token);return new NetworkStream(socket,true);}catch{socket.Dispose();throw;}
     }
     public static async Task<string> YoutubeThumbnail(string id,string directory,IProgress<OperationProgress>? progress,CancellationToken token)
     {
