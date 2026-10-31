@@ -326,7 +326,11 @@ enum NashiApplication {
     func applicationShouldTerminate(_ sender:NSApplication)->NSApplication.TerminateReply {
         // Sparkle can resume an earlier install without the postponement callback.
         // Never terminate a conversion before it has committed its results.
-        (state.working || toolSetupWorking) ? .terminateCancel:.terminateNow
+        if state.working || toolSetupWorking { return .terminateCancel }
+        // A link check's yt-dlp runs in its own process group and would outlive Nashi.
+        guard let inspection=downloadModel.stopInspection() else { return .terminateNow }
+        Task { await inspection.value;sender.reply(toApplicationShouldTerminate:true) }
+        return .terminateLater
     }
     func applicationShouldHandleReopen(_ sender:NSApplication,hasVisibleWindows flag:Bool)->Bool { showHome();return true }
     func makeWindow<V:View>(title:String,size:NSSize,view:V)->NSWindow {
