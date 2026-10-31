@@ -26,6 +26,15 @@
           "Avalonia.X11": "11.3.22"
         }
       },
+      "Avalonia.Headless": {
+        "type": "Direct",
+        "requested": "[11.3.22, )",
+        "resolved": "11.3.22",
+        "contentHash": "yb0+VpNVTDW2ok6SBiICk4/iOoPoH6fudqqCV8BPuW5mHqpxC2wko+9AiYs0ak0OiXYcvhmrywWenPgmaDKoPQ==",
+        "dependencies": {
+          "Avalonia": "11.3.22"
+        }
+      },
       "Avalonia.Themes.Fluent": {
         "type": "Direct",
         "requested": "[11.3.22, )",
@@ -34,6 +43,12 @@
         "dependencies": {
           "Avalonia": "11.3.22"
         }
+      },
+      "bblanchon.PDFium.Linux": {
+        "type": "Direct",
+        "requested": "[155.0.8044, )",
+        "resolved": "155.0.8044",
+        "contentHash": "RIVbKZkwbcSNgGZRODi9Z5HBp4z5+poAt9W779P2TslXCtzhrpzi+LEOtPJzPiA+Hh234DPPI7e15E4ZO/d+Tw=="
       },
       "Avalonia.Angle.Windows.Natives": {
         "type": "Transitive",
