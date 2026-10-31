@@ -43,6 +43,11 @@ internal static class Localizer
         ["Images, videos, audio, PDFs, documents, spreadsheets, slides, subtitles and archives. Drop files here, choose them or paste with Ctrl+V."]="Görseller, videolar, ses, PDF'ler, belgeler, tablolar, sunumlar, altyazılar ve arşivler. Dosyaları buraya bırakın, seçin veya Ctrl+V ile yapıştırın.",
         ["Remove selected"]="Seçileni kaldır",["Show in folder"]="Klasörde göster",["Search Library"]="Kitaplıkta ara",["Finished files appear here."]="Biten dosyalar burada görünür.",
         ["Cancelled. Nothing was saved."]="İptal edildi. Hiçbir şey kaydedilmedi.",["Use"]="Kullan",["Folder"]="Klasör",["Output"]="Çıktı",["Change…"]="Değiştir…",["Choose folder…"]="Klasör seç…",
+        ["Add at least one range."]="En az bir aralık ekleyin.",["Add range"]="Aralık ekle",["Aspect"]="Oran",["Cancelled."]="İptal edildi.",["Choose an image to place"]="Yerleştirilecek görseli seçin",
+        ["Choose background image"]="Arka plan görseli seçin",["Could not play the audio."]="Ses çalınamadı.",["Could not read the video size."]="Video boyutu okunamadı.",["Geometry"]="Geometri",
+        ["I / O mark the selected handle · ←/→ move it one second · Enter trims"]="I / O seçili tutamacı işaretler · ←/→ bir saniye kaydırır · Enter kırpar",
+        ["Media is re-encoded until it fits the target; audio keeps its sample rate."]="Medya hedefe sığana kadar yeniden kodlanır; ses örnekleme hızını korur.",
+        ["Order"]="Sıra",["Out"]="Çıkış",["Play selection"]="Seçimi çal",["Reading a frame…"]="Kare okunuyor…",["Replace with"]="Şununla değiştir",["Selection"]="Seçim",["Stop"]="Durdur",["Updating…"]="Güncelleniyor…",
         ["Set up media tools"]="Medya araçlarını kur",["Move to…"]="Taşı…",["Copy"]="Kopyala",["Cancel"]="İptal",["Save"]="Kaydet",["Undo"]="Geri al",["Clear"]="Temizle",["Tool"]="Araç",["Color"]="Renk",["Text"]="Metin",["Cover"]="Kapat",["Redact"]="Sansürle",
     };
     /// For sentences built from numbers or names, which a catalog lookup cannot match.

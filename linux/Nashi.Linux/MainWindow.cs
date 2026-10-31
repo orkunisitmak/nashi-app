@@ -143,7 +143,11 @@ public sealed class MainWindow:Window
             catch(Exception error){status.Text=error.Message;}
             return;
         }
-        MediaOptions? media=null;ImageEdit? edit=null;PhotoEdit? photo=null;FrameOptions? frame=null;CollageOptions? collage=null;Redaction? redact=null;PdfOrganization? organize=null;Annotation? annotate=null;DocumentOptions? document=null;MetadataEdit? metadata=null;
+        MediaOptions? media=null;ImageEdit? edit=null;PhotoEdit? photo=null;FrameOptions? frame=null;CollageOptions? collage=null;Redaction? redact=null;PdfOrganization? organize=null;Annotation? annotate=null;DocumentOptions? document=null;MetadataEdit? metadata=null;CompressionOptions? compress=null;
+        if(choice.Id=="compress")
+        {
+            var editor=new CompressDialog(choice.Title,inputs.All(FeatureCatalog.IsImage),Operations.IsMediaOnly(inputs));await editor.ShowDialog(this);if(editor.Result is not {} picked)return;compress=picked;
+        }
         if(choice.Id=="removeMetadata")
         {
             try{if(await EditMetadata(inputs) is not {} picked)return;metadata=picked.RemoveAll&&inputs.Length>1?null:picked;}
@@ -229,7 +233,7 @@ public sealed class MainWindow:Window
             else if(choice.Id=="redactAudio"){var bleep=new BleepDialog(choice.Title,inputs[0],info);await bleep.ShowDialog(this);if(bleep.Result is not {} picked)return;media=new(){AudioRedactions=picked.Ranges,RedactionMode=picked.Mode};}
             else{var trim=new TrimDialog(choice.Title,inputs[0],info);await trim.ShowDialog(this);if(trim.Result is not {} range)return;media=new(){Start=range.Start,End=range.End};}
         }
-        var settings=new ToolSettings(media,edit,photo,frame,collage,redact,organize,annotate,document,metadata);
+        var settings=new ToolSettings(media,edit,photo,frame,collage,redact,organize,annotate,document,metadata,compress);
         await RunWork(choice.Id=="convert"?"Convert to "+choice.Format!.ToUpperInvariant():choice.Title,(destination,report,token)=>Operations.RunAsync(choice,inputs,destination,report,token,settings),Destination(inputs));
     }
     /// Settings → Output: next to the original (default) or one chosen folder.

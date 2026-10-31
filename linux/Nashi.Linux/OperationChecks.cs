@@ -40,6 +40,17 @@ internal static class OperationChecks
             try{Operations.Crop(new MagickImage(MagickColors.White,10,10),new(.8,0,.5,1));Check(false,"Crop outside the image is rejected");}catch(ArgumentException){Check(true,"Crop outside the image is rejected");}
             var edited=Operations.RunAsync(new("editImage","Edit Photo"),[png],Path.Combine(root,"edit"),progress,token,new(Photo:new(new PhotoAdjustments{Exposure=-1,Saturation=0},90,true))).GetAwaiter().GetResult().Single();
             using(var result=new MagickImage(edited)){using var pixels=result.GetPixels();var c=pixels.GetPixel(10,10).ToColor()!;Check(result.Width==200&&result.Height==320&&Math.Abs(c.R-c.B)<3&&c.R is > 70 and < 120,"Edit photo rotates, desaturates and darkens");}
+            {
+                var photo=Path.Combine(root,"Big.jpg");using(var image=new MagickImage("plasma:fractal",1200,800)){image.Quality=95;image.Write(photo,MagickFormat.Jpeg);}
+                var size=new FileInfo(photo).Length;ToolSettings Squeeze(CompressionOptions o)=>new(Compress:o);
+                var half=Operations.RunAsync(new("compress","Compress"),[photo],Path.Combine(root,"compress-half"),progress,token,Squeeze(new(ReductionPercent:50))).GetAwaiter().GetResult().Single();
+                Check(new FileInfo(half).Length<=size/2&&new MagickImageInfo(half).Width==1200,"Compress to half the size by quality first");
+                var tiny=Operations.RunAsync(new("compress","Compress"),[photo],Path.Combine(root,"compress-tiny"),progress,token,Squeeze(new(TargetBytes:15_000))).GetAwaiter().GetResult().Single();
+                Check(new FileInfo(tiny).Length<=15_000&&new MagickImageInfo(tiny).Width<1200,"A small target also shrinks the image");
+                var edge=Operations.RunAsync(new("compress","Compress"),[photo],Path.Combine(root,"compress-edge"),progress,token,Squeeze(new(LongestEdge:600))).GetAwaiter().GetResult().Single();
+                Check(new MagickImageInfo(edge).Width==600&&new MagickImageInfo(edge).Height==400,"Longest-edge size preset");
+                try{Compression.Target(1000,-1,null);Check(false,"Bad targets are rejected");}catch(ArgumentException){Check(true,"Bad targets are rejected");}
+            }
             Check(Operations.Tools([png]).Any(t=>t.Id=="annotateImage")&&!Operations.Tools([png,jpg]).Any(t=>t.Id=="annotateImage"),"Annotate offered for one image");
             {
                 var canvas=Path.Combine(root,"Canvas.png");using(var image=new MagickImage(MagickColors.White,400,300))image.Write(canvas,MagickFormat.Png);
@@ -108,6 +119,13 @@ internal static class OperationChecks
             var parts=Operations.RunAsync(new("splitPDF","Split PDF"),[merged],Path.Combine(root,"split"),progress,token).GetAwaiter().GetResult();
             Check(parts.Count==4,"Split PDF files");
             Check(Operations.Tools([pdf]).Select(t=>t.Id).Intersect(new[]{"compress","removeMetadata"}).Count()==2,"PDF compress and metadata offered");
+            {
+                // A scanned (image-only) PDF is re-rendered as JPEG pages until it fits.
+                var scan=Path.Combine(root,"Scan.png");using(var image=new MagickImage("plasma:fractal",1600,2200))image.Write(scan,MagickFormat.Png);
+                var scanned=Operations.ImagesToPdf([scan],Path.Combine(root,"scan-big"),null,token).Single();var before=new FileInfo(scanned).Length;
+                var fitted=Operations.RunAsync(new("compress","Compress"),[scanned],Path.Combine(root,"pdf-fit"),progress,token,new(Compress:new(TargetBytes:before/4))).GetAwaiter().GetResult().Single();
+                using(var document=PdfDocument.Open(fitted))Check(new FileInfo(fitted).Length<=before/4&&document.NumberOfPages==1,"Scanned PDF fits a target size");
+            }
             foreach(var (tool,suffix) in new[]{("compress"," Compressed.pdf"),("removeMetadata"," Metadata.pdf")})
             {
                 var output=Operations.RunAsync(new(tool,tool),[pdf],Path.Combine(root,"pdf-"+tool),progress,token).GetAwaiter().GetResult().Single();
