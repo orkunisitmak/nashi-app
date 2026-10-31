@@ -256,6 +256,25 @@ final class GitHubUpdateTransportTests: XCTestCase {
         XCTAssertThrowsError(try bridge.archiveURL(for: URL(string: "https://api.github.com/repos/example/nashi/releases/assets/42")!))
     }
 
+    func testConsumerDisconnectCancelsTheInFlightUpstreamRequest() async throws {
+        let started = expectation(description: "Upstream asset lookup started")
+        let stopped = expectation(description: "Upstream asset lookup cancelled")
+        let client = try client { _ in
+            .init(headers: ["Content-Length": "64"], chunks: [], keepOpen: true,
+                  onStart: { started.fulfill() }, onStop: { stopped.fulfill() })
+        }
+        let bridge = GitHubUpdateBridge(client: client, appcast: feed)
+        _ = try await bridge.start(); defer { bridge.stop() }
+        let url = try bridge.archiveURL(for: URL(string: "https://api.github.com/repos/example/nashi/releases/assets/42")!)
+        let session = session()
+        let download = session.dataTask(with: url) { _, _, _ in }
+        download.resume()
+        await fulfillment(of: [started], timeout: 5)
+        // The bridge stays running: only the loopback consumer goes away.
+        download.cancel(); session.invalidateAndCancel()
+        await fulfillment(of: [stopped], timeout: 5)
+    }
+
     func testEarlyArchiveEOFDoesNotReturnATruncatedSuccess() async throws {
         let client = try client { request in
             if request.value(forHTTPHeaderField: "Accept") == "application/vnd.github+json" {
