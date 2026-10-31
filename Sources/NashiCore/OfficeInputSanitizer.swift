@@ -184,15 +184,30 @@ enum OfficeInputSanitizer {
     /// and the element behind it and leaves the staged part unparseable. Tags are
     /// located first (see `tagRanges(in:)`) and only their attributes are read.
     private static func neutraliseReferences(in text: String) -> String {
-        var result = text
-        // Right to left, so each rewrite leaves the ranges before it pointing where
-        // they pointed. They are all ranges of `text`, which is not mutated here.
-        for tag in tagRanges(in: text).reversed() {
-            for attribute in markupAttributes(in: text[tag]).reversed() {
+        let scalars = text.unicodeScalars
+        var replacements: [(range: Range<String.UnicodeScalarView.Index>, quote: Unicode.Scalar)] = []
+        for tag in tagRanges(in: text) {
+            for attribute in markupAttributes(in: scalars[tag]) {
                 guard isReferenceName(attribute.name), isHostPath(attribute.value) else { continue }
-                result.replaceSubrange(attribute.valueRange, with: String(attribute.quote) + "about:blank" + String(attribute.quote))
+                replacements.append((attribute.valueRange, attribute.quote))
             }
         }
+        guard !replacements.isEmpty else { return text }
+        replacements.sort { $0.range.lowerBound < $1.range.lowerBound }
+
+        // Build from the immutable scalar view. A scalar boundary can sit inside a
+        // grapheme cluster, so ranges produced by this pass are never applied to a
+        // String that has already been mutated.
+        var result = ""
+        var cursor = scalars.startIndex
+        for replacement in replacements {
+            result.append(contentsOf: String(scalars[cursor..<replacement.range.lowerBound]))
+            result.append(contentsOf: String(replacement.quote))
+            result.append(contentsOf: "about:blank")
+            result.append(contentsOf: String(replacement.quote))
+            cursor = replacement.range.upperBound
+        }
+        result.append(contentsOf: String(scalars[cursor..<scalars.endIndex]))
         return result
     }
 
@@ -201,114 +216,119 @@ enum OfficeInputSanitizer {
     /// outside a quoted attribute value; what sits between two tags is text and is
     /// never a candidate for a rewrite.
     ///
-    /// Quote tracking only starts once a tag is open. A `"` sitting in prose would
-    /// otherwise stay open across the next tag and hide its attributes from the
-    /// patterns, which is a way to smuggle a host path past the sanitizer, and a tag
-    /// cannot open inside a quoted value because XML forbids `<` there. The closing
-    /// `>` of a value such as `href="a>b"` is quoted, so it cannot end the tag early
-    /// either. Comments and CDATA hold text that may carry either bracket, so each is
-    /// skipped as a unit. An unterminated tag runs to the end of the part so a
-    /// truncated file is sanitised rather than passed through; a comment or CDATA
-    /// that is never closed ends the scan, which is the same verdict the converter
-    /// gives that part - it is not parseable markup, so there is no staged document
-    /// for a reference to resolve against.
-    private static func tagRanges(in text: String) -> [Range<String.Index>] {
-        var ranges: [Range<String.Index>] = []
-        var opening: String.Index?
-        var quote: Character?
-        var index = text.startIndex
-        while index < text.endIndex {
-            let character = text[index]
+    /// Quote tracking only starts once a tag is open. Comments and CDATA are skipped
+    /// as units, and all XML syntax is read as Unicode scalars so CRLF and combining
+    /// marks cannot merge punctuation into a different Swift Character.
+    private static func tagRanges(in text: String) -> [Range<String.UnicodeScalarView.Index>] {
+        let scalars = text.unicodeScalars
+        var ranges: [Range<String.UnicodeScalarView.Index>] = []
+        var opening: String.UnicodeScalarView.Index?
+        var quote: Unicode.Scalar?
+        var index = scalars.startIndex
+        while index < scalars.endIndex {
+            let scalar = scalars[index]
             if let open = quote {
-                if character == open { quote = nil }
-            } else if opening != nil && (character == "\"" || character == "'") {
-                quote = character
-            } else if character == ">", let start = opening {
-                ranges.append(start..<text.index(after: index))
+                if scalar == open { quote = nil }
+            } else if opening != nil && (scalar == #"""# || scalar == "'") {
+                quote = scalar
+            } else if scalar == ">", let start = opening {
+                ranges.append(start..<scalars.index(after: index))
                 opening = nil
-            } else if character == "<", opening == nil {
-                let marker = text[index...]
-                if marker.hasPrefix("<![CDATA[") {
-                    let body = text.index(index, offsetBy: "<![CDATA[".count)
-                    guard let closing = text.range(of: "]]>", range: body..<text.endIndex) else { break }
+            } else if scalar == "<", opening == nil {
+                if scalarSequence("<![CDATA[", startsAt: index, in: scalars) {
+                    let body = scalars.index(index, offsetBy: "<![CDATA[".unicodeScalars.count)
+                    guard let closing = scalarRange(of: "]]>", from: body, in: scalars) else { break }
                     index = closing.upperBound
                     continue
                 }
-                if marker.hasPrefix("<!--") {
-                    let body = text.index(index, offsetBy: "<!--".count)
-                    guard let closing = text.range(of: "-->", range: body..<text.endIndex) else { break }
+                if scalarSequence("<!--", startsAt: index, in: scalars) {
+                    let body = scalars.index(index, offsetBy: "<!--".unicodeScalars.count)
+                    guard let closing = scalarRange(of: "-->", from: body, in: scalars) else { break }
                     index = closing.upperBound
                     continue
                 }
-                if opensTag(after: index, in: text) { opening = index }
+                if opensTag(after: index, in: scalars) { opening = index }
             }
-            index = text.index(after: index)
+            index = scalars.index(after: index)
         }
-        if let start = opening { ranges.append(start..<text.endIndex) }
+        if let start = opening { ranges.append(start..<scalars.endIndex) }
         return ranges
     }
 
-    /// A `<` opens a tag only when the character after it can begin a name or a
+    private static func scalarSequence(_ needle: String,
+                                       startsAt index: String.UnicodeScalarView.Index,
+                                       in scalars: String.UnicodeScalarView) -> Bool {
+        scalars[index...].starts(with: needle.unicodeScalars)
+    }
+
+    private static func scalarRange(of needle: String,
+                                    from start: String.UnicodeScalarView.Index,
+                                    in scalars: String.UnicodeScalarView) -> Range<String.UnicodeScalarView.Index>? {
+        let sought = needle.unicodeScalars
+        var index = start
+        while index < scalars.endIndex {
+            if scalars[index...].starts(with: sought) {
+                return index..<scalars.index(index, offsetBy: sought.count)
+            }
+            index = scalars.index(after: index)
+        }
+        return nil
+    }
+
+    /// A `<` opens a tag only when the scalar after it can begin a name or a
     /// markup declaration. A bare `<` that survived a sloppy exporter is text.
-    private static func opensTag(after index: String.Index, in text: String) -> Bool {
-        let next = text.index(after: index)
-        guard next < text.endIndex else { return false }
-        let character = text[next]
-        return character.isLetter || character == "_" || character == "/" || character == "!" || character == "?"
+    private static func opensTag(after index: String.UnicodeScalarView.Index,
+                                 in scalars: String.UnicodeScalarView) -> Bool {
+        let next = scalars.index(after: index)
+        guard next < scalars.endIndex else { return false }
+        let scalar = scalars[next]
+        return isLetter(scalar) || scalar == "_" || scalar == "/" || scalar == "!" || scalar == "?"
+    }
+
+    private static func isLetter(_ scalar: Unicode.Scalar) -> Bool {
+        switch scalar.properties.generalCategory {
+        case .uppercaseLetter, .lowercaseLetter, .titlecaseLetter, .modifierLetter, .otherLetter:
+            return true
+        default:
+            return false
+        }
     }
 
     /// One attribute of a tag as the converter's parser sees it: the name, the value
-    /// with its character references still literal, and the range the quoted value
-    /// occupies - quotes included, so a rewrite can hand the same quote back.
+    /// with its character references still literal, and the scalar range occupied by
+    /// the quoted value. The quotes stay in the range so a rewrite can preserve them.
     private struct MarkupAttribute {
         let name: String
         let value: String
-        let valueRange: Range<String.Index>
-        let quote: Character
+        let valueRange: Range<String.UnicodeScalarView.Index>
+        let quote: Unicode.Scalar
     }
 
-    /// Whitespace XML allows between an attribute, its `=` and its value, plus the `/`
-    /// that closes an empty element.
-    private static func isMarkupTrivia(_ character: Character) -> Bool {
-        character == " " || character == "\t" || character == "\n" || character == "\r" || character == "\u{0C}" || character == "/"
+    /// XML whitespace plus the slash that closes an empty element.
+    private static func isMarkupTrivia(_ scalar: Unicode.Scalar) -> Bool {
+        scalar == " " || scalar == "\t" || scalar == "\n" || scalar == "\r" || scalar == "\u{0C}" || scalar == "/"
     }
 
-    /// A character that can stand inside an attribute name. XML names carry letters,
-    /// digits, `.`, `-`, `_` and the namespace separator; everything else - `=`, a
-    /// quote, a bracket - ends the name, which is what keeps `href` out of `data-href`.
-    private static func isAttributeNameCharacter(_ character: Character) -> Bool {
-        !isMarkupTrivia(character) && character != "=" && character != ">" && character != "<" && character != #"""# && character != "'"
+    private static func isAttributeNameScalar(_ scalar: Unicode.Scalar) -> Bool {
+        !isMarkupTrivia(scalar) && scalar != "=" && scalar != ">" && scalar != "<" && scalar != #"""# && scalar != "'"
     }
 
-    /// The attributes of one tag, read in a single pass that steps over each quoted
-    /// value instead of searching it.
-    ///
-    /// A name found by searching a tag's text is not necessarily a name. An author's
-    /// own attribute can carry the spelling of another attribute inside its value
-    /// (`Note="TargetMode='Internal'"`), and a search that takes the first hit reads
-    /// that text as the element's own `TargetMode`, even though no parser hands it
-    /// over as one: a parser pairs a name with the quoted value behind its `=` and
-    /// never looks inside a value. Only that reading says which names the converter
-    /// will see, and that is the difference between a decoy hiding a host path and a
-    /// decoy being document text.
-    ///
-    /// XML requires a quoted value, so a name that is not followed by `="\u2026"` or
-    /// `='\u2026'` ends the pass, and so does a value left open at the end of the tag:
-    /// past either there is no attribute list for a parser to read, which is the same
-    /// verdict the converter gives the part - it is not markup, so nothing behind it
-    /// resolves.
-    private static func markupAttributes(in tag: Substring) -> [MarkupAttribute] {
+    /// Reads attributes from one tag without ever searching inside a quoted value.
+    /// Scalar iteration is required here: Swift intentionally treats CRLF and a base
+    /// character followed by a combining mark as one Character, while XML assigns
+    /// syntax to each scalar separately.
+    private static func markupAttributes(in tag: Substring.UnicodeScalarView) -> [MarkupAttribute] {
         var attributes: [MarkupAttribute] = []
         var index = tag.startIndex
         if index < tag.endIndex, tag[index] == "<" { index = tag.index(after: index) }
-        // The name of the element, or the `/` of a closing tag, comes first.
+        // The element name, or the slash of a closing tag, comes first.
         while index < tag.endIndex, !isMarkupTrivia(tag[index]) { index = tag.index(after: index) }
         while index < tag.endIndex {
             while index < tag.endIndex, isMarkupTrivia(tag[index]) { index = tag.index(after: index) }
             guard index < tag.endIndex, tag[index] != ">", tag[index] != "/" else { return attributes }
             let nameStart = index
-            while index < tag.endIndex, isAttributeNameCharacter(tag[index]) { index = tag.index(after: index) }
-            let name = tag[nameStart..<index]
+            while index < tag.endIndex, isAttributeNameScalar(tag[index]) { index = tag.index(after: index) }
+            let name = String(tag[nameStart..<index])
             while index < tag.endIndex, isMarkupTrivia(tag[index]) { index = tag.index(after: index) }
             guard index < tag.endIndex, tag[index] == "=" else { return attributes }
             index = tag.index(after: index)
@@ -316,12 +336,17 @@ enum OfficeInputSanitizer {
             guard index < tag.endIndex, tag[index] == #"""# || tag[index] == "'" else { return attributes }
             let quote = tag[index]
             let opening = index
-            guard let closing = tag[tag.index(after: index)...].firstIndex(of: quote) else { return attributes }
-            attributes.append(MarkupAttribute(name: String(name),
-                                             value: String(tag[tag.index(after: opening)..<closing]),
-                                             valueRange: opening..<tag.index(after: closing),
-                                             quote: quote))
-            index = tag.index(after: closing)
+            index = tag.index(after: index)
+            let valueStart = index
+            while index < tag.endIndex, tag[index] != quote { index = tag.index(after: index) }
+            guard index < tag.endIndex else { return attributes }
+            let closing = index
+            let afterClosing = tag.index(after: closing)
+            attributes.append(MarkupAttribute(name: name,
+                                              value: String(tag[valueStart..<closing]),
+                                              valueRange: opening..<afterClosing,
+                                              quote: quote))
+            index = afterClosing
         }
         return attributes
     }
@@ -336,7 +361,7 @@ enum OfficeInputSanitizer {
     /// skips comments and CDATA and ignores a `<` that cannot open markup, so the
     /// same string written in a paragraph or inside a comment does not trip this.
     private static func declaresDocumentType(_ text: String) -> Bool {
-        for range in tagRanges(in: text) where text[range].lowercased().hasPrefix("<!doctype") { return true }
+        for range in tagRanges(in: text) where String(text.unicodeScalars[range]).lowercased().hasPrefix("<!doctype") { return true }
         return false
     }
 
@@ -359,7 +384,7 @@ enum OfficeInputSanitizer {
     /// a converter build this machine has not measured cannot widen the rule through it.
     private static func declaresAnExpandableDocumentType(_ text: String) -> Bool {
         for range in tagRanges(in: text) {
-            let tag = text[range].lowercased()
+            let tag = String(text.unicodeScalars[range]).lowercased()
             guard tag.hasPrefix("<!doctype") else { continue }
             if tag.contains("[") || tag.contains("system") || tag.contains("entity") { return true }
             let literals = quotedDeclarationLiterals(tag)
@@ -393,20 +418,20 @@ enum OfficeInputSanitizer {
     /// XML, and reporting it keeps an unfinished literal from hiding a location.
     private static func quotedDeclarationLiterals(_ tag: String) -> [String] {
         var literals: [String] = []
-        var open: Character?
-        var literal = ""
-        for character in tag {
+        var open: Unicode.Scalar?
+        var literal = String.UnicodeScalarView()
+        for scalar in tag.unicodeScalars {
             if let quote = open {
-                if character == quote {
-                    literals.append(literal)
-                    literal = ""
+                if scalar == quote {
+                    literals.append(String(literal))
+                    literal.removeAll(keepingCapacity: true)
                     open = nil
                 } else {
-                    literal.append(character)
+                    literal.append(scalar)
                 }
-            } else if character == #"""# || character == "'" {
-                open = character
-                literal = ""
+            } else if scalar == #"""# || scalar == "'" {
+                open = scalar
+                literal.removeAll(keepingCapacity: true)
             }
         }
         if open != nil { literals.append("") }
@@ -462,7 +487,7 @@ enum OfficeInputSanitizer {
     private static func isHostTarget(_ element: String) -> Bool {
         var target: String?
         var mode: String?
-        for attribute in markupAttributes(in: element[...]) {
+        for attribute in markupAttributes(in: element.unicodeScalars[...]) {
             if attribute.name == targetModeName { mode = mode ?? attribute.value }
             else if attribute.name == targetName { target = target ?? attribute.value }
         }

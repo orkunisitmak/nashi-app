@@ -718,4 +718,39 @@ final class OfficeInputSanitizerTests: XCTestCase {
         XCTAssertFalse(staged.contains("real-\(secret)"),
                        "the real host path remained in the staged part: \(staged)")
     }
+
+    func testUnicodeScalarSyntaxCannotHideHostPaths() throws {
+        let base = try package([
+            "content.xml": """
+            <?xml version="1.0"?>
+            <office:document-content xmlns:office="urn:office" xmlns:draw="urn:draw" xmlns:xlink="urn:xlink">\
+            <office:body>\
+            <draw:image\r\nxlink:href="file:///tmp/crlf-content-\(secret).png"/>\
+            <draw:image draw:name="\u{0301}>" xlink:href="file:///tmp/mark-content-\(secret).png"/>\
+            <draw:image xlink:href="file:///tmp/closing-content-\(secret).png"\u{0301}/>\
+            </office:body></office:document-content>
+            """,
+            "word/document.xml": "<w:document/>",
+            "word/_rels/document.xml.rels": """
+            <?xml version="1.0"?>
+            <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">\
+            <Relationship Id="crlf"\r\nTarget="file:///tmp/crlf-rel-\(secret).png" TargetMode="External"/>\
+            <Relationship Note="\u{0301}>" Id="mark" Target="file:///tmp/mark-rel-\(secret).png" TargetMode="External"/>\
+            <Relationship Id="closing" TargetMode="External" Target="file:///tmp/closing-rel-\(secret).png"\u{0301}/>\
+            <Relationship Id="keep" Target="media/kept.png" TargetMode="External"/>\
+            </Relationships>
+            """
+        ])
+        defer { try? FileManager.default.removeItem(at: base.base) }
+        let parts = try sanitizedParts(base.input, extensions: ["xml", "rels"], base: base.base)
+        let content = parts["content.xml"] ?? ""
+        let relationships = parts["word/_rels/document.xml.rels"] ?? ""
+
+        XCTAssertFalse(content.contains(secret),
+                       "CRLF or a combining mark hid a content host path: \(content)")
+        XCTAssertFalse(relationships.contains(secret),
+                       "CRLF or a combining mark hid a relationship host path: \(relationships)")
+        XCTAssertTrue(relationships.contains("media/kept.png"),
+                      "Unicode syntax handling removed the relative control: \(relationships)")
+    }
 }
