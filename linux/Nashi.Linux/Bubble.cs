@@ -71,7 +71,7 @@ internal sealed class Bubble:Window
     /// Opens the wheel for these files, on the ring the modifier picks.
     public void Expand(string[] files,KeyModifiers keys=KeyModifiers.None)
     {
-        held=files;home=Position;var scale=Screens.ScreenFromWindow(this)?.Scaling??1;
+        var reopened=wheel.IsVisible;held=files;if(!reopened)home=Position;var scale=Screens.ScreenFromWindow(this)?.Scaling??1;
         Width=Height=Large;var shift=(int)((Large-Small)/2*scale);Position=new PixelPoint(home.X-shift,home.Y-shift);
         // Keep the open wheel on screen when the pear sits at an edge.
         if(Screens.ScreenFromWindow(this)?.WorkingArea is {} area)Position=new PixelPoint(Math.Clamp(Position.X,area.X,area.Right-(int)(Large*scale)),Math.Clamp(Position.Y,area.Y,area.Bottom-(int)(Large*scale)));
@@ -152,7 +152,7 @@ internal sealed class Bubble:Window
     private async Task Choose(Choice choice)
     {
         var files=held;busy=true;Collapse();note.Text="";
-        try{var result=await run(files,choice);ToolTip.SetTip(puck,result);if(result.Length>0){ToolTip.SetIsOpen(puck,true);hide.Start();}}
+        try{string result;try{result=await run(files,choice);}catch(Exception error)when(error is not OutOfMemoryException){result=error.Message;}ToolTip.SetTip(puck,result);if(result.Length>0){ToolTip.SetIsOpen(puck,true);hide.Start();}}
         finally{busy=false;}
     }
 }

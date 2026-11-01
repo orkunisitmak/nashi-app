@@ -93,7 +93,8 @@ public static class Compositions
             image.Composite(piece,x,y,CompositeOperator.Copy);
         }
         if(image.GetExifProfile() is {} exif){exif.RemoveThumbnail();image.SetProfile(exif);}
-        image.RemoveProfile("8bim");
+        // Photoshop resources and XMP can both carry an unredacted preview.
+        image.RemoveProfile("8bim");image.RemoveProfile("xmp");
     }
 
     private readonly record struct Area(double X,double Y,double Width,double Height);

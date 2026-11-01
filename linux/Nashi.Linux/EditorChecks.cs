@@ -124,6 +124,16 @@ internal static class EditorChecks
             Check(dialog.Canvas.Areas.Count>=2&&dialog.Canvas.Areas.All(a=>a.Y is > 50 and < 210),"Find text puts a box over each word");
             dialog.KeyPress(Avalonia.Input.Key.Enter,RawInputModifiers.None,PhysicalKey.None,null);Pump();Check(dialog.Result is {Areas.Length:>=2},"Enter keeps the found boxes");
         }
+        {
+            var sign2=new MagickImage(MagickColors.White,200,100).ToByteArray(MagickFormat.Png);
+            var edge=Wait(RedactDialog.CreateAsync("Redact Video","clip.mp4",sign2));edge.Show();Pump();
+            edge.Canvas.AddArea(new Rect(190,90,40,40));edge.Canvas.AddArea(new Rect(300,300,10,10));
+            Check(edge.Canvas.Areas.Count==1&&edge.Canvas.Areas[0].Right<=200&&edge.Canvas.Areas[0].Bottom<=100,"OCR boxes are kept inside the picture");edge.Close();Pump();
+        }
+        {
+            var trim=new TrimDialog("Trim Video","clip.mp4",new MediaInfo(187.46,1000,[]));trim.Show();Pump();trim.Accept();Pump();
+            Check(trim.Result is {Start:0,End:187.46},"Untouched time fields keep the exact end");
+        }
         var frame=new MagickImage(MagickColors.Gray,320,240).ToByteArray(MagickFormat.Png);
         var video=Wait(RedactDialog.CreateAsync("Redact Video","clip.mp4",frame,10));video.Show();Pump();
         var fields=Descendants(video).OfType<TextBox>().Where(t=>t.TemplatedParent is null).ToArray();Check(fields.Length==2,"Video redaction shows From and To");

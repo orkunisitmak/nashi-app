@@ -74,7 +74,11 @@ internal sealed class BleepDialog:Window
     }
     private void Typed()
     {
-        if(TrimDialog.Parse(startText.Text) is {} a&&TrimDialog.Parse(endText.Text) is {} b&&b>a)wave.Selection=new(Math.Clamp(a,0,wave.Duration),Math.Clamp(b,0,wave.Duration));
+        // The fields show the selection rounded down to 0.1 s; an untouched field keeps the exact dragged value.
+        if(wave.Selection is {} current&&startText.Text==TrimDialog.Format(current.Start)&&endText.Text==TrimDialog.Format(current.End)){Changed();return;}
+        var exact=wave.Selection;
+        var a=exact is {} e1&&startText.Text==TrimDialog.Format(e1.Start)?e1.Start:TrimDialog.Parse(startText.Text);var b=exact is {} e2&&endText.Text==TrimDialog.Format(e2.End)?e2.End:TrimDialog.Parse(endText.Text);
+        if(a is {} start&&b is {} end&&end>start)wave.Selection=new(Math.Clamp(start,0,wave.Duration),Math.Clamp(end,0,wave.Duration));
         Changed();
     }
     private void Add(){Typed();if(wave.Selection is not {} s||s.End-s.Start<.02)return;wave.Ranges.Add(s);wave.Ranges.Sort((a,b)=>a.Start.CompareTo(b.Start));wave.Selection=null;wave.Select(wave.Ranges.IndexOf(s));state.Text="";}

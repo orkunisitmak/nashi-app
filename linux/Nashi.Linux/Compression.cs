@@ -81,7 +81,8 @@ public static class Compression
                     {
                         token.ThrowIfCancellationRequested();using var page=new MagickImage(pages[n]);page.Quality=(uint)Math.Clamp(quality,1,100);
                         using var jpeg=new MemoryStream(page.ToByteArray(MagickFormat.Jpeg));using var picture=XImage.FromStream(jpeg);
-                        var originalPage=source.Pages[n];var rotated=originalPage.Rotate%180!=0;var added=pdf.AddPage();added.Width=rotated?originalPage.Height:originalPage.Width;added.Height=rotated?originalPage.Width:originalPage.Height;
+                        // The page takes the size PDFium rendered: the visible (crop) box, already turned by /Rotate.
+                        var added=pdf.AddPage();added.Width=XUnit.FromPoint(page.Width*72d/dpi);added.Height=XUnit.FromPoint(page.Height*72d/dpi);
                         using(var drawing=XGraphics.FromPdfPage(added))drawing.DrawImage(picture,0,0,added.Width.Point,added.Height.Point);
                         progress?.Report(new(null,$"Compressing PDF · attempt {attempt+1} · page {n+1}/{pages.Length}…"));
                     }

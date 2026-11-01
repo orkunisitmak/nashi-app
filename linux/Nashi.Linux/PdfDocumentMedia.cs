@@ -4,27 +4,44 @@ using Nashi.Core;
 namespace Nashi.Linux;
 internal static class PdfDocumentMedia
 {
-    /// Scanned pages are read by Tesseract when it is installed, in every language it has.
+    private static string[]? installed;
+    /// English and the interface language first (tur for Turkish), then others, at most six: Tesseract lists
+    /// languages alphabetically, so the first six of a full install would be afr, amh, ara…
+    private static async Task<string[]> Languages(string tesseract,CancellationToken token)
+    {
+        if(installed is null)
+        {
+            var listed=await ProcessRunner.RunAsync(tesseract,["--list-langs"],token);
+            installed=(listed.Output+"\n"+listed.Error).Split('\n',StringSplitOptions.TrimEntries|StringSplitOptions.RemoveEmptyEntries).Where(l=>l.Length is >= 3 and <= 12&&l.All(c=>char.IsAsciiLetterLower(c)||c=='_')&&l is not "osd").ToArray();
+        }
+        string[] preferred=Localizer.Language=="tr"?["tur","eng"]:["eng","tur"];
+        return preferred.Where(installed.Contains).Concat(installed.Except(preferred)).Take(6).ToArray();
+    }
+    /// Scanned pages are read by Tesseract when it is installed. The page image goes to a private temporary
+    /// folder (0700), never to a world-readable file in /tmp.
     internal static bool OcrAvailable=>Operations.Executable("tesseract") is not null;
     internal static async Task<string> Recognize(byte[] image,CancellationToken token)
     {
         var tesseract=Operations.Executable("tesseract")??throw new InvalidOperationException("Install tesseract (with your language, e.g. tesseract-data-tur) to recognize scanned PDF text.");
-        var listed=await ProcessRunner.RunAsync(tesseract,["--list-langs"],token);
-        var languages=(listed.Output+"\n"+listed.Error).Split('\n',StringSplitOptions.TrimEntries|StringSplitOptions.RemoveEmptyEntries).Where(l=>l.Length is >= 3 and <= 12&&l.All(c=>char.IsAsciiLetterLower(c)||c=='_')&&l is not "osd").ToArray();
+        var languages=await Languages(tesseract,token);
         if(languages.Length==0)throw new InvalidOperationException("Install a Tesseract language (e.g. tesseract-data-eng) to recognize scanned PDF text.");
-        var file=Path.Combine(Path.GetTempPath(),"nashi-ocr-"+Guid.NewGuid().ToString("N")+".png");
+        var folder=Directory.CreateTempSubdirectory("nashi-ocr-").FullName;
         try
         {
+            var file=Path.Combine(folder,"page.png");
             // Same 2400 px ceiling as Windows keeps recognition time predictable.
             using(var page=new ImageMagick.MagickImage(image)){if(Math.Max(page.Width,page.Height)>2400)page.Resize(new ImageMagick.MagickGeometry(2400,2400));page.Write(file,ImageMagick.MagickFormat.Png);}
-            var result=await ProcessRunner.RunAsync(tesseract,[file,"stdout","-l",string.Join('+',languages.Take(6))],token);return result.Output.Trim();
+            var result=await ProcessRunner.RunAsync(tesseract,[file,"stdout","-l",string.Join('+',languages)],token);return result.Output.Trim();
         }
-        finally{try{File.Delete(file);}catch(IOException){}}
+        finally{try{Directory.Delete(folder,true);}catch(IOException){}catch(UnauthorizedAccessException){}}
     }
+    internal static Task<string[]> LanguagesFor(string tesseract,CancellationToken token)=>Languages(tesseract,token);
     internal static async Task<string> Text(string input,string password,CancellationToken token)
     {
-        using var pdf=UglyToad.PdfPig.PdfDocument.Open(input,new(){Password=password});byte[][]? images=null;var text=new List<string>();foreach(var page in pdf.GetPages())
-        {token.ThrowIfCancellationRequested();var content=UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor.ContentOrderTextExtractor.GetText(page);if(string.IsNullOrWhiteSpace(content)){images??=await NativePdf.RenderAsync(input,180,token,password);content=await Recognize(images[page.Number-1],token);}text.Add(content);}var output=string.Join("\n\n\f\n\n",text);if(string.IsNullOrWhiteSpace(output))throw new InvalidDataException("No text could be extracted or recognized in this PDF.");return output;
+        using var pdf=UglyToad.PdfPig.PdfDocument.Open(input,new(){Password=password});var text=new List<string>();foreach(var page in pdf.GetPages())
+        {token.ThrowIfCancellationRequested();var content=UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor.ContentOrderTextExtractor.GetText(page);
+            // A blank page needs OCR only when Tesseract is there, and then only that page is rendered.
+            if(string.IsNullOrWhiteSpace(content)&&OcrAvailable){var rendered=await NativePdf.RenderPagesAsync(input,[page.Number],180,token,password);if(rendered.TryGetValue(page.Number,out var png))content=await Recognize(png,token);}text.Add(content);}var output=string.Join("\n\n\f\n\n",text);if(string.IsNullOrWhiteSpace(output))throw new InvalidDataException("No text could be extracted or recognized in this PDF.");return output;
     }
     internal static async Task<string> Slides(string input,string work,int dpi,string password,CancellationToken token)
     {

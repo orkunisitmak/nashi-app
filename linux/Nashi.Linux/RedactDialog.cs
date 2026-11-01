@@ -96,7 +96,7 @@ internal sealed class RedactDialog:Window
         try
         {
             var boxes=await Task.Run(()=>TextBoxes.Find(source));var scale=canvas.Pixels.Width/(double)original.PixelSize.Width;
-            foreach(var b in boxes)canvas.Areas.Add(new Rect(b.X*scale,b.Y*scale,b.Width*scale,b.Height*scale));
+            foreach(var b in boxes)canvas.AddArea(new Rect(b.X*scale,b.Y*scale,b.Width*scale,b.Height*scale));
             canvas.InvalidateVisual();Changed();if(boxes.Count==0)count.Text=Localizer.T("No text found.");
         }
         catch(Exception error)when(error is IOException or InvalidOperationException or System.ComponentModel.Win32Exception){count.Text=error.Message;}
@@ -129,6 +129,8 @@ internal sealed class RegionCanvas(Bitmap preview,PixelSize pixels):PictureCanva
     private Point anchor,origin;
     private Rect start;
 
+    /// Adds a box kept inside the picture, like one drawn with the pointer.
+    public void AddArea(Rect area){var r=area.Intersect(new Rect(0,0,Pixels.Width,Pixels.Height));if(r.Width>=1&&r.Height>=1)Areas.Add(Clamp(r));}
     public void RemoveLast(){if(Areas.Count==0)return;Areas.RemoveAt(Areas.Count-1);selected=Areas.Count-1;Update();}
     public void Clear(){Areas.Clear();selected=-1;Update();}
     private void Update(){Changed?.Invoke();InvalidateVisual();}

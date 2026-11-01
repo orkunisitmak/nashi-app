@@ -9,16 +9,16 @@ public static class TextBoxes
     public static IReadOnlyList<Box> Find(byte[] image)
     {
         var tesseract=Operations.Executable("tesseract")??throw new InvalidOperationException("Install tesseract to find text.");
-        var file=Path.Combine(Path.GetTempPath(),"nashi-text-"+Guid.NewGuid().ToString("N")+".png");
+        // A private (0700) temporary folder: the picture may show exactly what is about to be redacted.
+        var folder=Directory.CreateTempSubdirectory("nashi-text-").FullName;var file=Path.Combine(folder,"picture.png");
         try
         {
             File.WriteAllBytes(file,image);
-            var languages=ProcessRunner.RunAsync(tesseract,["--list-langs"]).GetAwaiter().GetResult();
-            var installed=(languages.Output+"\n"+languages.Error).Split('\n',StringSplitOptions.TrimEntries|StringSplitOptions.RemoveEmptyEntries).Where(l=>l.Length is >= 3 and <= 12&&l.All(c=>char.IsAsciiLetterLower(c)||c=='_')&&l!="osd").Take(6).ToArray();
+            var installed=PdfDocumentMedia.LanguagesFor(tesseract,CancellationToken.None).GetAwaiter().GetResult();
             var args=new List<string>{file,"stdout"};if(installed.Length>0){args.Add("-l");args.Add(string.Join('+',installed));}args.Add("tsv");
             return Parse(ProcessRunner.RunAsync(tesseract,args).GetAwaiter().GetResult().Output);
         }
-        finally{try{File.Delete(file);}catch(IOException){}}
+        finally{try{Directory.Delete(folder,true);}catch(IOException){}catch(UnauthorizedAccessException){}}
     }
     /// Level 5 rows are words; a little padding covers ascenders and descenders.
     public static IReadOnlyList<Box> Parse(string tsv)

@@ -25,6 +25,7 @@ internal sealed class TrimDialog:Window
     private Slider active;
     private int generation;
     public MediaRange? Result{get;private set;}
+    internal void Accept(){Typed(startText,start);Typed(endText,end);Result=new(start.Value,end.Value);Close();}
 
     public TrimDialog(string title,string input,MediaInfo info)
     {
@@ -37,7 +38,7 @@ internal sealed class TrimDialog:Window
         startText.LostFocus+=(_,_)=>Typed(startText,start);endText.LostFocus+=(_,_)=>Typed(endText,end);
         debounce.Tick+=async(_,_)=>{debounce.Stop();await Frames();};
         var ok=new Button{Content="Trim",IsDefault=true,FontWeight=FontWeight.SemiBold,Background=NashiTheme.Primary,Foreground=new SolidColorBrush(Color.Parse("#243B2B"))};
-        ok.Click+=(_,_)=>{Typed(startText,start);Typed(endText,end);Result=new(start.Value,end.Value);Close();};
+        ok.Click+=(_,_)=>Accept();
         var cancel=new Button{Content="Cancel",IsCancel=true};cancel.Click+=(_,_)=>Close();
         var panel=new StackPanel{Margin=new(20),Spacing=12,Width=520,Children=
         {
@@ -61,7 +62,8 @@ internal sealed class TrimDialog:Window
         active=slider;startText.Text=Format(start.Value);endText.Text=Format(end.Value);length.Text=$"Keeps {Format(end.Value-start.Value)} of {Format(duration)}";
         if(video is not null){debounce.Stop();debounce.Start();}
     }
-    private void Typed(TextBox text,Slider slider){if(Parse(text.Text) is {} seconds)slider.Value=Math.Clamp(seconds,0,duration);else Changed(slider);}
+    /// The field shows the value rounded down to 0.1 s; an untouched field keeps the slider's exact value.
+    private void Typed(TextBox text,Slider slider){if(text.Text==Format(slider.Value))return;if(Parse(text.Text) is {} seconds)slider.Value=Math.Clamp(seconds,0,duration);else Changed(slider);}
     private void OnKey(object? sender,KeyEventArgs e)
     {
         if(e.Source is TextBox)return;

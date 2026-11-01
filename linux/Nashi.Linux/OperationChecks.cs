@@ -113,6 +113,12 @@ internal static class OperationChecks
                 var inside=Enumerable.Range(0,120).Sum(n=>Step(a,n,n));var original=Enumerable.Range(0,120).Sum(n=>Step(b,n,n));
                 Check(inside<original/3&&a.GetPixel(200,200).ToColor()!.Equals(b.GetPixel(200,200).ToColor()),"Redact "+style);
             }
+            {
+                // XMP can embed a preview of the original picture; redaction must not keep it.
+                var tagged=Path.Combine(root,"Xmp.png");using(var image=new MagickImage(MagickColors.White,100,100)){image.SetProfile(new XmpProfile(System.Text.Encoding.UTF8.GetBytes("<x:xmpmeta xmlns:x='adobe:ns:meta/'><rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'><rdf:Description xmlns:xmp='http://ns.adobe.com/xap/1.0/' xmp:Label='secret'/></rdf:RDF></x:xmpmeta>")));image.Write(tagged,MagickFormat.Png);}
+                var clean=Operations.RunAsync(new("redactImage","Redact Photo"),[tagged],Path.Combine(root,"redact-xmp"),progress,token,new(Redact:new([new(0,0,.5,.5)]))).GetAwaiter().GetResult().Single();
+                using var result=new MagickImage(clean);Check(new MagickImage(tagged).GetXmpProfile() is not null&&result.GetXmpProfile() is null,"Redaction removes XMP");
+            }
             try{using var image=new MagickImage(MagickColors.Red,10,10);Compositions.Redact(image,new([new(.5,.5,.8,.2)]));Check(false,"Redact rejects areas outside the image");}catch(ArgumentException){Check(true,"Redact rejects areas outside the image");}
             var pdf=Operations.RunAsync(new("createPDF","Create PDF"),[png,jpg],Path.Combine(root,"pdf"),progress,token).GetAwaiter().GetResult().Single();
             using(var document=PdfDocument.Open(pdf))Check(document.NumberOfPages==2,"Images to PDF pages");
@@ -127,6 +133,11 @@ internal static class OperationChecks
                 var scanned=Operations.ImagesToPdf([scan],Path.Combine(root,"scan-big"),null,token).Single();var before=new FileInfo(scanned).Length;
                 var fitted=Operations.RunAsync(new("compress","Compress"),[scanned],Path.Combine(root,"pdf-fit"),progress,token,new(Compress:new(TargetBytes:before/4))).GetAwaiter().GetResult().Single();
                 using(var document=PdfDocument.Open(fitted))Check(new FileInfo(fitted).Length<=before/4&&document.NumberOfPages==1,"Scanned PDF fits a target size");
+                // A crop box smaller than the media box: the compressed page has the visible size, not the media size.
+                var croppedPdf=Path.Combine(root,"Cropped.pdf");
+                using(var pdfDoc=PdfSharp.Pdf.IO.PdfReader.Open(scanned,PdfSharp.Pdf.IO.PdfDocumentOpenMode.Modify)){var p0=pdfDoc.Pages[0];p0.CropBox=new PdfSharp.Pdf.PdfRectangle(new PdfSharp.Drawing.XRect(0,0,p0.Width.Point/2,p0.Height.Point/2));pdfDoc.Save(croppedPdf);}
+                var small=Operations.RunAsync(new("compress","Compress"),[croppedPdf],Path.Combine(root,"pdf-crop"),progress,token,new(Compress:new(TargetBytes:before/4))).GetAwaiter().GetResult().Single();
+                using(var document=PdfDocument.Open(small)){var page=document.GetPage(1);Check(Math.Abs(page.Width-600)<2&&Math.Abs(page.Height-825)<2,$"Compressed scan keeps the crop box size ({page.Width}×{page.Height})");}
             }
             foreach(var (tool,suffix) in new[]{("compress"," Compressed.pdf"),("removeMetadata"," Metadata.pdf")})
             {
@@ -170,6 +181,12 @@ internal static class OperationChecks
             Check(Operations.Formats([zip]).Contains("tar"),"Archive formats");
             var extracted=Operations.RunAsync(new("extractArchive","Extract Archive"),[zip],Path.Combine(root,"extract"),progress,token).GetAwaiter().GetResult();
             Check(extracted.Count>0,"Archive extraction");
+            {
+                var broken=Path.Combine(root,"Broken.zip");File.WriteAllBytes(broken,[0x50,0x4B,0x03,0x04,1,2,3]);var target=Path.Combine(root,"extract-two");
+                try{Operations.RunAsync(new("extractArchive","Extract Archive"),[zip,broken],target,progress,token).GetAwaiter().GetResult();Check(false,"A failing second archive publishes nothing");}
+                catch(Exception error)when(error is not InvalidDataException{Message:"A failing second archive publishes nothing"}){Check(!Directory.Exists(target)||!Directory.EnumerateFileSystemEntries(target).Any(e=>!Path.GetFileName(e).StartsWith('.')),"A failing second archive publishes nothing");}
+            }
+            Check(Operations.Region(new(.999,.999,.001,.001),320,240) is {X:318,Y:238,Width:2,Height:2}&&Operations.Region(new(0,0,1,1),320,240) is {X:0,Y:0,Width:320,Height:240},"Video boxes at the frame edge stay 2×2 inside");
 
             if(Operations.Media is not null)
             {
@@ -290,7 +307,13 @@ internal static class OperationChecks
     private static void Metadata(string root,string png,IProgress<OperationProgress> progress,CancellationToken token)
     {
         var exif=Operations.Exif;
-        if(exif.Executable is null){if(Operations.Executable("perl") is null){Console.Error.WriteLine("perl not found: ExifTool checks skipped.");return;}exif.InstallAsync(null,token).GetAwaiter().GetResult();}
+        // Installing ExifTool downloads it into the user's Nashi data, so the checks do that only when asked to use the network.
+        if(exif.Executable is null)
+        {
+            if(Operations.Executable("perl") is null){Console.Error.WriteLine("perl not found: ExifTool checks skipped.");return;}
+            if(Environment.GetEnvironmentVariable("NASHI_VERIFY_WEB")!="1"){Console.Error.WriteLine("ExifTool not set up: metadata field checks skipped (set NASHI_VERIFY_WEB=1 to download it).");return;}
+            exif.InstallAsync(null,token).GetAwaiter().GetResult();
+        }
         Check(exif.Executable is not null,"ExifTool set up from its verified download");
         var jpg=Path.Combine(root,"Tagged.jpg");using(var image=new MagickImage(png)){image.Format=MagickFormat.Jpeg;image.Write(jpg);}
         ToolSettings Edit(bool all,params (string,string)[] fields)=>new(Metadata:new(all,fields.ToDictionary(f=>f.Item1,f=>f.Item2)));

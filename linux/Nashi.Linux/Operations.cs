@@ -97,11 +97,15 @@ public static class Operations
             "mergePDF"=>await Task.Run(()=>DocumentEngine.Pdf("mergePDFs",inputs,destination,null,token),token),
             "organizePDF"=>await Task.Run(()=>{var o=organize??throw new ArgumentException("Keep at least one page.");return DocumentEngine.Pdf("organizePDF",inputs,destination,o.Pages,token,pageRotations:o.Rotations,uniformWidth:o.UniformWidth);},token),
             "splitPDF"=>await Task.Run(()=>DocumentEngine.Pdf("splitPDF",inputs,destination,null,token),token),
-            "extractArchive"=>await Task.Run(()=>inputs.SelectMany(i=>ArchiveEngine.Extract(i,destination,null,progress,token)).ToArray(),token),
+            // One transaction for every archive, so a cancel or failure on the second leaves nothing behind.
+            "extractArchive"=>await Task.Run(()=>{using var tx=new ExportTransaction(destination);var staged=inputs.SelectMany(i=>ArchiveEngine.Extract(i,tx.StagingDirectory,null,progress,token)).ToList();return tx.Publish(staged,token);},token),
             "compress" or "removeMetadata" or "muteVideo" or "normalizeAudio" or "changeVideoSpeed" or "joinVideos" or "audioChannels" or "videoSnapshots" or "splitVideo" or "audioToVideo" or "trimVideo" or "trimAudio" or "cropVideo" or "redactVideo" or "redactAudio"=>await RequireMedia().ToolAsync(choice.Id,inputs,destination,media??new MediaOptions(),progress,token),
             _=>throw new NotSupportedException("This tool is not available in the Linux preview yet.")
         };
     }
+    /// A relative box in video pixels. FFmpeg needs at least 2×2 pixels inside the frame, also for a box
+    /// drawn in the last column or row.
+    public static MediaRegion Region(ImageEdit a,double w,double h){var x=Math.Max(0,Math.Min(Math.Floor(a.X*w),w-2));var y=Math.Max(0,Math.Min(Math.Floor(a.Y*h),h-2));return new(x,y,Math.Clamp(Math.Round(a.Width*w),2,w-x),Math.Clamp(Math.Round(a.Height*h),2,h-y));}
     /// One full-size video frame as PNG, for the crop and redact editors.
     public static async Task<byte[]> VideoFrameAsync(string input,double seconds,CancellationToken token=default)
     {

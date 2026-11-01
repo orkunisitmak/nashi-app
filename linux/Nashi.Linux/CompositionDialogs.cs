@@ -47,7 +47,7 @@ internal abstract class PreviewDialog:Window
             var draw=Snapshot();var png=await Task.Run(()=>{using var image=draw();return Picture.Encode(image);});
             if(current!=generation)return;using var stream=new MemoryStream(png);var previous=preview.Source;preview.Source=new Bitmap(stream);(previous as IDisposable)?.Dispose();state.Text="";
         }
-        catch(Exception error)when(error is ArgumentException or MagickException or InvalidDataException or IOException){if(current==generation)state.Text=error.Message;}
+        catch(Exception error)when(error is ArgumentException or MagickException or InvalidDataException or IOException or ObjectDisposedException){if(current==generation&&IsVisible)state.Text=error.Message;}
         finally{rendering=false;if(current!=generation&&IsVisible)Queue();}
     }
 
@@ -71,7 +71,7 @@ internal sealed class FrameDialog:PreviewDialog
     private readonly ComboBox backdrop;private readonly TextBox color,gradientEnd;private readonly TextBlock backgroundName=new(){Opacity=.75,TextTrimming=Avalonia.Media.TextTrimming.CharacterEllipsis};
     private readonly NumericUpDown padding,corner,shadow,shadowOpacity,blur,scale,x,y,width,height;
     private readonly CheckBox custom;
-    private string? background;private MagickImage? backgroundSmall;
+    private string? background;private MagickImage? backgroundSmall;private bool closed;
 
     private FrameDialog(string title,string input,MagickImage small,int w,int h):base(title,$"{Path.GetFileName(input)} · {w} × {h}")
     {
@@ -82,7 +82,8 @@ internal sealed class FrameDialog:PreviewDialog
         Heading("Image");padding=Number("Padding",80,0,4000,8);corner=Number("Corner radius",24,0,2000,2);shadow=Number("Shadow",24,0,100,2);shadowOpacity=Number("Shadow opacity",.25,0,1,.05,"0.00");
         scale=Number("Image scale",1,.1,10,.05,"0.00");x=Number("Position X",.5,0,1,.05,"0.00");y=Number("Position Y",.5,0,1,.05,"0.00");
         Heading("Canvas");custom=Check("Custom canvas size",false);width=Number("Canvas width",w+160,1,30000,10);height=Number("Canvas height",h+160,1,30000,10);
-        Closed+=(_,_)=>{small.Dispose();backgroundSmall?.Dispose();};
+        // A render may still be drawing on a worker thread; it holds this lock while it does.
+        Closed+=(_,_)=>{lock(small){closed=true;small.Dispose();backgroundSmall?.Dispose();}};
     }
     public static async Task<FrameDialog> CreateAsync(string title,string input)
     {
@@ -93,7 +94,7 @@ internal sealed class FrameDialog:PreviewDialog
     {
         var picked=await StorageProvider.OpenFilePickerAsync(new(){Title="Choose background image",FileTypeFilter=[new("Images"){Patterns=["*.png","*.jpg","*.jpeg","*.webp","*.heic","*.avif","*.tiff","*.bmp"]}]});
         if(picked.FirstOrDefault()?.TryGetLocalPath() is not {} path)return;
-        try{var loaded=await Task.Run(()=>Small(path));backgroundSmall?.Dispose();backgroundSmall=loaded;background=path;backgroundName.Text=Path.GetFileName(path);backdrop.SelectedIndex=2;Queue();}
+        try{var loaded=await Task.Run(()=>Small(path));lock(small){backgroundSmall?.Dispose();backgroundSmall=loaded;}background=path;backgroundName.Text=Path.GetFileName(path);backdrop.SelectedIndex=2;Queue();}
         catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or MagickException){backgroundName.Text=error.Message;}
     }
     public FrameOptions Result=>new((int)Value(padding),Value(corner),color.Text??"",Backdrops[Math.Max(0,backdrop.SelectedIndex)],gradientEnd.Text??"",background,Value(blur),Value(shadow),Value(shadowOpacity),custom.IsChecked==true?(int)Value(width):null,custom.IsChecked==true?(int)Value(height):null,Value(scale),Value(x),Value(y));
@@ -102,14 +103,14 @@ internal sealed class FrameDialog:PreviewDialog
     {
         // The preview draws the small background copy; Save reads the original file.
         var options=Result.Scaled(factor);var back=options.Backdrop=="image"?backgroundSmall:null;
-        return ()=>{lock(small)return Compositions.Frame(small,options,back);};
+        return ()=>{lock(small){ObjectDisposedException.ThrowIf(closed,this);return Compositions.Frame(small,options,back);}};
     }
 }
 
 internal sealed class CollageDialog:PreviewDialog
 {
     private static readonly string[] Layouts=["grid","row","column","featured"];
-    private readonly IReadOnlyList<string> inputs;private readonly MagickImage[] small;
+    private readonly IReadOnlyList<string> inputs;private readonly MagickImage[] small;private bool closed;
     private readonly ComboBox layout;private readonly NumericUpDown columns,width,height,spacing,padding,corner;private readonly TextBox color;private readonly CheckBox fill;
     private readonly ListBox order=new(){MaxHeight=200};
     private readonly List<int> indices;
@@ -124,7 +125,7 @@ internal sealed class CollageDialog:PreviewDialog
         var up=new Button{Content="Move up"};var down=new Button{Content="Move down"};up.Click+=(_,_)=>Move(-1);down.Click+=(_,_)=>Move(1);
         Options.Children.Add(new StackPanel{Orientation=Avalonia.Layout.Orientation.Horizontal,Spacing=8,Children={up,down}});
         order.KeyDown+=(_,e)=>{if(e.KeyModifiers==KeyModifiers.Alt&&e.Key is Key.Up or Key.Down){Move(e.Key==Key.Up?-1:1);e.Handled=true;}};
-        RefreshOrder();Closed+=(_,_)=>{foreach(var image in small)image.Dispose();};
+        RefreshOrder();Closed+=(_,_)=>{lock(small){closed=true;foreach(var image in small)image.Dispose();}};
     }
     public static async Task<CollageDialog> CreateAsync(string title,IReadOnlyList<string> inputs)
     {
@@ -139,6 +140,6 @@ internal sealed class CollageDialog:PreviewDialog
     protected override Func<MagickImage> Snapshot()
     {
         var result=Result;var factor=Math.Min(1,PreviewEdge/(double)Math.Max(result.Width,result.Height));var options=result.Scaled(factor);
-        return ()=>{lock(small)return Compositions.Collage(small,options);};
+        return ()=>{lock(small){ObjectDisposedException.ThrowIf(closed,this);return Compositions.Collage(small,options);}};
     }
 }

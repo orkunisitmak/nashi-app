@@ -243,7 +243,13 @@ public sealed class MainWindow:Window
         tile.Click+=async(_,_)=>await Run(choice);return tile;
     }
 
+    /// Click handlers are async void: anything a tool throws ends up here, on the status line, instead of closing Nashi.
     private async Task Run(Choice choice)
+    {
+        try{await RunChoice(choice);}
+        catch(Exception error)when(error is not OutOfMemoryException){status.Text=error.Message;Trace.Log("run failed: "+error);}
+    }
+    private async Task RunChoice(Choice choice)
     {
         if(running is not null||files.Count==0)return;
         var inputs=files.ToArray();
@@ -261,7 +267,7 @@ public sealed class MainWindow:Window
         if(choice.Id=="removeMetadata")
         {
             try{if(await EditMetadata(inputs) is not {} picked)return;metadata=picked.RemoveAll&&inputs.Length>1?null:picked;}
-            catch(Exception error)when(error is IOException or InvalidDataException or InvalidOperationException or System.Text.Json.JsonException){status.Text=error.Message;return;}
+            catch(Exception error)when(error is IOException or InvalidDataException or InvalidOperationException or System.Text.Json.JsonException or System.Net.Http.HttpRequestException or System.ComponentModel.Win32Exception or UnauthorizedAccessException){status.Text=error.Message;return;}
         }
         if(choice.Id=="convert"&&choice.Format is "docx" or "pages" or "epub"&&inputs.All(f=>FeatureCatalog.Extension(f)=="pdf"))
         {
@@ -318,7 +324,7 @@ public sealed class MainWindow:Window
             try{info=await Operations.Media!.InspectAsync(inputs[0]);if(info.Video is null)throw new ArgumentException("This file has no video stream.");picture=await Operations.VideoFrameAsync(inputs[0],info.Duration*.1);}
             catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or InvalidOperationException){status.Text=error.Message;return;}
             status.Text="";double w=info.Video.Width??0,h=info.Video.Height??0;if(w<2||h<2){status.Text="Could not read the video size.";return;}
-            MediaRegion Region(ImageEdit a){var x=Math.Floor(a.X*w);var y=Math.Floor(a.Y*h);return new(x,y,Math.Clamp(Math.Round(a.Width*w),2,w-x),Math.Clamp(Math.Round(a.Height*h),2,h-y));}
+            MediaRegion Region(ImageEdit a)=>Operations.Region(a,w,h);
             if(choice.Id=="cropVideo")
             {
                 CropDialog crop;try{crop=await CropDialog.CreateAsync(choice.Title,inputs[0],picture);}catch(Exception error)when(error is ArgumentException or ImageMagick.MagickException){status.Text=error.Message;return;}
