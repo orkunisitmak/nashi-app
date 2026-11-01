@@ -1,5 +1,6 @@
 import XCTest
 import CoreGraphics
+import PDFKit
 @testable import NashiCore
 
 final class AppLocalizationTests:XCTestCase {
@@ -122,6 +123,27 @@ final class AppLocalizationTests:XCTestCase {
         XCTAssertEqual(AppLocalization.text(untranslated,language:"tr"),untranslated)
         // Without a file extension before ": ", or with more than a catalog message after it, nothing changes.
         for source in ["Output: Choose an image.","Version 1.2: Choose an image.","photo.png: Choose an image. Again"] {
+            XCTAssertEqual(AppLocalization.text(source,language:"tr"),source)
+        }
+    }
+    /// A batch reports "File <i> of <n> · <status>". Both the prefix and the status are translated; a status without a
+    /// translation stays as it is.
+    func testBatchStatusTranslatesPrefixAndStatus() throws {
+        let directory=FileManager.default.temporaryDirectory.appendingPathComponent("nashi-l10n-\(UUID().uuidString)",isDirectory:true)
+        try FileManager.default.createDirectory(at:directory,withIntermediateDirectories:true)
+        defer { try? FileManager.default.removeItem(at:directory) }
+        let inputs=["a.pdf","b.pdf"].map { directory.appendingPathComponent($0) }
+        for input in inputs { let document=PDFDocument();document.insert(PDFPage(),at:0);XCTAssertTrue(document.write(to:input)) }
+        var options=OperationOptions();options.outputDirectory=directory
+        var labels:[String]=[]
+        _=try ConversionEngine.run(.init(inputs:inputs,operation:.tool(.removeMetadata),options:options)) { _,label in labels.append(label) }
+        XCTAssertTrue(labels.contains("File 2 of 2 · Remove Metadata"),"\(labels)")
+        XCTAssertEqual(AppLocalization.text("File 2 of 2 · Remove Metadata",language:"tr"),"Dosya 2/2 · Meta Verileri Kaldır")
+        XCTAssertEqual(AppLocalization.text("File 2 of 2 · Remove Metadata",language:"fr"),"Fichier 2 sur 2 · Supprimer les métadonnées")
+        XCTAssertEqual(AppLocalization.text("File 12 of 30 · Split PDF",language:"tr"),"Dosya 12/30 · PDF'yi Böl")
+        XCTAssertEqual(AppLocalization.text("File 2 of 2 · Remove Metadata",language:"en"),"File 2 of 2 · Remove Metadata")
+        XCTAssertEqual(AppLocalization.text("File 1 of 2 · Notes · v2… köşe.srt",language:"tr"),"Dosya 1/2 · Notes · v2… köşe.srt")
+        for source in ["Profile 1 of 2 · Split PDF","File one of 2 · Split PDF","report.pdf: File 1 of 2 · Split PDF"] {
             XCTAssertEqual(AppLocalization.text(source,language:"tr"),source)
         }
     }

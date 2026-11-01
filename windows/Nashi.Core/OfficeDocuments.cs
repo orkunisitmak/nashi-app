@@ -70,7 +70,9 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
     }
     private static XDocument Xml(ZipArchive zip,string entry)
     {
-        var resource=zip.GetEntry(entry)??throw new InvalidDataException("The document is missing "+entry);if(resource.Length>20_000_000)throw new InvalidDataException("Document XML is too large.");using var stream=resource.Open();using var reader=XmlReader.Create(stream,new(){DtdProcessing=DtdProcessing.Prohibit,XmlResolver=null,MaxCharactersInDocument=20_000_000});return XDocument.Load(reader);
+        var resource=zip.GetEntry(entry)??throw new InvalidDataException("The document is missing "+entry);if(resource.Length>20_000_000)throw new InvalidDataException("Document XML is too large.");var settings=new XmlReaderSettings{DtdProcessing=DtdProcessing.Prohibit,XmlResolver=null,MaxCharactersInDocument=20_000_000};
+        using(var scan=resource.Open())using(var depth=XmlReader.Create(scan,settings))while(depth.Read())if(depth.Depth>256)throw new InvalidDataException("This document nests its content too deeply to convert.");
+        using var stream=resource.Open();using var reader=XmlReader.Create(stream,settings);return XDocument.Load(reader);
     }
     public static string PdfText(string input,string password="")
     {

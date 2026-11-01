@@ -53,10 +53,23 @@ const ids=['compress','removeMetadata','editImage','annotateImage','frameImage',
   assert.ok(await page.getByRole('button',{name:'Thumbnail',exact:true}).isVisible());
   await page.locator('.close-editor').click();
  });
- await test('All six file actions open the right preview or shelf',async()=>{await page.locator('[data-group="image"]').click();for(const id of ['airdrop','copy','move','terminal']){await page.locator('[data-mode="actions"]').click();const names={airdrop:'AirDrop',copy:'Kopyala',move:'Taşı',terminal:'Terminal'};await page.getByRole('menuitem',{name:names[id],exact:true}).click();assert.equal(await page.locator('dialog').count(),1);await page.locator('.close-editor').click();}await page.locator('[data-mode="actions"]').click();await page.getByRole('menuitem',{name:'Yüzen Pencere',exact:true}).click();assert.equal(await page.locator('.float-shelf').count(),1);});
+ await test('All six file actions open the right preview or shelf',async()=>{await page.locator('[data-group="image"]').click();for(const id of ['airdrop','copy','move','terminal']){await page.locator('[data-mode="actions"]').click();const names={airdrop:/^(AirDrop|Paylaş)$/i,copy:'Kopyala',move:'Taşı',terminal:'Terminal'};await page.getByRole('menuitem',{name:names[id],exact:true}).click();assert.equal(await page.locator('dialog').count(),1);await page.locator('.close-editor').click();}await page.locator('[data-mode="actions"]').click();await page.getByRole('menuitem',{name:'Yüzen Pencere',exact:true}).click();assert.equal(await page.locator('.float-shelf').count(),1);});
  await test('English strings, layout and real image export',async()=>{await page.goto(base+'/');await page.locator('.demo-file').first().waitFor();await page.locator('[data-mode="convert"]').click();await page.getByRole('menuitem',{name:'PNG',exact:true}).click();await page.waitForFunction(()=>Number(document.querySelector('#library-count').textContent)===1);assert.equal(await page.locator('html').getAttribute('lang'),'en');});
  await page.goto(base+'/tr/');await page.locator('.demo-file').first().waitFor();await page.screenshot({path:path.join(output,'desktop-hero.png')});await page.locator('#playground').scrollIntoViewIfNeeded();await page.locator('[data-mode="tools"]').click();await page.screenshot({path:path.join(output,'desktop-wheel.png')});await page.keyboard.press('Escape');
  await test('390px touch viewport fits; tap selects, opens wheel and exports',async()=>{await page.setViewportSize({width:390,height:844});await page.locator('[data-group="image"]').click();assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.locator('.demo-file').nth(1).click();await page.locator('[data-mode="convert"]').click();const r=await page.locator('.demo-wheel').boundingBox();assert.ok(r.x>=0&&r.x+r.width<=390);await page.getByRole('menuitem',{name:'JPG',exact:true}).click();await page.waitForFunction(()=>Number(document.querySelector('#library-count').textContent)>0);await page.screenshot({path:path.join(output,'mobile-playground.png')});await openTool('cropImage');assert.ok(await page.evaluate(()=>document.querySelector('dialog').scrollWidth<=innerWidth));await page.screenshot({path:path.join(output,'mobile-crop.png')});await page.locator('.close-editor').click();});
+ await test('Reset clears Library, Float pins and returns to sample files',async()=>{
+  await page.locator('[data-group="image"]').click();
+  await page.locator('[data-mode="convert"]').click();
+  await page.getByRole('menuitem',{name:'PNG',exact:true}).click();
+  await page.waitForFunction(()=>Number(document.querySelector('#library-count').textContent)>0);
+  await page.locator('[data-mode="actions"]').click();
+  await page.getByRole('menuitem',{name:'Yüzen Pencere',exact:true}).click();
+  assert.equal(await page.locator('.float-shelf').count(),1);
+  await page.locator('#demo-reset').click();
+  assert.equal(await page.locator('#library-count').textContent(),'0');
+  assert.equal(await page.locator('.float-shelf').count(),0);
+  assert.equal(await page.locator('.demo-file').count(),3);
+ });
  await test('Keyboard and modifier wheel actions preserve multi-selection',async()=>{
   await page.locator('[data-group="image"]').click();
   await page.locator('.demo-file').nth(1).click({modifiers:['Shift']});
@@ -76,6 +89,59 @@ const ids=['compress','removeMetadata','editImage','annotateImage','frameImage',
   await page.locator('.demo-file').first().click();
   assert.equal(await page.locator('.demo-file[aria-pressed="true"]').count(),1);
   assert.equal(await page.locator('.demo-file').first().getAttribute('aria-pressed'),'true');
+ });
+ await test('Keyboard Enter on a file applies the slice chosen with the arrows',async()=>{
+  await page.locator('[data-group="pdf"]').click();
+  await page.locator('.demo-file').first().focus();
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('ArrowRight');
+  assert.equal(await page.locator('.wheel-option.active').getAttribute('data-index'),'0');
+  await page.keyboard.press('Enter');
+  assert.equal(await page.locator('.demo-wheel').count(),0);
+  assert.equal(await page.locator('dialog').count(),1);
+  await page.locator('.close-editor').click();
+  await page.locator('[data-group="image"]').click();
+ });
+ await test('Enter and Space on a focused editor button activate it instead of saving or playing',async()=>{
+  const before=await page.locator('#library-count').textContent();
+  await openTool('cropImage');
+  await page.getByRole('button',{name:'Tümünü Seç',exact:true}).click();
+  await page.getByRole('button',{name:'Seçimi Temizle',exact:true}).press('Enter');
+  assert.equal(await page.locator('dialog').count(),1);
+  assert.ok(await page.locator('dialog .export-button').isDisabled());
+  await page.getByRole('button',{name:'Tümünü Seç',exact:true}).click();
+  await page.locator('.close-editor').press('Enter');
+  await page.locator('dialog').waitFor({state:'detached'});
+  assert.equal(await page.locator('#library-count').textContent(),before);
+  await openTool('trimVideo');
+  await page.locator('.close-editor').press('Space');
+  await page.locator('dialog').waitFor({state:'detached'});
+  assert.equal(await page.locator('#library-count').textContent(),before);
+ });
+ await test('A closed image editor that finishes decoding late leaves the next editor alone',async()=>{
+  await page.locator('[data-group="image"]').click();
+  await page.locator('.demo-file').first().click();
+  // Hold every image decode until the test releases it, so the closed editor finishes last.
+  await page.evaluate(()=>{const Real=window.Image;window.__realImage=Real;window.__heldDecodes=[];window.Image=function(){const image=new Real();let onload=null;Object.defineProperty(image,'onload',{get:()=>onload,set:f=>{onload=f;}});image.addEventListener('load',()=>window.__heldDecodes.push(()=>onload?.()));return image;};});
+  const held=n=>page.waitForFunction(n=>window.__heldDecodes.length>=n,n);
+  const release=i=>page.evaluate(i=>window.__heldDecodes.splice(i,1)[0](),i);
+  try{
+   await page.locator('[data-mode="tools"]').click();await page.getByRole('menuitem',{name:'Arka Plan Ekle',exact:true}).click();
+   await held(1);await release(0);await held(1);
+   await page.locator('.close-editor').click();
+   await page.locator('.demo-file').nth(1).click({modifiers:['Shift']});
+   await page.locator('[data-mode="tools"]').click();await page.getByRole('menuitem',{name:'Kolaj Oluştur',exact:true}).click();
+   await held(2);await release(1);await held(3);await release(1);await release(1);
+   await page.waitForFunction(()=>document.querySelector('dialog .editor-filename'));
+   await release(0);
+   assert.equal(await page.locator('dialog input[type=color]').inputValue(),'#e6dfc8');
+  }finally{await page.evaluate(()=>{window.Image=window.__realImage;});}
+  await save();
+  await page.locator('#demo-library').click();
+  const u=await page.locator('.library-item').filter({hasText:'orchard-createCollage.png'}).first().locator('a').getAttribute('href');
+  const pixel=await page.evaluate(async u=>{const bitmap=await createImageBitmap(await(await fetch(u)).blob()),c=document.createElement('canvas');c.width=bitmap.width;c.height=bitmap.height;const ctx=c.getContext('2d');ctx.drawImage(bitmap,0,0);return[...ctx.getImageData(1,1,1,1).data.slice(0,3)];},u);
+  assert.deepEqual(pixel,[0xe6,0xdf,0xc8],'the collage background must stay the collage editor\'s own colour');
+  await page.locator('.close-editor').click();
  });
  if(errors.length)failures.push({name:'No browser errors',error:errors.join('\n')});
  const report={url:base,passed:passed.length,checks:passed,failures,consoleErrors:errors};await fs.writeFile(path.join(output,'report.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify({passed:passed.length,failed:failures.length,errors:errors.length}));await browser.close();if(failures.length)process.exitCode=1;

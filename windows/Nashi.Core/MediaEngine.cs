@@ -85,7 +85,9 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
         var duration = root.TryGetProperty("format", out var format) && double.TryParse(GetString(format,"duration"), CultureInfo.InvariantCulture, out var seconds) && double.IsFinite(seconds) ? Math.Max(0,seconds) : 0;
         var oggTags=format.ValueKind==JsonValueKind.Object&&GetString(format,"format_name").Split(',').Contains("ogg")&&root.GetProperty("streams").EnumerateArray().FirstOrDefault(s=>GetString(s,"codec_type")=="audio") is {ValueKind:JsonValueKind.Object} audio&&audio.TryGetProperty("tags",out var audioTags)&&audioTags.ValueKind==JsonValueKind.Object&&audioTags.EnumerateObject().Any();
         var quickTimeKeys=format.ValueKind==JsonValueKind.Object&&format.TryGetProperty("tags",out var formatTags)&&formatTags.ValueKind==JsonValueKind.Object&&formatTags.EnumerateObject().Any(t=>t.Name.StartsWith("com.apple.quicktime.",StringComparison.Ordinal));
-        return new(duration, new FileInfo(input).Length, streams){OggStreamTags=oggTags,QuickTimeKeys=quickTimeKeys};
+        // FileInfo sizes a symbolic link itself; compression targets come from the media it points to (as on macOS).
+        var file=new FileInfo(input);
+        return new(duration, (file.ResolveLinkTarget(true) as FileInfo??file).Length, streams){OggStreamTags=oggTags,QuickTimeKeys=quickTimeKeys};
     }
 
     // The last video packet's time from the container start, read without decoding: the final minute first, then the whole file.
@@ -380,7 +382,8 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
             // reset_sar fits the displayed shape, so clips with non-square pixels (DV, DVD, HDV) keep it after setsar=1 (as on macOS).
             args.AddRange(["-map","0:v:0","-vf",$"scale={width}:{height}:force_original_aspect_ratio=decrease:reset_sar=1,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30,setpts=PTS-STARTPTS"]);
             if(audio)args.AddRange(["-map",infos[index].HasAudio?"0:a:0":"1:a:0","-ac","2","-ar","48000","-af","asetpts=PTS-STARTPTS"]);else args.Add("-an");
-            args.AddRange(["-t",Number(infos[index].Duration),..VideoEncoding("mp4",options)]);var file=Path.Combine(work,$"clip-{index}.mp4");
+            // An unknown duration is 0 and "-t 0" encodes an empty clip; the clip's own video then ends the generated silence (as on macOS).
+            args.AddRange([..(infos[index].Duration>0?new[]{"-t",Number(infos[index].Duration)}:audio&&!infos[index].HasAudio?["-shortest"]:[]),..VideoEncoding("mp4",options)]);var file=Path.Combine(work,$"clip-{index}.mp4");
             await RenderAsync(args,file,infos[index].Duration,p=>progress?.Report(p with{Fraction=(index+(p.Fraction??0))/inputs.Count*.95,Label=$"Joining clip {index+1} of {inputs.Count}"}),token);clips.Add(file);
         }
         var output=Output(directory,inputs[0],"mp4"," Joined");await ConcatAsync(clips,output,infos.Sum(i=>i.Duration),p=>progress?.Report(p),token);Directory.Delete(work,true);return output;

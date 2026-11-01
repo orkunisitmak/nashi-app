@@ -15,6 +15,7 @@ internal static class EditorReliabilityChecks
     {
         // Only smoke fixtures are reported; no clipboard or user document contents.
         void Trace(string phase)=>File.AppendAllText(Path.Combine(root,"editor-progress.log"),$"{DateTimeOffset.UtcNow:O} {phase}{Environment.NewLine}");
+        using var editorWatchdog=new System.Threading.Timer(_=>{File.WriteAllText(Path.Combine(root,"editor-timeout.txt"),"Editor reliability checks exceeded 180 seconds. See editor-progress.log.");DesktopInput.HoldMouse(false);Environment.Exit(1);},null,TimeSpan.FromSeconds(180),System.Threading.Timeout.InfiniteTimeSpan);
         Trace("START audio editor");
         var audio=Path.Combine(root,"Reliability.wav");
         using(var writer=new BinaryWriter(File.Create(audio)))
