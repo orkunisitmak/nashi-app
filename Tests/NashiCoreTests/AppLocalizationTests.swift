@@ -147,6 +147,14 @@ final class AppLocalizationTests:XCTestCase {
         XCTAssertEqual(AppLocalization.text("selected 2",language:"fr"),"annotation 2 sélectionnée")
         XCTAssertEqual(AppLocalization.text("3 annotations",language:"en"),"3 annotations")
     }
+    /// Choose Files… (⌘O) opens an NSOpenPanel whose prompt is a plain String, so AppDelegate looks the button title up
+    /// through L10n.text; the title-case key needs its own entry next to the menu item's "Choose Files…".
+    func testChooseFilesPanelButtonIsTranslated() {
+        XCTAssertEqual(AppLocalization.text("Choose Files",language:"tr"),"Dosya Seç")
+        XCTAssertEqual(AppLocalization.text("Choose Files",language:"fr"),"Choisir des fichiers")
+        XCTAssertEqual(AppLocalization.text("Choose Files…",language:"tr"),"Dosya Seç…")
+        XCTAssertEqual(AppLocalization.text("Choose Files",language:"en"),"Choose Files")
+    }
     /// A batch reports "File <i> of <n> · <status>". Both the prefix and the status are translated; a status without a
     /// translation stays as it is.
     func testBatchStatusTranslatesPrefixAndStatus() throws {

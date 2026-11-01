@@ -263,7 +263,7 @@ enum NashiApplication {
     @objc func chooseFiles() {
         guard !state.working else { return }
         NSApp.activate(ignoringOtherApps:true)
-        let panel=NSOpenPanel();panel.allowsMultipleSelection=true;panel.canChooseDirectories=true;panel.prompt="Choose Files"
+        let panel=NSOpenPanel();panel.allowsMultipleSelection=true;panel.canChooseDirectories=true;panel.prompt=L10n.text("Choose Files")
         if panel.runModal() == .OK { state.inputs=panel.urls;showHome() }
     }
     @objc func showSettings() {
