@@ -129,7 +129,7 @@ public static class Program
         if (!File.Exists(filePath))
         {
             Console.Error.WriteLine($"Error: File '{filePath}' not found.");
-            return 2;
+            return 1;
         }
 
         var ext = Path.GetExtension(filePath).ToLowerInvariant();
@@ -157,6 +157,49 @@ public static class Program
             catch (Exception ex)
             {
                 result["imageError"] = ex.Message;
+            }
+        }
+        else if (ext == ".pdf")
+        {
+            try
+            {
+                using var document = UglyToad.PdfPig.PdfDocument.Open(filePath);
+                result["pages"] = document.NumberOfPages;
+            }
+            catch (Exception ex)
+            {
+                result["pdfError"] = ex.Message;
+            }
+        }
+        else if (FeatureCatalog.IsVideo(filePath) || FeatureCatalog.IsAudio(filePath))
+        {
+            var toolchain = new Toolchain(ToolsDirectory, Environment.GetEnvironmentVariable("PATH"));
+            string? ffprobe = null;
+            try { ffprobe = toolchain.Executable("ffprobe"); } catch { }
+            if (ffprobe is not null)
+            {
+                try
+                {
+                    var engine = new MediaEngine("", ffprobe);
+                    var mediaInfo = await engine.InspectAsync(filePath);
+                    result["duration"] = mediaInfo.Duration;
+                    result["hasAudio"] = mediaInfo.HasAudio;
+                    result["hasVideo"] = mediaInfo.Video is not null;
+                    if (mediaInfo.Video is not null)
+                    {
+                        if (mediaInfo.Video.Width is not null) result["videoWidth"] = mediaInfo.Video.Width.Value;
+                        if (mediaInfo.Video.Height is not null) result["videoHeight"] = mediaInfo.Video.Height.Value;
+                        result["videoCodec"] = mediaInfo.Video.Codec;
+                    }
+                    if (mediaInfo.Audio is not null)
+                    {
+                        result["audioCodec"] = mediaInfo.Audio.Codec;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    result["mediaError"] = ex.Message;
+                }
             }
         }
 
@@ -261,7 +304,7 @@ public static class Program
                 var deno = GetExecutable("deno.exe");
                 if (File.Exists(soffice))
                 {
-                    var office = new OfficeDocuments(soffice, deno, ToolsDirectory);
+                    var office = new OfficeDocuments(soffice, deno, AppContext.BaseDirectory);
                     var dest = await office.OfficeAsync(fullPath, format, outputDir, CancellationToken.None);
                     createdFiles.Add(dest);
                     if (!jsonOutput) Console.WriteLine($"Created: {dest}");
@@ -323,8 +366,8 @@ public static class Program
             var inExt = NormalizeFormat(Path.GetExtension(fullPath));
             if (!IsImageFormat(inExt))
             {
-                Console.Error.WriteLine($"Skipping non-image file: {Path.GetFileName(file)}");
-                continue;
+                Console.Error.WriteLine($"Error: File '{Path.GetFileName(file)}' is not a supported image format for resize.");
+                return 1;
             }
 
             var targetFormat = formatOverride ?? inExt;
@@ -516,6 +559,10 @@ public static class Program
             else if (arg is "--json")
             {
                 jsonOutput = true;
+            }
+            else if (arg is "--options" && i + 1 < args.Length)
+            {
+                i++; // consume JSON options argument
             }
             else if (arg is "--fit" && i + 1 < args.Length)
             {
