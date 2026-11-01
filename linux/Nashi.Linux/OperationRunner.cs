@@ -22,6 +22,11 @@ public sealed class OperationRunner(Toolchain tools)
     public async Task<IReadOnlyList<string>> RunAsync(string choiceId, IReadOnlyList<string> files, string destination, IProgress<OperationProgress> progress, CancellationToken token)
     {
         Note = null;
+        if (choiceId.StartsWith("quick:", StringComparison.Ordinal))
+        {
+            if (!Capabilities.QuickTools(files).Contains(choiceId)) throw new NotSupportedException($"{choiceId} is not available for this selection on Linux.");
+            return await Task.Run(() => Quick(choiceId[6..], files, destination, progress, token), token);
+        }
         var convert = choiceId.StartsWith("convert:", StringComparison.Ordinal) ? choiceId[8..].ToLowerInvariant() : null;
         if (convert is not null ? !Capabilities.Formats(files).Contains(convert) : !Capabilities.Tools(files).Contains(choiceId))
             throw new NotSupportedException($"{choiceId} is not available for this selection on Linux.");
@@ -53,6 +58,23 @@ public sealed class OperationRunner(Toolchain tools)
         }
     }
 
+    /// The wheel's quick tools: one click, no editor. Rotate, flip and grayscale are Edit Photo's engine ("photo -
+    /// Edited.jpg"); remove background makes a transparent PNG; pack into ZIP makes one Archive.zip of everything.
+    static IReadOnlyList<string> Quick(string tool, IReadOnlyList<string> files, string destination, IProgress<OperationProgress> progress, CancellationToken token) => tool switch
+    {
+        "rotate" => ImageTools.Each(files, destination, " - Edited", (_, image) => ImageTools.Edit(image, new PhotoOptions { Rotation = 90 }), progress, token),
+        "flip" => ImageTools.Each(files, destination, " - Edited", (_, image) => ImageTools.Edit(image, new PhotoOptions { FlipHorizontal = true }), progress, token),
+        "grayscale" => ImageTools.Each(files, destination, " - Edited", (_, image) => ImageTools.Edit(image, new PhotoOptions { Adjustments = new PhotoAdjustments { Saturation = 0 } }), progress, token),
+        "removeBackground" => ImageTools.Each(files, destination, " - No Background", (_, image) =>
+        {
+            var copy = (ImageMagick.MagickImage)image.Clone();
+            BackgroundRemover.Apply(copy, 25, keepEnclosed: false);
+            return copy;
+        }, progress, token, png: true),
+        "zip" => [DocumentEngine.Zip(files, destination, progress, token)],
+        _ => throw new NotSupportedException($"quick:{tool} is not available for this selection on Linux."),
+    };
+
     /// Runs the choice with each file's outputs beside it: one run per source folder, in the order the folders first
     /// appear, so files from two folders get their outputs in their own folders. A choice that makes one file out of
     /// many (Create PDF, Merge PDFs, Create Collage, images to one PDF) writes it beside the first file. `destination` maps a source folder
@@ -62,7 +84,7 @@ public sealed class OperationRunner(Toolchain tools)
     public async Task<IReadOnlyList<string>?> RunBesideSourcesAsync(string choiceId, IReadOnlyList<string> files, Func<string, Task<string?>> destination, IProgress<OperationProgress> progress, CancellationToken token, Editors.EditorJob? job = null)
     {
         static string Folder(string file) => Path.GetDirectoryName(Path.GetFullPath(file))!;
-        var combines = choiceId is "createPDF" or "mergePDF" or "createCollage" or "joinVideos" || (choiceId == "convert:pdf" && files.All(FeatureCatalog.IsImage));
+        var combines = choiceId is "createPDF" or "mergePDF" or "createCollage" or "joinVideos" or "quick:zip" || (choiceId == "convert:pdf" && files.All(FeatureCatalog.IsImage));
         IReadOnlyList<IReadOnlyList<string>> groups = combines ? [files] : [.. files.GroupBy(Folder).Select(g => (IReadOnlyList<string>)[.. g])];
         var targets = new List<string>();
         foreach (var group in groups)

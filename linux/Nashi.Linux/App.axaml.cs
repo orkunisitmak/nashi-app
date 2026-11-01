@@ -39,7 +39,7 @@ public sealed class App : Application
                 if (Launch.Message is { } first) Dispatcher.UIThread.Post(() => Handle(first));
                 StartGestures();
                 StartWatching();
-                if (Settings.Current.Shelf.Count > 0) FloatShelf.Open([], Flow.ShowTools); // Float comes back as it was
+                if (Settings.Current.Shelf.Count > 0) FloatShelf.Open([], Flow.ShowFormats); // Float comes back as it was
             }
             Instance?.Start(message => Dispatcher.UIThread.Post(() => Handle(message)));
         }
@@ -122,14 +122,14 @@ public sealed class App : Application
         }
     }
 
-    /// The tools wheel (or, for --actions, the actions wheel) at the pointer for the files that exist (Selection's
-    /// rules), or a "Nothing to convert" card. As on macOS, the tools wheel has no Actions petal: actions have their own.
+    /// The wheel at the pointer for the files that exist (Selection's rules), on its front face (or, for --actions, its
+    /// Actions face), or a "Nothing to convert" card.
     public void ShowWheel(IEnumerable<string> paths, bool actions = false)
     {
         var selection = new Selection();
         selection.Add(paths);
         if (selection.Files.Count == 0) SuccessToast.Notice(L10n.T(Copy.Nothing)).Present();
         else if (actions) Flow.ShowActions(selection.Files);
-        else Flow.ShowTools(selection.Files);
+        else Flow.ShowFormats(selection.Files);
     }
 }

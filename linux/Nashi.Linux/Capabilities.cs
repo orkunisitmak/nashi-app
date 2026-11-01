@@ -18,6 +18,24 @@ public static class Capabilities
 
     public static string[] Tools(IReadOnlyList<string> files) => FeatureCatalog.Tools(files);
 
+    /// The wheel's quick tools (its back face), for what fits: crop (its editor), rotate 90°, flip, grayscale and
+    /// remove background for images; one PDF from images or PDFs; one ZIP of anything.
+    public static string[] QuickTools(IReadOnlyList<string> files)
+    {
+        if (files.Count == 0) return [];
+        var tools = Tools(files);
+        var quick = new List<string>();
+        if (files.All(f => FeatureCatalog.IsImage(f) && FeatureCatalog.Extension(f) != "svg"))
+        {
+            if (tools.Contains("cropImage")) quick.Add("cropImage");
+            quick.AddRange(["quick:rotate", "quick:flip", "quick:grayscale", "quick:removeBackground"]);
+        }
+        if (tools.Contains("createPDF")) quick.Add("createPDF");
+        else if (tools.Contains("mergePDF")) quick.Add("mergePDF");
+        quick.Add("quick:zip");
+        return [.. quick];
+    }
+
     static IEnumerable<string> Routes(IReadOnlyList<string> files)
     {
         if (files.Count == 0) return [];

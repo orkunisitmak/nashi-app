@@ -116,10 +116,20 @@ static partial class EditorChecks
     }
 
     /// Chooses a petal with the keyboard, turning pages until it shows.
+    /// Chooses `id` on the one wheel: turning its faces and pages (Tab) until a petal or a group holds it.
     public static void Choose(WheelWindow wheel, string id)
     {
-        for (var i = 0; i < wheel.Wheel.PageCount && !wheel.Wheel.Segments.Any(s => s.Id == id); i++) wheel.KeyPressQwerty(PhysicalKey.PageDown, RawInputModifiers.None);
-        wheel.Wheel.HighlightedIndex = wheel.Wheel.Segments.ToList().FindIndex(s => s.Id == id);
+        bool Here() => wheel.Wheel.Segments.Any(s => s.Id == id || s.Group?.Any(g => g.Id == id) == true);
+        for (var i = 0; i < 40 && !Here(); i++) wheel.Wheel.Flip(1);
+        var index = wheel.Wheel.Segments.ToList().FindIndex(s => s.Id == id || s.Group?.Any(g => g.Id == id) == true);
+        wheel.Wheel.HighlightedIndex = index;
+        wheel.Wheel.Focus();
+        if (index >= 0 && wheel.Wheel.Segments[index].Group is { } group)
+        {
+            wheel.Wheel.OpenGroup(index);
+            var sub = group.ToList().FindIndex(g => g.Id == id);
+            for (var i = 0; i <= sub; i++) wheel.KeyPressQwerty(PhysicalKey.ArrowRight, RawInputModifiers.None);
+        }
         wheel.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
         Dispatcher.UIThread.RunJobs();
     }

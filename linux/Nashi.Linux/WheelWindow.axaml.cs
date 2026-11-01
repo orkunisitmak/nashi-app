@@ -39,7 +39,11 @@ public sealed partial class WheelWindow : Window
 
         var shown = (cards ?? []).Take(2).ToArray();
         var loads = new List<Task>();
+        // Room around the ring for a group's outer ring.
+        Height = Width = Wheel.Size + 2 * Wheel.SubRingSpace;
         if (shown.Length > 0) Width = Wheel.Size + 2 * CardColumn;
+        // The outer ring reaches past the wheel control: the pointer there is passed on to it.
+        AddHandler(PointerMovedEvent, (_, e) => { if (Ring.OpenGroupIndex >= 0 && !Ring.IsPointerOver) Ring.HighlightAt(e.GetPosition(Ring)); }, RoutingStrategies.Tunnel);
         if (shown.Length > 0) LeftCard.Content = FileCard(shown[0], loads);
         if (shown.Length > 1) RightCard.Content = FileCard(shown[1], loads);
         Thumbnails = Task.WhenAll(loads);
@@ -238,7 +242,7 @@ public sealed partial class WheelWindow : Window
         return this.TranslatePoint(new Point(x / scaling, y / scaling), Ring) ?? default;
     }
 
-    private (int Count, bool[] Enabled) petals = (0, []);
+    private Func<Point, bool> petals = _ => false;
     private int dwell;
 
     /// Makes this window an XDND drop target (XdndTarget.Create): a drag passing over highlights the petal under it
@@ -248,7 +252,7 @@ public sealed partial class WheelWindow : Window
     public IDisposable DropTarget(Action<DropContent> entered, Action<DropContent, Point> dropped, Action? left = null, Action? refused = null)
     {
         enteredHandler = entered;
-        void Snapshot() => petals = (Ring.Segments.Count, [.. Ring.Segments.Select(i => i.Enabled)]);
+        void Snapshot() => petals = Ring.DropSnapshot();
         Ring.Turned += Snapshot;
         Snapshot();
         var (rect, scaling) = ScreenRect();
@@ -256,11 +260,8 @@ public sealed partial class WheelWindow : Window
         // relative to the window (XdndProtocol), so where the window manager really put it doesn't matter.
         bool Accepts(int x, int y)
         {
-            var (count, enabled) = petals;
             var wheel = new Point(Wheel.Size / 2 + (x - rect.Width / 2.0) / scaling, Wheel.Size / 2 + (y - rect.Height / 2.0) / scaling);
-            if (count == 0) return Wheel.IndexAt(wheel, new Size(Wheel.Size, Wheel.Size), 8) >= 0; // petals still on their way
-            var index = Wheel.IndexAt(wheel, new Size(Wheel.Size, Wheel.Size), count);
-            return index >= 0 && enabled[index];
+            return petals(wheel);
         }
         var xid = TryGetPlatformHandle() is { HandleDescriptor: "XID", Handle: var handle } ? handle : IntPtr.Zero;
         return XdndTarget.Create(xid, rect, Accepts,
@@ -320,6 +321,7 @@ public sealed partial class WheelWindow : Window
     protected override void OnPointerReleased(PointerReleasedEventArgs e)
     {
         base.OnPointerReleased(e);
+        if (!e.Handled && e.InitialPressMouseButton == MouseButton.Left && Ring.SubAt(e.GetPosition(Ring)) is not null) { Ring.ChooseAt(e.GetPosition(Ring)); return; }
         if (!e.Handled && e.InitialPressMouseButton == MouseButton.Left) Close();
     }
 

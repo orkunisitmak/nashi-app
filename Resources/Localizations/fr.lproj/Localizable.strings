@@ -1137,6 +1137,7 @@
 "GRADIENT" = "DÉGRADÉ";
 "GRADIENT END" = "FIN DU DÉGRADÉ";
 "GRAIN" = "GRAIN";
+"GRAYSCALE" = "GRAYSCALE";
 "GRID" = "GRILLE";
 "GZIP EXPANDS BEYOND 4 GB." = "LE GZIP SE DÉCOMPRESSE AU-DELÀ DE 4 GO.";
 "GZIP expands beyond 4 GB." = "Le GZIP se décompresse au-delà de 4 Go.";
@@ -1151,6 +1152,7 @@
 "Gradient" = "Dégradé";
 "Gradient end" = "Fin du dégradé";
 "Grain" = "Grain";
+"Grayscale" = "Grayscale";
 "Grid" = "Grille";
 "HEIGHT" = "HAUTEUR";
 "HELLO" = "BONJOUR";
@@ -1626,6 +1628,7 @@
 "Output" = "Sortie";
 "Output format" = "Format de sortie";
 "Output-only format." = "Format de sortie uniquement.";
+"PACK INTO ZIP" = "PACK INTO ZIP";
 "PADDING" = "MARGE INTÉRIEURE";
 "PAGE NUMBERS" = "NUMÉROS DE PAGE";
 "PAGE RANGES" = "PLAGES DE PAGES";
@@ -1704,6 +1707,7 @@
 "PROCESSING…" = "TRAITEMENT EN COURS…";
 "PROTECTED MEDIA CANNOT BE DOWNLOADED." = "LES MÉDIAS PROTÉGÉS NE PEUVENT PAS ÊTRE TÉLÉCHARGÉS.";
 "PUBLIC UPDATES WORK WITHOUT A TOKEN." = "LES MISES À JOUR PUBLIQUES FONCTIONNENT SANS JETON.";
+"Pack into ZIP" = "Pack into ZIP";
 "Padding" = "Marge intérieure";
 "Page %@" = "Page %@";
 "Page %lld" = "Page %lld";
@@ -1776,11 +1780,13 @@
 "QUICK LOOK" = "COUP D’ŒIL";
 "QUICK PICKS" = "SÉLECTION RAPIDE";
 "QUICK PREVIEW" = "APERÇU RAPIDE";
+"QUICK TOOLS" = "QUICK TOOLS";
 "QUIT NASHI" = "QUITTER NASHI";
 "Quality" = "Qualité";
 "Quality (%)" = "Qualité (%)";
 "Quick Look" = "Coup d’œil";
 "Quick Preview" = "Aperçu rapide";
+"Quick tools" = "Quick tools";
 "Quit Nashi" = "Quitter Nashi";
 "READ QR CODES" = "LIRE LES CODES QR";
 "READ QR CODES · NASHI" = "LIRE LES CODES QR · NASHI";
@@ -1844,6 +1850,7 @@
 "RIGHT VOLUME" = "VOLUME DROIT";
 "RIGHT WHERE\nYOU WANT IT." = "EXACTEMENT LÀ\nOÙ VOUS LE VOULEZ.";
 "ROTATE" = "PIVOTER";
+"ROTATE 90°" = "ROTATE 90°";
 "ROTATE LEFT" = "ROTATION À GAUCHE";
 "ROTATE RIGHT" = "ROTATION À DROITE";
 "ROTATION" = "ROTATION";
@@ -1920,6 +1927,7 @@
 "Right volume" = "Volume droit";
 "Right where\nyou want it." = "Exactement là\noù vous le voulez.";
 "Rotate" = "Pivoter";
+"Rotate 90°" = "Rotate 90°";
 "Rotate Left" = "Rotation à gauche";
 "Rotate Right" = "Rotation à droite";
 "Rotation" = "Rotation";

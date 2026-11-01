@@ -46,6 +46,17 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
         public const string Unreadable = "Nashi couldn’t read what was dropped. Drop files from your file manager or browser.";
         public const string Downloading = "Downloading…";
         public const string SideTo = "{0} ›";
+        public const string QuickWheel = "Quick tools";
+        public const string Rotate = "Rotate 90°";
+        public const string Flip = "Flip";
+        public const string Grayscale = "Grayscale";
+        public const string RemoveBackground = "Remove Background";
+        public const string Zip = "Pack into ZIP";
+        public const string Images = "Images";
+        public const string Video = "Video";
+        public const string Audio = "Audio";
+        public const string Documents = "Documents";
+        public const string Archives = "Archives";
     }
 
     private readonly OperationRunner runner = new(tools);
@@ -85,45 +96,74 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
     /// The editor this flow opened last (it may be closed by now).
     public Editors.ToolEditorWindow? LastEditor { get; private set; }
 
-    /// Tools for the files, with Convert first when they have formats.
-    public void ShowTools(IReadOnlyList<string> selection)
-    {
-        Begin(selection);
-        var items = Capabilities.Tools(files).Select(id => new WheelItem(id, L10n.T(FeatureCatalog.ToolNames.GetValueOrDefault(id, id)))).ToList();
-        if (Capabilities.Formats(files).Length > 0) items.Insert(0, new WheelItem("convert", L10n.T(Copy.ConvertWheel)));
-        ShowWheel(L10n.T(Copy.ToolsWheel), items, Empty(Copy.NoTools, Copy.NoToolsFor));
-    }
+    /// The faces of the one wheel every entry point opens, in their Tab order.
+    public static readonly string[] Faces = ["convert", "quick", "tools", "actions"];
 
-    /// The format wheel straight away (Home's Convert chip).
-    public void ShowFormats(IReadOnlyList<string> selection)
-    {
-        Begin(selection);
-        ShowFormats();
-    }
+    /// The wheel on its front face, the formats (Open With, the right-click script, Ctrl+Alt+N, Ctrl+Space, Home's
+    /// Convert chip, a drop on Float).
+    public void ShowFormats(IReadOnlyList<string> selection) => Show(selection, "convert");
 
-    /// The Actions wheel: Share, Float, Copy, Move, Copy Path, Terminal.
-    public void ShowActions(IReadOnlyList<string> selection)
+    /// The same wheel, opened on its Tools face (Home's Tools chip).
+    public void ShowTools(IReadOnlyList<string> selection) => Show(selection, "tools");
+
+    /// The same wheel, opened on its Actions face ("Nashi actions", Home's Actions chip).
+    public void ShowActions(IReadOnlyList<string> selection) => Show(selection, "actions");
+
+    /// The wheel for the files, opened on `face` (or the first face it has). Every way in builds the same faces;
+    /// Tab, the mouse wheel and each face's last petal turn through them.
+    public void Show(IReadOnlyList<string> selection, string face = "convert")
     {
         Begin(selection);
-        ShowWheel(L10n.T(Copy.ActionsWheel), ActionItems(), "");
+        if (files.Count == 0) return;
+        var sides = Sides(files);
+        if (sides.Count == 0) { SuccessToast.Notice(Empty(Copy.NoTools, Copy.NoToolsFor)).Present(); return; }
+        var wheel = LastWheel = new WheelWindow("", [], owner is not null ? files : null);
+        wheel.Wheel.Sides = sides;
+        wheel.Wheel.StartAt(Math.Max(0, sides.ToList().FindIndex(s => s.Key == face)));
+        wheel.Wheel.Chosen += OnChosen;
+        if (owner is not null) wheel.Show(owner);
+        else wheel.ShowAt(pointer, StartupTime);
+        StartupTime = 0;
     }
 
     private static List<WheelItem> ActionItems() =>
         FileActions.Ids.Select(id => new WheelItem("action:" + id, L10n.T(FileActions.Title(id)), FileActions.Available(id))).ToList();
 
-    private List<WheelItem> FormatItems() =>
-        Capabilities.Formats(files).Select(f => new WheelItem("convert:" + f, f == "gz" ? "GZIP" : f.ToUpperInvariant())).ToList();
+    private static string ToolName(string id) => L10n.T(id.StartsWith("quick:", StringComparison.Ordinal) ? QuickNames[id] : FeatureCatalog.ToolNames.GetValueOrDefault(id, id));
 
-    /// The drag wheel's sides for these files, in this order: Convert (the formats), Tools, Actions. Empty sides are
-    /// left out, and each side ends with a petal that turns to the next ("Tools ›", "Actions ›", "Convert ›").
-    public IReadOnlyList<WheelSide> DragSides(IReadOnlyList<string> selection)
+    private static readonly Dictionary<string, string> QuickNames = new()
     {
-        files = [.. selection];
-        var tools = Capabilities.Tools(files).Select(id => new WheelItem(id, L10n.T(FeatureCatalog.ToolNames.GetValueOrDefault(id, id)))).ToList();
-        var sides = new[] { (L10n.T(Copy.ConvertWheel), FormatItems()), (L10n.T(Copy.ToolsWheel), tools), (L10n.T(Copy.ActionsWheel), ActionItems()) }
-            .Where(s => s.Item2.Count > 0).ToList();
-        return sides.Select((s, i) => new WheelSide(s.Item1, sides.Count < 2 ? s.Item2
-            : [.. s.Item2, new WheelItem("side:" + (i + 1) % sides.Count, L10n.F(Copy.SideTo, sides[(i + 1) % sides.Count].Item1))])).ToList();
+        ["quick:rotate"] = Copy.Rotate, ["quick:flip"] = Copy.Flip, ["quick:grayscale"] = Copy.Grayscale,
+        ["quick:removeBackground"] = Copy.RemoveBackground, ["quick:zip"] = Copy.Zip,
+    };
+
+    /// The formats, grouped when they don't fit on one face with its turn petal: a group petal (Images, Video,
+    /// Audio, Documents, Archives) fans out a second ring of its formats.
+    private static List<WheelItem> FormatItems(IReadOnlyList<string> selection)
+    {
+        static WheelItem Format(string f) => new("convert:" + f, f == "gz" ? "GZIP" : f.ToUpperInvariant());
+        var formats = Capabilities.Formats(selection);
+        if (formats.Length <= 7) return [.. formats.Select(Format)];
+        static string Category(string f) => FeatureCatalog.IsImage("x." + f) ? Copy.Images : FeatureCatalog.IsVideo("x." + f) ? Copy.Video
+            : FeatureCatalog.IsAudio("x." + f) ? Copy.Audio : FeatureCatalog.IsArchive("x." + f) ? Copy.Archives : Copy.Documents;
+        return [.. formats.GroupBy(Category).Select(g => g.Count() == 1 ? Format(g.First())
+            : new WheelItem("group:" + g.Key.ToLowerInvariant(), L10n.T(g.Key), Group: [.. g.Select(Format)]))];
+    }
+
+    /// The faces for these files, in Tab order: Convert (the formats), Quick tools (crop, rotate, flip, grayscale,
+    /// remove background, one PDF, one ZIP), Tools (every catalog tool), Actions. Empty faces are left out, and each
+    /// face ends with a petal naming the next ("Quick tools ›", "Tools ›", "Actions ›", "Convert ›").
+    public static IReadOnlyList<WheelSide> Sides(IReadOnlyList<string> selection)
+    {
+        var faces = new[]
+        {
+            ("convert", L10n.T(Copy.ConvertWheel), FormatItems(selection)),
+            ("quick", L10n.T(Copy.QuickWheel), Capabilities.QuickTools(selection).Select(id => new WheelItem(id, ToolName(id))).ToList()),
+            ("tools", L10n.T(Copy.ToolsWheel), Capabilities.Tools(selection).Select(id => new WheelItem(id, ToolName(id))).ToList()),
+            ("actions", L10n.T(Copy.ActionsWheel), ActionItems()),
+        }.Where(f => f.Item3.Count > 0).ToList();
+        return faces.Select((f, i) => new WheelSide(f.Item2, faces.Count < 2 ? f.Item3
+            : [.. f.Item3, new WheelItem("side:" + (i + 1) % faces.Count, L10n.F(Copy.SideTo, faces[(i + 1) % faces.Count].Item2))], f.Item1)).ToList();
     }
 
     private IDisposable? dropTarget;
@@ -151,7 +191,8 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
         {
             web = content.Web;
             var downloads = BrowserDrop.DownloadFolder();
-            wheel.Wheel.Sides = DragSides(content.Files.Count > 0 ? content.Files : [.. web.Select(w => Path.Combine(downloads, w.Name))]);
+            files = content.Files.Count > 0 ? content.Files : [.. web.Select(w => Path.Combine(downloads, w.Name))];
+            wheel.Wheel.Sides = Sides(files);
         }, async (content, point) =>
         {
             dropped = true;
@@ -224,7 +265,6 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
         pointer = owner is null ? Desktop.Pointer() : null;
     }
 
-    private void ShowFormats() => ShowWheel(L10n.T(Copy.ConvertWheel), FormatItems(), Empty(Copy.NoFormats, Copy.NoFormatsFor));
 
     /// "No conversions for PDF files yet." when the files share a type; the selection wording otherwise.
     private string Empty(string any, string named)
@@ -233,23 +273,11 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
         return types is [{ Length: > 0 } type] ? L10n.F(named, type.ToUpperInvariant()) : L10n.T(any);
     }
 
-    private void ShowWheel(string title, IReadOnlyList<WheelItem> items, string empty)
-    {
-        if (files.Count == 0) return;
-        if (items.Count == 0) { SuccessToast.Notice(empty).Present(); return; }
-        var wheel = LastWheel = new WheelWindow(title, items, owner is not null ? files : null);
-        wheel.Wheel.Chosen += OnChosen;
-        if (owner is not null) wheel.Show(owner);
-        else wheel.ShowAt(pointer, StartupTime);
-        StartupTime = 0;
-    }
-
     private async void OnChosen(WheelItem item)
     {
         try
         {
-            if (item.Id == "convert") ShowFormats();
-            else if (item.Id.StartsWith("action:", StringComparison.Ordinal)) await ActAsync(item.Id["action:".Length..]);
+            if (item.Id.StartsWith("action:", StringComparison.Ordinal)) await ActAsync(item.Id["action:".Length..]);
             else await RunAsync(item);
         }
         catch (Exception error) { notify(L10n.F(Copy.Problem, L10n.T(error.Message))); }
@@ -397,7 +425,7 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
                     else notify(L10n.T(Copy.NoTerminal));
                     break;
                 case "float":
-                    FloatShelf.Open(files, ShowTools);
+                    FloatShelf.Open(files, ShowFormats);
                     break;
                 case "share":
                     var selected = files;

@@ -80,6 +80,7 @@ try
     DragChecks.DragWheel(temp.FullName, Check, Smoke);
     WatchChecks.Run(temp.FullName, Check);
     FloatChecks.Run(temp.FullName, Check, Smoke);
+    FaceChecks.Run(temp.FullName, Check, Smoke);
     await EditorChecks.RunAsync(temp.FullName, Check, Smoke);
     WheelRenders(temp.FullName);
 }
@@ -476,43 +477,51 @@ void WheelChecks(string root)
     var doc = Path.Combine(root, "notes.xyz");
     File.WriteAllText(doc, "x");
     home.Selection.Add([doc]);
-    Chip("Convert").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-    Dispatcher.UIThread.RunJobs();
-    Check(SuccessToast.Current?.FindControl<TextBlock>("TitleText")?.Text == "No conversions for XYZ files yet." && home.OwnedWindows.Count == 0, "An empty format wheel shows a toast card naming the file type");
-    SuccessToast.Current?.Close();
+    // One wheel everywhere: its faces are Convert, Quick tools, Tools, Actions (those that have petals).
+    static string Faces(WheelWindow? w) => w is null ? "" : string.Join(" | ", w.Wheel.Sides.Select(x => x.Key + ":" + string.Join(",", x.Items.Select(i => i.Id))));
+    WheelWindow? Open(string chip)
+    {
+        Chip(chip).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+        return home.OwnedWindows.OfType<WheelWindow>().LastOrDefault(w => w.IsVisible);
+    }
+    var unknown = Open("Convert");
+    Check(unknown is not null && unknown.Wheel.Sides.Select(x => x.Key).SequenceEqual(["quick", "actions"]) && unknown.Wheel.Side == 0, "A file with no conversions opens the wheel on its first face (quick tools), with Actions behind it");
+    unknown?.Close();
     var pdfOnly = Path.Combine(root, "only.pdf");
     File.WriteAllText(pdfOnly, "x");
     home.Selection.Clear();
     home.Selection.Add([pdfOnly]);
-    Chip("Convert").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-    Dispatcher.UIThread.RunJobs();
-    var pdfWheel = home.OwnedWindows.OfType<WheelWindow>().SingleOrDefault();
-    Check(pdfWheel is not null && pdfWheel.Wheel.Items.Select(i => i.Id).SequenceEqual(FeatureCatalog.Formats([pdfOnly]).Select(f => "convert:" + f)), "A single PDF's format wheel offers every catalog route (the empty PDF wheel is gone)");
+    var pdfWheel = Open("Convert");
+    Check(pdfWheel is not null && pdfWheel.Wheel.Items.Where(i => !i.Id.StartsWith("side:")).SelectMany(i => i.Group ?? [i]).Select(i => i.Id).Order().SequenceEqual(FeatureCatalog.Formats([pdfOnly]).Select(f => "convert:" + f).Order())
+        && pdfWheel.Wheel.Items.Any(i => i.Group is { Count: > 1 }), "A single PDF's front face offers every catalog route, grouped (more than fit on one face)");
     pdfWheel?.Close();
     home.Selection.Add([png]);
-    Chip("Convert").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-    Dispatcher.UIThread.RunJobs();
-    Check(SuccessToast.Current?.FindControl<TextBlock>("TitleText")?.Text == "No conversions for this selection yet.", "Mixed types say No conversions for this selection yet.");
-    SuccessToast.Current?.Close();
+    var mixedWheel = Open("Convert");
+    Check(mixedWheel is not null && mixedWheel.Wheel.Sides[0].Key == "quick", "Mixed types have no Convert face: the wheel opens on Quick tools");
+    mixedWheel?.Close();
     home.Selection.Clear();
     home.Selection.Add([png]);
-    Chip("Convert").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-    Dispatcher.UIThread.RunJobs();
-    var opened = home.OwnedWindows.OfType<WheelWindow>().SingleOrDefault();
-    Check(opened is not null && opened.Wheel.Items.Any(i => i.Id == "convert:jpg" && i.Title == "JPG"), "Convert chip on a PNG opens a format wheel with JPG");
+    var opened = Open("Convert");
+    Check(opened is not null && opened.Wheel.Side == 0 && opened.Wheel.Items.Any(i => i.Id == "convert:jpg" && i.Title == "JPG") && opened.Wheel.Items[^1].Title == "Quick tools ›", "Convert chip on a PNG opens the front face with JPG, and its last petal names the next face");
+    var front = Faces(opened);
     opened?.Close();
     home.KeyPressQwerty(PhysicalKey.Space, RawInputModifiers.Control);
     Dispatcher.UIThread.RunJobs();
-    var tools = home.OwnedWindows.OfType<WheelWindow>().SingleOrDefault();
-    Check(tools is not null && tools.Wheel.Items.Select(i => i.Id).SequenceEqual(["convert", .. Capabilities.Tools([png])]), "Ctrl+Space opens the tools wheel with Convert first");
+    var tools = home.OwnedWindows.OfType<WheelWindow>().LastOrDefault(w => w.IsVisible);
+    Check(tools is not null && tools.Wheel.Side == 0 && Faces(tools) == front, "Ctrl+Space opens the same wheel on its front face");
     Check(tools is { Width: Wheel.Size + 2 * WheelWindow.CardColumn } && tools.FindControl<ContentControl>("LeftCard")?.Content is not null && tools.FindControl<ContentControl>("RightCard")?.Content is null, "Home's wheel shows the one selected file as a card beside it");
     tools?.Close();
-    Chip("Actions").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-    Dispatcher.UIThread.RunJobs();
-    var actions = home.OwnedWindows.OfType<WheelWindow>().SingleOrDefault();
-    Check(actions is not null && actions.Wheel.Items.Select(i => i.Id).SequenceEqual(FileActions.Ids.Select(id => "action:" + id)) && actions.Wheel.Items.All(i => i.Enabled), "The Actions chip opens the actions wheel: Share, Float, Copy, Move, Copy Path, Terminal, all enabled");
+    var toolsFace = Open("Tools");
+    Check(toolsFace is not null && toolsFace.Wheel.Sides[toolsFace.Wheel.Side].Key == "tools" && Faces(toolsFace) == front, "The Tools chip opens the same wheel on its Tools face");
+    toolsFace?.Close();
+    var actions = Open("Actions");
+    Check(actions is not null && actions.Wheel.Sides[actions.Wheel.Side].Key == "actions" && Faces(actions) == front
+        && actions.Wheel.Items.Where(i => !i.Id.StartsWith("side:")).Select(i => i.Id).SequenceEqual(FileActions.Ids.Select(id => "action:" + id)) && actions.Wheel.Items.All(i => i.Enabled),
+        "The Actions chip opens the same wheel on its Actions face: Share, Float, Copy, Move, Copy Path, Terminal, all enabled");
     Check(actions?.Wheel.Items[0].Title == "Share", "Share is called Share on Linux (no AirDrop)");
     actions?.Close();
+    Check(Faces(null) == "" && WheelFlow.Faces.SequenceEqual(["convert", "quick", "tools", "actions"]), "The faces turn Convert, Quick tools, Tools, Actions");
 
     var toast = new ProgressToast("Convert to JPG", null);
     toast.Show(home);
@@ -955,21 +964,40 @@ async Task BackgroundChecks(string root)
     app.ShowWheel([png, Path.Combine(root, "missing.png")]);
     Dispatcher.UIThread.RunJobs();
     var wheel = app.Flow.LastWheel;
-    Check(wheel is { IsVisible: true, Owner: null, Topmost: true } && wheel.Wheel.Items.Select(i => i.Id).SequenceEqual(["convert", .. Capabilities.Tools([png])]), "--wheel shows the topmost tools wheel, Convert first, with no main window");
-    wheel!.Wheel.HighlightedIndex = 0;
-    wheel.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
-    Dispatcher.UIThread.RunJobs();
-    var formats = app.Flow.LastWheel;
-    Check(formats != wheel && formats is { IsVisible: true } && formats.Wheel.Items.Any(i => i.Id == "convert:jpg"), "Convert opens the format wheel in the same mode");
-    formats!.Wheel.HighlightedIndex = formats.Wheel.Items.ToList().FindIndex(i => i.Id == "convert:jpg");
+    Check(wheel is { IsVisible: true, Owner: null, Topmost: true } && wheel.Wheel.Side == 0 && wheel.Wheel.Items.Any(i => i.Id == "convert:jpg"), "--wheel shows the topmost wheel on its front face (the formats), with no main window");
+    var faces = string.Join("|", wheel!.Wheel.Sides.Select(x => x.Key + string.Join(",", x.Items.Select(i => i.Id))));
+    var formats = wheel;
+    formats.Wheel.HighlightedIndex = formats.Wheel.Items.ToList().FindIndex(i => i.Id == "convert:jpg");
     formats.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
     for (var i = 0; i < 200 && Title()?.StartsWith("Nicely") != true; i++) { await Task.Delay(20); Dispatcher.UIThread.RunJobs(); }
     Check(Title() == "Nicely done. 1 file is ready." && File.Exists(Path.Combine(root, "background.jpg")), "Choosing JPG writes next to the file and shows the success card");
     SuccessToast.Current?.Close();
+    // Every way in builds the same faces for the same files; only the face it opens on differs.
+    string Built(Action open)
+    {
+        open();
+        Dispatcher.UIThread.RunJobs();
+        var w = app.Flow.LastWheel!;
+        var built = string.Join("|", w.Wheel.Sides.Select(x => x.Key + string.Join(",", x.Items.Select(i => i.Id))));
+        w.Close();
+        return built + "@" + w.Wheel.Sides[w.Wheel.Side].Key;
+    }
+    var ways = new Dictionary<string, string>
+    {
+        ["--wheel"] = Built(() => app.Handle(new InstanceMessage("wheel", [png]))),
+        ["Open With"] = Built(() => app.Handle(Launch.Parse([png]).Message!)),
+        ["--actions"] = Built(() => app.Handle(new InstanceMessage("actions", [png]))),
+        ["Tools"] = Built(() => app.Flow.ShowTools([png])),
+        ["Float drop"] = Built(() => app.Flow.ShowFormats([png])),
+    };
+    var dragSides = string.Join("|", WheelFlow.Sides([png]).Select(x => x.Key + string.Join(",", x.Items.Select(i => i.Id))));
+    Check(ways.Values.All(v => v.Split('@')[0] == faces) && dragSides == faces, "Every entry point (and the Ctrl-drag wheel) builds the same faces for the same files: " + string.Join("; ", ways.Select(p => p.Key + " " + p.Value.Split('@')[1])));
+    Check(ways["--wheel"].EndsWith("@convert") && ways["Open With"].EndsWith("@convert") && ways["--actions"].EndsWith("@actions") && ways["Tools"].EndsWith("@tools"), "…opening on the face it implies: the formats, or Actions for Nashi actions, or Tools for the Tools chip");
+    File.WriteAllText(Path.Combine(root, "notes.xyz"), "x");
     app.ShowWheel([Path.Combine(root, "notes.xyz")]);
     Dispatcher.UIThread.RunJobs();
-    Check(Title() == "No tools for XYZ files yet.", "An empty background wheel says there are no tools for XYZ files yet");
-    SuccessToast.Current?.Close();
+    Check(app.Flow.LastWheel is { IsVisible: true } xyz && xyz.Wheel.Sides[0].Key == "quick", "A file with no conversions opens the wheel on its Quick tools face");
+    app.Flow.LastWheel?.Close();
 
     // A pointer wheel nobody touches closes after its idle timeout (30 s by default).
     var now = new DateTime(2026, 1, 1);
@@ -1341,7 +1369,7 @@ async Task ActionChecks(string root)
     app.Handle(new InstanceMessage("actions", [png]));
     Dispatcher.UIThread.RunJobs();
     var bare = app.Flow.LastWheel;
-    Check(bare is { Owner: null, Width: Wheel.Size } && bare.Wheel.Items.Count == 6 && bare.Wheel.Items[0].Id == "action:share", "--actions shows the bare actions wheel at the pointer");
+    Check(bare is { Owner: null, Width: Wheel.Size + 2 * Wheel.SubRingSpace } && bare.Wheel.Items.Count == 7 && bare.Wheel.Items[0].Id == "action:share" && bare.Wheel.Items[^1].Id.StartsWith("side:"), "--actions shows the bare wheel at the pointer on its Actions face");
     // Background Copy: the picker gets a real, shown 1×1 topmost owner at the pointer, closed afterwards;
     // a picker that can't open or a non-local folder is an error card, never silence.
     Window? owner = null;
@@ -1373,7 +1401,7 @@ async Task ActionChecks(string root)
     bare?.Close();
     app.ShowWheel([png]);
     Dispatcher.UIThread.RunJobs();
-    Check(app.Flow.LastWheel?.Wheel.Items.All(i => !i.Id.StartsWith("action:")) == true && app.Flow.LastWheel.Width == Wheel.Size, "The pointer tools wheel has no actions and no cards, as on macOS");
+    Check(app.Flow.LastWheel?.Wheel.Items.All(i => !i.Id.StartsWith("action:")) == true && app.Flow.LastWheel.Width == Wheel.Size + 2 * Wheel.SubRingSpace, "The pointer wheel opens on its formats, with no cards (actions are a face behind them)");
     app.Flow.LastWheel?.Close();
 }
 

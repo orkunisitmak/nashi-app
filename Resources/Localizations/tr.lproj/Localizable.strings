@@ -1137,6 +1137,7 @@
 "GRADIENT" = "GEÇİŞ";
 "GRADIENT END" = "GEÇİŞİN BİTİŞ RENGİ";
 "GRAIN" = "GREN";
+"GRAYSCALE" = "GRİ TONLAMA";
 "GRID" = "IZGARA";
 "GZIP EXPANDS BEYOND 4 GB." = "GZIP AÇILDIĞINDA 4 GB'I AŞIYOR.";
 "GZIP expands beyond 4 GB." = "GZIP açıldığında 4 GB'ı aşıyor.";
@@ -1151,6 +1152,7 @@
 "Gradient" = "Geçiş";
 "Gradient end" = "Geçişin bitiş rengi";
 "Grain" = "Gren";
+"Grayscale" = "Gri tonlama";
 "Grid" = "Izgara";
 "HEIGHT" = "YÜKSEKLİK";
 "HELLO" = "MERHABA";
@@ -1626,6 +1628,7 @@
 "Output" = "Çıktı";
 "Output format" = "Çıktı biçimi";
 "Output-only format." = "Yalnızca çıktı biçimi.";
+"PACK INTO ZIP" = "ZIP'E PAKETLE";
 "PADDING" = "İÇ BOŞLUK";
 "PAGE NUMBERS" = "SAYFA NUMARALARI";
 "PAGE RANGES" = "SAYFA ARALIKLARI";
@@ -1704,6 +1707,7 @@
 "PROCESSING…" = "İŞLENİYOR…";
 "PROTECTED MEDIA CANNOT BE DOWNLOADED." = "KORUMALI MEDYA İNDİRİLEMEZ.";
 "PUBLIC UPDATES WORK WITHOUT A TOKEN." = "HERKESE AÇIK GÜNCELLEMELER İÇİN TOKEN GEREKMEZ.";
+"Pack into ZIP" = "ZIP'e paketle";
 "Padding" = "İç boşluk";
 "Page %@" = "Sayfa %@";
 "Page %lld" = "Sayfa %lld";
@@ -1776,11 +1780,13 @@
 "QUICK LOOK" = "HIZLI BAKIŞ";
 "QUICK PICKS" = "HIZLI SEÇİM";
 "QUICK PREVIEW" = "HIZLI ÖNİZLEME";
+"QUICK TOOLS" = "HIZLI ARAÇLAR";
 "QUIT NASHI" = "NASHI'DEN ÇIK";
 "Quality" = "Kalite";
 "Quality (%)" = "Kalite (%)";
 "Quick Look" = "Hızlı Bakış";
 "Quick Preview" = "Hızlı Önizleme";
+"Quick tools" = "Hızlı araçlar";
 "Quit Nashi" = "Nashi'den Çık";
 "READ QR CODES" = "QR KODLARINI OKU";
 "READ QR CODES · NASHI" = "QR KODLARINI OKU · NASHI";
@@ -1844,6 +1850,7 @@
 "RIGHT VOLUME" = "SAĞ KANAL SESİ";
 "RIGHT WHERE\nYOU WANT IT." = "TAM DA\nİSTEDİĞİN YERDE.";
 "ROTATE" = "DÖNDÜR";
+"ROTATE 90°" = "90° DÖNDÜR";
 "ROTATE LEFT" = "SOLA DÖNDÜR";
 "ROTATE RIGHT" = "SAĞA DÖNDÜR";
 "ROTATION" = "DÖNDÜRME";
@@ -1920,6 +1927,7 @@
 "Right volume" = "Sağ kanal sesi";
 "Right where\nyou want it." = "Tam da\nistediğin yerde.";
 "Rotate" = "Döndür";
+"Rotate 90°" = "90° döndür";
 "Rotate Left" = "Sola Döndür";
 "Rotate Right" = "Sağa Döndür";
 "Rotation" = "Döndürme";

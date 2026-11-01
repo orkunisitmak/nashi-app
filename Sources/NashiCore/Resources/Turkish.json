@@ -1308,5 +1308,9 @@
   "Dropped between the petals: nothing was changed. Drop on a petal to use it.": "Yaprakların arasına bırakıldı: hiçbir şey değişmedi. Kullanmak için bir yaprağa bırak.",
   "Nashi couldn’t read what was dropped. Drop files from your file manager or browser.": "Nashi bırakılanı okuyamadı. Dosyaları dosya yöneticinden ya da tarayıcından bırak.",
   "Drag gestures need an X11 session. The right-click menu and Open With still work.": "Sürükleme hareketleri X11 oturumu gerektirir. Sağ tık menüsü ve Birlikte Aç yine çalışır.",
-  "Removed the old Ctrl+Alt+N shortcut.": "Eski Ctrl+Alt+N kısayolu kaldırıldı."
+  "Removed the old Ctrl+Alt+N shortcut.": "Eski Ctrl+Alt+N kısayolu kaldırıldı.",
+  "Quick tools": "Hızlı araçlar",
+  "Rotate 90°": "90° döndür",
+  "Grayscale": "Gri tonlama",
+  "Pack into ZIP": "ZIP'e paketle"
 }

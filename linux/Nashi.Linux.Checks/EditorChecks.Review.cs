@@ -53,7 +53,6 @@ static partial class EditorChecks
         flow.ShowTools([source]);
         Dispatcher.UIThread.RunJobs();
         check(flow.LastWheel != wheelBefore && flow.LastWheel!.IsVisible, "While a run is busy the tools wheel still opens");
-        Choose(flow.LastWheel!, "convert");
         Choose(flow.LastWheel!, "convert:jpg");
         Pump(Waiting);
         var jpg = Path.Combine(folder, Name + ".jpg");
@@ -96,7 +95,6 @@ static partial class EditorChecks
         var cancelB = queue.LastToast!;
         queue.ShowTools([queueSource]);
         Dispatcher.UIThread.RunJobs();
-        Choose(queue.LastWheel!, "convert");
         Choose(queue.LastWheel!, "convert:jpg");
         cancelB.FindControl<Button>("ActionButton")!.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         var queuedJpg = Path.Combine(queued, Name + ".jpg");

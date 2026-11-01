@@ -86,9 +86,9 @@ static class FloatChecks
             window.DragRunning(false);
         }
         finally { XdndTarget.Create = saved; }
-        window.OpenWheel = flow.ShowTools;
+        window.OpenWheel = flow.ShowFormats;
         Wait(window.DroppedAsync(new DropContent([c], [])));
-        check(flow.LastWheel is { IsVisible: true } tools && tools.Wheel.Items.Any(i => i.Id == "convert"), "In the app, a drop opens the tools wheel at the pointer");
+        check(flow.LastWheel is { IsVisible: true } tools && tools.Wheel.Side == 0 && tools.Wheel.Items.Any(i => i.Id == "convert:jpg"), "In the app, a drop opens the wheel at the pointer on its front face");
         flow.LastWheel?.Close();
         window.Close();
         Dispatcher.UIThread.RunJobs();

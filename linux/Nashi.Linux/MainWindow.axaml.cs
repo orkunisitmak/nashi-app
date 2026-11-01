@@ -150,7 +150,7 @@ public sealed partial class MainWindow : Window
         e.Handled = true;
         try
         {
-            if (e.Key == Key.Space) { await ShowWheelAsync(flow.ShowTools); return; }
+            if (e.Key == Key.Space) { await ShowWheelAsync(flow.ShowFormats); return; }
             AddFiles(await Desktop.ClipboardFilesAsync(Clipboard!));
         }
         catch (Exception error) { Notify(L10n.F(Copy.Problem, L10n.T(error.Message))); }

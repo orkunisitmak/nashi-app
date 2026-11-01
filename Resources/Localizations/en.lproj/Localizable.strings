@@ -1137,6 +1137,7 @@
 "GRADIENT" = "GRADIENT";
 "GRADIENT END" = "GRADIENT END";
 "GRAIN" = "GRAIN";
+"GRAYSCALE" = "GRAYSCALE";
 "GRID" = "GRID";
 "GZIP EXPANDS BEYOND 4 GB." = "GZIP EXPANDS BEYOND 4 GB.";
 "GZIP expands beyond 4 GB." = "GZIP expands beyond 4 GB.";
@@ -1151,6 +1152,7 @@
 "Gradient" = "Gradient";
 "Gradient end" = "Gradient end";
 "Grain" = "Grain";
+"Grayscale" = "Grayscale";
 "Grid" = "Grid";
 "HEIGHT" = "HEIGHT";
 "HELLO" = "HELLO";
@@ -1626,6 +1628,7 @@
 "Output" = "Output";
 "Output format" = "Output format";
 "Output-only format." = "Output-only format.";
+"PACK INTO ZIP" = "PACK INTO ZIP";
 "PADDING" = "PADDING";
 "PAGE NUMBERS" = "PAGE NUMBERS";
 "PAGE RANGES" = "PAGE RANGES";
@@ -1704,6 +1707,7 @@
 "PROCESSING…" = "PROCESSING…";
 "PROTECTED MEDIA CANNOT BE DOWNLOADED." = "PROTECTED MEDIA CANNOT BE DOWNLOADED.";
 "PUBLIC UPDATES WORK WITHOUT A TOKEN." = "PUBLIC UPDATES WORK WITHOUT A TOKEN.";
+"Pack into ZIP" = "Pack into ZIP";
 "Padding" = "Padding";
 "Page %@" = "Page %@";
 "Page %lld" = "Page %lld";
@@ -1776,11 +1780,13 @@
 "QUICK LOOK" = "QUICK LOOK";
 "QUICK PICKS" = "QUICK PICKS";
 "QUICK PREVIEW" = "QUICK PREVIEW";
+"QUICK TOOLS" = "QUICK TOOLS";
 "QUIT NASHI" = "QUIT NASHI";
 "Quality" = "Quality";
 "Quality (%)" = "Quality (%)";
 "Quick Look" = "Quick Look";
 "Quick Preview" = "Quick Preview";
+"Quick tools" = "Quick tools";
 "Quit Nashi" = "Quit Nashi";
 "READ QR CODES" = "READ QR CODES";
 "READ QR CODES · NASHI" = "READ QR CODES · NASHI";
@@ -1844,6 +1850,7 @@
 "RIGHT VOLUME" = "RIGHT VOLUME";
 "RIGHT WHERE\nYOU WANT IT." = "RIGHT WHERE\nYOU WANT IT.";
 "ROTATE" = "ROTATE";
+"ROTATE 90°" = "ROTATE 90°";
 "ROTATE LEFT" = "ROTATE LEFT";
 "ROTATE RIGHT" = "ROTATE RIGHT";
 "ROTATION" = "ROTATION";
@@ -1920,6 +1927,7 @@
 "Right volume" = "Right volume";
 "Right where\nyou want it." = "Right where\nyou want it.";
 "Rotate" = "Rotate";
+"Rotate 90°" = "Rotate 90°";
 "Rotate Left" = "Rotate Left";
 "Rotate Right" = "Rotate Right";
 "Rotation" = "Rotation";

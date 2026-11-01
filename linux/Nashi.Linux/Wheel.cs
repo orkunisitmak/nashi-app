@@ -13,10 +13,10 @@ using Nashi.Core;
 namespace Nashi.Linux;
 
 /// One petal. A disabled one (Float, not built yet) shows dimmed, never takes the gold highlight and says Coming soon.
-public sealed record WheelItem(string Id, string Title, bool Enabled = true);
+public sealed record WheelItem(string Id, string Title, bool Enabled = true, IReadOnlyList<WheelItem>? Group = null);
 
 /// One side of a two-sided wheel (Convert, Tools, Actions): Tab, the mouse wheel or a "side:N" petal turns to it.
-public sealed record WheelSide(string Title, IReadOnlyList<WheelItem> Items);
+public sealed record WheelSide(string Title, IReadOnlyList<WheelItem> Items, string Key = "");
 
 /// A petal label fitted inside its petal: lines centered on `Center` (in the 320-point wheel), the icon above them.
 public sealed record WheelLabel(Point Center, double FontSize, IReadOnlyList<string> Lines, bool HasIcon, bool Fits)
@@ -30,7 +30,7 @@ public sealed record WheelLabel(Point Center, double FontSize, IReadOnlyList<str
 /// The macOS ring (Sources/NashiApp/Wheel.swift, as the web playground draws it): up to 8 rounded petals per page
 /// around a center disc that names the highlighted item. Geometry follows WheelGeometry.swift and
 /// docs/assets/wheel-geometry.mjs: a 320-point wheel, radius 0.44, inner 0.407 of it, item 0 at the top, clockwise.
-public sealed class Wheel : Control
+public sealed partial class Wheel : Control
 {
     private static class Copy
     {
@@ -77,7 +77,7 @@ public sealed class Wheel : Control
     public IReadOnlyList<WheelItem> Items
     {
         get => items;
-        set { items = value; page = 0; highlighted = -1; HighlightedIndex = Step(-1, 1); InvalidateVisual(); Turned?.Invoke(); }
+        set { items = value; page = 0; highlighted = -1; ResetGroup(); HighlightedIndex = Step(-1, 1); InvalidateVisual(); Turned?.Invoke(); }
     }
 
     /// The sides of a two-sided wheel; setting them shows the first. Empty for a one-sided wheel.
@@ -106,6 +106,15 @@ public sealed class Wheel : Control
         WheelFeedback.Tick();
     }
 
+    /// Shows side `index` as the wheel opens (no tick).
+    public void StartAt(int index)
+    {
+        if (sides.Count == 0) return;
+        side = (index % sides.Count + sides.Count) % sides.Count;
+        Title = sides[side].Title;
+        Items = sides[side].Items;
+    }
+
     /// Tab, Shift+Tab and the mouse wheel: the next (or previous) page of petals, then the next side; every turn ticks.
     public void Flip(int step)
     {
@@ -123,17 +132,18 @@ public sealed class Wheel : Control
     public int IndexAt(Point p) => IndexAt(p, Bounds.Size, Segments.Count);
 
     /// Highlights the petal under a point (a drag passing over), ticking when it changes.
-    public void HighlightAt(Point p) => Highlight(IndexAt(p));
+    public void HighlightAt(Point p) => Track(p);
 
     /// Chooses the petal under a point (a drop); false on none, a disabled one, or a page or side turn.
     public bool ChooseAt(Point p)
     {
+        if (SubAt(p) is { } sub) return ChooseSub(sub);
         var index = IndexAt(p);
         var segments = Segments;
         if (index < 0 || !segments[index].Enabled) return false;
         var id = segments[index].Id;
         Choose(index);
-        return id is not (PreviousId or NextId) && !id.StartsWith("side:", StringComparison.Ordinal);
+        return id is not (PreviousId or NextId) && !id.StartsWith("side:", StringComparison.Ordinal) && segments[index].Group is not { Count: > 0 };
     }
 
     /// The gold petal, or -1. Disabled petals are never highlighted.
@@ -196,6 +206,7 @@ public sealed class Wheel : Control
             case PreviousId: TurnPage(-1); break;
             case NextId: TurnPage(1); break;
             case var id when id.StartsWith("side:", StringComparison.Ordinal): ShowSide(int.Parse(id[5..], CultureInfo.InvariantCulture)); break;
+            case var _ when segments[index].Group is { Count: > 0 }: OpenGroup(index); break;
             default:
                 WheelFeedback.PlaySelection();
                 Chosen?.Invoke(segments[index]);
@@ -213,6 +224,7 @@ public sealed class Wheel : Control
     private void SetPage(int value)
     {
         page = value;
+        ResetGroup();
         highlighted = -1;
         HighlightedIndex = Step(-1, 1);
         InvalidateVisual();
@@ -233,6 +245,7 @@ public sealed class Wheel : Control
         base.OnKeyDown(e);
         var count = Segments.Count;
         if (e.Handled || count == 0) return;
+        if (GroupKey(e.Key)) { e.Handled = true; return; }
         e.Handled = true;
         switch (e.Key)
         {
@@ -256,7 +269,7 @@ public sealed class Wheel : Control
         base.OnPointerMoved(e);
         var segments = Segments;
         var index = IndexAt(e.GetPosition(this), Bounds.Size, segments.Count);
-        Highlight(index);
+        Track(e.GetPosition(this));
         ToolTip.SetTip(this, index >= 0 && !segments[index].Enabled ? L10n.T(Copy.Soon) : null);
     }
 
@@ -273,7 +286,8 @@ public sealed class Wheel : Control
         base.OnPointerReleased(e);
         if (e.InitialPressMouseButton != MouseButton.Left) return;
         var index = IndexAt(e.GetPosition(this), Bounds.Size, Segments.Count);
-        if (index >= 0) Choose(index);
+        if (SubAt(e.GetPosition(this)) is { } sub) ChooseSub(sub);
+        else if (index >= 0) Choose(index);
         else Dismissed?.Invoke();
         e.Handled = true;
     }
@@ -306,8 +320,9 @@ public sealed class Wheel : Control
                 DrawLabel(context, Layout(segments.Count, i, AppLocalization.Uppercase(item.Title, L10n.Language), WheelIcons.ForId(item.Id) is not null), WheelIcons.ForId(item.Id), foreground);
         }
 
+        RenderGroup(context, label, line);
         context.DrawEllipse(Brush("NashiWheelDisc"), null, Middle, Inner - 4, Inner - 4);
-        var title = new FormattedText(highlighted >= 0 && highlighted < segments.Count ? segments[highlighted].Title : Title, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Face, 11, label)
+        var title = new FormattedText(CenterTitle(segments), CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Face, 11, label)
         {
             MaxTextWidth = (Inner - 4) * 2 - 16,
             MaxLineCount = 3,

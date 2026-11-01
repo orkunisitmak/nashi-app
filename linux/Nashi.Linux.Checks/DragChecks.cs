@@ -250,7 +250,7 @@ static partial class DragChecks
             {
                 flow.ShowForDrag(new PixelPoint(400, 300));
                 for (var i = 0; i < 100 && flow.LastWheel!.Wheel.Sides.Count == 0; i++) { Thread.Sleep(5); Dispatcher.UIThread.RunJobs(); }
-                check(flow.LastWheel!.Known && flow.LastWheel.Wheel.Sides.Count == 3 && flow.LastWheel.Wheel.Items[0].Id == "convert:jpg", "The gesture fills the wheel from the drag source's uri-list before the drag reaches it");
+                check(flow.LastWheel!.Known && flow.LastWheel.Wheel.Sides.Count == 4 && flow.LastWheel.Wheel.Items[0].Id == "convert:jpg", "The gesture fills the wheel from the drag source's uri-list before the drag reaches it");
                 refused!();
                 Dispatcher.UIThread.RunJobs();
                 check(notes is [var said] && said.StartsWith("Dropped between the petals"), "A drop on the centre is not lost silently: a card says nothing changed");
@@ -264,29 +264,33 @@ static partial class DragChecks
             var wheel = flow.LastWheel!;
             check(wheel.IsVisible && !wheel.IsActive && wheel.Wheel.Items.Count == 0 && targets == 2, "The gesture shows an empty, unactivated wheel at the pointer and makes it a drop target");
             var (rect, scaling) = wheel.ScreenRect();
+            // A point of the wheel control relative to the window in pixels (as XDND positions become), and one over a petal.
+            (int X, int Y) At(Point p) => wheel.Wheel.TranslatePoint(p, wheel) is { } w ? ((int)Math.Round(w.X * scaling), (int)Math.Round(w.Y * scaling)) : (-1, -1);
             (int X, int Y) Screen(int petal)
             {
-                for (var y = 0; y < 320; y += 4)
-                    for (var x = 0; x < 320; x += 4)
-                        if (wheel.Wheel.IndexAt(new Point(x, y)) == petal) return ((int)(x * scaling), (int)(y * scaling));
+                var b = wheel.Wheel.Bounds;
+                for (var y = 0.0; y < b.Height; y += 4)
+                    for (var x = 0.0; x < b.Width; x += 4)
+                        if (wheel.Wheel.IndexAt(new Point(x, y)) == petal) return At(new Point(x, y));
                 return (-1, -1);
             }
             var content = new DropContent([png], []);
-            var (px, py) = ((int)(160 * scaling), (int)(60 * scaling)); // the top petal (window-relative pixels)
+            var (px, py) = At(new Point(wheel.Wheel.Bounds.Width / 2, wheel.Wheel.Bounds.Height / 2 - 100)); // the top petal
             hover!(content, px, py);
             Dispatcher.UIThread.RunJobs();
             var sides = wheel.Wheel.Sides;
-            check(sides.Select(x => x.Title).SequenceEqual(["Convert", "Tools", "Actions"]) && sides[0].Items[0].Id == "convert:jpg" && sides[0].Items[^1].Id == "side:1"
-                && sides[1].Items[^1].Id == "side:2" && sides[2].Items[^1].Id == "side:0" && sides[2].Items.Any(i => i.Id == "action:copy"),
-                "The drag wheel's sides: Convert (formats) first, then Tools, then Actions, each ending with a petal to the next");
-            check(wheel.Wheel.Side == 0 && wheel.Wheel.HighlightedIndex == 0 && accepts!(px, py) && !accepts((int)(160 * scaling), (int)(160 * scaling)), "The petal under the drag lights up; the centre refuses a drop");
+            check(sides.Select(x => x.Title).SequenceEqual(["Convert", "Quick tools", "Tools", "Actions"]) && sides[0].Items[0].Id == "convert:jpg" && sides[0].Items[^1].Id == "side:1"
+                && sides[1].Items[^1].Id == "side:2" && sides[2].Items[^1].Id == "side:3" && sides[3].Items[^1].Id == "side:0" && sides[3].Items.Any(i => i.Id == "action:copy")
+                && sides[1].Items.Select(i => i.Id).SequenceEqual(["cropImage", "quick:rotate", "quick:flip", "quick:grayscale", "quick:removeBackground", "quick:zip", "side:2"]),
+                "The drag wheel's faces: Convert (formats), Quick tools, Tools, Actions, each ending with a petal to the next");
+            check(wheel.Wheel.Side == 0 && wheel.Wheel.HighlightedIndex == 0 && accepts!(px, py) && !accepts(rect.Width / 2, rect.Height / 2), "The petal under the drag lights up; the centre refuses a drop");
 
             // Live positions arrive in root coordinates, with the wheel somewhere on screen: each petal crossed
             // lights up and ticks, and off the ring the highlight clears.
             var live = new XdndProtocol(accepts!, () => (1200, 700));
             live.Hover += hover;
             live.Enter(["text/uri-list"]);
-            wheel.Wheel.ShowSide(1); // the Tools face: eight petals
+            wheel.Wheel.ShowSide(2); // the Tools face: eight petals
             Dispatcher.UIThread.RunJobs();
             var count = wheel.Wheel.Segments.Count;
             var crossed = new List<int>();
@@ -310,11 +314,11 @@ static partial class DragChecks
             var before = ticks;
             var pages = wheel.Wheel.PageCount;
             for (var i = 0; i < pages; i++) flow.FlipDrag();
-            check(wheel.Wheel.Side == 1 && ticks == before + pages, "Tab during the drag turns the pages, then the Tools side, ticking every time");
-            for (var i = 0; i < 10 && wheel.Wheel.Side != 2; i++) wheel.Wheel.Flip(1);
-            check(wheel.Wheel.Page == 0, "A new side opens at its first page");
+            check(wheel.Wheel.Side == 1 && ticks == before + pages, "Tab during the drag turns the pages, then the Quick tools face, ticking every time");
+            for (var i = 0; i < 10 && wheel.Wheel.Side != 3; i++) wheel.Wheel.Flip(1);
+            check(wheel.Wheel.Page == 0, "A new face opens at its first page");
             while (wheel.Wheel.Page < wheel.Wheel.PageCount - 1) wheel.Wheel.Flip(1);
-            check(wheel.Wheel.Side == 2, "…and then the Actions side");
+            check(wheel.Wheel.Side == 3, "…then Tools, then the Actions face");
             wheel.Wheel.Flip(1);
             check(wheel.Wheel.Side == 0, "After Actions comes Convert again");
             smoke(wheel.CaptureRenderedFrame(), "drag-wheel-convert");
