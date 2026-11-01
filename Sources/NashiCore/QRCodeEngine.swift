@@ -35,11 +35,11 @@ public enum QRCodeEngine {
                         let box=page.bounds(for:.cropBox),scale=min(3,4096/max(box.width,box.height))
                         let thumbnail=page.thumbnail(of:NSSize(width:max(1,box.width*scale),height:max(1,box.height*scale)),for:.cropBox)
                         guard let image=thumbnail.cgImage(forProposedRect:nil,context:nil,hints:nil) else { throw NashiError.failed("Could not render PDF page \(pageIndex+1).") }
-                        report.results += try scanImage(image,input:input,page:pageIndex+1,token:token)
+                        try scanImage(image,input:input,page:pageIndex+1,token:token,into:&report)
                         progress((Double(index)+Double(pageIndex+1)/Double(max(1,document.pageCount)))/Double(max(1,inputs.count)),"\(input.lastPathComponent), page \(pageIndex+1)")
                     }
                 } else {
-                    report.results += try scanImage(ImageEngine.load(input),input:input,page:nil,token:token)
+                    try scanImage(ImageEngine.load(input),input:input,page:nil,token:token,into:&report)
                 }
             } catch {
                 try token.check()
@@ -57,12 +57,16 @@ public enum QRCodeEngine {
         try token.check();try encoder.encode(report).write(to:output,options:.atomic)
         return [output]
     }
-    private static func scanImage(_ image:CGImage,input:URL,page:Int?,token:CancellationToken) throws -> [QRCodeMatch] {
+    private static func scanImage(_ image:CGImage,input:URL,page:Int?,token:CancellationToken,into report:inout QRCodeScanReport) throws {
         try token.check()
         let request=VNDetectBarcodesRequest();request.symbologies=[.qr]
         try VNImageRequestHandler(cgImage:image).perform([request]);try token.check()
-        return request.results?.compactMap { observation in
+        let observations=request.results ?? []
+        report.results += observations.compactMap { observation in
             observation.payloadStringValue.map{QRCodeMatch(sourceName:input.lastPathComponent,sourcePath:input.path,page:page,text:$0)}
-        } ?? []
+        }
+        // A detected code without a text payload (binary content) must not read as "no codes".
+        let unreadable=observations.filter { $0.payloadStringValue == nil }.count
+        if unreadable>0 { report.errors.append("\(input.lastPathComponent)\(page.map { ", page \($0)" } ?? ""): \(unreadable == 1 ? "A QR code was":"\(unreadable) QR codes were") found, but the content is not text.") }
     }
 }

@@ -38,4 +38,13 @@ final class QRCodeEngineTests:XCTestCase {
         XCTAssertTrue(try QRCodeEngine.scan([empty]).results.isEmpty)
         let cancelled=CancellationToken();cancelled.cancel();XCTAssertThrowsError(try QRCodeEngine.scan([image],token:cancelled))
     }
+    func testBinaryQRCodeIsReportedInsteadOfAnEmptyScan() throws {
+        let directory=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:directory) }
+        let filter=CIFilter(name:"CIQRCodeGenerator")!;filter.setValue(Data([0xff,0xfe,0x00,0x80,0x81,0xc3,0x28,0x00]),forKey:"inputMessage")
+        let code=try XCTUnwrap(filter.outputImage).transformed(by:CGAffineTransform(scaleX:10,y:10))
+        let padded=code.composited(over:CIImage(color:.white).cropped(to:code.extent.insetBy(dx:-40,dy:-40)))
+        let url=directory.appendingPathComponent("binary.png");try ImageEngine.write(try XCTUnwrap(CIContext().createCGImage(padded,from:padded.extent)),to:url)
+        let report=try QRCodeEngine.scan([url])
+        XCTAssertTrue(report.results.isEmpty);XCTAssertEqual(report.errors,["binary.png: A QR code was found, but the content is not text."])
+    }
 }
