@@ -89,7 +89,7 @@ export function write(json) {
     }
     if (block.columnWidths?.length) block.columnWidths.forEach((width,index) => { if (index < columnCount && width > 0) table.setColumnWidth(index,width); });
     else for (let column = 0; column < columnCount; column++) table.setColumnWidth(column,(block.width ?? 480) / columnCount);
-    for (const merge of block.merges ?? []) if (merge.row + merge.rowCount <= rowCount && merge.column + merge.columnCount <= columnCount) table.mergeCells(merge.row,merge.column,merge.rowCount,merge.columnCount);
+    for (const merge of block.merges ?? []) { check(); if (merge.row + merge.rowCount <= rowCount && merge.column + merge.columnCount <= columnCount) table.mergeCells(merge.row,merge.column,merge.rowCount,merge.columnCount); }
   }
   check();
   const data = document.save();
