@@ -158,7 +158,11 @@ enum NashiApplication {
         statusItem.menu=menu;menu.delegate=self
         appMenu.delegate=self
         L10n.localize(mainMenu);L10n.localize(menu)
-        NotificationCenter.default.publisher(for:.nashiLanguageChanged).sink { _ in L10n.localize(NSApp.mainMenu);L10n.localize(menu);L10n.updateWindowTitles() }.store(in:&updateObservations)
+        NotificationCenter.default.publisher(for:.nashiLanguageChanged).sink { [weak self] _ in
+            L10n.localize(NSApp.mainMenu);L10n.localize(menu);L10n.updateWindowTitles()
+            // The status item's VoiceOver description is baked into its image; redraw it in the new language.
+            if let self { self.statusItem.button?.image=NashiArtwork.menuIcon(updateAvailable:self.updater.availableVersion != nil) }
+        }.store(in:&updateObservations)
         state.$working.sink { [weak self] working in guard let self else{return};self.updater.setBusy(working || self.toolSetupWorking) }.store(in:&updateObservations)
         updater.$availableVersion.sink { [weak self] version in
             guard let self else { return }

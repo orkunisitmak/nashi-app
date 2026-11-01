@@ -1524,6 +1524,7 @@
 "NASHI SETTINGS" = "NASHI AYARLARI";
 "NASHI TOOLS WHEEL" = "NASHI DOSYA ARAÇLARI ÇARKI";
 "NASHI UPDATE" = "NASHI GÜNCELLEMESİ";
+"NASHI UPDATE AVAILABLE" = "NASHI GÜNCELLEMESİ HAZIR";
 "NASHI UPDATE COULD NOT FINISH" = "NASHI GÜNCELLEMESİ TAMAMLANAMADI";
 "NASHI WEB MEDIA WHEEL" = "NASHI WEB MEDYASI ÇARKI";
 "NASHI · FEATURES & SHORTCUTS" = "NASHI · ÖZELLİKLER VE KISAYOLLAR";
@@ -1580,6 +1581,7 @@
 "Nashi saves results beside the originals. Allow a folder once to include every folder inside it." = "Nashi sonuçları orijinallerin yanına kaydeder. Bir klasöre verilen izin, içindeki klasörleri de kapsar.";
 "Nashi tools wheel" = "Nashi dosya araçları çarkı";
 "Nashi update" = "Nashi güncellemesi";
+"Nashi update available" = "Nashi güncellemesi hazır";
 "Nashi update could not finish" = "Nashi güncellemesi tamamlanamadı";
 "Nashi web media wheel" = "Nashi web medyası çarkı";
 "Nashi · Features & shortcuts" = "Nashi · Özellikler ve kısayollar";
