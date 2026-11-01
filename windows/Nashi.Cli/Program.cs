@@ -15,6 +15,11 @@ public static class Program
         "Tools"
     );
 
+    private static readonly string[] CliSupportedTools =
+    [
+        "readQRCode", "createPDF", "splitPDF", "mergePDF", "mergePDFs", "extractArchive", "unzip"
+    ];
+
     /// <summary>
     /// Executes the Nashi command-line application.
     /// </summary>
@@ -36,9 +41,9 @@ public static class Program
                 "catalog" => RunCatalog(),
                 "inspect" => args.Length < 2 ? MissingArgument("inspect <file>") : await RunInspectAsync(args[1]),
                 "dependencies" => RunDependencies(),
-                "convert" => args.Length < 3 ? MissingArgument("convert <format> <file...> [--output <dir>]") : await RunConvertAsync(args[1], args[2..]),
-                "resize" => args.Length < 3 ? MissingArgument("resize <dimensions> <file...> [--fit crop|contain|stretch] [--quality 100] [--output <dir>]") : await RunResizeAsync(args[1], args[2..]),
-                "tool" => args.Length < 3 ? MissingArgument("tool <tool-id> <file...> [--output <dir>]") : await RunToolAsync(args[1], args[2..]),
+                "convert" => args.Length < 3 ? MissingArgument("convert <format> <file...> [--output <dir>] [--json]") : await RunConvertAsync(args[1], args[2..]),
+                "resize" => args.Length < 3 ? MissingArgument("resize <dimensions> <file...> [--fit crop|contain|stretch] [--quality 100] [--output <dir>] [--json]") : await RunResizeAsync(args[1], args[2..]),
+                "tool" => args.Length < 3 ? MissingArgument("tool <tool-id> <file...> [--output <dir>] [--json]") : await RunToolAsync(args[1], args[2..]),
                 _ => UnknownCommand(command)
             };
         }
@@ -57,17 +62,18 @@ public static class Program
         Console.WriteLine("Nashi CLI - File toolkit for Windows");
         Console.WriteLine("Parity interface for Nashi.Core\n");
         Console.WriteLine("Usage:");
-        Console.WriteLine("  nashi convert <format> <file...> [--output <dir>]");
-        Console.WriteLine("  nashi resize <dimensions> <file...> [--fit crop|contain|stretch] [--quality 100] [--output <dir>]");
-        Console.WriteLine("  nashi tool <tool-id> <file...> [--output <dir>]");
+        Console.WriteLine("  nashi convert <format> <file...> [--output <dir>] [--json]");
+        Console.WriteLine("  nashi resize <dimensions> <file...> [--fit crop|contain|stretch] [--quality 100] [--output <dir>] [--json]");
+        Console.WriteLine("  nashi tool <tool-id> <file...> [--output <dir>] [--json]");
         Console.WriteLine("  nashi inspect <file>");
         Console.WriteLine("  nashi catalog");
         Console.WriteLine("  nashi dependencies\n");
         Console.WriteLine("Examples:");
         Console.WriteLine("  nashi convert pdf document.docx");
-        Console.WriteLine("  nashi convert webp image.png");
+        Console.WriteLine("  nashi convert webp image.png --json");
         Console.WriteLine("  nashi resize 1900x1200 photo.jpg --fit crop");
-        Console.WriteLine("  nashi resize 1920x1080 wallpaper.png --fit contain --quality 100");
+        Console.WriteLine("  nashi resize 1920x1080 wallpaper.png --fit contain --quality 100 --json");
+        Console.WriteLine("  nashi tool readQRCode ticket.png");
         Console.WriteLine("  nashi tool splitPDF doc.pdf");
         Console.WriteLine("  nashi tool mergePDF page1.pdf page2.pdf");
         Console.WriteLine("  nashi inspect photo.jpg");
@@ -102,10 +108,12 @@ public static class Program
     /// <returns>Process exit code 0.</returns>
     private static int RunCatalog()
     {
-        var output = new
+        var output = new Dictionary<string, object>
         {
-            conversions = FeatureCatalog.Conversions,
-            tools = FeatureCatalog.ToolNames
+            ["conversionMatrix"] = FeatureCatalog.Conversions,
+            ["conversions"] = FeatureCatalog.Conversions,
+            ["tools"] = FeatureCatalog.ToolNames,
+            ["supportedTools"] = CliSupportedTools
         };
         Console.WriteLine(JsonSerializer.Serialize(output, new JsonSerializerOptions { WriteIndented = true }));
         return 0;
@@ -176,13 +184,36 @@ public static class Program
     /// <returns>Process exit code 0.</returns>
     private static int RunDependencies()
     {
-        var toolchain = new Toolchain(ToolsDirectory);
+        var toolchain = new Toolchain(ToolsDirectory, Environment.GetEnvironmentVariable("PATH"));
+        string? ffmpegPath = null;
+        try { ffmpegPath = toolchain.Executable("ffmpeg"); } catch { }
+        string? ffprobePath = null;
+        try { ffprobePath = toolchain.Executable("ffprobe"); } catch { }
+        string? denoPath = null;
+        try { denoPath = toolchain.Executable("deno"); } catch { }
+
+        var metadataService = new MetadataService(ToolsDirectory);
+        string? exiftoolPath = metadataService.Executable;
+
+        var soffice = GetLibreOfficeExecutable();
+        bool hasSoffice = File.Exists(soffice);
+
         var status = new
         {
             toolsReady = toolchain.Ready,
-            ffmpeg = toolchain.Executable is not null,
-            metadata = new MetadataService(ToolsDirectory).Executable is not null,
-            libreOffice = File.Exists(GetLibreOfficeExecutable())
+            ffmpeg = ffmpegPath is not null,
+            ffprobe = ffprobePath is not null,
+            deno = denoPath is not null,
+            metadata = exiftoolPath is not null,
+            libreOffice = hasSoffice,
+            paths = new Dictionary<string, string?>
+            {
+                ["ffmpeg"] = ffmpegPath,
+                ["ffprobe"] = ffprobePath,
+                ["deno"] = denoPath,
+                ["exiftool"] = exiftoolPath,
+                ["soffice"] = hasSoffice ? soffice : null
+            }
         };
         Console.WriteLine(JsonSerializer.Serialize(status, new JsonSerializerOptions { WriteIndented = true }));
         return 0;
@@ -196,16 +227,18 @@ public static class Program
     /// <returns>Process exit code (0 on success).</returns>
     private static async Task<int> RunConvertAsync(string format, string[] filesAndOptions)
     {
-        var (inputs, outputDir) = ParseFilesAndOutput(filesAndOptions);
-        if (inputs.Count == 0)
+        var (inputs, outputDir, jsonOutput, parseError) = ParseFilesAndOutput(filesAndOptions);
+        if (parseError is not null)
         {
-            Console.Error.WriteLine("Error: No valid input files specified.");
-            return 64;
+            Console.Error.WriteLine($"Error: {parseError}");
+            return parseError.Contains("No valid input") ? 64 : 1;
         }
 
         outputDir ??= Path.GetDirectoryName(Path.GetFullPath(inputs[0])) ?? Environment.CurrentDirectory;
         Directory.CreateDirectory(outputDir);
         format = NormalizeFormat(format.TrimStart('.').ToLowerInvariant());
+
+        var createdFiles = new List<string>();
 
         foreach (var file in inputs)
         {
@@ -219,7 +252,8 @@ public static class Program
                 using var image = PhotoCodec.Read(fullPath);
                 var png = image.ToByteArray(MagickFormat.Png);
                 PhotoCodec.EncodePng(png, destPath, format, token: CancellationToken.None);
-                Console.WriteLine($"Created: {destPath}");
+                createdFiles.Add(destPath);
+                if (!jsonOutput) Console.WriteLine($"Created: {destPath}");
             }
             else if (inExt is "docx" or "doc" or "xlsx" or "xls" or "pptx" or "ppt" or "odt" or "ods" or "odp")
             {
@@ -229,7 +263,8 @@ public static class Program
                 {
                     var office = new OfficeDocuments(soffice, deno, ToolsDirectory);
                     var dest = await office.OfficeAsync(fullPath, format, outputDir, CancellationToken.None);
-                    Console.WriteLine($"Created: {dest}");
+                    createdFiles.Add(dest);
+                    if (!jsonOutput) Console.WriteLine($"Created: {dest}");
                 }
                 else
                 {
@@ -244,7 +279,14 @@ public static class Program
             }
         }
 
-        Console.WriteLine("Done.");
+        if (jsonOutput)
+        {
+            Console.WriteLine(JsonSerializer.Serialize(createdFiles, new JsonSerializerOptions { WriteIndented = true }));
+        }
+        else
+        {
+            Console.WriteLine("Done.");
+        }
         return 0;
     }
 
@@ -252,21 +294,15 @@ public static class Program
     /// Resizes images with studio-fidelity Lanczos resampling and configurable fit modes (crop, contain, stretch).
     /// </summary>
     /// <param name="dimensionsArg">Dimension specification: e.g. 1900x1200, 1900x, x1200, or 50%.</param>
-    /// <param name="filesAndOptions">Input image paths and flags (--fit, --quality, --format, --output).</param>
+    /// <param name="filesAndOptions">Input image paths and flags (--fit, --quality, --format, --output, --json).</param>
     /// <returns>Process exit code (0 on success).</returns>
     private static async Task<int> RunResizeAsync(string dimensionsArg, string[] filesAndOptions)
     {
-        var (inputs, outputDir, fit, quality, formatOverride, parseError) = ParseResizeArguments(filesAndOptions);
+        var (inputs, outputDir, fit, quality, formatOverride, jsonOutput, parseError) = ParseResizeArguments(filesAndOptions);
         if (parseError is not null)
         {
             Console.Error.WriteLine($"Error: {parseError}");
-            return 64;
-        }
-
-        if (inputs.Count == 0)
-        {
-            Console.Error.WriteLine("Error: No valid input files specified.");
-            return 64;
+            return parseError.Contains("No valid input") ? 64 : 1;
         }
 
         outputDir ??= Path.GetDirectoryName(Path.GetFullPath(inputs[0])) ?? Environment.CurrentDirectory;
@@ -279,6 +315,7 @@ public static class Program
             return 64;
         }
 
+        var resizedOutputs = new List<string>();
         int processedCount = 0;
         foreach (var file in inputs)
         {
@@ -293,7 +330,7 @@ public static class Program
             var targetFormat = formatOverride ?? inExt;
             targetFormat = NormalizeFormat(targetFormat);
 
-            using var image = new MagickImage(fullPath);
+            using var image = PhotoCodec.Read(fullPath);
             int origW = (int)image.Width;
             int origH = (int)image.Height;
 
@@ -354,7 +391,7 @@ public static class Program
                     image.ResetPage();
                 }
 
-                image.Resize((uint)targetW, (uint)targetH);
+                image.Resize(new MagickGeometry((uint)targetW, (uint)targetH) { IgnoreAspectRatio = true });
             }
             else if (fit == "stretch")
             {
@@ -394,9 +431,14 @@ public static class Program
             var destName = $"{baseName}-{targetW}x{targetH}.{targetFormat}";
             var destPath = SafePaths.Unique(outputDir, destName);
 
-            image.Write(destPath);
+            var pngBytes = image.ToByteArray(MagickFormat.Png);
+            PhotoCodec.EncodePng(pngBytes, destPath, targetFormat, quality, token: CancellationToken.None);
             processedCount++;
-            Console.WriteLine($"Resized: {destPath} ({image.Width}x{image.Height}, quality {quality}, fit: {fit})");
+            resizedOutputs.Add(destPath);
+            if (!jsonOutput)
+            {
+                Console.WriteLine($"Resized: {destPath} ({image.Width}x{image.Height}, quality {quality}, fit: {fit})");
+            }
         }
 
         if (processedCount == 0)
@@ -405,7 +447,14 @@ public static class Program
             return 1;
         }
 
-        Console.WriteLine($"Done. Processed {processedCount} image(s).");
+        if (jsonOutput)
+        {
+            Console.WriteLine(JsonSerializer.Serialize(resizedOutputs, new JsonSerializerOptions { WriteIndented = true }));
+        }
+        else
+        {
+            Console.WriteLine($"Done. Processed {processedCount} image(s).");
+        }
         return 0;
     }
 
@@ -448,13 +497,14 @@ public static class Program
         return (null, null, null);
     }
 
-    private static (List<string> Inputs, string? OutputDir, string Fit, int Quality, string? Format, string? Error) ParseResizeArguments(string[] args)
+    private static (List<string> Inputs, string? OutputDir, string Fit, int Quality, string? Format, bool JsonOutput, string? Error) ParseResizeArguments(string[] args)
     {
         var inputs = new List<string>();
         string? outputDir = null;
         string fit = "crop";
         int quality = 100;
         string? format = null;
+        bool jsonOutput = false;
 
         for (int i = 0; i < args.Length; i++)
         {
@@ -462,6 +512,10 @@ public static class Program
             if (arg is "-o" or "--output" or "--outdir" && i + 1 < args.Length)
             {
                 outputDir = args[++i];
+            }
+            else if (arg is "--json")
+            {
+                jsonOutput = true;
             }
             else if (arg is "--fit" && i + 1 < args.Length)
             {
@@ -475,7 +529,7 @@ public static class Program
                 };
                 if (fit is null)
                 {
-                    return (inputs, outputDir, "crop", quality, format, $"Unknown --fit value '{val}'. Supported options: crop, contain, stretch.");
+                    return (inputs, outputDir, "crop", quality, format, jsonOutput, $"Unknown --fit value '{val}'. Supported options: crop, contain, stretch.");
                 }
             }
             else if (arg is "-q" or "--quality" && i + 1 < args.Length && int.TryParse(args[++i], out var q))
@@ -486,29 +540,41 @@ public static class Program
             {
                 format = args[++i];
             }
-            else if (File.Exists(arg) || Directory.Exists(arg))
+            else if (arg.StartsWith('-'))
             {
+                return (inputs, outputDir, fit, quality, format, jsonOutput, $"Unknown option: {arg}");
+            }
+            else
+            {
+                if (!File.Exists(arg) && !Directory.Exists(arg))
+                {
+                    return (inputs, outputDir, fit, quality, format, jsonOutput, $"File not found: '{arg}'");
+                }
                 inputs.Add(arg);
             }
         }
 
-        return (inputs, outputDir, fit, quality, format, null);
+        if (inputs.Count == 0)
+        {
+            return (inputs, outputDir, fit, quality, format, jsonOutput, "No valid input files specified.");
+        }
+
+        return (inputs, outputDir, fit, quality, format, jsonOutput, null);
     }
 
-
     /// <summary>
-    /// Runs a standalone tool such as PDF split/merge or archive extraction.
+    /// Runs a standalone tool such as PDF split/merge, QR reading, or archive extraction.
     /// </summary>
-    /// <param name="toolId">Tool identifier (splitPDF, mergePDF, extractArchive).</param>
+    /// <param name="toolId">Tool identifier (splitPDF, mergePDF, readQRCode, extractArchive, createPDF).</param>
     /// <param name="filesAndOptions">Input file paths and optional flags.</param>
     /// <returns>Process exit code (0 on success).</returns>
     private static async Task<int> RunToolAsync(string toolId, string[] filesAndOptions)
     {
-        var (inputs, outputDir) = ParseFilesAndOutput(filesAndOptions);
-        if (inputs.Count == 0)
+        var (inputs, outputDir, jsonOutput, parseError) = ParseFilesAndOutput(filesAndOptions);
+        if (parseError is not null)
         {
-            Console.Error.WriteLine("Error: No valid input files specified.");
-            return 64;
+            Console.Error.WriteLine($"Error: {parseError}");
+            return parseError.Contains("No valid input") ? 64 : 1;
         }
 
         outputDir ??= Path.GetDirectoryName(Path.GetFullPath(inputs[0])) ?? Environment.CurrentDirectory;
@@ -517,11 +583,28 @@ public static class Program
         switch (toolId.ToLowerInvariant())
         {
             case "readqrcode":
+                bool hadQrError = false;
+                var qrResults = new Dictionary<string, string[]>();
                 foreach (var file in inputs)
                 {
-                    var codes = ReadQrCodes(file);
-                    Console.WriteLine($"QR codes in {Path.GetFileName(file)}: {codes.Length}");
-                    foreach (var code in codes) Console.WriteLine($" - {code}");
+                    var (codes, error) = ReadQrCodes(file);
+                    if (error is not null)
+                    {
+                        Console.Error.WriteLine($"Error reading QR codes from '{Path.GetFileName(file)}': {error}");
+                        hadQrError = true;
+                        continue;
+                    }
+                    qrResults[file] = codes;
+                    if (!jsonOutput)
+                    {
+                        Console.WriteLine($"QR codes in {Path.GetFileName(file)}: {codes.Length}");
+                        foreach (var code in codes) Console.WriteLine($" - {code}");
+                    }
+                }
+                if (hadQrError) return 1;
+                if (jsonOutput)
+                {
+                    Console.WriteLine(JsonSerializer.Serialize(qrResults, new JsonSerializerOptions { WriteIndented = true }));
                 }
                 return 0;
 
@@ -529,7 +612,7 @@ public static class Program
                 var imageInputs = inputs.Where(f => IsImageFormat(Path.GetExtension(f))).ToList();
                 if (imageInputs.Count > 0)
                 {
-                    Console.WriteLine($"Creating PDF from {imageInputs.Count} image(s)...");
+                    if (!jsonOutput) Console.WriteLine($"Creating PDF from {imageInputs.Count} image(s)...");
                     var pdfPath = SafePaths.Unique(outputDir, "Images.pdf");
                     using var collection = new MagickImageCollection();
                     foreach (var img in imageInputs)
@@ -537,40 +620,72 @@ public static class Program
                         collection.Add(PhotoCodec.Read(img));
                     }
                     collection.Write(pdfPath, MagickFormat.Pdf);
-                    Console.WriteLine($"Created: {pdfPath}");
+                    if (jsonOutput)
+                    {
+                        Console.WriteLine(JsonSerializer.Serialize(new[] { pdfPath }));
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Created: {pdfPath}");
+                    }
                     return 0;
                 }
                 Console.Error.WriteLine("Error: No valid images found to create PDF.");
                 return 1;
 
             case "splitpdf":
+                var splitOutputs = new List<string>();
                 foreach (var file in inputs)
                 {
-                    Console.WriteLine($"Splitting PDF: {file}");
+                    if (!jsonOutput) Console.WriteLine($"Splitting PDF: {file}");
                     var outputs = DocumentEngine.Pdf("splitPDF", new[] { file }, outputDir, null, CancellationToken.None, pagesPerFile: 1);
-                    foreach (var outf in outputs) Console.WriteLine($"Created: {outf}");
+                    splitOutputs.AddRange(outputs);
+                    if (!jsonOutput)
+                    {
+                        foreach (var outf in outputs) Console.WriteLine($"Created: {outf}");
+                    }
+                }
+                if (jsonOutput)
+                {
+                    Console.WriteLine(JsonSerializer.Serialize(splitOutputs, new JsonSerializerOptions { WriteIndented = true }));
                 }
                 return 0;
 
             case "mergepdf":
             case "mergepdfs":
-                Console.WriteLine($"Merging {inputs.Count} PDFs...");
+                if (!jsonOutput) Console.WriteLine($"Merging {inputs.Count} PDFs...");
                 var merged = DocumentEngine.Pdf("mergePDFs", inputs.ToArray(), outputDir, null, CancellationToken.None);
-                foreach (var outf in merged) Console.WriteLine($"Created: {outf}");
+                if (jsonOutput)
+                {
+                    Console.WriteLine(JsonSerializer.Serialize(merged, new JsonSerializerOptions { WriteIndented = true }));
+                }
+                else
+                {
+                    foreach (var outf in merged) Console.WriteLine($"Created: {outf}");
+                }
                 return 0;
 
             case "extractarchive":
             case "unzip":
+                var extractedOutputs = new List<string>();
                 foreach (var file in inputs)
                 {
-                    Console.WriteLine($"Extracting {Path.GetFileName(file)}...");
+                    if (!jsonOutput) Console.WriteLine($"Extracting {Path.GetFileName(file)}...");
                     var outputs = ArchiveEngine.Extract(file, outputDir, null, new Progress<OperationProgress>(), CancellationToken.None);
-                    foreach (var outf in outputs) Console.WriteLine($"Extracted: {outf}");
+                    extractedOutputs.AddRange(outputs);
+                    if (!jsonOutput)
+                    {
+                        foreach (var outf in outputs) Console.WriteLine($"Extracted: {outf}");
+                    }
+                }
+                if (jsonOutput)
+                {
+                    Console.WriteLine(JsonSerializer.Serialize(extractedOutputs, new JsonSerializerOptions { WriteIndented = true }));
                 }
                 return 0;
 
             default:
-                Console.Error.WriteLine($"Tool '{toolId}' is not yet supported in CLI mode.");
+                Console.Error.WriteLine($"Error: Tool '{toolId}' is not supported in CLI mode. Supported tools: {string.Join(", ", CliSupportedTools)}");
                 return 1;
         }
     }
@@ -578,8 +693,6 @@ public static class Program
     /// <summary>
     /// Determines whether the given file extension represents a supported raster image format.
     /// </summary>
-    /// <param name="ext">Extension without leading dot.</param>
-    /// <returns>True if recognized as an image format.</returns>
     private static string NormalizeFormat(string ext) => ext.TrimStart('.').ToLowerInvariant() switch
     {
         "jpeg" => "jpg",
@@ -597,8 +710,8 @@ public static class Program
     /// Reads and decodes QR codes from an image file using ZXing luminance source.
     /// </summary>
     /// <param name="filePath">Target image path containing QR codes.</param>
-    /// <returns>Array of detected text strings.</returns>
-    private static string[] ReadQrCodes(string filePath)
+    /// <returns>Decoded QR codes or error message.</returns>
+    private static (string[] Codes, string? Error) ReadQrCodes(string filePath)
     {
         try
         {
@@ -613,64 +726,101 @@ public static class Program
                     PossibleFormats = [ZXing.BarcodeFormat.QR_CODE]
                 }
             };
-            return reader.DecodeMultiple(pixels, (int)image.Width, (int)image.Height, ZXing.RGBLuminanceSource.BitmapFormat.BGRA32)?
-                .Select(r => r.Text).Distinct().ToArray() ?? [];
+            var results = reader.DecodeMultiple(pixels, (int)image.Width, (int)image.Height, ZXing.RGBLuminanceSource.BitmapFormat.BGRA32);
+            var codes = results?.Select(r => r.Text).Where(t => !string.IsNullOrEmpty(t)).Distinct().ToArray() ?? [];
+            return (codes, null);
         }
-        catch
+        catch (Exception ex)
         {
-            return [];
+            return ([], ex.Message);
         }
     }
 
     /// <summary>
-    /// Parses input file paths and an optional custom output directory from command-line arguments.
+    /// Parses input file paths, options, and an optional custom output directory from command-line arguments.
     /// </summary>
-    /// <param name="args">Array of file path and flag arguments.</param>
-    /// <returns>Tuple containing valid input files and optional output directory.</returns>
-    private static (List<string> Inputs, string? OutputDir) ParseFilesAndOutput(string[] args)
+    private static (List<string> Inputs, string? OutputDir, bool JsonOutput, string? Error) ParseFilesAndOutput(string[] args)
     {
         var inputs = new List<string>();
         string? outputDir = null;
+        bool jsonOutput = false;
 
         for (int i = 0; i < args.Length; i++)
         {
-            if (args[i] is "-o" or "--output" or "--outdir" && i + 1 < args.Length)
+            var arg = args[i];
+            if (arg is "-o" or "--output" or "--outdir" && i + 1 < args.Length)
             {
                 outputDir = args[++i];
             }
-            else if (File.Exists(args[i]) || Directory.Exists(args[i]))
+            else if (arg is "--json")
             {
-                inputs.Add(args[i]);
+                jsonOutput = true;
+            }
+            else if (arg.StartsWith('-'))
+            {
+                return (inputs, outputDir, jsonOutput, $"Unknown option: {arg}");
+            }
+            else
+            {
+                if (!File.Exists(arg) && !Directory.Exists(arg))
+                {
+                    return (inputs, outputDir, jsonOutput, $"File or directory not found: '{arg}'");
+                }
+                inputs.Add(arg);
             }
         }
 
-        return (inputs, outputDir);
+        if (inputs.Count == 0)
+        {
+            return (inputs, outputDir, jsonOutput, "No valid input files specified.");
+        }
+
+        return (inputs, outputDir, jsonOutput, null);
     }
 
     /// <summary>
-    /// Resolves the absolute path to a toolchain binary executable.
+    /// Resolves the path to a toolchain binary executable.
     /// </summary>
-    /// <param name="name">Executable file name.</param>
-    /// <returns>Absolute path if found locally, otherwise binary name for system PATH lookup.</returns>
     private static string GetExecutable(string name)
     {
         var localTool = Path.Combine(ToolsDirectory, name);
         if (File.Exists(localTool)) return localTool;
         var v1Tool = Path.Combine(ToolsDirectory, "v1", name);
         if (File.Exists(v1Tool)) return v1Tool;
+
+        var pathEnv = Environment.GetEnvironmentVariable("PATH") ?? "";
+        foreach (var entry in pathEnv.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var folder = entry.Trim('"');
+            if (folder.IndexOfAny(Path.GetInvalidPathChars()) >= 0 || !Path.IsPathFullyQualified(folder)) continue;
+            var candidate = Path.Combine(folder, name);
+            if (File.Exists(candidate)) return candidate;
+        }
+
         return name;
     }
 
     /// <summary>
     /// Resolves the path to the installed or bundled LibreOffice soffice.exe executable.
     /// </summary>
-    /// <returns>Executable path or generic soffice.exe name.</returns>
     private static string GetLibreOfficeExecutable()
     {
         var localOffice = Path.Combine(ToolsDirectory, "office-26.8.1", "program", "soffice.exe");
         if (File.Exists(localOffice)) return localOffice;
         var pfOffice = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "LibreOffice", "program", "soffice.exe");
         if (File.Exists(pfOffice)) return pfOffice;
+        var pf86Office = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "LibreOffice", "program", "soffice.exe");
+        if (File.Exists(pf86Office)) return pf86Office;
+
+        var pathEnv = Environment.GetEnvironmentVariable("PATH") ?? "";
+        foreach (var entry in pathEnv.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var folder = entry.Trim('"');
+            if (folder.IndexOfAny(Path.GetInvalidPathChars()) >= 0 || !Path.IsPathFullyQualified(folder)) continue;
+            var candidate = Path.Combine(folder, "soffice.exe");
+            if (File.Exists(candidate)) return candidate;
+        }
+
         return "soffice.exe";
     }
 }

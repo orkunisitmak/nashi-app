@@ -101,6 +101,42 @@ try
     try{await PublicUpdates.VerifyAsync(fake,update);throw new Exception("Unsigned update accepted");}catch(InvalidDataException){checks++;}
     foreach(var url in new[]{"https://evil.example/replace.zip","file:///temp/file.zip","https://github.com/another/repo/releases/download/test/file.zip"})
     {try{PublicUpdates.Validate(update with{Url=url});throw new Exception("Untrusted update URL accepted");}catch(InvalidDataException){checks++;}}
+    var savedOut = Console.Out;
+    var savedErr = Console.Error;
+    try
+    {
+        using var outSw = new StringWriter();
+        using var errSw = new StringWriter();
+        Console.SetOut(outSw);
+        Console.SetError(errSw);
+
+        var catalogCode = await Nashi.Cli.Program.Main(["catalog"]);
+        Check(catalogCode == 0, "CLI catalog failed");
+        var catalogJson = outSw.ToString();
+        Check(catalogJson.Contains("conversionMatrix") || catalogJson.Contains("conversions"), "CLI catalog missing conversions");
+        Check(catalogJson.Contains("tools"), "CLI catalog missing tools");
+
+        var missingCode = await Nashi.Cli.Program.Main(["convert", "png", Path.Combine(root, "non_existent.docx")]);
+        Check(missingCode != 0, "CLI did not return non-zero exit code for missing file");
+        Check(errSw.ToString().Contains("not found", StringComparison.OrdinalIgnoreCase), "CLI did not report error for missing file");
+
+        var cliPhoto = Path.Combine(root, "CliInput.png");
+        using (var image = new ImageMagick.MagickImage(ImageMagick.MagickColors.Red, 16, 16))
+        {
+            image.Write(cliPhoto, ImageMagick.MagickFormat.Png);
+        }
+        var cliOutDir = Path.Combine(root, "CliOutput");
+        Directory.CreateDirectory(cliOutDir);
+        var convertCode = await Nashi.Cli.Program.Main(["convert", "jpg", cliPhoto, "--output", cliOutDir]);
+        Check(convertCode == 0, "CLI convert failed");
+        var expectedJpg = Path.Combine(cliOutDir, "CliInput.jpg");
+        Check(File.Exists(expectedJpg) && new FileInfo(expectedJpg).Length > 0, "CLI convert did not create expected output file");
+    }
+    finally
+    {
+        Console.SetOut(savedOut);
+        Console.SetError(savedErr);
+    }
     Console.WriteLine(JsonSerializer.Serialize(new { passed = checks, scope = "Cross-platform Windows engine safety foundation; no Windows GUI claimed" }));
 }
 finally { Directory.Delete(root, recursive: true); }
