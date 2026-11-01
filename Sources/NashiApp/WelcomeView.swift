@@ -97,9 +97,9 @@ struct WelcomeView:View {
 
     private func chooseFolder() {
         let picker = NSOpenPanel()
-        picker.title = "Allow Home Folder Access"
-        picker.message = "Choose your home folder or a folder where you save files."
-        picker.prompt = "Allow Access"
+        picker.title = L10n.text("Allow Home Folder Access")
+        picker.message = L10n.text("Choose your home folder or a folder where you save files.")
+        picker.prompt = L10n.text("Allow Access")
         picker.directoryURL = FileManager.default.homeDirectoryForCurrentUser
         picker.canChooseFiles = false
         picker.canChooseDirectories = true

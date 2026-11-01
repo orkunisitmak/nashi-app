@@ -170,6 +170,9 @@ final class GitHubUpdateTransportTests: XCTestCase {
         let client = try client { _ in .init(status: 403, headers: ["X-RateLimit-Remaining": "0"], body: Data()) }
         do { try await client.validateAccess(); XCTFail("Expected rate limit") }
         catch { XCTAssertEqual(error as? GitHubUpdateTransportError, .rateLimited) }
+        let secondary = try self.client { _ in .init(status: 403, headers: ["Retry-After": "60", "X-RateLimit-Remaining": "4998"], body: Data()) }
+        do { try await secondary.validateAccess(); XCTFail("Expected secondary rate limit") }
+        catch { XCTAssertEqual(error as? GitHubUpdateTransportError, .rateLimited) }
     }
 
     func testOversizedAppcastIsRejectedBeforeDownloadingTheAsset() async throws {

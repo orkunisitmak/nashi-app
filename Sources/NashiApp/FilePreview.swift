@@ -16,7 +16,8 @@ import NashiCore
                 guard let self,event.window===self.window else{return event}
                 if event.keyCode==53 {self.close();return nil}
                 let modifiers=event.modifierFlags.intersection([.command,.control,.option,.shift]);guard modifiers.isEmpty || modifiers == .option else{return event}
-                if event.keyCode==49 {if let player=self.player {if player.rate==0 {player.play()}else{player.pause()}}else{self.close()};return nil}
+                // A held Space is one press: its auto-repeat must not close the preview or toggle playback again.
+                if event.keyCode==49 {if event.isARepeat {return nil};if let player=self.player {if player.rate==0 {player.play()}else{player.pause()}}else{self.close()};return nil}
                 if [123,124].contains(event.keyCode) {
                     let delta=event.keyCode==123 ? -1:1
                     if let player=self.player,!event.modifierFlags.contains(.option) {let t=player.currentTime().seconds;let duration=player.currentItem?.duration.seconds ?? 0;if t.isFinite,duration.isFinite {player.seek(to:CMTime(seconds:min(max(0,t+Double(delta)),duration),preferredTimescale:600))}}

@@ -7,10 +7,10 @@ enum EditorKeyboardCommand: Equatable {
 
     static func decode(_ event: NSEvent) -> Self? {
         let modifiers = event.modifierFlags.intersection([.command, .control, .option, .shift])
-        // Turkish I/ı/İ should invoke the same marked-in shortcut as Latin I/i.
-        let key = event.charactersIgnoringModifiers?
-            .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "en_US_POSIX"))
-            .lowercased().replacingOccurrences(of: "ı", with: "i")
+        // Turkish I/ı/İ should invoke the same marked-in shortcut as Latin I/i. Other accented
+        // letters (ö, í, ş…) are separate keys on many layouts and must not alias i/o/s.
+        let key = event.charactersIgnoringModifiers?.lowercased()
+            .replacingOccurrences(of: "ı", with: "i").replacingOccurrences(of: "i\u{307}", with: "i")
         let command: Self?
         if modifiers == .command, key == "s" { command = .save }
         else if modifiers.isEmpty || modifiers == .shift {

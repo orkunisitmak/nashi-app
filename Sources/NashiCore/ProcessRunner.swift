@@ -137,6 +137,33 @@ public enum OutputFiles {
         }
         return candidate
     }
+    /// Moves `source` into `directory` under its own name, or "Name 2", "Name 3"…
+    /// when that is taken, and returns where it landed. An existing item is never
+    /// replaced, even one another app creates after the name was chosen.
+    public static func move(_ source:URL,into directory:URL) throws -> URL {
+        try move(source,into:directory,willMove:nil)
+    }
+    static func move(_ source:URL,into directory:URL,willMove:((URL)->Void)?) throws -> URL {
+        // attributesOfItem does not follow links, so a dangling link also takes a name.
+        let taken={ (url:URL) in (try? FileManager.default.attributesOfItem(atPath:url.path)) != nil }
+        var target=directory.appendingPathComponent(source.lastPathComponent),index=2
+        func next() { target=directory.appendingPathComponent("\(source.deletingPathExtension().lastPathComponent) \(index)").appendingPathExtension(source.pathExtension.lowercased());index+=1 }
+        while true {
+            while taken(target) { next() }
+            willMove?(target)
+            // moveItem checks the destination and then renames, so a file created
+            // in between is replaced. RENAME_EXCL checks and renames in one step.
+            let code=source.withUnsafeFileSystemRepresentation { from in
+                target.withUnsafeFileSystemRepresentation { to in renamex_np(from!,to!,UInt32(RENAME_EXCL))==0 ? 0:errno }
+            }
+            if code==0 { return target }
+            if code==EEXIST { next();continue }
+            // Other volumes (EXDEV) and file systems without RENAME_EXCL (exFAT:
+            // ENOTSUP) keep the previous behavior, which also reports other errors.
+            try FileManager.default.moveItem(at:source,to:target)
+            return target
+        }
+    }
     public static func temporaryDirectory() throws -> URL {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("Nashi-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)

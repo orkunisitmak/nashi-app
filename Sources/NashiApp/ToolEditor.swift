@@ -47,6 +47,7 @@ struct ToolEditor:View {
     @State private var seeking=false
     @State private var previewError:String?
     @State private var imageSize=CGSize(width:100,height:100)
+    @State private var pixelAspect=1.0
     @State private var duration=0.0
     @State private var frameRate=30.0
     @State private var playhead=0.0
@@ -81,6 +82,7 @@ struct ToolEditor:View {
     @State private var qrResults:[String]=[]
     @State private var pdfEditor=PDFPageEditorState()
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
 
     var input:URL? { inputs.first }
     var category:FileCategory { input.map(FileCategory.detect) ?? .other }
@@ -119,7 +121,7 @@ struct ToolEditor:View {
                 }
                 ScrollView {
                     VStack(alignment:.leading,spacing:18) {
-                        Text(sideBySide ? L10n.text("MAKE IT YOURS"):"\(inputs.count>1 ? "\(inputs.count) FILES":input?.lastPathComponent ?? "")").font(.system(size:10,weight:.bold,design:.rounded)).tracking(0.8).foregroundStyle(.secondary).lineLimit(2)
+                        Text(verbatim:sideBySide ? L10n.text("MAKE IT YOURS"):inputs.count>1 ? L10n.uppercase("\(inputs.count) files"):input?.lastPathComponent ?? "").font(.system(size:10,weight:.bold,design:.rounded)).tracking(0.8).foregroundStyle(.secondary).lineLimit(2)
                         if isLoading { ProgressView("Preparing your file…").font(.caption) }
                         controls.disabled(isLoading || !readyToApply)
                         if let previewError { HStack { LText(previewError).font(.callout).foregroundStyle(.orange);Spacer();Button { self.previewError=nil } label:{Image(systemName:"xmark")}.accessibilityLabel("Dismiss preview error") } }
@@ -232,12 +234,12 @@ struct ToolEditor:View {
             slider("Left volume",value:$options.leftVolume,range:0...2,unit:"×");slider("Right volume",value:$options.rightVolume,range:0...2,unit:"×")
             HStack { Button("Preview Left") { previewChannel(0) };Button("Preview Right") { previewChannel(1) };Button("Original") { playOriginal() } }
         case .splitVideo:
-            HStack { Text("\(options.splitPoints.count) split point\(options.splitPoints.count==1 ? "":"s")");Spacer();Button("Add Split",action:addSplitPoint).disabled(!canAddSplitPoint).help("Add split at playhead (M)") }
+            HStack { LText(options.splitPoints.count==1 ? "1 split point":"\(options.splitPoints.count) split points");Spacer();Button("Add Split",action:addSplitPoint).disabled(!canAddSplitPoint).help("Add split at playhead (M)") }
             ForEach(Array(options.splitPoints.enumerated()),id:\.offset) { index,time in HStack { Text(timeLabel(time));Spacer();Button { options.equalClips=nil;options.splitPoints.remove(at:index) } label:{Image(systemName:"xmark.circle")} } }
             HStack { Stepper("Equal clips: \(equalClips)",value:$equalClips,in:2...100);Button("Set") { options.equalClips=equalClips;options.splitPoints=(1..<equalClips).map{duration*Double($0)/Double(equalClips)} } }
             splitEditingControls
         case .videoSnapshots:
-            HStack { Text("\(options.snapshotTimes.count) selected");Spacer();Button("Add Frame") { options.snapshotTimes.append(playhead) }.help("Add frame at playhead (M)") }
+            HStack { LText("\(options.snapshotTimes.count) selected");Spacer();Button("Add Frame") { options.snapshotTimes.append(playhead) }.help("Add frame at playhead (M)") }
             if let source=playbackURL ?? input { LazyVGrid(columns:[GridItem(.adaptive(minimum:100))]) { ForEach(Array(options.snapshotTimes.enumerated()),id:\.offset) { index,time in VStack {
                 VideoFrameThumbnail(source:source,time:time).frame(height:70).cornerRadius(6)
                 HStack { Text(timeLabel(time)).font(.caption);Spacer();Button { options.snapshotTimes.remove(at:index) } label:{Image(systemName:"xmark.circle")} }
@@ -263,7 +265,8 @@ struct ToolEditor:View {
     }
     var compressionControls:some View {
         VStack(alignment:.leading,spacing:18) {
-            if let input,let size=try? input.resourceValues(forKeys:[.fileSizeKey]).fileSize { LText("Original size: \(ByteCountFormatter.string(fromByteCount:Int64(size),countStyle:.file))").fontWeight(.semibold) }
+            // A symlink's own size is a few bytes; show the size of the file it points to.
+            if let input,let size=try? input.resolvingSymlinksInPath().resourceValues(forKeys:[.fileSizeKey]).fileSize { LText("Original size: \(Int64(size).formatted(.byteCount(style:.file).locale(locale)))").fontWeight(.semibold) }
             Text("Compression preset").font(.headline)
             Picker("Preset",selection:$preset) { Text("Balanced").tag("Balanced");Text("Strong").tag("Strong") }.pickerStyle(.segmented).labelsHidden()
             Text(preset=="Balanced" ? "Smaller files with less quality loss.":"Smaller files with stronger compression.").foregroundStyle(.secondary).font(.callout)
@@ -318,7 +321,7 @@ struct ToolEditor:View {
     var dimensionFields:some View { HStack { number("W",value:$width);number("H",value:$height);Text("px").foregroundStyle(.secondary) } }
     var imageControls:some View {
         VStack(alignment:.leading,spacing:12) {
-            HStack { Toggle("Show Original",isOn:$showOriginal).toggleStyle(.button);Spacer();Button("−") { previewZoom=max(0.25,previewZoom/1.25) };Text("\(Int(previewZoom*100))%").font(.caption.monospacedDigit());Button("+") { previewZoom=min(4,previewZoom*1.25) };Button("Fit") { previewZoom=1 } }
+            HStack { Toggle("Show Original",isOn:$showOriginal).toggleStyle(.button);Spacer();Button("−") { previewZoom=max(0.25,previewZoom/1.25) };Text(Int(previewZoom*100),format:.percent).font(.caption.monospacedDigit());Button("+") { previewZoom=min(4,previewZoom*1.25) };Button("Fit") { previewZoom=1 } }
             HStack { Button("Rotate Left") { options.rotation-=90;swap(&width,&height) };Button("Rotate Right") { options.rotation+=90;swap(&width,&height) };Toggle("Flip",isOn:$options.flipHorizontal) }
             dimensionFields
             Group {
@@ -382,7 +385,7 @@ struct ToolEditor:View {
             slider("Padding",value:Binding(get:{Double(options.imageFrame?.padding ?? 160)},set:{var f=options.imageFrame ?? .init();f.padding=Int($0);options.imageFrame=f}),range:0...400,unit:"px")
             slider("Corners",value:frame(\.cornerRadius),range:0...100,unit:"px")
             slider("Shadow",value:frame(\.shadowRadius),range:0...80,unit:"px")
-            HStack { ForEach(["Auto","1:1","16:9","4:5"],id:\.self) { label in Button(label) { var f=options.imageFrame ?? .init();let a=label.split(separator:":").compactMap{Double($0)};f.aspectRatio=a.count==2 ? a[0]/a[1]:nil;options.imageFrame=f } } }
+            HStack { ForEach(["Auto","1:1","16:9","4:5"],id:\.self) { label in Button(LocalizedStringKey(label)) { var f=options.imageFrame ?? .init();let a=label.split(separator:":").compactMap{Double($0)};f.aspectRatio=a.count==2 ? a[0]/a[1]:nil;options.imageFrame=f } } }
         }
     }
     var collageControls:some View {
@@ -405,7 +408,7 @@ struct ToolEditor:View {
             Text("Drag on the preview to add an area. Each area is saved into the new copy.").font(.caption).foregroundStyle(.secondary)
             if tool == .redactImage { HStack { Button("Detect Faces") { detectRedactions(faces:true) };Button("Detect Text") { detectRedactions(faces:false) } } }
             if tool == .redactVideo { timeRangeFields }
-            Text("\(options.redactions.count) area\(options.redactions.count==1 ? "":"s") selected")
+            LText(options.redactions.count==1 ? "1 area selected":"\(options.redactions.count) areas selected")
             if tool == .redactVideo { ForEach(Array(options.videoRedactions.enumerated()),id:\.offset) { index,redaction in HStack {
                 LText("Area \(index+1)");TextField("Start",value:Binding(get:{options.videoRedactions[index].start},set:{options.videoRedactions[index].start=$0}),format:.number)
                 TextField("End",value:Binding(get:{options.videoRedactions[index].end ?? duration},set:{options.videoRedactions[index].end=$0}),format:.number)
@@ -454,7 +457,7 @@ struct ToolEditor:View {
             Text("\(index+1)").foregroundStyle(.secondary).frame(width:20);Image(nsImage:NSWorkspace.shared.icon(forFile:url.path)).resizable().frame(width:28,height:28);Text(url.lastPathComponent).lineLimit(1);Spacer()
             Button { inputs.swapAt(index,index-1) } label:{Image(systemName:"chevron.up")}.disabled(index==0)
             Button { inputs.swapAt(index,index+1) } label:{Image(systemName:"chevron.down")}.disabled(index==inputs.count-1)
-        } } }
+        } } }.disabled(state.working)
     }
     var pdfControls:some View {
         VStack(alignment:.leading,spacing:14) {
@@ -504,13 +507,17 @@ struct ToolEditor:View {
             }
         }.frame(height:420).background(Color.black.opacity(0.94)).cornerRadius(20)
     }
+    // The player stretches non-square pixels, so the canvas over it works in displayed
+    // units while crop and redaction areas stay in video pixels.
+    func shown(_ r:EditRect)->EditRect { EditRect(x:r.x*pixelAspect,y:r.y,width:r.width*pixelAspect,height:r.height) }
+    func stored(_ r:EditRect)->EditRect { EditRect(x:r.x/pixelAspect,y:r.y,width:r.width/pixelAspect,height:r.height) }
     var mediaPreview:some View {
         VStack(spacing:10) {
             if let player {
                 ZStack {
                     PlayerView(player:player,onTime:updatePlayhead,onPlayback:{isPlaying=$0},hiddenControls:true)
                         .id(ObjectIdentifier(player)).frame(height:audio && tool != .audioToVideo ? 0:330)
-                    if (tool == .cropVideo || tool == .redactVideo) && !processedPlayback { ImageEditPreview(image:nil,imageSize:imageSize,crop:tool == .cropVideo ? options.crop:nil,redactions:options.redactions,annotations:[],redactionColor:Color(cgColor:ImageEngine.color(options.backgroundColor).copy(alpha:1)!),activeRedactions:tool == .redactVideo ? activeVideoRegions:nil,onMoveRedaction:{i,r in options.redactions[i]=r;if options.videoRedactions.indices.contains(i) { options.videoRedactions[i].rect=r }},onMoveCrop:setCrop,cropEnabled:tool == .cropVideo,cropAspectRatio:cropAspectRatio,onCropInteraction:cropInteraction) { rect in if tool == .cropVideo { setCrop(rect) } else { options.redactions.append(rect);options.videoRedactions.append(VideoRedaction(rect:rect,start:options.start,end:options.end)) } }.frame(height:330) }
+                    if (tool == .cropVideo || tool == .redactVideo) && !processedPlayback { ImageEditPreview(image:nil,imageSize:CGSize(width:imageSize.width*pixelAspect,height:imageSize.height),crop:tool == .cropVideo ? options.crop.map(shown):nil,redactions:options.redactions.map(shown),annotations:[],redactionColor:Color(cgColor:ImageEngine.color(options.backgroundColor).copy(alpha:1)!),activeRedactions:tool == .redactVideo ? activeVideoRegions:nil,onMoveRedaction:{i,r in let r=stored(r);options.redactions[i]=r;if options.videoRedactions.indices.contains(i) { options.videoRedactions[i].rect=r }},onMoveCrop:{ setCrop(stored($0)) },cropEnabled:tool == .cropVideo,cropAspectRatio:cropAspectRatio,onCropInteraction:cropInteraction) { rect in let rect=stored(rect);if tool == .cropVideo { setCrop(rect) } else { options.redactions.append(rect);options.videoRedactions.append(VideoRedaction(rect:rect,start:options.start,end:options.end)) } }.frame(height:330) }
                 }.cornerRadius(10)
             }
             if tool == .audioToVideo {
@@ -538,11 +545,12 @@ struct ToolEditor:View {
     var playbackDuration:Double { if processedPlayback,let processedDuration { return processedDuration };return tool == .audioToVideo && visualizationReady ? min(duration,12):duration }
     var activeVideoRegions:Set<Int> { options.redactionMode == "blur" ? []:Set(options.videoRedactions.enumerated().filter{playhead >= $0.element.start && playhead < ($0.element.end ?? duration)}.map{$0.offset}) }
     var compressionResultText:String {
-        func bytes(_ urls:[URL])->Int64 { urls.reduce(0) { $0+((try? FileManager.default.attributesOfItem(atPath:$1.path)[.size] as? NSNumber)?.int64Value ?? 0) } }
+        // Symlinked inputs count as the files they point to, not as the links.
+        func bytes(_ urls:[URL])->Int64 { urls.reduce(0) { $0+((try? FileManager.default.attributesOfItem(atPath:$1.resolvingSymlinksInPath().path)[.size] as? NSNumber)?.int64Value ?? 0) } }
         let before=bytes(inputs),after=bytes(state.outputs)
         if before==after { return "Already optimized. Original quality retained." }
-        let size=ByteCountFormatter.string(fromByteCount:after,countStyle:.file)
-        return before>after && before>0 ? "\(size) · \(Int((1-Double(after)/Double(before))*100))% smaller":"Saved size: \(size)"
+        let size=after.formatted(.byteCount(style:.file).locale(locale))
+        return before>after && before>0 ? "\(size) · \(Int((1-Double(after)/Double(before))*100).formatted(.percent.locale(locale))) smaller":"Saved size: \(size)"
     }
     @ViewBuilder var mediaTimeline:some View {
         if duration>0 {
@@ -580,7 +588,7 @@ struct ToolEditor:View {
                 let info=try await Task.detached { try MediaEngine.inspect(input,token:token) }.value
                 try checkGeneration(generation,token:token)
                 duration=info.duration;options.end=duration
-                if let v=info.video { imageSize=CGSize(width:v.width ?? 100,height:v.height ?? 100);width=v.width ?? 100;height=v.height ?? 100;frameRate=max(1,v.frameRate ?? 30) }
+                if let v=info.video { imageSize=CGSize(width:v.width ?? 100,height:v.height ?? 100);pixelAspect=v.sampleAspectRatio;width=v.width ?? 100;height=v.height ?? 100;frameRate=max(1,v.frameRate ?? 30) }
                 if category == .video { let generator=AVAssetImageGenerator(asset:AVURLAsset(url:input));generator.appliesPreferredTrackTransform=true;if let cg=try? generator.copyCGImage(at:.zero,actualTime:nil) { image=NSImage(cgImage:cg,size:.zero) } }
                 if audio || video {
                     let prepared=try await withTaskCancellationHandler(operation:{try await MediaPreviewEngine.prepare(input,token:token)},onCancel:{token.cancel()})
@@ -619,7 +627,7 @@ struct ToolEditor:View {
         disposeMedia();previewToken=CancellationToken();visualizationToken=CancellationToken()
         isLoading=true;readyToApply=false;inputs=originalInputs;options=OperationOptions()
         pdfEditor.reset();selectedSplitClip=nil;aspect="Free";cropInteracting=false;equalClips=2
-        width=0;height=0;image=nil;baseImage=nil;imageSize=CGSize(width:100,height:100);previewSize=nil;previewZoom=1;showOriginal=false
+        width=0;height=0;image=nil;baseImage=nil;imageSize=CGSize(width:100,height:100);pixelAspect=1;previewSize=nil;previewZoom=1;showOriginal=false
         duration=0;frameRate=30;playhead=0;playerReachedEnd=false;playingRange=false;processedPlayback=false;processedDuration=nil
         waveform=[];leftWaveform=[];rightWaveform=[];processedWaveform=nil;playbackURL=nil;visualizationReady=false;previewBusy=false;previewError=nil
         metadata=[:];originalMetadata=[:];metadataSearch="";metadataRemoveAll=false;addingMetadataField=false;newMetadataKey="{XMP-dc}.Title";newMetadataValue="";qrResults=[]
@@ -644,6 +652,8 @@ struct ToolEditor:View {
         if width>0 { applied.width=width };if height>0 { applied.height=height }
         if [.cropImage,.cropVideo].contains(tool),var crop=applied.crop { crop.width=Double(width);crop.height=Double(height);applied.crop=crop }
         if tool == .cropImage { applied.width=nil;applied.height=nil }
+        // The size fields hold the first file's dimensions; keeping originals must not resize the other files to them.
+        if tool == .compress,category != .image || compressionSize == "original" { applied.width=nil;applied.height=nil }
         if tool == .compress {
             applied.quality=preset=="Balanced" ? 0.8:0.45
             if targetEnabled {
@@ -665,7 +675,7 @@ struct ToolEditor:View {
             applied.metadataRemoveAll=metadataRemoveAll
             if usesImageMetadata { var edit=ImageMetadataOptions();edit.removeAll=metadataRemoveAll;edit.updates=metadata.filter{originalMetadata[$0.key] != $0.value};edit.removals=metadataRemoveAll ? []:originalMetadata.keys.filter{metadata[$0]==nil};applied.imageMetadata=edit }
         }
-        state.execute(.tool(tool),options:applied,inputs:inputs)
+        previewError=nil;state.execute(.tool(tool),options:applied,inputs:inputs)
     }
     func saveOrganizedPDF() {
         guard canApply,!pdfEditor.pages.isEmpty else { return }
@@ -674,7 +684,7 @@ struct ToolEditor:View {
     }
     func detectRedactions(faces:Bool) {
         guard let input,readyToApply,!isLoading else { return }
-        let generation=editorGeneration,token=previewToken
+        let generation=editorGeneration,token=previewToken;previewError=nil
         Task { do {
             let regions=try await Task.detached { try ImageEngine.recognizedRegions(input,faces:faces,text:!faces) }.value
             try checkGeneration(generation,token:token);options.redactions += regions.map(\.rect)
@@ -712,10 +722,12 @@ struct ToolEditor:View {
         options.crop=r;width=Int(r.width);height=Int(r.height)
     }
     func previewChannel(_ channel:Int) {
-        guard let input,readyToApply,!isLoading else { return };let settings=options,token=previewToken,generation=editorGeneration
+        guard let input,readyToApply,!isLoading else { return };let settings=options,token=previewToken,generation=editorGeneration,key=previewKey
+        previewError=nil
         Task { do {
             let url=try await Task.detached { try MediaEngine.previewChannel(input,channel:channel,options:settings,token:token) }.value
-            guard generation==editorGeneration,!token.isCancelled else { try? FileManager.default.removeItem(at:url.deletingLastPathComponent());return }
+            // A setting changed while the preview was being made: it no longer shows the current settings.
+            guard generation==editorGeneration,!token.isCancelled,key==previewKey else { try? FileManager.default.removeItem(at:url.deletingLastPathComponent());return }
             player?.pause();if let old=channelPreviewURL { try? FileManager.default.removeItem(at:old.deletingLastPathComponent()) };channelPreviewURL=url;playerReachedEnd=false;player=AVPlayer(url:url);processedPlayback=true;player?.play()
         } catch { if generation==editorGeneration,!token.isCancelled { previewError=error.localizedDescription } } }
     }
@@ -764,7 +776,7 @@ struct ToolEditor:View {
         guard options.start.isFinite,end.isFinite,options.start>=0,end>options.start,end<=duration else {
             previewError="Choose a valid start and end within the file’s duration.";return
         }
-        seek(options.start);playingRange=true;player?.play()
+        previewError=nil;seek(options.start);playingRange=true;player?.play()
     }
     func updatePlayhead(_ time:Double) {
         guard time.isFinite,!seeking else { return }
@@ -797,15 +809,17 @@ struct ToolEditor:View {
     }
     func playOriginal(play:Bool=true) { processedPlayback=false;processedWaveform=nil;processedDuration=nil;if let url=playbackURL ?? input { let time=playhead;player?.pause();player=AVPlayer(url:url);seek(time);if play { if time>=duration-0.001 { seek(0) };player?.play() } } }
     func processedPreview() {
-        guard let input,readyToApply,!isLoading else { return };var settings=options;let kind=tool,token=previewToken,generation=editorGeneration
+        guard let input,readyToApply,!isLoading else { return };var settings=options;let kind=tool,token=previewToken,generation=editorGeneration,key=previewKey
         if kind == .splitVideo { settings.joinSplitClips=true }
-        previewBusy=true
+        previewError=nil;previewBusy=true
         Task { do {
             let preview=try await MediaPreviewEngine.processedPreview(kind,input:input,options:settings,token:token)
             guard generation==editorGeneration,!token.isCancelled else { preview.removeTemporaryFiles();return }
+            // A setting changed while the preview was being made: it no longer shows the current settings.
+            guard key==previewKey else { preview.removeTemporaryFiles();previewBusy=false;return }
             processedDuration=(try? MediaEngine.inspect(preview.playbackURL).duration)
             player?.pause();if let old=channelPreviewURL { try? FileManager.default.removeItem(at:old.deletingLastPathComponent()) };channelPreviewURL=preview.playbackURL;playerReachedEnd=false;player=AVPlayer(url:preview.playbackURL);processedPlayback=true;player?.play()
-            if kind == .normalizeAudio { let url=preview.playbackURL;let peaks=try await Task.detached { try MediaPreviewEngine.waveformPeaks(url,token:token) }.value;try checkGeneration(generation,token:token);processedWaveform=peaks }
+            if kind == .normalizeAudio { let url=preview.playbackURL;let peaks=try await Task.detached { try MediaPreviewEngine.waveformPeaks(url,token:token) }.value;try checkGeneration(generation,token:token);if key==previewKey { processedWaveform=peaks } }
         } catch { if generation==editorGeneration,!token.isCancelled { previewError=error.localizedDescription } }
             if generation==editorGeneration,!token.isCancelled { previewBusy=false }
         }
@@ -832,14 +846,15 @@ struct ToolEditor:View {
     func frame<T>(_ key:WritableKeyPath<ImageFrameOptions,T>)->Binding<T> { Binding(get:{(options.imageFrame ?? .init())[keyPath:key]},set:{var value=options.imageFrame ?? .init();value[keyPath:key]=$0;options.imageFrame=value}) }
     func collage<T>(_ key:WritableKeyPath<CollageOptions,T>)->Binding<T> { Binding(get:{(options.collage ?? .init())[keyPath:key]},set:{var value=options.collage ?? .init();value[keyPath:key]=$0;options.collage=value}) }
     func relative(_ value:Binding<Double>)->Binding<Double> { Binding(get:{value.wrappedValue-1},set:{value.wrappedValue=$0+1}) }
-    func number(_ label:String,value:Binding<Int>)->some View { HStack { Text(label);TextField("",value:value,format:.number).textFieldStyle(.roundedBorder).frame(minWidth:60) } }
+    func number(_ label:String,value:Binding<Int>)->some View { HStack { LText(label);TextField("",value:value,format:.number).textFieldStyle(.roundedBorder).frame(minWidth:60) } }
     func slider(_ title:String,value:Binding<Double>,range:ClosedRange<Double>,unit:String="",reset:Double?=nil)->some View { HStack { LText(title).font(.callout).frame(width:105,alignment:.leading);Slider(value:value,in:range).tint(.nashi);Text("\(value.wrappedValue,specifier:"%.2f") \(unit)").font(.caption.monospacedDigit()).frame(width:70,alignment:.trailing);Button { value.wrappedValue=reset ?? ["Playback speed":1,"Target loudness":-16,"Loudness range":11,"True peak limit":-1.5,"Left volume":1,"Right volume":1,"Padding":160,"Corners":24,"Shadow":24,"Stroke width":3,"Text size":24,"Silence threshold":-50][title] ?? 0 } label:{Image(systemName:"arrow.counterclockwise").font(.caption)}.buttonStyle(.plain) } }
     func colorBinding(_ string:Binding<String>,preservingOpacity:Bool=false)->Binding<Color> {
         Binding(get:{Color(cgColor:ImageEngine.color(string.wrappedValue))},set:{
             string.wrappedValue=preservingOpacity ? ImageColorCodec.backgroundHex(NSColor($0)):hex($0)
         })
     }
-    func hex(_ color:Color)->String { guard let rgb=NSColor(color).usingColorSpace(.sRGB) else{return "#FFFFFF"};return String(format:"#%02X%02X%02X",Int(rgb.redComponent*255),Int(rgb.greenComponent*255),Int(rgb.blueComponent*255)) }
+    /// Rounds to the nearest byte like the frame/collage pickers; truncating turns a picked 10.99999 into 0A.
+    func hex(_ color:Color)->String { String(ImageColorCodec.backgroundHex(NSColor(color)).prefix(7)) }
     func timeLabel(_ time:Double)->String {
         guard time.isFinite,time>=0,time<Double(Int.max) else { return "—" }
         // Round to the displayed millisecond first so 59.9996 carries into the minute.
@@ -852,7 +867,7 @@ struct ToolEditor:View {
 struct WindowCloseButton:NSViewRepresentable {
     final class Coordinator:NSObject { @objc func close(_ sender:NSButton) { sender.window?.close() } }
     func makeCoordinator()->Coordinator { Coordinator() }
-    func makeNSView(context:Context)->NSButton { let button=NSButton(image:NSImage(systemSymbolName:"xmark.circle.fill",accessibilityDescription:"Close")!,target:context.coordinator,action:#selector(Coordinator.close(_:)));button.isBordered=false;button.setAccessibilityLabel("Close");return button }
+    func makeNSView(context:Context)->NSButton { let button=NSButton(image:NSImage(systemSymbolName:"xmark.circle.fill",accessibilityDescription:L10n.text("Close"))!,target:context.coordinator,action:#selector(Coordinator.close(_:)));button.isBordered=false;button.setAccessibilityLabel(L10n.text("Close"));return button }
     func updateNSView(_ nsView:NSButton,context:Context) { }
 }
 struct WindowDragRegion:NSViewRepresentable {

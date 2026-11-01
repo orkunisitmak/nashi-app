@@ -23,16 +23,16 @@ public enum PDFEngine {
         var outputs:[URL]=[]
         do {
             for index in 0..<pdf.pageCount {
-                try token.check();guard let page=pdf.page(at:index),let ref=page.pageRef else { throw NashiError.failed("A PDF page could not be read.") }
+                try token.check();guard let page=pdf.page(at:index) else { throw NashiError.failed("A PDF page could not be read.") }
                 let bounds=PDFOfficeCodec.visualBounds(page),scale=Double(max(36,min(1200,options.dpi)))/72
                 let scaledWidth=bounds.width*scale,scaledHeight=bounds.height*scale
                 guard scaledWidth.isFinite,scaledHeight.isFinite,scaledWidth>0,scaledHeight>0,scaledWidth<=32000,scaledHeight<=32000 else { throw NashiError.failed("PDF page is too large to render at this DPI.") }
                 let w=max(1,Int(scaledWidth.rounded())),h=max(1,Int(scaledHeight.rounded()))
                 guard w<=32000,h<=32000,let ctx=CGContext(data:nil,width:w,height:h,bitsPerComponent:8,bytesPerRow:0,space:CGColorSpaceCreateDeviceRGB(),bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue) else { throw NashiError.failed("PDF page is too large to render at this DPI.") }
                 ctx.setFillColor(CGColor(gray:1,alpha:1));ctx.fill(CGRect(x:0,y:0,width:w,height:h));ctx.scaleBy(x:scale,y:scale)
-                ctx.concatenate(ref.getDrawingTransform(.cropBox,rect:bounds,rotate:Int32(page.rotation)-ref.rotationAngle,preserveAspectRatio:true))
-                ctx.drawPDFPage(ref)
-                for annotation in page.annotations { annotation.draw(with:.mediaBox,in:ctx) }
+                // PDFKit draws the crop box upright with its annotations. Annotations drawn into an
+                // already turned context were turned again, off the image of a rotated page.
+                page.draw(with:.cropBox,to:ctx)
                 try token.check()
                 guard let image=ctx.makeImage() else { throw NashiError.failed("A PDF page could not be rendered.") }
                 let output=folder.appendingPathComponent(String(format:"Page %03d.%@",index+1,format));try ImageEngine.write(image,to:output,quality:options.quality);outputs.append(output)
@@ -43,6 +43,8 @@ public enum PDFEngine {
     }
     public static func pageOrder(_ ranges:String, count:Int) throws -> [Int] {
         if ranges.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty { return Array(0..<count) }
+        // "1 - 3" is as common as "1-3"; Windows trims both sides of the dash too.
+        let ranges=ranges.replacingOccurrences(of:#"\s*-\s*"#,with:"-",options:.regularExpression)
         var result:[Int]=[]
         for part in ranges.split(separator:",") {
             let pieces=part.trimmingCharacters(in:.whitespaces).split(separator:"-")
@@ -100,11 +102,14 @@ public enum PDFEngine {
                 guard cleaned.write(to:output) else { throw NashiError.failed("Could not save PDF.") };outputs.append(output)
             case .compress:
                 let output=OutputFiles.unique(for:input,extension:"pdf",suffix:" - Compressed",directory:options.outputDirectory)
-                let original=Int64((try input.resourceValues(forKeys:[.fileSizeKey])).fileSize ?? 0)
+                // A symlink's own size is a few bytes; a percentage applies to the PDF it points to.
+                let original=Int64((try input.resolvingSymlinksInPath().resourceValues(forKeys:[.fileSizeKey])).fileSize ?? 0)
                 if let bytes=options.targetBytes,bytes<=0 { throw NashiError.invalidInput("Target file size must be positive.") }
                 if let percent=options.percentage,(!percent.isFinite || percent<=0 || percent>=100) { throw NashiError.invalidInput("Percentage reduction must be between 0 and 100.") }
                 let target=options.targetBytes ?? options.percentage.map{Int64(Double(original)*(1-$0/100))}
-                if !(pdf.string ?? "").trimmingCharacters(in:.whitespacesAndNewlines).isEmpty || requiresPreservingWrite(pdf) {
+                // PDFKit's complete write keeps a password-protected PDF encrypted;
+                // the rasterized copy below would be written without a password.
+                if !(pdf.string ?? "").trimmingCharacters(in:.whitespacesAndNewlines).isEmpty || pdf.isEncrypted || requiresPreservingWrite(pdf) {
                     try token.check()
                     var settings:[PDFDocumentWriteOption:Any]=[:]
                     if #available(macOS 13.4,*) { settings=[.saveImagesAsJPEGOption:true,.optimizeImagesForScreenOption:true] }
@@ -122,6 +127,8 @@ public enum PDFEngine {
                 defer { if wrote && !complete { try? FileManager.default.removeItem(at:output) } }
                 for attempt in 0..<14 {
                     try token.check();let compressed=PDFDocument()
+                    // Keep the title, author, subject and keywords, as the PDFKit rewrite above does.
+                    compressed.documentAttributes=pdf.documentAttributes
                     for n in 0..<pdf.pageCount {
                         try token.check();progress(Double(n)/Double(pdf.pageCount),"Compressing PDF · attempt \(attempt+1) · page \(n+1) of \(pdf.pageCount)")
                         guard let page=pdf.page(at:n) else { continue };let bounds=page.bounds(for:.cropBox)
@@ -207,6 +214,8 @@ public enum PDFEngine {
         else if hasKey(names,"EmbeddedFiles") || hasKey(catalog,"AF") || hasKey(catalog,"Collection") || pages.contains(where:{hasKey($0.pageRef?.dictionary,"AF")}) { feature="embedded files" }
         else if hasKey(catalog,"OCProperties") { feature="optional content layers" }
         else if hasKey(catalog,"StructTreeRoot") { feature="accessibility tags" }
+        // Page numbering such as i, ii or A-1 lives in the catalog and is not copied with the pages.
+        else if hasKey(catalog,"PageLabels") { feature="custom page labels" }
         else { feature=nil }
         if let feature { throw NashiError.unsupported("This PDF contains \(feature). Metadata cleanup cannot safely preserve those features. No copy was exported.") }
         let result=PDFDocument()

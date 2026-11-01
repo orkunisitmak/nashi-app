@@ -55,7 +55,7 @@ struct WheelItem {
             let effect=NSVisualEffectView(frame:NSRect(x:0,y:0,width:size,height:size));effect.material = .popover;effect.blendingMode = .behindWindow;effect.state = .active;effect.wantsLayer=true;effect.layer?.cornerRadius=size/2;effect.layer?.masksToBounds=true
             let view=WheelView(frame:effect.bounds);view.autoresizingMask=[.width,.height];effect.addSubview(view);p.contentView=effect
             view.onSelect = { [weak self] item in self?.apply(item) };view.onCancel = { [weak self] in self?.hide() }
-            view.onDragInputs = { [weak self] urls in guard let self else { return };self.show(inputs:urls,mode:self.mode,at:NSEvent.mouseLocation) }
+            view.onDragInputs = { [weak self] urls in guard let self else { return };self.show(inputs:urls,mode:self.mode,at:NSEvent.mouseLocation,keyboard:self.keyboardMode) }
             self.panel=p;self.wheel=view
             keyWindowObserver=NotificationCenter.default.addObserver(forName:NSWindow.didResignKeyNotification,object:p,queue:.main) { [weak self] _ in Task { @MainActor in if self?.keyboardMode == true { self?.hide() } } }
         }
@@ -185,11 +185,12 @@ final class WheelView:NSView {
     }
     func updateSelection(_ point:NSPoint) { selected=items.indices.first{petal($0).contains(point)} }
     func updateAccessibility() {
-        setAccessibilityLabel(inputs.first?.isFileURL == false ? "Nashi web media wheel":"Nashi \(mode.rawValue) wheel")
+        setAccessibilityLabel(L10n.text(inputs.first?.isFileURL == false ? "Nashi web media wheel":"Nashi \(mode.rawValue) wheel"))
         let children=items.enumerated().map { index,item -> WheelAccessibilityItem in
             let child=WheelAccessibilityItem();child.setAccessibilityRole(.button);child.setAccessibilityEnabled(true);child.setAccessibilityLabel(L10n.text(item.operation?.title ?? item.title));child.setAccessibilityParent(self)
             if let window { child.setAccessibilityFrame(window.convertToScreen(convert(petal(index).bounds,to:nil))) }
-            child.activate = { [weak self] in guard let self else { return false };self.onSelect?(item);return true };return child
+            // An assistive app can still hold a petal of a closed or redrawn wheel; only the shown wheel's own petals act.
+            child.activate = { [weak self,weak child] in guard let self,let child,self.window?.isVisible == true,self.accessibilityChildren()?.contains(where:{($0 as AnyObject) === child}) == true else { return false };self.onSelect?(item);return true };return child
         }
         setAccessibilityChildren(children)
     }
@@ -203,7 +204,8 @@ final class WheelView:NSView {
         case 124,125: if !items.isEmpty { selected=((selected ?? -1)+1)%items.count }
         case 115: selected=items.isEmpty ? nil:0
         case 119: selected=items.isEmpty ? nil:items.count-1
-        case 36,49: if let selected { onSelect?(items[selected]) }
+        // A held key is one press: its auto-repeat must not pick the petal the keyboard wheel preselects.
+        case 36,49: if !event.isARepeat,let selected { onSelect?(items[selected]) }
         default: break
         }
     }

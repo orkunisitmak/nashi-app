@@ -70,7 +70,9 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
     }
     private static XDocument Xml(ZipArchive zip,string entry)
     {
-        var resource=zip.GetEntry(entry)??throw new InvalidDataException("The document is missing "+entry);if(resource.Length>20_000_000)throw new InvalidDataException("Document XML is too large.");using var stream=resource.Open();using var reader=XmlReader.Create(stream,new(){DtdProcessing=DtdProcessing.Prohibit,XmlResolver=null,MaxCharactersInDocument=20_000_000});return XDocument.Load(reader);
+        var resource=zip.GetEntry(entry)??throw new InvalidDataException("The document is missing "+entry);if(resource.Length>20_000_000)throw new InvalidDataException("Document XML is too large.");var settings=new XmlReaderSettings{DtdProcessing=DtdProcessing.Prohibit,XmlResolver=null,MaxCharactersInDocument=20_000_000};
+        using(var scan=resource.Open())using(var depth=XmlReader.Create(scan,settings))while(depth.Read())if(depth.Depth>256)throw new InvalidDataException("This document nests its content too deeply to convert.");
+        using var stream=resource.Open();using var reader=XmlReader.Create(stream,settings);return XDocument.Load(reader);
     }
     public static string PdfText(string input,string password="")
     {
@@ -124,7 +126,7 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
             {
                 var text=new StringBuilder("<p style=\"margin:0 0 5pt\">");var first=true;foreach(var word in line.OrderBy(w=>w.BoundingBox.Left))
                 {
-                    var letter=word.Letters.FirstOrDefault();var font=letter?.FontName??"Arial";var size=Math.Clamp(letter?.FontSize??12,1,300);var style="font-size:"+size.ToString("0.###",System.Globalization.CultureInfo.InvariantCulture)+"pt;"+(font.Contains("Bold",StringComparison.OrdinalIgnoreCase)?"font-weight:bold;":"")+(font.Contains("Italic",StringComparison.OrdinalIgnoreCase)||font.Contains("Oblique",StringComparison.OrdinalIgnoreCase)?"font-style:italic;":"");if(!first)text.Append(' ');first=false;text.Append("<span style=\"").Append(style).Append("\">").Append(Escape(word.Text)).Append("</span>");
+                    var letter=word.Letters.FirstOrDefault();var font=letter?.FontName??"Arial";var drawn=letter?.PointSize??12;var size=Math.Clamp(double.IsFinite(drawn)?drawn:12,1,300);var style="font-size:"+size.ToString("0.###",System.Globalization.CultureInfo.InvariantCulture)+"pt;"+(font.Contains("Bold",StringComparison.OrdinalIgnoreCase)?"font-weight:bold;":"")+(font.Contains("Italic",StringComparison.OrdinalIgnoreCase)||font.Contains("Oblique",StringComparison.OrdinalIgnoreCase)?"font-style:italic;":"");if(!first)text.Append(' ');first=false;text.Append("<span style=\"").Append(style).Append("\">").Append(Escape(word.Text)).Append("</span>");
                 }blocks.Add((page.Height-line.Max(w=>w.BoundingBox.Top),text.Append("</p>").ToString()));
             }
             foreach(var image in page.GetImages())

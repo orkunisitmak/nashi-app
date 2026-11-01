@@ -18,4 +18,10 @@ final class LocalProcessingTests:XCTestCase {
         XCTAssertThrowsError(try XMPPacketEditor.fields(input))
         XCTAssertThrowsError(try XMPPacketEditor.edit(input,updates:["{XMP-dc}.Title":"Value"],removals:[]))
     }
+    func testXMPAddsFieldInNamespaceDeclaredOnAnotherDescription() throws {
+        let input=Data("<x:xmpmeta xmlns:x='adobe:ns:meta/'><rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'><rdf:Description rdf:about='' xmlns:dc='http://purl.org/dc/elements/1.1/'><dc:format>image/jpeg</dc:format></rdf:Description><rdf:Description rdf:about='' xmlns:my='http://example.com/ns/1.0/'><my:A>a</my:A></rdf:Description></rdf:RDF></x:xmpmeta>".utf8)
+        let output=try XMPPacketEditor.edit(input,updates:["{XMP-my}.B":"b"],removals:[])
+        XCTAssertEqual(try XMPPacketEditor.fields(output),["{XMP-dc}.format":"image/jpeg","{XMP-my}.A":"a","{XMP-my}.B":"b"])
+        XCTAssertThrowsError(try XMPPacketEditor.edit(input,updates:["{XMP-other}.B":"b"],removals:[]))
+    }
 }

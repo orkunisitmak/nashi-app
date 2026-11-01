@@ -65,7 +65,8 @@ final class PDFSafetyAuditTests:XCTestCase {
             XCTAssertThrowsError(try ConversionEngine.run(.init(inputs:[input],operation:.tool(.removeMetadata),options:options))) { error in
                 XCTAssertTrue(error.localizedDescription.contains(reason))
             }
-            XCTAssertEqual(try FileManager.default.contentsOfDirectory(at:folder,includingPropertiesForKeys:nil).count,0)
+            // The refused export also removes the output folder it created.
+            XCTAssertFalse(FileManager.default.fileExists(atPath:folder.path))
             XCTAssertEqual(try Data(contentsOf:input),before)
         }
     }

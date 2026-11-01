@@ -46,6 +46,17 @@ final class EPUBAuditRegressionTests: XCTestCase {
         XCTAssertTrue(try convertedText(epub).contains("Second chapter Café déjà vu — résumé"))
     }
 
+    func testCreatedBookStaysWellFormedWithForbiddenCharacterReferences() throws {
+        let html = root.appendingPathComponent("Office export.html")
+        try "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\"><html><head><meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\"/><title>x</title></head><body><p title=\"x&#11;y\">a&#12;b&#x1F; Şişli café</p></body></html>".write(to: html, atomically: true, encoding: .utf8)
+        let epub = root.appendingPathComponent("Office export.epub")
+        try EPUBCodec.create(fromHTML: html, title: "Book", at: epub, token: .init())
+        let package = root.appendingPathComponent("Created book", isDirectory: true)
+        try ArchiveCodec.extract(epub, into: package, token: .init())
+        let xml = try XMLDocument(contentsOf: package.appendingPathComponent("OEBPS/book.xhtml"), options: .nodeLoadExternalEntitiesNever)
+        XCTAssertEqual(try xml.nodes(forXPath: "//*[local-name()='p']").first?.stringValue?.trimmingCharacters(in: .whitespacesAndNewlines), "ab Şişli café")
+    }
+
     private func convertedText(_ epub: URL) throws -> String {
         let output = try XCTUnwrap(DocumentEngine.convert(epub, to: "txt", options: .init(), token: .init()).first)
         return try DocumentText.read(output)
