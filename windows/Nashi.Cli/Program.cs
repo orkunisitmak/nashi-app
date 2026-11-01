@@ -19,7 +19,7 @@ public static class Program
         "v1"
     );
 
-    private static readonly string OfficeToolsDirectory = Path.Combine(
+    private static readonly string AppToolsDirectory = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "Nashi",
         "Tools"
@@ -129,7 +129,9 @@ public static class Program
             }
             else if (s is "docx" or "doc" or "xlsx" or "xls" or "pptx" or "ppt" or "odt" or "ods" or "odp")
             {
-                supportedConversions[source] = targets;
+                var unsupported = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "pages", "png", "jpg", "jpeg" };
+                var validTargets = targets.Where(t => !unsupported.Contains(t)).ToArray();
+                if (validTargets.Length > 0) supportedConversions[source] = validTargets;
             }
         }
 
@@ -228,7 +230,7 @@ public static class Program
             }
         }
 
-        var metadataService = new MetadataService(ToolsDirectory);
+        var metadataService = new MetadataService(AppToolsDirectory);
         if (metadataService.Executable is not null)
         {
             try
@@ -260,7 +262,7 @@ public static class Program
         string? denoPath = null;
         try { denoPath = toolchain.Executable("deno"); } catch { }
 
-        var metadataService = new MetadataService(ToolsDirectory);
+        var metadataService = new MetadataService(AppToolsDirectory);
         string? exiftoolPath = metadataService.Executable;
 
         var soffice = GetLibreOfficeExecutable(applyWorkarounds: false);
@@ -334,6 +336,11 @@ public static class Program
             }
             else if (inExt is "docx" or "doc" or "xlsx" or "xls" or "pptx" or "ppt" or "odt" or "ods" or "odp")
             {
+                if (format is "pages" or "png" or "jpg" or "jpeg")
+                {
+                    Console.Error.WriteLine($"Unsupported conversion: {inExt} -> {format} is not supported in CLI mode.");
+                    return 1;
+                }
                 var soffice = GetLibreOfficeExecutable(applyWorkarounds: true);
                 var deno = GetExecutable("deno.exe");
                 if (soffice is not null && File.Exists(soffice))
@@ -485,32 +492,21 @@ public static class Program
                 targetH = scaledH;
             }
 
-            image.Quality = (uint)Math.Clamp(quality, 1, 100);
-
-            if (targetFormat is "jpg" or "jpeg")
-            {
-                image.Format = MagickFormat.Jpeg;
-                if (quality >= 95)
-                {
-                    image.Settings.SetDefine(MagickFormat.Jpeg, "sampling-factor", "4:4:4");
-                }
-            }
-            else if (targetFormat == "png")
-            {
-                image.Format = MagickFormat.Png;
-            }
-            else if (targetFormat == "webp")
-            {
-                image.Format = MagickFormat.WebP;
-                if (quality >= 100) image.Settings.SetDefine(MagickFormat.WebP, "lossless", "true");
-            }
-
             var baseName = Path.GetFileNameWithoutExtension(fullPath);
             var destName = $"{baseName}-{targetW}x{targetH}.{targetFormat}";
             var destPath = SafePaths.Unique(outputDir, destName);
 
+            var toolchain = new Toolchain(ToolsDirectory, Environment.GetEnvironmentVariable("PATH"));
+            string? ffmpegPath = null;
+            try { ffmpegPath = toolchain.Executable("ffmpeg"); } catch { }
+            if (targetFormat == "heic" && ffmpegPath is null)
+            {
+                Console.Error.WriteLine("Error: Resizing to HEIC requires FFmpeg. Ensure FFmpeg is available on PATH or installed via Nashi tools setup.");
+                return 1;
+            }
+
             var pngBytes = image.ToByteArray(MagickFormat.Png);
-            PhotoCodec.EncodePng(pngBytes, destPath, targetFormat, quality, token: CancellationToken.None);
+            PhotoCodec.EncodePng(pngBytes, destPath, targetFormat, quality: quality, encoder: ffmpegPath, token: CancellationToken.None);
             processedCount++;
             resizedOutputs.Add(destPath);
             if (!jsonOutput)
@@ -627,11 +623,11 @@ public static class Program
                     }
                     if (root.TryGetProperty("quality", out var qualityProp))
                     {
-                        if (qualityProp.ValueKind != JsonValueKind.Number || !qualityProp.TryGetInt32(out var qVal))
+                        if (qualityProp.ValueKind != JsonValueKind.Number || !qualityProp.TryGetInt32(out var qVal) || qVal < 1 || qVal > 100)
                         {
                             return (inputs, outputDir, fit, quality, format, jsonOutput, "The 'quality' option must be an integer between 1 and 100.");
                         }
-                        quality = Math.Clamp(qVal, 1, 100);
+                        quality = qVal;
                     }
                     if (root.TryGetProperty("format", out var formatProp))
                     {
@@ -662,9 +658,14 @@ public static class Program
                     return (inputs, outputDir, "crop", quality, format, jsonOutput, $"Unknown --fit value '{val}'. Supported options: crop, contain, stretch.");
                 }
             }
-            else if (arg is "-q" or "--quality" && i + 1 < args.Length && int.TryParse(args[++i], NumberStyles.Integer, CultureInfo.InvariantCulture, out var q))
+            else if (arg is "-q" or "--quality" && i + 1 < args.Length)
             {
-                quality = Math.Clamp(q, 1, 100);
+                var qStr = args[++i];
+                if (!int.TryParse(qStr, NumberStyles.Integer, CultureInfo.InvariantCulture, out var q) || q < 1 || q > 100)
+                {
+                    return (inputs, outputDir, fit, quality, format, jsonOutput, $"The --quality option must be an integer between 1 and 100 (got '{qStr}').");
+                }
+                quality = q;
             }
             else if (arg is "-f" or "--format" && i + 1 < args.Length)
             {
@@ -834,7 +835,7 @@ public static class Program
 
             default:
                 Console.Error.WriteLine($"Error: Tool '{toolId}' is not supported in CLI mode. Supported tools: {string.Join(", ", CliSupportedTools)}");
-                return 1;
+                return 64;
         }
     }
 
@@ -951,6 +952,6 @@ public static class Program
     /// </summary>
     private static string? GetLibreOfficeExecutable(bool applyWorkarounds = false)
     {
-        return OfficeLocator.ResolveExecutable(OfficeToolsDirectory, Environment.GetEnvironmentVariable("PATH"), applyWorkarounds);
+        return OfficeLocator.ResolveExecutable(AppToolsDirectory, Environment.GetEnvironmentVariable("PATH"), applyWorkarounds);
     }
 }

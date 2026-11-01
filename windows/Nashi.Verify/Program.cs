@@ -169,10 +169,19 @@ try
             Check(rImg.Width == 8 && rImg.Height == 8, $"Expected 8x8 but got {rImg.Width}x{rImg.Height}");
         }
 
-        var resizeOptCode = await Nashi.Cli.Program.Main(["resize", "24x24", cliPhoto, "--options", "{\"fit\":\"contain\",\"quality\":90}", "--output", cliOutDir]);
+        var cliRect = Path.Combine(root, "CliRect.png");
+        using (var imageRect = new ImageMagick.MagickImage(ImageMagick.MagickColors.Green, 32, 16))
+        {
+            imageRect.Write(cliRect, ImageMagick.MagickFormat.Png);
+        }
+        var resizeOptCode = await Nashi.Cli.Program.Main(["resize", "24x24", cliRect, "--options", "{\"fit\":\"contain\",\"quality\":90}", "--output", cliOutDir]);
         Check(resizeOptCode == 0, "CLI resize with --options failed");
-        var expectedOpt = Path.Combine(cliOutDir, "CliInput-24x24.png");
-        Check(File.Exists(expectedOpt) && new FileInfo(expectedOpt).Length > 0, "CLI resize did not create output with --options");
+        var expectedOpt = Path.Combine(cliOutDir, "CliRect-24x12.png");
+        Check(File.Exists(expectedOpt) && new FileInfo(expectedOpt).Length > 0, "CLI resize did not create output with --options contain");
+        using (var rImg = Nashi.Core.PhotoCodec.Read(expectedOpt))
+        {
+            Check(rImg.Width == 24 && rImg.Height == 12, $"Expected 24x12 for contain scaling of 32x16 to 24x24, but got {rImg.Width}x{rImg.Height}");
+        }
     }
     finally
     {
