@@ -150,6 +150,29 @@ try
         File.WriteAllText(notesTxt, "Sample text notes");
         var dropNonImageCode = await Nashi.Cli.Program.Main(["tool", "createPDF", cliPhoto, notesTxt, "--output", cliOutDir]);
         Check(dropNonImageCode != 0, "CLI tool createPDF must fail when non-image input is passed");
+
+        var resizeSizeCode = await Nashi.Cli.Program.Main(["resize", "32x32", cliPhoto, "--output", cliOutDir]);
+        Check(resizeSizeCode == 0, "CLI resize with dimensions failed");
+        var expected32 = Path.Combine(cliOutDir, "CliInput-32x32.png");
+        Check(File.Exists(expected32) && new FileInfo(expected32).Length > 0, "CLI resize did not create 32x32 output");
+        using (var rImg = Nashi.Core.PhotoCodec.Read(expected32))
+        {
+            Check(rImg.Width == 32 && rImg.Height == 32, $"Expected 32x32 but got {rImg.Width}x{rImg.Height}");
+        }
+
+        var resizePctCode = await Nashi.Cli.Program.Main(["resize", "50%", cliPhoto, "--output", cliOutDir]);
+        Check(resizePctCode == 0, "CLI resize with percentage failed");
+        var expected8 = Path.Combine(cliOutDir, "CliInput-8x8.png");
+        Check(File.Exists(expected8) && new FileInfo(expected8).Length > 0, "CLI resize did not create 50% (8x8) output");
+        using (var rImg = Nashi.Core.PhotoCodec.Read(expected8))
+        {
+            Check(rImg.Width == 8 && rImg.Height == 8, $"Expected 8x8 but got {rImg.Width}x{rImg.Height}");
+        }
+
+        var resizeOptCode = await Nashi.Cli.Program.Main(["resize", "24x24", cliPhoto, "--options", "{\"fit\":\"contain\",\"quality\":90}", "--output", cliOutDir]);
+        Check(resizeOptCode == 0, "CLI resize with --options failed");
+        var expectedOpt = Path.Combine(cliOutDir, "CliInput-24x24.png");
+        Check(File.Exists(expectedOpt) && new FileInfo(expectedOpt).Length > 0, "CLI resize did not create output with --options");
     }
     finally
     {

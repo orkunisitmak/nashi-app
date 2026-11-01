@@ -15,7 +15,7 @@ public sealed class OfficeRuntime(string root)
     // Python loader. A LibreOffice installed under Program Files is never modified.
     internal const string DisabledPythonLoader=OfficeLocator.DisabledPythonLoader;
     internal static bool DisablePythonLoader(string application)=>OfficeLocator.DisablePythonLoader(application);
-    public string? Executable=>OfficeLocator.ResolveExecutable(root);
+    public string? Executable=>OfficeLocator.ResolveExecutable(root,applyWorkarounds:true);
     // If the loader cannot be disabled, prefer a LibreOffice under Program Files. The private runtime
     // is then the last resort, and the 5-minute conversion limit still applies.
     private string[] Candidates(bool privateRuntimeSafe)=>OfficeLocator.Candidates(root,privateRuntimeSafe);

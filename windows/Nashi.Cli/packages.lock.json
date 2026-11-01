@@ -61,6 +61,18 @@
         "type": "Transitive",
         "resolved": "0.16.11",
         "contentHash": "OZfAVu88hl87BffQ+rlWCj/vLvAhhCK4QnFaoveeF/MY8SjHNSYBQ3qyUEWlPKNgBQGh1syXhCDg10vUnCsqkg=="
+      },
+      "nashi.core": {
+        "type": "Project",
+        "dependencies": {
+          "BouncyCastle.Cryptography": "[2.7.0, )",
+          "Magick.NET-Q8-AnyCPU": "[15.0.0, )",
+          "PDFsharp": "[6.2.4, )",
+          "PdfPig": "[0.1.16, )",
+          "SharpCompress": "[0.50.5, )",
+          "System.Security.Cryptography.Pkcs": "[10.0.13, )",
+          "ZXing.Net": "[0.16.11, )"
+        }
       }
     }
   }

@@ -9,6 +9,15 @@ public static class OfficeLocator
     public const string DisabledPythonLoader = "pythonloaderlo.dll.disabled-by-nashi";
 
     /// <summary>
+    /// Checks whether the Python loader is currently disabled without altering files.
+    /// </summary>
+    public static bool IsPythonLoaderDisabled(string application)
+    {
+        var loader = Path.Combine(application, "program", "pythonloaderlo.dll");
+        return !File.Exists(loader);
+    }
+
+    /// <summary>
     /// Disables the bundled Python loader extension in a private LibreOffice runtime.
     /// Prevents hanging on systems where Lightproof Python registration deadlocks.
     /// </summary>
@@ -27,17 +36,19 @@ public static class OfficeLocator
     }
 
     /// <summary>
-    /// Finds the best available soffice executable, checking managed runtimes, installed locations, and PATH.
+    /// Finds the best available soffice executable. When applyWorkarounds is true, disables the Python loader
+    /// if needed; when false (e.g. for dependencies inspection), performs read-only checks without modifying files.
     /// </summary>
-    public static string? ResolveExecutable(string root, string? searchPath = null)
+    public static string? ResolveExecutable(string root, string? searchPath = null, bool applyWorkarounds = false)
     {
         var managed = Path.Combine(root, "office-26.8.1");
-        var safe = !Directory.Exists(managed) || DisablePythonLoader(managed);
+        var safe = !Directory.Exists(managed) || (applyWorkarounds ? DisablePythonLoader(managed) : IsPythonLoaderDisabled(managed));
         return Candidates(root, safe, searchPath).FirstOrDefault(ToolInstallation.UsableFile);
     }
 
     /// <summary>
     /// Enumerates candidate soffice paths in order of preference depending on whether the private runtime is safe.
+    /// Preserves exact app search locations (managed runtime and 64-bit Program Files).
     /// </summary>
     public static string[] Candidates(string root, bool privateRuntimeSafe, string? searchPath = null)
     {
@@ -47,13 +58,10 @@ public static class OfficeLocator
             Path.Combine(root, "office-26.8.1", "program", "soffice.exe")
         ];
         var programFiles = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "LibreOffice", "program");
-        var programFilesX86 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "LibreOffice", "program");
         var installed = new List<string>
         {
             Path.Combine(programFiles, "soffice.com"),
-            Path.Combine(programFiles, "soffice.exe"),
-            Path.Combine(programFilesX86, "soffice.com"),
-            Path.Combine(programFilesX86, "soffice.exe")
+            Path.Combine(programFiles, "soffice.exe")
         };
         if (!string.IsNullOrEmpty(searchPath))
         {

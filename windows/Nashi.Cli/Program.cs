@@ -52,7 +52,7 @@ public static class Program
                 "inspect" => args.Length < 2 ? MissingArgument("inspect <file>") : await RunInspectAsync(args[1]),
                 "dependencies" => RunDependencies(),
                 "convert" => args.Length < 3 ? MissingArgument("convert <format> <file...> [--output <dir>] [--json]") : await RunConvertAsync(args[1], args[2..]),
-                "resize" => args.Length < 3 ? MissingArgument("resize <dimensions> <file...> [--fit crop|contain|stretch] [--quality 100] [--output <dir>] [--json]") : await RunResizeAsync(args[1], args[2..]),
+                "resize" => args.Length < 3 ? MissingArgument("resize <dimensions> <file...> [--fit crop|contain|stretch] [--quality 100] [--output <dir>] [--options <json>] [--json]") : await RunResizeAsync(args[1], args[2..]),
                 "tool" => args.Length < 3 ? MissingArgument("tool <tool-id> <file...> [--output <dir>] [--json]") : await RunToolAsync(args[1], args[2..]),
                 _ => UnknownCommand(command)
             };
@@ -73,7 +73,7 @@ public static class Program
         Console.WriteLine("Parity interface for Nashi.Core\n");
         Console.WriteLine("Usage:");
         Console.WriteLine("  nashi convert <format> <file...> [--output <dir>] [--json]");
-        Console.WriteLine("  nashi resize <dimensions> <file...> [--fit crop|contain|stretch] [--quality 100] [--output <dir>] [--json]");
+        Console.WriteLine("  nashi resize <dimensions> <file...> [--fit crop|contain|stretch] [--quality 100] [--output <dir>] [--options <json>] [--json]");
         Console.WriteLine("  nashi tool <tool-id> <file...> [--output <dir>] [--json]");
         Console.WriteLine("  nashi inspect <file>");
         Console.WriteLine("  nashi catalog");
@@ -263,7 +263,7 @@ public static class Program
         var metadataService = new MetadataService(ToolsDirectory);
         string? exiftoolPath = metadataService.Executable;
 
-        var soffice = GetLibreOfficeExecutable();
+        var soffice = GetLibreOfficeExecutable(applyWorkarounds: false);
         bool hasSoffice = soffice is not null && File.Exists(soffice);
 
         var status = new
@@ -334,7 +334,7 @@ public static class Program
             }
             else if (inExt is "docx" or "doc" or "xlsx" or "xls" or "pptx" or "ppt" or "odt" or "ods" or "odp")
             {
-                var soffice = GetLibreOfficeExecutable();
+                var soffice = GetLibreOfficeExecutable(applyWorkarounds: true);
                 var deno = GetExecutable("deno.exe");
                 if (soffice is not null && File.Exists(soffice))
                 {
@@ -601,10 +601,18 @@ public static class Program
                 try
                 {
                     using var doc = JsonDocument.Parse(optionsJson);
-                    var root = doc.RootElement;
-                    if (root.TryGetProperty("fit", out var fitProp) && fitProp.GetString() is { } fitStr)
+                    if (doc.RootElement.ValueKind != JsonValueKind.Object)
                     {
-                        var val = fitStr.ToLowerInvariant();
+                        return (inputs, outputDir, fit, quality, format, jsonOutput, "The --options argument must be a JSON object.");
+                    }
+                    var root = doc.RootElement;
+                    if (root.TryGetProperty("fit", out var fitProp))
+                    {
+                        if (fitProp.ValueKind != JsonValueKind.String)
+                        {
+                            return (inputs, outputDir, fit, quality, format, jsonOutput, "The 'fit' option must be a string (crop, contain, stretch).");
+                        }
+                        var val = fitProp.GetString()?.ToLowerInvariant();
                         fit = val switch
                         {
                             "crop" => "crop",
@@ -617,16 +625,24 @@ public static class Program
                             return (inputs, outputDir, "crop", quality, format, jsonOutput, $"Unknown --fit value '{val}' in --options. Supported options: crop, contain, stretch.");
                         }
                     }
-                    if (root.TryGetProperty("quality", out var qualityProp) && qualityProp.TryGetInt32(out var qVal))
+                    if (root.TryGetProperty("quality", out var qualityProp))
                     {
+                        if (qualityProp.ValueKind != JsonValueKind.Number || !qualityProp.TryGetInt32(out var qVal))
+                        {
+                            return (inputs, outputDir, fit, quality, format, jsonOutput, "The 'quality' option must be an integer between 1 and 100.");
+                        }
                         quality = Math.Clamp(qVal, 1, 100);
                     }
-                    if (root.TryGetProperty("format", out var formatProp) && formatProp.GetString() is { } fmtStr)
+                    if (root.TryGetProperty("format", out var formatProp))
                     {
-                        format = fmtStr;
+                        if (formatProp.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(formatProp.GetString()))
+                        {
+                            return (inputs, outputDir, fit, quality, format, jsonOutput, "The 'format' option must be a non-empty string.");
+                        }
+                        format = formatProp.GetString();
                     }
                 }
-                catch (JsonException ex)
+                catch (Exception ex) when (ex is JsonException or InvalidOperationException)
                 {
                     return (inputs, outputDir, fit, quality, format, jsonOutput, $"Invalid JSON passed to --options: {ex.Message}");
                 }
@@ -917,8 +933,6 @@ public static class Program
     {
         var localTool = Path.Combine(ToolsDirectory, name);
         if (File.Exists(localTool)) return localTool;
-        var v1Tool = Path.Combine(ToolsDirectory, "v1", name);
-        if (File.Exists(v1Tool)) return v1Tool;
 
         var pathEnv = Environment.GetEnvironmentVariable("PATH") ?? "";
         foreach (var entry in pathEnv.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
@@ -935,8 +949,8 @@ public static class Program
     /// <summary>
     /// Resolves the path to the installed or bundled LibreOffice soffice.exe executable.
     /// </summary>
-    private static string? GetLibreOfficeExecutable()
+    private static string? GetLibreOfficeExecutable(bool applyWorkarounds = false)
     {
-        return OfficeLocator.ResolveExecutable(OfficeToolsDirectory, Environment.GetEnvironmentVariable("PATH"));
+        return OfficeLocator.ResolveExecutable(OfficeToolsDirectory, Environment.GetEnvironmentVariable("PATH"), applyWorkarounds);
     }
 }
