@@ -833,6 +833,8 @@
 "DOWNLOAD MEDIA TOOLS" = "TÉLÉCHARGER LES OUTILS MULTIMÉDIAS";
 "DOWNLOAD MISSING TOOLS" = "TÉLÉCHARGER LES OUTILS MANQUANTS";
 "DOWNLOAD OFFICE TOOLS" = "TÉLÉCHARGER LES OUTILS BUREAUTIQUES";
+"DOWNLOAD OR REFRESH THE VERIFIED TOOLS FOR CONVERSIONS, PREVIEWS AND WEB DOWNLOADS. TOOLS MANAGED ON YOUR PATH ARE KEPT." = "DOWNLOAD OR REFRESH THE VERIFIED TOOLS FOR CONVERSIONS, PREVIEWS AND WEB DOWNLOADS. TOOLS MANAGED ON YOUR PATH ARE KEPT.";
+"DOWNLOAD OR UPDATE TOOLS" = "DOWNLOAD OR UPDATE TOOLS";
 "DOWNLOAD PHOTOS" = "TÉLÉCHARGER LES PHOTOS";
 "DOWNLOAD PHOTOS…" = "TÉLÉCHARGER LES PHOTOS…";
 "DOWNLOAD THE MISSING TOOLS TO ENABLE ALL CONVERSIONS, PREVIEWS AND WEB DOWNLOADS. TOOLS ALREADY FOUND ON YOUR COMPUTER ARE KEPT." = "TÉLÉCHARGEZ LES OUTILS MANQUANTS POUR ACTIVER TOUTES LES CONVERSIONS, LES APERÇUS ET LES TÉLÉCHARGEMENTS WEB. LES OUTILS DÉJÀ PRÉSENTS SUR VOTRE ORDINATEUR SONT CONSERVÉS.";
@@ -916,6 +918,8 @@
 "Download media tools" = "Télécharger les outils multimédias";
 "Download missing tools" = "Télécharger les outils manquants";
 "Download office tools" = "Télécharger les outils bureautiques";
+"Download or refresh the verified tools for conversions, previews and web downloads. Tools managed on your PATH are kept." = "Download or refresh the verified tools for conversions, previews and web downloads. Tools managed on your PATH are kept.";
+"Download or update tools" = "Download or update tools";
 "Download photos" = "Télécharger les photos";
 "Download photos…" = "Télécharger les photos…";
 "Download the missing tools to enable all conversions, previews and web downloads. Tools already found on your computer are kept." = "Téléchargez les outils manquants pour activer toutes les conversions, les aperçus et les téléchargements web. Les outils déjà présents sur votre ordinateur sont conservés.";
@@ -2812,11 +2816,13 @@
 "YOUR TASK WILL FINISH BEFORE NASHI RESTARTS." = "VOTRE TÂCHE SE TERMINERA AVANT LE REDÉMARRAGE DE NASHI.";
 "YOUR TOOLS ARE READY." = "VOS OUTILS SONT PRÊTS.";
 "YOUR TOOLS ARE READY. LET’S PUT THAT NEXT FILE TO GOOD USE." = "VOS OUTILS SONT PRÊTS. METTONS CE PROCHAIN FICHIER À PROFIT.";
+"YOUTUBE REFUSED THIS PUBLIC DOWNLOAD. NASHI'S VERIFIED YT-DLP AND JAVASCRIPT RUNTIME ARE CURRENT, SO THIS VIDEO MAY REQUIRE SIGN-IN OR A PO TOKEN THAT NASHI DOES NOT IMPORT. TRY ANOTHER PUBLIC VIDEO OR INSTALL A NEWER NASHI UPDATE WHEN ONE IS AVAILABLE." = "YOUTUBE REFUSED THIS PUBLIC DOWNLOAD. NASHI'S VERIFIED YT-DLP AND JAVASCRIPT RUNTIME ARE CURRENT, SO THIS VIDEO MAY REQUIRE SIGN-IN OR A PO TOKEN THAT NASHI DOES NOT IMPORT. TRY ANOTHER PUBLIC VIDEO OR INSTALL A NEWER NASHI UPDATE WHEN ONE IS AVAILABLE.";
 "YOUTUBE THUMBNAIL · BEST AVAILABLE FULL-SIZE IMAGE" = "MINIATURE YOUTUBE · MEILLEURE IMAGE EN TAILLE RÉELLE DISPONIBLE";
 "YOU’RE ALL SET.\nMAKE SOMETHING GOOD." = "TOUT EST PRÊT.\nCRÉEZ QUELQUE CHOSE DE BIEN.";
 "You can also choose files from the main window." = "Vous pouvez aussi choisir des fichiers depuis la fenêtre principale.";
 "You choose when to download and install." = "Vous choisissez quand télécharger et installer.";
 "You have the latest published Windows version." = "Vous disposez de la dernière version publiée pour Windows.";
+"YouTube refused this public download. Nashi's verified yt-dlp and JavaScript runtime are current, so this video may require sign-in or a PO token that Nashi does not import. Try another public video or install a newer Nashi update when one is available." = "YouTube refused this public download. Nashi's verified yt-dlp and JavaScript runtime are current, so this video may require sign-in or a PO token that Nashi does not import. Try another public video or install a newer Nashi update when one is available.";
 "YouTube thumbnail · best available full-size image" = "Miniature YouTube · meilleure image en taille réelle disponible";
 "Your Library" = "Votre bibliothèque";
 "Your clipboard is empty." = "Votre presse-papiers est vide.";

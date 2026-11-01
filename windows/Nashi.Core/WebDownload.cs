@@ -3,6 +3,27 @@ using System.Text.Json;
 namespace Nashi.Core;
 public sealed partial class WebDownload(Toolchain tools)
 {
+    internal delegate Task<ProcessResult> ToolRunner(string executable,IEnumerable<string> arguments,CancellationToken token,Action<string>? outputLine);
+    private readonly ToolRunner runTool=ProcessRunner.RunAsync;
+    internal WebDownload(Toolchain tools,ToolRunner runTool):this(tools)=>this.runTool=runTool;
+    private string[] YtDlpBaseArguments(bool javascript=true)
+    {
+        var arguments=new List<string>{"--ignore-config","--no-plugin-dirs","--no-remote-components"};
+        if(javascript)arguments.AddRange(["--js-runtimes","deno:"+tools.Executable("deno")]);
+        return [.. arguments];
+    }
+    private async Task<ProcessResult> RunYtDlpAsync(Uri uri,IEnumerable<string> arguments,CancellationToken token,Action<string>? outputLine=null)
+    {
+        try{return await runTool(tools.Executable("yt-dlp"),arguments,token,outputLine);}
+        catch(IOException error)when(YoutubeFailure(uri,error.Message) is {} friendly){throw new IOException(friendly,error);}
+    }
+    internal static string? YoutubeFailure(Uri uri,string error)
+    {
+        if(!(uri.Host.Equals("youtube.com",StringComparison.OrdinalIgnoreCase)||uri.Host.EndsWith(".youtube.com",StringComparison.OrdinalIgnoreCase)||uri.Host.Equals("youtu.be",StringComparison.OrdinalIgnoreCase)))return null;
+        var errors=error.Split('\n').Select(line=>line.TrimStart()).Where(line=>line.StartsWith("ERROR:",StringComparison.Ordinal));
+        if(!errors.Any(line=>new[]{"HTTP Error 403","SABR","PO Token","Sign in to confirm","challenge solver"}.Any(line.Contains)))return null;
+        return "YouTube refused this public download. Nashi's verified yt-dlp and JavaScript runtime are current, so this video may require sign-in or a PO token that Nashi does not import. Try another public video or install a newer Nashi update when one is available.";
+    }
     /// Reads a "NASHI:downloaded:total" progress line. yt-dlp prints Python floats
     /// such as 1048576.0, so the numbers are parsed with the invariant culture;
     /// under tr-TR or de-DE the "." would otherwise be read as a group separator.
@@ -13,6 +34,7 @@ public sealed partial class WebDownload(Toolchain tools)
         if(parts.Length!=3||!double.TryParse(parts[1],NumberStyles.Float,CultureInfo.InvariantCulture,out var current)||!double.TryParse(parts[2],NumberStyles.Float,CultureInfo.InvariantCulture,out var total)||!double.IsFinite(current)||!double.IsFinite(total)||total<=0)return null;
         return Math.Clamp(current/total,0,.98);
     }
+    internal static string[] FilenameArguments()=>["--windows-filenames","-o","%(title).160B [%(id)s].%(ext)s"];
     public static Uri Validate(string input)
     {
         if(!Uri.TryCreate(input,UriKind.Absolute,out var url)||url.Scheme is not ("http" or "https")||!string.IsNullOrEmpty(url.UserInfo)||url.IsLoopback||url.Host.EndsWith(".local",StringComparison.OrdinalIgnoreCase))throw new ArgumentException("Paste a public http(s) media or page link.");return url;
@@ -29,11 +51,12 @@ public sealed partial class WebDownload(Toolchain tools)
         {
             var photos=await InspectPhotosAsync(uri.AbsoluteUri,token);if(selectedPhotos is not null){if(selectedPhotos.Count==0||selectedPhotos.Any(id=>!photos.Any(p=>p.Id==id)))throw new ArgumentException("Select at least one available photo.");photos=photos.Where(p=>selectedPhotos.Contains(p.Id)).ToArray();}var outputs=new List<string>();var n=0;foreach(var photo in photos){var local=new ProgressScope(progress,n++,photos.Length);outputs.Add(await WebPhotos.DownloadImageAsync(photo.Url,tx.StagingDirectory,local,token,"Instagram "+uri.Segments.Last().Trim('/')+" "+photo.Id.ToString("00")));}return tx.Publish(outputs,token);
         }
-        var args=new List<string>{"--ignore-config","--no-playlist","--no-part","--no-overwrites","--no-cache-dir","--restrict-filenames","--no-mtime","--progress","--newline","--progress-template","download:NASHI:%(progress.downloaded_bytes)s:%(progress.total_bytes,progress.total_bytes_estimate)s","--print","after_move:filepath","--ffmpeg-location",FfmpegLocation,"--js-runtimes","deno:"+tools.Executable("deno"),"-P",tx.StagingDirectory,"-o","%(title).160B [%(id)s].%(ext)s"};
+        var args=new List<string>(YtDlpBaseArguments()){ "--no-playlist","--no-part","--no-overwrites","--no-cache-dir","--no-mtime","--progress","--newline","--progress-template","download:NASHI:%(progress.downloaded_bytes)s:%(progress.total_bytes,progress.total_bytes_estimate)s","--print","after_move:filepath","--ffmpeg-location",FfmpegLocation,"-P",tx.StagingDirectory};
+        args.AddRange(FilenameArguments());
         if(kind=="audio")args.AddRange(["-x","--audio-format","mp3"]);else if(kind=="thumbnail")args.AddRange(["--skip-download","--write-thumbnail","--convert-thumbnails","jpg"]);else args.AddRange(["-f",maximumHeight is {} height?$"bv*[height<={height}]+ba/b[height<={height}]/bv*+ba/b":"bv*+ba/b","--merge-output-format","mp4"]);
         args.AddRange(["--",uri.AbsoluteUri]);
         progress?.Report(new(null,"Resolving media…"));
-        await ProcessRunner.RunAsync(tools.Executable("yt-dlp"),args,token,line=>
+        await RunYtDlpAsync(uri,args,token,line=>
         {
             if(ProgressFraction(line) is {} fraction)progress?.Report(new(fraction,"Downloading media…"));
         });
@@ -47,7 +70,7 @@ public sealed partial class WebDownload(Toolchain tools)
     }
     public async Task<WebPhoto[]> InspectPhotosAsync(string input,CancellationToken token=default)
     {
-        var uri=Validate(input);if(WebMediaPayload.Parse(input)?.Kind!="instagramPhotos")throw new ArgumentException("Choose an Instagram photo post link.");var result=await ProcessRunner.RunAsync(tools.Executable("yt-dlp"),["--ignore-config","--no-cache-dir","--yes-playlist","--playlist-end","51","--ignore-no-formats-error","--skip-download","--dump-single-json","--no-progress","--",uri.AbsoluteUri],token);return WebPhotos.Instagram(result.Output);
+        var uri=Validate(input);if(WebMediaPayload.Parse(input)?.Kind!="instagramPhotos")throw new ArgumentException("Choose an Instagram photo post link.");var result=await RunYtDlpAsync(uri,[..YtDlpBaseArguments(false),"--no-cache-dir","--yes-playlist","--playlist-end","51","--ignore-no-formats-error","--skip-download","--dump-single-json","--no-progress","--",uri.AbsoluteUri],token);return WebPhotos.Instagram(result.Output);
     }
     private sealed class ProgressScope(IProgress<OperationProgress>? progress,int index,int total):IProgress<OperationProgress>{public void Report(OperationProgress value)=>progress?.Report(value with{Fraction=value.Fraction is {} n?(index+n)/total*.98:null,Label=$"Photo {index+1} of {total}…"});}
 }

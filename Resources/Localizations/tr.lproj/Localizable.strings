@@ -833,6 +833,8 @@
 "DOWNLOAD MEDIA TOOLS" = "MEDYA ARAÇLARINI İNDİR";
 "DOWNLOAD MISSING TOOLS" = "EKSİK ARAÇLARI İNDİR";
 "DOWNLOAD OFFICE TOOLS" = "OFFICE ARAÇLARINI İNDİR";
+"DOWNLOAD OR REFRESH THE VERIFIED TOOLS FOR CONVERSIONS, PREVIEWS AND WEB DOWNLOADS. TOOLS MANAGED ON YOUR PATH ARE KEPT." = "DÖNÜŞTÜRMELER, ÖNİZLEMELER VE WEB İNDİRMELERİ İÇİN DOĞRULANMIŞ ARAÇLARI İNDİR VEYA YENİLE. PATH ÜZERİNDEN YÖNETİLEN ARAÇLAR KORUNUR.";
+"DOWNLOAD OR UPDATE TOOLS" = "ARAÇLARI İNDİR VEYA GÜNCELLE";
 "DOWNLOAD PHOTOS" = "FOTOĞRAFLARI İNDİR";
 "DOWNLOAD PHOTOS…" = "FOTOĞRAFLARI İNDİR…";
 "DOWNLOAD THE MISSING TOOLS TO ENABLE ALL CONVERSIONS, PREVIEWS AND WEB DOWNLOADS. TOOLS ALREADY FOUND ON YOUR COMPUTER ARE KEPT." = "TÜM DÖNÜŞTÜRMELERİ, ÖNİZLEMELERİ VE WEB İNDİRMELERİNİ AÇMAK İÇİN EKSİK ARAÇLARI İNDİR. BİLGİSAYARINDA BULUNAN ARAÇLAR KORUNUR.";
@@ -916,6 +918,8 @@
 "Download media tools" = "Medya araçlarını indir";
 "Download missing tools" = "Eksik araçları indir";
 "Download office tools" = "Office araçlarını indir";
+"Download or refresh the verified tools for conversions, previews and web downloads. Tools managed on your PATH are kept." = "Dönüştürmeler, önizlemeler ve web indirmeleri için doğrulanmış araçları indir veya yenile. PATH üzerinden yönetilen araçlar korunur.";
+"Download or update tools" = "Araçları indir veya güncelle";
 "Download photos" = "Fotoğrafları indir";
 "Download photos…" = "Fotoğrafları indir…";
 "Download the missing tools to enable all conversions, previews and web downloads. Tools already found on your computer are kept." = "Tüm dönüştürmeleri, önizlemeleri ve web indirmelerini açmak için eksik araçları indir. Bilgisayarında bulunan araçlar korunur.";
@@ -2812,11 +2816,13 @@
 "YOUR TASK WILL FINISH BEFORE NASHI RESTARTS." = "İŞLEMİN, NASHI YENİDEN BAŞLAMADAN ÖNCE TAMAMLANACAK.";
 "YOUR TOOLS ARE READY." = "ARAÇLARIN HAZIR.";
 "YOUR TOOLS ARE READY. LET’S PUT THAT NEXT FILE TO GOOD USE." = "ARAÇLARIN HAZIR. SIRADAKİ DOSYAYI BİRLİKTE HAZIRLAYALIM.";
+"YOUTUBE REFUSED THIS PUBLIC DOWNLOAD. NASHI'S VERIFIED YT-DLP AND JAVASCRIPT RUNTIME ARE CURRENT, SO THIS VIDEO MAY REQUIRE SIGN-IN OR A PO TOKEN THAT NASHI DOES NOT IMPORT. TRY ANOTHER PUBLIC VIDEO OR INSTALL A NEWER NASHI UPDATE WHEN ONE IS AVAILABLE." = "YOUTUBE BU HERKESE AÇIK İNDİRMEYİ REDDETTİ. NASHI’NİN DOĞRULANMIŞ YT-DLP VE JAVASCRİPT ÇALIŞMA ZAMANI GÜNCEL; BU NEDENLE VİDEO, NASHI’NİN İÇE AKTARMADIĞI BİR OTURUM AÇMA İŞLEMİ VEYA PO TOKENI GEREKTİRİYOR OLABİLİR. BAŞKA BİR HERKESE AÇIK VİDEO DENEYİN YA DA KULLANILABİLİR OLDUĞUNDA DAHA YENİ BİR NASHI GÜNCELLEMESİ YÜKLEYİN.";
 "YOUTUBE THUMBNAIL · BEST AVAILABLE FULL-SIZE IMAGE" = "YOUTUBE KÜÇÜK RESMİ · EN İYİ TAM BOYUTLU GÖRSEL";
 "YOU’RE ALL SET.\nMAKE SOMETHING GOOD." = "HER ŞEY HAZIR.\nGÜZEL BİR ŞEY YAP.";
 "You can also choose files from the main window." = "Ana pencereden de dosya seçebilirsin.";
 "You choose when to download and install." = "Ne zaman indirip kuracağına sen karar ver.";
 "You have the latest published Windows version." = "Yayınlanan en güncel Windows sürümünü kullanıyorsun.";
+"YouTube refused this public download. Nashi's verified yt-dlp and JavaScript runtime are current, so this video may require sign-in or a PO token that Nashi does not import. Try another public video or install a newer Nashi update when one is available." = "YouTube bu herkese açık indirmeyi reddetti. Nashi’nin doğrulanmış yt-dlp ve JavaScript çalışma zamanı güncel; bu nedenle video, Nashi’nin içe aktarmadığı bir oturum açma işlemi veya PO tokenı gerektiriyor olabilir. Başka bir herkese açık video deneyin ya da kullanılabilir olduğunda daha yeni bir Nashi güncellemesi yükleyin.";
 "YouTube thumbnail · best available full-size image" = "YouTube küçük resmi · en iyi tam boyutlu görsel";
 "Your Library" = "Kitaplığın";
 "Your clipboard is empty." = "Panon boş.";
