@@ -134,6 +134,17 @@ final class AppLocalizationTests:XCTestCase {
             XCTAssertEqual(AppLocalization.text(source,language:"tr"),source)
         }
     }
+    /// The web download button for an Instagram photo post (WebDownloadView.photoDownloadTitle) uses one key per count
+    /// form, so French reads the singular for 0 and 1 and no English word is left inside.
+    func testPhotoDownloadButtonCountIsTranslated() {
+        XCTAssertEqual(AppLocalization.text("Download 0 photos",language:"fr"),"Télécharger 0 photo")
+        XCTAssertEqual(AppLocalization.text("Download 1 photo",language:"fr"),"Télécharger 1 photo")
+        XCTAssertEqual(AppLocalization.text("Download 3 photos",language:"fr"),"Télécharger 3 photos")
+        XCTAssertEqual(AppLocalization.text("Download 0 photos",language:"tr"),"0 fotoğraf indir")
+        XCTAssertEqual(AppLocalization.text("Download 1 photo",language:"tr"),"1 fotoğraf indir")
+        XCTAssertEqual(AppLocalization.text("Download 12 photos",language:"tr"),"12 fotoğraf indir")
+        XCTAssertEqual(AppLocalization.text("Download 12 photos",language:"en"),"Download 12 photos")
+    }
     /// A batch reports "File <i> of <n> · <status>". Both the prefix and the status are translated; a status without a
     /// translation stays as it is.
     func testBatchStatusTranslatesPrefixAndStatus() throws {

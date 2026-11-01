@@ -821,6 +821,8 @@
 "DOCUMENTS" = "DOCUMENTS";
 "DONE" = "TERMINÉ";
 "DOWNLOAD" = "TÉLÉCHARGER";
+"DOWNLOAD 0 PHOTOS" = "TÉLÉCHARGER 0 PHOTO";
+"DOWNLOAD 1 PHOTO" = "TÉLÉCHARGER 1 PHOTO";
 "DOWNLOAD A LINK" = "TÉLÉCHARGER UN LIEN";
 "DOWNLOAD AUDIO" = "TÉLÉCHARGER L’AUDIO";
 "DOWNLOAD CANCELLED. NO PARTIAL FILES WERE KEPT." = "TÉLÉCHARGEMENT ANNULÉ. AUCUN FICHIER PARTIEL N’A ÉTÉ CONSERVÉ.";
@@ -902,6 +904,10 @@
 "Documents" = "Documents";
 "Done" = "Terminé";
 "Download" = "Télécharger";
+"Download %@ photos" = "Télécharger %@ photos";
+"Download %lld photos" = "Télécharger %lld photos";
+"Download 0 photos" = "Télécharger 0 photo";
+"Download 1 photo" = "Télécharger 1 photo";
 "Download Audio" = "Télécharger l’audio";
 "Download ExifTool (~11 MB) from its official SourceForge distribution? The SHA-256 is checked and it runs locally without an administrator password. Upstream licenses are retained." = "Télécharger ExifTool (~11 Mo) depuis sa distribution officielle sur SourceForge ? Le SHA-256 est vérifié et l’outil s’exécute en local sans mot de passe administrateur. Les licences amont sont conservées.";
 "Download FFmpeg (~180 MB), yt-dlp and Deno directly from their official GitHub releases? SHA-256 hashes are verified before use. FFmpeg is GPL; the other upstream licenses and source links are listed on our Features page. No administrator password is needed." = "Télécharger FFmpeg (~180 Mo), yt-dlp et Deno directement depuis leurs versions officielles sur GitHub ? Les empreintes SHA-256 sont vérifiées avant utilisation. FFmpeg est sous licence GPL ; les autres licences amont et les liens vers les sources figurent sur notre page des fonctionnalités. Aucun mot de passe administrateur n’est nécessaire.";

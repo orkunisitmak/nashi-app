@@ -821,6 +821,8 @@
 "DOCUMENTS" = "BELGELER";
 "DONE" = "BİTTİ";
 "DOWNLOAD" = "İNDİR";
+"DOWNLOAD 0 PHOTOS" = "0 FOTOĞRAF İNDİR";
+"DOWNLOAD 1 PHOTO" = "1 FOTOĞRAF İNDİR";
 "DOWNLOAD A LINK" = "BAĞLANTIDAN İNDİR";
 "DOWNLOAD AUDIO" = "SESİ İNDİR";
 "DOWNLOAD CANCELLED. NO PARTIAL FILES WERE KEPT." = "İNDİRME İPTAL EDİLDİ. YARIM KALAN DOSYALAR SİLİNDİ.";
@@ -902,6 +904,10 @@
 "Documents" = "Belgeler";
 "Done" = "Bitti";
 "Download" = "İndir";
+"Download %@ photos" = "%@ fotoğraf indir";
+"Download %lld photos" = "%lld fotoğraf indir";
+"Download 0 photos" = "0 fotoğraf indir";
+"Download 1 photo" = "1 fotoğraf indir";
 "Download Audio" = "Sesi İndir";
 "Download ExifTool (~11 MB) from its official SourceForge distribution? The SHA-256 is checked and it runs locally without an administrator password. Upstream licenses are retained." = "ExifTool (~11 MB) resmi SourceForge dağıtımından indirilsin mi? SHA-256 özeti kontrol edilir; yönetici parolası gerekmeden bilgisayarında çalışır. Kendi lisansları korunur.";
 "Download FFmpeg (~180 MB), yt-dlp and Deno directly from their official GitHub releases? SHA-256 hashes are verified before use. FFmpeg is GPL; the other upstream licenses and source links are listed on our Features page. No administrator password is needed." = "FFmpeg (~180 MB), yt-dlp ve Deno resmi GitHub sürümlerinden indirilsin mi? SHA-256 özetleri kullanılmadan önce doğrulanır. FFmpeg GPL lisanslıdır; diğer lisanslar ve kaynak bağlantıları Özellikler sayfamızda yer alır. Yönetici parolası gerekmez.";
