@@ -152,7 +152,7 @@
       "avi",
       "wmv",
       "gif",
-      "mp3"
+      "m4a", "wav", "flac", "ogg", "mp3"
     ],
     "mov": [
       "mp4",
@@ -161,7 +161,7 @@
       "avi",
       "wmv",
       "gif",
-      "mp3"
+      "m4a", "wav", "flac", "ogg", "mp3"
     ],
     "mkv": [
       "mp4",
@@ -170,7 +170,7 @@
       "avi",
       "wmv",
       "gif",
-      "mp3"
+      "m4a", "wav", "flac", "ogg", "mp3"
     ],
     "webm": [
       "mp4",
@@ -179,7 +179,7 @@
       "avi",
       "wmv",
       "gif",
-      "mp3"
+      "m4a", "wav", "flac", "ogg", "mp3"
     ],
     "avi": [
       "mp4",
@@ -188,7 +188,7 @@
       "webm",
       "wmv",
       "gif",
-      "mp3"
+      "m4a", "wav", "flac", "ogg", "mp3"
     ],
     "wmv": [
       "mp4",
@@ -197,7 +197,7 @@
       "webm",
       "avi",
       "gif",
-      "mp3"
+      "m4a", "wav", "flac", "ogg", "mp3"
     ],
     "gif": [
       "mp4",
