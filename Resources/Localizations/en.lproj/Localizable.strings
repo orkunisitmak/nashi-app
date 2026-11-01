@@ -1562,6 +1562,7 @@
 "NONE" = "NONE";
 "NORMALIZE AUDIO" = "NORMALIZE AUDIO";
 "NORMALIZE VOLUME" = "NORMALIZE VOLUME";
+"NOT SUPPORTED FOR LINKS" = "NOT SUPPORTED FOR LINKS";
 "NOTE" = "NOTE";
 "NOTHING HERE YET. PASTE SOMETHING OR MAKE YOUR FIRST FRESH COPY." = "NOTHING HERE YET. PASTE SOMETHING OR MAKE YOUR FIRST FRESH COPY.";
 "NUMBER" = "NUMBER";
@@ -1628,6 +1629,7 @@
 "None" = "None";
 "Normalize Audio" = "Normalize Audio";
 "Normalize Volume" = "Normalize Volume";
+"Not supported for links" = "Not supported for links";
 "Note" = "Note";
 "Nothing here yet. Paste something or make your first fresh copy." = "Nothing here yet. Paste something or make your first fresh copy.";
 "Number" = "Number";

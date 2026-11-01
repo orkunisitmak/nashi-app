@@ -1562,6 +1562,7 @@
 "NONE" = "YOK";
 "NORMALIZE AUDIO" = "SESİ NORMALİZE ET";
 "NORMALIZE VOLUME" = "SES DÜZEYİNİ EŞİTLE";
+"NOT SUPPORTED FOR LINKS" = "BAĞLANTILAR İÇİN DESTEKLENMİYOR";
 "NOTE" = "NOT";
 "NOTHING HERE YET. PASTE SOMETHING OR MAKE YOUR FIRST FRESH COPY." = "BURADA HENÜZ BİR ŞEY YOK. BİR DOSYA YAPIŞTIR VEYA İLK KOPYANI OLUŞTUR.";
 "NUMBER" = "NUMARA";
@@ -1628,6 +1629,7 @@
 "None" = "Yok";
 "Normalize Audio" = "Sesi Normalize Et";
 "Normalize Volume" = "Ses Düzeyini Eşitle";
+"Not supported for links" = "Bağlantılar için desteklenmiyor";
 "Note" = "Not";
 "Nothing here yet. Paste something or make your first fresh copy." = "Burada henüz bir şey yok. Bir dosya yapıştır veya ilk kopyanı oluştur.";
 "Number" = "Numara";

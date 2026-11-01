@@ -1562,6 +1562,7 @@
 "NONE" = "AUCUNE";
 "NORMALIZE AUDIO" = "NORMALISER L’AUDIO";
 "NORMALIZE VOLUME" = "NORMALISER LE VOLUME";
+"NOT SUPPORTED FOR LINKS" = "NON PRIS EN CHARGE POUR LES LIENS";
 "NOTE" = "NOTE";
 "NOTHING HERE YET. PASTE SOMETHING OR MAKE YOUR FIRST FRESH COPY." = "RIEN ICI POUR L’INSTANT. COLLEZ QUELQUE CHOSE OU CRÉEZ VOTRE PREMIÈRE COPIE.";
 "NUMBER" = "NUMÉRO";
@@ -1628,6 +1629,7 @@
 "None" = "Aucune";
 "Normalize Audio" = "Normaliser l’audio";
 "Normalize Volume" = "Normaliser le volume";
+"Not supported for links" = "Non pris en charge pour les liens";
 "Note" = "Note";
 "Nothing here yet. Paste something or make your first fresh copy." = "Rien ici pour l’instant. Collez quelque chose ou créez votre première copie.";
 "Number" = "Numéro";
