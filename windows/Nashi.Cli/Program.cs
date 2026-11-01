@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using System.IO;
 using System.Text.Json;
 using Nashi.Core;
@@ -8,6 +9,10 @@ namespace Nashi.Cli;
 
 public static class Program
 {
+    private static readonly JsonSerializerOptions StrictOptions = new()
+    {
+        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow
+    };
     [STAThread]
     public static async Task<int> Main(string[] args)
     {
@@ -184,7 +189,7 @@ public static class Program
                             if (FeatureCatalog.IsImage(input) || inExt is "gif" || destFormat is "ico" || ImageEngine.Formats.Contains(destFormat))
                             {
                                 var imgOpts = optionsJson is not null
-                                    ? JsonSerializer.Deserialize<ImageOptions>(optionsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ImageOptions()
+                                    ? JsonSerializer.Deserialize<ImageOptions>(optionsJson, StrictOptions) ?? new ImageOptions()
                                     : new ImageOptions();
                                 var produced = ImageEngine.Apply("convert", [input], stageDir, imgOpts, format: destFormat);
                                 foreach (var f in produced)
@@ -198,7 +203,7 @@ public static class Program
                                 var ffprobe = toolchain.Executable("ffprobe");
                                 var engine = new MediaEngine(ffmpeg, ffprobe);
                                 var mediaOpts = optionsJson is not null
-                                    ? JsonSerializer.Deserialize<MediaOptions>(optionsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new MediaOptions()
+                                    ? JsonSerializer.Deserialize<MediaOptions>(optionsJson, StrictOptions) ?? new MediaOptions()
                                     : new MediaOptions();
                                 var produced = await engine.ConvertAsync([input], destFormat, stageDir, mediaOpts);
                                 foreach (var f in produced)
@@ -235,7 +240,7 @@ public static class Program
                         if (toolId is "createPDF" or "createCollage" || (FeatureCatalog.IsImage(firstInput) && toolId is "rotate" or "crop" or "compress" or "removeMetadata" or "annotate" or "editImage" or "redactImage" or "frameImage"))
                         {
                             var imgOpts = optionsJson is not null
-                                ? JsonSerializer.Deserialize<ImageOptions>(optionsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ImageOptions()
+                                ? JsonSerializer.Deserialize<ImageOptions>(optionsJson, StrictOptions) ?? new ImageOptions()
                                 : new ImageOptions();
                             var produced = ImageEngine.Apply(toolId, paths, stageDir, imgOpts);
                             foreach (var f in produced)
@@ -257,7 +262,7 @@ public static class Program
                             var ffprobe = toolchain.Executable("ffprobe");
                             var engine = new MediaEngine(ffmpeg, ffprobe);
                             var mediaOpts = optionsJson is not null
-                                ? JsonSerializer.Deserialize<MediaOptions>(optionsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new MediaOptions()
+                                ? JsonSerializer.Deserialize<MediaOptions>(optionsJson, StrictOptions) ?? new MediaOptions()
                                 : new MediaOptions();
                             var produced = await engine.ToolAsync(toolId, paths, stageDir, mediaOpts);
                             foreach (var f in produced)
@@ -284,11 +289,22 @@ public static class Program
 
                     // Publish all staged outputs atomically
                     var published = new List<string>();
-                    foreach (var (stageFile, finalFile) in stagedOutputs)
+                    try
                     {
-                        var destFile = SafePaths.Unique(Path.GetDirectoryName(finalFile)!, Path.GetFileName(finalFile));
-                        File.Move(stageFile, destFile);
-                        published.Add(destFile);
+                        foreach (var (stageFile, finalFile) in stagedOutputs)
+                        {
+                            var destFile = SafePaths.Unique(Path.GetDirectoryName(finalFile)!, Path.GetFileName(finalFile));
+                            File.Move(stageFile, destFile);
+                            published.Add(destFile);
+                        }
+                    }
+                    catch
+                    {
+                        foreach (var p in published)
+                        {
+                            try { File.Delete(p); } catch { }
+                        }
+                        throw;
                     }
 
                     if (jsonOutput)

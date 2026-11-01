@@ -62,7 +62,7 @@ public sealed class MetadataService(string root)
                     args.Add("-E");
                     foreach (var (k, v) in updates)
                     {
-                        var val = v.Replace("&", "&amp;").Replace("\r\n", "&#10;").Replace("\r", "&#10;").Replace("\n", "&#10;");
+                        var val = v.Replace("&", "&amp;").Replace("\r", "&#13;").Replace("\n", "&#10;");
                         args.Add("-" + k + "=" + val);
                     }
                 }

@@ -364,8 +364,10 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
                     ? new[] { "h264_videotoolbox" }
                     : Array.Empty<string>();
 
+            var hadTimeout = false;
             foreach(var encoder in candidates)
             {
+                token.ThrowIfCancellationRequested();
                 try
                 {
                     using var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
@@ -379,16 +381,25 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
                     ], cts.Token).ConfigureAwait(false);
 
                     detectedHardwareH264Encoder = encoder;
-                    break;
+                    checkedHardware = true;
+                    return detectedHardwareH264Encoder;
                 }
-                catch(OperationCanceledException) when(!token.IsCancellationRequested)
+                catch(OperationCanceledException) when(token.IsCancellationRequested)
                 {
+                    throw;
                 }
-                catch
+                catch(OperationCanceledException)
+                {
+                    hadTimeout = true;
+                }
+                catch(Exception ex) when(ex is not OperationCanceledException)
                 {
                 }
             }
-            checkedHardware = true;
+            if(!hadTimeout)
+            {
+                checkedHardware = true;
+            }
             return detectedHardwareH264Encoder;
         }
         finally
