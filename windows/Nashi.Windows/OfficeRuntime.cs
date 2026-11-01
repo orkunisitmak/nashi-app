@@ -33,7 +33,7 @@ public sealed class OfficeRuntime(string root)
     }
     public async Task InstallAsync(IProgress<OperationProgress>? progress,CancellationToken token)
     {
-        if(Executable is not null)return;Directory.CreateDirectory(root);var stage=Path.Combine(root,".office-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(stage);
+        var currentExe=Executable;if(currentExe is not null&&currentExe!="MicrosoftOffice")return;Directory.CreateDirectory(root);var stage=Path.Combine(root,".office-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(stage);
         try
         {
             var msi=Path.Combine(stage,"office.msi");var sources=new[]{new Uri("https://download.documentfoundation.org/libreoffice/stable/26.8.1/win/x86_64/LibreOffice_26.8.1_Win_x86-64.msi"),new Uri("https://downloadarchive.documentfoundation.org/libreoffice/old/26.8.1.1/win/x86_64/LibreOffice_26.8.1.1_Win_x86-64.msi")};await VerifiedDownload.FetchAnyAsync(sources,msi,600L*1024*1024,p=>progress?.Report(new(p*.75,"Downloading LibreOffice 26.8.1…")),token,file=>{using var stream=File.OpenRead(file);return Convert.ToHexString(SHA256.HashData(stream)).Equals("c6298b10cfa1748bcbedad94c62ce771e240e5021bfd6d7a967cd571b04b5312",StringComparison.OrdinalIgnoreCase);});

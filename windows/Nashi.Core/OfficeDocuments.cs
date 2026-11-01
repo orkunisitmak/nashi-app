@@ -21,13 +21,22 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
         var destination=SafePaths.Unique(outputDirectory,Path.GetFileNameWithoutExtension(original)+"."+(format=="tsv"?"csv":format));
 
         // Native Microsoft Office support (no LibreOffice download needed)
-        if (OperatingSystem.IsWindows() && MicrosoftOffice.IsAvailable && MicrosoftOffice.CanHandle(ext, format))
+        if (OperatingSystem.IsWindows() && MicrosoftOffice.CanHandle(ext, format))
         {
             token.ThrowIfCancellationRequested();
-            var success = await Task.Run(() => MicrosoftOffice.TryConvert(original, format, destination), token);
-            if (success && File.Exists(destination) && new FileInfo(destination).Length > 0)
+            using var limit = CancellationTokenSource.CreateLinkedTokenSource(token);
+            limit.CancelAfter(ConversionTimeout);
+            try
             {
-                return destination;
+                var success = await Task.Run(() => MicrosoftOffice.TryConvert(original, format, destination, limit.Token), limit.Token);
+                if (success && File.Exists(destination) && new FileInfo(destination).Length > 0)
+                {
+                    return destination;
+                }
+            }
+            catch (OperationCanceledException) when (!token.IsCancellationRequested)
+            {
+                throw new TimeoutException(TimeoutMessage);
             }
         }
 
