@@ -152,15 +152,14 @@ internal static class EditorChecks
         Check(bubble.Width==Bubble.Large&&bubble.Ring=="tools"&&bubble.Segments.Any(b=>(b.Tag as Choice)?.Id=="annotateImage"),"Dropping an image opens the Tools ring");
         bubble.Collapse();bubble.Expand([photo],KeyModifiers.Shift);Pump();Check(bubble.Ring=="convert"&&bubble.Segments.Any(b=>(b.Tag as Choice)?.Format=="webp"),"Shift opens the Convert ring");
         bubble.Collapse();bubble.Expand([photo],KeyModifiers.Alt);Pump();Check(bubble.Ring=="actions"&&bubble.Segments.Count()==6,"Alt opens the File ring");
-        bool Inside(Button b){var r=new Rect(Canvas.GetLeft(b),Canvas.GetTop(b),b.DesiredSize.Width,b.DesiredSize.Height);const double c=Bubble.Large/2;return new[]{r.TopLeft,r.TopRight,r.BottomLeft,r.BottomRight}.All(p=>Math.Sqrt((p.X-c)*(p.X-c)+(p.Y-c)*(p.Y-c))<=c-8);}
-        bool Apart(Button[] all)=>all.SelectMany((a,i)=>all.Skip(i+1).Select(b=>(a,b))).All(p=>!new Rect(Canvas.GetLeft(p.a),Canvas.GetTop(p.a),p.a.DesiredSize.Width,p.a.DesiredSize.Height).Intersects(new Rect(Canvas.GetLeft(p.b),Canvas.GetTop(p.b),p.b.DesiredSize.Width,p.b.DesiredSize.Height)));
-        bool Clear(Bubble b)=>b.Segments.All(x=>!new Rect(Canvas.GetLeft(x),Canvas.GetTop(x),x.DesiredSize.Width,x.DesiredSize.Height).Intersects(new Rect(Bubble.Large/2-60,Bubble.Large/2-40,120,100)));
-        Check(bubble.Segments.All(Inside)&&Apart(bubble.Segments.ToArray())&&Clear(bubble),"File ring buttons fit inside the disc without overlapping");
+        Check(bubble.Segments.Count()==6&&bubble.Segments.All(p=>p is Avalonia.Controls.Shapes.Path),"Each choice is a petal of the ring");
         var many=Enumerable.Range(1,10).Select(n=>new Choice("t"+n,"Change Video Speed "+n)).ToArray();
         var crowded=new Bubble((_,_)=>many,(_,_)=>Task.FromResult(""));crowded.Show();crowded.Expand([photo]);Pump();
-        Check(crowded.Segments.Count()==10&&crowded.Segments.All(Inside)&&Apart(crowded.Segments.ToArray())&&Clear(crowded),$"Ten long choices fit on two circles without overlapping (inside {crowded.Segments.Count(Inside)}, apart {Apart(crowded.Segments.ToArray())}, clear {Clear(crowded)}: {string.Join(" ",crowded.Segments.Select(x=>$"{Canvas.GetLeft(x):0},{Canvas.GetTop(x):0},{x.DesiredSize.Width:0}x{x.DesiredSize.Height:0}"))})");crowded.Close();
+        // The middle of each petal is inside that petal and in no other, so ten choices still have their own place.
+        var c=Bubble.Large/2;bool Own(Choice x,int i){var a=-Math.PI/2-Math.PI/10+(i+.5)*2*Math.PI/10;var p=new Point(c+169*Math.Cos(a),c+169*Math.Sin(a));return crowded.PetalOf(x).FillContains(p)&&many.Where(o=>o!=x).All(o=>!crowded.PetalOf(o).FillContains(p));}
+        Check(crowded.Segments.Count()==10&&many.Select((x,i)=>Own(x,i)).All(v=>v),"Ten choices get ten separate petals");crowded.Close();
         bubble.KeyPress(Avalonia.Input.Key.Tab,RawInputModifiers.None,PhysicalKey.None,null);Pump();Check(bubble.Ring=="tools","Tab moves to the next ring");
-        var crop=bubble.Segments.First(b=>(b.Tag as Choice)?.Id=="cropImage");crop.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));Pump();
+        var crop=(Choice)bubble.Segments.First(b=>(b.Tag as Choice)?.Id=="cropImage").Tag!;Wait(bubble.Pick(crop));Pump();
         Check(ran?.Id=="cropImage"&&with is [var only]&&only==photo&&bubble.Width==Bubble.Small,"A wheel button runs that tool on the dropped file and closes the wheel");
         bubble.Expand([photo,Path.Combine(root,"a.txt")]);Pump();Check(bubble.Ring=="actions","Mixed files open on the ring that has choices");
         bubble.KeyPress(Avalonia.Input.Key.Escape,RawInputModifiers.None,PhysicalKey.None,null);Pump();Check(bubble.Width==Bubble.Small&&bubble.Held.Count==0,"Escape closes the wheel");

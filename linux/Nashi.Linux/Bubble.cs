@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Layout;
@@ -17,7 +18,7 @@ namespace Nashi.Linux;
 /// first, the same modifiers as the wheels. Drag the pear itself to move it.
 internal sealed class Bubble:Window
 {
-    public const double Small=76,Large=470;
+    public const double Small=76,Large=500;
     private static readonly string[] Rings=["tools","convert","actions"];
     private readonly Image pear=new(){Width=60,Height=60,Source=new Bitmap(AssetLoader.Open(new Uri("avares://Nashi/Assets/NashiMark.png")))};
     private readonly Canvas wheel=new(){Width=Large,Height=Large,IsVisible=false};
@@ -28,7 +29,6 @@ internal sealed class Bubble:Window
     private readonly DispatcherTimer hide=new(){Interval=TimeSpan.FromSeconds(5)};
     private string[] held=[];private string ring="tools";private PixelPoint home;
     internal string Ring=>ring;internal IReadOnlyList<string> Held=>held;
-    internal IEnumerable<Button> Segments=>wheel.Children.OfType<Button>();
 
     /// `choices(files, ring)` lists a ring's buttons; `run(files, choice)` runs one and returns a status line.
     public Bubble(Func<IReadOnlyList<string>,string,Choice[]> choices,Func<IReadOnlyList<string>,Choice,Task<string>> run)
@@ -40,7 +40,6 @@ internal sealed class Bubble:Window
         puck[!Border.BackgroundProperty]=new Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("Surface");
         ToolTip.SetTip(puck,Localizer.T("Drop files here. Hold Ctrl for tools, Shift to convert, Alt for file actions."));
         Content=new Panel{Children={wheel,puck}};
-        wheel.LayoutUpdated+=(_,_)=>Remeasured();
         puck.PointerPressed+=(_,e)=>{if(e.GetCurrentPoint(this).Properties.IsLeftButtonPressed&&!wheel.IsVisible)BeginMoveDrag(e);};
         puck.DoubleTapped+=(_,_)=>Collapse();
         DragDrop.SetAllowDrop(this,true);
@@ -82,84 +81,73 @@ internal sealed class Bubble:Window
     public void Collapse()
     {
         if(!wheel.IsVisible)return;wheel.IsVisible=false;wheel.Children.Clear();held=[];
-        Width=Height=Small;Position=home;
+        Width=Height=Small;Position=home;puck.Margin=new(0);
     }
 
     private bool busy;
-    /// One ring: the choices on a circle (two circles when there are many), ring tabs and a short note in the middle.
+    private const double Inner=98,Outer=240;
+    private readonly List<(Avalonia.Controls.Shapes.Path Petal,Choice Choice)> petals=[];
+    internal IEnumerable<Control> Segments=>petals.Select(p=>(Control)p.Petal);
+    internal Geometry PetalOf(Choice choice)=>petals.First(p=>p.Choice==choice).Petal.Data!;
+    internal Task Pick(Choice choice)=>Choose(choice);
+    /// Symbols from the Windows wheel, so the rings read the same on every platform.
+    internal static string Symbol(string id)=>id switch{"compress"=>"↘","removeMetadata"=>"◇","editImage"=>"☷","annotateImage"=>"✎","frameImage"=>"▣","cropImage" or "cropVideo"=>"⌗","trimAudio" or "trimVideo"=>"✂","muteVideo"=>"♫","normalizeAudio"=>"≋","audioChannels"=>"⇆","audioToVideo"=>"▷","createCollage"=>"▦","redactImage" or "redactVideo" or "redactAudio"=>"▨","readQRCode"=>"▧","mergePDF"=>"▣","splitPDF" or "splitVideo"=>"◫","organizePDF"=>"▤","extractArchive"=>"↗","createPDF"=>"▱","joinVideos"=>"⇥","videoSnapshots"=>"▣","changeVideoSpeed"=>"◴",
+        "action:open"=>"◎","action:float"=>"▣","action:copy"=>"▱","action:move"=>"↗","action:path"=>"↪","action:terminal"=>">_","convert"=>"⇄",_=>"↗"};
+
+    /// One ring drawn like the Windows wheel: a petal per choice between two circles, a symbol and an
+    /// upper-case name in each, the highlighted petal in sage with a gold edge; the ring name, the file
+    /// and the ring tabs sit in the middle with the pear.
     private void Show(string name)
     {
-        ring=name;wheel.Children.Clear();const double c=Large/2;
+        ring=name;wheel.Children.Clear();petals.Clear();const double c=Large/2;
         var list=choices(held,name);
-        var disc=new Border{Width=Large-8,Height=Large-8,CornerRadius=new(Large/2),BoxShadow=BoxShadows.Parse("0 4 24 0 #60000000"),Opacity=.97};
-        disc[!Border.BackgroundProperty]=new Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("Paper");Canvas.SetLeft(disc,4);Canvas.SetTop(disc,4);wheel.Children.Add(disc);
-        // Up to seven choices on one circle, more on two; long names wrap to two lines. Buttons are
-        // added first and measured with their template, then placed.
-        var two=list.Length>7;var inner=two?list.Length/2:list.Length;var placed=new List<(Button Button,double Angle,double Radius)>();
+        var disc=new Ellipse{Width=Large-6,Height=Large-6,Opacity=.97};disc[!Shape.FillProperty]=Resource("Surface");disc[!Shape.StrokeProperty]=Resource("Line");disc.StrokeThickness=1;
+        Canvas.SetLeft(disc,3);Canvas.SetTop(disc,3);wheel.Children.Add(disc);
+        var count=Math.Max(1,list.Length);var sweep=2*Math.PI/count;var first=count==3?-Math.PI:-Math.PI/2-sweep/2;
+        Point P(double r,double a)=>new(c+r*Math.Cos(a),c+r*Math.Sin(a));
         for(var i=0;i<list.Length;i++)
         {
-            var onInner=i<inner;var count=onInner?inner:list.Length-inner;var index=onInner?i:i-inner;
-            var radius=two?(onInner?122:186):165d;var angle=-Math.PI/2+2*Math.PI*index/Math.Max(1,count)+(two&&!onInner?Math.PI/Math.Max(1,count):0);
-            var choice=list[i];
-            var button=new Button{Content=new TextBlock{Text=choice.Title,TextWrapping=TextWrapping.Wrap,TextAlignment=TextAlignment.Center,MaxWidth=92,FontSize=12},Padding=new(8,4),Tag=choice};
-            ToolTip.SetTip(button,choice.Title);button.Click+=async(_,_)=>await Choose(choice);
-            wheel.Children.Add(button);placed.Add((button,angle,radius));
+            var choice=list[i];var a=first+i*sweep+.012;var b=first+(i+1)*sweep-.012;if(count==1){a=-Math.PI/2+.001;b=a+2*Math.PI-.002;}
+            var geometry=new StreamGeometry();
+            using(var g=geometry.Open())
+            {
+                g.BeginFigure(P(Inner,a),true);g.LineTo(P(Outer,a));g.ArcTo(P(Outer,b),new Size(Outer,Outer),0,b-a>Math.PI,SweepDirection.Clockwise);
+                g.LineTo(P(Inner,b));g.ArcTo(P(Inner,a),new Size(Inner,Inner),0,b-a>Math.PI,SweepDirection.CounterClockwise);g.EndFigure(true);
+            }
+            var petal=new Avalonia.Controls.Shapes.Path{Data=geometry,StrokeThickness=1,Cursor=new Cursor(StandardCursorType.Hand),Tag=choice};
+            Paint(petal,false);ToolTip.SetTip(petal,choice.Title);
+            petal.PointerEntered+=(_,_)=>Paint(petal,true);petal.PointerExited+=(_,_)=>Paint(petal,false);
+            petal.PointerReleased+=async(_,e)=>{if(e.InitialPressMouseButton==MouseButton.Left)await Choose(choice);};
+            wheel.Children.Add(petal);petals.Add((petal,choice));
+            // The label: symbol over the name, as wide as the petal allows at its middle radius.
+            var mid=(a+b)/2;var radius=(Inner+Outer)/2;var width=Math.Clamp(radius*sweep*.82,64,132);
+            var label=new StackPanel{Width=width,IsHitTestVisible=false,Spacing=2,Children=
+            {
+                new TextBlock{Text=Symbol(choice.Id=="convert"&&choice.Format is null?"convert":choice.Id),FontSize=24,TextAlignment=TextAlignment.Center},
+                new TextBlock{Text=Localizer.Language=="tr"?Localizer.T(choice.Title).ToUpper(new System.Globalization.CultureInfo("tr-TR")):choice.Title.ToUpperInvariant(),FontSize=11,FontWeight=FontWeight.SemiBold,TextAlignment=TextAlignment.Center,TextWrapping=TextWrapping.Wrap,LetterSpacing=.4}
+            }};
+            label.Measure(new Size(width,double.PositiveInfinity));var at=P(radius,mid);
+            Canvas.SetLeft(label,at.X-width/2);Canvas.SetTop(label,at.Y-label.DesiredSize.Height/2);wheel.Children.Add(label);
         }
-        // Ring tabs under the pear, like the three wheels.
-        var tabs=new StackPanel{Orientation=Orientation.Horizontal,Spacing=4};
+        // The middle: pear, ring name, the file and the ring tabs.
+        var title=new TextBlock{Text=name switch{"convert"=>"Convert","actions"=>"File actions",_=>"Tools"},FontSize=17,FontWeight=FontWeight.SemiBold,TextAlignment=TextAlignment.Center,Width=170};
+        note.Text=list.Length==0?Localizer.T("Nothing here for these files."):held.Length==1?System.IO.Path.GetFileName(held[0]):Localizer.Pick($"{held.Length} files",$"{held.Length} dosya");
+        note.FontSize=11;note.Opacity=.7;note.Width=150;note.TextTrimming=TextTrimming.CharacterEllipsis;note.TextWrapping=TextWrapping.NoWrap;
+        var tabs=new StackPanel{Orientation=Orientation.Horizontal,Spacing=3};
         foreach(var (id,label) in new[]{("tools","Tools"),("convert","Convert"),("actions","File")})
         {
-            var tab=new ToggleButton{Content=label,IsChecked=id==ring,FontSize=11,Padding=new(6,2),IsEnabled=choices(held,id).Length>0};tab.Click+=(_,_)=>Show(id);tabs.Children.Add(tab);
+            var tab=new ToggleButton{Content=label,IsChecked=id==ring,FontSize=10,Padding=new(7,2),MinHeight=0,CornerRadius=new(10),IsEnabled=choices(held,id).Length>0};tab.Click+=(_,_)=>Show(id);tabs.Children.Add(tab);
         }
-        tabs.Measure(Size.Infinity);Canvas.SetLeft(tabs,c-tabs.DesiredSize.Width/2);Canvas.SetTop(tabs,c+42);wheel.Children.Add(tabs);
-        note.Text=list.Length==0?Localizer.T("Nothing here for these files."):held.Length==1?Path.GetFileName(held[0]):Localizer.Pick($"{held.Length} files",$"{held.Length} dosya");
-        note.Measure(Size.Infinity);Canvas.SetLeft(note,c-85);Canvas.SetTop(note,c-80);wheel.Children.Add(note);
-        wheel.Measure(new Size(Large,Large));
-        // Nothing may cover the pear, the file name or the ring tabs.
-        var middle=new[]{new Rect(c-40,c-40,80,80),new Rect(Canvas.GetLeft(tabs),Canvas.GetTop(tabs),tabs.DesiredSize.Width,tabs.DesiredSize.Height),new Rect(c-85,c-80,170,note.DesiredSize.Height)}.Select(r=>r.Inflate(4)).ToArray();
-        layout=(placed,middle);Place();
+        (note.Parent as Panel)?.Children.Remove(note);
+        var middle=new StackPanel{Spacing=3,Width=176,HorizontalAlignment=HorizontalAlignment.Center,Children={title,note,tabs}};tabs.HorizontalAlignment=HorizontalAlignment.Center;
+        middle.Measure(Size.Infinity);Canvas.SetLeft(middle,c-88);Canvas.SetTop(middle,c-10);wheel.Children.Add(middle);
+        puck.Margin=new(0,0,0,100);
     }
-    private (List<(Button Button,double Angle,double Radius)> Buttons,Rect[] Middle)? layout;
-    private readonly Dictionary<Button,Size> sized=[];
-    /// Each button takes the first free spot near its place on the circle: inside the disc, clear of the
-    /// middle and of the buttons already placed. Runs again once the real (themed) sizes are known.
-    private void Place()
+    private static Avalonia.Data.BindingBase Resource(string key)=>new Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension(key);
+    private static void Paint(Avalonia.Controls.Shapes.Path petal,bool on)
     {
-        if(layout is not var (buttons,middle))return;const double c=Large/2;var taken=new List<Rect>();sized.Clear();
-        Rect Ideal((Button Button,double Angle,double Radius) b){var size=b.Button.Bounds.Width>0?b.Button.Bounds.Size:b.Button.DesiredSize;return new(c+Math.Cos(b.Angle)*b.Radius-size.Width/2,c+Math.Sin(b.Angle)*b.Radius-size.Height/2,size.Width,size.Height);}
-        for(var i=0;i<buttons.Count;i++)
-        {
-            var (button,direction,start)=buttons[i];
-            var size=button.Bounds.Width>0?button.Bounds.Size:button.DesiredSize;sized[button]=size;
-            // The ideal spots of the buttons still to come stay free if possible, so one that has to move
-            // does not push a later one out of its place.
-            var reserved=buttons.Skip(i+1).Select(Ideal).Where(r=>!middle.Any(m=>m.Intersects(r))).ToArray();
-            Rect Box(double r,double a)=>new(c+Math.Cos(a)*r-size.Width/2,c+Math.Sin(a)*r-size.Height/2,size.Width,size.Height);
-            bool Free(double r,double a,bool strict){var box=Box(r,a);return Corner(r,a,size)<=c-12&&!middle.Any(m=>m.Intersects(box))&&!taken.Any(t=>t.Inflate(4).Intersects(box))&&(!strict||!reserved.Any(t=>t.Inflate(4).Intersects(box)));}
-            // Every nearby radius and angle; the free spot that moves the button least wins.
-            var spot=(R:start,A:direction);var found=false;
-            foreach(var strict in new[]{true,false})
-            {
-                if(found)break;var best=double.MaxValue;
-                for(var dr=-120d;dr<=60;dr+=6)for(var da=-1.2;da<=1.2;da+=.03)
-                {
-                    var r=start+dr;var a=direction+da;if(r<=60)continue;
-                    var cost=Math.Abs(dr)+Math.Abs(da)*start;if(cost<best&&Free(r,a,strict)){best=cost;spot=(r,a);found=true;}
-                }
-            }
-            var place=Box(spot.R,spot.A);taken.Add(place);Canvas.SetLeft(button,place.X);Canvas.SetTop(button,place.Y);
-            Trace.Log($"wheel {((Choice)button.Tag!).Id}: {place} found={found}");
-        }
-    }
-    private void Remeasured()
-    {
-        if(layout is not var (buttons,_))return;
-        if(buttons.Any(b=>b.Button.Bounds.Width>0&&sized.TryGetValue(b.Button,out var used)&&(Math.Abs(used.Width-b.Button.Bounds.Width)>.5||Math.Abs(used.Height-b.Button.Bounds.Height)>.5)))Place();
-    }
-    private static double Corner(double radius,double angle,Size size)
-    {
-        var x=Math.Cos(angle)*radius;var y=Math.Sin(angle)*radius;
-        return new[]{(-1,-1),(1,-1),(1,1),(-1,1)}.Max(k=>Math.Sqrt(Math.Pow(x+k.Item1*size.Width/2,2)+Math.Pow(y+k.Item2*size.Height/2,2)));
+        petal[!Shape.FillProperty]=Resource(on?"Sage":"Inset");
+        if(on){petal.Stroke=new SolidColorBrush(Color.FromRgb(227,184,89));petal.StrokeThickness=2;}else{petal[!Shape.StrokeProperty]=Resource("Line");petal.StrokeThickness=1;}
     }
     private async Task Choose(Choice choice)
     {
