@@ -38,6 +38,15 @@ class OwnerMergeTests(unittest.TestCase):
             values = checks();values[0][key] = value
             self.assertFalse(merge.checks_passed(values, SHA), key)
 
+    def test_success_elsewhere_never_masks_failed_or_pending_run_of_same_name(self):
+        self.assertTrue(merge.checks_passed(checks() + checks(), SHA))
+        for key, value in [("conclusion", "failure"), ("conclusion", "cancelled"),
+                           ("status", "in_progress")]:
+            extra = checks()[0];extra[key] = value
+            self.assertFalse(merge.checks_passed(checks() + [extra], SHA), value)
+        foreign = checks()[0];foreign["app"] = {"id": 1};foreign["conclusion"] = "failure"
+        self.assertTrue(merge.checks_passed(checks() + [foreign], SHA))
+
     def test_merge_sha_guard_and_deployment_dispatch(self):
         class API:
             def __init__(self):self.calls = []
