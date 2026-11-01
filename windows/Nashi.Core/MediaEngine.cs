@@ -201,7 +201,7 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
                     if(options.TrimSilence){args.AddRange(["-af","silenceremove=start_periods=1:start_duration=0.02:start_threshold=-50dB,areverse,silenceremove=start_periods=1:start_duration=0.02:start_threshold=-50dB,areverse"]);duration=null;}
                     args.AddRange(AudioEncoding(ext,options));
                 }
-                else args.AddRange(["-map","0:v:0","-map","0:a:0?",..VideoEncoding(ext,options)]);
+                else args.AddRange(["-map","0:v:0","-map","0:a:0?","-vf",EvenSizeFor(ext),..VideoEncoding(ext,options)]);
                 break;
             case "cropVideo":
                 RequireVideo(info);if(options.Regions.Length!=1)throw new ArgumentException("Select one crop rectangle.");
@@ -209,7 +209,7 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
                 args.AddRange(["-map","0:v:0","-map","0:a:0?","-vf",$"crop={crop.Width}:{crop.Height}:{crop.X}:{crop.Y}:exact=1,pad=ceil(iw/2)*2:ceil(ih/2)*2",..VideoEncoding(ext,options)]);break;
             case "changeVideoSpeed":
                 RequireVideo(info);duration=info.Duration/options.Speed;
-                args.AddRange(["-map","0:v:0","-map","0:a:0?","-vf","setpts=(PTS-STARTPTS)/"+Number(options.Speed)]);
+                args.AddRange(["-map","0:v:0","-map","0:a:0?","-vf","setpts=(PTS-STARTPTS)/"+Number(options.Speed)+","+EvenSizeFor(ext)]);
                 if(info.HasAudio)args.AddRange(["-af",Tempo(options.Speed)]);
                 args.AddRange(VideoEncoding(ext,options));break;
             case "audioChannels":
@@ -280,7 +280,8 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
                     }
                     previous=next;
                 }
-                args.AddRange(["-filter_complex",string.Join(';',graph),"-map","["+previous+"]","-map","0:a:0?",..VideoEncoding(ext,options)]);break;
+                graph.Add($"[{previous}]{EvenSizeFor(ext)}[even]");
+                args.AddRange(["-filter_complex",string.Join(';',graph),"-map","[even]","-map","0:a:0?",..VideoEncoding(ext,options)]);break;
             default:throw new ArgumentException("Unsupported media tool.");
         }
         args.AddRange(WmaChannels(Path.GetExtension(output).TrimStart('.').ToLowerInvariant(),options));await RenderAsync(args,output,duration,progress,token);return [output];
@@ -328,7 +329,7 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
             if(video)
             {
                 var log=Path.Combine(directory,"pass-"+Guid.NewGuid().ToString("N"));
-                args.AddRange(["-map","0:v:0","-map","0:a:0?","-c:v","libx264","-preset","medium","-b:v",((long)Math.Max(1000,total-audioRate)).ToString(CultureInfo.InvariantCulture),"-pix_fmt","yuv420p"]);
+                args.AddRange(["-map","0:v:0","-map","0:a:0?","-vf",EvenSize,"-c:v","libx264","-preset","medium","-b:v",((long)Math.Max(1000,total-audioRate)).ToString(CultureInfo.InvariantCulture),"-pix_fmt","yuv420p"]);
                 var first=new FFmpegProgress(info.Duration,p=>progress(p with{Fraction=p.Fraction*.5,Label=$"Compression {attempt+1} · analyzing"}),"Analyzing");
                 await ProcessRunner.RunAsync(ffmpeg,["-hide_banner","-nostdin","-v","error","-y","-nostats","-progress","pipe:1",..args,"-an","-pass","1","-passlogfile",log,"-f","null",OperatingSystem.IsWindows()?"NUL":"/dev/null"],token,first.ReadLine);
                 args.AddRange(["-pass","2","-passlogfile",log,"-c:a","aac","-b:a",((int)audioRate).ToString(CultureInfo.InvariantCulture),"-movflags","+faststart"]);
@@ -438,6 +439,10 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
     private static void RequireVideo(MediaInfo info){if(info.Video is null)throw new ArgumentException("This file has no video stream.");}
     private static void RequireAudio(MediaInfo info){if(!info.HasAudio)throw new ArgumentException("This file has no audio stream.");}
     private static string Number(double value)=>double.IsFinite(value)?value.ToString("0.########",CultureInfo.InvariantCulture):throw new ArgumentException("Enter a finite number.");
+    // H.264 4:2:0 needs even dimensions; screen recordings of a selected area are often odd (641x361).
+    private const string EvenSize="pad=ceil(iw/2)*2:ceil(ih/2)*2";
+    // libx264 (yuv420p) and wmv2 reject odd sizes; VP9 and MPEG-4 keep them, so leave those untouched.
+    private static string EvenSizeFor(string ext)=>ext is "webm" or "avi"?"null":EvenSize;
     private static string GetString(JsonElement element,string property)=>element.TryGetProperty(property,out var value)?value.ToString():"";
     private static int? GetInt(JsonElement element,string property)=>element.TryGetProperty(property,out var value)&&int.TryParse(value.ToString(),NumberStyles.Integer,CultureInfo.InvariantCulture,out var number)?number:null;
     private static void Validate(MediaOptions o)
