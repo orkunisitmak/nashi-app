@@ -13,5 +13,9 @@ internal static class PreviewLaunchSmoke
               PreviewLaunch.DataDirectory!=Path.Combine(Environment.GetFolderPath(
                   Environment.SpecialFolder.LocalApplicationData),"Nashi"),
               "Visual preview stores Library and preferences away from the installed app");
+        var installedTools=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Nashi","Tools");
+        check(PreviewLaunch.ToolsDirectory==Path.Combine(PreviewLaunch.DataDirectory,"Tools") &&
+              !string.Equals(PreviewLaunch.ToolsDirectory,installedTools,StringComparison.OrdinalIgnoreCase),
+              "Visual preview isolates downloaded media, office and metadata tools from official Nashi");
     }
 }

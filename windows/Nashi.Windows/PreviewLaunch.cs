@@ -22,4 +22,8 @@ internal static class PreviewLaunch
 
     internal static string DataDirectory=>Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Nashi.FluentPreview");
+
+    // Preview installations must never touch the official app media, Office, or metadata tools.
+    internal static string ToolsDirectory=>Enabled?Path.Combine(DataDirectory,"Tools"):
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Nashi","Tools");
 }
