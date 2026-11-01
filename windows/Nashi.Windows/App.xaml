@@ -38,4 +38,65 @@
  <Style TargetType="ScrollBar"><Setter Property="Width" Value="11"/><Setter Property="Background" Value="Transparent"/><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ScrollBar"><Grid Background="Transparent"><Track x:Name="PART_Track" IsDirectionReversed="True" Orientation="{TemplateBinding Orientation}"><Track.DecreaseRepeatButton><RepeatButton Command="ScrollBar.PageUpCommand" Focusable="False" Opacity="0"/></Track.DecreaseRepeatButton><Track.Thumb><Thumb><Thumb.Template><ControlTemplate TargetType="Thumb"><Border Background="{DynamicResource Muted}" CornerRadius="4" Margin="3,1" Opacity="0.45"/></ControlTemplate></Thumb.Template></Thumb></Track.Thumb><Track.IncreaseRepeatButton><RepeatButton Command="ScrollBar.PageDownCommand" Focusable="False" Opacity="0"/></Track.IncreaseRepeatButton></Track></Grid><ControlTemplate.Triggers><Trigger Property="Orientation" Value="Horizontal"><Setter Property="Height" Value="11"/><Setter Property="Width" Value="Auto"/><Setter TargetName="PART_Track" Property="IsDirectionReversed" Value="False"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter></Style>
  <Style x:Key="WheelLabelButton" TargetType="Button"><Setter Property="FocusVisualStyle" Value="{x:Null}"/><Setter Property="Cursor" Value="Hand"/><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/></Border></ControlTemplate></Setter.Value></Setter></Style>
  <Style TargetType="CheckBox"><Setter Property="Foreground" Value="{DynamicResource Ink}"/></Style>
+ <Style TargetType="Expander">
+  <Setter Property="Foreground" Value="{DynamicResource Ink}"/>
+  <Setter Property="Background" Value="Transparent"/>
+  <Setter Property="FontSize" Value="12"/>
+  <Setter Property="FontWeight" Value="SemiBold"/>
+  <Setter Property="Template">
+   <Setter.Value>
+    <ControlTemplate TargetType="Expander">
+     <DockPanel Background="{TemplateBinding Background}">
+      <ToggleButton x:Name="HeaderSite" DockPanel.Dock="Top" FocusVisualStyle="{x:Null}"
+                    IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                    Content="{TemplateBinding Header}" ContentTemplate="{TemplateBinding HeaderTemplate}"
+                    Foreground="{TemplateBinding Foreground}"
+                    Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="2,6">
+       <ToggleButton.Template>
+        <ControlTemplate TargetType="ToggleButton">
+         <Border Background="Transparent" Padding="{TemplateBinding Padding}">
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center" TextElement.Foreground="{TemplateBinding Foreground}">
+           <Border x:Name="Badge" Width="20" Height="20" CornerRadius="10" Background="{DynamicResource Inset}" BorderBrush="{DynamicResource Line}" BorderThickness="1" Margin="0,0,8,0">
+            <Path x:Name="Chevron" Data="M 2 1 L 6 5 L 2 9" Stroke="{DynamicResource Ink}" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="1,0,0,0"/>
+           </Border>
+           <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" VerticalAlignment="Center" RecognizesAccessKey="True" TextBlock.Foreground="{TemplateBinding Foreground}"/>
+          </StackPanel>
+         </Border>
+         <ControlTemplate.Triggers>
+          <Trigger Property="IsChecked" Value="True">
+           <Setter TargetName="Chevron" Property="Data" Value="M 1 2 L 5 6 L 9 2"/>
+           <Setter TargetName="Chevron" Property="Stroke" Value="{DynamicResource Gold}"/>
+           <Setter TargetName="Chevron" Property="Margin" Value="0,1,0,0"/>
+           <Setter TargetName="Badge" Property="BorderBrush" Value="{DynamicResource Gold}"/>
+           <Setter TargetName="Badge" Property="Background" Value="{DynamicResource Surface}"/>
+          </Trigger>
+          <Trigger Property="IsMouseOver" Value="True">
+           <Setter TargetName="Chevron" Property="Stroke" Value="{DynamicResource Gold}"/>
+           <Setter TargetName="Badge" Property="BorderBrush" Value="{DynamicResource Gold}"/>
+           <Setter TargetName="Badge" Property="Background" Value="{DynamicResource Surface}"/>
+          </Trigger>
+          <Trigger Property="IsKeyboardFocused" Value="True">
+           <Setter TargetName="Badge" Property="BorderBrush" Value="{DynamicResource Gold}"/>
+           <Setter TargetName="Badge" Property="BorderThickness" Value="2"/>
+          </Trigger>
+         </ControlTemplate.Triggers>
+        </ControlTemplate>
+       </ToggleButton.Template>
+      </ToggleButton>
+      <Border x:Name="ContentSite" DockPanel.Dock="Bottom" Visibility="Collapsed">
+       <ContentPresenter ContentSource="Content"/>
+      </Border>
+     </DockPanel>
+     <ControlTemplate.Triggers>
+      <Trigger Property="IsExpanded" Value="True">
+       <Setter TargetName="ContentSite" Property="Visibility" Value="Visible"/>
+      </Trigger>
+      <Trigger Property="IsEnabled" Value="False">
+       <Setter Property="Opacity" Value="0.4"/>
+      </Trigger>
+     </ControlTemplate.Triggers>
+    </ControlTemplate>
+   </Setter.Value>
+  </Setter>
+ </Style>
 </Application.Resources></Application>
