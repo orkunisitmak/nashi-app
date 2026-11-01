@@ -792,6 +792,7 @@
 "DROP IT LIKE IT’S… A FILE." = "DOSYANI BURAYA BIRAK.";
 "DROP ON A PETAL" = "BİR YAPRAĞA BIRAK";
 "DROP SOMETHING GOOD." = "BİR DOSYA BIRAK.";
+"DROPPED BETWEEN THE PETALS: NOTHING WAS CHANGED. DROP ON A PETAL TO USE IT." = "YAPRAKLARIN ARASINA BIRAKILDI: HİÇBİR ŞEY DEĞİŞMEDİ. KULLANMAK İÇİN BİR YAPRAĞA BIRAK.";
 "DUPLICATE" = "ÇOĞALT";
 "Dark" = "Koyu";
 "Defaults apply whenever you choose an output format." = "Bir çıktı biçimi seçtiğinde bu varsayılanlar uygulanır.";
@@ -874,6 +875,7 @@
 "Drop it like it’s… a file." = "Dosyanı buraya bırak.";
 "Drop on a petal" = "Bir yaprağa bırak";
 "Drop something good." = "Bir dosya bırak.";
+"Dropped between the petals: nothing was changed. Drop on a petal to use it." = "Yaprakların arasına bırakıldı: hiçbir şey değişmedi. Kullanmak için bir yaprağa bırak.";
 "Duplicate" = "Çoğalt";
 "EACH AREA COVERS THE RANGE ON THE TIMELINE WHEN IT IS DRAWN; CHOOSE AN AREA TO CHANGE ITS RANGE." = "HER ALAN, ÇİZİLDİĞİNDE ZAMAN ÇİZELGESİNDEKİ ARALIĞI KAPSAR; ARALIĞINI DEĞİŞTİRMEK İÇİN BİR ALAN SEÇ.";
 "EACH RANGE BECOMES ITS OWN PDF." = "HER ARALIK AYRI BİR PDF OLUR.";
@@ -1427,6 +1429,7 @@
 "Mute Video · Nashi" = "Videoyu Sessize Al · Nashi";
 "NASHI ACTIONS" = "NASHI İŞLEMLERİ";
 "NASHI CHECKS ONCE AN HOUR WHILE IT’S RUNNING. YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL." = "NASHI ÇALIŞIRKEN SAATTE BİR DENETLER. İNDİRME VE KURULUM ZAMANINI SEN SEÇERSİN.";
+"NASHI COULDN’T READ WHAT WAS DROPPED. DROP FILES FROM YOUR FILE MANAGER OR BROWSER." = "NASHI BIRAKILANI OKUYAMADI. DOSYALARI DOSYA YÖNETİCİNDEN YA DA TARAYICINDAN BIRAK.";
 "NASHI IS ALREADY RUNNING BUT IS STILL STARTING. OPEN IT FROM THE SYSTEM TRAY OR TRY AGAIN IN A MOMENT." = "NASHI ZATEN ÇALIŞIYOR AMA HÂLÂ AÇILIYOR. SİSTEM TEPSİSİNDEN AÇ VEYA BİRAZDAN TEKRAR DENE.";
 "NASHI IS RUNNING BUT DID NOT ANSWER." = "NASHI ÇALIŞIYOR AMA YANIT VERMEDİ.";
 "NASHI IS STILL RUNNING." = "NASHI HÂLÂ ÇALIŞIYOR.";
@@ -1479,6 +1482,7 @@
 "Nashi Settings" = "Nashi Ayarları";
 "Nashi actions" = "Nashi işlemleri";
 "Nashi checks once an hour while it’s running. You choose when to download and install." = "Nashi çalışırken saatte bir denetler. İndirme ve kurulum zamanını sen seçersin.";
+"Nashi couldn’t read what was dropped. Drop files from your file manager or browser." = "Nashi bırakılanı okuyamadı. Dosyaları dosya yöneticinden ya da tarayıcından bırak.";
 "Nashi is already running but is still starting. Open it from the system tray or try again in a moment." = "Nashi zaten çalışıyor ama hâlâ açılıyor. Sistem tepsisinden aç veya birazdan tekrar dene.";
 "Nashi is running but did not answer." = "Nashi çalışıyor ama yanıt vermedi.";
 "Nashi is still running." = "Nashi hâlâ çalışıyor.";

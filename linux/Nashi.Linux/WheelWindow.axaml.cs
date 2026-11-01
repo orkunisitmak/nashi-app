@@ -245,37 +245,51 @@ public sealed partial class WheelWindow : Window
     /// (and, resting on a side or page petal, turns it), and a drop on a petal goes to `dropped` with the point.
     /// Points off the petals refuse the drop, so it goes back to the source unchanged. `entered` gets the content
     /// once it is known; it fills the petals.
-    public IDisposable DropTarget(Action<DropContent> entered, Action<DropContent, Point> dropped, Action? left = null)
+    public IDisposable DropTarget(Action<DropContent> entered, Action<DropContent, Point> dropped, Action? left = null, Action? refused = null)
     {
-        var known = false;
+        enteredHandler = entered;
         void Snapshot() => petals = (Ring.Segments.Count, [.. Ring.Segments.Select(i => i.Enabled)]);
         Ring.Turned += Snapshot;
         Snapshot();
         var (rect, scaling) = ScreenRect();
-        var inset = (Width - Wheel.Size) / 2;
-        // Any thread: pure geometry on what was captured here and the petal snapshot.
+        // Any thread: pure geometry around the window's centre (the wheel's), on the petal snapshot.
         bool Accepts(int x, int y)
         {
             var (count, enabled) = petals;
-            var wheel = new Point((x - rect.X) / scaling - inset, (y - rect.Y) / scaling);
+            var wheel = new Point(Wheel.Size / 2 + (x - rect.X - rect.Width / 2.0) / scaling, Wheel.Size / 2 + (y - rect.Y - rect.Height / 2.0) / scaling);
             if (count == 0) return Wheel.IndexAt(wheel, new Size(Wheel.Size, Wheel.Size), 8) >= 0; // petals still on their way
             var index = Wheel.IndexAt(wheel, new Size(Wheel.Size, Wheel.Size), count);
             return index >= 0 && enabled[index];
         }
-        return XdndTarget.Create(rect, Accepts,
+        var xid = TryGetPlatformHandle() is { HandleDescriptor: "XID", Handle: var handle } ? handle : IntPtr.Zero;
+        return XdndTarget.Create(xid, rect, Accepts,
             (content, x, y) => Dispatcher.UIThread.Post(() =>
             {
                 if (!IsVisible) return;
-                if (!known && content.Any) { known = true; entered(content); }
+                Know(content);
                 Hover(ToWheel(x, y));
             }),
             () => Dispatcher.UIThread.Post(() => { dwell++; Ring.HighlightedIndex = -1; left?.Invoke(); }),
             (content, x, y) => Dispatcher.UIThread.Post(() =>
             {
                 dwell++;
-                if (!known && content.Any) { known = true; entered(content); }
+                Know(content);
                 dropped(content, ToWheel(x, y));
-            }));
+            }),
+            () => Dispatcher.UIThread.Post(() => refused?.Invoke()));
+    }
+
+    private Action<DropContent>? enteredHandler;
+
+    /// Whether the dragged content is known (and the petals filled).
+    public bool Known { get; private set; }
+
+    /// The dragged content, once: from the drag source when the gesture fires, else from the first XDND position.
+    public void Know(DropContent content)
+    {
+        if (Known || !content.Any || enteredHandler is null) return;
+        Known = true;
+        enteredHandler(content);
     }
 
     /// A drag over the wheel: highlights the petal; resting 0.7 s on a side or page petal turns the wheel.

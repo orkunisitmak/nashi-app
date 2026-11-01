@@ -28,6 +28,8 @@ public sealed class XdndProtocol(Func<int, int, bool> accepts)
     public event Action<DropContent, int, int>? Dropped;
     /// The drag left, or ended somewhere it was refused.
     public event Action? Left;
+    /// A drop came and was refused (off the petals, or nothing Nashi reads): say so, it is not silently lost.
+    public event Action? Refused;
 
     public bool Ready => pending.Count == 0;
     public DropContent Content => Ready ? DropContent.From(data) : DropContent.None;
@@ -80,15 +82,16 @@ public sealed class XdndProtocol(Func<int, int, bool> accepts)
         var ok = content.Any && accepts(at.X, at.Y);
         Finished?.Invoke(ok);
         if (ok) Dropped?.Invoke(content, at.X, at.Y);
-        else Left?.Invoke();
+        else { Left?.Invoke(); Refused?.Invoke(); }
     }
 }
 
-/// An XDND drop target over a screen rectangle: an invisible, override-redirect InputOnly window with XdndAware on
-/// Nashi's own X connection and thread, so a drag from any app can land on an Avalonia window (Avalonia 11 on X11
-/// does not take drops). It exists only while a drag needs it; nothing is grabbed, and a drop it refuses goes back
-/// to the source as refused. `accepts` (any thread) says whether a screen point is a place to drop; `hover`,
-/// `left` and `dropped` run on the X thread: post to the UI thread from them.
+/// An XDND drop target for an Avalonia window (Avalonia 11 on X11 takes no drops). The window gets XdndAware and
+/// an XdndProxy pointing at a hidden window on Nashi's own X connection and thread, which takes the XDND messages for
+/// it: so the source finds the drop target in the window it is really over, stacking aside. It exists only while a
+/// drag needs it; nothing is grabbed, and a drop it refuses goes back to the source as refused. `accepts` (any
+/// thread) says whether a screen point is a place to drop; `hover`, `left`, `dropped` and `refused` (a drop that was
+/// refused: the centre, or nothing Nashi reads) run on the X thread: post to the UI thread from them.
 public sealed class XdndTarget : IDisposable
 {
     private readonly ConcurrentQueue<Action<IntPtr, IntPtr>> requests = new();
@@ -97,40 +100,80 @@ public sealed class XdndTarget : IDisposable
     private readonly Action<DropContent, int, int> hover;
     private readonly Action left;
     private readonly Action<DropContent, int, int> dropped;
+    private readonly Action? refused;
 
-    /// Makes a drop target over `rect` (physical pixels): the real one on X11, nothing elsewhere. The checks swap in a
-    /// recorder, so no window is ever made on a display from them.
-    public static Func<Avalonia.PixelRect, Func<int, int, bool>, Action<DropContent, int, int>, Action, Action<DropContent, int, int>, IDisposable> Create { get; set; } =
-        (rect, accepts, hover, left, dropped) => PointerWatch.Available
-            ? new XdndTarget(rect.X, rect.Y, rect.Width, rect.Height, accepts, hover, left, dropped)
+    /// Makes the drop target for the toplevel `xid` (Window.TryGetPlatformHandle) covering `rect` (physical pixels):
+    /// the real one on X11, nothing elsewhere. The checks swap in a recorder, so nothing ever reaches a display.
+    public static Func<IntPtr, Avalonia.PixelRect, Func<int, int, bool>, Action<DropContent, int, int>, Action, Action<DropContent, int, int>, Action?, IDisposable> Create { get; set; } =
+        (xid, _, accepts, hover, left, dropped, refused) => PointerWatch.Available && xid != IntPtr.Zero
+            ? new XdndTarget(xid, accepts, hover, left, dropped, refused)
             : new CancellationTokenSource();
 
-    public XdndTarget(int x, int y, int width, int height, Func<int, int, bool> accepts, Action<DropContent, int, int> hover, Action left, Action<DropContent, int, int> dropped)
+    public XdndTarget(IntPtr toplevel, Func<int, int, bool> accepts, Action<DropContent, int, int> hover, Action left, Action<DropContent, int, int> dropped, Action? refused = null)
     {
-        (this.accepts, this.hover, this.left, this.dropped) = (accepts, hover, left, dropped);
-        new Thread(() => Run(x, y, width, height)) { IsBackground = true, Name = "Nashi drop target" }.Start();
+        (this.accepts, this.hover, this.left, this.dropped, this.refused) = (accepts, hover, left, dropped, refused);
+        new Thread(() => Run(toplevel)) { IsBackground = true, Name = "Nashi drop target" }.Start();
     }
-
-    /// Moves the target (the window it covers moved or resized).
-    public void Place(int x, int y, int width, int height) =>
-        requests.Enqueue((display, window) => XMoveResizeWindow(display, window, x, y, (uint)Math.Max(1, width), (uint)Math.Max(1, height)));
 
     public void Dispose() => stop.Cancel();
 
+    /// What an XDND drag running right now carries, asked of its source directly (XdndSelection as text/uri-list,
+    /// then the browser types), within `timeout`; null when nothing answers. The gesture fills the wheel with it before
+    /// the drag reaches the wheel. The checks swap in their own.
+    public static Func<TimeSpan, DropContent?> ReadDrag { get; set; } = ReadSelection;
+
+    private static DropContent? ReadSelection(TimeSpan timeout)
+    {
+        IntPtr display;
+        try { display = XOpenDisplay(IntPtr.Zero); }
+        catch (Exception error) when (error is DllNotFoundException or EntryPointNotFoundException) { return null; }
+        if (display == IntPtr.Zero) return null;
+        var window = XCreateSimpleWindow(display, XDefaultRootWindow(display), 0, 0, 1, 1, 0, IntPtr.Zero, IntPtr.Zero);
+        try
+        {
+            var selection = XInternAtom(display, "XdndSelection", false);
+            var property = XInternAtom(display, "NASHI_DRAG", false);
+            if (XGetSelectionOwner(display, selection) == IntPtr.Zero) return null;
+            var deadline = DateTime.UtcNow + timeout;
+            var data = new Dictionary<string, byte[]>();
+            var e = new IntPtr[24];
+            foreach (var type in new[] { "text/uri-list", "text/x-moz-url", "_NETSCAPE_URL", "text/html" })
+            {
+                XConvertSelection(display, selection, XInternAtom(display, type, false), property, window, IntPtr.Zero);
+                XFlush(display);
+                while (DateTime.UtcNow < deadline && !XCheckTypedWindowEvent(display, window, 31 /* SelectionNotify */, e)) Thread.Sleep(5);
+                if (DateTime.UtcNow >= deadline && e[0] != 31) break;
+                if (e[0] == 31 && e[7] == property && PointerWatch.Property(display, window, "NASHI_DRAG", 16 << 20) is { Format: 8 } read) data[type] = read.Data;
+                XDeleteProperty(display, window, property);
+                e[0] = 0;
+                if (type == "text/uri-list" && DropContent.From(data).Files.Count > 0) break; // files: that is all it needs
+            }
+            var content = DropContent.From(data);
+            return content.Any ? content : null;
+        }
+        finally
+        {
+            XDestroyWindow(display, window);
+            XCloseDisplay(display);
+        }
+    }
+
     // XEvent as 24 C longs. ClientMessage: [5] message_type, [6] format, [7..11] data.l; SelectionNotify: [6] target, [7] property.
-    private void Run(int x, int y, int width, int height)
+    private void Run(IntPtr toplevel)
     {
         IntPtr display;
         try { display = XOpenDisplay(IntPtr.Zero); }
         catch (Exception error) when (error is DllNotFoundException or EntryPointNotFoundException) { return; }
         if (display == IntPtr.Zero) return;
         IntPtr Atom(string name) => XInternAtom(display, name, false);
-        var root = XDefaultRootWindow(display);
-        var attributes = new long[14];
-        attributes[11] = 1; // override_redirect
-        var window = XCreateWindow(display, root, x, y, (uint)Math.Max(1, width), (uint)Math.Max(1, height), 0, 0, 2 /* InputOnly */, IntPtr.Zero, (IntPtr)(1 << 9) /* CWOverrideRedirect */, attributes);
-        XChangeProperty(display, window, Atom("XdndAware"), (IntPtr)4 /* XA_ATOM */, 32, 0, [5], 1);
-        XMapRaised(display, window);
+        var window = XCreateSimpleWindow(display, XDefaultRootWindow(display), -10, -10, 1, 1, 0, IntPtr.Zero, IntPtr.Zero); // never mapped
+        var (aware, proxy) = (Atom("XdndAware"), Atom("XdndProxy"));
+        // XdndAware version 5 on both; the proxy names itself, as the spec asks, and the toplevel names the proxy.
+        foreach (var target in new[] { window, toplevel })
+        {
+            XChangeProperty(display, target, aware, (IntPtr)4 /* XA_ATOM */, 32, 0, [5], 1);
+            XChangeProperty(display, target, proxy, (IntPtr)33 /* XA_WINDOW */, 32, 0, [window], 1);
+        }
         XFlush(display);
         var (enter, position, leave, drop) = (Atom("XdndEnter"), Atom("XdndPosition"), Atom("XdndLeave"), Atom("XdndDrop"));
         var (status, finished, copy, selection, property) = (Atom("XdndStatus"), Atom("XdndFinished"), Atom("XdndActionCopy"), Atom("XdndSelection"), Atom("NASHI_DROP"));
@@ -155,6 +198,7 @@ public sealed class XdndTarget : IDisposable
         protocol.Hover += hover;
         protocol.Dropped += dropped;
         protocol.Left += left;
+        protocol.Refused += () => refused?.Invoke();
 
         try
         {
@@ -198,6 +242,9 @@ public sealed class XdndTarget : IDisposable
         }
         finally
         {
+            // ponytail: the toplevel may be gone by now; Avalonia's X error handler logs the BadWindow.
+            XDeleteProperty(display, toplevel, proxy);
+            XDeleteProperty(display, toplevel, aware);
             XDestroyWindow(display, window);
             XCloseDisplay(display);
         }
@@ -228,12 +275,11 @@ public sealed class XdndTarget : IDisposable
     [DllImport("libX11.so.6")] static extern IntPtr XDefaultRootWindow(IntPtr display);
     [DllImport("libX11.so.6")] static extern IntPtr XInternAtom(IntPtr display, string name, bool onlyIfExists);
     [DllImport("libX11.so.6")] static extern IntPtr XGetAtomName(IntPtr display, IntPtr atom);
-    [DllImport("libX11.so.6")]
-    static extern IntPtr XCreateWindow(IntPtr display, IntPtr parent, int x, int y, uint width, uint height, uint border, int depth, uint windowClass, IntPtr visual, IntPtr valueMask, long[] attributes);
-    [DllImport("libX11.so.6")] static extern int XChangeProperty(IntPtr display, IntPtr window, IntPtr property, IntPtr type, int format, int mode, long[] data, int count);
+    [DllImport("libX11.so.6")] static extern int XChangeProperty(IntPtr display, IntPtr window, IntPtr property, IntPtr type, int format, int mode, IntPtr[] data, int count);
     [DllImport("libX11.so.6")] static extern int XDeleteProperty(IntPtr display, IntPtr window, IntPtr property);
-    [DllImport("libX11.so.6")] static extern int XMapRaised(IntPtr display, IntPtr window);
-    [DllImport("libX11.so.6")] static extern int XMoveResizeWindow(IntPtr display, IntPtr window, int x, int y, uint width, uint height);
+    [DllImport("libX11.so.6")] static extern IntPtr XCreateSimpleWindow(IntPtr display, IntPtr parent, int x, int y, uint width, uint height, uint border, IntPtr borderPixel, IntPtr background);
+    [DllImport("libX11.so.6")] static extern IntPtr XGetSelectionOwner(IntPtr display, IntPtr selection);
+    [DllImport("libX11.so.6")] static extern bool XCheckTypedWindowEvent(IntPtr display, IntPtr window, int type, IntPtr[] e);
     [DllImport("libX11.so.6")] static extern int XDestroyWindow(IntPtr display, IntPtr window);
     [DllImport("libX11.so.6")] static extern int XFlush(IntPtr display);
     [DllImport("libX11.so.6")] static extern int XPending(IntPtr display);

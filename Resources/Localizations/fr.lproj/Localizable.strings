@@ -792,6 +792,7 @@
 "DROP IT LIKE IT’S… A FILE." = "DÉPOSEZ-LE COMME SI C’ÉTAIT… UN FICHIER.";
 "DROP ON A PETAL" = "DROP ON A PETAL";
 "DROP SOMETHING GOOD." = "DÉPOSEZ QUELQUE CHOSE DE BIEN.";
+"DROPPED BETWEEN THE PETALS: NOTHING WAS CHANGED. DROP ON A PETAL TO USE IT." = "DROPPED BETWEEN THE PETALS: NOTHING WAS CHANGED. DROP ON A PETAL TO USE IT.";
 "DUPLICATE" = "DUPLIQUER";
 "Dark" = "Sombre";
 "Defaults apply whenever you choose an output format." = "Ces valeurs par défaut s’appliquent chaque fois que vous choisissez un format de sortie.";
@@ -874,6 +875,7 @@
 "Drop it like it’s… a file." = "Déposez-le comme si c’était… un fichier.";
 "Drop on a petal" = "Drop on a petal";
 "Drop something good." = "Déposez quelque chose de bien.";
+"Dropped between the petals: nothing was changed. Drop on a petal to use it." = "Dropped between the petals: nothing was changed. Drop on a petal to use it.";
 "Duplicate" = "Dupliquer";
 "EACH AREA COVERS THE RANGE ON THE TIMELINE WHEN IT IS DRAWN; CHOOSE AN AREA TO CHANGE ITS RANGE." = "EACH AREA COVERS THE RANGE ON THE TIMELINE WHEN IT IS DRAWN; CHOOSE AN AREA TO CHANGE ITS RANGE.";
 "EACH RANGE BECOMES ITS OWN PDF." = "EACH RANGE BECOMES ITS OWN PDF.";
@@ -1427,6 +1429,7 @@
 "Mute Video · Nashi" = "Couper le son de la vidéo · Nashi";
 "NASHI ACTIONS" = "NASHI ACTIONS";
 "NASHI CHECKS ONCE AN HOUR WHILE IT’S RUNNING. YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL." = "NASHI VÉRIFIE UNE FOIS PAR HEURE PENDANT SON EXÉCUTION. VOUS CHOISISSEZ QUAND TÉLÉCHARGER ET INSTALLER.";
+"NASHI COULDN’T READ WHAT WAS DROPPED. DROP FILES FROM YOUR FILE MANAGER OR BROWSER." = "NASHI COULDN’T READ WHAT WAS DROPPED. DROP FILES FROM YOUR FILE MANAGER OR BROWSER.";
 "NASHI IS ALREADY RUNNING BUT IS STILL STARTING. OPEN IT FROM THE SYSTEM TRAY OR TRY AGAIN IN A MOMENT." = "NASHI EST DÉJÀ OUVERT MAIS DÉMARRE ENCORE. OUVREZ-LE DEPUIS LA ZONE DE NOTIFICATION OU RÉESSAYEZ DANS UN INSTANT.";
 "NASHI IS RUNNING BUT DID NOT ANSWER." = "NASHI IS RUNNING BUT DID NOT ANSWER.";
 "NASHI IS STILL RUNNING." = "NASHI EST TOUJOURS EN COURS D’EXÉCUTION.";
@@ -1479,6 +1482,7 @@
 "Nashi Settings" = "Réglages de Nashi";
 "Nashi actions" = "Nashi actions";
 "Nashi checks once an hour while it’s running. You choose when to download and install." = "Nashi vérifie une fois par heure pendant son exécution. Vous choisissez quand télécharger et installer.";
+"Nashi couldn’t read what was dropped. Drop files from your file manager or browser." = "Nashi couldn’t read what was dropped. Drop files from your file manager or browser.";
 "Nashi is already running but is still starting. Open it from the system tray or try again in a moment." = "Nashi est déjà ouvert mais démarre encore. Ouvrez-le depuis la zone de notification ou réessayez dans un instant.";
 "Nashi is running but did not answer." = "Nashi is running but did not answer.";
 "Nashi is still running." = "Nashi est toujours en cours d’exécution.";

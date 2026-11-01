@@ -42,6 +42,8 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
         public const string NothingMade = "Nothing was created.";
         public const string Waiting = "Waiting for the current task to finish…";
         public const string DropHere = "Drop on a petal";
+        public const string MissedPetal = "Dropped between the petals: nothing was changed. Drop on a petal to use it.";
+        public const string Unreadable = "Nashi couldn’t read what was dropped. Drop files from your file manager or browser.";
         public const string Downloading = "Downloading…";
         public const string SideTo = "{0} ›";
     }
@@ -167,8 +169,13 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
                 if (!wheel.Wheel.ChooseAt(point) && wheel.IsVisible) wheel.Engage();
             }
             catch (Exception error) { wheel.Close(); notify(L10n.F(Copy.Problem, L10n.T(error.Message))); }
-        });
+        }, refused: () => notify(L10n.T(wheel.Known ? Copy.MissedPetal : Copy.Unreadable)));
         if (Sampler is { } s) s.WatchFlip = true;
+        // The petals come at once, from the drag source itself; the first XDND position over the wheel is the fallback.
+        _ = Task.Run(() => XdndTarget.ReadDrag(TimeSpan.FromMilliseconds(300))).ContinueWith(read =>
+        {
+            if (read.Result is { } content) Avalonia.Threading.Dispatcher.UIThread.Post(() => { if (dragWheel == wheel) wheel.Know(content); });
+        }, TaskScheduler.Default);
     }
 
     /// The drag's button came up: a wheel nothing was dropped on closes (a drop arrives around the release).

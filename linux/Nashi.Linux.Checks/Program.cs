@@ -49,6 +49,7 @@ WheelFeedback.SystemReducesMotion = false;
 WheelFeedback.ReduceMotion = true; // renders show the wheel at rest; MotionChecks turns it on
 var temp = Directory.CreateTempSubdirectory("nashi-linux-checks-");
 // No ExifTool unless a check provides one: never the user's tools folder.
+XdndTarget.ReadDrag = _ => null; // never asks a real display for the drag
 AppPaths.DataOverride = Directory.CreateDirectory(Path.Combine(temp.FullName, "data")).FullName; // never the user's settings
 var noMetadata = Directory.CreateDirectory(Path.Combine(temp.FullName, "no-metadata")).FullName;
 AppPaths.MetadataRoot = noMetadata;

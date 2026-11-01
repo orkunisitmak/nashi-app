@@ -1305,5 +1305,7 @@
   "Couldn’t convert in {0}: {1}": "{0} içinde dönüştürülemedi: {1}",
   "Pin to another edge": "Başka bir kenara sabitle",
   "Removing a reference never deletes the file.": "Bir referansı kaldırmak dosyayı asla silmez.",
-  "Copied. Paste them in your file manager.": "Kopyalandı. Dosya yöneticinde yapıştır."
+  "Copied. Paste them in your file manager.": "Kopyalandı. Dosya yöneticinde yapıştır.",
+  "Dropped between the petals: nothing was changed. Drop on a petal to use it.": "Yaprakların arasına bırakıldı: hiçbir şey değişmedi. Kullanmak için bir yaprağa bırak.",
+  "Nashi couldn’t read what was dropped. Drop files from your file manager or browser.": "Nashi bırakılanı okuyamadı. Dosyaları dosya yöneticinden ya da tarayıcından bırak."
 }

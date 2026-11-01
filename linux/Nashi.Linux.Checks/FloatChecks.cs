@@ -75,7 +75,7 @@ static class FloatChecks
         IDisposable? target = null;
         Action<DropContent, int, int>? dropped = null;
         var saved = XdndTarget.Create;
-        XdndTarget.Create = (_, _, _, _, d) => { dropped = d; return target = new CancellationTokenSource(); };
+        XdndTarget.Create = (_, _, _, _, _, d, _) => { dropped = d; return target = new CancellationTokenSource(); };
         try
         {
             window.DragRunning(true);

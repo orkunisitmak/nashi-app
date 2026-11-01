@@ -230,20 +230,39 @@ static partial class DragChecks
         using (var image = new ImageMagick.MagickImage(ImageMagick.MagickColors.Gold, 16, 16)) image.Write(png);
         Func<int, int, bool>? accepts = null;
         Action<DropContent, int, int>? hover = null, dropped = null;
+        Action? refused = null;
         var targets = 0;
         var made = 0;
         var gone = 0;
         var saved = XdndTarget.Create;
-        XdndTarget.Create = (_, a, h, _, d) => { (accepts, hover, dropped) = (a, h, d); targets++; made++; return new Gone(() => gone++); };
+        XdndTarget.Create = (_, _, a, h, _, d, r) => { (accepts, hover, dropped, refused) = (a, h, d, r); targets++; made++; return new Gone(() => gone++); };
         var ticks = 0;
         WheelFeedback.Player = _ => ticks++;
         try
         {
-            var flow = new WheelFlow(new Toolchain(Path.Combine(work, "no-tools"), ""), null, _ => { }, () => Task.CompletedTask);
+            var notes = new List<string>();
+            var flow = new WheelFlow(new Toolchain(Path.Combine(work, "no-tools"), ""), null, notes.Add, () => Task.CompletedTask);
+
+            // The drag source answers at once (a fake XdndSelection owner): the petals are there before any XDND message.
+            var savedRead = XdndTarget.ReadDrag;
+            XdndTarget.ReadDrag = _ => DropContent.From(new Dictionary<string, byte[]> { ["text/uri-list"] = Encoding.UTF8.GetBytes(new Uri(png).AbsoluteUri + "\r\n") });
+            try
+            {
+                flow.ShowForDrag(new PixelPoint(400, 300));
+                for (var i = 0; i < 100 && flow.LastWheel!.Wheel.Sides.Count == 0; i++) { Thread.Sleep(5); Dispatcher.UIThread.RunJobs(); }
+                check(flow.LastWheel!.Known && flow.LastWheel.Wheel.Sides.Count == 3 && flow.LastWheel.Wheel.Items[0].Id == "convert:jpg", "The gesture fills the wheel from the drag source's uri-list before the drag reaches it");
+                refused!();
+                Dispatcher.UIThread.RunJobs();
+                check(notes is [var said] && said.StartsWith("Dropped between the petals"), "A drop on the centre is not lost silently: a card says nothing changed");
+                flow.LastWheel.Close();
+                Dispatcher.UIThread.RunJobs();
+            }
+            finally { XdndTarget.ReadDrag = savedRead; }
+            notes.Clear();
             flow.ShowForDrag(new PixelPoint(400, 300));
             Dispatcher.UIThread.RunJobs();
             var wheel = flow.LastWheel!;
-            check(wheel.IsVisible && !wheel.IsActive && wheel.Wheel.Items.Count == 0 && targets == 1, "The gesture shows an empty, unactivated wheel at the pointer and makes it a drop target");
+            check(wheel.IsVisible && !wheel.IsActive && wheel.Wheel.Items.Count == 0 && targets == 2, "The gesture shows an empty, unactivated wheel at the pointer and makes it a drop target");
             var (rect, scaling) = wheel.ScreenRect();
             (int X, int Y) Screen(int petal)
             {

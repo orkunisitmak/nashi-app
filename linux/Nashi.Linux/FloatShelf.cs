@@ -79,6 +79,7 @@ public sealed class FloatShelf : Window
         public const string Close = "Close Float without deleting files";
         public const string Selected = "{0} selected";
         public const string Hint = "Removing a reference never deletes the file.";
+        public const string Unread = "Nashi couldn’t read what was dropped. Drop files from your file manager or browser.";
         public const string Copied = "Copied. Paste them in your file manager.";
     }
 
@@ -307,10 +308,12 @@ public sealed class FloatShelf : Window
         if (!running || !IsVisible) return;
         var scaling = Desktop.ScreenAt(this, Position)?.Scaling ?? 1;
         var rect = new PixelRect(Position, PixelSize.FromSize(new Size(Width, Height), scaling));
-        dropTarget = XdndTarget.Create(rect, (_, _) => true,
+        var xid = TryGetPlatformHandle() is { HandleDescriptor: "XID", Handle: var handle } ? handle : IntPtr.Zero;
+        dropTarget = XdndTarget.Create(xid, rect, (_, _) => true,
             (_, _, _) => Dispatcher.UIThread.Post(() => card.Classes.Set("targeted", true)),
             () => Dispatcher.UIThread.Post(() => card.Classes.Set("targeted", false)),
-            (content, _, _) => Dispatcher.UIThread.Post(() => _ = DroppedAsync(content)));
+            (content, _, _) => Dispatcher.UIThread.Post(() => _ = DroppedAsync(content)),
+            () => Dispatcher.UIThread.Post(() => SuccessToast.Notice(L10n.T(Copy.Unread)).Present()));
     }
 
     /// Files dropped on Float: added, then the wheel opens for them. Browser items are downloaded first.
