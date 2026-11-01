@@ -32,6 +32,25 @@ final class ImageFrameShadowTransparencyTests: XCTestCase {
         return try ImageEngine.framedImage(image, options: options)
     }
 
+    /// A 101 × 60 image on a Square 421 × 421 canvas has 180.5 px of free space above and below.
+    /// Drawn half a pixel off the grid, every pixel was blended with its neighbour.
+    func testImageOnAnOddSizedCanvasStaysOnWholePixels() throws {
+        let context = try XCTUnwrap(CGContext(data: nil, width: 101, height: 60, bitsPerComponent: 8, bytesPerRow: 0,
+            space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+        for y in 0..<60 { for x in 0..<101 { context.setFillColor(CGColor(gray: CGFloat((x + y) % 2), alpha: 1)); context.fill(CGRect(x: x, y: 59 - y, width: 1, height: 1)) } }
+        var frame = ImageFrameOptions(); frame.padding = 160; frame.cornerRadius = 0; frame.shadowRadius = 0; frame.backgroundColor = "#FF0000"; frame.aspectRatio = 1
+        var options = OperationOptions(); options.imageFrame = frame
+        let result = try ImageEngine.framedImage(try XCTUnwrap(context.makeImage()), options: options)
+        XCTAssertEqual(result.width, 421); XCTAssertEqual(result.height, 421)
+        let left = 160, top = 181
+        for (x, y) in [(0, 0), (1, 0), (0, 1), (50, 30), (51, 30), (100, 59), (99, 59)] {
+            let value = (x + y) % 2 == 1 ? 255 : 0
+            XCTAssertEqual(try pixel(result, left + x, top + y), [value, value, value, 255], "image pixel \(x),\(y)")
+        }
+        XCTAssertEqual(try pixel(result, left - 1, top), [255, 0, 0, 255]); XCTAssertEqual(try pixel(result, left + 101, top + 59), [255, 0, 0, 255])
+        XCTAssertEqual(try pixel(result, left, top - 1), [255, 0, 0, 255]); XCTAssertEqual(try pixel(result, left + 100, top + 60), [255, 0, 0, 255])
+    }
+
     func testTransparentPixelsShowTheFrameBackgroundBehindTheDefaultShadow() throws {
         let result = try framed(try source(fill: nil))
         XCTAssertEqual(try pixel(result, 45, 45), [255, 255, 255, 255], "A transparent source pixel must not turn black")

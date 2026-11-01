@@ -468,7 +468,8 @@ public enum ImageEngine {
         let availableWidth=max(1,width-padding*2),availableHeight=max(1,height-padding*2)
         let scale=min(1,min(Double(availableWidth)/Double(image.width),Double(availableHeight)/Double(image.height)))*settings.imageScale
         let imageWidth=Double(image.width)*scale,imageHeight=Double(image.height)*scale
-        let x=(Double(width)-imageWidth)*max(0,min(1,settings.position.x)),top=(Double(height)-imageHeight)*max(0,min(1,settings.position.y))
+        // Whole-pixel origin: half a pixel off the grid resamples, and blurs, every pixel of the image.
+        let x=((Double(width)-imageWidth)*max(0,min(1,settings.position.x))).rounded(),top=((Double(height)-imageHeight)*max(0,min(1,settings.position.y))).rounded()
         let r=CGRect(x:x,y:Double(height)-top-imageHeight,width:imageWidth,height:imageHeight)
         let radius=max(0,min(settings.cornerRadius,min(r.width,r.height)/2)),path=CGPath(roundedRect:r,cornerWidth:radius,cornerHeight:radius,transform:nil)
         // Cast the shadow from the clipped image itself. Filling the shape with black
