@@ -106,6 +106,31 @@ final class DocumentEngineTests: XCTestCase {
         }
     }
 
+    func testArchiveExtractionAndConversionKeepFolderPermissions() throws {
+        let fm=FileManager.default
+        let source=root.appendingPathComponent("Permission source",isDirectory:true)
+        let privateFolder=source.appendingPathComponent("private",isDirectory:true),locked=source.appendingPathComponent("locked",isDirectory:true)
+        try fm.createDirectory(at:privateFolder,withIntermediateDirectories:true)
+        try fm.createDirectory(at:locked,withIntermediateDirectories:true)
+        try Data("Host x\n".utf8).write(to:privateFolder.appendingPathComponent("config"))
+        try Data("read only\n".utf8).write(to:locked.appendingPathComponent("note.txt"))
+        try fm.setAttributes([.posixPermissions:0o700],ofItemAtPath:privateFolder.path)
+        try fm.setAttributes([.posixPermissions:0o555],ofItemAtPath:locked.path)
+        defer{try? fm.setAttributes([.posixPermissions:0o755],ofItemAtPath:locked.path)}
+        let archive=root.appendingPathComponent("Permissions.tar")
+        _=try ProcessRunner.run(URL(fileURLWithPath:"/usr/bin/tar"),["-cf",archive.path,"-C",source.path,"private","locked"])
+        func mode(_ folder:URL,_ name:String) throws -> Int { (try fm.attributesOfItem(atPath:folder.appendingPathComponent(name).path)[.posixPermissions] as! NSNumber).intValue }
+        let extracted=try XCTUnwrap(DocumentEngine.extractArchive(archive,options:.init(),token:.init()).first)
+        XCTAssertEqual(try mode(extracted,"private"),0o700)
+        // The owner keeps write access, so a read-only folder's files are still written.
+        XCTAssertEqual(try mode(extracted,"locked"),0o755)
+        XCTAssertEqual(try DocumentText.read(extracted.appendingPathComponent("locked/note.txt")),"read only\n")
+        let zip=try convert(archive,"zip")
+        let reopened=root.appendingPathComponent("Reopened",isDirectory:true)
+        try ArchiveCodec.extract(zip,into:reopened,token:.init())
+        XCTAssertEqual(try mode(reopened,"private"),0o700)
+    }
+
     func testStoredRARAndOrdinaryGZIPAreReadable() throws {
         let rar = root.appendingPathComponent("Stored.rar")
         try Self.storedRAR(name: "hello.txt", payload: Data("RAR round trip\n".utf8)).write(to: rar)

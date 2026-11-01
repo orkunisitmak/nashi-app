@@ -76,6 +76,9 @@ enum ArchiveCodec {
             let kind = a.entryFiletype(entry) & 0o170000
             if kind == 0o040000 {
                 try fm.createDirectory(at: destination, withIntermediateDirectories: true)
+                // The owner keeps full access so later entries, conversion and cleanup still work.
+                let mode = a.entryPerm(entry) & 0o777
+                if mode != 0 { try? fm.setAttributes([.posixPermissions: NSNumber(value: mode | 0o700)], ofItemAtPath: destination.path) }
                 continue
             }
             guard kind == 0o100000 || kind == 0 else {
