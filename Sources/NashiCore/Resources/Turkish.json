@@ -1298,5 +1298,8 @@
   "Choose a valid color.": "Geçerli bir renk seç.",
   "This PDF could not be opened.": "Bu PDF açılamadı.",
   "Couldn’t play the preview: {0}": "Önizleme oynatılamadı: {0}",
-  "Only HTTPS downloads are supported.": "Yalnızca HTTPS indirmeleri destekleniyor."
+  "Only HTTPS downloads are supported.": "Yalnızca HTTPS indirmeleri destekleniyor.",
+  "Drag gestures need an X11 session. The right-click menu and Ctrl+Alt+N still work.": "Sürükleme hareketleri X11 oturumu gerektirir. Sağ tık menüsü ve Ctrl+Alt+N yine çalışır.",
+  "Drop on a petal": "Bir yaprağa bırak",
+  "{0} ›": "{0} ›"
 }

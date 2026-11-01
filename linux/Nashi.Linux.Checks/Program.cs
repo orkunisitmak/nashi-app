@@ -49,6 +49,7 @@ WheelFeedback.SystemReducesMotion = false;
 WheelFeedback.ReduceMotion = true; // renders show the wheel at rest; MotionChecks turns it on
 var temp = Directory.CreateTempSubdirectory("nashi-linux-checks-");
 // No ExifTool unless a check provides one: never the user's tools folder.
+AppPaths.DataOverride = Directory.CreateDirectory(Path.Combine(temp.FullName, "data")).FullName; // never the user's settings
 var noMetadata = Directory.CreateDirectory(Path.Combine(temp.FullName, "no-metadata")).FullName;
 AppPaths.MetadataRoot = noMetadata;
 try
@@ -74,6 +75,8 @@ try
     LabelChecks();
     MotionChecks();
     await ActionChecks(temp.FullName);
+    DragChecks.Gestures(Check);
+    DragChecks.DragWheel(temp.FullName, Check, Smoke);
     await EditorChecks.RunAsync(temp.FullName, Check, Smoke);
     WheelRenders(temp.FullName);
 }
@@ -294,6 +297,8 @@ void HomeChecks()
 async Task ToolSetupChecks(string root)
 {
     var saved = Environment.GetEnvironmentVariable("XDG_DATA_HOME");
+    var data = AppPaths.DataOverride;
+    AppPaths.DataOverride = null; // these look at the real rule, without the checks' own folder
     try
     {
         Environment.SetEnvironmentVariable("XDG_DATA_HOME", "/tmp/x");
@@ -301,7 +306,7 @@ async Task ToolSetupChecks(string root)
         Environment.SetEnvironmentVariable("XDG_DATA_HOME", null);
         Check(AppPaths.Tools.EndsWith(Path.Combine(".local", "share", "Nashi", "tools")), "Without XDG_DATA_HOME tools live under ~/.local/share");
     }
-    finally { Environment.SetEnvironmentVariable("XDG_DATA_HOME", saved); }
+    finally { Environment.SetEnvironmentVariable("XDG_DATA_HOME", saved); AppPaths.DataOverride = data; }
 
     var missing = new Toolchain(Directory.CreateDirectory(Path.Combine(root, "tools-missing")).FullName, "");
     var presentDir = Directory.CreateDirectory(Path.Combine(root, "tools-present")).FullName;

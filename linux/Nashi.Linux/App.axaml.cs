@@ -14,6 +14,7 @@ public sealed class App : Application
     private static class Copy
     {
         public const string Nothing = "Nothing to convert";
+        public const string Wayland = "Drag gestures need an X11 session. The right-click menu and Ctrl+Alt+N still work.";
     }
 
     /// Set by Program before Avalonia starts; the checks keep Home.
@@ -35,10 +36,35 @@ public sealed class App : Application
             {
                 desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
                 if (Launch.Message is { } first) Dispatcher.UIThread.Post(() => Handle(first));
+                StartGestures();
             }
             Instance?.Start(message => Dispatcher.UIThread.Post(() => Handle(message)));
         }
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private PointerWatch? pointerWatch;
+
+    /// The background instance hosts the drag gesture: holding the gesture key while dragging files opens the wheel at
+    /// the pointer. On Wayland there is no global pointer: a one-time card says so.
+    private void StartGestures()
+    {
+        if (!PointerWatch.Available)
+        {
+            if (Environment.GetEnvironmentVariable("XDG_SESSION_TYPE") == "wayland" && !Settings.Current.WaylandNoticeShown)
+            {
+                Dispatcher.UIThread.Post(() => SuccessToast.Notice(L10n.T(Copy.Wayland)).Present());
+                Settings.Update(s => s with { WaylandNoticeShown = true });
+            }
+            return;
+        }
+        var detector = new GestureDetector { Key = GestureDetector.Parse(Settings.Current.GestureKey) };
+        Settings.Changed += s => detector.Key = GestureDetector.Parse(s.GestureKey);
+        pointerWatch = new PointerWatch(detector);
+        Flow.Sampler = pointerWatch.Sampler;
+        detector.DragStarted += (x, y) => Dispatcher.UIThread.Post(() => Flow.ShowForDrag(new PixelPoint(x, y)));
+        detector.DragEnded += (_, _) => Dispatcher.UIThread.Post(Flow.DragEnded);
+        pointerWatch.Sampler.Flip += () => Dispatcher.UIThread.Post(Flow.FlipDrag);
     }
 
     /// The wheels, toasts and setup window of the background mode.

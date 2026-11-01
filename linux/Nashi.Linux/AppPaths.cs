@@ -4,10 +4,14 @@ namespace Nashi.Linux;
 
 public static class AppPaths
 {
+    /// Where the checks keep settings, the shelf and the library instead of the user's data folder.
+    public static string? DataOverride { get; set; }
+
     public static string Data
     {
         get
         {
+            if (DataOverride is { } data) return data;
             var xdg = Environment.GetEnvironmentVariable("XDG_DATA_HOME");
             var root = !string.IsNullOrEmpty(xdg) && Path.IsPathRooted(xdg) ? xdg
                 : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "share");

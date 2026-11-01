@@ -41,6 +41,9 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
         public const string Problem = "Something went wrong: {0}";
         public const string NothingMade = "Nothing was created.";
         public const string Waiting = "Waiting for the current task to finish…";
+        public const string DropHere = "Drop on a petal";
+        public const string Downloading = "Downloading…";
+        public const string SideTo = "{0} ›";
     }
 
     private readonly OperationRunner runner = new(tools);
@@ -96,11 +99,116 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
         ShowFormats();
     }
 
-    /// The Actions wheel: Share, Float (not yet), Copy, Move, Copy Path, Terminal.
+    /// The Actions wheel: Share, Float, Copy, Move, Copy Path, Terminal.
     public void ShowActions(IReadOnlyList<string> selection)
     {
         Begin(selection);
-        ShowWheel(L10n.T(Copy.ActionsWheel), FileActions.Ids.Select(id => new WheelItem("action:" + id, L10n.T(FileActions.Title(id)), FileActions.Available(id))).ToList(), "");
+        ShowWheel(L10n.T(Copy.ActionsWheel), ActionItems(), "");
+    }
+
+    private static List<WheelItem> ActionItems() =>
+        FileActions.Ids.Select(id => new WheelItem("action:" + id, L10n.T(FileActions.Title(id)), FileActions.Available(id))).ToList();
+
+    private List<WheelItem> FormatItems() =>
+        Capabilities.Formats(files).Select(f => new WheelItem("convert:" + f, f == "gz" ? "GZIP" : f.ToUpperInvariant())).ToList();
+
+    /// The drag wheel's sides for these files, in this order: Convert (the formats), Tools, Actions. Empty sides are
+    /// left out, and each side ends with a petal that turns to the next ("Tools ›", "Actions ›", "Convert ›").
+    public IReadOnlyList<WheelSide> DragSides(IReadOnlyList<string> selection)
+    {
+        files = [.. selection];
+        var tools = Capabilities.Tools(files).Select(id => new WheelItem(id, L10n.T(FeatureCatalog.ToolNames.GetValueOrDefault(id, id)))).ToList();
+        var sides = new[] { (L10n.T(Copy.ConvertWheel), FormatItems()), (L10n.T(Copy.ToolsWheel), tools), (L10n.T(Copy.ActionsWheel), ActionItems()) }
+            .Where(s => s.Item2.Count > 0).ToList();
+        return sides.Select((s, i) => new WheelSide(s.Item1, sides.Count < 2 ? s.Item2
+            : [.. s.Item2, new WheelItem("side:" + (i + 1) % sides.Count, L10n.F(Copy.SideTo, sides[(i + 1) % sides.Count].Item1))])).ToList();
+    }
+
+    private IDisposable? dropTarget;
+    private WheelWindow? dragWheel;
+    private bool dropped;
+
+    /// Feeds Tab presses during a drag (the X11 poll); on while a drag wheel is up.
+    public PointerSampler? Sampler { get; set; }
+
+    /// The drag gesture fired: an empty wheel at the pointer that fills with the dragged files' sides when the drag
+    /// reaches it. A drop on a petal runs it for those files (browser items are downloaded first); a drop on a side
+    /// or page petal turns the wheel and leaves it up for a click. A drop anywhere else is the source's own.
+    public void ShowForDrag(PixelPoint at)
+    {
+        EndDragWheel();
+        files = [];
+        pointer = at;
+        dropped = false;
+        IReadOnlyList<WebItem> web = [];
+        var wheel = dragWheel = LastWheel = new WheelWindow(L10n.T(Copy.DropHere), []);
+        wheel.Wheel.Chosen += OnChosen;
+        wheel.Closed += (_, _) => { if (dragWheel == wheel) EndDragWheel(); };
+        wheel.ShowForDrop(at);
+        dropTarget = wheel.DropTarget(content =>
+        {
+            web = content.Web;
+            var downloads = BrowserDrop.DownloadFolder();
+            wheel.Wheel.Sides = DragSides(content.Files.Count > 0 ? content.Files : [.. web.Select(w => Path.Combine(downloads, w.Name))]);
+        }, async (content, point) =>
+        {
+            dropped = true;
+            dropTarget?.Dispose();
+            dropTarget = null;
+            if (Sampler is { } sampler) sampler.WatchFlip = false;
+            try
+            {
+                if (content.Web.Count > 0)
+                {
+                    if (await DownloadAsync(content.Web) is not { } saved) { wheel.Close(); return; }
+                    files = saved;
+                }
+                else files = content.Files;
+                if (!wheel.Wheel.ChooseAt(point) && wheel.IsVisible) wheel.Engage();
+            }
+            catch (Exception error) { wheel.Close(); notify(L10n.F(Copy.Problem, L10n.T(error.Message))); }
+        });
+        if (Sampler is { } s) s.WatchFlip = true;
+    }
+
+    /// The drag's button came up: a wheel nothing was dropped on closes (a drop arrives around the release).
+    public void DragEnded()
+    {
+        if (Sampler is { } sampler) sampler.WatchFlip = false;
+        var wheel = dragWheel;
+        Desktop.After(TimeSpan.FromMilliseconds(300), () => { if (wheel == dragWheel && !dropped) EndDragWheel(); });
+    }
+
+    /// Tab during a drag: the drag wheel turns to its next page or side.
+    public void FlipDrag()
+    {
+        if (dragWheel is { IsVisible: true } wheel && !dropped) wheel.Wheel.Flip(1);
+    }
+
+    private void EndDragWheel()
+    {
+        dropTarget?.Dispose();
+        dropTarget = null;
+        var wheel = dragWheel;
+        dragWheel = null;
+        if (wheel is { IsVisible: true } && !dropped) wheel.Close();
+    }
+
+    /// The browser items into the download folder, with a cancellable card; null when cancelled or failed (said).
+    private async Task<IReadOnlyList<string>?> DownloadAsync(IReadOnlyList<WebItem> items)
+    {
+        using var cancellation = new CancellationTokenSource();
+        var toast = LastToast = new ProgressToast(L10n.T(Copy.Downloading), cancellation.Cancel);
+        toast.Show();
+        toast.Update(new(null, items.Count == 1 ? items[0].Name : L10n.F(Copy.Files, items.Count)));
+        try { return await BrowserDrop.SaveAsync(items, BrowserDrop.DownloadFolder(), cancellation.Token); }
+        catch (OperationCanceledException) { notify(L10n.T(Copy.Cancelled)); return null; }
+        catch (Exception error) when (error is HttpRequestException or IOException or InvalidDataException or UnauthorizedAccessException or TimeoutException)
+        {
+            notify(L10n.F(Copy.Failed, L10n.T(error.Message)));
+            return null;
+        }
+        finally { toast.Close(); }
     }
 
     private void Begin(IReadOnlyList<string> selection)
@@ -109,8 +217,7 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
         pointer = owner is null ? Desktop.Pointer() : null;
     }
 
-    private void ShowFormats() =>
-        ShowWheel(L10n.T(Copy.ConvertWheel), Capabilities.Formats(files).Select(f => new WheelItem("convert:" + f, f == "gz" ? "GZIP" : f.ToUpperInvariant())).ToList(), Empty(Copy.NoFormats, Copy.NoFormatsFor));
+    private void ShowFormats() => ShowWheel(L10n.T(Copy.ConvertWheel), FormatItems(), Empty(Copy.NoFormats, Copy.NoFormatsFor));
 
     /// "No conversions for PDF files yet." when the files share a type; the selection wording otherwise.
     private string Empty(string any, string named)

@@ -22,6 +22,7 @@
 "%@ ways to change it" = "%@ farklı biçime çevir";
 "%@ · Nashi" = "%@ · Nashi";
 "%@ · Original stays safe" = "%@ · Orijinal dosyan güvende";
+"%@ ›" = "%@ ›";
 "%@: %@ pages" = "%@: %@ sayfa";
 "%@: %lld pages" = "%@: %lld sayfa";
 "%@: The crop rectangle must fit completely inside the %@ × %@ pixel image." = "%@: Kırpma alanı %@ × %@ piksellik görselin tamamen içinde kalmalı.";
@@ -49,6 +50,7 @@
 "%lld ways to change it" = "%lld farklı biçime çevir";
 "%lld · Nashi" = "%lld · Nashi";
 "%lld · Original stays safe" = "%lld · Orijinal dosyan güvende";
+"%lld ›" = "%lld ›";
 "%lld: %@ pages" = "%lld: %@ sayfa";
 "%lld: %lld pages" = "%lld: %lld sayfa";
 "%lld: The crop rectangle must fit completely inside the %@ × %@ pixel image." = "%lld: Kırpma alanı %@ × %@ piksellik görselin tamamen içinde kalmalı.";
@@ -766,6 +768,7 @@
 "DRAG AN ANNOTATION TO MOVE IT; PRESS DELETE TO REMOVE IT. TURN OFF SELECT / MOVE TO DRAW." = "BİR İŞARETİ TAŞIMAK İÇİN SÜRÜKLE, KALDIRMAK İÇİN DELETE'E BAS. ÇİZMEK İÇİN SEÇ / TAŞI'YI KAPAT.";
 "DRAG AN AREA FIRST." = "ÖNCE BİR ALAN SÜRÜKLE.";
 "DRAG AN EXISTING ANNOTATION TO MOVE IT; DRAG ITS HANDLES TO RESIZE. TURN OFF SELECT / MOVE TO DRAW." = "BİR İŞARETİ TAŞIMAK İÇİN İÇİNİ, BOYUTLANDIRMAK İÇİN TUTAMAĞINI SÜRÜKLE. ÇİZMEK İÇİN SEÇ / TAŞI'YI KAPAT.";
+"DRAG GESTURES NEED AN X11 SESSION. THE RIGHT-CLICK MENU AND CTRL+ALT+N STILL WORK." = "SÜRÜKLEME HAREKETLERİ X11 OTURUMU GEREKTİRİR. SAĞ TIK MENÜSÜ VE CTRL+ALT+N YİNE ÇALIŞIR.";
 "DRAG INSIDE TO MOVE. DRAG NEAR A CORNER TO RESIZE. DRAG OUTSIDE TO START A NEW SELECTION." = "TAŞIMAK İÇİN ALANIN İÇİNİ, BOYUTLANDIRMAK İÇİN KÖŞEYİ SÜRÜKLE. YENİ SEÇİM İÇİN ALANIN DIŞINDA SÜRÜKLE.";
 "DRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE." = "TAŞIMAK İÇİN ALANIN İÇİNİ, BOYUTLANDIRMAK İÇİN TUTAMAĞI SÜRÜKLE.";
 "DRAG ON THE PREVIEW TO ADD AN AREA. EACH AREA IS SAVED INTO THE NEW COPY." = "ALAN EKLEMEK İÇİN ÖNİZLEMEDE SÜRÜKLE. HER ALAN YENİ KOPYAYA İŞLENİR.";
@@ -781,6 +784,7 @@
 "DROP FILES HERE · SPACE FOR QUICK LOOK" = "DOSYALARI BURAYA BIRAK · HIZLI BAKIŞ İÇİN SPACE";
 "DROP FILES OR FOLDERS HERE" = "DOSYALARI VEYA KLASÖRLERİ BURAYA BIRAK";
 "DROP IT LIKE IT’S… A FILE." = "DOSYANI BURAYA BIRAK.";
+"DROP ON A PETAL" = "BİR YAPRAĞA BIRAK";
 "DROP SOMETHING GOOD." = "BİR DOSYA BIRAK.";
 "DUPLICATE" = "ÇOĞALT";
 "Dark" = "Koyu";
@@ -846,6 +850,7 @@
 "Drag an annotation to move it; press Delete to remove it. Turn off Select / Move to draw." = "Bir işareti taşımak için sürükle, kaldırmak için Delete'e bas. Çizmek için Seç / Taşı'yı kapat.";
 "Drag an area first." = "Önce bir alan sürükle.";
 "Drag an existing annotation to move it; drag its handles to resize. Turn off Select / Move to draw." = "Bir işareti taşımak için içini, boyutlandırmak için tutamağını sürükle. Çizmek için Seç / Taşı'yı kapat.";
+"Drag gestures need an X11 session. The right-click menu and Ctrl+Alt+N still work." = "Sürükleme hareketleri X11 oturumu gerektirir. Sağ tık menüsü ve Ctrl+Alt+N yine çalışır.";
 "Drag inside to move. Drag near a corner to resize. Drag outside to start a new selection." = "Taşımak için alanın içini, boyutlandırmak için köşeyi sürükle. Yeni seçim için alanın dışında sürükle.";
 "Drag inside to move; drag a handle to resize." = "Taşımak için alanın içini, boyutlandırmak için tutamağı sürükle.";
 "Drag on the preview to add an area. Each area is saved into the new copy." = "Alan eklemek için önizlemede sürükle. Her alan yeni kopyaya işlenir.";
@@ -861,6 +866,7 @@
 "Drop files here · Space for Quick Look" = "Dosyaları buraya bırak · Hızlı Bakış için Space";
 "Drop files or folders here" = "Dosyaları veya klasörleri buraya bırak";
 "Drop it like it’s… a file." = "Dosyanı buraya bırak.";
+"Drop on a petal" = "Bir yaprağa bırak";
 "Drop something good." = "Bir dosya bırak.";
 "Duplicate" = "Çoğalt";
 "EACH AREA COVERS THE RANGE ON THE TIMELINE WHEN IT IS DRAWN; CHOOSE AN AREA TO CHANGE ITS RANGE." = "HER ALAN, ÇİZİLDİĞİNDE ZAMAN ÇİZELGESİNDEKİ ARALIĞI KAPSAR; ARALIĞINI DEĞİŞTİRMEK İÇİN BİR ALAN SEÇ.";

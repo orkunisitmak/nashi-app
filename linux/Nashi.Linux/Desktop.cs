@@ -56,6 +56,10 @@ public static class Desktop
         return false;
     };
 
+    /// Runs `action` on the UI thread after `delay` (a posted job, so a headless pump runs it too).
+    public static void After(TimeSpan delay, Action action) =>
+        _ = Task.Delay(delay).ContinueWith(_ => Avalonia.Threading.Dispatcher.UIThread.Post(action), TaskScheduler.Default);
+
     /// Fire-and-forget Spawn.
     public static bool Start(string program, IReadOnlyList<string> args, string? folder) => Spawn(program, args, folder, null);
 

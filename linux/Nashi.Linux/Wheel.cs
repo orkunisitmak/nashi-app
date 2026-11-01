@@ -15,6 +15,9 @@ namespace Nashi.Linux;
 /// One petal. A disabled one (Float, not built yet) shows dimmed, never takes the gold highlight and says Coming soon.
 public sealed record WheelItem(string Id, string Title, bool Enabled = true);
 
+/// One side of a two-sided wheel (Convert, Tools, Actions): Tab, the mouse wheel or a "side:N" petal turns to it.
+public sealed record WheelSide(string Title, IReadOnlyList<WheelItem> Items);
+
 /// A petal label fitted inside its petal: lines centered on `Center` (in the 320-point wheel), the icon above them.
 public sealed record WheelLabel(Point Center, double FontSize, IReadOnlyList<string> Lines, bool HasIcon, bool Fits)
 {
@@ -55,7 +58,8 @@ public sealed class Wheel : Control
     private static readonly Dictionary<(int, int, string, bool), WheelLabel> labels = [];
 
     private IReadOnlyList<WheelItem> items = [];
-    private int page, highlighted = -1;
+    private IReadOnlyList<WheelSide> sides = [];
+    private int page, side, highlighted = -1;
 
     public Wheel()
     {
@@ -73,7 +77,63 @@ public sealed class Wheel : Control
     public IReadOnlyList<WheelItem> Items
     {
         get => items;
-        set { items = value; page = 0; highlighted = -1; HighlightedIndex = Step(-1, 1); InvalidateVisual(); }
+        set { items = value; page = 0; highlighted = -1; HighlightedIndex = Step(-1, 1); InvalidateVisual(); Turned?.Invoke(); }
+    }
+
+    /// The sides of a two-sided wheel; setting them shows the first. Empty for a one-sided wheel.
+    public IReadOnlyList<WheelSide> Sides
+    {
+        get => sides;
+        set { sides = value; side = 0; if (value.Count > 0) { Title = value[0].Title; Items = value[0].Items; } }
+    }
+
+    /// The side on show (0 without sides).
+    public int Side => side;
+
+    /// The page on show of the current side.
+    public int Page => page;
+
+    /// The petals changed: a page or side turned, or new items (UI thread).
+    public event Action? Turned;
+
+    /// Shows side `index` from its first page.
+    public void ShowSide(int index)
+    {
+        if (sides.Count == 0) return;
+        side = (index % sides.Count + sides.Count) % sides.Count;
+        Title = sides[side].Title;
+        Items = sides[side].Items;
+        WheelFeedback.Tick();
+    }
+
+    /// Tab, Shift+Tab and the mouse wheel: the next (or previous) page of petals, then the next side; every turn ticks.
+    public void Flip(int step)
+    {
+        if (PageCount > 1 && page + step >= 0 && page + step < PageCount) { TurnPage(step); return; }
+        if (sides.Count > 1)
+        {
+            ShowSide(side + step);
+            if (step < 0 && PageCount > 1) SetPage(PageCount - 1);
+            return;
+        }
+        TurnPage(step);
+    }
+
+    /// The petal under a point in this control's coordinates (-1: none).
+    public int IndexAt(Point p) => IndexAt(p, Bounds.Size, Segments.Count);
+
+    /// Highlights the petal under a point (a drag passing over), ticking when it changes.
+    public void HighlightAt(Point p) => Highlight(IndexAt(p));
+
+    /// Chooses the petal under a point (a drop); false on none, a disabled one, or a page or side turn.
+    public bool ChooseAt(Point p)
+    {
+        var index = IndexAt(p);
+        var segments = Segments;
+        if (index < 0 || !segments[index].Enabled) return false;
+        var id = segments[index].Id;
+        Choose(index);
+        return id is not (PreviousId or NextId) && !id.StartsWith("side:", StringComparison.Ordinal);
     }
 
     /// The gold petal, or -1. Disabled petals are never highlighted.
@@ -135,6 +195,7 @@ public sealed class Wheel : Control
         {
             case PreviousId: TurnPage(-1); break;
             case NextId: TurnPage(1); break;
+            case var id when id.StartsWith("side:", StringComparison.Ordinal): ShowSide(int.Parse(id[5..], CultureInfo.InvariantCulture)); break;
             default:
                 WheelFeedback.PlaySelection();
                 Chosen?.Invoke(segments[index]);
@@ -145,10 +206,17 @@ public sealed class Wheel : Control
     private void TurnPage(int step)
     {
         if (PageCount < 2) return;
-        page = (page + step + PageCount) % PageCount;
+        SetPage((page + step + PageCount) % PageCount);
+        WheelFeedback.Tick();
+    }
+
+    private void SetPage(int value)
+    {
+        page = value;
         highlighted = -1;
         HighlightedIndex = Step(-1, 1);
         InvalidateVisual();
+        Turned?.Invoke();
     }
 
     // Every highlight the user moves (pointer, arrows, Tab) ticks, as macOS's selectionChanged; opening and page turns
@@ -170,6 +238,8 @@ public sealed class Wheel : Control
         {
             case Key.Right or Key.Down: Highlight(Step(highlighted, 1)); break;
             case Key.Left or Key.Up: Highlight(Step(highlighted, -1)); break;
+            // Tab turns a paged or two-sided wheel; on a single page it walks the petals.
+            case Key.Tab when PageCount > 1 || sides.Count > 1: Flip(e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? -1 : 1); break;
             case Key.Tab: Highlight(Step(highlighted, e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? -1 : 1)); break;
             case Key.Home: Highlight(Step(-1, 1)); break;
             case Key.End: Highlight(Step(0, -1)); break;
@@ -188,6 +258,14 @@ public sealed class Wheel : Control
         var index = IndexAt(e.GetPosition(this), Bounds.Size, segments.Count);
         Highlight(index);
         ToolTip.SetTip(this, index >= 0 && !segments[index].Enabled ? L10n.T(Copy.Soon) : null);
+    }
+
+    protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
+    {
+        base.OnPointerWheelChanged(e);
+        if (PageCount < 2 && sides.Count < 2 || e.Delta.Y == 0) return;
+        Flip(e.Delta.Y < 0 ? 1 : -1);
+        e.Handled = true;
     }
 
     protected override void OnPointerReleased(PointerReleasedEventArgs e)

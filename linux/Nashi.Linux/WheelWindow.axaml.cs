@@ -172,6 +172,30 @@ public sealed partial class WheelWindow : Window
     /// Without a grab it also closes on pointer leave (after an enter) and after IdleTimeout.
     public void ShowAt(PixelPoint? pointer, uint timestamp = 0)
     {
+        Place(pointer);
+        Opened += (_, _) => Engage(timestamp);
+        Show();
+    }
+
+    /// During a drag (the drag gesture): at the pointer and topmost, but not activated or grabbed, since the drag's
+    /// source holds the pointer. The petals come with the first drag over it (DropTarget); after a drop that stays
+    /// open (on a side or page petal) Engage makes it an ordinary pointer wheel.
+    public void ShowForDrop(PixelPoint pointer)
+    {
+        Place(pointer);
+        ShowActivated = false;
+        Show();
+    }
+
+    /// The window's place on screen in physical pixels, and its scaling.
+    public (PixelRect Rect, double Scaling) ScreenRect()
+    {
+        var scaling = Desktop.ScreenAt(this, Position)?.Scaling ?? 1;
+        return (new PixelRect(Position, PixelSize.FromSize(new Size(Width, Height), scaling)), scaling);
+    }
+
+    private void Place(PixelPoint? pointer)
+    {
         if (Desktop.ScreenAt(this, pointer) is { } screen)
         {
             var area = screen.WorkingArea;
@@ -179,12 +203,18 @@ public sealed partial class WheelWindow : Window
             Position = Desktop.Place(pointer ?? area.Center, PixelSize.FromSize(new Size(Width, Height), screen.Scaling), area);
         }
         Topmost = true;
-        Opened += (_, _) =>
-        {
-            Activate();
-            Desktop.Activate(this, timestamp);
-            TryGrab(5);
-        };
+    }
+
+    private bool engaged;
+
+    /// Activates and grabs the shown pointer wheel, with its idle and leave rules.
+    public void Engage(uint timestamp = 0)
+    {
+        if (engaged) return;
+        engaged = true;
+        Activate();
+        Desktop.Activate(this, timestamp);
+        TryGrab(5);
         Closed += (_, _) =>
         {
             try { releaseGrab?.Invoke(); }
@@ -199,8 +229,69 @@ public sealed partial class WheelWindow : Window
         AddHandler(KeyDownEvent, (_, _) => Touch(), RoutingStrategies.Tunnel, handledEventsToo: true);
         PointerEntered += (_, _) => entered = true;
         PointerExited += (_, _) => { if (entered && releaseGrab is null && !IsActive) Close(); };
-        Show();
     }
+
+    /// A screen point (physical pixels) in the wheel's own coordinates.
+    public Point ToWheel(int x, int y)
+    {
+        var (rect, scaling) = ScreenRect();
+        return this.TranslatePoint(new Point((x - rect.X) / scaling, (y - rect.Y) / scaling), Ring) ?? default;
+    }
+
+    private (int Count, bool[] Enabled) petals = (0, []);
+    private int dwell;
+
+    /// Makes this window an XDND drop target (XdndTarget.Create): a drag passing over highlights the petal under it
+    /// (and, resting on a side or page petal, turns it), and a drop on a petal goes to `dropped` with the point.
+    /// Points off the petals refuse the drop, so it goes back to the source unchanged. `entered` gets the content
+    /// once it is known; it fills the petals.
+    public IDisposable DropTarget(Action<DropContent> entered, Action<DropContent, Point> dropped, Action? left = null)
+    {
+        var known = false;
+        void Snapshot() => petals = (Ring.Segments.Count, [.. Ring.Segments.Select(i => i.Enabled)]);
+        Ring.Turned += Snapshot;
+        Snapshot();
+        var (rect, scaling) = ScreenRect();
+        var inset = (Width - Wheel.Size) / 2;
+        // Any thread: pure geometry on what was captured here and the petal snapshot.
+        bool Accepts(int x, int y)
+        {
+            var (count, enabled) = petals;
+            var wheel = new Point((x - rect.X) / scaling - inset, (y - rect.Y) / scaling);
+            if (count == 0) return Wheel.IndexAt(wheel, new Size(Wheel.Size, Wheel.Size), 8) >= 0; // petals still on their way
+            var index = Wheel.IndexAt(wheel, new Size(Wheel.Size, Wheel.Size), count);
+            return index >= 0 && enabled[index];
+        }
+        return XdndTarget.Create(rect, Accepts,
+            (content, x, y) => Dispatcher.UIThread.Post(() =>
+            {
+                if (!IsVisible) return;
+                if (!known && content.Any) { known = true; entered(content); }
+                Hover(ToWheel(x, y));
+            }),
+            () => Dispatcher.UIThread.Post(() => { dwell++; Ring.HighlightedIndex = -1; left?.Invoke(); }),
+            (content, x, y) => Dispatcher.UIThread.Post(() =>
+            {
+                dwell++;
+                if (!known && content.Any) { known = true; entered(content); }
+                dropped(content, ToWheel(x, y));
+            }));
+    }
+
+    /// A drag over the wheel: highlights the petal; resting 0.7 s on a side or page petal turns the wheel.
+    public void Hover(Point at)
+    {
+        var before = Ring.HighlightedIndex;
+        Ring.HighlightAt(at);
+        var index = Ring.HighlightedIndex;
+        if (index == before) return;
+        var mine = ++dwell;
+        if (index >= 0 && Ring.Segments[index].Id is var id && (id.StartsWith("side:", StringComparison.Ordinal) || id.StartsWith("page:", StringComparison.Ordinal)))
+            Desktop.After(DwellTime, () => { if (mine == dwell && IsVisible) Ring.ChooseAt(at); });
+    }
+
+    /// How long a drag rests on a side or page petal before it turns.
+    public static TimeSpan DwellTime { get; set; } = TimeSpan.FromMilliseconds(700);
 
     // The grab fails while another client holds one (AlreadyGrabbed) or before the map lands (NotViewable): retry over ~200 ms.
     private void TryGrab(int attempts)
