@@ -742,7 +742,7 @@ void LaunchChecks()
     Check(bare.Mode == LaunchMode.Wheel && bare.Files.SequenceEqual(["/x/a.png", Path.GetFullPath("rel.png")]) && bare.Message!.Cmd == "wheel" && bare.Message.Files!.SequenceEqual(bare.Files), "Bare files (the desktop entry's %F) open the wheel with absolute paths");
     var acts = Launch.Parse(["--actions", "/a b.png", "rel.png"]);
     Check(acts.Mode == LaunchMode.Actions && acts.Files.SequenceEqual(["/a b.png", Path.GetFullPath("rel.png")]) && acts.Message!.Cmd == "actions" && acts.Message.Files!.SequenceEqual(acts.Files), "--actions forwards actions with absolute paths");
-    Check(Launch.Parse(["--wheel-clipboard"]).Mode == LaunchMode.WheelClipboard && Launch.Parse(["--wheel-clipboard"]).Message!.Cmd == "wheel-clipboard", "--wheel-clipboard forwards wheel-clipboard");
+    Check(Launch.Parse(["--wheel-clipboard"]).Mode == LaunchMode.Wheel, "--wheel-clipboard is gone (only Ctrl-drag remains): it is just another argument");
     Check(Launch.Parse(["--install-integration"]).Mode == LaunchMode.InstallIntegration && Launch.Parse(["--uninstall-integration"]).Mode == LaunchMode.UninstallIntegration, "Integration flags parse");
     Check(Desktop.StartupTime("nautilus-1234-ece-laptop-_TIME98765") == 98765 && Desktop.StartupTime("gnome-shell/Nashi/5-0-host_TIME4294967295") == uint.MaxValue, "DESKTOP_STARTUP_ID _TIME<n> parses to the timestamp");
     Check(Desktop.StartupTime(null) == 0 && Desktop.StartupTime("no-time-here") == 0 && Desktop.StartupTime("x_TIMEabc") == 0 && Desktop.StartupTime("x_TIME99999999999") == 0, "Missing or bad startup times are 0 (CurrentTime)");
@@ -750,7 +750,7 @@ void LaunchChecks()
     try
     {
         Environment.SetEnvironmentVariable("DESKTOP_STARTUP_ID", "nautilus-1-h-_TIME42");
-        Check(Launch.Parse(["--wheel", "/a.png"]).Message!.Startup == "nautilus-1-h-_TIME42" && Launch.Parse(["--wheel-clipboard"]).Message!.Startup == "nautilus-1-h-_TIME42", "The caller's DESKTOP_STARTUP_ID is forwarded");
+        Check(Launch.Parse(["--wheel", "/a.png"]).Message!.Startup == "nautilus-1-h-_TIME42" && Launch.Parse(["--actions", "/a.png"]).Message!.Startup == "nautilus-1-h-_TIME42", "The caller's DESKTOP_STARTUP_ID is forwarded");
         Environment.SetEnvironmentVariable("DESKTOP_STARTUP_ID", null);
         Check(Launch.Parse(["--wheel", "/a.png"]).Message!.Startup is null, "No DESKTOP_STARTUP_ID forwards none");
     }
@@ -875,20 +875,28 @@ void IntegrationChecks(string root)
     actionShell.WaitForExit();
     Check(actionPrinted == "--actions\na b.png\nğ\"q'.png\n", "The actions script passes the files intact after --actions: " + actionPrinted.Replace("\n", "|"));
     Check(AppLocalization.Text("Nashi actions", "tr") == "Nashi işlemleri", "The Turkish actions script is Nashi işlemleri");
-    Check(settings["list"] == $"['{other}', '{Integration.KeybindingPath}']", "The shortcut list keeps the existing entry and adds Nashi's once: " + settings["list"]);
-    Check(settings[keyed + " binding"] == "'<Primary><Alt>n'" && settings[keyed + " command"] == $"'\"{exe}\" --wheel-clipboard'", "Ctrl+Alt+N runs the quoted executable with --wheel-clipboard");
-    Check(log.Any(l => l.StartsWith("Wrote ")) && log[^1].StartsWith("Added the Ctrl+Alt+N"), "Install prints what it wrote");
+    Check(settings["list"] == $"['{other}']" && !settings.Keys.Any(k => k.StartsWith(keyed)), "Install adds no keyboard shortcut (only Ctrl-drag)");
+    Check(log.Any(l => l.StartsWith("Wrote ")) && !log.Any(l => l.Contains("Ctrl+Alt+N")), "Install prints what it wrote");
 
     var removed = Integration.Uninstall(home, Fake);
     Check(!File.Exists(Integration.Autostart(home)) && !File.Exists(Integration.OpenWith(home)) && !File.Exists(Integration.Icon(home)) && !File.Exists(script) && !File.Exists(actionsScript), "Uninstall removes Nashi's files");
     Check(File.Exists(Path.Combine(scripts, "Someone else's script")), "Uninstall keeps other Nautilus scripts");
-    Check(settings["list"] == $"['{other}']" && !settings.Keys.Any(k => k.StartsWith(keyed)), "Uninstall removes only Nashi's keybinding");
-    Check(removed[^1] == "Removed the Ctrl+Alt+N shortcut.", "Uninstall prints what it removed");
+
+    // The Ctrl+Alt+N entry an earlier version added goes on install and uninstall; everyone else's stay.
+    foreach (var uninstall in new[] { false, true })
+    {
+        settings["list"] = $"['{other}', '{Integration.KeybindingPath}']";
+        settings[keyed + " binding"] = "'<Primary><Alt>n'";
+        var said = uninstall ? Integration.Uninstall(home, Fake) : Integration.Install(home, exe, Fake);
+        Check(settings["list"] == $"['{other}']" && !settings.Keys.Any(k => k.StartsWith(keyed)) && said[^1] == "Removed the old Ctrl+Alt+N shortcut.",
+            (uninstall ? "Uninstall" : "Install") + " removes the old Ctrl+Alt+N entry, keeping the others, and says so");
+    }
+    Integration.Uninstall(home, Fake);
 
     // A list that can't be read is never overwritten.
     foreach (var (output, label) in new[] { ((string?)null, "fails"), ("garbage output", "is unparsable") })
     {
-        settings["list"] = $"['{other}']";
+        settings["list"] = $"['{other}', '{Integration.KeybindingPath}']";
         var writes = 0;
         string? Broken(string program, IReadOnlyList<string> args)
         {
@@ -897,17 +905,12 @@ void IntegrationChecks(string root)
             return Fake(program, args);
         }
         var aborted = Integration.Install(Directory.CreateDirectory(Path.Combine(root, "home-broken")).FullName, exe, Broken);
-        Check(writes == 0 && settings["list"] == $"['{other}']" && aborted[^1].StartsWith("Skipped the keyboard shortcut: couldn’t read"), $"When gsettings get {label}, the keybinding step aborts with a note and writes nothing");
         var abortedRemove = Integration.Uninstall(Path.Combine(root, "home-broken"), Broken);
-        Check(writes == 0 && abortedRemove[^1].StartsWith("Skipped the keyboard shortcut: couldn’t read"), $"Uninstall also leaves the shortcuts alone when gsettings get {label}");
+        Check(writes == 0 && !aborted.Concat(abortedRemove).Any(l => l.Contains("Ctrl+Alt+N")), $"When gsettings get {label}, the shortcuts are left exactly as they are");
     }
-    settings["list"] = "@as []";
-    Integration.Install(Directory.CreateDirectory(Path.Combine(root, "home-empty")).FullName, exe, Fake);
-    Check(settings["list"] == $"['{Integration.KeybindingPath}']", "An empty @as [] list gets Nashi's entry");
-
     var bare = Directory.CreateDirectory(Path.Combine(root, "home-bare")).FullName;
-    var noGnome = Integration.Install(bare, exe, (_, _) => null);
-    Check(noGnome[^1].StartsWith("Skipped the keyboard shortcut") && File.Exists(Integration.Script(bare)), "Without gsettings the shortcut is skipped with a note and the rest installs");
+    Integration.Install(bare, exe, (_, _) => null);
+    Check(File.Exists(Integration.Script(bare)), "Without gsettings everything else installs");
     // The background instance starts detached: stdio on /dev/null (nothing for a terminal or the AppImage runtime to
     // wait on), in its own session, and the call returns at once.
     var marker = Path.Combine(root, "started-in-background");

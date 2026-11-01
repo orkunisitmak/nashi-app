@@ -15,7 +15,7 @@ public sealed class App : Application
     {
         public const string Nothing = "Nothing to convert";
         public const string WatchFailed = "Couldn’t convert in {0}: {1}";
-        public const string Wayland = "Drag gestures need an X11 session. The right-click menu and Ctrl+Alt+N still work.";
+        public const string Wayland = "Drag gestures need an X11 session. The right-click menu and Open With still work.";
     }
 
     /// Set by Program before Avalonia starts; the checks keep Home.
@@ -116,10 +116,6 @@ public sealed class App : Application
                 Flow.StartupTime = Desktop.StartupTime(message.Startup);
                 ShowWheel(message.Files ?? [], actions: true);
                 break;
-            case "wheel-clipboard":
-                Flow.StartupTime = Desktop.StartupTime(message.Startup);
-                _ = ShowClipboardWheelAsync();
-                break;
             case "quit":
                 desktop?.Shutdown();
                 break;
@@ -135,13 +131,5 @@ public sealed class App : Application
         if (selection.Files.Count == 0) SuccessToast.Notice(L10n.T(Copy.Nothing)).Present();
         else if (actions) Flow.ShowActions(selection.Files);
         else Flow.ShowTools(selection.Files);
-    }
-
-    private async Task ShowClipboardWheelAsync()
-    {
-        var host = new Window(); // never shown: it only lends the platform clipboard
-        try { ShowWheel(host.Clipboard is { } clipboard ? await Desktop.ClipboardFilesAsync(clipboard) : []); }
-        catch (Exception error) { SuccessToast.Notice(L10n.T(error.Message)).Present(); }
-        finally { host.Close(); }
     }
 }

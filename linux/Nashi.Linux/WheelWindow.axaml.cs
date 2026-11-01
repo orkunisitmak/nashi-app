@@ -231,11 +231,11 @@ public sealed partial class WheelWindow : Window
         PointerExited += (_, _) => { if (entered && releaseGrab is null && !IsActive) Close(); };
     }
 
-    /// A screen point (physical pixels) in the wheel's own coordinates.
+    /// A point relative to this window in physical pixels (what XDND positions become) in the wheel's coordinates.
     public Point ToWheel(int x, int y)
     {
-        var (rect, scaling) = ScreenRect();
-        return this.TranslatePoint(new Point((x - rect.X) / scaling, (y - rect.Y) / scaling), Ring) ?? default;
+        var (_, scaling) = ScreenRect();
+        return this.TranslatePoint(new Point(x / scaling, y / scaling), Ring) ?? default;
     }
 
     private (int Count, bool[] Enabled) petals = (0, []);
@@ -252,11 +252,12 @@ public sealed partial class WheelWindow : Window
         Ring.Turned += Snapshot;
         Snapshot();
         var (rect, scaling) = ScreenRect();
-        // Any thread: pure geometry around the window's centre (the wheel's), on the petal snapshot.
+        // Any thread: pure geometry around the window's centre (the wheel's), on the petal snapshot; points are
+        // relative to the window (XdndProtocol), so where the window manager really put it doesn't matter.
         bool Accepts(int x, int y)
         {
             var (count, enabled) = petals;
-            var wheel = new Point(Wheel.Size / 2 + (x - rect.X - rect.Width / 2.0) / scaling, Wheel.Size / 2 + (y - rect.Y - rect.Height / 2.0) / scaling);
+            var wheel = new Point(Wheel.Size / 2 + (x - rect.Width / 2.0) / scaling, Wheel.Size / 2 + (y - rect.Height / 2.0) / scaling);
             if (count == 0) return Wheel.IndexAt(wheel, new Size(Wheel.Size, Wheel.Size), 8) >= 0; // petals still on their way
             var index = Wheel.IndexAt(wheel, new Size(Wheel.Size, Wheel.Size), count);
             return index >= 0 && enabled[index];

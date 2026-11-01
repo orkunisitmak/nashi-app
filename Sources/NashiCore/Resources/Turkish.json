@@ -1299,7 +1299,6 @@
   "This PDF could not be opened.": "Bu PDF açılamadı.",
   "Couldn’t play the preview: {0}": "Önizleme oynatılamadı: {0}",
   "Only HTTPS downloads are supported.": "Yalnızca HTTPS indirmeleri destekleniyor.",
-  "Drag gestures need an X11 session. The right-click menu and Ctrl+Alt+N still work.": "Sürükleme hareketleri X11 oturumu gerektirir. Sağ tık menüsü ve Ctrl+Alt+N yine çalışır.",
   "Drop on a petal": "Bir yaprağa bırak",
   "{0} ›": "{0} ›",
   "Couldn’t convert in {0}: {1}": "{0} içinde dönüştürülemedi: {1}",
@@ -1307,5 +1306,7 @@
   "Removing a reference never deletes the file.": "Bir referansı kaldırmak dosyayı asla silmez.",
   "Copied. Paste them in your file manager.": "Kopyalandı. Dosya yöneticinde yapıştır.",
   "Dropped between the petals: nothing was changed. Drop on a petal to use it.": "Yaprakların arasına bırakıldı: hiçbir şey değişmedi. Kullanmak için bir yaprağa bırak.",
-  "Nashi couldn’t read what was dropped. Drop files from your file manager or browser.": "Nashi bırakılanı okuyamadı. Dosyaları dosya yöneticinden ya da tarayıcından bırak."
+  "Nashi couldn’t read what was dropped. Drop files from your file manager or browser.": "Nashi bırakılanı okuyamadı. Dosyaları dosya yöneticinden ya da tarayıcından bırak.",
+  "Drag gestures need an X11 session. The right-click menu and Open With still work.": "Sürükleme hareketleri X11 oturumu gerektirir. Sağ tık menüsü ve Birlikte Aç yine çalışır.",
+  "Removed the old Ctrl+Alt+N shortcut.": "Eski Ctrl+Alt+N kısayolu kaldırıldı."
 }

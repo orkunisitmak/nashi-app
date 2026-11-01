@@ -774,7 +774,7 @@
 "DRAG AN ANNOTATION TO MOVE IT; PRESS DELETE TO REMOVE IT. TURN OFF SELECT / MOVE TO DRAW." = "DRAG AN ANNOTATION TO MOVE IT; PRESS DELETE TO REMOVE IT. TURN OFF SELECT / MOVE TO DRAW.";
 "DRAG AN AREA FIRST." = "DRAG AN AREA FIRST.";
 "DRAG AN EXISTING ANNOTATION TO MOVE IT; DRAG ITS HANDLES TO RESIZE. TURN OFF SELECT / MOVE TO DRAW." = "DRAG AN EXISTING ANNOTATION TO MOVE IT; DRAG ITS HANDLES TO RESIZE. TURN OFF SELECT / MOVE TO DRAW.";
-"DRAG GESTURES NEED AN X11 SESSION. THE RIGHT-CLICK MENU AND CTRL+ALT+N STILL WORK." = "DRAG GESTURES NEED AN X11 SESSION. THE RIGHT-CLICK MENU AND CTRL+ALT+N STILL WORK.";
+"DRAG GESTURES NEED AN X11 SESSION. THE RIGHT-CLICK MENU AND OPEN WITH STILL WORK." = "DRAG GESTURES NEED AN X11 SESSION. THE RIGHT-CLICK MENU AND OPEN WITH STILL WORK.";
 "DRAG INSIDE TO MOVE. DRAG NEAR A CORNER TO RESIZE. DRAG OUTSIDE TO START A NEW SELECTION." = "DRAG INSIDE TO MOVE. DRAG NEAR A CORNER TO RESIZE. DRAG OUTSIDE TO START A NEW SELECTION.";
 "DRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE." = "DRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE.";
 "DRAG ON THE PREVIEW TO ADD AN AREA. EACH AREA IS SAVED INTO THE NEW COPY." = "DRAG ON THE PREVIEW TO ADD AN AREA. EACH AREA IS SAVED INTO THE NEW COPY.";
@@ -857,7 +857,7 @@
 "Drag an annotation to move it; press Delete to remove it. Turn off Select / Move to draw." = "Drag an annotation to move it; press Delete to remove it. Turn off Select / Move to draw.";
 "Drag an area first." = "Drag an area first.";
 "Drag an existing annotation to move it; drag its handles to resize. Turn off Select / Move to draw." = "Drag an existing annotation to move it; drag its handles to resize. Turn off Select / Move to draw.";
-"Drag gestures need an X11 session. The right-click menu and Ctrl+Alt+N still work." = "Drag gestures need an X11 session. The right-click menu and Ctrl+Alt+N still work.";
+"Drag gestures need an X11 session. The right-click menu and Open With still work." = "Drag gestures need an X11 session. The right-click menu and Open With still work.";
 "Drag inside to move. Drag near a corner to resize. Drag outside to start a new selection." = "Drag inside to move. Drag near a corner to resize. Drag outside to start a new selection.";
 "Drag inside to move; drag a handle to resize." = "Drag inside to move; drag a handle to resize.";
 "Drag on the preview to add an area. Each area is saved into the new copy." = "Drag on the preview to add an area. Each area is saved into the new copy.";
@@ -1823,6 +1823,7 @@
 "REMOVE SILENCE AT THE BEGINNING AND END" = "REMOVE SILENCE AT THE BEGINNING AND END";
 "REMOVE SILENCE FROM BEGINNING AND END" = "REMOVE SILENCE FROM BEGINNING AND END";
 "REMOVED THE CTRL+ALT+N SHORTCUT." = "REMOVED THE CTRL+ALT+N SHORTCUT.";
+"REMOVED THE OLD CTRL+ALT+N SHORTCUT." = "REMOVED THE OLD CTRL+ALT+N SHORTCUT.";
 "REMOVING A REFERENCE NEVER DELETES THE FILE." = "REMOVING A REFERENCE NEVER DELETES THE FILE.";
 "RENDERED PAGES EXCEED 512 MB. CHOOSE A LOWER DPI OR SPLIT THE PDF FIRST." = "RENDERED PAGES EXCEED 512 MB. CHOOSE A LOWER DPI OR SPLIT THE PDF FIRST.";
 "REPLACE SELECTED AUDIO WITH" = "REPLACE SELECTED AUDIO WITH";
@@ -1895,6 +1896,7 @@
 "Removed %@" = "Removed %@";
 "Removed %lld" = "Removed %lld";
 "Removed the Ctrl+Alt+N shortcut." = "Removed the Ctrl+Alt+N shortcut.";
+"Removed the old Ctrl+Alt+N shortcut." = "Removed the old Ctrl+Alt+N shortcut.";
 "Removing a reference never deletes the file." = "Removing a reference never deletes the file.";
 "Rendered pages exceed 512 MB. Choose a lower DPI or split the PDF first." = "Rendered pages exceed 512 MB. Choose a lower DPI or split the PDF first.";
 "Rendering page %@" = "Rendering page %@";

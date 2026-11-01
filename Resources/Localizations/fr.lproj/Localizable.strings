@@ -774,7 +774,7 @@
 "DRAG AN ANNOTATION TO MOVE IT; PRESS DELETE TO REMOVE IT. TURN OFF SELECT / MOVE TO DRAW." = "DRAG AN ANNOTATION TO MOVE IT; PRESS DELETE TO REMOVE IT. TURN OFF SELECT / MOVE TO DRAW.";
 "DRAG AN AREA FIRST." = "FAITES D’ABORD GLISSER UNE ZONE.";
 "DRAG AN EXISTING ANNOTATION TO MOVE IT; DRAG ITS HANDLES TO RESIZE. TURN OFF SELECT / MOVE TO DRAW." = "FAITES GLISSER UNE ANNOTATION EXISTANTE POUR LA DÉPLACER ; FAITES GLISSER SES POIGNÉES POUR LA REDIMENSIONNER. DÉSACTIVEZ SÉLECTIONNER / DÉPLACER POUR DESSINER.";
-"DRAG GESTURES NEED AN X11 SESSION. THE RIGHT-CLICK MENU AND CTRL+ALT+N STILL WORK." = "DRAG GESTURES NEED AN X11 SESSION. THE RIGHT-CLICK MENU AND CTRL+ALT+N STILL WORK.";
+"DRAG GESTURES NEED AN X11 SESSION. THE RIGHT-CLICK MENU AND OPEN WITH STILL WORK." = "DRAG GESTURES NEED AN X11 SESSION. THE RIGHT-CLICK MENU AND OPEN WITH STILL WORK.";
 "DRAG INSIDE TO MOVE. DRAG NEAR A CORNER TO RESIZE. DRAG OUTSIDE TO START A NEW SELECTION." = "FAITES GLISSER À L’INTÉRIEUR POUR DÉPLACER. FAITES GLISSER PRÈS D’UN COIN POUR REDIMENSIONNER. FAITES GLISSER À L’EXTÉRIEUR POUR DÉMARRER UNE NOUVELLE SÉLECTION.";
 "DRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE." = "DRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE.";
 "DRAG ON THE PREVIEW TO ADD AN AREA. EACH AREA IS SAVED INTO THE NEW COPY." = "FAITES GLISSER SUR L’APERÇU POUR AJOUTER UNE ZONE. CHAQUE ZONE EST ENREGISTRÉE DANS LA NOUVELLE COPIE.";
@@ -857,7 +857,7 @@
 "Drag an annotation to move it; press Delete to remove it. Turn off Select / Move to draw." = "Drag an annotation to move it; press Delete to remove it. Turn off Select / Move to draw.";
 "Drag an area first." = "Faites d’abord glisser une zone.";
 "Drag an existing annotation to move it; drag its handles to resize. Turn off Select / Move to draw." = "Faites glisser une annotation existante pour la déplacer ; faites glisser ses poignées pour la redimensionner. Désactivez Sélectionner / Déplacer pour dessiner.";
-"Drag gestures need an X11 session. The right-click menu and Ctrl+Alt+N still work." = "Drag gestures need an X11 session. The right-click menu and Ctrl+Alt+N still work.";
+"Drag gestures need an X11 session. The right-click menu and Open With still work." = "Drag gestures need an X11 session. The right-click menu and Open With still work.";
 "Drag inside to move. Drag near a corner to resize. Drag outside to start a new selection." = "Faites glisser à l’intérieur pour déplacer. Faites glisser près d’un coin pour redimensionner. Faites glisser à l’extérieur pour démarrer une nouvelle sélection.";
 "Drag inside to move; drag a handle to resize." = "Drag inside to move; drag a handle to resize.";
 "Drag on the preview to add an area. Each area is saved into the new copy." = "Faites glisser sur l’aperçu pour ajouter une zone. Chaque zone est enregistrée dans la nouvelle copie.";
@@ -1823,6 +1823,7 @@
 "REMOVE SILENCE AT THE BEGINNING AND END" = "SUPPRIMER LE SILENCE AU DÉBUT ET À LA FIN";
 "REMOVE SILENCE FROM BEGINNING AND END" = "SUPPRIMER LE SILENCE AU DÉBUT ET À LA FIN";
 "REMOVED THE CTRL+ALT+N SHORTCUT." = "REMOVED THE CTRL+ALT+N SHORTCUT.";
+"REMOVED THE OLD CTRL+ALT+N SHORTCUT." = "REMOVED THE OLD CTRL+ALT+N SHORTCUT.";
 "REMOVING A REFERENCE NEVER DELETES THE FILE." = "REMOVING A REFERENCE NEVER DELETES THE FILE.";
 "RENDERED PAGES EXCEED 512 MB. CHOOSE A LOWER DPI OR SPLIT THE PDF FIRST." = "LES PAGES RENDUES DÉPASSENT 512 MO. CHOISISSEZ UN DPI PLUS BAS OU DIVISEZ D’ABORD LE PDF.";
 "REPLACE SELECTED AUDIO WITH" = "REMPLACER L’AUDIO SÉLECTIONNÉ PAR";
@@ -1895,6 +1896,7 @@
 "Removed %@" = "Removed %@";
 "Removed %lld" = "Removed %lld";
 "Removed the Ctrl+Alt+N shortcut." = "Removed the Ctrl+Alt+N shortcut.";
+"Removed the old Ctrl+Alt+N shortcut." = "Removed the old Ctrl+Alt+N shortcut.";
 "Removing a reference never deletes the file." = "Removing a reference never deletes the file.";
 "Rendered pages exceed 512 MB. Choose a lower DPI or split the PDF first." = "Les pages rendues dépassent 512 Mo. Choisissez un DPI plus bas ou divisez d’abord le PDF.";
 "Rendering page %@" = "Rendu de la page %@";

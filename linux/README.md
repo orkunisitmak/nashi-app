@@ -41,18 +41,18 @@ This starts Nashi in the background now and at every login, with no window. Then
 
 - **Right-click → Scripts → Convert with Nashi** in Files (Nautilus) shows the wheel at the pointer for the selected files. With a Turkish UI the entry is "Nashi ile dönüştür".
 - **Right-click → Scripts → Nashi actions** shows the actions wheel for them ("Nashi işlemleri" in Turkish). `Nashi --actions FILE...` does the same.
-- **Ctrl+Alt+N** after copying files (Ctrl+C in Files) shows the wheel for the copied files.
 - **Open With → Nashi** works for images, audio, video, PDF and ZIP files.
+- **Hold Ctrl and drag files** from Files, the desktop or a browser: the wheel opens at the pointer with the formats that fit. Drop on a petal to run it; Tab turns to the other faces. A drop anywhere else is an ordinary Ctrl copy. The key can be changed in `settings.json` (`gestureKey`: Ctrl, Shift, Alt, two of them joined with `+`, or Off).
 
 Choose a tool and a format as in the app. New files are saved directly next to the file they came from, each in its own folder (an archive extracts into one folder named after it, next to it; Merge and Create PDF save beside the first file). When a folder is read-only you pick another one for its files. A card at the bottom of the screen says when they are ready and offers **Show in folder**.
 
-It writes only `~/.config/autostart/nashi.desktop`, `~/.local/share/applications/nashi.desktop`, `~/.local/share/icons/hicolor/256x256/apps/nashi.png`, the two Nautilus scripts and one GNOME custom shortcut. Keep the AppImage where it is, since those entries point at its path. To remove all of that and stop the background instance:
+It writes only `~/.config/autostart/nashi.desktop`, `~/.local/share/applications/nashi.desktop`, `~/.local/share/icons/hicolor/256x256/apps/nashi.png`, and the two Nautilus scripts. It also removes the Ctrl+Alt+N shortcut that earlier versions added, keeping your other shortcuts. Keep the AppImage where it is, since those entries point at its path. To remove all of that and stop the background instance:
 
 ```sh
 ./Nashi-Linux-x86_64.AppImage --uninstall-integration
 ```
 
-Showing the wheel at the pointer needs an X11 session. On Wayland the wheel opens in the middle of the screen. The keyboard shortcut needs GNOME. Without it the installer skips the shortcut and says so.
+Showing the wheel at the pointer and the Ctrl-drag need an X11 session. On Wayland the wheel opens in the middle of the screen, and a one-time card says that Ctrl-drag needs X11.
 
 ## Coming
 

@@ -5,9 +5,9 @@ using Nashi.Core;
 
 namespace Nashi.Linux;
 
-/// `--install-integration`: autostart in the background, an Open With entry, two Nautilus scripts and the GNOME
-/// Ctrl+Alt+N shortcut. Idempotent; it writes only the files below and the one keybinding, and uninstall removes
-/// exactly those. External programs run with argument lists through `run` (program, args → stdout, or null on failure).
+/// `--install-integration`: autostart in the background (which hosts the Ctrl-drag wheel), an Open With entry and two
+/// Nautilus scripts. Idempotent; it writes only the files below, and uninstall removes exactly those. Both remove the
+/// GNOME Ctrl+Alt+N keybinding earlier versions added (only Nashi's own entry; everyone else's stay). External programs run with argument lists through `run` (program, args → stdout, or null on failure).
 public static class Integration
 {
     private static class Copy
@@ -16,10 +16,7 @@ public static class Integration
         public const string ActionsScriptName = "Nashi actions";
         public const string Wrote = "Wrote {0}";
         public const string Removed = "Removed {0}";
-        public const string ShortcutAdded = "Added the Ctrl+Alt+N shortcut: copy files, then press it.";
-        public const string ShortcutRemoved = "Removed the Ctrl+Alt+N shortcut.";
-        public const string NoShortcut = "Skipped the keyboard shortcut: GNOME settings are not available.";
-        public const string UnreadShortcuts = "Skipped the keyboard shortcut: couldn’t read your existing shortcuts, so they were left as they are.";
+        public const string ShortcutRemoved = "Removed the old Ctrl+Alt+N shortcut.";
         public const string Started = "Started Nashi in the background.";
         public const string Stopped = "Stopped the background Nashi.";
     }
@@ -87,7 +84,7 @@ public static class Integration
         Write(Script(home), $"#!/bin/sh\nexec {Quote(exe)} --wheel \"$@\"\n", Executable);
         Write(ActionsScript(home), $"#!/bin/sh\nexec {Quote(exe)} --actions \"$@\"\n", Executable);
         run("update-desktop-database", [Path.GetDirectoryName(OpenWith(home))!]);
-        log.Add(Shortcut(run, $"{Quote(exe)} --wheel-clipboard") ?? L10n.T(Copy.ShortcutAdded));
+        if (RemoveShortcut(run)) log.Add(L10n.T(Copy.ShortcutRemoved));
         return log;
     }
 
@@ -101,31 +98,22 @@ public static class Integration
             log.Add(L10n.F(Copy.Removed, path));
         }
         run("update-desktop-database", [Path.GetDirectoryName(OpenWith(home))!]);
-        log.Add(Shortcut(run, null) ?? L10n.T(Copy.ShortcutRemoved));
+        if (RemoveShortcut(run)) log.Add(L10n.T(Copy.ShortcutRemoved));
         return log;
     }
 
-    /// Adds (command set) or removes (null) Nashi's custom keybinding, keeping everyone else's.
-    /// Null when done; otherwise the note saying why it was skipped. A list it could not read is never written.
-    static string? Shortcut(Func<string, IReadOnlyList<string>, string?> run, string? command)
+    /// Removes the custom keybinding earlier versions added, keeping everyone else's; true when there was one. A list
+    /// it could not read, or GNOME settings that aren't there, are left exactly as they are.
+    static bool RemoveShortcut(Func<string, IReadOnlyList<string>, string?> run)
     {
-        if (run("gsettings", ["list-keys", Schema]) is not { } keys || !keys.Split('\n').Contains("custom-keybindings")) return L10n.T(Copy.NoShortcut);
+        if (run("gsettings", ["list-keys", Schema]) is not { } keys || !keys.Split('\n').Contains("custom-keybindings")) return false;
         var current = run("gsettings", ["get", Schema, "custom-keybindings"])?.Trim();
-        if (current is null || !Regex.IsMatch(current, @"^(@as \[\]|\[\s*('(?:[^'\\]|\\.)*'\s*(,\s*'(?:[^'\\]|\\.)*'\s*)*)?\])$")) return L10n.T(Copy.UnreadShortcuts);
+        if (current is null || !Regex.IsMatch(current, @"^(@as \[\]|\[\s*('(?:[^'\\]|\\.)*'\s*(,\s*'(?:[^'\\]|\\.)*'\s*)*)?\])$")) return false;
         var list = Regex.Matches(current, @"'((?:[^'\\]|\\.)*)'").Select(m => m.Groups[1].Value).ToList();
-        var entry = Schema + ".custom-keybinding:" + KeybindingPath;
-        if (command is null)
-        {
-            if (list.Remove(KeybindingPath)) run("gsettings", ["set", Schema, "custom-keybindings", Variant(list)]);
-            run("gsettings", ["reset-recursively", entry]);
-            return null;
-        }
-        if (!list.Contains(KeybindingPath)) list.Add(KeybindingPath);
-        var written = run("gsettings", ["set", entry, "name", Variant("Nashi")]) is not null
-            && run("gsettings", ["set", entry, "command", Variant(command)]) is not null
-            && run("gsettings", ["set", entry, "binding", Variant("<Primary><Alt>n")]) is not null
-            && run("gsettings", ["set", Schema, "custom-keybindings", Variant(list)]) is not null;
-        return written ? null : L10n.T(Copy.NoShortcut);
+        if (!list.Remove(KeybindingPath)) return false;
+        run("gsettings", ["set", Schema, "custom-keybindings", Variant(list)]);
+        run("gsettings", ["reset-recursively", Schema + ".custom-keybinding:" + KeybindingPath]);
+        return true;
     }
 
     static string Variant(string value) => "'" + value.Replace("\\", "\\\\").Replace("'", "\\'") + "'";

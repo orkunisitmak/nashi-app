@@ -774,7 +774,7 @@
 "DRAG AN ANNOTATION TO MOVE IT; PRESS DELETE TO REMOVE IT. TURN OFF SELECT / MOVE TO DRAW." = "BİR İŞARETİ TAŞIMAK İÇİN SÜRÜKLE, KALDIRMAK İÇİN DELETE'E BAS. ÇİZMEK İÇİN SEÇ / TAŞI'YI KAPAT.";
 "DRAG AN AREA FIRST." = "ÖNCE BİR ALAN SÜRÜKLE.";
 "DRAG AN EXISTING ANNOTATION TO MOVE IT; DRAG ITS HANDLES TO RESIZE. TURN OFF SELECT / MOVE TO DRAW." = "BİR İŞARETİ TAŞIMAK İÇİN İÇİNİ, BOYUTLANDIRMAK İÇİN TUTAMAĞINI SÜRÜKLE. ÇİZMEK İÇİN SEÇ / TAŞI'YI KAPAT.";
-"DRAG GESTURES NEED AN X11 SESSION. THE RIGHT-CLICK MENU AND CTRL+ALT+N STILL WORK." = "SÜRÜKLEME HAREKETLERİ X11 OTURUMU GEREKTİRİR. SAĞ TIK MENÜSÜ VE CTRL+ALT+N YİNE ÇALIŞIR.";
+"DRAG GESTURES NEED AN X11 SESSION. THE RIGHT-CLICK MENU AND OPEN WITH STILL WORK." = "SÜRÜKLEME HAREKETLERİ X11 OTURUMU GEREKTİRİR. SAĞ TIK MENÜSÜ VE BİRLİKTE AÇ YİNE ÇALIŞIR.";
 "DRAG INSIDE TO MOVE. DRAG NEAR A CORNER TO RESIZE. DRAG OUTSIDE TO START A NEW SELECTION." = "TAŞIMAK İÇİN ALANIN İÇİNİ, BOYUTLANDIRMAK İÇİN KÖŞEYİ SÜRÜKLE. YENİ SEÇİM İÇİN ALANIN DIŞINDA SÜRÜKLE.";
 "DRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE." = "TAŞIMAK İÇİN ALANIN İÇİNİ, BOYUTLANDIRMAK İÇİN TUTAMAĞI SÜRÜKLE.";
 "DRAG ON THE PREVIEW TO ADD AN AREA. EACH AREA IS SAVED INTO THE NEW COPY." = "ALAN EKLEMEK İÇİN ÖNİZLEMEDE SÜRÜKLE. HER ALAN YENİ KOPYAYA İŞLENİR.";
@@ -857,7 +857,7 @@
 "Drag an annotation to move it; press Delete to remove it. Turn off Select / Move to draw." = "Bir işareti taşımak için sürükle, kaldırmak için Delete'e bas. Çizmek için Seç / Taşı'yı kapat.";
 "Drag an area first." = "Önce bir alan sürükle.";
 "Drag an existing annotation to move it; drag its handles to resize. Turn off Select / Move to draw." = "Bir işareti taşımak için içini, boyutlandırmak için tutamağını sürükle. Çizmek için Seç / Taşı'yı kapat.";
-"Drag gestures need an X11 session. The right-click menu and Ctrl+Alt+N still work." = "Sürükleme hareketleri X11 oturumu gerektirir. Sağ tık menüsü ve Ctrl+Alt+N yine çalışır.";
+"Drag gestures need an X11 session. The right-click menu and Open With still work." = "Sürükleme hareketleri X11 oturumu gerektirir. Sağ tık menüsü ve Birlikte Aç yine çalışır.";
 "Drag inside to move. Drag near a corner to resize. Drag outside to start a new selection." = "Taşımak için alanın içini, boyutlandırmak için köşeyi sürükle. Yeni seçim için alanın dışında sürükle.";
 "Drag inside to move; drag a handle to resize." = "Taşımak için alanın içini, boyutlandırmak için tutamağı sürükle.";
 "Drag on the preview to add an area. Each area is saved into the new copy." = "Alan eklemek için önizlemede sürükle. Her alan yeni kopyaya işlenir.";
@@ -1823,6 +1823,7 @@
 "REMOVE SILENCE AT THE BEGINNING AND END" = "BAŞLANGIÇ VE SONDAKİ SESSİZLİĞİ KALDIR";
 "REMOVE SILENCE FROM BEGINNING AND END" = "BAŞLANGIÇ VE SONDAKİ SESSİZLİĞİ KALDIR";
 "REMOVED THE CTRL+ALT+N SHORTCUT." = "CTRL+ALT+N KISAYOLU KALDIRILDI.";
+"REMOVED THE OLD CTRL+ALT+N SHORTCUT." = "ESKİ CTRL+ALT+N KISAYOLU KALDIRILDI.";
 "REMOVING A REFERENCE NEVER DELETES THE FILE." = "BİR REFERANSI KALDIRMAK DOSYAYI ASLA SİLMEZ.";
 "RENDERED PAGES EXCEED 512 MB. CHOOSE A LOWER DPI OR SPLIT THE PDF FIRST." = "OLUŞTURULAN SAYFALAR 512 MB'I AŞIYOR. DAHA DÜŞÜK BİR DPI SEÇ VEYA ÖNCE PDF'Yİ BÖL.";
 "REPLACE SELECTED AUDIO WITH" = "SEÇİLİ SESİ ŞUNUNLA DEĞİŞTİR";
@@ -1895,6 +1896,7 @@
 "Removed %@" = "Kaldırıldı: %@";
 "Removed %lld" = "Kaldırıldı: %lld";
 "Removed the Ctrl+Alt+N shortcut." = "Ctrl+Alt+N kısayolu kaldırıldı.";
+"Removed the old Ctrl+Alt+N shortcut." = "Eski Ctrl+Alt+N kısayolu kaldırıldı.";
 "Removing a reference never deletes the file." = "Bir referansı kaldırmak dosyayı asla silmez.";
 "Rendered pages exceed 512 MB. Choose a lower DPI or split the PDF first." = "Oluşturulan sayfalar 512 MB'ı aşıyor. Daha düşük bir DPI seç veya önce PDF'yi böl.";
 "Rendering page %@" = "Sayfa %@ işleniyor";

@@ -268,18 +268,45 @@ static partial class DragChecks
             {
                 for (var y = 0; y < 320; y += 4)
                     for (var x = 0; x < 320; x += 4)
-                        if (wheel.Wheel.IndexAt(new Point(x, y)) == petal) return (rect.X + (int)(x * scaling), rect.Y + (int)(y * scaling));
+                        if (wheel.Wheel.IndexAt(new Point(x, y)) == petal) return ((int)(x * scaling), (int)(y * scaling));
                 return (-1, -1);
             }
             var content = new DropContent([png], []);
-            var (px, py) = (rect.X + (int)(160 * scaling), rect.Y + (int)(60 * scaling)); // the top petal
+            var (px, py) = ((int)(160 * scaling), (int)(60 * scaling)); // the top petal (window-relative pixels)
             hover!(content, px, py);
             Dispatcher.UIThread.RunJobs();
             var sides = wheel.Wheel.Sides;
             check(sides.Select(x => x.Title).SequenceEqual(["Convert", "Tools", "Actions"]) && sides[0].Items[0].Id == "convert:jpg" && sides[0].Items[^1].Id == "side:1"
                 && sides[1].Items[^1].Id == "side:2" && sides[2].Items[^1].Id == "side:0" && sides[2].Items.Any(i => i.Id == "action:copy"),
                 "The drag wheel's sides: Convert (formats) first, then Tools, then Actions, each ending with a petal to the next");
-            check(wheel.Wheel.Side == 0 && wheel.Wheel.HighlightedIndex == 0 && accepts!(px, py) && !accepts(rect.X + (int)(160 * scaling), rect.Y + (int)(160 * scaling)), "The petal under the drag lights up; the centre refuses a drop");
+            check(wheel.Wheel.Side == 0 && wheel.Wheel.HighlightedIndex == 0 && accepts!(px, py) && !accepts((int)(160 * scaling), (int)(160 * scaling)), "The petal under the drag lights up; the centre refuses a drop");
+
+            // Live positions arrive in root coordinates, with the wheel somewhere on screen: each petal crossed
+            // lights up and ticks, and off the ring the highlight clears.
+            var live = new XdndProtocol(accepts!, () => (1200, 700));
+            live.Hover += hover;
+            live.Enter(["text/uri-list"]);
+            wheel.Wheel.ShowSide(1); // the Tools face: eight petals
+            Dispatcher.UIThread.RunJobs();
+            var count = wheel.Wheel.Segments.Count;
+            var crossed = new List<int>();
+            Dispatcher.UIThread.RunJobs();
+            var tickBefore = ticks;
+            for (var k = 1; k <= count; k++)
+            {
+                var (lx, ly) = Screen(k % count);
+                live.Position(1200 + lx, 700 + ly);
+                Dispatcher.UIThread.RunJobs();
+                crossed.Add(wheel.Wheel.HighlightedIndex);
+            }
+            check(count >= 8 && crossed.SequenceEqual(Enumerable.Range(1, count).Select(k => k % count)) && ticks == tickBefore + count,
+                $"XdndPosition in root coordinates across {count} petals, the wheel at (1200, 700): {count} highlight changes and {count} ticks");
+            live.Position(1200 + (int)(5 * scaling), 700 + (int)(5 * scaling));
+            Dispatcher.UIThread.RunJobs();
+            check(wheel.Wheel.HighlightedIndex == -1, "Outside the ring the highlight clears");
+            wheel.Wheel.ShowSide(0);
+            live.Position(1200 + px, 700 + py);
+            Dispatcher.UIThread.RunJobs();
             var before = ticks;
             var pages = wheel.Wheel.PageCount;
             for (var i = 0; i < pages; i++) flow.FlipDrag();

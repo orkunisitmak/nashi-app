@@ -6,7 +6,9 @@ namespace Nashi.Linux;
 /// The target side of XDND as pure state, fed with the events of one drag after another: which offered types to
 /// ask for (in order), the status and finished answers, and what the drag brought. XdndTarget turns X events into
 /// these calls and these events back into X messages; the checks inject made-up ones.
-public sealed class XdndProtocol(Func<int, int, bool> accepts)
+/// Positions come in root coordinates; `origin` gives the target window's root position (asked each time, so a
+/// moved window stays right), and every callback gets points relative to the window, in physical pixels.
+public sealed class XdndProtocol(Func<int, int, bool> accepts, Func<(int X, int Y)>? origin = null)
 {
     /// What Nashi reads from a drag, most useful first: local files, then what browsers offer (BrowserDrop).
     public static readonly string[] Wanted =
@@ -42,8 +44,11 @@ public sealed class XdndProtocol(Func<int, int, bool> accepts)
         (inside, dropPending, requested) = (true, false, false);
     }
 
-    public void Position(int x, int y)
+    /// An XdndPosition at root coordinates (x, y).
+    public void Position(int rootX, int rootY)
     {
+        var (ox, oy) = origin?.Invoke() ?? (0, 0);
+        var (x, y) = (rootX - ox, rootY - oy);
         if (!inside) return;
         at = (x, y);
         if (!requested && !Ready) { requested = true; Request?.Invoke(pending.Peek()); }
@@ -90,7 +95,7 @@ public sealed class XdndProtocol(Func<int, int, bool> accepts)
 /// an XdndProxy pointing at a hidden window on Nashi's own X connection and thread, which takes the XDND messages for
 /// it: so the source finds the drop target in the window it is really over, stacking aside. It exists only while a
 /// drag needs it; nothing is grabbed, and a drop it refuses goes back to the source as refused. `accepts` (any
-/// thread) says whether a screen point is a place to drop; `hover`, `left`, `dropped` and `refused` (a drop that was
+/// thread) says whether a point (relative to the window, physical pixels) is a place to drop; `hover`, `left`, `dropped` and `refused` (a drop that was
 /// refused: the centre, or nothing Nashi reads) run on the X thread: post to the UI thread from them.
 public sealed class XdndTarget : IDisposable
 {
@@ -187,11 +192,13 @@ public sealed class XdndTarget : IDisposable
             message[4] = source;
             message[5] = type;
             message[6] = 32;
-            (message[7], message[8], message[11]) = (window, l1, l4);
+            // data.l[0] is the window the source is over (the toplevel), not the proxy: sources match replies by it.
+            (message[7], message[8], message[11]) = (toplevel, l1, l4);
             XSendEvent(display, source, false, IntPtr.Zero, message);
             XFlush(display);
         }
-        var protocol = new XdndProtocol(accepts);
+        var protocol = new XdndProtocol(accepts, () =>
+            XTranslateCoordinates(display, toplevel, XDefaultRootWindow(display), 0, 0, out var x, out var y, out _) != 0 ? (x, y) : (0, 0));
         protocol.Request += type => XConvertSelection(display, selection, Atom(type), property, window, time);
         protocol.Status += ok => Send(status, ok ? 3 : 2, ok ? copy : 0); // bit 1: keep sending positions
         protocol.Finished += ok => Send(finished, ok ? 1 : 0, 0);
@@ -274,6 +281,8 @@ public sealed class XdndTarget : IDisposable
     [DllImport("libX11.so.6")] static extern int XCloseDisplay(IntPtr display);
     [DllImport("libX11.so.6")] static extern IntPtr XDefaultRootWindow(IntPtr display);
     [DllImport("libX11.so.6")] static extern IntPtr XInternAtom(IntPtr display, string name, bool onlyIfExists);
+    [DllImport("libX11.so.6")]
+    static extern int XTranslateCoordinates(IntPtr display, IntPtr source, IntPtr destination, int x, int y, out int destinationX, out int destinationY, out IntPtr child);
     [DllImport("libX11.so.6")] static extern IntPtr XGetAtomName(IntPtr display, IntPtr atom);
     [DllImport("libX11.so.6")] static extern int XChangeProperty(IntPtr display, IntPtr window, IntPtr property, IntPtr type, int format, int mode, IntPtr[] data, int count);
     [DllImport("libX11.so.6")] static extern int XDeleteProperty(IntPtr display, IntPtr window, IntPtr property);
