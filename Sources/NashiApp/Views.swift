@@ -111,9 +111,9 @@ struct SettingsView:View {
                 VStack(alignment:.leading,spacing:16) {
                     ForEach(WheelShortcut.allCases) { wheel in HStack {
                         LText(wheel.title);Spacer()
-                        Picker(LocalizedStringKey(wheel.title),selection:shortcut(wheel)) { ForEach(ModifierPreferences.available(for:wheel)) { chord in Text("\(chord.symbols)  \(chord.title)").tag(chord.rawValue) } }.labelsHidden().frame(maxWidth:240)
+                        DragShortcutRecorder(wheel:wheel) { shortcutsRevision += 1 }
                     } }
-                    Text("Tap the chosen modifier combination while dragging files.").font(.caption).foregroundStyle(.secondary)
+                    Text("Click a shortcut, then press any keys or a mouse button. Use it while dragging files.").font(.caption).foregroundStyle(.secondary)
                 }.padding(10)
             }.id(shortcutsRevision)
             GroupBox("Window management") {
@@ -164,9 +164,6 @@ struct SettingsView:View {
             Divider()
             FormatSettingsDetail(format:FormatPreferenceItem.all.first{$0.id==selectedFormat} ?? FormatPreferenceItem.all[0],preferences:preferences).frame(maxWidth:.infinity,maxHeight:.infinity)
         }
-    }
-    private func shortcut(_ wheel:WheelShortcut)->Binding<UInt> {
-        Binding(get:{ModifierPreferences.chord(for:wheel).rawValue},set:{if ModifierPreferences.set(.init(rawValue:$0),for:wheel) { shortcutsRevision += 1 }})
     }
     private func readLaunchStatus() {
         let status=SMAppService.mainApp.status

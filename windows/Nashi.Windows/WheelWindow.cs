@@ -45,7 +45,7 @@ public sealed class WheelWindow:Window
     {
         if(modes is null)return false;var preferences=WheelPresentation.Preferences;string? best=null;var size=0;
         foreach(var (kind,combo) in new[]{("tools",preferences.ToolsModifier),("convert",preferences.ConvertModifier),("actions",preferences.ActionsModifier)})
-        {var set=combo.Split('+');if(set.Contains(modifier)&&set.All(m=>m==modifier||held.Contains(m))&&set.Length>size){best=kind;size=set.Length;}}
+        {var chord=DragShortcut.Chord(combo);var set=chord.Split('+');var score=set.Length*2+(chord==combo?1:0);if(set.Contains(modifier)&&set.All(m=>m==modifier||held.Contains(m))&&score>size){best=kind;size=score;}}
         if(best is null||best==mode)return false;var next=modes(best);if(next.Count==0)return false;mode=best;Populate(next);return true;
     }
     internal string Mode=>mode;

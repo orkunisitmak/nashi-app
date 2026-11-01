@@ -34,7 +34,7 @@
   "Subtle animations": "Animations discrètes",
   "macOS Reduce Motion is on. Nashi keeps motion off.": "L’option Réduire les animations de macOS est activée. Nashi désactive les animations.",
   "Drag shortcuts": "Raccourcis de glisser-déposer",
-  "Tap the chosen modifier combination while dragging files.": "Appuyez sur la combinaison de modificateurs choisie pendant que vous faites glisser des fichiers.",
+  "Click a shortcut, then press any keys or a mouse button. Use it while dragging files.": "Cliquez sur un raccourci, puis appuyez sur les touches ou le bouton de souris de votre choix. Utilisez-le pendant que vous faites glisser des fichiers.",
   "Window management": "Gestion des fenêtres",
   "Window arrangement": "Disposition des fenêtres",
   "Arrange window": "Disposer la fenêtre",
@@ -1415,6 +1415,11 @@
   "Original image · ready to download": "Image originale · prête à télécharger",
   "YouTube thumbnail · best available full-size image": "Miniature YouTube · meilleure image en taille réelle disponible",
   "No tools for this file type": "Aucun outil pour ce type de fichier",
+  "Press keys or a mouse button…": "Appuyez sur des touches ou un bouton de souris…",
+  "Already assigned to {0}.": "Déjà attribué à {0}.",
+  "Right Click": "Clic droit",
+  "Middle Click": "Clic central",
+  "Mouse {0}": "Souris {0}",
   "Details": "Détails",
   "Copy details": "Copier les détails"
 }

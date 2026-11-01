@@ -275,6 +275,8 @@
 "Allow Home Folder Access" = "Ana Klasöre Erişim İzni Ver";
 "Allow Home Folder Access…" = "Ana Klasöre Erişim İzni Ver…";
 "Allow Nashi in macOS Login Items." = "macOS Giriş Öğeleri bölümünden Nashi'ye izin ver.";
+"Already assigned to %@." = "Zaten %@ için atanmış.";
+"Already assigned to %lld." = "Zaten %lld için atanmış.";
 "Already available on your computer" = "Bilgisayarında zaten hazır";
 "Already optimized. Original quality retained." = "Zaten optimize edilmiş. Orijinal kalite korundu.";
 "Always a little fresher." = "Hep biraz daha yeni.";
@@ -485,6 +487,7 @@
 "CLEAR" = "TEMİZLE";
 "CLEAR FLOAT" = "YÜZEN PENCEREYİ TEMİZLE";
 "CLEAR SELECTION" = "SEÇİMİ TEMİZLE";
+"CLICK A SHORTCUT, THEN PRESS ANY KEYS OR A MOUSE BUTTON. USE IT WHILE DRAGGING FILES." = "BİR KISAYOLA TIKLA, SONRA İSTEDİĞİN TUŞLARA VEYA FARE TUŞUNA BAS. DOSYALARI SÜRÜKLERKEN KULLAN.";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "PANO MEŞGUL. TEKRAR DENE.";
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "PANO MEŞGUL. YENİDEN YAPIŞTIRMAYI DENE.";
 "CLOSE" = "KAPAT";
@@ -680,6 +683,7 @@
 "Clear" = "Temizle";
 "Clear Float" = "Yüzen Pencereyi Temizle";
 "Clear Selection" = "Seçimi Temizle";
+"Click a shortcut, then press any keys or a mouse button. Use it while dragging files." = "Bir kısayola tıkla, sonra istediğin tuşlara veya fare tuşuna bas. Dosyaları sürüklerken kullan.";
 "Clip %@" = "Klip %@";
 "Clip %lld" = "Klip %lld";
 "Clipboard is busy. Try Paste again." = "Pano meşgul. Yeniden yapıştırmayı dene.";
@@ -1431,6 +1435,7 @@
 "METADATA TOOLS ARE NOT READY." = "META VERİ ARAÇLARI HAZIR DEĞİL.";
 "METADATA TOOLS CHECKSUM MISMATCH." = "META VERİ ARAÇLARININ SAĞLAMA TOPLAMI EŞLEŞMİYOR.";
 "METADATA · NASHI" = "META VERİLER · NASHI";
+"MIDDLE CLICK" = "ORTA TIK";
 "MIDDLE THIRD" = "ORTA ÜÇTE BİR";
 "MONO" = "MONO";
 "MONOSPACED" = "EŞ ARALIKLI";
@@ -1477,9 +1482,12 @@
 "Metadata tools are not ready." = "Meta veri araçları hazır değil.";
 "Metadata tools checksum mismatch." = "Meta veri araçlarının sağlama toplamı eşleşmiyor.";
 "Metadata · Nashi" = "Meta Veriler · Nashi";
+"Middle Click" = "Orta tık";
 "Middle third" = "Orta üçte bir";
 "Mono" = "Mono";
 "Monospaced" = "Eş aralıklı";
+"Mouse %@" = "Fare %@";
+"Mouse %lld" = "Fare %lld";
 "Move" = "Taşı";
 "Move & share" = "Taşı ve paylaş";
 "Move Here" = "Buraya Taşı";
@@ -1757,6 +1765,7 @@
 "PRESERVE METADATA" = "META VERİLERİ KORU";
 "PRESERVE ORIGINAL PAGES" = "ORİJİNAL SAYFALARI KORU";
 "PRESET" = "ÖN AYAR";
+"PRESS KEYS OR A MOUSE BUTTON…" = "TUŞLARA VEYA FARE TUŞUNA BAS…";
 "PREVIEW" = "ÖNİZLEME";
 "PREVIEW LEFT" = "SOLU ÖNİZLE";
 "PREVIEW POSITION" = "ÖNİZLEME KONUMU";
@@ -1835,6 +1844,7 @@
 "Preserve metadata" = "Meta verileri koru";
 "Preserve original pages" = "Orijinal sayfaları koru";
 "Preset" = "Ön ayar";
+"Press keys or a mouse button…" = "Tuşlara veya fare tuşuna bas…";
 "Preview" = "Önizleme";
 "Preview %@" = "%@ öğesini önizle";
 "Preview %lld" = "%lld öğesini önizle";
@@ -1927,6 +1937,7 @@
 "REVEAL FINISHED FILES IN EXPLORER" = "TAMAMLANAN DOSYALARI DOSYA GEZGİNİ'NDE GÖSTER";
 "REVEAL FINISHED FILES IN FINDER" = "TAMAMLANAN DOSYALARI FINDER'DA GÖSTER";
 "RIGHT" = "SAĞ";
+"RIGHT CLICK" = "SAĞ TIK";
 "RIGHT HALF" = "SAĞ YARI";
 "RIGHT THIRD" = "SAĞ ÜÇTE BİR";
 "RIGHT TWO-THIRDS" = "SAĞ ÜÇTE İKİ";
@@ -2003,6 +2014,7 @@
 "Reveal finished files in Explorer" = "Tamamlanan dosyaları Dosya Gezgini'nde göster";
 "Reveal finished files in Finder" = "Tamamlanan dosyaları Finder'da göster";
 "Right" = "Sağ";
+"Right Click" = "Sağ tık";
 "Right half" = "Sağ yarı";
 "Right third" = "Sağ üçte bir";
 "Right two-thirds" = "Sağ üçte iki";
@@ -2330,7 +2342,6 @@
 "System" = "Sistem";
 "TAP COMMAND WHILE DRAGGING TO CROP, COMPRESS, ANNOTATE, AND GIVE YOUR FILE A LITTLE LOVE." = "KIRPMAK, SIKIŞTIRMAK, İŞARETLEMEK VE DOSYANA BİRAZ ÖZEN GÖSTERMEK İÇİN SÜRÜKLERKEN COMMAND'A BAS.";
 "TAP CONTROL WHILE DRAGGING TO COPY, MOVE, SHARE, OR CARRY FILES IN A FLOATING SHELF." = "KOPYALAMAK, TAŞIMAK, PAYLAŞMAK VEYA DOSYALARI YÜZEN BİR PENCEREDE YANINDA TAŞIMAK İÇİN SÜRÜKLERKEN CONTROL'E BAS.";
-"TAP THE CHOSEN MODIFIER COMBINATION WHILE DRAGGING FILES." = "DOSYALARI SÜRÜKLERKEN SEÇTİĞİN TUŞ BİRLEŞİMİNE BAS.";
 "TARGET" = "HEDEF";
 "TARGET LOUDNESS" = "HEDEF SES DÜZEYİ";
 "TARGET LUFS" = "HEDEF LUFS";
@@ -2471,7 +2482,6 @@
 "TURN OFF UNIFORM WIDTH TO PRESERVE THIS PDF’S FORM FIELDS, ATTACHMENTS, LINKS OR NAVIGATION." = "BU PDF'NİN FORM ALANLARINI, EKLERİNİ, BAĞLANTILARINI VEYA GEZİNMESİNİ KORUMAK İÇİN EŞİT GENİŞLİĞİ KAPAT.";
 "Tap Command while dragging to crop, compress, annotate, and give your file a little love." = "Kırpmak, sıkıştırmak, işaretlemek ve dosyana biraz özen göstermek için sürüklerken Command'a bas.";
 "Tap Control while dragging to copy, move, share, or carry files in a floating shelf." = "Kopyalamak, taşımak, paylaşmak veya dosyaları yüzen bir pencerede yanında taşımak için sürüklerken Control'e bas.";
-"Tap the chosen modifier combination while dragging files." = "Dosyaları sürüklerken seçtiğin tuş birleşimine bas.";
 "Target" = "Hedef";
 "Target LUFS" = "Hedef LUFS";
 "Target loudness" = "Hedef ses düzeyi";

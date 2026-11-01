@@ -166,7 +166,7 @@ struct HomeView:View {
         else { LText("Keep them together, or give each one a fresh start.") }
     }
     private func shortcut(_ key:String,_ title:String)->some View {
-        HStack(spacing:5) { Text(ModifierChord.legacy(key)?.symbols ?? key).font(.system(size:12,weight:.semibold));LText(title).font(.system(size:10,weight:.medium)) }
+        HStack(spacing:5) { Text(DragShortcut(name:key)?.symbols ?? key).font(.system(size:12,weight:.semibold));LText(title).font(.system(size:10,weight:.medium)) }
             .foregroundStyle(NashiPalette.forest).padding(.horizontal,9).padding(.vertical,6).background(NashiPalette.sage.opacity(0.65),in:RoundedRectangle(cornerRadius:8))
     }
     private var selectionActions:some View {
