@@ -35,6 +35,7 @@ public sealed class FloatShelf:Window
         this.action=action;this.reuse=reuse;Theme.Attach(this);Title="Float · Nashi";
         Width=112;Height=136;MinWidth=112;MinHeight=136;Topmost=true;ShowInTaskbar=false;WindowStyle=WindowStyle.None;AllowsTransparency=true;Background=Brushes.Transparent;ResizeMode=ResizeMode.NoResize;AllowDrop=true;WindowStartupLocation=WindowStartupLocation.CenterScreen;
         root.RowDefinitions.Add(new(){Height=new(136)});root.RowDefinitions.Add(new(){Height=new(1,GridUnitType.Star)});root.RowDefinitions.Add(new(){Height=new(0)});
+        System.Windows.Automation.AutomationProperties.SetAutomationId(stack,"FloatStackCanvas");
         Content=new Grid{Children={glass,root}};root.Children.Add(header);header.Children.Add(stack);header.Children.Add(countPlate);header.Children.Add(count);
         close=Control("×","Close Float without deleting files",Close);close.HorizontalAlignment=HorizontalAlignment.Left;close.Margin=new(6,6,0,0);header.Children.Add(close);
         options=Control("···","Float options",Options);options.HorizontalAlignment=HorizontalAlignment.Right;options.Margin=new(0,6,6,0);header.Children.Add(options);
