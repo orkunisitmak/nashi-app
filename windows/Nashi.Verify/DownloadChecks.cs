@@ -27,7 +27,7 @@ internal static class DownloadChecks
         finally{System.Globalization.CultureInfo.CurrentCulture=culture;}
         check(WebDownload.FilenameArguments().SequenceEqual(["--windows-filenames","-o","%(title).160B [%(id)s].%(ext)s"]),"Web downloads must preserve Unicode titles and their source IDs in filenames");
         check(WebDownload.YoutubeFailure(new("https://www.youtube.com/watch?v=fixture"),"ERROR: HTTP Error 403: Forbidden")?.Contains("PO token",StringComparison.Ordinal)==true,"YouTube 403 failures must explain current-tool and access requirements");
-        check(WebDownload.YoutubeFailure(new("https://example.com/video"),"HTTP Error 403: Forbidden") is null&&WebDownload.YoutubeFailure(new("https://youtu.be/fixture"),"unrelated failure") is null,"Unrelated yt-dlp failures must preserve their original diagnostics");
+        check(WebDownload.YoutubeFailure(new("https://example.com/video"),"ERROR: HTTP Error 403: Forbidden") is null&&WebDownload.YoutubeFailure(new("https://youtu.be/fixture"),"WARNING: SABR streaming was requested\nERROR: Postprocessing failed: No space left on device") is null&&WebDownload.YoutubeFailure(new("https://youtu.be/fixture"),"unrelated failure") is null,"Unrelated yt-dlp failures must preserve their original diagnostics");
         // Like the Mac: servers also send image/jpg, image/pjpeg or upper-case types for JPEG photos.
         try
         {

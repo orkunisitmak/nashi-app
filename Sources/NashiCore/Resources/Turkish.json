@@ -965,6 +965,7 @@
   "Download or update tools": "Araçları indir veya güncelle",
   "Download media tools": "Medya araçlarını indir",
   "Download office tools": "Office araçlarını indir",
+  "YouTube refused this public download. Nashi's verified yt-dlp and JavaScript runtime are current, so this video may require sign-in or a PO token that Nashi does not import. Try another public video or install a newer Nashi update when one is available.": "YouTube bu herkese açık indirmeyi reddetti. Nashi’nin doğrulanmış yt-dlp ve JavaScript çalışma zamanı güncel; bu nedenle video, Nashi’nin içe aktarmadığı bir oturum açma işlemi veya PO tokenı gerektiriyor olabilir. Başka bir herkese açık video deneyin ya da kullanılabilir olduğunda daha yeni bir Nashi güncellemesi yükleyin.",
   "One tool group is ready. Download the remaining tools to finish setup.": "Bir araç grubu hazır. Kurulumu tamamlamak için kalan araçları indir.",
   "The downloaded tools are incomplete. Please try setup again.": "İndirilen araçlar eksik. Kurulumu tekrar dene.",
   "Tools ready": "Araçlar hazır",

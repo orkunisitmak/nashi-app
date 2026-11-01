@@ -17,7 +17,8 @@ public sealed partial class WebDownload(Toolchain tools)
     internal static string? YoutubeFailure(Uri uri,string error)
     {
         if(!(uri.Host.Equals("youtube.com",StringComparison.OrdinalIgnoreCase)||uri.Host.EndsWith(".youtube.com",StringComparison.OrdinalIgnoreCase)||uri.Host.Equals("youtu.be",StringComparison.OrdinalIgnoreCase)))return null;
-        if(!new[]{"HTTP Error 403","SABR","PO Token","Sign in to confirm","challenge solver"}.Any(error.Contains))return null;
+        var errors=error.Split('\n').Select(line=>line.TrimStart()).Where(line=>line.StartsWith("ERROR:",StringComparison.Ordinal));
+        if(!errors.Any(line=>new[]{"HTTP Error 403","SABR","PO Token","Sign in to confirm","challenge solver"}.Any(line.Contains)))return null;
         return "YouTube refused this public download. Nashi's verified yt-dlp and JavaScript runtime are current, so this video may require sign-in or a PO token that Nashi does not import. Try another public video or install a newer Nashi update when one is available.";
     }
     /// Reads a "NASHI:downloaded:total" progress line. yt-dlp prints Python floats

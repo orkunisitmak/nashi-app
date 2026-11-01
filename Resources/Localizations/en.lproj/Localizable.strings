@@ -821,6 +821,8 @@
 "DOWNLOAD MEDIA TOOLS" = "DOWNLOAD MEDIA TOOLS";
 "DOWNLOAD MISSING TOOLS" = "DOWNLOAD MISSING TOOLS";
 "DOWNLOAD OFFICE TOOLS" = "DOWNLOAD OFFICE TOOLS";
+"DOWNLOAD OR REFRESH THE VERIFIED TOOLS FOR CONVERSIONS, PREVIEWS AND WEB DOWNLOADS. TOOLS MANAGED ON YOUR PATH ARE KEPT." = "DOWNLOAD OR REFRESH THE VERIFIED TOOLS FOR CONVERSIONS, PREVIEWS AND WEB DOWNLOADS. TOOLS MANAGED ON YOUR PATH ARE KEPT.";
+"DOWNLOAD OR UPDATE TOOLS" = "DOWNLOAD OR UPDATE TOOLS";
 "DOWNLOAD PHOTOS" = "DOWNLOAD PHOTOS";
 "DOWNLOAD PHOTOS…" = "DOWNLOAD PHOTOS…";
 "DOWNLOAD THE MISSING TOOLS TO ENABLE ALL CONVERSIONS, PREVIEWS AND WEB DOWNLOADS. TOOLS ALREADY FOUND ON YOUR COMPUTER ARE KEPT." = "DOWNLOAD THE MISSING TOOLS TO ENABLE ALL CONVERSIONS, PREVIEWS AND WEB DOWNLOADS. TOOLS ALREADY FOUND ON YOUR COMPUTER ARE KEPT.";
@@ -901,6 +903,8 @@
 "Download media tools" = "Download media tools";
 "Download missing tools" = "Download missing tools";
 "Download office tools" = "Download office tools";
+"Download or refresh the verified tools for conversions, previews and web downloads. Tools managed on your PATH are kept." = "Download or refresh the verified tools for conversions, previews and web downloads. Tools managed on your PATH are kept.";
+"Download or update tools" = "Download or update tools";
 "Download photos" = "Download photos";
 "Download photos…" = "Download photos…";
 "Download the missing tools to enable all conversions, previews and web downloads. Tools already found on your computer are kept." = "Download the missing tools to enable all conversions, previews and web downloads. Tools already found on your computer are kept.";
@@ -2750,11 +2754,13 @@
 "YOUR TASK WILL FINISH BEFORE NASHI RESTARTS." = "YOUR TASK WILL FINISH BEFORE NASHI RESTARTS.";
 "YOUR TOOLS ARE READY." = "YOUR TOOLS ARE READY.";
 "YOUR TOOLS ARE READY. LET’S PUT THAT NEXT FILE TO GOOD USE." = "YOUR TOOLS ARE READY. LET’S PUT THAT NEXT FILE TO GOOD USE.";
+"YOUTUBE REFUSED THIS PUBLIC DOWNLOAD. NASHI'S VERIFIED YT-DLP AND JAVASCRIPT RUNTIME ARE CURRENT, SO THIS VIDEO MAY REQUIRE SIGN-IN OR A PO TOKEN THAT NASHI DOES NOT IMPORT. TRY ANOTHER PUBLIC VIDEO OR INSTALL A NEWER NASHI UPDATE WHEN ONE IS AVAILABLE." = "YOUTUBE REFUSED THIS PUBLIC DOWNLOAD. NASHI'S VERIFIED YT-DLP AND JAVASCRIPT RUNTIME ARE CURRENT, SO THIS VIDEO MAY REQUIRE SIGN-IN OR A PO TOKEN THAT NASHI DOES NOT IMPORT. TRY ANOTHER PUBLIC VIDEO OR INSTALL A NEWER NASHI UPDATE WHEN ONE IS AVAILABLE.";
 "YOUTUBE THUMBNAIL · BEST AVAILABLE FULL-SIZE IMAGE" = "YOUTUBE THUMBNAIL · BEST AVAILABLE FULL-SIZE IMAGE";
 "YOU’RE ALL SET.\nMAKE SOMETHING GOOD." = "YOU’RE ALL SET.\nMAKE SOMETHING GOOD.";
 "You can also choose files from the main window." = "You can also choose files from the main window.";
 "You choose when to download and install." = "You choose when to download and install.";
 "You have the latest published Windows version." = "You have the latest published Windows version.";
+"YouTube refused this public download. Nashi's verified yt-dlp and JavaScript runtime are current, so this video may require sign-in or a PO token that Nashi does not import. Try another public video or install a newer Nashi update when one is available." = "YouTube refused this public download. Nashi's verified yt-dlp and JavaScript runtime are current, so this video may require sign-in or a PO token that Nashi does not import. Try another public video or install a newer Nashi update when one is available.";
 "YouTube thumbnail · best available full-size image" = "YouTube thumbnail · best available full-size image";
 "Your Library" = "Your Library";
 "Your clipboard is empty." = "Your clipboard is empty.";
