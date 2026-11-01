@@ -32,6 +32,13 @@ public sealed partial class WheelWindow : Window
         InitializeComponent();
         Ring.Title = title;
         Ring.Items = items;
+        void Describe()
+        {
+            DescriptionText.Text = Ring.Description;
+            DescriptionCard.IsVisible = Ring.Description.Length > 0;
+        }
+        Ring.DescriptionChanged += Describe;
+        Describe();
         Ring.Chosen += _ => Close();
         Ring.Dismissed += Close;
         Opened += (_, _) => Ring.Focus();

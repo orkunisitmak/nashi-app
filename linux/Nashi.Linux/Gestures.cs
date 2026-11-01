@@ -94,6 +94,9 @@ public sealed class PointerSampler(GestureDetector detector)
     private bool down, tab;
     public bool WatchFlip { get; set; }
     public event Action? Flip;
+    /// Root coordinates while a drag wheel is watching. The source owns the pointer grab, so the overlay
+    /// cannot rely on ordinary motion events (or on every source forwarding XDND positions to its proxy).
+    public event Action<int, int>? DragPosition;
 
     public const uint ShiftMask = 1, ControlMask = 4, Mod1Mask = 8, Mod4Mask = 64, Button1Mask = 256;
 
@@ -109,6 +112,7 @@ public sealed class PointerSampler(GestureDetector detector)
         if (held) detector.Move(x, y, modifiers);
         if (!held && down) detector.Up(x, y);
         down = held;
+        if (held && WatchFlip) DragPosition?.Invoke(x, y);
         if (tabDown && !tab && WatchFlip) Flip?.Invoke();
         tab = tabDown;
     }

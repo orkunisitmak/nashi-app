@@ -34,7 +34,7 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libreoffice-writer libreoffice-calc libreoffice-impress
+          sudo apt-get install -y --no-install-recommends libreoffice-writer libreoffice-calc libreoffice-impress xvfb xauth
       - name: Restore Linux app
         shell: bash
         run: |
@@ -48,6 +48,9 @@ jobs:
           NASHI_VERIFY_FFPROBE: ${{ runner.temp }}/Nashi-Test-Tools/ffprobe
           NASHI_VERIFY_DENO: ${{ runner.temp }}/Nashi-Test-Tools/deno
         run: dotnet run --project linux/Nashi.Linux.Checks -c Release
+      - name: Run native X11 PDF-to-JPG drag/drop smoke
+        shell: bash
+        run: xvfb-run --auto-servernum python3 scripts/test-linux-native-drop.py
       - name: Upload Linux smoke screenshots
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f

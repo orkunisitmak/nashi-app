@@ -5,8 +5,8 @@ using Nashi.Core;
 
 namespace Nashi.Linux;
 
-/// `--install-integration`: autostart in the background (which hosts the Ctrl-drag wheel), an Open With entry and two
-/// Nautilus scripts. Idempotent; it writes only the files below, and uninstall removes exactly those. Both remove the
+/// `--install-integration`: autostart in the background (which hosts the Ctrl-drag wheel), an Open With entry and an icon.
+/// Removes legacy Nautilus scripts without installing new Scripts menu entries. Idempotent; it writes only the files below, and uninstall removes exactly those. Both remove the
 /// GNOME Ctrl+Alt+N keybinding earlier versions added (only Nashi's own entry; everyone else's stay). External programs run with argument lists through `run` (program, args → stdout, or null on failure).
 public static class Integration
 {
@@ -23,12 +23,11 @@ public static class Integration
 
     const string Schema = "org.gnome.settings-daemon.plugins.media-keys";
     public static readonly string KeybindingPath = "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/nashi/";
-    const UnixFileMode Executable = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute | UnixFileMode.GroupRead | UnixFileMode.GroupExecute | UnixFileMode.OtherRead | UnixFileMode.OtherExecute;
 
     // Input formats the Linux app handles, as freedesktop MIME types.
     static readonly Dictionary<string, string> Mime = new()
     {
-        ["aiff"] = "audio/x-aiff", ["avi"] = "video/x-msvideo", ["avif"] = "image/avif", ["bmp"] = "image/bmp", ["flac"] = "audio/flac",
+        ["aac"] = "audio/aac", ["m4v"] = "video/x-m4v", ["aiff"] = "audio/x-aiff", ["avi"] = "video/x-msvideo", ["avif"] = "image/avif", ["bmp"] = "image/bmp", ["flac"] = "audio/flac",
         ["gif"] = "image/gif", ["heic"] = "image/heif", ["jpg"] = "image/jpeg", ["m4a"] = "audio/mp4", ["mkv"] = "video/x-matroska",
         ["mov"] = "video/quicktime", ["mp3"] = "audio/mpeg", ["mp4"] = "video/mp4", ["ogg"] = "audio/ogg", ["opus"] = "audio/x-opus+ogg",
         ["pdf"] = "application/pdf", ["png"] = "image/png", ["svg"] = "image/svg+xml", ["tiff"] = "image/tiff", ["wav"] = "audio/x-wav",
@@ -40,7 +39,7 @@ public static class Integration
 
     /// Image, audio, video, PDF and ZIP inputs from the feature catalog.
     public static IReadOnlyList<string> InputExtensions() =>
-        FeatureCatalog.Conversions.Keys.Append("pdf").Distinct()
+        Capabilities.InputExtensions.Append("pdf").Distinct()
             .Where(e => FeatureCatalog.IsImage("x." + e) || FeatureCatalog.IsAudio("x." + e) || FeatureCatalog.IsVideo("x." + e) || e is "pdf" or "zip")
             .Order(StringComparer.Ordinal).ToList();
 
@@ -63,11 +62,10 @@ public static class Integration
     public static IReadOnlyList<string> Install(string home, string exe, Func<string, IReadOnlyList<string>, string?> run)
     {
         var log = new List<string>();
-        void Write(string path, string text, UnixFileMode? mode = null)
+        void Write(string path, string text)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             File.WriteAllText(path, text);
-            if (mode is { } m) File.SetUnixFileMode(path, m);
             log.Add(L10n.F(Copy.Wrote, path));
         }
 
@@ -80,9 +78,12 @@ public static class Integration
             icon.Write(Icon(home), ImageMagick.MagickFormat.Png);
         }
         log.Add(L10n.F(Copy.Wrote, Icon(home)));
-        foreach (var other in ScriptNames.Select(n => Path.Combine(Scripts(home), n)).Where(p => p != Script(home) && p != ActionsScript(home) && File.Exists(p))) File.Delete(other); // the other language's names
-        Write(Script(home), $"#!/bin/sh\nexec {Quote(exe)} --wheel \"$@\"\n", Executable);
-        Write(ActionsScript(home), $"#!/bin/sh\nexec {Quote(exe)} --actions \"$@\"\n", Executable);
+        foreach (var path in ScriptNames.Select(n => Path.Combine(Scripts(home), n)).Distinct())
+        {
+            if (!File.Exists(path)) continue;
+            File.Delete(path);
+            log.Add(L10n.F(Copy.Removed, path));
+        }
         run("update-desktop-database", [Path.GetDirectoryName(OpenWith(home))!]);
         if (RemoveShortcut(run)) log.Add(L10n.T(Copy.ShortcutRemoved));
         return log;

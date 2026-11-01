@@ -5,8 +5,8 @@ using Nashi.Core;
 
 namespace Nashi.Linux;
 
-/// Tools wheel ("Convert" first) → format wheel → OperationRunner with a progress toast → success card; and the
-/// Actions wheel → FileActions → success card. Home passes itself as `owner` and gets the wheels over its window,
+/// One wheel with Convert and Tools faces → OperationRunner or FileActions → progress and completion cards.
+/// Home passes itself as `owner` and gets the wheel over its window,
 /// with the files as cards; the background mode passes null and gets bare wheels at the pointer.
 /// `notify` reports cancels and failures; missing media tools call `setUpTools`.
 public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> notify, Func<Task> setUpTools)
@@ -15,7 +15,6 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
     {
         public const string ConvertWheel = "Convert";
         public const string ToolsWheel = "Tools";
-        public const string ActionsWheel = "Actions";
         public const string CopyTo = "Copy to…";
         public const string MoveTo = "Move to…";
         public const string Copied = "Copied.";
@@ -45,17 +44,11 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
         public const string MissedPetal = "Dropped between the petals: nothing was changed. Drop on a petal to use it.";
         public const string Unreadable = "Nashi couldn’t read what was dropped. Drop files from your file manager or browser.";
         public const string Downloading = "Downloading…";
-        public const string SideTo = "{0} ›";
-        public const string QuickWheel = "Quick tools";
-        public const string Rotate = "Rotate 90°";
-        public const string Flip = "Flip";
-        public const string Grayscale = "Grayscale";
-        public const string RemoveBackground = "Remove Background";
-        public const string Zip = "Pack into ZIP";
         public const string Images = "Images";
         public const string Video = "Video";
         public const string Audio = "Audio";
         public const string Documents = "Documents";
+        public const string TextData = "Text & Data";
         public const string Archives = "Archives";
     }
 
@@ -97,20 +90,20 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
     public Editors.ToolEditorWindow? LastEditor { get; private set; }
 
     /// The faces of the one wheel every entry point opens, in their Tab order.
-    public static readonly string[] Faces = ["convert", "quick", "tools", "actions"];
+    public static readonly string[] Faces = ["convert", "tools"];
 
-    /// The wheel on its front face, the formats (Open With, the right-click script, Ctrl+Alt+N, Ctrl+Space, Home's
+    /// The wheel on its front face, the formats (Open With, the right-click script, Ctrl+Space, Home's
     /// Convert chip, a drop on Float).
     public void ShowFormats(IReadOnlyList<string> selection) => Show(selection, "convert");
 
     /// The same wheel, opened on its Tools face (Home's Tools chip).
     public void ShowTools(IReadOnlyList<string> selection) => Show(selection, "tools");
 
-    /// The same wheel, opened on its Actions face ("Nashi actions", Home's Actions chip).
+    /// The same wheel on Tools with File Actions open ("Nashi actions", Home's Actions chip).
     public void ShowActions(IReadOnlyList<string> selection) => Show(selection, "actions");
 
     /// The wheel for the files, opened on `face` (or the first face it has). Every way in builds the same faces;
-    /// Tab, the mouse wheel and each face's last petal turn through them.
+    /// Tab switches between Convert and Tools; groups open an outer ring.
     public void Show(IReadOnlyList<string> selection, string face = "convert")
     {
         Begin(selection);
@@ -119,59 +112,66 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
         if (sides.Count == 0) { SuccessToast.Notice(Empty(Copy.NoTools, Copy.NoToolsFor)).Present(); return; }
         var wheel = LastWheel = new WheelWindow("", [], owner is not null ? files : null);
         wheel.Wheel.Sides = sides;
-        wheel.Wheel.StartAt(Math.Max(0, sides.ToList().FindIndex(s => s.Key == face)));
+        var target = face is "actions" or "quick" ? "tools" : face;
+        wheel.Wheel.StartAt(Math.Max(0, sides.ToList().FindIndex(s => s.Key == target)));
+        if (face == "actions") wheel.Wheel.OpenGroup(wheel.Wheel.Items.ToList().FindIndex(i => i.Id == "group:files"));
         wheel.Wheel.Chosen += OnChosen;
         if (owner is not null) wheel.Show(owner);
         else wheel.ShowAt(pointer, StartupTime);
         StartupTime = 0;
     }
 
-    private static List<WheelItem> ActionItems() =>
-        FileActions.Ids.Select(id => new WheelItem("action:" + id, L10n.T(FileActions.Title(id)), FileActions.Available(id))).ToList();
-
-    private static string ToolName(string id) => L10n.T(id.StartsWith("quick:", StringComparison.Ordinal) ? QuickNames[id] : FeatureCatalog.ToolNames.GetValueOrDefault(id, id));
-
-    private static readonly Dictionary<string, string> QuickNames = new()
-    {
-        ["quick:rotate"] = Copy.Rotate, ["quick:flip"] = Copy.Flip, ["quick:grayscale"] = Copy.Grayscale,
-        ["quick:removeBackground"] = Copy.RemoveBackground, ["quick:zip"] = Copy.Zip,
-    };
-
-    /// The formats, grouped when they don't fit on one face with its turn petal: a group petal (Images, Video,
+    /// Compatible output families: a group petal (Images, Video,
     /// Audio, Documents, Archives) fans out a second ring of its formats.
     private static List<WheelItem> FormatItems(IReadOnlyList<string> selection)
     {
         static WheelItem Format(string f) => new("convert:" + f, f == "gz" ? "GZIP" : f.ToUpperInvariant());
         var formats = Capabilities.Formats(selection);
-        if (formats.Length <= 7) return [.. formats.Select(Format)];
-        static string Category(string f) => FeatureCatalog.IsImage("x." + f) ? Copy.Images : FeatureCatalog.IsVideo("x." + f) ? Copy.Video
+        string Category(string f) => f is "txt" or "md" or "csv" or "tsv" or "srt" or "vtt" ? Copy.TextData : f == "gif" && selection.All(FeatureCatalog.IsImage) || FeatureCatalog.IsImage("x." + f) ? Copy.Images : FeatureCatalog.IsVideo("x." + f) ? Copy.Video
             : FeatureCatalog.IsAudio("x." + f) ? Copy.Audio : FeatureCatalog.IsArchive("x." + f) ? Copy.Archives : Copy.Documents;
-        return [.. formats.GroupBy(Category).Select(g => g.Count() == 1 ? Format(g.First())
-            : new WheelItem("group:" + g.Key.ToLowerInvariant(), L10n.T(g.Key), Group: [.. g.Select(Format)]))];
+        return [.. formats.GroupBy(Category).Select(g => new WheelItem("group:" + g.Key.ToLowerInvariant(), L10n.T(g.Key), Group: [.. g.Select(Format)]))];
     }
 
-    /// The faces for these files, in Tab order: Convert (the formats), Quick tools (crop, rotate, flip, grayscale,
-    /// remove background, one PDF, one ZIP), Tools (every catalog tool), Actions. Empty faces are left out, and each
-    /// face ends with a petal naming the next ("Quick tools ›", "Tools ›", "Actions ›", "Convert ›").
+    /// Two contextual faces, with no navigation petals or additional pages. Tab switches between them.
     public static IReadOnlyList<WheelSide> Sides(IReadOnlyList<string> selection)
     {
-        var faces = new[]
-        {
-            ("convert", L10n.T(Copy.ConvertWheel), FormatItems(selection)),
-            ("quick", L10n.T(Copy.QuickWheel), Capabilities.QuickTools(selection).Select(id => new WheelItem(id, ToolName(id))).ToList()),
-            ("tools", L10n.T(Copy.ToolsWheel), Capabilities.Tools(selection).Select(id => new WheelItem(id, ToolName(id))).ToList()),
-            ("actions", L10n.T(Copy.ActionsWheel), ActionItems()),
-        }.Where(f => f.Item3.Count > 0).ToList();
-        return faces.Select((f, i) => new WheelSide(f.Item2, faces.Count < 2 ? f.Item3
-            : [.. f.Item3, new WheelItem("side:" + (i + 1) % faces.Count, L10n.F(Copy.SideTo, faces[(i + 1) % faces.Count].Item2))], f.Item1)).ToList();
+        if (selection.Count == 0) return [];
+        var faces = new List<WheelSide>();
+        var formats = FormatItems(selection);
+        if (formats.Count > 0) faces.Add(new(L10n.T(Copy.ConvertWheel), formats, "convert"));
+        faces.Add(new(L10n.T(Copy.ToolsWheel), WheelMenu.Tools(selection), "tools"));
+        return faces;
     }
 
     private IDisposable? dropTarget;
     private WheelWindow? dragWheel;
     private bool dropped;
+    private CancellationTokenSource? dragRead;
 
-    /// Feeds Tab presses during a drag (the X11 poll); on while a drag wheel is up.
-    public PointerSampler? Sampler { get; set; }
+    private PointerSampler? sampler;
+
+    /// Feeds pointer positions and Tab presses during a drag (the X11 poll); on while a drag wheel is up.
+    public PointerSampler? Sampler
+    {
+        get => sampler;
+        set
+        {
+            if (sampler is not null) sampler.DragPosition -= DragPosition;
+            sampler = value;
+            if (sampler is not null) sampler.DragPosition += DragPosition;
+        }
+    }
+
+    private void DragPosition(int x, int y)
+    {
+        void Hover()
+        {
+            if (dragWheel is { IsVisible: true } wheel && !dropped)
+                wheel.Hover(wheel.ToWheel(x - wheel.Position.X, y - wheel.Position.Y));
+        }
+        if (Avalonia.Threading.Dispatcher.UIThread.CheckAccess()) Hover();
+        else Avalonia.Threading.Dispatcher.UIThread.Post(Hover);
+    }
 
     /// The drag gesture fired: an empty wheel at the pointer that fills with the dragged files' sides when the drag
     /// reaches it. A drop on a petal runs it for those files (browser items are downloaded first); a drop on a side
@@ -213,15 +213,37 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
         }, refused: () => notify(L10n.T(wheel.Known ? Copy.MissedPetal : Copy.Unreadable)));
         if (Sampler is { } s) s.WatchFlip = true;
         // The petals come at once, from the drag source itself; the first XDND position over the wheel is the fallback.
-        _ = Task.Run(() => XdndTarget.ReadDrag(TimeSpan.FromMilliseconds(300))).ContinueWith(read =>
+        var reading = dragRead = new CancellationTokenSource();
+        _ = ReadDragAsync(wheel, reading.Token);
+    }
+
+    /// A source may not answer the first request while it sets up its drag. Keep trying while this drag is
+    /// active, without depending on an XDND position reaching the overlay. Never apply an old drag's answer.
+    private async Task ReadDragAsync(WheelWindow wheel, CancellationToken token)
+    {
+        try
         {
-            if (read.Result is { } content) Avalonia.Threading.Dispatcher.UIThread.Post(() => { if (dragWheel == wheel) wheel.Know(content); });
-        }, TaskScheduler.Default);
+            while (!token.IsCancellationRequested)
+            {
+                var content = await Task.Run(() => XdndTarget.ReadDrag(TimeSpan.FromMilliseconds(300)), token).ConfigureAwait(false);
+                var retry = await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    if (token.IsCancellationRequested || dragWheel != wheel || dropped || wheel.Known) return false;
+                    if (content is not { Any: true }) return true;
+                    wheel.Know(content);
+                    return false;
+                });
+                if (!retry) return;
+                await Task.Delay(75, token).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested) { }
     }
 
     /// The drag's button came up: a wheel nothing was dropped on closes (a drop arrives around the release).
     public void DragEnded()
     {
+        dragRead?.Cancel();
         if (Sampler is { } sampler) sampler.WatchFlip = false;
         var wheel = dragWheel;
         Desktop.After(TimeSpan.FromMilliseconds(300), () => { if (wheel == dragWheel && !dropped) EndDragWheel(); });
@@ -235,6 +257,9 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
 
     private void EndDragWheel()
     {
+        dragRead?.Cancel();
+        dragRead?.Dispose();
+        dragRead = null;
         dropTarget?.Dispose();
         dropTarget = null;
         var wheel = dragWheel;

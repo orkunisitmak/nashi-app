@@ -13,9 +13,9 @@ static class FaceChecks
 {
     public static void Run(string root, Action<bool, string> check, Action<Avalonia.Media.Imaging.WriteableBitmap?, string> smoke)
     {
-        // Geometry: a fan of 5 around the top petal of 8 spans its petal and a quarter of each neighbour, at least 44 points a petal.
+        // Geometry: a fan of 5 around the top petal of 8 spans its petal and a quarter of each neighbour, at least 76 points a petal.
         var span = Wheel.SubSpan(45, 5);
-        check(Math.Abs(span - Math.Max(45 * 1.5 / 5, 44 / ((Wheel.SubInner + Wheel.SubOuter) / 2) * 180 / Math.PI)) < 1e-9 && Wheel.SubSpan(45, 40) == 9, "A group's ring: each petal shares the fan, at least 44 points wide, never more than once round");
+        check(Math.Abs(span - Math.Max(45 * 1.5 / 5, 76 / ((Wheel.SubInner + Wheel.SubOuter) / 2) * 180 / Math.PI)) < 1e-9 && Wheel.SubSpan(45, 40) == 9, "A group's ring: each petal shares the fan, at least 76 points wide, never more than once round");
         var top = 90.0;
         bool AllFound()
         {
@@ -101,18 +101,45 @@ static class FaceChecks
         // The faces of the real wheel: groups when the formats don't fit, and the flip order both ways.
         var video = WheelFlow.Sides(["x.pdf"]);
         check(video[0].Items.Any(i => i.Group is { Count: > 1 }) && video[0].Items.Where(i => !i.Id.StartsWith("side:")).SelectMany(i => i.Group ?? [i]).Count() == Capabilities.Formats(["x.pdf"]).Length
-            && WheelFlow.Sides(["x.mp4"])[0].Items.All(i => i.Group is null), "A PDF's many formats are grouped (Images, Documents…) and every one is still there; a video's seven fit as they are");
-        check(video[0].Items.Where(i => i.Group is not null).All(i => i.Title is "Video" or "Audio" or "Images" or "Documents" or "Archives"), "Groups are named after catalog categories");
+            && WheelFlow.Sides(["x.mp4"])[0].Items.Select(i => i.Title).SequenceEqual(["Video", "Audio", "Images"]), "A PDF's many formats are grouped (Images, Documents…) and every one is still there; a video's targets are grouped into Video, Audio and Images");
+        check(video[0].Items.Where(i => i.Group is not null).All(i => i.Title is "Video" or "Audio" or "Images" or "Documents" or "Archives" or "Text & Data"), "Groups are named after catalog categories");
         var sides = WheelFlow.Sides(["a.png", "b.png"]);
-        check(sides[1].Items.Select(i => i.Id).SequenceEqual(["cropImage", "quick:rotate", "quick:flip", "quick:grayscale", "quick:removeBackground", "createPDF", "quick:zip", "side:2"])
-            && WheelFlow.Sides(["a.pdf", "b.pdf"]).Single(s => s.Key == "quick").Items.Select(i => i.Id).SequenceEqual(["mergePDF", "quick:zip", "side:2"]),
-            "The quick face: crop, rotate, flip, grayscale, remove background, one PDF (images or PDFs), one ZIP");
+        var imageTools = sides[1].Items.SelectMany(i => i.Group ?? [i]).Select(i => i.Id).ToArray();
+        check(sides.Select(s => s.Key).SequenceEqual(["convert", "tools"]) && sides[1].Items.Count <= 8 && WheelFlow.Sides(["a.png"])[1].Items.Count == 8
+            && Capabilities.Tools(["a.png", "b.png"]).Concat(Capabilities.QuickTools(["a.png", "b.png"])).All(imageTools.Contains)
+            && FileActions.Ids.All(id => imageTools.Contains("action:" + id)), "Two faces: every editor, quick tool and file action remains reachable on Tools");
         var flip = new Wheel { Sides = sides };
-        var order = new List<string>();
-        for (var i = 0; i < 12 && order.Count < 5; i++) { if (order.LastOrDefault() != sides[flip.Side].Key) order.Add(sides[flip.Side].Key); flip.Flip(1); }
-        flip.StartAt(0);
-        flip.Flip(-1);
-        check(order.SequenceEqual(["convert", "quick", "tools", "actions", "convert"]) && sides[flip.Side].Key == "actions", "Tab turns Convert → Quick tools → Tools → Actions → Convert; Shift+Tab turns back");
+        flip.Flip(1);
+        check(sides[flip.Side].Key == "tools", "One Tab switches directly from Convert to Tools");
+        flip.Flip(1);
+        check(sides[flip.Side].Key == "convert", "Another Tab returns directly to Convert");
+        var keyboard = new WheelWindow("", []);
+        keyboard.Wheel.Sides = sides;
+        keyboard.Show();
+        Dispatcher.UIThread.RunJobs();
+        keyboard.Wheel.Focus();
+        keyboard.KeyPressQwerty(PhysicalKey.Tab, RawInputModifiers.None);
+        check(keyboard.Wheel.Sides[keyboard.Wheel.Side].Key == "tools", "A real Tab key opens Tools");
+        keyboard.Wheel.OpenGroup(keyboard.Wheel.Items.ToList().FindIndex(i => i.Id == "group:background"));
+        keyboard.KeyPressQwerty(PhysicalKey.Tab, RawInputModifiers.None);
+        check(keyboard.Wheel.Side == 0 && keyboard.Wheel.OpenGroupIndex == -1, "Tab closes the outer ring and returns straight to Convert");
+        keyboard.MouseWheel(new Point(keyboard.Bounds.Width / 2, keyboard.Bounds.Height / 2 - 100), new Vector(0, -1), RawInputModifiers.None);
+        check(keyboard.Wheel.Side == 0, "Scrolling does not switch faces; Tab is the face switch");
+        keyboard.Close();
+        foreach (var ext in FeatureCatalog.Conversions.Keys)
+        foreach (var count in new[] { 1, 2 })
+        {
+            var selection = Enumerable.Range(0, count).Select(i => $"file{i}.{ext}").ToArray();
+            var faces = WheelFlow.Sides(selection);
+            var offered = faces.Single(f => f.Key == "tools").Items.SelectMany(i => i.Group ?? [i]).Select(i => i.Id).ToArray();
+            var formats = faces.Where(f => f.Key == "convert").SelectMany(f => f.Items).SelectMany(i => i.Group ?? [i]).Select(i => i.Id).ToArray();
+            check(faces.Count <= 2 && faces.All(f => f.Items.Count <= 8 && f.Items.All(i => !i.Id.StartsWith("side:") && !i.Id.StartsWith("page:")))
+                && Capabilities.Tools(selection).Concat(Capabilities.QuickTools(selection)).All(offered.Contains)
+                && formats.Order().SequenceEqual(Capabilities.Formats(selection).Select(f => "convert:" + f).Order())
+                && offered.Distinct().Count() == offered.Length, $"{count} {ext}: at most two faces, no page/turn petals, all tools reachable once");
+        }
+        check(L10n.ResolveLanguage("en", null, "tr") == "en" && L10n.ResolveLanguage("system", null, "tr") == "tr"
+            && L10n.ResolveLanguage("tr", "en", "tr") == "en", "Saved English overrides the system language, with explicit environment overrides preserved");
 
         // Each quick tool on a fixture, beside the source.
         var work = Directory.CreateDirectory(Path.Combine(root, "quick tools ş")).FullName;
@@ -132,6 +159,11 @@ static class FaceChecks
         using (var image = new MagickImage(rotated[0]))
             check(rotated is [var r] && Path.GetDirectoryName(r) == work && Path.GetFileName(r) == "-halves - Edited.png" && image.Width == 20 && image.Height == 40 && Red(At(r, 10, 5)) && !Red(At(r, 10, 35)),
                 "Rotate 90° turns it clockwise (the left half on top), saved beside it as - Edited");
+        var left = Run("quick:rotateLeft", halves);
+        using (var image = new MagickImage(left[0]))
+            check(image.Width == 20 && image.Height == 40 && !Red(At(left[0], 10, 5)) && Red(At(left[0], 10, 35)), "Rotate Left turns the image counterclockwise");
+        var vertical = Run("quick:flipVertical", rotated[0]);
+        check(!Red(At(vertical[0], 10, 5)) && Red(At(vertical[0], 10, 35)), "Flip Vertical mirrors the image top to bottom");
         var flipped = Run("quick:flip", halves);
         check(!Red(At(flipped[0], 5, 10)) && Red(At(flipped[0], 35, 10)), "Flip mirrors it left to right");
         var gray = Run("quick:grayscale", halves);
@@ -159,14 +191,14 @@ static class FaceChecks
             check(pdf.Count == 1 && doc.NumberOfPages == 2 && Path.GetDirectoryName(pdf[0]) == work, "Images merged into one PDF: one page each, beside them");
         check(!Capabilities.QuickTools(["a.mp4"]).Contains("quick:rotate") && Capabilities.QuickTools(["a.mp4"]).Contains("quick:zip"), "Image quick tools are only for images; ZIP is for anything");
 
-        // Renders: the quick face and a grouped front face, light, dark and Turkish.
+        // Renders: the eight-petal Tools face and a grouped Convert face, light, dark and Turkish.
         foreach (var (theme, language, suffix) in new[] { (ThemeVariant.Light, "en", "light"), (ThemeVariant.Dark, "en", "dark"), (ThemeVariant.Light, "tr", "tr") })
         {
             Application.Current!.RequestedThemeVariant = theme;
             L10n.Language = language;
             try
             {
-                foreach (var (files, face, name) in new[] { (new[] { halves, logo }, 1, "quick"), (new[] { Path.Combine(work, "x.pdf") }, 0, "grouped") })
+                foreach (var (files, face, name) in new[] { (new[] { halves }, 1, "tools"), (new[] { Path.Combine(work, "x.pdf") }, 0, "grouped") })
                 {
                     var w = new WheelWindow("", []);
                     w.Wheel.Sides = WheelFlow.Sides(files);
@@ -178,6 +210,13 @@ static class FaceChecks
                     var frame = w.CaptureRenderedFrame();
                     check(frame is not null, $"The {name} face renders ({suffix})");
                     smoke(frame, $"wheel-{name}-{suffix}");
+                    if (name == "tools")
+                    {
+                        w.Wheel.OpenGroup(w.Wheel.Items.ToList().FindIndex(i => i.Id == "group:background"));
+                        Dispatcher.UIThread.RunJobs();
+                        w.CaptureRenderedFrame();
+                        smoke(w.CaptureRenderedFrame(), $"wheel-tools-background-{suffix}");
+                    }
                     w.Close();
                 }
             }

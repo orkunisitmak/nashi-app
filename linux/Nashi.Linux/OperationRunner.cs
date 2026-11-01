@@ -16,6 +16,16 @@ public sealed class MissingToolsException(string message = MissingToolsException
 /// Turns a wheel choice plus selected files into output files, using the shared engine.
 public sealed class OperationRunner(Toolchain tools)
 {
+    /// The export defaults for a format (Settings' format defaults, or the command line's --options): image quality
+    /// and the media quality and bitrate of conversions. Null keeps Nashi's built-in defaults.
+    public Func<string, OutputProfile>? Profile { get; set; }
+
+    int ImageQuality(string format) => Profile is { } profile ? (int)Math.Round(profile(format).Quality * 100) : 85;
+
+    MediaOptions MediaFor(string format) => Profile is { } profile
+        ? new MediaOptions { Quality = profile(format).Quality, AudioBitrate = profile(format).AudioBitrate }
+        : new MediaOptions();
+
     /// What the last run wants the success card to add (English; translate at display), or null.
     public string? Note { get; private set; }
 
@@ -34,8 +44,11 @@ public sealed class OperationRunner(Toolchain tools)
 
         if (convert is not null)
         {
-            if (files.All(FeatureCatalog.IsImage)) return await Task.Run(() => ImageOperations.Convert(files, convert, destination, progress, token), token);
-            if (files.All(f => FeatureCatalog.IsAudio(f) || FeatureCatalog.IsVideo(f))) return await Media(progress, (e, p) => e.ConvertAsync(files, convert, destination, new MediaOptions(), p, token));
+            if (files.All(FeatureCatalog.IsImage)) return await Task.Run(() => ImageOperations.Convert(files, convert, destination, progress, token, ImageQuality(convert)), token);
+            if (files.All(f => FeatureCatalog.IsAudio(f) || FeatureCatalog.IsVideo(f)))
+                return await Media(progress, (e, p) => convert is "jpg" or "png"
+                    ? MediaFrames.ExportAsync(e, files, convert, destination, new MediaOptions(), p, token)
+                    : e.ConvertAsync(files, convert, destination, MediaFor(convert), p, token));
             if (files.All(DocumentOperations.Handles))
             {
                 var documents = new DocumentOperations(AppPaths.Office(), AppPaths.Deno(tools));
@@ -63,7 +76,9 @@ public sealed class OperationRunner(Toolchain tools)
     static IReadOnlyList<string> Quick(string tool, IReadOnlyList<string> files, string destination, IProgress<OperationProgress> progress, CancellationToken token) => tool switch
     {
         "rotate" => ImageTools.Each(files, destination, " - Edited", (_, image) => ImageTools.Edit(image, new PhotoOptions { Rotation = 90 }), progress, token),
+        "rotateLeft" => ImageTools.Each(files, destination, " - Edited", (_, image) => ImageTools.Edit(image, new PhotoOptions { Rotation = -90 }), progress, token),
         "flip" => ImageTools.Each(files, destination, " - Edited", (_, image) => ImageTools.Edit(image, new PhotoOptions { FlipHorizontal = true }), progress, token),
+        "flipVertical" => ImageTools.Each(files, destination, " - Edited", (_, image) => ImageTools.Edit(image, new PhotoOptions { FlipVertical = true }), progress, token),
         "grayscale" => ImageTools.Each(files, destination, " - Edited", (_, image) => ImageTools.Edit(image, new PhotoOptions { Adjustments = new PhotoAdjustments { Saturation = 0 } }), progress, token),
         "removeBackground" => ImageTools.Each(files, destination, " - No Background", (_, image) =>
         {

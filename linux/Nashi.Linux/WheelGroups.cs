@@ -13,14 +13,14 @@ namespace Nashi.Linux;
 public sealed partial class Wheel
 {
     /// Gap between the ring and a group's outer ring, and that ring's thickness (in the 320-point wheel).
-    public const double SubGap = 6, SubBand = 46;
+    public const double SubGap = 6, SubBand = 76;
     public const double SubInner = Radius + SubGap, SubOuter = SubInner + SubBand;
 
     /// Room a window needs around the 320-point wheel to show an outer ring and its labels.
     public const double SubRingSpace = SubGap + SubBand + 10;
 
     /// How far a group's fan reaches into each neighbouring petal, as a share of a petal; the narrowest sub petal.
-    private const double SubOverhang = 0.25, MinSubWidth = 44;
+    private const double SubOverhang = 0.25, MinSubWidth = 76;
 
     /// How long the pointer rests on a group petal before its ring fans out: passing over on the way elsewhere doesn't.
     public static TimeSpan GroupDelay { get; set; } = TimeSpan.FromMilliseconds(250);
@@ -131,6 +131,7 @@ public sealed partial class Wheel
         WheelFeedback.Tick();
         InvalidateVisual();
         Turned?.Invoke();
+        DescriptionChanged?.Invoke();
     }
 
     private void ResetGroup()
@@ -140,6 +141,7 @@ public sealed partial class Wheel
         (openGroup, subHighlighted, resting) = (-1, -1, -1);
         InvalidateVisual();
         if (was >= 0) Turned?.Invoke();
+        DescriptionChanged?.Invoke();
     }
 
     private void SetSub(int sub)
@@ -148,6 +150,7 @@ public sealed partial class Wheel
         subHighlighted = sub;
         if (sub >= 0) WheelFeedback.Tick();
         InvalidateVisual();
+        DescriptionChanged?.Invoke();
     }
 
     private bool ChooseSub(int sub)
@@ -216,10 +219,10 @@ public sealed partial class Wheel
             var on = k == subHighlighted;
             context.DrawGeometry(on ? Selected : Brush("NashiWheelPetal"), line, geometry);
             var item = SubItems[k];
-            var text = new FormattedText(AppLocalization.Uppercase(item.Title, L10n.Language), CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Face, 9.5, on ? Ink : label)
+            var text = new FormattedText(WheelCaptions.For(item), CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Face, 9.5, on ? Ink : label)
             {
-                MaxTextWidth = Math.Max(30, span * Math.PI / 180 * (SubInner + SubOuter) / 2 - 6),
-                MaxLineCount = 2,
+                MaxTextWidth = Math.Min(SubBand - 12, Math.Max(30, span * Math.PI / 180 * (SubInner + SubOuter) / 2 - 12)),
+                MaxLineCount = 1,
                 TextAlignment = TextAlignment.Center,
                 Trimming = TextTrimming.CharacterEllipsis,
             };

@@ -78,6 +78,13 @@ public static class WheelIcons
         ["convert"] = "file",
         ["action:share"] = "share", ["action:float"] = "float", ["action:copy"] = "copy", ["action:move"] = "move", ["action:copyPath"] = "path", ["action:terminal"] = "terminal",
         ["page:previous"] = "previous", ["page:next"] = "next",
+        ["group:background"] = "frame", ["group:photo"] = "edit", ["group:rotate"] = "edit",
+        ["group:markup"] = "annotate", ["group:create"] = "merge", ["group:more"] = "edit",
+        ["group:files"] = "move", ["group:trim"] = "trim", ["group:audio"] = "audio",
+        ["group:edit"] = "edit", ["group:frames"] = "snapshot", ["group:pages"] = "file", ["group:extract"] = "archive",
+        ["group:text & data"] = "file", ["group:images"] = "image", ["group:video"] = "video", ["group:documents"] = "file", ["group:archives"] = "archive",
+        ["quick:rotate"] = "edit", ["quick:rotateLeft"] = "edit", ["quick:flip"] = "edit", ["quick:flipVertical"] = "edit",
+        ["quick:grayscale"] = "image", ["quick:removeBackground"] = "redact", ["quick:zip"] = "archive",
     };
 
     /// The icon key for a wheel item id, or null (formats, unknown ids).

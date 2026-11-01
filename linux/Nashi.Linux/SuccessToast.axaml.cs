@@ -35,6 +35,7 @@ public sealed partial class SuccessToast : Window
         this.visible = visible;
         TitleText.Text = title;
         DetailText.Text = detail;
+        ToolTip.SetTip(DetailText, detail);
         DetailText.IsVisible = detail is not null;
         ShowButton.IsVisible = folder is not null;
         MarkImage.Source = happy ? MainWindow.HappyMark : MainWindow.Mark;
@@ -45,10 +46,10 @@ public sealed partial class SuccessToast : Window
 
     public static string Heading(int count) => count == 0 ? L10n.T(Copy.Done) : count == 1 ? L10n.T(Copy.DoneOne) : L10n.F(Copy.DoneMany, count);
 
-    /// Finished work: how many files, the first one's name (plus a note such as a fallback, when there is one), and Show in folder.
+    /// Finished work: how many files, the first output's actual path (plus any fallback note), and Show in folder.
     public static SuccessToast Done(IReadOnlyList<string> outputs, string folder, string? note = null)
     {
-        var detail = outputs.Count > 0 ? Path.GetFileName(outputs[0]) : L10n.T(Copy.Complete);
+        var detail = outputs.Count > 0 ? Path.GetFullPath(outputs[0]) : L10n.T(Copy.Complete);
         return new(Heading(outputs.Count), note is null ? detail : detail + " · " + L10n.T(note), folder, true, Visible);
     }
 

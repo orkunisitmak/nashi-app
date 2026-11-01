@@ -42,10 +42,7 @@ static class FloatChecks
         flow.ShowActions([a, b]);
         var actions = flow.LastWheel!;
         Dispatcher.UIThread.RunJobs();
-        var petal = actions.Wheel.Items.ToList().FindIndex(i => i.Id == "action:float");
-        actions.Wheel.HighlightedIndex = petal;
-        actions.Wheel.Focus();
-        actions.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+        EditorChecks.Choose(actions, "action:float");
         for (var i = 0; i < 100 && FloatShelf.Current is null; i++) { Thread.Sleep(5); Dispatcher.UIThread.RunJobs(); }
         var window = FloatShelf.Current!;
         check(window is { IsVisible: true, Topmost: true } && window.Items.Paths.SequenceEqual([a, b]) && !window.Collapsed, "The Float petal opens the shelf, always on top, with the files");
@@ -88,7 +85,7 @@ static class FloatChecks
         finally { XdndTarget.Create = saved; }
         window.OpenWheel = flow.ShowFormats;
         Wait(window.DroppedAsync(new DropContent([c], [])));
-        check(flow.LastWheel is { IsVisible: true } tools && tools.Wheel.Side == 0 && tools.Wheel.Items.Any(i => i.Id == "convert:jpg"), "In the app, a drop opens the wheel at the pointer on its front face");
+        check(flow.LastWheel is { IsVisible: true } tools && tools.Wheel.Side == 0 && tools.Wheel.Items.SelectMany(i => i.Group ?? [i]).Any(i => i.Id == "convert:jpg"), "In the app, a drop opens the wheel at the pointer on its front face");
         flow.LastWheel?.Close();
         window.Close();
         Dispatcher.UIThread.RunJobs();

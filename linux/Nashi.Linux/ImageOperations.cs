@@ -8,7 +8,7 @@ namespace Nashi.Linux;
 /// Image convert and compress for the Linux wheel. Converted copies match the Windows engine's naming.
 public static class ImageOperations
 {
-    public static IReadOnlyList<string> Convert(IReadOnlyList<string> inputs, string format, string destination, IProgress<OperationProgress>? progress, CancellationToken token)
+    public static IReadOnlyList<string> Convert(IReadOnlyList<string> inputs, string format, string destination, IProgress<OperationProgress>? progress, CancellationToken token, int quality = 85)
     {
         if (inputs.Count == 0) throw new ArgumentException("Choose at least one image.");
         format = format.ToLowerInvariant();
@@ -42,7 +42,7 @@ public static class ImageOperations
             token.ThrowIfCancellationRequested();
             using var image = PhotoCodec.Read(inputs[n]);
             var output = SafePaths.Unique(tx.StagingDirectory, Path.GetFileNameWithoutExtension(inputs[n]) + "." + format);
-            Write(image, output, format, 85, strip: false);
+            Write(image, output, format, Math.Clamp(quality, 1, 100), strip: false);
             outputs.Add(output);
             progress?.Report(new((n + 1) / (double)inputs.Count * .98, "Saving images…"));
         }

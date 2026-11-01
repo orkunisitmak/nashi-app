@@ -17,8 +17,8 @@ static class DocumentChecks
     {
         // The acceptance gate: every catalog input offers its catalog routes, minus HEIC output.
         var mismatched = FeatureCatalog.Conversions.Keys.Where(ext =>
-            !Capabilities.Formats(["x." + ext]).SequenceEqual(FeatureCatalog.Formats(["x." + ext]).Where(f => f != "heic"))).ToList();
-        check(FeatureCatalog.Conversions.Count == 46 && mismatched.Count == 0, "Capabilities match the catalog for all 46 inputs, minus HEIC output; differ: " + string.Join(" ", mismatched));
+            !FeatureCatalog.Formats(["x." + ext]).Where(f => f != "heic").All(Capabilities.Formats(["x." + ext]).Contains)).ToList();
+        check(FeatureCatalog.Conversions.Count == 46 && mismatched.Count == 0, "Capabilities retain every catalog route for 46 inputs, minus HEIC output; differ: " + string.Join(" ", mismatched));
         var saved = AppPaths.OfficeSearchPath;
         AppPaths.OfficeSearchPath = "";
         check(AppPaths.Office() is null && Capabilities.Formats(["x.docx"]).SequenceEqual(FeatureCatalog.Formats(["x.docx"])), "Without LibreOffice the wheel still offers Office routes (choosing one opens setup)");
@@ -44,7 +44,7 @@ static class DocumentChecks
         var skipped = new ConcurrentDictionary<string, int>();
         using var gate = new SemaphoreSlim(Math.Clamp(Environment.ProcessorCount, 2, 6));
         var jobs = new List<Task>();
-        foreach (var (ext, formats) in FeatureCatalog.Conversions)
+        foreach (var ext in Capabilities.InputExtensions)
             foreach (var format in Capabilities.Formats(["x." + ext]))
             {
                 var route = ext + "→" + format;
@@ -65,7 +65,7 @@ static class DocumentChecks
         await Task.WhenAll(jobs);
         var total = FeatureCatalog.Conversions.Sum(c => c.Value.Length);
         var heic = FeatureCatalog.Conversions.Sum(c => c.Value.Count(f => f == "heic"));
-        var offered = FeatureCatalog.Conversions.Keys.Sum(e => Capabilities.Formats(["x." + e]).Length);
+        var offered = Capabilities.InputExtensions.Sum(e => Capabilities.Formats(["x." + e]).Length);
         Console.WriteLine($"Route checks: {results.Count} of {offered} offered routes run ({total} catalog routes, {heic} HEIC outputs not offered); skipped {skipped.Values.Sum()}" + string.Concat(skipped.OrderBy(s => s.Key).Select(s => $", {s.Value} need {s.Key}")));
         foreach (var (route, error) in results.OrderBy(r => r.Route, StringComparer.Ordinal)) check(error is null, "Route " + route + " makes a valid file: " + error);
         check(results.Count >= 4, "Routes ran without any optional tool (pdf→png, jpg, txt, md at least)");
@@ -323,10 +323,11 @@ static class DocumentChecks
         if (!string.IsNullOrEmpty(ffmpeg))
         {
             using (var image = new MagickImage("gradient:red-blue", 64, 48)) PhotoCodec.EncodePng(image.ToByteArray(MagickFormat.Png), made["heic"] = File("heic"), "heic", encoder: ffmpeg);
-            foreach (var ext in new[] { "mp3", "m4a", "wav", "flac", "ogg", "opus", "aiff", "wma" })
+            foreach (var ext in new[] { "mp3", "m4a", "wav", "flac", "ogg", "opus", "aiff", "wma", "aac" })
                 await ProcessRunner.RunAsync(ffmpeg, ["-v", "error", "-y", "-f", "lavfi", "-i", "sine=duration=1", made[ext] = File(ext)]);
             foreach (var ext in new[] { "mp4", "mov", "mkv", "webm", "avi", "wmv" })
                 await ProcessRunner.RunAsync(ffmpeg, ["-v", "error", "-y", "-f", "lavfi", "-i", "testsrc=duration=1:size=160x120:rate=10", "-f", "lavfi", "-i", "sine=duration=1", "-shortest", "-pix_fmt", "yuv420p", made[ext] = File(ext)]);
+            System.IO.File.Copy(made["mp4"], made["m4v"] = File("m4v"));
             await ProcessRunner.RunAsync(ffmpeg, ["-v", "error", "-y", "-f", "lavfi", "-i", "testsrc=duration=1:size=160x120:rate=10", made["gif"] = File("gif")]);
         }
         if (office is not null)
@@ -370,7 +371,7 @@ static class DocumentChecks
                 // A document's text survives into the PDF; an image's PDF is a picture.
                 "pdf" => Try(() => { using var pdf = UglyToad.PdfPig.PdfDocument.Open(output); return pdf.NumberOfPages < 1 ? "no pages" : document && !pdf.GetPages().Any(p => p.Text.Contains(Marker)) ? "text lost" : null; }),
                 "png" or "jpg" or "webp" or "tiff" or "avif" or "bmp" => Try(() => { var info = new MagickImageInfo(output); return info.Format == PhotoCodec.Format(format) && info.Width > 0 ? null : "decodes as " + info.Format; }),
-                "gif" when media is null => Try(() => new MagickImageInfo(output).Format == MagickFormat.Gif ? null : "not a GIF"),
+                "gif" => Try(() => new MagickImageInfo(output).Format == MagickFormat.Gif ? null : "not a GIF"),
                 "docx" => Entry("word/document.xml") ?? Try(() => { using var zip = ZipFile.OpenRead(output); using var r = new StreamReader(zip.GetEntry("word/document.xml")!.Open()); return r.ReadToEnd().Contains(Marker) ? null : "text lost"; }),
                 "pptx" => Entry("ppt/presentation.xml"),
                 "xlsx" => Entry("xl/workbook.xml"),

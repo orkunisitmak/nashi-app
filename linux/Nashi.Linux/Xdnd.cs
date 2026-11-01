@@ -64,6 +64,14 @@ public sealed class XdndProtocol(Func<int, int, bool> accepts, Func<(int X, int 
         if (bytes is { Length: > 0 }) data[type] = bytes;
         if (!Ready) Request?.Invoke(pending.Peek());
         else if (dropPending) Finish();
+        else
+        {
+            // A stationary source need not send another XdndPosition after SelectionNotify. Publish the
+            // newly read content at the last position now, or the overlay keeps showing an empty wheel.
+            var content = Content;
+            Status?.Invoke(content.Any && accepts(at.X, at.Y));
+            Hover?.Invoke(content, at.X, at.Y);
+        }
     }
 
     public void Drop()
@@ -99,6 +107,9 @@ public sealed class XdndProtocol(Func<int, int, bool> accepts, Func<(int X, int 
 /// refused: the centre, or nothing Nashi reads) run on the X thread: post to the UI thread from them.
 public sealed class XdndTarget : IDisposable
 {
+    /// XEvent.type is a C int; the upper half of the first native long is padding on 64-bit Linux.
+    internal static int EventType(IntPtr firstNativeLong) => unchecked((int)firstNativeLong.ToInt64());
+
     private readonly ConcurrentQueue<Action<IntPtr, IntPtr>> requests = new();
     private readonly CancellationTokenSource stop = new();
     private readonly Func<int, int, bool> accepts;
@@ -146,11 +157,15 @@ public sealed class XdndTarget : IDisposable
             {
                 XConvertSelection(display, selection, XInternAtom(display, type, false), property, window, IntPtr.Zero);
                 XFlush(display);
-                while (DateTime.UtcNow < deadline && !XCheckTypedWindowEvent(display, window, 31 /* SelectionNotify */, e)) Thread.Sleep(5);
-                if (DateTime.UtcNow >= deadline && e[0] != 31) break;
-                if (e[0] == 31 && e[7] == property && PointerWatch.Property(display, window, "NASHI_DRAG", 16 << 20) is { Format: 8 } read) data[type] = read.Data;
+                var received = false;
+                while (DateTime.UtcNow < deadline)
+                {
+                    if (XCheckTypedWindowEvent(display, window, 31 /* SelectionNotify */, e)) { received = true; break; }
+                    Thread.Sleep(5);
+                }
+                if (!received) break;
+                if (e[7] == property && PointerWatch.Property(display, window, "NASHI_DRAG", 16 << 20) is { Format: 8 } read) data[type] = read.Data;
                 XDeleteProperty(display, window, property);
-                e[0] = 0;
                 if (type == "text/uri-list" && DropContent.From(data).Files.Count > 0) break; // files: that is all it needs
             }
             var content = DropContent.From(data);
@@ -220,25 +235,28 @@ public sealed class XdndTarget : IDisposable
                     continue;
                 }
                 XNextEvent(display, e);
-                if (e[0] == 33 && e[5] == enter)
+                // XEvent.type is a 32-bit int followed by padding, even though the union is represented
+                // here as native longs. XNextEvent may leave nonzero padding on 64-bit Linux.
+                var eventType = EventType(e[0]);
+                if (eventType == 33 && e[5] == enter)
                 {
                     source = e[7];
                     time = 0;
                     var types = (e[8] & 1) != 0 ? TypeList(display, source, Atom("XdndTypeList")) : new[] { e[9], e[10], e[11] }.Where(a => a != 0).ToArray();
                     protocol.Enter(types.Select(a => AtomName(display, a)).OfType<string>().ToList());
                 }
-                else if (e[0] == 33 && e[5] == position && e[7] == source)
+                else if (eventType == 33 && e[5] == position && e[7] == source)
                 {
                     time = e[10];
                     protocol.Position((int)((long)e[9] >> 16 & 0xFFFF), (int)((long)e[9] & 0xFFFF));
                 }
-                else if (e[0] == 33 && e[5] == leave && e[7] == source) protocol.Leave();
-                else if (e[0] == 33 && e[5] == drop && e[7] == source)
+                else if (eventType == 33 && e[5] == leave && e[7] == source) protocol.Leave();
+                else if (eventType == 33 && e[5] == drop && e[7] == source)
                 {
                     time = e[9];
                     protocol.Drop();
                 }
-                else if (e[0] == 31) // SelectionNotify: [7] is our property, or None when the source refused the type
+                else if (eventType == 31) // SelectionNotify: [7] is our property, or None when the source refused the type
                 {
                     // ponytail: INCR (chunked transfers, format 32) reads as nothing; addresses and file lists are small.
                     var read = e[7] == property ? PointerWatch.Property(display, window, "NASHI_DROP", 16 << 20) : null;

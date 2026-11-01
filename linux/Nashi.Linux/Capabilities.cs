@@ -10,13 +10,30 @@ public static class Capabilities
     static readonly string[] ArchiveOutputs = ["zip", "tar", "gz"];
     static readonly string[] SubtitleOutputs = ["srt", "vtt", "txt"];
 
+    public static IEnumerable<string> InputExtensions => FeatureCatalog.Conversions.Keys.Concat(["aac", "m4v"]);
+    internal static readonly string[] AudioOutputs = ["mp3", "wav", "flac", "aac", "m4a", "ogg", "opus", "aiff", "wma"];
+    internal static readonly string[] VideoOutputs = ["mp4", "mov", "mkv", "webm", "avi", "wmv", "gif"];
+
     public static string[] Formats(IReadOnlyList<string> files)
     {
-        var routes = Routes(files).ToHashSet();
-        return FeatureCatalog.Formats(files).Where(routes.Contains).ToArray();
+        if (files.Count == 0) return [];
+        IEnumerable<string> formats;
+        if (files.All(FeatureCatalog.IsImage)) formats = ImageFormats;
+        else if (files.All(FeatureCatalog.IsAudio)) formats = AudioOutputs;
+        else if (files.All(FeatureCatalog.IsVideo))
+            formats = VideoOutputs.Concat(files.Any(f => FeatureCatalog.Extension(f) == "gif") ? [] : AudioOutputs).Concat(["jpg", "png"]);
+        else if (files.All(f => FeatureCatalog.IsAudio(f) || FeatureCatalog.IsVideo(f)))
+            formats = files.Any(f => FeatureCatalog.Extension(f) == "gif") ? [] : AudioOutputs;
+        else formats = FeatureCatalog.Formats(files).Where(Routes(files).Contains);
+        // In a mixed batch a target is useful even when one source already has that extension: save fresh copies.
+        return formats.Where(format => !files.All(file => FeatureCatalog.Extension(file) == format)).Distinct().ToArray();
     }
 
-    public static string[] Tools(IReadOnlyList<string> files) => FeatureCatalog.Tools(files);
+    public static string[] Tools(IReadOnlyList<string> files) => FeatureCatalog.Tools(
+        files.Select(file => FeatureCatalog.Extension(file) switch
+        {
+            "aac" => Path.ChangeExtension(file, "m4a"), "m4v" => Path.ChangeExtension(file, "mp4"), _ => file,
+        }).ToArray());
 
     /// The wheel's quick tools (its back face), for what fits: crop (its editor), rotate 90°, flip, grayscale and
     /// remove background for images; one PDF from images or PDFs; one ZIP of anything.
@@ -28,7 +45,7 @@ public static class Capabilities
         if (files.All(f => FeatureCatalog.IsImage(f) && FeatureCatalog.Extension(f) != "svg"))
         {
             if (tools.Contains("cropImage")) quick.Add("cropImage");
-            quick.AddRange(["quick:rotate", "quick:flip", "quick:grayscale", "quick:removeBackground"]);
+            quick.AddRange(["quick:rotate", "quick:rotateLeft", "quick:flip", "quick:flipVertical", "quick:grayscale", "quick:removeBackground"]);
         }
         if (tools.Contains("createPDF")) quick.Add("createPDF");
         else if (tools.Contains("mergePDF")) quick.Add("mergePDF");

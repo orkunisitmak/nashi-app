@@ -10,7 +10,13 @@
   <!-- Home's wheel has the selected files as cards on either side (macOS's in-app look); the pointer wheel is bare. -->
   <Grid x:Name="Root" ColumnDefinitions="*,320,*" RenderTransformOrigin="50%,50%">
     <ContentControl x:Name="LeftCard" HorizontalAlignment="Center" VerticalAlignment="Center" />
-    <local:Wheel x:Name="Ring" Grid.Column="1" />
+    <local:Wheel x:Name="Ring" Grid.Column="1" ZIndex="1" />
     <ContentControl x:Name="RightCard" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" />
+    <Border x:Name="DescriptionCard" Grid.ColumnSpan="3" ZIndex="2" VerticalAlignment="Bottom" HorizontalAlignment="Center"
+            Margin="8,0,8,1" Padding="10,4" CornerRadius="10" IsHitTestVisible="False" IsVisible="False"
+            Background="{DynamicResource NashiCanvasClear}" BorderBrush="{DynamicResource NashiBorder}" BorderThickness="1">
+      <TextBlock x:Name="DescriptionText" FontSize="11" MaxWidth="420" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                 Foreground="{DynamicResource NashiText}" />
+    </Border>
   </Grid>
 </Window>

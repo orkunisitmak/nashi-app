@@ -172,6 +172,17 @@ static partial class EditorChecks
         var video = Path.Combine(folder, Name + ".mp4");
         Make(video, "-f", "lavfi", "-i", "testsrc2=size=320x240:rate=30:duration=4", "-f", "lavfi", "-i", "sine=frequency=440:duration=4", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest", "-metadata", "title=Original title", "-metadata", "comment=secret place");
         var silentClip = Path.Combine(folder, "--second clip.mov");
+        foreach (var format in new[] { "jpg", "png" })
+        {
+            var panel = (MediaEditor)ToolEditorWindow.For("convert:" + format, [video], toolchain)!;
+            var window = Open(panel);
+            check(panel.FrameFormat == format && panel.Points.SequenceEqual([0d]) && panel.CanSave,
+                "Convert to " + format + " opens the frame editor with the first frame selected");
+            var frames = Run(panel.Job(), [video], Path.Combine(folder, "convert-frames-" + format));
+            check(frames.Count == 1 && new ImageMagick.MagickImageInfo(frames[0]).Format == PhotoCodec.Format(format),
+                "The frame editor saves the selected " + format + " format");
+            window.Close();
+        }
         Make(silentClip, "-f", "lavfi", "-i", "testsrc2=size=640x360:rate=25:duration=2", "-c:v", "libx264", "-pix_fmt", "yuv420p");
         var tone = Path.Combine(folder, Name + " tone.wav");
         Make(tone, "-filter_complex", "sine=frequency=440:duration=3[a];sine=frequency=880:duration=3[b];[a][b]amerge=inputs=2,volume=0.05");

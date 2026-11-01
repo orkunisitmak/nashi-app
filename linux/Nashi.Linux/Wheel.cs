@@ -15,7 +15,7 @@ namespace Nashi.Linux;
 /// One petal. A disabled one (Float, not built yet) shows dimmed, never takes the gold highlight and says Coming soon.
 public sealed record WheelItem(string Id, string Title, bool Enabled = true, IReadOnlyList<WheelItem>? Group = null);
 
-/// One side of a two-sided wheel (Convert, Tools, Actions): Tab, the mouse wheel or a "side:N" petal turns to it.
+/// One face of the wheel: Convert or Tools. Tab switches between them.
 public sealed record WheelSide(string Title, IReadOnlyList<WheelItem> Items, string Key = "");
 
 /// A petal label fitted inside its petal: lines centered on `Center` (in the 320-point wheel), the icon above them.
@@ -55,7 +55,7 @@ public sealed partial class Wheel : Control
         GradientStops = { new GradientStop(Gold, 0), new GradientStop(GoldEnd, 1) },
     };
     private static readonly Typeface Face = new(FontFamily.Default, FontStyle.Normal, FontWeight.SemiBold);
-    private static readonly Dictionary<(int, int, string, bool), WheelLabel> labels = [];
+    private static readonly Dictionary<(int, int, string, bool, bool), WheelLabel> labels = [];
 
     private IReadOnlyList<WheelItem> items = [];
     private IReadOnlyList<WheelSide> sides = [];
@@ -70,6 +70,10 @@ public sealed partial class Wheel : Control
     public event Action<WheelItem>? Chosen;
     /// A click outside the petals: the window closes.
     public event Action? Dismissed;
+    public event Action? DescriptionChanged;
+
+    public string Description => openGroup >= 0 && subHighlighted >= 0 ? SubItems[subHighlighted].Title
+        : highlighted >= 0 && highlighted < Segments.Count ? Segments[highlighted].Title : "";
 
     /// Shown in the center disc while nothing is highlighted.
     public string Title { get; set; } = "";
@@ -115,14 +119,12 @@ public sealed partial class Wheel : Control
         Items = sides[side].Items;
     }
 
-    /// Tab, Shift+Tab and the mouse wheel: the next (or previous) page of petals, then the next side; every turn ticks.
+    /// Tab switches faces directly. Standalone paged wheels retain paging for their callers.
     public void Flip(int step)
     {
-        if (PageCount > 1 && page + step >= 0 && page + step < PageCount) { TurnPage(step); return; }
         if (sides.Count > 1)
         {
             ShowSide(side + step);
-            if (step < 0 && PageCount > 1) SetPage(PageCount - 1);
             return;
         }
         TurnPage(step);
@@ -157,6 +159,7 @@ public sealed partial class Wheel : Control
             if (next == highlighted) return;
             highlighted = next;
             InvalidateVisual();
+            DescriptionChanged?.Invoke();
         }
     }
 
@@ -252,7 +255,8 @@ public sealed partial class Wheel : Control
             case Key.Right or Key.Down: Highlight(Step(highlighted, 1)); break;
             case Key.Left or Key.Up: Highlight(Step(highlighted, -1)); break;
             // Tab turns a paged or two-sided wheel; on a single page it walks the petals.
-            case Key.Tab when PageCount > 1 || sides.Count > 1: Flip(e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? -1 : 1); break;
+            case Key.Tab when sides.Count > 1: Flip(1); break;
+            case Key.Tab when PageCount > 1: TurnPage(1); break;
             case Key.Tab: Highlight(Step(highlighted, e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? -1 : 1)); break;
             case Key.Home: Highlight(Step(-1, 1)); break;
             case Key.End: Highlight(Step(0, -1)); break;
@@ -276,8 +280,8 @@ public sealed partial class Wheel : Control
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
     {
         base.OnPointerWheelChanged(e);
-        if (PageCount < 2 && sides.Count < 2 || e.Delta.Y == 0) return;
-        Flip(e.Delta.Y < 0 ? 1 : -1);
+        if (sides.Count > 0 || PageCount < 2 || e.Delta.Y == 0) return;
+        TurnPage(e.Delta.Y < 0 ? 1 : -1);
         e.Handled = true;
     }
 
@@ -317,19 +321,24 @@ public sealed partial class Wheel : Control
             context.DrawGeometry(on ? Selected : Brush("NashiWheelPetal"), line, Petal(segments.Count, i));
             var foreground = on ? Ink : label;
             using (context.PushOpacity(item.Enabled ? 1 : 0.4))
-                DrawLabel(context, Layout(segments.Count, i, AppLocalization.Uppercase(item.Title, L10n.Language), WheelIcons.ForId(item.Id) is not null), WheelIcons.ForId(item.Id), foreground);
+                DrawLabel(context, Layout(segments.Count, i, WheelCaptions.For(item), WheelIcons.ForId(item.Id) is not null, singleLine: true), WheelIcons.ForId(item.Id), foreground);
         }
 
         RenderGroup(context, label, line);
         context.DrawEllipse(Brush("NashiWheelDisc"), null, Middle, Inner - 4, Inner - 4);
-        var title = new FormattedText(CenterTitle(segments), CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Face, 11, label)
+        var title = new FormattedText(sides.Count > 0 ? Title : CenterTitle(segments), CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Face, 11, label)
         {
             MaxTextWidth = (Inner - 4) * 2 - 16,
             MaxLineCount = 3,
             TextAlignment = TextAlignment.Center,
             Trimming = TextTrimming.CharacterEllipsis,
         };
-        context.DrawText(title, new Point(Middle.X - title.MaxTextWidth / 2, Middle.Y - title.Height / 2));
+        context.DrawText(title, new Point(Middle.X - title.MaxTextWidth / 2, Middle.Y - title.Height / 2 - (sides.Count > 1 ? 9 : 0)));
+        if (sides.Count > 1)
+        {
+            var hint = Text($"{side + 1} / {sides.Count} · Tab", 8.5, label);
+            context.DrawText(hint, new Point(Middle.X - hint.Width / 2, Middle.Y + 13));
+        }
     }
 
     private static void DrawLabel(DrawingContext context, WheelLabel layout, Geometry? icon, IBrush brush)
@@ -367,22 +376,23 @@ public sealed partial class Wheel : Control
     /// The label for petal `index` of `count`, fitted as WheelLabelLayout.swift and wheel-geometry.mjs do: try the
     /// preferred center at full width, then narrower wraps and nearby centers, then smaller fonts (down by 3 points).
     /// At most two lines; words are never split. `Fits` is false only when nothing fits (then 6 points at the centroid).
-    public static WheelLabel Layout(int count, int index, string title, bool hasIcon)
+    public static WheelLabel Layout(int count, int index, string title, bool hasIcon, bool singleLine = false)
     {
-        var key = (count, index, title, hasIcon);
+        var key = (count, index, title, hasIcon, singleLine);
         if (labels.TryGetValue(key, out var cached)) return cached;
         var petal = Petal(count, index);
         var centers = LabelCenters(count, index);
         var baseFont = hasIcon ? 9.5 : 13;
         WheelLabel Keep(WheelLabel label) => labels[key] = label;
-        for (var reduction = 0.0; reduction <= 3; reduction += 0.25)
+        for (var reduction = 0.0; reduction <= (singleLine ? 0 : 3); reduction += 0.25)
         {
             var font = baseFont - reduction;
             WheelLabel? best = null;
             var bestScore = double.MaxValue;
             for (var width = MaxLabelWidth; width >= MinLabelWidth; width -= 4)
             {
-                if (Wrap(title, width, font) is not { Count: <= 2 } lines) continue;
+                IReadOnlyList<string>? lines = singleLine ? Measure(title, font) <= width ? [title] : null : Wrap(title, width, font);
+                if (lines is not { Count: <= 2 }) continue;
                 for (var ci = 0; ci < centers.Count; ci++)
                 {
                     var candidate = new WheelLabel(centers[ci], font, lines, hasIcon, true);
@@ -395,6 +405,17 @@ public sealed partial class Wheel : Control
                 }
             }
             if (best is not null) return Keep(best);
+        }
+        if (singleLine)
+        {
+            // Keep a readable size for an unexpected long name; its full title remains below the wheel.
+            for (var length = title.Length - 1; length >= 0; length--)
+                foreach (var center in centers)
+                {
+                    var candidate = new WheelLabel(center, baseFont, [title[..length] + "…"], hasIcon, true);
+                    if (Rects(candidate).All(r => Contains(petal, r))) return Keep(candidate);
+                }
+            return Keep(new WheelLabel(centers[0], baseFont, ["…"], hasIcon, false));
         }
         return Keep(new WheelLabel(centers[0], 6, Wrap(title, 80, 6) ?? [title], hasIcon, false));
     }

@@ -4,11 +4,14 @@ using Nashi.Core;
 
 namespace Nashi.Linux;
 
-/// UI language: NASHI_LANGUAGE, else the system UI culture ("tr" or English). Fixed at startup.
+/// UI language: explicit environment override, saved preference, then system UI culture. Fixed at startup.
 public static class L10n
 {
-    public static string Language { get; set; } = AppLocalization.Normalize(
-        Environment.GetEnvironmentVariable("NASHI_LANGUAGE") is { Length: > 0 } forced ? forced : CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+    public static string Language { get; set; } = ResolveLanguage(Settings.Current.Language,
+        Environment.GetEnvironmentVariable("NASHI_LANGUAGE"), CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+
+    public static string ResolveLanguage(string preference, string? forced, string system) => AppLocalization.Normalize(
+        forced is { Length: > 0 } ? forced : preference is "en" or "tr" ? preference : system);
 
     public static string T(string english) => AppLocalization.Text(english, Language);
 

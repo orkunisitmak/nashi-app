@@ -26,6 +26,7 @@ public sealed class MediaEditor : EditorPanel
         public const string Bleeped = "Save bleeped copy";
         public const string Visualize = "Create visualization";
         public const string Frames = "Save frames";
+        public const string FrameHint = "Choose frames to export as {0}.";
         public const string Clips = "Export clips";
         public const string Muted = "Save muted copy";
         public const string Normalized = "Save normalized copy";
@@ -152,7 +153,7 @@ public sealed class MediaEditor : EditorPanel
         ShowTransport();
     }
 
-    public override string Hint => Tool is "trimVideo" or "trimAudio" ? Copy.Straight : Copy.Fine;
+    public override string Hint => FrameFormat is { } format ? L10n.F(Copy.FrameHint, format.ToUpperInvariant()) : Tool is "trimVideo" or "trimAudio" ? Copy.Straight : Copy.Fine;
     public override string Primary => Tool switch
     {
         "trimVideo" or "trimAudio" => Copy.Trimmed,
@@ -190,6 +191,7 @@ public sealed class MediaEditor : EditorPanel
     public MediaPlayer? Player => player;
     internal Timeline Timeline => timeline;
     public IReadOnlyList<double> Points => points;
+    public string? FrameFormat { get; init; }
     public IReadOnlyList<MediaRange> Bleeps => bleeps;
 
     public override async Task LoadAsync(CancellationToken token)
@@ -203,6 +205,7 @@ public sealed class MediaEditor : EditorPanel
         player.Changed += OnPlayer;
         ShowTransport();
         if (Tool == "splitVideo") SetEqual(2);
+        if (Tool == "videoSnapshots" && FrameFormat is not null) AddPoint(0);
         if (Tool == "audioToVideo") (width, height) = (1920, 1080);
         Live();
         player.Still(0);
@@ -702,6 +705,7 @@ public sealed class MediaEditor : EditorPanel
         (trimSilence, joinClips, swap, channels, depth, bleepMode, visualization, color, image) = (false, false, false, 2, "matchSource", "bleep", "waveform", "E4BD59", null);
         (width, height) = (1920, 1080);
         points.Clear();
+        if (Tool == "videoSnapshots" && FrameFormat is not null) points.Add(0);
         discarded.Clear();
         bleeps.Clear();
         areas.Clear();
@@ -721,7 +725,9 @@ public sealed class MediaEditor : EditorPanel
         var o = Settings;
         var tool = Tool;
         var engine = tools.Engine;
-        return (files, destination, progress, token) => engine.ToolAsync(tool, files, destination, o, progress, token);
+        return (files, destination, progress, token) => tool == "videoSnapshots" && FrameFormat is { } format
+            ? MediaFrames.ExportAsync(engine, files, format, destination, o, progress, token)
+            : engine.ToolAsync(tool, files, destination, o, progress, token);
     }
 
     // ---- Redact Video: areas on the frame, each covering its own time range (the In/Out range when drawn).

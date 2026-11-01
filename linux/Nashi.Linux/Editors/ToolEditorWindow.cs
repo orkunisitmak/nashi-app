@@ -36,7 +36,8 @@ public sealed class ToolEditorWindow : Window
     /// Whether the choice opens an editor for these files (Read QR Codes has its own window; Create PDF runs at once,
     /// and so does Extract Archive unless an archive is password-protected).
     public static bool Opens(string tool, IReadOnlyList<string> files) =>
-        tool is not ("readQRCode" or "createPDF") && Capabilities.Tools(files).Contains(tool) && (tool != "extractArchive" || files.Any(Locks.ArchiveLocked));
+        files.Count > 0 && ((tool is "convert:jpg" or "convert:png" && files.All(FeatureCatalog.IsVideo)) ||
+        (tool is not ("readQRCode" or "createPDF") && Capabilities.Tools(files).Contains(tool) && (tool != "extractArchive" || files.Any(Locks.ArchiveLocked))));
 
     /// The editor for a wheel choice on these files, or null when the choice runs without one. Media editors use
     /// `tools`' ffmpeg and ffprobe; MissingToolsException (which opens setup) when a needed tool is missing.
@@ -46,6 +47,8 @@ public sealed class ToolEditorWindow : Window
         static bool IsMedia(string f) => FeatureCatalog.IsAudio(f) || FeatureCatalog.IsVideo(f);
         Editors.Media.MediaTools Ffmpeg() => Editors.Media.MediaTools.From(tools ?? AppPaths.CreateToolchain());
         static EditorPanel Exif(Func<EditorPanel> make) => AppPaths.Metadata().Executable is null ? throw new MissingToolsException(MissingToolsException.Metadata) : make();
+        if (tool is "convert:jpg" or "convert:png" && files.All(FeatureCatalog.IsVideo))
+            return new Editors.Media.MediaEditor("videoSnapshots", files, Ffmpeg()) { FrameFormat = tool[8..] };
         if (files.All(FeatureCatalog.IsImage))
             return tool switch
             {
