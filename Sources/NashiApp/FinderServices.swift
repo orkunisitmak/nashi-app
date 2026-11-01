@@ -8,6 +8,11 @@ enum FinderServices {
     /// Must match `NSMessage` in Resources/Info.plist.
     static let message = "nashiOpenFiles"
 
+    /// Makes `provider` the Services handler and asks the system to refresh the
+    /// menu so "Open in Nashi" appears without a relaunch.
+    ///
+    /// - Parameter provider: Object exposing the `@objc` selector named by
+    ///   ``message``; normally the application delegate.
     static func register(provider: AnyObject) {
         NSApp.servicesProvider = provider
         NSUpdateDynamicServices()
