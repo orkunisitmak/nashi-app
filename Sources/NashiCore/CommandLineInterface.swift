@@ -22,7 +22,7 @@ do {
     if args.count==2,args[1]=="dependencies" {
         var result:[String:String]=[:];for name in ["ffmpeg","ffprobe","soffice","exiftool"] { result[name]=try Dependencies.executable(name).path };print(String(decoding:try JSONSerialization.data(withJSONObject:result,options:.sortedKeys),as:UTF8.self));return 0
     }
-    guard args.count>=4 else { fputs("Usage: nashi-cli convert FORMAT FILE... [--options JSON] [--json]\n       nashi-cli tool TOOL_ID FILE... [--options JSON] [--json]\n       nashi-cli inspect FILE\n       nashi-cli catalog\n       nashi-cli dependencies\n",stderr);return 64 }
+    guard args.count>=4 else { fputs(usage,stderr);return 64 }
     var options=OperationOptions(), paths=Array(args.dropFirst(3))
     let jsonOutput=paths.contains("--json");paths.removeAll{$0=="--json"}
     if let i=paths.firstIndex(of:"--options"),i+1<paths.count {
@@ -46,7 +46,8 @@ do {
     let operation:Operation
     if args[1]=="convert" { operation = .convert(args[2]) }
     else if args[1]=="tool",let kind=ToolKind(rawValue:args[2]) { operation = .tool(kind) }
-    else { throw NashiError.invalidInput("Unknown operation.") }
+    // A misspelled command or tool id is a usage error like any other malformed command line.
+    else { fputs((args[1]=="tool" ? "Unknown tool: \(args[2])\n":"Unknown command: \(args[1])\n")+usage,stderr);return 64 }
     // Ctrl-C, a closed terminal or a supervisor's SIGTERM cancels the job, so its tools are
     // stopped and its hidden staging folder is removed instead of left in the output folder.
     let interruption=Interruption();defer { interruption.stop() }
@@ -60,6 +61,7 @@ do {
 
     }
 
+    private static let usage="Usage: nashi-cli convert FORMAT FILE... [--options JSON] [--json]\n       nashi-cli tool TOOL_ID FILE... [--options JSON] [--json]\n       nashi-cli inspect FILE\n       nashi-cli catalog\n       nashi-cli dependencies\n"
     private static func unknownKey(_ supplied:[String:Any],in decoded:[String:Any],prefix:String="")->String? {
         for (key,value) in supplied.sorted(by:{$0.key<$1.key}) where !(value is NSNull) {
             guard let known=decoded[key] else { return prefix+key }

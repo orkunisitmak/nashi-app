@@ -111,4 +111,18 @@ final class CommandLineTests:XCTestCase {
         let usage=try String(contentsOf:err,encoding:.utf8)
         for word in ["convert FORMAT","tool TOOL_ID","inspect FILE","catalog","dependencies","--options JSON","--json"] { XCTAssertTrue(usage.contains(word),word) }
     }
+    func testMisspelledCommandOrToolWithFilesIsAUsageError() throws {
+        let root=try OutputFiles.temporaryDirectory();defer{try? FileManager.default.removeItem(at:root)}
+        let input=root.appendingPathComponent("clip.srt"),err=root.appendingPathComponent("err")
+        try "1\n00:00:00,000 --> 00:00:01,000\nHi\n".write(to:input,atomically:true,encoding:.utf8)
+        for (arguments,named) in [(["nashi-cli","covnert","vtt",input.path],"Unknown command: covnert"),(["nashi-cli","tool","removeMetdata",input.path],"Unknown tool: removeMetdata")] {
+            fflush(stderr);let savedErr=dup(2),e=open(err.path,O_CREAT|O_WRONLY|O_TRUNC,0o600);dup2(e,2);close(e)
+            let code=NashiCommandLine.run(arguments:arguments)
+            fflush(stderr);dup2(savedErr,2);close(savedErr)
+            XCTAssertEqual(code,64,named)
+            let message=try String(contentsOf:err,encoding:.utf8)
+            XCTAssertTrue(message.hasPrefix(named),message);XCTAssertTrue(message.contains("tool TOOL_ID"),message)
+        }
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath:root.path).sorted(),["clip.srt","err"])
+    }
 }
