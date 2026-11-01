@@ -389,6 +389,9 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
                     if (await Task.Run(() => FileActions.OpenTerminal(first))) SuccessToast.Action(L10n.T(Copy.TerminalOpened), Path.GetDirectoryName(files[0]), null).Present();
                     else notify(L10n.T(Copy.NoTerminal));
                     break;
+                case "float":
+                    FloatShelf.Open(files, ShowTools);
+                    break;
                 case "share":
                     var selected = files;
                     if (await Task.Run(() => FileActions.Share(selected))) SuccessToast.Action(L10n.T(Copy.Shared), name, null).Present();

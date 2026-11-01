@@ -78,6 +78,7 @@ try
     DragChecks.Gestures(Check);
     DragChecks.DragWheel(temp.FullName, Check, Smoke);
     WatchChecks.Run(temp.FullName, Check);
+    FloatChecks.Run(temp.FullName, Check, Smoke);
     await EditorChecks.RunAsync(temp.FullName, Check, Smoke);
     WheelRenders(temp.FullName);
 }
@@ -508,7 +509,7 @@ void WheelChecks(string root)
     Chip("Actions").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
     Dispatcher.UIThread.RunJobs();
     var actions = home.OwnedWindows.OfType<WheelWindow>().SingleOrDefault();
-    Check(actions is not null && actions.Wheel.Items.Select(i => i.Id).SequenceEqual(FileActions.Ids.Select(id => "action:" + id)) && actions.Wheel.Items.Single(i => !i.Enabled).Id == "action:float", "The Actions chip opens the actions wheel: Share, Float (disabled), Copy, Move, Copy Path, Terminal");
+    Check(actions is not null && actions.Wheel.Items.Select(i => i.Id).SequenceEqual(FileActions.Ids.Select(id => "action:" + id)) && actions.Wheel.Items.All(i => i.Enabled), "The Actions chip opens the actions wheel: Share, Float, Copy, Move, Copy Path, Terminal, all enabled");
     Check(actions?.Wheel.Items[0].Title == "Share", "Share is called Share on Linux (no AirDrop)");
     actions?.Close();
 
@@ -1170,18 +1171,18 @@ async Task ActionChecks(string root)
     Check(FileActions.Share([first]) && launched.Single().Program == "xdg-open" && launched[0].Args.SequenceEqual([to]), "Without FileManager1, Share opens the folder with xdg-open");
     startable.Clear(); launched.Clear();
 
-    // Float stays disabled: no gold, skipped by the keys, never chosen.
-    var wheel = new Wheel { Items = FileActions.Ids.Select(id => new WheelItem("action:" + id, FileActions.Title(id), FileActions.Available(id))).ToList() };
+    // A disabled petal (here the second): no gold, skipped by the keys, never chosen.
+    var wheel = new Wheel { Items = FileActions.Ids.Select(id => new WheelItem("action:" + id, FileActions.Title(id), id != "float")).ToList() };
     WheelItem? chosen = null;
     wheel.Chosen += item => chosen = item;
     void Key(Key key) => wheel.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = key });
     wheel.HighlightedIndex = 1;
-    Check(wheel.HighlightedIndex == -1, "The Float petal never takes the highlight");
+    Check(wheel.HighlightedIndex == -1, "A disabled petal never takes the highlight");
     wheel.HighlightedIndex = 0;
     Key(Avalonia.Input.Key.Right);
-    Check(wheel.HighlightedIndex == 2, "Right from Share skips Float to Copy");
+    Check(wheel.HighlightedIndex == 2, "Right skips a disabled petal");
     Key(Avalonia.Input.Key.Left);
-    Check(wheel.HighlightedIndex == 0, "Left from Copy skips Float back to Share");
+    Check(wheel.HighlightedIndex == 0, "Left skips a disabled petal back");
 
     // Sound: a choice plays the wav at full volume; every highlight change the user makes (arrows, Tab, the pointer
     // into another petal) plays it at 0.65, none dropped; opening and setting the highlight in code are silent.

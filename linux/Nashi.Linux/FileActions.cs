@@ -1,3 +1,4 @@
+using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Nashi.Core;
 
@@ -9,8 +10,8 @@ public static class FileActions
     /// Resources/FeatureCatalog.json `fileActions`, in order; the checks compare the two.
     public static readonly string[] Ids = ["share", "float", "copy", "move", "copyPath", "terminal"];
 
-    /// Float is not built on Linux yet: its petal stays disabled.
-    public static bool Available(string id) => id != "float";
+    /// Every action is available (Float opens the shelf).
+    public static bool Available(string id) => true;
 
     /// "Share" on Linux (there is no AirDrop); the other titles as macOS has them.
     public static string Title(string id) => id switch
@@ -115,6 +116,20 @@ public static class FileActions
         var text = string.Join("\n", files);
         await clipboard.SetTextAsync(text);
         return text;
+    }
+
+    /// Files on the clipboard as GNOME file managers paste them (copy, not cut), with a uri-list and the paths as text.
+    public static async Task CopyFilesAsync(IClipboard? clipboard, IReadOnlyList<string> files)
+    {
+        if (clipboard is null) throw new InvalidOperationException(Copy.NoClipboard);
+        var uris = files.Select(f => new Uri(f).AbsoluteUri).ToList();
+        var item = new DataTransferItem();
+        item.Set(DataFormat.CreateStringPlatformFormat("x-special/gnome-copied-files"), "copy\n" + string.Join("\n", uris));
+        item.Set(DataFormat.CreateStringPlatformFormat("text/uri-list"), string.Join("\r\n", uris) + "\r\n");
+        item.SetText(string.Join("\n", files));
+        var data = new DataTransfer();
+        data.Add(item);
+        await clipboard.SetDataAsync(data);
     }
 
     /// The system terminal in the file's folder: the first of these that starts and does not fail within

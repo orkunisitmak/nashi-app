@@ -465,6 +465,7 @@
 "COPIED ALL" = "TÜMÜ KOPYALANDI";
 "COPIED LINK" = "KOPYALANAN BAĞLANTI";
 "COPIED." = "KOPYALANDI.";
+"COPIED. PASTE THEM IN YOUR FILE MANAGER." = "KOPYALANDI. DOSYA YÖNETİCİNDE YAPIŞTIR.";
 "COPY" = "KOPYALA";
 "COPY A FILE, SOME TEXT, AN IMAGE OR A PUBLIC MEDIA LINK FIRST." = "ÖNCE BİR DOSYA, METİN, GÖRSEL VEYA HERKESE AÇIK BİR MEDYA BAĞLANTISI KOPYALA.";
 "COPY A LINK → ⌃⇧D, OR DRAG IT WITH ⌘." = "BAĞLANTIYI KOPYALA → ⌃⇧D VEYA ⌘ İLE SÜRÜKLE.";
@@ -671,6 +672,7 @@
 "Copied all" = "Tümü kopyalandı";
 "Copied link" = "Kopyalanan bağlantı";
 "Copied." = "Kopyalandı.";
+"Copied. Paste them in your file manager." = "Kopyalandı. Dosya yöneticinde yapıştır.";
 "Copy" = "Kopyala";
 "Copy Path" = "Yolu Kopyala";
 "Copy a file, some text, an image or a public media link first." = "Önce bir dosya, metin, görsel veya herkese açık bir medya bağlantısı kopyala.";
@@ -1659,6 +1661,7 @@
 "PHOTOS" = "FOTOĞRAFLAR";
 "PICK A FOLDER YOU WORK IN. FRESH COPIES ARE SAVED BESIDE THE ORIGINALS BY DEFAULT." = "ÇALIŞTIĞIN BİR KLASÖRÜ SEÇ. YENİ KOPYALAR VARSAYILAN OLARAK ORİJİNALLERİN YANINA KAYDEDİLİR.";
 "PIN" = "SABİTLE";
+"PIN TO ANOTHER EDGE" = "BAŞKA BİR KENARA SABİTLE";
 "PIXELATE" = "PİKSELLEŞTİR";
 "PLAY" = "OYNAT";
 "PLAY / PAUSE" = "OYNAT / DURAKLAT";
@@ -1720,6 +1723,7 @@
 "Photos" = "Fotoğraflar";
 "Pick a folder you work in. Fresh copies are saved beside the originals by default." = "Çalıştığın bir klasörü seç. Yeni kopyalar varsayılan olarak orijinallerin yanına kaydedilir.";
 "Pin" = "Sabitle";
+"Pin to another edge" = "Başka bir kenara sabitle";
 "Pixelate" = "Pikselleştir";
 "Play" = "Oynat";
 "Play / pause" = "Oynat / duraklat";
@@ -1815,6 +1819,7 @@
 "REMOVE SILENCE AT THE BEGINNING AND END" = "BAŞLANGIÇ VE SONDAKİ SESSİZLİĞİ KALDIR";
 "REMOVE SILENCE FROM BEGINNING AND END" = "BAŞLANGIÇ VE SONDAKİ SESSİZLİĞİ KALDIR";
 "REMOVED THE CTRL+ALT+N SHORTCUT." = "CTRL+ALT+N KISAYOLU KALDIRILDI.";
+"REMOVING A REFERENCE NEVER DELETES THE FILE." = "BİR REFERANSI KALDIRMAK DOSYAYI ASLA SİLMEZ.";
 "RENDERED PAGES EXCEED 512 MB. CHOOSE A LOWER DPI OR SPLIT THE PDF FIRST." = "OLUŞTURULAN SAYFALAR 512 MB'I AŞIYOR. DAHA DÜŞÜK BİR DPI SEÇ VEYA ÖNCE PDF'Yİ BÖL.";
 "REPLACE SELECTED AUDIO WITH" = "SEÇİLİ SESİ ŞUNUNLA DEĞİŞTİR";
 "REPORT SAVED." = "RAPOR KAYDEDİLDİ.";
@@ -1886,6 +1891,7 @@
 "Removed %@" = "Kaldırıldı: %@";
 "Removed %lld" = "Kaldırıldı: %lld";
 "Removed the Ctrl+Alt+N shortcut." = "Ctrl+Alt+N kısayolu kaldırıldı.";
+"Removing a reference never deletes the file." = "Bir referansı kaldırmak dosyayı asla silmez.";
 "Rendered pages exceed 512 MB. Choose a lower DPI or split the PDF first." = "Oluşturulan sayfalar 512 MB'ı aşıyor. Daha düşük bir DPI seç veya önce PDF'yi böl.";
 "Rendering page %@" = "Sayfa %@ işleniyor";
 "Rendering page %lld" = "Sayfa %lld işleniyor";

@@ -59,6 +59,8 @@
   <!-- Gold is the one accent: the selected petal, the primary button, the START HERE pill. -->
   <SolidColorBrush x:Key="NashiGold" Color="#E3B859" />
   <SolidColorBrush x:Key="NashiGoldTint" Color="#1FE3B859" />
+  <!-- A selected row (Float, Library). -->
+  <SolidColorBrush x:Key="NashiSelection" Color="#59E3B859" />
   <!-- Neutral dark ink on gold. -->
   <SolidColorBrush x:Key="NashiButtonInk" Color="#2A2620" />
   <LinearGradientBrush x:Key="NashiPrimaryFill" StartPoint="0%,50%" EndPoint="100%,50%">

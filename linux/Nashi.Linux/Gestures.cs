@@ -128,6 +128,9 @@ public sealed class PointerWatch : IDisposable
     private readonly CancellationTokenSource stop = new();
     public PointerSampler Sampler { get; }
 
+    /// A drag-and-drop started (true) or ended (false) anywhere on screen (the poll's thread).
+    public event Action<bool>? DragChanged;
+
     public PointerWatch(GestureDetector detector)
     {
         Sampler = new PointerSampler(detector);
@@ -150,10 +153,19 @@ public sealed class PointerWatch : IDisposable
             var root = XDefaultRootWindow(display);
             var tabCode = XKeysymToKeycode(display, 0xff09); // XK_Tab
             var keys = new byte[32];
-            while (!stop.IsCancellationRequested)
+            var xdnd = XInternAtom(display, "XdndSelection", false);
+            var dragging = false;
+            for (var n = 0; !stop.IsCancellationRequested; n++)
             {
                 if (XQueryPointer(display, root, out _, out _, out var x, out var y, out _, out _, out var mask) != 0)
                 {
+                    // Every 100 ms with the button held: is a drag-and-drop running (for Float's drop target)?
+                    var held = (mask & PointerSampler.Button1Mask) != 0;
+                    if (held ? n % 5 == 0 : dragging)
+                    {
+                        var now = held && XGetSelectionOwner(display, xdnd) != IntPtr.Zero;
+                        if (now != dragging) DragChanged?.Invoke(dragging = now);
+                    }
                     var tab = Sampler.WatchFlip && XQueryKeymap(display, keys) != 0 && (keys[tabCode / 8] & (1 << (tabCode % 8))) != 0;
                     Sampler.Sample(x, y, mask, tab);
                 }

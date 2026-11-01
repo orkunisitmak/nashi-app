@@ -39,6 +39,7 @@ public sealed class App : Application
                 if (Launch.Message is { } first) Dispatcher.UIThread.Post(() => Handle(first));
                 StartGestures();
                 StartWatching();
+                if (Settings.Current.Shelf.Count > 0) FloatShelf.Open([], Flow.ShowTools); // Float comes back as it was
             }
             Instance?.Start(message => Dispatcher.UIThread.Post(() => Handle(message)));
         }
@@ -67,6 +68,7 @@ public sealed class App : Application
         detector.DragStarted += (x, y) => Dispatcher.UIThread.Post(() => Flow.ShowForDrag(new PixelPoint(x, y)));
         detector.DragEnded += (_, _) => Dispatcher.UIThread.Post(Flow.DragEnded);
         pointerWatch.Sampler.Flip += () => Dispatcher.UIThread.Post(Flow.FlipDrag);
+        pointerWatch.DragChanged += running => Dispatcher.UIThread.Post(() => FloatShelf.Current?.DragRunning(running));
     }
 
     private WatchService? watching;

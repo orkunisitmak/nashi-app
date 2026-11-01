@@ -465,6 +465,7 @@
 "COPIED ALL" = "COPIED ALL";
 "COPIED LINK" = "COPIED LINK";
 "COPIED." = "COPIED.";
+"COPIED. PASTE THEM IN YOUR FILE MANAGER." = "COPIED. PASTE THEM IN YOUR FILE MANAGER.";
 "COPY" = "COPY";
 "COPY A FILE, SOME TEXT, AN IMAGE OR A PUBLIC MEDIA LINK FIRST." = "COPY A FILE, SOME TEXT, AN IMAGE OR A PUBLIC MEDIA LINK FIRST.";
 "COPY A LINK → ⌃⇧D, OR DRAG IT WITH ⌘." = "COPY A LINK → ⌃⇧D, OR DRAG IT WITH ⌘.";
@@ -671,6 +672,7 @@
 "Copied all" = "Copied all";
 "Copied link" = "Copied link";
 "Copied." = "Copied.";
+"Copied. Paste them in your file manager." = "Copied. Paste them in your file manager.";
 "Copy" = "Copy";
 "Copy Path" = "Copy Path";
 "Copy a file, some text, an image or a public media link first." = "Copy a file, some text, an image or a public media link first.";
@@ -1659,6 +1661,7 @@
 "PHOTOS" = "PHOTOS";
 "PICK A FOLDER YOU WORK IN. FRESH COPIES ARE SAVED BESIDE THE ORIGINALS BY DEFAULT." = "PICK A FOLDER YOU WORK IN. FRESH COPIES ARE SAVED BESIDE THE ORIGINALS BY DEFAULT.";
 "PIN" = "PIN";
+"PIN TO ANOTHER EDGE" = "PIN TO ANOTHER EDGE";
 "PIXELATE" = "PIXELATE";
 "PLAY" = "PLAY";
 "PLAY / PAUSE" = "PLAY / PAUSE";
@@ -1720,6 +1723,7 @@
 "Photos" = "Photos";
 "Pick a folder you work in. Fresh copies are saved beside the originals by default." = "Pick a folder you work in. Fresh copies are saved beside the originals by default.";
 "Pin" = "Pin";
+"Pin to another edge" = "Pin to another edge";
 "Pixelate" = "Pixelate";
 "Play" = "Play";
 "Play / pause" = "Play / pause";
@@ -1815,6 +1819,7 @@
 "REMOVE SILENCE AT THE BEGINNING AND END" = "REMOVE SILENCE AT THE BEGINNING AND END";
 "REMOVE SILENCE FROM BEGINNING AND END" = "REMOVE SILENCE FROM BEGINNING AND END";
 "REMOVED THE CTRL+ALT+N SHORTCUT." = "REMOVED THE CTRL+ALT+N SHORTCUT.";
+"REMOVING A REFERENCE NEVER DELETES THE FILE." = "REMOVING A REFERENCE NEVER DELETES THE FILE.";
 "RENDERED PAGES EXCEED 512 MB. CHOOSE A LOWER DPI OR SPLIT THE PDF FIRST." = "RENDERED PAGES EXCEED 512 MB. CHOOSE A LOWER DPI OR SPLIT THE PDF FIRST.";
 "REPLACE SELECTED AUDIO WITH" = "REPLACE SELECTED AUDIO WITH";
 "REPORT SAVED." = "REPORT SAVED.";
@@ -1886,6 +1891,7 @@
 "Removed %@" = "Removed %@";
 "Removed %lld" = "Removed %lld";
 "Removed the Ctrl+Alt+N shortcut." = "Removed the Ctrl+Alt+N shortcut.";
+"Removing a reference never deletes the file." = "Removing a reference never deletes the file.";
 "Rendered pages exceed 512 MB. Choose a lower DPI or split the PDF first." = "Rendered pages exceed 512 MB. Choose a lower DPI or split the PDF first.";
 "Rendering page %@" = "Rendering page %@";
 "Rendering page %lld" = "Rendering page %lld";

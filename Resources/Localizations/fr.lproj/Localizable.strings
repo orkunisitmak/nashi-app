@@ -465,6 +465,7 @@
 "COPIED ALL" = "COPIED ALL";
 "COPIED LINK" = "LIEN COPIÉ";
 "COPIED." = "COPIED.";
+"COPIED. PASTE THEM IN YOUR FILE MANAGER." = "COPIED. PASTE THEM IN YOUR FILE MANAGER.";
 "COPY" = "COPIER";
 "COPY A FILE, SOME TEXT, AN IMAGE OR A PUBLIC MEDIA LINK FIRST." = "COPIEZ D’ABORD UN FICHIER, DU TEXTE, UNE IMAGE OU UN LIEN MÉDIA PUBLIC.";
 "COPY A LINK → ⌃⇧D, OR DRAG IT WITH ⌘." = "COPIEZ UN LIEN → ⌃⇧D, OU FAITES-LE GLISSER AVEC ⌘.";
@@ -671,6 +672,7 @@
 "Copied all" = "Copied all";
 "Copied link" = "Lien copié";
 "Copied." = "Copied.";
+"Copied. Paste them in your file manager." = "Copied. Paste them in your file manager.";
 "Copy" = "Copier";
 "Copy Path" = "Copier le chemin";
 "Copy a file, some text, an image or a public media link first." = "Copiez d’abord un fichier, du texte, une image ou un lien média public.";
@@ -1659,6 +1661,7 @@
 "PHOTOS" = "PHOTOS";
 "PICK A FOLDER YOU WORK IN. FRESH COPIES ARE SAVED BESIDE THE ORIGINALS BY DEFAULT." = "CHOISISSEZ UN DOSSIER DANS LEQUEL VOUS TRAVAILLEZ. PAR DÉFAUT, LES NOUVELLES COPIES SONT ENREGISTRÉES À CÔTÉ DES ORIGINAUX.";
 "PIN" = "ÉPINGLER";
+"PIN TO ANOTHER EDGE" = "PIN TO ANOTHER EDGE";
 "PIXELATE" = "PIXELLISER";
 "PLAY" = "LIRE";
 "PLAY / PAUSE" = "LECTURE / PAUSE";
@@ -1720,6 +1723,7 @@
 "Photos" = "Photos";
 "Pick a folder you work in. Fresh copies are saved beside the originals by default." = "Choisissez un dossier dans lequel vous travaillez. Par défaut, les nouvelles copies sont enregistrées à côté des originaux.";
 "Pin" = "Épingler";
+"Pin to another edge" = "Pin to another edge";
 "Pixelate" = "Pixelliser";
 "Play" = "Lire";
 "Play / pause" = "Lecture / pause";
@@ -1815,6 +1819,7 @@
 "REMOVE SILENCE AT THE BEGINNING AND END" = "SUPPRIMER LE SILENCE AU DÉBUT ET À LA FIN";
 "REMOVE SILENCE FROM BEGINNING AND END" = "SUPPRIMER LE SILENCE AU DÉBUT ET À LA FIN";
 "REMOVED THE CTRL+ALT+N SHORTCUT." = "REMOVED THE CTRL+ALT+N SHORTCUT.";
+"REMOVING A REFERENCE NEVER DELETES THE FILE." = "REMOVING A REFERENCE NEVER DELETES THE FILE.";
 "RENDERED PAGES EXCEED 512 MB. CHOOSE A LOWER DPI OR SPLIT THE PDF FIRST." = "LES PAGES RENDUES DÉPASSENT 512 MO. CHOISISSEZ UN DPI PLUS BAS OU DIVISEZ D’ABORD LE PDF.";
 "REPLACE SELECTED AUDIO WITH" = "REMPLACER L’AUDIO SÉLECTIONNÉ PAR";
 "REPORT SAVED." = "RAPPORT ENREGISTRÉ.";
@@ -1886,6 +1891,7 @@
 "Removed %@" = "Removed %@";
 "Removed %lld" = "Removed %lld";
 "Removed the Ctrl+Alt+N shortcut." = "Removed the Ctrl+Alt+N shortcut.";
+"Removing a reference never deletes the file." = "Removing a reference never deletes the file.";
 "Rendered pages exceed 512 MB. Choose a lower DPI or split the PDF first." = "Les pages rendues dépassent 512 Mo. Choisissez un DPI plus bas ou divisez d’abord le PDF.";
 "Rendering page %@" = "Rendu de la page %@";
 "Rendering page %lld" = "Rendu de la page %lld";
