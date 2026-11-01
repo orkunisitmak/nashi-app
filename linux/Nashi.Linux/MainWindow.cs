@@ -18,20 +18,24 @@ public sealed class MainWindow:Window
     private readonly LibraryStore library;
     private readonly PreferencesStore preferences=new(LinuxPaths.DataDirectory);
     private readonly WrapPanel actions=new();
-    private readonly TextBlock actionsLabel=Label("File actions");
+    private readonly Border formatsCard=new(),toolsCard=new(),actionsCard=new(),progressCard=new();
+    private readonly WrapPanel fileChips=new();
+    private readonly StackPanel tips=new(){Orientation=Orientation.Horizontal,Spacing=8};
+    private readonly Control artwork=Artwork();
+    private readonly StackPanel recent=new(){Spacing=0};
+    private readonly TextBlock recentCount=new(){FontSize=13,VerticalAlignment=VerticalAlignment.Center,Margin=new(10,0,0,0)};
+    private readonly Dictionary<string,(Button Nav,Control Page)> pages=[];
     private readonly WebPanel web=new();
     private Bubble? bubble;
     /// Dialogs belong to the bubble while it runs a choice, so they appear over the app the files came from.
     private Window owner;
     private readonly List<string> files=[];
-    private readonly ListBox fileList=new(){SelectionMode=SelectionMode.Multiple,MaxHeight=220,ItemTemplate=new Avalonia.Controls.Templates.FuncDataTemplate<string>((path,_)=>{var row=new TextBlock{Text=Path.GetFileName(path),TextTrimming=TextTrimming.CharacterEllipsis};ToolTip.SetTip(row,path);return row;})};
-    private readonly TextBlock selection=new(){FontSize=22,FontWeight=FontWeight.SemiBold};
-    private readonly TextBlock hint=new(){TextWrapping=TextWrapping.Wrap};
+    private readonly TextBlock selection=new(){FontSize=26,FontWeight=FontWeight.Bold,TextWrapping=TextWrapping.Wrap};
+    private readonly TextBlock hint=new(){TextWrapping=TextWrapping.Wrap,FontSize=14};
     private readonly WrapPanel formats=new(),tools=new();
-    private readonly TextBlock formatsLabel=Label("Convert to"),toolsLabel=Label("Tools");
-    private readonly ProgressBar progress=new(){Minimum=0,Maximum=1,Height=6,IsVisible=false};
+    private readonly ProgressBar progress=new(){Minimum=0,Maximum=1,Height=6,IsVisible=false,CornerRadius=new(3)};
     private readonly TextBlock status=new(){TextWrapping=TextWrapping.Wrap};
-    private readonly Button cancel=new(){Content="Cancel",IsVisible=false},reveal=new(){Content="Show in folder",IsVisible=false};
+    private readonly Button cancel=new(){Content="Cancel",IsVisible=false,Classes={"mini"}},reveal=new(){Content="Show in folder",IsVisible=false,Classes={"mini"}};
     private readonly TextBox search=new(){PlaceholderText="Search Library"};
     private readonly StackPanel libraryItems=new(){Spacing=6};
     private CancellationTokenSource? running;
@@ -39,10 +43,11 @@ public sealed class MainWindow:Window
 
     public MainWindow(LibraryStore library,IReadOnlyList<string> args)
     {
-        this.library=library;owner=this;Title="Nashi";Width=760;Height=720;MinWidth=520;MinHeight=520;
+        this.library=library;owner=this;Title="Nashi";Width=880;Height=820;MinWidth=600;MinHeight=560;
         Icon=new WindowIcon(AssetLoader.Open(new Uri("avares://Nashi/Assets/NashiIcon.png")));
         this[!BackgroundProperty]=Resource("Paper");this[!ForegroundProperty]=Resource("Ink");
         Content=Layout();
+        status.PropertyChanged+=(_,e)=>{if(e.Property==TextBlock.TextProperty)progressCard.IsVisible=running is not null||!string.IsNullOrEmpty(status.Text);};
         cancel.Click+=(_,_)=>running?.Cancel();reveal.Click+=(_,_)=>{if(lastFolder is not null)Open(lastFolder);};
         search.TextChanged+=(_,_)=>RefreshLibrary();
         KeyDown+=OnKey;
@@ -54,7 +59,7 @@ public sealed class MainWindow:Window
         string? Value(string flag)=>args.SkipWhile(a=>a!=flag).Skip(1).FirstOrDefault();
         var capture=Value("--capture");var dialog=Value("--dialog");var tab=Value("--tab");var lang=Value("--lang");
         Add(args.Where(a=>!a.StartsWith('-')&&a!=capture&&a!=dialog&&a!=tab&&a!=lang).Select(Path.GetFullPath));
-        if(tab is not null&&Content is TabControl pages)pages.SelectedIndex=Math.Max(0,Array.IndexOf(["home","web","library","settings"],tab));Refresh();RefreshLibrary();
+        if(tab is not null)Page(tab);Refresh();RefreshLibrary();
         if(capture is null&&preferences.Value.Enabled)Opened+=(_,_)=>ShowBubble(true);
         if(capture is not null)Opened+=async(_,_)=>await Capture(Path.GetFullPath(capture),args.Contains("--dark")?"dark":args.Contains("--light")?"light":null,dialog,args.ToArray());
     }
@@ -71,43 +76,110 @@ public sealed class MainWindow:Window
     }
     private static void Snap(Window window,string file){var size=new PixelSize((int)window.Bounds.Width,(int)window.Bounds.Height);using var bitmap=new RenderTargetBitmap(size);bitmap.Render(window);bitmap.Save(file,new Avalonia.Media.Imaging.PngBitmapEncoderOptions());}
 
+    /// The Mac and Windows home: a header with pill navigation, the start card with the pear artwork,
+    /// the selection's formats, tools and file actions, a web link card and what was made recently.
     private Control Layout()
     {
-        var choose=Primary("Choose files");choose.Click+=async(_,_)=>await Choose();
-        var clear=new Button{Content="Clear"};clear.Click+=(_,_)=>{files.Clear();Refresh();};
-        var remove=new Button{Content="Remove selected"};remove.Click+=(_,_)=>{foreach(var item in fileList.SelectedItems?.OfType<string>().ToArray()??[])files.Remove(item);Refresh();};
-        var drop=Card(new StackPanel{Spacing=10,HorizontalAlignment=HorizontalAlignment.Center,Children=
-        {
-            new Image{Source=new Bitmap(AssetLoader.Open(new Uri("avares://Nashi/Assets/NashiMark.png"))),Width=88,Height=88},
-            selection,hint,new StackPanel{Orientation=Orientation.Horizontal,Spacing=8,HorizontalAlignment=HorizontalAlignment.Center,Children={choose,remove,clear}}
-        }});
-        selection.HorizontalAlignment=hint.HorizontalAlignment=HorizontalAlignment.Center;hint.TextAlignment=TextAlignment.Center;
-        Button Act(string text,Func<Task> action){var b=new Button{Content=text,Margin=new(0,0,8,8)};b.Click+=async(_,_)=>await action();return b;}
-        actions.Children.Add(Act("Copy",CopyFiles));actions.Children.Add(Act("Move to…",MoveFiles));actions.Children.Add(Act("Copy path",async()=>{if(Clipboard is not null){await Clipboard.SetTextAsync(FileActions.PathList(files));status.Text=files.Count==1?"Path copied.":Localizer.Pick($"{files.Count} paths copied.",$"{files.Count} yol kopyalandı.");}}));
-        actions.Children.Add(Act("Float",()=>{new FloatShelf(files.ToArray()).Show();return Task.CompletedTask;}));
-        actions.Children.Add(Act("Open terminal here",()=>{status.Text=FileActions.Terminal(files[0])?"":"No terminal app was found.";return Task.CompletedTask;}));
-        var home=new StackPanel{Spacing=14,Margin=new(20),Children={drop,fileList,formatsLabel,formats,toolsLabel,tools,actionsLabel,actions,progress,
-            new StackPanel{Orientation=Orientation.Horizontal,Spacing=8,Children={cancel,reveal}},status}};
+        // Header
+        var mark=new Image{Source=new Bitmap(AssetLoader.Open(new Uri("avares://Nashi/Assets/NashiMark.png"))),Width=36,Height=36};
+        var brand=new StackPanel{Orientation=Orientation.Horizontal,Spacing=10,VerticalAlignment=VerticalAlignment.Center,Children={mark,new TextBlock{Text="Nashi",FontSize=21,FontWeight=FontWeight.SemiBold,VerticalAlignment=VerticalAlignment.Center}}};
+        var nav=new StackPanel{Orientation=Orientation.Horizontal,Spacing=6,VerticalAlignment=VerticalAlignment.Center};
+        var badge=new Border{CornerRadius=new(12),Padding=new(10,5),VerticalAlignment=VerticalAlignment.Center,Child=new StackPanel{Orientation=Orientation.Horizontal,Spacing=6,Children={new Avalonia.Controls.Shapes.Ellipse{Width=7,Height=7,Fill=new SolidColorBrush(Color.FromRgb(86,140,72)),VerticalAlignment=VerticalAlignment.Center},new TextBlock{Text="On your PC",FontSize=12,FontWeight=FontWeight.SemiBold}}}};ToolTip.SetTip(badge,"Files stay on your computer.");badge[!Border.BackgroundProperty]=Resource("Sage");
+        var header=new DockPanel{Margin=new(28,20,28,6),Children={Dock(new StackPanel{Orientation=Orientation.Horizontal,Spacing=10,Children={badge,nav}},Avalonia.Controls.Dock.Right),brand}};
+
+        // Home
+        var choose=new Button{Classes={"primary"},Content=new StackPanel{Orientation=Orientation.Horizontal,Spacing=8,Children={new TextBlock{Text="＋",FontWeight=FontWeight.Bold},new TextBlock{Text="Choose files"}}}};choose.Click+=async(_,_)=>await Choose();
+        var paste=new Button{Content="Paste",Classes={"ghost"}};paste.Click+=async(_,_)=>await Paste();
+        var clear=new Button{Content="Clear",Classes={"ghost"}};clear.Click+=(_,_)=>{files.Clear();Refresh();};
+        var start=new TextBlock{Text="✦  START HERE",FontSize=11,FontWeight=FontWeight.Bold,LetterSpacing=.6};start.Foreground=new SolidColorBrush(Color.FromRgb(176,128,30));
+        var startBadge=new Border{CornerRadius=new(9),Padding=new(10,4),HorizontalAlignment=HorizontalAlignment.Left,Child=start};startBadge[!Border.BackgroundProperty]=Resource("Sand");
+        foreach(var (key,label) in new[]{("◉","Drop on the pear bubble"),("Ctrl+O","Choose"),("Ctrl+V","Paste")})tips.Children.Add(Tip(key,label));
+        var left=new StackPanel{Spacing=12,Children={startBadge,selection,hint,new StackPanel{Orientation=Orientation.Horizontal,Spacing=10,Children={choose,paste,clear}},fileChips,tips}};
+        clear[!IsVisibleProperty]=new Avalonia.Data.Binding(nameof(fileChips.IsVisible)){Source=fileChips};
+        var startGrid=new Grid{ColumnDefinitions=new("*,Auto"),Children={left,artwork}};Grid.SetColumn(artwork,1);
+        var startCard=Card(startGrid,22,28);
+        formatsCard.Child=Section("Convert to",formats);toolsCard.Child=Section("Tools",tools);actionsCard.Child=Section("File actions",actions);
+        foreach(var c in new[]{formatsCard,toolsCard,actionsCard,progressCard})Style(c,20,22);
+        Button Act(string symbol,string text,Func<Task> action){var b=new Button{Classes={"chip"},Content=new StackPanel{Orientation=Orientation.Horizontal,Spacing=8,Children={new TextBlock{Text=symbol,FontSize=15},new TextBlock{Text=text}}}};b.Click+=async(_,_)=>await action();return b;}
+        actions.Children.Add(Act("▱","Copy",CopyFiles));actions.Children.Add(Act("↗","Move to…",MoveFiles));
+        actions.Children.Add(Act("↪","Copy path",async()=>{if(Clipboard is not null){await Clipboard.SetTextAsync(FileActions.PathList(files));status.Text=files.Count==1?"Path copied.":Localizer.Pick($"{files.Count} paths copied.",$"{files.Count} yol kopyalandı.");}}));
+        actions.Children.Add(Act("▣","Float",()=>{new FloatShelf(files.ToArray()).Show();return Task.CompletedTask;}));
+        actions.Children.Add(Act(">_","Open terminal here",()=>{status.Text=FileActions.Terminal(files[0])?"":"No terminal app was found.";return Task.CompletedTask;}));
+        progressCard.Child=new StackPanel{Spacing=10,Children={status,progress,new StackPanel{Orientation=Orientation.Horizontal,Spacing=8,Children={cancel,reveal}}}};
+        status.FontSize=14;
+        // Download a link
+        var arrow=new Border{Width=40,Height=40,CornerRadius=new(20),Background=NashiStyles.Gold,Child=new TextBlock{Text="↓",FontSize=20,FontWeight=FontWeight.Bold,Foreground=Brushes.White,HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center}};
+        var linkRow=new DockPanel{Margin=new(22,16),Children={Dock(new TextBlock{Text="Web  ↗",FontSize=12,VerticalAlignment=VerticalAlignment.Center},Avalonia.Controls.Dock.Right),Dock(arrow,Avalonia.Controls.Dock.Left),
+            new StackPanel{Margin=new(14,0,0,0),VerticalAlignment=VerticalAlignment.Center,Children={new TextBlock{Text="Download a link",FontSize=16,FontWeight=FontWeight.SemiBold},Muted("Video, audio, or an image. Straight into your tools.")}}}};
+        var link=new Button{Classes={"link"},Content=linkRow,HorizontalAlignment=HorizontalAlignment.Stretch};link.Click+=(_,_)=>Page("web");var linkCard=Card(link,20,0);
+        // Freshly made
+        var seeAll=new Button{Content="See all  ↗",Classes={"pill"}};seeAll.Click+=(_,_)=>Page("library");
+        var recentHeader=new DockPanel{Margin=new(2,8,2,0),Children={Dock(seeAll,Avalonia.Controls.Dock.Right),new StackPanel{Orientation=Orientation.Horizontal,Children={new TextBlock{Text="Freshly made",FontSize=19,FontWeight=FontWeight.SemiBold},recentCount}}}};
+        var recentCard=Card(recent,20,8);
+        var home=Column(new TextBlock{Text="Your files. Their next form.",FontSize=32,FontWeight=FontWeight.Bold},Muted("Convert, fine-tune, and send them on their way.",15),
+            startCard,formatsCard,toolsCard,actionsCard,progressCard,linkCard,recentHeader,recentCard);
         web.Run=(title,work)=>RunWork(title,work,preferences.Value.DownloadFolder);
-        var libraryPage=new StackPanel{Spacing=12,Margin=new(20),Children={search,libraryItems}};
-        var appearance=new ComboBox{ItemsSource=new[]{"System","Light","Dark"},SelectedIndex=library.Appearance switch{"light"=>1,"dark"=>2,_=>0},MinWidth=120};
+
+        // Library
+        search.CornerRadius=new(12);search.Padding=new(12,8);
+        var libraryPage=Column(new TextBlock{Text="Library",FontSize=30,FontWeight=FontWeight.Bold},Muted("Everything Nashi made, newest first.",15),search,libraryItems);
+
+        // Settings
+        var appearance=new ComboBox{ItemsSource=new[]{"System","Light","Dark"},SelectedIndex=library.Appearance switch{"light"=>1,"dark"=>2,_=>0},MinWidth=140};
         appearance.SelectionChanged+=(_,_)=>{var value=new[]{"system","light","dark"}[appearance.SelectedIndex];library.SetAppearance(value);NashiTheme.Apply(Application.Current!,value);};
-        var language=new ComboBox{ItemsSource=new[]{"English","Türkçe"},SelectedIndex=Localizer.Language=="tr"?1:0,MinWidth=120};
+        var language=new ComboBox{ItemsSource=new[]{"English","Türkçe"},SelectedIndex=Localizer.Language=="tr"?1:0,MinWidth=140};
         language.SelectionChanged+=(_,_)=>{Save(preferences.Value with{Language=language.SelectedIndex==1?"tr":"en"});status.Text="Restart Nashi to use the new language everywhere.";};
         var showBubble=new CheckBox{Content="Show the Nashi bubble: drop files on it from any app to open the wheel",IsChecked=preferences.Value.Enabled};
         showBubble.IsCheckedChanged+=(_,_)=>{Save(preferences.Value with{Enabled=showBubble.IsChecked==true});ShowBubble(showBubble.IsChecked==true);};
-        var settings=new StackPanel{Spacing=12,Margin=new(20),Children={Label("Appearance"),appearance,Label("Language"),language,Label("Bubble"),showBubble}};
+        var settings=new StackPanel{Spacing=12,Children={Label("Appearance"),appearance,Label("Language"),language,Label("Bubble"),showBubble}};
         Settings(settings);
-        var tabs=new TabControl{Items={Tab("Home",home),Tab("Web",web),Tab("Library",libraryPage),Tab("Settings",settings)}};
-        tabs.SelectionChanged+=(_,_)=>{if(tabs.SelectedIndex==2)RefreshLibrary();};
-        return tabs;
+        var settingsPage=Column(new TextBlock{Text="Settings",FontSize=30,FontWeight=FontWeight.Bold},Card(settings,20,24));
+        var webPage=Column(Card(web,20,6));web.Margin=new(18);
+
+        foreach(var (id,title,page) in new (string,string,Control)[]{("home","Home",home),("web","Web",webPage),("library","Library",libraryPage),("settings","Settings",settingsPage)})
+        {
+            var button=new Button{Content=title,Classes={"pill"}};button.Click+=(_,_)=>Page(id);nav.Children.Add(button);
+            var scroller=new ScrollViewer{Content=page,IsVisible=id=="home"};pages[id]=(button,scroller);
+        }
+        var footer=new DockPanel{Margin=new(30,8,30,14),Children={Dock(Muted("Made for Linux",12),Avalonia.Controls.Dock.Right),Muted("Files stay on your computer.",12)}};
+        var body=new Panel();foreach(var (_,page) in pages.Values)body.Children.Add(page);
+        Page("home");
+        return new DockPanel{Children={Dock(header,Avalonia.Controls.Dock.Top),Dock(footer,Avalonia.Controls.Dock.Bottom),body}};
     }
+    private void Page(string id)
+    {
+        if(!pages.ContainsKey(id))id="home";
+        foreach(var (key,(nav,page)) in pages){page.IsVisible=key==id;nav.Classes.Set("on",key==id);}
+        if(id=="library")RefreshLibrary();
+    }
+    /// The start card's artwork: a PDF and a PNG card over a warm circle, with the pear in front.
+    private static Control Artwork()
+    {
+        var canvas=new Canvas{Width=230,Height=180,Margin=new(18,0,0,0),VerticalAlignment=VerticalAlignment.Center};
+        var sun=new Avalonia.Controls.Shapes.Ellipse{Width=160,Height=160};sun[!Avalonia.Controls.Shapes.Shape.FillProperty]=Resource("Sand");Canvas.SetLeft(sun,60);Canvas.SetTop(sun,8);canvas.Children.Add(sun);
+        Border Sheet(string glyph,string name,double x,double y,double angle)
+        {
+            var sheet=new Border{Width=78,Height=100,CornerRadius=new(14),BorderThickness=new(1.5),RenderTransform=new RotateTransform(angle),
+                Child=new StackPanel{VerticalAlignment=VerticalAlignment.Center,Spacing=6,Children={new TextBlock{Text=glyph,FontSize=26,HorizontalAlignment=HorizontalAlignment.Center},new TextBlock{Text=name,FontSize=12,FontWeight=FontWeight.Bold,HorizontalAlignment=HorizontalAlignment.Center,Foreground=new SolidColorBrush(Color.FromRgb(196,148,48))}}}};
+            sheet[!Border.BackgroundProperty]=Resource("Surface");sheet[!Border.BorderBrushProperty]=Resource("Line");Canvas.SetLeft(sheet,x);Canvas.SetTop(sheet,y);return sheet;
+        }
+        canvas.Children.Add(Sheet("▤","PDF",54,34,-9));canvas.Children.Add(Sheet("▨","PNG",120,18,8));
+        var pear=new Image{Source=new Bitmap(AssetLoader.Open(new Uri("avares://Nashi/Assets/NashiMark.png"))),Width=70,Height=70};Canvas.SetLeft(pear,104);Canvas.SetTop(pear,100);canvas.Children.Add(pear);
+        return canvas;
+    }
+    private static Border Tip(string key,string label)
+    {
+        var tip=new Border{CornerRadius=new(10),Padding=new(10,5),BorderThickness=new(1),Child=new StackPanel{Orientation=Orientation.Horizontal,Spacing=6,Children={new TextBlock{Text=key,FontSize=12,FontWeight=FontWeight.SemiBold},new TextBlock{Text=label,FontSize=12}}}};
+        tip[!Border.BackgroundProperty]=Resource("Sage");tip[!Border.BorderBrushProperty]=Resource("Line");return tip;
+    }
+    private static StackPanel Section(string title,Control content)=>new(){Spacing=12,Children={new TextBlock{Text=title,FontSize=16,FontWeight=FontWeight.SemiBold},content}};
+    private static StackPanel Column(params Control[] children){var column=new StackPanel{Spacing=16,Margin=new(28,10,28,24),MaxWidth=920};foreach(var child in children)column.Children.Add(child);return column;}
+    private static string KindSymbol(string path)=>Directory.Exists(path)?"▦":FeatureCatalog.IsImage(path)?"▨":FeatureCatalog.IsVideo(path)?"▷":FeatureCatalog.IsAudio(path)?"♫":FeatureCatalog.IsArchive(path)?"▦":FeatureCatalog.Extension(path)=="pdf"?"▤":"☷";
 
     private void OnKey(object? sender,KeyEventArgs e)
     {
         if(e.KeyModifiers==KeyModifiers.Control&&e.Key==Key.O){_=Choose();e.Handled=true;}
         else if(e.KeyModifiers==KeyModifiers.Control&&e.Key==Key.V&&FocusManager?.GetFocusedElement() is not TextBox){_=Paste();e.Handled=true;}
-        else if(e.Key==Key.Delete&&fileList.IsFocused){foreach(var item in fileList.SelectedItems?.OfType<string>().ToArray()??[])files.Remove(item);Refresh();e.Handled=true;}
     }
     private async Task Choose()
     {
@@ -125,7 +197,7 @@ public sealed class MainWindow:Window
             if(await data.TryGetFilesAsync() is {Length:>0} items){Add(items.Select(i=>i.TryGetLocalPath()).OfType<string>());return;}
             var text=await data.TryGetTextAsync();
             if(ClipboardImport.Paths(text) is {Length:>0} paths){Add(paths);return;}
-            if(ClipboardImport.Link(text) is {} link){if(Content is TabControl pages)pages.SelectedIndex=1;web.Link.Text=link;return;}
+            if(ClipboardImport.Link(text) is {} link){Page("web");web.Link.Text=link;return;}
             if(!string.IsNullOrWhiteSpace(text)){Add([ClipboardImport.SaveText(text)]);status.Text="Pasted text";return;}
             if(await data.TryGetBitmapAsync() is {} bitmap){using(bitmap){var file=ClipboardImport.Destination("png");bitmap.Save(file,new Avalonia.Media.Imaging.PngBitmapEncoderOptions());Add([file]);status.Text="Pasted image";}return;}
             status.Text="Copy a file, some text, an image or a public media link first.";
@@ -141,17 +213,35 @@ public sealed class MainWindow:Window
 
     private void Refresh()
     {
-        fileList.ItemsSource=files.ToArray();fileList.IsVisible=files.Count>0;
         selection.Text=files.Count switch{0=>"Drop something good.",1=>Path.GetFileName(files[0]),var n=>Localizer.Pick($"{n} files, ready to go.",$"{n} dosya hazır.")};
-        hint.Text=files.Count==0?"Images, videos, audio, PDFs, documents, spreadsheets, slides, subtitles and archives. Drop files here, choose them or paste with Ctrl+V.":"Pick a format or a tool below. Originals are never overwritten.";
+        hint.Text=files.Count==0?"Images, videos, documents, and all the little things in between.":"Pick a format or a tool below. Originals are never overwritten.";
+        hint[!TextBlock.ForegroundProperty]=Resource("Muted");
+        fileChips.Children.Clear();
+        foreach(var path in files)
+        {
+            var remove=new Button{Content="✕",Classes={"mini"},Padding=new(6,1),FontSize=10,VerticalAlignment=VerticalAlignment.Center};var item=path;remove.Click+=(_,_)=>{files.Remove(item);Refresh();};
+            var chip=new Border{CornerRadius=new(10),Padding=new(10,5,5,5),Margin=new(0,0,8,8),BorderThickness=new(1),MaxWidth=300,
+                Child=new DockPanel{Children={Dock(remove,Avalonia.Controls.Dock.Right),Dock(new TextBlock{Text=KindSymbol(path),FontSize=14,Margin=new(0,0,8,0),VerticalAlignment=VerticalAlignment.Center},Avalonia.Controls.Dock.Left),new TextBlock{Text=Path.GetFileName(path),FontSize=13,TextTrimming=TextTrimming.CharacterEllipsis,VerticalAlignment=VerticalAlignment.Center,Margin=new(0,0,8,0)}}}};
+            chip[!Border.BackgroundProperty]=Resource("Inset");chip[!Border.BorderBrushProperty]=Resource("Line");ToolTip.SetTip(chip,path);fileChips.Children.Add(chip);
+        }
+        fileChips.IsVisible=files.Count>0;tips.IsVisible=files.Count==0;artwork.IsVisible=files.Count==0;
         var ready=running is null&&files.Count>0;
         var formatChoices=ready?Operations.Formats(files):[];var toolChoices=ready?Operations.Tools(files):[];
-        formats.Children.Clear();foreach(var format in formatChoices)formats.Children.Add(Action(format.ToUpperInvariant(),new("convert",format.ToUpperInvariant(),format)));
-        tools.Children.Clear();foreach(var tool in toolChoices)tools.Children.Add(Action(tool.Title,tool));
-        formatsLabel.IsVisible=formats.IsVisible=formatChoices.Length>0;toolsLabel.IsVisible=tools.IsVisible=toolChoices.Length>0;actionsLabel.IsVisible=actions.IsVisible=ready;
+        formats.Children.Clear();foreach(var format in formatChoices){var chip=new Button{Content=format.ToUpperInvariant(),Classes={"chip"},MinWidth=74,HorizontalContentAlignment=HorizontalAlignment.Center};var choice=new Choice("convert",format.ToUpperInvariant(),format);chip.Click+=async(_,_)=>await Run(choice);formats.Children.Add(chip);}
+        tools.Children.Clear();foreach(var tool in toolChoices)tools.Children.Add(Tile(tool));
+        formatsCard.IsVisible=formatChoices.Length>0;toolsCard.IsVisible=toolChoices.Length>0;actionsCard.IsVisible=ready;
+        progressCard.IsVisible=running is not null||!string.IsNullOrEmpty(status.Text);
         if(ready&&formatChoices.Length==0&&toolChoices.Length==0)status.Text="These files have no Linux preview action yet. Try one kind of file at a time.";
     }
-    private Button Action(string title,Choice choice){var button=new Button{Content=title,Margin=new(0,0,8,8),MinWidth=72,HorizontalContentAlignment=HorizontalAlignment.Center};button.Click+=async(_,_)=>await Run(choice);return button;}
+    private Button Tile(Choice choice)
+    {
+        var tile=new Button{Classes={"tile"},Content=new StackPanel{Spacing=6,HorizontalAlignment=HorizontalAlignment.Center,Children=
+        {
+            new TextBlock{Text=Bubble.Symbol(choice.Id),FontSize=24,Height=32,TextAlignment=TextAlignment.Center,HorizontalAlignment=HorizontalAlignment.Center},
+            new TextBlock{Text=choice.Title,FontSize=12,FontWeight=FontWeight.SemiBold,TextWrapping=TextWrapping.Wrap,TextAlignment=TextAlignment.Center,MaxWidth=118}
+        }}};
+        tile.Click+=async(_,_)=>await Run(choice);return tile;
+    }
 
     private async Task Run(Choice choice)
     {
@@ -339,7 +429,7 @@ public sealed class MainWindow:Window
         var output=new ComboBox{ItemsSource=new[]{"Next to the original","In one folder"},SelectedIndex=preferences.Value.OutputMode=="folder"?1:0,MinWidth=200};
         var outputFolder=Muted(preferences.Value.OutputFolder.Length>0?preferences.Value.OutputFolder:"No folder chosen");
         async Task<string?> PickFolder(string title)=>(await StorageProvider.OpenFolderPickerAsync(new(){Title=title,AllowMultiple=false})).FirstOrDefault()?.TryGetLocalPath();
-        var chooseOutput=new Button{Content="Choose folder…"};
+        var chooseOutput=new Button{Content="Choose folder…",Classes={"pill"}};
         chooseOutput.Click+=async(_,_)=>{if(await PickFolder("Save results to…") is {} folder){Save(preferences.Value with{OutputFolder=folder,OutputMode="folder"});outputFolder.Text=folder;output.SelectedIndex=1;}};
         output.SelectionChanged+=async(_,_)=>
         {
@@ -347,10 +437,10 @@ public sealed class MainWindow:Window
             if(!Directory.Exists(preferences.Value.OutputFolder)){if(await PickFolder("Save results to…") is {} folder){Save(preferences.Value with{OutputFolder=folder});outputFolder.Text=folder;}else{output.SelectedIndex=0;return;}}
             Save(preferences.Value with{OutputMode="folder"});
         };
-        var downloads=Muted(preferences.Value.DownloadFolder);var chooseDownloads=new Button{Content="Change…"};
+        var downloads=Muted(preferences.Value.DownloadFolder);var chooseDownloads=new Button{Content="Change…",Classes={"pill"}};
         chooseDownloads.Click+=async(_,_)=>{if(await PickFolder("Save downloaded media to…") is {} folder){Save(preferences.Value with{DownloadFolder=folder});downloads.Text=folder;}};
         var toolsState=new TextBlock{TextWrapping=TextWrapping.Wrap};
-        var setup=new Button{Content="Set up media tools"};
+        var setup=new Button{Content="Set up media tools",Classes={"primary"}};
         void Describe()
         {
             string Found(bool ok,string yes,string no)=>ok?"✓ "+yes:"– "+no;
@@ -401,7 +491,7 @@ public sealed class MainWindow:Window
             if(numbers.Count+choices.Count==0&&metadata.Parent is null){panel.Children.Add(Muted("This format uses its original document structure. No export defaults are needed."));return;}
             double Value(string key,double fallback)=>numbers.TryGetValue(key,out var box)?(double)(box.Value??(decimal)fallback):fallback;
             string Picked(string key,string fallback)=>choices.TryGetValue(key,out var box)?box.SelectedItem as string??fallback:fallback;
-            var save=new Button{Content="Save defaults"};var restore=new Button{Content="Restore defaults"};
+            var save=new Button{Content="Save defaults",Classes={"primary"}};var restore=new Button{Content="Restore defaults",Classes={"ghost"}};
             save.Click+=(_,_)=>{try{preferences.SetProfile(name,profile with{Quality=Value("quality",profile.Quality*100)/100,AudioBitrate=(int)Value("bitrate",profile.AudioBitrate),SampleDepth=Picked("depth",profile.SampleDepth),MaxVideoHeight=(int)Value("height",profile.MaxVideoHeight),GifFrameRate=(int)Value("fps",profile.GifFrameRate),GifWidth=(int)Value("width",profile.GifWidth),Dpi=(int)Value("dpi",profile.Dpi),Layout=Picked("layout",profile.Layout),EpubLayout=Picked("epub",profile.EpubLayout),PreserveMetadata=metadata.IsChecked==true});status.Text=Localizer.Pick("Defaults saved for ","Varsayılanlar kaydedildi: ")+name.ToUpperInvariant();}
                 catch(Exception error)when(error is ArgumentException or IOException or UnauthorizedAccessException){status.Text=error.Message;}};
             restore.Click+=(_,_)=>{try{preferences.SetProfile(name,new());Render();}catch(Exception error)when(error is IOException or UnauthorizedAccessException){status.Text=error.Message;}};
@@ -443,7 +533,7 @@ public sealed class MainWindow:Window
     {
         T? result=null;var dialog=new Window{Title=title,SizeToContent=SizeToContent.WidthAndHeight,CanResize=false,WindowStartupLocation=WindowStartupLocation.CenterOwner};
         var list=new ComboBox{ItemsSource=options.Select(o=>o.Label).ToArray(),SelectedIndex=selected,MinWidth=200};
-        var ok=Primary("OK");ok.IsDefault=true;ok.Click+=(_,_)=>{result=options[list.SelectedIndex].Value;dialog.Close();};
+        var ok=new Button{Content="OK",Classes={"primary"}};ok.IsDefault=true;ok.Click+=(_,_)=>{result=options[list.SelectedIndex].Value;dialog.Close();};
         var close=new Button{Content="Cancel",IsCancel=true};close.Click+=(_,_)=>dialog.Close();
         dialog.Content=new StackPanel{Margin=new(20),Spacing=14,Children={Label(title),list,new StackPanel{Orientation=Orientation.Horizontal,Spacing=8,HorizontalAlignment=HorizontalAlignment.Right,Children={close,ok}}}};
         dialog[!BackgroundProperty]=Resource("Paper");
@@ -452,19 +542,27 @@ public sealed class MainWindow:Window
 
     private void RefreshLibrary()
     {
-        libraryItems.Children.Clear();
-        foreach(var entry in library.Search(search.Text??""))
+        libraryItems.Children.Clear();recent.Children.Clear();
+        var entries=library.Search(search.Text??"").ToArray();var all=library.Search("").ToArray();
+        Control Row(LibraryEntry entry,bool compact)
         {
             var available=entry.AvailablePaths;
-            var use=new Button{Content="Use",IsEnabled=available.Length>0&&running is null};use.Click+=(_,_)=>{files.Clear();Add(available);};
-            var folder=new Button{Content="Folder",IsEnabled=available.Length>0};folder.Click+=(_,_)=>Open(Path.GetDirectoryName(available[0])!);
-            libraryItems.Children.Add(Card(new DockPanel{Children=
+            var use=new Button{Content="Use",Classes={"mini"},IsEnabled=available.Length>0&&running is null};use.Click+=(_,_)=>{files.Clear();Add(available);Page("home");};
+            var folder=new Button{Content="Folder",Classes={"mini"},IsEnabled=available.Length>0};folder.Click+=(_,_)=>Open(Path.GetDirectoryName(available[0])!);
+            var icon=new Border{Width=36,Height=36,CornerRadius=new(10),Child=new TextBlock{Text=available.Length>0?KindSymbol(available[0]):"·",FontSize=16,HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center}};icon[!Border.BackgroundProperty]=Resource("Inset");
+            var row=new DockPanel{Margin=compact?new(14,9):new(16,12),Children=
             {
                 Dock(new StackPanel{Orientation=Orientation.Horizontal,Spacing=6,VerticalAlignment=VerticalAlignment.Center,Children={use,folder}},Avalonia.Controls.Dock.Right),
-                new StackPanel{Children={new TextBlock{Text=entry.Name,FontWeight=FontWeight.SemiBold,TextTrimming=TextTrimming.CharacterEllipsis},Muted($"{entry.Action} · {entry.Created.LocalDateTime:g}{(available.Length==0?" · missing":"")}")}}
-            }}));
+                Dock(icon,Avalonia.Controls.Dock.Left),
+                new StackPanel{Margin=new(12,0,10,0),VerticalAlignment=VerticalAlignment.Center,Children={new TextBlock{Text=entry.Name,FontWeight=FontWeight.SemiBold,TextTrimming=TextTrimming.CharacterEllipsis},Muted($"{entry.Action} · {entry.Created.LocalDateTime:g}{(available.Length==0?" · missing":"")}")}}
+            }};
+            return row;
         }
-        if(libraryItems.Children.Count==0)libraryItems.Children.Add(Muted("Finished files appear here."));
+        foreach(var entry in entries)libraryItems.Children.Add(Card(Row(entry,false),16,0));
+        if(libraryItems.Children.Count==0)libraryItems.Children.Add(Muted("Finished files appear here.",14));
+        foreach(var entry in all.Take(4))recent.Children.Add(Row(entry,true));
+        if(recent.Children.Count==0)recent.Children.Add(new TextBlock{Text="Finished files appear here.",Margin=new(16,14),Opacity=.7});
+        recentCount.Text=all.Length>0?all.Length.ToString(System.Globalization.CultureInfo.InvariantCulture):"";recentCount[!TextBlock.ForegroundProperty]=Resource("Muted");
     }
 
     private static void Open(string folder)
@@ -473,11 +571,10 @@ public sealed class MainWindow:Window
         try{var start=new ProcessStartInfo("xdg-open"){UseShellExecute=false};start.ArgumentList.Add(folder);Process.Start(start)?.Dispose();}catch(Exception error)when(error is System.ComponentModel.Win32Exception or InvalidOperationException){}
     }
 
-    private static TabItem Tab(string header,Control content)=>new(){Header=header,Content=new ScrollViewer{Content=content}};
     private static TextBlock Label(string text)=>new(){Text=text,FontWeight=FontWeight.SemiBold,FontSize=15};
-    private static TextBlock Muted(string text){var block=new TextBlock{Text=text,FontSize=12,TextTrimming=TextTrimming.CharacterEllipsis};block[!TextBlock.ForegroundProperty]=Resource("Muted");return block;}
-    private static Button Primary(string text){var button=new Button{Content=text,Background=NashiTheme.Primary,Foreground=new SolidColorBrush(Color.Parse("#243B2B")),FontWeight=FontWeight.SemiBold};return button;}
-    private static Border Card(Control child){var border=new Border{CornerRadius=new(16),Padding=new(18),BorderThickness=new(1),Child=child};border[!Border.BackgroundProperty]=Resource("Surface");border[!Border.BorderBrushProperty]=Resource("Line");return border;}
+    private static TextBlock Muted(string text,double size=12){var block=new TextBlock{Text=text,FontSize=size,TextTrimming=TextTrimming.CharacterEllipsis};block[!TextBlock.ForegroundProperty]=Resource("Muted");return block;}
+    private static Border Card(Control child,double radius=16,double padding=18){var border=new Border{Child=child};Style(border,radius,padding);return border;}
+    private static void Style(Border border,double radius,double padding){border.CornerRadius=new(radius);border.Padding=new(padding);border.BorderThickness=new(1);border.BoxShadow=BoxShadows.Parse("0 2 10 0 #0F000000");border[!Border.BackgroundProperty]=Resource("Surface");border[!Border.BorderBrushProperty]=Resource("Line");}
     private static T Dock<T>(T control,Dock side)where T:Control{DockPanel.SetDock(control,side);return control;}
     private static Avalonia.Data.BindingBase Resource(string key)=>new Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension(key);
 }

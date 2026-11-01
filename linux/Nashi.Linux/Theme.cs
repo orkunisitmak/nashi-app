@@ -14,6 +14,8 @@ internal static class NashiTheme
         app.RequestedThemeVariant=appearance switch{"light"=>ThemeVariant.Light,"dark"=>ThemeVariant.Dark,_=>ThemeVariant.Default};
         var light=new ResourceDictionary();var dark=new ResourceDictionary();
         foreach(var (key,l,d) in Palette){light[key]=new SolidColorBrush(Color.Parse(l));dark[key]=new SolidColorBrush(Color.Parse(d));}
+        // Fluent's accent (checkboxes, toggles, sliders, progress) in the pear's gold.
+        foreach(var (key,value) in new[]{("SystemAccentColor","#C9972E"),("SystemAccentColorDark1","#B58425"),("SystemAccentColorDark2","#9C711C"),("SystemAccentColorDark3","#7F5B14"),("SystemAccentColorLight1","#E3B859"),("SystemAccentColorLight2","#ECC977"),("SystemAccentColorLight3","#F5D99B")})app.Resources[key]=Color.Parse(value);
         app.Resources.ThemeDictionaries[ThemeVariant.Light]=light;app.Resources.ThemeDictionaries[ThemeVariant.Dark]=dark;
     }
 }

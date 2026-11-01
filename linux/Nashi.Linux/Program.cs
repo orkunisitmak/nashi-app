@@ -19,7 +19,7 @@ internal static class Program
 
 internal sealed class App:Application
 {
-    public override void Initialize()=>Styles.Add(new FluentTheme());
+    public override void Initialize(){Styles.Add(new FluentTheme());NashiStyles.Install(this);}
     public override void OnFrameworkInitializationCompleted()
     {
         if(ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)

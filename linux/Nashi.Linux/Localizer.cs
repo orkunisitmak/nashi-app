@@ -57,6 +57,8 @@ internal static class Localizer
         ["Nashi is busy. Try again in a moment."]="Nashi meşgul. Biraz sonra tekrar deneyin.",["Show the Nashi bubble: drop files on it from any app to open the wheel"]="Nashi balonunu göster: çarkı açmak için herhangi bir uygulamadan dosyaları üstüne bırakın",
         // The shared catalog names both Trim Video and Crop Video "Videoyu Kırp"; Linux tells them apart.
         ["Trim Video"]="Videoyu Kısalt",["Trim Audio"]="Sesi Kısalt",
+        ["On your PC"]="Bilgisayarında",["Made for Linux"]="Linux için yapıldı",["Choose files"]="Dosya seç",["Download a link"]="Bağlantı indir",["Video, audio, or an image. Straight into your tools."]="Video, ses ya da görsel. Doğrudan araçlarına.",
+        ["Freshly made"]="Taze yapılanlar",["See all  ↗"]="Tümünü gör  ↗",["Library"]="Kitaplık",["Everything Nashi made, newest first."]="Nashi'nin yaptığı her şey, en yenisi önce.",["Drop on the pear bubble"]="Armut balonuna bırak",["Choose"]="Seç",["Paste"]="Yapıştır",["Web  ↗"]="Web  ↗",["✦  START HERE"]="✦  BURADAN BAŞLA",
         ["Set up media tools"]="Medya araçlarını kur",["Move to…"]="Taşı…",["Copy"]="Kopyala",["Cancel"]="İptal",["Save"]="Kaydet",["Undo"]="Geri al",["Clear"]="Temizle",["Tool"]="Araç",["Color"]="Renk",["Text"]="Metin",["Cover"]="Kapat",["Redact"]="Sansürle",
     };
     /// For sentences built from numbers or names, which a catalog lookup cannot match.

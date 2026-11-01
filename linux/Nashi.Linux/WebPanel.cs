@@ -46,7 +46,7 @@ internal sealed class WebPanel : StackPanel
         {
             Text = "Download from the web",
             FontWeight = FontWeight.Bold,
-            FontSize = 22,
+            FontSize = 26,
         };
         Children.Add(title);
 
@@ -82,8 +82,7 @@ internal sealed class WebPanel : StackPanel
         findBtn.Click += async (_, __) => await FindAsync();
         var downloadBtn = new Button { Content = "Download" };
         downloadBtn.Click += async (_, __) => await DownloadAsync();
-        // Primary style
-        ApplyPrimaryStyle(downloadBtn);
+        downloadBtn.Classes.Add("primary");pasteBtn.Classes.Add("pill");findBtn.Classes.Add("pill");
         buttonRow.Children.Add(pasteBtn);
         buttonRow.Children.Add(findBtn);
         buttonRow.Children.Add(downloadBtn);
