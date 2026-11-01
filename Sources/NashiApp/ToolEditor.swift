@@ -301,22 +301,22 @@ struct ToolEditor:View {
                 LText("Alignment").font(.caption.weight(.medium)).foregroundStyle(.secondary)
                 HStack(spacing:6) {
                     LText("Horizontal").font(.caption).frame(width:68,alignment:.leading)
-                    Button { alignCrop(horizontal:.left) } label:{ HStack(spacing:3) { Image(systemName:"align.horizontal.left");LText("Left") } }
-                    Button { alignCrop(horizontal:.center) } label:{ HStack(spacing:3) { Image(systemName:"align.horizontal.center");LText("Center") } }
-                    Button { alignCrop(horizontal:.right) } label:{ HStack(spacing:3) { Image(systemName:"align.horizontal.right");LText("Right") } }
+                    Button { alignCrop(horizontal:.left) } label:{ Image(systemName:"align.horizontal.left") }.help(L10n.text("Left"))
+                    Button { alignCrop(horizontal:.center) } label:{ Image(systemName:"align.horizontal.center") }.help(L10n.text("Center"))
+                    Button { alignCrop(horizontal:.right) } label:{ Image(systemName:"align.horizontal.right") }.help(L10n.text("Right"))
                 }
                 HStack(spacing:6) {
                     LText("Vertical").font(.caption).frame(width:68,alignment:.leading)
-                    Button { alignCrop(vertical:.top) } label:{ HStack(spacing:3) { Image(systemName:"align.vertical.top");LText("Top") } }
-                    Button { alignCrop(vertical:.center) } label:{ HStack(spacing:3) { Image(systemName:"align.vertical.center");LText("Center") } }
-                    Button { alignCrop(vertical:.bottom) } label:{ HStack(spacing:3) { Image(systemName:"align.vertical.bottom");LText("Bottom") } }
+                    Button { alignCrop(vertical:.top) } label:{ Image(systemName:"align.vertical.top") }.help(L10n.text("Top"))
+                    Button { alignCrop(vertical:.center) } label:{ Image(systemName:"align.vertical.center") }.help(L10n.text("Center"))
+                    Button { alignCrop(vertical:.bottom) } label:{ Image(systemName:"align.vertical.bottom") }.help(L10n.text("Bottom"))
                 }
             }
-            HStack {
-                Button("Select All") { setCrop(EditRect(x:0,y:0,width:imageSize.width,height:imageSize.height));aspect="Free" }
-                Button { alignCrop(horizontal:.center,vertical:.center) } label:{ LText("Center Selection") }
-                Button("Clear Selection") { options.crop=nil;width=Int(imageSize.width);height=Int(imageSize.height) }.disabled(options.crop==nil)
-            }
+            HStack(spacing:4) {
+                Button(action:{ setCrop(EditRect(x:0,y:0,width:imageSize.width,height:imageSize.height));aspect="Free" }) { LText("Select All").lineLimit(1).minimumScaleFactor(0.7) }
+                Button(action:{ alignCrop(horizontal:.center,vertical:.center) }) { LText("Center Selection").lineLimit(1).minimumScaleFactor(0.7) }
+                Button(action:{ options.crop=nil;width=Int(imageSize.width);height=Int(imageSize.height) }) { LText("Clear Selection").lineLimit(1).minimumScaleFactor(0.7) }.disabled(options.crop==nil)
+            }.controlSize(.small)
         }
     }
     var isCropTool:Bool { tool == .cropImage || tool == .cropVideo }

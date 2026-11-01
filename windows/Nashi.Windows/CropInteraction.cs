@@ -29,22 +29,36 @@ public sealed partial class ToolEditor
     private void AlignCrop(int? horizontal = null, int? vertical = null)
     {
         if(tool is not ("crop" or "cropVideo"))return;
-        var cur = selection is not null && selection.Width > 0 && selection.Height > 0
-            ? new Rect(Canvas.GetLeft(selection),Canvas.GetTop(selection),selection.Width,selection.Height)
-            : new Rect(0,0,drawing.Width,drawing.Height);
-        var x = cur.X;
-        var y = cur.Y;
+        double curW, curH, curX, curY;
+        if(selection is not null && selection.Width > 0 && selection.Height > 0)
+        {
+            // Boyutu önce yuvarla (kilitli oranda son piksel kaybını önler)
+            curW = Math.Max(1, Math.Round(selection.Width));
+            curH = Math.Max(1, Math.Round(selection.Height));
+            curX = Canvas.GetLeft(selection);
+            curY = Canvas.GetTop(selection);
+        }
+        else
+        {
+            // Seçim yoksa field değerlerini kullan
+            curW = Math.Max(1, Math.Round(Value("Width", drawing.Width)));
+            curH = Math.Max(1, Math.Round(Value("Height", drawing.Height)));
+            curX = 0;
+            curY = 0;
+        }
+        var x = curX;
+        var y = curY;
         if(horizontal is {} h)
         {
-            var maxW = Math.Max(0, drawing.Width - cur.Width);
+            var maxW = Math.Max(0, drawing.Width - curW);
             x = h < 0 ? 0 : h == 0 ? Math.Floor(maxW / 2) : maxW;
         }
         if(vertical is {} v)
         {
-            var maxH = Math.Max(0, drawing.Height - cur.Height);
+            var maxH = Math.Max(0, drawing.Height - curH);
             y = v < 0 ? 0 : v == 0 ? Math.Floor(maxH / 2) : maxH;
         }
-        SetCrop(new(x, y, cur.Width, cur.Height));
+        SetCrop(new(x, y, curW, curH));
     }
     private double? CropRatio(){if(aspectRatio.SelectedItem is not string value||value=="Free")return null;var p=value.Split(':');return double.Parse(p[0],System.Globalization.CultureInfo.InvariantCulture)/double.Parse(p[1],System.Globalization.CultureInfo.InvariantCulture);}
     private bool BeginCropGesture(Point point)
@@ -64,6 +78,6 @@ public sealed partial class ToolEditor
     private void SetCrop(Rect rect)
     {
         if(selection is null){selection=new Rectangle{Stroke=Brushes.Gold,StrokeThickness=Math.Max(2,drawing.Width/350),Fill=new SolidColorBrush(Color.FromArgb(35,224,189,82)),IsHitTestVisible=false};drawing.Children.Add(selection);}
-        Canvas.SetLeft(selection,rect.X);Canvas.SetTop(selection,rect.Y);selection.Width=rect.Width;selection.Height=rect.Height;fields["X"].Text=Number(Math.Floor(rect.X));fields["Y"].Text=Number(Math.Floor(rect.Y));fields["Width"].Text=Number(Math.Floor(rect.Width));fields["Height"].Text=Number(Math.Floor(rect.Height));
+        Canvas.SetLeft(selection,rect.X);Canvas.SetTop(selection,rect.Y);selection.Width=rect.Width;selection.Height=rect.Height;fields["X"].Text=Number(Math.Floor(rect.X));fields["Y"].Text=Number(Math.Floor(rect.Y));fields["Width"].Text=Number(Math.Round(rect.Width));fields["Height"].Text=Number(Math.Round(rect.Height));
     }
 }
