@@ -26,26 +26,27 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
             token.ThrowIfCancellationRequested();
             using var limit = CancellationTokenSource.CreateLinkedTokenSource(token);
             limit.CancelAfter(ConversionTimeout);
+            var tempStage = Path.Combine(Path.GetTempPath(), "NashiMsOffice-" + Guid.NewGuid().ToString("N") + "." + (format == "tsv" ? "csv" : format));
             try
             {
-                var success = await Task.Run(() => MicrosoftOffice.TryConvert(original, format, destination, limit.Token), limit.Token);
+                var success = await Task.Run(() => MicrosoftOffice.TryConvert(original, format, tempStage, limit.Token), limit.Token);
                 limit.Token.ThrowIfCancellationRequested();
-                if (success && File.Exists(destination) && new FileInfo(destination).Length > 0)
+                if (success && File.Exists(tempStage) && new FileInfo(tempStage).Length > 0)
                 {
+                    File.Move(tempStage, destination);
                     return destination;
-                }
-                if (File.Exists(destination))
-                {
-                    try { File.Delete(destination); } catch { }
                 }
             }
             catch (OperationCanceledException) when (!token.IsCancellationRequested)
             {
-                if (File.Exists(destination))
-                {
-                    try { File.Delete(destination); } catch { }
-                }
                 throw new TimeoutException(TimeoutMessage);
+            }
+            finally
+            {
+                if (File.Exists(tempStage))
+                {
+                    try { File.Delete(tempStage); } catch { }
+                }
             }
         }
 
