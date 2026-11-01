@@ -1536,6 +1536,7 @@
 "ONE LAST STEP.\nSET UP YOUR TOOLS." = "UNE DERNIÈRE ÉTAPE.\nCONFIGUREZ VOS OUTILS.";
 "ONE OR MORE MEDIA SETTINGS ARE OUTSIDE THEIR SUPPORTED RANGE." = "UN OU PLUSIEURS RÉGLAGES MULTIMÉDIAS SONT EN DEHORS DE LEUR PLAGE PRISE EN CHARGE.";
 "ONE TOOL GROUP IS READY. DOWNLOAD THE REMAINING TOOLS TO FINISH SETUP." = "UN GROUPE D’OUTILS EST PRÊT. TÉLÉCHARGEZ LES OUTILS RESTANTS POUR TERMINER LA CONFIGURATION.";
+"ONLY HTTPS DOWNLOADS ARE SUPPORTED." = "ONLY HTTPS DOWNLOADS ARE SUPPORTED.";
 "OPEN" = "OUVRIR";
 "OPEN IN TERMINAL" = "OUVRIR DANS TERMINAL";
 "OPEN LINK" = "OUVRIR LE LIEN";
@@ -1581,6 +1582,7 @@
 "One last step.\nSet up your tools." = "Une dernière étape.\nConfigurez vos outils.";
 "One or more media settings are outside their supported range." = "Un ou plusieurs réglages multimédias sont en dehors de leur plage prise en charge.";
 "One tool group is ready. Download the remaining tools to finish setup." = "Un groupe d’outils est prêt. Téléchargez les outils restants pour terminer la configuration.";
+"Only HTTPS downloads are supported." = "Only HTTPS downloads are supported.";
 "Open" = "Ouvrir";
 "Open Login Items" = "Ouvrir les éléments d’ouverture";
 "Open Nashi" = "Ouvrir Nashi";

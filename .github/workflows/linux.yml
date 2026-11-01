@@ -65,7 +65,7 @@ jobs:
           actual=$(APPIMAGE_EXTRACT_AND_RUN=1 ./build/linux/Nashi-Linux-x86_64.AppImage --version)
           test "$actual" = "$expected" || { echo "got '$actual', want '$expected'" >&2; exit 1; }
           (cd "$RUNNER_TEMP" && "$GITHUB_WORKSPACE/build/linux/Nashi-Linux-x86_64.AppImage" --appimage-extract >/dev/null)
-          for f in LICENSE THIRD-PARTY-NOTICES.txt licenses/Magick.NET-THIRD-PARTY-NOTICES.txt licenses/dotnet-MIT.txt licenses/dotnet-THIRD-PARTY-NOTICES.txt licenses/PDFsharp-MIT.txt licenses/SharpCompress-MIT.txt licenses/BouncyCastle-MIT.txt licenses/PdfPig-Apache-2.0.txt licenses/ZXing-Apache-2.0.txt licenses/Avalonia-MIT.txt licenses/SkiaSharp-HarfBuzzSharp-MIT.txt licenses/SkiaSharp-HarfBuzzSharp-THIRD-PARTY-NOTICES.txt licenses/Inter-OFL-1.1.txt licenses/PDFium-THIRD-PARTY-NOTICES.txt; do
+          for f in LICENSE THIRD-PARTY-NOTICES.txt licenses/Magick.NET-THIRD-PARTY-NOTICES.txt licenses/dotnet-MIT.txt licenses/dotnet-THIRD-PARTY-NOTICES.txt licenses/PDFsharp-MIT.txt licenses/SharpCompress-MIT.txt licenses/BouncyCastle-MIT.txt licenses/PdfPig-Apache-2.0.txt licenses/ZXing-Apache-2.0.txt licenses/Avalonia-MIT.txt licenses/SkiaSharp-HarfBuzzSharp-MIT.txt licenses/SkiaSharp-HarfBuzzSharp-THIRD-PARTY-NOTICES.txt licenses/Inter-OFL-1.1.txt licenses/PDFium-THIRD-PARTY-NOTICES.txt licenses/Filee-MIT.txt; do
             test -s "$RUNNER_TEMP/squashfs-root/usr/share/doc/nashi/$f"
           done
       - name: Upload Linux AppImage

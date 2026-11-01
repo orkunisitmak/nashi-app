@@ -1536,6 +1536,7 @@
 "ONE LAST STEP.\nSET UP YOUR TOOLS." = "ONE LAST STEP.\nSET UP YOUR TOOLS.";
 "ONE OR MORE MEDIA SETTINGS ARE OUTSIDE THEIR SUPPORTED RANGE." = "ONE OR MORE MEDIA SETTINGS ARE OUTSIDE THEIR SUPPORTED RANGE.";
 "ONE TOOL GROUP IS READY. DOWNLOAD THE REMAINING TOOLS TO FINISH SETUP." = "ONE TOOL GROUP IS READY. DOWNLOAD THE REMAINING TOOLS TO FINISH SETUP.";
+"ONLY HTTPS DOWNLOADS ARE SUPPORTED." = "ONLY HTTPS DOWNLOADS ARE SUPPORTED.";
 "OPEN" = "OPEN";
 "OPEN IN TERMINAL" = "OPEN IN TERMINAL";
 "OPEN LINK" = "OPEN LINK";
@@ -1581,6 +1582,7 @@
 "One last step.\nSet up your tools." = "One last step.\nSet up your tools.";
 "One or more media settings are outside their supported range." = "One or more media settings are outside their supported range.";
 "One tool group is ready. Download the remaining tools to finish setup." = "One tool group is ready. Download the remaining tools to finish setup.";
+"Only HTTPS downloads are supported." = "Only HTTPS downloads are supported.";
 "Open" = "Open";
 "Open Login Items" = "Open Login Items";
 "Open Nashi" = "Open Nashi";

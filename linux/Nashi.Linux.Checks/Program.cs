@@ -56,6 +56,7 @@ try
     LaunchChecks();
     await InstanceChecks(temp.FullName);
     ClipboardChecks();
+    await DragChecks.BrowserAsync(temp.FullName, Check);
     PlacementChecks();
     IntegrationChecks(temp.FullName); // before Avalonia starts, like the real --install-integration
     SelectionChecks(temp.FullName);

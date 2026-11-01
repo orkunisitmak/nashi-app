@@ -19,6 +19,9 @@ Bundled in the AppImage:
 - BouncyCastle.Cryptography 2.7.0, The Legion of the Bouncy Castle Inc., MIT. https://github.com/bcgit/bc-csharp/blob/master/LICENSE.md
 - Microsoft.Extensions.DependencyInjection.Abstractions / Logging.Abstractions 8.x and System.Security.Cryptography.Pkcs 10.0.13, Microsoft, MIT.
 
+Adapted source code:
+- Filee (https://github.com/KnifeLemon/Filee, commit 5811b463f081), Copyright (c) 2026 Myeonggu Kim (KnifeLemon) and Filee contributors, MIT (licenses/Filee-MIT.txt). Nashi adapts its drag-gesture detector, browser-drag parsing, XDG download folder lookup and folder-watching approach; each adapted file says so at the top.
+
 LibreOffice is not bundled: Office conversions use the system LibreOffice, under its own licenses.
 
 ExifTool 13.59 (Phil Harvey, Artistic License or GPL, the same terms as Perl) is downloaded the same way for Metadata, from https://sourceforge.net/projects/exiftool/files/Image-ExifTool-13.59.tar.gz/ with a pinned SHA-256; it runs on the system Perl and keeps its upstream notices in the tools folder.

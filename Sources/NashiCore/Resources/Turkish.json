@@ -1297,5 +1297,6 @@
   "{0}: {1} pages": "{0}: {1} sayfa",
   "Choose a valid color.": "Geçerli bir renk seç.",
   "This PDF could not be opened.": "Bu PDF açılamadı.",
-  "Couldn’t play the preview: {0}": "Önizleme oynatılamadı: {0}"
+  "Couldn’t play the preview: {0}": "Önizleme oynatılamadı: {0}",
+  "Only HTTPS downloads are supported.": "Yalnızca HTTPS indirmeleri destekleniyor."
 }

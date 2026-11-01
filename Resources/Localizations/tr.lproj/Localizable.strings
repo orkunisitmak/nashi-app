@@ -1536,6 +1536,7 @@
 "ONE LAST STEP.\nSET UP YOUR TOOLS." = "SON BİR ADIM.\nARAÇLARINI KUR.";
 "ONE OR MORE MEDIA SETTINGS ARE OUTSIDE THEIR SUPPORTED RANGE." = "BİR VEYA DAHA FAZLA MEDYA AYARI DESTEKLENEN ARALIĞIN DIŞINDA.";
 "ONE TOOL GROUP IS READY. DOWNLOAD THE REMAINING TOOLS TO FINISH SETUP." = "BİR ARAÇ GRUBU HAZIR. KURULUMU TAMAMLAMAK İÇİN KALAN ARAÇLARI İNDİR.";
+"ONLY HTTPS DOWNLOADS ARE SUPPORTED." = "YALNIZCA HTTPS İNDİRMELERİ DESTEKLENİYOR.";
 "OPEN" = "AÇ";
 "OPEN IN TERMINAL" = "TERMINAL'DE AÇ";
 "OPEN LINK" = "BAĞLANTIYI AÇ";
@@ -1581,6 +1582,7 @@
 "One last step.\nSet up your tools." = "Son bir adım.\nAraçlarını kur.";
 "One or more media settings are outside their supported range." = "Bir veya daha fazla medya ayarı desteklenen aralığın dışında.";
 "One tool group is ready. Download the remaining tools to finish setup." = "Bir araç grubu hazır. Kurulumu tamamlamak için kalan araçları indir.";
+"Only HTTPS downloads are supported." = "Yalnızca HTTPS indirmeleri destekleniyor.";
 "Open" = "Aç";
 "Open Login Items" = "Giriş Öğelerini Aç";
 "Open Nashi" = "Nashi'yi Aç";
