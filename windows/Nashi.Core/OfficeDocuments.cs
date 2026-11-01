@@ -15,13 +15,33 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
     public const string TimeoutMessage="Office did not finish converting this document within 5 minutes. Try again, or cancel and choose another format.";
     public async Task<string> OfficeAsync(string input,string format,string outputDirectory,CancellationToken token)
     {
-        Directory.CreateDirectory(outputDirectory);// LibreOffice creates deeply nested profile/cache paths. Keep its job short
+        Directory.CreateDirectory(outputDirectory);
+        var original=Path.GetFullPath(input);
+        var ext=FeatureCatalog.Extension(input);
+        var destination=SafePaths.Unique(outputDirectory,Path.GetFileNameWithoutExtension(original)+"."+(format=="tsv"?"csv":format));
+
+        // Native Microsoft Office support (no LibreOffice download needed)
+        if (OperatingSystem.IsWindows() && MicrosoftOffice.IsAvailable && MicrosoftOffice.CanHandle(ext, format))
+        {
+            token.ThrowIfCancellationRequested();
+            var success = await Task.Run(() => MicrosoftOffice.TryConvert(original, format, destination), token);
+            if (success && File.Exists(destination) && new FileInfo(destination).Length > 0)
+            {
+                return destination;
+            }
+        }
+
+        if (office == "MicrosoftOffice" || string.IsNullOrEmpty(office) || !File.Exists(office))
+        {
+            throw new InvalidOperationException("Microsoft Office could not convert this document and LibreOffice is not installed.");
+        }
+
+        // LibreOffice creates deeply nested profile/cache paths. Keep its job short
         // even when the destination is an already nested export transaction.
         var job=Path.Combine(Path.GetTempPath(),"NashiOffice-"+Guid.NewGuid().ToString("N"));var profile=Path.Combine(job,"profile");var rendered=Path.Combine(job,"out");Directory.CreateDirectory(Path.Combine(profile,"user"));Directory.CreateDirectory(rendered);
         try
         {
             await File.WriteAllTextAsync(Path.Combine(profile,"user","registrymodifications.xcu"),"<?xml version=\"1.0\"?><oor:items xmlns:oor=\"http://openoffice.org/2001/registry\"><item oor:path=\"/org.openoffice.Office.Common/Security/Scripting\"><prop oor:name=\"MacroSecurityLevel\" oor:op=\"fuse\"><value>3</value></prop></item><item oor:path=\"/org.openoffice.Office.Common/Load\"><prop oor:name=\"UpdateLinkMode\" oor:op=\"fuse\"><value>0</value></prop></item></oor:items>",token);
-            var original=Path.GetFullPath(input);var ext=FeatureCatalog.Extension(input);
             if(new[]{"docx","doc","pptx","ppt","xlsx","xls","ods","odt","rtf","pdf","epub"}.Contains(ext)){input=Path.Combine(job,"Source."+ext);File.Copy(original,input);}
             var spreadsheet=new[]{"csv","tsv","xls","xlsx","ods"}.Contains(ext);var slides=new[]{"ppt","pptx"}.Contains(ext);
             var filter=format switch{"docx"=>"docx:Office Open XML Text","pptx"=>"pptx:Impress MS PowerPoint 2007 XML","xlsx"=>"xlsx:Calc MS Excel 2007 XML","pdf"=>"pdf:"+(spreadsheet?"calc_pdf_Export":slides?"impress_pdf_Export":"writer_pdf_Export"),"txt"=>"txt:Text (encoded):UTF8,LF","csv"=>"csv:Text - txt - csv (StarCalc):44,34,76,1,,0,false,true,true,false,false,0","tsv"=>"csv:Text - txt - csv (StarCalc):9,34,76,1,,0,false,true,true,false,false,0","html"=>"html:HTML (StarWriter)","md"=>"md:Markdown","epub"=>"epub:EPUB",_=>format};
@@ -34,7 +54,7 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
             using var limit=CancellationTokenSource.CreateLinkedTokenSource(token);limit.CancelAfter(ConversionTimeout);ProcessResult result;
             try{result=await ProcessRunner.RunAsync(office,args,limit.Token);}
             catch(OperationCanceledException)when(!token.IsCancellationRequested){throw new TimeoutException(TimeoutMessage);}
-            var output=Path.Combine(rendered,Path.GetFileNameWithoutExtension(input)+"."+(format=="tsv"?"csv":format));if(!File.Exists(output)||new FileInfo(output).Length==0)throw new IOException("Office could not convert this document to "+format.ToUpperInvariant()+". "+(result.Error+" "+result.Output).Trim());var destination=SafePaths.Unique(outputDirectory,Path.GetFileNameWithoutExtension(original)+"."+(format=="tsv"?"csv":format));File.Move(output,destination);return destination;
+            var output=Path.Combine(rendered,Path.GetFileNameWithoutExtension(input)+"."+(format=="tsv"?"csv":format));if(!File.Exists(output)||new FileInfo(output).Length==0)throw new IOException("Office could not convert this document to "+format.ToUpperInvariant()+". "+(result.Error+" "+result.Output).Trim());File.Move(output,destination);return destination;
         }
         finally{if(Directory.Exists(job))Directory.Delete(job,true);}
     }

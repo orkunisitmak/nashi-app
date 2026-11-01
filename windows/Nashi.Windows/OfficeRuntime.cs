@@ -21,7 +21,7 @@ public sealed class OfficeRuntime(string root)
         catch(Exception error)when(error is IOException or UnauthorizedAccessException){}
         return !File.Exists(loader);
     }
-    public string? Executable{get{var managed=Path.Combine(root,"office-26.8.1");var safe=!Directory.Exists(managed)||DisablePythonLoader(managed);return Candidates(safe).FirstOrDefault(ToolInstallation.UsableFile);}}
+    public string? Executable{get{var managed=Path.Combine(root,"office-26.8.1");var safe=!Directory.Exists(managed)||DisablePythonLoader(managed);var candidate=Candidates(safe).FirstOrDefault(ToolInstallation.UsableFile);if(candidate is not null)return candidate;if(MicrosoftOffice.IsAvailable)return "MicrosoftOffice";return null;}}
     // If the loader cannot be disabled, prefer a LibreOffice under Program Files. The private runtime
     // is then the last resort, and the 5-minute conversion limit still applies.
     private string[] Candidates(bool privateRuntimeSafe)
