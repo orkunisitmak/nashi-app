@@ -1,6 +1,9 @@
+using System.Globalization;
 using System.Text.Json;
 using ImageMagick;
 using Nashi.Core;
+using PdfSharp.Drawing;
+using PdfSharp.Pdf;
 
 namespace Nashi.Cli;
 
@@ -12,12 +15,19 @@ public static class Program
     private static readonly string ToolsDirectory = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "Nashi",
+        "Tools",
+        "v1"
+    );
+
+    private static readonly string OfficeToolsDirectory = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "Nashi",
         "Tools"
     );
 
     private static readonly string[] CliSupportedTools =
     [
-        "readQRCode", "createPDF", "splitPDF", "mergePDF", "mergePDFs", "extractArchive", "unzip"
+        "readQRCode", "createPDF", "splitPDF", "mergePDF", "extractArchive"
     ];
 
     /// <summary>
@@ -108,10 +118,25 @@ public static class Program
     /// <returns>Process exit code 0.</returns>
     private static int RunCatalog()
     {
+        var supportedConversions = new Dictionary<string, string[]>();
+        foreach (var (source, targets) in FeatureCatalog.Conversions)
+        {
+            var s = NormalizeFormat(source);
+            if (IsImageFormat(s))
+            {
+                var validTargets = targets.Select(NormalizeFormat).Where(IsImageFormat).Distinct().ToArray();
+                if (validTargets.Length > 0) supportedConversions[source] = validTargets;
+            }
+            else if (s is "docx" or "doc" or "xlsx" or "xls" or "pptx" or "ppt" or "odt" or "ods" or "odp")
+            {
+                supportedConversions[source] = targets;
+            }
+        }
+
         var output = new Dictionary<string, object>
         {
             ["conversionMatrix"] = FeatureCatalog.Conversions,
-            ["conversions"] = FeatureCatalog.Conversions,
+            ["conversions"] = supportedConversions,
             ["tools"] = FeatureCatalog.ToolNames,
             ["supportedTools"] = CliSupportedTools
         };
@@ -239,7 +264,7 @@ public static class Program
         string? exiftoolPath = metadataService.Executable;
 
         var soffice = GetLibreOfficeExecutable();
-        bool hasSoffice = File.Exists(soffice);
+        bool hasSoffice = soffice is not null && File.Exists(soffice);
 
         var status = new
         {
@@ -274,7 +299,8 @@ public static class Program
         if (parseError is not null)
         {
             Console.Error.WriteLine($"Error: {parseError}");
-            return parseError.Contains("No valid input") ? 64 : 1;
+            bool isFileMissing = parseError.StartsWith("File not found") || parseError.StartsWith("File or directory not found");
+            return isFileMissing ? 1 : 64;
         }
 
         outputDir ??= Path.GetDirectoryName(Path.GetFullPath(inputs[0])) ?? Environment.CurrentDirectory;
@@ -290,11 +316,19 @@ public static class Program
 
             if (IsImageFormat(inExt) && IsImageFormat(format))
             {
+                var toolchain = new Toolchain(ToolsDirectory, Environment.GetEnvironmentVariable("PATH"));
+                string? ffmpegPath = null;
+                try { ffmpegPath = toolchain.Executable("ffmpeg"); } catch { }
+                if (format == "heic" && ffmpegPath is null)
+                {
+                    Console.Error.WriteLine("Error: Converting to HEIC requires FFmpeg. Ensure FFmpeg is available on PATH or installed via Nashi tools setup.");
+                    return 1;
+                }
                 var destName = Path.GetFileNameWithoutExtension(fullPath) + "." + format;
                 var destPath = SafePaths.Unique(outputDir, destName);
                 using var image = PhotoCodec.Read(fullPath);
                 var png = image.ToByteArray(MagickFormat.Png);
-                PhotoCodec.EncodePng(png, destPath, format, token: CancellationToken.None);
+                PhotoCodec.EncodePng(png, destPath, format, encoder: ffmpegPath, token: CancellationToken.None);
                 createdFiles.Add(destPath);
                 if (!jsonOutput) Console.WriteLine($"Created: {destPath}");
             }
@@ -302,7 +336,7 @@ public static class Program
             {
                 var soffice = GetLibreOfficeExecutable();
                 var deno = GetExecutable("deno.exe");
-                if (File.Exists(soffice))
+                if (soffice is not null && File.Exists(soffice))
                 {
                     var office = new OfficeDocuments(soffice, deno, AppContext.BaseDirectory);
                     var dest = await office.OfficeAsync(fullPath, format, outputDir, CancellationToken.None);
@@ -345,7 +379,8 @@ public static class Program
         if (parseError is not null)
         {
             Console.Error.WriteLine($"Error: {parseError}");
-            return parseError.Contains("No valid input") ? 64 : 1;
+            bool isFileMissing = parseError.StartsWith("File not found") || parseError.StartsWith("File or directory not found");
+            return isFileMissing ? 1 : 64;
         }
 
         outputDir ??= Path.GetDirectoryName(Path.GetFullPath(inputs[0])) ?? Environment.CurrentDirectory;
@@ -504,7 +539,7 @@ public static class Program
     private static (int? Width, int? Height, double? Percent) ParseDimensions(string spec)
     {
         spec = spec.Trim().ToLowerInvariant();
-        if (spec.EndsWith('%') && double.TryParse(spec[..^1], out var pct) && pct > 0)
+        if (spec.EndsWith('%') && double.TryParse(spec[..^1], NumberStyles.Float, CultureInfo.InvariantCulture, out var pct) && pct > 0)
         {
             return (null, null, pct);
         }
@@ -516,23 +551,23 @@ public static class Program
             bool hasH = parts[1].Length > 0;
             if (hasW && hasH)
             {
-                if (int.TryParse(parts[0], out var w) && w > 0 &&
-                    int.TryParse(parts[1], out var h) && h > 0)
+                if (int.TryParse(parts[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var w) && w > 0 &&
+                    int.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var h) && h > 0)
                 {
                     return (w, h, null);
                 }
                 return (null, null, null);
             }
-            if (hasW && int.TryParse(parts[0], out var singleW) && singleW > 0)
+            if (hasW && int.TryParse(parts[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var singleW) && singleW > 0)
             {
                 return (singleW, null, null);
             }
-            if (hasH && int.TryParse(parts[1], out var singleH) && singleH > 0)
+            if (hasH && int.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var singleH) && singleH > 0)
             {
                 return (null, singleH, null);
             }
         }
-        else if (parts.Length == 1 && int.TryParse(parts[0], out var singleW) && singleW > 0)
+        else if (parts.Length == 1 && int.TryParse(parts[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var singleW) && singleW > 0)
         {
             return (singleW, null, null);
         }
@@ -562,7 +597,39 @@ public static class Program
             }
             else if (arg is "--options" && i + 1 < args.Length)
             {
-                i++; // consume JSON options argument
+                var optionsJson = args[++i];
+                try
+                {
+                    using var doc = JsonDocument.Parse(optionsJson);
+                    var root = doc.RootElement;
+                    if (root.TryGetProperty("fit", out var fitProp) && fitProp.GetString() is { } fitStr)
+                    {
+                        var val = fitStr.ToLowerInvariant();
+                        fit = val switch
+                        {
+                            "crop" => "crop",
+                            "contain" or "fit" => "contain",
+                            "stretch" or "fill" or "exact" => "stretch",
+                            _ => null!
+                        };
+                        if (fit is null)
+                        {
+                            return (inputs, outputDir, "crop", quality, format, jsonOutput, $"Unknown --fit value '{val}' in --options. Supported options: crop, contain, stretch.");
+                        }
+                    }
+                    if (root.TryGetProperty("quality", out var qualityProp) && qualityProp.TryGetInt32(out var qVal))
+                    {
+                        quality = Math.Clamp(qVal, 1, 100);
+                    }
+                    if (root.TryGetProperty("format", out var formatProp) && formatProp.GetString() is { } fmtStr)
+                    {
+                        format = fmtStr;
+                    }
+                }
+                catch (JsonException ex)
+                {
+                    return (inputs, outputDir, fit, quality, format, jsonOutput, $"Invalid JSON passed to --options: {ex.Message}");
+                }
             }
             else if (arg is "--fit" && i + 1 < args.Length)
             {
@@ -579,7 +646,7 @@ public static class Program
                     return (inputs, outputDir, "crop", quality, format, jsonOutput, $"Unknown --fit value '{val}'. Supported options: crop, contain, stretch.");
                 }
             }
-            else if (arg is "-q" or "--quality" && i + 1 < args.Length && int.TryParse(args[++i], out var q))
+            else if (arg is "-q" or "--quality" && i + 1 < args.Length && int.TryParse(args[++i], NumberStyles.Integer, CultureInfo.InvariantCulture, out var q))
             {
                 quality = Math.Clamp(q, 1, 100);
             }
@@ -621,7 +688,8 @@ public static class Program
         if (parseError is not null)
         {
             Console.Error.WriteLine($"Error: {parseError}");
-            return parseError.Contains("No valid input") ? 64 : 1;
+            bool isFileMissing = parseError.StartsWith("File not found") || parseError.StartsWith("File or directory not found");
+            return isFileMissing ? 1 : 64;
         }
 
         outputDir ??= Path.GetDirectoryName(Path.GetFullPath(inputs[0])) ?? Environment.CurrentDirectory;
@@ -656,29 +724,46 @@ public static class Program
                 return 0;
 
             case "createpdf":
-                var imageInputs = inputs.Where(f => IsImageFormat(Path.GetExtension(f))).ToList();
-                if (imageInputs.Count > 0)
+                var nonImage = inputs.FirstOrDefault(f => !IsImageFormat(Path.GetExtension(f)));
+                if (nonImage is not null)
                 {
-                    if (!jsonOutput) Console.WriteLine($"Creating PDF from {imageInputs.Count} image(s)...");
-                    var pdfPath = SafePaths.Unique(outputDir, "Images.pdf");
-                    using var collection = new MagickImageCollection();
-                    foreach (var img in imageInputs)
-                    {
-                        collection.Add(PhotoCodec.Read(img));
-                    }
-                    collection.Write(pdfPath, MagickFormat.Pdf);
-                    if (jsonOutput)
-                    {
-                        Console.WriteLine(JsonSerializer.Serialize(new[] { pdfPath }));
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Created: {pdfPath}");
-                    }
-                    return 0;
+                    Console.Error.WriteLine($"Error: File '{Path.GetFileName(nonImage)}' is not a supported image format for createPDF.");
+                    return 1;
                 }
-                Console.Error.WriteLine("Error: No valid images found to create PDF.");
-                return 1;
+                if (inputs.Count == 0)
+                {
+                    Console.Error.WriteLine("Error: No valid images found to create PDF.");
+                    return 1;
+                }
+
+                if (!jsonOutput) Console.WriteLine($"Creating PDF from {inputs.Count} image(s)...");
+                var pdfPath = SafePaths.Unique(outputDir, "Images.pdf");
+                using (var pdf = new PdfDocument())
+                {
+                    foreach (var imgPath in inputs)
+                    {
+                        using var image = PhotoCodec.Read(imgPath);
+                        using var pngStream = new MemoryStream();
+                        image.Write(pngStream, MagickFormat.Png);
+                        pngStream.Position = 0;
+                        using var xImage = XImage.FromStream(pngStream);
+                        var page = pdf.AddPage();
+                        page.Width = XUnit.FromPoint(image.Width * 72.0 / 96.0);
+                        page.Height = XUnit.FromPoint(image.Height * 72.0 / 96.0);
+                        using var g = XGraphics.FromPdfPage(page);
+                        g.DrawImage(xImage, 0, 0, page.Width.Point, page.Height.Point);
+                    }
+                    pdf.Save(pdfPath);
+                }
+                if (jsonOutput)
+                {
+                    Console.WriteLine(JsonSerializer.Serialize(new[] { pdfPath }));
+                }
+                else
+                {
+                    Console.WriteLine($"Created: {pdfPath}");
+                }
+                return 0;
 
             case "splitpdf":
                 var splitOutputs = new List<string>();
@@ -762,7 +847,7 @@ public static class Program
     {
         try
         {
-            using var image = new MagickImage(filePath);
+            using var image = PhotoCodec.Read(filePath);
             var pixels = image.ToByteArray(MagickFormat.Bgra);
             var reader = new ZXing.BarcodeReaderGeneric
             {
@@ -811,7 +896,7 @@ public static class Program
             {
                 if (!File.Exists(arg) && !Directory.Exists(arg))
                 {
-                    return (inputs, outputDir, jsonOutput, $"File or directory not found: '{arg}'");
+                    return (inputs, outputDir, jsonOutput, $"File not found: '{arg}'");
                 }
                 inputs.Add(arg);
             }
@@ -850,24 +935,8 @@ public static class Program
     /// <summary>
     /// Resolves the path to the installed or bundled LibreOffice soffice.exe executable.
     /// </summary>
-    private static string GetLibreOfficeExecutable()
+    private static string? GetLibreOfficeExecutable()
     {
-        var localOffice = Path.Combine(ToolsDirectory, "office-26.8.1", "program", "soffice.exe");
-        if (File.Exists(localOffice)) return localOffice;
-        var pfOffice = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "LibreOffice", "program", "soffice.exe");
-        if (File.Exists(pfOffice)) return pfOffice;
-        var pf86Office = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "LibreOffice", "program", "soffice.exe");
-        if (File.Exists(pf86Office)) return pf86Office;
-
-        var pathEnv = Environment.GetEnvironmentVariable("PATH") ?? "";
-        foreach (var entry in pathEnv.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-        {
-            var folder = entry.Trim('"');
-            if (folder.IndexOfAny(Path.GetInvalidPathChars()) >= 0 || !Path.IsPathFullyQualified(folder)) continue;
-            var candidate = Path.Combine(folder, "soffice.exe");
-            if (File.Exists(candidate)) return candidate;
-        }
-
-        return "soffice.exe";
+        return OfficeLocator.ResolveExecutable(OfficeToolsDirectory, Environment.GetEnvironmentVariable("PATH"));
     }
 }

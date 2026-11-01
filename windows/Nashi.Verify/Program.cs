@@ -131,6 +131,25 @@ try
         Check(convertCode == 0, "CLI convert failed");
         var expectedJpg = Path.Combine(cliOutDir, "CliInput.jpg");
         Check(File.Exists(expectedJpg) && new FileInfo(expectedJpg).Length > 0, "CLI convert did not create expected output file");
+
+        var cliPhoto2 = Path.Combine(root, "CliInput2.png");
+        using (var image2 = new ImageMagick.MagickImage(ImageMagick.MagickColors.Blue, 16, 16))
+        {
+            image2.Write(cliPhoto2, ImageMagick.MagickFormat.Png);
+        }
+        var createPdfCode = await Nashi.Cli.Program.Main(["tool", "createPDF", cliPhoto, cliPhoto2, "--output", cliOutDir]);
+        Check(createPdfCode == 0, "CLI tool createPDF failed");
+        var expectedPdf = Path.Combine(cliOutDir, "Images.pdf");
+        Check(File.Exists(expectedPdf) && new FileInfo(expectedPdf).Length > 0, "CLI tool createPDF did not create output PDF");
+        using (var pdfDoc = UglyToad.PdfPig.PdfDocument.Open(expectedPdf))
+        {
+            Check(pdfDoc.NumberOfPages == 2, $"CLI createPDF expected 2 pages but got {pdfDoc.NumberOfPages}");
+        }
+
+        var notesTxt = Path.Combine(root, "notes.txt");
+        File.WriteAllText(notesTxt, "Sample text notes");
+        var dropNonImageCode = await Nashi.Cli.Program.Main(["tool", "createPDF", cliPhoto, notesTxt, "--output", cliOutDir]);
+        Check(dropNonImageCode != 0, "CLI tool createPDF must fail when non-image input is passed");
     }
     finally
     {
