@@ -8,7 +8,9 @@ public enum ConversionEngine {
         let transaction=ExportTransaction()
         defer { transaction.cleanUp() }
         let groups:[[URL]]
-        if case .tool(let tool)=request.operation,[ToolKind.createPDF,.mergePDF,.createCollage,.joinVideos,.readQRCode].contains(tool) {
+        if case .convert("pdf")=request.operation,request.options.combinePDFs == true {
+            groups=[request.inputs]
+        } else if case .tool(let tool)=request.operation,[ToolKind.createPDF,.mergePDF,.createCollage,.joinVideos,.readQRCode].contains(tool) {
             groups=[request.inputs]
         } else { groups=request.inputs.map{[$0]} }
         for (index,inputs) in groups.enumerated() {
@@ -34,6 +36,10 @@ public enum ConversionEngine {
         var outputs:[URL]=[]
         switch request.operation {
         case .convert(let format):
+            if format == "pdf",request.options.combinePDFs == true,request.inputs.allSatisfy({FileCategory.detect($0) == .image}) {
+                outputs=try PDFEngine.create(inputs:request.inputs,options:request.options,token:token,progress:progress)
+                break
+            }
             for input in request.inputs {
                 try token.check();progress(OperationProgress.indeterminate,"Processing \(input.lastPathComponent)…")
                 switch FileCategory.detect(input) {
@@ -42,6 +48,10 @@ public enum ConversionEngine {
                 case .pdf where ["png","jpg"].contains(format): outputs += try PDFEngine.render(input,to:format,options:request.options,token:token,progress:progress)
                 default: outputs += try DocumentEngine.convert(input,to:format,options:request.options,token:token)
                 }
+            }
+            if format == "pdf",request.options.combinePDFs == true,outputs.count>1 {
+                progress(OperationProgress.indeterminate,"Merging PDFs…")
+                outputs=try PDFEngine.tool(.mergePDF,inputs:outputs,options:request.options,token:token,progress:progress)
             }
         case .tool(let tool):
             progress(OperationProgress.indeterminate,tool.title)

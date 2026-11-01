@@ -163,6 +163,7 @@ public struct OperationOptions: Codable, Sendable {
     public var collageColumns: Int = 2
     public var audioMode: String = "bleep"
     public var outputDirectory: URL? = nil
+    public var combinePDFs: Bool? = nil
     public var revealInFinder: Bool = true
     public init() {}
 }

@@ -74,6 +74,16 @@ struct JobRecord:Codable,Identifiable {
     func select(_ operation:NashiCore.Operation,options:NashiCore.OperationOptions? = nil,immediate:Bool=false) {
         var settings=options ?? OperationOptions()
         if options == nil,case .convert(let format)=operation { settings=FormatPreferences.shared.options(for:format) }
+        if case .convert("pdf")=operation,inputs.count>1,!immediate {
+            let alert=NSAlert();alert.messageText=L10n.text("PDF output")
+            alert.informativeText=L10n.text("Combine files in their current order, or create a separate PDF for each file. Your originals stay unchanged.")
+            alert.addButton(withTitle:L10n.text("Separate PDFs"));alert.addButton(withTitle:L10n.text("Combine into one PDF"));alert.addButton(withTitle:L10n.text("Cancel"))
+            switch alert.runModal() {
+            case .alertFirstButtonReturn: settings.combinePDFs=false
+            case .alertSecondButtonReturn: settings.combinePDFs=true
+            default: return
+            }
+        }
         if case .convert("epub")=operation,inputs.allSatisfy({FileCategory.detect($0) == .pdf}),!immediate { onEPUBOptions?();return }
         if case .tool(.removeMetadata)=operation,inputs.count>1 { execute(operation,options:settings);return }
         if case .tool(let kind)=operation,!immediate,!([.muteVideo,.extractArchive,.createPDF,.splitPDF].contains(kind)) {

@@ -1,4 +1,9 @@
 {
+  "PDF output": "PDF çıktısı",
+  "Separate PDFs": "Ayrı PDF’ler",
+  "Combine into one PDF": "Tek PDF’te birleştir",
+  "Combine files in their current order, or create a separate PDF for each file. Your originals stay unchanged.": "Dosyaları mevcut sırayla birleştirin veya her dosya için ayrı bir PDF oluşturun. Orijinalleriniz değişmez.",
+  "Merging PDFs…": "PDF’ler birleştiriliyor…",
   "Language": "Dil",
   "General": "Genel",
   "Formats": "Biçimler",

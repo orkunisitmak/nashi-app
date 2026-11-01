@@ -57,6 +57,14 @@ internal static class SmokeTests
         var rotated=ImageEngine.Apply("rotate",[source],root,new(Rotation:90));Check(ImageEngine.Load(rotated[0]).PixelWidth==180,"Rotate mismatch");
         foreach(var ext in ImageEngine.Formats){var converted=ImageEngine.Apply("convert",[source],root,new(){EncoderPath=testTools.Ready?testTools.Executable("ffmpeg"):null},ext);Check(new FileInfo(converted[0]).Length>0,"Empty "+ext);}
         var pdfs=Directory.GetFiles(root,"*.pdf");var merged=DocumentEngine.Pdf("mergePDFs",[pdfs[0],pdfs[0]],root);var parts=DocumentEngine.Pdf("splitPDF",merged,root);Check(parts.Count==2,"PDF page count mismatch");
+        Check(ImageEngine.Apply("convert",[crop[0],source],root,new(),"pdf").Count==2,"Image PDF conversion no longer defaults to separate files");
+        var batchPdf=ImageEngine.Apply("convert",[crop[0],source],root,new(){CombinePDFs=true},"pdf");Check(batchPdf.Count==1,"Image PDF conversion created separate files");
+        using(var batch=PdfSharp.Pdf.IO.PdfReader.Open(batchPdf[0],PdfSharp.Pdf.IO.PdfDocumentOpenMode.Import))
+        {Check(batch.PageCount==2,"Image PDF conversion dropped a page");Check(Math.Abs(batch.Pages[0].Width.Point-60)<.1&&Math.Abs(batch.Pages[1].Width.Point-240)<.1,"Image PDF conversion changed input order");}
+        Check(ImageEngine.Apply("convert",[crop[0],source],root,new(),"jpg").Count==2,"Other image conversions stopped producing separate files");
+        var invalidImage=Path.Combine(root,"Invalid.png");File.WriteAllText(invalidImage,"not an image");var beforeBatchFailure=Directory.GetFiles(root,"*.pdf").Length;var batchFailed=false;
+        try{ImageEngine.Apply("convert",[source,invalidImage],root,new(){CombinePDFs=true},"pdf");}catch{batchFailed=true;}
+        Check(batchFailed&&Directory.GetFiles(root,"*.pdf").Length==beforeBatchFailure,"Failed image PDF conversion published a partial PDF");
         var zip=DocumentEngine.Zip([source],root);var extracted=DocumentEngine.Unzip(zip,root);Check(File.Exists(Path.Combine(extracted[0],"Source.png")),"ZIP output missing");
         var library=new LibraryStore(Path.Combine(root,"UserData"));library.SetAppearance("dark");
         var window=new MainWindow([source],library,checkForUpdates:false);window.Show();window.UpdateLayout();DesktopInput.Pump();

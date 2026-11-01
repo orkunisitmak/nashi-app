@@ -7,7 +7,7 @@ using System.Xml.Linq;
 using System.Text.RegularExpressions;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 namespace Nashi.Core;
-public sealed record DocumentOptions(int Dpi=144,string Layout="editable",string EpubLayout="reflowable",string Password="");
+public sealed record DocumentOptions(int Dpi=144,string Layout="editable",string EpubLayout="reflowable",string Password="",bool CombinePDFs=false);
 public sealed partial class OfficeDocuments(string office,string deno,string assets)
 {
     private static string Escape(string value)=>WebUtility.HtmlEncode(value);

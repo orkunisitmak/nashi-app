@@ -1,4 +1,9 @@
 {
+  "PDF output": "Sortie PDF",
+  "Separate PDFs": "PDF séparés",
+  "Combine into one PDF": "Combiner en un seul PDF",
+  "Combine files in their current order, or create a separate PDF for each file. Your originals stay unchanged.": "Combinez les fichiers dans leur ordre actuel ou créez un PDF par fichier. Vos originaux restent inchangés.",
+  "Merging PDFs…": "Fusion des PDF…",
   "Language": "Langue",
   "General": "Général",
   "Formats": "Formats",

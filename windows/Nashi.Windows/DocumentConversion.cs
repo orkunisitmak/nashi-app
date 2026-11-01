@@ -17,6 +17,7 @@ public sealed class DocumentConversion(OfficeRuntime runtime,Toolchain tools)
             token.ThrowIfCancellationRequested();var input=inputs[i];var ext=FeatureCatalog.Extension(input);var work=Path.Combine(tx.StagingDirectory,"work-"+i);Directory.CreateDirectory(work);string source=input;
             if(!FeatureCatalog.Formats([input]).Contains(format))throw new ArgumentException("This conversion is not available for "+Path.GetFileName(input)+".");
             progress?.Report(new(null,"Preparing "+Path.GetFileName(input)+"…"));
+            if(format=="pdf"&&FeatureCatalog.IsImage(input)){outputs.AddRange(ImageEngine.Apply("convert",[input],tx.StagingDirectory,new(),format,token,progress));continue;}
             if(FeatureCatalog.IsArchive(input)){outputs.AddRange(ArchiveEngine.Convert(input,format,tx.StagingDirectory,options.Password,progress,token));continue;}
             if(ext is "srt" or "vtt")
             {var path=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+"."+format);await File.WriteAllTextAsync(path,SubtitleCodec.Convert(LegacyTextCodec.Decode(await File.ReadAllBytesAsync(input,token)),format),new UTF8Encoding(false),token);outputs.Add(path);continue;}
@@ -48,6 +49,11 @@ public sealed class DocumentConversion(OfficeRuntime runtime,Toolchain tools)
             {var pdf=await Require(engine).OfficeAsync(source,"pdf",work,token);var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+".epub");EpubFixed(await NativePdf.RenderAsync(pdf,options.Dpi,token,ext=="pdf"?options.Password:""),output,Path.GetFileNameWithoutExtension(input));outputs.Add(output);continue;}
             if(FeatureCatalog.Extension(source)=="html"){var safe=Path.Combine(work,"Safe.html");await File.WriteAllTextAsync(safe,OfficeDocuments.SanitizedHtml(await File.ReadAllTextAsync(source,token)),token);source=safe;}
             var converted=await Require(engine).OfficeAsync(source,format,work,token);var target=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+"."+format);File.Move(converted,target);outputs.Add(target);progress?.Report(new((i+1d)/inputs.Count*.98,"Saving document…"));
+        }
+        if(format=="pdf"&&options.CombinePDFs&&outputs.Count>1)
+        {
+            progress?.Report(new(null,"Merging PDFs…"));
+            return tx.Publish(DocumentEngine.Pdf("mergePDFs",outputs,tx.StagingDirectory,token:token),token);
         }
         return tx.Publish(outputs,token);
     }
