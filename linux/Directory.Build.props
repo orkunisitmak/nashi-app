@@ -1,0 +1,7 @@
+<Project>
+  <!-- Shares the version, analyzers and NuGet audit policy with the Windows engine. -->
+  <Import Project="../windows/Directory.Build.props" />
+  <PropertyGroup>
+    <PathMap>$(MSBuildThisFileDirectory)=/_/linux/</PathMap>
+  </PropertyGroup>
+</Project>
