@@ -15,6 +15,18 @@ var root = Path.Combine(Path.GetTempPath(), "Nashi-Verify-" + Guid.NewGuid().ToS
 Directory.CreateDirectory(root);
 try
 {
+    Check(ShortcutAppFilter.IsExcluded("Photoshop, Illustrator", "photoshop.exe"), "Configured Photoshop process was not excluded");
+    Check(ShortcutAppFilter.IsExcluded("Photoshop, Illustrator", "ILLUSTRATOR"), "Excluded process match was case-sensitive");
+    Check(!ShortcutAppFilter.IsExcluded("Photoshop, Illustrator", "PhotoshopHelper.exe"), "An unrelated process was excluded by a partial match");
+    Check(!ShortcutAppFilter.IsExcluded("", "Photoshop.exe"), "Empty exclusion list disabled shortcuts");
+    Check(!ShortcutAppFilter.IsExcluded("Photoshop", null), "Missing process identity was excluded");
+    Check(ShortcutAppFilter.IsExcluded("Photoshop.exe, Illustrator", "Photoshop"), "Executable suffix was not normalized");
+    var exclusionRoot=Path.Combine(root,"Shortcut exclusions");
+    var exclusionSettings=new PreferencesStore(exclusionRoot);
+    exclusionSettings.Save(exclusionSettings.Value with{ShortcutExcludedApps="Photoshop, Illustrator"});
+    Check(new PreferencesStore(exclusionRoot).Value.ShortcutExcludedApps=="Photoshop, Illustrator", "Excluded application preferences were not persisted");
+    Directory.Delete(exclusionRoot,true);
+    Check(AppLocalization.Turkish.ContainsKey("Pause Nashi shortcuts in these applications"), "App exclusion Settings title was not translated");
     var languageRoot=Path.Combine(root,"Language checks");Directory.CreateDirectory(languageRoot);
     try{LocalizationChecks.Run(Check,languageRoot);}finally{Directory.Delete(languageRoot,true);}
     await DownloadChecks.Run(Check,root);
