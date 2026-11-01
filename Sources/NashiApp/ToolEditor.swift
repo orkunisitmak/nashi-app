@@ -297,10 +297,26 @@ struct ToolEditor:View {
             }
             HStack { number("W",value:cropDimension(width:true));number("H",value:cropDimension(width:false));Text("px").foregroundStyle(.secondary) }
             if let crop=options.crop { HStack { number("X",value:Binding(get:{Int(crop.x)},set:{options.crop?.x=Double($0)}));number("Y",value:Binding(get:{Int(crop.y)},set:{options.crop?.y=Double($0)})) } }
-            HStack {
-                Button("Select All") { setCrop(EditRect(x:0,y:0,width:imageSize.width,height:imageSize.height));aspect="Free" }
-                Button("Clear Selection") { options.crop=nil;width=Int(imageSize.width);height=Int(imageSize.height) }.disabled(options.crop==nil)
+            VStack(alignment:.leading,spacing:8) {
+                LText("Alignment").font(.caption.weight(.medium)).foregroundStyle(.secondary)
+                HStack(spacing:6) {
+                    LText("Horizontal").font(.caption).frame(width:68,alignment:.leading)
+                    Button { alignCrop(horizontal:.left) } label:{ Image(systemName:"align.horizontal.left") }.help(L10n.text("Left"))
+                    Button { alignCrop(horizontal:.center) } label:{ Image(systemName:"align.horizontal.center") }.help(L10n.text("Center"))
+                    Button { alignCrop(horizontal:.right) } label:{ Image(systemName:"align.horizontal.right") }.help(L10n.text("Right"))
+                }
+                HStack(spacing:6) {
+                    LText("Vertical").font(.caption).frame(width:68,alignment:.leading)
+                    Button { alignCrop(vertical:.top) } label:{ Image(systemName:"align.vertical.top") }.help(L10n.text("Top"))
+                    Button { alignCrop(vertical:.center) } label:{ Image(systemName:"align.vertical.center") }.help(L10n.text("Center"))
+                    Button { alignCrop(vertical:.bottom) } label:{ Image(systemName:"align.vertical.bottom") }.help(L10n.text("Bottom"))
+                }
             }
+            HStack(spacing:4) {
+                Button(action:{ setCrop(EditRect(x:0,y:0,width:imageSize.width,height:imageSize.height));aspect="Free" }) { LText("Select All").lineLimit(1).minimumScaleFactor(0.7) }
+                Button(action:{ alignCrop(horizontal:.center,vertical:.center) }) { LText("Center Selection").lineLimit(1).minimumScaleFactor(0.7) }
+                Button(action:{ options.crop=nil;width=Int(imageSize.width);height=Int(imageSize.height) }) { LText("Clear Selection").lineLimit(1).minimumScaleFactor(0.7) }.disabled(options.crop==nil)
+            }.controlSize(.small)
         }
     }
     var isCropTool:Bool { tool == .cropImage || tool == .cropVideo }
@@ -722,6 +738,13 @@ struct ToolEditor:View {
         r.x=pixels(r.x);r.y=pixels(r.y)
         r.width=max(1,pixels(r.width));r.height=max(1,pixels(r.height))
         options.crop=r;width=Int(r.width);height=Int(r.height)
+    }
+    func alignCrop(horizontal: CropSelectionGeometry.HorizontalAlignment? = nil, vertical: CropSelectionGeometry.VerticalAlignment? = nil) {
+        let base = options.crop ?? EditRect(x: (Double(imageSize.width) - Double(width)) / 2, y: (Double(imageSize.height) - Double(height)) / 2, width: Double(width), height: Double(height))
+        var cg = CGRect(x: base.x, y: base.y, width: base.width, height: base.height)
+        if let horizontal { cg = CropSelectionGeometry.align(cg, horizontal: horizontal, bounds: imageSize) }
+        if let vertical { cg = CropSelectionGeometry.align(cg, vertical: vertical, bounds: imageSize) }
+        setCrop(EditRect(x: cg.origin.x, y: cg.origin.y, width: cg.width, height: cg.height))
     }
     func previewChannel(_ channel:Int) {
         guard let input,readyToApply,!isLoading else { return };let settings=options,token=previewToken,generation=editorGeneration,key=previewKey
