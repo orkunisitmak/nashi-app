@@ -178,6 +178,7 @@
 "ADDING PAGES…" = "AJOUT DES PAGES…";
 "ADDITIONAL OPTIONS" = "OPTIONS SUPPLÉMENTAIRES";
 "AIRDROP IS UNAVAILABLE ON THIS MAC." = "AIRDROP N’EST PAS DISPONIBLE SUR CE MAC.";
+"ALIGNMENT" = "ALIGNEMENT";
 "ALL" = "TOUT";
 "ALL METADATA" = "TOUTES LES MÉTADONNÉES";
 "ALL SET. YOU’RE READY TO GO." = "TOUT EST EN PLACE. VOUS ÊTES PRÊT.";
@@ -258,6 +259,7 @@
 "Adding pages…" = "Ajout des pages…";
 "Additional options" = "Options supplémentaires";
 "AirDrop is unavailable on this Mac." = "AirDrop n’est pas disponible sur ce Mac.";
+"Alignment" = "Alignement";
 "All" = "Tout";
 "All metadata" = "Toutes les métadonnées";
 "All set. You’re ready to go." = "Tout est en place. Vous êtes prêt.";
@@ -377,6 +379,8 @@
 "CANVAS" = "CANEVAS";
 "CANVAS HEIGHT" = "HAUTEUR DU CANEVAS";
 "CANVAS WIDTH" = "LARGEUR DU CANEVAS";
+"CENTER" = "CENTRE";
+"CENTER SELECTION" = "CENTRER LA SÉLECTION";
 "CHANGE SPEED" = "CHANGER LA VITESSE";
 "CHANGE SPEED · NASHI" = "CHANGER LA VITESSE · NASHI";
 "CHANGE VIDEO SPEED" = "CHANGER LA VITESSE DE LA VIDÉO";
@@ -569,6 +573,8 @@
 "Canvas" = "Canevas";
 "Canvas height" = "Hauteur du canevas";
 "Canvas width" = "Largeur du canevas";
+"Center" = "Centre";
+"Center Selection" = "Centrer la sélection";
 "Change Speed" = "Changer la vitesse";
 "Change Speed · Nashi" = "Changer la vitesse · Nashi";
 "Change Video Speed" = "Changer la vitesse de la vidéo";
@@ -1210,6 +1216,7 @@
 "HIGHLIGHTS" = "HAUTES LUMIÈRES";
 "HOLD A KEY WHILE DRAGGING IN FINDER" = "MAINTENEZ UNE TOUCHE EN FAISANT GLISSER DANS LE FINDER";
 "HOME" = "ACCUEIL";
+"HORIZONTAL" = "HORIZONTAL";
 "HUE" = "TEINTE";
 "Height" = "Hauteur";
 "Hello" = "Bonjour";
@@ -1217,6 +1224,7 @@
 "Highlights" = "Hautes lumières";
 "Hold a key while dragging in Finder" = "Maintenez une touche en faisant glisser dans le Finder";
 "Home" = "Accueil";
+"Horizontal" = "Horizontal";
 "Hue" = "Teinte";
 "ICONS" = "ICÔNES";
 "IMAGE" = "IMAGE";
@@ -2670,6 +2678,7 @@
 "VALUE" = "VALEUR";
 "VERIFYING AND PREPARING OFFICE TOOLS…" = "VÉRIFICATION ET PRÉPARATION DES OUTILS BUREAUTIQUES…";
 "VERIFYING UPDATE SIGNATURE…" = "VÉRIFICATION DE LA SIGNATURE DE LA MISE À JOUR…";
+"VERTICAL" = "VERTICAL";
 "VIBRANCE" = "ÉCLAT";
 "VIDEO" = "VIDÉO";
 "VIDEO COMPRESSION" = "COMPRESSION VIDÉO";
@@ -2690,6 +2699,7 @@
 "Version %lld" = "Version %lld";
 "Version %lld is available" = "La version %lld est disponible";
 "Version %lld · Install when you’re ready." = "Version %lld · Installez-la quand vous voulez.";
+"Vertical" = "Vertical";
 "Vibrance" = "Éclat";
 "Video" = "Vidéo";
 "Video Compression" = "Compression vidéo";

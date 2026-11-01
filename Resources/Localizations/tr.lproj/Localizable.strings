@@ -178,6 +178,7 @@
 "ADDING PAGES…" = "SAYFALAR EKLENİYOR…";
 "ADDITIONAL OPTIONS" = "DİĞER SEÇENEKLER";
 "AIRDROP IS UNAVAILABLE ON THIS MAC." = "AİRDROP BU MAC'TE KULLANILAMIYOR.";
+"ALIGNMENT" = "HİZALAMA";
 "ALL" = "TÜMÜ";
 "ALL METADATA" = "TÜM META VERİLER";
 "ALL SET. YOU’RE READY TO GO." = "HER ŞEY HAZIR.";
@@ -258,6 +259,7 @@
 "Adding pages…" = "Sayfalar ekleniyor…";
 "Additional options" = "Diğer seçenekler";
 "AirDrop is unavailable on this Mac." = "AirDrop bu Mac'te kullanılamıyor.";
+"Alignment" = "Hizalama";
 "All" = "Tümü";
 "All metadata" = "Tüm meta veriler";
 "All set. You’re ready to go." = "Her şey hazır.";
@@ -377,6 +379,8 @@
 "CANVAS" = "TUVAL";
 "CANVAS HEIGHT" = "TUVAL YÜKSEKLİĞİ";
 "CANVAS WIDTH" = "TUVAL GENİŞLİĞİ";
+"CENTER" = "ORTA";
+"CENTER SELECTION" = "SEÇİMİ ORTALA";
 "CHANGE SPEED" = "HIZI DEĞİŞTİR";
 "CHANGE SPEED · NASHI" = "HIZI DEĞİŞTİR · NASHI";
 "CHANGE VIDEO SPEED" = "VİDEO HIZINI DEĞİŞTİR";
@@ -569,6 +573,8 @@
 "Canvas" = "Tuval";
 "Canvas height" = "Tuval yüksekliği";
 "Canvas width" = "Tuval genişliği";
+"Center" = "Orta";
+"Center Selection" = "Seçimi Ortala";
 "Change Speed" = "Hızı Değiştir";
 "Change Speed · Nashi" = "Hızı Değiştir · Nashi";
 "Change Video Speed" = "Video Hızını Değiştir";
@@ -1210,6 +1216,7 @@
 "HIGHLIGHTS" = "PARLAK ALANLAR";
 "HOLD A KEY WHILE DRAGGING IN FINDER" = "FINDER'DA SÜRÜKLERKEN BİR KISAYOL TUŞUNA BAS";
 "HOME" = "ANA SAYFA";
+"HORIZONTAL" = "YATAY";
 "HUE" = "RENK TONU";
 "Height" = "Yükseklik";
 "Hello" = "Merhaba";
@@ -1217,6 +1224,7 @@
 "Highlights" = "Parlak alanlar";
 "Hold a key while dragging in Finder" = "Finder'da sürüklerken bir kısayol tuşuna bas";
 "Home" = "Ana Sayfa";
+"Horizontal" = "Yatay";
 "Hue" = "Renk tonu";
 "ICONS" = "SİMGELER";
 "IMAGE" = "GÖRSEL";
@@ -2670,6 +2678,7 @@
 "VALUE" = "DEĞER";
 "VERIFYING AND PREPARING OFFICE TOOLS…" = "OFİS ARAÇLARI DOĞRULANIYOR VE HAZIRLANIYOR…";
 "VERIFYING UPDATE SIGNATURE…" = "GÜNCELLEME İMZASI DOĞRULANIYOR…";
+"VERTICAL" = "DİKEY";
 "VIBRANCE" = "CANLILIK";
 "VIDEO" = "VİDEO";
 "VIDEO COMPRESSION" = "VİDEO SIKIŞTIRMA";
@@ -2690,6 +2699,7 @@
 "Version %lld" = "Sürüm %lld";
 "Version %lld is available" = "%lld sürümü hazır";
 "Version %lld · Install when you’re ready." = "Sürüm %lld · Hazır olduğunda kur.";
+"Vertical" = "Dikey";
 "Vibrance" = "Canlılık";
 "Video" = "Video";
 "Video Compression" = "Video Sıkıştırma";

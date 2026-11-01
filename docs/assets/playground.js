@@ -150,7 +150,43 @@ async function imageEditor(e){const {preview,controls,files,id}=e;const image=aw
   }
   const ratioRow=el('div',{class:'native-ratio-row'});ratioRow.append(el('span',{},L('Aspect ratio','En-boy oranı')),ratios);controls.append(ratioRow);
   const dimensions=el('div',{class:'native-dimensions'});for(const [key,label,max]of [['cropW','W',image.width],['cropH','H',image.height]]){const lab=el('label',{},label),input=el('input',{type:'number',min:1,max,step:1,'aria-label':L(key==='cropW'?'Crop width':'Crop height',key==='cropW'?'Kırpma genişliği':'Kırpma yüksekliği')});input.value=max;input.oninput=()=>{let w=key==='cropW'?Number(input.value):Math.round((e.crop?.w||1)*image.width),h=key==='cropH'?Number(input.value):Math.round((e.crop?.h||1)*image.height);const ratio=Number(e.values.ratio);if(ratio){if(key==='cropW')h=w/ratio;else w=h*ratio;}const scale=Math.min(1,image.width/Math.max(1,w),image.height/Math.max(1,h));w=Math.max(1,w*scale);h=Math.max(1,h*scale);e.crop={x:Math.min(e.crop?.x||0,1-w/image.width),y:Math.min(e.crop?.y||0,1-h/image.height),w:w/image.width,h:h/image.height};e.refresh();};e.inputs[key]=input;lab.append(input);dimensions.append(lab);}dimensions.append(el('span',{},'px'));controls.append(dimensions);
-  const actions=el('div',{class:'page-actions'}),all=el('button',{},L('Select All','Tümünü Seç')),clear=el('button',{},L('Clear Selection','Seçimi Temizle'));all.onclick=()=>{e.crop={x:0,y:0,w:1,h:1};e.refresh();};clear.onclick=()=>{e.crop=null;e.refresh();};e.clearCrop=clear;actions.append(all,clear);controls.append(actions);
+  const alignGroup=el('div',{class:'native-alignment-group'});
+  alignGroup.append(el('p',{class:'editor-note',style:'margin:6px 0 2px;font-weight:600'},L('Alignment','Hizalama')));
+  const alignH=el('div',{class:'page-actions',style:'margin-top:2px'});
+  alignH.append(el('span',{style:'min-width:65px;font-size:12px;color:var(--text-muted,inherit)'},L('Horizontal','Yatay')));
+  for(const[pos,label]of[['left',L('Left','Sol')],['center',L('Center','Orta')],['right',L('Right','Sağ')]]){
+   const b=el('button',{},label);
+   b.onclick=()=>{
+    const c=e.crop||{x:0,y:0,w:Math.min(1,Number(e.inputs.cropW?.value||image.width)/image.width),h:Math.min(1,Number(e.inputs.cropH?.value||image.height)/image.height)};
+    const x=pos==='left'?0:pos==='center'?(1-c.w)/2:(1-c.w);
+    e.crop={x:Math.max(0,Math.min(1-c.w,x)),y:c.y,w:c.w,h:c.h};
+    e.refresh();
+   };
+   alignH.append(b);
+  }
+  const alignV=el('div',{class:'page-actions',style:'margin-top:2px'});
+  alignV.append(el('span',{style:'min-width:65px;font-size:12px;color:var(--text-muted,inherit)'},L('Vertical','Dikey')));
+  for(const[pos,label]of[['top',L('Top','Üst')],['center',L('Center','Orta')],['bottom',L('Bottom','Alt')]]){
+   const b=el('button',{},label);
+   b.onclick=()=>{
+    const c=e.crop||{x:0,y:0,w:Math.min(1,Number(e.inputs.cropW?.value||image.width)/image.width),h:Math.min(1,Number(e.inputs.cropH?.value||image.height)/image.height)};
+    const y=pos==='top'?0:pos==='center'?(1-c.h)/2:(1-c.h);
+    e.crop={x:c.x,y:Math.max(0,Math.min(1-c.h,y)),w:c.w,h:c.h};
+    e.refresh();
+   };
+   alignV.append(b);
+  }
+  alignGroup.append(alignH,alignV);
+  controls.append(alignGroup);
+  const actions=el('div',{class:'page-actions'}),all=el('button',{},L('Select All','Tümünü Seç')),center=el('button',{},L('Center Selection','Seçimi Ortala')),clear=el('button',{},L('Clear Selection','Seçimi Temizle'));
+  all.onclick=()=>{e.crop={x:0,y:0,w:1,h:1};e.refresh();};
+  center.onclick=()=>{
+   const c=e.crop||{x:0,y:0,w:Math.min(1,Number(e.inputs.cropW?.value||image.width)/image.width),h:Math.min(1,Number(e.inputs.cropH?.value||image.height)/image.height)};
+   e.crop={x:Math.max(0,(1-c.w)/2),y:Math.max(0,(1-c.h)/2),w:c.w,h:c.h};
+   e.refresh();
+  };
+  clear.onclick=()=>{e.crop=null;e.refresh();};
+  e.clearCrop=clear;actions.append(all,center,clear);controls.append(actions);
   const dims=el('p',{class:'editor-dialog-status'});controls.append(dims);e.cropStatus=dims;const size=el('span',{class:'preview-dimensions'},image.width.toLocaleString(tr?'tr':'en')+' × '+image.height.toLocaleString(tr?'tr':'en'));$('.editor-label',preview).append(size);
  }
  if(id==='redactImage'){e.crop={x:.15,y:.15,w:.70,h:.70};e.values.ratio='free';selectField(controls,L('Treatment','Gizleme şekli'),'treatment',[['solid',L('Solid','Düz renk')],['pixel',L('Pixelate','Pikselleştir')],['blur',L('Blur','Bulanıklaştır')]],'solid');controls.append(el('p',{class:'editor-note'},L('Drag to select the area to redact.','Gizlenecek alanı sürükleyerek seç.')));}
