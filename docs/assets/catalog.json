@@ -16,6 +16,10 @@
       "webm",
       "wmv",
       "gif",
+      "m4a",
+      "wav",
+      "flac",
+      "ogg",
       "mp3"
     ],
     "avif" : [
@@ -128,6 +132,10 @@
       "avi",
       "wmv",
       "gif",
+      "m4a",
+      "wav",
+      "flac",
+      "ogg",
       "mp3"
     ],
     "mov" : [
@@ -137,6 +145,10 @@
       "avi",
       "wmv",
       "gif",
+      "m4a",
+      "wav",
+      "flac",
+      "ogg",
       "mp3"
     ],
     "mp3" : [
@@ -155,6 +167,10 @@
       "avi",
       "wmv",
       "gif",
+      "m4a",
+      "wav",
+      "flac",
+      "ogg",
       "mp3"
     ],
     "ods" : [
@@ -322,6 +338,10 @@
       "avi",
       "wmv",
       "gif",
+      "m4a",
+      "wav",
+      "flac",
+      "ogg",
       "mp3"
     ],
     "webp" : [
@@ -349,6 +369,10 @@
       "webm",
       "avi",
       "gif",
+      "m4a",
+      "wav",
+      "flac",
+      "ogg",
       "mp3"
     ],
     "xls" : [
