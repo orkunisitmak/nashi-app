@@ -12,7 +12,11 @@ export function classifyMediaPreviewURL(value) {
 
   if (!['instagram.com', 'www.instagram.com', 'm.instagram.com'].includes(host))
     return 'original';
-  if (/^\/(?:reel|reels)\/[^/]+/i.test(url.pathname)) return 'instagram-video';
-  if (/^\/p\/[^/]+/i.test(url.pathname)) return 'instagram-photos';
+  // Native WebMediaDragPayload / WebMediaPayload allow an optional username
+  // before /p/, /reel/, /reels/, or /tv/ (Instagram profile-grid links).
+  if (/^\/(?:[A-Za-z0-9._]{1,30}\/)?(?:reel|reels|tv)\/[^/]+/i.test(url.pathname))
+    return 'instagram-video';
+  if (/^\/(?:[A-Za-z0-9._]{1,30}\/)?p\/[^/]+/i.test(url.pathname))
+    return 'instagram-photos';
   return 'original';
 }

@@ -16,9 +16,12 @@ test('Instagram video and photo preview actions follow the actual URL pathname',
   for(const url of [
     'https://instagram.com/reel/demo/',
     'https://www.instagram.com/reels/demo/',
-    'https://m.instagram.com/reel/demo/'
+    'https://m.instagram.com/reel/demo/',
+    'https://www.instagram.com/natgeo/reel/C1a2B3c4D5e/',
+    'https://www.instagram.com/tv/C1a2B3c4D5e/'
   ])assert.equal(classifyMediaPreviewURL(url),'instagram-video',url);
   assert.equal(classifyMediaPreviewURL('https://www.instagram.com/p/demo/?utm_source=test'),'instagram-photos');
+  assert.equal(classifyMediaPreviewURL('https://instagram.com/some.user_1/p/C1a2B3c4D5e/'),'instagram-photos');
   assert.equal(classifyMediaPreviewURL('https://www.instagram.com/stories/demo'),'original');
 });
 
