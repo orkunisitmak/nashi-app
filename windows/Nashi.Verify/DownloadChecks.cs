@@ -25,7 +25,16 @@ internal static class DownloadChecks
             check(WebDownload.ProgressFraction("NASHI:12:NA") is null&&WebDownload.ProgressFraction("NASHI:1:0") is null&&WebDownload.ProgressFraction("[download] 5%") is null&&WebDownload.ProgressFraction("NASHI:NaN:1048576.0") is null&&WebDownload.ProgressFraction("NASHI:5:NaN") is null&&WebDownload.ProgressFraction("NASHI:5:Infinity") is null,"Unusable yt-dlp progress lines must be ignored");
         }
         finally{System.Globalization.CultureInfo.CurrentCulture=culture;}
-        check(WebDownload.FilenameArguments().SequenceEqual(["--windows-filenames","-o","%(title).160B [%(id)s].%(ext)s"]),"Web downloads must preserve Unicode titles and their source IDs in filenames");
+        var toolDirectory=Path.Combine(root,"Web download tools");Directory.CreateDirectory(toolDirectory);var suffix=OperatingSystem.IsWindows()?".exe":"";
+        foreach(var name in new[]{"ffmpeg","ffprobe","yt-dlp","deno"}){var path=Path.Combine(toolDirectory,name+suffix);File.WriteAllText(path,"fixture");ToolInstallation.MakeExecutable(path);}File.WriteAllText(Path.Combine(toolDirectory,Toolchain.ToolsetMarkerName),Toolchain.ToolsetVersion);
+        string executable="";string[] arguments=[];var expectedName="Canozan - düşman benim [4vrscEdUU-w].mp3";
+        Task<ProcessResult> Capture(string path,IEnumerable<string> values,CancellationToken token,Action<string>? outputLine)
+        {
+            token.ThrowIfCancellationRequested();executable=path;arguments=[..values];var destination=arguments[Array.IndexOf(arguments,"-P")+1];var output=Path.Combine(destination,expectedName);File.WriteAllText(output,"fixture");return Task.FromResult(new ProcessResult(output+Environment.NewLine,""));
+        }
+        var downloadDirectory=Path.Combine(root,"Web download output");var downloaded=await new WebDownload(new Toolchain(toolDirectory,""),Capture).DownloadAsync("https://www.youtube.com/watch?v=4vrscEdUU-w","audio",downloadDirectory);
+        var template=Array.IndexOf(arguments,"-o");check(Path.GetFileNameWithoutExtension(executable)=="yt-dlp"&&arguments.Contains("--windows-filenames")&&template>=0&&template+1<arguments.Length&&arguments[template+1]=="%(title).160B [%(id)s].%(ext)s"&&Path.GetFileName(downloaded.Single())==expectedName&&File.ReadAllText(downloaded.Single())=="fixture","Web download path must preserve Unicode titles and source IDs in filenames");
+        Directory.Delete(downloadDirectory,true);Directory.Delete(toolDirectory,true);
         check(WebDownload.YoutubeFailure(new("https://www.youtube.com/watch?v=fixture"),"ERROR: HTTP Error 403: Forbidden")?.Contains("PO token",StringComparison.Ordinal)==true,"YouTube 403 failures must explain current-tool and access requirements");
         check(WebDownload.YoutubeFailure(new("https://example.com/video"),"ERROR: HTTP Error 403: Forbidden") is null&&WebDownload.YoutubeFailure(new("https://youtu.be/fixture"),"WARNING: SABR streaming was requested\nERROR: Postprocessing failed: No space left on device") is null&&WebDownload.YoutubeFailure(new("https://youtu.be/fixture"),"unrelated failure") is null,"Unrelated yt-dlp failures must preserve their original diagnostics");
         // Like the Mac: servers also send image/jpg, image/pjpeg or upper-case types for JPEG photos.

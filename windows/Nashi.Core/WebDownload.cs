@@ -3,6 +3,9 @@ using System.Text.Json;
 namespace Nashi.Core;
 public sealed partial class WebDownload(Toolchain tools)
 {
+    internal delegate Task<ProcessResult> ToolRunner(string executable,IEnumerable<string> arguments,CancellationToken token,Action<string>? outputLine);
+    private readonly ToolRunner runTool=ProcessRunner.RunAsync;
+    internal WebDownload(Toolchain tools,ToolRunner runTool):this(tools)=>this.runTool=runTool;
     private string[] YtDlpBaseArguments(bool javascript=true)
     {
         var arguments=new List<string>{"--ignore-config","--no-plugin-dirs","--no-remote-components"};
@@ -11,7 +14,7 @@ public sealed partial class WebDownload(Toolchain tools)
     }
     private async Task<ProcessResult> RunYtDlpAsync(Uri uri,IEnumerable<string> arguments,CancellationToken token,Action<string>? outputLine=null)
     {
-        try{return await ProcessRunner.RunAsync(tools.Executable("yt-dlp"),arguments,token,outputLine);}
+        try{return await runTool(tools.Executable("yt-dlp"),arguments,token,outputLine);}
         catch(IOException error)when(YoutubeFailure(uri,error.Message) is {} friendly){throw new IOException(friendly,error);}
     }
     internal static string? YoutubeFailure(Uri uri,string error)
