@@ -136,7 +136,7 @@ public sealed partial class ToolEditor
         {
             Canvas.SetLeft(line,0);Canvas.SetTop(line,0);line.Points=new(){origin,point};if(strokeKind==2){var a=Math.Atan2(point.Y-origin.Y,point.X-origin.X);var size=Math.Max(12,line.StrokeThickness*4);line.Points.Add(new(point.X-size*Math.Cos(a-.5),point.Y-size*Math.Sin(a-.5)));line.Points.Add(point);line.Points.Add(new(point.X-size*Math.Cos(a+.5),point.Y-size*Math.Sin(a+.5)));}return;
         }
-        var bounds=new Rect(origin,point);if(Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)){var side=Math.Min(bounds.Width,bounds.Height);bounds.Width=side;bounds.Height=side;}
+        var bounds=new Rect(origin,point);if(Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)||DesktopInput.IsShiftPressed){var side=Math.Min(bounds.Width,bounds.Height);bounds.Width=side;bounds.Height=side;}
         if(annotationShape is FrameworkElement element){Canvas.SetLeft(element,bounds.X);Canvas.SetTop(element,bounds.Y);element.Width=Math.Max(1,bounds.Width);element.Height=Math.Max(1,bounds.Height);if(strokeKind==8&&element is Image magnifier&&bitmap is not null){var width=Math.Max(1,(int)bounds.Width/2);var height=Math.Max(1,(int)bounds.Height/2);var crop=new Int32Rect(Math.Clamp((int)bounds.X,0,bitmap.PixelWidth-width),Math.Clamp((int)bounds.Y,0,bitmap.PixelHeight-height),width,height);magnifier.Source=new CroppedBitmap(bitmap,crop);}}
     }
 }
