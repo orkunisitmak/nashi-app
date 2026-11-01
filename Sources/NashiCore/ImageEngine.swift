@@ -538,6 +538,8 @@ public enum ImageEngine {
             for index in images.indices { cells.append(CGRect(x:area.minX+Double(index%columns)*(cellWidth+gap),y:area.maxY-Double(index/columns+1)*cellHeight-Double(index/columns)*gap,width:cellWidth,height:cellHeight)) }
         }
         for (image,cell) in zip(images,cells) {
+            // Whole-pixel edges: touching cells share one edge instead of each half covering a pixel the background shows through.
+            let cell=CGRect(x:cell.minX.rounded(),y:cell.minY.rounded(),width:cell.maxX.rounded()-cell.minX.rounded(),height:cell.maxY.rounded()-cell.minY.rounded())
             ctx.saveGState();let radius=max(0,min(settings.cornerRadius,min(cell.width,cell.height)/2));ctx.addPath(CGPath(roundedRect:cell,cornerWidth:radius,cornerHeight:radius,transform:nil));ctx.clip();drawFitted(image,in:cell,context:ctx,fit:settings.imageFit);ctx.restoreGState()
         }
         guard let result=ctx.makeImage() else { throw NashiError.failed("Could not create collage.") };return result

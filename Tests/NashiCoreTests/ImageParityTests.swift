@@ -118,6 +118,17 @@ final class ImageParityTests: XCTestCase {
         XCTAssertThrowsError(try ImageEngine.collageImage(images,settings:settings))
     }
 
+    /// 1000 px split into 3 or 7 cells puts the shared edges inside pixels; with no spacing the
+    /// background used to show through as a hairline between images that should touch.
+    func testCollageCellsWithoutSpacingTouchWithoutSeams() throws {
+        let white=try canvas(50,50,color:"#FFFFFF")
+        var settings=CollageOptions();settings.layout = .row;settings.width=1000;settings.height=100;settings.spacing=0;settings.outerPadding=0;settings.cornerRadius=0;settings.backgroundColor="#000000"
+        for count in [3,7] {
+            let result=try ImageEngine.collageImage(Array(repeating:white,count:count),settings:settings),row=try bytes(try XCTUnwrap(result.cropping(to:CGRect(x:0,y:50,width:1000,height:1))))
+            XCTAssertEqual(stride(from:0,to:row.count,by:4).filter { row[$0] != 255 }.map { $0/4 },[],"\(count) images")
+        }
+    }
+
     func testSolidBlurAndPixelateRedactionsAffectOnlySelectedRegion() throws {
         let input=try canvas(128,128)
         var options=OperationOptions();options.redactions=[.init(x:32,y:32,width:64,height:64)]
