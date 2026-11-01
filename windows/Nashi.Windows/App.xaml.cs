@@ -96,6 +96,20 @@ public partial class App:Application
             }
             return;
         }
+        if(e.Args.Contains("--editor-smoke-test"))
+        {
+            IsSmokeTest=true;ShutdownMode=ShutdownMode.OnExplicitShutdown;
+            var directory=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY")??Path.Combine(Path.GetTempPath(),"Nashi-Editor-Smoke");
+            try
+            {
+                Directory.CreateDirectory(directory);var checks=0;
+                EditorReliabilityChecks.Run(directory,(passed,reason)=>{if(!passed)throw new InvalidOperationException(reason);checks++;});
+                File.WriteAllText(Path.Combine(directory,"editor-result.json"),System.Text.Json.JsonSerializer.Serialize(new{passed=checks}));
+                Shutdown(0);
+            }
+            catch(Exception error){Console.Error.WriteLine(error);Directory.CreateDirectory(directory);File.WriteAllText(Path.Combine(directory,"error.txt"),error.ToString());Shutdown(1);}
+            return;
+        }
         if(e.Args.Contains("--smoke-test")){IsSmokeTest=true;try{NativeExceptionTrace.Install();SmokeTests.Run();Shutdown(0);}catch(Exception error){Console.Error.WriteLine(error);var directory=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");if(directory is not null){Directory.CreateDirectory(directory);File.WriteAllText(Path.Combine(directory,"error.txt"),error.ToString());}Shutdown(1);}return;}
         if(e.Args.Length==1&&e.Args[0]=="--install-update"){ShutdownMode=ShutdownMode.OnExplicitShutdown;_ = InstallUpdateAsync();return;}
         instance=new SingleInstance();Exit+=(_,_)=>instance.Dispose();var paths=e.Args.Where(p=>File.Exists(p)||Directory.Exists(p)).ToArray();

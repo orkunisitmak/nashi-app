@@ -292,9 +292,9 @@ public sealed partial class MainWindow:Window
         catch(Exception error){toast.Close();MessageBox.Show(this,L10n.Text(error.Message),L10n.Text("Couldn’t finish"),MessageBoxButton.OK,MessageBoxImage.Information);}
         finally{SetBusy(false);}
     }
-    private static Task<IReadOnlyList<string>> OnStaAsync(Func<IReadOnlyList<string>> work)
+    internal static Task<TResult> OnStaAsync<TResult>(Func<TResult> work)
     {
-        var completion=new TaskCompletionSource<IReadOnlyList<string>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var completion=new TaskCompletionSource<TResult>(TaskCreationOptions.RunContinuationsAsynchronously);
         var thread=new Thread(()=>{try{completion.SetResult(work());}catch(Exception error){completion.SetException(error);}}){IsBackground=true};thread.SetApartmentState(ApartmentState.STA);thread.Start();return completion.Task;
     }
     private async Task DownloadAsync()

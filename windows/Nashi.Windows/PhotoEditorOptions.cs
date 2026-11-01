@@ -47,7 +47,7 @@ public sealed partial class ToolEditor
         if(tool is "editImage" or "frameImage" or "createCollage")
         {
             photoPreview=new(){Interval=TimeSpan.FromMilliseconds(300)};photoPreview.Tick+=async(_,_)=>{photoPreview.Stop();await PreviewPhoto();};
-            foreach(var box in fields.Values)box.TextChanged+=(_,_)=>QueuePhotoPreview();backdrop.SelectionChanged+=(_,_)=>QueuePhotoPreview();collageLayout.SelectionChanged+=(_,_)=>QueuePhotoPreview();Closed+=(_,_)=>photoPreview.Stop();
+            foreach(var box in fields.Values)box.TextChanged+=(_,_)=>QueuePhotoPreview();backdrop.SelectionChanged+=(_,_)=>QueuePhotoPreview();collageLayout.SelectionChanged+=(_,_)=>QueuePhotoPreview();Closed+=(_,_)=>{photoGeneration++;photoPreview.Stop();};
             var original=L10n.Content(new CheckBox{Content="Show original",Margin=new(4,14,4,4)});original.Checked+=(_,_)=>{showingOriginal=true;photoPreview.Stop();photoGeneration++;SetPhotoPreview(bitmap!);};original.Unchecked+=(_,_)=>{showingOriginal=false;QueuePhotoPreview();};resetPhotoView=()=>original.IsChecked=false;previewStack.Children.Add(original);Loaded+=(_,_)=>QueuePhotoPreview();
         }
         if(tool=="annotate")options.Children.Add(MainWindow.Button("Choose annotation image…",()=>{var picker=new OpenFileDialog{Filter="Images|*.png;*.jpg;*.webp;*.heic;*.avif;*.bmp"};if(picker.ShowDialog(this)==true)ChooseAnnotationImage(picker.FileName);}));
@@ -83,7 +83,7 @@ public sealed partial class ToolEditor
         controls.Children.Add(MainWindow.Button("−",()=>Apply(zoom/1.25)));controls.Children.Add(MainWindow.Button("Fit",()=>Apply(1)));controls.Children.Add(MainWindow.Button("+",()=>Apply(zoom*1.25)));controls.Children.Add(percent);result.Children.Add(controls);result.Children.Add(scroll);System.Windows.Automation.AutomationProperties.SetAutomationId(scroll,"ImagePreviewViewport");scroll.SizeChanged+=(_,_)=>SetZoom(zoom);scroll.ScrollChanged+=(_,e)=>{if(Math.Abs(e.ViewportWidthChange)>.1||Math.Abs(e.ViewportHeightChange)>.1)SetZoom(zoom);};SizeChanged+=(_,_)=>SetZoom(zoom);return result;
     }
     private void MoveImage(int delta){var index=imageOrder.SelectedIndex;var next=index+delta;if(index<0||next<0||next>=imageOrder.Items.Count)return;var item=imageOrder.Items[index];imageOrder.Items.RemoveAt(index);imageOrder.Items.Insert(next,item);imageOrder.SelectedIndex=next;QueuePhotoPreview();}
-    private void QueuePhotoPreview(){if(photoPreview is null||showingOriginal)return;photoPreview.Stop();photoPreview.Start();}
+    private void QueuePhotoPreview(){if(photoPreview is null||showingOriginal)return;photoGeneration++;photoPreview.Stop();photoPreview.Start();}
     private ImageOptions PhotoSettings(ImageOptions original)
     {
         var changes=new Dictionary<string,double>();foreach(var property in typeof(PhotoAdjustments).GetProperties())changes[property.Name]=Value(property.Name,(double)property.GetValue(new PhotoAdjustments())!);
@@ -92,14 +92,29 @@ public sealed partial class ToolEditor
     }
     private async Task PreviewPhoto()
     {
-        if(bitmap is null||!IsVisible||showingOriginal)return;var generation=++photoGeneration;
+        if(bitmap is null||!IsVisible||showingOriginal)return;var generation=photoGeneration;
         if(!await previewGate.WaitAsync(0)){QueuePhotoPreview();return;}
         try
         {
-            var settings=PhotoSettings(new((int)Value("Width",bitmap.PixelWidth),(int)Value("Height",bitmap.PixelHeight),(int)Value("Degrees",0)));BitmapSource result;
-            if(tool=="editImage"){var factor=Math.Min(1,1200d/Math.Max(bitmap.PixelWidth,bitmap.PixelHeight));var source=factor<1?new TransformedBitmap(bitmap,new ScaleTransform(factor,factor)):(BitmapSource)bitmap;var png=ImageEngine.PngBytes(source);result=ImageEngine.FromPng(await Task.Run(()=>PhotoCodec.Adjust(png,settings.Adjustments)));result=ImageEngine.TransformPhoto(result,SizeUntouched?settings with{Width=null,Height=null}:settings with{Width=Math.Max(1,(int)Math.Round((settings.Width??bitmap.PixelWidth)*factor)),Height=Math.Max(1,(int)Math.Round((settings.Height??bitmap.PixelHeight)*factor))});}
-            else if(tool=="frameImage")result=ImageEngine.Frame(bitmap,settings.Frame);
-            else result=ImageEngine.Collage(collageInputs,settings.Collage,CancellationToken.None);
+            // Snapshot WPF controls on the UI thread; render expensive photo operations on an isolated STA.
+            // An arbitrary-angle RenderTargetBitmap.Render can block the Windows CI desktop dispatcher.
+            var settings=PhotoSettings(new((int)Value("Width",bitmap.PixelWidth),(int)Value("Height",bitmap.PixelHeight),(int)Value("Degrees",0)));
+            var previewSource=bitmap.IsFrozen?bitmap:bitmap.CloneCurrentValue();previewSource.Freeze();
+            var untouched=tool=="editImage"&&SizeUntouched;var inputs=collageInputs.ToArray();
+            var result=await MainWindow.OnStaAsync(()=>
+            {
+                BitmapSource output;
+                if(tool=="editImage")
+                {
+                    var factor=Math.Min(1,1200d/Math.Max(previewSource.PixelWidth,previewSource.PixelHeight));
+                    var source=factor<1?new TransformedBitmap(previewSource,new ScaleTransform(factor,factor)):previewSource;
+                    var adjusted=ImageEngine.FromPng(PhotoCodec.Adjust(ImageEngine.PngBytes(source),settings.Adjustments));
+                    output=ImageEngine.TransformPhoto(adjusted,untouched?settings with{Width=null,Height=null}:settings with{Width=Math.Max(1,(int)Math.Round((settings.Width??previewSource.PixelWidth)*factor)),Height=Math.Max(1,(int)Math.Round((settings.Height??previewSource.PixelHeight)*factor))});
+                }
+                else if(tool=="frameImage")output=ImageEngine.Frame(previewSource,settings.Frame);
+                else output=ImageEngine.Collage(inputs,settings.Collage,CancellationToken.None);
+                if(!output.IsFrozen)output.Freeze();return output;
+            });
             if(!IsVisible||showingOriginal||generation!=photoGeneration)return;SetPhotoPreview(result);
         }
         catch(Exception error)when(error is ArgumentException or FormatException or InvalidDataException or ImageMagick.MagickException or IOException or NotSupportedException){ToolTip=error.Message;}finally{previewGate.Release();}
