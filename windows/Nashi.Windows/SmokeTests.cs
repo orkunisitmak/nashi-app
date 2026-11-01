@@ -24,12 +24,15 @@ internal static class SmokeTests
         var root=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY")??Path.Combine(Path.GetTempPath(),"Nashi-Smoke-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(root);var checks=0;
         using var watchdog=new System.Threading.Timer(_=>{File.WriteAllText(Path.Combine(root,"suite-timeout.txt"),"Native desktop verification exceeded 15 minutes.");DesktopInput.HoldMouse(false);Environment.Exit(1);},null,TimeSpan.FromMinutes(15),System.Threading.Timeout.InfiniteTimeSpan);
         var testTools=ParitySmokeTests.Tools(root);
-        void Check(bool value,string reason){if(!value)throw new Exception(reason);checks++;}
-        TrayIconRecoveryChecks.Run(Check);
-        ShellShortcutChecks.Run(root,Check);
-        EditorReliabilityChecks.Run(root,Check);
-        InteractionChecks.Run(root,Check);
-        WheelIconSmoke.Run(Check);
+        // Persist the last verified assertion before a native window can block the dispatcher.
+        // The CI artifact then identifies the stalled check even if the watchdog exits the process.
+        void Progress(string message)=>File.AppendAllText(Path.Combine(root,"suite-progress.log"),$"{DateTimeOffset.UtcNow:O} {message}{Environment.NewLine}");
+        void Check(bool value,string reason){Progress($"{(value?"PASS":"FAIL")} {checks+1}: {reason}");if(!value)throw new Exception(reason);checks++;}
+        Progress("START TrayIconRecoveryChecks");TrayIconRecoveryChecks.Run(Check);
+        Progress("START ShellShortcutChecks");ShellShortcutChecks.Run(root,Check);
+        Progress("START EditorReliabilityChecks");EditorReliabilityChecks.Run(root,Check);
+        Progress("START InteractionChecks");InteractionChecks.Run(root,Check);
+        Progress("START WheelIconSmoke");WheelIconSmoke.Run(Check);
         var visual=new DrawingVisual();using(var dc=visual.RenderOpen()){dc.DrawRectangle(Brushes.DarkOliveGreen,null,new Rect(0,0,320,180));dc.DrawRectangle(Brushes.Gold,null,new Rect(20,20,120,80));}
         var bitmap=new RenderTargetBitmap(320,180,96,96,PixelFormats.Pbgra32);bitmap.Render(visual);var source=Path.Combine(root,"Source.png");ImageEngine.Save(bitmap,source,"png");
         const string query="/tEXt/{str=Comment}";

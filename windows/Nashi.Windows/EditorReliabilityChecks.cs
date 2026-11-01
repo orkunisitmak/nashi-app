@@ -13,6 +13,9 @@ internal static class EditorReliabilityChecks
     }
     internal static void Run(string root,Action<bool,string> check)
     {
+        // Only smoke fixtures are reported; no clipboard or user document contents.
+        void Trace(string phase)=>File.AppendAllText(Path.Combine(root,"editor-progress.log"),$"{DateTimeOffset.UtcNow:O} {phase}{Environment.NewLine}");
+        Trace("START audio editor");
         var audio=Path.Combine(root,"Reliability.wav");
         using(var writer=new BinaryWriter(File.Create(audio)))
         {
@@ -56,30 +59,33 @@ internal static class EditorReliabilityChecks
             }
             finally{convert.Close();}
             var pixels=System.Windows.Media.Imaging.BitmapSource.Create(100,60,96,96,PixelFormats.Bgra32,null,new byte[100*60*4],100*4);pixels.Freeze();
+            Trace("START photo editor");
             var image=Path.Combine(root,"Reliability.png");ImageEngine.Save(pixels,image,"png");var photo=new ToolEditor(owner,"editImage","Edit Photo",image,preview:pixels);
             try
             {
-                photo.Show();DesktopInput.Pump();photo.FieldForTest("Degrees").Text="invalid";var rotate=Children(photo).OfType<Button>().Single(b=>b.Content as string=="Rotate Right");
+                Trace("photo show");photo.Show();DesktopInput.Pump();photo.FieldForTest("Degrees").Text="invalid";var rotate=Children(photo).OfType<Button>().Single(b=>b.Content as string=="Rotate Right");
+                Trace("photo invalid rotation click");
                 Exception? failure=null;try{rotate.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));}catch(Exception error){failure=error;}
                 check(failure is null&&photo.FieldForTest("Width").Text=="100","Invalid photo rotation escaped the editor or partially changed dimensions");
                 photo.FieldForTest("Degrees").Text="0";rotate.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 check(photo.FieldForTest("Degrees").Text=="90"&&photo.FieldForTest("Width").Text=="60","Photo rotation did not recover after correcting invalid input");
-                photo.AcceptForTest();var turned=ImageEngine.Load(ImageEngine.Apply("editImage",[image],root,photo.ImageOptions)[0]);
+                Trace("photo first image export");photo.AcceptForTest();var turned=ImageEngine.Load(ImageEngine.Apply("editImage",[image],root,photo.ImageOptions)[0]);
                 check(turned.PixelWidth==60&&turned.PixelHeight==100,$"Rotate Right distorted the photo to {turned.PixelWidth}×{turned.PixelHeight}");
-                Children(photo).OfType<Button>().Single(b=>b.Content as string=="↶ Reset").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));photo.FieldForTest("Degrees").Text="45";DesktopInput.Pump(1500);photo.AcceptForTest();
-                var tilted=ImageEngine.Load(ImageEngine.Apply("editImage",[image],root,photo.ImageOptions)[0]);
+                Children(photo).OfType<Button>().Single(b=>b.Content as string=="↶ Reset").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));Trace("photo reset and 45-degree preview");photo.FieldForTest("Degrees").Text="45";DesktopInput.Pump(1500);photo.AcceptForTest();
+                Trace("photo second image export");var tilted=ImageEngine.Load(ImageEngine.Apply("editImage",[image],root,photo.ImageOptions)[0]);
                 check(photo.IsVisible&&tilted.PixelWidth==114&&tilted.PixelHeight==114,$"A 45° photo rotation crashed the preview or lost the turned corners: {tilted.PixelWidth}×{tilted.PixelHeight}");
                 var shown=(System.Windows.Media.Imaging.BitmapSource)((Image)Children(photo).OfType<Canvas>().First(c=>c.Children.Count>0&&c.Children[0] is Image).Children[0]).Source;
                 check(shown.PixelWidth==114&&shown.PixelHeight==114,$"The 45° preview ({shown.PixelWidth}×{shown.PixelHeight}) differs from the exported photo");
             }
-            finally{photo.Close();}
-            var single=new ToolEditor(owner,"resize","Resize",image,preview:pixels);
+            finally{Trace("photo close");photo.Close();}
+            Trace("START single-image resize editor");var single=new ToolEditor(owner,"resize","Resize",image,preview:pixels);
             try
             {
                 single.Show();DesktopInput.Pump();single.FieldForTest("Height").Text="30";single.AcceptForTest();var exact=ImageEngine.Load(ImageEngine.Apply("resize",[image],root,single.ImageOptions)[0]);
                 check(exact.PixelWidth==100&&exact.PixelHeight==30,$"Resizing one image ignored the typed size: {exact.PixelWidth}×{exact.PixelHeight}");
             }
             finally{single.Close();}
+            Trace("START rounded audio trim editor");
             // Default ranges show milliseconds and can round just past ffprobe's duration.
             var rounded=new ToolEditor(owner,"trimAudio","Trim Audio",audio,new MediaInfo(4.9876,new FileInfo(audio).Length,[new MediaStream(0,"audio","pcm_s16le",null,null,false)]));
             try
