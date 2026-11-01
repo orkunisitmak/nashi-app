@@ -489,6 +489,7 @@
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "LE PRESSE-PAPIERS EST OCCUPÉ. RÉESSAYEZ DE COLLER.";
 "CLOSE" = "FERMER";
 "CLOSE FLOAT WITHOUT DELETING FILES" = "FERMER FLOAT SANS SUPPRIMER LES FICHIERS";
+"CLOSE WELCOME" = "FERMER L’ÉCRAN DE BIENVENUE";
 "CLOSE WINDOW" = "FERMER LA FENÊTRE";
 "COLLAPSE FLOAT" = "RÉDUIRE FLOAT";
 "COLOR" = "COULEUR";
@@ -690,6 +691,7 @@
 "Close" = "Fermer";
 "Close Float without deleting files" = "Fermer Float sans supprimer les fichiers";
 "Close Window" = "Fermer la fenêtre";
+"Close welcome" = "Fermer l’écran de bienvenue";
 "Collapse Float" = "Réduire Float";
 "Color" = "Couleur";
 "Column" = "Colonne";
@@ -1186,6 +1188,8 @@
 "Format preferences" = "Préférences de format";
 "Formats" = "Formats";
 "Frame Image" = "Encadrer l’image";
+"Frame at %@ seconds" = "Image à la seconde %@";
+"Frame at %lld seconds" = "Image à la seconde %lld";
 "Frame rate" = "Fréquence d’images";
 "Frame timing and repeat count are preserved." = "Le minutage des images et le nombre de répétitions sont conservés.";
 "Free" = "Libre";
@@ -1923,6 +1927,7 @@
 "REMOVE AUDIO" = "SUPPRIMER L’AUDIO";
 "REMOVE BACKGROUND" = "SUPPRIMER L’ARRIÈRE-PLAN";
 "REMOVE CLIPS (NUMBERS; SEPARATED BY SEMICOLONS)" = "SUPPRIMER DES CLIPS (NUMÉROS ; SÉPARÉS PAR DES POINTS-VIRGULES)";
+"REMOVE FOLDER ACCESS" = "SUPPRIMER L’ACCÈS AU DOSSIER";
 "REMOVE FROM FLOAT" = "RETIRER DE FLOAT";
 "REMOVE FROM SELECTION" = "RETIRER DE LA SÉLECTION";
 "REMOVE IMAGE" = "RETIRER L’IMAGE";
@@ -1998,6 +2003,7 @@
 "Remove Metadata" = "Supprimer les métadonnées";
 "Remove all metadata" = "Supprimer toutes les métadonnées";
 "Remove clips (numbers; separated by semicolons)" = "Supprimer des clips (numéros ; séparés par des points-virgules)";
+"Remove folder access" = "Supprimer l’accès au dossier";
 "Remove from Float" = "Retirer de Float";
 "Remove from selection" = "Retirer de la sélection";
 "Remove selected area" = "Retirer la zone sélectionnée";
@@ -2324,6 +2330,8 @@
 "Speed" = "Vitesse";
 "Split PDF" = "Diviser un PDF";
 "Split Video" = "Diviser la vidéo";
+"Split at %@ seconds" = "Coupure à la seconde %@";
+"Split at %lld seconds" = "Coupure à la seconde %lld";
 "Split points (seconds; separated by semicolons)" = "Points de coupure (secondes ; séparés par des points-virgules)";
 "Split points must be at least 0.05 seconds apart and from either end." = "Les points de coupure doivent être espacés d’au moins 0,05 seconde entre eux et des deux extrémités.";
 "Splitting requires a known duration." = "La division nécessite une durée connue.";
@@ -2334,6 +2342,10 @@
 "Start" = "Début";
 "Start must be before End, within the media duration." = "Le début doit précéder la fin, dans la durée du média.";
 "Starting download…" = "Démarrage du téléchargement…";
+"Step %@ of 6: %@" = "Étape %@ sur 6 : %@";
+"Step %@ of 6: %lld" = "Étape %@ sur 6 : %lld";
+"Step %lld of 6: %@" = "Étape %lld sur 6 : %@";
+"Step %lld of 6: %lld" = "Étape %lld sur 6 : %lld";
 "Stereo" = "Stéréo";
 "Still image" = "Image fixe";
 "Straight to the good stuff." = "Droit au but.";

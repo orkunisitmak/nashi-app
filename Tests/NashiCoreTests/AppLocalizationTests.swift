@@ -134,6 +134,18 @@ final class AppLocalizationTests:XCTestCase {
             XCTAssertEqual(AppLocalization.text(source,language:"tr"),source)
         }
     }
+    /// VoiceOver labels of the video timeline, the welcome window and the Folders settings page. The welcome page-dot
+    /// label interpolates the page name, which WelcomeView translates before it reaches the "Step %lld of 6: %@" key.
+    func testTimelineWelcomeAndFolderVoiceOverLabelsAreTranslated() {
+        XCTAssertEqual(AppLocalization.text("Frame at 1.25 seconds",language:"tr"),"1.25 saniyedeki kare")
+        XCTAssertEqual(AppLocalization.text("Split at 3.10 seconds",language:"fr"),"Coupure à la seconde 3.10")
+        XCTAssertEqual(AppLocalization.text("Close welcome",language:"fr"),"Fermer l’écran de bienvenue")
+        XCTAssertEqual(AppLocalization.text("Remove folder access",language:"tr"),"Klasör erişimini kaldır")
+        let name=AppLocalization.text("Move & share",language:"fr")
+        XCTAssertEqual(AppLocalization.text("Step 4 of 6: \(name)",language:"fr"),"Étape 4 sur 6\u{00A0}: Déplacer et partager")
+        XCTAssertEqual(AppLocalization.text("Step 1 of 6: \(AppLocalization.text("Hello",language:"tr"))",language:"tr"),"Adım 1/6: Merhaba")
+        XCTAssertEqual(AppLocalization.text("Step 1 of 6: Hello",language:"en"),"Step 1 of 6: Hello")
+    }
     /// A batch reports "File <i> of <n> · <status>". Both the prefix and the status are translated; a status without a
     /// translation stays as it is.
     func testBatchStatusTranslatesPrefixAndStatus() throws {

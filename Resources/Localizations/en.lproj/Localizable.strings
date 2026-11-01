@@ -489,6 +489,7 @@
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "CLIPBOARD IS BUSY. TRY PASTE AGAIN.";
 "CLOSE" = "CLOSE";
 "CLOSE FLOAT WITHOUT DELETING FILES" = "CLOSE FLOAT WITHOUT DELETING FILES";
+"CLOSE WELCOME" = "CLOSE WELCOME";
 "CLOSE WINDOW" = "CLOSE WINDOW";
 "COLLAPSE FLOAT" = "COLLAPSE FLOAT";
 "COLOR" = "COLOR";
@@ -690,6 +691,7 @@
 "Close" = "Close";
 "Close Float without deleting files" = "Close Float without deleting files";
 "Close Window" = "Close Window";
+"Close welcome" = "Close welcome";
 "Collapse Float" = "Collapse Float";
 "Color" = "Color";
 "Column" = "Column";
@@ -1186,6 +1188,8 @@
 "Format preferences" = "Format preferences";
 "Formats" = "Formats";
 "Frame Image" = "Frame Image";
+"Frame at %@ seconds" = "Frame at %@ seconds";
+"Frame at %lld seconds" = "Frame at %lld seconds";
 "Frame rate" = "Frame rate";
 "Frame timing and repeat count are preserved." = "Frame timing and repeat count are preserved.";
 "Free" = "Free";
@@ -1923,6 +1927,7 @@
 "REMOVE AUDIO" = "REMOVE AUDIO";
 "REMOVE BACKGROUND" = "REMOVE BACKGROUND";
 "REMOVE CLIPS (NUMBERS; SEPARATED BY SEMICOLONS)" = "REMOVE CLIPS (NUMBERS; SEPARATED BY SEMICOLONS)";
+"REMOVE FOLDER ACCESS" = "REMOVE FOLDER ACCESS";
 "REMOVE FROM FLOAT" = "REMOVE FROM FLOAT";
 "REMOVE FROM SELECTION" = "REMOVE FROM SELECTION";
 "REMOVE IMAGE" = "REMOVE IMAGE";
@@ -1998,6 +2003,7 @@
 "Remove Metadata" = "Remove Metadata";
 "Remove all metadata" = "Remove all metadata";
 "Remove clips (numbers; separated by semicolons)" = "Remove clips (numbers; separated by semicolons)";
+"Remove folder access" = "Remove folder access";
 "Remove from Float" = "Remove from Float";
 "Remove from selection" = "Remove from selection";
 "Remove selected area" = "Remove selected area";
@@ -2324,6 +2330,8 @@
 "Speed" = "Speed";
 "Split PDF" = "Split PDF";
 "Split Video" = "Split Video";
+"Split at %@ seconds" = "Split at %@ seconds";
+"Split at %lld seconds" = "Split at %lld seconds";
 "Split points (seconds; separated by semicolons)" = "Split points (seconds; separated by semicolons)";
 "Split points must be at least 0.05 seconds apart and from either end." = "Split points must be at least 0.05 seconds apart and from either end.";
 "Splitting requires a known duration." = "Splitting requires a known duration.";
@@ -2334,6 +2342,10 @@
 "Start" = "Start";
 "Start must be before End, within the media duration." = "Start must be before End, within the media duration.";
 "Starting download…" = "Starting download…";
+"Step %@ of 6: %@" = "Step %@ of 6: %@";
+"Step %@ of 6: %lld" = "Step %@ of 6: %lld";
+"Step %lld of 6: %@" = "Step %lld of 6: %@";
+"Step %lld of 6: %lld" = "Step %lld of 6: %lld";
 "Stereo" = "Stereo";
 "Still image" = "Still image";
 "Straight to the good stuff." = "Straight to the good stuff.";

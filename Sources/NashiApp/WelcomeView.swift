@@ -15,6 +15,7 @@ struct WelcomeView:View {
     @State private var launchUnavailable=false
     @State private var launchError:String?
     private let names=["Hello","Convert","Fine-tune","Move & share","Folders","Ready"]
+    @AppStorage("appLanguage") private var language="en"
     private var toolsReady:Bool { ExternalToolSetup.status.ready }
     private var titles:[String] { ["Nice files.\nNo fuss.","A new form.\nIn a tap.","Little tweaks.\nBig difference.","Keep things\nmoving.","Right where\nyou want it.",toolsReady ? "You’re all set.\nMake something good.":"One last step.\nSet up your tools."] }
     var body:some View {
@@ -38,7 +39,7 @@ struct WelcomeView:View {
                 }.frame(width:310,alignment:.leading).id("copy-\(page)").transition(.opacity)
             }.frame(maxWidth:.infinity,maxHeight:.infinity)
             HStack(spacing:10) {
-                HStack(spacing:6) { ForEach(0..<6,id:\.self) { index in Button { page=index } label:{ Capsule().fill(page==index ? Color.nashi:Color.secondary.opacity(0.22)).frame(width:page==index ? 23:6,height:6).frame(height:24) }.buttonStyle(.plain).accessibilityLabel("Step \(index+1) of 6: \(names[index])").accessibilityAddTraits(page==index ? .isSelected:[]) } }
+                HStack(spacing:6) { ForEach(0..<6,id:\.self) { index in Button { page=index } label:{ Capsule().fill(page==index ? Color.nashi:Color.secondary.opacity(0.22)).frame(width:page==index ? 23:6,height:6).frame(height:24) }.buttonStyle(.plain).accessibilityLabel("Step \(index+1) of 6: \(AppLocalization.text(names[index],language:language))").accessibilityAddTraits(page==index ? .isSelected:[]) } }
                 Text("\(page+1) / 6").font(.system(size:10,design:.rounded)).monospacedDigit().foregroundStyle(.secondary)
                 Spacer()
                 if page>0 { Button("Back") { page-=1 }.buttonStyle(NashiButtonStyle(.quiet)) }

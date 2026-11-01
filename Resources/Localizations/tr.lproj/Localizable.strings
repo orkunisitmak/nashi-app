@@ -489,6 +489,7 @@
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "PANO MEŞGUL. YENİDEN YAPIŞTIRMAYI DENE.";
 "CLOSE" = "KAPAT";
 "CLOSE FLOAT WITHOUT DELETING FILES" = "DOSYALARI SİLMEDEN FLOAT’I KAPAT";
+"CLOSE WELCOME" = "HOŞ GELDİN EKRANINI KAPAT";
 "CLOSE WINDOW" = "PENCEREYİ KAPAT";
 "COLLAPSE FLOAT" = "FLOAT’I DARALT";
 "COLOR" = "RENK";
@@ -690,6 +691,7 @@
 "Close" = "Kapat";
 "Close Float without deleting files" = "Dosyaları silmeden Float’ı kapat";
 "Close Window" = "Pencereyi Kapat";
+"Close welcome" = "Hoş geldin ekranını kapat";
 "Collapse Float" = "Float’ı daralt";
 "Color" = "Renk";
 "Column" = "Sütun";
@@ -1186,6 +1188,8 @@
 "Format preferences" = "Biçim tercihleri";
 "Formats" = "Biçimler";
 "Frame Image" = "Çerçeve Ekle";
+"Frame at %@ seconds" = "%@ saniyedeki kare";
+"Frame at %lld seconds" = "%lld saniyedeki kare";
 "Frame rate" = "Kare hızı";
 "Frame timing and repeat count are preserved." = "Kare süreleri ve tekrar sayısı korunur.";
 "Free" = "Serbest";
@@ -1923,6 +1927,7 @@
 "REMOVE AUDIO" = "SESİ KALDIR";
 "REMOVE BACKGROUND" = "ARKA PLANI KALDIR";
 "REMOVE CLIPS (NUMBERS; SEPARATED BY SEMICOLONS)" = "ÇIKARILACAK KLİPLER (NUMARA; NOKTALI VİRGÜLLE AYIR)";
+"REMOVE FOLDER ACCESS" = "KLASÖR ERİŞİMİNİ KALDIR";
 "REMOVE FROM FLOAT" = "YÜZEN PENCEREDEN KALDIR";
 "REMOVE FROM SELECTION" = "SEÇİMDEN KALDIR";
 "REMOVE IMAGE" = "GÖRSELİ KALDIR";
@@ -1998,6 +2003,7 @@
 "Remove Metadata" = "Meta Verileri Kaldır";
 "Remove all metadata" = "Tüm meta verileri kaldır";
 "Remove clips (numbers; separated by semicolons)" = "Çıkarılacak klipler (numara; noktalı virgülle ayır)";
+"Remove folder access" = "Klasör erişimini kaldır";
 "Remove from Float" = "Yüzen Pencereden Kaldır";
 "Remove from selection" = "Seçimden kaldır";
 "Remove selected area" = "Seçili alanı kaldır";
@@ -2324,6 +2330,8 @@
 "Speed" = "Hız";
 "Split PDF" = "PDF'yi Böl";
 "Split Video" = "Videoyu Böl";
+"Split at %@ seconds" = "%@ saniyedeki bölme noktası";
+"Split at %lld seconds" = "%lld saniyedeki bölme noktası";
 "Split points (seconds; separated by semicolons)" = "Bölme noktaları (saniye; noktalı virgülle ayır)";
 "Split points must be at least 0.05 seconds apart and from either end." = "Bölme noktaları birbirinden ve iki uçtan en az 0,05 saniye uzakta olmalı.";
 "Splitting requires a known duration." = "Bölmek için sürenin bilinmesi gerekiyor.";
@@ -2334,6 +2342,10 @@
 "Start" = "Başlangıç";
 "Start must be before End, within the media duration." = "Başlangıç, Bitiş'ten önce ve medya süresi içinde olmalı.";
 "Starting download…" = "İndirme başlıyor…";
+"Step %@ of 6: %@" = "Adım %@/6: %@";
+"Step %@ of 6: %lld" = "Adım %@/6: %lld";
+"Step %lld of 6: %@" = "Adım %lld/6: %@";
+"Step %lld of 6: %lld" = "Adım %lld/6: %lld";
 "Stereo" = "Stereo";
 "Still image" = "Sabit görsel";
 "Straight to the good stuff." = "Doğrudan istediğin bölüme.";
