@@ -19,6 +19,7 @@ public sealed class Toolchain(string directory,string? searchPath=null)
     public string Executable(string name)
     {
         if(!Names.Contains(name))throw new ArgumentException("Unknown tool.");
+        if((name is "yt-dlp" or "deno")&&!Current(DirectoryPath))throw new FileNotFoundException("Choose Set up media tools first.");
         return Find(name,DirectoryPath)??throw new FileNotFoundException("Choose Set up media tools first.");
     }
     private static string FileName(string name)=>OperatingSystem.IsWindows()?name+".exe":name;

@@ -28,6 +28,7 @@ internal static class ToolSetupChecks
             check(!new Toolchain(platform).Ready,"A tool named for another platform must not count as installed");
             Tool("deno"+suffix);check(!new Toolchain(platform).Ready,"Bundled tools without a version marker must be refreshed");
             Write(Path.Combine(platform,Toolchain.ToolsetMarkerName),"older-toolset");check(!new Toolchain(platform).Ready,"An outdated bundled toolset must not count as ready");
+            try{new Toolchain(platform).Executable("yt-dlp");throw new Exception("Outdated yt-dlp remained executable");}catch(FileNotFoundException){check(new Toolchain(platform).Executable("ffmpeg")==Path.Combine(platform,"ffmpeg"+suffix),"An outdated marker must block only pinned yt-dlp and Deno tools");}
             Write(Path.Combine(platform,Toolchain.ToolsetMarkerName),Toolchain.ToolsetVersion);check(new Toolchain(platform).Ready&&new Toolchain(platform).Executable("deno")==Path.Combine(platform,"deno"+suffix),"Current tools must use this platform's executable names");
             if(!OperatingSystem.IsWindows())
             {
