@@ -24,6 +24,10 @@ internal static class CaptureDialog
                     editor.Add(new("text",w*.5,h*.88,0,0,"#FFFFFF",4,"Nashi ✓ şğüöçı",w/30));
                     return editor;
                 }
+            case "bubble":
+                {
+                    var bubble=new Bubble(MainWindow.BubbleChoices,(_,_)=>Task.FromResult(""));bubble.Opened+=(_,_)=>bubble.Expand(files.ToArray());return bubble;
+                }
             default:Console.Error.WriteLine("Unknown dialog: "+tool);return null;
         }
     }

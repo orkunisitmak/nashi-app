@@ -52,6 +52,11 @@ internal static class Localizer
         ["Pasted text"]="Metin yapıştırıldı",["Pasted image"]="Görsel yapıştırıldı",
         ["Format defaults"]="Biçim varsayılanları",["Restore defaults"]="Varsayılanlara dön",
         ["Float"]="Float",["Open"]="Aç",["Collapse"]="Daralt",["Float · 1 file"]="Float · 1 dosya",["Drag files out to use them anywhere. Drop files here to add them."]="Dosyaları istediğiniz yere sürükleyip bırakın. Eklemek için dosyaları buraya bırakın.",
+        ["Drop files here. Hold Ctrl for tools, Shift to convert, Alt for file actions."]="Dosyaları buraya bırakın. Araçlar için Ctrl, dönüştürmek için Shift, dosya işlemleri için Alt basılı tutun.",
+        ["Nothing here for these files."]="Bu dosyalar için burada bir şey yok.",["Open in Nashi"]="Nashi'de aç",["File"]="Dosya",["Convert"]="Dönüştür",["Bubble"]="Balon",["Paths copied."]="Yollar kopyalandı.",
+        ["Nashi is busy. Try again in a moment."]="Nashi meşgul. Biraz sonra tekrar deneyin.",["Show the Nashi bubble: drop files on it from any app to open the wheel"]="Nashi balonunu göster: çarkı açmak için herhangi bir uygulamadan dosyaları üstüne bırakın",
+        // The shared catalog names both Trim Video and Crop Video "Videoyu Kırp"; Linux tells them apart.
+        ["Trim Video"]="Videoyu Kısalt",["Trim Audio"]="Sesi Kısalt",
         ["Set up media tools"]="Medya araçlarını kur",["Move to…"]="Taşı…",["Copy"]="Kopyala",["Cancel"]="İptal",["Save"]="Kaydet",["Undo"]="Geri al",["Clear"]="Temizle",["Tool"]="Araç",["Color"]="Renk",["Text"]="Metin",["Cover"]="Kapat",["Redact"]="Sansürle",
     };
     /// For sentences built from numbers or names, which a catalog lookup cannot match.

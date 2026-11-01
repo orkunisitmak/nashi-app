@@ -19,7 +19,7 @@ internal static class EditorChecks
             root=Path.GetFullPath(root);Directory.CreateDirectory(root);
             if(Directory.EnumerateFileSystemEntries(root).Any())throw new InvalidOperationException("Choose an empty folder.");
             AppBuilder.Configure<App>().UseSkia().UseHeadless(new AvaloniaHeadlessPlatformOptions{UseHeadlessDrawing=false}).SetupWithoutStarting();
-            Annotate(root);Organize(root);Metadata();Web();Redact(root);Float(root);
+            Annotate(root);Organize(root);Metadata();Web();Redact(root);Float(root);BubbleWheel(root);
             Console.WriteLine($"{{\"passed\":{passed},\"scope\":\"Linux editors with pointer and keyboard input\"}}");
             return 0;
         }
@@ -142,6 +142,30 @@ internal static class EditorChecks
         Check(shelf.Items.Count==2&&!shelf.Items.Contains(a)&&File.Exists(a),"Delete removes from Float, not from disk");
         shelf.Toggle();Pump();Check(shelf.Height<60,"Float collapses to a strip");shelf.Toggle();Pump();Check(shelf.Height>300,"Float expands again");
         shelf.Close();Pump();
+    }
+    private static void BubbleWheel(string root)
+    {
+        var photo=Path.Combine(root,"Photo.png");Choice? ran=null;string[]? with=null;
+        var bubble=new Bubble(MainWindow.BubbleChoices,(files,choice)=>{ran=choice;with=files.ToArray();return Task.FromResult("Saved");});bubble.Show();Pump();
+        Check(bubble.Width==Bubble.Small&&bubble.Topmost,"The bubble is a small pear on top");
+        bubble.Expand([photo]);Pump();
+        Check(bubble.Width==Bubble.Large&&bubble.Ring=="tools"&&bubble.Segments.Any(b=>(b.Tag as Choice)?.Id=="annotateImage"),"Dropping an image opens the Tools ring");
+        bubble.Collapse();bubble.Expand([photo],KeyModifiers.Shift);Pump();Check(bubble.Ring=="convert"&&bubble.Segments.Any(b=>(b.Tag as Choice)?.Format=="webp"),"Shift opens the Convert ring");
+        bubble.Collapse();bubble.Expand([photo],KeyModifiers.Alt);Pump();Check(bubble.Ring=="actions"&&bubble.Segments.Count()==6,"Alt opens the File ring");
+        bool Inside(Button b){var r=new Rect(Canvas.GetLeft(b),Canvas.GetTop(b),b.DesiredSize.Width,b.DesiredSize.Height);const double c=Bubble.Large/2;return new[]{r.TopLeft,r.TopRight,r.BottomLeft,r.BottomRight}.All(p=>Math.Sqrt((p.X-c)*(p.X-c)+(p.Y-c)*(p.Y-c))<=c-8);}
+        bool Apart(Button[] all)=>all.SelectMany((a,i)=>all.Skip(i+1).Select(b=>(a,b))).All(p=>!new Rect(Canvas.GetLeft(p.a),Canvas.GetTop(p.a),p.a.DesiredSize.Width,p.a.DesiredSize.Height).Intersects(new Rect(Canvas.GetLeft(p.b),Canvas.GetTop(p.b),p.b.DesiredSize.Width,p.b.DesiredSize.Height)));
+        bool Clear(Bubble b)=>b.Segments.All(x=>!new Rect(Canvas.GetLeft(x),Canvas.GetTop(x),x.DesiredSize.Width,x.DesiredSize.Height).Intersects(new Rect(Bubble.Large/2-60,Bubble.Large/2-40,120,100)));
+        Check(bubble.Segments.All(Inside)&&Apart(bubble.Segments.ToArray())&&Clear(bubble),"File ring buttons fit inside the disc without overlapping");
+        var many=Enumerable.Range(1,10).Select(n=>new Choice("t"+n,"Change Video Speed "+n)).ToArray();
+        var crowded=new Bubble((_,_)=>many,(_,_)=>Task.FromResult(""));crowded.Show();crowded.Expand([photo]);Pump();
+        Check(crowded.Segments.Count()==10&&crowded.Segments.All(Inside)&&Apart(crowded.Segments.ToArray())&&Clear(crowded),$"Ten long choices fit on two circles without overlapping (inside {crowded.Segments.Count(Inside)}, apart {Apart(crowded.Segments.ToArray())}, clear {Clear(crowded)}: {string.Join(" ",crowded.Segments.Select(x=>$"{Canvas.GetLeft(x):0},{Canvas.GetTop(x):0},{x.DesiredSize.Width:0}x{x.DesiredSize.Height:0}"))})");crowded.Close();
+        bubble.KeyPress(Avalonia.Input.Key.Tab,RawInputModifiers.None,PhysicalKey.None,null);Pump();Check(bubble.Ring=="tools","Tab moves to the next ring");
+        var crop=bubble.Segments.First(b=>(b.Tag as Choice)?.Id=="cropImage");crop.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));Pump();
+        Check(ran?.Id=="cropImage"&&with is [var only]&&only==photo&&bubble.Width==Bubble.Small,"A wheel button runs that tool on the dropped file and closes the wheel");
+        bubble.Expand([photo,Path.Combine(root,"a.txt")]);Pump();Check(bubble.Ring=="actions","Mixed files open on the ring that has choices");
+        bubble.KeyPress(Avalonia.Input.Key.Escape,RawInputModifiers.None,PhysicalKey.None,null);Pump();Check(bubble.Width==Bubble.Small&&bubble.Held.Count==0,"Escape closes the wheel");
+        bubble.CaptureRenderedFrame()?.Save(Path.Combine(root,"bubble-small.png"));bubble.Expand([photo]);Pump();bubble.CaptureRenderedFrame()?.Save(Path.Combine(root,"bubble-wheel.png"));
+        bubble.Close();Pump();
     }
     private static IEnumerable<Avalonia.Visual> Descendants(Avalonia.Visual root){foreach(var child in Avalonia.VisualTree.VisualExtensions.GetVisualChildren(root)){yield return child;foreach(var d in Descendants(child))yield return d;}}
     private static T Wait<T>(Task<T> task){while(!task.IsCompleted){Dispatcher.UIThread.RunJobs();Thread.Sleep(5);}return task.GetAwaiter().GetResult();}

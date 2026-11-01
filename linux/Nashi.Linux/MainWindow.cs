@@ -19,6 +19,9 @@ public sealed class MainWindow:Window
     private readonly WrapPanel actions=new();
     private readonly TextBlock actionsLabel=Label("File actions");
     private readonly WebPanel web=new();
+    private Bubble? bubble;
+    /// Dialogs belong to the bubble while it runs a choice, so they appear over the app the files came from.
+    private Window owner;
     private readonly List<string> files=[];
     private readonly ListBox fileList=new(){SelectionMode=SelectionMode.Multiple,MaxHeight=220,ItemTemplate=new Avalonia.Controls.Templates.FuncDataTemplate<string>((path,_)=>{var row=new TextBlock{Text=Path.GetFileName(path),TextTrimming=TextTrimming.CharacterEllipsis};ToolTip.SetTip(row,path);return row;})};
     private readonly TextBlock selection=new(){FontSize=22,FontWeight=FontWeight.SemiBold};
@@ -35,20 +38,23 @@ public sealed class MainWindow:Window
 
     public MainWindow(LibraryStore library,IReadOnlyList<string> args)
     {
-        this.library=library;Title="Nashi";Width=760;Height=720;MinWidth=520;MinHeight=520;
+        this.library=library;owner=this;Title="Nashi";Width=760;Height=720;MinWidth=520;MinHeight=520;
         Icon=new WindowIcon(AssetLoader.Open(new Uri("avares://Nashi/Assets/NashiIcon.png")));
         this[!BackgroundProperty]=Resource("Paper");this[!ForegroundProperty]=Resource("Ink");
         Content=Layout();
         cancel.Click+=(_,_)=>running?.Cancel();reveal.Click+=(_,_)=>{if(lastFolder is not null)Open(lastFolder);};
         search.TextChanged+=(_,_)=>RefreshLibrary();
         KeyDown+=OnKey;
-        DragDrop.SetAllowDrop(this,true);AddHandler(DragDrop.DragOverEvent,(_,e)=>e.DragEffects=e.DataTransfer.Contains(DataFormat.File)?DragDropEffects.Copy:DragDropEffects.None);
-        AddHandler(DragDrop.DropEvent,(_,e)=>Add(e.DataTransfer.TryGetFiles()?.Select(f=>f.TryGetLocalPath()).OfType<string>()??[]));
+        DragDrop.SetAllowDrop(this,true);
+        AddHandler(DragDrop.DragEnterEvent,(_,e)=>Trace.Log("drag enter: "+string.Join(", ",e.DataTransfer.Formats)));
+        AddHandler(DragDrop.DragOverEvent,(_,e)=>e.DragEffects=e.DataTransfer.Contains(DataFormat.File)?DragDropEffects.Copy:DragDropEffects.None);
+        AddHandler(DragDrop.DropEvent,(_,e)=>{var dropped=e.DataTransfer.TryGetFiles()?.Select(f=>f.TryGetLocalPath()).OfType<string>().ToArray()??[];Trace.Log($"drop: {dropped.Length} files: {string.Join(" | ",dropped)}");Add(dropped);});
         if(library.RecoveryNotice is {} notice)status.Text=notice;
         string? Value(string flag)=>args.SkipWhile(a=>a!=flag).Skip(1).FirstOrDefault();
         var capture=Value("--capture");var dialog=Value("--dialog");var tab=Value("--tab");var lang=Value("--lang");
         Add(args.Where(a=>!a.StartsWith('-')&&a!=capture&&a!=dialog&&a!=tab&&a!=lang).Select(Path.GetFullPath));
         if(tab is not null&&Content is TabControl pages)pages.SelectedIndex=Math.Max(0,Array.IndexOf(["home","web","library","settings"],tab));Refresh();RefreshLibrary();
+        if(capture is null&&preferences.Value.Enabled)Opened+=(_,_)=>ShowBubble(true);
         if(capture is not null)Opened+=async(_,_)=>await Capture(Path.GetFullPath(capture),args.Contains("--dark")?"dark":args.Contains("--light")?"light":null,dialog,args.ToArray());
     }
 
@@ -87,7 +93,9 @@ public sealed class MainWindow:Window
         appearance.SelectionChanged+=(_,_)=>{var value=new[]{"system","light","dark"}[appearance.SelectedIndex];library.SetAppearance(value);NashiTheme.Apply(Application.Current!,value);};
         var language=new ComboBox{ItemsSource=new[]{"English","Türkçe"},SelectedIndex=Localizer.Language=="tr"?1:0,MinWidth=120};
         language.SelectionChanged+=(_,_)=>{Save(preferences.Value with{Language=language.SelectedIndex==1?"tr":"en"});status.Text="Restart Nashi to use the new language everywhere.";};
-        var settings=new StackPanel{Spacing=12,Margin=new(20),Children={Label("Appearance"),appearance,Label("Language"),language}};
+        var showBubble=new CheckBox{Content="Show the Nashi bubble: drop files on it from any app to open the wheel",IsChecked=preferences.Value.Enabled};
+        showBubble.IsCheckedChanged+=(_,_)=>{Save(preferences.Value with{Enabled=showBubble.IsChecked==true});ShowBubble(showBubble.IsChecked==true);};
+        var settings=new StackPanel{Spacing=12,Margin=new(20),Children={Label("Appearance"),appearance,Label("Language"),language,Label("Bubble"),showBubble}};
         Settings(settings);
         var tabs=new TabControl{Items={Tab("Home",home),Tab("Web",web),Tab("Library",libraryPage),Tab("Settings",settings)}};
         tabs.SelectionChanged+=(_,_)=>{if(tabs.SelectedIndex==2)RefreshLibrary();};
@@ -157,7 +165,7 @@ public sealed class MainWindow:Window
         MediaOptions? media=null;ImageEdit? edit=null;PhotoEdit? photo=null;FrameOptions? frame=null;CollageOptions? collage=null;Redaction? redact=null;PdfOrganization? organize=null;Annotation? annotate=null;DocumentOptions? document=null;MetadataEdit? metadata=null;CompressionOptions? compress=null;
         if(choice.Id=="compress")
         {
-            var editor=new CompressDialog(choice.Title,inputs.All(FeatureCatalog.IsImage),Operations.IsMediaOnly(inputs));await editor.ShowDialog(this);if(editor.Result is not {} picked)return;compress=picked;
+            var editor=new CompressDialog(choice.Title,inputs.All(FeatureCatalog.IsImage),Operations.IsMediaOnly(inputs));await editor.ShowDialog(owner);if(editor.Result is not {} picked)return;compress=picked;
         }
         if(choice.Id=="removeMetadata")
         {
@@ -180,37 +188,37 @@ public sealed class MainWindow:Window
         if(choice.Id=="annotateImage")
         {
             AnnotateDialog editor;try{editor=await AnnotateDialog.CreateAsync(choice.Title,inputs[0]);}catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or ImageMagick.MagickException){status.Text=error.Message;return;}
-            await editor.ShowDialog(this);if(editor.Result is not {} marks)return;annotate=marks;
+            await editor.ShowDialog(owner);if(editor.Result is not {} marks)return;annotate=marks;
         }
         if(choice.Id=="organizePDF")
         {
             PdfOrganizeDialog editor;status.Text="Reading pages…";try{editor=await PdfOrganizeDialog.CreateAsync(choice.Title,inputs[0]);}catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or DllNotFoundException){status.Text=error.Message;return;}
-            status.Text="";await editor.ShowDialog(this);if(editor.Result is not {} result)return;organize=result;
+            status.Text="";await editor.ShowDialog(owner);if(editor.Result is not {} result)return;organize=result;
         }
         if(choice.Id=="frameImage")
         {
             FrameDialog editor;try{editor=await FrameDialog.CreateAsync(choice.Title,inputs[0]);}catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or ImageMagick.MagickException){status.Text=error.Message;return;}
-            await editor.ShowDialog(this);if(!editor.Accepted)return;frame=editor.Result;
+            await editor.ShowDialog(owner);if(!editor.Accepted)return;frame=editor.Result;
         }
         else if(choice.Id=="createCollage")
         {
             CollageDialog editor;try{editor=await CollageDialog.CreateAsync(choice.Title,inputs);}catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or ImageMagick.MagickException){status.Text=error.Message;return;}
-            await editor.ShowDialog(this);if(!editor.Accepted)return;collage=editor.Result;
+            await editor.ShowDialog(owner);if(!editor.Accepted)return;collage=editor.Result;
         }
         if(choice.Id=="editImage")
         {
             PhotoDialog editor;try{editor=await PhotoDialog.CreateAsync(choice.Title,inputs[0]);}catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or ImageMagick.MagickException){status.Text=error.Message;return;}
-            await editor.ShowDialog(this);if(editor.Result is not {} result)return;photo=result;
+            await editor.ShowDialog(owner);if(editor.Result is not {} result)return;photo=result;
         }
         if(choice.Id=="cropImage")
         {
             CropDialog crop;try{crop=await CropDialog.CreateAsync(choice.Title,inputs[0]);}catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or ImageMagick.MagickException){status.Text=error.Message;return;}
-            await crop.ShowDialog(this);if(crop.Result is not {} selection)return;edit=selection;
+            await crop.ShowDialog(owner);if(crop.Result is not {} selection)return;edit=selection;
         }
         if(choice.Id=="redactImage")
         {
             RedactDialog editor;try{editor=await RedactDialog.CreateAsync(choice.Title,inputs[0]);}catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or ImageMagick.MagickException){status.Text=error.Message;return;}
-            await editor.ShowDialog(this);if(editor.Result is not {} areas)return;redact=areas;
+            await editor.ShowDialog(owner);if(editor.Result is not {} areas)return;redact=areas;
         }
         else if(choice.Id is "cropVideo" or "redactVideo")
         {
@@ -223,12 +231,12 @@ public sealed class MainWindow:Window
             if(choice.Id=="cropVideo")
             {
                 CropDialog crop;try{crop=await CropDialog.CreateAsync(choice.Title,inputs[0],picture);}catch(Exception error)when(error is ArgumentException or ImageMagick.MagickException){status.Text=error.Message;return;}
-                await crop.ShowDialog(this);if(crop.Result is not {} selection)return;media=new(){Regions=[Region(selection)]};
+                await crop.ShowDialog(owner);if(crop.Result is not {} selection)return;media=new(){Regions=[Region(selection)]};
             }
             else
             {
                 RedactDialog editor;try{editor=await RedactDialog.CreateAsync(choice.Title,inputs[0],picture,info.Duration);}catch(Exception error)when(error is ArgumentException or ImageMagick.MagickException){status.Text=error.Message;return;}
-                await editor.ShowDialog(this);if(editor.Result is not {} areas)return;var (start,end)=editor.Range;media=new(){Regions=areas.Areas.Select(a=>Region(a) with{Start=start,End=end}).ToArray(),RedactionMode=areas.Style};
+                await editor.ShowDialog(owner);if(editor.Result is not {} areas)return;var (start,end)=editor.Range;media=new(){Regions=areas.Areas.Select(a=>Region(a) with{Start=start,End=end}).ToArray(),RedactionMode=areas.Style};
             }
         }
         else if(choice.Id=="changeVideoSpeed"){if(await Ask(choice.Title,[("0.5×",.5),("1.5×",1.5),("2×",2d)],1) is not {} speed)return;media=new(){Speed=speed};}
@@ -243,12 +251,48 @@ public sealed class MainWindow:Window
                 if(await Ask(choice.Title,[("First frame",0),("Middle frame",1),("5 frames across the video",2)],0) is not {} pick)return;var d=info.Duration;
                 media=new(){SnapshotTimes=pick switch{1=>[d/2],2=>[d*.1,d*.3,d*.5,d*.7,d*.9],_=>[0]}};
             }
-            else if(choice.Id=="redactAudio"){var bleep=new BleepDialog(choice.Title,inputs[0],info);await bleep.ShowDialog(this);if(bleep.Result is not {} picked)return;media=new(){AudioRedactions=picked.Ranges,RedactionMode=picked.Mode};}
-            else{var trim=new TrimDialog(choice.Title,inputs[0],info);await trim.ShowDialog(this);if(trim.Result is not {} range)return;media=new(){Start=range.Start,End=range.End};}
+            else if(choice.Id=="redactAudio"){var bleep=new BleepDialog(choice.Title,inputs[0],info);await bleep.ShowDialog(owner);if(bleep.Result is not {} picked)return;media=new(){AudioRedactions=picked.Ranges,RedactionMode=picked.Mode};}
+            else{var trim=new TrimDialog(choice.Title,inputs[0],info);await trim.ShowDialog(owner);if(trim.Result is not {} range)return;media=new(){Start=range.Start,End=range.End};}
         }
         var settings=new ToolSettings(media,edit,photo,frame,collage,redact,organize,annotate,document,metadata,compress,choice.Id=="convert"?preferences.Profile(choice.Format!):null);
         await RunWork(choice.Id=="convert"?"Convert to "+choice.Format!.ToUpperInvariant():choice.Title,(destination,report,token)=>Operations.RunAsync(choice,inputs,destination,report,token,settings),Destination(inputs));
     }
+    private static readonly (string Id,string Title)[] BubbleActions=[("action:open","Open in Nashi"),("action:copy","Copy"),("action:move","Move to…"),("action:path","Copy path"),("action:float","Float"),("action:terminal","Open terminal here")];
+    internal static Choice[] BubbleChoices(IReadOnlyList<string> inputs,string ring)=>ring switch
+    {
+        "tools"=>Operations.Tools(inputs),
+        "convert"=>Operations.Formats(inputs).Select(f=>new Choice("convert",f.ToUpperInvariant(),f)).ToArray(),
+        _=>BubbleActions.Select(a=>new Choice(a.Id,a.Title)).ToArray()
+    };
+    private void ShowBubble(bool show)
+    {
+        if(!show){bubble?.Close();bubble=null;return;}
+        if(bubble is not null)return;
+        bubble=new Bubble(BubbleChoices,RunFromBubble);bubble.Closed+=(_,_)=>bubble=null;bubble.Show();
+    }
+    /// Runs a wheel choice on the dropped files with the same code as the Home buttons.
+    private async Task<string> RunFromBubble(IReadOnlyList<string> inputs,Choice choice)
+    {
+        if(running is not null)return Localizer.T("Nashi is busy. Try again in a moment.");
+        files.Clear();files.AddRange(inputs);Refresh();status.Text="";
+        if(choice.Id=="action:open"){WindowState=WindowState.Normal;Show();Activate();return "";}
+        owner=bubble??(Window)this;
+        try
+        {
+            switch(choice.Id)
+            {
+                case "action:copy":await CopyFiles();break;
+                case "action:move":await MoveFiles();break;
+                case "action:path":if(Clipboard is not null){await Clipboard.SetTextAsync(FileActions.PathList(files));status.Text=Localizer.T(files.Count==1?"Path copied.":"Paths copied.");}break;
+                case "action:float":new FloatShelf(files.ToArray()).Show();break;
+                case "action:terminal":status.Text=FileActions.Terminal(files[0])?"":Localizer.T("No terminal app was found.");break;
+                default:await Run(choice);break;
+            }
+        }
+        finally{owner=this;}
+        return status.Text??"";
+    }
+
     /// Settings → Output: next to the original (default) or one chosen folder.
     private string Destination(IReadOnlyList<string> inputs)=>preferences.Value.OutputMode=="folder"&&Directory.Exists(preferences.Value.OutputFolder)?preferences.Value.OutputFolder:Path.GetDirectoryName(inputs[0])!;
 
@@ -375,7 +419,7 @@ public sealed class MainWindow:Window
         {
             if(inputs.Length>1)return all;
             status.Text="Reading tags…";var values=await MediaMetadata.Read(Operations.Toolset,inputs[0]);status.Text="";
-            var editor=new MetadataDialog(values,true);await editor.ShowDialog(this);return editor.Result;
+            var editor=new MetadataDialog(values,true);await editor.ShowDialog(owner);return editor.Result;
         }
         var exif=Operations.Exif;
         if(exif.Executable is null)
@@ -390,7 +434,7 @@ public sealed class MainWindow:Window
         }
         if(inputs.Length>1)return all;
         status.Text="Reading tags…";var tags=await exif.ReadAsync(inputs[0]);status.Text="";
-        var dialog=new MetadataDialog(tags,false);await dialog.ShowDialog(this);return dialog.Result;
+        var dialog=new MetadataDialog(tags,false);await dialog.ShowDialog(owner);return dialog.Result;
     }
 
     /// One-choice dialog for tools whose only option is a small preset list. Null means cancelled.
@@ -402,7 +446,7 @@ public sealed class MainWindow:Window
         var close=new Button{Content="Cancel",IsCancel=true};close.Click+=(_,_)=>dialog.Close();
         dialog.Content=new StackPanel{Margin=new(20),Spacing=14,Children={Label(title),list,new StackPanel{Orientation=Orientation.Horizontal,Spacing=8,HorizontalAlignment=HorizontalAlignment.Right,Children={close,ok}}}};
         dialog[!BackgroundProperty]=Resource("Paper");
-        await dialog.ShowDialog(this);return result;
+        await dialog.ShowDialog(owner);return result;
     }
 
     private void RefreshLibrary()

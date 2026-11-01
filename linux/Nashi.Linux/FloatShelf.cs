@@ -60,7 +60,8 @@ internal sealed class FloatShelf:Window
         var point=e.GetPosition(list);if(Math.Abs(point.X-start.X)+Math.Abs(point.Y-start.Y)<8)return;pressed=null;
         var transfer=new DataTransfer();
         foreach(var path in Selected())if((Directory.Exists(path)?await StorageProvider.TryGetFolderFromPathAsync(path) as IStorageItem:await StorageProvider.TryGetFileFromPathAsync(path)) is {} item)transfer.Add(DataTransferItem.CreateFile(item));
-        if(transfer.Items.Count>0)await DragDrop.DoDragDropAsync(e,transfer,DragDropEffects.Copy|DragDropEffects.Link);
+        Trace.Log($"float drag out: {transfer.Items.Count} items");
+        if(transfer.Items.Count>0){var result=await DragDrop.DoDragDropAsync(e,transfer,DragDropEffects.Copy|DragDropEffects.Link);Trace.Log("float drag result: "+result);}
     }
     private static void Launch(string path)
     {
