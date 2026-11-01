@@ -92,14 +92,14 @@ internal sealed class GlobalDropWheel:Window
     {
         // DragOver fires on every pointer move, so shortcuts are only resolved when the dragged files change.
         var dragged=e.Data.GetData(DataFormats.FileDrop) as string[]??[];if(!dragged.SequenceEqual(draggedFiles)){draggedFiles=dragged;resolvedFiles=ShellShortcut.Resolve(dragged);}
-        var files=resolvedFiles;var web=Payload(e.Data);var updated=Choices(files,DragPayload.Parse(e.Data),web);
+        var files=resolvedFiles;var dataLink=DragPayload.Parse(e.Data);var web=Payload(e.Data);var updated=Choices(files,dataLink,web);
         // Replacing the hit-test target during DragEnter causes OLE to enter
         // again instead of advancing to DragOver. Keep the visual tree stable
         // until the payload actually changes, and select on entry as well.
         // A file this mode has no tool for (an .ico, for example) still shows the wheel, with a message, so it does not look broken.
         var unsupported=files.Length>0&&files.All(p=>!Directory.Exists(p)||FeatureCatalog.Extension(p) is "pages" or "rtfd")&&updated.Count==0;
         // A link only offers downloads in Tools mode; Convert and File actions say so instead of repeating the downloads.
-        var linkOnly=web is not null&&updated.Count==0;unsupported|=linkOnly;
+        var linkOnly=(files.Length==0||dataLink is not null)&&web is not null&&updated.Count==0;unsupported|=linkOnly;
         if(!updated.SequenceEqual(choices)||unsupported!=noTools||linkOnly!=noLink){choices=updated;noTools=unsupported;noLink=linkOnly;Build(choices);}
         var p=e.GetPosition(canvas);var distance=(p-new Point(270,270)).Length;
         if(distance<108||distance>250||choices.Count==0){selection="";Highlight(-1);}
