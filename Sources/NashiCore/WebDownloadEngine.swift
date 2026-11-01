@@ -221,6 +221,8 @@ public enum WebDownloadEngine {
         let preferred=mime.flatMap{UTType(mimeType:$0)?.preferredFilenameExtension}
         let allowed=["jpg","jpeg","png","webp","heic","heif","avif","bmp","tif","tiff","svg","gif","mp4","mov","webm","mkv","m4v","mp3","m4a","wav","flac","ogg","opus","aac","aiff"]
         if !allowed.contains(ext),let preferred,allowed.contains(preferred) { name=(name as NSString).deletingPathExtension+"."+preferred }
+        // Without a media MIME type, never keep a server-chosen non-media extension.
+        while case let ext=(name as NSString).pathExtension.lowercased(),!ext.isEmpty,!allowed.contains(ext) { name=(name as NSString).deletingPathExtension }
         return name
     }
     public static func friendlyError(_ diagnostic:String)->String {
