@@ -216,6 +216,34 @@ internal static class ParityChecks
             var paragraph=System.Xml.Linq.XDocument.Parse(OfficeDocuments.ModelHtml(model.RootElement)).Descendants("p").Single();var spans=paragraph.Elements("span").ToArray();
             check(!paragraph.Attribute("style")!.Value.Contains("background-color:")&&spans[0].Attribute("style")!.Value.Contains("background-color:rgb(255,255,0)")&&!spans[1].Attribute("style")!.Value.Contains("background-color:"),"Explicitly cleared Word highlighting remained visible behind the run");
         }
+        // Like the Mac, a Word HYPERLINK field (instruction possibly split across runs) links its visible text; \l bookmark links and other fields do not.
+        string FieldRuns(string first,string second,string text,string inner="")=>"<w:r><w:fldChar w:fldCharType=\"begin\"/></w:r><w:r><w:instrText xml:space=\"preserve\">"+first+"</w:instrText></w:r>"+(second.Length>0?"<w:r><w:instrText xml:space=\"preserve\">"+second+"</w:instrText></w:r>":"")+"<w:r><w:fldChar w:fldCharType=\"separate\"/></w:r><w:r><w:t xml:space=\"preserve\">"+text+"</w:t></w:r>"+inner+"<w:r><w:fldChar w:fldCharType=\"end\"/></w:r>";
+        var fieldLinksDocx=Path.Combine(root,"Field hyperlinks.docx");using(var archive=ZipFile.Open(fieldLinksDocx,ZipArchiveMode.Create))
+        {
+            void Part(string name,string text){using var writer=new StreamWriter(archive.CreateEntry(name).Open(),new UTF8Encoding(false));writer.Write(text);}
+            Part("word/_rels/document.xml.rels","<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rL\" Target=\"https://example.com/element\" TargetMode=\"External\"/></Relationships>");
+            Part("word/document.xml","<w:document xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"><w:body><w:p>"+FieldRuns(" HYPERLINK \"https://exa","mple.com/split\" \\o \"Tip\" ","Split")+"</w:p><w:p><w:hyperlink r:id=\"rL\">"+FieldRuns(" HYPERLINK \"https://example.com/field\" ","","Inside")+"</w:hyperlink></w:p><w:p>"+FieldRuns(" hyperlink \"https://example.com/nested\" ","","See page ",FieldRuns(" PAGE ","","7"))+"</w:p><w:p>"+FieldRuns(" HYPERLINK \\l \"Bookmark\" ","","Bookmark")+FieldRuns(" DATE \\@ \"yyyy\" ","","2026")+"<w:r><w:t xml:space=\"preserve\"> after</w:t></w:r></w:p></w:body></w:document>");
+        }
+        using(var fieldLinksModel=System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(OfficeDocuments.ReadDocx(fieldLinksDocx))))
+        {
+            var fieldLinkRuns=string.Join("|",fieldLinksModel.RootElement.GetProperty("blocks").EnumerateArray().Select(b=>string.Concat(b.GetProperty("runs").EnumerateArray().Select(r=>r.GetProperty("text").GetString()+"{"+(r.TryGetProperty("link",out var link)&&link.ValueKind==System.Text.Json.JsonValueKind.String?link.GetString():"")+"}"))));
+            check(fieldLinkRuns=="Split{https://example.com/split}|Inside{https://example.com/element}|See page {https://example.com/nested}7{https://example.com/nested}|Bookmark{}2026{} after{}","Pages interchange lost or misread links from Word HYPERLINK fields: "+fieldLinkRuns);
+        }
+        // A field's instruction ends at its first separate. Repeated separate markers with more instruction text after them
+        // must neither change the link nor re-read the whole instruction each time (crafted files stayed linear on the Mac's side too).
+        var repeatedSeparatesDocx=Path.Combine(root,"Repeated separates.docx");using(var archive=ZipFile.Open(repeatedSeparatesDocx,ZipArchiveMode.Create))
+        {
+            var repeated=new StringBuilder("<w:document xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:body><w:p><w:r><w:fldChar w:fldCharType=\"begin\"/></w:r><w:r><w:instrText xml:space=\"preserve\"> HYPERLINK \"https://example.com/first\" "+new string('x',20000)+"</w:instrText></w:r><w:r><w:fldChar w:fldCharType=\"separate\"/></w:r>");
+            for(var n=0;n<20000;n++)repeated.Append("<w:r><w:instrText xml:space=\"preserve\"> \"https://example.com/late\"</w:instrText><w:fldChar w:fldCharType=\"separate\"/></w:r>");
+            repeated.Append("<w:r><w:t>Linked</w:t></w:r><w:r><w:fldChar w:fldCharType=\"end\"/></w:r></w:p></w:body></w:document>");
+            using var writer=new StreamWriter(archive.CreateEntry("word/document.xml").Open(),new UTF8Encoding(false));writer.Write(repeated.ToString());
+        }
+        var repeatedWatch=System.Diagnostics.Stopwatch.StartNew();
+        using(var repeatedModel=System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(OfficeDocuments.ReadDocx(repeatedSeparatesDocx))))
+        {
+            var repeatedRuns=string.Join("|",repeatedModel.RootElement.GetProperty("blocks").EnumerateArray().SelectMany(b=>b.GetProperty("runs").EnumerateArray()).Select(r=>r.GetProperty("text").GetString()+"{"+(r.TryGetProperty("link",out var link)&&link.ValueKind==System.Text.Json.JsonValueKind.String?link.GetString():"")+"}"));
+            check(repeatedRuns=="Linked{https://example.com/first}"&&repeatedWatch.Elapsed<TimeSpan.FromSeconds(10),$"Repeated HYPERLINK separate markers changed the link or re-read the instruction ({repeatedRuns}, {repeatedWatch.Elapsed.TotalSeconds:0.0} s)");
+        }
         var clipping=LegacyTextCodec.Clipping(Encoding.UTF8.GetBytes("<?xml version=\"1.0\"?><plist><dict><key>public.utf8-plain-text</key><data>VMO8cmvDp2U=</data></dict></plist>"));check(Encoding.UTF8.GetString(clipping.Bytes)=="Türkçe","Text clipping plist lost content");
         var binary=LegacyTextCodec.Clipping(System.Convert.FromBase64String("YnBsaXN0MDDRAQJfEBZwdWJsaWMudXRmOC1wbGFpbi10ZXh0aQBUAPwAcgBrAOcAZQAg2DzfUAgLJAAAAAAAAAEBAAAAAAAAAAMAAAAAAAAAAAAAAAAAAAA3"));check(Encoding.UTF8.GetString(binary.Bytes)=="Türkçe 🍐","Binary text clipping lost Unicode");
         // Like the Mac, a manual page break (w:br w:type="page") splits the paragraph and the next part starts a new page; other breaks stay line breaks.
