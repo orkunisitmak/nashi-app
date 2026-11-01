@@ -44,6 +44,10 @@ public sealed record MediaOptions
     public MediaRegion[] Regions { get; init; } = [];
     public MediaRange[] AudioRedactions { get; init; } = [];
     public bool RemoveAllMetadata{get;init;}=true;
+    /// Audio Channels in stereo: the left output takes the right input and the other way round.
+    public bool SwapChannels { get; init; }
+    /// The waveform and bars colour of Audio to Video, as six hex digits.
+    public string VisualizationColor { get; init; } = "e4bd59";
     public Dictionary<string,string> Metadata { get; init; } = [];
 }
 
@@ -176,7 +180,7 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
                 if(info.HasAudio)args.AddRange(["-af",Tempo(options.Speed)]);
                 args.AddRange(VideoEncoding(ext,options));break;
             case "audioChannels":
-                RequireAudio(info);var filter=options.Channels==1?$"aformat=channel_layouts=stereo,pan=mono|c0={Number(options.LeftVolume/2)}*c0+{Number(options.RightVolume/2)}*c1":$"aformat=channel_layouts=stereo,pan=stereo|c0={Number(options.LeftVolume)}*c0|c1={Number(options.RightVolume)}*c1";
+                RequireAudio(info);var filter=options.Channels==1?$"aformat=channel_layouts=stereo,pan=mono|c0={Number(options.LeftVolume/2)}*c0+{Number(options.RightVolume/2)}*c1":$"aformat=channel_layouts=stereo,pan=stereo|c0={Number(options.LeftVolume)}*c{(options.SwapChannels?1:0)}|c1={Number(options.RightVolume)}*c{(options.SwapChannels?0:1)}";
                 args.AddRange(["-map","0:a:0","-vn","-af",filter,"-ac",options.Channels.ToString(CultureInfo.InvariantCulture),..AudioEncoding(ext,options)]);break;
             case "normalizeAudio":return [await NormalizeAsync(input,info,directory,ext,options,progress,token)];
             case "compress":return [await CompressAsync(input,info,directory,options,progress,token)];
@@ -201,7 +205,7 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
                 }
                 else
                 {
-                    var visual=options.Visualization switch{"spectrum"=>$"showspectrum=s={w}x{h}:slide=scroll:color=intensity:fps=30","bars"=>$"showfreqs=s={w}x{h}:mode=bar:ascale=log:fscale=log:rate=30",_=>$"showwaves=s={w}x{h}:mode=cline:rate=30:colors=0xe4bd59"};
+                    var visual=options.Visualization switch{"spectrum"=>$"showspectrum=s={w}x{h}:slide=scroll:color=intensity:fps=30","bars"=>$"showfreqs=s={w}x{h}:mode=bar:ascale=log:fscale=log:rate=30:colors=0x{options.VisualizationColor}",_=>$"showwaves=s={w}x{h}:mode=cline:rate=30:colors=0x{options.VisualizationColor}"};
                     args.AddRange(["-filter_complex",$"[0:a]asplit[v][a];[v]{visual},format=yuv420p[video]","-map","[video]","-map","[a]"]);
                 }
                 args.AddRange(["-t",Number(info.Duration),"-shortest",..VideoEncoding("mp4",options)]);break;
@@ -380,6 +384,7 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
     {
         if(o.SampleDepth is not ("matchSource" or "pcm16" or "pcm24" or "pcm32" or "float32")||o.GifFrameRate<1||o.GifFrameRate>60||o.GifWidth<16||o.GifWidth>8192)throw new ArgumentException("Choose supported GIF and audio sample settings.");
         if(!double.IsFinite(o.Quality)||o.Quality<0||o.Quality>1||o.AudioBitrate<8||o.AudioBitrate>512||!double.IsFinite(o.Speed)||o.Speed<.05||o.Speed>100||o.Channels is not (1 or 2)||!double.IsFinite(o.LeftVolume)||!double.IsFinite(o.RightVolume)||o.LeftVolume<0||o.RightVolume<0||o.LeftVolume>4||o.RightVolume>4||o.Width is <2 or >8192||o.Height is <2 or >8192||o.TargetBytes is <=0||o.ReductionPercent is {} reduction&&(!double.IsFinite(reduction)||reduction<=0||reduction>=100)||!double.IsFinite(o.SplitInterval)||o.SplitInterval<=0)throw new ArgumentException("One or more media settings are outside their supported range.");
+        if(o.VisualizationColor.Length!=6||!o.VisualizationColor.All(Uri.IsHexDigit))throw new ArgumentException("Choose a valid color.");
         if(!double.IsFinite(o.TargetLoudness)||o.TargetLoudness< -70||o.TargetLoudness> -5||!double.IsFinite(o.LoudnessRange)||o.LoudnessRange<1||o.LoudnessRange>50||!double.IsFinite(o.TruePeak)||o.TruePeak< -9||o.TruePeak>0)throw new ArgumentException("Choose supported loudness targets.");
     }
 }

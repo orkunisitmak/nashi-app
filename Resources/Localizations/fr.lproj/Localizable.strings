@@ -13,12 +13,17 @@
 "%@ found" = "%@ found";
 "%@ is enabled" = "%@ est activé";
 "%@ is not available for this selection on Linux." = "%@ is not available for this selection on Linux.";
+"%@ is password-protected. Enter its password." = "%@ is password-protected. Enter its password.";
 "%@ items" = "%@ éléments";
+"%@ pages" = "%@ pages";
 "%@ selected" = "%@ sélectionnés";
 "%@ selected · Drag to carry files" = "%@ sélectionnés · Faites glisser pour emporter les fichiers";
+"%@ split points" = "%@ split points";
 "%@ ways to change it" = "%@ façons de le transformer";
 "%@ · Nashi" = "%@ · Nashi";
 "%@ · Original stays safe" = "%@ · L’original reste intact";
+"%@: %@ pages" = "%@: %@ pages";
+"%@: %lld pages" = "%@: %lld pages";
 "%@: The crop rectangle must fit completely inside the %@ × %@ pixel image." = "%@: The crop rectangle must fit completely inside the %@ × %@ pixel image.";
 "%@: The crop rectangle must fit completely inside the %@ × %lld pixel image." = "%@: The crop rectangle must fit completely inside the %@ × %lld pixel image.";
 "%@: The crop rectangle must fit completely inside the %lld × %@ pixel image." = "%@: The crop rectangle must fit completely inside the %lld × %@ pixel image.";
@@ -35,12 +40,17 @@
 "%lld found" = "%lld found";
 "%lld is enabled" = "%lld est activé";
 "%lld is not available for this selection on Linux." = "%lld is not available for this selection on Linux.";
+"%lld is password-protected. Enter its password." = "%lld is password-protected. Enter its password.";
 "%lld items" = "%lld éléments";
+"%lld pages" = "%lld pages";
 "%lld selected" = "%lld sélectionnés";
 "%lld selected · Drag to carry files" = "%lld sélectionnés · Faites glisser pour emporter les fichiers";
+"%lld split points" = "%lld split points";
 "%lld ways to change it" = "%lld façons de le transformer";
 "%lld · Nashi" = "%lld · Nashi";
 "%lld · Original stays safe" = "%lld · L’original reste intact";
+"%lld: %@ pages" = "%lld: %@ pages";
+"%lld: %lld pages" = "%lld: %lld pages";
 "%lld: The crop rectangle must fit completely inside the %@ × %@ pixel image." = "%lld: The crop rectangle must fit completely inside the %@ × %@ pixel image.";
 "%lld: The crop rectangle must fit completely inside the %@ × %lld pixel image." = "%lld: The crop rectangle must fit completely inside the %@ × %lld pixel image.";
 "%lld: The crop rectangle must fit completely inside the %lld × %@ pixel image." = "%lld: The crop rectangle must fit completely inside the %lld × %@ pixel image.";
@@ -119,6 +129,7 @@
 "ACTIONS" = "ACTIONS";
 "ADD" = "AJOUTER";
 "ADD A BLEEP OR SILENCE RANGE." = "AJOUTEZ UNE PLAGE DE BIP OU DE SILENCE.";
+"ADD A SPLIT POINT OR CHOOSE EQUAL CLIPS." = "ADD A SPLIT POINT OR CHOOSE EQUAL CLIPS.";
 "ADD BG" = "AJOUTER UN FOND";
 "ADD FIELD" = "AJOUTER UN CHAMP";
 "ADD FILES" = "AJOUTER DES FICHIERS";
@@ -197,6 +208,7 @@
 "Add Redaction" = "Ajouter un caviardage";
 "Add Split" = "Ajouter une coupure";
 "Add a bleep or silence range." = "Ajoutez une plage de bip ou de silence.";
+"Add a split point or choose equal clips." = "Add a split point or choose equal clips.";
 "Add files" = "Ajouter des fichiers";
 "Add or change files" = "Modifier la sélection";
 "Add selected range" = "Ajouter la plage sélectionnée";
@@ -315,6 +327,7 @@
 "CHANGE VIDEO SPEED" = "CHANGER LA VITESSE DE LA VIDÉO";
 "CHANGE…" = "MODIFIER…";
 "CHANNELS" = "CANAUX";
+"CHAPTERS, COVER ART AND EVERY TAG GO; TAGS YOU CHANGE BELOW ARE WRITTEN TO THE CLEAN COPY." = "CHAPTERS, COVER ART AND EVERY TAG GO; TAGS YOU CHANGE BELOW ARE WRITTEN TO THE CLEAN COPY.";
 "CHECK AUTOMATICALLY WHILE NASHI IS RUNNING" = "RECHERCHER AUTOMATIQUEMENT PENDANT QUE NASHI EST EN COURS D’EXÉCUTION";
 "CHECK DRAWING SETTINGS" = "VÉRIFIEZ LES RÉGLAGES DE DESSIN";
 "CHECK EXPORT DEFAULTS" = "VÉRIFIEZ LES RÉGLAGES D’EXPORT PAR DÉFAUT";
@@ -407,6 +420,8 @@
 "CLEAR" = "EFFACER";
 "CLEAR FLOAT" = "VIDER LE FLOAT";
 "CLEAR SELECTION" = "EFFACER LA SÉLECTION";
+"CLICK A CLIP TO LEAVE IT OUT OF THE RESULT." = "CLICK A CLIP TO LEAVE IT OUT OF THE RESULT.";
+"CLICK A PAGE TO SELECT IT (CTRL ADDS, SHIFT EXTENDS). DRAG A PAGE ONTO ANOTHER TO MOVE IT THERE." = "CLICK A PAGE TO SELECT IT (CTRL ADDS, SHIFT EXTENDS). DRAG A PAGE ONTO ANOTHER TO MOVE IT THERE.";
 "CLICK AN AREA TO SELECT IT, DRAG IT TO MOVE IT, AND PRESS DELETE TO REMOVE IT." = "CLICK AN AREA TO SELECT IT, DRAG IT TO MOVE IT, AND PRESS DELETE TO REMOVE IT.";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "LE PRESSE-PAPIERS EST OCCUPÉ. RÉESSAYEZ.";
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "LE PRESSE-PAPIERS EST OCCUPÉ. RÉESSAYEZ DE COLLER.";
@@ -463,6 +478,7 @@
 "COULDN’T OPEN THIS TOOL" = "IMPOSSIBLE D’OUVRIR CET OUTIL";
 "COULDN’T OPEN YOUR FILE MANAGER." = "COULDN’T OPEN YOUR FILE MANAGER.";
 "COULDN’T REACH THE CLIPBOARD." = "COULDN’T REACH THE CLIPBOARD.";
+"COUNT" = "COUNT";
 "COVER STYLE" = "STYLE DE POCHETTE";
 "CREATE A NEW FLOAT" = "CRÉER UN NOUVEAU FLOAT";
 "CREATE COLLAGE" = "CRÉER UN COLLAGE";
@@ -498,6 +514,7 @@
 "Change Video Speed" = "Changer la vitesse de la vidéo";
 "Change…" = "Modifier…";
 "Channels" = "Canaux";
+"Chapters, cover art and every tag go; tags you change below are written to the clean copy." = "Chapters, cover art and every tag go; tags you change below are written to the clean copy.";
 "Check automatically while Nashi is running" = "Rechercher automatiquement pendant que Nashi est en cours d’exécution";
 "Check drawing settings" = "Vérifiez les réglages de dessin";
 "Check export defaults" = "Vérifiez les réglages d’export par défaut";
@@ -592,6 +609,8 @@
 "Clear" = "Effacer";
 "Clear Float" = "Vider le Float";
 "Clear Selection" = "Effacer la sélection";
+"Click a clip to leave it out of the result." = "Click a clip to leave it out of the result.";
+"Click a page to select it (Ctrl adds, Shift extends). Drag a page onto another to move it there." = "Click a page to select it (Ctrl adds, Shift extends). Drag a page onto another to move it there.";
 "Click an area to select it, drag it to move it, and press Delete to remove it." = "Click an area to select it, drag it to move it, and press Delete to remove it.";
 "Clip %@" = "Clip %@";
 "Clip %lld" = "Clip %lld";
@@ -669,6 +688,7 @@
 "Couldn’t reach the clipboard." = "Couldn’t reach the clipboard.";
 "Couldn’t set up tools: %@" = "Couldn’t set up tools: %@";
 "Couldn’t set up tools: %lld" = "Couldn’t set up tools: %lld";
+"Count" = "Count";
 "Cover style" = "Style de pochette";
 "Create Collage" = "Créer un collage";
 "Create PDF" = "Créer un PDF";
@@ -738,6 +758,7 @@
 "DRAG A REGION TO COVER WITH A SOLID BLOCK." = "FAITES GLISSER POUR SÉLECTIONNER UNE ZONE À RECOUVRIR D’UN BLOC PLEIN.";
 "DRAG A WINDOW BY ITS TITLE BAR OR RESIZE BORDER, THEN TAP SHIFT OR COMMAND. HOVER OVER A LAYOUT AND RELEASE THE MOUSE TO PLACE IT. ESCAPE CANCELS." = "FAITES GLISSER UNE FENÊTRE PAR SA BARRE DE TITRE OU SON BORD DE REDIMENSIONNEMENT, PUIS APPUYEZ SUR MAJ OU COMMANDE. SURVOLEZ UNE DISPOSITION ET RELÂCHEZ LA SOURIS POUR PLACER LA FENÊTRE. ÉCHAP ANNULE.";
 "DRAG ACROSS THE PREVIEW TO SELECT THE AREA TO KEEP." = "FAITES GLISSER SUR L’APERÇU POUR SÉLECTIONNER LA ZONE À CONSERVER.";
+"DRAG ACROSS THE WAVEFORM TO CHOOSE A RANGE." = "DRAG ACROSS THE WAVEFORM TO CHOOSE A RANGE.";
 "DRAG AN ANNOTATION TO MOVE IT; PRESS DELETE TO REMOVE IT. TURN OFF SELECT / MOVE TO DRAW." = "DRAG AN ANNOTATION TO MOVE IT; PRESS DELETE TO REMOVE IT. TURN OFF SELECT / MOVE TO DRAW.";
 "DRAG AN AREA FIRST." = "FAITES D’ABORD GLISSER UNE ZONE.";
 "DRAG AN EXISTING ANNOTATION TO MOVE IT; DRAG ITS HANDLES TO RESIZE. TURN OFF SELECT / MOVE TO DRAW." = "FAITES GLISSER UNE ANNOTATION EXISTANTE POUR LA DÉPLACER ; FAITES GLISSER SES POIGNÉES POUR LA REDIMENSIONNER. DÉSACTIVEZ SÉLECTIONNER / DÉPLACER POUR DESSINER.";
@@ -817,6 +838,7 @@
 "Drag a region to cover with a solid block." = "Faites glisser pour sélectionner une zone à recouvrir d’un bloc plein.";
 "Drag a window by its title bar or resize border, then tap Shift or Command. Hover over a layout and release the mouse to place it. Escape cancels." = "Faites glisser une fenêtre par sa barre de titre ou son bord de redimensionnement, puis appuyez sur Maj ou Commande. Survolez une disposition et relâchez la souris pour placer la fenêtre. Échap annule.";
 "Drag across the preview to select the area to keep." = "Faites glisser sur l’aperçu pour sélectionner la zone à conserver.";
+"Drag across the waveform to choose a range." = "Drag across the waveform to choose a range.";
 "Drag an annotation to move it; press Delete to remove it. Turn off Select / Move to draw." = "Drag an annotation to move it; press Delete to remove it. Turn off Select / Move to draw.";
 "Drag an area first." = "Faites d’abord glisser une zone.";
 "Drag an existing annotation to move it; drag its handles to resize. Turn off Select / Move to draw." = "Faites glisser une annotation existante pour la déplacer ; faites glisser ses poignées pour la redimensionner. Désactivez Sélectionner / Déplacer pour dessiner.";
@@ -837,6 +859,8 @@
 "Drop it like it’s… a file." = "Déposez-le comme si c’était… un fichier.";
 "Drop something good." = "Déposez quelque chose de bien.";
 "Duplicate" = "Dupliquer";
+"EACH AREA COVERS THE RANGE ON THE TIMELINE WHEN IT IS DRAWN; CHOOSE AN AREA TO CHANGE ITS RANGE." = "EACH AREA COVERS THE RANGE ON THE TIMELINE WHEN IT IS DRAWN; CHOOSE AN AREA TO CHANGE ITS RANGE.";
+"EACH RANGE BECOMES ITS OWN PDF." = "EACH RANGE BECOMES ITS OWN PDF.";
 "EDIT" = "ÉDITION";
 "EDIT FIELDS OR REMOVE METADATA. ENCODED AUDIO AND VIDEO STAY UNTOUCHED." = "MODIFIEZ LES CHAMPS OU SUPPRIMEZ LES MÉTADONNÉES. L’AUDIO ET LA VIDÉO ENCODÉS RESTENT INCHANGÉS.";
 "EDIT FIELDS OR REMOVE METADATA. ENCODED IMAGE PIXELS STAY UNTOUCHED." = "MODIFIEZ LES CHAMPS OU SUPPRIMEZ LES MÉTADONNÉES. LES PIXELS ENCODÉS DE L’IMAGE RESTENT INCHANGÉS.";
@@ -852,13 +876,20 @@
 "ENABLE NASHI DRAG SHORTCUTS" = "ACTIVER LES RACCOURCIS DE GLISSER-DÉPOSER DE NASHI";
 "ENCODED PIXELS, COLOR PROFILE AND DISPLAY ORIENTATION ARE PRESERVED." = "LES PIXELS ENCODÉS, LE PROFIL COLORIMÉTRIQUE ET L’ORIENTATION D’AFFICHAGE SONT CONSERVÉS.";
 "END" = "FIN";
+"END OF THE SELECTED RANGE" = "END OF THE SELECTED RANGE";
 "ENTER A FINITE NUMBER." = "SAISISSEZ UN NOMBRE FINI.";
 "ENTER A POSITIVE, FINITE TARGET SIZE." = "ENTER A POSITIVE, FINITE TARGET SIZE.";
 "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%." = "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%.";
 "ENTER PAGE NUMBERS WITHIN THIS PDF, IN THE DESIRED ORDER." = "SAISISSEZ DES NUMÉROS DE PAGE DE CE PDF, DANS L’ORDRE SOUHAITÉ.";
 "EPUB LAYOUT" = "MISE EN PAGE EPUB";
 "EPUB layout" = "Mise en page EPUB";
+"EQUAL CLIPS" = "EQUAL CLIPS";
 "ESC TO CLOSE" = "ÉCHAP POUR FERMER";
+"EVENLY SPACED" = "EVENLY SPACED";
+"EVERY CLIP IS FITTED TO THE FIRST ONE'S SIZE AT 30 FPS; CLIPS WITHOUT SOUND GET SILENCE." = "EVERY CLIP IS FITTED TO THE FIRST ONE'S SIZE AT 30 FPS; CLIPS WITHOUT SOUND GET SILENCE.";
+"EVERY N PAGES" = "EVERY N PAGES";
+"EVERY N SECONDS" = "EVERY N SECONDS";
+"EVERY PAGE" = "EVERY PAGE";
 "EVERY TAG WILL BE REMOVED. ENCODED PIXELS, COLOR PROFILE AND DISPLAY ORIENTATION ARE PRESERVED." = "EVERY TAG WILL BE REMOVED. ENCODED PIXELS, COLOR PROFILE AND DISPLAY ORIENTATION ARE PRESERVED.";
 "EVERYTHING HAS A NEXT FORM." = "TOUT A UNE PROCHAINE FORME.";
 "EVERYTHING NASHI NEEDS FOR AUDIO, VIDEO AND DOCUMENTS IS IN PLACE." = "EVERYTHING NASHI NEEDS FOR AUDIO, VIDEO AND DOCUMENTS IS IN PLACE.";
@@ -869,8 +900,11 @@
 "EXPORT CLIPS" = "EXPORTER LES CLIPS";
 "EXPORT ONE VIDEO" = "EXPORTER UNE SEULE VIDÉO";
 "EXPOSURE" = "EXPOSITION";
+"EXTRACT" = "EXTRACT";
 "EXTRACT ARCHIVE" = "EXTRAIRE L’ARCHIVE";
 "EXTRACT NASHI INTO ITS OWN WRITABLE FOLDER FIRST." = "EXTRAYEZ D’ABORD NASHI DANS SON PROPRE DOSSIER ACCESSIBLE EN ÉCRITURE.";
+"Each area covers the range on the timeline when it is drawn; choose an area to change its range." = "Each area covers the range on the timeline when it is drawn; choose an area to change its range.";
+"Each range becomes its own PDF." = "Each range becomes its own PDF.";
 "Edit" = "Édition";
 "Edit Image" = "Modifier l’image";
 "Edit Photo" = "Modifier la photo";
@@ -886,13 +920,20 @@
 "Enable Nashi drag shortcuts" = "Activer les raccourcis de glisser-déposer de Nashi";
 "Encoded pixels, color profile and display orientation are preserved." = "Les pixels encodés, le profil colorimétrique et l’orientation d’affichage sont conservés.";
 "End" = "Fin";
+"End of the selected range" = "End of the selected range";
 "Enter a finite number." = "Saisissez un nombre fini.";
 "Enter a positive, finite target size." = "Enter a positive, finite target size.";
 "Enter a reduction greater than 0% and less than 100%." = "Enter a reduction greater than 0% and less than 100%.";
 "Enter a valid number for %@." = "Saisissez un nombre valide pour %@.";
 "Enter a valid number for %lld." = "Saisissez un nombre valide pour %lld.";
 "Enter page numbers within this PDF, in the desired order." = "Saisissez des numéros de page de ce PDF, dans l’ordre souhaité.";
+"Equal clips" = "Equal clips";
 "Esc to close" = "Échap pour fermer";
+"Evenly spaced" = "Evenly spaced";
+"Every N pages" = "Every N pages";
+"Every N seconds" = "Every N seconds";
+"Every clip is fitted to the first one's size at 30 fps; clips without sound get silence." = "Every clip is fitted to the first one's size at 30 fps; clips without sound get silence.";
+"Every page" = "Every page";
 "Every redaction area must have positive dimensions and fit completely inside the %@ × %@ pixel image. Adjust the areas for this image and try again." = "Every redaction area must have positive dimensions and fit completely inside the %@ × %@ pixel image. Adjust the areas for this image and try again.";
 "Every redaction area must have positive dimensions and fit completely inside the %@ × %lld pixel image. Adjust the areas for this image and try again." = "Every redaction area must have positive dimensions and fit completely inside the %@ × %lld pixel image. Adjust the areas for this image and try again.";
 "Every redaction area must have positive dimensions and fit completely inside the %lld × %@ pixel image. Adjust the areas for this image and try again." = "Every redaction area must have positive dimensions and fit completely inside the %lld × %@ pixel image. Adjust the areas for this image and try again.";
@@ -908,6 +949,7 @@
 "Export clips" = "Exporter les clips";
 "Export one video" = "Exporter une seule vidéo";
 "Exposure" = "Exposition";
+"Extract" = "Extract";
 "Extract Archive" = "Extraire l’archive";
 "Extract Nashi into its own writable folder first." = "Extrayez d’abord Nashi dans son propre dossier accessible en écriture.";
 "FADE" = "FONDU";
@@ -1064,10 +1106,12 @@
 "GIF FRAME RATE" = "FRÉQUENCE D’IMAGES DU GIF";
 "GIF FRAMES PER SECOND" = "IMAGES PAR SECONDE DU GIF";
 "GIF MAXIMUM WIDTH" = "LARGEUR MAXIMALE DU GIF";
+"GIF METADATA CAN ONLY BE REMOVED AS A WHOLE." = "GIF METADATA CAN ONLY BE REMOVED AS A WHOLE.";
 "GIF WIDTH" = "LARGEUR DU GIF";
 "GIF frame rate" = "Fréquence d’images du GIF";
 "GIF frames per second" = "Images par seconde du GIF";
 "GIF maximum width" = "Largeur maximale du GIF";
+"GIF metadata can only be removed as a whole." = "GIF metadata can only be removed as a whole.";
 "GIF width" = "Largeur du GIF";
 "GITHUB REPOSITORY" = "DÉPÔT GITHUB";
 "GIVE IT A LITTLE BREATHING ROOM." = "LAISSEZ-LUI UN PEU D’AIR.";
@@ -1115,6 +1159,7 @@
 "IMAGE SCALE" = "ÉCHELLE DE L’IMAGE";
 "IMAGE SIZE" = "TAILLE DE L’IMAGE";
 "IMAGES" = "IMAGES";
+"IMAGES AND PDFS IN THIS SELECTION HAVE ALL THEIR METADATA REMOVED WITH EXIFTOOL." = "IMAGES AND PDFS IN THIS SELECTION HAVE ALL THEIR METADATA REMOVED WITH EXIFTOOL.";
 "IMAGES, VIDEOS, DOCUMENTS, AND ALL THE LITTLE THINGS IN BETWEEN." = "IMAGES, VIDÉOS, DOCUMENTS ET TOUS LES PETITS FORMATS ENTRE LES DEUX.";
 "INK COLOR" = "COULEUR DE L’ENCRE";
 "INPUT AND OUTPUT FORMAT." = "FORMAT D’ENTRÉE ET DE SORTIE.";
@@ -1126,6 +1171,7 @@
 "INSTALL AN OCR LANGUAGE IN WINDOWS LANGUAGE SETTINGS TO RECOGNIZE SCANNED PDF TEXT." = "INSTALLEZ UNE LANGUE OCR DANS LES RÉGLAGES DE LANGUE DE WINDOWS POUR RECONNAÎTRE LE TEXTE DES PDF NUMÉRISÉS.";
 "INSTALL LIBREOFFICE WITH YOUR PACKAGE MANAGER, FOR EXAMPLE SUDO APT INSTALL LIBREOFFICE OR SUDO DNF INSTALL LIBREOFFICE, THEN TRY AGAIN. NASHI DOES NOT DOWNLOAD IT." = "INSTALL LIBREOFFICE WITH YOUR PACKAGE MANAGER, FOR EXAMPLE SUDO APT INSTALL LIBREOFFICE OR SUDO DNF INSTALL LIBREOFFICE, THEN TRY AGAIN. NASHI DOES NOT DOWNLOAD IT.";
 "INSTALLED" = "INSTALLED";
+"INTERVAL" = "INTERVAL";
 "INVALID EPUB CHAPTER PATH." = "CHEMIN DE CHAPITRE EPUB INVALIDE.";
 "INVALID EPUB IMAGE PATH." = "CHEMIN D’IMAGE EPUB INVALIDE.";
 "INVALID METADATA FIELD." = "CHAMP DE MÉTADONNÉES INVALIDE.";
@@ -1146,6 +1192,7 @@
 "Image scale" = "Échelle de l’image";
 "Image size" = "Taille de l’image";
 "Images" = "Images";
+"Images and PDFs in this selection have all their metadata removed with ExifTool." = "Images and PDFs in this selection have all their metadata removed with ExifTool.";
 "Images, videos, documents, and all the little things in between." = "Images, vidéos, documents et tous les petits formats entre les deux.";
 "Ink color" = "Couleur de l’encre";
 "Input and output format." = "Format d’entrée et de sortie.";
@@ -1157,6 +1204,7 @@
 "Install an OCR language in Windows Language settings to detect text." = "Installez une langue OCR dans les réglages de langue de Windows pour détecter le texte.";
 "Install an OCR language in Windows Language settings to recognize scanned PDF text." = "Installez une langue OCR dans les réglages de langue de Windows pour reconnaître le texte des PDF numérisés.";
 "Installed" = "Installed";
+"Interval" = "Interval";
 "Invalid EPUB chapter path." = "Chemin de chapitre EPUB invalide.";
 "Invalid EPUB image path." = "Chemin d’image EPUB invalide.";
 "Invalid YouTube video ID." = "Identifiant de vidéo YouTube invalide.";
@@ -1222,6 +1270,7 @@
 "LITTLE TWEAKS.\nBIG DIFFERENCE." = "DE PETITES RETOUCHES.\nUNE GRANDE DIFFÉRENCE.";
 "LITTLE TWEAKS. A WHOLE NEW LOOK." = "DE PETITES RETOUCHES. UN TOUT NOUVEAU LOOK.";
 "LOCAL BY DESIGN" = "LOCAL PAR CONCEPTION";
+"LOCKED" = "LOCKED";
 "LOOKING FOR LITTLE SQUARES…" = "À LA RECHERCHE DE PETITS CARRÉS…";
 "LOUDNESS RANGE" = "PLAGE DE VOLUME SONORE";
 "Landscape" = "Paysage";
@@ -1255,6 +1304,7 @@
 "Local by design" = "Local par conception";
 "Local by design · MIT source\nVersion %@" = "Local par conception · Source MIT\nVersion %@";
 "Local by design · MIT source\nVersion %lld" = "Local par conception · Source MIT\nVersion %lld";
+"Locked" = "Locked";
 "Looking for little squares…" = "À la recherche de petits carrés…";
 "Loudness range" = "Plage de volume sonore";
 "MACOS REDUCE MOTION IS ON. NASHI KEEPS MOTION OFF." = "L’OPTION RÉDUIRE LES ANIMATIONS DE MACOS EST ACTIVÉE. NASHI DÉSACTIVE LES ANIMATIONS.";
@@ -1364,6 +1414,7 @@
 "NASHI IS ALREADY RUNNING BUT IS STILL STARTING. OPEN IT FROM THE SYSTEM TRAY OR TRY AGAIN IN A MOMENT." = "NASHI EST DÉJÀ OUVERT MAIS DÉMARRE ENCORE. OUVREZ-LE DEPUIS LA ZONE DE NOTIFICATION OU RÉESSAYEZ DANS UN INSTANT.";
 "NASHI IS RUNNING BUT DID NOT ANSWER." = "NASHI IS RUNNING BUT DID NOT ANSWER.";
 "NASHI IS STILL RUNNING." = "NASHI EST TOUJOURS EN COURS D’EXÉCUTION.";
+"NASHI REWRITES THE PDF WITH COMPRESSED CONTENT STREAMS. TEXT STAYS SELECTABLE AND PAGES STAY SHARP." = "NASHI REWRITES THE PDF WITH COMPRESSED CONTENT STREAMS. TEXT STAYS SELECTABLE AND PAGES STAY SHARP.";
 "NASHI SAVES RESULTS BESIDE THE ORIGINALS. ALLOW A FOLDER ONCE TO INCLUDE EVERY FOLDER INSIDE IT." = "NASHI ENREGISTRE LES RÉSULTATS À CÔTÉ DES ORIGINAUX. AUTORISEZ UN DOSSIER UNE SEULE FOIS POUR INCLURE TOUS LES DOSSIERS QU’IL CONTIENT.";
 "NASHI SETTINGS" = "RÉGLAGES DE NASHI";
 "NASHI UPDATE" = "MISE À JOUR DE NASHI";
@@ -1415,6 +1466,7 @@
 "Nashi is already running but is still starting. Open it from the system tray or try again in a moment." = "Nashi est déjà ouvert mais démarre encore. Ouvrez-le depuis la zone de notification ou réessayez dans un instant.";
 "Nashi is running but did not answer." = "Nashi is running but did not answer.";
 "Nashi is still running." = "Nashi est toujours en cours d’exécution.";
+"Nashi rewrites the PDF with compressed content streams. Text stays selectable and pages stay sharp." = "Nashi rewrites the PDF with compressed content streams. Text stays selectable and pages stay sharp.";
 "Nashi saves results beside the originals. Allow a folder once to include every folder inside it." = "Nashi enregistre les résultats à côté des originaux. Autorisez un dossier une seule fois pour inclure tous les dossiers qu’il contient.";
 "Nashi update" = "Mise à jour de Nashi";
 "Nashi update could not finish" = "La mise à jour de Nashi n’a pas pu se terminer";
@@ -1496,6 +1548,7 @@
 "ORIGINAL STAYS SAFE" = "L’ORIGINAL RESTE INTACT";
 "ORIGINALS REMAIN SAFE. CHOOSE WHERE NEW COPIES SHOULD LAND." = "LES ORIGINAUX RESTENT INTACTS. CHOISISSEZ OÙ PLACER LES NOUVELLES COPIES.";
 "OTHER" = "AUTRE";
+"OTHER TAGS STAY; THE TAGS BELOW ARE WRITTEN AS TYPED." = "OTHER TAGS STAY; THE TAGS BELOW ARE WRITTEN AS TYPED.";
 "OUTER PADDING" = "OUTER PADDING";
 "OUTPUT" = "SORTIE";
 "OUTPUT FORMAT" = "FORMAT DE SORTIE";
@@ -1546,6 +1599,7 @@
 "Original stays safe" = "L’original reste intact";
 "Originals remain safe. Choose where new copies should land." = "Les originaux restent intacts. Choisissez où placer les nouvelles copies.";
 "Other" = "Autre";
+"Other tags stay; the tags below are written as typed." = "Other tags stay; the tags below are written as typed.";
 "Outer padding" = "Outer padding";
 "Output" = "Sortie";
 "Output format" = "Format de sortie";
@@ -1584,6 +1638,8 @@
 "PDF preview bitmap could not be allocated." = "Impossible d’allouer le bitmap de l’aperçu PDF.";
 "PDF → OFFICE LAYOUT" = "MISE EN PAGE PDF → OFFICE";
 "PDF → Office layout" = "Mise en page PDF → Office";
+"PDFS ARE REWRITTEN WITH COMPRESSED CONTENT STREAMS; TEXT AND PAGES STAY AS THEY ARE." = "PDFS ARE REWRITTEN WITH COMPRESSED CONTENT STREAMS; TEXT AND PAGES STAY AS THEY ARE.";
+"PDFs are rewritten with compressed content streams; text and pages stay as they are." = "PDFs are rewritten with compressed content streams; text and pages stay as they are.";
 "PHOTOS" = "PHOTOS";
 "PICK A FOLDER YOU WORK IN. FRESH COPIES ARE SAVED BESIDE THE ORIGINALS BY DEFAULT." = "CHOISISSEZ UN DOSSIER DANS LEQUEL VOUS TRAVAILLEZ. PAR DÉFAUT, LES NOUVELLES COPIES SONT ENREGISTRÉES À CÔTÉ DES ORIGINAUX.";
 "PIN" = "ÉPINGLER";
@@ -1594,6 +1650,7 @@
 "PLAY SELECTED RANGE" = "LIRE LA PLAGE SÉLECTIONNÉE";
 "PLAYBACK / DOCUMENT ORDER" = "ORDRE DE LECTURE / DU DOCUMENT";
 "PLAYBACK SPEED" = "VITESSE DE LECTURE";
+"PLAYHEAD" = "PLAYHEAD";
 "PORTRAIT" = "PORTRAIT";
 "PORTRAIT · 4:5" = "PORTRAIT · 4:5";
 "PORTRAIT · 9:16" = "PORTRAIT · 9:16";
@@ -1655,6 +1712,7 @@
 "Play selected range" = "Lire la plage sélectionnée";
 "Playback / document order" = "Ordre de lecture / du document";
 "Playback speed" = "Vitesse de lecture";
+"Playhead" = "Playhead";
 "Portrait" = "Portrait";
 "Portrait · 4:5" = "Portrait · 4:5";
 "Portrait · 9:16" = "Portrait · 9:16";
@@ -1855,6 +1913,7 @@
 "SAVE DOWNLOADED MEDIA HERE" = "ENREGISTRER LES MÉDIAS TÉLÉCHARGÉS ICI";
 "SAVE DOWNLOADED MEDIA TO…" = "ENREGISTRER LES MÉDIAS TÉLÉCHARGÉS DANS…";
 "SAVE EDITED COPY" = "ENREGISTRER LA COPIE MODIFIÉE";
+"SAVE FRAMES" = "SAVE FRAMES";
 "SAVE METADATA COPY" = "ENREGISTRER LA COPIE DES MÉTADONNÉES";
 "SAVE MUTED COPY" = "ENREGISTRER LA COPIE MUETTE";
 "SAVE NEW COPIES" = "ENREGISTRER LES NOUVELLES COPIES";
@@ -1862,6 +1921,7 @@
 "SAVE NEW COPY  ↗" = "ENREGISTRER UNE NOUVELLE COPIE  ↗";
 "SAVE NEW COPY ↗" = "ENREGISTRER UNE NOUVELLE COPIE ↗";
 "SAVE NEW FILES TO…" = "ENREGISTRER LES NOUVEAUX FICHIERS DANS…";
+"SAVE NORMALIZED COPY" = "SAVE NORMALIZED COPY";
 "SAVE ORGANIZED COPY ↗" = "ENREGISTRER LA COPIE ORGANISÉE ↗";
 "SAVE ORGANIZED PDF" = "ENREGISTRER LE PDF ORGANISÉ";
 "SAVE REDACTED COPY" = "ENREGISTRER LA COPIE CAVIARDÉE";
@@ -1946,9 +2006,11 @@
 "SOUND AND HAPTIC FEEDBACK" = "RETOUR SONORE ET HAPTIQUE";
 "SOUND FEEDBACK" = "RETOUR SONORE";
 "SOUND FOLLOWS YOUR MAC’S VOLUME. HAPTICS NEED A COMPATIBLE FORCE TOUCH TRACKPAD." = "LE SON SUIT LE VOLUME DE VOTRE MAC. LE RETOUR HAPTIQUE NÉCESSITE UN TRACKPAD FORCE TOUCH COMPATIBLE.";
+"SOUND PREVIEW IS OFF: PULSEAUDIO ISN’T AVAILABLE. THE PICTURE STILL PLAYS." = "SOUND PREVIEW IS OFF: PULSEAUDIO ISN’T AVAILABLE. THE PICTURE STILL PLAYS.";
 "SOURCE & THIRD-PARTY NOTICES" = "MENTIONS SUR LES SOURCES ET LES COMPOSANTS TIERS";
 "SPACE PLAY/PAUSE · ←/→ 1S · SHIFT+←/→ 1 FRAME (VIDEO), 0.1S (AUDIO) · I/O SET RANGE · ENTER SAVE" = "ESPACE LECTURE/PAUSE · ←/→ 1 S · MAJ+←/→ 1 IMAGE (VIDÉO), 0,1 S (AUDIO) · I/O DÉFINIR LA PLAGE · ENTRÉE ENREGISTRER";
 "SPACE PLAY/PAUSE · ←/→ 1S · ⇧←/→ 1 FRAME · I/O SET RANGE · ⇧SPACE PLAY RANGE" = "ESPACE LECTURE/PAUSE · ←/→ 1 S · ⇧←/→ 1 IMAGE · I/O DÉFINIR LA PLAGE · ⇧ESPACE LIRE LA PLAGE";
+"SPACE PLAYS · ←/→ 1 S · SHIFT+←/→ ONE FRAME · I/O SET THE RANGE" = "SPACE PLAYS · ←/→ 1 S · SHIFT+←/→ ONE FRAME · I/O SET THE RANGE";
 "SPACE · PREVIEW" = "ESPACE · APERÇU";
 "SPACE: PREVIEW · ENTER: USE IN NASHI" = "ESPACE : APERÇU · ENTRÉE : UTILISER DANS NASHI";
 "SPACING" = "ESPACEMENT";
@@ -1965,6 +2027,7 @@
 "START" = "DÉBUT";
 "START HERE" = "COMMENCEZ ICI";
 "START MUST BE BEFORE END, WITHIN THE MEDIA DURATION." = "LE DÉBUT DOIT PRÉCÉDER LA FIN, DANS LA DURÉE DU MÉDIA.";
+"START OF THE SELECTED RANGE" = "START OF THE SELECTED RANGE";
 "STARTED NASHI IN THE BACKGROUND." = "STARTED NASHI IN THE BACKGROUND.";
 "STARTING DOWNLOAD…" = "DÉMARRAGE DU TÉLÉCHARGEMENT…";
 "STEREO" = "STÉRÉO";
@@ -1981,6 +2044,7 @@
 "SVG EXTERNAL STYLES ARE NOT LOADED." = "LES STYLES EXTERNES DU SVG NE SONT PAS CHARGÉS.";
 "SVG external resources are not loaded. Embed the raster image first." = "Les ressources externes du SVG ne sont pas chargées. Intégrez d’abord l’image matricielle.";
 "SVG external styles are not loaded." = "Les styles externes du SVG ne sont pas chargés.";
+"SWAP LEFT AND RIGHT" = "SWAP LEFT AND RIGHT";
 "SYSTEM" = "SYSTÈME";
 "Sample depth" = "Profondeur d’échantillonnage";
 "Saturation" = "Saturation";
@@ -2000,6 +2064,7 @@
 "Save downloaded media here" = "Enregistrer les médias téléchargés ici";
 "Save downloaded media to…" = "Enregistrer les médias téléchargés dans…";
 "Save edited copy" = "Enregistrer la copie modifiée";
+"Save frames" = "Save frames";
 "Save metadata copy" = "Enregistrer la copie des métadonnées";
 "Save muted copy" = "Enregistrer la copie muette";
 "Save new copies" = "Enregistrer les nouvelles copies";
@@ -2007,6 +2072,7 @@
 "Save new copy  ↗" = "Enregistrer une nouvelle copie  ↗";
 "Save new copy ↗" = "Enregistrer une nouvelle copie ↗";
 "Save new files to…" = "Enregistrer les nouveaux fichiers dans…";
+"Save normalized copy" = "Save normalized copy";
 "Save organized PDF" = "Enregistrer le PDF organisé";
 "Save organized copy ↗" = "Enregistrer la copie organisée ↗";
 "Save redacted copy" = "Enregistrer la copie caviardée";
@@ -2100,9 +2166,11 @@
 "Sound and haptic feedback" = "Retour sonore et haptique";
 "Sound feedback" = "Retour sonore";
 "Sound follows your Mac’s volume. Haptics need a compatible Force Touch trackpad." = "Le son suit le volume de votre Mac. Le retour haptique nécessite un trackpad Force Touch compatible.";
+"Sound preview is off: PulseAudio isn’t available. The picture still plays." = "Sound preview is off: PulseAudio isn’t available. The picture still plays.";
 "Source & third-party notices" = "Mentions sur les sources et les composants tiers";
 "Space play/pause · ←/→ 1s · Shift+←/→ 1 frame (video), 0.1s (audio) · I/O set range · Enter save" = "Espace lecture/pause · ←/→ 1 s · Maj+←/→ 1 image (vidéo), 0,1 s (audio) · I/O définir la plage · Entrée enregistrer";
 "Space play/pause · ←/→ 1s · ⇧←/→ 1 frame · I/O set range · ⇧Space play range" = "Espace lecture/pause · ←/→ 1 s · ⇧←/→ 1 image · I/O définir la plage · ⇧Espace lire la plage";
+"Space plays · ←/→ 1 s · Shift+←/→ one frame · I/O set the range" = "Space plays · ←/→ 1 s · Shift+←/→ one frame · I/O set the range";
 "Space · Preview" = "Espace · Aperçu";
 "Space: preview · Enter: use in Nashi" = "Espace : aperçu · Entrée : utiliser dans Nashi";
 "Spacing" = "Espacement";
@@ -2118,6 +2186,7 @@
 "Staging cannot be a symbolic link." = "Le dossier intermédiaire ne peut pas être un lien symbolique.";
 "Start" = "Début";
 "Start must be before End, within the media duration." = "Le début doit précéder la fin, dans la durée du média.";
+"Start of the selected range" = "Start of the selected range";
 "Started Nashi in the background." = "Started Nashi in the background.";
 "Starting download…" = "Démarrage du téléchargement…";
 "Stereo" = "Stéréo";
@@ -2130,6 +2199,7 @@
 "Style" = "Style";
 "Subtitles" = "Sous-titres";
 "Subtle animations" = "Animations discrètes";
+"Swap left and right" = "Swap left and right";
 "System" = "Système";
 "TAP THE CHOSEN MODIFIER COMBINATION WHILE DRAGGING FILES." = "APPUYEZ SUR LA COMBINAISON DE MODIFICATEURS CHOISIE PENDANT QUE VOUS FAITES GLISSER DES FICHIERS.";
 "TARGET" = "CIBLE";
@@ -2149,16 +2219,19 @@
 "THE ARCHIVE ENTRY LEAVES ITS DESTINATION." = "L’ENTRÉE DE L’ARCHIVE SORT DE SA DESTINATION.";
 "THE CLIPPING EXCEEDS 200 MB." = "LE FRAGMENT DÉPASSE 200 MO.";
 "THE CLIPPING HAS NO READABLE TEXT. INCLUDE ITS ORIGINAL RESOURCE FORK/APPLEDOUBLE SIDECAR, OR PASTE ITS TEXT INTO NASHI." = "LE FRAGMENT NE CONTIENT AUCUN TEXTE LISIBLE. INCLUEZ SON FICHIER ANNEXE D’ORIGINE (RESOURCE FORK/APPLEDOUBLE) OU COLLEZ SON TEXTE DANS NASHI.";
+"THE COPY KEEPS THE PICTURE AND DROPS EVERY AUDIO TRACK." = "THE COPY KEEPS THE PICTURE AND DROPS EVERY AUDIO TRACK.";
 "THE DOCUMENT HAS NO EDITABLE BODY." = "LE DOCUMENT N’A PAS DE CORPS MODIFIABLE.";
 "THE DOCUMENT PACKAGE IS TOO LARGE OR CONTAINS DUPLICATE ENTRIES." = "LE PAQUET DU DOCUMENT EST TROP VOLUMINEUX OU CONTIENT DES ENTRÉES EN DOUBLE.";
 "THE DOWNLOAD CONNECTION WAS INTERRUPTED." = "LA CONNEXION DE TÉLÉCHARGEMENT A ÉTÉ INTERROMPUE.";
 "THE DOWNLOAD STOPPED RESPONDING. PLEASE TRY AGAIN." = "LE TÉLÉCHARGEMENT NE RÉPOND PLUS. VEUILLEZ RÉESSAYER.";
 "THE DOWNLOADED FILE CONTAINS NO VIDEO." = "LE FICHIER TÉLÉCHARGÉ NE CONTIENT PAS DE VIDÉO.";
 "THE DOWNLOADED TOOLS ARE INCOMPLETE. PLEASE TRY SETUP AGAIN." = "LES OUTILS TÉLÉCHARGÉS SONT INCOMPLETS. VEUILLEZ RELANCER LA CONFIGURATION.";
+"THE FILES GO INTO ONE NEW FOLDER BESIDE THE ARCHIVE." = "THE FILES GO INTO ONE NEW FOLDER BESIDE THE ARCHIVE.";
 "THE IMAGE COULD NOT BE READ." = "THE IMAGE COULD NOT BE READ.";
 "THE IMAGE DOWNLOAD ENDED EARLY." = "LE TÉLÉCHARGEMENT DE L’IMAGE S’EST TERMINÉ PRÉMATURÉMENT.";
 "THE IMAGE ORDER MUST INCLUDE EVERY IMAGE ONCE." = "L’ORDRE DES IMAGES DOIT INCLURE CHAQUE IMAGE UNE FOIS.";
 "THE MEDIA SERVER REDIRECTED TO AN INSECURE URL." = "LE SERVEUR MULTIMÉDIA A REDIRIGÉ VERS UNE URL NON SÉCURISÉE.";
+"THE PASSWORD IS MISSING OR INCORRECT." = "THE PASSWORD IS MISSING OR INCORRECT.";
 "THE PROCESSING TOOL COULD NOT START." = "L’OUTIL DE TRAITEMENT N’A PAS PU DÉMARRER.";
 "THE REQUESTED FILE SIZE COULD NOT BE REACHED. CHOOSE A LARGER TARGET." = "THE REQUESTED FILE SIZE COULD NOT BE REACHED. CHOOSE A LARGER TARGET.";
 "THE REQUESTED IMAGE SIZE COULD NOT BE REACHED. CHOOSE A LARGER TARGET." = "LA TAILLE D’IMAGE DEMANDÉE N’A PAS PU ÊTRE ATTEINTE. CHOISISSEZ UNE CIBLE PLUS GRANDE.";
@@ -2167,6 +2240,7 @@
 "THE SIGNED PACKAGE VERSION DOES NOT MATCH THIS UPDATE." = "LA VERSION DU PAQUET SIGNÉ NE CORRESPOND PAS À CETTE MISE À JOUR.";
 "THE UPDATE DOES NOT CONTAIN NASHI." = "LA MISE À JOUR NE CONTIENT PAS NASHI.";
 "THE UPDATE SIGNATURE IS INVALID. YOUR EXISTING APP WAS KEPT." = "LA SIGNATURE DE LA MISE À JOUR EST INVALIDE. VOTRE APP EXISTANTE A ÉTÉ CONSERVÉE.";
+"THESE CHANGES APPLY TO EVERY SELECTED FILE." = "THESE CHANGES APPLY TO EVERY SELECTED FILE.";
 "THESE CHANGES APPLY TO EVERY SELECTED IMAGE." = "THESE CHANGES APPLY TO EVERY SELECTED IMAGE.";
 "THESE FILES HAVE MOVED OR WERE DELETED." = "CES FICHIERS ONT ÉTÉ DÉPLACÉS OU SUPPRIMÉS.";
 "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE." = "CE RECADRAGE S’APPLIQUE À TOUTES LES IMAGES SÉLECTIONNÉES ET DOIT TENIR DANS CHACUNE D’ELLES.";
@@ -2239,6 +2313,7 @@
 "The archive entry leaves its destination." = "L’entrée de l’archive sort de sa destination.";
 "The clipping exceeds 200 MB." = "Le fragment dépasse 200 Mo.";
 "The clipping has no readable text. Include its original resource fork/AppleDouble sidecar, or paste its text into Nashi." = "Le fragment ne contient aucun texte lisible. Incluez son fichier annexe d’origine (resource fork/AppleDouble) ou collez son texte dans Nashi.";
+"The copy keeps the picture and drops every audio track." = "The copy keeps the picture and drops every audio track.";
 "The crop rectangle must fit completely inside the %@ × %@ pixel image." = "The crop rectangle must fit completely inside the %@ × %@ pixel image.";
 "The crop rectangle must fit completely inside the %@ × %lld pixel image." = "The crop rectangle must fit completely inside the %@ × %lld pixel image.";
 "The crop rectangle must fit completely inside the %lld × %@ pixel image." = "The crop rectangle must fit completely inside the %lld × %@ pixel image.";
@@ -2251,10 +2326,12 @@
 "The download stopped responding. Please try again." = "Le téléchargement ne répond plus. Veuillez réessayer.";
 "The downloaded file contains no video." = "Le fichier téléchargé ne contient pas de vidéo.";
 "The downloaded tools are incomplete. Please try setup again." = "Les outils téléchargés sont incomplets. Veuillez relancer la configuration.";
+"The files go into one new folder beside the archive." = "The files go into one new folder beside the archive.";
 "The image could not be read." = "The image could not be read.";
 "The image download ended early." = "Le téléchargement de l’image s’est terminé prématurément.";
 "The image order must include every image once." = "L’ordre des images doit inclure chaque image une fois.";
 "The media server redirected to an insecure URL." = "Le serveur multimédia a redirigé vers une URL non sécurisée.";
+"The password is missing or incorrect." = "The password is missing or incorrect.";
 "The processing tool could not start." = "L’outil de traitement n’a pas pu démarrer.";
 "The requested PDF size could not be reached. Choose a larger target." = "La taille de PDF demandée n’a pas pu être atteinte. Choisissez une cible plus grande.";
 "The requested file size could not be reached. Choose a larger target." = "The requested file size could not be reached. Choose a larger target.";
@@ -2263,6 +2340,7 @@
 "The signed package version does not match this update." = "La version du paquet signé ne correspond pas à cette mise à jour.";
 "The update does not contain Nashi." = "La mise à jour ne contient pas Nashi.";
 "The update signature is invalid. Your existing app was kept." = "La signature de la mise à jour est invalide. Votre app existante a été conservée.";
+"These changes apply to every selected file." = "These changes apply to every selected file.";
 "These changes apply to every selected image." = "These changes apply to every selected image.";
 "These files have moved or were deleted." = "Ces fichiers ont été déplacés ou supprimés.";
 "This EPUB could not be read." = "This EPUB could not be read.";
@@ -2306,6 +2384,8 @@
 "Tools ready" = "Outils prêts";
 "Tools · while dragging" = "Outils · pendant le glissement";
 "Top" = "Haut";
+"Total: %@" = "Total: %@";
+"Total: %lld" = "Total: %lld";
 "Track name" = "Nom de la piste";
 "Transparent" = "Transparent";
 "Transparent backgrounds save as PNG to keep their transparency." = "Les arrière-plans transparents sont enregistrés en PNG pour conserver leur transparence.";
@@ -2323,6 +2403,7 @@
 "UNDO AREA" = "ANNULER LA ZONE";
 "UNDO LAST MARK" = "ANNULER LE DERNIER REPÈRE";
 "UNIT" = "UNITÉ";
+"UNLOCK" = "UNLOCK";
 "UNSAFE DOWNLOAD REDIRECT." = "REDIRECTION DE TÉLÉCHARGEMENT NON SÛRE.";
 "UNSAFE UPDATE ENTRY." = "ENTRÉE DE MISE À JOUR NON SÛRE.";
 "UNSUPPORTED AUDIO FORMAT." = "FORMAT AUDIO NON PRIS EN CHARGE.";
@@ -2353,6 +2434,7 @@
 "Undo area" = "Annuler la zone";
 "Undo last mark" = "Annuler le dernier repère";
 "Unit" = "Unité";
+"Unlock" = "Unlock";
 "Unsafe download redirect." = "Redirection de téléchargement non sûre.";
 "Unsafe update entry." = "Entrée de mise à jour non sûre.";
 "Unsupported audio format." = "Format audio non pris en charge.";

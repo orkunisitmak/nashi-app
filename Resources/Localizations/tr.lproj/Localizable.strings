@@ -13,12 +13,17 @@
 "%@ found" = "%@ bulundu";
 "%@ is enabled" = "%@ izni açık";
 "%@ is not available for this selection on Linux." = "%@ bu seçim için Linux'ta kullanılamıyor.";
+"%@ is password-protected. Enter its password." = "%@ parolayla korunuyor. Parolasını gir.";
 "%@ items" = "%@ öğe";
+"%@ pages" = "%@ sayfa";
 "%@ selected" = "%@ seçili";
 "%@ selected · Drag to carry files" = "%@ seçili · Dosyaları taşımak için sürükle";
+"%@ split points" = "%@ bölme noktası";
 "%@ ways to change it" = "%@ farklı biçime çevir";
 "%@ · Nashi" = "%@ · Nashi";
 "%@ · Original stays safe" = "%@ · Orijinal dosyan güvende";
+"%@: %@ pages" = "%@: %@ sayfa";
+"%@: %lld pages" = "%@: %lld sayfa";
 "%@: The crop rectangle must fit completely inside the %@ × %@ pixel image." = "%@: Kırpma alanı %@ × %@ piksellik görselin tamamen içinde kalmalı.";
 "%@: The crop rectangle must fit completely inside the %@ × %lld pixel image." = "%@: Kırpma alanı %@ × %lld piksellik görselin tamamen içinde kalmalı.";
 "%@: The crop rectangle must fit completely inside the %lld × %@ pixel image." = "%@: Kırpma alanı %lld × %@ piksellik görselin tamamen içinde kalmalı.";
@@ -35,12 +40,17 @@
 "%lld found" = "%lld bulundu";
 "%lld is enabled" = "%lld izni açık";
 "%lld is not available for this selection on Linux." = "%lld bu seçim için Linux'ta kullanılamıyor.";
+"%lld is password-protected. Enter its password." = "%lld parolayla korunuyor. Parolasını gir.";
 "%lld items" = "%lld öğe";
+"%lld pages" = "%lld sayfa";
 "%lld selected" = "%lld seçili";
 "%lld selected · Drag to carry files" = "%lld seçili · Dosyaları taşımak için sürükle";
+"%lld split points" = "%lld bölme noktası";
 "%lld ways to change it" = "%lld farklı biçime çevir";
 "%lld · Nashi" = "%lld · Nashi";
 "%lld · Original stays safe" = "%lld · Orijinal dosyan güvende";
+"%lld: %@ pages" = "%lld: %@ sayfa";
+"%lld: %lld pages" = "%lld: %lld sayfa";
 "%lld: The crop rectangle must fit completely inside the %@ × %@ pixel image." = "%lld: Kırpma alanı %@ × %@ piksellik görselin tamamen içinde kalmalı.";
 "%lld: The crop rectangle must fit completely inside the %@ × %lld pixel image." = "%lld: Kırpma alanı %@ × %lld piksellik görselin tamamen içinde kalmalı.";
 "%lld: The crop rectangle must fit completely inside the %lld × %@ pixel image." = "%lld: Kırpma alanı %lld × %@ piksellik görselin tamamen içinde kalmalı.";
@@ -119,6 +129,7 @@
 "ACTIONS" = "İŞLEMLER";
 "ADD" = "EKLE";
 "ADD A BLEEP OR SILENCE RANGE." = "BİR BİP VEYA SESSİZLİK ARALIĞI EKLE.";
+"ADD A SPLIT POINT OR CHOOSE EQUAL CLIPS." = "BİR BÖLME NOKTASI EKLE YA DA EŞİT PARÇALAR SEÇ.";
 "ADD BG" = "ARKA PLAN EKLE";
 "ADD FIELD" = "ALAN EKLE";
 "ADD FILES" = "DOSYA EKLE";
@@ -197,6 +208,7 @@
 "Add Redaction" = "Sansür Alanı Ekle";
 "Add Split" = "Bölme Noktası Ekle";
 "Add a bleep or silence range." = "Bir bip veya sessizlik aralığı ekle.";
+"Add a split point or choose equal clips." = "Bir bölme noktası ekle ya da eşit parçalar seç.";
 "Add files" = "Dosya ekle";
 "Add or change files" = "Dosya ekle veya değiştir";
 "Add selected range" = "Seçili aralığı ekle";
@@ -315,6 +327,7 @@
 "CHANGE VIDEO SPEED" = "VİDEO HIZINI DEĞİŞTİR";
 "CHANGE…" = "DEĞİŞTİR…";
 "CHANNELS" = "KANALLAR";
+"CHAPTERS, COVER ART AND EVERY TAG GO; TAGS YOU CHANGE BELOW ARE WRITTEN TO THE CLEAN COPY." = "BÖLÜMLER, KAPAK GÖRSELİ VE TÜM ETİKETLER KALDIRILIR; AŞAĞIDA DEĞİŞTİRDİĞİN ETİKETLER TEMİZ KOPYAYA YAZILIR.";
 "CHECK AUTOMATICALLY WHILE NASHI IS RUNNING" = "NASHI ÇALIŞIRKEN OTOMATİK DENETLE";
 "CHECK DRAWING SETTINGS" = "ÇİZİM AYARLARINI KONTROL ET";
 "CHECK EXPORT DEFAULTS" = "DIŞA AKTARMA VARSAYILANLARINI KONTROL ET";
@@ -407,6 +420,8 @@
 "CLEAR" = "TEMİZLE";
 "CLEAR FLOAT" = "YÜZEN PENCEREYİ TEMİZLE";
 "CLEAR SELECTION" = "SEÇİMİ TEMİZLE";
+"CLICK A CLIP TO LEAVE IT OUT OF THE RESULT." = "SONUÇTAN ÇIKARMAK İÇİN BİR PARÇAYA TIKLA.";
+"CLICK A PAGE TO SELECT IT (CTRL ADDS, SHIFT EXTENDS). DRAG A PAGE ONTO ANOTHER TO MOVE IT THERE." = "SEÇMEK İÇİN BİR SAYFAYA TIKLA (CTRL EKLER, SHIFT ARALIĞI GENİŞLETİR). TAŞIMAK İÇİN BİR SAYFAYI BAŞKA BİR SAYFANIN ÜZERİNE SÜRÜKLE.";
 "CLICK AN AREA TO SELECT IT, DRAG IT TO MOVE IT, AND PRESS DELETE TO REMOVE IT." = "BİR ALANI SEÇMEK İÇİN TIKLA, TAŞIMAK İÇİN SÜRÜKLE, KALDIRMAK İÇİN DELETE'E BAS.";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "PANO MEŞGUL. TEKRAR DENE.";
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "PANO MEŞGUL. YENİDEN YAPIŞTIRMAYI DENE.";
@@ -463,6 +478,7 @@
 "COULDN’T OPEN THIS TOOL" = "BU ARAÇ AÇILAMADI";
 "COULDN’T OPEN YOUR FILE MANAGER." = "DOSYA YÖNETİCİN AÇILAMADI.";
 "COULDN’T REACH THE CLIPBOARD." = "PANOYA ULAŞILAMADI.";
+"COUNT" = "ADET";
 "COVER STYLE" = "KAPLAMA STİLİ";
 "CREATE A NEW FLOAT" = "YENİ YÜZEN PENCERE OLUŞTUR";
 "CREATE COLLAGE" = "KOLAJ OLUŞTUR";
@@ -498,6 +514,7 @@
 "Change Video Speed" = "Video Hızını Değiştir";
 "Change…" = "Değiştir…";
 "Channels" = "Kanallar";
+"Chapters, cover art and every tag go; tags you change below are written to the clean copy." = "Bölümler, kapak görseli ve tüm etiketler kaldırılır; aşağıda değiştirdiğin etiketler temiz kopyaya yazılır.";
 "Check automatically while Nashi is running" = "Nashi çalışırken otomatik denetle";
 "Check drawing settings" = "Çizim ayarlarını kontrol et";
 "Check export defaults" = "Dışa aktarma varsayılanlarını kontrol et";
@@ -592,6 +609,8 @@
 "Clear" = "Temizle";
 "Clear Float" = "Yüzen Pencereyi Temizle";
 "Clear Selection" = "Seçimi Temizle";
+"Click a clip to leave it out of the result." = "Sonuçtan çıkarmak için bir parçaya tıkla.";
+"Click a page to select it (Ctrl adds, Shift extends). Drag a page onto another to move it there." = "Seçmek için bir sayfaya tıkla (Ctrl ekler, Shift aralığı genişletir). Taşımak için bir sayfayı başka bir sayfanın üzerine sürükle.";
 "Click an area to select it, drag it to move it, and press Delete to remove it." = "Bir alanı seçmek için tıkla, taşımak için sürükle, kaldırmak için Delete'e bas.";
 "Clip %@" = "Klip %@";
 "Clip %lld" = "Klip %lld";
@@ -669,6 +688,7 @@
 "Couldn’t reach the clipboard." = "Panoya ulaşılamadı.";
 "Couldn’t set up tools: %@" = "Araçlar kurulamadı: %@";
 "Couldn’t set up tools: %lld" = "Araçlar kurulamadı: %lld";
+"Count" = "Adet";
 "Cover style" = "Kaplama stili";
 "Create Collage" = "Kolaj Oluştur";
 "Create PDF" = "PDF Oluştur";
@@ -738,6 +758,7 @@
 "DRAG A REGION TO COVER WITH A SOLID BLOCK." = "DÜZ BİR BLOKLA KAPATILACAK ALANI SÜRÜKLEYEREK SEÇ.";
 "DRAG A WINDOW BY ITS TITLE BAR OR RESIZE BORDER, THEN TAP SHIFT OR COMMAND. HOVER OVER A LAYOUT AND RELEASE THE MOUSE TO PLACE IT. ESCAPE CANCELS." = "PENCEREYİ BAŞLIK ÇUBUĞUNDAN VEYA KENARINDAN SÜRÜKLERKEN SHIFT YA DA COMMAND'A BAS. BİR DÜZENİN ÜZERİNE GELİP FAREYİ BIRAK. ESCAPE İPTAL EDER.";
 "DRAG ACROSS THE PREVIEW TO SELECT THE AREA TO KEEP." = "KORUNACAK ALANI SEÇMEK İÇİN ÖNİZLEMEDE SÜRÜKLE.";
+"DRAG ACROSS THE WAVEFORM TO CHOOSE A RANGE." = "BİR ARALIK SEÇMEK İÇİN DALGA BİÇİMİ ÜZERİNDE SÜRÜKLE.";
 "DRAG AN ANNOTATION TO MOVE IT; PRESS DELETE TO REMOVE IT. TURN OFF SELECT / MOVE TO DRAW." = "BİR İŞARETİ TAŞIMAK İÇİN SÜRÜKLE, KALDIRMAK İÇİN DELETE'E BAS. ÇİZMEK İÇİN SEÇ / TAŞI'YI KAPAT.";
 "DRAG AN AREA FIRST." = "ÖNCE BİR ALAN SÜRÜKLE.";
 "DRAG AN EXISTING ANNOTATION TO MOVE IT; DRAG ITS HANDLES TO RESIZE. TURN OFF SELECT / MOVE TO DRAW." = "BİR İŞARETİ TAŞIMAK İÇİN İÇİNİ, BOYUTLANDIRMAK İÇİN TUTAMAĞINI SÜRÜKLE. ÇİZMEK İÇİN SEÇ / TAŞI'YI KAPAT.";
@@ -817,6 +838,7 @@
 "Drag a region to cover with a solid block." = "Düz bir blokla kapatılacak alanı sürükleyerek seç.";
 "Drag a window by its title bar or resize border, then tap Shift or Command. Hover over a layout and release the mouse to place it. Escape cancels." = "Pencereyi başlık çubuğundan veya kenarından sürüklerken Shift ya da Command'a bas. Bir düzenin üzerine gelip fareyi bırak. Escape iptal eder.";
 "Drag across the preview to select the area to keep." = "Korunacak alanı seçmek için önizlemede sürükle.";
+"Drag across the waveform to choose a range." = "Bir aralık seçmek için dalga biçimi üzerinde sürükle.";
 "Drag an annotation to move it; press Delete to remove it. Turn off Select / Move to draw." = "Bir işareti taşımak için sürükle, kaldırmak için Delete'e bas. Çizmek için Seç / Taşı'yı kapat.";
 "Drag an area first." = "Önce bir alan sürükle.";
 "Drag an existing annotation to move it; drag its handles to resize. Turn off Select / Move to draw." = "Bir işareti taşımak için içini, boyutlandırmak için tutamağını sürükle. Çizmek için Seç / Taşı'yı kapat.";
@@ -837,6 +859,8 @@
 "Drop it like it’s… a file." = "Dosyanı buraya bırak.";
 "Drop something good." = "Bir dosya bırak.";
 "Duplicate" = "Çoğalt";
+"EACH AREA COVERS THE RANGE ON THE TIMELINE WHEN IT IS DRAWN; CHOOSE AN AREA TO CHANGE ITS RANGE." = "HER ALAN, ÇİZİLDİĞİNDE ZAMAN ÇİZELGESİNDEKİ ARALIĞI KAPSAR; ARALIĞINI DEĞİŞTİRMEK İÇİN BİR ALAN SEÇ.";
+"EACH RANGE BECOMES ITS OWN PDF." = "HER ARALIK AYRI BİR PDF OLUR.";
 "EDIT" = "DÜZENLE";
 "EDIT FIELDS OR REMOVE METADATA. ENCODED AUDIO AND VIDEO STAY UNTOUCHED." = "ALANLARI DÜZENLE YA DA META VERİLERİ KALDIR. KODLANMIŞ SES VE GÖRÜNTÜ DEĞİŞMEZ.";
 "EDIT FIELDS OR REMOVE METADATA. ENCODED IMAGE PIXELS STAY UNTOUCHED." = "ALANLARI DÜZENLE YA DA META VERİLERİ KALDIR. GÖRSELİN PİKSELLERİ DEĞİŞMEZ.";
@@ -852,13 +876,20 @@
 "ENABLE NASHI DRAG SHORTCUTS" = "NASHI SÜRÜKLEME KISAYOLLARINI ETKİNLEŞTİR";
 "ENCODED PIXELS, COLOR PROFILE AND DISPLAY ORIENTATION ARE PRESERVED." = "KODLANMIŞ PİKSELLER, RENK PROFİLİ VE GÖRÜNTÜ YÖNÜ KORUNUR.";
 "END" = "BİTİŞ";
+"END OF THE SELECTED RANGE" = "SEÇİLİ ARALIĞIN SONU";
 "ENTER A FINITE NUMBER." = "GEÇERLİ BİR SAYI GİR.";
 "ENTER A POSITIVE, FINITE TARGET SIZE." = "POZİTİF, SONLU BİR HEDEF BOYUT GİR.";
 "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%." = "%0'DAN BÜYÜK VE %100'DEN KÜÇÜK BİR AZALTMA GİR.";
 "ENTER PAGE NUMBERS WITHIN THIS PDF, IN THE DESIRED ORDER." = "BU PDF'DEKİ SAYFA NUMARALARINI İSTEDİĞİN SIRAYLA GİR.";
 "EPUB LAYOUT" = "EPUB DÜZENİ";
 "EPUB layout" = "EPUB düzeni";
+"EQUAL CLIPS" = "EŞİT PARÇALAR";
 "ESC TO CLOSE" = "KAPATMAK İÇİN ESC";
+"EVENLY SPACED" = "EŞİT ARALIKLI";
+"EVERY CLIP IS FITTED TO THE FIRST ONE'S SIZE AT 30 FPS; CLIPS WITHOUT SOUND GET SILENCE." = "HER PARÇA İLK PARÇANIN BOYUTUNA VE 30 FPS'YE UYARLANIR; SESİ OLMAYAN PARÇALARA SESSİZLİK EKLENİR.";
+"EVERY N PAGES" = "HER N SAYFADA BİR";
+"EVERY N SECONDS" = "HER N SANİYEDE BİR";
+"EVERY PAGE" = "HER SAYFA";
 "EVERY TAG WILL BE REMOVED. ENCODED PIXELS, COLOR PROFILE AND DISPLAY ORIENTATION ARE PRESERVED." = "TÜM ETİKETLER KALDIRILACAK. KODLANMIŞ PİKSELLER, RENK PROFİLİ VE GÖRÜNTÜ YÖNÜ KORUNUR.";
 "EVERYTHING HAS A NEXT FORM." = "HER DOSYANIN YENİ BİR HÂLİ VAR.";
 "EVERYTHING NASHI NEEDS FOR AUDIO, VIDEO AND DOCUMENTS IS IN PLACE." = "NASHI'NİN SES, VİDEO VE BELGELER İÇİN İHTİYAÇ DUYDUĞU HER ŞEY HAZIR.";
@@ -869,8 +900,11 @@
 "EXPORT CLIPS" = "KLİPLERİ KAYDET";
 "EXPORT ONE VIDEO" = "TEK VİDEO OLARAK KAYDET";
 "EXPOSURE" = "POZLAMA";
+"EXTRACT" = "ÇIKAR";
 "EXTRACT ARCHIVE" = "ARŞİVİ AÇ";
 "EXTRACT NASHI INTO ITS OWN WRITABLE FOLDER FIRST." = "ÖNCE NASHI'Yİ YAZILABİLİR, KENDİNE AİT BİR KLASÖRE ÇIKAR.";
+"Each area covers the range on the timeline when it is drawn; choose an area to change its range." = "Her alan, çizildiğinde zaman çizelgesindeki aralığı kapsar; aralığını değiştirmek için bir alan seç.";
+"Each range becomes its own PDF." = "Her aralık ayrı bir PDF olur.";
 "Edit" = "Düzenle";
 "Edit Image" = "Görseli Düzenle";
 "Edit Photo" = "Fotoğrafı Düzenle";
@@ -886,13 +920,20 @@
 "Enable Nashi drag shortcuts" = "Nashi sürükleme kısayollarını etkinleştir";
 "Encoded pixels, color profile and display orientation are preserved." = "Kodlanmış pikseller, renk profili ve görüntü yönü korunur.";
 "End" = "Bitiş";
+"End of the selected range" = "Seçili aralığın sonu";
 "Enter a finite number." = "Geçerli bir sayı gir.";
 "Enter a positive, finite target size." = "Pozitif, sonlu bir hedef boyut gir.";
 "Enter a reduction greater than 0% and less than 100%." = "%0'dan büyük ve %100'den küçük bir azaltma gir.";
 "Enter a valid number for %@." = "%@ için geçerli bir sayı gir.";
 "Enter a valid number for %lld." = "%lld için geçerli bir sayı gir.";
 "Enter page numbers within this PDF, in the desired order." = "Bu PDF'deki sayfa numaralarını istediğin sırayla gir.";
+"Equal clips" = "Eşit parçalar";
 "Esc to close" = "Kapatmak için Esc";
+"Evenly spaced" = "Eşit aralıklı";
+"Every N pages" = "Her N sayfada bir";
+"Every N seconds" = "Her N saniyede bir";
+"Every clip is fitted to the first one's size at 30 fps; clips without sound get silence." = "Her parça ilk parçanın boyutuna ve 30 fps'ye uyarlanır; sesi olmayan parçalara sessizlik eklenir.";
+"Every page" = "Her sayfa";
 "Every redaction area must have positive dimensions and fit completely inside the %@ × %@ pixel image. Adjust the areas for this image and try again." = "Her sansür alanının boyutları pozitif olmalı ve %@ × %@ piksellik görselin tamamen içinde kalmalı. Bu görsel için alanları ayarlayıp yeniden dene.";
 "Every redaction area must have positive dimensions and fit completely inside the %@ × %lld pixel image. Adjust the areas for this image and try again." = "Her sansür alanının boyutları pozitif olmalı ve %@ × %lld piksellik görselin tamamen içinde kalmalı. Bu görsel için alanları ayarlayıp yeniden dene.";
 "Every redaction area must have positive dimensions and fit completely inside the %lld × %@ pixel image. Adjust the areas for this image and try again." = "Her sansür alanının boyutları pozitif olmalı ve %lld × %@ piksellik görselin tamamen içinde kalmalı. Bu görsel için alanları ayarlayıp yeniden dene.";
@@ -908,6 +949,7 @@
 "Export clips" = "Klipleri kaydet";
 "Export one video" = "Tek video olarak kaydet";
 "Exposure" = "Pozlama";
+"Extract" = "Çıkar";
 "Extract Archive" = "Arşivi Aç";
 "Extract Nashi into its own writable folder first." = "Önce Nashi'yi yazılabilir, kendine ait bir klasöre çıkar.";
 "FADE" = "SOLUKLAŞTIRMA";
@@ -1064,10 +1106,12 @@
 "GIF FRAME RATE" = "GIF KARE HIZI";
 "GIF FRAMES PER SECOND" = "GIF SANİYEDEKİ KARE SAYISI";
 "GIF MAXIMUM WIDTH" = "EN FAZLA GIF GENİŞLİĞİ";
+"GIF METADATA CAN ONLY BE REMOVED AS A WHOLE." = "GIF META VERİLERİ YALNIZCA TÜMÜYLE KALDIRILABİLİR.";
 "GIF WIDTH" = "GIF GENİŞLİĞİ";
 "GIF frame rate" = "GIF kare hızı";
 "GIF frames per second" = "GIF saniyedeki kare sayısı";
 "GIF maximum width" = "En fazla GIF genişliği";
+"GIF metadata can only be removed as a whole." = "GIF meta verileri yalnızca tümüyle kaldırılabilir.";
 "GIF width" = "GIF genişliği";
 "GITHUB REPOSITORY" = "GITHUB DEPOSU";
 "GIVE IT A LITTLE BREATHING ROOM." = "BİRAZ NEFES ALACAK ALAN AÇ.";
@@ -1115,6 +1159,7 @@
 "IMAGE SCALE" = "GÖRSEL ÖLÇEĞİ";
 "IMAGE SIZE" = "GÖRSEL BOYUTU";
 "IMAGES" = "GÖRSELLER";
+"IMAGES AND PDFS IN THIS SELECTION HAVE ALL THEIR METADATA REMOVED WITH EXIFTOOL." = "BU SEÇİMDEKİ GÖRSELLERİN VE PDF'LERİN TÜM META VERİLERİ EXİFTOOL İLE KALDIRILIR.";
 "IMAGES, VIDEOS, DOCUMENTS, AND ALL THE LITTLE THINGS IN BETWEEN." = "GÖRSELLER, VİDEOLAR, BELGELER VE DİĞER TÜM DOSYALARIN.";
 "INK COLOR" = "KALEM RENGİ";
 "INPUT AND OUTPUT FORMAT." = "GİRDİ VE ÇIKTI BİÇİMİ.";
@@ -1126,6 +1171,7 @@
 "INSTALL AN OCR LANGUAGE IN WINDOWS LANGUAGE SETTINGS TO RECOGNIZE SCANNED PDF TEXT." = "TARANMIŞ PDF METNİNİ TANIMAK İÇİN WINDOWS DİL AYARLARINDAN BİR OCR DİLİ YÜKLE.";
 "INSTALL LIBREOFFICE WITH YOUR PACKAGE MANAGER, FOR EXAMPLE SUDO APT INSTALL LIBREOFFICE OR SUDO DNF INSTALL LIBREOFFICE, THEN TRY AGAIN. NASHI DOES NOT DOWNLOAD IT." = "LIBREOFFICE'İ PAKET YÖNETİCİNLE KUR, ÖRNEĞİN SUDO APT İNSTALL LİBREOFFİCE VEYA SUDO DNF İNSTALL LİBREOFFİCE; SONRA YENİDEN DENE. NASHI ONU İNDİRMEZ.";
 "INSTALLED" = "KURULU";
+"INTERVAL" = "ARALIK";
 "INVALID EPUB CHAPTER PATH." = "EPUB BÖLÜM YOLU GEÇERSİZ.";
 "INVALID EPUB IMAGE PATH." = "EPUB GÖRSEL YOLU GEÇERSİZ.";
 "INVALID METADATA FIELD." = "META VERİ ALANI GEÇERSİZ.";
@@ -1146,6 +1192,7 @@
 "Image scale" = "Görsel ölçeği";
 "Image size" = "Görsel boyutu";
 "Images" = "Görseller";
+"Images and PDFs in this selection have all their metadata removed with ExifTool." = "Bu seçimdeki görsellerin ve PDF'lerin tüm meta verileri ExifTool ile kaldırılır.";
 "Images, videos, documents, and all the little things in between." = "Görseller, videolar, belgeler ve diğer tüm dosyaların.";
 "Ink color" = "Kalem rengi";
 "Input and output format." = "Girdi ve çıktı biçimi.";
@@ -1157,6 +1204,7 @@
 "Install an OCR language in Windows Language settings to detect text." = "Metin algılamak için Windows dil ayarlarından bir OCR dili yükle.";
 "Install an OCR language in Windows Language settings to recognize scanned PDF text." = "Taranmış PDF metnini tanımak için Windows dil ayarlarından bir OCR dili yükle.";
 "Installed" = "Kurulu";
+"Interval" = "Aralık";
 "Invalid EPUB chapter path." = "EPUB bölüm yolu geçersiz.";
 "Invalid EPUB image path." = "EPUB görsel yolu geçersiz.";
 "Invalid YouTube video ID." = "YouTube video kimliği geçersiz.";
@@ -1222,6 +1270,7 @@
 "LITTLE TWEAKS.\nBIG DIFFERENCE." = "KÜÇÜK DOKUNUŞLAR.\nBÜYÜK FARK.";
 "LITTLE TWEAKS. A WHOLE NEW LOOK." = "KÜÇÜK DOKUNUŞLAR. YEPYENİ BİR GÖRÜNÜM.";
 "LOCAL BY DESIGN" = "VERİLERİN CİHAZINDA KALIR";
+"LOCKED" = "KİLİTLİ";
 "LOOKING FOR LITTLE SQUARES…" = "QR KODLARI ARANIYOR…";
 "LOUDNESS RANGE" = "SES DÜZEYİ ARALIĞI";
 "Landscape" = "Yatay";
@@ -1255,6 +1304,7 @@
 "Local by design" = "Verilerin cihazında kalır";
 "Local by design · MIT source\nVersion %@" = "Verilerin cihazında kalır · MIT lisanslı kaynak kodu\nSürüm %@";
 "Local by design · MIT source\nVersion %lld" = "Verilerin cihazında kalır · MIT lisanslı kaynak kodu\nSürüm %lld";
+"Locked" = "Kilitli";
 "Looking for little squares…" = "QR kodları aranıyor…";
 "Loudness range" = "Ses düzeyi aralığı";
 "MACOS REDUCE MOTION IS ON. NASHI KEEPS MOTION OFF." = "MACOS HAREKETİ AZALT AÇIK. NASHI ANİMASYONLARI KAPALI TUTAR.";
@@ -1364,6 +1414,7 @@
 "NASHI IS ALREADY RUNNING BUT IS STILL STARTING. OPEN IT FROM THE SYSTEM TRAY OR TRY AGAIN IN A MOMENT." = "NASHI ZATEN ÇALIŞIYOR AMA HÂLÂ AÇILIYOR. SİSTEM TEPSİSİNDEN AÇ VEYA BİRAZDAN TEKRAR DENE.";
 "NASHI IS RUNNING BUT DID NOT ANSWER." = "NASHI ÇALIŞIYOR AMA YANIT VERMEDİ.";
 "NASHI IS STILL RUNNING." = "NASHI HÂLÂ ÇALIŞIYOR.";
+"NASHI REWRITES THE PDF WITH COMPRESSED CONTENT STREAMS. TEXT STAYS SELECTABLE AND PAGES STAY SHARP." = "NASHI PDF'Yİ SIKIŞTIRILMIŞ İÇERİK AKIŞLARIYLA YENİDEN YAZAR. METİN SEÇİLEBİLİR, SAYFALAR NET KALIR.";
 "NASHI SAVES RESULTS BESIDE THE ORIGINALS. ALLOW A FOLDER ONCE TO INCLUDE EVERY FOLDER INSIDE IT." = "NASHI SONUÇLARI ORİJİNALLERİN YANINA KAYDEDER. BİR KLASÖRE VERİLEN İZİN, İÇİNDEKİ KLASÖRLERİ DE KAPSAR.";
 "NASHI SETTINGS" = "NASHI AYARLARI";
 "NASHI UPDATE" = "NASHI GÜNCELLEMESİ";
@@ -1415,6 +1466,7 @@
 "Nashi is already running but is still starting. Open it from the system tray or try again in a moment." = "Nashi zaten çalışıyor ama hâlâ açılıyor. Sistem tepsisinden aç veya birazdan tekrar dene.";
 "Nashi is running but did not answer." = "Nashi çalışıyor ama yanıt vermedi.";
 "Nashi is still running." = "Nashi hâlâ çalışıyor.";
+"Nashi rewrites the PDF with compressed content streams. Text stays selectable and pages stay sharp." = "Nashi PDF'yi sıkıştırılmış içerik akışlarıyla yeniden yazar. Metin seçilebilir, sayfalar net kalır.";
 "Nashi saves results beside the originals. Allow a folder once to include every folder inside it." = "Nashi sonuçları orijinallerin yanına kaydeder. Bir klasöre verilen izin, içindeki klasörleri de kapsar.";
 "Nashi update" = "Nashi güncellemesi";
 "Nashi update could not finish" = "Nashi güncellemesi tamamlanamadı";
@@ -1496,6 +1548,7 @@
 "ORIGINAL STAYS SAFE" = "ORİJİNAL DOSYAN GÜVENDE";
 "ORIGINALS REMAIN SAFE. CHOOSE WHERE NEW COPIES SHOULD LAND." = "ORİJİNALLER GÜVENDE. YENİ KOPYALARIN NEREYE KAYDEDİLECEĞİNİ SEÇ.";
 "OTHER" = "DİĞER";
+"OTHER TAGS STAY; THE TAGS BELOW ARE WRITTEN AS TYPED." = "DİĞER ETİKETLER KALIR; AŞAĞIDAKİ ETİKETLER YAZILDIĞI GİBİ KAYDEDİLİR.";
 "OUTER PADDING" = "DIŞ BOŞLUK";
 "OUTPUT" = "ÇIKTI";
 "OUTPUT FORMAT" = "ÇIKTI BİÇİMİ";
@@ -1546,6 +1599,7 @@
 "Original stays safe" = "Orijinal dosyan güvende";
 "Originals remain safe. Choose where new copies should land." = "Orijinaller güvende. Yeni kopyaların nereye kaydedileceğini seç.";
 "Other" = "Diğer";
+"Other tags stay; the tags below are written as typed." = "Diğer etiketler kalır; aşağıdaki etiketler yazıldığı gibi kaydedilir.";
 "Outer padding" = "Dış boşluk";
 "Output" = "Çıktı";
 "Output format" = "Çıktı biçimi";
@@ -1584,6 +1638,8 @@
 "PDF preview bitmap could not be allocated." = "PDF önizlemesi için bellek ayrılamadı.";
 "PDF → OFFICE LAYOUT" = "PDF → OFFICE DÜZENİ";
 "PDF → Office layout" = "PDF → Office düzeni";
+"PDFS ARE REWRITTEN WITH COMPRESSED CONTENT STREAMS; TEXT AND PAGES STAY AS THEY ARE." = "PDF'LER SIKIŞTIRILMIŞ İÇERİK AKIŞLARIYLA YENİDEN YAZILIR; METİN VE SAYFALAR OLDUĞU GİBİ KALIR.";
+"PDFs are rewritten with compressed content streams; text and pages stay as they are." = "PDF'ler sıkıştırılmış içerik akışlarıyla yeniden yazılır; metin ve sayfalar olduğu gibi kalır.";
 "PHOTOS" = "FOTOĞRAFLAR";
 "PICK A FOLDER YOU WORK IN. FRESH COPIES ARE SAVED BESIDE THE ORIGINALS BY DEFAULT." = "ÇALIŞTIĞIN BİR KLASÖRÜ SEÇ. YENİ KOPYALAR VARSAYILAN OLARAK ORİJİNALLERİN YANINA KAYDEDİLİR.";
 "PIN" = "SABİTLE";
@@ -1594,6 +1650,7 @@
 "PLAY SELECTED RANGE" = "SEÇİLİ ARALIĞI OYNAT";
 "PLAYBACK / DOCUMENT ORDER" = "OYNATMA / BELGE SIRASI";
 "PLAYBACK SPEED" = "OYNATMA HIZI";
+"PLAYHEAD" = "OYNATMA KONUMU";
 "PORTRAIT" = "DİKEY";
 "PORTRAIT · 4:5" = "DİKEY · 4:5";
 "PORTRAIT · 9:16" = "DİKEY · 9:16";
@@ -1655,6 +1712,7 @@
 "Play selected range" = "Seçili aralığı oynat";
 "Playback / document order" = "Oynatma / belge sırası";
 "Playback speed" = "Oynatma hızı";
+"Playhead" = "Oynatma konumu";
 "Portrait" = "Dikey";
 "Portrait · 4:5" = "Dikey · 4:5";
 "Portrait · 9:16" = "Dikey · 9:16";
@@ -1855,6 +1913,7 @@
 "SAVE DOWNLOADED MEDIA HERE" = "İNDİRİLEN MEDYAYI BURAYA KAYDET";
 "SAVE DOWNLOADED MEDIA TO…" = "İNDİRİLEN MEDYAYI ŞURAYA KAYDET…";
 "SAVE EDITED COPY" = "DÜZENLENMİŞ KOPYAYI KAYDET";
+"SAVE FRAMES" = "KARELERİ KAYDET";
 "SAVE METADATA COPY" = "META VERİ KOPYASINI KAYDET";
 "SAVE MUTED COPY" = "SESSİZ KOPYAYI KAYDET";
 "SAVE NEW COPIES" = "YENİ KOPYALARI KAYDET";
@@ -1862,6 +1921,7 @@
 "SAVE NEW COPY  ↗" = "YENİ KOPYA KAYDET  ↗";
 "SAVE NEW COPY ↗" = "YENİ KOPYA KAYDET ↗";
 "SAVE NEW FILES TO…" = "YENİ DOSYALARI ŞURAYA KAYDET…";
+"SAVE NORMALIZED COPY" = "NORMALLEŞTİRİLMİŞ KOPYAYI KAYDET";
 "SAVE ORGANIZED COPY ↗" = "DÜZENLENMİŞ KOPYAYI KAYDET ↗";
 "SAVE ORGANIZED PDF" = "DÜZENLENMİŞ PDF'Yİ KAYDET";
 "SAVE REDACTED COPY" = "SANSÜRLENMİŞ KOPYAYI KAYDET";
@@ -1946,9 +2006,11 @@
 "SOUND AND HAPTIC FEEDBACK" = "SES VE DOKUNSAL GERİ BİLDİRİM";
 "SOUND FEEDBACK" = "SESLİ GERİ BİLDİRİM";
 "SOUND FOLLOWS YOUR MAC’S VOLUME. HAPTICS NEED A COMPATIBLE FORCE TOUCH TRACKPAD." = "SES, MAC'İNİN SES DÜZEYİNİ KULLANIR. TİTREŞİM İÇİN UYUMLU BİR FORCE TOUCH TRACKPAD GEREKİR.";
+"SOUND PREVIEW IS OFF: PULSEAUDIO ISN’T AVAILABLE. THE PICTURE STILL PLAYS." = "SES ÖNİZLEMESİ KAPALI: PULSEAUDİO KULLANILAMIYOR. GÖRÜNTÜ YİNE DE OYNAR.";
 "SOURCE & THIRD-PARTY NOTICES" = "KAYNAK KODU VE ÜÇÜNCÜ TARAF BİLDİRİMLERİ";
 "SPACE PLAY/PAUSE · ←/→ 1S · SHIFT+←/→ 1 FRAME (VIDEO), 0.1S (AUDIO) · I/O SET RANGE · ENTER SAVE" = "SPACE OYNAT/DURAKLAT · ←/→ 1 SN · SHIFT+←/→ 1 KARE (VİDEO), 0,1 SN (SES) · I/O ARALIĞI AYARLA · ENTER KAYDET";
 "SPACE PLAY/PAUSE · ←/→ 1S · ⇧←/→ 1 FRAME · I/O SET RANGE · ⇧SPACE PLAY RANGE" = "SPACE OYNAT/DURAKLAT · ←/→ 1 SN · ⇧←/→ 1 KARE · I/O ARALIĞI AYARLA · ⇧SPACE ARALIĞI OYNAT";
+"SPACE PLAYS · ←/→ 1 S · SHIFT+←/→ ONE FRAME · I/O SET THE RANGE" = "BOŞLUK OYNATIR · ←/→ 1 SN · SHIFT+←/→ BİR KARE · I/O ARALIĞI BELİRLER";
 "SPACE · PREVIEW" = "BOŞLUK · ÖNİZLEME";
 "SPACE: PREVIEW · ENTER: USE IN NASHI" = "BOŞLUK: ÖNİZLE · ENTER: NASHI'DE KULLAN";
 "SPACING" = "BOŞLUK";
@@ -1965,6 +2027,7 @@
 "START" = "BAŞLANGIÇ";
 "START HERE" = "BURADAN BAŞLA";
 "START MUST BE BEFORE END, WITHIN THE MEDIA DURATION." = "BAŞLANGIÇ, BİTİŞ'TEN ÖNCE VE MEDYA SÜRESİ İÇİNDE OLMALI.";
+"START OF THE SELECTED RANGE" = "SEÇİLİ ARALIĞIN BAŞI";
 "STARTED NASHI IN THE BACKGROUND." = "NASHI ARKA PLANDA BAŞLATILDI.";
 "STARTING DOWNLOAD…" = "İNDİRME BAŞLIYOR…";
 "STEREO" = "STEREO";
@@ -1981,6 +2044,7 @@
 "SVG EXTERNAL STYLES ARE NOT LOADED." = "SVG DIŞ STİLLERİ YÜKLENMEZ.";
 "SVG external resources are not loaded. Embed the raster image first." = "SVG dış kaynakları yüklenmez. Önce görseli SVG dosyasına göm.";
 "SVG external styles are not loaded." = "SVG dış stilleri yüklenmez.";
+"SWAP LEFT AND RIGHT" = "SOL VE SAĞI DEĞİŞTİR";
 "SYSTEM" = "SİSTEM";
 "Sample depth" = "Örnek derinliği";
 "Saturation" = "Doygunluk";
@@ -2000,6 +2064,7 @@
 "Save downloaded media here" = "İndirilen medyayı buraya kaydet";
 "Save downloaded media to…" = "İndirilen medyayı şuraya kaydet…";
 "Save edited copy" = "Düzenlenmiş kopyayı kaydet";
+"Save frames" = "Kareleri kaydet";
 "Save metadata copy" = "Meta veri kopyasını kaydet";
 "Save muted copy" = "Sessiz kopyayı kaydet";
 "Save new copies" = "Yeni kopyaları kaydet";
@@ -2007,6 +2072,7 @@
 "Save new copy  ↗" = "Yeni kopya kaydet  ↗";
 "Save new copy ↗" = "Yeni kopya kaydet ↗";
 "Save new files to…" = "Yeni dosyaları şuraya kaydet…";
+"Save normalized copy" = "Normalleştirilmiş kopyayı kaydet";
 "Save organized PDF" = "Düzenlenmiş PDF'yi kaydet";
 "Save organized copy ↗" = "Düzenlenmiş kopyayı kaydet ↗";
 "Save redacted copy" = "Sansürlenmiş kopyayı kaydet";
@@ -2100,9 +2166,11 @@
 "Sound and haptic feedback" = "Ses ve dokunsal geri bildirim";
 "Sound feedback" = "Sesli geri bildirim";
 "Sound follows your Mac’s volume. Haptics need a compatible Force Touch trackpad." = "Ses, Mac'inin ses düzeyini kullanır. Titreşim için uyumlu bir Force Touch trackpad gerekir.";
+"Sound preview is off: PulseAudio isn’t available. The picture still plays." = "Ses önizlemesi kapalı: PulseAudio kullanılamıyor. Görüntü yine de oynar.";
 "Source & third-party notices" = "Kaynak kodu ve üçüncü taraf bildirimleri";
 "Space play/pause · ←/→ 1s · Shift+←/→ 1 frame (video), 0.1s (audio) · I/O set range · Enter save" = "Space oynat/duraklat · ←/→ 1 sn · Shift+←/→ 1 kare (video), 0,1 sn (ses) · I/O aralığı ayarla · Enter kaydet";
 "Space play/pause · ←/→ 1s · ⇧←/→ 1 frame · I/O set range · ⇧Space play range" = "Space oynat/duraklat · ←/→ 1 sn · ⇧←/→ 1 kare · I/O aralığı ayarla · ⇧Space aralığı oynat";
+"Space plays · ←/→ 1 s · Shift+←/→ one frame · I/O set the range" = "Boşluk oynatır · ←/→ 1 sn · Shift+←/→ bir kare · I/O aralığı belirler";
 "Space · Preview" = "Boşluk · Önizleme";
 "Space: preview · Enter: use in Nashi" = "Boşluk: önizle · Enter: Nashi'de kullan";
 "Spacing" = "Boşluk";
@@ -2118,6 +2186,7 @@
 "Staging cannot be a symbolic link." = "Geçici klasör sembolik bağlantı olamaz.";
 "Start" = "Başlangıç";
 "Start must be before End, within the media duration." = "Başlangıç, Bitiş'ten önce ve medya süresi içinde olmalı.";
+"Start of the selected range" = "Seçili aralığın başı";
 "Started Nashi in the background." = "Nashi arka planda başlatıldı.";
 "Starting download…" = "İndirme başlıyor…";
 "Stereo" = "Stereo";
@@ -2130,6 +2199,7 @@
 "Style" = "Stil";
 "Subtitles" = "Altyazılar";
 "Subtle animations" = "Hafif animasyonlar";
+"Swap left and right" = "Sol ve sağı değiştir";
 "System" = "Sistem";
 "TAP THE CHOSEN MODIFIER COMBINATION WHILE DRAGGING FILES." = "DOSYALARI SÜRÜKLERKEN SEÇTİĞİN TUŞ BİRLEŞİMİNE BAS.";
 "TARGET" = "HEDEF";
@@ -2149,16 +2219,19 @@
 "THE ARCHIVE ENTRY LEAVES ITS DESTINATION." = "ARŞİVDEKİ BİR ÖĞE HEDEF KLASÖRÜN DIŞINA ÇIKIYOR.";
 "THE CLIPPING EXCEEDS 200 MB." = "METİN KIRPINTISI 200 MB'I AŞIYOR.";
 "THE CLIPPING HAS NO READABLE TEXT. INCLUDE ITS ORIGINAL RESOURCE FORK/APPLEDOUBLE SIDECAR, OR PASTE ITS TEXT INTO NASHI." = "METİN KIRPINTISINDA OKUNABİLİR METİN YOK. ORİJİNAL RESOURCE FORK/APPLEDOUBLE DOSYASINI DA EKLE VEYA METNİNİ NASHI'YE YAPIŞTIR.";
+"THE COPY KEEPS THE PICTURE AND DROPS EVERY AUDIO TRACK." = "KOPYA GÖRÜNTÜYÜ KORUR, TÜM SES PARÇALARINI KALDIRIR.";
 "THE DOCUMENT HAS NO EDITABLE BODY." = "BELGEDE DÜZENLENEBİLİR BİR İÇERİK YOK.";
 "THE DOCUMENT PACKAGE IS TOO LARGE OR CONTAINS DUPLICATE ENTRIES." = "BELGE PAKETİ ÇOK BÜYÜK VEYA YİNELENEN ÖĞELER İÇERİYOR.";
 "THE DOWNLOAD CONNECTION WAS INTERRUPTED." = "İNDİRME BAĞLANTISI KESİLDİ.";
 "THE DOWNLOAD STOPPED RESPONDING. PLEASE TRY AGAIN." = "İNDİRME YANIT VERMİYOR. LÜTFEN TEKRAR DENE.";
 "THE DOWNLOADED FILE CONTAINS NO VIDEO." = "İNDİRİLEN DOSYADA VİDEO YOK.";
 "THE DOWNLOADED TOOLS ARE INCOMPLETE. PLEASE TRY SETUP AGAIN." = "İNDİRİLEN ARAÇLAR EKSİK. KURULUMU TEKRAR DENE.";
+"THE FILES GO INTO ONE NEW FOLDER BESIDE THE ARCHIVE." = "DOSYALAR ARŞİVİN YANINDA YENİ BİR KLASÖRE ÇIKARILIR.";
 "THE IMAGE COULD NOT BE READ." = "GÖRSEL OKUNAMADI.";
 "THE IMAGE DOWNLOAD ENDED EARLY." = "GÖRSEL İNDİRMESİ ERKEN SONA ERDİ.";
 "THE IMAGE ORDER MUST INCLUDE EVERY IMAGE ONCE." = "GÖRSEL SIRASINDA HER GÖRSEL BİR KEZ YER ALMALI.";
 "THE MEDIA SERVER REDIRECTED TO AN INSECURE URL." = "MEDYA SUNUCUSU GÜVENLİ OLMAYAN BİR ADRESE YÖNLENDİRDİ.";
+"THE PASSWORD IS MISSING OR INCORRECT." = "PAROLA EKSİK YA DA YANLIŞ.";
 "THE PROCESSING TOOL COULD NOT START." = "İŞLEME ARACI BAŞLATILAMADI.";
 "THE REQUESTED FILE SIZE COULD NOT BE REACHED. CHOOSE A LARGER TARGET." = "İSTENEN DOSYA BOYUTUNA ULAŞILAMADI. DAHA BÜYÜK BİR HEDEF SEÇ.";
 "THE REQUESTED IMAGE SIZE COULD NOT BE REACHED. CHOOSE A LARGER TARGET." = "İSTENEN GÖRSEL BOYUTUNA İNİLEMEDİ. DAHA BÜYÜK BİR HEDEF SEÇ.";
@@ -2167,6 +2240,7 @@
 "THE SIGNED PACKAGE VERSION DOES NOT MATCH THIS UPDATE." = "İMZALI PAKETİN SÜRÜMÜ BU GÜNCELLEMEYLE EŞLEŞMİYOR.";
 "THE UPDATE DOES NOT CONTAIN NASHI." = "GÜNCELLEME NASHI'Yİ İÇERMİYOR.";
 "THE UPDATE SIGNATURE IS INVALID. YOUR EXISTING APP WAS KEPT." = "GÜNCELLEME İMZASI GEÇERSİZ. MEVCUT UYGULAMAN KORUNDU.";
+"THESE CHANGES APPLY TO EVERY SELECTED FILE." = "BU DEĞİŞİKLİKLER SEÇİLİ TÜM DOSYALARA UYGULANIR.";
 "THESE CHANGES APPLY TO EVERY SELECTED IMAGE." = "BU DEĞİŞİKLİKLER SEÇİLİ TÜM GÖRSELLERE UYGULANIR.";
 "THESE FILES HAVE MOVED OR WERE DELETED." = "BU DOSYALAR TAŞINMIŞ VEYA SİLİNMİŞ.";
 "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE." = "BU KIRPMA, SEÇİLEN TÜM GÖRSELLERE UYGULANIR VE HER GÖRSELİN SINIRLARINA SIĞMALIDIR.";
@@ -2239,6 +2313,7 @@
 "The archive entry leaves its destination." = "Arşivdeki bir öğe hedef klasörün dışına çıkıyor.";
 "The clipping exceeds 200 MB." = "Metin kırpıntısı 200 MB'ı aşıyor.";
 "The clipping has no readable text. Include its original resource fork/AppleDouble sidecar, or paste its text into Nashi." = "Metin kırpıntısında okunabilir metin yok. Orijinal resource fork/AppleDouble dosyasını da ekle veya metnini Nashi'ye yapıştır.";
+"The copy keeps the picture and drops every audio track." = "Kopya görüntüyü korur, tüm ses parçalarını kaldırır.";
 "The crop rectangle must fit completely inside the %@ × %@ pixel image." = "Kırpma alanı %@ × %@ piksellik görselin tamamen içinde kalmalı.";
 "The crop rectangle must fit completely inside the %@ × %lld pixel image." = "Kırpma alanı %@ × %lld piksellik görselin tamamen içinde kalmalı.";
 "The crop rectangle must fit completely inside the %lld × %@ pixel image." = "Kırpma alanı %lld × %@ piksellik görselin tamamen içinde kalmalı.";
@@ -2251,10 +2326,12 @@
 "The download stopped responding. Please try again." = "İndirme yanıt vermiyor. Lütfen tekrar dene.";
 "The downloaded file contains no video." = "İndirilen dosyada video yok.";
 "The downloaded tools are incomplete. Please try setup again." = "İndirilen araçlar eksik. Kurulumu tekrar dene.";
+"The files go into one new folder beside the archive." = "Dosyalar arşivin yanında yeni bir klasöre çıkarılır.";
 "The image could not be read." = "Görsel okunamadı.";
 "The image download ended early." = "Görsel indirmesi erken sona erdi.";
 "The image order must include every image once." = "Görsel sırasında her görsel bir kez yer almalı.";
 "The media server redirected to an insecure URL." = "Medya sunucusu güvenli olmayan bir adrese yönlendirdi.";
+"The password is missing or incorrect." = "Parola eksik ya da yanlış.";
 "The processing tool could not start." = "İşleme aracı başlatılamadı.";
 "The requested PDF size could not be reached. Choose a larger target." = "İstenen PDF boyutuna inilemedi. Daha büyük bir hedef seç.";
 "The requested file size could not be reached. Choose a larger target." = "İstenen dosya boyutuna ulaşılamadı. Daha büyük bir hedef seç.";
@@ -2263,6 +2340,7 @@
 "The signed package version does not match this update." = "İmzalı paketin sürümü bu güncellemeyle eşleşmiyor.";
 "The update does not contain Nashi." = "Güncelleme Nashi'yi içermiyor.";
 "The update signature is invalid. Your existing app was kept." = "Güncelleme imzası geçersiz. Mevcut uygulaman korundu.";
+"These changes apply to every selected file." = "Bu değişiklikler seçili tüm dosyalara uygulanır.";
 "These changes apply to every selected image." = "Bu değişiklikler seçili tüm görsellere uygulanır.";
 "These files have moved or were deleted." = "Bu dosyalar taşınmış veya silinmiş.";
 "This EPUB could not be read." = "Bu EPUB okunamadı.";
@@ -2306,6 +2384,8 @@
 "Tools ready" = "Araçlar hazır";
 "Tools · while dragging" = "Araçlar · sürüklerken";
 "Top" = "Üst";
+"Total: %@" = "Toplam: %@";
+"Total: %lld" = "Toplam: %lld";
 "Track name" = "İz adı";
 "Transparent" = "Şeffaf";
 "Transparent backgrounds save as PNG to keep their transparency." = "Şeffaf arka planlar, şeffaflığı korumak için PNG olarak kaydedilir.";
@@ -2323,6 +2403,7 @@
 "UNDO AREA" = "ALANI GERİ AL";
 "UNDO LAST MARK" = "SON İŞARETİ GERİ AL";
 "UNIT" = "BİRİM";
+"UNLOCK" = "KİLİDİ AÇ";
 "UNSAFE DOWNLOAD REDIRECT." = "GÜVENLİ OLMAYAN İNDİRME YÖNLENDİRMESİ.";
 "UNSAFE UPDATE ENTRY." = "GÜNCELLEMEDE GÜVENLİ OLMAYAN BİR ÖĞE VAR.";
 "UNSUPPORTED AUDIO FORMAT." = "DESTEKLENMEYEN SES BİÇİMİ.";
@@ -2353,6 +2434,7 @@
 "Undo area" = "Alanı geri al";
 "Undo last mark" = "Son işareti geri al";
 "Unit" = "Birim";
+"Unlock" = "Kilidi aç";
 "Unsafe download redirect." = "Güvenli olmayan indirme yönlendirmesi.";
 "Unsafe update entry." = "Güncellemede güvenli olmayan bir öğe var.";
 "Unsupported audio format." = "Desteklenmeyen ses biçimi.";

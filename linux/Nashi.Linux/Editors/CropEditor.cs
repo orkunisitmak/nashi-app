@@ -81,7 +81,7 @@ public static class CropGeometry
 
 /// Crop Image (macOS cropControls): drag to draw, handles to resize, inside to move, Shift to lock the ratio,
 /// aspect presets, W/H and X/Y fields in step with the selection, Select All and Clear Selection.
-public sealed class CropEditor(IReadOnlyList<string> inputs) : EditorPanel("cropImage", inputs)
+public class CropEditor(IReadOnlyList<string> inputs, string tool = "cropImage") : EditorPanel(tool, inputs)
 {
     private static class Copy
     {

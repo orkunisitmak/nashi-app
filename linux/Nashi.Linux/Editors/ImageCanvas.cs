@@ -32,7 +32,7 @@ public sealed class ImageCanvas : Control
 
     /// The bitmap the window keeps for Original (not disposed when replaced).
     public Bitmap? Kept { get; set; }
-    bool Keep(Bitmap b) => ReferenceEquals(b, Kept);
+    bool Keep(Bitmap b) => ReferenceEquals(b, Kept) || ReferenceEquals(b, Panel?.Frame);
 
     /// Source pixels → control coordinates.
     public Matrix View

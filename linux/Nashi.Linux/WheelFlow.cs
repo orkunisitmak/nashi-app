@@ -163,7 +163,7 @@ public sealed class WheelFlow(Toolchain tools, Window? owner, Action<string> not
         Editors.EditorJob? job = null;
         // An image tool opens its editor first; Save hands back the job, Cancel or Esc ends here with nothing made.
         Editors.EditorPanel? panel;
-        try { panel = Editors.ToolEditorWindow.For(item.Id, selection); }
+        try { panel = Editors.ToolEditorWindow.For(item.Id, selection, tools); }
         catch (MissingToolsException) { await setUpTools(); return; }
         if (panel is not null)
         {

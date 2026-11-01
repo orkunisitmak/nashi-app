@@ -33,24 +33,46 @@ public sealed class ToolEditorWindow : Window
         public const string Close = "Close";
     }
 
-    /// Whether the choice opens an editor for these files (Read QR Codes has its own window).
+    /// Whether the choice opens an editor for these files (Read QR Codes has its own window; Create PDF runs at once,
+    /// and so does Extract Archive unless an archive is password-protected).
     public static bool Opens(string tool, IReadOnlyList<string> files) =>
-        tool != "readQRCode" && Capabilities.ImageEditors.Contains(tool) && files.Count > 0 && files.All(FeatureCatalog.IsImage);
+        tool is not ("readQRCode" or "createPDF") && Capabilities.Tools(files).Contains(tool) && (tool != "extractArchive" || files.Any(Locks.ArchiveLocked));
 
-    /// The editor for a wheel choice on these files, or null when the choice runs without one.
-    public static EditorPanel? For(string tool, IReadOnlyList<string> files)
+    /// The editor for a wheel choice on these files, or null when the choice runs without one. Media editors use
+    /// `tools`' ffmpeg and ffprobe; MissingToolsException (which opens setup) when a needed tool is missing.
+    public static EditorPanel? For(string tool, IReadOnlyList<string> files, Toolchain? tools = null)
     {
-        if (files.Count == 0 || !files.All(FeatureCatalog.IsImage)) return null;
+        if (files.Count == 0) return null;
+        static bool IsMedia(string f) => FeatureCatalog.IsAudio(f) || FeatureCatalog.IsVideo(f);
+        Editors.Media.MediaTools Ffmpeg() => Editors.Media.MediaTools.From(tools ?? AppPaths.CreateToolchain());
+        static EditorPanel Exif(Func<EditorPanel> make) => AppPaths.Metadata().Executable is null ? throw new MissingToolsException(MissingToolsException.Metadata) : make();
+        if (files.All(FeatureCatalog.IsImage))
+            return tool switch
+            {
+                "cropImage" => new CropEditor(files),
+                "editImage" => new PhotoEditor(files),
+                "frameImage" => new FrameEditor(files),
+                "redactImage" => new RedactEditor(files),
+                "compress" => new CompressEditor(files),
+                "removeMetadata" => Exif(() => new MetadataEditor(files)),
+                "annotateImage" => new AnnotateEditor(files),
+                "createCollage" => new CollageEditor(files),
+                _ => null,
+            };
         return tool switch
         {
-            "cropImage" => new CropEditor(files),
-            "editImage" => new PhotoEditor(files),
-            "frameImage" => new FrameEditor(files),
-            "redactImage" => new RedactEditor(files),
-            "compress" => new CompressEditor(files),
-            "removeMetadata" => AppPaths.Metadata().Executable is null ? throw new MissingToolsException(MissingToolsException.Metadata) : new MetadataEditor(files),
-            "annotateImage" => new AnnotateEditor(files),
-            "createCollage" => new CollageEditor(files),
+            "compress" => new FileCompressEditor(files, files.Any(IsMedia) ? Ffmpeg() : null),
+            "removeMetadata" when files.All(IsMedia) => new MediaMetadataEditor(files, Ffmpeg()),
+            "removeMetadata" when files.Any(IsMedia) => Exif(() => new MediaMetadataEditor(files, Ffmpeg())),
+            "removeMetadata" => Exif(() => new MetadataEditor(files)),
+            "cropVideo" => new Editors.Media.VideoCropEditor(files, Ffmpeg()),
+            "joinVideos" => new OrderEditor(tool, files, Ffmpeg()),
+            "mergePDF" => new OrderEditor(tool, files, null),
+            "organizePDF" => new PdfOrganizeEditor(files),
+            "splitPDF" => new PdfSplitEditor(files),
+            "extractArchive" => files.Any(Locks.ArchiveLocked) ? new ArchiveEditor(files) : null,
+            "trimVideo" or "trimAudio" or "splitVideo" or "changeVideoSpeed" or "videoSnapshots" or "muteVideo" or "redactVideo"
+                or "normalizeAudio" or "audioChannels" or "redactAudio" or "audioToVideo" => new Editors.Media.MediaEditor(tool, files, Ffmpeg()),
             _ => null,
         };
     }
@@ -111,10 +133,13 @@ public sealed class ToolEditorWindow : Window
         canvas.Panel = panel;
         panel.PickImage ??= PickImageAsync;
         panel.Changed += OnChanged;
+        panel.Repaint += ShowPreview;
+        panel.Rebuilt += BuildOptions;
         panel.Message += text => { message.Text = text; warning.IsVisible = text is not null; };
         compare.Chosen += _ => ShowPreview();
         debounce.Tick += (_, _) => { debounce.Stop(); Render(); };
-        KeyDown += OnKey;
+        // Tunnelling, so a focused button never takes Space or Return from the editor (Space plays, Return saves).
+        AddHandler(KeyDownEvent, OnKey, Avalonia.Interactivity.RoutingStrategies.Tunnel);
         Closed += (_, _) => { debounce.Stop(); lifetime.Cancel(); _ = ReleaseAsync(); };
         Loading = LoadAsync();
     }
@@ -190,7 +215,7 @@ public sealed class ToolEditorWindow : Window
         var scroller = new ScrollViewer { Content = side, HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled };
         if (!panel.SideBySide) return scroller;
 
-        var preview = new Grid { RowDefinitions = new RowDefinitions("Auto,*,Auto"), RowSpacing = 18, Margin = new Thickness(24) };
+        var preview = new Grid { RowDefinitions = new RowDefinitions(panel.Stage is null ? "Auto,*,Auto" : "Auto,*,Auto,Auto"), RowSpacing = 18, Margin = new Thickness(24) };
         var top = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto"), ColumnSpacing = 10 };
         var label = Ui.Row(new Path { Data = WheelIcons.ForId("crop"), StrokeThickness = 2, Width = 10, Height = 10, Stretch = Stretch.Uniform }, Ui.Section(Copy.Preview));
         label.Spacing = 6;
@@ -204,9 +229,15 @@ public sealed class ToolEditorWindow : Window
         preview.Children.Add(top);
         Grid.SetRow(canvas, 1);
         preview.Children.Add(canvas);
+        if (panel.Stage is { } stage)
+        {
+            Grid.SetRow(stage, panel.Canvas ? 2 : 1);
+            preview.Children.Add(stage);
+            canvas.IsVisible = panel.Canvas;
+        }
         var file = Ui.Row(new PathIcon { Data = (Geometry)Application.Current!.FindResource("IconDocument")!, Width = 10, Height = 10 }, new TextBlock { Text = System.IO.Path.GetFileName(panel.Inputs[0]), FontSize = 11, TextTrimming = TextTrimming.CharacterEllipsis });
         file.Opacity = .6;
-        Grid.SetRow(file, 2);
+        Grid.SetRow(file, panel.Stage is null ? 2 : 3);
         preview.Children.Add(file);
         var left = new Border { Child = preview };
         left.Bind(Border.BackgroundProperty, left.GetResourceObservable("NashiSurface"));
@@ -250,7 +281,17 @@ public sealed class ToolEditorWindow : Window
         try
         {
             var token = lifetime.Token;
-            var (image, scale, width, height) = await Task.Run(() => ImageTools.PreviewCopy(panel.Inputs[0]), token);
+            if (!panel.ImageSource)
+            {
+                await panel.LoadAsync(token);
+                if (token.IsCancellationRequested) return;
+                ready = true;
+                BuildOptions();
+                OnChanged();
+                return;
+            }
+            var still = await panel.StillAsync(token);
+            var (image, scale, width, height) = await Task.Run(() => ImageTools.PreviewCopy(still), token);
             await panel.LoadAsync(token);
             var pixels = await Task.Run(() => ImageCanvas.Pixels(image), token);
             if (token.IsCancellationRequested) { image.Dispose(); return; }
@@ -342,13 +383,19 @@ public sealed class ToolEditorWindow : Window
 
     private void ShowPreview()
     {
-        if (!ready || panel.Source is not { } source) return;
+        if (!ready) return;
+        if (panel.Source is not { } source)
+        {
+            if (panel.Frame is { } frame) canvas.Show(frame, frame.Size);
+            dimensions.Text = panel.Dimensions ?? "";
+            return;
+        }
         var showResult = result is not null && (!panel.ComparesResult || compare.Value == Copy.Result);
         canvas.Editing = panel.Interactive && (!showResult || resultSize == source.Size);
         if (showResult) canvas.Show(result, resultSize);
-        else canvas.Show(original, source.Size);
+        else canvas.Show(panel.Frame ?? original, source.Size);
         var size = showResult ? resultSize : source.Size;
-        dimensions.Text = $"{Math.Round(size.Width):0} × {Math.Round(size.Height):0}";
+        dimensions.Text = panel.Dimensions ?? $"{Math.Round(size.Width):0} × {Math.Round(size.Height):0}";
     }
 
     private static class Picker
@@ -382,6 +429,7 @@ public sealed class ToolEditorWindow : Window
         var typing = focused is TextBox;
         var multiline = focused is TextBox { AcceptsReturn: true };
         if (e.Key == Key.Escape) { Close(); e.Handled = true; }
+        else if (!typing && panel.Key(e.Key, e.KeyModifiers)) e.Handled = true;
         else if ((e.Key is Key.Enter or Key.Return && e.KeyModifiers == KeyModifiers.None || e.Key == Key.S && e.KeyModifiers == KeyModifiers.Control) && !multiline) { Save(); e.Handled = true; }
         else if (e.Key is Key.Delete or Key.Back && !typing && panel.Delete()) e.Handled = true;
     }

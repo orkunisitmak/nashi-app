@@ -46,6 +46,26 @@ public abstract class EditorPanel(string tool, IReadOnlyList<string> inputs)
 
     /// Off the UI thread, before Options: anything besides the preview copy (metadata, more images).
     public virtual Task LoadAsync(CancellationToken token) => Task.CompletedTask;
+    /// Whether the window loads an image preview copy (Source) of Still; media, PDF and archive panels load their own.
+    public virtual bool ImageSource => true;
+    /// The image the preview copy comes from: the first file, or a frame of a video (Crop and Redact Video).
+    public virtual Task<string> StillAsync(CancellationToken token) => Task.FromResult(Inputs[0]);
+    /// Whether the preview shows the image canvas; false gives the whole preview to Stage.
+    public virtual bool Canvas => true;
+    /// Shown under the canvas (a media timeline and transport), or in its place when Canvas is false.
+    public virtual Control? Stage => null;
+    /// The playing frame, shown on the canvas in place of the still; the window never disposes it.
+    public virtual Avalonia.Media.Imaging.Bitmap? Frame => null;
+    /// The preview's size line ("1920 × 1080 · 0:12.00"); null shows the canvas size.
+    public virtual string? Dimensions => null;
+    /// A key on the editor (Space, arrows, I/O, M) when no text field has focus; true when handled.
+    public virtual bool Key(Key key, KeyModifiers modifiers) => false;
+    /// The frame changed: the window repaints the canvas.
+    public event Action? Repaint;
+    protected void Repainted() => Repaint?.Invoke();
+    /// The options need building again (a PDF was unlocked).
+    public event Action? Rebuilt;
+    protected void RebuildOptions() => Rebuilt?.Invoke();
     public abstract Control Options();
     /// Source pixels per preview pixel of what Preview renders (the collage renders its own canvas smaller).
     public virtual double PreviewScale => Source!.Scale;

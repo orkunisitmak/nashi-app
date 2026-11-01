@@ -39,6 +39,10 @@ static partial class EditorChecks
         Annotate(work, photo);
         Collage(work, photo);
         Review(work, photo);
+        Parity(work);
+        TimelineChecks();
+        Documents(work);
+        MediaEditors(work);
         check(Hash(photo).SequenceEqual(hash), "Editors never modify the original");
         return Task.CompletedTask;
     }

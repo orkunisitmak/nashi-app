@@ -28,6 +28,16 @@ public sealed class MetadataEditor(IReadOnlyList<string> inputs) : EditorPanel("
     /// The tags this editor writes: MetadataService's EXIF and XMP ones.
     public static readonly string[] Editable = [.. MetadataService.EditableTags.Where(k => k.StartsWith("EXIF:", StringComparison.Ordinal) || k.StartsWith("XMP:", StringComparison.Ordinal))];
 
+    /// The tags for these files: EXIF and XMP for images, PDF and XMP for PDFs, XMP for both together.
+    public static string[] EditableFor(IReadOnlyList<string> files)
+    {
+        var pdf = files.Any(f => FeatureCatalog.Extension(f) == "pdf");
+        var images = files.Any(f => FeatureCatalog.Extension(f) != "pdf");
+        return [.. MetadataService.EditableTags.Where(k => k.StartsWith("XMP:", StringComparison.Ordinal) || images && !pdf && k.StartsWith("EXIF:", StringComparison.Ordinal) || pdf && !images && k.StartsWith("PDF:", StringComparison.Ordinal))];
+    }
+
+    private readonly string[] keys = EditableFor(inputs);
+
     private IReadOnlyDictionary<string, string> read = new Dictionary<string, string>();
     private readonly Dictionary<string, string> values = [];
     private bool removeAll;
@@ -51,7 +61,7 @@ public sealed class MetadataEditor(IReadOnlyList<string> inputs) : EditorPanel("
     {
         removeAll = false;
         values.Clear();
-        foreach (var key in Editable) values[key] = read.GetValueOrDefault(key, "");
+        foreach (var key in keys) values[key] = read.GetValueOrDefault(key, "");
     }
 
     public override Control Options()
@@ -73,7 +83,7 @@ public sealed class MetadataEditor(IReadOnlyList<string> inputs) : EditorPanel("
     public void RemoveAll()
     {
         removeAll = true;
-        foreach (var key in Editable) values[key] = "";
+        foreach (var key in keys) values[key] = "";
         Fill();
         Change();
     }

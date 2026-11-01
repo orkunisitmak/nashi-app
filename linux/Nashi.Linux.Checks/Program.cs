@@ -40,6 +40,9 @@ var ran = new List<(string Program, string[] Args)>();
 Func<string, IReadOnlyList<string>, string?> runResult = (_, _) => null;
 Desktop.Run = (program, args) => { ran.Add((program, [.. args])); return runResult(program, args); };
 WheelFeedback.Player = _ => { }; // nothing reaches the speakers
+// The editors' preview player: a sink that takes the sound and drops it, and a clock that stands still unless a check moves it.
+Nashi.Linux.Editors.Media.MediaPlayer.OpenSink = (_, _) => new((_, _) => true, () => { });
+Nashi.Linux.Editors.Media.MediaPlayer.Clock = () => 0;
 var stoppedPlayers = new List<string>(); // fallback players are recorded through Desktop.Spawn, never started
 WheelFeedback.StartPlayer = (program, args, exited) => Desktop.Spawn(program, args, null, exited) ? () => { lock (stoppedPlayers) stoppedPlayers.Add(program); } : null;
 WheelFeedback.SystemReducesMotion = false;
@@ -129,7 +132,7 @@ void CapabilityChecks()
         .Where(s => !Capabilities.Tools(s).SequenceEqual(FeatureCatalog.Tools(s))).Select(s => string.Join("+", s)).ToList();
     Check(differ.Count == 0, "Image tools match the catalog for every image type, one or two, and mixed with PNG; differ: " + string.Join(" ", differ));
     Check(Capabilities.Tools(png).SequenceEqual(FeatureCatalog.Tools(png)) && Capabilities.Tools(["a.jpg", "b.jpg"]).Contains("createCollage"), "A PNG offers every catalog image tool; two JPGs add Create Collage");
-    Check(Capabilities.Tools(["x.jpg", "y.pdf"]).SequenceEqual(["compress", "readQRCode"]), "Images with a PDF offer Compress and Read QR Codes (Metadata edits images only)");
+    Check(Capabilities.Tools(["x.jpg", "y.pdf"]).SequenceEqual(["compress", "removeMetadata", "readQRCode"]), "Images with a PDF offer Compress, Metadata and Read QR Codes");
     var mp4Tools = Capabilities.Tools(mp4);
     Check(mp4Tools.Contains("compress") && mp4Tools.Contains("muteVideo"), "Tools for an MP4 include compress and muteVideo");
     Check(Capabilities.Formats(mp4).SequenceEqual(FeatureCatalog.Formats(mp4)), "Formats for an MP4 keep catalog order");
@@ -567,7 +570,8 @@ async Task RunnerChecks(string root)
 
     Check(await Fails<NotSupportedException>(() => runner.RunAsync("convert:heic", [png], Path.Combine(work, "o-x"), none, default)), "Runner rejects convert:heic");
     Check(await Fails<NotSupportedException>(() => runner.RunAsync("convert:mp3", [png], Path.Combine(work, "o-x"), none, default)), "Runner rejects a format outside Capabilities");
-    Check(await Fails<NotSupportedException>(() => runner.RunAsync("splitPDF", [pdfs[0]], Path.Combine(work, "o-x"), none, default)), "Runner rejects a tool outside Capabilities");
+    Check(await Fails<NotSupportedException>(() => runner.RunAsync("organizePDF", [png], Path.Combine(work, "o-x"), none, default)), "Runner rejects a tool outside Capabilities");
+    Check(await Fails<NotSupportedException>(() => runner.RunAsync("splitPDF", [pdfs[0]], Path.Combine(work, "o-x"), none, default)), "Runner rejects an editor's tool chosen without its editor");
 
     var pdfIn = Path.Combine(work, "doc.pdf");
     File.Copy(pdfs[0], pdfIn);

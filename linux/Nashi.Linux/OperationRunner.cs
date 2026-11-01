@@ -46,8 +46,10 @@ public sealed class OperationRunner(Toolchain tools)
             case "createPDF": return await Task.Run(() => ImageOperations.Convert(files, "pdf", destination, progress, token), token);
             case "mergePDF": return await Task.Run(() => DocumentEngine.Pdf("mergePDFs", files, destination, token: token), token);
             case "extractArchive": return await Task.Run(() => Each(files, destination, token, (f, d) => ArchiveEngine.Extract(f, d, null, progress, token)), token);
-            case "compress": return await Compress(files, destination, progress, token);
-            default: return await Media(progress, (e, p) => e.ToolAsync(choiceId, files, destination, new MediaOptions(), p, token)); // muteVideo, normalizeAudio
+            case "compress": return await CompressAsync(files, destination, progress, token, files.Any(f => FeatureCatalog.IsAudio(f) || FeatureCatalog.IsVideo(f)) ? Engine() : null);
+            // muteVideo and normalizeAudio at their defaults; every other tool takes its options from its editor (EditorJob).
+            case "muteVideo" or "normalizeAudio": return await Media(progress, (e, p) => e.ToolAsync(choiceId, files, destination, new MediaOptions(), p, token));
+            default: throw new NotSupportedException($"{choiceId} is not available for this selection on Linux.");
         }
     }
 
@@ -60,7 +62,7 @@ public sealed class OperationRunner(Toolchain tools)
     public async Task<IReadOnlyList<string>?> RunBesideSourcesAsync(string choiceId, IReadOnlyList<string> files, Func<string, Task<string?>> destination, IProgress<OperationProgress> progress, CancellationToken token, Editors.EditorJob? job = null)
     {
         static string Folder(string file) => Path.GetDirectoryName(Path.GetFullPath(file))!;
-        var combines = choiceId is "createPDF" or "mergePDF" or "createCollage" || (choiceId == "convert:pdf" && files.All(FeatureCatalog.IsImage));
+        var combines = choiceId is "createPDF" or "mergePDF" or "createCollage" or "joinVideos" || (choiceId == "convert:pdf" && files.All(FeatureCatalog.IsImage));
         IReadOnlyList<IReadOnlyList<string>> groups = combines ? [files] : [.. files.GroupBy(Folder).Select(g => (IReadOnlyList<string>)[.. g])];
         var targets = new List<string>();
         foreach (var group in groups)
@@ -122,17 +124,19 @@ public sealed class OperationRunner(Toolchain tools)
         return tx.Publish(outputs, token);
     }
 
-    // Compress routes per file kind; each group is its own transaction, and a later failure or cancel removes earlier groups' outputs.
-    async Task<IReadOnlyList<string>> Compress(IReadOnlyList<string> files, string destination, IProgress<OperationProgress> progress, CancellationToken token)
+    /// Compress routes per file kind (the wheel and the Compress editor for mixed, media and PDF selections); each
+    /// group is its own transaction, and a later failure or cancel removes earlier groups' outputs. `engine` is
+    /// required when there is media; the options default to Balanced.
+    public static async Task<IReadOnlyList<string>> CompressAsync(IReadOnlyList<string> files, string destination, IProgress<OperationProgress> progress, CancellationToken token, MediaEngine? engine, CompressOptions? image = null, MediaOptions? media = null, string password = "")
     {
         var images = files.Where(FeatureCatalog.IsImage).ToList();
         var pdfs = files.Where(f => FeatureCatalog.Extension(f) == "pdf").ToList();
-        var media = files.Where(f => FeatureCatalog.IsAudio(f) || FeatureCatalog.IsVideo(f)).ToList();
-        if (media.Count > 0) Engine(); // fail before any group starts
+        var clips = files.Where(f => FeatureCatalog.IsAudio(f) || FeatureCatalog.IsVideo(f)).ToList();
+        if (clips.Count > 0 && engine is null) throw new MissingToolsException(); // fail before any group starts
         var groups = new List<Func<IProgress<OperationProgress>, Task<IReadOnlyList<string>>>>();
-        if (images.Count > 0) groups.Add(p => Task.Run(() => ImageOperations.Compress(images, destination, p, token), token));
-        if (pdfs.Count > 0) groups.Add(p => Task.Run(() => DocumentEngine.Pdf("compress", pdfs, destination, token: token), token));
-        if (media.Count > 0) groups.Add(p => Engine().ToolAsync("compress", media, destination, new MediaOptions(), p, token));
+        if (images.Count > 0) groups.Add(p => Task.Run(() => ImageOperations.Compress(images, destination, p, token, image), token));
+        if (pdfs.Count > 0) groups.Add(p => Task.Run(() => DocumentEngine.Pdf("compress", pdfs, destination, token: token, password: password), token));
+        if (clips.Count > 0) groups.Add(p => engine!.ToolAsync("compress", clips, destination, media ?? new MediaOptions(), p, token));
         var outputs = new List<string>();
         try
         {

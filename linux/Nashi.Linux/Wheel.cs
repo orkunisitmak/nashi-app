@@ -677,6 +677,24 @@ internal static class Pulse
         }
     }
 
+    /// A playback stream for the media editors' previews: interleaved PCM s16 at `rate` × `channels`, about 100 ms
+    /// buffered. Null when PulseAudio (or PipeWire's pulse server) is not there. Only the thread that writes may close it.
+    internal static Editors.Media.AudioSink? Stream(int rate, int channels)
+    {
+        try
+        {
+            var spec = new SampleSpec { Format = 3 /* PA_SAMPLE_S16LE */, Rate = (uint)rate, Channels = (byte)channels };
+            var attr = new BufferAttr { MaxLength = uint.MaxValue, TLength = (uint)(rate * channels * 2 / 10), PreBuf = uint.MaxValue, MinReq = uint.MaxValue, FragSize = uint.MaxValue };
+            var handle = pa_simple_new(Server, "Nashi", 1, null, "Preview", ref spec, 0, ref attr, out _);
+            if (handle == 0) return null;
+            return new((data, count) => pa_simple_write_bytes(handle, data, (nuint)count, out _) >= 0, () => { pa_simple_flush(handle, out _); pa_simple_free(handle); });
+        }
+        catch (Exception e) when (e is DllNotFoundException or EntryPointNotFoundException or BadImageFormatException)
+        {
+            return null;
+        }
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     private struct SampleSpec
     {
@@ -694,6 +712,7 @@ internal static class Pulse
     [DllImport("libpulse-simple.so.0")]
     private static extern nint pa_simple_new(string? server, string name, int direction, string? device, string streamName, ref SampleSpec spec, nint map, ref BufferAttr attr, out int error);
     [DllImport("libpulse-simple.so.0")] private static extern int pa_simple_write(nint stream, short[] data, nuint bytes, out int error);
+    [DllImport("libpulse-simple.so.0", EntryPoint = "pa_simple_write")] private static extern int pa_simple_write_bytes(nint stream, byte[] data, nuint bytes, out int error);
     [DllImport("libpulse-simple.so.0")] private static extern int pa_simple_flush(nint stream, out int error);
     [DllImport("libpulse-simple.so.0")] private static extern void pa_simple_free(nint stream);
 }

@@ -2,15 +2,10 @@ using Nashi.Core;
 
 namespace Nashi.Linux;
 
-/// What the Linux wheel offers for a selection: only the routes the Linux runner implements.
-/// For files of one kind that is every catalog route except HEIC output (Magick.NET on Linux has no HEIC encoder),
-/// and every image tool.
+/// What the Linux wheel offers for a selection. Every catalog tool, as on macOS (each opens its editor or runs); for
+/// files of one kind every catalog route except HEIC output (Magick.NET on Linux has no HEIC encoder).
 public static class Capabilities
 {
-    static readonly IReadOnlySet<string> SupportedTools = new HashSet<string> { "compress", "muteVideo", "normalizeAudio", "extractArchive", "createPDF", "mergePDF" };
-    /// The image editors (Editors/*), offered when every file is an image; Read QR Codes also takes PDFs (the
-    /// catalog offers it for images and PDFs only).
-    internal static readonly IReadOnlySet<string> ImageEditors = new HashSet<string> { "cropImage", "editImage", "frameImage", "redactImage", "compress", "removeMetadata", "readQRCode", "annotateImage", "createCollage" };
     internal static readonly string[] ImageFormats = ["png", "jpg", "webp", "avif", "bmp", "gif", "tiff", "pdf"];
     static readonly string[] ArchiveOutputs = ["zip", "tar", "gz"];
     static readonly string[] SubtitleOutputs = ["srt", "vtt", "txt"];
@@ -21,8 +16,7 @@ public static class Capabilities
         return FeatureCatalog.Formats(files).Where(routes.Contains).ToArray();
     }
 
-    public static string[] Tools(IReadOnlyList<string> files) =>
-        FeatureCatalog.Tools(files).Where(t => SupportedTools.Contains(t) || ImageEditors.Contains(t) && (files.All(FeatureCatalog.IsImage) || t == "readQRCode")).ToArray();
+    public static string[] Tools(IReadOnlyList<string> files) => FeatureCatalog.Tools(files);
 
     static IEnumerable<string> Routes(IReadOnlyList<string> files)
     {
