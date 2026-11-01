@@ -1294,5 +1294,8 @@
   "{0} is password-protected. Enter its password.": "{0} parolayla korunuyor. Parolasını gir.",
   "{0} pages": "{0} sayfa",
   "{0} split points": "{0} bölme noktası",
-  "{0}: {1} pages": "{0}: {1} sayfa"
+  "{0}: {1} pages": "{0}: {1} sayfa",
+  "Choose a valid color.": "Geçerli bir renk seç.",
+  "This PDF could not be opened.": "Bu PDF açılamadı.",
+  "Couldn’t play the preview: {0}": "Önizleme oynatılamadı: {0}"
 }

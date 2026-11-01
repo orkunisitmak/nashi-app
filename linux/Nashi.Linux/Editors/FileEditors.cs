@@ -16,23 +16,39 @@ public static class Locks
         public const string Archive = "Archive password (if needed)";
         public const string Wrong = "The password is missing or incorrect.";
         public const string Locked = "{0} is password-protected. Enter its password.";
+        public const string Unreadable = "This PDF could not be opened.";
     }
 
-    /// Whether the PDF opens without (or with) this password.
-    public static bool PdfOpens(string path, string password = "")
+    /// Why the PDF does not open with this password: null when it opens, Refused when it is locked (or the password
+    /// is wrong), "This PDF could not be opened." when it is damaged or not a PDF, so a damaged file never asks for a password.
+    public static string? PdfRefusal(string path, string password = "")
     {
         try
         {
             using var pdf = UglyToad.PdfPig.PdfDocument.Open(path, new UglyToad.PdfPig.ParsingOptions { Password = password });
-            return true;
+            return null;
         }
-        catch (UglyToad.PdfPig.Exceptions.PdfDocumentEncryptedException) { return false; }
+        catch (UglyToad.PdfPig.Exceptions.PdfDocumentEncryptedException) { return Refused; }
+        catch (Exception error) when (error is not OperationCanceledException and not OutOfMemoryException) { return L10n.T(Copy.Unreadable); }
     }
+
+    /// The first refusal among these files (PDFs only), or null when they all open.
+    public static string? PdfRefusal(IEnumerable<string> files, string password) =>
+        files.Where(f => FeatureCatalog.Extension(f) == "pdf").Select(f => PdfRefusal(f, password)).FirstOrDefault(r => r is not null);
+
+    /// Whether the PDF opens without (or with) this password.
+    public static bool PdfOpens(string path, string password = "") => PdfRefusal(path, password) is null;
+
+    /// Whether the PDF needs a password (a damaged one does not: its error is shown instead).
+    public static bool PdfLocked(string path) => PdfRefusal(path) == Refused;
 
     /// Whether the archive has encrypted entries (or headers) that need a password.
     public static bool ArchiveLocked(string path) => !ArchiveOpens(path, null);
 
     /// Whether the archive's first encrypted entry decrypts with this password (true when nothing is encrypted).
+    /// Locked means only what SharpCompress reports as encryption: an encrypted entry, or a cryptographic failure
+    /// (encrypted headers, a wrong password). Any other error (a damaged archive) counts as open, so the extraction
+    /// shows its real error and the password editor never loops on it.
     public static bool ArchiveOpens(string path, string? password)
     {
         try
@@ -45,9 +61,7 @@ public static class Locks
             stream.ReadByte();
             return true;
         }
-        // A wrong password, or headers that are encrypted too.
-        catch (Exception error) when (error is System.Security.Cryptography.CryptographicException || error.Message.Contains("password", StringComparison.OrdinalIgnoreCase) || error.Message.Contains("encrypt", StringComparison.OrdinalIgnoreCase)) { return false; }
-        // Anything else (a damaged archive) is for the extraction to report.
+        catch (Exception error) when (error is SharpCompress.Common.CryptographicException or System.Security.Cryptography.CryptographicException) { return false; }
         catch (Exception error) when (error is InvalidDataException or IOException or NotSupportedException or InvalidOperationException or ArgumentException or SharpCompress.Common.SharpCompressException) { return true; }
     }
 
@@ -105,7 +119,7 @@ public sealed class FileCompressEditor(IReadOnlyList<string> inputs, MediaTools?
 
     public override Task LoadAsync(CancellationToken token)
     {
-        locked = Inputs.Any(f => FeatureCatalog.Extension(f) == "pdf" && !Locks.PdfOpens(f));
+        locked = Inputs.Any(f => FeatureCatalog.Extension(f) == "pdf" && Locks.PdfLocked(f));
         return Task.CompletedTask;
     }
 
@@ -164,7 +178,7 @@ public sealed class FileCompressEditor(IReadOnlyList<string> inputs, MediaTools?
 
     public override string? Validate()
     {
-        if (locked && Inputs.Any(f => FeatureCatalog.Extension(f) == "pdf" && !Locks.PdfOpens(f, password))) return Locks.Refused;
+        if (Locks.PdfRefusal(Inputs, password) is { } refusal) return refusal;
         if (!target) return null;
         if (!double.IsFinite(amount) || amount <= 0) return L10n.T(Copy.Positive);
         if (unit == "percent" && amount >= 100) return L10n.T(Copy.Reduction);

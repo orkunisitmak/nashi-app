@@ -360,6 +360,7 @@
 "CHOOSE A RECTANGLE INSIDE THE VIDEO." = "VİDEONUN İÇİNDE KALAN BİR DİKDÖRTGEN SEÇ.";
 "CHOOSE A SUPPORTED MAXIMUM VIDEO HEIGHT." = "DESTEKLENEN BİR MAKSİMUM VİDEO YÜKSEKLİĞİ SEÇ.";
 "CHOOSE A TARGET OF AT LEAST 2 KB." = "EN AZ 2 KB'LIK BİR HEDEF SEÇ.";
+"CHOOSE A VALID COLOR." = "GEÇERLİ BİR RENK SEÇ.";
 "CHOOSE A VALID RANGE FIRST." = "ÖNCE GEÇERLİ BİR ARALIK SEÇ.";
 "CHOOSE A VALID RANGE." = "GEÇERLİ BİR ARALIK SEÇ.";
 "CHOOSE A VALID TIME RANGE." = "GEÇERLİ BİR ZAMAN ARALIĞI SEÇ.";
@@ -558,6 +559,7 @@
 "Choose a rectangle inside the video." = "Videonun içinde kalan bir dikdörtgen seç.";
 "Choose a supported maximum video height." = "Desteklenen bir maksimum video yüksekliği seç.";
 "Choose a target of at least 2 KB." = "En az 2 KB'lık bir hedef seç.";
+"Choose a valid color." = "Geçerli bir renk seç.";
 "Choose a valid range first." = "Önce geçerli bir aralık seç.";
 "Choose a valid range." = "Geçerli bir aralık seç.";
 "Choose a valid time range." = "Geçerli bir zaman aralığı seç.";
@@ -685,6 +687,8 @@
 "Couldn’t open the folder picker." = "Klasör seçici açılamadı.";
 "Couldn’t open this tool" = "Bu araç açılamadı";
 "Couldn’t open your file manager." = "Dosya yöneticin açılamadı.";
+"Couldn’t play the preview: %@" = "Önizleme oynatılamadı: %@";
+"Couldn’t play the preview: %lld" = "Önizleme oynatılamadı: %lld";
 "Couldn’t reach the clipboard." = "Panoya ulaşılamadı.";
 "Couldn’t set up tools: %@" = "Araçlar kurulamadı: %@";
 "Couldn’t set up tools: %lld" = "Araçlar kurulamadı: %lld";
@@ -2258,6 +2262,7 @@
 "THIS LINK DID NOT RETURN A DOWNLOADABLE IMAGE." = "BU BAĞLANTIDAN İNDİRİLEBİLİR BİR GÖRSEL GELMEDİ.";
 "THIS OUTPUT FORMAT HAS NO ADJUSTABLE CONVERSION DEFAULTS." = "BU ÇIKTI BİÇİMİNİN AYARLANABİLİR DÖNÜŞTÜRME TERCİHİ YOK.";
 "THIS PDF CONTAINS NO PAGES." = "BU PDF'DE SAYFA YOK.";
+"THIS PDF COULD NOT BE OPENED." = "BU PDF AÇILAMADI.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT MERGING, SPLITTING OR REORDERING PAGES CANNOT KEEP. NO COPY WAS EXPORTED." = "BU PDF'DE BİRLEŞTİRME, BÖLME VEYA SAYFALARI YENİDEN SIRALAMA SIRASINDA KORUNAMAYAN FORM ALANLARI YA DA EKLER VAR. KOPYA DIŞA AKTARILMADI.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT METADATA CLEANUP CANNOT KEEP. NO COPY WAS EXPORTED." = "BU PDF'DE META VERİ TEMİZLİĞİ SIRASINDA KORUNAMAYAN FORM ALANLARI YA DA EKLER VAR. KOPYA DIŞA AKTARILMADI.";
 "THIS PDF PAGE COULD NOT BE READ." = "BU PDF SAYFASI OKUNAMADI.";
@@ -2345,6 +2350,7 @@
 "These files have moved or were deleted." = "Bu dosyalar taşınmış veya silinmiş.";
 "This EPUB could not be read." = "Bu EPUB okunamadı.";
 "This PDF contains no pages." = "Bu PDF'de sayfa yok.";
+"This PDF could not be opened." = "Bu PDF açılamadı.";
 "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported." = "Bu PDF'de birleştirme, bölme veya sayfaları yeniden sıralama sırasında korunamayan form alanları ya da ekler var. Kopya dışa aktarılmadı.";
 "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported." = "Bu PDF'de meta veri temizliği sırasında korunamayan form alanları ya da ekler var. Kopya dışa aktarılmadı.";
 "This PDF page could not be read." = "Bu PDF sayfası okunamadı.";

@@ -51,6 +51,8 @@ public sealed class MediaPlayer : IDisposable
     public string? VideoFilter { get; set; }
     /// Where playing stops (Play Selected Range); null plays to the end.
     public double? Until { get; private set; }
+    /// Why the last play stopped on its own: ffmpeg could not start or failed (English; translate at display).
+    public string? Error { get; private set; }
     /// Position, frame or playing changed (UI thread).
     public event Action? Changed;
 
@@ -84,6 +86,7 @@ public sealed class MediaPlayer : IDisposable
         var id = generation;
         (startedAt, startedFrom) = (Clock(), Position);
         Silent = false;
+        Error = null;
         if (video) StartVideo(id);
         if (audio) StartAudio(id);
         ticker.Start();
@@ -180,7 +183,7 @@ public sealed class MediaPlayer : IDisposable
         var from = Position;
         var filter = (VideoFilter is null ? "" : VideoFilter + ",") + $"setpts=(PTS-STARTPTS)/{MediaTools.N(Speed)},fps={MediaTools.N(fps)},scale={size.Width}:{size.Height}";
         var frameBytes = size.Width * size.Height * 4;
-        new Thread(() =>
+        Background(id, "Nashi preview frames", () =>
         {
             using var pipe = Pipe(id, ["-ss", MediaTools.N(from), "-i", path, "-map", "0:v:0", "-vf", filter, "-an", "-f", "rawvideo", "-pix_fmt", "rgba", "-"]);
             if (pipe is null) return;
@@ -192,7 +195,7 @@ public sealed class MediaPlayer : IDisposable
                 while (Interlocked.Read(ref generation) == id && Clock() - startedAt < n / fps) Thread.Sleep(4);
                 Dispatcher.UIThread.Post(() => { if (generation == id) Show(frame); });
             }
-        }) { IsBackground = true, Name = "Nashi preview frames" }.Start();
+        });
     }
 
     private void StartAudio(long id)
@@ -200,7 +203,7 @@ public sealed class MediaPlayer : IDisposable
         var from = Position;
         // The filter sees source times (a bleep at 0:05 stays there after a seek), then the tempo.
         var filter = string.Join(',', new[] { AudioFilter is null ? null : $"asetpts=PTS+{MediaTools.N(from)}/TB,{AudioFilter}", Speed == 1 ? null : Tempo(Speed) }.Where(f => f is not null));
-        new Thread(() =>
+        Background(id, "Nashi preview sound", () =>
         {
             var sink = OpenSink(Rate, 2);
             if (sink is null)
@@ -220,8 +223,26 @@ public sealed class MediaPlayer : IDisposable
                 }
             }
             finally { sink.Close(); }
-        }) { IsBackground = true, Name = "Nashi preview sound" }.Start();
+        });
     }
+
+    /// A preview thread whose failure (ffmpeg missing or refusing to start) stops playback and sets Error instead of
+    /// taking the app down.
+    private void Background(long id, string name, Action body) => new Thread(() =>
+    {
+        try { body(); }
+        catch (Exception error)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (generation != id || disposed) return;
+                Stop();
+                Playing = false;
+                Error = error.Message;
+                Changed?.Invoke();
+            });
+        }
+    }) { IsBackground = true, Name = name }.Start();
 
     private void Show(byte[] pixels)
     {

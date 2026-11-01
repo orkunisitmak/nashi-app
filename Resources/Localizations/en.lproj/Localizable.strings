@@ -360,6 +360,7 @@
 "CHOOSE A RECTANGLE INSIDE THE VIDEO." = "CHOOSE A RECTANGLE INSIDE THE VIDEO.";
 "CHOOSE A SUPPORTED MAXIMUM VIDEO HEIGHT." = "CHOOSE A SUPPORTED MAXIMUM VIDEO HEIGHT.";
 "CHOOSE A TARGET OF AT LEAST 2 KB." = "CHOOSE A TARGET OF AT LEAST 2 KB.";
+"CHOOSE A VALID COLOR." = "CHOOSE A VALID COLOR.";
 "CHOOSE A VALID RANGE FIRST." = "CHOOSE A VALID RANGE FIRST.";
 "CHOOSE A VALID RANGE." = "CHOOSE A VALID RANGE.";
 "CHOOSE A VALID TIME RANGE." = "CHOOSE A VALID TIME RANGE.";
@@ -558,6 +559,7 @@
 "Choose a rectangle inside the video." = "Choose a rectangle inside the video.";
 "Choose a supported maximum video height." = "Choose a supported maximum video height.";
 "Choose a target of at least 2 KB." = "Choose a target of at least 2 KB.";
+"Choose a valid color." = "Choose a valid color.";
 "Choose a valid range first." = "Choose a valid range first.";
 "Choose a valid range." = "Choose a valid range.";
 "Choose a valid time range." = "Choose a valid time range.";
@@ -685,6 +687,8 @@
 "Couldn’t open the folder picker." = "Couldn’t open the folder picker.";
 "Couldn’t open this tool" = "Couldn’t open this tool";
 "Couldn’t open your file manager." = "Couldn’t open your file manager.";
+"Couldn’t play the preview: %@" = "Couldn’t play the preview: %@";
+"Couldn’t play the preview: %lld" = "Couldn’t play the preview: %lld";
 "Couldn’t reach the clipboard." = "Couldn’t reach the clipboard.";
 "Couldn’t set up tools: %@" = "Couldn’t set up tools: %@";
 "Couldn’t set up tools: %lld" = "Couldn’t set up tools: %lld";
@@ -2258,6 +2262,7 @@
 "THIS LINK DID NOT RETURN A DOWNLOADABLE IMAGE." = "THIS LINK DID NOT RETURN A DOWNLOADABLE IMAGE.";
 "THIS OUTPUT FORMAT HAS NO ADJUSTABLE CONVERSION DEFAULTS." = "THIS OUTPUT FORMAT HAS NO ADJUSTABLE CONVERSION DEFAULTS.";
 "THIS PDF CONTAINS NO PAGES." = "THIS PDF CONTAINS NO PAGES.";
+"THIS PDF COULD NOT BE OPENED." = "THIS PDF COULD NOT BE OPENED.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT MERGING, SPLITTING OR REORDERING PAGES CANNOT KEEP. NO COPY WAS EXPORTED." = "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT MERGING, SPLITTING OR REORDERING PAGES CANNOT KEEP. NO COPY WAS EXPORTED.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT METADATA CLEANUP CANNOT KEEP. NO COPY WAS EXPORTED." = "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT METADATA CLEANUP CANNOT KEEP. NO COPY WAS EXPORTED.";
 "THIS PDF PAGE COULD NOT BE READ." = "THIS PDF PAGE COULD NOT BE READ.";
@@ -2345,6 +2350,7 @@
 "These files have moved or were deleted." = "These files have moved or were deleted.";
 "This EPUB could not be read." = "This EPUB could not be read.";
 "This PDF contains no pages." = "This PDF contains no pages.";
+"This PDF could not be opened." = "This PDF could not be opened.";
 "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported." = "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported.";
 "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported." = "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported.";
 "This PDF page could not be read." = "This PDF page could not be read.";

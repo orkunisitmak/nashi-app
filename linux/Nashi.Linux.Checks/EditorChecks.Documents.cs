@@ -133,6 +133,31 @@ static partial class EditorChecks
         using (var zip = System.IO.Compression.ZipFile.Open(plain, System.IO.Compression.ZipArchiveMode.Create))
             using (var entry = new StreamWriter(zip.CreateEntry("hello.txt").Open())) entry.Write("hello");
         check(!Locks.ArchiveLocked(plain) && ToolEditorWindow.For("extractArchive", [plain]) is null && !ToolEditorWindow.Opens("extractArchive", [plain]), "A plain archive extracts without an editor");
+        // A damaged ZIP whose comment talks about passwords: it is not "locked", so it never opens the password editor;
+        // its extraction reports the real error.
+        var damaged = Path.Combine(archives, Name + " damaged.zip");
+        using (var zip = System.IO.Compression.ZipFile.Open(damaged, System.IO.Compression.ZipArchiveMode.Create))
+        {
+            zip.Comment = "password required: this archive is encrypted";
+            using var entry = new StreamWriter(zip.CreateEntry("hello.txt").Open());
+            entry.Write("hello");
+        }
+        var bytes = File.ReadAllBytes(damaged);
+        var central = bytes.AsSpan().IndexOf("PK\u0001\u0002"u8);
+        bytes[central + 2] = 9; // neither the central directory nor the entry's own header reads any more
+        bytes[2] = 9;
+        File.WriteAllBytes(damaged, bytes);
+        var extractError = "";
+        try { ArchiveEngine.Extract(damaged, Directory.CreateDirectory(Path.Combine(archives, "damaged-out")).FullName, null, null, CancellationToken.None); }
+        catch (Exception error) { extractError = error.Message; }
+        check(central > 0 && !Locks.ArchiveLocked(damaged) && ToolEditorWindow.For("extractArchive", [damaged]) is null && Locks.ArchiveOpens(damaged, "x"), "A damaged ZIP that mentions a password is not taken for a locked one");
+        check(extractError.Length > 0, "Extracting a damaged ZIP reports its own error: " + extractError);
+        var brokenPdf = Path.Combine(archives, Name + " broken.pdf");
+        File.WriteAllText(brokenPdf, "%PDF-1.7\nthis is not a PDF body, and no password helps\n");
+        var brokenSplit = Open(new PdfSplitEditor([brokenPdf]));
+        brokenSplit.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+        check(!Locks.PdfLocked(brokenPdf) && Locks.PdfRefusal(brokenPdf) == "This PDF could not be opened." && brokenSplit.Job is null && Texts(brokenSplit).Contains("This PDF could not be opened."), "A damaged PDF says it could not be opened instead of asking for a password");
+        brokenSplit.Close();
         var zipTool = new[] { "/usr/bin/zip", "/bin/zip" }.FirstOrDefault(File.Exists);
         if (zipTool is null) Console.WriteLine("Archive checks: zip absent; the password round trip skipped");
         else

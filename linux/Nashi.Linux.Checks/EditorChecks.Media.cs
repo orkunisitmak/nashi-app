@@ -38,11 +38,13 @@ static partial class EditorChecks
         var saved = AppPaths.MetadataRoot;
         AppPaths.MetadataRoot = Path.GetDirectoryName(exif);
         var tools = new Toolchain(Directory.CreateDirectory(Path.Combine(root, "none")).FullName, bin);
+        // Three tools have no editor by design, each with its own check below: createPDF and extractArchive (an
+        // unlocked archive) are OperationRunner routes, and readQRCode opens the QR reader window instead of an editor.
         var direct = new HashSet<string> { "createPDF", "readQRCode", "extractArchive" };
         var unresolved = new List<string>();
         try
         {
-            foreach (var selection in selections.Where(s => s.Length == 1 || s[0][2..] == s[1][2..]))
+            foreach (var selection in selections)
                 foreach (var tool in Capabilities.Tools(selection))
                 {
                     var files = selection.Select(f => Path.Combine(root, f)).ToArray();
@@ -51,7 +53,53 @@ static partial class EditorChecks
                 }
         }
         finally { AppPaths.MetadataRoot = saved; }
-        check(unresolved.Count == 0, "Every offered tool for one file or several of a kind opens its editor or runs directly; unresolved: " + string.Join(" ", unresolved));
+        check(unresolved.Count == 0, $"Every offered tool for every one-file, same-type and mixed selection ({selections.Count}) opens its editor or runs directly; unresolved: " + string.Join(" ", unresolved.Take(20)));
+        // The direct tools really run: Create PDF and Extract Archive through the runner, Read QR Codes in its window.
+        var png = Path.Combine(root, "real.png");
+        using (var image = new ImageMagick.MagickImage(ImageMagick.MagickColors.Gold, 8, 8)) image.Write(png);
+        var zip = Path.Combine(root, "real.zip");
+        using (var archive = System.IO.Compression.ZipFile.Open(zip, System.IO.Compression.ZipArchiveMode.Create))
+            using (var entry = new StreamWriter(archive.CreateEntry("a.txt").Open())) entry.Write("a");
+        var runner = new OperationRunner(tools);
+        var made = Directory.CreateDirectory(Path.Combine(root, "made")).FullName;
+        var png2 = Path.Combine(root, "real2.png");
+        File.Copy(png, png2, true);
+        var pdf = Wait(runner.RunAsync("createPDF", [png, png2], made, new Progress<OperationProgress>(), CancellationToken.None));
+        var extracted = Wait(runner.RunAsync("extractArchive", [zip], made, new Progress<OperationProgress>(), CancellationToken.None));
+        check(pdf.Count == 1 && pdf[0].EndsWith(".pdf") && extracted.Count == 1 && File.Exists(Path.Combine(extracted[0], "a.txt")), "Create PDF and an unlocked Extract Archive run straight through the runner");
+        var reader = new QrReaderWindow([png]);
+        reader.Show();
+        check(reader.IsVisible, "Read QR Codes opens the QR reader window");
+        reader.Close();
+        // Audio to Video's arguments (a recording fake ffmpeg): Core's default keeps Windows's old filters, with no
+        // bar colours, and only an explicit colour adds them.
+        var recorder = Directory.CreateDirectory(Path.Combine(root, "recorder")).FullName;
+        var argsFile = Path.Combine(recorder, "args.txt");
+        File.WriteAllText(Path.Combine(recorder, "ffprobe"), "#!/bin/sh\necho '{\"streams\":[{\"index\":0,\"codec_type\":\"audio\",\"codec_name\":\"pcm_s16le\",\"sample_rate\":\"8000\"}],\"format\":{\"duration\":\"1.0\"}}'\n");
+        File.WriteAllText(Path.Combine(recorder, "ffmpeg"), $"#!/bin/sh\nprintf '%s\\n' \"$@\" >> '{argsFile}'\nexit 1\n");
+        foreach (var name in new[] { "ffmpeg", "ffprobe" }) File.SetUnixFileMode(Path.Combine(recorder, name), UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        var wav = Path.Combine(recorder, "a.wav");
+        File.WriteAllText(wav, "x");
+        var engine = new MediaEngine(Path.Combine(recorder, "ffmpeg"), Path.Combine(recorder, "ffprobe"));
+        string Filters(MediaOptions options)
+        {
+            File.Delete(argsFile);
+            var run = engine.ToolAsync("audioToVideo", [wav], Directory.CreateDirectory(Path.Combine(recorder, "out")).FullName, options);
+            for (var i = 0; i < 500 && !run.IsCompleted; i++) { Thread.Sleep(5); Dispatcher.UIThread.RunJobs(); } // the fake fails after recording
+            return File.Exists(argsFile) ? File.ReadAllText(argsFile) : "";
+        }
+        var bars = Filters(new MediaOptions { Visualization = "bars" });
+        var waves = Filters(new MediaOptions { Visualization = "waveform" });
+        var colored = Filters(new MediaOptions { Visualization = "bars", VisualizationColor = "ffffff" });
+        check(bars.Contains("showfreqs=") && !bars.Contains("colors=") && waves.Contains("showwaves=") && waves.Contains("colors=0xe4bd59") && colored.Contains("colors=0xffffff"), "Audio to Video by default passes Windows's original filters (no bar colours); an explicit colour adds them");
+
+        // A preview whose ffmpeg can't start stops and says why instead of crashing the app.
+        var broken = new MediaPlayer(new MediaTools(Path.Combine(root, "no-such-ffmpeg"), Path.Combine(root, "no-such-ffprobe")), wav,
+            new MediaInfo(2, 1, [new MediaStream(0, "video", "h264", 32, 32, false, 8, "", 30, 0)]), 32, 32);
+        broken.Play();
+        for (var i = 0; i < 200 && broken.Error is null; i++) { Thread.Sleep(5); Dispatcher.UIThread.RunJobs(); }
+        check(broken.Error is not null && !broken.Playing, "A preview whose ffmpeg fails to start stops with an error instead of crashing");
+        broken.Dispose();
         check(ThrowsMissing(() => ToolEditorWindow.For("trimVideo", [Path.Combine(root, "x.mp4")], new Toolchain(Path.Combine(root, "none"), ""))), "A media editor without ffmpeg opens setup instead");
     }
 

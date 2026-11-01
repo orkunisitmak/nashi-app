@@ -360,6 +360,7 @@
 "CHOOSE A RECTANGLE INSIDE THE VIDEO." = "CHOISISSEZ UN RECTANGLE À L’INTÉRIEUR DE LA VIDÉO.";
 "CHOOSE A SUPPORTED MAXIMUM VIDEO HEIGHT." = "CHOISISSEZ UNE HAUTEUR VIDÉO MAXIMALE PRISE EN CHARGE.";
 "CHOOSE A TARGET OF AT LEAST 2 KB." = "CHOISISSEZ UNE CIBLE D’AU MOINS 2 KO.";
+"CHOOSE A VALID COLOR." = "CHOOSE A VALID COLOR.";
 "CHOOSE A VALID RANGE FIRST." = "CHOISISSEZ D’ABORD UNE PLAGE VALIDE.";
 "CHOOSE A VALID RANGE." = "CHOISISSEZ UNE PLAGE VALIDE.";
 "CHOOSE A VALID TIME RANGE." = "CHOISISSEZ UNE PLAGE DE TEMPS VALIDE.";
@@ -558,6 +559,7 @@
 "Choose a rectangle inside the video." = "Choisissez un rectangle à l’intérieur de la vidéo.";
 "Choose a supported maximum video height." = "Choisissez une hauteur vidéo maximale prise en charge.";
 "Choose a target of at least 2 KB." = "Choisissez une cible d’au moins 2 Ko.";
+"Choose a valid color." = "Choose a valid color.";
 "Choose a valid range first." = "Choisissez d’abord une plage valide.";
 "Choose a valid range." = "Choisissez une plage valide.";
 "Choose a valid time range." = "Choisissez une plage de temps valide.";
@@ -685,6 +687,8 @@
 "Couldn’t open the folder picker." = "Couldn’t open the folder picker.";
 "Couldn’t open this tool" = "Impossible d’ouvrir cet outil";
 "Couldn’t open your file manager." = "Couldn’t open your file manager.";
+"Couldn’t play the preview: %@" = "Couldn’t play the preview: %@";
+"Couldn’t play the preview: %lld" = "Couldn’t play the preview: %lld";
 "Couldn’t reach the clipboard." = "Couldn’t reach the clipboard.";
 "Couldn’t set up tools: %@" = "Couldn’t set up tools: %@";
 "Couldn’t set up tools: %lld" = "Couldn’t set up tools: %lld";
@@ -2258,6 +2262,7 @@
 "THIS LINK DID NOT RETURN A DOWNLOADABLE IMAGE." = "CE LIEN N’A PAS RENVOYÉ D’IMAGE TÉLÉCHARGEABLE.";
 "THIS OUTPUT FORMAT HAS NO ADJUSTABLE CONVERSION DEFAULTS." = "CE FORMAT DE SORTIE N’A PAS DE RÉGLAGES DE CONVERSION MODIFIABLES.";
 "THIS PDF CONTAINS NO PAGES." = "CE PDF NE CONTIENT AUCUNE PAGE.";
+"THIS PDF COULD NOT BE OPENED." = "THIS PDF COULD NOT BE OPENED.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT MERGING, SPLITTING OR REORDERING PAGES CANNOT KEEP. NO COPY WAS EXPORTED." = "CE PDF CONTIENT DES CHAMPS DE FORMULAIRE OU DES PIÈCES JOINTES QUE LA FUSION, LA DIVISION OU LA RÉORGANISATION DES PAGES NE PEUT PAS CONSERVER. AUCUNE COPIE N’A ÉTÉ EXPORTÉE.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT METADATA CLEANUP CANNOT KEEP. NO COPY WAS EXPORTED." = "CE PDF CONTIENT DES CHAMPS DE FORMULAIRE OU DES PIÈCES JOINTES QUE LE NETTOYAGE DES MÉTADONNÉES NE PEUT PAS CONSERVER. AUCUNE COPIE N’A ÉTÉ EXPORTÉE.";
 "THIS PDF PAGE COULD NOT BE READ." = "CETTE PAGE PDF N’A PAS PU ÊTRE LUE.";
@@ -2345,6 +2350,7 @@
 "These files have moved or were deleted." = "Ces fichiers ont été déplacés ou supprimés.";
 "This EPUB could not be read." = "This EPUB could not be read.";
 "This PDF contains no pages." = "Ce PDF ne contient aucune page.";
+"This PDF could not be opened." = "This PDF could not be opened.";
 "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported." = "Ce PDF contient des champs de formulaire ou des pièces jointes que la fusion, la division ou la réorganisation des pages ne peut pas conserver. Aucune copie n’a été exportée.";
 "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported." = "Ce PDF contient des champs de formulaire ou des pièces jointes que le nettoyage des métadonnées ne peut pas conserver. Aucune copie n’a été exportée.";
 "This PDF page could not be read." = "Cette page PDF n’a pas pu être lue.";

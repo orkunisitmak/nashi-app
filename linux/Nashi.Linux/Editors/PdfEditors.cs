@@ -74,8 +74,10 @@ public sealed class PdfOrganizeEditor(IReadOnlyList<string> inputs) : EditorPane
 
     public override async Task LoadAsync(CancellationToken token)
     {
-        locked = !await Task.Run(() => Locks.PdfOpens(Inputs[0]), token);
-        if (!locked) await Thumbnails(token);
+        var refusal = await Task.Run(() => Locks.PdfRefusal(Inputs[0]), token);
+        locked = refusal == Locks.Refused;
+        if (refusal is null) await Thumbnails(token);
+        else if (!locked) Say(refusal);
     }
 
     private async Task Thumbnails(CancellationToken token)
@@ -91,7 +93,7 @@ public sealed class PdfOrganizeEditor(IReadOnlyList<string> inputs) : EditorPane
     public async Task<bool> UnlockAsync(string value)
     {
         password = value;
-        if (!Locks.PdfOpens(Inputs[0], value)) { Say(Locks.Refused); return false; }
+        if (Locks.PdfRefusal(Inputs[0], value) is { } refusal) { Say(refusal); return false; }
         locked = false;
         Say(null);
         await Thumbnails(CancellationToken.None);
@@ -305,7 +307,7 @@ public sealed class PdfSplitEditor(IReadOnlyList<string> inputs) : EditorPanel("
 
     public override string? Validate()
     {
-        if (Inputs.Any(f => !Locks.PdfOpens(f, password))) return Locks.Refused;
+        if (Locks.PdfRefusal(Inputs, password) is { } refusal) return refusal;
         if (counts.Count < Inputs.Count) Count();
         if (mode == "group" && perFile is < 1 or > 1000) return L10n.T("Choose between 1 and 1,000 pages per file.");
         if (mode != "ranges") return null;
@@ -386,7 +388,7 @@ public sealed class OrderEditor(string tool, IReadOnlyList<string> inputs, Media
 
     private string Pages(string file, string secret)
     {
-        if (!Locks.PdfOpens(file, secret)) return L10n.T(Copy.Locked);
+        if (Locks.PdfRefusal(file, secret) is { } refusal) return refusal == Locks.Refused ? L10n.T(Copy.Locked) : refusal;
         using var pdf = UglyToad.PdfPig.PdfDocument.Open(file, new UglyToad.PdfPig.ParsingOptions { Password = secret });
         return L10n.F(Copy.Pages, pdf.NumberOfPages);
     }
@@ -459,7 +461,7 @@ public sealed class OrderEditor(string tool, IReadOnlyList<string> inputs, Media
 
     public void Password(string value) => password = value;
 
-    public override string? Validate() => Tool == "mergePDF" && Inputs.Any(f => !Locks.PdfOpens(f, password)) ? Locks.Refused : null;
+    public override string? Validate() => Tool == "mergePDF" ? Locks.PdfRefusal(Inputs, password) : null;
 
     public override EditorJob Job()
     {

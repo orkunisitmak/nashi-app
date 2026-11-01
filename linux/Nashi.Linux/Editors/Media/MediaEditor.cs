@@ -32,6 +32,7 @@ public sealed class MediaEditor : EditorPanel
         public const string Play = "Play";
         public const string Pause = "Pause";
         public const string PlayRange = "Play Selected Range";
+        public const string PlayFailed = "Couldn’t play the preview: {0}";
         public const string Silent = "Sound preview is off: PulseAudio isn’t available. The picture still plays.";
         public const string Keys = "Space plays · ←/→ 1 s · Shift+←/→ one frame · I/O set the range";
         public const string Start = "Start";
@@ -242,6 +243,7 @@ public sealed class MediaEditor : EditorPanel
         if (player is null) return;
         timeline.Playhead = player.Position;
         silent.IsVisible = player.Silent;
+        if (player.Error is { } error) Say(L10n.F(Copy.PlayFailed, L10n.T(error)));
         ShowTransport();
         Repainted();
     }
@@ -633,8 +635,8 @@ public sealed class MediaEditor : EditorPanel
                 var filter = o.Visualization switch
                 {
                     "spectrum" => $"showspectrum=s={w}x{h}:slide=replace:color=intensity",
-                    "bars" => $"showfreqs=s={w}x{h}:mode=bar:ascale=log:fscale=log:colors=0x{o.VisualizationColor}",
-                    _ => $"showwaves=s={w}x{h}:mode=cline:colors=0x{o.VisualizationColor}",
+                    "bars" => $"showfreqs=s={w}x{h}:mode=bar:ascale=log:fscale=log:colors=0x{o.VisualizationColor ?? "e4bd59"}",
+                    _ => $"showwaves=s={w}x{h}:mode=cline:colors=0x{o.VisualizationColor ?? "e4bd59"}",
                 };
                 string[] args = o.Visualization == "image" && image is not null
                     ? ["-i", image, "-frames:v", "1", "-vf", $"scale={w}:{h}:force_original_aspect_ratio=decrease,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2,setsar=1", "-f", "rawvideo", "-pix_fmt", "rgba", "-"]
