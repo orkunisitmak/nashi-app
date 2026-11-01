@@ -477,6 +477,7 @@
 "CHOOSE SUPPORTED GIF AND AUDIO SAMPLE SETTINGS." = "CHOISISSEZ DES RÉGLAGES GIF ET D’ÉCHANTILLONNAGE AUDIO PRIS EN CHARGE.";
 "CHOOSE SUPPORTED LOUDNESS TARGETS." = "CHOISISSEZ DES CIBLES DE VOLUME SONORE PRISES EN CHARGE.";
 "CHOOSE UP TO 10,000 OUTPUT PAGES." = "CHOISISSEZ JUSQU’À 10 000 PAGES DE SORTIE.";
+"CHOOSE UP TO 20 EXCLUDED APPLICATION NAMES." = "CHOOSE UP TO 20 EXCLUDED APPLICATION NAMES.";
 "CHOOSE UP TO 4 GB OF FILES." = "CHOISISSEZ JUSQU’À 4 GO DE FICHIERS.";
 "CHOOSE VALID BACKGROUND AND IMAGE DIMENSIONS." = "CHOISISSEZ DES DIMENSIONS D’ARRIÈRE-PLAN ET D’IMAGE VALIDES.";
 "CHOOSE VALID COLLAGE SPACING AND COLUMNS." = "CHOISISSEZ UN ESPACEMENT ET UN NOMBRE DE COLONNES VALIDES POUR LE COLLAGE.";
@@ -677,6 +678,7 @@
 "Choose supported export defaults." = "Choisissez des réglages d’export par défaut pris en charge.";
 "Choose supported loudness targets." = "Choisissez des cibles de volume sonore prises en charge.";
 "Choose up to 10,000 output pages." = "Choisissez jusqu’à 10 000 pages de sortie.";
+"Choose up to 20 excluded application names." = "Choose up to 20 excluded application names.";
 "Choose up to 4 GB of files." = "Choisissez jusqu’à 4 Go de fichiers.";
 "Choose valid PDF pages." = "Choisissez des pages PDF valides.";
 "Choose valid background and image dimensions." = "Choisissez des dimensions d’arrière-plan et d’image valides.";
@@ -1000,6 +1002,8 @@
 "EPUB layout" = "Mise en page EPUB";
 "ESC TO CLOSE" = "ÉCHAP POUR FERMER";
 "EVERYTHING HAS A NEXT FORM." = "TOUT A UNE PROCHAINE FORME.";
+"EXCLUDED APPLICATION PROCESS NAMES" = "EXCLUDED APPLICATION PROCESS NAMES";
+"EXECUTABLE NAMES SEPARATED BY COMMAS, FOR EXAMPLE: PHOTOSHOP, ILLUSTRATOR. LEAVE BLANK TO KEEP SHORTCUTS ACTIVE EVERYWHERE." = "EXECUTABLE NAMES SEPARATED BY COMMAS, FOR EXAMPLE: PHOTOSHOP, ILLUSTRATOR. LEAVE BLANK TO KEEP SHORTCUTS ACTIVE EVERYWHERE.";
 "EXPAND FLOAT" = "DÉVELOPPER FLOAT";
 "EXPANDED UPDATE IS TOO LARGE." = "LA MISE À JOUR DÉCOMPRESSÉE EST TROP VOLUMINEUSE.";
 "EXPORT CLIPS" = "EXPORTER LES CLIPS";
@@ -1038,6 +1042,8 @@
 "Every redaction area must have positive dimensions and fit completely inside the %lld × %@ pixel image. Adjust the areas for this image and try again." = "Chaque zone caviardée doit avoir des dimensions positives et tenir entièrement dans l’image de %lld × %@ pixels. Ajustez les zones pour cette image, puis réessayez.";
 "Every redaction area must have positive dimensions and fit completely inside the %lld × %lld pixel image. Adjust the areas for this image and try again." = "Chaque zone caviardée doit avoir des dimensions positives et tenir entièrement dans l’image de %lld × %lld pixels. Ajustez les zones pour cette image, puis réessayez.";
 "Everything has a next form." = "Tout a une prochaine forme.";
+"Excluded application process names" = "Excluded application process names";
+"Executable names separated by commas, for example: Photoshop, Illustrator. Leave blank to keep shortcuts active everywhere." = "Executable names separated by commas, for example: Photoshop, Illustrator. Leave blank to keep shortcuts active everywhere.";
 "Expand Float" = "Développer Float";
 "Expanded update is too large." = "La mise à jour décompressée est trop volumineuse.";
 "Export One Video" = "Exporter une seule vidéo";
@@ -1735,6 +1741,7 @@
 "PASTED IMAGE" = "IMAGE COLLÉE";
 "PASTED TEXT" = "TEXTE COLLÉ";
 "PAUSE" = "PAUSE";
+"PAUSE NASHI SHORTCUTS IN THESE APPLICATIONS" = "PAUSE NASHI SHORTCUTS IN THESE APPLICATIONS";
 "PDF FORM APPEARANCES COULD NOT BE PREPARED." = "IMPOSSIBLE DE PRÉPARER L’APPARENCE DES FORMULAIRES PDF.";
 "PDF LAYOUT" = "MISE EN PAGE DU PDF";
 "PDF OUTPUT LAYOUT" = "MISE EN PAGE DE SORTIE PDF";
@@ -1823,6 +1830,7 @@
 "Pasted image" = "Image collée";
 "Pasted text" = "Texte collé";
 "Pause" = "Pause";
+"Pause Nashi shortcuts in these applications" = "Pause Nashi shortcuts in these applications";
 "Photo %@" = "Photo %@";
 "Photo %@ of %@…" = "Photo %@ sur %@…";
 "Photo %@ of %lld…" = "Photo %@ sur %lld…";

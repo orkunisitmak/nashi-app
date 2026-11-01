@@ -477,6 +477,7 @@
 "CHOOSE SUPPORTED GIF AND AUDIO SAMPLE SETTINGS." = "DESTEKLENEN GIF VE SES ÖRNEKLEME AYARLARINI SEÇ.";
 "CHOOSE SUPPORTED LOUDNESS TARGETS." = "DESTEKLENEN SES DÜZEYİ HEDEFLERİNİ SEÇ.";
 "CHOOSE UP TO 10,000 OUTPUT PAGES." = "EN FAZLA 10.000 ÇIKTI SAYFASI SEÇ.";
+"CHOOSE UP TO 20 EXCLUDED APPLICATION NAMES." = "EN FAZLA 20 HARİÇ TUTULACAK UYGULAMA ADI SEÇİN.";
 "CHOOSE UP TO 4 GB OF FILES." = "TOPLAMI EN FAZLA 4 GB OLAN DOSYALAR SEÇ.";
 "CHOOSE VALID BACKGROUND AND IMAGE DIMENSIONS." = "GEÇERLİ ARKA PLAN VE GÖRSEL BOYUTLARI SEÇ.";
 "CHOOSE VALID COLLAGE SPACING AND COLUMNS." = "GEÇERLİ KOLAJ ARALIĞI VE SÜTUN SAYISI SEÇ.";
@@ -677,6 +678,7 @@
 "Choose supported export defaults." = "Desteklenen dışa aktarma varsayılanlarını seç.";
 "Choose supported loudness targets." = "Desteklenen ses düzeyi hedeflerini seç.";
 "Choose up to 10,000 output pages." = "En fazla 10.000 çıktı sayfası seç.";
+"Choose up to 20 excluded application names." = "En fazla 20 hariç tutulacak uygulama adı seçin.";
 "Choose up to 4 GB of files." = "Toplamı en fazla 4 GB olan dosyalar seç.";
 "Choose valid PDF pages." = "Geçerli PDF sayfaları seç.";
 "Choose valid background and image dimensions." = "Geçerli arka plan ve görsel boyutları seç.";
@@ -1000,6 +1002,8 @@
 "EPUB layout" = "EPUB düzeni";
 "ESC TO CLOSE" = "KAPATMAK İÇİN ESC";
 "EVERYTHING HAS A NEXT FORM." = "HER DOSYANIN YENİ BİR HÂLİ VAR.";
+"EXCLUDED APPLICATION PROCESS NAMES" = "HARİÇ TUTULACAK UYGULAMALARIN İŞLEM ADLARI";
+"EXECUTABLE NAMES SEPARATED BY COMMAS, FOR EXAMPLE: PHOTOSHOP, ILLUSTRATOR. LEAVE BLANK TO KEEP SHORTCUTS ACTIVE EVERYWHERE." = "UYGULAMA İŞLEM ADLARINI VİRGÜLLE AYIRIN; ÖRNEĞİN PHOTOSHOP, ILLUSTRATOR. KISAYOLLARIN HER YERDE ÇALIŞMASI İÇİN BOŞ BIRAKIN.";
 "EXPAND FLOAT" = "FLOAT’I GENİŞLET";
 "EXPANDED UPDATE IS TOO LARGE." = "AÇILAN GÜNCELLEME ÇOK BÜYÜK.";
 "EXPORT CLIPS" = "KLİPLERİ KAYDET";
@@ -1038,6 +1042,8 @@
 "Every redaction area must have positive dimensions and fit completely inside the %lld × %@ pixel image. Adjust the areas for this image and try again." = "Her sansür alanının boyutları sıfırdan büyük olmalı ve alan %lld × %@ piksellik görselin tamamen içinde kalmalı. Alanları bu görsele göre ayarla ve yeniden dene.";
 "Every redaction area must have positive dimensions and fit completely inside the %lld × %lld pixel image. Adjust the areas for this image and try again." = "Her sansür alanının boyutları sıfırdan büyük olmalı ve alan %lld × %lld piksellik görselin tamamen içinde kalmalı. Alanları bu görsele göre ayarla ve yeniden dene.";
 "Everything has a next form." = "Her dosyanın yeni bir hâli var.";
+"Excluded application process names" = "Hariç tutulacak uygulamaların işlem adları";
+"Executable names separated by commas, for example: Photoshop, Illustrator. Leave blank to keep shortcuts active everywhere." = "Uygulama işlem adlarını virgülle ayırın; örneğin Photoshop, Illustrator. Kısayolların her yerde çalışması için boş bırakın.";
 "Expand Float" = "Float’ı genişlet";
 "Expanded update is too large." = "Açılan güncelleme çok büyük.";
 "Export One Video" = "Tek Video Olarak Kaydet";
@@ -1735,6 +1741,7 @@
 "PASTED IMAGE" = "YAPIŞTIRILAN GÖRSEL";
 "PASTED TEXT" = "YAPIŞTIRILAN METİN";
 "PAUSE" = "DURAKLAT";
+"PAUSE NASHI SHORTCUTS IN THESE APPLICATIONS" = "BU UYGULAMALARDA NASHI KISAYOLLARINI DURAKLAT";
 "PDF FORM APPEARANCES COULD NOT BE PREPARED." = "PDF FORM GÖRÜNÜMLERİ HAZIRLANAMADI.";
 "PDF LAYOUT" = "PDF DÜZENİ";
 "PDF OUTPUT LAYOUT" = "PDF ÇIKTI DÜZENİ";
@@ -1823,6 +1830,7 @@
 "Pasted image" = "Yapıştırılan görsel";
 "Pasted text" = "Yapıştırılan metin";
 "Pause" = "Duraklat";
+"Pause Nashi shortcuts in these applications" = "Bu uygulamalarda Nashi kısayollarını duraklat";
 "Photo %@" = "Fotoğraf %@";
 "Photo %@ of %@…" = "Fotoğraf %@/%@…";
 "Photo %@ of %lld…" = "Fotoğraf %@/%lld…";

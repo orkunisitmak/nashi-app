@@ -477,6 +477,7 @@
 "CHOOSE SUPPORTED GIF AND AUDIO SAMPLE SETTINGS." = "CHOOSE SUPPORTED GIF AND AUDIO SAMPLE SETTINGS.";
 "CHOOSE SUPPORTED LOUDNESS TARGETS." = "CHOOSE SUPPORTED LOUDNESS TARGETS.";
 "CHOOSE UP TO 10,000 OUTPUT PAGES." = "CHOOSE UP TO 10,000 OUTPUT PAGES.";
+"CHOOSE UP TO 20 EXCLUDED APPLICATION NAMES." = "CHOOSE UP TO 20 EXCLUDED APPLICATION NAMES.";
 "CHOOSE UP TO 4 GB OF FILES." = "CHOOSE UP TO 4 GB OF FILES.";
 "CHOOSE VALID BACKGROUND AND IMAGE DIMENSIONS." = "CHOOSE VALID BACKGROUND AND IMAGE DIMENSIONS.";
 "CHOOSE VALID COLLAGE SPACING AND COLUMNS." = "CHOOSE VALID COLLAGE SPACING AND COLUMNS.";
@@ -677,6 +678,7 @@
 "Choose supported export defaults." = "Choose supported export defaults.";
 "Choose supported loudness targets." = "Choose supported loudness targets.";
 "Choose up to 10,000 output pages." = "Choose up to 10,000 output pages.";
+"Choose up to 20 excluded application names." = "Choose up to 20 excluded application names.";
 "Choose up to 4 GB of files." = "Choose up to 4 GB of files.";
 "Choose valid PDF pages." = "Choose valid PDF pages.";
 "Choose valid background and image dimensions." = "Choose valid background and image dimensions.";
@@ -1000,6 +1002,8 @@
 "EPUB layout" = "EPUB layout";
 "ESC TO CLOSE" = "ESC TO CLOSE";
 "EVERYTHING HAS A NEXT FORM." = "EVERYTHING HAS A NEXT FORM.";
+"EXCLUDED APPLICATION PROCESS NAMES" = "EXCLUDED APPLICATION PROCESS NAMES";
+"EXECUTABLE NAMES SEPARATED BY COMMAS, FOR EXAMPLE: PHOTOSHOP, ILLUSTRATOR. LEAVE BLANK TO KEEP SHORTCUTS ACTIVE EVERYWHERE." = "EXECUTABLE NAMES SEPARATED BY COMMAS, FOR EXAMPLE: PHOTOSHOP, ILLUSTRATOR. LEAVE BLANK TO KEEP SHORTCUTS ACTIVE EVERYWHERE.";
 "EXPAND FLOAT" = "EXPAND FLOAT";
 "EXPANDED UPDATE IS TOO LARGE." = "EXPANDED UPDATE IS TOO LARGE.";
 "EXPORT CLIPS" = "EXPORT CLIPS";
@@ -1038,6 +1042,8 @@
 "Every redaction area must have positive dimensions and fit completely inside the %lld × %@ pixel image. Adjust the areas for this image and try again." = "Every redaction area must have positive dimensions and fit completely inside the %lld × %@ pixel image. Adjust the areas for this image and try again.";
 "Every redaction area must have positive dimensions and fit completely inside the %lld × %lld pixel image. Adjust the areas for this image and try again." = "Every redaction area must have positive dimensions and fit completely inside the %lld × %lld pixel image. Adjust the areas for this image and try again.";
 "Everything has a next form." = "Everything has a next form.";
+"Excluded application process names" = "Excluded application process names";
+"Executable names separated by commas, for example: Photoshop, Illustrator. Leave blank to keep shortcuts active everywhere." = "Executable names separated by commas, for example: Photoshop, Illustrator. Leave blank to keep shortcuts active everywhere.";
 "Expand Float" = "Expand Float";
 "Expanded update is too large." = "Expanded update is too large.";
 "Export One Video" = "Export One Video";
@@ -1735,6 +1741,7 @@
 "PASTED IMAGE" = "PASTED IMAGE";
 "PASTED TEXT" = "PASTED TEXT";
 "PAUSE" = "PAUSE";
+"PAUSE NASHI SHORTCUTS IN THESE APPLICATIONS" = "PAUSE NASHI SHORTCUTS IN THESE APPLICATIONS";
 "PDF FORM APPEARANCES COULD NOT BE PREPARED." = "PDF FORM APPEARANCES COULD NOT BE PREPARED.";
 "PDF LAYOUT" = "PDF LAYOUT";
 "PDF OUTPUT LAYOUT" = "PDF OUTPUT LAYOUT";
@@ -1823,6 +1830,7 @@
 "Pasted image" = "Pasted image";
 "Pasted text" = "Pasted text";
 "Pause" = "Pause";
+"Pause Nashi shortcuts in these applications" = "Pause Nashi shortcuts in these applications";
 "Photo %@" = "Photo %@";
 "Photo %@ of %@…" = "Photo %@ of %@…";
 "Photo %@ of %lld…" = "Photo %@ of %lld…";
