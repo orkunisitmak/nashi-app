@@ -60,4 +60,17 @@ internal static class DownloadChecks
         var mirrors=new[]{new Uri("https://mirror1.example/pkg"),new Uri("https://mirror2.example/pkg")};using(var handler=new Handler((request,n)=>Response(request,request.RequestUri!.Host=="mirror1.example"?new ByteArrayContent(new byte[]{9,9,9}):new ByteArrayContent(bytes)))){await VerifiedDownload.FetchAnyForTest(mirrors,output,10,null,CancellationToken.None,handler,TimeSpan.FromSeconds(1),data=>File.ReadAllBytes(data).SequenceEqual(bytes));check(handler.Calls==2&&File.ReadAllBytes(output).SequenceEqual(bytes),"Multi-mirror validation fallback did not proceed to secondary mirror");File.Delete(output);}
         using(var handler=new Handler((request,n)=>Response(request))){try{await VerifiedDownload.FetchAnyForTest([new Uri("https://mirror1.example/pkg")],output,10,null,CancellationToken.None,handler,TimeSpan.FromSeconds(1),_=>throw new ApplicationException("Custom validator failure"));throw new Exception("Validator exception swallowed");}catch(ApplicationException){check(!File.Exists(output)&&Directory.GetFiles(root,"*.part").Length==0,"Validator exception left behind a temporary .part file");}}
     }
+    public static async Task RunLiveWindowsDownload(Action<bool,string> check,string root,Toolchain tools)
+    {
+        if(!OperatingSystem.IsWindows())throw new PlatformNotSupportedException("The live web download check requires Windows.");
+        const string url="https://www.youtube.com/watch?v=4vrscEdUU-w";const string expected="Canozan - düşman benim [4vrscEdUU-w].mp3";
+        var output=Path.Combine(root,"Live web download");Directory.CreateDirectory(output);using var timeout=new CancellationTokenSource(TimeSpan.FromMinutes(3));
+        try
+        {
+            IReadOnlyList<string> downloaded;try{downloaded=await new WebDownload(tools).DownloadAsync(url,"audio",output,token:timeout.Token);}catch(OperationCanceledException)when(timeout.IsCancellationRequested){throw new TimeoutException("The live Windows web download did not finish within three minutes.");}
+            check(downloaded.Count==1&&Path.GetFileName(downloaded[0])==expected&&new FileInfo(downloaded[0]).Length>0,"Live Windows download did not preserve the Unicode title and source video ID");
+            var media=await new MediaEngine(tools.Executable("ffmpeg"),tools.Executable("ffprobe")).InspectAsync(downloaded[0],timeout.Token);check(media.HasAudio&&media.Duration>0,"Live Windows download did not produce a readable audio file");
+        }
+        finally{if(Directory.Exists(output))Directory.Delete(output,true);}
+    }
 }
