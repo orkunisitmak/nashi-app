@@ -89,7 +89,15 @@ export function write(json) {
     }
     if (block.columnWidths?.length) block.columnWidths.forEach((width,index) => { if (index < columnCount && width > 0) table.setColumnWidth(index,width); });
     else for (let column = 0; column < columnCount; column++) table.setColumnWidth(column,(block.width ?? 480) / columnCount);
-    for (const merge of block.merges ?? []) if (merge.row + merge.rowCount <= rowCount && merge.column + merge.columnCount <= columnCount) table.mergeCells(merge.row,merge.column,merge.rowCount,merge.columnCount);
+    const merged = [];
+    for (const merge of block.merges ?? []) {
+      if (!(merge.row + merge.rowCount <= rowCount && merge.column + merge.columnCount <= columnCount)) continue;
+      // A malformed Word table can describe overlapping merges. Keep the first
+      // one instead of failing the whole conversion.
+      if (merged.some(other => merge.row < other.row + other.rowCount && other.row < merge.row + merge.rowCount && merge.column < other.column + other.columnCount && other.column < merge.column + merge.columnCount)) continue;
+      table.mergeCells(merge.row,merge.column,merge.rowCount,merge.columnCount);
+      merged.push(merge);
+    }
   }
   check();
   const data = document.save();
