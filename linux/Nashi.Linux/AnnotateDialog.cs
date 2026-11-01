@@ -68,7 +68,7 @@ internal sealed class AnnotateDialog:Window
     public static async Task<AnnotateDialog> CreateAsync(string title,string input)
     {
         var (preview,pixels)=await Picture.LoadAsync(()=>PhotoCodec.Read(input));
-        using var stream=new MemoryStream();preview.Save(stream);
+        using var stream=new MemoryStream();preview.Save(stream,new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
         return new(title,$"{Path.GetFileName(input)} · {pixels.Width} × {pixels.Height}",preview,stream.ToArray(),pixels);
     }
 

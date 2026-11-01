@@ -24,7 +24,7 @@ internal sealed class RedactDialog:Window
     public Redaction? Result{get;private set;}
     /// Video only: when the boxes are shown, in seconds. Empty fields mean the whole clip.
     public (double Start,double? End) Range{get;private set;}
-    private readonly TextBox from=new(){Watermark="0:00",Width=90},to=new(){Watermark="end",Width=90};
+    private readonly TextBox from=new(){PlaceholderText="0:00",Width=90},to=new(){PlaceholderText="end",Width=90};
     private readonly Button findText=new(){Content="Find text"};
     private double? duration;
     internal RegionCanvas Canvas=>canvas;
@@ -64,7 +64,7 @@ internal sealed class RedactDialog:Window
     private void ShowRange()
     {
         if(Content is not DockPanel root||root.Children[0] is not DockPanel bar||bar.Children[1] is not StackPanel tools)return;
-        to.Watermark=TrimDialog.Format(duration??0);
+        to.PlaceholderText=TrimDialog.Format(duration??0);
         tools.Children.Insert(tools.Children.Count-1,new TextBlock{Text="From",VerticalAlignment=VerticalAlignment.Center});tools.Children.Insert(tools.Children.Count-1,from);
         tools.Children.Insert(tools.Children.Count-1,new TextBlock{Text="To",VerticalAlignment=VerticalAlignment.Center});tools.Children.Insert(tools.Children.Count-1,to);
     }
@@ -73,7 +73,7 @@ internal sealed class RedactDialog:Window
     {
         var (preview,pixels)=await Picture.LoadAsync(load);
         // The editor redraws from the bounded preview, never from the full-size file.
-        using var stream=new MemoryStream();preview.Save(stream);
+        using var stream=new MemoryStream();preview.Save(stream,new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
         return new(title,$"{note} · {pixels.Width} × {pixels.Height}",preview,stream.ToArray(),pixels);
     }
 

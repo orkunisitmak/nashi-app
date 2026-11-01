@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -31,7 +32,7 @@ public sealed class MainWindow:Window
     private readonly ProgressBar progress=new(){Minimum=0,Maximum=1,Height=6,IsVisible=false};
     private readonly TextBlock status=new(){TextWrapping=TextWrapping.Wrap};
     private readonly Button cancel=new(){Content="Cancel",IsVisible=false},reveal=new(){Content="Show in folder",IsVisible=false};
-    private readonly TextBox search=new(){Watermark="Search Library"};
+    private readonly TextBox search=new(){PlaceholderText="Search Library"};
     private readonly StackPanel libraryItems=new(){Spacing=6};
     private CancellationTokenSource? running;
     private string? lastFolder;
@@ -68,7 +69,7 @@ public sealed class MainWindow:Window
         catch(Exception error){Console.Error.WriteLine(error);}
         Close();
     }
-    private static void Snap(Window window,string file){var size=new PixelSize((int)window.Bounds.Width,(int)window.Bounds.Height);using var bitmap=new RenderTargetBitmap(size);bitmap.Render(window);bitmap.Save(file);}
+    private static void Snap(Window window,string file){var size=new PixelSize((int)window.Bounds.Width,(int)window.Bounds.Height);using var bitmap=new RenderTargetBitmap(size);bitmap.Render(window);bitmap.Save(file,new Avalonia.Media.Imaging.PngBitmapEncoderOptions());}
 
     private Control Layout()
     {
@@ -126,7 +127,7 @@ public sealed class MainWindow:Window
             if(ClipboardImport.Paths(text) is {Length:>0} paths){Add(paths);return;}
             if(ClipboardImport.Link(text) is {} link){if(Content is TabControl pages)pages.SelectedIndex=1;web.Link.Text=link;return;}
             if(!string.IsNullOrWhiteSpace(text)){Add([ClipboardImport.SaveText(text)]);status.Text="Pasted text";return;}
-            if(await data.TryGetBitmapAsync() is {} bitmap){using(bitmap){var file=ClipboardImport.Destination("png");bitmap.Save(file);Add([file]);status.Text="Pasted image";}return;}
+            if(await data.TryGetBitmapAsync() is {} bitmap){using(bitmap){var file=ClipboardImport.Destination("png");bitmap.Save(file,new Avalonia.Media.Imaging.PngBitmapEncoderOptions());Add([file]);status.Text="Pasted image";}return;}
             status.Text="Copy a file, some text, an image or a public media link first.";
         }
         catch(Exception error)when(error is IOException or UnauthorizedAccessException or InvalidOperationException){status.Text=error.Message;}
@@ -478,5 +479,5 @@ public sealed class MainWindow:Window
     private static Button Primary(string text){var button=new Button{Content=text,Background=NashiTheme.Primary,Foreground=new SolidColorBrush(Color.Parse("#243B2B")),FontWeight=FontWeight.SemiBold};return button;}
     private static Border Card(Control child){var border=new Border{CornerRadius=new(16),Padding=new(18),BorderThickness=new(1),Child=child};border[!Border.BackgroundProperty]=Resource("Surface");border[!Border.BorderBrushProperty]=Resource("Line");return border;}
     private static T Dock<T>(T control,Dock side)where T:Control{DockPanel.SetDock(control,side);return control;}
-    private static Avalonia.Data.IBinding Resource(string key)=>new Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension(key);
+    private static Avalonia.Data.BindingBase Resource(string key)=>new Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension(key);
 }

@@ -62,7 +62,7 @@ internal static class EditorChecks
         dialog.Choose("image");Drag(10,10,60,60);Check(canvas.Marks.Count==5,"The image tool waits for a chosen image");
         // The preview render runs off the UI thread; give it a moment and check it changed pixels.
         Wait(dialog.Flush());Pump();
-        var frame=dialog.CaptureRenderedFrame()!;var shot=Path.Combine(root,"annotate-editor.png");frame.Save(shot);
+        var frame=dialog.CaptureRenderedFrame()!;var shot=Path.Combine(root,"annotate-editor.png");frame.Save(shot,new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
         using(var image=new MagickImage(shot)){using var pixels=image.GetPixels();var p=canvas.TranslatePoint(canvas.ToControl(675,375),dialog)!.Value;var ink=pixels.GetPixel((int)p.X,(int)p.Y).ToColor()!;
             Check(dialog.Settled&&ink.R>200&&ink.G<150,$"The live preview shows the freehand ink (settled {dialog.Settled}, {ink}, at {p})");}
         Key(Avalonia.Input.Key.Enter);Check(dialog.Result is {Marks.Count:5},"Enter saves the marks");
@@ -88,7 +88,7 @@ internal static class EditorChecks
         dialog.MouseDown(from,MouseButton.Left);dialog.MouseMove(new(from.X+30,from.Y),RawInputModifiers.LeftMouseButton);dialog.MouseMove(to,RawInputModifiers.LeftMouseButton);dialog.MouseUp(to,MouseButton.Left);Pump();
         Check(dialog.Current.Pages.SequenceEqual(new[]{1,3,4,2}),"Dragging a page moves it");
         Key(Avalonia.Input.Key.A,RawInputModifiers.Control);Key(Avalonia.Input.Key.Delete);Check(dialog.Current.Pages.Length==4,"The last page cannot be removed");
-        dialog.CaptureRenderedFrame()?.Save(Path.Combine(root,"organize-editor.png"));
+        dialog.CaptureRenderedFrame()?.Save(Path.Combine(root,"organize-editor.png"),new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
         dialog.Close();Pump();
     }
 
@@ -164,7 +164,7 @@ internal static class EditorChecks
         Check(ran?.Id=="cropImage"&&with is [var only]&&only==photo&&bubble.Width==Bubble.Small,"A wheel button runs that tool on the dropped file and closes the wheel");
         bubble.Expand([photo,Path.Combine(root,"a.txt")]);Pump();Check(bubble.Ring=="actions","Mixed files open on the ring that has choices");
         bubble.KeyPress(Avalonia.Input.Key.Escape,RawInputModifiers.None,PhysicalKey.None,null);Pump();Check(bubble.Width==Bubble.Small&&bubble.Held.Count==0,"Escape closes the wheel");
-        bubble.CaptureRenderedFrame()?.Save(Path.Combine(root,"bubble-small.png"));bubble.Expand([photo]);Pump();bubble.CaptureRenderedFrame()?.Save(Path.Combine(root,"bubble-wheel.png"));
+        bubble.CaptureRenderedFrame()?.Save(Path.Combine(root,"bubble-small.png"),new Avalonia.Media.Imaging.PngBitmapEncoderOptions());bubble.Expand([photo]);Pump();bubble.CaptureRenderedFrame()?.Save(Path.Combine(root,"bubble-wheel.png"),new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
         bubble.Close();Pump();
     }
     private static IEnumerable<Avalonia.Visual> Descendants(Avalonia.Visual root){foreach(var child in Avalonia.VisualTree.VisualExtensions.GetVisualChildren(root)){yield return child;foreach(var d in Descendants(child))yield return d;}}

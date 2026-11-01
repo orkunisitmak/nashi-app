@@ -69,7 +69,7 @@ internal static class Localizer
         TextBlock.TextProperty.Changed.AddClassHandler<TextBlock>((c,e)=>{if(c is not SelectableTextBlock)Swap(c,TextBlock.TextProperty,e.NewValue);});
         ContentControl.ContentProperty.Changed.AddClassHandler<ContentControl>((c,e)=>Swap(c,ContentControl.ContentProperty,e.NewValue));
         HeaderedContentControl.HeaderProperty.Changed.AddClassHandler<HeaderedContentControl>((c,e)=>Swap(c,HeaderedContentControl.HeaderProperty,e.NewValue));
-        TextBox.WatermarkProperty.Changed.AddClassHandler<TextBox>((c,e)=>Swap(c,TextBox.WatermarkProperty,e.NewValue));
+        TextBox.PlaceholderTextProperty.Changed.AddClassHandler<TextBox>((c,e)=>Swap(c,TextBox.PlaceholderTextProperty,e.NewValue));
         Window.TitleProperty.Changed.AddClassHandler<Window>((c,e)=>Swap(c,Window.TitleProperty,e.NewValue));
     }
     private static void Swap(AvaloniaObject target,AvaloniaProperty property,object? value)

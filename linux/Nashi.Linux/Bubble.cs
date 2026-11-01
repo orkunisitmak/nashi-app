@@ -34,7 +34,7 @@ internal sealed class Bubble:Window
     public Bubble(Func<IReadOnlyList<string>,string,Choice[]> choices,Func<IReadOnlyList<string>,Choice,Task<string>> run)
     {
         this.choices=choices;this.run=run;
-        Title="Nashi";SystemDecorations=SystemDecorations.None;Topmost=true;ShowInTaskbar=false;CanResize=false;
+        Title="Nashi";WindowDecorations=Avalonia.Controls.WindowDecorations.None;Topmost=true;ShowInTaskbar=false;CanResize=false;
         TransparencyLevelHint=[WindowTransparencyLevel.Transparent];Background=Brushes.Transparent;Width=Height=Small;
         puck=new Border{Width=Small-4,Height=Small-4,CornerRadius=new(38),Child=pear,BoxShadow=BoxShadows.Parse("0 2 10 0 #50000000"),Cursor=new Cursor(StandardCursorType.Hand)};
         puck[!Border.BackgroundProperty]=new Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension("Surface");

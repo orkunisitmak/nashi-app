@@ -63,7 +63,7 @@ internal sealed class WebPanel : StackPanel
         var linkRow = new DockPanel { LastChildFill = true };
         Link = new TextBox
         {
-            Watermark = "Paste a public video, audio or image link",
+            PlaceholderText = "Paste a public video, audio or image link",
             HorizontalAlignment = HorizontalAlignment.Stretch,
         };
         Kind = new ComboBox { MinWidth = 130 };

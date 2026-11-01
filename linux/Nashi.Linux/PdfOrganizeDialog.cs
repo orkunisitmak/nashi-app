@@ -143,5 +143,5 @@ internal sealed class PdfOrganizeDialog:Window
         if(entries.Count>0){anchor=entries[Math.Min(first,entries.Count-1)];selected.Add(anchor);}Reload();
     }
     public PdfOrganization Current=>new(entries.Select(e=>e.Number).ToArray(),entries.Select(e=>e.Rotation).ToArray(),uniform.IsChecked==true);
-    private static Avalonia.Data.IBinding Resource(string key)=>new Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension(key);
+    private static Avalonia.Data.BindingBase Resource(string key)=>new Avalonia.Markup.Xaml.MarkupExtensions.DynamicResourceExtension(key);
 }

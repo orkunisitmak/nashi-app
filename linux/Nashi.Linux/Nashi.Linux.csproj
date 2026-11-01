@@ -6,11 +6,11 @@
   </PropertyGroup>
   <ItemGroup><ProjectReference Include="../../windows/Nashi.Core/Nashi.Core.csproj" /></ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.3.22" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.3.22" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.22" />
+    <PackageReference Include="Avalonia" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.4" />
     <!-- Drives the editors with real pointer and key events in the editor checks. -->
-    <PackageReference Include="Avalonia.Headless" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Headless" Version="12.1.4" />
     <!-- The same PDFium build as Windows, for page thumbnails, PDF to image and QR codes in PDFs. -->
     <PackageReference Include="bblanchon.PDFium.Linux" Version="155.0.8044" />
   </ItemGroup>

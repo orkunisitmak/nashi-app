@@ -15,7 +15,7 @@ internal sealed class FloatShelf:Window
     private readonly ListBox list=new(){SelectionMode=SelectionMode.Multiple,MinHeight=80};
     private readonly TextBlock caption=new(){FontWeight=FontWeight.SemiBold,VerticalAlignment=VerticalAlignment.Center};
     private readonly Control body;
-    private Point? pressed;
+    private Point? pressed;private PointerPressedEventArgs? press;
     internal IReadOnlyList<string> Items=>items;
     internal ListBox List=>list;
 
@@ -34,7 +34,7 @@ internal sealed class FloatShelf:Window
         DragDrop.SetAllowDrop(this,true);
         AddHandler(DragDrop.DragOverEvent,(_,e)=>e.DragEffects=e.DataTransfer.Contains(DataFormat.File)&&!ReferenceEquals(e.Source,list)?DragDropEffects.Copy:DragDropEffects.None);
         AddHandler(DragDrop.DropEvent,(_,e)=>Add(e.DataTransfer.TryGetFiles()?.Select(f=>f.TryGetLocalPath()).OfType<string>()??[]));
-        list.AddHandler(PointerPressedEvent,(_,e)=>{if(e.GetCurrentPoint(list).Properties.IsLeftButtonPressed)pressed=e.GetPosition(list);},Avalonia.Interactivity.RoutingStrategies.Tunnel);
+        list.AddHandler(PointerPressedEvent,(_,e)=>{if(e.GetCurrentPoint(list).Properties.IsLeftButtonPressed){pressed=e.GetPosition(list);press=e;}},Avalonia.Interactivity.RoutingStrategies.Tunnel);
         list.AddHandler(PointerMovedEvent,async(_,e)=>await DragOut(e),Avalonia.Interactivity.RoutingStrategies.Tunnel);
         list.AddHandler(PointerReleasedEvent,(_,_)=>pressed=null,Avalonia.Interactivity.RoutingStrategies.Tunnel);
         list.DoubleTapped+=(_,_)=>{foreach(var file in Selected())Launch(file);};
@@ -61,7 +61,7 @@ internal sealed class FloatShelf:Window
         var transfer=new DataTransfer();
         foreach(var path in Selected())if((Directory.Exists(path)?await StorageProvider.TryGetFolderFromPathAsync(path) as IStorageItem:await StorageProvider.TryGetFileFromPathAsync(path)) is {} item)transfer.Add(DataTransferItem.CreateFile(item));
         Trace.Log($"float drag out: {transfer.Items.Count} items");
-        if(transfer.Items.Count>0){var result=await DragDrop.DoDragDropAsync(e,transfer,DragDropEffects.Copy|DragDropEffects.Link);Trace.Log("float drag result: "+result);}
+        if(transfer.Items.Count>0&&press is {} origin){var result=await DragDrop.DoDragDropAsync(origin,transfer,DragDropEffects.Copy|DragDropEffects.Link);Trace.Log("float drag result: "+result);}
     }
     private static void Launch(string path)
     {
