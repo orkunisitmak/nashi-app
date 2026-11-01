@@ -683,6 +683,10 @@
 "Corner radius" = "Corner radius";
 "Corners" = "Corners";
 "Couldn’t check for updates" = "Couldn’t check for updates";
+"Couldn’t convert in %@: %@" = "Couldn’t convert in %@: %@";
+"Couldn’t convert in %@: %lld" = "Couldn’t convert in %@: %lld";
+"Couldn’t convert in %lld: %@" = "Couldn’t convert in %lld: %@";
+"Couldn’t convert in %lld: %lld" = "Couldn’t convert in %lld: %lld";
 "Couldn’t finish" = "Couldn’t finish";
 "Couldn’t finish: %@" = "Couldn’t finish: %@";
 "Couldn’t finish: %lld" = "Couldn’t finish: %lld";

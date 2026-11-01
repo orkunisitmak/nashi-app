@@ -683,6 +683,10 @@
 "Corner radius" = "Köşe yuvarlaklığı";
 "Corners" = "Köşeler";
 "Couldn’t check for updates" = "Güncellemeler denetlenemedi";
+"Couldn’t convert in %@: %@" = "%@ içinde dönüştürülemedi: %@";
+"Couldn’t convert in %@: %lld" = "%@ içinde dönüştürülemedi: %lld";
+"Couldn’t convert in %lld: %@" = "%lld içinde dönüştürülemedi: %@";
+"Couldn’t convert in %lld: %lld" = "%lld içinde dönüştürülemedi: %lld";
 "Couldn’t finish" = "İşlem tamamlanamadı";
 "Couldn’t finish: %@" = "Tamamlanamadı: %@";
 "Couldn’t finish: %lld" = "Tamamlanamadı: %lld";

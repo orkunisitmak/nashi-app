@@ -683,6 +683,10 @@
 "Corner radius" = "Rayon des coins";
 "Corners" = "Coins";
 "Couldn’t check for updates" = "Impossible de rechercher les mises à jour";
+"Couldn’t convert in %@: %@" = "Couldn’t convert in %@: %@";
+"Couldn’t convert in %@: %lld" = "Couldn’t convert in %@: %lld";
+"Couldn’t convert in %lld: %@" = "Couldn’t convert in %lld: %@";
+"Couldn’t convert in %lld: %lld" = "Couldn’t convert in %lld: %lld";
 "Couldn’t finish" = "Impossible de terminer";
 "Couldn’t finish: %@" = "Couldn’t finish: %@";
 "Couldn’t finish: %lld" = "Couldn’t finish: %lld";

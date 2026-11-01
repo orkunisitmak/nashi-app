@@ -1301,5 +1301,6 @@
   "Only HTTPS downloads are supported.": "Yalnızca HTTPS indirmeleri destekleniyor.",
   "Drag gestures need an X11 session. The right-click menu and Ctrl+Alt+N still work.": "Sürükleme hareketleri X11 oturumu gerektirir. Sağ tık menüsü ve Ctrl+Alt+N yine çalışır.",
   "Drop on a petal": "Bir yaprağa bırak",
-  "{0} ›": "{0} ›"
+  "{0} ›": "{0} ›",
+  "Couldn’t convert in {0}: {1}": "{0} içinde dönüştürülemedi: {1}"
 }

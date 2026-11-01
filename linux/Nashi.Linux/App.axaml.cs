@@ -14,6 +14,7 @@ public sealed class App : Application
     private static class Copy
     {
         public const string Nothing = "Nothing to convert";
+        public const string WatchFailed = "Couldn’t convert in {0}: {1}";
         public const string Wayland = "Drag gestures need an X11 session. The right-click menu and Ctrl+Alt+N still work.";
     }
 
@@ -37,6 +38,7 @@ public sealed class App : Application
                 desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
                 if (Launch.Message is { } first) Dispatcher.UIThread.Post(() => Handle(first));
                 StartGestures();
+                StartWatching();
             }
             Instance?.Start(message => Dispatcher.UIThread.Post(() => Handle(message)));
         }
@@ -65,6 +67,23 @@ public sealed class App : Application
         detector.DragStarted += (x, y) => Dispatcher.UIThread.Post(() => Flow.ShowForDrag(new PixelPoint(x, y)));
         detector.DragEnded += (_, _) => Dispatcher.UIThread.Post(Flow.DragEnded);
         pointerWatch.Sampler.Flip += () => Dispatcher.UIThread.Post(Flow.FlipDrag);
+    }
+
+    private WatchService? watching;
+
+    /// The background instance runs the watch folders from Settings, and follows its changes.
+    private void StartWatching()
+    {
+        var runner = new OperationRunner(tools);
+        watching = new WatchService(async (route, files, token) =>
+            await runner.RunBesideSourcesAsync(route, files, folder => Task.FromResult<string?>(folder), new Progress<OperationProgress>(), token) ?? []);
+        watching.Ran += (folder, inputs, outputs, error) => Dispatcher.UIThread.Post(() =>
+        {
+            if (error is not null) SuccessToast.Notice(L10n.F(Copy.WatchFailed, Path.GetFileName(folder.Path), L10n.T(error.Message))).Present();
+            else if (outputs.Count > 0) SuccessToast.Done(outputs, folder.Path).Present();
+        });
+        watching.Sync(Settings.Current.WatchFolders, startup: true);
+        Settings.Changed += s => Dispatcher.UIThread.Post(() => watching.Sync(s.WatchFolders));
     }
 
     /// The wheels, toasts and setup window of the background mode.

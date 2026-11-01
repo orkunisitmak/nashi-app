@@ -77,6 +77,7 @@ try
     await ActionChecks(temp.FullName);
     DragChecks.Gestures(Check);
     DragChecks.DragWheel(temp.FullName, Check, Smoke);
+    WatchChecks.Run(temp.FullName, Check);
     await EditorChecks.RunAsync(temp.FullName, Check, Smoke);
     WheelRenders(temp.FullName);
 }
