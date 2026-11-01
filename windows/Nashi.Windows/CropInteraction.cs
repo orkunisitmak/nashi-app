@@ -40,9 +40,9 @@ public sealed partial class ToolEditor
         }
         else
         {
-            // Seçim yoksa field değerlerini kullan
-            curW = Math.Max(1, Math.Round(Value("Width", drawing.Width)));
-            curH = Math.Max(1, Math.Round(Value("Height", drawing.Height)));
+            // Seçim yoksa field değerlerini kullan; görüntü sınırlarını aşmasın
+            curW = Math.Clamp(Math.Round(Value("Width", drawing.Width)), 1, Math.Max(1, drawing.Width));
+            curH = Math.Clamp(Math.Round(Value("Height", drawing.Height)), 1, Math.Max(1, drawing.Height));
             curX = 0;
             curY = 0;
         }
