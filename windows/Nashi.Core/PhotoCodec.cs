@@ -105,6 +105,8 @@ public static class PhotoCodec
     /// Vignette instead faded the edges to the white background colour and painted over transparency.
     private static void Vignette(MagickImage image,double intensity)
     {
+        // The loop reads three colour channels; make that hold for any input, not only after Adjust's grey expansion.
+        if(image.ColorSpace!=ColorSpace.sRGB)image.ColorSpace=ColorSpace.sRGB;
         var linear=new double[256];for(var i=0;i<256;i++){var c=i/255d;linear[i]=c<=.04045?c/12.92:Math.Pow((c+.055)/1.055,2.4);}
         var srgb=new byte[65536];for(var i=0;i<srgb.Length;i++){var c=i/65535d;srgb[i]=(byte)Math.Round(255*(c<=.0031308?c*12.92:1.055*Math.Pow(c,1/2.4)-.055));}
         var width=(int)image.Width;var height=(int)image.Height;var channels=(int)image.ChannelCount;var radius=Math.Min(width,height)/2d;
