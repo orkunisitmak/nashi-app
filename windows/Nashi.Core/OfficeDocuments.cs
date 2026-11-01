@@ -29,13 +29,22 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
             try
             {
                 var success = await Task.Run(() => MicrosoftOffice.TryConvert(original, format, destination, limit.Token), limit.Token);
+                limit.Token.ThrowIfCancellationRequested();
                 if (success && File.Exists(destination) && new FileInfo(destination).Length > 0)
                 {
                     return destination;
                 }
+                if (File.Exists(destination))
+                {
+                    try { File.Delete(destination); } catch { }
+                }
             }
             catch (OperationCanceledException) when (!token.IsCancellationRequested)
             {
+                if (File.Exists(destination))
+                {
+                    try { File.Delete(destination); } catch { }
+                }
                 throw new TimeoutException(TimeoutMessage);
             }
         }
