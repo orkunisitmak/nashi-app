@@ -33,6 +33,23 @@ public sealed partial class OfficeDocuments
         var indent=Child(e,"ind");foreach(var (name,key) in new[]{("left","leftIndent"),("right","rightIndent"),("firstLine","firstLineIndent")})if(Num(indent,name) is {} value)d[key]=value/20;if(Num(indent,"hanging") is {} hanging)d["firstLineIndent"]=-hanging/20;
         foreach(var (name,key) in new[]{("keepNext","keepWithNext"),("keepLines","keepLinesTogether"),("pageBreakBefore","pageBreakBefore"),("widowControl","widowControl")})if(Child(e,name) is {} p)d[key]=Attr(p,"val") is not ("0" or "false" or "off");return d;
     }
+    // Plain text of a cell paragraph or a header part, as on the Mac: tabs, line breaks, non-breaking hyphens and paragraph
+    // boundaries are kept, and property blocks (tab stop definitions) are not text. The XML depth limit bounds the recursion.
+    private static string PlainText(XElement element)
+    {
+        var output=new System.Text.StringBuilder();
+        void Visit(XElement item)
+        {
+            switch(item.Name.LocalName)
+            {
+                case "t":output.Append(item.Value);break;case "tab":output.Append('\t');break;case "noBreakHyphen":output.Append('\u2011');break;case "br" or "cr":output.Append('\n');break;case "pPr" or "rPr":break;
+                default:if(item.Name.LocalName=="p"&&output.Length>0)output.Append('\n');foreach(var child in item.Elements())Visit(child);break;
+            }
+        }
+        Visit(element);return output.ToString();
+    }
+    // A Pages cell cannot hold a table, so a nested table keeps its text as lines of tab-separated cells (up to 32 levels deep).
+    private static string CellText(XElement cell,int depth=0)=>string.Join("\n",Blocks(cell).Select(child=>child.Name.LocalName=="p"?PlainText(child):child.Name.LocalName=="tbl"&&depth<32?string.Join("\n",child.Elements().Where(r=>r.Name.LocalName=="tr").Select(r=>string.Join("\t",r.Elements().Where(c=>c.Name.LocalName=="tc").Select(c=>CellText(c,depth+1))))):null).OfType<string>());
     public static object ReadDocx(string path)
     {
         using var zip=ZipFile.OpenRead(path);if(zip.Entries.Count>10000||zip.Entries.Sum(e=>e.Length)>512_000_000||zip.Entries.GroupBy(e=>e.FullName,StringComparer.OrdinalIgnoreCase).Any(g=>g.Count()>1))throw new InvalidDataException("The document package is too large or contains duplicate entries.");
@@ -84,7 +101,7 @@ public sealed partial class OfficeDocuments
                     if(int.TryParse(Attr(Child(Child(row,"trPr"),"gridBefore"),"val"),NumberStyles.AllowLeadingSign,CultureInfo.InvariantCulture,out var skipped)&&skipped>0){if(skipped>1024)throw new InvalidDataException("A table cell span is invalid or exceeds 1,024 columns.");column=skipped;for(var n=0;n<skipped;n++)cells.Add(new{text=""});}
                     foreach(var cell in row.Elements().Where(e=>e.Name.LocalName=="tc"))
                     {
-                        var props=Child(cell,"tcPr");var raw=Num(Child(props,"gridSpan"),"val");var span=raw is null?1:checked((int)raw.Value);if(span is <1 or >1024||column>1024-span)throw new InvalidDataException("A table cell span is invalid or exceeds 1,024 columns.");var text=string.Join("\n",Blocks(cell).Where(p=>p.Name.LocalName=="p").Select(p=>string.Concat(p.Descendants().Where(e=>e.Name.LocalName=="t").Select(t=>t.Value))));cells.Add(new{text});for(var n=1;n<span;n++)cells.Add(new{text=""});
+                        var props=Child(cell,"tcPr");var raw=Num(Child(props,"gridSpan"),"val");var span=raw is null?1:checked((int)raw.Value);if(span is <1 or >1024||column>1024-span)throw new InvalidDataException("A table cell span is invalid or exceeds 1,024 columns.");var text=CellText(cell);cells.Add(new{text});for(var n=1;n<span;n++)cells.Add(new{text=""});
                         var vm=Child(props,"vMerge");var hm=vm is null?Child(props,"hMerge"):null;var extends=false;var joins=false;
                         if(vm is not null){if(Attr(vm,"val")=="restart")continued[column]=(rowIndex,span);else if(vertical.TryGetValue(column,out var origin)&&origin.Span==span){continued[column]=origin;extends=true;var merged=merges.FirstOrDefault(m=>m["row"]==origin.Row&&m["column"]==column);if(merged is null){merged=new(){{"row",origin.Row},{"column",column},{"rowCount",1},{"columnCount",origin.Span}};merges.Add(merged);}merged["rowCount"]=rowIndex-origin.Row+1;}}
                         if(hm is null)anchor=null;else if(Attr(hm,"val")=="restart")anchor=column;else if(anchor is {} start){joins=true;var merged=merges.FirstOrDefault(m=>m["row"]==rowIndex&&m["column"]==start);if(merged is null){merged=new(){{"row",rowIndex},{"column",start},{"rowCount",1},{"columnCount",1}};merges.Add(merged);}merged["columnCount"]=column+span-start;}
@@ -98,7 +115,7 @@ public sealed partial class OfficeDocuments
         var blocks=Blocks(body).Select(Block).OfType<object>().SelectMany(b=>b as object[]??[b]).ToArray();var model=new Dictionary<string,object?>{{"blocks",blocks}};var section=Child(body,"sectPr");if(section is not null)
         {
             var setup=new Dictionary<string,object?>();foreach(var (name,key) in new[]{("w","pageWidth"),("h","pageHeight")})if(Num(Child(section,"pgSz"),name) is {} size)setup[key]=size/20;foreach(var (name,key) in new[]{("left","leftMargin"),("right","rightMargin"),("top","topMargin"),("bottom","bottomMargin")})if(Num(Child(section,"pgMar"),name) is {} size)setup[key]=size/20;model["pageSetup"]=setup;
-            foreach(var (name,key) in new[]{("headerReference","header"),("footerReference","footer")})if(Attr(Child(section,name),"id") is {} id&&rels.TryGetValue(id,out var target)&&Local(target) is {} local&&zip.GetEntry(local) is not null)model[key]=string.Concat(Xml(zip,local).Descendants().Where(e=>e.Name.LocalName=="t").Select(e=>e.Value));
+            foreach(var (name,key) in new[]{("headerReference","header"),("footerReference","footer")})if(Attr(Child(section,name),"id") is {} id&&rels.TryGetValue(id,out var target)&&Local(target) is {} local&&zip.GetEntry(local) is not null)model[key]=PlainText(Xml(zip,local).Root!);
         }return model;
     }
     // Stands for a w:br w:type="page" in a paragraph's runs until the paragraph is split there.
