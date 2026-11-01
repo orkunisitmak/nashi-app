@@ -205,7 +205,8 @@ public enum WebDownloadEngine {
         if mime.hasPrefix("image/") { return .image }
         if mime.hasPrefix("video/") { return .video }
         if mime.hasPrefix("audio/") { return .audio }
-        guard mime.isEmpty || mime=="application/octet-stream" else { return nil }
+        // Amazon S3's default for untyped uploads is binary/octet-stream.
+        guard mime.isEmpty || mime=="application/octet-stream" || mime=="binary/octet-stream" else { return nil }
         if ["png","jpg","jpeg","webp","heic","heif","avif","bmp","tif","tiff"].contains(ext) { return .image }
         if ["mp4","mov","webm","mkv","m4v","gif"].contains(ext) { return .video }
         if ["mp3","m4a","wav","flac","ogg","opus","aac","aiff"].contains(ext) { return .audio }

@@ -265,7 +265,8 @@ struct ToolEditor:View {
     }
     var compressionControls:some View {
         VStack(alignment:.leading,spacing:18) {
-            if let input,let size=try? input.resourceValues(forKeys:[.fileSizeKey]).fileSize { LText("Original size: \(Int64(size).formatted(.byteCount(style:.file).locale(locale)))").fontWeight(.semibold) }
+            // A symlink's own size is a few bytes; show the size of the file it points to.
+            if let input,let size=try? input.resolvingSymlinksInPath().resourceValues(forKeys:[.fileSizeKey]).fileSize { LText("Original size: \(Int64(size).formatted(.byteCount(style:.file).locale(locale)))").fontWeight(.semibold) }
             Text("Compression preset").font(.headline)
             Picker("Preset",selection:$preset) { Text("Balanced").tag("Balanced");Text("Strong").tag("Strong") }.pickerStyle(.segmented).labelsHidden()
             Text(preset=="Balanced" ? "Smaller files with less quality loss.":"Smaller files with stronger compression.").foregroundStyle(.secondary).font(.callout)
@@ -544,7 +545,8 @@ struct ToolEditor:View {
     var playbackDuration:Double { if processedPlayback,let processedDuration { return processedDuration };return tool == .audioToVideo && visualizationReady ? min(duration,12):duration }
     var activeVideoRegions:Set<Int> { options.redactionMode == "blur" ? []:Set(options.videoRedactions.enumerated().filter{playhead >= $0.element.start && playhead < ($0.element.end ?? duration)}.map{$0.offset}) }
     var compressionResultText:String {
-        func bytes(_ urls:[URL])->Int64 { urls.reduce(0) { $0+((try? FileManager.default.attributesOfItem(atPath:$1.path)[.size] as? NSNumber)?.int64Value ?? 0) } }
+        // Symlinked inputs count as the files they point to, not as the links.
+        func bytes(_ urls:[URL])->Int64 { urls.reduce(0) { $0+((try? FileManager.default.attributesOfItem(atPath:$1.resolvingSymlinksInPath().path)[.size] as? NSNumber)?.int64Value ?? 0) } }
         let before=bytes(inputs),after=bytes(state.outputs)
         if before==after { return "Already optimized. Original quality retained." }
         let size=after.formatted(.byteCount(style:.file).locale(locale))
@@ -650,6 +652,8 @@ struct ToolEditor:View {
         if width>0 { applied.width=width };if height>0 { applied.height=height }
         if [.cropImage,.cropVideo].contains(tool),var crop=applied.crop { crop.width=Double(width);crop.height=Double(height);applied.crop=crop }
         if tool == .cropImage { applied.width=nil;applied.height=nil }
+        // The size fields hold the first file's dimensions; keeping originals must not resize the other files to them.
+        if tool == .compress,category != .image || compressionSize == "original" { applied.width=nil;applied.height=nil }
         if tool == .compress {
             applied.quality=preset=="Balanced" ? 0.8:0.45
             if targetEnabled {

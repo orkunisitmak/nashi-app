@@ -26,6 +26,7 @@ internal static class SmokeTests
         var testTools=ParitySmokeTests.Tools(root);
         void Check(bool value,string reason){if(!value)throw new Exception(reason);checks++;}
         TrayIconRecoveryChecks.Run(Check);
+        ShellShortcutChecks.Run(root,Check);
         EditorReliabilityChecks.Run(root,Check);
         InteractionChecks.Run(root,Check);
         var visual=new DrawingVisual();using(var dc=visual.RenderOpen()){dc.DrawRectangle(Brushes.DarkOliveGreen,null,new Rect(0,0,320,180));dc.DrawRectangle(Brushes.Gold,null,new Rect(20,20,120,80));}

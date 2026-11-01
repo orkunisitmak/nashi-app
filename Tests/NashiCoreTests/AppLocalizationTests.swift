@@ -1,4 +1,6 @@
 import XCTest
+import CoreGraphics
+import PDFKit
 @testable import NashiCore
 
 final class AppLocalizationTests:XCTestCase {
@@ -70,6 +72,13 @@ final class AppLocalizationTests:XCTestCase {
         XCTAssertTrue(AppLocalization.matches("Crop Image",query:"recadrer",language:"fr"))
         for code in ["png","MP4","Ctrl+Shift","⌘S","00:01.250"] { XCTAssertEqual(AppLocalization.text(code,language:"fr"),code) }
     }
+    func testQRFoundCountUsesFrenchSingularForZeroAndOne() {
+        XCTAssertEqual(AppLocalization.text("0 found",language:"fr"),"0 trouvé")
+        XCTAssertEqual(AppLocalization.text("1 found",language:"fr"),"1 trouvé")
+        XCTAssertEqual(AppLocalization.text("2 found",language:"fr"),"2 trouvés")
+        XCTAssertEqual(AppLocalization.text("1 found",language:"tr"),"1 bulundu")
+        XCTAssertEqual(AppLocalization.text("12 found",language:"tr"),"12 bulundu")
+    }
     /// Literals from Wheel.swift: the web-link petals and the empty-wheel centre (with the configured shortcut symbols).
     func testWheelWebPetalsAndEmptyWheelAreTranslated() {
         let petals=["Download photos…","Download video…","Download image…","Download…","Download thumbnail…","Audio MP3…","Copy link"]
@@ -87,5 +96,55 @@ final class AppLocalizationTests:XCTestCase {
         XCTAssertEqual(AppLocalization.text("2 selected",language:"fr"),"2 sélectionnés")
         XCTAssertEqual(AppLocalization.text("1 selected",language:"tr"),"1 seçili")
         XCTAssertEqual(AppLocalization.text("1 selected",language:"en"),"1 selected")
+    }
+    /// Crop and redact batches report "<file name>: <message>". The message is translated; the file name, even one
+    /// that contains ": " followed by catalogued copy, stays exactly as it is.
+    func testFilePrefixedBatchErrorsTranslateOnlyTheMessage() throws {
+        let directory=FileManager.default.temporaryDirectory.appendingPathComponent("nashi-l10n-\(UUID().uuidString)",isDirectory:true)
+        try FileManager.default.createDirectory(at:directory,withIntermediateDirectories:true)
+        defer { try? FileManager.default.removeItem(at:directory) }
+        func image(_ width:Int,_ height:Int) -> CGImage {
+            let context=CGContext(data:nil,width:width,height:height,bitsPerComponent:8,bytesPerRow:0,space:CGColorSpace(name:CGColorSpace.sRGB)!,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue)!
+            context.setFillColor(CGColor(red:0.9,green:0.5,blue:0.1,alpha:1));context.fill(CGRect(x:0,y:0,width:width,height:height));return context.makeImage()!
+        }
+        let large=directory.appendingPathComponent("Large.png"),small=directory.appendingPathComponent("Scan.png: Preview unavailable: köşe.png")
+        try ImageEngine.write(image(400,300),to:large);try ImageEngine.write(image(40,25),to:small)
+        var options=OperationOptions();options.crop=EditRect(x:0,y:0,width:200,height:150);options.outputDirectory=directory
+        XCTAssertThrowsError(try ConversionEngine.run(.init(inputs:[large,small],operation:.tool(.cropImage),options:options))) { error in
+            let message=error.localizedDescription,name=small.lastPathComponent
+            XCTAssertEqual(message,name+": The crop rectangle must fit completely inside the 40 × 25 pixel image.")
+            XCTAssertEqual(AppLocalization.text(message,language:"tr"),name+": Kırpma alanı 40 × 25 piksellik görselin tamamen içinde kalmalı.")
+            XCTAssertEqual(AppLocalization.text(message,language:"fr"),name+"\u{00A0}: Le rectangle de recadrage doit tenir entièrement dans l’image de 40 × 25 pixels.")
+            XCTAssertEqual(AppLocalization.text(message,language:"en"),message)
+        }
+        XCTAssertEqual(AppLocalization.text("Report: v2.png: Choose an image.",language:"tr"),"Report: v2.png: Bir görsel seç.")
+        // An untranslated message leaves everything, including copy inside the file name, unchanged.
+        let untranslated="Scan.png: Preview unavailable: köşe.png: Could not resize image."
+        XCTAssertEqual(AppLocalization.text(untranslated,language:"tr"),untranslated)
+        // Without a file extension before ": ", or with more than a catalog message after it, nothing changes.
+        for source in ["Output: Choose an image.","Version 1.2: Choose an image.","photo.png: Choose an image. Again"] {
+            XCTAssertEqual(AppLocalization.text(source,language:"tr"),source)
+        }
+    }
+    /// A batch reports "File <i> of <n> · <status>". Both the prefix and the status are translated; a status without a
+    /// translation stays as it is.
+    func testBatchStatusTranslatesPrefixAndStatus() throws {
+        let directory=FileManager.default.temporaryDirectory.appendingPathComponent("nashi-l10n-\(UUID().uuidString)",isDirectory:true)
+        try FileManager.default.createDirectory(at:directory,withIntermediateDirectories:true)
+        defer { try? FileManager.default.removeItem(at:directory) }
+        let inputs=["a.pdf","b.pdf"].map { directory.appendingPathComponent($0) }
+        for input in inputs { let document=PDFDocument();document.insert(PDFPage(),at:0);XCTAssertTrue(document.write(to:input)) }
+        var options=OperationOptions();options.outputDirectory=directory
+        var labels:[String]=[]
+        _=try ConversionEngine.run(.init(inputs:inputs,operation:.tool(.removeMetadata),options:options)) { _,label in labels.append(label) }
+        XCTAssertTrue(labels.contains("File 2 of 2 · Remove Metadata"),"\(labels)")
+        XCTAssertEqual(AppLocalization.text("File 2 of 2 · Remove Metadata",language:"tr"),"Dosya 2/2 · Meta Verileri Kaldır")
+        XCTAssertEqual(AppLocalization.text("File 2 of 2 · Remove Metadata",language:"fr"),"Fichier 2 sur 2 · Supprimer les métadonnées")
+        XCTAssertEqual(AppLocalization.text("File 12 of 30 · Split PDF",language:"tr"),"Dosya 12/30 · PDF'yi Böl")
+        XCTAssertEqual(AppLocalization.text("File 2 of 2 · Remove Metadata",language:"en"),"File 2 of 2 · Remove Metadata")
+        XCTAssertEqual(AppLocalization.text("File 1 of 2 · Notes · v2… köşe.srt",language:"tr"),"Dosya 1/2 · Notes · v2… köşe.srt")
+        for source in ["Profile 1 of 2 · Split PDF","File one of 2 · Split PDF","report.pdf: File 1 of 2 · Split PDF"] {
+            XCTAssertEqual(AppLocalization.text(source,language:"tr"),source)
+        }
     }
 }

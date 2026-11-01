@@ -35,8 +35,17 @@ public static class ProcessRunner
         await process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
         var results = await Task.WhenAll(stdout, stderr).ConfigureAwait(false);
         token.ThrowIfCancellationRequested();
-        if (process.ExitCode != 0) throw new IOException(string.IsNullOrWhiteSpace(results[1]) ? "The processing tool failed." : results[1][Math.Max(0, results[1].Length - 6000)..].Trim());
+        if (process.ExitCode != 0) throw new IOException(string.IsNullOrWhiteSpace(results[1]) ? "The processing tool failed." : ErrorTail(results[1]));
         return new(results[0], results[1]);
+    }
+
+    // The last 6,000 characters of a tool's error output, starting at a whole line as the Mac keeps yt-dlp's details: a cut line
+    // can be a progress fragment or the end of a signed link. Without a later line break the character cut stays.
+    private static string ErrorTail(string error)
+    {
+        var cut = Math.Max(0, error.Length - 6000);
+        if (cut > 0 && error[cut - 1] != '\n' && error.IndexOf('\n', cut) is var newline and >= 0 && !string.IsNullOrWhiteSpace(error[(newline + 1)..])) cut = newline + 1;
+        return error[cut..].Trim();
     }
 
     private static async Task<string> DrainAsync(StreamReader stream, Action<string>? onLine)

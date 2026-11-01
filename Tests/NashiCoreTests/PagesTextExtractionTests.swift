@@ -35,6 +35,24 @@ final class PagesTextExtractionTests: XCTestCase {
         XCTAssertEqual(model["header"] as? String, "Company\nConfidential")
     }
 
+    // F1543
+    func testDefaultHeaderAndFooterVariantsAreUsed() throws {
+        let references = "<w:headerReference w:type=\"even\" r:id=\"hE\"/><w:headerReference w:type=\"default\" r:id=\"hD\"/><w:footerReference w:type=\"even\" r:id=\"fE\"/><w:footerReference w:type=\"default\" r:id=\"fD\"/><w:headerReference w:type=\"first\" r:id=\"hF\"/>"
+        let parts = ["hE": ("hdr", paragraph("Even header")), "hD": ("hdr", paragraph("Default header")), "hF": ("hdr", paragraph("First header")), "fE": ("ftr", paragraph("Even footer")), "fD": ("ftr", paragraph("Default footer"))]
+        // A table selects the Pages template that has a section master for headers.
+        let model = try convert(body: paragraph("Body") + "<w:tbl><w:tr><w:tc>\(paragraph("c"))</w:tc></w:tr></w:tbl>", sections: references, parts: parts)
+        XCTAssertEqual(model["header"] as? String, "Default header")
+        XCTAssertEqual(model["footer"] as? String, "Default footer")
+    }
+
+    // F1544
+    func testNonBreakingHyphenIsKeptInParagraphsAndCells() throws {
+        let number = "<w:r><w:t>555</w:t><w:noBreakHyphen/><w:t>0100</w:t></w:r>"
+        let model = try convert(body: "<w:p>\(number)</w:p><w:tbl><w:tr><w:tc><w:p>\(number)</w:p></w:tc></w:tr></w:tbl>")
+        XCTAssertEqual(paragraphTexts(model), ["555\u{2011}0100"])
+        XCTAssertEqual(cellTexts(model), ["555\u{2011}0100"])
+    }
+
     private func run(_ text: String) -> String { "<w:r><w:t xml:space=\"preserve\">\(text)</w:t></w:r>" }
     private func paragraph(_ text: String) -> String { "<w:p>\(run(text))</w:p>" }
 

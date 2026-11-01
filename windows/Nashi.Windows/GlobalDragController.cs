@@ -78,7 +78,7 @@ internal sealed class GlobalDropWheel:Window
     private const double HiddenOpacity=.02;
     internal bool Revealed{get;private set;}
     private void Reveal(){if(Revealed)return;Revealed=true;foreach(var label in canvas.Children.OfType<Border>())label.Visibility=Visibility.Visible;WheelPresentation.Animate(this,HiddenOpacity);if(Opacity<1&&!HasAnimatedProperties)Opacity=1;}
-    private readonly string mode;private readonly Action<IDataObject,string> chosen;private readonly Func<string?> hint;private readonly Canvas canvas=new(){Width=540,Height=540,Background=Brushes.Transparent,AllowDrop=true};private string selection="";private IReadOnlyList<ToolChoice> choices=[];
+    private readonly string mode;private readonly Action<IDataObject,string> chosen;private readonly Func<string?> hint;private readonly Canvas canvas=new(){Width=540,Height=540,Background=Brushes.Transparent,AllowDrop=true};private string selection="";private IReadOnlyList<ToolChoice> choices=[];private string[] draggedFiles=[],resolvedFiles=[];
     public GlobalDropWheel(string mode,double scale,Action<IDataObject,string> chosen,Func<string?> hint)
     {
         this.mode=mode;this.chosen=chosen;this.hint=hint;Title="Nashi · "+mode;Width=Height=WheelPresentation.Diameter*scale;WindowStyle=WindowStyle.None;AllowsTransparency=true;Background=Brushes.Transparent;ResizeMode=ResizeMode.NoResize;ShowInTaskbar=false;ShowActivated=false;Topmost=true;AllowDrop=true;Content=new Viewbox{Child=canvas};Build([]);Opacity=HiddenOpacity;
@@ -90,7 +90,9 @@ internal sealed class GlobalDropWheel:Window
     }
     private void Track(DragEventArgs e)
     {
-        var files=e.Data.GetData(DataFormats.FileDrop) as string[]??[];var updated=Choices(files,DragPayload.Parse(e.Data),Payload(e.Data));
+        // DragOver fires on every pointer move, so shortcuts are only resolved when the dragged files change.
+        var dragged=e.Data.GetData(DataFormats.FileDrop) as string[]??[];if(!dragged.SequenceEqual(draggedFiles)){draggedFiles=dragged;resolvedFiles=ShellShortcut.Resolve(dragged);}
+        var files=resolvedFiles;var updated=Choices(files,DragPayload.Parse(e.Data),Payload(e.Data));
         // Replacing the hit-test target during DragEnter causes OLE to enter
         // again instead of advancing to DragOver. Keep the visual tree stable
         // until the payload actually changes, and select on entry as well.

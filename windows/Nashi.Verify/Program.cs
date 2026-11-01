@@ -111,6 +111,10 @@ if(Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG") is {} encoder && En
     var directory=Path.Combine(Path.GetTempPath(),"Nashi-Media-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(directory);
     try
     {
+        // A failing tool's message keeps its last 6,000 characters from a whole line, as the Mac trims yt-dlp details:
+        // ashowinfo writes ~8.7 KB of "[Parsed_ashowinfo_0 @ …]" lines before the empty output aborts.
+        try{await ProcessRunner.RunAsync(encoder,["-hide_banner","-nostdin","-f","lavfi","-i","sine=d=1","-af","ashowinfo,aselect=0","-abort_on","empty_output","-f","null","-"]);throw new Exception("An empty FFmpeg output did not fail");}
+        catch(IOException error){Check(error.Message.StartsWith("[Parsed_ashowinfo_0 @",StringComparison.Ordinal)&&error.Message.Length<=6000&&error.Message.EndsWith("Conversion failed!",StringComparison.Ordinal),"A tool error message started in the middle of a line: "+error.Message[..Math.Min(80,error.Message.Length)]);}
         var source=Path.Combine(directory,"Source ' $().mp4");
         await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","testsrc2=size=128x72:rate=12:duration=2","-f","lavfi","-i","sine=duration=2:sample_rate=48000","-c:v","libx264","-c:a","aac",source]);
         var original=System.Security.Cryptography.SHA256.HashData(await File.ReadAllBytesAsync(source));
@@ -123,6 +127,10 @@ if(Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG") is {} encoder && En
             Check(paddedInfo.Video is {Width:98,Height:66}&&paddedInfo.Duration>0,"Odd video dimensions could not convert to "+format);
         }
         Check((await engine.InspectAsync(odd)).Video is {Width:97,Height:65},"Odd-dimension conversion changed the source");
+        // iPhones store location, make, model and capture date as QuickTime keys, which the MP4 and MOV muxer writes only when asked to.
+        var iphone=Path.Combine(directory,"IMG_0001.MOV");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","testsrc2=size=128x72:rate=12:duration=0.5","-c:v","libx264","-movflags","use_metadata_tags","-metadata","com.apple.quicktime.location.ISO6709=+35.6895+139.6917+040.000/","-metadata","com.apple.quicktime.make=Apple","-metadata","com.apple.quicktime.model=iPhone 15","-metadata","com.apple.quicktime.creationdate=2026-10-31T12:00:00+0900",iphone]);Check((await FileTags(iphone)).GetValueOrDefault("com.apple.quicktime.model")=="iPhone 15","iPhone fixture lacks its QuickTime keys");
+        foreach(var (iphoneFormat,iphoneKeep) in new[]{("mp4",true),("mov",true),("m4v",true),("mkv",true),("mp4",false),("mov",false)})
+        {var iphoneTags=await FileTags((await engine.ConvertAsync([iphone],iphoneFormat,directory,new(){PreserveMetadata=iphoneKeep}))[0]);Check(new[]{("location.ISO6709","+35.6895+139.6917+040.000/"),("make","Apple"),("model","iPhone 15"),("creationdate","2026-10-31T12:00:00+0900")}.All(t=>iphoneTags.GetValueOrDefault("com.apple.quicktime."+t.Item1)==(iphoneKeep?t.Item2:null)),$"An iPhone video converted to {iphoneFormat} with metadata {(iphoneKeep?"kept":"off")} has {string.Join(", ",iphoneTags.Select(t=>t.Key+"="+t.Value))}");}
         var reporter=new InlineProgress(p=>progress.Add(p));
         Check(Math.Abs((await engine.InspectAsync(source)).Video!.FrameRate-12)<.001,"Frame-by-frame preview lost actual source FPS");
         var trimmed=await engine.ToolAsync("trimVideo",[source],directory,new(){Start=.25,End=1.25},reporter);
@@ -130,13 +138,46 @@ if(Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG") is {} encoder && En
         Check((await engine.ToolAsync("trimVideo",[source],directory,new(){Start=1.1,End=1.15},reporter)).Count==1,"A 50 ms trim was refused by floating-point rounding");
         Check(progress.Any(p=>p.Fraction>0&&p.Fraction<.98),"No live media progress");
         var audio=await engine.ConvertAsync([source],"mp3",directory,new());Check((await engine.InspectAsync(audio[0])).HasAudio,"Audio conversion failed");
+        // FileInfo sizes a symbolic link itself (its path's length here); percentage targets come from the media it points to (as on macOS).
+        var linkedSizeFolder=Path.Combine(directory,"Linked size");Directory.CreateDirectory(linkedSizeFolder);var linkedSizeSong=Path.Combine(linkedSizeFolder,"Linked song.mp3");var linkedSizeLinked=true;
+        // Windows accounts without Developer Mode or elevation cannot create symbolic links.
+        try{File.CreateSymbolicLink(linkedSizeSong,audio[0]);}catch(Exception e)when(OperatingSystem.IsWindows()&&e is UnauthorizedAccessException or IOException){linkedSizeLinked=false;Console.Error.WriteLine("Skipping symbolic link media checks: this account cannot create symbolic links.");}
+        if(linkedSizeLinked)
+        {
+            var linkedSizeMissing=Path.Combine(linkedSizeFolder,"Missing song.mp3");File.CreateSymbolicLink(linkedSizeMissing,Path.Combine(directory,"No such song.mp3"));
+            var linkedSizeInfo=await engine.InspectAsync(linkedSizeSong);Check(linkedSizeInfo.Bytes==new FileInfo(audio[0]).Length,$"Inspect sized a symbolic link as {linkedSizeInfo.Bytes} bytes instead of the linked file's {new FileInfo(audio[0]).Length}");
+            var linkedSizeCompressed=await engine.ToolAsync("compress",[linkedSizeSong],directory,new(){ReductionPercent=30});Check(Path.GetFileName(linkedSizeCompressed[0])=="Linked song Compressed.m4a"&&new FileInfo(linkedSizeCompressed[0]).Length<=new FileInfo(audio[0]).Length*.7,"Compress by percentage failed for a symbolic link");
+            var linkedSizeFolderLink=Path.Combine(linkedSizeFolder,"Folder.mp3");Directory.CreateSymbolicLink(linkedSizeFolderLink,directory);
+            foreach(var linkedSizeRefused in new[]{linkedSizeMissing,linkedSizeFolderLink}){try{await engine.InspectAsync(linkedSizeRefused);throw new Exception("A dangling or folder symbolic link was inspected: "+linkedSizeRefused);}catch(IOException){checks++;}}
+        }
         var deep=await engine.ConvertAsync([source],"wav",directory,new(){SampleDepth="pcm24"});var matched=await engine.ConvertAsync(deep,"aiff",directory,new());Check((await engine.InspectAsync(matched[0])).Streams.First(s=>s.Kind=="audio").Bits==24,"Match source reduced 24-bit audio");
         var floating=await engine.ConvertAsync([source],"wav",directory,new(){SampleDepth="float32"});var floatMatch=await engine.ConvertAsync(floating,"aiff",directory,new());Check((await engine.InspectAsync(floatMatch[0])).Streams.First(s=>s.Kind=="audio").Codec=="pcm_f32be","Match source lost floating point audio");
+        // Album art is an attached picture stream, not a tag; MP3, M4A and FLAC store JPEG and PNG art.
+        foreach(var (artName,artCodec,artEncoder) in new[]{("Art mp3.mp3","mjpeg","libmp3lame"),("Art flac.flac","png","flac"),("Art m4a.m4a","mjpeg","aac")})
+        {
+            var artSource=Path.Combine(directory,artName);var artImage=Path.Combine(directory,"Art."+(artCodec=="png"?"png":"jpg"));if(!File.Exists(artImage))await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","color=c=red:s=64x64","-frames:v","1",artImage]);
+            await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","sine=duration=1:sample_rate=48000","-i",artImage,"-map","0","-map","1","-c:a",artEncoder,"-c:v","copy","-disposition:v","attached_pic",artSource]);
+            Check((await engine.InspectAsync(artSource)).Streams.Count(s=>s.AttachedPicture&&s.Codec==artCodec)==1,artName+" fixture lacks its picture");
+            foreach(var artTarget in new[]{"mp3","m4a","flac"})
+            {
+                var kept=await engine.InspectAsync((await engine.ConvertAsync([artSource],artTarget,directory,new()))[0]);Check(kept.HasAudio&&kept.Streams.Count(s=>s.AttachedPicture&&s.Codec==artCodec)==1,artName+" lost its album art converting to "+artTarget);
+                var stripped=await engine.InspectAsync((await engine.ConvertAsync([artSource],artTarget,directory,new(){PreserveMetadata=false}))[0]);Check(stripped.HasAudio&&stripped.Streams.All(s=>s.Kind=="audio"),artName+" kept album art converting to "+artTarget+" with metadata off");
+            }
+            var artWave=await engine.InspectAsync((await engine.ConvertAsync([artSource],"wav",directory,new()))[0]);Check(artWave.Streams.All(s=>s.Kind=="audio"),"WAV conversion wrote a picture stream");
+        }
         var taggedAudio=await engine.ToolAsync("removeMetadata",audio,directory,new(){RemoveAllMetadata=false,Metadata=new(){{"title","Fixture title"},{"artist","Fixture artist"}}});
         async Task<Dictionary<string,string>> Tags(string file){var result=await ProcessRunner.RunAsync(probe,["-v","error","-show_format","-show_streams","-of","json",file]);using var doc=JsonDocument.Parse(result.Output);var tags=new Dictionary<string,string>(StringComparer.OrdinalIgnoreCase);if(doc.RootElement.GetProperty("format").TryGetProperty("tags",out var values))foreach(var p in values.EnumerateObject())tags[p.Name]=p.Value.ToString();if(doc.RootElement.TryGetProperty("streams",out var streams))foreach(var stream in streams.EnumerateArray())if(stream.TryGetProperty("tags",out values))foreach(var p in values.EnumerateObject())tags.TryAdd(p.Name,p.Value.ToString());return tags;}
         var writtenTags=await Tags(taggedAudio[0]);Check(writtenTags.GetValueOrDefault("title")=="Fixture title"&&writtenTags.GetValueOrDefault("artist")=="Fixture artist","MP3 metadata editing failed");var clearedTitle=await engine.ToolAsync("removeMetadata",taggedAudio,directory,new(){RemoveAllMetadata=false,Metadata=new(){{"title",""}}});Check(!(await Tags(clearedTitle[0])).ContainsKey("title")&&(await Tags(clearedTitle[0])).GetValueOrDefault("artist")=="Fixture artist","Clearing one media tag removed another");var clearedAll=await engine.ToolAsync("removeMetadata",taggedAudio,directory,new());Check(!(await Tags(clearedAll[0])).ContainsKey("title")&&!(await Tags(clearedAll[0])).ContainsKey("artist"),"Remove all media metadata retained user tags");
         async Task<string> AudioHash(string file)=>(await ProcessRunner.RunAsync(encoder,["-v","error","-i",file,"-map","0:a:0","-c:a","copy","-f","hash","-"])).Output;Check(await AudioHash(audio[0])==await AudioHash(taggedAudio[0]),"Media tag edit changed encoded audio");
         var muted=await engine.ToolAsync("muteVideo",[source],directory,new());Check(!(await engine.InspectAsync(muted[0])).HasAudio,"Mute retained audio");
+        // Black with white from column 62 and row 62. overlay rounds x and y down to even pixels in 4:2:0 video, so a patch cut at an odd position
+        // landed one pixel up and left and the selection's last column and row (62) stayed unredacted; column 63 lies outside the selection.
+        var oddOrigin=Path.Combine(directory,"Odd origin.mkv");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","color=black:s=128x96:r=12:d=1,drawbox=x=62:y=0:w=66:h=96:color=white:t=fill,drawbox=x=0:y=62:w=128:h=34:color=white:t=fill","-c:v","ffv1",oddOrigin]);
+        foreach(var oddMode in new[]{"blur","pixelate"})
+        {
+            var oddRedacted=(await engine.ToolAsync("redactVideo",[oddOrigin],directory,new(){Regions=[new(33,33,30,30)],RedactionMode=oddMode}))[0];
+            foreach(var (oddX,oddY,oddInside) in new[]{(62,40,true),(40,62,true),(63,40,false),(40,63,false)}){var oddPixel=$"{oddRedacted} {oddX}x{oddY}.gray";await ProcessRunner.RunAsync(encoder,["-v","error","-i",oddRedacted,"-frames:v","1","-vf",$"format=gray,crop=1:1:{oddX}:{oddY}","-f","rawvideo",oddPixel]);var oddValue=File.ReadAllBytes(oddPixel)[0];Check(oddInside?oddValue<160:oddValue>220,$"{oddMode} redaction at an odd position {(oddInside?"left":"changed")} pixel {oddX},{oddY} ({oddValue})");}
+        }
         var speed=await engine.ToolAsync("changeVideoSpeed",[source],directory,new(){Speed=2});Check((await engine.InspectAsync(speed[0])).Duration<1.3,"Speed duration is wrong");
         var crop=await engine.ToolAsync("cropVideo",[source],directory,new(){Regions=[new(0,0,64,40)]});var cropped=await engine.InspectAsync(crop[0]);Check(cropped.Video?.Width==64&&cropped.Video.Height==40,"Crop dimensions wrong");
         var capped=await engine.InspectAsync((await engine.ConvertAsync([source],"mp4",directory,new(){Height=720}))[0]);var shrunk=await engine.InspectAsync((await engine.ConvertAsync([source],"mp4",directory,new(){Height=48}))[0]);Check(capped.Video?.Width==128&&capped.Video.Height==72&&shrunk.Video?.Height==48,"Maximum video height upscaled a smaller video");
@@ -144,11 +185,27 @@ if(Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG") is {} encoder && En
         foreach(var clip in clips)Check((await engine.InspectAsync(clip)).Duration<1.25,"Split interval wrong");
         var sourceDuration=(await engine.InspectAsync(source)).Duration;var tail=await engine.ToolAsync("splitVideo",[source],directory,new(){SplitInterval=sourceDuration/2-.01});Check(tail.Count==2,"A sub-0.05 s interval remainder failed the split instead of joining the last clip");
         var joined=await engine.ToolAsync("joinVideos",clips,directory,new());Check((await engine.InspectAsync(joined[0])).Duration>1.8,"Join lost content");
+        // White 16:9 clips: DV stored at 720x480 with 32:27 pixels, then square 640x360. Both fit the 720x480 canvas as 720x405 between black bars;
+        // fitting the stored 3:2 frame and then setting square pixels stretched the DV clip over the whole canvas.
+        var joinDv=Path.Combine(directory,"Join DV.mp4");var joinPhone=Path.Combine(directory,"Join phone.mp4");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","color=white:s=720x480:r=25:d=1,setsar=32/27","-c:v","libx264","-pix_fmt","yuv420p",joinDv]);await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","color=white:s=640x360:r=25:d=1","-c:v","libx264","-pix_fmt","yuv420p",joinPhone]);
+        var joinedShapes=(await engine.ToolAsync("joinVideos",[joinDv,joinPhone],directory,new()))[0];Check((await ProcessRunner.RunAsync(probe,["-v","error","-select_streams","v:0","-show_entries","stream=width,height,sample_aspect_ratio","-of","csv=p=0",joinedShapes])).Output.Trim()=="720,480,1:1","Joined anamorphic video changed its canvas");
+        foreach(var (joinTime,joinY,joinBar) in new[]{("0.5",10,true),("0.5",240,false),("1.5",10,true),("1.5",240,false)}){var joinPixel=$"{joinedShapes} {joinTime} {joinY}.gray";await ProcessRunner.RunAsync(encoder,["-v","error","-ss",joinTime,"-i",joinedShapes,"-frames:v","1","-vf",$"format=gray,crop=1:1:360:{joinY}","-f","rawvideo",joinPixel]);var joinValue=File.ReadAllBytes(joinPixel)[0];Check(joinBar?joinValue<64:joinValue>192,$"Joined clip at {joinTime} s lost its 16:9 shape (row {joinY} is {joinValue})");}
+        // Live Matroska recordings carry no duration (inspected as 0); "-t 0" encoded an empty clip, so Join dropped them (as fixed on macOS).
+        var liveJoinSilent=Path.Combine(directory,"Live join silent.mkv");var liveJoinVoiced=Path.Combine(directory,"Live join voiced.mkv");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","testsrc2=size=128x72:rate=12:duration=2","-c:v","libx264","-live","1",liveJoinSilent]);await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","testsrc2=size=128x72:rate=12:duration=2","-f","lavfi","-i","sine=duration=2:sample_rate=48000","-c:v","libx264","-c:a","aac","-live","1",liveJoinVoiced]);
+        Check((await engine.InspectAsync(liveJoinSilent)).Duration==0&&(await engine.InspectAsync(liveJoinVoiced)).Duration==0,"Live Matroska fixtures reported a duration");
+        var liveJoined=(await engine.ToolAsync("joinVideos",[source,liveJoinSilent,liveJoinVoiced],directory,new()))[0];var liveJoinStreams=(await ProcessRunner.RunAsync(probe,["-v","error","-show_entries","stream=codec_type,duration","-of","csv=p=0",liveJoined])).Output.Split('\n',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries).Select(l=>l.Split(',')).ToDictionary(p=>p[0],p=>double.Parse(p[1],System.Globalization.CultureInfo.InvariantCulture));
+        Check(liveJoinStreams["video"]>5.8&&liveJoinStreams["audio"]>5.8&&liveJoinStreams["audio"]<6.3,FormattableString.Invariant($"Join dropped clips without a known duration or let their generated silence run on (video {liveJoinStreams["video"]} s, audio {liveJoinStreams["audio"]} s)"));
         var normalized=await engine.ToolAsync("normalizeAudio",audio,directory,new());var normalizedInfo=await engine.InspectAsync(normalized[0]);Check(normalizedInfo.HasAudio,"Normalization failed");
         // loudnorm runs at 192 kHz; PCM outputs keep that rate unless the source rate is requested (MP3 cannot exceed 48 kHz, so test WAV).
         var wav=await engine.ConvertAsync([source],"wav",directory,new());var normalizedWav=await engine.ToolAsync("normalizeAudio",wav,directory,new());
         var sourceRate=(await engine.InspectAsync(wav[0])).Audio?.SampleRate??0;var normalizedRate=(await engine.InspectAsync(normalizedWav[0])).Audio?.SampleRate??0;Check(sourceRate>0&&normalizedRate==sourceRate,$"Normalization changed the sample rate ({sourceRate} Hz → {normalizedRate} Hz)");
         var snapshots=await engine.ToolAsync("videoSnapshots",[source],directory,new(){SnapshotTimes=[0,1]});Check(snapshots.Count==2&&snapshots.All(File.Exists),"Snapshot output missing");
+        // Image viewers ignore a PNG pixel aspect, so frames of DV (32:27), NTSC 4:3 (8:9) and rotated HDV (4:3) videos are saved in their displayed shape, also at the end.
+        foreach(var (frameSize,frameSar,frameRotation,frameShape) in new[]{("720x480","32/27","0","853x480"),("720x480","8/9","0","640x480"),("1440x1080","4/3","90","810x1440")})
+        {
+            var frameSource=Path.Combine(directory,$"Frame source {frameSize} {frameSar.Replace('/',' ')}.mp4");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i",$"testsrc2=size={frameSize}:rate=12:duration=0.5,setsar={frameSar}","-c:v","libx264","-pix_fmt","yuv420p",frameSource+".mp4"]);await ProcessRunner.RunAsync(encoder,["-v","error","-display_rotation:v:0",frameRotation,"-i",frameSource+".mp4","-c","copy",frameSource]);
+            foreach(var frame in await engine.ToolAsync("videoSnapshots",[frameSource],directory,new(){SnapshotTimes=[.2,(await engine.InspectAsync(frameSource)).Duration]})){var frameInfo=(await engine.InspectAsync(frame)).Video;Check($"{frameInfo?.Width}x{frameInfo?.Height}"==frameShape,$"A frame of a {frameSize} video with {frameSar} pixels was saved at {frameInfo?.Width}x{frameInfo?.Height} instead of {frameShape}");}
+        }
         // The player shows the last frame from its start to the end, including an audio tail after the picture.
         var pictureEndsEarly=Path.Combine(directory,"Picture ends early.mp4");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","testsrc=size=128x96:rate=25:duration=2","-f","lavfi","-i","sine=duration=2.5:sample_rate=48000","-c:v","libx264","-pix_fmt","yuv420p","-c:a","aac",pictureEndsEarly]);
         // Matroska stores no video stream duration, so its end is found by decoding.
@@ -163,10 +220,37 @@ if(Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG") is {} encoder && En
             Check(endFrames.Count==(clip==pictureEndsEarlyAvi?3:5)&&File.ReadAllBytes(endFrames[0]).SequenceEqual(File.ReadAllBytes(middle))&&endFrames.Skip(1).All(f=>File.ReadAllBytes(f).SequenceEqual(lastBytes))&&!lastBytes.SequenceEqual(File.ReadAllBytes(middle)),"End-of-video snapshots did not show the last frame, or a mid-video snapshot moved ("+Path.GetExtension(clip)+")");
         }
         var bleeped=await engine.ToolAsync("redactAudio",audio,directory,new(){AudioRedactions=[new(.25,.75)]});Check((await engine.InspectAsync(bleeped[0])).HasAudio,"Bleep export failed");
+        // Fully transparent videos with a white stripe: overlay blends a blurred or pixelated patch by its alpha, so a patch that kept it showed the stripe.
+        foreach(var (alphaName,alphaCodec) in new[]{("Alpha qtrle.mov",new[]{"-c:v","qtrle"}),("Alpha ProRes 4444.mov",["-c:v","prores_ks","-profile:v","4444","-pix_fmt","yuva444p10le"]),("Alpha PNG.mov",["-c:v","png"]),("Alpha VP9.webm",["-c:v","libvpx-vp9","-pix_fmt","yuva420p"])})
+        {
+            var alphaSource=Path.Combine(directory,alphaName);await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","color=black:s=128x96:r=12:d=1,drawbox=x=60:y=0:w=8:h=96:color=white:t=fill,format=rgba,colorchannelmixer=aa=0",..alphaCodec,alphaSource]);
+            foreach(var alphaMode in new[]{"blur","pixelate"})
+            {var alphaRedacted=(await engine.ToolAsync("redactVideo",[alphaSource],directory,new(){Regions=[new(16,16,96,64)],RedactionMode=alphaMode}))[0];var alphaPixel=alphaRedacted+".gray";await ProcessRunner.RunAsync(encoder,["-v","error","-i",alphaRedacted,"-frames:v","1","-vf","format=gray,crop=1:1:63:48","-f","rawvideo",alphaPixel]);Check(File.ReadAllBytes(alphaPixel)[0]<128,$"{alphaName} {alphaMode} redaction left the original pixels visible ({File.ReadAllBytes(alphaPixel)[0]})");}
+        }
         var stereo=Path.Combine(directory,"Stereo.wav");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","sine=duration=1:sample_rate=48000","-ac","2",stereo]);var stereoBleep=await engine.ToolAsync("redactAudio",[stereo],directory,new(){AudioRedactions=[new(.25,.75)]});
         Check((await ProcessRunner.RunAsync(probe,["-v","error","-select_streams","a:0","-show_entries","stream=channels","-of","csv=p=0",stereoBleep[0]])).Output.Trim()=="2","Audio redaction downmixed a stereo file");
+        // FLAC and AC-3 surround decode as 5.1(side); libopus takes only Vorbis-order layouts and WMA at most two channels.
+        async Task<string> AudioLayout(string file)=>(await ProcessRunner.RunAsync(probe,["-v","error","-select_streams","a:0","-show_entries","stream=channels,channel_layout","-of","csv=p=0",file])).Output.Trim();
+        var surround=Path.Combine(directory,"Surround.mkv");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","testsrc2=size=128x72:rate=12:duration=1","-f","lavfi","-i","sine=duration=1:sample_rate=48000","-af","aformat=channel_layouts=5.1(side)","-c:v","libx264","-c:a","flac",surround]);Check(await AudioLayout(surround)=="6,5.1(side)","Surround fixture has another layout");
+        // ASF stores no channel layout, so WMA and WMV report only their two channels.
+        foreach(var (surroundFormat,layout) in new[]{("opus","6,5.1"),("webm","6,5.1"),("wma","2,unknown"),("wmv","2,unknown"),("flac","6,5.1(side)"),("mkv","6,5.1")})
+        {string? converted=null;try{converted=(await engine.ConvertAsync([surround],surroundFormat,directory,new()))[0];}catch(IOException){}Check(converted is not null&&await AudioLayout(converted)==layout,"5.1(side) audio did not convert to "+surroundFormat);}
+        var surroundOpus=Path.Combine(directory,"Surround source.opus");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","sine=duration=1:sample_rate=48000","-af","aformat=channel_layouts=5.1","-c:a","libopus",surroundOpus]);
+        foreach(var (surroundTool,surroundOptions,layout) in new (string,MediaOptions,string)[]{("trimAudio",new(){Start=.25,End=.75},"6,5.1"),("audioChannels",new(){Channels=2},"2,stereo"),("audioChannels",new(){Channels=1},"1,mono")})
+            Check(await AudioLayout((await engine.ToolAsync(surroundTool,[surroundOpus],directory,surroundOptions))[0])==layout,"Surround Opus "+surroundTool+" wrote the wrong channels");
+        // Edits re-encode WMV audio as two-channel WMA; copies and muted exports keep or drop it unchanged.
+        var surroundWmv=Path.Combine(directory,"Surround source.wmv");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","testsrc2=size=128x72:rate=12:duration=1","-f","lavfi","-i","sine=duration=1:sample_rate=48000","-af","aformat=channel_layouts=5.1(side)","-c:v","wmv2","-c:a","pcm_s16le",surroundWmv]);
+        foreach(var (surroundTool,surroundOptions,layout) in new (string,MediaOptions,string)[]{("trimVideo",new(){Start=.25,End=.75},"2,unknown"),("cropVideo",new(){Regions=[new(0,0,64,40)]},"2,unknown"),("changeVideoSpeed",new(){Speed=2},"2,unknown"),("redactVideo",new(){Regions=[new(0,0,32,32)]},"2,unknown"),("removeMetadata",new(),"6,5.1(side)"),("muteVideo",new(),"")})
+        {string? edited=null;try{edited=(await engine.ToolAsync(surroundTool,[surroundWmv],directory,surroundOptions))[0];}catch(IOException){}Check(edited is not null&&await AudioLayout(edited)==layout,"Surround WMV "+surroundTool+" failed or wrote the wrong channels");}
         var redacted=await engine.ToolAsync("redactVideo",[source],directory,new(){Regions=[new(0,0,32,32,.25,.75)],RedactionMode="blur"});Check((await engine.InspectAsync(redacted[0])).Video is not null,"Video redaction failed");
         var channels=await engine.ToolAsync("audioChannels",audio,directory,new(){Channels=1});Check((await engine.InspectAsync(channels[0])).HasAudio,"Channel export failed");
+        // Per-channel sample peaks of the first audio track, decoded to 32-bit float.
+        async Task<double[]> Peaks(string file){var count=int.Parse((await ProcessRunner.RunAsync(probe,["-v","error","-select_streams","a:0","-show_entries","stream=channels","-of","csv=p=0",file])).Output.Trim(),System.Globalization.CultureInfo.InvariantCulture);var raw=file+".f32";await ProcessRunner.RunAsync(encoder,["-v","error","-i",file,"-map","0:a:0","-c:a","pcm_f32le","-f","f32le",raw]);var bytes=await File.ReadAllBytesAsync(raw);File.Delete(raw);var peaks=new double[count];for(var n=0;n+4<=bytes.Length;n+=4)peaks[n/4%count]=Math.Max(peaks[n/4%count],Math.Abs(BitConverter.ToSingle(bytes,n)));return peaks;}
+        // A mono file keeps its level at 100 %, like on macOS; upmixing it to stereo first lowered it by 3 dB.
+        var monoWave=Path.Combine(directory,"Mono.wav");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","sine=frequency=440:duration=1:sample_rate=48000","-c:a","pcm_s16le",monoWave]);var monoPeak=(await Peaks(monoWave)).Single();
+        foreach(var (count,left,right,expected) in new (int,double,double,double[])[]{(1,1,1,[1]),(2,1,1,[1,1]),(1,.5,1,[.75]),(2,.5,1,[.5,1])})
+        {var leveled=await Peaks((await engine.ToolAsync("audioChannels",[monoWave],directory,new(){Channels=count,LeftVolume=left,RightVolume=right}))[0]);Check(leveled.Length==count&&leveled.Zip(expected).All(p=>Math.Abs(p.First-monoPeak*p.Second)<.001),FormattableString.Invariant($"Audio Channels changed a mono file's level ({count} ch, {left}/{right}): {string.Join(", ",leveled.Select(p=>p.ToString(System.Globalization.CultureInfo.InvariantCulture)))} vs {monoPeak}"));}
+        var stereoPeaks=await Peaks(stereo);var stereoLeveled=await Peaks((await engine.ToolAsync("audioChannels",[stereo],directory,new(){LeftVolume=.5}))[0]);Check(stereoLeveled.Length==2&&Math.Abs(stereoLeveled[0]-stereoPeaks[0]*.5)<.001&&Math.Abs(stereoLeveled[1]-stereoPeaks[1])<.001,"Audio Channels changed stereo levels");
         var visualized=await engine.ToolAsync("audioToVideo",audio,directory,new(){Width=128,Height=72});Check((await engine.InspectAsync(visualized[0])).Video?.Width==128,"Audio visualization failed");
         var cover=Path.Combine(directory,"Cover.png");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","color=c=red:s=64x64","-frames:v","1",cover]);var still=await engine.ToolAsync("audioToVideo",audio,directory,new(){Width=128,Height=72,Visualization="image",VisualizationImage=cover});Check((await engine.InspectAsync(still[0])).Video?.Width==128,"Still-image visualization failed");
         var compressed=await engine.ToolAsync("compress",[source],directory,new(){TargetBytes=100000});Check(new FileInfo(compressed[0]).Length<=100000,"Compression ignored target");
@@ -175,11 +259,32 @@ if(Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG") is {} encoder && En
         {
             var converted=await engine.ConvertAsync([source],ext,directory,new());Check((await engine.InspectAsync(converted[0])).HasAudio,"No audio in "+ext);if(FeatureCatalog.Conversions.ContainsKey(ext)){var edited=await engine.ToolAsync("removeMetadata",converted,directory,new(){RemoveAllMetadata=false,Metadata=new(){{"title","Nashi tag roundtrip"}}});Check((await Tags(edited[0])).GetValueOrDefault("title")=="Nashi tag roundtrip","Audio metadata failed: "+ext);}
         }
+        // FFmpeg reads Ogg Vorbis and Opus comments as audio-stream tags, while MP3, M4A, FLAC and WAV store file-level tags.
+        async Task<Dictionary<string,string>> FileTags(string file){using var doc=JsonDocument.Parse((await ProcessRunner.RunAsync(probe,["-v","error","-show_format","-of","json",file])).Output);var tags=new Dictionary<string,string>(StringComparer.OrdinalIgnoreCase);if(doc.RootElement.GetProperty("format").TryGetProperty("tags",out var values))foreach(var p in values.EnumerateObject())tags[p.Name]=p.Value.ToString();return tags;}
+        foreach(var (oggName,oggCodec) in new[]{("Tagged.ogg","libvorbis"),("Tagged.opus","libopus")})
+        {
+            var oggSource=Path.Combine(directory,oggName);await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","sine=duration=1:sample_rate=48000","-c:a",oggCodec,"-metadata","title=Ogg title","-metadata","artist=Ogg artist",oggSource]);
+            foreach(var target in new[]{"mp3","m4a","flac","wav"})
+            {
+                var kept=await FileTags((await engine.ConvertAsync([oggSource],target,directory,new()))[0]);Check(kept.GetValueOrDefault("title")=="Ogg title"&&kept.GetValueOrDefault("artist")=="Ogg artist",oggName+" lost its tags converting to "+target+" with metadata kept");
+                var dropped=await FileTags((await engine.ConvertAsync([oggSource],target,directory,new(){PreserveMetadata=false}))[0]);Check(!dropped.ContainsKey("title")&&!dropped.ContainsKey("artist"),oggName+" kept its tags converting to "+target+" with metadata off");
+            }
+        }
         foreach(var ext in MediaEngine.VideoFormats)
         {
             var converted=await engine.ConvertAsync([source],ext,directory,new());Check((await engine.InspectAsync(converted[0])).Video is not null,"No video in "+ext);
         }
+        // WMA stops at 48 kHz: hi-res audio is saved at 48 kHz in WMA and WMV, other audio keeps its rate.
+        foreach(var (name,fixture,format,expected) in new[]{("Hi-res.m4a",new[]{"-f","lavfi","-i","sine=sample_rate=192000:duration=1","-ac","2","-c:a","alac"},"wma","wmav2,48000,2"),("Hi-res 88.2 kHz.flac",["-f","lavfi","-i","sine=sample_rate=88200:duration=1"],"wma","wmav2,48000,1"),("Hi-res audio.mkv",["-f","lavfi","-i","testsrc=size=64x48:duration=1","-f","lavfi","-i","sine=sample_rate=96000:duration=1","-c:a","flac"],"wmv","wmav2,48000,1"),("22 kHz.wav",["-f","lavfi","-i","sine=sample_rate=22050:duration=1","-ac","2"],"wma","wmav2,22050,2"),("44.1 kHz.mp4",["-f","lavfi","-i","testsrc=size=64x48:duration=1","-f","lavfi","-i","sine=sample_rate=44100:duration=1"],"wmv","wmav2,44100,1")})
+        {
+            var file=Path.Combine(directory,name);await ProcessRunner.RunAsync(encoder,["-v","error",..fixture,file]);string written;
+            try{written=(await ProcessRunner.RunAsync(probe,["-v","error","-select_streams","a:0","-show_entries","stream=codec_name,sample_rate,channels","-of","csv=p=0",(await engine.ConvertAsync([file],format,directory,new()))[0]])).Output.Trim();}catch(IOException error){written=error.Message.Split('\n')[0];}
+            Check(written==expected,$"{name} → {format}: {written}");
+        }
         var gif=Path.Combine(directory,"Animated.gif");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","testsrc2=size=128x72:rate=12:duration=1",gif]);var gifWebm=await engine.ConvertAsync([gif],"webm",directory,new());Check((await engine.InspectAsync(gifWebm[0])).Video?.Codec=="vp9","GIF to WebM conversion did not produce a VP9 video");
+        // GIF viewers ignore a pixel aspect, so DV (32:27), NTSC 4:3 (8:9) and HDV (4:3) frames are resized to their displayed shape; square pixels keep their size.
+        foreach(var (gifSize,gifSar,gifShape) in new[]{("720x480","32/27","720x406"),("720x480","8/9","720x540"),("1440x1080","4/3","960x540"),("128x72","1","128x72")})
+        {var gifSource=Path.Combine(directory,$"GIF source {gifSize} {gifSar.Replace('/',' ')}.mp4");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i",$"testsrc2=size={gifSize}:rate=12:duration=0.5,setsar={gifSar}","-c:v","libx264","-pix_fmt","yuv420p",gifSource]);var gifShaped=(await engine.InspectAsync((await engine.ConvertAsync([gifSource],"gif",directory,new()))[0])).Video;Check($"{gifShaped?.Width}x{gifShaped?.Height}"==gifShape,$"A {gifSize} video with {gifSar} pixels became a {gifShaped?.Width}x{gifShaped?.Height} GIF instead of {gifShape}");}
         var portrait=Path.Combine(directory,"Portrait.mp4");
         await ProcessRunner.RunAsync(encoder,["-v","error","-display_rotation:v:0","90","-i",source,"-map","0","-c","copy",portrait]);
         var portraitInfo=await engine.InspectAsync(portrait);Check(portraitInfo.Video?.Width==72&&portraitInfo.Video.Height==128,"Portrait display dimensions ignored rotation");

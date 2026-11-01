@@ -102,7 +102,8 @@ public enum PDFEngine {
                 guard cleaned.write(to:output) else { throw NashiError.failed("Could not save PDF.") };outputs.append(output)
             case .compress:
                 let output=OutputFiles.unique(for:input,extension:"pdf",suffix:" - Compressed",directory:options.outputDirectory)
-                let original=Int64((try input.resourceValues(forKeys:[.fileSizeKey])).fileSize ?? 0)
+                // A symlink's own size is a few bytes; a percentage applies to the PDF it points to.
+                let original=Int64((try input.resolvingSymlinksInPath().resourceValues(forKeys:[.fileSizeKey])).fileSize ?? 0)
                 if let bytes=options.targetBytes,bytes<=0 { throw NashiError.invalidInput("Target file size must be positive.") }
                 if let percent=options.percentage,(!percent.isFinite || percent<=0 || percent>=100) { throw NashiError.invalidInput("Percentage reduction must be between 0 and 100.") }
                 let target=options.targetBytes ?? options.percentage.map{Int64(Double(original)*(1-$0/100))}

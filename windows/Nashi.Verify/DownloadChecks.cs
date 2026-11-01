@@ -25,6 +25,17 @@ internal static class DownloadChecks
             check(WebDownload.ProgressFraction("NASHI:12:NA") is null&&WebDownload.ProgressFraction("NASHI:1:0") is null&&WebDownload.ProgressFraction("[download] 5%") is null&&WebDownload.ProgressFraction("NASHI:NaN:1048576.0") is null&&WebDownload.ProgressFraction("NASHI:5:NaN") is null&&WebDownload.ProgressFraction("NASHI:5:Infinity") is null,"Unusable yt-dlp progress lines must be ignored");
         }
         finally{System.Globalization.CultureInfo.CurrentCulture=culture;}
+        // Like the Mac: servers also send image/jpg, image/pjpeg or upper-case types for JPEG photos.
+        try
+        {
+            foreach(var name in new[]{"en-US","tr-TR"})
+            {
+                System.Globalization.CultureInfo.CurrentCulture=new(name);
+                check(WebPhotos.ImageExtension("image/pjpeg")=="jpg"&&WebPhotos.ImageExtension("image/jpg")=="jpg"&&WebPhotos.ImageExtension("IMAGE/JPEG")=="jpg",$"A photo served with an alias or upper-case content type was refused under {name}");
+            }
+        }
+        finally{System.Globalization.CultureInfo.CurrentCulture=culture;}
+        check(WebPhotos.ImageExtension("image/png")=="png"&&WebPhotos.ImageExtension("binary/octet-stream") is null&&WebPhotos.ImageExtension("application/octet-stream") is null&&WebPhotos.ImageExtension("text/html") is null,"A non-image response was saved as an image");
         var uri=new Uri("https://download.example/fixture");var output=Path.Combine(root,"Download.bin");var bytes=new byte[]{1,2,3};
         HttpResponseMessage Response(HttpRequestMessage request,HttpContent? content=null)=>new(HttpStatusCode.OK){RequestMessage=request,Content=content??new ByteArrayContent(bytes)};
         using(var handler=new Handler((request,n)=>n==1?throw new HttpRequestException("Transient connection failure"):Response(request))){await VerifiedDownload.FetchForTest(uri,output,10,null,CancellationToken.None,handler,TimeSpan.FromSeconds(1));check(handler.Calls==2&&File.ReadAllBytes(output).SequenceEqual(bytes),"Interrupted download did not retry safely");File.Delete(output);}

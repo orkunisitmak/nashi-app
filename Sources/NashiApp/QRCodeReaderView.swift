@@ -48,10 +48,18 @@ import NashiCore
             do { let encoder=JSONEncoder();encoder.outputFormatting=[.prettyPrinted,.sortedKeys];try encoder.encode(report).write(to:url,options:.atomic);onSuccess(.action("Report saved.",files:[url])) } catch { self.error=error.localizedDescription }
         }
     }
+    /// Scan errors read "<file name>: <message>" (QRCodeEngine.scan). The file name stays verbatim; the message is UI copy.
+    static func errorText(_ error:String,inputs:[URL],language:String)->String {
+        guard let name=inputs.map(\.lastPathComponent).filter({ error.hasPrefix($0+": ") }).max(by:{ $0.count<$1.count }) else { return AppLocalization.text(error,language:language) }
+        let message=String(error.dropFirst(name.count+2)),translated=AppLocalization.text(message,language:language)
+        guard translated != message else { return error }
+        return name+(AppLocalization.normalizedLanguage(language) == "fr" ? "\u{00A0}: ":": ")+translated
+    }
 }
 
 struct QRCodeReaderView:View {
     @StateObject private var model:QRCodeReaderModel
+    @AppStorage("appLanguage") private var language="en"
     @MainActor init(inputs:[URL],onSuccess:@escaping(SuccessNotice)->Void) { _model=StateObject(wrappedValue:QRCodeReaderModel(inputs:inputs,onSuccess:onSuccess)) }
     var body:some View {
         VStack(spacing:0) {
@@ -75,7 +83,7 @@ struct QRCodeReaderView:View {
                             Text(result.text).font(.system(size:13)).textSelection(.enabled).frame(maxWidth:.infinity,alignment:.leading)
                         }.padding(18).nashiCard(radius:18)
                     }
-                    ForEach(model.report.errors,id:\.self) { Text($0).font(.caption).foregroundStyle(.orange) }
+                    ForEach(model.report.errors,id:\.self) { Text(verbatim:QRCodeReaderModel.errorText($0,inputs:model.inputs,language:language)).font(.caption).foregroundStyle(.orange) }
                     if let error=model.error { LText(error).font(.caption).foregroundStyle(.orange) }
                 }.padding(20)
             }

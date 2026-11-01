@@ -76,7 +76,8 @@ public enum MediaEngine {
             MediaChapter(index: index, start: number(item["start_time"]) ?? 0, end: number(item["end_time"]) ?? 0, metadata: tags(item["tags"]))
         }
         let duration = number(format["duration"]) ?? streams.compactMap(\.duration).max() ?? 0
-        let size = (try input.resourceValues(forKeys: [.fileSizeKey]).fileSize).map(Int64.init) ?? 0
+        // A symlink's own size is a few bytes; compression targets come from the media it points to.
+        let size = (try input.resolvingSymlinksInPath().resourceValues(forKeys: [.fileSizeKey]).fileSize).map(Int64.init) ?? 0
         return MediaInfo(duration: duration, size: size, format: format["format_name"] as? String ?? input.pathExtension, streams: streams, chapters: chapters, metadata: tags(format["tags"]))
     }
 
@@ -694,7 +695,8 @@ public enum MediaEngine {
 
     private static func validateInput(_ url: URL, token: CancellationToken) throws {
         try token.check()
-        guard url.isFileURL, FileManager.default.isReadableFile(atPath: url.path), (try? url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true else { throw NashiError.invalidInput("Choose a readable local media file.") }
+        // A symlink is never a regular file itself; check the file it points to.
+        guard url.isFileURL, FileManager.default.isReadableFile(atPath: url.path), (try? url.resolvingSymlinksInPath().resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true else { throw NashiError.invalidInput("Choose a readable local media file.") }
     }
     private static func requireAudio(_ info: MediaInfo) throws { guard info.hasAudio else { throw NashiError.invalidInput("The file has no audio track.") } }
     private static func requireVideo(_ info: MediaInfo) throws { guard info.hasVideo else { throw NashiError.invalidInput("The file has no video track.") } }
