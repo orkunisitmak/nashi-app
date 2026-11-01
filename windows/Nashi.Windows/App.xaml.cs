@@ -103,7 +103,8 @@ public partial class App:Application
             try
             {
                 Directory.CreateDirectory(directory);var checks=0;
-                EditorReliabilityChecks.Run(directory,(passed,reason)=>{if(!passed)throw new InvalidOperationException(reason);checks++;});
+                if(e.Args.Contains("--photo-only"))PhotoPreviewSmoke.Run(directory,(passed,reason)=>{if(!passed)throw new InvalidOperationException(reason);checks++;});
+                else EditorReliabilityChecks.Run(directory,(passed,reason)=>{if(!passed)throw new InvalidOperationException(reason);checks++;});
                 File.WriteAllText(Path.Combine(directory,"editor-result.json"),System.Text.Json.JsonSerializer.Serialize(new{passed=checks}));
                 Shutdown(0);
             }
