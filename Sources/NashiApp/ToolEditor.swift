@@ -740,7 +740,7 @@ struct ToolEditor:View {
         options.crop=r;width=Int(r.width);height=Int(r.height)
     }
     func alignCrop(horizontal: CropSelectionGeometry.HorizontalAlignment? = nil, vertical: CropSelectionGeometry.VerticalAlignment? = nil) {
-        let base = options.crop ?? EditRect(x: (imageSize.width - Double(width)) / 2, y: (imageSize.height - Double(height)) / 2, width: Double(width), height: Double(height))
+        let base = options.crop ?? EditRect(x: (Double(imageSize.width) - Double(width)) / 2, y: (Double(imageSize.height) - Double(height)) / 2, width: Double(width), height: Double(height))
         var cg = CGRect(x: base.x, y: base.y, width: base.width, height: base.height)
         if let horizontal { cg = CropSelectionGeometry.align(cg, horizontal: horizontal, bounds: imageSize) }
         if let vertical { cg = CropSelectionGeometry.align(cg, vertical: vertical, bounds: imageSize) }
