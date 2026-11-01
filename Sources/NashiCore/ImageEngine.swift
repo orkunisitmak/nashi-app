@@ -8,6 +8,11 @@ import Vision
 
 public enum ImageEngine {
     private static let imageColorSpace = CGColorSpace(name: CGColorSpace.sRGB)!
+    /// Keeps an RGB source's own color space (Display P3, Adobe RGB) so renders do not clip it to sRGB.
+    private static func outputColorSpace(_ image:CGImage)->CGColorSpace {
+        guard let space=image.colorSpace,space.model == .rgb,space.supportsOutput,!CGColorSpaceUsesExtendedRange(space) else { return imageColorSpace }
+        return space
+    }
     private static let imageContext = CIContext(options: [.cacheIntermediates: false])
     public static func load(_ url: URL) throws -> CGImage {
         if let source = CGImageSourceCreateWithURL(url as CFURL, nil) {
@@ -19,7 +24,7 @@ public enum ImageEngine {
                 let orientation = (properties?[kCGImagePropertyOrientation] as? NSNumber)?.int32Value ?? 1
                 if squarePixels || !(2...8).contains(orientation) { return image }
                 let oriented = CIImage(cgImage: image).oriented(forExifOrientation: orientation)
-                guard let result = imageContext.createCGImage(oriented, from: oriented.extent) else { throw NashiError.failed("Could not orient image.") }
+                guard let result = imageContext.createCGImage(oriented, from: oriented.extent, format: .RGBA8, colorSpace: outputColorSpace(image)) else { throw NashiError.failed("Could not orient image.") }
                 return result
             }
         }
@@ -128,7 +133,7 @@ public enum ImageEngine {
     }
 
     public static func resized(_ image: CGImage, width: Int, height: Int) throws -> CGImage {
-        guard width>0,height>0,width<=32000,height<=32000,let ctx=CGContext(data:nil,width:width,height:height,bitsPerComponent:8,bytesPerRow:0,space:imageColorSpace,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue) else { throw NashiError.invalidInput("Image dimensions must be between 1 and 32,000 pixels.") }
+        guard width>0,height>0,width<=32000,height<=32000,let ctx=CGContext(data:nil,width:width,height:height,bitsPerComponent:8,bytesPerRow:0,space:outputColorSpace(image),bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue) else { throw NashiError.invalidInput("Image dimensions must be between 1 and 32,000 pixels.") }
         ctx.interpolationQuality = .high
         ctx.draw(image,in:CGRect(x:0,y:0,width:width,height:height))
         guard let result=ctx.makeImage() else { throw NashiError.failed("Could not resize image.") }; return result
@@ -230,12 +235,12 @@ public enum ImageEngine {
         case 270: ci=ci.oriented(.left)
         default: ci=ci.transformed(by:CGAffineTransform(rotationAngle:-CGFloat(rotation) * .pi / 180))
         }
-        guard let output=imageContext.createCGImage(ci,from:ci.extent.integral) else { throw NashiError.failed("Could not edit image.") }
+        guard let output=imageContext.createCGImage(ci,from:ci.extent.integral,format:.RGBA8,colorSpace:outputColorSpace(image)) else { throw NashiError.failed("Could not edit image.") }
         return try resizeUsingOptions(output,options:options)
     }
 
-    private static func canvas(_ width:Int,_ height:Int) throws -> CGContext {
-        guard width>0,height>0,width<=32000,height<=32000,let ctx=CGContext(data:nil,width:width,height:height,bitsPerComponent:8,bytesPerRow:0,space:imageColorSpace,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue) else { throw NashiError.failed("Could not allocate image canvas.") }; return ctx
+    private static func canvas(_ width:Int,_ height:Int,space:CGColorSpace=imageColorSpace) throws -> CGContext {
+        guard width>0,height>0,width<=32000,height<=32000,let ctx=CGContext(data:nil,width:width,height:height,bitsPerComponent:8,bytesPerRow:0,space:space,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue) else { throw NashiError.failed("Could not allocate image canvas.") }; return ctx
     }
     /// Reads #RGB, #RGBA, #RRGGBB or #RRGGBBAA (the "#" is optional); nil for anything else.
     public static func parsedColor(_ hex: String) -> CGColor? {
@@ -261,7 +266,7 @@ public enum ImageEngine {
     public static func annotatedImage(_ image: CGImage, options: OperationOptions) throws -> CGImage { try annotate(image,options:options) }
 
     private static func annotate(_ image: CGImage, options: OperationOptions) throws -> CGImage {
-        let ctx=try canvas(image.width,image.height); ctx.draw(image,in:CGRect(x:0,y:0,width:image.width,height:image.height))
+        let ctx=try canvas(image.width,image.height,space:outputColorSpace(image)); ctx.draw(image,in:CGRect(x:0,y:0,width:image.width,height:image.height))
         var annotations = options.annotations.map { legacy -> ImageAnnotation in
             var item = ImageAnnotation(kind:ImageAnnotationKind(rawValue:legacy.kind) ?? .text,rect:legacy.rect)
             item.text=legacy.text;item.color=legacy.color;item.fontSize=max(12,legacy.rect.height*0.7);item.strokeWidth=max(2,legacy.rect.height/15)
@@ -379,7 +384,7 @@ public enum ImageEngine {
                 throw NashiError.invalidInput("Every redaction area must have positive dimensions and fit completely inside the \(image.width) × \(image.height) pixel image. Adjust the areas for this image and try again.")
             }
         }
-        let ctx=try canvas(image.width,image.height);ctx.draw(image,in:CGRect(x:0,y:0,width:image.width,height:image.height))
+        let ctx=try canvas(image.width,image.height,space:outputColorSpace(image));ctx.draw(image,in:CGRect(x:0,y:0,width:image.width,height:image.height))
         for rect in regions {
             let pixels=CGRect(x:rect.x,y:rect.y,width:rect.width,height:rect.height).integral
             let target=CGRect(x:pixels.minX,y:CGFloat(image.height)-pixels.maxY,width:pixels.width,height:pixels.height)
@@ -391,7 +396,7 @@ public enum ImageEngine {
                 let filtered:CIImage
                 if settings.style == .blur { filtered=original.clampedToExtent().applyingFilter("CIGaussianBlur",parameters:[kCIInputRadiusKey:max(1,settings.blurRadius)]).cropped(to:bounds) }
                 else { filtered=original.clampedToExtent().applyingFilter("CIPixellate",parameters:[kCIInputScaleKey:max(2,settings.pixelSize),kCIInputCenterKey:CIVector(x:bounds.midX,y:bounds.midY)]).cropped(to:bounds) }
-                guard let cg=imageContext.createCGImage(filtered,from:bounds) else { throw NashiError.failed("Could not render the redaction.") }
+                guard let cg=imageContext.createCGImage(filtered,from:bounds,format:.RGBA8,colorSpace:outputColorSpace(image)) else { throw NashiError.failed("Could not render the redaction.") }
                 // Replace the area. Drawing over it would let the original show
                 // through every transparent or translucent filtered pixel.
                 ctx.saveGState();ctx.setBlendMode(.copy);ctx.draw(cg,in:target);ctx.restoreGState()
@@ -447,7 +452,7 @@ public enum ImageEngine {
                 else { height=try dimension(Double(width)/ratio) }
             }
         }
-        let ctx=try canvas(width,height),bounds=CGRect(x:0,y:0,width:width,height:height)
+        let ctx=try canvas(width,height,space:outputColorSpace(image)),bounds=CGRect(x:0,y:0,width:width,height:height)
         ctx.setFillColor(try validatedColor(settings.backgroundColor));ctx.fill(bounds)
         switch settings.backdrop {
         case .solid: break
