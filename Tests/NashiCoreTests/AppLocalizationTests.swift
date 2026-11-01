@@ -168,6 +168,21 @@ final class AppLocalizationTests:XCTestCase {
             XCTAssertEqual(AppLocalization.text(source,language:"tr"),source)
         }
     }
+    /// The NSAlert shown when Window management cannot arrange a window takes plain Strings, so AppDelegate looks up
+    /// its title, the WindowManagement notice and the button through L10n.text; each needs a catalog entry.
+    func testWindowArrangementAlertIsTranslated() {
+        let expected=[
+            "Window arrangement":("Pencere düzeni","Disposition des fenêtres"),
+            "This window could not be arranged. The app may restrict resizing.":("Bu pencere düzenlenemedi. Uygulama yeniden boyutlandırmayı kısıtlıyor olabilir.","Cette fenêtre n’a pas pu être disposée. L’app limite peut-être le redimensionnement."),
+            "OK":("Tamam","OK"),
+        ]
+        for (source,(tr,fr)) in expected {
+            XCTAssertEqual(AppLocalization.text(source,language:"tr"),tr)
+            XCTAssertEqual(AppLocalization.text(source,language:"fr"),fr)
+            XCTAssertEqual(AppLocalization.text(source,language:"en"),source)
+        }
+        XCTAssertEqual(AppLocalization.catalog(for:"fr")["OK"],"OK")
+    }
     /// UpdateConnectionView shows its save/remove confirmation through LText, so each sentence needs a catalog entry.
     func testUpdateConnectionConfirmationsAreTranslated() {
         let expected=[

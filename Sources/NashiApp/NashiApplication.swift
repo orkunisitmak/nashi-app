@@ -178,8 +178,8 @@ enum NashiApplication {
         monitor=DragMonitor(onEnd:{ [weak self] in self?.wheel.endDrag() }) { [weak self] urls,mode,point in self?.wheel.show(inputs:urls,mode:mode,at:point) }
         windowManagement=WindowManagementController(fileWheelIsVisible:{ [weak self] in self?.wheel.panel?.isVisible == true })
         windowManagement.onNotice = { message in
-            let alert=NSAlert();alert.messageText="Window arrangement";alert.informativeText=message
-            alert.addButton(withTitle:"OK");alert.runModal()
+            let alert=NSAlert();alert.messageText=L10n.text("Window arrangement");alert.informativeText=L10n.text(message)
+            alert.addButton(withTitle:L10n.text("OK"));alert.runModal()
         }
         state.onOpenWheel = { [weak self] in self?.wheel.show(inputs:self?.state.inputs ?? [],mode:.tools,at:NSEvent.mouseLocation,keyboard:true) }
         state.onWebDownload = { [weak self] url,mode in self?.showWebDownload(url,mode:mode) }
