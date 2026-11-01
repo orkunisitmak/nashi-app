@@ -22,7 +22,50 @@ do {
     if args.count==2,args[1]=="dependencies" {
         var result:[String:String]=[:];for name in ["ffmpeg","ffprobe","soffice","exiftool"] { result[name]=try Dependencies.executable(name).path };print(String(decoding:try JSONSerialization.data(withJSONObject:result,options:.sortedKeys),as:UTF8.self));return 0
     }
-    guard args.count>=4 else { fputs("Usage: nashi-cli convert FORMAT FILE... [--options JSON] [--json]\n       nashi-cli tool TOOL_ID FILE... [--options JSON] [--json]\n       nashi-cli inspect FILE\n       nashi-cli catalog\n       nashi-cli dependencies\n",stderr);return 64 }
+    if args.count>=3,args[1]=="hash" {
+        var algorithm=FileHasher.Algorithm.sha256,paths:[String]=[],verify:String?,jsonOutput=false,index=2
+        while index<args.count {
+            switch args[index] {
+            case "--algorithm":
+                guard index+1<args.count,let value=FileHasher.Algorithm(rawValue:args[index+1].lowercased()) else { throw NashiError.invalidInput("Unknown algorithm. Use sha256, sha512 or md5.") }
+                algorithm=value;index+=2
+            case "--verify":
+                guard index+1<args.count else { throw NashiError.invalidInput("--verify needs a checksum file.") }
+                verify=args[index+1];index+=2
+            case "--json": jsonOutput=true;index+=1
+            default: paths.append(args[index]);index+=1
+            }
+        }
+        if let verify {
+            let checksumFile=URL(fileURLWithPath:verify)
+            guard FileManager.default.fileExists(atPath:checksumFile.path) else { throw NashiError.invalidInput("File not found: \(checksumFile.lastPathComponent)") }
+            // Relative paths in a checksum file resolve next to that file, as `shasum -c` does.
+            let base=checksumFile.deletingLastPathComponent()
+            var checked=0,failures=0
+            for line in try String(contentsOf:checksumFile,encoding:.utf8).split(separator:"\n",omittingEmptySubsequences:false) {
+                guard let entry=FileHasher.parseChecksumLine(String(line)) else { continue }
+                checked+=1
+                let file=entry.path.hasPrefix("/") ? URL(fileURLWithPath:entry.path):base.appendingPathComponent(entry.path)
+                let actual=(try? FileHasher.digest(of:file.standardizedFileURL,algorithm:algorithm))?.lowercased()
+                let matches=actual==entry.digest
+                if !matches { failures+=1 }
+                print("\(matches ? "OK":"FAILED") \(entry.path)")
+            }
+            guard checked>0 else { throw NashiError.invalidInput("No checksum lines found in \(checksumFile.lastPathComponent).") }
+            fputs(failures==0 ? "All \(checked) checksums matched.\n":"\(failures) of \(checked) checksums failed.\n",stderr)
+            return failures==0 ? 0:1
+        }
+        guard !paths.isEmpty else { throw NashiError.invalidInput("hash needs at least one file.") }
+        var files:[[String:String]]=[]
+        for path in paths {
+            let url=URL(fileURLWithPath:path),digest=try FileHasher.digest(of:url,algorithm:algorithm)
+            files.append(["path":url.path,"hash":digest])
+            if !jsonOutput { print("\(digest)  \(url.path)") }
+        }
+        if jsonOutput { print(String(decoding:try JSONSerialization.data(withJSONObject:["algorithm":algorithm.rawValue,"files":files],options:[.sortedKeys]),as:UTF8.self)) }
+        return 0
+    }
+    guard args.count>=4 else { fputs("Usage: nashi-cli convert FORMAT FILE... [--options JSON] [--json]\n       nashi-cli tool TOOL_ID FILE... [--options JSON] [--json]\n       nashi-cli inspect FILE\n       nashi-cli hash FILE... [--algorithm sha256|sha512|md5] [--json]\n       nashi-cli hash --verify CHECKSUMS [--algorithm sha256|sha512|md5]\n       nashi-cli catalog\n       nashi-cli dependencies\n",stderr);return 64 }
     var options=OperationOptions(), paths=Array(args.dropFirst(3))
     let jsonOutput=paths.contains("--json");paths.removeAll{$0=="--json"}
     if let i=paths.firstIndex(of:"--options"),i+1<paths.count {
