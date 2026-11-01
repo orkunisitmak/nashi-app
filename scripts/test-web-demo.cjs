@@ -53,10 +53,23 @@ const ids=['compress','removeMetadata','editImage','annotateImage','frameImage',
   assert.ok(await page.getByRole('button',{name:'Thumbnail',exact:true}).isVisible());
   await page.locator('.close-editor').click();
  });
- await test('All six file actions open the right preview or shelf',async()=>{await page.locator('[data-group="image"]').click();for(const id of ['airdrop','copy','move','terminal']){await page.locator('[data-mode="actions"]').click();const names={airdrop:'AirDrop',copy:'Kopyala',move:'Taşı',terminal:'Terminal'};await page.getByRole('menuitem',{name:names[id],exact:true}).click();assert.equal(await page.locator('dialog').count(),1);await page.locator('.close-editor').click();}await page.locator('[data-mode="actions"]').click();await page.getByRole('menuitem',{name:'Yüzen Pencere',exact:true}).click();assert.equal(await page.locator('.float-shelf').count(),1);});
+ await test('All six file actions open the right preview or shelf',async()=>{await page.locator('[data-group="image"]').click();for(const id of ['airdrop','copy','move','terminal']){await page.locator('[data-mode="actions"]').click();const names={airdrop:/^(AirDrop|Paylaş)$/i,copy:'Kopyala',move:'Taşı',terminal:'Terminal'};await page.getByRole('menuitem',{name:names[id],exact:true}).click();assert.equal(await page.locator('dialog').count(),1);await page.locator('.close-editor').click();}await page.locator('[data-mode="actions"]').click();await page.getByRole('menuitem',{name:'Yüzen Pencere',exact:true}).click();assert.equal(await page.locator('.float-shelf').count(),1);});
  await test('English strings, layout and real image export',async()=>{await page.goto(base+'/');await page.locator('.demo-file').first().waitFor();await page.locator('[data-mode="convert"]').click();await page.getByRole('menuitem',{name:'PNG',exact:true}).click();await page.waitForFunction(()=>Number(document.querySelector('#library-count').textContent)===1);assert.equal(await page.locator('html').getAttribute('lang'),'en');});
  await page.goto(base+'/tr/');await page.locator('.demo-file').first().waitFor();await page.screenshot({path:path.join(output,'desktop-hero.png')});await page.locator('#playground').scrollIntoViewIfNeeded();await page.locator('[data-mode="tools"]').click();await page.screenshot({path:path.join(output,'desktop-wheel.png')});await page.keyboard.press('Escape');
  await test('390px touch viewport fits; tap selects, opens wheel and exports',async()=>{await page.setViewportSize({width:390,height:844});await page.locator('[data-group="image"]').click();assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.locator('.demo-file').nth(1).click();await page.locator('[data-mode="convert"]').click();const r=await page.locator('.demo-wheel').boundingBox();assert.ok(r.x>=0&&r.x+r.width<=390);await page.getByRole('menuitem',{name:'JPG',exact:true}).click();await page.waitForFunction(()=>Number(document.querySelector('#library-count').textContent)>0);await page.screenshot({path:path.join(output,'mobile-playground.png')});await openTool('cropImage');assert.ok(await page.evaluate(()=>document.querySelector('dialog').scrollWidth<=innerWidth));await page.screenshot({path:path.join(output,'mobile-crop.png')});await page.locator('.close-editor').click();});
+ await test('Reset clears Library, Float pins and returns to sample files',async()=>{
+  await page.locator('[data-group="image"]').click();
+  await page.locator('[data-mode="convert"]').click();
+  await page.getByRole('menuitem',{name:'PNG',exact:true}).click();
+  await page.waitForFunction(()=>Number(document.querySelector('#library-count').textContent)>0);
+  await page.locator('[data-mode="actions"]').click();
+  await page.getByRole('menuitem',{name:'Yüzen Pencere',exact:true}).click();
+  assert.equal(await page.locator('.float-shelf').count(),1);
+  await page.locator('#demo-reset').click();
+  assert.equal(await page.locator('#library-count').textContent(),'0');
+  assert.equal(await page.locator('.float-shelf').count(),0);
+  assert.equal(await page.locator('.demo-file').count(),3);
+ });
  await test('Keyboard and modifier wheel actions preserve multi-selection',async()=>{
   await page.locator('[data-group="image"]').click();
   await page.locator('.demo-file').nth(1).click({modifiers:['Shift']});
