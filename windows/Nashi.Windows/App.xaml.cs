@@ -15,6 +15,8 @@ public partial class App:Application
         }
         DispatcherUnhandledException+=(_,error)=>{var folder=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");if(folder is not null){Directory.CreateDirectory(folder);File.WriteAllText(Path.Combine(folder,"dispatcher-error.txt"),error.Exception.ToString());error.Handled=true;Shutdown(1);}};
         base.OnStartup(e);
+        try{UpdateInstaller.CleanupStale();}catch(Exception error)when(error is IOException or UnauthorizedAccessException or System.Security.SecurityException){Console.Error.WriteLine(error);}
+        try{UpdateInstaller.CleanupStale();}catch(Exception error)when(error is IOException or UnauthorizedAccessException or System.Security.SecurityException){Console.Error.WriteLine(error);}
         if(e.Args.Contains("--smoke-test-interactions"))
         {
             IsSmokeTest=true;ShutdownMode=ShutdownMode.OnExplicitShutdown;

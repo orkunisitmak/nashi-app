@@ -16,7 +16,35 @@ public sealed class PreferencesStore
     private readonly string file;public Preferences Value{get;private set;}=new();public string? RecoveryNotice{get;private set;}
     public PreferencesStore(string directory)
     {
-        file=Path.Combine(directory,"preferences.json");if(!File.Exists(file))return;try{if(new FileInfo(file).Length>1_000_000)throw new InvalidDataException();Value=JsonSerializer.Deserialize<Preferences>(File.ReadAllText(file))??new();Value=Value with{Language=AppLocalization.Normalize(Value.Language)};Validate(Value);}catch(Exception error)when(error is JsonException or IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException){RecoveryNotice="Settings could not be loaded. Defaults are in use.";Value=new();}
+        file=Path.Combine(directory,"preferences.json");AtomicFile.RecoverOrphan(file,contents=>ValidateRecovered(contents));
+        if(!File.Exists(file))return;
+        try
+        {
+            if(new FileInfo(file).Length>1_000_000)throw new InvalidDataException("Preferences are too large.");
+            Value=JsonSerializer.Deserialize<Preferences>(File.ReadAllText(file))??throw new InvalidDataException("Preferences are empty.");
+            Value=Value with{Language=AppLocalization.Normalize(Value.Language)};Validate(Value);
+        }
+        catch(Exception error)when(error is JsonException or InvalidDataException or ArgumentException or NotSupportedException)
+        {
+            var quarantine=file+".recovered-"+Guid.NewGuid().ToString("N");
+            try
+            {
+                File.Copy(file,quarantine);
+                File.Delete(file);
+            }
+            catch(Exception backupError)when(backupError is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+            {
+                RecoveryNotice="Settings recovery needs access to your Nashi data folder. Defaults are in use.";Value=new();return;
+            }
+            RecoveryNotice="Settings could not be loaded. Defaults are in use; a recovery copy was kept.";Value=new();
+        }
+        catch(Exception error)when(error is IOException or UnauthorizedAccessException){RecoveryNotice="Settings are unavailable. Check access to your Nashi data folder.";Value=new();}
+    }
+    private static bool ValidateRecovered(string contents)
+    {
+        var value=JsonSerializer.Deserialize<Preferences>(contents)??throw new InvalidDataException("Preferences are empty.");
+        Validate(value with{Language=AppLocalization.Normalize(value.Language)});
+        return true;
     }
     private static void Validate(Preferences p)
     {
@@ -26,7 +54,7 @@ public sealed class PreferencesStore
     }
     public void Save(Preferences value)
     {
-        Validate(value);Directory.CreateDirectory(Path.GetDirectoryName(file)!);var temporary=file+"."+Guid.NewGuid().ToString("N")+".tmp";try{File.WriteAllText(temporary,JsonSerializer.Serialize(value));File.Move(temporary,file,true);Value=value;}finally{if(File.Exists(temporary))File.Delete(temporary);}
+        Validate(value);AtomicFile.WriteAllText(file,JsonSerializer.Serialize(value));Value=value;
     }
     public OutputProfile Profile(string format)=>Value.Formats.GetValueOrDefault(format,new());
     public void SetProfile(string format,OutputProfile profile){var formats=new Dictionary<string,OutputProfile>(Value.Formats){[format]=profile};Save(Value with{Formats=formats});}
