@@ -31,6 +31,10 @@ Windows görüntüsü, [PR #1](https://github.com/orkunisitmak/nashi-app/pull/1)
 
 İlk public build’lerde Apple notarization / Windows Authenticode yayıncı imzası bulunmuyor. İşletim sistemi ilk açılışta onay isteyebilir. Nashi sistem güvenlik ayarlarını kapatmaz. Resmi yayınlarda SHA-256 dosyası vardır; her CI çıktısı resmi imzalı güncelleme sayılmaz.
 
+### Komut satırı
+
+Uygulama paketi `Nashi.app/Contents/MacOS/nashi-cli` aracını da içerir; `catalog`, `inspect`, `convert` ve `tool` komutları uygulamayla aynı dönüştürme motorunu kullanır. Her komut yeni dosya üretir, asıl dosyayı değiştirmez; çıktı adı çakışmaları uygulamadaki kuralla çözülür. Ayrıntılı kullanım [macOS build adımlarında](README.md#build).
+
 ## Kısayollar
 
 macOS’ta Finder’da sürüklerken **Shift** dönüşüm, **Command** araçlar, **Control** dosya işlemleri çarkını açar. **Control–Shift–D** kopyalanmış public linki indirir. Sürükleme tuşları özelleştirilebilir. Windows’ta **Ctrl+O** dosya seçer; **Ctrl+Space** seçili dosyaların araç ve dönüşüm çarkını açar. Çarkta **Dönüştür** ile çıktı formatını seçebilirsin. Ana sayfadaki dosya listesinde **Delete**, seçili dosyaları asıllarını silmeden Nashi’den kaldırır.

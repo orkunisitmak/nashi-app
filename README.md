@@ -52,6 +52,21 @@ scripts/build-app.sh release
 
 The public app is written to `build/Nashi.app`. Large runtimes are installed through its setup screen. Source builds use an ad-hoc signature unless you provide your own ignored signing profile. Signing private keys are never distributed. [Windows build instructions](windows/README.md).
 
+### Command line
+
+The same bundle ships `nashi-cli`, so scripts can reuse the conversion engine without the window:
+
+```sh
+NASHI=build/Nashi.app/Contents/MacOS/nashi-cli
+$NASHI catalog                                              # conversion routes and tool ids as JSON
+$NASHI inspect photo.heic                                   # category, size and media information
+$NASHI convert png photo.heic                               # one output path per line
+$NASHI tool readQRCode poster.png                           # any id listed by "catalog"
+$NASHI convert mp4 clip.mov --json                          # machine-readable output
+```
+
+Every command creates new files next to the input and never rewrites the source, with the same unique-name and partial-export cleanup rules as the app. Exit status is `0` on success, `1` for a failed operation and `64` for a usage error. `--options` accepts the same JSON settings the app stores for an operation.
+
 ## Privacy and updates
 
 Conversion/editing run locally. Web downloads contact the selected media site. No analytics, cloud account or browser-cookie import is built in. Official releases update through this public repository without a GitHub account or token. macOS verifies the signed feed and archive; Windows verifies the archive signature and version before replacement. Active operations finish or cancel before the app exits for an update. Portable Windows updates retain the previous folder as a recoverable backup.
