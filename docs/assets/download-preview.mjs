@@ -5,6 +5,7 @@ export function classifyMediaPreviewURL(value) {
   try { url = new URL(value); } catch { return 'original'; }
   if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password)
     return 'original';
+  if (/\.(?:heic|heif)$/i.test(url.pathname)) return 'image';
 
   const host = url.hostname.toLowerCase().replace(/\.$/, '');
   if (['youtube.com', 'www.youtube.com', 'm.youtube.com', 'music.youtube.com',

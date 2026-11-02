@@ -34,6 +34,14 @@ test('lookalike domains and query/fragment text cannot impersonate supported pro
   ])assert.equal(classifyMediaPreviewURL(url),'original',url);
 });
 
+test('direct HEIC and HEIF file URLs unlock the image preview',()=>{
+  for(const url of [
+    'https://cdn.example.org/photo.heic',
+    'https://media.example.org/shot.heif',
+    'https://cdn.example.org/photo.HEIC'
+  ])assert.equal(classifyMediaPreviewURL(url),'image',url);
+});
+
 test('invalid or non-HTTP(S) links have only the generic preview',()=>{
   for(const url of [
     'not a URL','', 'javascript:alert("youtube.com")',
