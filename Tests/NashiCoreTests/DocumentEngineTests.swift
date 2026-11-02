@@ -527,6 +527,33 @@ final class DocumentEngineTests: XCTestCase {
         XCTAssertEqual(rect.width, 80, accuracy: 0.1); XCTAssertEqual(rect.height, 90, accuracy: 0.1)
     }
 
+    func testPDFImageScannerStopsAtSelfReferencingFormXObjects() throws {
+        // Form 4 draws an image and then itself three times. Before cycle
+        // detection that meant 3^16 nested scans: a one-page PDF froze export.
+        let image = "<< /Type /XObject /Subtype /Image /Width 1 /Height 1 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Length 3 >>\nstream\n\u{1}\u{2}\u{3}\nendstream"
+        let form = "q 100 0 0 50 10 20 cm /I Do Q /X Do /X Do /X Do"
+        let objects = [
+            "<< /Type /Catalog /Pages 2 0 R >>",
+            "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /XObject << /X 4 0 R >> >> /Contents 6 0 R >>",
+            "<< /Type /XObject /Subtype /Form /BBox [0 0 612 792] /Resources << /XObject << /X 4 0 R /I 5 0 R >> >> /Length \(form.utf8.count) >>\nstream\n\(form)\nendstream",
+            image,
+            "<< /Length 5 >>\nstream\n/X Do\nendstream",
+        ]
+        var pdf = "%PDF-1.4\n", offsets: [Int] = []
+        for (index, body) in objects.enumerated() { offsets.append(pdf.utf8.count); pdf += "\(index + 1) 0 obj\n\(body)\nendobj\n" }
+        let xref = pdf.utf8.count
+        pdf += "xref\n0 \(objects.count + 1)\n0000000000 65535 f \n" + offsets.map { String(format: "%010d 00000 n \n", $0) }.joined()
+        pdf += "trailer\n<< /Size \(objects.count + 1) /Root 1 0 R >>\nstartxref\n\(xref)\n%%EOF\n"
+        let page = try XCTUnwrap(PDFDocument(data: Data(pdf.utf8))?.page(at: 0))
+        // A watchdog cancels a runaway scan so a regression fails instead of hanging.
+        let token = CancellationToken(), finished = DispatchSemaphore(value: 0)
+        DispatchQueue.global().async { if finished.wait(timeout: .now() + 10) == .timedOut { token.cancel() } }
+        defer { finished.signal() }
+        let regions = try PDFPlacedImages.regions(page, token: token)
+        XCTAssertEqual(regions, [CGRect(x: 10, y: 20, width: 100, height: 50)])
+    }
+
     private func convert(_ input: URL, _ format: String) throws -> URL {
         try XCTUnwrap(DocumentEngine.convert(input, to: format, options: .init(), token: .init()).first)
     }
