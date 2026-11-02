@@ -37,7 +37,7 @@ public sealed partial class MainWindow
     // Disabled while a dialog is open so an open Settings window cannot show a stale value.
     private System.Windows.Controls.MenuItem DragShortcutsItem()
     {
-        var item=new System.Windows.Controls.MenuItem{IsCheckable=true,IsChecked=preferences.Value.Enabled,IsEnabled=IsEnabled};L10n.Bind(item,System.Windows.Controls.HeaderedItemsControl.HeaderProperty,"Enable Nashi drag shortcuts");
+        var item=new System.Windows.Controls.MenuItem{IsCheckable=true,IsChecked=preferences.Value.Enabled,IsEnabled=DesktopGeometry.IsInteractive(this)};L10n.Bind(item,System.Windows.Controls.HeaderedItemsControl.HeaderProperty,"Enable Nashi drag shortcuts");
         item.Click+=(_,_)=>{try{preferences.Save(preferences.Value with{Enabled=item.IsChecked});ApplyPreferences();}catch(Exception error) when(error is IOException or UnauthorizedAccessException){item.IsChecked=preferences.Value.Enabled;ShowMain();L10n.SetText(status,error.Message);}};
         return item;
     }
