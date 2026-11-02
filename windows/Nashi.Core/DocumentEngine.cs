@@ -47,7 +47,7 @@ public static partial class DocumentEngine
             }
             else if(tool=="removeMetadata")
             {
-                using var result=new PdfDocument();var copies=new Dictionary<PdfPage,PdfPage>();foreach(var page in source.Pages)copies[page]=result.AddPage(page);CopyOutlines(source,result,copies);CopyPageLabels(source,result);result.Options.CompressContentStreams=true;result.Info.Title="";result.Info.Author="";result.Info.Subject="";result.Info.Keywords="";
+                using var result=new PdfDocument();var copies=new Dictionary<PdfPage,PdfPage>();foreach(var page in source.Pages)copies[page]=result.AddPage(page);CopyOutlines(source,result,copies);CopyPageLabels(source,result);ClearAnnotationMetadata(result);result.Options.CompressContentStreams=true;result.Info.Title="";result.Info.Author="";result.Info.Subject="";result.Info.Keywords="";
                 var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+(tool=="compress"?" Compressed.pdf":" Metadata.pdf"));result.Save(output);outputs.Add(output);
             }
             else throw new ArgumentException("Unknown PDF tool.");
@@ -70,6 +70,14 @@ public static partial class DocumentEngine
         var form=catalog.GetDictionary("/AcroForm");var fields=form is not null&&(form.Elements.GetArray("/Fields") is {Elements.Count:>0}||form.Elements.ContainsKey("/XFA"));
         if(!fields&&!widgets&&!attachments)return;
         throw new InvalidDataException(tool=="removeMetadata"?"This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported.":"This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported.");
+    }
+    // Remove All drops each review annotation's author and dates, as on macOS, whatever its type (Caret, Squiggly, Polygon…); the note
+    // text stays. A widget's /T is its field name, not an author, and forms are refused before this anyway.
+    private static void ClearAnnotationMetadata(PdfDocument pdf)
+    {
+        foreach(var page in pdf.Pages)if(page.Elements.GetArray("/Annots") is {} annotations)foreach(var item in annotations.Elements)
+            if((item is PdfSharp.Pdf.Advanced.PdfReference reference?reference.Value:item) is PdfDictionary annotation&&annotation.Elements.GetName("/Subtype")!="/Widget")
+                foreach(var key in new[]{"/T","/M","/CreationDate"})annotation.Elements.Remove(key);
     }
     private static void CopyOutlines(PdfDocument source,PdfDocument result,Dictionary<PdfPage,PdfPage> copies)
     {
