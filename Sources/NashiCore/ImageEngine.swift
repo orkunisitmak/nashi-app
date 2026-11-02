@@ -7,29 +7,84 @@ import CoreText
 import Vision
 
 public enum ImageEngine {
+    private static let maximumImagePixels:Int64=100_000_000
+    private static let maximumImageSide=32_000
+    private static let previewImageSide=2_048
     private static let imageColorSpace = CGColorSpace(name: CGColorSpace.sRGB)!
     private static let imageContext = CIContext(options: [.cacheIntermediates: false])
     public static func load(_ url: URL) throws -> CGImage {
-        if let source = CGImageSourceCreateWithURL(url as CFURL, nil) {
-            // The thumbnail transform also applies the pixel aspect ratio implied by unequal
-            // horizontal and vertical DPI, which resamples the stored pixels. Orient those files here.
-            let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString:Any]
-            let squarePixels = (properties?[kCGImagePropertyDPIWidth] as? Double) == (properties?[kCGImagePropertyDPIHeight] as? Double)
-            if let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [kCGImageSourceCreateThumbnailFromImageAlways:true, kCGImageSourceCreateThumbnailWithTransform:squarePixels, kCGImageSourceThumbnailMaxPixelSize:32000] as CFDictionary) {
-                let orientation = (properties?[kCGImagePropertyOrientation] as? NSNumber)?.int32Value ?? 1
+        if let source=CGImageSourceCreateWithURL(url as CFURL,[kCGImageSourceShouldCache:false] as CFDictionary) {
+            try validateSourceDimensions(source)
+            // An ImageIO transform can resample non-square DPI images; apply only the EXIF rotation.
+            let properties=CGImageSourceCopyPropertiesAtIndex(source,0,nil) as? [CFString:Any]
+            let squarePixels=(properties?[kCGImagePropertyDPIWidth] as? Double) == (properties?[kCGImagePropertyDPIHeight] as? Double)
+            if let image=CGImageSourceCreateThumbnailAtIndex(source,0,[kCGImageSourceCreateThumbnailFromImageAlways:true,kCGImageSourceCreateThumbnailWithTransform:squarePixels,kCGImageSourceThumbnailMaxPixelSize:maximumImageSide] as CFDictionary) {
+                try validateDimensions(image.width,height:image.height)
+                let orientation=(properties?[kCGImagePropertyOrientation] as? NSNumber)?.int32Value ?? 1
                 if squarePixels || !(2...8).contains(orientation) { return image }
-                let oriented = CIImage(cgImage: image).oriented(forExifOrientation: orientation)
-                guard let result = imageContext.createCGImage(oriented, from: oriented.extent) else { throw NashiError.failed("Could not orient image.") }
+                let oriented=CIImage(cgImage:image).oriented(forExifOrientation:orientation)
+                guard let result=imageContext.createCGImage(oriented,from:oriented.extent) else { throw NashiError.failed("Could not orient image.") }
+                try validateDimensions(result.width,height:result.height)
                 return result
             }
         }
-        if let image = NSImage(contentsOf: url), let cg = image.cgImage(forProposedRect:nil,context:nil,hints:nil) { return cg }
+        if let image=NSImage(contentsOf:url),let cg=image.cgImage(forProposedRect:nil,context:nil,hints:nil) {
+            try validateDimensions(cg.width,height:cg.height)
+            return cg
+        }
         // FFmpeg handles additional decoders (including animated inputs' first frame).
-        let temp = try OutputFiles.temporaryDirectory(); defer { try? FileManager.default.removeItem(at:temp) }
-        let png = temp.appendingPathComponent("decoded.png")
-        try ProcessRunner.run(Dependencies.executable("ffmpeg"), ["-v","error","-i",url.path,"-frames:v","1",png.path])
-        guard let source=CGImageSourceCreateWithURL(png as CFURL,nil),let cg=CGImageSourceCreateImageAtIndex(source,0,nil) else { throw NashiError.invalidInput("This image could not be decoded.") }
-        return cg
+        return try decodeWithFFmpeg(url,maxPixelSize:maximumImageSide)
+    }
+
+    /// Loads a bounded display-sized image for editors that only need a preview.
+    public static func loadThumbnail(_ url:URL,maxPixelSize:Int=2_048) throws -> CGImage {
+        guard maxPixelSize>0,maxPixelSize<=previewImageSide else {
+            throw NashiError.invalidInput("This image could not be decoded.")
+        }
+        if let source=CGImageSourceCreateWithURL(url as CFURL,[kCGImageSourceShouldCache:false] as CFDictionary) {
+            try validateSourceDimensions(source)
+            if let image=CGImageSourceCreateThumbnailAtIndex(source,0,[kCGImageSourceCreateThumbnailFromImageAlways:true,kCGImageSourceCreateThumbnailWithTransform:true,kCGImageSourceThumbnailMaxPixelSize:maxPixelSize] as CFDictionary) {
+                try validateDimensions(image.width,height:image.height)
+                return image
+            }
+        }
+        return try decodeWithFFmpeg(url,maxPixelSize:maxPixelSize)
+    }
+
+    private static func decodeWithFFmpeg(_ url:URL,maxPixelSize:Int) throws -> CGImage {
+        let temp=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:temp) }
+        let png=temp.appendingPathComponent("decoded.png")
+        let scale="scale=w='min(\(maxPixelSize),min(iw,sqrt(100000000*iw/ih)))':h='min(\(maxPixelSize),min(ih,sqrt(100000000*ih/iw)))':force_original_aspect_ratio=decrease"
+        try ProcessRunner.run(Dependencies.executable("ffmpeg"),["-v","error","-max_alloc","536870912","-i",url.path,"-frames:v","1","-vf",scale,png.path])
+        guard let source=CGImageSourceCreateWithURL(png as CFURL,nil),let image=CGImageSourceCreateImageAtIndex(source,0,nil) else {
+            throw NashiError.invalidInput("This image could not be decoded.")
+        }
+        try validateDimensions(image.width,height:image.height)
+        return image
+    }
+
+    private static func validateSourceDimensions(_ source:CGImageSource) throws {
+        guard let properties=CGImageSourceCopyPropertiesAtIndex(source,0,nil) as? [CFString:Any],
+              let width=(properties[kCGImagePropertyPixelWidth] as? NSNumber)?.intValue,
+              let height=(properties[kCGImagePropertyPixelHeight] as? NSNumber)?.intValue else {
+            throw NashiError.invalidInput("The image dimensions could not be read.")
+        }
+        try validateDimensions(width,height:height)
+    }
+
+    private static func validateDimensions(_ width:Int,height:Int) throws {
+        guard width>0,height>0,width<=maximumImageSide,height<=maximumImageSide,
+              Int64(width)*Int64(height)<=maximumImagePixels else {
+            throw NashiError.invalidInput("Images must be no larger than 100 megapixels or 32,000 pixels on either side.")
+        }
+    }
+
+    private static func validateDimensions(_ width:Double,height:Double) throws {
+        guard width.isFinite,height.isFinite,width>0,height>0,
+              width<=Double(maximumImageSide),height<=Double(maximumImageSide),
+              width*height<=Double(maximumImagePixels) else {
+            throw NashiError.invalidInput("Images must be no larger than 100 megapixels or 32,000 pixels on either side.")
+        }
     }
 
     public static func convert(_ input: URL, to format: String, options: OperationOptions, token: CancellationToken) throws -> [URL] {
@@ -128,7 +183,8 @@ public enum ImageEngine {
     }
 
     public static func resized(_ image: CGImage, width: Int, height: Int) throws -> CGImage {
-        guard width>0,height>0,width<=32000,height<=32000,let ctx=CGContext(data:nil,width:width,height:height,bitsPerComponent:8,bytesPerRow:0,space:imageColorSpace,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue) else { throw NashiError.invalidInput("Image dimensions must be between 1 and 32,000 pixels.") }
+        try validateDimensions(width,height:height)
+        guard let ctx=CGContext(data:nil,width:width,height:height,bitsPerComponent:8,bytesPerRow:0,space:imageColorSpace,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue) else { throw NashiError.invalidInput("Could not allocate an image within the 100 megapixel limit.") }
         ctx.interpolationQuality = .high
         ctx.draw(image,in:CGRect(x:0,y:0,width:width,height:height))
         guard let result=ctx.makeImage() else { throw NashiError.failed("Could not resize image.") }; return result
@@ -164,11 +220,12 @@ public enum ImageEngine {
 
     private static func resizeUsingOptions(_ image: CGImage, options: OperationOptions) throws -> CGImage {
         guard options.width != nil || options.height != nil else { return image }
-        for value in [options.width,options.height].compactMap({$0}) { guard value>0,value<=32000 else { throw NashiError.invalidInput("Image dimensions must be between 1 and 32,000 pixels.") } }
+        for value in [options.width,options.height].compactMap({$0}) { guard value>0,value<=maximumImageSide else { throw NashiError.invalidInput("Image dimensions must be between 1 and 32,000 pixels.") } }
         let ratio = Double(image.height) / Double(image.width)
         // Round the derived side and keep at least one pixel for very thin images.
         let width = options.width ?? max(1, Int((Double(options.height!) / ratio).rounded()))
         let height = options.height ?? max(1, Int((Double(width) * ratio).rounded()))
+        try validateDimensions(width,height:height)
         return try resized(image, width: width, height: height)
     }
 
@@ -230,12 +287,15 @@ public enum ImageEngine {
         case 270: ci=ci.oriented(.left)
         default: ci=ci.transformed(by:CGAffineTransform(rotationAngle:-CGFloat(rotation) * .pi / 180))
         }
-        guard let output=imageContext.createCGImage(ci,from:ci.extent.integral) else { throw NashiError.failed("Could not edit image.") }
+        let outputExtent=ci.extent.integral
+        try validateDimensions(Double(outputExtent.width),height:Double(outputExtent.height))
+        guard let output=imageContext.createCGImage(ci,from:outputExtent) else { throw NashiError.failed("Could not edit image.") }
         return try resizeUsingOptions(output,options:options)
     }
 
     private static func canvas(_ width:Int,_ height:Int) throws -> CGContext {
-        guard width>0,height>0,width<=32000,height<=32000,let ctx=CGContext(data:nil,width:width,height:height,bitsPerComponent:8,bytesPerRow:0,space:imageColorSpace,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue) else { throw NashiError.failed("Could not allocate image canvas.") }; return ctx
+        try validateDimensions(width,height:height)
+        guard let ctx=CGContext(data:nil,width:width,height:height,bitsPerComponent:8,bytesPerRow:0,space:imageColorSpace,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue) else { throw NashiError.failed("Could not allocate image canvas within the 100 megapixel limit.") }; return ctx
     }
     /// Reads #RGB, #RGBA, #RRGGBB or #RRGGBBAA (the "#" is optional); nil for anything else.
     public static func parsedColor(_ hex: String) -> CGColor? {
@@ -505,7 +565,8 @@ public enum ImageEngine {
             ctx.draw(image,in:CGRect(x:x,y:y,width:w,height:h))
         }
         let output=OutputFiles.unique(for:first,extension:"png",suffix:" - Collage",directory:options.outputDirectory)
-        try write(ctx.makeImage()!,to:output);return [output]
+        guard let image=ctx.makeImage() else { throw NashiError.failed("Could not render the collage.") }
+        try write(image,to:output);return [output]
     }
 
     public static func collageImage(_ inputs:[CGImage],settings:CollageOptions) throws -> CGImage {

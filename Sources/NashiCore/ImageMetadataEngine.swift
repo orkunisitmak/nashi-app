@@ -58,7 +58,7 @@ public enum ImageMetadataEngine {
         try token.check()
         guard formats.contains(input.pathExtension.lowercased()) else { throw NashiError.unsupported("Metadata-only editing is unavailable for this image format.") }
         let original=try fingerprint(input,token:token)
-        let sourceHash=SHA256.hash(data:try Data(contentsOf:input))
+        let sourceHash=try hashFile(input,token:token)
         let directory=try OutputFiles.temporaryDirectory()
         defer { try? FileManager.default.removeItem(at:directory) }
         let staged=directory.appendingPathComponent("image").appendingPathExtension(input.pathExtension)
@@ -118,7 +118,7 @@ public enum ImageMetadataEngine {
             let expectedKey=displayKey(try tagName(key))
             guard !displayed.keys.contains(where:{$0.caseInsensitiveCompare(expectedKey) == .orderedSame}) else { throw NashiError.failed("The metadata field \(key) could not be removed.") }
         }
-        guard sourceHash==SHA256.hash(data:try Data(contentsOf:input)) else { throw NashiError.failed("The source changed during this operation. No output was saved.") }
+        guard sourceHash == (try hashFile(input,token:token)) else { throw NashiError.failed("The source changed during this operation. No output was saved.") }
         try token.check()
         let output=OutputFiles.unique(for:input,extension:input.pathExtension,suffix:changes.removeAll ? " - Clean":" - Metadata",directory:options.outputDirectory)
         try FileManager.default.moveItem(at:staged,to:output)
@@ -133,6 +133,20 @@ public enum ImageMetadataEngine {
         let rows=try JSONSerialization.jsonObject(with:result.output) as? [[String:Any]]
         guard let hash=rows?.first?["ImageDataHash"] as? String,!hash.isEmpty else { throw NashiError.failed("The encoded image data cannot be verified for this format.") }
         return hash
+    }
+
+    private static func hashFile(_ url:URL,token:CancellationToken) throws -> SHA256.Digest {
+        try token.check()
+        let handle=try FileHandle(forReadingFrom:url)
+        defer { try? handle.close() }
+        var hasher=SHA256()
+        while true {
+            try token.check()
+            guard let chunk=try handle.read(upToCount:1_048_576),!chunk.isEmpty else { break }
+            try token.check()
+            hasher.update(data:chunk)
+        }
+        return hasher.finalize()
     }
 
     private static func gifImageHash(_ data:Data) throws -> String {
