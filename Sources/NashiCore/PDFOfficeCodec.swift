@@ -15,7 +15,19 @@ enum PDFOfficeCodec {
         return CGRect(origin: .zero, size: rotated ? CGSize(width: box.height, height: box.width) : box.size)
     }
 
-    static func rasterPNG(_ page: PDFPage, rect crop: CGRect? = nil, dpi: Int = 144, token: CancellationToken) throws -> Data {
+    /// Maps page space into the frame in which a page's text layer reads left
+    /// to right. Text stored turned so that a /Rotate page shows it upright
+    /// gets the displayed frame, offset by the CropBox origin; text that
+    /// already runs left to right in page space keeps page space.
+    /// `advance` sums the steps between neighbouring characters of each line.
+    static func readingTransform(_ page: PDFPage, advance: CGVector) -> CGAffineTransform {
+        let box = page.bounds(for: .cropBox), turn = (page.rotation % 360 + 360) % 360
+        guard turn % 90 == 0, turn != 0, advance.dx <= abs(advance.dy) else { return .identity }
+        let r: CGAffineTransform = turn == 90 ? .init(a: 0, b: -1, c: 1, d: 0, tx: 0, ty: box.width) : turn == 180 ? .init(a: -1, b: 0, c: 0, d: -1, tx: box.width, ty: box.height) : .init(a: 0, b: 1, c: -1, d: 0, tx: box.height, ty: 0)
+        return CGAffineTransform(translationX: -box.minX, y: -box.minY).concatenating(r).concatenating(CGAffineTransform(translationX: box.minX, y: box.minY))
+    }
+
+    static func rasterPNG(_ page: PDFPage, rect crop: CGRect? = nil, frame: CGAffineTransform = .identity, dpi: Int = 144, token: CancellationToken) throws -> Data {
         try token.check()
         let bounds = crop ?? visualBounds(page)
         let scale = CGFloat(max(36, min(600, dpi))) / 72
@@ -26,7 +38,7 @@ enum PDFOfficeCodec {
         }
         context.setFillColor(CGColor(gray: 1, alpha: 1)); context.fill(CGRect(x: 0, y: 0, width: width, height: height))
         context.scaleBy(x: scale, y: scale)
-        if crop != nil { context.translateBy(x: -bounds.minX, y: -bounds.minY); context.drawPDFPage(cgPage) }
+        if crop != nil { context.translateBy(x: -bounds.minX, y: -bounds.minY); context.concatenate(frame); context.drawPDFPage(cgPage) }
         // A whole page keeps its annotations, such as stamps and filled form fields, as viewers show it.
         else { page.draw(with: .cropBox, to: context) }
         try token.check()
@@ -176,18 +188,22 @@ enum PDFOfficeCodec {
         guard let string = page.string, !string.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return try recognizedCells(page, token: token) }
         let ns = string as NSString
         var characters: [TextCell] = []
-        var index = 0
+        var index = 0, advance = CGVector.zero, last: CGRect?
         while index < ns.length {
             if index % 256 == 0 { try token.check() }
             let range = ns.rangeOfComposedCharacterSequence(at: index)
             let value = ns.substring(with: range)
             index = NSMaxRange(range)
-            if value == "\n" || value == "\r" { continue }
+            if value == "\n" || value == "\r" { last = nil; continue }
             guard let selection = page.selection(for: range) else { continue }
             let bounds = selection.bounds(for: page)
             guard bounds.width > 0, bounds.height > 0, !bounds.isInfinite, !bounds.isNull else { continue }
+            if let last { advance.dx += bounds.midX - last.midX; advance.dy += bounds.midY - last.midY }
+            last = bounds
             characters.append(.init(text: value, rect: bounds))
         }
+        let frame = readingTransform(page, advance: advance)
+        characters = characters.map { .init(text: $0.text, rect: $0.rect.applying(frame)) }
         var lines: [[TextCell]] = []
         for character in characters.sorted(by: { abs($0.rect.midY - $1.rect.midY) > 3 ? $0.rect.midY > $1.rect.midY : $0.rect.minX < $1.rect.minX }) {
             if let index = lines.indices.last, let previous = lines[index].first, abs(previous.rect.midY - character.rect.midY) < max(3, character.rect.height * 0.35) { lines[index].append(character) }
