@@ -165,7 +165,7 @@ struct ToolEditor:View {
             }
             .onChange(of:options.splitPoints) { _ in options.discardedClips=[];selectedSplitClip=nil }
             .onDeleteCommand { discardSelectedClip() }
-            .onDisappear { disposeMedia();pdfUnlock.reset() }
+            .onDisappear { disposeMedia();pdfUnlock.reset();options.password="" }
     }
     var toolHint:String {
         switch tool {
@@ -617,7 +617,7 @@ struct ToolEditor:View {
                 else { loaded=try await Task.detached { try MediaEngine.readMetadata(input,token:token) }.value }
                 try checkGeneration(generation,token:token);metadata=loaded;originalMetadata=loaded
             }
-            if tool == .organizePDF { pdfEditor.reset(document:try pdfUnlock.open(input));options.password=pdfUnlock.password }
+            if tool == .organizePDF { pdfEditor.reset(document:try pdfUnlock.open(input));options.password=pdfUnlock.password;previewError=nil }
             if tool == .frameImage { options.imageFrame = .init() }
             if tool == .createCollage { options.collage = .init() }
             if tool == .audioToVideo { width=1920;height=1080;options.backgroundColor="#000000" }
