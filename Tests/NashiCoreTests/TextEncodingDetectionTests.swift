@@ -44,6 +44,19 @@ final class TextEncodingDetectionTests: XCTestCase {
         }
     }
 
+    func testDirectTextImportFailureLeavesNoOutputFolderOrChangedResources() throws {
+        let root=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:root) }
+        for name in ["Input.txt","Input.md"] {
+            let input=root.appendingPathComponent(name),folder=root.appendingPathComponent(name+" output")
+            let source=Data("![Local image](nearby.png)".utf8);try source.write(to:input)
+            let resource=root.appendingPathComponent("nearby.png");try Data("keep resource".utf8).write(to:resource)
+            var options=OperationOptions();options.textEncoding=name.hasSuffix(".md") ? "utf-8":"unsupported";options.outputDirectory=folder
+            XCTAssertThrowsError(try DocumentEngine.convert(input,to:"pdf",options:options,token:.init()))
+            XCTAssertFalse(FileManager.default.fileExists(atPath:folder.path))
+            XCTAssertEqual(try Data(contentsOf:input),source);XCTAssertEqual(try Data(contentsOf:resource),Data("keep resource".utf8))
+        }
+    }
+
     func testUTF32TextWithByteOrderMarkIsReadAsUTF32() throws {
         let root = try OutputFiles.temporaryDirectory()
         defer { try? FileManager.default.removeItem(at: root) }

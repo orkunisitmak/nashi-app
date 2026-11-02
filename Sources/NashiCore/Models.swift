@@ -96,7 +96,7 @@ public struct VideoRedaction: Codable, Sendable {
 }
 
 public struct OperationOptions: Codable, Sendable {
-    /// Optional source encoding for subtitle and TXT/Markdown imports; nil preserves automatic detection.
+    /// Optional source encoding for subtitle and TXT imports; nil preserves automatic detection.
     public var textEncoding: String? = nil
     public var quality: Double = 0.8
     public var audioBitrate: Int = 256
