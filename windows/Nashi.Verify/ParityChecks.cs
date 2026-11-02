@@ -49,6 +49,15 @@ internal static class ParityChecks
             check(opensWithoutPassword==(userPassword.Length==0)&&reopened.SecurityHandler.Elements.ContainsKey("/Filter")&&reopened.PageCount==1,"Compressing a protected PDF saved a copy without its password or permissions");
         }
         using(var cleaned=PdfSharp.Pdf.IO.PdfReader.Open(DocumentEngine.Pdf("removeMetadata",[titledPdf],root)[0],PdfSharp.Pdf.IO.PdfDocumentOpenMode.Import))check(cleaned.Info is {Title:"",Author:"",Subject:"",Keywords:""},"Remove Metadata kept the title, author, subject or keywords");
+        // Like the Mac, Remove All drops each review annotation's author (/T) and its dates, of every type, and keeps the note text.
+        var reviewedPdf=Pdf("Reviewed.pdf","BT /F1 24 Tf 72 700 Td (Draft) Tj ET",pdf=>{var reviewAnnots=new PdfSharp.Pdf.PdfArray(pdf);pdf.Pages[0].Elements["/Annots"]=reviewAnnots;foreach(var reviewType in new[]{"/Text","/Highlight","/Caret","/Squiggly","/Polygon","/PolyLine","/FreeText","/Ink"}){var reviewNote=new PdfSharp.Pdf.PdfDictionary(pdf);reviewNote.Elements.SetName("/Type","/Annot");reviewNote.Elements.SetName("/Subtype",reviewType);reviewNote.Elements["/Rect"]=new PdfSharp.Pdf.PdfArray(pdf,new PdfSharp.Pdf.PdfInteger(72),new PdfSharp.Pdf.PdfInteger(72),new PdfSharp.Pdf.PdfInteger(144),new PdfSharp.Pdf.PdfInteger(144));reviewNote.Elements.SetString("/T","Ayşe Yılmaz");reviewNote.Elements.SetString("/M","D:20260101120000Z");reviewNote.Elements.SetString("/CreationDate","D:20260101120000Z");reviewNote.Elements.SetString("/Contents","Check "+reviewType);pdf.Internals.AddObject(reviewNote);reviewAnnots.Elements.Add(reviewNote.Reference!);}});
+        var reviewedBefore=File.ReadAllBytes(reviewedPdf);
+        using(var reviewed=PdfSharp.Pdf.IO.PdfReader.Open(DocumentEngine.Pdf("removeMetadata",[reviewedPdf],root)[0],PdfSharp.Pdf.IO.PdfDocumentOpenMode.Import))
+        {
+            var reviewNotes=reviewed.Pages[0].Elements.GetArray("/Annots")!.Elements.Select(e=>(e is PdfSharp.Pdf.Advanced.PdfReference reference?reference.Value:e) as PdfSharp.Pdf.PdfDictionary).ToArray();
+            check(reviewNotes.Length==8&&reviewNotes.All(n=>n is not null&&!n.Elements.ContainsKey("/T")&&!n.Elements.ContainsKey("/M")&&!n.Elements.ContainsKey("/CreationDate")&&n.Elements.GetString("/Contents")=="Check "+n.Elements.GetName("/Subtype")),"Remove Metadata kept an annotation author or date, or lost its note text");
+        }
+        check(File.ReadAllBytes(reviewedPdf).SequenceEqual(reviewedBefore),"Remove Metadata changed the source PDF");
         var textHtml=OfficeDocuments.PdfHtml(textPdf,"",(_,_)=>[9],out var textBlank);var vectorHtml=OfficeDocuments.PdfHtml(vectorPdf,"",(_,area)=>area is null?[1,2,3]:null,out var vectorBlank);
         check(textBlank.Length==0&&textHtml.Contains("Nashi")&&!textHtml.Contains("data:image")&&vectorBlank.SequenceEqual(new[]{1})&&vectorHtml.Contains("data:image/png;base64,AQID"),"A PDF page without extractable text or images converted to a blank page");
         // macOS (Quartz) PDFs set "1 Tf" and scale the text matrix; the drawn size is what matters.
