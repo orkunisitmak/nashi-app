@@ -24,7 +24,7 @@ public enum PDFEngine {
         do {
             for index in 0..<pdf.pageCount {
                 try token.check();guard let page=pdf.page(at:index) else { throw NashiError.failed("A PDF page could not be read.") }
-                let bounds=PDFOfficeCodec.visualBounds(page),scale=Double(max(36,min(1200,options.dpi)))/72
+                let bounds=PDFOfficeCodec.visualBounds(page),dpi=Double(max(36,min(1200,options.dpi))),scale=dpi/72
                 let scaledWidth=bounds.width*scale,scaledHeight=bounds.height*scale
                 guard scaledWidth.isFinite,scaledHeight.isFinite,scaledWidth>0,scaledHeight>0,scaledWidth<=32000,scaledHeight<=32000 else { throw NashiError.failed("PDF page is too large to render at this DPI.") }
                 let w=max(1,Int(scaledWidth.rounded())),h=max(1,Int(scaledHeight.rounded()))
@@ -35,7 +35,7 @@ public enum PDFEngine {
                 page.draw(with:.cropBox,to:ctx)
                 try token.check()
                 guard let image=ctx.makeImage() else { throw NashiError.failed("A PDF page could not be rendered.") }
-                let output=folder.appendingPathComponent(String(format:"Page %03d.%@",index+1,format));try ImageEngine.write(image,to:output,quality:options.quality);outputs.append(output)
+                let output=folder.appendingPathComponent(String(format:"Page %03d.%@",index+1,format));try ImageEngine.write(image,to:output,quality:options.quality,metadata:[kCGImagePropertyDPIWidth:dpi,kCGImagePropertyDPIHeight:dpi] as CFDictionary);outputs.append(output)
                 progress(Double(index+1)/Double(pdf.pageCount),"Rendered page \(index+1) of \(pdf.pageCount)")
             }
         } catch { try? FileManager.default.removeItem(at:folder);throw error }
