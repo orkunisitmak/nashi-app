@@ -1432,5 +1432,18 @@
   "YouTube thumbnail · best available full-size image": "YouTube küçük resmi · en iyi tam boyutlu görsel",
   "No tools for this file type": "Bu dosya türü için araç yok",
   "Details": "Ayrıntılar",
-  "Copy details": "Ayrıntıları kopyala"
+  "Copy details": "Ayrıntıları kopyala",
+  "Calculate or convert": "Hesapla veya dönüştür",
+  "Math, units, and currencies. Answers appear as you type.": "Matematik, birimler ve para birimleri. Sonuç sen yazarken görünür.",
+  "Clear calculation": "Hesaplamayı temizle",
+  "Copied": "Kopyalandı",
+  "Return copies the answer": "Enter sonucu kopyalar",
+  "Exchange rates: {0}": "Döviz kurları: {0}",
+  "Getting today’s exchange rates for {0} → {1}…": "{0} → {1} için güncel döviz kurları alınıyor…",
+  "Exchange rates are unavailable. Check your connection and try again.": "Döviz kurlarına ulaşılamıyor. Bağlantını kontrol edip tekrar dene.",
+  "Try again": "Tekrar dene",
+  "Calculator": "Hesap makinesi",
+  "Local currency": "Yerel para birimi",
+  "Automatic ({0})": "Otomatik ({0})",
+  "Type on Home: 10+10, 1 USD, 1 USD to TRY or 5 km in mi. Currency amounts convert to this currency unless you name another. Exchange rates download only when you convert a currency.": "Ana Sayfa’da yaz: 10+10, 1 USD, 1 USD to TRY veya 5 km in mi. Başka bir para birimi yazmazsan tutarlar bu para birimine çevrilir. Döviz kurları yalnızca para birimi çevirdiğinde indirilir."
 }

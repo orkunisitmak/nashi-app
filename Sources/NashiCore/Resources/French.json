@@ -1432,5 +1432,18 @@
   "YouTube thumbnail · best available full-size image": "Miniature YouTube · meilleure image en taille réelle disponible",
   "No tools for this file type": "Aucun outil pour ce type de fichier",
   "Details": "Détails",
-  "Copy details": "Copier les détails"
+  "Copy details": "Copier les détails",
+  "Calculate or convert": "Calculer ou convertir",
+  "Math, units, and currencies. Answers appear as you type.": "Calculs, unités et devises. Le résultat s’affiche pendant la saisie.",
+  "Clear calculation": "Effacer le calcul",
+  "Copied": "Copié",
+  "Return copies the answer": "Retour copie le résultat",
+  "Exchange rates: {0}": "Taux de change : {0}",
+  "Getting today’s exchange rates for {0} → {1}…": "Récupération des taux du jour pour {0} → {1}…",
+  "Exchange rates are unavailable. Check your connection and try again.": "Les taux de change sont indisponibles. Vérifiez votre connexion et réessayez.",
+  "Try again": "Réessayer",
+  "Calculator": "Calculatrice",
+  "Local currency": "Devise locale",
+  "Automatic ({0})": "Automatique ({0})",
+  "Type on Home: 10+10, 1 USD, 1 USD to TRY or 5 km in mi. Currency amounts convert to this currency unless you name another. Exchange rates download only when you convert a currency.": "Saisissez sur l’accueil : 10+10, 1 USD, 1 USD to TRY ou 5 km in mi. Les montants sont convertis dans cette devise, sauf si vous en indiquez une autre. Les taux de change ne sont téléchargés que lorsque vous convertissez une devise."
 }

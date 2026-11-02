@@ -15,6 +15,10 @@ struct HomeView:View {
     @State private var historySearch=""
     @State private var allHistory=false
     @State private var toolsReady=ExternalToolSetup.status.ready
+    @StateObject private var calculator:CalculatorModel
+    init(state:AppState,updater:AppUpdater,calculator:CalculatorModel?=nil) {
+        self.state=state;self.updater=updater;_calculator=StateObject(wrappedValue:calculator ?? CalculatorModel())
+    }
     private var formats:[String] { FeatureCatalog.formats(for:state.inputs) }
     private var tools:[ToolKind] { FeatureCatalog.tools(for:state.inputs) }
     private var recent:[JobRecord] {
@@ -68,6 +72,7 @@ struct HomeView:View {
                             Spacer();if state.webShortcutAvailable { Text("⌃⇧D").font(.system(size:13,weight:.semibold)).foregroundStyle(.secondary) }
                         }.padding(18).frame(maxWidth:.infinity,alignment:.leading).nashiCard()
                     }.buttonStyle(.plain).accessibilityLabel("Download a link")
+                    CalculatorCard(model:calculator).nashiEntrance(delay:0.06)
                     if !state.inputs.isEmpty {
                         selectionActions.transition(.opacity.combined(with:.move(edge:.top)))
                     }
