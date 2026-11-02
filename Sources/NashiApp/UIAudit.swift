@@ -138,7 +138,7 @@ struct UIAuditError:LocalizedError { let message:String;init(_ message:String){s
         switch scene {
         case "pdf.password":
             let model=PDFUnlockModel();_ = try? model.open(fixtures["protected"]!)
-            view=AnyView(PDFUnlockView(model:model,busy:false,onUnlock:{}).padding(24));size=NSSize(width:480,height:220)
+            view=AnyView(PDFUnlockView(model:model,busy:false,onUnlock:{}).padding(24).frame(maxWidth:.infinity,maxHeight:.infinity).background(NashiPalette.canvas).tint(.nashi).buttonStyle(NashiButtonStyle(.secondary,compact:true)));size=NSSize(width:480,height:220)
         case "home.empty","home.selected","library":view=AnyView(HomeView(state:state,updater:updater));size=NSSize(width:700,height:580)
         case "settings.general","settings.formats","settings.updates":
             let section:SettingsSection=scene=="settings.formats" ? .formats:scene=="settings.updates" ? .updates:.general
