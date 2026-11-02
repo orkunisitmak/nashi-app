@@ -34,3 +34,9 @@ test('playground Library search NFD-folds Turkish dotted İ like Formats', () =>
   assert.deepEqual(names.filter(name => foldSearchText(name).includes(foldSearchText('AVİF'))), ['AVIF-export.jpg']);
   assert.equal('AVIF-export.jpg'.toLowerCase().includes('AVİF'.toLowerCase()), false);
 });
+
+test('playground Library search ignores spaces around the query', () => {
+  const names = ['AVIF-export.jpg', 'weekend.mp4'];
+  assert.deepEqual(names.filter(name => foldSearchText(name).includes(foldSearchText(' AVİF'))), ['AVIF-export.jpg']);
+  assert.equal(foldSearchText('  '), '');
+});
