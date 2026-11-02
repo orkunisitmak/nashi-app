@@ -18,9 +18,12 @@ export function classifyMediaPreviewURL(value) {
 
   if (!['instagram.com', 'www.instagram.com', 'm.instagram.com'].includes(host)) {
     const name = url.pathname.split('/').pop() ?? '';
-    const ext = name.includes('.') ? '.' + name.split('.').pop().toLowerCase() : '';
-    return ['.jpg', '.jpeg', '.png', '.webp', '.avif', '.gif', '.heic', '.heif', '.svg', '.bmp', '.tiff', '.tif'].includes(ext)
-      ? 'image' : 'original';
+    const ext = name.lastIndexOf('.') > 0 ? name.slice(name.lastIndexOf('.')).toLowerCase() : '';
+    if (['.jpg', '.jpeg', '.png', '.webp', '.avif', '.gif', '.heic', '.heif', '.svg', '.bmp', '.tiff', '.tif'].includes(ext))
+      return 'image';
+    // Mac directKind video and audio extensions for links without a media type.
+    return ['.mp4', '.mov', '.webm', '.mkv', '.m4v', '.mp3', '.m4a', '.wav', '.flac', '.ogg', '.opus', '.aac', '.aiff'].includes(ext)
+      ? 'media' : 'original';
   }
   // Native WebMediaDragPayload / WebMediaPayload allow an optional username
   // before /p/, /reel/, /reels/, or /tv/ (Instagram profile-grid links).
@@ -38,6 +41,7 @@ export function mediaPreviewOptions(value) {
     case 'instagram-photos': return [['Carousel photos', 'Carousel görselleri']];
     case 'youtube': return [['Video', 'Video'], ['Audio', 'Ses'], ['Thumbnail', 'Thumbnail']];
     case 'image': return [['Image', 'Görsel']];
+    case 'media': return [['Media file', 'Medya dosyası']];
     default: return [['Original media', 'Orijinal medya']];
   }
 }

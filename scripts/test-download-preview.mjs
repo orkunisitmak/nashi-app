@@ -67,6 +67,28 @@ test('AVIF, BMP, TIFF, HEIC and HEIF file links unlock the image preview, provid
   assert.equal(classifyMediaPreviewURL('https://www.instagram.com/p/demo.heic'),'instagram-photos');
 });
 
+test('direct video and audio links follow the Mac direct-link extensions, images and providers win',()=>{
+  for(const url of [
+    'https://example.org/clip.mp4',
+    'https://cdn.example.org/clip.WEBM?token=1',
+    'https://cdn.example.org/clip.mkv',
+    'https://cdn.example.org/clip.m4v',
+    'https://cdn.example.org/song.mp3',
+    'https://cdn.example.org/song.m4a',
+    'https://cdn.example.org/song.wav',
+    'https://cdn.example.org/song.flac',
+    'https://cdn.example.org/song.ogg',
+    'https://cdn.example.org/song.opus',
+    'https://cdn.example.org/song.aac',
+    'https://cdn.example.org/song.aiff'
+  ])assert.equal(classifyMediaPreviewURL(url),'media',url);
+  for(const url of ['https://example.org/page','https://example.org/page.html','https://example.org/.mp4','https://example.org/a.mp4/b'])
+    assert.equal(classifyMediaPreviewURL(url),'original',url);
+  assert.equal(classifyMediaPreviewURL('https://www.youtube.com/watch.mp4'),'youtube');
+  assert.equal(classifyMediaPreviewURL('https://www.instagram.com/p/demo.mp4'),'instagram-photos');
+  assert.deepEqual(mediaPreviewOptions('https://cdn.example.org/clip.mp4'),[['Media file','Medya dosyası']]);
+});
+
 test('a direct image link shows an Image option instead of Original media',()=>{
   assert.deepEqual(mediaPreviewOptions('https://pbs.twimg.com/media/Demo.jpg'),[['Image','Görsel']]);
   assert.deepEqual(mediaPreviewOptions('https://example.com/page'),[['Original media','Orijinal medya']]);
