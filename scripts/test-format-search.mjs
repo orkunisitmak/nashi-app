@@ -57,6 +57,6 @@ test('playground Edit Image applies Width to the rotated image', () => {
   assert.deepEqual(size(100, 90), [100, 200]);
   assert.deepEqual(size(100, 270), [100, 200]);
   assert.deepEqual(size(200, 90), [200, 400]);
-  assert.deepEqual(size(400, 90), [200, 400]);
+  assert.deepEqual(size(400, 90), [400, 800]);
   assert.deepEqual(size(400, 180), [400, 200]);
 });
