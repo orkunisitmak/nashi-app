@@ -91,7 +91,9 @@ final class HTMLToPDFTests: XCTestCase {
         <pre id="report"></pre><script>
         const report = line => { document.getElementById('report').textContent += line + '\\n' };
         const frame = document.body.appendChild(document.createElement('iframe'));
-        report('peer ' + typeof RTCPeerConnection + ', frame peer ' + typeof frame.contentWindow.RTCPeerConnection + ', camera ' + typeof navigator.mediaDevices + ', location ' + typeof navigator.geolocation);
+        // The frame has its own origin, so the page cannot borrow its WebRTC either.
+        const framePeer = (() => { try { return typeof frame.contentWindow.RTCPeerConnection } catch { return 'unreachable' } })();
+        report('peer ' + typeof RTCPeerConnection + ', frame peer ' + framePeer + ', camera ' + typeof navigator.mediaDevices + ', location ' + typeof navigator.geolocation);
         fetch('\(remote)/fetch').catch(() => {}); navigator.sendBeacon('\(remote)/beacon', 'x');
         // Files beside the page may be shown by markup, but scripts may not read them into the PDF.
         fetch('secret.txt').then(response => response.text()).then(report, () => {});
@@ -102,7 +104,7 @@ final class HTMLToPDFTests: XCTestCase {
         new Image().src = '\(remote)/script-image'; import('\(remote)/module.js').catch(() => {});
         new Worker(URL.createObjectURL(new Blob(["fetch('\(remote)/worker').catch(() => {})"])));
         window.open('\(remote)/popup'); setTimeout(() => { location.href = '\(remote)/navigate' }, 10);
-        const Peer = window.RTCPeerConnection || frame.contentWindow.RTCPeerConnection;
+        let Peer = window.RTCPeerConnection; try { Peer = Peer || frame.contentWindow.RTCPeerConnection } catch {}
         if (Peer) { const peer = new Peer({ iceServers: [{ urls: 'stun:127.0.0.1:\(probe.udpPort)' }] }); peer.createDataChannel('x'); peer.createOffer().then(offer => peer.setLocalDescription(offer)) }
         </script></body></html>
         """.write(to: input, atomically: true, encoding: .utf8)
@@ -113,10 +115,37 @@ final class HTMLToPDFTests: XCTestCase {
         let pdf = try XCTUnwrap(PDFDocument(url: output))
         let text = try XCTUnwrap(pdf.string)
         XCTAssertTrue(text.contains("Offline probe"))
-        XCTAssertTrue(text.contains("peer undefined, frame peer undefined, camera undefined, location undefined"), text)
+        XCTAssertTrue(text.contains("peer undefined, frame peer unreachable, camera undefined, location undefined"), text)
         XCTAssertFalse(text.contains("Sibling secret marker"), "A page script read a file beside the page.")
         for index in 0..<pdf.pageCount { XCTAssertEqual(try Self.pixels(near: (255, 0, 255), on: XCTUnwrap(pdf.page(at: index))), 0, "A file outside the page's folder was rendered.") }
         XCTAssertNil(try Data(contentsOf: output).range(of: Data("file:".utf8)))
+    }
+
+    func testPageScriptsCannotReadFramesStyleSheetsOrImagesBesideThePage() throws {
+        try "Framed secret marker".write(to: site.appendingPathComponent("frame.txt"), atomically: true, encoding: .utf8)
+        try ".SheetSecretMarker { color: red }".write(to: site.appendingPathComponent("sheet.css"), atomically: true, encoding: .utf8)
+        try Self.png(255, 128, 0).write(to: site.appendingPathComponent("assets/photo.png"))
+        let input = site.appendingPathComponent("Reader.html")
+        // Markup may show these files; the hidden copies are only visible if a script reads them.
+        try """
+        <!doctype html><meta charset="utf-8"><p>Reader page</p><pre id="report"></pre>
+        <iframe id="frame" src="frame.txt" style="display:none"></iframe><link id="sheet" rel="stylesheet" href="sheet.css" media="not all"><img id="photo" src="assets/photo.png" style="display:none">
+        <script>
+        const report = line => { document.getElementById('report').textContent += line + '\\n' };
+        addEventListener('load', () => {
+          try { report('frame ' + document.getElementById('frame').contentDocument.body.innerText) } catch { report('frame blocked') }
+          try { report('sheet ' + document.getElementById('sheet').sheet.cssRules[0].selectorText) } catch { report('sheet blocked') }
+          const context = document.createElement('canvas').getContext('2d'); context.drawImage(document.getElementById('photo'), 0, 0);
+          try { report('pixel ' + context.getImageData(0, 0, 1, 1).data.join(',')) } catch { report('pixel blocked') }
+        });
+        </script>
+        """.write(to: input, atomically: true, encoding: .utf8)
+        let output = try XCTUnwrap(ConversionEngine.run(.init(inputs: [input], operation: .convert("pdf"))).first)
+        let text = try XCTUnwrap(PDFDocument(url: output)?.string)
+        XCTAssertTrue(text.contains("Reader page"), text)
+        XCTAssertTrue(text.contains("frame blocked"), text)
+        XCTAssertTrue(text.contains("sheet blocked"), text)
+        XCTAssertTrue(text.contains("pixel blocked"), text)
     }
 
     func testCancellationAndPageLimitsPublishNothing() throws {
