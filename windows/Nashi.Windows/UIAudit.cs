@@ -64,6 +64,18 @@ internal static class UIAudit
             ValidateFilter(requestedScenes, SceneIds, "scene");
             ValidateFilter(requestedAppearances, Appearances, "appearance");
             ValidateFilter(requestedLanguages, Languages, "language");
+            WheelIconSmoke.Run((valid,description) =>
+            {
+                if(!valid)throw new InvalidOperationException(description);
+            });
+            VisualSystemSmoke.Run((valid,description) =>
+            {
+                if(!valid)throw new InvalidOperationException(description);
+            });
+            PreviewLaunchSmoke.Run((valid,description) =>
+            {
+                if(!valid)throw new InvalidOperationException(description);
+            });
             Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
             Feedback.Enabled = false;
             // A fresh data directory on every run prevents stale settings or history influencing a capture.
@@ -196,6 +208,44 @@ internal static class UIAudit
             capture.Checks["language"] = L10n.Language == capture.Language;
             capture.Checks["appearance"] = Theme.Dark == (capture.Appearance == "dark");
             AssertActualScene(subject, owner, fixtures, capture);
+            if(capture.Scene=="library")
+            {
+                var nativeFiles=Descendants<Image>(subject)
+                    .Where(image => image.GetValue(FileArtwork.PathProperty) is string);
+                capture.Checks["nativeFileIconResolution"]=nativeFiles.Any() &&
+                    nativeFiles.All(image => image.Source is BitmapSource{PixelWidth:>=32,PixelHeight:>=32});
+                if(!capture.Checks["nativeFileIconResolution"])
+                    capture.Issues.Add("File icons must use full-size native Windows artwork, not stretched 16px assets.");
+            }
+            if(capture.Scene=="settings.general")
+            {
+                var cards=Descendants<Border>(subject).Count(border=>Equals(border.Tag,"NashiSettingsCard"));
+                var toggles=Descendants<CheckBox>(subject).ToArray();
+                var pickers=Descendants<ComboBox>(subject).ToArray();
+                capture.Checks["previewStartupIsolated"]=!PreviewLaunch.Enabled ||
+                    !toggles.Any(toggle=>Equals(toggle.Content,"Launch at login"));
+                if(!capture.Checks["previewStartupIsolated"])
+                    capture.Issues.Add("Preview Settings must not expose live Windows login registry controls.");
+                capture.Checks["settingsGroupedCards"]=cards>=3;
+                capture.Checks["settingsVectorToggle"]=toggles.Length>=6 &&
+                    toggles.All(toggle=>toggle.Template.FindName("NashiSwitchThumb",toggle) is Border);
+                capture.Checks["settingsVectorDropdown"]=pickers.Length>=2 &&
+                    pickers.All(picker=>picker.Template.FindName("NashiChevron",picker) is System.Windows.Shapes.Path);
+                foreach(var key in new[]{"settingsGroupedCards","settingsVectorToggle","settingsVectorDropdown"})
+                    if(!capture.Checks[key])capture.Issues.Add("Windows Settings design system is incomplete: "+key);
+            }
+            if(capture.Scene is "library" or "home.selected" or "settings.general")
+            {
+                var iconCount=Descendants<Button>(subject).Count(button => button.Content is Viewbox);
+                capture.Checks["sharedAppIcons"] = capture.Scene switch
+                {
+                    "library" => iconCount>=3,
+                    "home.selected" => Descendants<Viewbox>(subject).Count()>=3,
+                    _ => Descendants<ListBox>(subject).Any(list => list.Items.Count>=6 &&
+                        Descendants<Viewbox>(list).Count()>=6)
+                };
+                if(!capture.Checks["sharedAppIcons"])capture.Issues.Add("Shared Windows icon controls are missing in this scene.");
+            }
             if (!ready) capture.Issues.Add("Scene did not reach loaded, arranged and artwork-ready state within 8 seconds.");
             subject.UpdateLayout();
             capture.Width = subject.ActualWidth;
@@ -298,7 +348,8 @@ internal static class UIAudit
             "settings.general" or "settings.formats" or "settings.updates" => subject is SettingsWindow &&
                 Descendants<ListBox>(subject).Any(list => Equals(list.SelectedItem, capture.Scene.Split('.')[1] switch { "formats" => "Formats", "updates" => "Updates", _ => "General" })),
             "wheel.pdf-multiple" => subject is WheelWindow && owner.SelectedFiles.SequenceEqual(fixtures.Pdfs) &&
-                Descendants<System.Windows.Shapes.Path>(subject).Count(path => path.Data is StreamGeometry) == FeatureCatalog.Tools(fixtures.Pdfs).Length,
+                Descendants<System.Windows.Shapes.Path>(subject).Count(path => path.Data is StreamGeometry &&
+                    path.Parent is Canvas { Width: 540, Height: 540 }) == Math.Min(12, FeatureCatalog.Tools(fixtures.Pdfs).Length),
             "editor.crop-image" => subject is ToolEditor crop && crop.FieldForTest("Width").Text == fixtures.Bitmap.PixelWidth.ToString(CultureInfo.CurrentCulture),
             "editor.annotate-image" => subject is ToolEditor && Descendants<ComboBox>(subject).Any(combo => Equals(combo.SelectedItem, "Marker")),
             "editor.frame-image" => subject is ToolEditor frame && frame.UIAuditPreviewReady &&

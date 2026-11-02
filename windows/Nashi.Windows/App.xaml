@@ -26,9 +26,14 @@
  </Style>
  <Style TargetType="ComboBox"><Setter Property="ItemTemplate" Value="{StaticResource ChoiceLabel}"/><Setter Property="FocusVisualStyle" Value="{x:Null}"/><Setter Property="BorderBrush" Value="{DynamicResource Line}"/><Setter Property="Padding" Value="10,9"/><Setter Property="Margin" Value="4"/><Setter Property="MinWidth" Value="110"/><Setter Property="Foreground" Value="{DynamicResource Ink}"/><Setter Property="Background" Value="{DynamicResource Surface}"/>
   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ComboBox"><Grid>
-   <ToggleButton Focusable="False" IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" ClickMode="Press"><ToggleButton.Template><ControlTemplate TargetType="ToggleButton"><Border Background="{DynamicResource Surface}" BorderBrush="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType=ComboBox}}" BorderThickness="1" CornerRadius="10"><TextBlock Text="⌄" HorizontalAlignment="Right" Margin="0,0,10,0" VerticalAlignment="Center" Foreground="{DynamicResource Ink}"/></Border></ControlTemplate></ToggleButton.Template></ToggleButton>
+   <ToggleButton Focusable="False" IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" ClickMode="Press"><ToggleButton.Template><ControlTemplate TargetType="ToggleButton"><Border Background="{DynamicResource Surface}" BorderBrush="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType=ComboBox}}" BorderThickness="1" CornerRadius="10"></Border></ControlTemplate></ToggleButton.Template></ToggleButton>
    <ContentPresenter Margin="12,9,30,9" IsHitTestVisible="False" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" VerticalAlignment="Center"/>
    <Popup x:Name="PART_Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Focusable="False" PopupAnimation="None"><Border Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="10" MinWidth="{TemplateBinding ActualWidth}" Padding="5"><ScrollViewer MaxHeight="300"><ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/></ScrollViewer></Border></Popup>
+   <Path x:Name="NashiChevron" Data="{local:FluentIcon chevron}" Fill="{DynamicResource Ink}"
+    Width="13" Height="13" Stretch="Uniform" StrokeThickness="1.7"
+    StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+    HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,13,0"
+    IsHitTestVisible="False"/>
   </Grid><ControlTemplate.Triggers><Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter Property="BorderBrush" Value="{DynamicResource Gold}"/></Trigger><Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
  </Style>
  <Style TargetType="ComboBoxItem"><Setter Property="Foreground" Value="{DynamicResource Ink}"/><Setter Property="Padding" Value="10,8"/><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ComboBoxItem"><Border x:Name="Item" CornerRadius="6" Background="Transparent" Padding="{TemplateBinding Padding}"><ContentPresenter/></Border><ControlTemplate.Triggers><Trigger Property="IsHighlighted" Value="True"><Setter TargetName="Item" Property="Background" Value="{DynamicResource Sage}"/></Trigger><Trigger Property="IsSelected" Value="True"><Setter TargetName="Item" Property="Background" Value="{DynamicResource Sage}"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter></Style>
@@ -37,5 +42,79 @@
  <Style TargetType="ScrollViewer"><Setter Property="FocusVisualStyle" Value="{x:Null}"/></Style>
  <Style TargetType="ScrollBar"><Setter Property="Width" Value="11"/><Setter Property="Background" Value="Transparent"/><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ScrollBar"><Grid Background="Transparent"><Track x:Name="PART_Track" IsDirectionReversed="True" Orientation="{TemplateBinding Orientation}"><Track.DecreaseRepeatButton><RepeatButton Command="ScrollBar.PageUpCommand" Focusable="False" Opacity="0"/></Track.DecreaseRepeatButton><Track.Thumb><Thumb><Thumb.Template><ControlTemplate TargetType="Thumb"><Border Background="{DynamicResource Muted}" CornerRadius="4" Margin="3,1" Opacity="0.45"/></ControlTemplate></Thumb.Template></Thumb></Track.Thumb><Track.IncreaseRepeatButton><RepeatButton Command="ScrollBar.PageDownCommand" Focusable="False" Opacity="0"/></Track.IncreaseRepeatButton></Track></Grid><ControlTemplate.Triggers><Trigger Property="Orientation" Value="Horizontal"><Setter Property="Height" Value="11"/><Setter Property="Width" Value="Auto"/><Setter TargetName="PART_Track" Property="IsDirectionReversed" Value="False"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter></Style>
  <Style x:Key="WheelLabelButton" TargetType="Button"><Setter Property="FocusVisualStyle" Value="{x:Null}"/><Setter Property="Cursor" Value="Hand"/><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/></Border></ControlTemplate></Setter.Value></Setter></Style>
- <Style TargetType="CheckBox"><Setter Property="Foreground" Value="{DynamicResource Ink}"/></Style>
+ <Style x:Key="NashiIconButton" TargetType="Button">
+  <Setter Property="FocusVisualStyle" Value="{x:Null}"/><Setter Property="Cursor" Value="Hand"/>
+  <Setter Property="Foreground" Value="{DynamicResource Ink}"/><Setter Property="Padding" Value="0"/>
+  <Setter Property="Background" Value="{DynamicResource Surface}"/><Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
+  <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
+   <Border x:Name="Round" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="18">
+    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+   </Border>
+   <ControlTemplate.Triggers>
+    <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Round" Property="Background" Value="{DynamicResource Sage}"/><Setter TargetName="Round" Property="BorderBrush" Value="{DynamicResource Muted}"/></Trigger>
+    <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Round" Property="BorderBrush" Value="{DynamicResource Gold}"/><Setter TargetName="Round" Property="BorderThickness" Value="2"/></Trigger>
+    <Trigger Property="IsPressed" Value="True"><Setter TargetName="Round" Property="Opacity" Value="0.8"/></Trigger>
+    <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.45"/></Trigger>
+   </ControlTemplate.Triggers>
+  </ControlTemplate></Setter.Value></Setter>
+ </Style>
+ <Style x:Key="NashiToggleSwitch" TargetType="CheckBox">
+  <Setter Property="Foreground" Value="{DynamicResource Ink}"/>
+  <Setter Property="Cursor" Value="Hand"/>
+  <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+  <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="CheckBox">
+   <Grid MinHeight="34" Background="Transparent">
+    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+    <ContentPresenter VerticalAlignment="Center" RecognizesAccessKey="True" Margin="0,0,12,0"/>
+    <Border x:Name="NashiSwitchTrack" Grid.Column="1" Width="42" Height="24" CornerRadius="12"
+      Background="{DynamicResource Inset}" BorderBrush="{DynamicResource Muted}"
+      BorderThickness="1" VerticalAlignment="Center">
+      <Border x:Name="NashiSwitchThumb" Width="18" Height="18" CornerRadius="9"
+       Background="{DynamicResource Surface}" HorizontalAlignment="Left"
+       VerticalAlignment="Center" Margin="2,0,2,0"/>
+    </Border>
+   </Grid>
+   <ControlTemplate.Triggers>
+    <Trigger Property="IsChecked" Value="True">
+     <Setter TargetName="NashiSwitchTrack" Property="Background" Value="{DynamicResource Gold}"/>
+     <Setter TargetName="NashiSwitchTrack" Property="BorderBrush" Value="{DynamicResource Gold}"/>
+     <Setter TargetName="NashiSwitchThumb" Property="Background" Value="#243B2B"/>
+     <Setter TargetName="NashiSwitchThumb" Property="HorizontalAlignment" Value="Right"/>
+    </Trigger>
+    <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="NashiSwitchTrack" Property="BorderBrush" Value="{DynamicResource Gold}"/></Trigger>
+    <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="NashiSwitchTrack" Property="BorderThickness" Value="2"/></Trigger>
+    <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value=".45"/></Trigger>
+   </ControlTemplate.Triggers>
+  </ControlTemplate></Setter.Value></Setter>
+ </Style>
+ <Style TargetType="CheckBox">
+  <Setter Property="Foreground" Value="{DynamicResource Ink}"/><Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+  <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="CheckBox">
+   <Grid Background="Transparent" MinHeight="25">
+    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+    <Border x:Name="NashiCheckSurface" Width="18" Height="18" CornerRadius="5" VerticalAlignment="Center"
+      BorderThickness="1" Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Muted}">
+      <Path x:Name="NashiCheckMark" Data="{local:FluentIcon checkmark}" Fill="#243B2B"
+        StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Visibility="Collapsed"/>
+    </Border>
+    <ContentPresenter Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center"
+      RecognizesAccessKey="True"/>
+   </Grid>
+   <ControlTemplate.Triggers>
+    <Trigger Property="IsChecked" Value="True">
+     <Setter TargetName="NashiCheckSurface" Property="Background" Value="{DynamicResource Gold}"/>
+     <Setter TargetName="NashiCheckSurface" Property="BorderBrush" Value="{DynamicResource Gold}"/>
+     <Setter TargetName="NashiCheckMark" Property="Visibility" Value="Visible"/>
+    </Trigger>
+    <Trigger Property="IsMouseOver" Value="True">
+     <Setter TargetName="NashiCheckSurface" Property="BorderBrush" Value="{DynamicResource Gold}"/>
+    </Trigger>
+    <Trigger Property="IsKeyboardFocused" Value="True">
+     <Setter TargetName="NashiCheckSurface" Property="BorderThickness" Value="2"/>
+     <Setter TargetName="NashiCheckSurface" Property="BorderBrush" Value="{DynamicResource Gold}"/>
+    </Trigger>
+    <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.5"/></Trigger>
+   </ControlTemplate.Triggers>
+  </ControlTemplate></Setter.Value></Setter>
+ </Style>
 </Application.Resources></Application>
