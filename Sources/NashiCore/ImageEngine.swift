@@ -37,11 +37,14 @@ public enum ImageEngine {
         if format == "pdf" { return try PDFEngine.create(inputs:[input],options:options,token:token) }
         let image = try load(input)
         let output=OutputFiles.unique(for:input,extension:format,directory:options.outputDirectory)
-        var complete=false;defer { if !complete { try? FileManager.default.removeItem(at:output) } }
+        // Failure cleanup may remove only this job's private file. moveItem never
+        // replaces an entry another writer created at the chosen name.
+        let temporary=output.deletingLastPathComponent().appendingPathComponent(".nashi-\(UUID().uuidString)").appendingPathExtension(output.pathExtension)
+        defer { try? FileManager.default.removeItem(at:temporary) }
         let metadata = options.preserveMetadata ? CGImageSourceCreateWithURL(input as CFURL,nil).map { imageProperties($0,input:input) as CFDictionary } : nil
-        try write(image,to:output,quality:options.quality,metadata:metadata,token:token)
-        if options.preserveMetadata { try ImageMetadataEngine.copyMetadata(from:input,to:output,token:token) }
-        complete=true
+        try write(image,to:temporary,quality:options.quality,metadata:metadata,token:token)
+        if options.preserveMetadata { try ImageMetadataEngine.copyMetadata(from:input,to:temporary,token:token) }
+        try FileManager.default.moveItem(at:temporary,to:output)
         return [output]
     }
 
