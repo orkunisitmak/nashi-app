@@ -33,7 +33,9 @@ public enum ConversionEngine {
     private static func perform(_ request:ConversionRequest,token:CancellationToken,progress:@escaping ProgressHandler) throws -> [URL] {
         var outputs:[URL]=[]
         switch request.operation {
-        case .convert(let format):
+        case .convert(let requested):
+            // Engines compare exact lowercase names; accept "PDF" or ".pdf" from callers such as the CLI.
+            let format=requested.lowercased().trimmingCharacters(in:CharacterSet(charactersIn:". "))
             for input in request.inputs {
                 try token.check();progress(OperationProgress.indeterminate,"Processing \(input.lastPathComponent)…")
                 switch FileCategory.detect(input) {
