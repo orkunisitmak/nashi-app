@@ -1740,6 +1740,7 @@
 "PDF OUTPUT LAYOUT" = "PDF OUTPUT LAYOUT";
 "PDF PAGE EXCEEDS 100 MP." = "PDF PAGE EXCEEDS 100 MP.";
 "PDF PAGE IS TOO LARGE TO RENDER AT THIS DPI." = "PDF PAGE IS TOO LARGE TO RENDER AT THIS DPI.";
+"PDF PASSWORD" = "PDF PASSWORD";
 "PDF PASSWORD (IF NEEDED)" = "PDF PASSWORD (IF NEEDED)";
 "PDF PREVIEW BACKGROUND COULD NOT BE PREPARED." = "PDF PREVIEW BACKGROUND COULD NOT BE PREPARED.";
 "PDF PREVIEW BITMAP COULD NOT BE ALLOCATED." = "PDF PREVIEW BITMAP COULD NOT BE ALLOCATED.";
@@ -1748,6 +1749,7 @@
 "PDF output layout" = "PDF output layout";
 "PDF page exceeds 100 MP." = "PDF page exceeds 100 MP.";
 "PDF page is too large to render at this DPI." = "PDF page is too large to render at this DPI.";
+"PDF password" = "PDF password";
 "PDF password (if needed)" = "PDF password (if needed)";
 "PDF preview background could not be prepared." = "PDF preview background could not be prepared.";
 "PDF preview bitmap could not be allocated." = "PDF preview bitmap could not be allocated.";
@@ -2667,6 +2669,7 @@
 "UNDO AREA" = "UNDO AREA";
 "UNDO LAST MARK" = "UNDO LAST MARK";
 "UNIT" = "UNIT";
+"UNLOCK PDF" = "UNLOCK PDF";
 "UNSAFE DOWNLOAD REDIRECT." = "UNSAFE DOWNLOAD REDIRECT.";
 "UNSAFE UPDATE ENTRY." = "UNSAFE UPDATE ENTRY.";
 "UNSUPPORTED AUDIO FORMAT." = "UNSUPPORTED AUDIO FORMAT.";
@@ -2700,6 +2703,7 @@
 "Undo area" = "Undo area";
 "Undo last mark" = "Undo last mark";
 "Unit" = "Unit";
+"Unlock PDF" = "Unlock PDF";
 "Unsafe download redirect." = "Unsafe download redirect.";
 "Unsafe update entry." = "Unsafe update entry.";
 "Unsupported audio format." = "Unsupported audio format.";

@@ -7,6 +7,7 @@ import NashiUpdates
 struct UIAuditOptions {
     static let scenes=["home.empty","home.selected","library","settings.general","settings.formats","settings.updates","wheel.pdf-multiple","editor.crop-image","editor.annotate-image","editor.frame-image"]
     var output:URL
+    static let supportedScenes=scenes+["pdf.password"]
     var scenes=Self.scenes
     var appearances=["light","dark"]
     var languages=["en","tr"]
@@ -21,7 +22,7 @@ struct UIAuditOptions {
             guard index<arguments.count else{throw UIAuditError("Missing value for "+key)}
             let value=arguments[index];index+=1
             switch key {
-            case "--scenes":scenes=value.split(separator:",").map(String.init);guard !scenes.isEmpty,Set(scenes).count==scenes.count,scenes.allSatisfy(Self.scenes.contains) else{throw UIAuditError("Unknown or repeated audit scene. Supported: "+Self.scenes.joined(separator:","))}
+            case "--scenes":scenes=value.split(separator:",").map(String.init);guard !scenes.isEmpty,Set(scenes).count==scenes.count,scenes.allSatisfy(Self.supportedScenes.contains) else{throw UIAuditError("Unknown or repeated audit scene. Supported: "+Self.scenes.joined(separator:","))}
             case "--appearance":guard ["light","dark","both"].contains(value) else{throw UIAuditError("Appearance must be light, dark or both")};appearances=value=="both" ? ["light","dark"]:[value]
             case "--language":guard AppLocalization.supportedLanguages.contains(value) || value=="both" else{throw UIAuditError("Language must be en, tr, fr or both")};languages=value=="both" ? ["en","tr"]:[value]
             default:throw UIAuditError("Unknown audit argument: "+key)
@@ -93,6 +94,9 @@ struct UIAuditError:LocalizedError { let message:String;init(_ message:String){s
             let pdf=PDFDocument();for _ in 0..<2 {guard let page=PDFPage(image:NSImage(data:data)!)else{throw UIAuditError("PDF fixture could not be generated")};pdf.insert(page,at:pdf.pageCount)}
             let path=directory.appendingPathComponent("Örnek belge \(number).pdf");guard pdf.write(to:path)else{throw UIAuditError("PDF fixture could not be saved")};fixtures["pdf\(number)"]=path
         }
+        let protected=directory.appendingPathComponent("Protected.pdf")
+        guard let document=PDFDocument(url:fixtures["pdf1"]!),document.write(to:protected,withOptions:[.ownerPasswordOption:"fixture-owner",.userPasswordOption:"fixture-password"]) else { throw UIAuditError("Protected PDF fixture could not be saved") }
+        fixtures["protected"]=protected
         fixtures["image"]=imageURL;fixtures["text"]=textURL;fixtures["missing"]=directory.appendingPathComponent("Missing original.png")
     }
     private func run()async throws {
@@ -132,6 +136,9 @@ struct UIAuditError:LocalizedError { let message:String;init(_ message:String){s
         let isEditor=scene.hasPrefix("editor.")
         let view:AnyView,size:NSSize
         switch scene {
+        case "pdf.password":
+            let model=PDFUnlockModel();_ = try? model.open(fixtures["protected"]!)
+            view=AnyView(PDFUnlockView(model:model,busy:false,onUnlock:{}).padding(24));size=NSSize(width:480,height:220)
         case "home.empty","home.selected","library":view=AnyView(HomeView(state:state,updater:updater));size=NSSize(width:700,height:580)
         case "settings.general","settings.formats","settings.updates":
             let section:SettingsSection=scene=="settings.formats" ? .formats:scene=="settings.updates" ? .updates:.general
