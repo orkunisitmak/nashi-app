@@ -32,7 +32,6 @@ public sealed partial class MainWindow:Window
     private readonly ScrollViewer homeScroll=new(),libraryScroll=new();
     private bool busy,checking,toolSetupOffered;private WindowsUpdate? update;private Border? updateBanner;
     private ToolSetupWindow? toolSetupWindow;
-    private readonly bool monitorToolSetup;
     internal bool UpdateBannerVisible=>updateBanner?.Visibility==Visibility.Visible;
     internal IReadOnlyList<string> SelectedFiles=>files;
     internal bool LibraryVisible=>libraryPage.Visibility==Visibility.Visible;
@@ -40,7 +39,6 @@ public sealed partial class MainWindow:Window
     internal TextBox LinkField=>link;
     public MainWindow(string[]? initial=null,LibraryStore? library=null,bool checkForUpdates=true,bool offerToolSetup=true)
     {
-        monitorToolSetup=checkForUpdates;
         this.library=library??new LibraryStore();preferences=new(this.library.DirectoryPath);ApplyPreferences();Theme.Apply(this.library.Appearance);Theme.Attach(this);
         Title="Nashi";Width=820;Height=780;MinWidth=700;MinHeight=580;WindowStartupLocation=WindowStartupLocation.CenterScreen;AllowDrop=true;
         Icon=BitmapFrame.Create(new Uri("pack://application:,,,/Assets/NashiIcon.png"));
@@ -181,11 +179,24 @@ public sealed partial class MainWindow:Window
     private Border LibraryRow(LibraryEntry entry,bool compact=false)
     {
         var row=new DockPanel();var available=entry.AvailablePaths;var buttons=new WrapPanel{VerticalAlignment=VerticalAlignment.Center};DockPanel.SetDock(buttons,Dock.Right);row.Children.Add(buttons);
-        var reuse=Button("↖",()=>{if(busy)return;var existing=entry.AvailablePaths.ToArray();if(existing.Length==0){L10n.SetText(status,"These files have moved or were deleted.");RenderLibrary();return;}files.Clear();Add(existing);ShowLibrary(false);L10n.SetText(status,existing.Length==entry.Paths.Length?"Ready for another round.":"Available files selected. Some files have moved or were deleted.");});reuse.IsEnabled=!busy&&available.Length>0;L10n.Bind(reuse,System.Windows.FrameworkElement.ToolTipProperty,"Use in Nashi");AutomationProperties.SetName(reuse,"Use "+entry.Name+" again");buttons.Children.Add(reuse);
-        var reveal=Button("▱",()=>{var existing=entry.AvailablePaths;if(existing.Length>0)Reveal(existing[0]);else{L10n.SetText(status,"This file has moved or was deleted.");RenderLibrary();}});reveal.IsEnabled=available.Length>0;L10n.Bind(reveal,System.Windows.FrameworkElement.ToolTipProperty,"Show in Explorer");AutomationProperties.SetName(reveal,"Show "+entry.Name+" in Explorer");buttons.Children.Add(reveal);
+        var reuse=Button("↖",()=>{if(busy)return;var existing=entry.AvailablePaths.ToArray();if(existing.Length==0){L10n.SetText(status,"These files have moved or were deleted.");RenderLibrary();return;}files.Clear();Add(existing);ShowLibrary(false);L10n.SetText(status,existing.Length==entry.Paths.Length?"Ready for another round.":"Available files selected. Some files have moved or were deleted.");});reuse.IsEnabled=!busy&&available.Length>0;L10n.Bind(reuse,System.Windows.FrameworkElement.ToolTipProperty,"Use in Nashi");AutomationProperties.SetName(reuse,L10n.Text("Use {0} again").Replace("{0}",entry.Name));buttons.Children.Add(reuse);
+        var reveal=Button("▱",()=>{var existing=entry.AvailablePaths;if(existing.Length>0)Reveal(existing[0]);else{L10n.SetText(status,"This file has moved or was deleted.");RenderLibrary();}});reveal.IsEnabled=available.Length>0;L10n.Bind(reveal,System.Windows.FrameworkElement.ToolTipProperty,"Show in Explorer");AutomationProperties.SetName(reveal,L10n.Text("Show {0} in Explorer").Replace("{0}",entry.Name));buttons.Children.Add(reveal);
         var fileIcon=new Image{Width=29,Height=29,Margin=new(0,0,12,0),VerticalAlignment=VerticalAlignment.Center};FileArtwork.Bind(fileIcon,entry.Paths[0]);DockPanel.SetDock(fileIcon,Dock.Left);row.Children.Add(fileIcon);var text=new StackPanel{Margin=new(0,0,12,0),VerticalAlignment=VerticalAlignment.Center};var name=Text(entry.Name,12,localize:false);name.TextWrapping=TextWrapping.NoWrap;name.TextTrimming=TextTrimming.CharacterEllipsis;name.ToolTip=string.Join(Environment.NewLine,entry.Paths);text.Children.Add(name);var info=new StackPanel{Orientation=Orientation.Horizontal};info.Children.Add(Text(entry.Action,10,"Muted"));info.Children.Add(Text("  ·  "+entry.Created.ToLocalTime().ToString("g"),10,"Muted",localize:false));if(available.Length<entry.Paths.Length){info.Children.Add(Text("  ·  ",10,"Muted",localize:false));info.Children.Add(Text("Files missing",10,"Muted"));}text.Children.Add(info);row.Children.Add(text);
-        var preview=Button("◉",()=>PreviewEntry(entry));preview.IsEnabled=available.Length>0;L10n.Bind(preview,System.Windows.FrameworkElement.ToolTipProperty,"Preview");AutomationProperties.SetName(preview,"Preview "+entry.Name);buttons.Children.Insert(0,preview);
+        var preview=Button("◉",()=>PreviewEntry(entry));preview.IsEnabled=available.Length>0;L10n.Bind(preview,System.Windows.FrameworkElement.ToolTipProperty,"Preview");AutomationProperties.SetName(preview,L10n.Text("Preview {0}").Replace("{0}",entry.Name));buttons.Children.Insert(0,preview);
+        var forget=new Button();forget.Content=new TextBlock{Text="\uE74D",FontFamily=new FontFamily("Segoe MDL2 Assets"),FontSize=13};forget.Click+=(_,_)=>DeleteFromLibrary(entry);forget.Padding=new(9,7,9,7);L10n.Bind(forget,System.Windows.FrameworkElement.ToolTipProperty,"Delete file");AutomationProperties.SetName(forget,L10n.Text("Delete {0}").Replace("{0}",entry.Name));buttons.Children.Add(forget);
         var card=Card(row);if(!compact)ConfigureLibraryRow(card,entry);card.Padding=new(14,10,14,10);if(compact){card.CornerRadius=new(12);card.BorderThickness=new(0);card.Margin=new(0,0,0,2);}return card;
+    }
+    private void DeleteFromLibrary(LibraryEntry entry)
+    {
+        var existing=entry.AvailablePaths;
+        var question=existing.Length>1?L10n.Text($"{existing.Length} files will be deleted?"):L10n.Text("Delete “{0}”?").Replace("{0}",entry.Name);
+        var answer=MessageBox.Show(this,question+Environment.NewLine+Environment.NewLine+L10n.Text("The files go to the Recycle Bin and their Library entry is removed. You can restore them from the Recycle Bin."),L10n.Text("Delete file"),MessageBoxButton.YesNo,MessageBoxImage.Warning,MessageBoxResult.No);
+        if(answer!=MessageBoxResult.Yes)return;
+        if(existing.Length>0&&!RecycleBin.TryRecycle(existing,new System.Windows.Interop.WindowInteropHelper(this).Handle)){L10n.SetText(status,"The file could not be deleted.");return;}
+        try{library.Remove(entry.Id);}catch(Exception error)when(error is IOException or UnauthorizedAccessException){L10n.SetText(status,"Library could not be saved");return;}
+        if(selectedLibraryId==entry.Id)selectedLibraryId=null;
+        L10n.SetText(status,existing.Length==0?"The file was already missing; the Library entry is removed.":existing.Length>1?"Files moved to the Recycle Bin.":"Moved to the Recycle Bin.");
+        RenderLibrary();
     }
     private void OpenDownload()
     {

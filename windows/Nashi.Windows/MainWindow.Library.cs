@@ -14,14 +14,23 @@ public sealed partial class MainWindow
     private void ShowToolSetupMenu()
     {
         if(busy)return;
-        toolSetupOffered=true;
+        toolSetupOffered=true;MarkToolsPromptSeen();
         if(toolSetupWindow is not null){toolSetupWindow.Activate();return;}
         toolSetupWindow=new ToolSetupWindow(this,tools,officeRuntime,SetBusy);
         try{toolSetupWindow.ShowDialog();}finally{toolSetupWindow=null;}
     }
+    // First-run setup is a suggestion, not a gate: remember that we showed it so
+    // every launch does not reopen the same download page. "Finish setup" stays
+    // available in the header and Settings for anyone who wants it later.
+    private void MarkToolsPromptSeen()
+    {
+        if(preferences.Value.ToolsPromptSeen)return;
+        try{preferences.Save(preferences.Value with{ToolsPromptSeen=true});}
+        catch(Exception error)when(error is IOException or UnauthorizedAccessException){/* The prompt may return next launch; nothing else is affected. */}
+    }
     private void OfferFirstRunTools()
     {
-        if(toolSetupOffered || busy || tools.Ready && officeRuntime.Executable is not null)return;
+        if(toolSetupOffered || preferences.Value.ToolsPromptSeen || busy || tools.Ready && officeRuntime.Executable is not null)return;
         toolSetupOffered=true;ShowToolSetupMenu();
     }
     private void BuildFileChips()
@@ -30,12 +39,12 @@ public sealed partial class MainWindow
         var border=new FrameworkElementFactory(typeof(Border));border.SetValue(Border.CornerRadiusProperty,new CornerRadius(9));border.SetResourceReference(Border.BackgroundProperty,"Inset");border.SetValue(Border.PaddingProperty,new Thickness(7,3,3,3));var row=new FrameworkElementFactory(typeof(StackPanel));row.SetValue(StackPanel.OrientationProperty,Orientation.Horizontal);border.AppendChild(row);
         var icon=new FrameworkElementFactory(typeof(Image));icon.SetValue(FrameworkElement.WidthProperty,17d);icon.SetValue(FrameworkElement.HeightProperty,17d);icon.SetValue(FrameworkElement.MarginProperty,new Thickness(0,0,6,0));icon.SetBinding(FileArtwork.PathProperty,new System.Windows.Data.Binding());row.AppendChild(icon);
         var name=new FrameworkElementFactory(typeof(TextBlock));name.SetBinding(TextBlock.TextProperty,new System.Windows.Data.Binding{Converter=new FileNameConverter()});name.SetValue(TextBlock.FontSizeProperty,10d);name.SetValue(TextBlock.TextTrimmingProperty,TextTrimming.CharacterEllipsis);name.SetValue(FrameworkElement.MaxWidthProperty,160d);name.SetValue(FrameworkElement.VerticalAlignmentProperty,VerticalAlignment.Center);row.AppendChild(name);
-        var remove=new FrameworkElementFactory(typeof(Button));remove.SetValue(ContentControl.ContentProperty,"×");remove.SetValue(Control.PaddingProperty,new Thickness(4,0,4,0));remove.SetValue(Control.BorderThicknessProperty,new Thickness(0));remove.SetValue(FrameworkElement.ToolTipProperty,L10n.Text("Remove from selection"));remove.SetBinding(FrameworkElement.TagProperty,new System.Windows.Data.Binding());remove.AddHandler(System.Windows.Controls.Button.ClickEvent,new RoutedEventHandler((sender,e)=>{if(sender is Button{Tag:string path}){files.Remove(path);Refresh();e.Handled=true;}}));row.AppendChild(remove);
+        var remove=new FrameworkElementFactory(typeof(Button));remove.SetValue(ContentControl.ContentProperty,"×");remove.SetValue(Control.PaddingProperty,new Thickness(4,0,4,0));remove.SetValue(Control.BorderThicknessProperty,new Thickness(0));remove.SetValue(FrameworkElement.ToolTipProperty,L10n.TextBinding("Remove from selection"));remove.SetBinding(FrameworkElement.TagProperty,new System.Windows.Data.Binding());remove.AddHandler(System.Windows.Controls.Button.ClickEvent,new RoutedEventHandler((sender,e)=>{if(sender is Button{Tag:string path}){files.Remove(path);Refresh();e.Handled=true;}}));row.AppendChild(remove);
         list.ItemTemplate=new DataTemplate{VisualTree=border};list.ItemContainerStyle=new Style(typeof(ListBoxItem),(Style)Application.Current.FindResource(typeof(ListBoxItem)));list.ItemContainerStyle.Setters.Add(new Setter(Control.PaddingProperty,new Thickness(0)));list.ItemContainerStyle.Setters.Add(new Setter(FrameworkElement.MarginProperty,new Thickness(0,3,6,0)));
     }
     private void ConfigureLibraryRow(Border card,LibraryEntry entry)
     {
-        libraryCards[entry.Id]=card;card.Tag=entry;card.Focusable=true;card.ToolTip=L10n.Text("Space: preview · Enter: use in Nashi");
+        libraryCards[entry.Id]=card;card.Tag=entry;card.Focusable=true;L10n.Bind(card,FrameworkElement.ToolTipProperty,"Space: preview · Enter: use in Nashi");
         card.BorderBrush=selectedLibraryId==entry.Id?Theme.Brush("Gold"):Theme.Brush("Line");
         card.GotKeyboardFocus+=(_,_)=>SelectCard(entry.Id);
         card.PreviewMouseLeftButtonDown+=(_,e)=>{libraryDragStart=e.GetPosition(card);SelectCard(entry.Id);if(!IsButton(e.OriginalSource as DependencyObject)){card.Focus();if(e.ClickCount==2){PreviewEntry(entry);e.Handled=true;}}};

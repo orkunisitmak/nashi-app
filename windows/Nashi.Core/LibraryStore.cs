@@ -46,6 +46,13 @@ public sealed class LibraryStore
         Save(state with{Entries=new[]{new LibraryEntry(Guid.NewGuid(),DateTimeOffset.Now,action,existing)}.Concat(state.Entries).Take(Limit).ToList()});
     }
     public void SetAppearance(string appearance)=>Save(state with{Appearance=ValidAppearance(appearance)});
+    // Forgets one entry only; the files it points at are never touched.
+    public void Remove(Guid id)
+    {
+        var remaining=state.Entries.Where(e=>e.Id!=id).ToList();
+        if(remaining.Count==state.Entries.Count)return;
+        Save(state with{Entries=remaining});
+    }
     public void SetWindowManagement(bool enabled)=>Save(state with{WindowManagementEnabled=enabled});
     // Actions match in English and the app language; file names match the way macOS finds them,
     // ignoring case and accents in the app language ("izmir" finds "İzmir.png", "cafe" finds "Café.pdf").

@@ -25,7 +25,7 @@ public sealed partial class MainWindow
         // Without a tray icon (Explorer not ready at sign-in), a hidden Nashi could not be reached.
         Closed+=(_,_)=>{launchTimer?.Stop();tray?.Dispose();};if(tray is not null&&Environment.GetCommandLineArgs().Contains("--background"))Hide();
     }
-    private void ShowMain(){Show();if(WindowState==WindowState.Minimized)WindowState=WindowState.Normal;Activate();if(monitorToolSetup)Dispatcher.BeginInvoke(OfferFirstRunTools);}
+    private void ShowMain(){Show();if(WindowState==WindowState.Minimized)WindowState=WindowState.Normal;Activate();}
     private System.Windows.Controls.ContextMenu TrayMenu()
     {
         var menu=new System.Windows.Controls.ContextMenu();
