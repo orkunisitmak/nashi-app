@@ -49,6 +49,18 @@ for component in ffmpeg ffprobe yt-dlp deno; do
 done
 fi
 if [[ -f Tools/ExifTool/exiftool ]]; then
+  # Ship only an unmodified extraction of the archive pinned in scripts/setup-exiftool.sh.
+  exiftool_archive=Downloads/exiftool-13.59.tar.gz
+  if [[ ! -f "$exiftool_archive" || "$(shasum -a 256 "$exiftool_archive" | awk '{print $1}')" != e1e2ad6c6fbf568afee5993ef8b2b91ab013d21698c9304e079e633ad82776f5 ]]; then
+    print -u2 "Missing or mismatched $exiftool_archive; run scripts/setup-exiftool.sh"; exit 1
+  fi
+  exiftool_check=$(mktemp -d)
+  tar -xzf "$exiftool_archive" --strip-components=1 -C "$exiftool_check"
+  if ! diff -r "$exiftool_check" Tools/ExifTool >/dev/null; then
+    rm -rf "$exiftool_check"
+    print -u2 "Tools/ExifTool differs from the pinned ExifTool archive; remove it and rerun scripts/setup-exiftool.sh"; exit 1
+  fi
+  rm -rf "$exiftool_check"
   ditto Tools/ExifTool "$application/Contents/Resources/Tools/ExifTool"
 else
   print -u2 "Missing Tools/ExifTool; run scripts/setup-exiftool.sh"
