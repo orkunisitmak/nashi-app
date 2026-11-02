@@ -12,7 +12,7 @@ public enum DocumentEngine {
         let category = FileCategory.detect(input)
         if category == .archive { return try convertArchive(input, to: format, options: options, token: token) }
         if category == .subtitle {
-            let text = try SubtitleCodec.convert(input, to: format, token: token)
+            let text = try SubtitleCodec.convert(input, to: format, token: token, inputEncoding: options.textEncoding)
             let output = try destination(input, format: format, options: options)
             try token.check()
             try text.write(to: output, atomically: true, encoding: .utf8)
@@ -67,9 +67,9 @@ public enum DocumentEngine {
             source = try RichTextCodec.materializeHTML(input, in: work)
         } else if ext == "txt" || ext == "md" {
             let data = try Data(contentsOf: input)
-            if String(data: data, encoding: .utf8) == nil || data.contains(0) {
+            if (options.textEncoding != nil && options.textEncoding != "auto") || String(data: data, encoding: .utf8) == nil || data.contains(0) {
                 source = work.appendingPathComponent(input.lastPathComponent)
-                try DocumentText.read(input).write(to: source, atomically: true, encoding: .utf8)
+                try DocumentText.read(input, encoding: options.textEncoding).write(to: source, atomically: true, encoding: .utf8)
             }
         }
 

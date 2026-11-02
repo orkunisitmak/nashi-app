@@ -1,4 +1,5 @@
 import Foundation
+import CoreFoundation
 
 enum SubtitleCodec {
     struct Cue: Equatable {
@@ -8,9 +9,9 @@ enum SubtitleCodec {
         var settings: String = ""
     }
 
-    static func convert(_ input: URL, to format: String, token: CancellationToken) throws -> String {
+    static func convert(_ input: URL, to format: String, token: CancellationToken, inputEncoding: String? = nil) throws -> String {
         try token.check()
-        let source = try DocumentText.read(input)
+        let source = try DocumentText.read(input, encoding: inputEncoding)
         // WebVTT requires cues in start-time order; the stable sort keeps the
         // file order of cues that start together.
         let cues = try parse(source).sorted { $0.start < $1.start }
@@ -102,8 +103,20 @@ enum SubtitleCodec {
 }
 
 enum DocumentText {
-    static func read(_ url: URL) throws -> String {
+    static func read(_ url: URL, encoding name: String? = nil) throws -> String {
         let data = try Data(contentsOf: url)
+        if let name, name != "auto" {
+            let encoding: String.Encoding
+            switch name {
+            case "utf-8": encoding = .utf8
+            case "windows-1252": encoding = .windowsCP1252
+            case "windows-1254": encoding = String.Encoding(rawValue: CFStringConvertEncodingToNSStringEncoding(CFStringEncoding(CFStringEncodings.windowsLatin5.rawValue)))
+            case "mac-roman": encoding = .macOSRoman
+            default: throw NashiError.invalidInput("Unsupported input text encoding: \(name). Use auto, utf-8, windows-1252, windows-1254, or mac-roman.")
+            }
+            guard let text = String(data: data, encoding: encoding) else { throw NashiError.invalidInput("The text encoding of \(url.lastPathComponent) could not be read.") }
+            return text
+        }
         // The UTF-32LE byte order mark begins with the UTF-16LE one.
         if data.starts(with: [0xff, 0xfe, 0, 0]) || data.starts(with: [0, 0, 0xfe, 0xff]) {
             guard let text = String(data: data, encoding: .utf32) else {
