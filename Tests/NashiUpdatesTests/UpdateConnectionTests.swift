@@ -63,6 +63,38 @@ final class UpdateConnectionTests: XCTestCase {
         XCTAssertEqual(store.values, ["example/private": "accepted_fixture"])
     }
 
+    func testFailedOldTokenRemovalDoesNotLeaveNewToken() async throws {
+        final class LockedOldToken: UpdateCredentialStore, @unchecked Sendable {
+            var values: [String: String] = [:]
+            var lockedSlug: String?
+            func token(for repository: GitHubRepository) throws -> String {
+                guard let value = values[repository.slug] else { throw UpdateCredentialError.missing }
+                return value
+            }
+            func save(_ token: String, for repository: GitHubRepository) throws { values[repository.slug] = token }
+            func remove(for repository: GitHubRepository) throws {
+                if repository.slug == lockedSlug { throw UpdateCredentialError.locked }
+                values.removeValue(forKey: repository.slug)
+            }
+        }
+        let suite = "NashiUpdateConnectionTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let store = LockedOldToken()
+        let updater = await MainActor.run { AppUpdater(credentials: store, defaults: defaults, validateAccess: { _, _ in }) }
+        try await updater.connectGitHub(repository: "example/private", token: "accepted_fixture", requiresToken: true)
+        store.lockedSlug = "example/private"
+        do {
+            try await updater.connectGitHub(repository: "example/new", token: "new_fixture", requiresToken: true)
+            XCTFail("A locked old token should stop the switch")
+        } catch { XCTAssertEqual(error as? UpdateCredentialError, .locked) }
+        await MainActor.run {
+            XCTAssertEqual(updater.repository?.slug, "example/private")
+            XCTAssertTrue(updater.hasSavedToken)
+        }
+        XCTAssertEqual(store.values, ["example/private": "accepted_fixture"], "No token may remain for a repository that was not connected")
+    }
+
     func testSwitchingToPublicDoesNotReadOrForwardPrivateToken() async throws {
         let suite = "NashiUpdateConnectionTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suite)!

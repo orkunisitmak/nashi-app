@@ -174,7 +174,15 @@ import Sparkle
         try await validateGitHubAccess(selected, token)
         if let token { try await credentials.storeToken(token, for: selected) }
         else { try await credentials.removeToken(for: selected) }
-        if let previous = repository, previous != selected { try await credentials.removeToken(for: previous) }
+        if let previous = repository, previous != selected {
+            do { try await credentials.removeToken(for: previous) }
+            catch {
+                // The old connection stays configured; do not leave a newly entered
+                // token behind for a repository that was never connected.
+                if token != nil, !enteredToken.isEmpty { try? await credentials.removeToken(for: selected) }
+                throw error
+            }
+        }
         if repository == nil, let controller {
             defaults.set(controller.updater.automaticallyChecksForUpdates, forKey: Preference.previousAutomaticChecks)
         }
