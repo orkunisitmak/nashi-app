@@ -75,8 +75,10 @@ enum PDFOfficeCodec {
 
     static func recognizedCells(_ page: PDFPage, token: CancellationToken) throws -> [TextCell] {
         try token.check()
-        let bounds = page.bounds(for: .cropBox)
-        let size = NSSize(width: max(1, bounds.width * 2), height: max(1, bounds.height * 2))
+        // The thumbnail is drawn upright (with /Rotate applied), so size it and
+        // scale Vision's boxes by the displayed page rather than the unrotated box.
+        let bounds = page.bounds(for: .cropBox), shown = visualBounds(page)
+        let size = NSSize(width: max(1, shown.width * 2), height: max(1, shown.height * 2))
         let image = page.thumbnail(of: size, for: .cropBox)
         var rect = CGRect(origin: .zero, size: size)
         guard let cgImage = image.cgImage(forProposedRect: &rect, context: nil, hints: nil) else { return [] }
@@ -89,7 +91,7 @@ enum PDFOfficeCodec {
         return (request.results ?? []).compactMap { observation in
             guard let candidate = observation.topCandidates(1).first else { return nil }
             let r = observation.boundingBox
-            return TextCell(text: candidate.string, rect: CGRect(x: bounds.minX + r.minX * bounds.width, y: bounds.minY + r.minY * bounds.height, width: r.width * bounds.width, height: r.height * bounds.height))
+            return TextCell(text: candidate.string, rect: CGRect(x: bounds.minX + r.minX * shown.width, y: bounds.minY + r.minY * shown.height, width: r.width * shown.width, height: r.height * shown.height))
         }
     }
 
