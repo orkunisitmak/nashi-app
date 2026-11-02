@@ -48,15 +48,19 @@ public sealed partial class MainWindow
     }
     private async Task ReadQrAsync(IReadOnlyList<string> inputs)
     {
-        SetBusy(true);var results=new List<(string File,string Value)>();try
+        SetBusy(true);var results=new List<(string File,string Value,BitmapSource? Preview)>();try
         {
             foreach(var file in inputs)
             {
-                if(FeatureCatalog.Extension(file)=="pdf"){var pages=await NativePdf.RenderAsync(file,180);for(var n=0;n<pages.Length;n++)foreach(var value in NativePdf.DecodeQr(ImageEngine.FromPng(pages[n])))results.Add((Path.GetFileName(file)+$" · Page {n+1}",value));}
-                else foreach(var value in NativePdf.DecodeQr(ImageEngine.Load(file)))results.Add((Path.GetFileName(file),value));
+                if(FeatureCatalog.Extension(file)=="pdf"){var pages=await NativePdf.RenderAsync(file,180);for(var n=0;n<pages.Length;n++)foreach(var value in NativePdf.DecodeQr(ImageEngine.FromPng(pages[n])))results.Add((Path.GetFileName(file)+$" · Page {n+1}",value,null));}
+                else foreach(var value in NativePdf.DecodeQr(ImageEngine.Load(file)))results.Add((Path.GetFileName(file),value,null));
             }
-            var window=new Window{Owner=this,Title="Read QR Codes · Nashi",Width=720,Height=520,WindowStartupLocation=WindowStartupLocation.CenterOwner};Theme.Attach(window);var stack=new StackPanel{Margin=new(26)};stack.Children.Add(Text("Read QR Codes",28));stack.Children.Add(Text(results.Count==0?"No QR codes found. Try a larger or sharper image.":$"{results.Count} QR {(results.Count==1?"code":"codes")} found.",14,"Muted"));
-            foreach(var result in results){var content=new StackPanel();content.Children.Add(Text(result.File,12,"Muted"));content.Children.Add(new TextBox{Text=result.Value,IsReadOnly=true,TextWrapping=TextWrapping.Wrap,MaxHeight=150});var buttons=new WrapPanel();buttons.Children.Add(Button("Copy",()=>{try{Clipboard.SetText(result.Value);}catch(Exception error)when(ClipboardImport.IsClipboardError(error)){MessageBox.Show(window,L10n.Text("Clipboard is busy. Try again."),"Nashi");}}));if(Uri.TryCreate(result.Value,UriKind.Absolute,out var url)&&url.Scheme is "http" or "https")buttons.Children.Add(Button("Open link",()=>OpenUrl(url.AbsoluteUri)));content.Children.Add(buttons);stack.Children.Add(Card(content));}window.Content=new ScrollViewer{Content=stack};window.ShowDialog();
+            ShowQrResults(results,"No QR codes found. Try a larger or sharper image.");
         }finally{SetBusy(false);}
+    }
+    private void ShowQrResults(IReadOnlyList<(string File,string Value,BitmapSource? Preview)> results,string empty)
+    {
+        var window=new Window{Owner=IsVisible?this:null,Title="Read QR Codes · Nashi",Width=720,Height=520,WindowStartupLocation=IsVisible?WindowStartupLocation.CenterOwner:WindowStartupLocation.CenterScreen};Theme.Attach(window);var stack=new StackPanel{Margin=new(26)};stack.Children.Add(Text("Read QR Codes",28));stack.Children.Add(Text(results.Count==0?empty:$"{results.Count} QR {(results.Count==1?"code":"codes")} found.",14,"Muted"));
+        foreach(var result in results){var content=new StackPanel();content.Children.Add(Text(result.File,12,"Muted"));if(result.Preview is {} preview)content.Children.Add(new Image{Source=preview,MaxHeight=120,MaxWidth=120,HorizontalAlignment=HorizontalAlignment.Left,Margin=new(0,6,0,6),Stretch=Stretch.Uniform});content.Children.Add(new TextBox{Text=result.Value,IsReadOnly=true,TextWrapping=TextWrapping.Wrap,MaxHeight=150});var buttons=new WrapPanel();buttons.Children.Add(Button("Copy",()=>{try{Clipboard.SetText(result.Value);}catch(Exception error)when(ClipboardImport.IsClipboardError(error)){MessageBox.Show(window,L10n.Text("Clipboard is busy. Try again."),"Nashi");}}));if(Uri.TryCreate(result.Value,UriKind.Absolute,out var url)&&url.Scheme is "http" or "https")buttons.Children.Add(Button("Open link",()=>OpenUrl(url.AbsoluteUri)));content.Children.Add(buttons);stack.Children.Add(Card(content));}window.Content=new ScrollViewer{Content=stack};window.ShowDialog();
     }
 }
