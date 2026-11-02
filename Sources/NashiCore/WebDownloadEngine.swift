@@ -225,8 +225,11 @@ public enum WebDownloadEngine {
         if name.isEmpty { name="Downloaded media" }
         let ext=(name as NSString).pathExtension.lowercased()
         let preferred=mime.flatMap{UTType(mimeType:$0)?.preferredFilenameExtension}
-        let allowed=["jpg","jpeg","png","webp","heic","heif","avif","bmp","tif","tiff","svg","gif","mp4","mov","webm","mkv","m4v","avi","wmv","mp3","m4a","wav","flac","ogg","opus","aac","aiff","wma"]
-        if !allowed.contains(ext) {
+        let allowed=["jpg","jpeg","png","webp","heic","heif","avif","bmp","tif","tiff","svg","gif","mp4","mov","webm","mkv","m4v","mp3","m4a","wav","flac","ogg","opus","aac","aiff"]
+        let mediaMIME=["image/","audio/","video/"].contains{mime?.lowercased().hasPrefix($0)==true}
+        let mediaExtension=mediaMIME && !ext.isEmpty && UTType(filenameExtension:ext).map{$0.conforms(to:.audiovisualContent) || $0.conforms(to:.image)}==true
+        let knownMedia=[FileCategory.image,.video,.audio].contains(FileCategory.detect(URL(fileURLWithPath:name)))
+        if !allowed.contains(ext) && !mediaExtension && !knownMedia {
             let basename=(name as NSString).deletingPathExtension
             name=preferred.flatMap{allowed.contains($0) ? basename+"."+$0:nil} ?? basename
         }

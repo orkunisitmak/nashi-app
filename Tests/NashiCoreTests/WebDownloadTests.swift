@@ -16,6 +16,15 @@ final class WebDownloadTests:XCTestCase {
         XCTAssertEqual(WebDownloadEngine.cleanFilename(".hidden.jpg",mime:"image/jpeg"),"hidden.jpg")
         XCTAssertFalse(WebDownloadEngine.cleanFilename("a\\b:c\n.jpg",mime:"image/jpeg").contains(":"))
         XCTAssertEqual(WebDownloadEngine.cleanFilename("Türkçe 🥭.png",mime:"image/png"),"Türkçe 🥭.png")
+        XCTAssertEqual(WebDownloadEngine.cleanFilename("clip.avi",mime:"video/x-msvideo"),"clip.avi")
+        XCTAssertEqual(WebDownloadEngine.cleanFilename("movie.wmv",mime:"video/x-ms-wmv"),"movie.wmv")
+        XCTAssertEqual(WebDownloadEngine.cleanFilename("song.wma",mime:"audio/x-ms-wma"),"song.wma")
+        XCTAssertEqual(WebDownloadEngine.cleanFilename("clip.avi",mime:nil),"clip.avi")
+        XCTAssertEqual(WebDownloadEngine.cleanFilename("clip.3gp",mime:"video/3gpp"),"clip.3gp")
+        XCTAssertEqual(WebDownloadEngine.cleanFilename("clip.mpg",mime:"video/mpeg"),"clip.mpg")
+        XCTAssertEqual(WebDownloadEngine.cleanFilename("clip.flv",mime:"video/x-flv"),"clip.flv")
+        XCTAssertEqual(WebDownloadEngine.cleanFilename("clip.exe",mime:"video/mp4"),"clip.mp4")
+        XCTAssertEqual(WebDownloadEngine.cleanFilename("notes.ts",mime:"text/plain"),"notes")
     }
     func testMetadataModesQualityAndDuration() throws {
         let json=Data(#"{"title":"A test","duration":12.5,"extractor_key":"YouTube","formats":[{"height":1080,"vcodec":"avc1"},{"height":720},{"height":1080},{"height":-1},{"height":999999}]}"#.utf8)
