@@ -199,6 +199,7 @@
   "Cancel download": "Annuler le téléchargement",
   "Cancel": "Annuler",
   "Download cancelled. No partial files were kept.": "Téléchargement annulé. Aucun fichier partiel n’a été conservé.",
+  "Downloads work with public web addresses only. Private, local and link-local hosts are blocked.": "Les téléchargements ne fonctionnent qu'avec des adresses web publiques. Les hôtes privés, locaux et de lien local sont bloqués.",
   "Paste one complete http:// or https:// media link.": "Collez un lien média http:// ou https:// complet.",
   "This link requires a login or is restricted. Try a public share link; Nashi does not read your browser sessions.": "Ce lien nécessite une connexion ou est restreint. Essayez un lien de partage public ; Nashi ne lit pas vos sessions de navigateur.",
   "This media is protected and cannot be downloaded here.": "Ce média est protégé et ne peut pas être téléchargé ici.",

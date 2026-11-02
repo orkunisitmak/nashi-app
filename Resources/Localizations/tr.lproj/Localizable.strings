@@ -858,6 +858,7 @@
 "DOWNLOADING LIBREOFFICE 26.8.1…" = "LIBREOFFICE 26.8.1 İNDİRİLİYOR…";
 "DOWNLOADING MEDIA…" = "MEDYA İNDİRİLİYOR…";
 "DOWNLOADING…" = "İNDİRİLİYOR…";
+"DOWNLOADS WORK WITH PUBLIC WEB ADDRESSES ONLY. PRIVATE, LOCAL AND LINK-LOCAL HOSTS ARE BLOCKED." = "İNDİRMELER YALNIZCA HERKESE AÇIK WEB ADRESLERİYLE ÇALIŞIR. ÖZEL, YEREL VE BAĞLANTI YEREL SUNUCULAR ENGELLENİR.";
 "DOWNLOAD…" = "İNDİR…";
 "DRAG A CROP INSIDE THE IMAGE." = "KIRPMA ALANINI GÖRSELİN İÇİNDE SÜRÜKLE.";
 "DRAG A FILE IN FINDER, TAP SHIFT, AND DROP ONTO ITS NEXT FORMAT." = "FINDER'DA BİR DOSYAYI SÜRÜKLERKEN SHIFT'E BAS VE YENİ BİÇİMİNİN ÜZERİNE BIRAK.";
@@ -951,6 +952,7 @@
 "Downloading · %@" = "İndiriliyor · %@";
 "Downloading · %lld" = "İndiriliyor · %lld";
 "Downloading…" = "İndiriliyor…";
+"Downloads work with public web addresses only. Private, local and link-local hosts are blocked." = "İndirmeler yalnızca herkese açık web adresleriyle çalışır. Özel, yerel ve bağlantı yerel sunucular engellenir.";
 "Download…" = "İndir…";
 "Drag a crop inside the image." = "Kırpma alanını görselin içinde sürükle.";
 "Drag a file in Finder, tap Shift, and drop onto its next format." = "Finder'da bir dosyayı sürüklerken Shift'e bas ve yeni biçiminin üzerine bırak.";

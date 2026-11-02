@@ -23,18 +23,20 @@ public struct WebMediaInfo:Sendable {
 }
 
 public enum WebDownloadEngine {
+    /// Parses pasted text into a URL without touching the network. Callers that
+    /// act on the link must still run `WebAddressPolicy.validate`, because a
+    /// public name can resolve to a private address.
     public static func link(_ text:String) throws -> URL {
         let value=text.trimmingCharacters(in:.whitespacesAndNewlines)
         guard value.utf8.count<=16_384,!value.unicodeScalars.contains(where:{CharacterSet.whitespacesAndNewlines.contains($0) || CharacterSet.controlCharacters.contains($0)}),
-              let url=URL(string:value),let scheme=url.scheme?.lowercased(),["http","https"].contains(scheme),
-              let host=url.host,!host.isEmpty,url.user==nil,url.password==nil else {
+              let url=URL(string:value) else {
             throw NashiError.invalidInput("Paste one complete http:// or https:// media link.")
         }
-        return url
+        return try WebAddressPolicy.syntax(url)
     }
     public static func inspect(_ url:URL,token:CancellationToken = .init()) async throws -> WebMediaInfo {
-        let url=try link(url.absoluteString);try token.check()
-        let session=URLSession(configuration:.ephemeral)
+        let url=try WebAddressPolicy.validate(url);try token.check()
+        let session=URLSession(configuration:.ephemeral,delegate:PublicRedirectPolicy(),delegateQueue:nil)
         defer { session.invalidateAndCancel() }
         if WebMediaDragPayload.isInstagramPhotoPost(url) {
             let args=try baseArguments(photoPost:true)+["--ignore-no-formats-error","--skip-download","--dump-single-json","--no-progress","--",url.absoluteString]
@@ -90,7 +92,7 @@ public enum WebDownloadEngine {
 
     public static func download(_ info:WebMediaInfo,mode:WebDownloadMode,maximumHeight:Int?,destination:URL,selectedPhotos:Set<Int>? = nil,
                                 token:CancellationToken = .init(),progress:@escaping ProgressHandler) async throws -> [URL] {
-        _=try link(info.url.absoluteString)
+        _=try WebAddressPolicy.validate(info.url)
         guard destination.isFileURL,info.modes.contains(mode) else { throw NashiError.invalidInput("Choose an available media type and a local destination folder.") }
         if let maximumHeight { guard (2...16_384).contains(maximumHeight) else { throw NashiError.invalidInput("Choose a valid video quality.") } }
         try token.check();try Task.checkCancellation()
@@ -172,6 +174,9 @@ public enum WebDownloadEngine {
 
     static func downloadDirect(_ info:WebMediaInfo,mode:WebDownloadMode,directory:URL,token:CancellationToken,
                                        progress:@escaping ProgressHandler) async throws -> [URL] {
+        // Photo posts hand each image URL straight to this method, so the check
+        // happens here as well as in `download`.
+        _=try WebAddressPolicy.validate(info.url)
         let delegate=TransferDelegate(token:token,maximumBytes:20*1024*1024*1024,progress:progress)
         let configuration=URLSessionConfiguration.ephemeral;configuration.timeoutIntervalForRequest=45;configuration.timeoutIntervalForResource=21_600
         let session=URLSession(configuration:configuration,delegate:delegate,delegateQueue:nil)
@@ -329,7 +334,12 @@ public enum WebDownloadEngine {
             progress(totalBytesExpectedToWrite>0 ? fraction:OperationProgress.indeterminate,"Downloading · \(ByteCountFormatter.string(fromByteCount:totalBytesWritten,countStyle:.file))")
         }
         func urlSession(_ session:URLSession,task:URLSessionTask,willPerformHTTPRedirection response:HTTPURLResponse,newRequest request:URLRequest,completionHandler:@escaping(URLRequest?)->Void) {
-            completionHandler(request.url.flatMap{try? WebDownloadEngine.link($0.absoluteString)} == nil ? nil:request)
+            // A public host may redirect to a private service; re-check the target
+            // including its resolved addresses before following it.
+            guard let target=request.url,(try? WebAddressPolicy.validate(target)) != nil else {
+                completionHandler(nil);return
+            }
+            completionHandler(request)
         }
     }
 }

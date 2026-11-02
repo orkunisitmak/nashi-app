@@ -858,6 +858,7 @@
 "DOWNLOADING LIBREOFFICE 26.8.1…" = "TÉLÉCHARGEMENT DE LIBREOFFICE 26.8.1…";
 "DOWNLOADING MEDIA…" = "TÉLÉCHARGEMENT DU MÉDIA…";
 "DOWNLOADING…" = "TÉLÉCHARGEMENT…";
+"DOWNLOADS WORK WITH PUBLIC WEB ADDRESSES ONLY. PRIVATE, LOCAL AND LINK-LOCAL HOSTS ARE BLOCKED." = "LES TÉLÉCHARGEMENTS NE FONCTIONNENT QU'AVEC DES ADRESSES WEB PUBLIQUES. LES HÔTES PRIVÉS, LOCAUX ET DE LIEN LOCAL SONT BLOQUÉS.";
 "DOWNLOAD…" = "TÉLÉCHARGER…";
 "DRAG A CROP INSIDE THE IMAGE." = "FAITES GLISSER UN RECADRAGE À L’INTÉRIEUR DE L’IMAGE.";
 "DRAG A FILE IN FINDER, TAP SHIFT, AND DROP ONTO ITS NEXT FORMAT." = "FAITES GLISSER UN FICHIER DANS LE FINDER, APPUYEZ SUR MAJ ET DÉPOSEZ-LE SUR SON NOUVEAU FORMAT.";
@@ -951,6 +952,7 @@
 "Downloading · %@" = "Téléchargement · %@";
 "Downloading · %lld" = "Téléchargement · %lld";
 "Downloading…" = "Téléchargement…";
+"Downloads work with public web addresses only. Private, local and link-local hosts are blocked." = "Les téléchargements ne fonctionnent qu'avec des adresses web publiques. Les hôtes privés, locaux et de lien local sont bloqués.";
 "Download…" = "Télécharger…";
 "Drag a crop inside the image." = "Faites glisser un recadrage à l’intérieur de l’image.";
 "Drag a file in Finder, tap Shift, and drop onto its next format." = "Faites glisser un fichier dans le Finder, appuyez sur Maj et déposez-le sur son nouveau format.";
