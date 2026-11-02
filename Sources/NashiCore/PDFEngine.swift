@@ -11,7 +11,9 @@ public enum PDFEngine {
     public static func create(inputs: [URL], options: OperationOptions, token: CancellationToken, progress: ProgressHandler = {_,_ in}) throws -> [URL] {
         guard let first=inputs.first else { throw NashiError.invalidInput("Choose images to create a PDF.") }
         let pdf=PDFDocument()
-        for (index,input) in inputs.enumerated() { progress(Double(index)/Double(inputs.count),"Adding image \(index+1) of \(inputs.count)…");try token.check(); let cg=try ImageEngine.load(input); if let page=PDFPage(image:NSImage(cgImage:cg,size:NSSize(width:cg.width,height:cg.height))) { pdf.insert(page,at:pdf.pageCount) } }
+        for (index,input) in inputs.enumerated() { progress(Double(index)/Double(inputs.count),"Adding image \(index+1) of \(inputs.count)…");try token.check()
+            for frame in 0..<ImageEngine.pageCount(input) { try token.check(); let cg=try ImageEngine.load(input,page:frame); if let page=PDFPage(image:NSImage(cgImage:cg,size:NSSize(width:cg.width,height:cg.height))) { pdf.insert(page,at:pdf.pageCount) } }
+        }
         let output=OutputFiles.unique(for:first,extension:"pdf",directory:options.outputDirectory)
         progress(OperationProgress.indeterminate,"Writing PDF…")
         guard pdf.write(to:output) else { throw NashiError.failed("Could not create PDF.") };return [output]
