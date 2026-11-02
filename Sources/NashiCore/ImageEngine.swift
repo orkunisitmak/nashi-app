@@ -75,8 +75,12 @@ public enum ImageEngine {
             var args=["-v","error","-i",png.path,"-frames:v","1"]
             if ext == "webp" { args += ["-c:v","libwebp","-quality",String(Int(quality*100))] }
             if ext == "avif" { args += ["-c:v","libaom-av1","-still-picture","1","-cpu-used","6","-crf",String(Int((1-quality)*50)+8)] }
-            args += [url.path]
+            // FFmpeg opens its output with O_TRUNC and follows symlinks. Encode into
+            // the private folder; moveItem never replaces or follows an existing name.
+            let encoded=temp.appendingPathComponent("encoded").appendingPathExtension(ext)
+            args += [encoded.path]
             try ProcessRunner.run(Dependencies.executable("ffmpeg"),args,token:token)
+            try FileManager.default.moveItem(at:encoded,to:url)
         }
     }
 
