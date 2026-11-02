@@ -47,6 +47,9 @@ public sealed partial class OfficeDocuments
             if(element.Name.LocalName=="p")
             {
                 var props=Child(element,"pPr");var baseStyle=Resolve(Attr(Child(props,"pStyle"),"val")??Attr(defaultStyle,"styleId"));var runs=new List<object>();
+                // Open complex fields (fldChar begin … end), as on the Mac: a HYPERLINK field links its result once, at its first separate,
+                // and each entry keeps the innermost link in effect, so a run reads it in constant time however deeply fields nest.
+                var fields=new List<(System.Text.StringBuilder Instruction,string? Link,bool Result)>();
                 void Visit(XElement item,string? link=null)
                 {
                     if(item.Name.LocalName=="r")
@@ -54,7 +57,9 @@ public sealed partial class OfficeDocuments
                         var rp=Child(item,"rPr");var runBase=Attr(Child(rp,"rStyle"),"val") is {} sid?Resolve(sid,includeDefaults:false).C:new();var formatting=Merge(baseStyle.C,runBase,Character(rp));
                         foreach(var child in item.Elements())
                         {
-                            if(child.Name.LocalName=="br"&&Attr(child,"type")=="page")runs.Add(PageBreak);else if(child.Name.LocalName is "t" or "tab" or "br" or "cr")runs.Add(new{text=child.Name.LocalName=="t"?child.Value:child.Name.LocalName=="tab"?"\t":"\n",character=formatting,link});
+                            if(child.Name.LocalName=="fldChar")switch(Attr(child,"fldCharType")){case "begin":fields.Add((new(),fields.Count>0?fields[^1].Link:null,false));break;case "separate" when fields.Count>0&&!fields[^1].Result:fields[^1]=fields[^1] with{Link=HyperlinkField(fields[^1].Instruction.ToString())??fields[^1].Link,Result=true};break;case "end" when fields.Count>0:fields.RemoveAt(fields.Count-1);break;}
+                            else if(child.Name.LocalName=="instrText"&&fields.Count>0&&!fields[^1].Result)fields[^1].Instruction.Append(child.Value);
+                            if(child.Name.LocalName=="br"&&Attr(child,"type")=="page")runs.Add(PageBreak);else if(child.Name.LocalName is "t" or "tab" or "br" or "cr")runs.Add(new{text=child.Name.LocalName=="t"?child.Value:child.Name.LocalName=="tab"?"\t":"\n",character=formatting,link=link??(fields.Count>0?fields[^1].Link:null)});
                             if(child.Name.LocalName is "drawing" or "pict")
                             {
                                 var id=child.Descendants().Select(e=>Attr(e,"embed")??(e.Name.LocalName=="imagedata"?Attr(e,"id"):null)).FirstOrDefault(v=>v is not null);if(id is null||!rels.TryGetValue(id,out var target)||Local(target) is not {} local)continue;var entry=zip.GetEntry(local);if(entry is null||entry.Length>20_000_000)throw new InvalidDataException("An embedded image is missing or too large.");using var source=entry.Open();using var bytes=new MemoryStream();source.CopyTo(bytes);var extent=child.Descendants().FirstOrDefault(e=>e.Name.LocalName=="extent");runs.Add(new{type="image",data=Convert.ToBase64String(bytes.ToArray()),fileName=Path.GetFileName(local),width=Num(extent,"cx")/12700,height=Num(extent,"cy")/12700,alt=Attr(child.Descendants().FirstOrDefault(e=>e.Name.LocalName=="docPr"),"descr")??""});
@@ -103,4 +108,23 @@ public sealed partial class OfficeDocuments
     }
     // Stands for a w:br w:type="page" in a paragraph's runs until the paragraph is split there.
     private static readonly object PageBreak=new();
+    /// The external target of a `HYPERLINK "url" [\o "tip"] [\l "bookmark"]` field instruction, as the Mac reads it;
+    /// bookmark-only links have no URL in the Pages model.
+    private static string? HyperlinkField(string instruction)
+    {
+        var tokens=new List<(string Value,bool Quoted)>();
+        for(var i=0;i<instruction.Length;)
+        {
+            if(char.IsWhiteSpace(instruction[i])){i++;continue;}
+            if(instruction[i]=='"'){var close=instruction.IndexOf('"',i+1);if(close<0)close=instruction.Length;tokens.Add((instruction[(i+1)..close],true));i=close+1;}
+            else{var end=i;while(end<instruction.Length&&!char.IsWhiteSpace(instruction[end]))end++;tokens.Add((instruction[i..end],false));i=end;}
+        }
+        if(tokens.Count==0||tokens[0].Quoted||!tokens[0].Value.Equals("HYPERLINK",StringComparison.OrdinalIgnoreCase))return null;
+        for(var n=1;n<tokens.Count;)
+        {
+            if(!tokens[n].Quoted&&tokens[n].Value.StartsWith('\\')){n+=tokens[n].Value.ToLowerInvariant() is "\\l" or "\\o" or "\\t"?2:1;continue;}
+            return tokens[n].Value.Length==0?null:tokens[n].Value;
+        }
+        return null;
+    }
 }
