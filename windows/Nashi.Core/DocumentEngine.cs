@@ -12,7 +12,8 @@ public static partial class DocumentEngine
         if(tool=="mergePDFs")
         {
             if(inputs.Count<2)throw new ArgumentException("Choose at least two PDFs.");
-            using var merged=new PdfDocument();
+            // The merged PDF keeps the first document's properties, read before its pages are copied.
+            using var merged=new PdfDocument();using(var first=PdfReader.Open(inputs[0],password,PdfDocumentOpenMode.Import))KeepInfo(first,merged);
             foreach(var file in inputs){token.ThrowIfCancellationRequested();using var source=PdfReader.Open(file,password,PdfDocumentOpenMode.Import);RequireRebuildable(source,tool);foreach(var page in source.Pages)merged.AddPage(page);}
             var output=SafePaths.Unique(tx.StagingDirectory,"Merged.pdf");merged.Save(output);outputs.Add(output);
         }
@@ -25,7 +26,7 @@ public static partial class DocumentEngine
                 var selected=pages??PageRange(pageRanges,source.PageCount);if(selected.Length==0||selected.Any(p=>p<1||p>source.PageCount))throw new ArgumentException("Choose valid PDF pages.");
                 for(var i=0;i<selected.Length;i+=pagesPerFile)
                 {
-                    token.ThrowIfCancellationRequested();using var part=new PdfDocument();foreach(var page in selected.Skip(i).Take(pagesPerFile))part.AddPage(source.Pages[page-1]);
+                    token.ThrowIfCancellationRequested();using var part=new PdfDocument();KeepInfo(source,part);foreach(var page in selected.Skip(i).Take(pagesPerFile))part.AddPage(source.Pages[page-1]);
                     var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+$" Page {i+1}.pdf");part.Save(output);outputs.Add(output);
                 }
             }
@@ -33,8 +34,8 @@ public static partial class DocumentEngine
             {
                 if(pages is null||pages.Length==0||pages.Any(p=>p<1||p>source.PageCount))throw new ArgumentException("Enter page numbers within this PDF, in the desired order.");
                 if(uniformWidth&&(source.Internals.Catalog.Elements.ContainsKey("/Names")||source.Internals.Catalog.Elements.ContainsKey("/Outlines")||source.Pages.Cast<PdfPage>().Any(p=>p.Elements.ContainsKey("/Annots"))))throw new ArgumentException("Turn off uniform width to preserve this PDF’s form fields, attachments, links or navigation.");
-                using var result=new PdfDocument();for(var n=0;n<pages.Length;n++){var page=pages[n];var added=result.AddPage(source.Pages[page-1]);added.Rotate=(added.Rotate+(pageRotations is not null?pageRotations[n]:rotations?.GetValueOrDefault(page)??0))%360;}
-                var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+" Organized.pdf");result.Save(output);if(uniformWidth&&tool=="organizePDF")UniformWidths(output,token);outputs.Add(output);
+                using var result=new PdfDocument();KeepInfo(source,result);for(var n=0;n<pages.Length;n++){var page=pages[n];var added=result.AddPage(source.Pages[page-1]);added.Rotate=(added.Rotate+(pageRotations is not null?pageRotations[n]:rotations?.GetValueOrDefault(page)??0))%360;}
+                var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+" Organized.pdf");result.Save(output);if(uniformWidth&&tool=="organizePDF"){UniformWidths(output,token);KeepInfo(source,output);}outputs.Add(output);
             }
             else if(tool=="compress")
             {
@@ -53,6 +54,17 @@ public static partial class DocumentEngine
             else throw new ArgumentException("Unknown PDF tool.");
         }
         return tx.Publish(outputs,token);
+    }
+    // Page edits keep the first document's properties, as on macOS and as Compress does; only metadata cleanup clears them.
+    // Empty ones are left out, so a PDF without a title is saved exactly as before.
+    private static void KeepInfo(PdfDocument source,PdfDocument result)
+    {
+        var info=source.Info;if(info.Title.Length>0)result.Info.Title=info.Title;if(info.Author.Length>0)result.Info.Author=info.Author;if(info.Subject.Length>0)result.Info.Subject=info.Subject;
+        if(info.Keywords.Length>0)result.Info.Keywords=info.Keywords;if(info.Creator.Length>0)result.Info.Creator=info.Creator;
+    }
+    private static void KeepInfo(PdfDocument source,string file)
+    {
+        using var memory=new MemoryStream(File.ReadAllBytes(file));using var redrawn=PdfReader.Open(memory,PdfDocumentOpenMode.Modify);KeepInfo(source,redrawn);redrawn.Save(file);
     }
     /// Whether the PDF was encrypted (a user or owner password); every /Encrypt dictionary names its /Filter.
     public static bool Protected(PdfDocument pdf)=>pdf.SecurityHandler.Elements.ContainsKey("/Filter");
