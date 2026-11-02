@@ -203,7 +203,8 @@ struct ToolEditor:View {
         switch tool {
         case .cropImage,.cropVideo:
             guard !cropInteracting,let crop=options.crop else { return false }
-            return crop.x>=0 && crop.y>=0 && crop.width>=1 && crop.height>=1 && crop.x+crop.width<=imageSize.width && crop.y+crop.height<=imageSize.height
+            let minSide=tool == .cropVideo ? MediaEngine.minimumVideoCropSide:1
+            return crop.x>=0 && crop.y>=0 && crop.width>=minSide && crop.height>=minSide && crop.x+crop.width<=imageSize.width && crop.y+crop.height<=imageSize.height
         case .removeMetadata where isGIFMetadata:return metadataRemoveAll
         case .splitVideo:return (!options.splitPoints.isEmpty || options.equalClips != nil) && options.discardedClips.count<splitIntervals.count
         case .videoSnapshots:return !options.snapshotTimes.isEmpty
