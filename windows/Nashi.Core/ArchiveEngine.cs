@@ -38,6 +38,25 @@ public static class ArchiveEngine
                 if(!tar){probe.Close();File.Move(sourcePath,SafePaths.ArchiveEntry(folder,Path.GetFileNameWithoutExtension(input)));return tx.Publish([folder],token);}
             }
         }
+        // An empty password box means no password: SharpCompress would try "" and call it a bad password.
+        password=string.IsNullOrEmpty(password)?null:password;
+        try{return ExtractEntries(sourcePath,folder,tx,password,progress,token);}
+        // SharpCompress names a missing password in English, and a 7z whose names are encrypted fails to open with a wrong one
+        // as "Data Error" (an internal exception type). Encrypted data cannot tell a wrong key from damage, so the message names both.
+        catch(SharpCompress.Common.CryptographicException error)when(password is null){throw new InvalidDataException(PasswordNeeded,error);}
+        catch(Exception error)when(password is not null&&error.GetType().FullName=="SharpCompress.Compressors.LZMA.DataErrorException"){throw new InvalidDataException(WrongPassword,error);}
+        // A WinZip AES key that fails its check makes the ZIP unrecognizable, so the format probe gives up first.
+        catch(SharpCompress.Common.ArchiveOperationException error)when(password is not null&&Encrypted(sourcePath)){throw new InvalidDataException(WrongPassword,error);}
+    }
+    private static bool Encrypted(string path)
+    {
+        try{using var archive=ArchiveFactory.OpenArchive(path,new ReaderOptions{ArchiveEncoding=new ArchiveEncoding{CustomDecoder=DecodeName}});return archive.Entries.Any(e=>e.IsEncrypted);}
+        catch(SharpCompress.Common.CryptographicException){return true;}
+        catch(Exception error)when(error is not OperationCanceledException){return false;}
+    }
+    private const string PasswordNeeded="This archive is protected. Enter its password.",WrongPassword="The password is incorrect, or the archive is damaged.";
+    private static IReadOnlyList<string> ExtractEntries(string sourcePath,string folder,ExportTransaction tx,string? password,IProgress<OperationProgress>? progress,CancellationToken token)
+    {
         using var archive=ArchiveFactory.OpenArchive(sourcePath,new ReaderOptions{Password=password,ArchiveEncoding=new ArchiveEncoding{CustomDecoder=DecodeName}});var entries=archive.Entries.ToArray();
         if(entries.Length>10000||entries.Sum(e=>Math.Max(0,e.Size))>4L*1024*1024*1024)throw new InvalidDataException("Archive exceeds 10,000 entries or 4 GB.");
         var names=new HashSet<string>(StringComparer.OrdinalIgnoreCase);long copied=0;var index=0;
@@ -46,8 +65,13 @@ public static class ArchiveEngine
             token.ThrowIfCancellationRequested();var name=entry.Key?.TrimEnd('/','\\');while(name?.StartsWith("./",StringComparison.Ordinal)==true)name=name[2..];if(string.IsNullOrWhiteSpace(name)||name==".")continue;
             var output=SafePaths.ArchiveEntry(folder,name);if(!names.Add(output)||!string.IsNullOrEmpty(entry.LinkTarget))throw new InvalidDataException("Archive contains duplicate paths or links.");
             if(entry.IsDirectory){Directory.CreateDirectory(output);continue;}Directory.CreateDirectory(Path.GetDirectoryName(output)!);
-            using(var source=entry.OpenEntryStream())using(var target=new FileStream(output,FileMode.CreateNew)){var buffer=new byte[81920];int count;
-            while((count=source.Read(buffer))>0){token.ThrowIfCancellationRequested();copied+=count;if(copied>4L*1024*1024*1024)throw new InvalidDataException("Archive expands beyond 4 GB.");target.Write(buffer,0,count);}}
+            try
+            {
+                using var source=entry.OpenEntryStream();using var target=new FileStream(output,FileMode.CreateNew);var buffer=new byte[81920];int count;
+                while((count=source.Read(buffer))>0){token.ThrowIfCancellationRequested();copied+=count;if(copied>4L*1024*1024*1024)throw new InvalidDataException("Archive expands beyond 4 GB.");target.Write(buffer,0,count);}
+            }
+            // A wrong key fails as whatever SharpCompress meets in the garbled data: "bad password", an unknown method, a CRC…
+            catch(Exception error)when(entry.IsEncrypted&&password is not null&&error is not (OperationCanceledException or InvalidDataException or IOException)){throw new InvalidDataException(WrongPassword,error);}
             // Keep each file's modification date, as macOS does; the file must be closed first.
             // SharpCompress reports some RAR 4 file times only as CreatedTime.
             if((entry.LastModifiedTime??entry.CreatedTime) is {Year:>=1970} modified)File.SetLastWriteTime(output,modified);

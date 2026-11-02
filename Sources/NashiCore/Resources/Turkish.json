@@ -1093,6 +1093,8 @@
   "Archive expands beyond 4 GB.": "Arşiv açıldığında 4 GB'ı aşıyor.",
   "Archive has too many entries (10,000 limit).": "Arşivde çok fazla öğe var (sınır 10.000).",
   "Archive size exceeds its declared limit.": "Arşiv boyutu bildirilen sınırı aşıyor.",
+  "This archive is protected. Enter its password.": "Bu arşiv parola korumalı. Parolasını gir.",
+  "The password is incorrect, or the archive is damaged.": "Parola yanlış ya da arşiv bozuk.",
   "The archive has too many entries (100,000 limit).": "Arşivde çok fazla öğe var (sınır 100.000).",
   "The archive expands beyond the 20 GB safety limit.": "Arşiv açıldığında 20 GB'lık güvenlik sınırını aşıyor.",
   "An archive hard link does not point to a regular file.": "Arşivdeki bir sabit bağlantı normal bir dosyayı göstermiyor.",

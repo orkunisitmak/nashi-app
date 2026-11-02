@@ -2396,6 +2396,7 @@
 "THE IMAGE ORDER MUST INCLUDE EVERY IMAGE ONCE." = "GÖRSEL SIRASINDA HER GÖRSEL BİR KEZ YER ALMALI.";
 "THE MEDIA SERVER REDIRECTED TO AN INSECURE URL." = "MEDYA SUNUCUSU GÜVENLİ OLMAYAN BİR ADRESE YÖNLENDİRDİ.";
 "THE OPERATION WAS CANCELLED." = "İŞLEM İPTAL EDİLDİ.";
+"THE PASSWORD IS INCORRECT, OR THE ARCHIVE IS DAMAGED." = "PAROLA YANLIŞ YA DA ARŞİV BOZUK.";
 "THE PDF CONTAINS NO PAGES." = "PDF'DE SAYFA YOK.";
 "THE PDF PAGE IS TOO LARGE TO RENDER AT THIS RESOLUTION." = "PDF SAYFASI BU ÇÖZÜNÜRLÜKTE İŞLENEMEYECEK KADAR BÜYÜK.";
 "THE POST DID NOT RETURN READABLE PHOTO DETAILS." = "GÖNDERİ OKUNABİLİR FOTOĞRAF BİLGİSİ DÖNDÜRMEDİ.";
@@ -2425,6 +2426,7 @@
 "THE UPSTREAM SERVER DID NOT RETURN A SUCCESSFUL HTTPS DOWNLOAD." = "KAYNAK SUNUCU BAŞARILI BİR HTTPS İNDİRMESİ DÖNDÜRMEDİ.";
 "THE VIDEO HAS NO READABLE DIMENSIONS." = "VİDEONUN BOYUTLARI OKUNAMIYOR.";
 "THESE FILES HAVE MOVED OR WERE DELETED." = "BU DOSYALAR TAŞINMIŞ VEYA SİLİNMİŞ.";
+"THIS ARCHIVE IS PROTECTED. ENTER ITS PASSWORD." = "BU ARŞİV PAROLA KORUMALI. PAROLASINI GİR.";
 "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE." = "BU KIRPMA, SEÇİLEN TÜM GÖRSELLERE UYGULANIR VE HER GÖRSELİN SINIRLARINA SIĞMALIDIR.";
 "THIS DOCUMENT NESTS ITS CONTENT TOO DEEPLY TO CONVERT." = "BU BELGENİN İÇERİĞİ DÖNÜŞTÜRÜLEMEYECEK KADAR İÇ İÇE.";
 "THIS FILE HAS MOVED OR WAS DELETED." = "BU DOSYA TAŞINMIŞ VEYA SİLİNMİŞ.";
@@ -2561,6 +2563,7 @@
 "The metadata field %@ could not be removed." = "%@ meta veri alanı kaldırılamadı.";
 "The metadata field %lld could not be removed." = "%lld meta veri alanı kaldırılamadı.";
 "The operation was cancelled." = "İşlem iptal edildi.";
+"The password is incorrect, or the archive is damaged." = "Parola yanlış ya da arşiv bozuk.";
 "The post did not return readable photo details." = "Gönderi okunabilir fotoğraf bilgisi döndürmedi.";
 "The processing tool could not start." = "İşleme aracı başlatılamadı.";
 "The requested PDF size could not be reached." = "İstenen PDF boyutuna inilemedi.";
@@ -2605,6 +2608,7 @@
 "This Word document contains duplicate relationship identifiers. It could not be converted to Pages." = "Bu Word belgesinde yinelenen ilişki kimlikleri var. Pages biçimine dönüştürülemedi.";
 "This Word document contains duplicate style identifiers. It could not be converted to Pages." = "Bu Word belgesinde yinelenen stil kimlikleri var. Pages biçimine dönüştürülemedi.";
 "This Word document has no editable body." = "Bu Word belgesinde düzenlenebilir bir içerik yok.";
+"This archive is protected. Enter its password." = "Bu arşiv parola korumalı. Parolasını gir.";
 "This conversion is not available for %@." = "%@ için bu dönüştürme kullanılamıyor.";
 "This conversion is not available for %lld." = "%lld için bu dönüştürme kullanılamıyor.";
 "This crop applies to every selected image and must fit inside each one." = "Bu kırpma, seçilen tüm görsellere uygulanır ve her görselin sınırlarına sığmalıdır.";

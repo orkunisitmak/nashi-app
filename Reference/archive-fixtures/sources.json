@@ -19,5 +19,19 @@
     "sha256": "68f9d7e2662cd5bc5607ba9c6bf1edbf121cf3b08011a7d8643091791750a7c8",
     "bytes": 436,
     "purpose": "Offline RAR4 and RAR5 interoperability test fixture"
+  },
+  {
+    "file": "test_read_format_zip_winzip_aes256.zip",
+    "source": "https://raw.githubusercontent.com/libarchive/libarchive/master/libarchive/test/test_read_format_zip_winzip_aes256.zip.uu",
+    "sha256": "447342e5b3b20d05d087e3bc3b89727879fb74734cd84556abc6c5126528dd9e",
+    "bytes": 2829,
+    "purpose": "WinZip AES-256 ZIP with the password \"password\" for archive password errors"
+  },
+  {
+    "file": "nashi_encrypted_headers.7z",
+    "source": "Generated for Nashi: one synthetic note, 7z a -t7z -mhe=on -ppassword (NanaZip 7.0)",
+    "sha256": "c7ef3d8a60ad301c27889cf48fae6993c04162fa1694e69dfd2a967fd01e581f",
+    "bytes": 253,
+    "purpose": "7z with encrypted contents and headers, password \"password\", for archive password errors"
   }
 ]
