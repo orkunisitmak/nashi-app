@@ -13,4 +13,11 @@ final class ImageSVGDeclaredSizeTests:XCTestCase {
         let properties=try XCTUnwrap(CGImageSourceCopyPropertiesAtIndex(source,0,nil) as? [CFString:Any])
         XCTAssertEqual(properties[kCGImagePropertyPixelWidth] as? Int,24);XCTAssertEqual(properties[kCGImagePropertyPixelHeight] as? Int,24)
     }
+    func testSVGWithAnExcessiveDeclaredSizeIsRejected() throws {
+        let directory=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:directory) }
+        let svg=directory.appendingPathComponent("huge.svg")
+        try "<svg xmlns='http://www.w3.org/2000/svg' width='90000' height='90000' viewBox='0 0 24 24'><rect width='24' height='24' fill='red'/></svg>".write(to:svg,atomically:true,encoding:.utf8)
+        var options=OperationOptions();options.outputDirectory=directory
+        XCTAssertThrowsError(try ImageEngine.convert(svg,to:"png",options:options,token:CancellationToken()))
+    }
 }
