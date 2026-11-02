@@ -9,6 +9,15 @@ import Vision
 public enum ImageEngine {
     private static let imageColorSpace = CGColorSpace(name: CGColorSpace.sRGB)!
     private static let imageContext = CIContext(options: [.cacheIntermediates: false])
+    private static func rasterize(_ image:NSImage) throws -> CGImage? {
+        guard image.size.width.isFinite,image.size.height.isFinite,image.size.width<=32000,image.size.height<=32000,image.size.width*image.size.height<=100_000_000 else { throw NashiError.invalidInput("This image is too large to convert.") }
+        let width=Int(image.size.width.rounded()),height=Int(image.size.height.rounded())
+        guard width>0,height>0,let rep=NSBitmapImageRep(bitmapDataPlanes:nil,pixelsWide:width,pixelsHigh:height,bitsPerSample:8,samplesPerPixel:4,hasAlpha:true,isPlanar:false,colorSpaceName:.deviceRGB,bytesPerRow:0,bitsPerPixel:0),let context=NSGraphicsContext(bitmapImageRep:rep) else { return nil }
+        NSGraphicsContext.saveGraphicsState();defer { NSGraphicsContext.restoreGraphicsState() }
+        NSGraphicsContext.current=context
+        image.draw(in:NSRect(x:0,y:0,width:width,height:height))
+        return rep.cgImage
+    }
     public static func load(_ url: URL) throws -> CGImage {
         if let source = CGImageSourceCreateWithURL(url as CFURL, nil) {
             // The thumbnail transform also applies the pixel aspect ratio implied by unequal
@@ -23,7 +32,11 @@ public enum ImageEngine {
                 return result
             }
         }
-        if let image = NSImage(contentsOf: url), let cg = image.cgImage(forProposedRect:nil,context:nil,hints:nil) { return cg }
+        if let image = NSImage(contentsOf: url) {
+            // A vector image drawn without a context takes the display's scale, so size it from its own width and height.
+            if image.representations.allSatisfy({ !($0 is NSBitmapImageRep) }), let cg = try rasterize(image) { return cg }
+            if let cg = image.cgImage(forProposedRect:nil,context:nil,hints:nil) { return cg }
+        }
         // FFmpeg handles additional decoders (including animated inputs' first frame).
         let temp = try OutputFiles.temporaryDirectory(); defer { try? FileManager.default.removeItem(at:temp) }
         let png = temp.appendingPathComponent("decoded.png")
