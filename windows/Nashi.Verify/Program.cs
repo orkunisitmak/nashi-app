@@ -8,6 +8,10 @@ if(Environment.GetEnvironmentVariable("NASHI_VERIFY_DOWNLOAD_TOOLS")=="1")
     // Starting each download proves it is this platform's binary and that it kept its executable bit.
     await ProcessRunner.RunAsync(tools.Executable("yt-dlp"),["--version"]);await ProcessRunner.RunAsync(tools.Executable("deno"),["--version"]);
     Environment.SetEnvironmentVariable("NASHI_VERIFY_FFMPEG",tools.Executable("ffmpeg"));Environment.SetEnvironmentVariable("NASHI_VERIFY_FFPROBE",tools.Executable("ffprobe"));
+    if(!OperatingSystem.IsWindows()){
+    var metadata=new MetadataService(Path.Combine(toolPath,"metadata"));await metadata.InstallAsync(null,default);
+    if(metadata.Executable is null||!(await ProcessRunner.RunAsync(metadata.Executable,["-ver"],default)).Output.Trim().StartsWith("13.59"))throw new Exception("Downloaded ExifTool must run.");
+    }
 }
 var checks = 0;
 void Check(bool value, string message) { if (!value) throw new Exception(message); checks++; }
@@ -37,6 +41,10 @@ try
         catch (InvalidDataException) { checks++; }
     }
     Check(SafePaths.ArchiveEntry(root, "folder/file.txt") == Path.Combine(root, "folder", "file.txt"), "Valid nested path failed");
+    if(!OperatingSystem.IsWindows()){
+        Check(SafePaths.Unique(root,"12:30 a\\b.png")==Path.Combine(root,"12:30 a\\b.png"),"A ':' or '\\' in a Linux/macOS file name was rejected");
+        foreach(var bad in new[]{"","..","a/b.png","a\0b.png"}){try{SafePaths.Unique(root,bad);throw new Exception("Unsafe output name accepted: "+bad);}catch(ArgumentException){checks++;}}
+    }
     File.WriteAllText(Path.Combine(root, "Output.txt"), "keep");
     using (var transaction = new ExportTransaction(root))
     {
@@ -68,6 +76,12 @@ try
     var namedLibrary=new LibraryStore(Path.Combine(root,"Named library"));var izmir=Path.Combine(root,"İzmir Café.txt");File.WriteAllText(izmir,"x");namedLibrary.Record("Resize Image",[izmir]);
     Check(new[]{"izmir","İZMİR","cafe"," İzmir "}.All(q=>namedLibrary.Search(q).Count()==1&&namedLibrary.Search(q,"tr").Count()==1)&&namedLibrary.Search("görseli boyut","tr").Count()==1&&namedLibrary.Search("Ankara","tr").Count()==0,"Library search missed a file name that differs only in case or accents, as macOS finds it");
     File.Delete(izmir);
+    if(!OperatingSystem.IsWindows()){
+        var upper=Path.Combine(root,"Photo.jpg");var lower=Path.Combine(root,"photo.jpg");File.WriteAllText(upper,"A");File.WriteAllText(lower,"a");
+        var cased=new LibraryStore(Path.Combine(root,"Cased library"));cased.Record("Convert",[upper,lower]);
+        Check(cased.Entries.Single().Paths.SequenceEqual([upper,lower]),"Library merged two Linux files that differ only in case");
+        File.Delete(upper);File.Delete(lower);
+    }
     File.Delete(unicodeFile);Check(reopened.Entries.Single().AvailablePaths.Length==0,"Missing Library file was available");
     for(var i=0;i<55;i++)library.Record("ZIP "+i,[Path.Combine(root,"Output.txt")]);Check(library.Entries.Count==LibraryStore.Limit,"Library retention limit failed");
     Check(new LibraryStore(libraryDirectory).Entries.Count==LibraryStore.Limit,"Persisted Library limit failed");
