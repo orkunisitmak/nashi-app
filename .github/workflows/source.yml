@@ -23,6 +23,8 @@ jobs:
         run: python3 scripts/generate-localizations.py --check
       - name: Owner merge authorization regressions
         run: python3 scripts/test-owner-auto-merge.py
+      - name: Release feed archive length regressions
+        run: python3 scripts/test_validate_update_feed_length.py
       - name: Public source boundary
         run: python3 scripts/audit-public-tree.py
       - name: Scan full public history for secrets
