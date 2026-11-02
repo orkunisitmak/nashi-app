@@ -10,7 +10,7 @@ public static class FeatureCatalog
     public static IReadOnlyDictionary<string,string[]> Conversions=>Data.ConversionMatrix;
     public static IReadOnlyDictionary<string,string> ToolNames=>Data.ToolNames;
     public static string Extension(string path)=>Path.GetExtension(path).TrimStart('.').ToLowerInvariant() switch{"jpeg"=>"jpg","tif"=>"tiff","heif"=>"heic","aif"=>"aiff","markdown"=>"md","htm"=>"html","gzip" or "tgz"=>"gz",var ext=>ext};
-    public static bool IsImage(string path)=>new[]{"jpg","png","webp","heic","tiff","svg","avif","bmp"}.Contains(Extension(path));
+    public static bool IsImage(string path)=>new[]{"jpg","png","webp","heic","tiff","svg","avif","bmp","dng"}.Contains(Extension(path));
     public static bool IsVideo(string path)=>new[]{"mp4","mov","mkv","webm","avi","wmv","m4v","gif"}.Contains(Extension(path));
     public static bool IsAudio(string path)=>new[]{"mp3","m4a","wav","flac","ogg","opus","aiff","wma","aac"}.Contains(Extension(path));
     public static bool IsArchive(string path)=>new[]{"zip","tar","gz","rar"}.Contains(Extension(path));
