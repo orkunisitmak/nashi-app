@@ -319,7 +319,8 @@ public enum MediaEngine {
             points = (1..<count).map { info.duration * Double($0) / Double(count) }
         } else {
             guard options.splitInterval.isFinite, options.splitInterval > 0, info.duration / options.splitInterval <= 10000 else { throw NashiError.invalidInput("Enter a positive split interval producing at most 10,000 clips.") }
-            points = stride(from: options.splitInterval, to: info.duration - 0.000001, by: options.splitInterval).map { $0 }
+            // A remainder shorter than the minimum clip joins the last clip instead of failing.
+            points = stride(from: options.splitInterval, to: info.duration - 0.05 + 0.000001, by: options.splitInterval).map { $0 }
         }
         let boundaries = [0] + points + [info.duration]
         guard zip(boundaries, boundaries.dropFirst()).allSatisfy({ $0.1 - $0.0 >= 0.05 - 0.000001 }) else { throw NashiError.invalidInput("Split points must be at least 0.05 seconds apart and from either end.") }
