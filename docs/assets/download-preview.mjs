@@ -9,6 +9,12 @@ export function classifyMediaPreviewURL(value) {
   const host = url.hostname.toLowerCase().replace(/\.$/, '');
   if (['youtube.com', 'www.youtube.com', 'm.youtube.com', 'music.youtube.com',
        'youtu.be', 'www.youtu.be'].includes(host)) return 'youtube';
+  if (host === 'img.youtube.com' || host === 'ytimg.com' || host.endsWith('.ytimg.com')) {
+    const parts = url.pathname.split('/').filter(Boolean);
+    if (parts.length >= 3 && ['vi', 'vi_webp', 'an_webp'].includes(parts[0]) &&
+        /^[A-Za-z0-9_-]{11}$/.test(parts[1])) return 'youtube';
+    return 'original';
+  }
 
   if (!['instagram.com', 'www.instagram.com', 'm.instagram.com'].includes(host))
     return 'original';
