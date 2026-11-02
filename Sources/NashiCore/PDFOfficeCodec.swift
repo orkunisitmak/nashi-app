@@ -26,12 +26,25 @@ enum PDFOfficeCodec {
         }
         context.setFillColor(CGColor(gray: 1, alpha: 1)); context.fill(CGRect(x: 0, y: 0, width: width, height: height))
         context.scaleBy(x: scale, y: scale)
-        if crop != nil { context.translateBy(x: -bounds.minX, y: -bounds.minY); context.drawPDFPage(cgPage) }
+        if crop != nil {
+            context.translateBy(x: -bounds.minX, y: -bounds.minY); context.drawPDFPage(cgPage)
+            // Annotations draw in the displayed MediaBox frame (origin moved, page rotation
+            // applied); undo that, since the cropped picture is in unrotated page space.
+            context.concatenate(page.transform(for: .mediaBox).inverted())
+            for annotation in picturedAnnotations(page) where annotation.bounds.intersects(bounds) { annotation.draw(with: .mediaBox, in: context) }
+        }
         // A whole page keeps its annotations, such as stamps and filled form fields, as viewers show it.
         else { page.draw(with: .cropBox, to: context) }
         try token.check()
         guard let image = context.makeImage(), let data = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) else { throw NashiError.failed("The PDF page image could not be written.") }
         return data
+    }
+
+    /// Stamps (approval marks, pasted signatures) and ink (handwriting) are
+    /// pictures a viewer shows that live in annotations rather than page content.
+    static func picturedAnnotations(_ page: PDFPage) -> [PDFAnnotation] {
+        // Hidden (2) and NoView (32) annotations are not shown on the page.
+        page.annotations.filter { ["Stamp", "Ink"].contains($0.type) && ((($0.value(forAnnotationKey: .flags) as? NSNumber)?.intValue ?? 0) & 34) == 0 }
     }
 
     static func prepare(_ input: URL, to format: String, at work: URL, options: OperationOptions, token: CancellationToken) throws -> URL {
