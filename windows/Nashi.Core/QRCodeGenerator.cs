@@ -18,6 +18,7 @@ public static class QRCodeGenerator
         if(matrix.Width!=size||matrix.Height!=size)throw new ArgumentException("Choose a larger QR image size for this text.");
         var pixels=new byte[size*size*3];
         for(var y=0;y<size;y++)for(var x=0;x<size;x++){var value=matrix[x,y]?(byte)0:(byte)255;var i=(y*size+x)*3;pixels[i]=value;pixels[i+1]=value;pixels[i+2]=value;}
+        PhotoCodec.EnsureInitialized();
         using var image=new MagickImage();image.ReadPixels(pixels,new PixelReadSettings((uint)size,(uint)size,StorageType.Char,PixelMapping.RGB));
         return image.ToByteArray(MagickFormat.Png);
     }

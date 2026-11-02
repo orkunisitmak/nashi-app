@@ -22,6 +22,8 @@ public static class PhotoCodec
         config.Policy.Data="<policymap><policy domain='delegate' rights='none' pattern='*'/><policy domain='coder' rights='none' pattern='{HTTPS,HTTP,URL,FTP,MSL,EPHEMERAL,PS,PS2,PS3,EPS,PDF,XPS}'/><policy domain='path' rights='none' pattern='@*'/></policymap>";
         MagickNET.Initialize(config);ResourceLimits.Memory=512UL*1024*1024;ResourceLimits.Disk=0;ResourceLimits.Width=30000;ResourceLimits.Height=30000;ResourceLimits.ListLength=500;ResourceLimits.Thread=2;
     }
+    // Initialize the shared native codec policy before another image operation uses Magick.
+    internal static void EnsureInitialized() {}
     public static MagickImage Read(string path)
     {
         if(!FeatureCatalog.IsImage(path)&&FeatureCatalog.Extension(path)!="gif")throw new ArgumentException("Choose an image.");

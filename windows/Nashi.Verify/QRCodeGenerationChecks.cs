@@ -7,6 +7,8 @@ static class QRCodeGenerationChecks
     public static void Run(Action<bool,string> check,string root)
     {
         var folder=Path.Combine(root,"Generated QR codes");Directory.CreateDirectory(folder);
+        try
+        {
         const string text="İstanbul ığüş 🍐 https://example.com/qr?x=1&y=2";
         foreach(var level in new[]{"L","M","Q","H"})foreach(var size in new[]{256,512})
         {
@@ -23,5 +25,7 @@ static class QRCodeGenerationChecks
             try{QRCodeGenerator.Png(item.Item1,item.Item2,item.Item3);throw new Exception("Invalid QR request accepted");}catch(ArgumentException){check(true,"Invalid QR request rejected");}
         }
         try{QRCodeGenerator.Export(text,folder,token:new CancellationToken(true));throw new Exception("Cancelled QR export accepted");}catch(OperationCanceledException){check(true,"Cancelled QR export rejected");}
+        }
+        finally{Directory.Delete(folder,true);}
     }
 }
