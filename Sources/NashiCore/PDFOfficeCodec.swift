@@ -156,7 +156,9 @@ enum PDFOfficeCodec {
                     values[column] += (values[column].isEmpty ? "" : " ") + cell.text
                 }
                 table += "<table:table-row>" + values.map { value in
-                    if value.range(of: #"^-?(?:0|[1-9]\d*)(?:\.\d+)?$"#, options: .regularExpression) != nil, Double(value) != nil {
+                    // Only 15 significant digits survive a spreadsheet's binary64
+                    // value; longer digit runs (IDs, account numbers) stay text.
+                    if value.range(of: #"^-?(?:0|[1-9]\d*)(?:\.\d+)?$"#, options: .regularExpression) != nil, value.filter(\.isWholeNumber).count <= 15, Double(value) != nil {
                         return "<table:table-cell office:value-type=\"float\" office:value=\"\(value)\"><text:p>\(value)</text:p></table:table-cell>"
                     }
                     return "<table:table-cell office:value-type=\"string\"><text:p>\(DocumentText.escapeXML(value))</text:p></table:table-cell>"
