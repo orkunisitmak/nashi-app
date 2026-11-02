@@ -549,6 +549,13 @@ public enum ImageEngine {
         var image=try load(input)
         let originalWidth=image.width,originalHeight=image.height
         image=try resizeUsingOptions(image,options:options)
+        if options.width == nil,options.height == nil {
+            var factor=1.0
+            if let scale=options.imageScale { guard scale.isFinite,scale>0 else { throw NashiError.invalidInput("Image scale must be greater than 0.") };factor=scale }
+            if let edge=options.imageMaxEdge { guard edge>0,edge<=32000 else { throw NashiError.invalidInput("Image dimensions must be between 1 and 32,000 pixels.") };factor=min(factor,Double(edge)/Double(max(image.width,image.height))) }
+            factor=min(1,factor)
+            if factor<1 { image=try resized(image,width:max(1,Int(Double(image.width)*factor)),height:max(1,Int(Double(image.height)*factor))) }
+        }
         // A symlink's own size is a few bytes; a percentage applies to the image it points to.
         let inputSize=Int64((try input.resolvingSymlinksInPath().resourceValues(forKeys:[.fileSizeKey])).fileSize ?? 0)
         if let percent=options.percentage { guard percent.isFinite,percent>0,percent<100 else { throw NashiError.invalidInput("Percentage reduction must be greater than 0 and less than 100.") } }
