@@ -8,7 +8,12 @@ test('only a real YouTube hostname unlocks video, audio and thumbnail previews',
     'https://www.youtube.com/watch?v=demo',
     'https://m.youtube.com/shorts/abc',
     'https://music.youtube.com/watch?v=demo',
-    'https://youtu.be/demo'
+    'https://youtu.be/demo',
+    'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
+    'https://img.youtube.com/vi/dQw4w9WgXcQ/0.jpg',
+    'https://ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
+    'https://i.ytimg.com/vi_webp/dQw4w9WgXcQ/hq720.webp',
+    'https://i1.ytimg.com/an_webp/dQw4w9WgXcQ/hqdefault.webp'
   ])assert.equal(classifyMediaPreviewURL(url),'youtube',url);
 });
 
@@ -26,6 +31,9 @@ test('lookalike domains and query/fragment text cannot impersonate supported pro
   for(const url of [
     'https://notyoutube.com/watch?v=demo',
     'https://youtube.com.evil.example/watch?v=demo',
+    'https://i.ytimg.com.evil.example/vi/dQw4w9WgXcQ/hqdefault.jpg',
+    'https://i.ytimg.com/vi/short/hqdefault.jpg',
+    'https://i.ytimg.com/watch/dQw4w9WgXcQ/hqdefault.jpg',
     'https://example.net/?next=https://youtube.com/watch?v=demo',
     'https://example.net/#instagram.com/reel/demo',
     'https://notinstagram.com/reel/demo',
