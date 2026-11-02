@@ -185,6 +185,12 @@ public enum ImageEngine {
         return try resized(image, width: width, height: height)
     }
 
+    /// Core Image works in linear light, so contrast would pivot around linear 0.5 (sRGB 188) and darken the photo.
+    /// Running the filter on sRGB-encoded values keeps mid-gray in place, as the Windows editor does.
+    private static func colorControls(_ image: CIImage, parameters: [String: Any]) -> CIImage {
+        image.applyingFilter("CILinearToSRGBToneCurve").applyingFilter("CIColorControls", parameters: parameters).applyingFilter("CISRGBToneCurveToLinear")
+    }
+
     private static func edit(_ image: CGImage, options: OperationOptions) throws -> CGImage {
         let a = options.imageAdjustments
         let values = [a.exposure,a.brightness,a.contrast,a.highlights,a.shadows,a.whites,a.blacks,a.gamma,a.temperature,a.tint,a.saturation,a.vibrance,a.hue,a.clarity,a.texture,a.fade,a.blur,a.sharpen,a.dehaze,a.grain,a.noiseReduction,a.vignette,options.brightness,options.contrast,options.saturation]
@@ -198,7 +204,7 @@ public enum ImageEngine {
             // Positive values warm and add magenta, matching the Windows editor.
             ci = ci.applyingFilter("CITemperatureAndTint", parameters: ["inputNeutral": CIVector(x:6500,y:0), "inputTargetNeutral": CIVector(x:6500 - max(-1,min(1,a.temperature)) * 3000, y:-max(-1,min(1,a.tint)) * 100)])
         }
-        ci=ci.applyingFilter("CIColorControls",parameters:[kCIInputBrightnessKey:options.brightness+a.brightness,kCIInputContrastKey:max(0,options.contrast*a.contrast),kCIInputSaturationKey:max(0,options.saturation*a.saturation)])
+        ci=colorControls(ci,parameters:[kCIInputBrightnessKey:options.brightness+a.brightness,kCIInputContrastKey:max(0,options.contrast*a.contrast),kCIInputSaturationKey:max(0,options.saturation*a.saturation)])
         if a.highlights != 0 || a.shadows != 0 || a.whites != 0 || a.blacks != 0 {
             // Five monotonic luminance anchors let the four tonal ranges vary independently.
             let xs: [Double] = [0,0.25,0.5,0.75,1]
@@ -214,7 +220,7 @@ public enum ImageEngine {
         if a.gamma != 1 { ci = ci.applyingFilter("CIGammaAdjust",parameters:["inputPower":max(0.1,min(5,a.gamma))]) }
         if a.vibrance != 0 { ci = ci.applyingFilter("CIVibrance",parameters:["inputAmount":max(-1,min(1,a.vibrance))]) }
         if a.hue != 0 { ci = ci.applyingFilter("CIHueAdjust",parameters:["inputAngle":a.hue * .pi / 180]) }
-        if a.dehaze != 0 { ci = ci.applyingFilter("CIColorControls",parameters:[kCIInputContrastKey:1 + max(-1,min(1,a.dehaze))*0.65,kCIInputBrightnessKey:-a.dehaze*0.045,kCIInputSaturationKey:1+a.dehaze*0.12]) }
+        if a.dehaze != 0 { ci = colorControls(ci,parameters:[kCIInputContrastKey:1 + max(-1,min(1,a.dehaze))*0.65,kCIInputBrightnessKey:-a.dehaze*0.045,kCIInputSaturationKey:1+a.dehaze*0.12]) }
         if a.clarity > 0 { ci = ci.applyingFilter("CIUnsharpMask",parameters:[kCIInputRadiusKey:4,kCIInputIntensityKey:min(1,a.clarity)*1.5]) }
         if a.clarity < 0 { ci = ci.clampedToExtent().applyingFilter("CIGaussianBlur",parameters:[kCIInputRadiusKey:min(1,-a.clarity)*3]).cropped(to:bounds) }
         if a.sharpen > 0 { ci = ci.applyingFilter("CISharpenLuminance",parameters:[kCIInputSharpnessKey:min(2,a.sharpen)]) }
