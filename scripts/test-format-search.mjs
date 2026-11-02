@@ -40,3 +40,12 @@ test('playground Library search ignores spaces around the query', () => {
   assert.deepEqual(names.filter(name => foldSearchText(name).includes(foldSearchText(' AVİF'))), ['AVIF-export.jpg']);
   assert.equal(foldSearchText('  '), '');
 });
+
+test('playground clock carries a rounded 60 seconds into the minute', () => {
+  const src = fs.readFileSync(new URL('../docs/assets/playground.js', import.meta.url), 'utf8').split('\n').find(l => l.startsWith('function time('));
+  const time = new Function(src + '; return time;')();
+  assert.equal(time(59.9996), '01:00.000');
+  assert.equal(time(119.9999), '02:00.000');
+  assert.equal(time(61.5), '01:01.500');
+  assert.equal(time(0), '00:00.000');
+});
