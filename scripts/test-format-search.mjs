@@ -61,4 +61,6 @@ test('playground Edit Image applies Width to the rotated image', () => {
   assert.deepEqual(size(400, 180), [400, 200]);
   const huge = renderImage({image: {width: 4000, height: 40}, id: 'editImage', values: {width: 6000, rotation: 90, brightness: 100, contrast: 100, saturation: 100}}, true);
   assert.ok(huge.width * huge.height <= 24000000);
+  const rounded = renderImage({image: {width: 19, height: 10}, id: 'editImage', values: {width: 6000, rotation: 90, brightness: 100, contrast: 100, saturation: 100}}, true);
+  assert.ok(rounded.width * rounded.height <= 24000000);
 });
