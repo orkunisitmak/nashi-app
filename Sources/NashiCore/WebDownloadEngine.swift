@@ -27,13 +27,15 @@ public enum WebDownloadEngine {
         let value=text.trimmingCharacters(in:.whitespacesAndNewlines)
         guard value.utf8.count<=16_384,!value.unicodeScalars.contains(where:{CharacterSet.whitespacesAndNewlines.contains($0) || CharacterSet.controlCharacters.contains($0)}),
               let url=URL(string:value),let scheme=url.scheme?.lowercased(),["http","https"].contains(scheme),
-              let host=url.host,!host.isEmpty,url.user==nil,url.password==nil else {
+              let host=url.host,!host.isEmpty,url.user==nil,url.password==nil,
+              PublicWebHost.allows(host) else {
             throw NashiError.invalidInput("Paste one complete http:// or https:// media link.")
         }
         return url
     }
     public static func inspect(_ url:URL,token:CancellationToken = .init()) async throws -> WebMediaInfo {
         let url=try link(url.absoluteString);try token.check()
+        try await confirmPublicHost(url.host)
         let session=URLSession(configuration:.ephemeral)
         defer { session.invalidateAndCancel() }
         if WebMediaDragPayload.isInstagramPhotoPost(url) {
@@ -91,6 +93,7 @@ public enum WebDownloadEngine {
     public static func download(_ info:WebMediaInfo,mode:WebDownloadMode,maximumHeight:Int?,destination:URL,selectedPhotos:Set<Int>? = nil,
                                 token:CancellationToken = .init(),progress:@escaping ProgressHandler) async throws -> [URL] {
         _=try link(info.url.absoluteString)
+        try await confirmPublicHost(info.url.host)
         guard destination.isFileURL,info.modes.contains(mode) else { throw NashiError.invalidInput("Choose an available media type and a local destination folder.") }
         if let maximumHeight { guard (2...16_384).contains(maximumHeight) else { throw NashiError.invalidInput("Choose a valid video quality.") } }
         try token.check();try Task.checkCancellation()
@@ -271,6 +274,20 @@ public enum WebDownloadEngine {
         return String(selected.joined(separator:"\n").prefix(1_500))
     }
 
+    // Confirms every resolved address is public before real network work.
+    // getaddrinfo blocks, so it runs off the cooperative pool. This check and
+    // the later connection cannot share one resolution (URLSession exposes no
+    // peer-address hook and yt-dlp no DNS pin), so a hostile DNS operator
+    // keeps a narrow rebinding race; refusing hosts whose answers are not
+    // all public removes every stable-target version of it.
+    static func confirmPublicHost(_ host:String?) async throws {
+        guard let host else { throw NashiError.invalidInput("Paste one complete http:// or https:// media link.") }
+        let allowed=await withCheckedContinuation { (continuation:CheckedContinuation<Bool,Never>) in
+            DispatchQueue.global(qos:.userInitiated).async { continuation.resume(returning:PublicWebHost.egressAllowed(host)) }
+        }
+        guard allowed else { throw NashiError.invalidInput("Paste one complete http:// or https:// media link.") }
+    }
+
     private final class TransferDelegate:NSObject,URLSessionDownloadDelegate,@unchecked Sendable {
         let token:CancellationToken,maximumBytes:Int64,progress:ProgressHandler
         init(token:CancellationToken,maximumBytes:Int64,progress:@escaping ProgressHandler) { self.token=token;self.maximumBytes=maximumBytes;self.progress=progress }
@@ -326,7 +343,11 @@ public enum WebDownloadEngine {
             progress(totalBytesExpectedToWrite>0 ? fraction:OperationProgress.indeterminate,"Downloading · \(ByteCountFormatter.string(fromByteCount:totalBytesWritten,countStyle:.file))")
         }
         func urlSession(_ session:URLSession,task:URLSessionTask,willPerformHTTPRedirection response:HTTPURLResponse,newRequest request:URLRequest,completionHandler:@escaping(URLRequest?)->Void) {
-            completionHandler(request.url.flatMap{try? WebDownloadEngine.link($0.absoluteString)} == nil ? nil:request)
+            let safe=request.url.flatMap { target -> Bool in
+                guard (try? WebDownloadEngine.link(target.absoluteString)) != nil, let host=target.host else { return false }
+                return PublicWebHost.egressAllowed(host)
+            } ?? false
+            completionHandler(safe ? request : nil)
         }
     }
 }
