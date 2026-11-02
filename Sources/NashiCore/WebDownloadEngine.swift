@@ -209,8 +209,13 @@ public enum WebDownloadEngine {
     }
     public static func cleanFilename(_ proposed:String,mime:String?)->String {
         var name=(proposed as NSString).lastPathComponent
-        name=String(name.unicodeScalars.filter{!CharacterSet.controlCharacters.contains($0) && !CharacterSet(charactersIn:"/:\\").contains($0)}.prefix(170))
+        name=String(name.unicodeScalars.filter{!CharacterSet.controlCharacters.contains($0) && !CharacterSet(charactersIn:"/:\\").contains($0)})
         while name.hasPrefix(".") { name.removeFirst() }
+        // File systems limit UTF-16 units, not scalars; shorten the stem so the extension survives.
+        let kept=(name as NSString).pathExtension.utf16.count<=16 ? (name as NSString).pathExtension:""
+        var used=kept.isEmpty ? 0:kept.utf16.count+1
+        let stem=(kept.isEmpty ? name:(name as NSString).deletingPathExtension).prefix { used+=$0.utf16.count;return used<=170 }
+        name=String(stem)+(kept.isEmpty ? "":"."+kept)
         if name.isEmpty { name="Downloaded media" }
         let ext=(name as NSString).pathExtension.lowercased()
         let preferred=mime.flatMap{UTType(mimeType:$0)?.preferredFilenameExtension}

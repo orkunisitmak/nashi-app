@@ -17,6 +17,13 @@ final class WebDownloadTests:XCTestCase {
         XCTAssertFalse(WebDownloadEngine.cleanFilename("a\\b:c\n.jpg",mime:"image/jpeg").contains(":"))
         XCTAssertEqual(WebDownloadEngine.cleanFilename("Türkçe 🥭.png",mime:"image/png"),"Türkçe 🥭.png")
     }
+    func testLongNamesStayWritableAndKeepTheirExtension() throws {
+        let emoji=WebDownloadEngine.cleanFilename(String(repeating:"🎬",count:200)+".jpg",mime:"image/jpeg")
+        XCTAssertEqual((emoji as NSString).pathExtension,"jpg");XCTAssertLessThanOrEqual(emoji.utf16.count,170)
+        let directory=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:directory) }
+        XCTAssertNoThrow(try Data([1]).write(to:directory.appendingPathComponent(emoji)))
+        XCTAssertEqual(WebDownloadEngine.cleanFilename(String(repeating:"b",count:300)+".mp4",mime:"application/octet-stream"),String(repeating:"b",count:166)+".mp4")
+    }
     func testMetadataModesQualityAndDuration() throws {
         let json=Data(#"{"title":"A test","duration":12.5,"extractor_key":"YouTube","formats":[{"height":1080,"vcodec":"avc1"},{"height":720},{"height":1080},{"height":-1},{"height":999999}]}"#.utf8)
         let info=try WebDownloadEngine.parseMetadata(json,url:URL(string:"https://example.org/watch")!)
