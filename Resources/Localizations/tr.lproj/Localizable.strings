@@ -16,6 +16,8 @@
 "%@ is enabled" = "%@ izni açık";
 "%@ is not installed." = "%@ kurulu değil.";
 "%@ items" = "%@ öğe";
+"%@ more outputs" = "%@ çıktı daha";
+"%@ output files" = "%@ çıktı dosyası";
 "%@ photos" = "%@ fotoğraf";
 "%@ ready to paste." = "%@ kod yapıştırmaya hazır.";
 "%@ selected" = "%@ seçili";
@@ -45,6 +47,8 @@
 "%lld is enabled" = "%lld izni açık";
 "%lld is not installed." = "%lld kurulu değil.";
 "%lld items" = "%lld öğe";
+"%lld more outputs" = "%lld çıktı daha";
+"%lld output files" = "%lld çıktı dosyası";
 "%lld photos" = "%lld fotoğraf";
 "%lld ready to paste." = "%lld kod yapıştırmaya hazır.";
 "%lld selected" = "%lld seçili";
@@ -62,17 +66,20 @@
 "0 ANNOTATIONS" = "0 İŞARETLEME";
 "0 AREAS SELECTED" = "0 ALAN SEÇİLİ";
 "0 FOUND" = "0 BULUNDU";
+"0 KEEPS THE ORIGINAL SIZE." = "0, ÖZGÜN BOYUTU KORUR.";
 "0 SELECTED" = "0 SEÇİLİ";
 "0 SPLIT POINTS" = "0 BÖLME NOKTASI";
 "0 annotations" = "0 işaretleme";
 "0 areas selected" = "0 alan seçili";
 "0 found" = "0 bulundu";
+"0 keeps the original size." = "0, özgün boyutu korur.";
 "0 selected" = "0 seçili";
 "0 split points" = "0 bölme noktası";
 "1 ANNOTATION" = "1 İŞARETLEME";
 "1 AREA SELECTED" = "1 ALAN SEÇİLİ";
 "1 FOUND" = "1 BULUNDU";
 "1 ITEM" = "1 ÖĞE";
+"1 OUTPUT FILE" = "1 ÇIKTI DOSYASI";
 "1 PHOTO" = "1 FOTOĞRAF";
 "1 READY TO PASTE." = "1 KOD YAPIŞTIRMAYA HAZIR.";
 "1 SELECTED" = "1 SEÇİLİ";
@@ -83,6 +90,7 @@
 "1 area selected" = "1 alan seçili";
 "1 found" = "1 bulundu";
 "1 item" = "1 öğe";
+"1 output file" = "1 çıktı dosyası";
 "1 photo" = "1 fotoğraf";
 "1 ready to paste." = "1 kod yapıştırmaya hazır.";
 "1 selected" = "1 seçili";
@@ -122,6 +130,7 @@
 "A LITTLE LESS FILE FUSS. A LITTLE MORE FLOW.\nCONVERT, EDIT, AND ORGANIZE — RIGHT ON YOUR MAC." = "DOSYA İŞİ AZALSIN, AKIŞIN HIZLANSIN.\nMAC'İNDE DÖNÜŞTÜR, DÜZENLE VE ORGANİZE ET.";
 "A LITTLE PEAR. A LOT OF POSSIBILITY." = "KÜÇÜK BİR ARMUT. BİR SÜRÜ OLASILIK.";
 "A NEW FORM.\nIN A TAP." = "TEK DOKUNUŞ.\nYENİ BİR BİÇİM.";
+"A NEW PACKAGE FOLDER KEEPS EXISTING FILES SAFE. ITS NAME GETS A NUMBER IF NEEDED." = "YENİ BİR PAKET KLASÖRÜ MEVCUT DOSYALARI KORUR. GEREKİRSE KLASÖR ADINA NUMARA EKLENİR.";
 "A PAGE RANGE IS OUTSIDE THE PDF." = "BİR SAYFA ARALIĞI PDF'NİN DIŞINDA.";
 "A PDF PAGE COULD NOT BE READ." = "BİR PDF SAYFASI OKUNAMADI.";
 "A PDF page could not be read." = "Bir PDF sayfası okunamadı.";
@@ -151,6 +160,7 @@
 "A little less file fuss. A little more flow.\nConvert, edit, and organize — right on your Mac." = "Dosya işi azalsın, akışın hızlansın.\nMac'inde dönüştür, düzenle ve organize et.";
 "A little pear. A lot of possibility." = "Küçük bir armut. Bir sürü olasılık.";
 "A new form.\nIn a tap." = "Tek dokunuş.\nYeni bir biçim.";
+"A new package folder keeps existing files safe. Its name gets a number if needed." = "Yeni bir paket klasörü mevcut dosyaları korur. Gerekirse klasör adına numara eklenir.";
 "A page range is outside the PDF." = "Bir sayfa aralığı PDF'nin dışında.";
 "A perfect landing spot" = "Buraya bırakabilirsin";
 "A photo in this post is unavailable. Try a fresh public post link." = "Bu gönderideki bir fotoğrafa ulaşılamıyor. Gönderinin güncel, herkese açık bağlantısını dene.";
@@ -167,6 +177,7 @@
 "ACTIONS" = "İŞLEMLER";
 "ADD" = "EKLE";
 "ADD A BLEEP OR SILENCE RANGE." = "BİR BİP VEYA SESSİZLİK ARALIĞI EKLE.";
+"ADD BETWEEN 1 AND 12 OUTPUTS TO THE PACKAGE." = "PAKETE 1 İLE 12 ARASINDA ÇIKTI EKLEYİN.";
 "ADD BG" = "ARKA PLAN EKLE";
 "ADD FIELD" = "ALAN EKLE";
 "ADD FILES" = "DOSYA EKLE";
@@ -176,6 +187,7 @@
 "ADD FRAME AT PLAYHEAD (M)" = "OYNATMA KONUMUNDAKİ KAREYİ EKLE (M)";
 "ADD METADATA FIELD" = "META VERİ ALANI EKLE";
 "ADD OR CHANGE FILES" = "DOSYA EKLE VEYA DEĞİŞTİR";
+"ADD OUTPUT" = "ÇIKTI EKLE";
 "ADD REDACTION" = "SANSÜR ALANI EKLE";
 "ADD SELECTED RANGE" = "SEÇİLİ ARALIĞI EKLE";
 "ADD SPLIT" = "BÖLME NOKTASI EKLE";
@@ -259,9 +271,11 @@
 "Add Redaction" = "Sansür Alanı Ekle";
 "Add Split" = "Bölme Noktası Ekle";
 "Add a bleep or silence range." = "Bir bip veya sessizlik aralığı ekle.";
+"Add between 1 and 12 outputs to the package." = "Pakete 1 ile 12 arasında çıktı ekleyin.";
 "Add files" = "Dosya ekle";
 "Add frame at playhead (M)" = "Oynatma konumundaki kareyi ekle (M)";
 "Add or change files" = "Dosya ekle veya değiştir";
+"Add output" = "Çıktı ekle";
 "Add selected range" = "Seçili aralığı ekle";
 "Add split at playhead (M)" = "Oynatma konumuna bölme noktası ekle (M)";
 "Add to Float" = "Yüzen pencereye ekle";
@@ -442,6 +456,7 @@
 "CHOOSE AN IMAGE." = "BİR GÖRSEL SEÇ.";
 "CHOOSE AN INPUT FORMAT TO SEE ITS AVAILABLE OUTPUTS." = "KULLANILABİLİR ÇIKTILARINI GÖRMEK İÇİN BİR GİRDİ BİÇİMİ SEÇ.";
 "CHOOSE AN INSTAGRAM PHOTO POST LINK." = "BİR INSTAGRAM FOTOĞRAF GÖNDERİSİ BAĞLANTISI SEÇ.";
+"CHOOSE AN OUTPUT FOLDER FOR THE PACKAGE." = "PAKET İÇİN BİR ÇIKTI KLASÖRÜ SEÇİN.";
 "CHOOSE ANNOTATION IMAGE…" = "İŞARET GÖRSELİ SEÇ…";
 "CHOOSE AT LEAST ONE FRAME." = "EN AZ BİR KARE SEÇ.";
 "CHOOSE AT LEAST TWO PDFS." = "EN AZ İKİ PDF SEÇ.";
@@ -449,9 +464,11 @@
 "CHOOSE AT MOST 10,000 CLIPS." = "EN FAZLA 10.000 KLİP SEÇ.";
 "CHOOSE BACKGROUND IMAGE…" = "ARKA PLAN GÖRSELİ SEÇ…";
 "CHOOSE BETWEEN 1 AND 1,000 PAGES PER FILE." = "DOSYA BAŞINA 1 İLE 1.000 ARASINDA SAYFA SEÇ.";
+"CHOOSE BETWEEN 1 AND 1000 STILL IMAGES FOR THE PACKAGE." = "PAKET İÇİN 1 İLE 1000 ARASINDA HAREKETSİZ GÖRSEL SEÇİN.";
 "CHOOSE DIMENSIONS BETWEEN 1 AND 30,000 PIXELS (100 MP LIMIT)." = "1 İLE 30.000 PİKSEL ARASINDA BOYUTLAR SEÇ (SINIR 100 MP).";
 "CHOOSE DISTINCT DRAG SHORTCUTS AND VALID OUTPUT SETTINGS." = "BİRBİRİNDEN FARKLI SÜRÜKLEME KISAYOLLARI VE GEÇERLİ ÇIKTI AYARLARI SEÇ.";
 "CHOOSE DOWNLOADS FOLDER…" = "İNDİRME KLASÖRÜNÜ SEÇ…";
+"CHOOSE EXISTING IMAGE FILES FOR THE PACKAGE." = "PAKET İÇİN MEVCUT GÖRSEL DOSYALARINI SEÇİN.";
 "CHOOSE FEWER FILES TO OPEN." = "AÇMAK İÇİN DAHA AZ DOSYA SEÇ.";
 "CHOOSE FILES" = "DOSYA SEÇ";
 "CHOOSE FILES AND A SUPPORTED MEDIA FORMAT." = "DOSYALARI VE DESTEKLENEN BİR MEDYA BİÇİMİNİ SEÇ.";
@@ -552,6 +569,7 @@
 "COULD NOT DECODE THE AUDIO WAVEFORM." = "SESİN DALGA BİÇİMİ ÇÖZÜMLENEMEDİ.";
 "COULD NOT INSPECT MEDIA INFORMATION." = "MEDYA BİLGİLERİ İNCELENEMEDİ.";
 "COULD NOT ORIENT IMAGE." = "GÖRSELİN YÖNÜ DÜZELTİLEMEDİ.";
+"COULD NOT PREPARE THE PACKAGE IMAGE." = "PAKET GÖRSELİ HAZIRLANAMADI.";
 "COULD NOT READ THIS PDF." = "BU PDF OKUNAMADI.";
 "COULD NOT RENDER THE REDACTION." = "SANSÜR UYGULANAMADI.";
 "COULDN’T CHECK FOR UPDATES" = "GÜNCELLEMELER DENETLENEMEDİ";
@@ -650,6 +668,7 @@
 "Choose an image or PDF." = "Bir görsel veya PDF seç.";
 "Choose an image." = "Bir görsel seç.";
 "Choose an input format to see its available outputs." = "Kullanılabilir çıktılarını görmek için bir girdi biçimi seç.";
+"Choose an output folder for the package." = "Paket için bir çıktı klasörü seçin.";
 "Choose annotation image…" = "İşaret görseli seç…";
 "Choose at least one frame." = "En az bir kare seç.";
 "Choose at least two PDFs." = "En az iki PDF seç.";
@@ -657,9 +676,11 @@
 "Choose at most 10,000 clips." = "En fazla 10.000 klip seç.";
 "Choose background image…" = "Arka plan görseli seç…";
 "Choose between 1 and 1,000 pages per file." = "Dosya başına 1 ile 1.000 arasında sayfa seç.";
+"Choose between 1 and 1000 still images for the package." = "Paket için 1 ile 1000 arasında hareketsiz görsel seçin.";
 "Choose dimensions between 1 and 30,000 pixels (100 MP limit)." = "1 ile 30.000 piksel arasında boyutlar seç (sınır 100 MP).";
 "Choose distinct drag shortcuts and valid output settings." = "Birbirinden farklı sürükleme kısayolları ve geçerli çıktı ayarları seç.";
 "Choose downloads folder…" = "İndirme klasörünü seç…";
+"Choose existing image files for the package." = "Paket için mevcut görsel dosyalarını seçin.";
 "Choose fewer files to open." = "Açmak için daha az dosya seç.";
 "Choose files" = "Dosya seç";
 "Choose files and a supported media format." = "Dosyaları ve desteklenen bir medya biçimini seç.";
@@ -778,6 +799,7 @@
 "Could not open %@." = "%@ açılamadı.";
 "Could not open %lld." = "%lld açılamadı.";
 "Could not orient image." = "Görselin yönü düzeltilemedi.";
+"Could not prepare the package image." = "Paket görseli hazırlanamadı.";
 "Could not read this PDF." = "Bu PDF okunamadı.";
 "Could not render PDF page %@." = "PDF'nin %@. sayfası işlenemedi.";
 "Could not render PDF page %lld." = "PDF'nin %lld. sayfası işlenemedi.";
@@ -812,6 +834,7 @@
 "DEHAZE" = "PUS GİDERME";
 "DELETE" = "SİL";
 "DELETE CLIP" = "KLİBİ SİL";
+"DELETE SAVED PACKAGE" = "KAYITLI PAKETİ SİL";
 "DETACH" = "AYIR";
 "DETAIL" = "AYRINTI";
 "DETAILS" = "AYRINTILAR";
@@ -891,6 +914,7 @@
 "Dehaze" = "Pus giderme";
 "Delete" = "Sil";
 "Delete Clip" = "Klibi Sil";
+"Delete saved package" = "Kayıtlı paketi sil";
 "Detach" = "Ayır";
 "Detail" = "Ayrıntı";
 "Details" = "Ayrıntılar";
@@ -977,6 +1001,7 @@
 "Drop it like it’s… a file." = "Dosyanı buraya bırak.";
 "Drop something good." = "Bir dosya bırak.";
 "Duplicate" = "Çoğalt";
+"EACH OUTPUT GETS ITS OWN SUBFOLDER. SIZE LIMITS KEEP THE ASPECT RATIO AND NEVER ENLARGE IMAGES." = "HER ÇIKTI AYRI BİR ALT KLASÖRE KAYDEDİLİR. BOYUT SINIRI EN BOY ORANINI KORUR VE GÖRSELLERİ BÜYÜTMEZ.";
 "EDIT" = "DÜZENLE";
 "EDIT FIELDS OR REMOVE METADATA. ENCODED AUDIO AND VIDEO STAY UNTOUCHED." = "ALANLARI DÜZENLE YA DA META VERİLERİ KALDIR. KODLANMIŞ SES VE GÖRÜNTÜ DEĞİŞMEZ.";
 "EDIT FIELDS OR REMOVE METADATA. ENCODED IMAGE PIXELS STAY UNTOUCHED." = "ALANLARI DÜZENLE YA DA META VERİLERİ KALDIR. GÖRSELİN PİKSELLERİ DEĞİŞMEZ.";
@@ -1000,13 +1025,18 @@
 "EPUB layout" = "EPUB düzeni";
 "ESC TO CLOSE" = "KAPATMAK İÇİN ESC";
 "EVERYTHING HAS A NEXT FORM." = "HER DOSYANIN YENİ BİR HÂLİ VAR.";
+"EXAMPLE PACKAGE" = "ÖRNEK PAKET";
 "EXPAND FLOAT" = "FLOAT’I GENİŞLET";
 "EXPANDED UPDATE IS TOO LARGE." = "AÇILAN GÜNCELLEME ÇOK BÜYÜK.";
 "EXPORT CLIPS" = "KLİPLERİ KAYDET";
+"EXPORT HERE" = "BURAYA AKTAR";
+"EXPORT IMAGE PACKAGE" = "GÖRSEL PAKETİNİ DIŞA AKTAR";
 "EXPORT ONE VIDEO" = "TEK VİDEO OLARAK KAYDET";
+"EXPORT PACKAGE…" = "PAKETİ DIŞA AKTAR…";
 "EXPOSURE" = "POZLAMA";
 "EXTRACT ARCHIVE" = "ARŞİVİ AÇ";
 "EXTRACT NASHI INTO ITS OWN WRITABLE FOLDER FIRST." = "ÖNCE NASHI'Yİ YAZILABİLİR, KENDİNE AİT BİR KLASÖRE ÇIKAR.";
+"Each output gets its own subfolder. Size limits keep the aspect ratio and never enlarge images." = "Her çıktı ayrı bir alt klasöre kaydedilir. Boyut sınırı en boy oranını korur ve görselleri büyütmez.";
 "Edit" = "Düzenle";
 "Edit Image" = "Görseli Düzenle";
 "Edit Photo" = "Fotoğrafı Düzenle";
@@ -1038,11 +1068,15 @@
 "Every redaction area must have positive dimensions and fit completely inside the %lld × %@ pixel image. Adjust the areas for this image and try again." = "Her sansür alanının boyutları sıfırdan büyük olmalı ve alan %lld × %@ piksellik görselin tamamen içinde kalmalı. Alanları bu görsele göre ayarla ve yeniden dene.";
 "Every redaction area must have positive dimensions and fit completely inside the %lld × %lld pixel image. Adjust the areas for this image and try again." = "Her sansür alanının boyutları sıfırdan büyük olmalı ve alan %lld × %lld piksellik görselin tamamen içinde kalmalı. Alanları bu görsele göre ayarla ve yeniden dene.";
 "Everything has a next form." = "Her dosyanın yeni bir hâli var.";
+"Example package" = "Örnek paket";
 "Expand Float" = "Float’ı genişlet";
 "Expanded update is too large." = "Açılan güncelleme çok büyük.";
+"Export Here" = "Buraya Aktar";
 "Export One Video" = "Tek Video Olarak Kaydet";
 "Export clips" = "Klipleri kaydet";
+"Export image package" = "Görsel paketini dışa aktar";
 "Export one video" = "Tek video olarak kaydet";
+"Export package…" = "Paketi dışa aktar…";
 "Exposure" = "Pozlama";
 "Extract Archive" = "Arşivi Aç";
 "Extract Nashi into its own writable folder first." = "Önce Nashi'yi yazılabilir, kendine ait bir klasöre çıkar.";
@@ -1107,6 +1141,7 @@
 "FOLDERS" = "KLASÖRLER";
 "FONT" = "YAZI TİPİ";
 "FONT SIZE" = "YAZI BOYUTU";
+"FORMAT" = "FORMAT";
 "FORMAT COMPATIBILITY" = "BİÇİM UYUMLULUĞU";
 "FORMAT PREFERENCES" = "BİÇİM TERCİHLERİ";
 "FORMATS" = "BİÇİMLER";
@@ -1189,6 +1224,7 @@
 "Folders" = "Klasörler";
 "Font" = "Yazı tipi";
 "Font size" = "Yazı boyutu";
+"Format" = "Format";
 "Format Compatibility" = "Biçim Uyumluluğu";
 "Format preferences" = "Biçim tercihleri";
 "Formats" = "Biçimler";
@@ -1217,6 +1253,7 @@
 "GITHUB RELEASE CONNECTION" = "GITHUB SÜRÜM BAĞLANTISI";
 "GITHUB REPOSITORY" = "GITHUB DEPOSU";
 "GITHUB TOKEN" = "GITHUB TOKENI";
+"GIVE EACH OUTPUT A DIFFERENT SUBFOLDER NAME." = "HER ÇIKTIYA FARKLI BİR ALT KLASÖR ADI VERİN.";
 "GIVE IT A LITTLE BREATHING ROOM." = "BİRAZ NEFES ALACAK ALAN AÇ.";
 "GLASS" = "CAM";
 "GRADIENT" = "GEÇİŞ";
@@ -1232,6 +1269,7 @@
 "GitHub release connection" = "GitHub sürüm bağlantısı";
 "GitHub repository" = "GitHub deposu";
 "GitHub token" = "GitHub tokenı";
+"Give each output a different subfolder name." = "Her çıktıya farklı bir alt klasör adı verin.";
 "Give it a little breathing room." = "Biraz nefes alacak alan aç.";
 "Glass" = "Cam";
 "Gradient" = "Geçiş";
@@ -1383,6 +1421,7 @@
 "LITTLE TWEAKS.\nBIG DIFFERENCE." = "KÜÇÜK DOKUNUŞLAR.\nBÜYÜK FARK.";
 "LITTLE TWEAKS. A WHOLE NEW LOOK." = "KÜÇÜK DOKUNUŞLAR. YEPYENİ BİR GÖRÜNÜM.";
 "LOCAL BY DESIGN" = "VERİLERİN CİHAZINDA KALIR";
+"LONGEST EDGE (PX)" = "UZUN KENAR (PX)";
 "LOOKING FOR LITTLE SQUARES…" = "QR KODLARI ARANIYOR…";
 "LOUDNESS RANGE" = "SES DÜZEYİ ARALIĞI";
 "Landscape" = "Yatay";
@@ -1417,6 +1456,7 @@
 "Local by design" = "Verilerin cihazında kalır";
 "Local by design · MIT source\nVersion %@" = "Verilerin cihazında kalır · MIT lisanslı kaynak kodu\nSürüm %@";
 "Local by design · MIT source\nVersion %lld" = "Verilerin cihazında kalır · MIT lisanslı kaynak kodu\nSürüm %lld";
+"Longest edge (px)" = "Uzun kenar (px)";
 "Looking for little squares…" = "QR kodları aranıyor…";
 "Loudness range" = "Ses düzeyi aralığı";
 "MACOS COULD NOT OPEN THE GENERATED MEDIA PREVIEW." = "MACOS OLUŞTURULAN MEDYA ÖNİZLEMESİNİ AÇAMADI.";
@@ -1716,6 +1756,9 @@
 "Output" = "Çıktı";
 "Output format" = "Çıktı biçimi";
 "Output-only format." = "Yalnızca çıktı biçimi.";
+"PACKAGE NAME" = "PAKET ADI";
+"PACKAGE OUTPUTS MUST BE PNG, JPG OR WEBP." = "PAKET ÇIKTILARI PNG, JPG VEYA WEBP OLMALIDIR.";
+"PACKAGE SAVED." = "PAKET KAYDEDİLDİ.";
 "PADDING" = "İÇ BOŞLUK";
 "PAGE NUMBERS" = "SAYFA NUMARALARI";
 "PAGE RANGES" = "SAYFA ARALIKLARI";
@@ -1773,6 +1816,7 @@
 "PREPARING A LOCAL PREVIEW…" = "YEREL ÖNİZLEME HAZIRLANIYOR…";
 "PREPARING MEDIA…" = "MEDYA HAZIRLANIYOR…";
 "PREPARING MOVE…" = "TAŞIMA HAZIRLANIYOR…";
+"PREPARING PACKAGE OUTPUTS…" = "PAKET ÇIKTILARI HAZIRLANIYOR…";
 "PREPARING PREVIEW…" = "ÖNİZLEME HAZIRLANIYOR…";
 "PREPARING PROCESSED PREVIEW…" = "İŞLENMİŞ ÖNİZLEME HAZIRLANIYOR…";
 "PREPARING VISUALIZATION…" = "GÖRSELLEŞTİRME HAZIRLANIYOR…";
@@ -1800,6 +1844,9 @@
 "PROTECTED MEDIA CANNOT BE DOWNLOADED." = "KORUMALI MEDYA İNDİRİLEMEZ.";
 "PUBLIC REPOSITORY · NO TOKEN NEEDED" = "HERKESE AÇIK DEPO · TOKEN GEREKMEZ";
 "PUBLIC UPDATES WORK WITHOUT A TOKEN." = "HERKESE AÇIK GÜNCELLEMELER İÇİN TOKEN GEREKMEZ.";
+"Package name" = "Paket adı";
+"Package outputs must be PNG, JPG or WebP." = "Paket çıktıları PNG, JPG veya WebP olmalıdır.";
+"Package saved." = "Paket kaydedildi.";
 "Padding" = "İç boşluk";
 "Page %@" = "Sayfa %@";
 "Page %lld" = "Sayfa %lld";
@@ -1852,6 +1899,7 @@
 "Preparing a local preview…" = "Yerel önizleme hazırlanıyor…";
 "Preparing media…" = "Medya hazırlanıyor…";
 "Preparing move…" = "Taşıma hazırlanıyor…";
+"Preparing package outputs…" = "Paket çıktıları hazırlanıyor…";
 "Preparing preview…" = "Önizleme hazırlanıyor…";
 "Preparing processed preview…" = "İşlenmiş önizleme hazırlanıyor…";
 "Preparing visualization…" = "Görselleştirme hazırlanıyor…";
@@ -1937,6 +1985,7 @@
 "REMOVE FROM SELECTION" = "SEÇİMDEN KALDIR";
 "REMOVE IMAGE" = "GÖRSELİ KALDIR";
 "REMOVE METADATA" = "META VERİLERİ KALDIR";
+"REMOVE OUTPUT" = "ÇIKTIYI KALDIR";
 "REMOVE SELECTED AREA" = "SEÇİLİ ALANI KALDIR";
 "REMOVE SELECTED RANGE" = "SEÇİLİ ARALIĞI KALDIR";
 "REMOVE SILENCE AT THE BEGINNING AND END" = "BAŞLANGIÇ VE SONDAKİ SESSİZLİĞİ KALDIR";
@@ -2010,6 +2059,7 @@
 "Remove clips (numbers; separated by semicolons)" = "Çıkarılacak klipler (numara; noktalı virgülle ayır)";
 "Remove from Float" = "Yüzen Pencereden Kaldır";
 "Remove from selection" = "Seçimden kaldır";
+"Remove output" = "Çıktıyı kaldır";
 "Remove selected area" = "Seçili alanı kaldır";
 "Remove selected range" = "Seçili aralığı kaldır";
 "Remove silence at the beginning and end" = "Başlangıç ve sondaki sessizliği kaldır";
@@ -2067,6 +2117,7 @@
 "SAVE NEW FILES TO…" = "YENİ DOSYALARI ŞURAYA KAYDET…";
 "SAVE ORGANIZED COPY ↗" = "DÜZENLENMİŞ KOPYAYI KAYDET ↗";
 "SAVE ORGANIZED PDF" = "DÜZENLENMİŞ PDF'Yİ KAYDET";
+"SAVE PACKAGE" = "PAKETİ KAYDET";
 "SAVE REDACTED COPY" = "SANSÜRLENMİŞ KOPYAYI KAYDET";
 "SAVE REPORT…" = "RAPORU KAYDET…";
 "SAVE SPEED COPY" = "HIZI DEĞİŞTİRİLMİŞ KOPYAYI KAYDET";
@@ -2076,6 +2127,8 @@
 "SAVE WITH BACKGROUND" = "ARKA PLANLA KAYDET";
 "SAVED 1 NEW FILE. ORIGINALS KEPT." = "1 YENİ DOSYA KAYDEDİLDİ. ORİJİNAL KORUNDU.";
 "SAVED IN POST ORDER IN A NEW INSTAGRAM FOLDER." = "GÖNDERİ SIRASIYLA YENİ BİR INSTAGRAM KLASÖRÜNE KAYDEDİLİR.";
+"SAVED PACKAGE REMOVED." = "KAYITLI PAKET SİLİNDİ.";
+"SAVED PACKAGES" = "KAYITLI PAKETLER";
 "SAVED TOKEN · LEAVE BLANK TO KEEP IT" = "KAYITLI TOKEN · KORUMAK İÇİN BOŞ BIRAK";
 "SAVING COLLAGE…" = "KOLAJ KAYDEDİLİYOR…";
 "SAVING DOCUMENT…" = "BELGE KAYDEDİLİYOR…";
@@ -2120,6 +2173,7 @@
 "SETUP CANCELLED." = "KURULUM İPTAL EDİLDİ.";
 "SETUP CANCELLED. EXISTING TOOLS WERE KEPT." = "KURULUM İPTAL EDİLDİ. MEVCUT ARAÇLAR KORUNDU.";
 "SETUP COULDN’T FINISH" = "KURULUM TAMAMLANAMADI";
+"SEVERAL FORMATS AND SIZES, IN ONE EXPORT." = "TEK İŞLEMDE FARKLI FORMAT VE BOYUTLAR.";
 "SHADOW" = "GÖLGE";
 "SHADOW OPACITY" = "GÖLGE OPAKLIĞI";
 "SHADOW RADIUS" = "GÖLGE YARIÇAPI";
@@ -2150,6 +2204,7 @@
 "SOUND FEEDBACK" = "SESLİ GERİ BİLDİRİM";
 "SOUND FOLLOWS YOUR MAC’S VOLUME. HAPTICS NEED A COMPATIBLE FORCE TOUCH TRACKPAD." = "SES, MAC'İNİN SES DÜZEYİNİ KULLANIR. TİTREŞİM İÇİN UYUMLU BİR FORCE TOUCH TRACKPAD GEREKİR.";
 "SOURCE & THIRD-PARTY NOTICES" = "KAYNAK KODU VE ÜÇÜNCÜ TARAF BİLDİRİMLERİ";
+"SOURCE METADATA IS OMITTED. JPG USES A WHITE BACKGROUND FOR TRANSPARENT AREAS." = "KAYNAĞIN META VERİLERİ EKLENMEZ. JPG ÇIKTISINDA SAYDAM ALANLAR BEYAZ OLUR.";
 "SPACE PLAY/PAUSE · ←/→ 1S · SHIFT+←/→ 1 FRAME (VIDEO), 0.1S (AUDIO) · I/O SET RANGE · ENTER SAVE" = "SPACE OYNAT/DURAKLAT · ←/→ 1 SN · SHIFT+←/→ 1 KARE (VİDEO), 0,1 SN (SES) · I/O ARALIĞI AYARLA · ENTER KAYDET";
 "SPACE PLAY/PAUSE · ←/→ 1S · ⇧←/→ 0.1S" = "SPACE OYNAT/DURAKLAT · ←/→ 1 SN · ⇧←/→ 0,1 SN";
 "SPACE PLAY/PAUSE · ←/→ 1S · ⇧←/→ 0.1S · I/O SET RANGE · ⇧SPACE PLAY RANGE" = "SPACE OYNAT/DURAKLAT · ←/→ 1 SN · ⇧←/→ 0,1 SN · I/O ARALIĞI AYARLA · ⇧SPACE ARALIĞI OYNAT";
@@ -2181,6 +2236,7 @@
 "STROKE WIDTH" = "ÇİZGİ KALINLIĞI";
 "STRONG" = "GÜÇLÜ";
 "STYLE" = "STİL";
+"SUBFOLDER" = "ALT KLASÖR";
 "SUBTITLES" = "ALTYAZILAR";
 "SUBTLE ANIMATIONS" = "HAFİF ANİMASYONLAR";
 "SVG EXTERNAL RESOURCES ARE NOT LOADED. EMBED THE RASTER IMAGE FIRST." = "SVG DIŞ KAYNAKLARI YÜKLENMEZ. ÖNCE GÖRSELİ SVG DOSYASINA GÖM.";
@@ -2218,6 +2274,7 @@
 "Save new files to…" = "Yeni dosyaları şuraya kaydet…";
 "Save organized PDF" = "Düzenlenmiş PDF'yi kaydet";
 "Save organized copy ↗" = "Düzenlenmiş kopyayı kaydet ↗";
+"Save package" = "Paketi kaydet";
 "Save redacted copy" = "Sansürlenmiş kopyayı kaydet";
 "Save report…" = "Raporu kaydet…";
 "Save speed copy" = "Hızı değiştirilmiş kopyayı kaydet";
@@ -2229,6 +2286,8 @@
 "Saved %lld new files. Originals kept." = "%lld yeni dosya kaydedildi. Orijinaller korundu.";
 "Saved 1 new file. Originals kept." = "1 yeni dosya kaydedildi. Orijinal korundu.";
 "Saved in post order in a new Instagram folder." = "Gönderi sırasıyla yeni bir Instagram klasörüne kaydedilir.";
+"Saved package removed." = "Kayıtlı paket silindi.";
+"Saved packages" = "Kayıtlı paketler";
 "Saved size: %@" = "Kaydedilen boyut: %@";
 "Saved size: %lld" = "Kaydedilen boyut: %lld";
 "Saved to %@" = "%@ klasörüne kaydedildi";
@@ -2287,6 +2346,7 @@
 "Setup cancelled." = "Kurulum iptal edildi.";
 "Setup cancelled. Existing tools were kept." = "Kurulum iptal edildi. Mevcut araçlar korundu.";
 "Setup couldn’t finish" = "Kurulum tamamlanamadı";
+"Several formats and sizes, in one export." = "Tek işlemde farklı format ve boyutlar.";
 "Shadow" = "Gölge";
 "Shadow opacity" = "Gölge opaklığı";
 "Shadow radius" = "Gölge yarıçapı";
@@ -2320,6 +2380,7 @@
 "Sound feedback" = "Sesli geri bildirim";
 "Sound follows your Mac’s volume. Haptics need a compatible Force Touch trackpad." = "Ses, Mac'inin ses düzeyini kullanır. Titreşim için uyumlu bir Force Touch trackpad gerekir.";
 "Source & third-party notices" = "Kaynak kodu ve üçüncü taraf bildirimleri";
+"Source metadata is omitted. JPG uses a white background for transparent areas." = "Kaynağın meta verileri eklenmez. JPG çıktısında saydam alanlar beyaz olur.";
 "Space play/pause · ←/→ 1s · Shift+←/→ 1 frame (video), 0.1s (audio) · I/O set range · Enter save" = "Space oynat/duraklat · ←/→ 1 sn · Shift+←/→ 1 kare (video), 0,1 sn (ses) · I/O aralığı ayarla · Enter kaydet";
 "Space play/pause · ←/→ 1s · ⇧←/→ 0.1s" = "Space oynat/duraklat · ←/→ 1 sn · ⇧←/→ 0,1 sn";
 "Space play/pause · ←/→ 1s · ⇧←/→ 0.1s · I/O set range · ⇧Space play range" = "Space oynat/duraklat · ←/→ 1 sn · ⇧←/→ 0,1 sn · I/O aralığı ayarla · ⇧Space aralığı oynat";
@@ -2350,6 +2411,7 @@
 "Stroke width" = "Çizgi kalınlığı";
 "Strong" = "Güçlü";
 "Style" = "Stil";
+"Subfolder" = "Alt klasör";
 "Subtitles" = "Altyazılar";
 "Subtle animations" = "Hafif animasyonlar";
 "System" = "Sistem";
@@ -2688,12 +2750,15 @@
 "UPDATE…" = "GÜNCELLE…";
 "UPSTREAM DOWNLOAD CHECKSUM MISMATCH. NOTHING WAS INSTALLED." = "İNDİRİLEN ARACIN SAĞLAMA TOPLAMI EŞLEŞMİYOR. HİÇBİR ŞEY KURULMADI.";
 "UPSTREAM VERSIONS, LICENSES AND SOURCE LINKS" = "ARAÇ SÜRÜMLERİ, LİSANSLAR VE KAYNAK BAĞLANTILARI";
+"USE A LONGEST EDGE FROM 1 TO 16384 PIXELS, OR 0 FOR ORIGINAL SIZE." = "UZUN KENARI 1 İLE 16384 PİKSEL ARASINDA GİRİN; ÖZGÜN BOYUT İÇİN 0 KULLANIN.";
 "USE A REGULAR WRITABLE FOLDER FOR PORTABLE UPDATES." = "TAŞINABİLİR GÜNCELLEMELER İÇİN YAZILABİLİR, NORMAL BİR KLASÖR KULLAN.";
+"USE A SHORT PACKAGE NAME WITHOUT PATHS OR RESERVED NAMES." = "YOL VEYA AYRILMIŞ AD İÇERMEYEN KISA BİR PAKET ADI KULLANIN.";
 "USE A STATIC SVG WITHOUT EMBEDDED SCRIPTS OR HTML." = "GÖMÜLÜ BETİK VEYA HTML İÇERMEYEN STATİK BİR SVG KULLAN.";
 "USE IN NASHI" = "NASHI'DE KULLAN";
 "USE ONCE IF MACOS NEEDS PERMISSION FOR YOUR SAVED UPDATE CONNECTION." = "MACOS KAYITLI GÜNCELLEME BAĞLANTISI İÇİN İZİN İSTERSE BİR KEZ KULLAN.";
 "USE ONE INSTAGRAM PHOTO POST WITH UP TO 50 ITEMS." = "EN FAZLA 50 ÖĞE İÇEREN TEK BİR INSTAGRAM FOTOĞRAF GÖNDERİSİ KULLAN.";
 "USE OPEN TO PREVIEW THIS DOCUMENT IN ITS DEFAULT APP." = "BU BELGEYİ VARSAYILAN UYGULAMASINDA ÖNİZLEMEK İÇİN AÇ'I KULLAN.";
+"USE SHORT SUBFOLDER NAMES WITHOUT PATHS OR RESERVED NAMES." = "YOL VEYA AYRILMIŞ AD İÇERMEYEN KISA ALT KLASÖR ADLARI KULLANIN.";
 "USE THESE FILES AGAIN" = "BU DOSYALARI YENİDEN KULLAN";
 "Undo" = "Geri Al";
 "Undo Area" = "Alanı Geri Al";
@@ -2732,11 +2797,14 @@
 "Use %@ again" = "%@ öğesini yeniden kullan";
 "Use %lld again" = "%lld öğesini yeniden kullan";
 "Use Open to preview this document in its default app." = "Bu belgeyi varsayılan uygulamasında önizlemek için Aç'ı kullan.";
+"Use a longest edge from 1 to 16384 pixels, or 0 for original size." = "Uzun kenarı 1 ile 16384 piksel arasında girin; özgün boyut için 0 kullanın.";
 "Use a regular writable folder for portable updates." = "Taşınabilir güncellemeler için yazılabilir, normal bir klasör kullan.";
+"Use a short package name without paths or reserved names." = "Yol veya ayrılmış ad içermeyen kısa bir paket adı kullanın.";
 "Use a static SVG without embedded scripts or HTML." = "Gömülü betik veya HTML içermeyen statik bir SVG kullan.";
 "Use in Nashi" = "Nashi'de kullan";
 "Use once if macOS needs permission for your saved update connection." = "macOS kayıtlı güncelleme bağlantısı için izin isterse bir kez kullan.";
 "Use one Instagram photo post with up to 50 items." = "En fazla 50 öğe içeren tek bir Instagram fotoğraf gönderisi kullan.";
+"Use short subfolder names without paths or reserved names." = "Yol veya ayrılmış ad içermeyen kısa alt klasör adları kullanın.";
 "Use these files again" = "Bu dosyaları yeniden kullan";
 "VALUE" = "DEĞER";
 "VERIFYING AND PREPARING OFFICE TOOLS…" = "OFİS ARAÇLARI DOĞRULANIYOR VE HAZIRLANIYOR…";
@@ -2822,6 +2890,7 @@
 "X %lld, Y %lld, width %lld, height %@" = "X %lld, Y %lld, genişlik %lld, yükseklik %@";
 "X %lld, Y %lld, width %lld, height %lld" = "X %lld, Y %lld, genişlik %lld, yükseklik %lld";
 "YOU CAN ALSO CHOOSE FILES FROM THE MAIN WINDOW." = "ANA PENCEREDEN DE DOSYA SEÇEBİLİRSİN.";
+"YOU CAN SAVE UP TO 50 EXPORT PACKAGES." = "EN FAZLA 50 DIŞA AKTARMA PAKETİ KAYDEDEBİLİRSİNİZ.";
 "YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL." = "NE ZAMAN İNDİRİP KURACAĞINA SEN KARAR VER.";
 "YOU HAVE THE LATEST PUBLISHED WINDOWS VERSION." = "YAYINLANAN EN GÜNCEL WINDOWS SÜRÜMÜNÜ KULLANIYORSUN.";
 "YOUR CLIPBOARD IS EMPTY." = "PANON BOŞ.";
@@ -2842,6 +2911,7 @@
 "YOUTUBE THUMBNAIL · BEST AVAILABLE FULL-SIZE IMAGE" = "YOUTUBE KÜÇÜK RESMİ · EN İYİ TAM BOYUTLU GÖRSEL";
 "YOU’RE ALL SET.\nMAKE SOMETHING GOOD." = "HER ŞEY HAZIR.\nGÜZEL BİR ŞEY YAP.";
 "You can also choose files from the main window." = "Ana pencereden de dosya seçebilirsin.";
+"You can save up to 50 export packages." = "En fazla 50 dışa aktarma paketi kaydedebilirsiniz.";
 "You choose when to download and install." = "Ne zaman indirip kuracağına sen karar ver.";
 "You have the latest published Windows version." = "Yayınlanan en güncel Windows sürümünü kullanıyorsun.";
 "YouTube thumbnail · best available full-size image" = "YouTube küçük resmi · en iyi tam boyutlu görsel";

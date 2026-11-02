@@ -50,6 +50,7 @@ struct JobRecord:Codable,Identifiable {
     @Published var webShortcutAvailable=false
     var onShowTool:((ToolKind)->Void)?
     var onEPUBOptions:(()->Void)?
+    var onImageExportPackage:(()->Void)?
     var onJobStarted:(()->Void)?
     var onSuccess:((SuccessNotice)->Void)?
     var toolWindows:[NSWindow]=[]

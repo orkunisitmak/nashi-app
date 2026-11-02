@@ -170,7 +170,8 @@ public struct OperationOptions: Codable, Sendable {
 public enum Operation: Sendable {
     case convert(String)
     case tool(ToolKind)
-    public var title: String { switch self { case .convert(let f): return "Convert to \(f.uppercased())"; case .tool(let t): return t.title } }
+    case imageExportPackage(ImageExportPackage)
+    public var title: String { switch self { case .convert(let f): return "Convert to \(f.uppercased())"; case .tool(let t): return t.title; case .imageExportPackage: return "Export image package" } }
 }
 
 public struct ConversionRequest: Sendable {

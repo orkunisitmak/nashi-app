@@ -41,11 +41,15 @@ jobs:
         run: swift build --product Nashi
       - name: Isolated native UI, accessibility and artwork checks
         run: python3 scripts/test-native-ui.py
+      - name: Image export packages, real files and native editor
+        run: python3 scripts/test-image-export-packages.py
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         if: always()
         with:
           name: mac-native-ui
-          path: build/native-ui
+          path: |
+            build/native-ui
+            build/image-export-packages/proof
           retention-days: 7
           if-no-files-found: warn
       - name: Archive link boundary and extraction regressions

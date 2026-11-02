@@ -179,6 +179,18 @@ struct HomeView:View {
                 Button { HomeActionMenu.show(FileAction.allCases.map{action in (action.title,{state.perform(action)})}) } label:{HomeActionTile(title:"Move & share",subtitle:"Send it on its way",symbol:"paperplane",color:Color(red:0.34,green:0.47,blue:0.67))}
                     .buttonStyle(.plain).disabled(state.working)
             }
+            if !state.inputs.isEmpty,state.inputs.allSatisfy({FileCategory.detect($0) == .image}) {
+                Button { state.onImageExportPackage?() } label: {
+                    HStack(spacing:12) {
+                        Image(systemName:"square.stack.3d.up").foregroundStyle(Color.nashi)
+                        VStack(alignment:.leading,spacing:3) {
+                            Text("Export image package").font(.system(size:13,weight:.semibold))
+                            Text("Several formats and sizes, in one export.").font(.caption).foregroundStyle(.secondary)
+                        }
+                        Spacer();Image(systemName:"arrow.up.right")
+                    }.padding(14).nashiCard()
+                }.buttonStyle(.plain).disabled(state.working).accessibilityIdentifier("home.export-package")
+            }
             if !formats.isEmpty {
                 HStack(spacing:7) {
                     Text("QUICK PICKS").font(.system(size:9,weight:.bold,design:.rounded)).tracking(0.8).foregroundStyle(.secondary)
