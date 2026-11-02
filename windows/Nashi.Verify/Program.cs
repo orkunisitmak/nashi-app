@@ -127,6 +127,11 @@ if(Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG") is {} encoder && En
             Check(paddedInfo.Video is {Width:98,Height:66}&&paddedInfo.Duration>0,"Odd video dimensions could not convert to "+format);
         }
         Check((await engine.InspectAsync(odd)).Video is {Width:97,Height:65},"Odd-dimension conversion changed the source");
+        // A raw ADTS AAC voice memo has no stored length; FFprobe's bitrate guess for 4 s of tone and 6 s of quiet is about 4.5 s.
+        var memo=Path.Combine(directory,"Voice memo.aac");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","sine=frequency=440:duration=4,apad=whole_dur=10","-c:a","aac","-b:a","128k",memo]);
+        Check(Math.Abs((await engine.InspectAsync(memo)).Duration-10)<.1,"A raw AAC file's duration was taken from FFprobe's bitrate guess");
+        var memoEnd=await engine.InspectAsync((await engine.ToolAsync("trimAudio",[memo],directory,new(){Start=1,End=9}))[0]);
+        Check(Math.Abs(memoEnd.Duration-8)<.1,"Trimming a raw AAC file past FFprobe's bitrate guess failed or lost its end");
         // iPhones store location, make, model and capture date as QuickTime keys, which the MP4 and MOV muxer writes only when asked to.
         var iphone=Path.Combine(directory,"IMG_0001.MOV");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","testsrc2=size=128x72:rate=12:duration=0.5","-c:v","libx264","-movflags","use_metadata_tags","-metadata","com.apple.quicktime.location.ISO6709=+35.6895+139.6917+040.000/","-metadata","com.apple.quicktime.make=Apple","-metadata","com.apple.quicktime.model=iPhone 15","-metadata","com.apple.quicktime.creationdate=2026-10-31T12:00:00+0900",iphone]);Check((await FileTags(iphone)).GetValueOrDefault("com.apple.quicktime.model")=="iPhone 15","iPhone fixture lacks its QuickTime keys");
         foreach(var (iphoneFormat,iphoneKeep) in new[]{("mp4",true),("mov",true),("m4v",true),("mkv",true),("mp4",false),("mov",false)})
