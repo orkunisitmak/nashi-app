@@ -68,7 +68,7 @@ internal static class ImageExportPackageChecks
         Reject(() => (package with { Variants = [] }).Validate(), check);
         Reject(() => package.Plan([]), check); Reject(() => package.Plan(["a.gif"]), check);
         Reject(() => package.Plan(Enumerable.Repeat(input, 1001).ToArray()), check);
-        var longPlan = package.Plan([string.Concat(Enumerable.Repeat("猫🍐", 50)) + ".png", "CON.jpg", "a:b.png"]);
+        var longPlan = package.Plan([string.Concat(Enumerable.Repeat("猫🍐", 50)) + ".png", "CON.jpg", "a?b.png"]);
         check(longPlan.All(entry => Encoding.UTF8.GetByteCount(Path.GetFileName(entry.RelativePath).Normalize(NormalizationForm.FormD)) < 255), "Preview bounds long Unicode filenames");
         check(longPlan[3].RelativePath.EndsWith("Image.png", StringComparison.Ordinal) && longPlan[6].RelativePath.EndsWith("a_b.png", StringComparison.Ordinal), "Preview sanitizes reserved and nonportable stems");
 
