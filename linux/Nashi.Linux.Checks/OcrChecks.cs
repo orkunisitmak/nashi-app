@@ -78,6 +78,18 @@ static class OcrChecks
             rejected = false;
             try { await new OcrEngine(null).PdfTextAsync(blank, "", "eng", null, default); } catch (InvalidOperationException) { rejected = true; }
             check(rejected, "Without Tesseract, a PDF with no text at all still asks for OCR");
+            var englishOnly = Path.Combine(work, "english-only-tesseract");
+            File.WriteAllText(englishOnly, File.ReadAllText(fake).Replace("(2):\\neng\\ntur\\n", "(1):\\neng\\n"));
+            ToolInstallation.MakeExecutable(englishOnly);
+            kept = await new OcrEngine(englishOnly).PdfTextAsync(gap, "", "tur", null, default);
+            check(kept[1].Contains("Digital page") && string.IsNullOrWhiteSpace(kept[2]),
+                "A missing OCR language pack also leaves textless pages blank and keeps the digital text");
+            var broken = Path.Combine(work, "broken-tesseract");
+            File.WriteAllText(broken, File.ReadAllText(fake).Replace("printf '%s\\n' \"$@\"", "exit 3\nprintf '%s\\n' \"$@\""));
+            ToolInstallation.MakeExecutable(broken);
+            Exception? failure = null;
+            try { await new OcrEngine(broken).PdfTextAsync(gap, "", "eng", null, default); } catch (Exception error) { failure = error; }
+            check(failure is not null and not OcrUnavailableException, "Other OCR failures on a partly digital PDF reach the caller instead of leaving pages blank");
 
             var slow = Path.Combine(work, "slow-tesseract");
             var marker = Path.Combine(work, "running");

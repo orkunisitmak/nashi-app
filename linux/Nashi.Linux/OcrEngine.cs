@@ -15,6 +15,9 @@ public sealed record OcrStatus(string Version, IReadOnlyList<string> Languages);
 public sealed record OcrWord(string Text, double Confidence, int Left, int Top, int Width, int Height);
 
 /// Local Tesseract CLI, one bounded page at a time. No cloud service, shell interpolation or source modification.
+/// OCR cannot run here: Tesseract or the chosen language pack is not installed. Only this lets a conversion skip OCR.
+public sealed class OcrUnavailableException(string message) : InvalidOperationException(message);
+
 public sealed class OcrEngine(string? executable, string? tessdata = null)
 {
     const int TextLimit = 1_000_000, PageLimit = 200;
@@ -34,7 +37,7 @@ public sealed class OcrEngine(string? executable, string? tessdata = null)
 
     async Task<ProcessResult> RunAsync(IEnumerable<string> arguments, CancellationToken token)
     {
-        if (executable is null) throw new InvalidOperationException("Install Tesseract and its English/Turkish language packs, then check again.");
+        if (executable is null) throw new OcrUnavailableException("Install Tesseract and its English/Turkish language packs, then check again.");
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
         timeout.CancelAfter(TimeSpan.FromMinutes(2));
         try { return await ProcessRunner.RunAsync(executable, arguments, timeout.Token).ConfigureAwait(false); }
@@ -77,7 +80,7 @@ public sealed class OcrEngine(string? executable, string? tessdata = null)
         if (inputs.Any(file => new FileInfo(file).Length > 200_000_000)) throw new InvalidDataException("Choose OCR files smaller than 200 MB.");
         var status = await ProbeAsync(token).ConfigureAwait(false);
         if (options.Languages.Split('+').Any(language => !status.Languages.Contains(language)))
-            throw new InvalidOperationException("The selected OCR language pack is missing. Install it and check again.");
+            throw new OcrUnavailableException("The selected OCR language pack is missing. Install it and check again.");
         var temp = Directory.CreateTempSubdirectory("nashi-ocr-");
         try
         {
@@ -162,7 +165,7 @@ public sealed class OcrEngine(string? executable, string? tessdata = null)
     {
         if (!ValidLanguages(languages) || !FeatureCatalog.IsImage(file)) throw new ArgumentException("Choose an image and installed OCR languages.");
         var status = await ProbeAsync(token).ConfigureAwait(false);
-        if (languages.Split('+').Any(l => !status.Languages.Contains(l))) throw new InvalidOperationException("The selected OCR language pack is missing.");
+        if (languages.Split('+').Any(l => !status.Languages.Contains(l))) throw new OcrUnavailableException("The selected OCR language pack is missing.");
         var temp = Directory.CreateTempSubdirectory("nashi-ocr-words-");
         try
         {
@@ -217,8 +220,9 @@ public sealed class OcrEngine(string? executable, string? tessdata = null)
                 var recognized = await RecognizeAsync([input], new(languages, Pages: string.Join(',', missing), Password: password), progress, token).ConfigureAwait(false);
                 foreach (var page in recognized.Single().PageText) pages[page.Key] = page.Value;
             }
-            // OCR only fills gaps: keep the digital text and leave these pages blank. A PDF with no text at all still reports why OCR failed.
-            catch (Exception) when (!token.IsCancellationRequested && missing.Length < pages.Count) { }
+            // Without Tesseract or the language pack, OCR only fills gaps: keep the digital text and leave these pages blank.
+            // A PDF with no text at all still reports it; any other OCR failure (timeouts, limits, bad output) reaches the caller.
+            catch (OcrUnavailableException) when (missing.Length < pages.Count) { }
         }
         return pages;
     }
