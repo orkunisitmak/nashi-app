@@ -19,6 +19,16 @@ test('the Turkish uppercase dotted İ matches ASCII format names', () => {
   assert.deepEqual(rows.map(row => row.hidden), [false, false, false]);
 });
 
+test('the Turkish lowercase dotless ı matches ASCII I in format names', () => {
+  const rows = [
+    {textContent: 'TIFF — JPG, PDF', hidden: false},
+    {textContent: 'AVIF — JPG, PNG', hidden: false},
+    {textContent: 'MP4 — AVI, MKV', hidden: false}
+  ];
+  filterFormatRows(rows, 'tıff');
+  assert.deepEqual(rows.map(row => row.hidden), [false, true, true]);
+});
+
 test('the plain ASCII search and no-match filtering stay unchanged', () => {
   const rows = [{textContent: 'PNG — JPG', hidden: true}, {textContent: 'MOV — MP4', hidden: true}];
   filterFormatRows(rows, 'png');
@@ -48,4 +58,10 @@ test('playground clock carries a rounded 60 seconds into the minute', () => {
   assert.equal(time(119.9999), '02:00.000');
   assert.equal(time(61.5), '01:01.500');
   assert.equal(time(0), '00:00.000');
+});
+
+test('playground Library search matches Turkish dotless ı in file names', () => {
+  const names = ['TIFF-export.tif', 'weekend.mp4'];
+  assert.deepEqual(names.filter(name => foldSearchText(name).includes(foldSearchText('tıff'))), ['TIFF-export.tif']);
+  assert.equal('TIFF-export.tif'.toLowerCase().includes('tıff'), false);
 });
