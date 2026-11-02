@@ -16,6 +16,7 @@
 "%@ is enabled" = "%@ est activé";
 "%@ is not installed." = "%@ n’est pas installé.";
 "%@ items" = "%@ éléments";
+"%@ percent" = "%@ pour cent";
 "%@ photos" = "%@ photos";
 "%@ ready to paste." = "%@ prêts à coller.";
 "%@ selected" = "%@ sélectionnés";
@@ -45,6 +46,7 @@
 "%lld is enabled" = "%lld est activé";
 "%lld is not installed." = "%lld n’est pas installé.";
 "%lld items" = "%lld éléments";
+"%lld percent" = "%lld pour cent";
 "%lld photos" = "%lld photos";
 "%lld ready to paste." = "%lld prêts à coller.";
 "%lld selected" = "%lld sélectionnés";
@@ -1264,6 +1266,7 @@
 "IMAGE SIZE" = "TAILLE DE L’IMAGE";
 "IMAGES" = "IMAGES";
 "IMAGES, VIDEOS, DOCUMENTS, AND ALL THE LITTLE THINGS IN BETWEEN." = "IMAGES, VIDÉOS, DOCUMENTS ET TOUS LES PETITS FORMATS ENTRE LES DEUX.";
+"IN PROGRESS" = "EN COURS";
 "INK COLOR" = "COULEUR DE L’ENCRE";
 "INPUT AND OUTPUT FORMAT." = "FORMAT D’ENTRÉE ET DE SORTIE.";
 "INPUT FORMAT" = "FORMAT D’ENTRÉE";
@@ -1294,6 +1297,7 @@
 "Image size" = "Taille de l’image";
 "Images" = "Images";
 "Images, videos, documents, and all the little things in between." = "Images, vidéos, documents et tous les petits formats entre les deux.";
+"In progress" = "En cours";
 "Ink color" = "Couleur de l’encre";
 "Input and output format." = "Format d’entrée et de sortie.";
 "Input format" = "Format d’entrée";
@@ -1797,6 +1801,7 @@
 "PROCESSED PREVIEW. CHOOSE ORIGINAL TO EDIT AREAS." = "APERÇU TRAITÉ. CHOISISSEZ ORIGINAL POUR MODIFIER LES ZONES.";
 "PROCESSING MEDIA…" = "TRAITEMENT DU MÉDIA…";
 "PROCESSING…" = "TRAITEMENT EN COURS…";
+"PROGRESS" = "PROGRESSION";
 "PROTECTED MEDIA CANNOT BE DOWNLOADED." = "LES MÉDIAS PROTÉGÉS NE PEUVENT PAS ÊTRE TÉLÉCHARGÉS.";
 "PUBLIC REPOSITORY · NO TOKEN NEEDED" = "DÉPÔT PUBLIC · AUCUN JETON NÉCESSAIRE";
 "PUBLIC UPDATES WORK WITHOUT A TOKEN." = "LES MISES À JOUR PUBLIQUES FONCTIONNENT SANS JETON.";
@@ -1880,6 +1885,7 @@
 "Processed preview. Choose Original to edit areas." = "Aperçu traité. Choisissez Original pour modifier les zones.";
 "Processing media…" = "Traitement du média…";
 "Processing…" = "Traitement en cours…";
+"Progress" = "Progression";
 "Protected media cannot be downloaded." = "Les médias protégés ne peuvent pas être téléchargés.";
 "Public repository · No token needed" = "Dépôt public · Aucun jeton nécessaire";
 "Public updates work without a token." = "Les mises à jour publiques fonctionnent sans jeton.";

@@ -16,6 +16,7 @@
 "%@ is enabled" = "%@ izni açık";
 "%@ is not installed." = "%@ kurulu değil.";
 "%@ items" = "%@ öğe";
+"%@ percent" = "Yüzde %@";
 "%@ photos" = "%@ fotoğraf";
 "%@ ready to paste." = "%@ kod yapıştırmaya hazır.";
 "%@ selected" = "%@ seçili";
@@ -45,6 +46,7 @@
 "%lld is enabled" = "%lld izni açık";
 "%lld is not installed." = "%lld kurulu değil.";
 "%lld items" = "%lld öğe";
+"%lld percent" = "Yüzde %lld";
 "%lld photos" = "%lld fotoğraf";
 "%lld ready to paste." = "%lld kod yapıştırmaya hazır.";
 "%lld selected" = "%lld seçili";
@@ -1264,6 +1266,7 @@
 "IMAGE SIZE" = "GÖRSEL BOYUTU";
 "IMAGES" = "GÖRSELLER";
 "IMAGES, VIDEOS, DOCUMENTS, AND ALL THE LITTLE THINGS IN BETWEEN." = "GÖRSELLER, VİDEOLAR, BELGELER VE DİĞER TÜM DOSYALARIN.";
+"IN PROGRESS" = "DEVAM EDİYOR";
 "INK COLOR" = "KALEM RENGİ";
 "INPUT AND OUTPUT FORMAT." = "GİRDİ VE ÇIKTI BİÇİMİ.";
 "INPUT FORMAT" = "GİRDİ BİÇİMİ";
@@ -1294,6 +1297,7 @@
 "Image size" = "Görsel boyutu";
 "Images" = "Görseller";
 "Images, videos, documents, and all the little things in between." = "Görseller, videolar, belgeler ve diğer tüm dosyaların.";
+"In progress" = "Devam ediyor";
 "Ink color" = "Kalem rengi";
 "Input and output format." = "Girdi ve çıktı biçimi.";
 "Input format" = "Girdi biçimi";
@@ -1797,6 +1801,7 @@
 "PROCESSED PREVIEW. CHOOSE ORIGINAL TO EDIT AREAS." = "İŞLENMİŞ ÖNİZLEME. ALANLARI DÜZENLEMEK İÇİN ORİJİNAL'İ SEÇ.";
 "PROCESSING MEDIA…" = "MEDYA İŞLENİYOR…";
 "PROCESSING…" = "İŞLENİYOR…";
+"PROGRESS" = "İLERLEME";
 "PROTECTED MEDIA CANNOT BE DOWNLOADED." = "KORUMALI MEDYA İNDİRİLEMEZ.";
 "PUBLIC REPOSITORY · NO TOKEN NEEDED" = "HERKESE AÇIK DEPO · TOKEN GEREKMEZ";
 "PUBLIC UPDATES WORK WITHOUT A TOKEN." = "HERKESE AÇIK GÜNCELLEMELER İÇİN TOKEN GEREKMEZ.";
@@ -1880,6 +1885,7 @@
 "Processed preview. Choose Original to edit areas." = "İşlenmiş önizleme. Alanları düzenlemek için Orijinal'i seç.";
 "Processing media…" = "Medya işleniyor…";
 "Processing…" = "İşleniyor…";
+"Progress" = "İlerleme";
 "Protected media cannot be downloaded." = "Korumalı medya indirilemez.";
 "Public repository · No token needed" = "Herkese açık depo · Token gerekmez";
 "Public updates work without a token." = "Herkese açık güncellemeler için token gerekmez.";

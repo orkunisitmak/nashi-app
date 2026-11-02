@@ -16,6 +16,7 @@
 "%@ is enabled" = "%@ is enabled";
 "%@ is not installed." = "%@ is not installed.";
 "%@ items" = "%@ items";
+"%@ percent" = "%@ percent";
 "%@ photos" = "%@ photos";
 "%@ ready to paste." = "%@ ready to paste.";
 "%@ selected" = "%@ selected";
@@ -45,6 +46,7 @@
 "%lld is enabled" = "%lld is enabled";
 "%lld is not installed." = "%lld is not installed.";
 "%lld items" = "%lld items";
+"%lld percent" = "%lld percent";
 "%lld photos" = "%lld photos";
 "%lld ready to paste." = "%lld ready to paste.";
 "%lld selected" = "%lld selected";
@@ -1264,6 +1266,7 @@
 "IMAGE SIZE" = "IMAGE SIZE";
 "IMAGES" = "IMAGES";
 "IMAGES, VIDEOS, DOCUMENTS, AND ALL THE LITTLE THINGS IN BETWEEN." = "IMAGES, VIDEOS, DOCUMENTS, AND ALL THE LITTLE THINGS IN BETWEEN.";
+"IN PROGRESS" = "IN PROGRESS";
 "INK COLOR" = "INK COLOR";
 "INPUT AND OUTPUT FORMAT." = "INPUT AND OUTPUT FORMAT.";
 "INPUT FORMAT" = "INPUT FORMAT";
@@ -1294,6 +1297,7 @@
 "Image size" = "Image size";
 "Images" = "Images";
 "Images, videos, documents, and all the little things in between." = "Images, videos, documents, and all the little things in between.";
+"In progress" = "In progress";
 "Ink color" = "Ink color";
 "Input and output format." = "Input and output format.";
 "Input format" = "Input format";
@@ -1797,6 +1801,7 @@
 "PROCESSED PREVIEW. CHOOSE ORIGINAL TO EDIT AREAS." = "PROCESSED PREVIEW. CHOOSE ORIGINAL TO EDIT AREAS.";
 "PROCESSING MEDIA…" = "PROCESSING MEDIA…";
 "PROCESSING…" = "PROCESSING…";
+"PROGRESS" = "PROGRESS";
 "PROTECTED MEDIA CANNOT BE DOWNLOADED." = "PROTECTED MEDIA CANNOT BE DOWNLOADED.";
 "PUBLIC REPOSITORY · NO TOKEN NEEDED" = "PUBLIC REPOSITORY · NO TOKEN NEEDED";
 "PUBLIC UPDATES WORK WITHOUT A TOKEN." = "PUBLIC UPDATES WORK WITHOUT A TOKEN.";
@@ -1880,6 +1885,7 @@
 "Processed preview. Choose Original to edit areas." = "Processed preview. Choose Original to edit areas.";
 "Processing media…" = "Processing media…";
 "Processing…" = "Processing…";
+"Progress" = "Progress";
 "Protected media cannot be downloaded." = "Protected media cannot be downloaded.";
 "Public repository · No token needed" = "Public repository · No token needed";
 "Public updates work without a token." = "Public updates work without a token.";

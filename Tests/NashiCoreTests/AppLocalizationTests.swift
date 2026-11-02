@@ -105,6 +105,16 @@ final class AppLocalizationTests:XCTestCase {
         XCTAssertEqual(AppLocalization.text("1 selected",language:"tr"),"1 seçili")
         XCTAssertEqual(AppLocalization.text("1 selected",language:"en"),"1 selected")
     }
+    /// JobProgressBar (ProgressToast.swift): the label and value VoiceOver reads for a running job's progress bar.
+    func testProgressBarAccessibilityCopyIsTranslated() {
+        XCTAssertEqual(AppLocalization.text("In progress",language:"tr"),"Devam ediyor")
+        XCTAssertEqual(AppLocalization.text("In progress",language:"fr"),"En cours")
+        XCTAssertEqual(AppLocalization.text("Progress",language:"tr"),"İlerleme")
+        XCTAssertEqual(AppLocalization.text("Progress",language:"fr"),"Progression")
+        XCTAssertEqual(AppLocalization.text("40 percent",language:"tr"),"Yüzde 40")
+        XCTAssertEqual(AppLocalization.text("40 percent",language:"fr"),"40 pour cent")
+        XCTAssertEqual(AppLocalization.text("40 percent",language:"en"),"40 percent")
+    }
     /// Crop and redact batches report "<file name>: <message>". The message is translated; the file name, even one
     /// that contains ": " followed by catalogued copy, stays exactly as it is.
     func testFilePrefixedBatchErrorsTranslateOnlyTheMessage() throws {
