@@ -36,13 +36,17 @@ public sealed partial class MainWindow
     private void RemoveLibraryEntry(Guid id)
     {
         if(busy)return;
-        try{library.Remove(id);RenderLibrary();}catch(Exception error)when(error is IOException or UnauthorizedAccessException){L10n.SetText(status,"Library history could not be saved.");}
+        var position=Array.FindIndex(SearchLibrary(search.Text).ToArray(),e=>e.Id==id);
+        try{library.Remove(id);RenderLibrary();
+            if(LibraryVisible){var entries=SearchLibrary(search.Text).ToArray();if(entries.Length>0&&libraryCards.TryGetValue(entries[Math.Clamp(position,0,entries.Length-1)].Id,out var card)){SelectCard(entries[Math.Clamp(position,0,entries.Length-1)].Id);card.Focus();card.BringIntoView();}else search.Focus();}
+            else recentSearch.Focus();
+        }catch(Exception error)when(error is IOException or UnauthorizedAccessException){L10n.SetText(status,"Library history could not be saved.");}
     }
     private void ClearLibraryHistory()
     {
         if(busy||library.Entries.Count==0)return;
         if(MessageBox.Show(this,L10n.Text("This removes history entries. Your files stay on disk."),L10n.Text("Clear Library history?"),MessageBoxButton.OKCancel,MessageBoxImage.Question)!=MessageBoxResult.OK)return;
-        try{library.Clear();RenderLibrary();}catch(Exception error)when(error is IOException or UnauthorizedAccessException){L10n.SetText(status,"Library history could not be saved.");}
+        try{library.Clear();RenderLibrary();search.Focus();}catch(Exception error)when(error is IOException or UnauthorizedAccessException){L10n.SetText(status,"Library history could not be saved.");}
     }
     private void ConfigureLibraryRow(Border card,LibraryEntry entry)
     {
