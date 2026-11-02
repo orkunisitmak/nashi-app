@@ -51,6 +51,8 @@ public struct AudioLoudness: Sendable, Equatable {
 
 /// Local media operations. Every export creates a new file; source files are never rewritten.
 public enum MediaEngine {
+    /// Smallest width and height, in pixels, a video crop may have.
+    public static let minimumVideoCropSide = 2.0
     public static let audioFormats: Set<String> = ["mp3", "m4a", "wav", "flac", "ogg", "opus", "aiff", "aif", "wma", "aac"]
     public static let videoFormats: Set<String> = ["mp4", "mov", "mkv", "webm", "avi", "wmv", "m4v", "gif"]
 
@@ -745,7 +747,7 @@ public enum MediaEngine {
         return (start, min(finish, duration > 0 ? duration : finish))
     }
     private static func pixelRect(_ rect: EditRect, width: Int, height: Int) throws -> (x: Int, y: Int, w: Int, h: Int) {
-        guard [rect.x, rect.y, rect.width, rect.height].allSatisfy(\.isFinite), rect.x >= 0, rect.y >= 0, rect.width >= 2, rect.height >= 2, rect.x + rect.width <= Double(width) + 0.01, rect.y + rect.height <= Double(height) + 0.01 else { throw NashiError.invalidInput("The selected rectangle must be inside the video and at least 2 × 2 pixels.") }
+        guard [rect.x, rect.y, rect.width, rect.height].allSatisfy(\.isFinite), rect.x >= 0, rect.y >= 0, rect.width >= minimumVideoCropSide, rect.height >= minimumVideoCropSide, rect.x + rect.width <= Double(width) + 0.01, rect.y + rect.height <= Double(height) + 0.01 else { throw NashiError.invalidInput("The selected rectangle must be inside the video and at least 2 × 2 pixels.") }
         return (Int(rect.x), Int(rect.y), Int(rect.width), Int(rect.height))
     }
     private static func redactionPixelRect(_ rect: EditRect, width: Int, height: Int) throws -> (x: Int, y: Int, w: Int, h: Int) {
