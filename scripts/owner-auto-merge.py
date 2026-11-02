@@ -24,7 +24,7 @@ def eligible(pr, head):
 
 def checks_passed(checks, head):
     passed = {c["name"] for c in checks
-              if c.get("head_sha") == head and c.get("app", {}).get("id") == ACTIONS_APP_ID
+              if c.get("head_sha") == head and (c.get("app") or {}).get("id") == ACTIONS_APP_ID
               and c.get("status") == "completed" and c.get("conclusion") == "success"}
     return REQUIRED_CHECKS <= passed
 

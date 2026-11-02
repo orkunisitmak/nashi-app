@@ -38,6 +38,12 @@ class OwnerMergeTests(unittest.TestCase):
             values = checks();values[0][key] = value
             self.assertFalse(merge.checks_passed(values, SHA), key)
 
+    def test_null_app_on_extra_check_does_not_block_required(self):
+        values = checks()
+        values.append({"name": "stale", "head_sha": SHA, "app": None,
+                       "status": "completed", "conclusion": "success"})
+        self.assertTrue(merge.checks_passed(values, SHA))
+
     def test_merge_sha_guard_and_deployment_dispatch(self):
         class API:
             def __init__(self):self.calls = []
