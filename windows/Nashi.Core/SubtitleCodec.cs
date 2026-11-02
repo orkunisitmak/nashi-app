@@ -11,12 +11,13 @@ public static partial class SubtitleCodec
     public static Cue[] Parse(string source)
     {
         var lines=source.TrimStart('\uFEFF').Replace("\r\n","\n").Replace('\r','\n').Split('\n');var cues=new List<Cue>();
+        var webVtt=lines[0]=="WEBVTT"||lines[0].StartsWith("WEBVTT ",StringComparison.Ordinal)||lines[0].StartsWith("WEBVTT\t",StringComparison.Ordinal);
         for(var i=0;i<lines.Length;i++)
         {
             var line=lines[i].Trim();if(line is "NOTE" or "STYLE" or "REGION"||line.StartsWith("NOTE ",StringComparison.Ordinal)){while(i<lines.Length&&lines[i].Trim().Length>0)i++;continue;}
             var match=Timing().Match(line);if(!match.Success)continue;var a=Milliseconds(match.Groups[1].Value);var b=Milliseconds(match.Groups[2].Value);if(b<=a)throw new InvalidDataException("A subtitle cue ends before it starts.");
             // WebVTT ends cue text at the next timing line; SRT files that leave out the blank line also put the next cue's number before it.
-            var text=new List<string>();while(++i<lines.Length&&lines[i].Trim().Length>0){if(Timing().IsMatch(lines[i])){if(text.Count>0&&text[^1].Trim().All(char.IsAsciiDigit))text.RemoveAt(text.Count-1);i--;break;}text.Add(lines[i]);}cues.Add(new(a,b,string.Join('\n',text),match.Groups[3].Value.Trim()));
+            var text=new List<string>();while(++i<lines.Length&&lines[i].Trim().Length>0){if(Timing().IsMatch(lines[i])){if(!webVtt&&text.Count>0&&text[^1].Trim().All(char.IsAsciiDigit))text.RemoveAt(text.Count-1);i--;break;}text.Add(lines[i]);}cues.Add(new(a,b,string.Join('\n',text),match.Groups[3].Value.Trim()));
         }
         if(cues.Count==0)throw new InvalidDataException("No timed subtitle cues were found.");return cues.ToArray();
     }

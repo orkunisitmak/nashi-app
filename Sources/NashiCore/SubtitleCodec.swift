@@ -29,6 +29,8 @@ enum SubtitleCodec {
     static func parse(_ source: String) throws -> [Cue] {
         let normalized = source.replacingOccurrences(of: "\u{feff}", with: "").replacingOccurrences(of: "\r\n", with: "\n").replacingOccurrences(of: "\r", with: "\n")
         let lines = normalized.components(separatedBy: "\n")
+        let header = lines.first ?? ""
+        let webVTT = header == "WEBVTT" || header.hasPrefix("WEBVTT ") || header.hasPrefix("WEBVTT\t")
         let timing = try NSRegularExpression(pattern: #"^\s*((?:\d+:)?\d{2}:\d{2}[.,]\d{1,3})\s*-->\s*((?:\d+:)?\d{2}:\d{2}[.,]\d{1,3})(?:\s+(.*))?\s*$"#)
         var cues: [Cue] = [], index = 0
         while index < lines.count {
@@ -50,7 +52,7 @@ enum SubtitleCodec {
                 // WebVTT ends cue text at the next timing line. SRT files that
                 // omit the blank line also put the next cue's number before it.
                 if timing.firstMatch(in: lines[index], range: NSRange(location: 0, length: (lines[index] as NSString).length)) != nil {
-                    if text.last?.trimmingCharacters(in: .whitespaces).allSatisfy({ $0.isASCII && $0.isNumber }) == true { text.removeLast() }
+                    if !webVTT, text.last?.trimmingCharacters(in: .whitespaces).allSatisfy({ $0.isASCII && $0.isNumber }) == true { text.removeLast() }
                     break
                 }
                 text.append(lines[index]); index += 1
