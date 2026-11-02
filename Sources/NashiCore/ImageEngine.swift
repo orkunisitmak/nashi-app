@@ -127,7 +127,7 @@ public enum ImageEngine {
                 default: throw NashiError.unsupported("\(kind.title) is not an image operation.")
                 }
                 let output=OutputFiles.unique(for:input,extension:ext,suffix:suffix,directory:options.outputDirectory)
-                try write(image,to:output,quality:options.quality)
+                do { try write(image,to:output,quality:options.quality,token:token) } catch { try? FileManager.default.removeItem(at:output); throw error }
                 outputs.append(output)
             } catch NashiError.invalidInput(let message) where kind == .cropImage || kind == .redactImage {
                 throw NashiError.invalidInput("\(input.lastPathComponent): \(message)")
