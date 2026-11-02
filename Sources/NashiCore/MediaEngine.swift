@@ -313,7 +313,9 @@ public enum MediaEngine {
         var points: [Double]
         if !options.splitPoints.isEmpty {
             guard options.splitPoints.allSatisfy({ $0.isFinite && $0 > 0 && $0 < info.duration }) else { throw NashiError.invalidInput("Split points must fall inside the video.") }
-            points = Array(Set(options.splitPoints)).sorted()
+            // Keep duplicates: discardedClips index the segments of the sorted points, so the
+            // spacing check must reject a repeated point rather than silently renumbering.
+            points = options.splitPoints.sorted()
         } else if let count = options.equalClips {
             guard count >= 2, count <= 10000 else { throw NashiError.invalidInput("Choose between 2 and 10,000 equal clips.") }
             points = (1..<count).map { info.duration * Double($0) / Double(count) }
