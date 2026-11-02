@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {classifyMediaPreviewURL} from '../docs/assets/download-preview.mjs';
+import {classifyMediaPreviewURL,mediaPreviewOptions} from '../docs/assets/download-preview.mjs';
 
 test('only a real YouTube hostname unlocks video, audio and thumbnail previews',()=>{
   for(const url of [
@@ -42,7 +42,35 @@ test('lookalike domains and query/fragment text cannot impersonate supported pro
     'https://notinstagram.com/reel/demo',
     'https://www.instagram.com.evil.example/reel/demo',
     'https://example.net/instagram.com/p/demo'
-  ])assert.equal(classifyMediaPreviewURL(url),'original',url);
+  ])assert.ok(['original','image'].includes(classifyMediaPreviewURL(url)),url);
+});
+
+test('direct image CDN URLs follow the Windows image-extension list',()=>{
+  for(const url of [
+    'https://pbs.twimg.com/media/Demo.jpg',
+    'https://i.pinimg.com/originals/aa/bb/photo.png',
+    'https://i.vimeocdn.com/video/123456.webp'
+  ])assert.equal(classifyMediaPreviewURL(url),'image',url);
+});
+
+test('AVIF, BMP, TIFF, HEIC and HEIF file links unlock the image preview, provider links keep their kind',()=>{
+  for(const url of [
+    'https://cdn.example.org/photo.avif',
+    'https://cdn.example.org/photo.bmp',
+    'https://cdn.example.org/scan.tiff',
+    'https://cdn.example.org/scan.tif',
+    'https://cdn.example.org/photo.heic',
+    'https://media.example.org/shot.heif',
+    'https://cdn.example.org/photo.HEIC'
+  ])assert.equal(classifyMediaPreviewURL(url),'image',url);
+  assert.equal(classifyMediaPreviewURL('https://www.youtube.com/watch.heic'),'youtube');
+  assert.equal(classifyMediaPreviewURL('https://www.instagram.com/p/demo.heic'),'instagram-photos');
+});
+
+test('a direct image link shows an Image option instead of Original media',()=>{
+  assert.deepEqual(mediaPreviewOptions('https://pbs.twimg.com/media/Demo.jpg'),[['Image','Görsel']]);
+  assert.deepEqual(mediaPreviewOptions('https://example.com/page'),[['Original media','Orijinal medya']]);
+  assert.deepEqual(mediaPreviewOptions('https://youtu.be/demo').map(([en])=>en),['Video','Audio','Thumbnail']);
 });
 
 test('invalid or non-HTTP(S) links have only the generic preview',()=>{
