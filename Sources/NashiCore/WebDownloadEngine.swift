@@ -225,7 +225,7 @@ public enum WebDownloadEngine {
         if name.isEmpty { name="Downloaded media" }
         let ext=(name as NSString).pathExtension.lowercased()
         let preferred=mime.flatMap{UTType(mimeType:$0)?.preferredFilenameExtension}
-        let allowed=["jpg","jpeg","png","webp","heic","heif","avif","bmp","tif","tiff","svg","gif","mp4","mov","webm","mkv","m4v","mp3","m4a","wav","flac","ogg","opus","aac","aiff"]
+        let allowed=["jpg","jpeg","png","webp","heic","heif","avif","bmp","tif","tiff","svg","gif","mp4","mov","webm","mkv","m4v","avi","wmv","mp3","m4a","wav","flac","ogg","opus","aac","aiff","wma"]
         if !allowed.contains(ext) {
             let basename=(name as NSString).deletingPathExtension
             name=preferred.flatMap{allowed.contains($0) ? basename+"."+$0:nil} ?? basename
