@@ -1,4 +1,5 @@
 import XCTest
+import Sparkle
 @testable import NashiUpdates
 
 final class UpdateConnectionTests: XCTestCase {
@@ -90,5 +91,24 @@ final class UpdateConnectionTests: XCTestCase {
         } catch { }
         await MainActor.run { updater.setBusy(false) }
         try await updater.disconnectGitHub()
+    }
+
+    func testStaleDownloadAfterSwitchingRepositoriesFailsClosedWithoutHeaders() async throws {
+        let suite = "NashiUpdateConnectionTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let updater = await MainActor.run { AppUpdater(credentials: MemoryCredentials(), defaults: defaults, validateAccess: { _, _ in }) }
+        try await updater.connectGitHub(repository: "example/old", token: "old_fixture", requiresToken: true)
+        try await updater.connectGitHub(repository: "example/new", token: "new_fixture", requiresToken: true)
+        await MainActor.run {
+            let sparkle = SPUUpdater(hostBundle: .main, applicationBundle: .main,
+                                     userDriver: SPUStandardUserDriver(hostBundle: .main, delegate: nil), delegate: nil)
+            let request = NSMutableURLRequest(url: URL(string: "https://api.github.com/repos/example/old/releases/assets/42")!)
+            request.setValue("application/octet-stream", forHTTPHeaderField: "Accept")
+            request.setValue("Bearer header_fixture", forHTTPHeaderField: "Authorization")
+            updater.updater(sparkle, willDownloadUpdate: SUAppcastItem.empty(), with: request)
+            XCTAssertEqual(request.url?.absoluteString, "http://127.0.0.1:1/unavailable")
+            XCTAssertEqual(request.allHTTPHeaderFields ?? [:], [:], "A failed hand-off must not forward any of Sparkle's request headers")
+        }
     }
 }
