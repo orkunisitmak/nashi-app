@@ -72,6 +72,20 @@ final class CommandLineTests:XCTestCase {
         XCTAssertEqual(NashiCommandLine.run(arguments:["nashi-cli","convert","vtt",input.path,"--options",try json(["outputDirectory":destination.path,"width":NSNull(),"imageAdjustments":["blur":2]])]),0)
         XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath:destination.path),["clip.vtt"])
     }
+    func testUnknownKeysInsideArrayOptionsFailWithoutWritingOutput() throws {
+        let root=try OutputFiles.temporaryDirectory();defer{try? FileManager.default.removeItem(at:root)}
+        let input=root.appendingPathComponent("clip.srt"),destination=root.appendingPathComponent("Out")
+        try FileManager.default.createDirectory(at:destination,withIntermediateDirectories:true)
+        try Data("1\n00:00:00,125 --> 00:00:01,250\nHi\n".utf8).write(to:input)
+        func json(_ object:[String:Any]) throws -> String { String(decoding:try JSONSerialization.data(withJSONObject:object),as:UTF8.self) }
+        let rect:[String:Any]=["x":1,"y":1,"width":10,"height":10]
+        for options in [["imageAnnotations":[["kind":"rectangle","rect":rect,"colour":"#000000"]]],["videoRedactions":[["rect":rect,"start":0,"ende":2]]],["imageAnnotations":[["kind":"freehand","rect":rect,"points":[["x":1,"y":1,"z":3]]]]]] as [[String:Any]] {
+            XCTAssertEqual(NashiCommandLine.run(arguments:["nashi-cli","convert","vtt",input.path,"--options",try json(options.merging(["outputDirectory":destination.path]){$1})]),1)
+        }
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath:destination.path),[])
+        XCTAssertEqual(NashiCommandLine.run(arguments:["nashi-cli","convert","vtt",input.path,"--options",try json(["outputDirectory":destination.path,"imageAnnotations":[["kind":"freehand","rect":rect,"color":"#000000","fillColor":NSNull(),"points":[["x":1,"y":1]]]],"videoRedactions":[["rect":rect,"start":0]]])]),0)
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath:destination.path),["clip.vtt"])
+    }
     func testRelativeOutputDirectoryWithColonIsAPath() throws {
         let root=try OutputFiles.temporaryDirectory();defer{try? FileManager.default.removeItem(at:root)}
         let files=FileManager.default,previous=files.currentDirectoryPath
@@ -96,5 +110,28 @@ final class CommandLineTests:XCTestCase {
         XCTAssertEqual(try Data(contentsOf:out),Data())
         let usage=try String(contentsOf:err,encoding:.utf8)
         for word in ["convert FORMAT","tool TOOL_ID","inspect FILE","catalog","dependencies","--options JSON","--json"] { XCTAssertTrue(usage.contains(word),word) }
+    }
+    func testResultsThatCannotBeWrittenToStandardOutputFailTheRun() throws {
+        let root=try OutputFiles.temporaryDirectory();defer{try? FileManager.default.removeItem(at:root)}
+        let err=root.appendingPathComponent("err")
+        func run(_ arguments:[String],stdoutWritable:Bool)->Int32 {
+            fflush(stdout);fflush(stderr)
+            let savedOut=dup(1),savedErr=dup(2)
+            // A read-only descriptor makes every write fail, like a full disk.
+            let o=stdoutWritable ? open("/dev/null",O_WRONLY):open("/dev/null",O_RDONLY),e=open(err.path,O_CREAT|O_WRONLY|O_TRUNC,0o600)
+            dup2(o,1);dup2(e,2);close(o);close(e)
+            let code=NashiCommandLine.run(arguments:arguments)
+            fflush(stdout);fflush(stderr);clearerr(stdout)
+            dup2(savedOut,1);dup2(savedErr,2);close(savedOut);close(savedErr)
+            return code
+        }
+        XCTAssertEqual(run(["nashi-cli","catalog"],stdoutWritable:true),0)
+        XCTAssertEqual(run(["nashi-cli","catalog"],stdoutWritable:false),1)
+        XCTAssertTrue(try String(contentsOf:err,encoding:.utf8).contains("standard output"))
+        let input=root.appendingPathComponent("blank.png")
+        let context=try XCTUnwrap(CGContext(data:nil,width:8,height:8,bitsPerComponent:8,bytesPerRow:32,space:CGColorSpace(name:CGColorSpace.sRGB)!,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue))
+        try ImageEngine.write(XCTUnwrap(context.makeImage()),to:input)
+        XCTAssertEqual(run(["nashi-cli","inspect",input.path],stdoutWritable:true),0)
+        XCTAssertEqual(run(["nashi-cli","inspect",input.path],stdoutWritable:false),1)
     }
 }

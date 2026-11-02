@@ -272,6 +272,27 @@ final class DocumentEngineTests: XCTestCase {
         XCTAssertFalse(html.contains("src=\"file:"))
     }
 
+    func testRTFDAttachmentWithQuestionMarkInNameKeepsItsPicture() throws {
+        // Cocoa writes "Why?.png" as file:///Why?.png; parsed as a URL that is "Why" plus a query.
+        let text = NSMutableAttributedString(string: "Before\n")
+        for (index, name) in ["Why?.png", "photo.png"].enumerated() {
+            let bitmap = try XCTUnwrap(NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: index + 2, pixelsHigh: index + 2, bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0))
+            let wrapper = FileWrapper(regularFileWithContents: try XCTUnwrap(bitmap.representation(using: .png, properties: [:]))); wrapper.preferredFilename = name
+            text.append(NSAttributedString(attachment: NSTextAttachment(fileWrapper: wrapper)))
+        }
+        let rtfd = root.appendingPathComponent("Question.rtfd", isDirectory: true)
+        try text.fileWrapper(from: NSRange(location: 0, length: text.length), documentAttributes: [.documentType: NSAttributedString.DocumentType.rtfd]).write(to: rtfd, options: .atomic, originalContentsURL: nil)
+        let work = root.appendingPathComponent("Work", isDirectory: true)
+        try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
+        let html = try RichTextCodec.materializeHTML(rtfd, in: work)
+        let prepared = work.appendingPathComponent("Prepared.html")
+        try DocumentEngine.embedHTMLImages(html, output: prepared, token: .init())
+        let source = try DocumentText.read(prepared)
+        let sources = try NSRegularExpression(pattern: #"<img src="([^"]*)""#).matches(in: source, range: NSRange(source.startIndex..., in: source)).map { (source as NSString).substring(with: $0.range(at: 1)) }
+        XCTAssertEqual(sources.count, 2, source)
+        XCTAssertTrue(sources.allSatisfy { $0.hasPrefix("data:image/png;base64,") }, source)
+    }
+
     func testSpreadsheetFormulaSurvivesXLSXODSRoundTrip() throws {
         let source = try file("Formula.fods", """
         <?xml version="1.0"?><office:document xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:of="urn:oasis:names:tc:opendocument:xmlns:of:1.2" office:version="1.3" office:mimetype="application/vnd.oasis.opendocument.spreadsheet"><office:body><office:spreadsheet><table:table table:name="Formula"><table:table-row><table:table-cell office:value-type="float" office:value="3"><text:p>3</text:p></table:table-cell><table:table-cell office:value-type="float" office:value="4"><text:p>4</text:p></table:table-cell><table:table-cell table:formula="of:=SUM([.A1:.B1])" office:value-type="float" office:value="7"><text:p>7</text:p></table:table-cell></table:table-row></table:table></office:spreadsheet></office:body></office:document>

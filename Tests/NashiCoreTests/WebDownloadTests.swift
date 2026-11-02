@@ -134,4 +134,61 @@ final class WebDownloadTests:XCTestCase {
         let files=try await WebDownloadEngine.download(info,mode:.video,maximumHeight:720,destination:root.appendingPathComponent("Downloads",isDirectory:true)) { _,_ in }
         XCTAssertEqual(files.map(\.lastPathComponent),["a.mp4"]);XCTAssertEqual(try String(contentsOf:files[0],encoding:.utf8),"H480")
     }
+    // F3510: presigned storage links are signed for GET only and some servers refuse HEAD; the photo went to yt-dlp.
+    func testDirectImageWhoseServerRefusesHEADStaysAPhoto() async throws {
+        let fm=FileManager.default,root=try OutputFiles.temporaryDirectory();addTeardownBlock { try? FileManager.default.removeItem(at:root) }
+        let argv=root.appendingPathComponent("yt-dlp.argv")
+        for (name,body) in ["yt-dlp":"echo \"$@\" > '\(argv.path)'\necho 'ERROR: Unsupported URL' >&2\nexit 1\n","deno":"exit 0\n","ffmpeg":"exit 0\n"] {
+            let tool=root.appendingPathComponent(name);try Data(("#!/bin/sh\n"+body).utf8).write(to:tool)
+            try fm.setAttributes([.posixPermissions:0o755],ofItemAtPath:tool.path)
+            let variable="NASHI_"+name.uppercased(),previous=ProcessInfo.processInfo.environment[variable]
+            setenv(variable,tool.path,1)
+            addTeardownBlock { if let previous { setenv(variable,previous,1) } else { unsetenv(variable) } }
+        }
+        let png=try XCTUnwrap(Data(base64Encoded:"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="))
+        for head in [200,403,405] {
+            let server=try LoopbackServer { method in
+                let ok=method=="GET" || head==200
+                return Data("HTTP/1.1 \(ok ? 200:head) X\r\nContent-Type: \(ok ? "image/png":"application/xml")\r\nContent-Length: \(png.count)\r\nConnection: close\r\n\r\n".utf8)+(method=="GET" ? png:Data())
+            }
+            defer { server.stop() }
+            guard let info=try? await WebDownloadEngine.inspect(URL(string:"http://127.0.0.1:\(server.port)/photo.png?X-Amz-Signature=abc")!) else {
+                XCTFail("HEAD \(head): the photo link was handed to yt-dlp (\(server.methods))");continue
+            }
+            XCTAssertEqual(info.kind,.image,"HEAD \(head)");XCTAssertTrue(info.direct,"HEAD \(head)");XCTAssertFalse(fm.fileExists(atPath:argv.path),"HEAD \(head)")
+            XCTAssertEqual(server.methods,head==200 ? ["HEAD"]:["HEAD","GET"])
+            let files=try await WebDownloadEngine.download(info,mode:.original,maximumHeight:nil,destination:root.appendingPathComponent("Downloads \(head)")) { _,_ in }
+            XCTAssertEqual(files.map(\.lastPathComponent),["photo.png"]);XCTAssertEqual(try Data(contentsOf:files[0]),png)
+        }
+    }
+}
+
+/// HTTP on 127.0.0.1 with an ephemeral port, one response per connection; no network.
+private final class LoopbackServer:@unchecked Sendable {
+    let port:UInt16
+    private let socketFD:Int32,lock=NSLock(),reply:(String)->Data
+    private var seen:[String]=[]
+    var methods:[String] { lock.lock();defer{lock.unlock()};return seen }
+    init(_ reply:@escaping(String)->Data) throws {
+        self.reply=reply;socketFD=socket(AF_INET,SOCK_STREAM,0)
+        var address=sockaddr_in();address.sin_family=sa_family_t(AF_INET);address.sin_addr.s_addr=inet_addr("127.0.0.1")
+        var length=socklen_t(MemoryLayout<sockaddr_in>.size)
+        let fd=socketFD
+        guard withUnsafeMutablePointer(to:&address,{ $0.withMemoryRebound(to:sockaddr.self,capacity:1) { bind(fd,$0,length)==0 && listen(fd,8)==0 && getsockname(fd,$0,&length)==0 } }) else {
+            close(fd);throw POSIXError(POSIXErrorCode(rawValue:errno) ?? .EIO)
+        }
+        port=UInt16(bigEndian:address.sin_port)
+        Thread.detachNewThread { [self] in
+            while case let client=accept(socketFD,nil,nil),client>=0 {
+                var noSignal:Int32=1;setsockopt(client,SOL_SOCKET,SO_NOSIGPIPE,&noSignal,socklen_t(MemoryLayout<Int32>.size))
+                var request=Data(),buffer=[UInt8](repeating:0,count:4_096)
+                while request.range(of:Data("\r\n\r\n".utf8))==nil { let count=read(client,&buffer,buffer.count);if count<=0 { break };request.append(buffer,count:count) }
+                let method=String(decoding:request.prefix{$0 != 32},as:UTF8.self)
+                lock.lock();seen.append(method);lock.unlock()
+                _=reply(method).withUnsafeBytes { write(client,$0.baseAddress,$0.count) }
+                close(client)
+            }
+        }
+    }
+    func stop() { shutdown(socketFD,SHUT_RDWR);close(socketFD) }
 }

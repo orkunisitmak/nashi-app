@@ -468,7 +468,8 @@ public enum ImageEngine {
         let availableWidth=max(1,width-padding*2),availableHeight=max(1,height-padding*2)
         let scale=min(1,min(Double(availableWidth)/Double(image.width),Double(availableHeight)/Double(image.height)))*settings.imageScale
         let imageWidth=Double(image.width)*scale,imageHeight=Double(image.height)*scale
-        let x=(Double(width)-imageWidth)*max(0,min(1,settings.position.x)),top=(Double(height)-imageHeight)*max(0,min(1,settings.position.y))
+        // Whole-pixel origin: half a pixel off the grid resamples, and blurs, every pixel of the image.
+        let x=((Double(width)-imageWidth)*max(0,min(1,settings.position.x))).rounded(),top=((Double(height)-imageHeight)*max(0,min(1,settings.position.y))).rounded()
         let r=CGRect(x:x,y:Double(height)-top-imageHeight,width:imageWidth,height:imageHeight)
         let radius=max(0,min(settings.cornerRadius,min(r.width,r.height)/2)),path=CGPath(roundedRect:r,cornerWidth:radius,cornerHeight:radius,transform:nil)
         // Cast the shadow from the clipped image itself. Filling the shape with black
@@ -553,7 +554,7 @@ public enum ImageEngine {
         if let percent=options.percentage { guard percent.isFinite,percent>0,percent<100 else { throw NashiError.invalidInput("Percentage reduction must be greater than 0 and less than 100.") } }
         let target=options.targetBytes ?? options.percentage.map { Int64(Double(inputSize)*(1-$0/100)) }
         if let target { guard target>0 else { throw NashiError.invalidInput("Choose a positive target file size.") } }
-        let ext=["jpg","jpeg","heic","webp","avif","png"].contains(input.pathExtension.lowercased()) ? input.pathExtension : "jpg"
+        let ext=["jpg","jpeg","heic","heif","webp","avif","png"].contains(input.pathExtension.lowercased()) ? input.pathExtension : "jpg"
         let output=OutputFiles.unique(for:input,extension:ext,suffix:" - Compressed",directory:options.outputDirectory)
         // Attempts are encoded privately; a failed or cancelled pass leaves no partial output.
         let temporary=output.deletingLastPathComponent().appendingPathComponent(".nashi-\(UUID().uuidString)").appendingPathExtension(output.pathExtension)

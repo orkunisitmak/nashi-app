@@ -34,8 +34,16 @@ final class MediaJoinPixelAspectTests: XCTestCase {
     }
 
     func testAnamorphicClipsAreSquaredBeforeFittingTheCanvas() throws {
-        let filters = try clipFilters([("DV.mov", clip(720, 480, sar: "32:27")), ("Phone.mp4", clip(1920, 1080, sar: "1:1"))])
+        let filters = try clipFilters([("Phone.mp4", clip(1920, 1080, sar: "1:1")), ("DV.mov", clip(720, 480, sar: "32:27"))])
         // Fitting keeps the stored 3:2 ratio and setsar=1 drops 32:27, which would squeeze 16:9 to 3:2.
-        XCTAssertEqual(filters, Array(repeating: "scale=trunc(iw*sar/2)*2:ih,setsar=1,scale=720:480:force_original_aspect_ratio=decrease,pad=720:480:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30,setpts=PTS-STARTPTS", count: 2))
+        XCTAssertEqual(filters, Array(repeating: "scale=trunc(iw*sar/2)*2:ih,setsar=1,scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30,setpts=PTS-STARTPTS", count: 2))
+    }
+
+    func testAnamorphicFirstClipSetsTheCanvasAtItsDisplayedSize() throws {
+        // The stored 720x480 canvas would shrink the squared 852x480 DV clip, and the 16:9 clip after it, into a letterbox.
+        let filters = try clipFilters([("DV.mov", clip(720, 480, sar: "32:27")), ("Phone.mp4", clip(1920, 1080, sar: "1:1"))])
+        XCTAssertEqual(filters, Array(repeating: "scale=trunc(iw*sar/2)*2:ih,setsar=1,scale=852:480:force_original_aspect_ratio=decrease,pad=852:480:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30,setpts=PTS-STARTPTS", count: 2))
+        // A 4:3 DV clip (8:9 pixels) gets a 640x480 canvas instead of side bars in a 3:2 frame.
+        XCTAssertEqual(try clipFilters([("DV.mov", clip(720, 480, sar: "8:9")), ("Phone.mp4", clip(1920, 1080, sar: "1:1"))]).first?.contains("pad=640:480:"), true)
     }
 }

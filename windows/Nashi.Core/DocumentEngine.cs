@@ -38,19 +38,24 @@ public static partial class DocumentEngine
             }
             else if(tool=="compress")
             {
+                // A rebuilt copy is saved without the password and permissions, which macOS keeps. PDFsharp cannot re-create them
+                // (the typed password may be the owner's), so a protected PDF is kept byte for byte instead of losing its protection.
+                if(Protected(source)){var kept=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+" Compressed.pdf");File.Copy(input,kept);outputs.Add(kept);continue;}
                 // Compression keeps the document properties, as on macOS; only metadata cleanup clears them.
                 using var result=new PdfDocument();foreach(var page in source.Pages)result.AddPage(page);result.Options.CompressContentStreams=true;result.Info.Title=source.Info.Title;result.Info.Author=source.Info.Author;result.Info.Subject=source.Info.Subject;result.Info.Keywords=source.Info.Keywords;result.Info.Creator=source.Info.Creator;
                 var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+" Compressed.pdf");result.Save(output);outputs.Add(output);
             }
             else if(tool=="removeMetadata")
             {
-                using var result=new PdfDocument();var copies=new Dictionary<PdfPage,PdfPage>();foreach(var page in source.Pages)copies[page]=result.AddPage(page);CopyOutlines(source,result,copies);result.Options.CompressContentStreams=true;result.Info.Title="";result.Info.Author="";result.Info.Subject="";result.Info.Keywords="";
+                using var result=new PdfDocument();var copies=new Dictionary<PdfPage,PdfPage>();foreach(var page in source.Pages)copies[page]=result.AddPage(page);CopyOutlines(source,result,copies);CopyPageLabels(source,result);result.Options.CompressContentStreams=true;result.Info.Title="";result.Info.Author="";result.Info.Subject="";result.Info.Keywords="";
                 var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+(tool=="compress"?" Compressed.pdf":" Metadata.pdf"));result.Save(output);outputs.Add(output);
             }
             else throw new ArgumentException("Unknown PDF tool.");
         }
         return tx.Publish(outputs,token);
     }
+    /// Whether the PDF was encrypted (a user or owner password); every /Encrypt dictionary names its /Filter.
+    public static bool Protected(PdfDocument pdf)=>pdf.SecurityHandler.Elements.ContainsKey("/Filter");
     // These tools copy pages into a new document, which leaves the catalog's form field registry
     // and attachments behind: fields go dead and files disappear without a word. Refuse instead,
     // as macOS does where it cannot keep them. Unlike macOS, metadata cleanup still accepts tagged
@@ -98,6 +103,31 @@ public static partial class DocumentEngine
             }
         }
         var root=Value(source.Internals.Catalog.Elements["/Outlines"]) as PdfDictionary;if(Value(root?.Elements["/First"]) is PdfDictionary first&&visited.Add(root!)){Copy(first,result.Outlines,0);result.Internals.Catalog.Elements["/PageMode"]=Value(source.Internals.Catalog.Elements["/PageMode"]) as PdfName??new PdfName("/UseNone");}
+    }
+    // Page labels (i, ii, A-1…) number pages by position, and cleanup keeps every page in order, so the catalog's number tree is
+    // copied as it is. macOS refuses these files; LaTeX and most book PDFs carry labels, so refusing would leave them uncleanable.
+    // Indirect nodes stay indirect and shared ones are copied once; anything that cannot be copied faithfully is refused.
+    private static void CopyPageLabels(PdfDocument source,PdfDocument result)
+    {
+        if(!source.Internals.Catalog.Elements.ContainsKey("/PageLabels"))return;var copies=new Dictionary<PdfItem,PdfItem>(ReferenceEqualityComparer.Instance);var count=0;
+        static InvalidDataException Refused()=>new("This PDF contains custom page labels. Metadata cleanup cannot safely preserve those features. No copy was exported.");
+        PdfItem Copy(PdfItem? item,int depth)
+        {
+            var value=item is PdfSharp.Pdf.Advanced.PdfReference reference?reference.Value:item;if(value is null||depth>32||++count>100_000)throw Refused();
+            if(copies.TryGetValue(value,out var copied))return copied;
+            PdfItem Indirect(PdfObject copy){if(item is not PdfSharp.Pdf.Advanced.PdfReference)return copy;result.Internals.AddObject(copy);return copies[value]=copy.Reference!;}
+            switch(value)
+            {
+                case PdfDictionary{Stream:null} dictionary:{var copy=new PdfDictionary(result);var link=Indirect(copy);foreach(var key in dictionary.Elements.Keys)copy.Elements[key]=Copy(dictionary.Elements[key],depth+1);return link;}
+                case PdfArray array:{var copy=new PdfArray(result);var link=Indirect(copy);foreach(var element in array.Elements)copy.Elements.Add(Copy(element,depth+1));return link;}
+                case PdfStringObject text:return new PdfString(text.Value,PdfStringEncoding.Unicode);
+                case PdfIntegerObject number:return new PdfInteger(number.Value);
+                case PdfNameObject name:return new PdfName(name.Value);
+                case PdfName or PdfInteger or PdfLongInteger or PdfReal or PdfString or PdfBoolean or PdfNull:return value;
+                default:throw Refused();
+            }
+        }
+        result.Internals.Catalog.Elements["/PageLabels"]=Copy(source.Internals.Catalog.Elements["/PageLabels"],0);
     }
     public static string Zip(IReadOnlyList<string> inputs,string destination,IProgress<OperationProgress>? progress=null,CancellationToken token=default)
     {

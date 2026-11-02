@@ -142,7 +142,7 @@ struct UpdateConnectionView:View {
                     }
                 }.padding(20).nashiCard().disabled(!updater.canChangeConnection)
                 if let message {
-                    Label(message,systemImage:"checkmark.circle").font(.system(size:12)).foregroundStyle(NashiPalette.forest).fixedSize(horizontal:false,vertical:true)
+                    Label { LText(message) } icon:{ Image(systemName:"checkmark.circle") }.font(.system(size:12)).foregroundStyle(NashiPalette.forest).fixedSize(horizontal:false,vertical:true)
                 }
                 if let error {
                     Label(error,systemImage:"exclamationmark.circle").font(.system(size:12)).foregroundStyle(.secondary).fixedSize(horizontal:false,vertical:true)

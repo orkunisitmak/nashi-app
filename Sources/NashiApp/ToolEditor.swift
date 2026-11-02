@@ -31,7 +31,8 @@ struct ToolEditor:View {
     @State private var rightWaveform:[Float]=[]
     @State private var mediaPreviewFolder:URL?
     @State private var playbackURL:URL?
-    @State private var previewBusy=false
+    @State private var processedPreviewBusy=false
+    @State private var visualizationBusy=false
     @State private var isLoading=true
     @State private var readyToApply=false
     @State private var loadRevision=UUID()
@@ -85,6 +86,7 @@ struct ToolEditor:View {
     @Environment(\.locale) private var locale
 
     var input:URL? { inputs.first }
+    var previewBusy:Bool { processedPreviewBusy || visualizationBusy }
     var category:FileCategory { input.map(FileCategory.detect) ?? .other }
     var isGIFMetadata:Bool { input?.pathExtension.lowercased()=="gif" }
     var usesImageMetadata:Bool { category == .image || isGIFMetadata }
@@ -629,7 +631,7 @@ struct ToolEditor:View {
         pdfEditor.reset();selectedSplitClip=nil;aspect="Free";cropInteracting=false;equalClips=2
         width=0;height=0;image=nil;baseImage=nil;imageSize=CGSize(width:100,height:100);pixelAspect=1;previewSize=nil;previewZoom=1;showOriginal=false
         duration=0;frameRate=30;playhead=0;playerReachedEnd=false;playingRange=false;processedPlayback=false;processedDuration=nil
-        waveform=[];leftWaveform=[];rightWaveform=[];processedWaveform=nil;playbackURL=nil;visualizationReady=false;previewBusy=false;previewError=nil
+        waveform=[];leftWaveform=[];rightWaveform=[];processedWaveform=nil;playbackURL=nil;visualizationReady=false;processedPreviewBusy=false;visualizationBusy=false;previewError=nil
         metadata=[:];originalMetadata=[:];metadataSearch="";metadataRemoveAll=false;addingMetadataField=false;newMetadataKey="{XMP-dc}.Title";newMetadataValue="";qrResults=[]
         annotationKind = .arrow;selectingAnnotations=false;annotationText="Text";annotationColor = .red;annotationStroke=3;annotationFont=24;annotationFontFamily="system"
         targetEnabled=false;targetMode="MB";targetValue=1;preset="Balanced";compressionSize="original"
@@ -811,31 +813,35 @@ struct ToolEditor:View {
     func processedPreview() {
         guard let input,readyToApply,!isLoading else { return };var settings=options;let kind=tool,token=previewToken,generation=editorGeneration,key=previewKey
         if kind == .splitVideo { settings.joinSplitClips=true }
-        previewError=nil;previewBusy=true
+        previewError=nil;processedPreviewBusy=true
         Task { do {
             let preview=try await MediaPreviewEngine.processedPreview(kind,input:input,options:settings,token:token)
             guard generation==editorGeneration,!token.isCancelled else { preview.removeTemporaryFiles();return }
             // A setting changed while the preview was being made: it no longer shows the current settings.
-            guard key==previewKey else { preview.removeTemporaryFiles();previewBusy=false;return }
+            guard key==previewKey else { preview.removeTemporaryFiles();processedPreviewBusy=false;return }
             processedDuration=(try? MediaEngine.inspect(preview.playbackURL).duration)
             player?.pause();if let old=channelPreviewURL { try? FileManager.default.removeItem(at:old.deletingLastPathComponent()) };channelPreviewURL=preview.playbackURL;playerReachedEnd=false;player=AVPlayer(url:preview.playbackURL);processedPlayback=true;player?.play()
             if kind == .normalizeAudio { let url=preview.playbackURL;let peaks=try await Task.detached { try MediaPreviewEngine.waveformPeaks(url,token:token) }.value;try checkGeneration(generation,token:token);if key==previewKey { processedWaveform=peaks } }
         } catch { if generation==editorGeneration,!token.isCancelled { previewError=error.localizedDescription } }
-            if generation==editorGeneration,!token.isCancelled { previewBusy=false }
+            if generation==editorGeneration,!token.isCancelled { processedPreviewBusy=false }
         }
     }
     var visualizationKey:String { tool == .audioToVideo ? "\(input?.path ?? ""):\(options.visualizationStyle):\(options.visualizationImage?.path ?? ""):\(options.backgroundColor):\(width):\(height)":"" }
     func renderVisualization() async {
-        guard tool == .audioToVideo,let input,width>0,height>0 else { return }
-        if options.visualizationStyle == "image",options.visualizationImage == nil { return }
+        guard tool == .audioToVideo else { return }
         visualizationToken.cancel();let token=CancellationToken(),generation=editorGeneration;visualizationToken=token
+        defer { if generation==editorGeneration,visualizationToken === token { visualizationBusy=false } }
+        guard let input,width>0,height>0 else { return }
+        if options.visualizationStyle == "image",options.visualizationImage == nil { return }
         var settings=options;settings.width=width;settings.height=height
         do {
-            try await Task.sleep(nanoseconds:150_000_000);try Task.checkCancellation();previewBusy=true
+            try await Task.sleep(nanoseconds:150_000_000);try Task.checkCancellation()
+            guard generation==editorGeneration,!token.isCancelled else { return }
+            visualizationBusy=true
             let preview=try await withTaskCancellationHandler(operation:{ try await MediaPreviewEngine.visualizationPreview(input,options:settings,token:token) },onCancel:{token.cancel()})
             if Task.isCancelled || token.isCancelled || generation != editorGeneration { preview.removeTemporaryFiles();return }
-            player?.pause();if let old=channelPreviewURL { try? FileManager.default.removeItem(at:old.deletingLastPathComponent()) };channelPreviewURL=preview.playbackURL;playerReachedEnd=false;player=AVPlayer(url:preview.playbackURL);playhead=0;visualizationReady=true;previewBusy=false
-        } catch { if generation==editorGeneration,!Task.isCancelled,!token.isCancelled { previewBusy=false;previewError=error.localizedDescription } }
+            player?.pause();if let old=channelPreviewURL { try? FileManager.default.removeItem(at:old.deletingLastPathComponent()) };channelPreviewURL=preview.playbackURL;playerReachedEnd=false;player=AVPlayer(url:preview.playbackURL);playhead=0;visualizationReady=true
+        } catch { if generation==editorGeneration,!Task.isCancelled,!token.isCancelled { previewError=error.localizedDescription } }
     }
     func disposeMedia() {
         editorGeneration=UUID();readyToApply=false;seekRevision=UUID();seeking=false;isPlaying=false

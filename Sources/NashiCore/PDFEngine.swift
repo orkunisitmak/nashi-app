@@ -47,7 +47,7 @@ public enum PDFEngine {
         let ranges=ranges.replacingOccurrences(of:#"\s*-\s*"#,with:"-",options:.regularExpression)
         var result:[Int]=[]
         for part in ranges.split(separator:",") {
-            let pieces=part.trimmingCharacters(in:.whitespaces).split(separator:"-")
+            let pieces=part.trimmingCharacters(in:.whitespaces).split(separator:"-",omittingEmptySubsequences:false)
             if pieces.count==1,let n=Int(pieces[0]),n>0,n<=count { result.append(n-1) }
             else if pieces.count==2,let a=Int(pieces[0]),let b=Int(pieces[1]),a>0,b>0,a<=count,b<=count {
                 result += stride(from:a,through:b,by:a<=b ? 1 : -1).map { $0-1 }
@@ -114,12 +114,13 @@ public enum PDFEngine {
                     var settings:[PDFDocumentWriteOption:Any]=[:]
                     if #available(macOS 13.4,*) { settings=[.saveImagesAsJPEGOption:true,.optimizeImagesForScreenOption:true] }
                     guard pdf.write(to:output,withOptions:settings) else { throw NashiError.failed("Could not compress PDF.") }
+                    // The original may already meet the target even when PDFKit's rewrite is larger.
+                    try OutputFiles.retainSmallerOriginal(input,output:output,target:target)
                     let bytes=Int64(try output.resourceValues(forKeys:[.fileSizeKey]).fileSize ?? 0)
                     if let target,bytes>target {
                         try? FileManager.default.removeItem(at:output)
                         throw NashiError.failed("That PDF size cannot be reached while keeping selectable text, links, and annotations. Choose a larger target.")
                     }
-                    try OutputFiles.retainSmallerOriginal(input,output:output,target:target)
                     outputs.append(output);continue
                 }
                 var dpi=144.0,quality=options.quality
@@ -147,6 +148,8 @@ public enum PDFEngine {
                     let bytes=(try FileManager.default.attributesOfItem(atPath:output.path)[.size] as? NSNumber)?.int64Value ?? 0
                     if target == nil || bytes<=target! { complete=true;break };dpi=max(36,dpi*0.8);quality=max(0.05,quality*0.75)
                 }
+                // The original may already meet a target that no rasterized pass reached.
+                if !complete,let target,original>0,original<=target { try FileManager.default.removeItem(at:output);try FileManager.default.copyItem(at:input.resolvingSymlinksInPath(),to:output);complete=true }
                 guard complete else { try? FileManager.default.removeItem(at:output);throw NashiError.failed("The requested PDF size could not be reached.") }
                 try OutputFiles.retainSmallerOriginal(input,output:output,target:target);outputs.append(output)
             default: throw NashiError.unsupported("Unsupported PDF tool.")
@@ -179,6 +182,8 @@ public enum PDFEngine {
                 result.insert(page,at:result.pageCount)
             }
         }
+        // Keep the title and author, as the object-graph path keeps the first document's Info.
+        result.documentAttributes=documents.first?.documentAttributes
         guard let bytes=result.dataRepresentation() else { throw NashiError.failed("Could not save the unlocked PDF pages.") }
         return bytes
     }
@@ -211,7 +216,8 @@ public enum PDFEngine {
         let pages=(0..<source.pageCount).compactMap{source.page(at:$0)}
         let feature:String?
         if hasKey(catalog,"AcroForm") || pages.contains(where:{$0.annotations.contains(where:{$0.type=="Widget"})}) { feature="form fields" }
-        else if hasKey(names,"EmbeddedFiles") || hasKey(catalog,"AF") || hasKey(catalog,"Collection") || pages.contains(where:{hasKey($0.pageRef?.dictionary,"AF")}) { feature="embedded files" }
+        // A paperclip (FileAttachment) annotation's file is dropped by the page copy too.
+        else if hasKey(names,"EmbeddedFiles") || hasKey(catalog,"AF") || hasKey(catalog,"Collection") || pages.contains(where:{hasKey($0.pageRef?.dictionary,"AF") || $0.annotations.contains(where:{$0.type=="FileAttachment"})}) { feature="embedded files" }
         else if hasKey(catalog,"OCProperties") { feature="optional content layers" }
         else if hasKey(catalog,"StructTreeRoot") { feature="accessibility tags" }
         // Page numbering such as i, ii or A-1 lives in the catalog and is not copied with the pages.
@@ -224,8 +230,9 @@ public enum PDFEngine {
             guard let page=source.page(at:index)?.copy() as? PDFPage else { throw NashiError.failed("A PDF page could not be copied.") }
             for annotation in page.annotations {
                 if clearAnnotationMetadata {
-                    // Widget /T is its field name, not an annotation author.
-                    if annotation.type != "Widget" { annotation.userName=nil }
+                    // Widget /T is its field name, not an annotation author. Setting userName to nil
+                    // leaves /T on Caret, Squiggly, Polygon, PolyLine and Sound annotations.
+                    if annotation.type != "Widget" { annotation.removeValue(forAnnotationKey:.textLabel) }
                     annotation.modificationDate=nil
                     annotation.removeValue(forAnnotationKey:PDFAnnotationKey(rawValue:"/CreationDate"))
                 }

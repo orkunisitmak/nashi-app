@@ -307,8 +307,10 @@ enum RichTextCodec {
             let pattern = try NSRegularExpression(pattern: #"(?i)\bsrc\s*=\s*(["'])(file:[^"']+)\1"#)
             for match in pattern.matches(in: html, range: NSRange(html.startIndex..., in: html)).reversed() {
                 let source = (html as NSString).substring(with: match.range(at: 2))
-                guard let original = URL(string: source) else { continue }
-                let candidate = directory.appendingPathComponent(original.lastPathComponent)
+                // Cocoa leaves "?" in a file name unescaped; read the name from the raw
+                // link, as a URL parser would take "Why?.png" for "Why" and a query.
+                guard let name = source.split(separator: "/").last?.removingPercentEncoding, !name.contains("/") else { continue }
+                let candidate = directory.appendingPathComponent(name)
                 if FileManager.default.fileExists(atPath: candidate.path), let range = Range(match.range(at: 2), in: html) {
                     html.replaceSubrange(range, with: candidate.absoluteString)
                 }

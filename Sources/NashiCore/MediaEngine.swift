@@ -143,7 +143,8 @@ public enum MediaEngine {
             try requireVideo(info)
             arguments += ["-map", "0:v:0"]
             if ext == "gif" {
-                let scale = try scalingFilter(options)
+                // GIF has no even-size rule; padding an odd-sized video would add a black edge to every frame.
+                let scale = try scalingFilter(options, padToEven: false)
                 // GIF viewers ignore a pixel aspect, so non-square pixels are resized to their displayed shape.
                 let first = (["fps=\(options.gifFrameRate)"] + (scale.map { [$0] } ?? []) + ["scale=w='min(\(options.gifMaxWidth),iw)':h=-2:force_original_aspect_ratio=decrease:reset_sar=1"]).joined(separator: ",")
                 arguments += ["-filter_complex", "[0:v:0]\(first),split[p0][p1];[p0]palettegen=stats_mode=diff[pal];[p1][pal]paletteuse=dither=sierra2_4a", "-an", "-loop", "0"]
@@ -254,7 +255,9 @@ public enum MediaEngine {
         let interval = try timeRange(options.start, options.end, duration: info.duration)
         let ext = audio ? audioExtension(input) : videoExtension(input)
         let out = try outputURL(input, ext: ext, suffix: suffix, options: options)
-        var arguments = ["-i", input.path, "-ss", decimal(interval.0), "-t", decimal(interval.1 - interval.0)]
+        let range = ["-ss", decimal(interval.0), "-t", decimal(interval.1 - interval.0)]
+        // Output -ss/-t cut after -af, so silence removal would scan the whole file; read only the selection instead.
+        var arguments = audio && options.trimSilence ? range + ["-i", input.path] : ["-i", input.path] + range
         if audio {
             arguments += ["-map", "0:a:0", "-vn"]
             if options.trimSilence { arguments += ["-af", "silenceremove=start_periods=1:start_duration=0.02:start_threshold=\(decimal(options.silenceThresholdDb))dB,areverse,silenceremove=start_periods=1:start_duration=0.02:start_threshold=\(decimal(options.silenceThresholdDb))dB,areverse"] }
@@ -291,7 +294,8 @@ public enum MediaEngine {
         let infos = try inputs.map { try inspect($0, token: token) }
         try infos.forEach(requireVideo)
         guard let first = infos.first?.video else { throw NashiError.invalidInput("The first clip has no video.") }
-        let width = max(2, (first.width ?? 1280) / 2 * 2), height = max(2, (first.height ?? 720) / 2 * 2)
+        // Clips are squared below, so an anamorphic first clip sets the canvas at its displayed width.
+        let width = max(2, Int(min(16384, Double(first.width ?? 1280) * first.sampleAspectRatio) / 2) * 2), height = max(2, (first.height ?? 720) / 2 * 2)
         let fps = 30.0
         let audio = infos.contains { $0.hasAudio }
         let temp = try OutputFiles.temporaryDirectory()
@@ -324,18 +328,41 @@ public enum MediaEngine {
     private static func snapshots(_ input: URL, info: MediaInfo, options: OperationOptions, token: CancellationToken, progress: @escaping ProgressHandler = {_,_ in}) throws -> [URL] {
         try requireVideo(info)
         guard !options.snapshotTimes.isEmpty else { throw NashiError.invalidInput("Choose at least one frame to save.") }
-        var outputs: [URL] = []
+        var outputs: [URL] = [], lastVideo: Double?? = nil
         do {
             for (index, time) in options.snapshotTimes.enumerated() {
-                guard time.isFinite, time >= 0, info.duration <= 0 || time < info.duration else { throw NashiError.invalidInput("A snapshot time is outside the video.") }
+                guard time.isFinite, time >= 0, info.duration <= 0 || time <= info.duration else { throw NashiError.invalidInput("A snapshot time is outside the video.") }
                 let out = try outputURL(input, ext: "png", suffix: " Frame \(index + 1)", options: options)
                 // Image viewers ignore a PNG pixel aspect, so non-square pixels are resized to their displayed shape.
-                try render(["-ss", decimal(time), "-i", input.path, "-map", "0:v:0", "-frames:v", "1", "-update", "1", "-vf", "scale=-1:ih:reset_sar=1", "-c:v", "png"], to: out, token: token)
+                do { try render(["-ss", decimal(time), "-i", input.path, "-map", "0:v:0", "-frames:v", "1", "-update", "1", "-vf", "scale=-1:ih:reset_sar=1", "-c:v", "png"], to: out, token: token) }
+                catch let error as NSError where error.domain == NSCocoaErrorDomain && error.code == NSFileReadNoSuchFileError {
+                    // FFmpeg writes the first frame at or after -ss. Past the start of the last frame (the
+                    // end, a long last frame or an audio tail) there is none, yet the player shows the last
+                    // frame there. Packet times can be missing or early (B-frames in AVI), so decode the last
+                    // second of video to the end and keep the final frame.
+                    try token.check()
+                    if lastVideo == nil { lastVideo = .some(try lastVideoTimestamp(input, duration: info.duration, token: token)) }
+                    guard let last = lastVideo ?? nil else { throw error }
+                    try render((last > 1 ? ["-ss", decimal(last - 1)] : []) + ["-i", input.path, "-map", "0:v:0", "-update", "1", "-vf", "scale=-1:ih:reset_sar=1", "-c:v", "png"], to: out, token: token)
+                }
                 outputs.append(out)
                 progress(Double(index+1)/Double(options.snapshotTimes.count),"Saving frame \(index+1) of \(options.snapshotTimes.count)…")
             }
             return outputs
         } catch { outputs.forEach { try? FileManager.default.removeItem(at: $0) }; throw error }
+    }
+
+    /// The last video packet's time from the container start, read without decoding: the final minute first, then the whole file.
+    private static func lastVideoTimestamp(_ input: URL, duration: Double, token: CancellationToken) throws -> Double? {
+        for interval in duration > 60 ? ["\(decimal(duration - 60))%", nil] : [nil] {
+            let result = try ProcessRunner.run(Dependencies.executable("ffprobe"), ["-v", "error", "-select_streams", "v:0"] + (interval.map { ["-read_intervals", $0] } ?? []) + ["-show_entries", "packet=pts_time,dts_time:format=start_time", "-of", "json=c=1", input.path], token: token)
+            guard let root = try JSONSerialization.jsonObject(with: result.output) as? [String: Any] else { return nil }
+            // B-frames in AVI leave many packets without a PTS; their DTS still places them.
+            guard let last = (root["packets"] as? [[String: Any]] ?? []).compactMap({ number($0["pts_time"]) ?? number($0["dts_time"]) }).filter(\.isFinite).max() else { continue }
+            // Input -ss counts from the container's start time.
+            return last - (number((root["format"] as? [String: Any])?["start_time"]).flatMap { $0.isFinite ? $0 : nil } ?? 0)
+        }
+        return nil
     }
 
     private static func split(_ input: URL, info: MediaInfo, options: OperationOptions, token: CancellationToken, progress: @escaping ProgressHandler = {_,_ in}) throws -> [URL] {
@@ -645,10 +672,10 @@ public enum MediaEngine {
         return arguments
     }
 
-    private static func scalingFilter(_ options: OperationOptions) throws -> String? {
+    private static func scalingFilter(_ options: OperationOptions, padToEven: Bool = true) throws -> String? {
         if let width = options.width, width < 2 || width > 16384 { throw NashiError.invalidInput("Width must be between 2 and 16,384 pixels.") }
         if let height = options.height, height < 2 || height > 16384 { throw NashiError.invalidInput("Height must be between 2 and 16,384 pixels.") }
-        var filter: String
+        var filter: String?
         // setsar=1 drops a non-square pixel aspect; reset_sar sizes from the displayed shape instead.
         if let width = options.width, let height = options.height {
             let w = width / 2 * 2, h = height / 2 * 2
@@ -656,8 +683,8 @@ public enum MediaEngine {
         }
         else if let width = options.width { filter = "scale=\(width / 2 * 2):-2:reset_sar=1,setsar=1" }
         else if let height = options.height { filter = "scale=-2:\(height / 2 * 2):reset_sar=1,setsar=1" }
-        else { filter = "pad=ceil(iw/2)*2:ceil(ih/2)*2" }
-        if options.videoMaxHeight > 0 { filter += ",scale=-2:'trunc(min(\(options.videoMaxHeight),ih)/2)*2':reset_sar=1,setsar=1" }
+        else if padToEven { filter = "pad=ceil(iw/2)*2:ceil(ih/2)*2" }
+        if options.videoMaxHeight > 0 { filter = (filter.map { $0 + "," } ?? "") + "scale=-2:'trunc(min(\(options.videoMaxHeight),ih)/2)*2':reset_sar=1,setsar=1" }
         return filter
     }
 

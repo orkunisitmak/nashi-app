@@ -5,17 +5,21 @@ const {readFileSync} = require('node:fs');
 const {join} = require('node:path');
 const {runInNewContext} = require('node:vm');
 const {test} = require('node:test');
+const resetSource = readFileSync(join(__dirname, '../docs/assets/reset-state.mjs'), 'utf8').replaceAll('export function', 'function');
+const {isCurrentDemoGeneration, resetDemoHistory} = runInNewContext(`${resetSource}\n({isCurrentDemoGeneration, resetDemoHistory})`);
 const source = readFileSync(join(__dirname, '../docs/assets/playground.js'), 'utf8');
 const saveSource = source.slice(source.indexOf('async function saveEditor()'), source.indexOf('\nfunction editorKey('));
+const parseSource = source.slice(source.indexOf('function parsePages('), source.indexOf('\nfunction audioWav('));
+const parsePages = runInNewContext(`${parseSource}\nparsePages`, {L: en => en});
 const deferred = () => { let resolve, reject; const promise = new Promise((a, b) => {resolve = a; reject = b;}); return {promise, resolve, reject}; };
 function harness(overrides = {}) {
   const editor = {id: 'cropImage', ready: true, save: {disabled: false}, real: true, image: {}, files: [{name: 'synthetic.png'}], values: {}};
-  const state = {editor}, results = [], errors = [];
-  const context = {state, Blob, PDFLib: {}, Number, Math, setTimeout,
+  const state = {editor, generation: 0}, results = [], errors = [];
+  const context = {state, isCurrentDemoGeneration, Blob, PDFLib: {}, Number, Math, setTimeout,
     renderImage: () => ({}), canvasBlob: async () => new Blob(['image']), imagesPDF: async () => new Uint8Array([1]),
     addResult: (...args) => results.push(args), toast: (...args) => errors.push(args),
     closeEditor: () => {state.editor = null;}, L: en => en, toolTitle: id => id,
-    parsePages: () => [0, 1, 2], ...overrides};
+    parsePages, ...overrides};
   const save = runInNewContext(`${saveSource}\nsaveEditor`, context);
   return {editor, state, results, errors, save};
 }
@@ -114,3 +118,59 @@ test('Closing a video snapshot during seeking never touches the discarded media'
   assert.equal(canvasCreations, 0);
   assert.equal(h.results.length, 0); assert.equal(h.errors.length, 0);
 });
+
+for (const reject of [false, true]) {
+  test(`Reset generation discards a pending image ${reject ? 'failure' : 'result'} even with the same editor`, async () => {
+    const pending = deferred(), h = harness({canvasBlob: () => pending.promise});
+    Object.assign(h.state, {urls: new Set(), library: [], shelf: [], float: {}});
+    const saving = h.save();
+    resetDemoHistory(h.state, () => {});
+    if (reject) pending.reject(Error('pre-reset export')); else pending.resolve(new Blob(['image']));
+    await saving;
+    assert.equal(h.results.length, 0); assert.equal(h.errors.length, 0);
+    assert.equal(h.state.editor, h.editor);
+  });
+}
+function multiplePDFs(h, pages = '') {
+  h.editor.pdfs.push({getPageCount: () => 2});
+  h.editor.files.push({name: 'second.pdf'});
+  h.editor.values.pages = pages;
+}
+test('Multi-PDF split preserves blank all-pages ranges and per-file naming', async () => {
+  const h = pdfHarness(async part => new Uint8Array([part])); multiplePDFs(h);
+  await h.save();
+  assert.deepEqual(h.results.map(r => r[0]), ['synthetic-part-1.pdf', 'synthetic-part-2.pdf', 'synthetic-part-3.pdf', 'second-part-1.pdf', 'second-part-2.pdf']);
+  assert.equal(h.errors.length, 0); assert.equal(h.state.editor, null);
+});
+test('Multi-PDF split preserves descending ranges and validates every source before encoding', async () => {
+  const copied = [];
+  const h = harness({PDFLib: {PDFDocument: {create: async () => ({
+    copyPages: async (pdf, indices) => {copied.push([pdf.getPageCount(), ...indices]); return indices;},
+    addPage: () => {}, save: async () => new Uint8Array([1])
+  })}}});
+  Object.assign(h.editor, {id: 'splitPDF', image: null, pdfs: [{getPageCount: () => 3}], values: {pages: '', perFile: 2}});
+  multiplePDFs(h, '2-1,'); await h.save();
+  assert.deepEqual(copied, [[3, 1, 0], [2, 1, 0]]); assert.equal(h.results.length, 2);
+  const invalid = pdfHarness(() => {throw Error('must not encode');}); multiplePDFs(invalid, '3');
+  await invalid.save();
+  assert.equal(invalid.results.length, 0); assert.match(invalid.errors[0][1], /outside the document/);
+});
+test('Failure in a later PDF discards the complete multi-source batch and permits retry', async () => {
+  let fail = true;
+  const h = pdfHarness(async part => {if (fail && part === 4) throw Error('second PDF failed'); return new Uint8Array([part]);});
+  multiplePDFs(h); await h.save();
+  assert.equal(h.results.length, 0); assert.equal(h.errors.length, 1); assert.equal(h.editor.save.disabled, false);
+  fail = false; await h.save(); assert.equal(h.results.length, 5);
+});
+for (const action of ['close', 'reset']) {
+  test(`${action} during a later PDF discards all sources and stops subsequent parts`, async () => {
+    const pending = deferred(), started = deferred(); let parts = 0;
+    const h = pdfHarness(part => {parts++; if (part === 4) {started.resolve(); return pending.promise;} return new Uint8Array([part]);});
+    multiplePDFs(h);
+    Object.assign(h.state, {urls: new Set(), library: [], shelf: [], float: {}});
+    const saving = h.save(); await started.promise;
+    if (action === 'close') h.state.editor = null; else resetDemoHistory(h.state, () => {});
+    pending.resolve(new Uint8Array([4])); await saving;
+    assert.equal(parts, 4); assert.equal(h.results.length, 0); assert.equal(h.errors.length, 0);
+  });
+}

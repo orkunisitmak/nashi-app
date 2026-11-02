@@ -92,6 +92,11 @@ public enum AppLocalization {
         // Window titles: translate the title, keep the app suffix ("Convert to JPG · Nashi").
         let suffix = " · Nashi"
         if source.count > suffix.count, source.hasSuffix(suffix) { return text(String(source.dropLast(suffix.count)), language: language) + suffix }
+        // Batch status lines: "File 2 of 5 · <status>" (ConversionEngine.run). A template capture is never translated,
+        // so translate the prefix and the status separately.
+        if let prefix = source.range(of: #"^File [0-9]+ of [0-9]+ · "#, options: .regularExpression) {
+            return text(String(source[..<prefix.upperBound].dropLast(3)), language: language) + " · " + text(String(source[prefix.upperBound...]), language: language)
+        }
         return templateText(source, table: table) ?? fileMessage(source, language: language, table: table) ?? source
     }
     /// Batch errors name the failed input first: "<file name>: <message>" (ImageEngine.tool). Translate the message and

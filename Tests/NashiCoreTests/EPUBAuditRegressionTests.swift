@@ -57,6 +57,23 @@ final class EPUBAuditRegressionTests: XCTestCase {
         XCTAssertEqual(try xml.nodes(forXPath: "//*[local-name()='p']").first?.stringValue?.trimmingCharacters(in: .whitespacesAndNewlines), "ab Şişli café")
     }
 
+    func testCreatedBookKeepsSourceLanguageAndDirection() throws {
+        // LibreOffice's HTML export puts the document language and direction on <body>.
+        for (attributes, language, direction) in [(" lang=\"ar-SA\" dir=\"rtl\"", "ar-SA", "rtl"), (" lang=\"tr-TR\" dir=\"ltr\"", "tr-TR", "ltr"), ("", "en", nil)] {
+            let html = root.appendingPathComponent("Office \(language).html")
+            try "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\"><html><head><meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\"/><title></title></head><body\(attributes)><p>مرحبا Şişli</p></body></html>".write(to: html, atomically: true, encoding: .utf8)
+            let epub = root.appendingPathComponent("Office \(language).epub")
+            try EPUBCodec.create(fromHTML: html, title: "Book", at: epub, token: .init())
+            let package = root.appendingPathComponent("Created \(language)", isDirectory: true)
+            try ArchiveCodec.extract(epub, into: package, token: .init())
+            let xhtml = try XCTUnwrap(XMLDocument(contentsOf: package.appendingPathComponent("OEBPS/book.xhtml"), options: .nodeLoadExternalEntitiesNever).rootElement())
+            let opf = try XMLDocument(contentsOf: package.appendingPathComponent("OEBPS/content.opf"), options: .nodeLoadExternalEntitiesNever)
+            XCTAssertEqual(xhtml.attribute(forName: "lang")?.stringValue, language)
+            XCTAssertEqual(xhtml.attribute(forName: "dir")?.stringValue, direction)
+            XCTAssertEqual(try opf.nodes(forXPath: "//*[local-name()='language']").first?.stringValue, language)
+        }
+    }
+
     private func convertedText(_ epub: URL) throws -> String {
         let output = try XCTUnwrap(DocumentEngine.convert(epub, to: "txt", options: .init(), token: .init()).first)
         return try DocumentText.read(output)

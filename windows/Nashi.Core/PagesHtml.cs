@@ -18,7 +18,7 @@ public sealed partial class OfficeDocuments
     public static string ModelHtml(JsonElement model)
     {
         model.TryGetProperty("pageSetup",out var setup);var html=new StringBuilder("<!DOCTYPE html><html><head><meta charset=\"utf-8\"/><style>@page{size:");html.Append(CssNumber(JNumber(setup,"pageWidth",595.28))).Append("pt ").Append(CssNumber(JNumber(setup,"pageHeight",841.89))).Append("pt;margin:").Append(string.Join(' ',new[]{"topMargin","rightMargin","bottomMargin","leftMargin"}.Select(n=>CssNumber(JNumber(setup,n,56.69))+"pt"))).Append("}body{font:12pt Arial}table{border-collapse:collapse}td{border:1px solid #888;padding:5pt}p{white-space:pre-wrap}img{max-width:100%;height:auto}</style></head><body>");
-        if(JString(model,"header") is {Length:>0} header)html.Append("<header>").Append(Escape(header)).Append("</header>");
+        if(JString(model,"header") is {Length:>0} header)html.Append("<header>").Append(Escape(header).Replace("\n","<br/>")).Append("</header>");
         foreach(var block in model.GetProperty("blocks").EnumerateArray())
         {
             if(JString(block,"type")=="table")
@@ -40,6 +40,6 @@ public sealed partial class OfficeDocuments
                 }
             }html.Append("</p>");
         }
-        if(JString(model,"footer") is {Length:>0} footer)html.Append("<footer>").Append(Escape(footer)).Append("</footer>");return html.Append("</body></html>").ToString();
+        if(JString(model,"footer") is {Length:>0} footer)html.Append("<footer>").Append(Escape(footer).Replace("\n","<br/>")).Append("</footer>");return html.Append("</body></html>").ToString();
     }
 }

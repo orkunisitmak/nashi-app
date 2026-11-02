@@ -4,7 +4,7 @@ public enum NashiCommandLine {
     public static func run(arguments args:[String] = CommandLine.arguments) -> Int32 {
 do {
     if args.count==2,args[1]=="catalog" {
-        let data=try JSONSerialization.data(withJSONObject:["conversionMatrix":FeatureCatalog.conversionMatrix,"tools":ToolKind.allCases.map(\.rawValue)],options:[.prettyPrinted,.sortedKeys]);print(String(decoding:data,as:UTF8.self));return 0
+        let data=try JSONSerialization.data(withJSONObject:["conversionMatrix":FeatureCatalog.conversionMatrix,"tools":ToolKind.allCases.map(\.rawValue)],options:[.prettyPrinted,.sortedKeys]);print(String(decoding:data,as:UTF8.self));return flushResults()
     }
     if args.count==3,args[1]=="inspect" {
         let input=URL(fileURLWithPath:args[2]),category=FileCategory.detect(input)
@@ -17,10 +17,10 @@ do {
         case .audio,.video:let info=try MediaEngine.inspect(input);result["duration"]=info.duration;result["hasAudio"]=info.hasAudio;result["hasVideo"]=info.hasVideo;result["width"]=info.video?.width;result["height"]=info.video?.height;result["channels"]=info.audio?.channels
         default:break
         }
-        print(String(decoding:try JSONSerialization.data(withJSONObject:result,options:.sortedKeys),as:UTF8.self));return 0
+        print(String(decoding:try JSONSerialization.data(withJSONObject:result,options:.sortedKeys),as:UTF8.self));return flushResults()
     }
     if args.count==2,args[1]=="dependencies" {
-        var result:[String:String]=[:];for name in ["ffmpeg","ffprobe","soffice","exiftool"] { result[name]=try Dependencies.executable(name).path };print(String(decoding:try JSONSerialization.data(withJSONObject:result,options:.sortedKeys),as:UTF8.self));return 0
+        var result:[String:String]=[:];for name in ["ffmpeg","ffprobe","soffice","exiftool"] { result[name]=try Dependencies.executable(name).path };print(String(decoding:try JSONSerialization.data(withJSONObject:result,options:.sortedKeys),as:UTF8.self));return flushResults()
     }
     guard args.count>=4 else { fputs("Usage: nashi-cli convert FORMAT FILE... [--options JSON] [--json]\n       nashi-cli tool TOOL_ID FILE... [--options JSON] [--json]\n       nashi-cli inspect FILE\n       nashi-cli catalog\n       nashi-cli dependencies\n",stderr);return 64 }
     var options=OperationOptions(), paths=Array(args.dropFirst(3))
@@ -55,15 +55,26 @@ do {
     catch where interruption.signal != 0 { fputs("Interrupted. No files were saved.\n",stderr);return 128+interruption.signal }
     if jsonOutput { print(String(decoding:try JSONEncoder().encode(outputs.map(\.path)),as:UTF8.self)) }
     else { for url in outputs { print(url.path) } }
-    return 0
+    return flushResults()
 } catch { fputs("\(error.localizedDescription)\n",stderr);return 1 }
 
     }
 
+    /// Scripts read results from stdout; a write that failed (full disk, unwritable descriptor) must not exit 0.
+    private static func flushResults()->Int32 {
+        guard fflush(stdout) != 0 || ferror(stdout) != 0 else { return 0 }
+        clearerr(stdout);fputs("The results could not be written to standard output.\n",stderr);return 1
+    }
     private static func unknownKey(_ supplied:[String:Any],in decoded:[String:Any],prefix:String="")->String? {
         for (key,value) in supplied.sorted(by:{$0.key<$1.key}) where !(value is NSNull) {
             guard let known=decoded[key] else { return prefix+key }
             if let value=value as? [String:Any],let known=known as? [String:Any],let nested=unknownKey(value,in:known,prefix:prefix+key+".") { return nested }
+            // Objects in arrays (annotations, redactions, points) are decoded the same way.
+            if let value=value as? [Any],let known=known as? [Any] {
+                for (i,(item,decoded)) in zip(value,known).enumerated() {
+                    if let item=item as? [String:Any],let decoded=decoded as? [String:Any],let nested=unknownKey(item,in:decoded,prefix:prefix+key+"[\(i)].") { return nested }
+                }
+            }
         }
         return nil
     }

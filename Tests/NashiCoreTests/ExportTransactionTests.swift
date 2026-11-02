@@ -103,6 +103,20 @@ final class ExportTransactionTests:XCTestCase {
         XCTAssertEqual(try Data(contentsOf:secondOutputs[0]),Data("second".utf8))
     }
 
+    func testSuffixedOutputNamesOfLongSourceNamesStayWithinTheNameLimit() throws {
+        XCTAssertEqual(OutputFiles.unique(for:URL(fileURLWithPath:"/x/Photo.JPG"),extension:"png",suffix:" - Edited",directory:root).lastPathComponent,"Photo - Edited.png")
+        // Legal source names (255 units with their extension) whose suffixed output name would not be.
+        for stem in [String(repeating:"a",count:251),String(repeating:"ş",count:125)] {
+            let source=URL(fileURLWithPath:"/x/\(stem).pdf")
+            for _ in 0..<2 {
+                let output=OutputFiles.unique(for:source,extension:"pdf",suffix:" - Organized",directory:root)
+                XCTAssertLessThanOrEqual(output.lastPathComponent.decomposedStringWithCanonicalMapping.utf16.count,255)
+                XCTAssertTrue(output.lastPathComponent.hasSuffix(" - Organized.pdf") || output.lastPathComponent.hasSuffix(" - Organized 2.pdf"),output.lastPathComponent)
+                XCTAssertNoThrow(try Data("pdf".utf8).write(to:output))
+            }
+        }
+    }
+
     func testOptimizedSymlinkInputsProduceIndependentRegularFilesForCompressionAndMetadataRemoval() throws {
         let source=root.appendingPathComponent("Source.png")
         let context=try XCTUnwrap(CGContext(data:nil,width:8,height:8,bitsPerComponent:8,bytesPerRow:32,space:CGColorSpaceCreateDeviceRGB(),bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue))

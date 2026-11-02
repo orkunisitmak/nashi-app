@@ -11,7 +11,7 @@ public sealed record ProcessResult(string Output, string Error);
 public static class ProcessRunner
 {
     public static async Task<ProcessResult> RunAsync(string executable, IEnumerable<string> arguments,
-        CancellationToken token = default, Action<string>? outputLine = null)
+        CancellationToken token = default, Action<string>? outputLine = null, string? standardInput = null)
     {
         token.ThrowIfCancellationRequested();
         if (!Path.IsPathFullyQualified(executable)) throw new ArgumentException("A fully qualified tool path is required.");
@@ -19,7 +19,8 @@ public static class ProcessRunner
         {
             UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true,
             RedirectStandardInput = true, CreateNoWindow = true,
-            StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8
+            StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8,
+            StandardInputEncoding = new UTF8Encoding(false)
         };
         var values = arguments.ToList();
         if (Path.GetFileNameWithoutExtension(executable).ToLowerInvariant() is "ffmpeg" or "ffprobe" && !values.Contains("-protocol_whitelist"))
@@ -28,15 +29,42 @@ public static class ProcessRunner
         using var process = new Process { StartInfo = start };
         if (!process.Start()) throw new IOException("The processing tool could not start.");
         JobObjectTracker.Track(process);
-        process.StandardInput.Close();
         using var cancellation = token.Register(() => { try { if (!process.HasExited) process.Kill(entireProcessTree: true); } catch (InvalidOperationException) { } });
         var stdout = DrainAsync(process.StandardOutput, outputLine);
         var stderr = DrainAsync(process.StandardError, null);
+        Exception? stdinException = null;
+        if (standardInput is not null)
+        {
+            try
+            {
+                await process.StandardInput.WriteAsync(standardInput.AsMemory(), token).ConfigureAwait(false);
+                await process.StandardInput.FlushAsync(token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (IOException ex)
+            {
+                stdinException = ex;
+            }
+        }
+        try { process.StandardInput.Close(); } catch { }
         await process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
         var results = await Task.WhenAll(stdout, stderr).ConfigureAwait(false);
         token.ThrowIfCancellationRequested();
-        if (process.ExitCode != 0) throw new IOException(string.IsNullOrWhiteSpace(results[1]) ? "The processing tool failed." : results[1][Math.Max(0, results[1].Length - 6000)..].Trim());
+        if (process.ExitCode != 0) throw new IOException(string.IsNullOrWhiteSpace(results[1]) ? "The processing tool failed." : ErrorTail(results[1]));
+        if (stdinException is not null) throw stdinException;
         return new(results[0], results[1]);
+    }
+
+    // The last 6,000 characters of a tool's error output, starting at a whole line as the Mac keeps yt-dlp's details: a cut line
+    // can be a progress fragment or the end of a signed link. Without a later line break the character cut stays.
+    private static string ErrorTail(string error)
+    {
+        var cut = Math.Max(0, error.Length - 6000);
+        if (cut > 0 && error[cut - 1] != '\n' && error.IndexOf('\n', cut) is var newline and >= 0 && !string.IsNullOrWhiteSpace(error[(newline + 1)..])) cut = newline + 1;
+        return error[cut..].Trim();
     }
 
     private static async Task<string> DrainAsync(StreamReader stream, Action<string>? onLine)

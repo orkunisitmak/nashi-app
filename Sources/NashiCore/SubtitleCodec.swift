@@ -11,7 +11,9 @@ enum SubtitleCodec {
     static func convert(_ input: URL, to format: String, token: CancellationToken) throws -> String {
         try token.check()
         let source = try DocumentText.read(input)
-        let cues = try parse(source)
+        // WebVTT requires cues in start-time order; the stable sort keeps the
+        // file order of cues that start together.
+        let cues = try parse(source).sorted { $0.start < $1.start }
         switch format {
         case "vtt":
             return "WEBVTT\n\n" + cues.map { "\(timestamp($0.start, vtt: true)) --> \(timestamp($0.end, vtt: true))\($0.settings.isEmpty ? "" : " " + $0.settings)\n\(vttText($0.text))\n" }.joined(separator: "\n")

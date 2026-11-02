@@ -111,6 +111,10 @@ if(Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG") is {} encoder && En
     var directory=Path.Combine(Path.GetTempPath(),"Nashi-Media-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(directory);
     try
     {
+        // A failing tool's message keeps its last 6,000 characters from a whole line, as the Mac trims yt-dlp details:
+        // ashowinfo writes ~8.7 KB of "[Parsed_ashowinfo_0 @ …]" lines before the empty output aborts.
+        try{await ProcessRunner.RunAsync(encoder,["-hide_banner","-nostdin","-f","lavfi","-i","sine=d=1","-af","ashowinfo,aselect=0","-abort_on","empty_output","-f","null","-"]);throw new Exception("An empty FFmpeg output did not fail");}
+        catch(IOException error){Check(error.Message.StartsWith("[Parsed_ashowinfo_0 @",StringComparison.Ordinal)&&error.Message.Length<=6000&&error.Message.EndsWith("Conversion failed!",StringComparison.Ordinal),"A tool error message started in the middle of a line: "+error.Message[..Math.Min(80,error.Message.Length)]);}
         var source=Path.Combine(directory,"Source ' $().mp4");
         await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","testsrc2=size=128x72:rate=12:duration=2","-f","lavfi","-i","sine=duration=2:sample_rate=48000","-c:v","libx264","-c:a","aac",source]);
         var original=System.Security.Cryptography.SHA256.HashData(await File.ReadAllBytesAsync(source));
@@ -134,6 +138,18 @@ if(Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG") is {} encoder && En
         Check((await engine.ToolAsync("trimVideo",[source],directory,new(){Start=1.1,End=1.15},reporter)).Count==1,"A 50 ms trim was refused by floating-point rounding");
         Check(progress.Any(p=>p.Fraction>0&&p.Fraction<.98),"No live media progress");
         var audio=await engine.ConvertAsync([source],"mp3",directory,new());Check((await engine.InspectAsync(audio[0])).HasAudio,"Audio conversion failed");
+        // FileInfo sizes a symbolic link itself (its path's length here); percentage targets come from the media it points to (as on macOS).
+        var linkedSizeFolder=Path.Combine(directory,"Linked size");Directory.CreateDirectory(linkedSizeFolder);var linkedSizeSong=Path.Combine(linkedSizeFolder,"Linked song.mp3");var linkedSizeLinked=true;
+        // Windows accounts without Developer Mode or elevation cannot create symbolic links.
+        try{File.CreateSymbolicLink(linkedSizeSong,audio[0]);}catch(Exception e)when(OperatingSystem.IsWindows()&&e is UnauthorizedAccessException or IOException){linkedSizeLinked=false;Console.Error.WriteLine("Skipping symbolic link media checks: this account cannot create symbolic links.");}
+        if(linkedSizeLinked)
+        {
+            var linkedSizeMissing=Path.Combine(linkedSizeFolder,"Missing song.mp3");File.CreateSymbolicLink(linkedSizeMissing,Path.Combine(directory,"No such song.mp3"));
+            var linkedSizeInfo=await engine.InspectAsync(linkedSizeSong);Check(linkedSizeInfo.Bytes==new FileInfo(audio[0]).Length,$"Inspect sized a symbolic link as {linkedSizeInfo.Bytes} bytes instead of the linked file's {new FileInfo(audio[0]).Length}");
+            var linkedSizeCompressed=await engine.ToolAsync("compress",[linkedSizeSong],directory,new(){ReductionPercent=30});Check(Path.GetFileName(linkedSizeCompressed[0])=="Linked song Compressed.m4a"&&new FileInfo(linkedSizeCompressed[0]).Length<=new FileInfo(audio[0]).Length*.7,"Compress by percentage failed for a symbolic link");
+            var linkedSizeFolderLink=Path.Combine(linkedSizeFolder,"Folder.mp3");Directory.CreateSymbolicLink(linkedSizeFolderLink,directory);
+            foreach(var linkedSizeRefused in new[]{linkedSizeMissing,linkedSizeFolderLink}){try{await engine.InspectAsync(linkedSizeRefused);throw new Exception("A dangling or folder symbolic link was inspected: "+linkedSizeRefused);}catch(IOException){checks++;}}
+        }
         var deep=await engine.ConvertAsync([source],"wav",directory,new(){SampleDepth="pcm24"});var matched=await engine.ConvertAsync(deep,"aiff",directory,new());Check((await engine.InspectAsync(matched[0])).Streams.First(s=>s.Kind=="audio").Bits==24,"Match source reduced 24-bit audio");
         var floating=await engine.ConvertAsync([source],"wav",directory,new(){SampleDepth="float32"});var floatMatch=await engine.ConvertAsync(floating,"aiff",directory,new());Check((await engine.InspectAsync(floatMatch[0])).Streams.First(s=>s.Kind=="audio").Codec=="pcm_f32be","Match source lost floating point audio");
         // Album art is an attached picture stream, not a tag; MP3, M4A and FLAC store JPEG and PNG art.
@@ -174,6 +190,11 @@ if(Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG") is {} encoder && En
         var joinDv=Path.Combine(directory,"Join DV.mp4");var joinPhone=Path.Combine(directory,"Join phone.mp4");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","color=white:s=720x480:r=25:d=1,setsar=32/27","-c:v","libx264","-pix_fmt","yuv420p",joinDv]);await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","color=white:s=640x360:r=25:d=1","-c:v","libx264","-pix_fmt","yuv420p",joinPhone]);
         var joinedShapes=(await engine.ToolAsync("joinVideos",[joinDv,joinPhone],directory,new()))[0];Check((await ProcessRunner.RunAsync(probe,["-v","error","-select_streams","v:0","-show_entries","stream=width,height,sample_aspect_ratio","-of","csv=p=0",joinedShapes])).Output.Trim()=="720,480,1:1","Joined anamorphic video changed its canvas");
         foreach(var (joinTime,joinY,joinBar) in new[]{("0.5",10,true),("0.5",240,false),("1.5",10,true),("1.5",240,false)}){var joinPixel=$"{joinedShapes} {joinTime} {joinY}.gray";await ProcessRunner.RunAsync(encoder,["-v","error","-ss",joinTime,"-i",joinedShapes,"-frames:v","1","-vf",$"format=gray,crop=1:1:360:{joinY}","-f","rawvideo",joinPixel]);var joinValue=File.ReadAllBytes(joinPixel)[0];Check(joinBar?joinValue<64:joinValue>192,$"Joined clip at {joinTime} s lost its 16:9 shape (row {joinY} is {joinValue})");}
+        // Live Matroska recordings carry no duration (inspected as 0); "-t 0" encoded an empty clip, so Join dropped them (as fixed on macOS).
+        var liveJoinSilent=Path.Combine(directory,"Live join silent.mkv");var liveJoinVoiced=Path.Combine(directory,"Live join voiced.mkv");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","testsrc2=size=128x72:rate=12:duration=2","-c:v","libx264","-live","1",liveJoinSilent]);await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","testsrc2=size=128x72:rate=12:duration=2","-f","lavfi","-i","sine=duration=2:sample_rate=48000","-c:v","libx264","-c:a","aac","-live","1",liveJoinVoiced]);
+        Check((await engine.InspectAsync(liveJoinSilent)).Duration==0&&(await engine.InspectAsync(liveJoinVoiced)).Duration==0,"Live Matroska fixtures reported a duration");
+        var liveJoined=(await engine.ToolAsync("joinVideos",[source,liveJoinSilent,liveJoinVoiced],directory,new()))[0];var liveJoinStreams=(await ProcessRunner.RunAsync(probe,["-v","error","-show_entries","stream=codec_type,duration","-of","csv=p=0",liveJoined])).Output.Split('\n',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries).Select(l=>l.Split(',')).ToDictionary(p=>p[0],p=>double.Parse(p[1],System.Globalization.CultureInfo.InvariantCulture));
+        Check(liveJoinStreams["video"]>5.8&&liveJoinStreams["audio"]>5.8&&liveJoinStreams["audio"]<6.3,FormattableString.Invariant($"Join dropped clips without a known duration or let their generated silence run on (video {liveJoinStreams["video"]} s, audio {liveJoinStreams["audio"]} s)"));
         var normalized=await engine.ToolAsync("normalizeAudio",audio,directory,new());var normalizedInfo=await engine.InspectAsync(normalized[0]);Check(normalizedInfo.HasAudio,"Normalization failed");
         // loudnorm runs at 192 kHz; PCM outputs keep that rate unless the source rate is requested (MP3 cannot exceed 48 kHz, so test WAV).
         var wav=await engine.ConvertAsync([source],"wav",directory,new());var normalizedWav=await engine.ToolAsync("normalizeAudio",wav,directory,new());
@@ -287,7 +308,35 @@ if(Environment.GetEnvironmentVariable("NASHI_VERIFY_DOWNLOAD_TOOLS")=="1"&&Envir
         var tagged=await metadata.WriteAsync([photo],directory,false,new Dictionary<string,string>{{"EXIF:Artist","Nashi fixture"}});
         Check((await metadata.ReadAsync(tagged[0])).GetValueOrDefault("EXIF:Artist")=="Nashi fixture","ExifTool did not write and read back a tag");
         Check(!(await metadata.ReadAsync(photo)).ContainsKey("EXIF:Artist"),"Metadata editing changed the original");
-        Console.WriteLine(JsonSerializer.Serialize(new{passed=checks,scope="Verified ExifTool download, tag write and read back"}));
+
+        // Regression check: Non-ASCII TMP/TEMP, non-ASCII and Turkish file paths, multiline with bare CR, and leading space
+        var prevTmp = Environment.GetEnvironmentVariable("TMP");
+        var prevTemp = Environment.GetEnvironmentVariable("TEMP");
+        var nonAsciiTemp = Path.Combine(directory, "Geçici Dizin ğüşiöç");
+        Directory.CreateDirectory(nonAsciiTemp);
+        Environment.SetEnvironmentVariable("TMP", nonAsciiTemp);
+        Environment.SetEnvironmentVariable("TEMP", nonAsciiTemp);
+        try
+        {
+            var unicodePhoto=Path.Combine(directory,"Vesikalık fotoğraf ğüşiöç ' $().jpg");File.Copy(photo,unicodePhoto);
+            var multilineComment="Satır 1\r\nSatır 2\nSatır 3\rSatır 4 & 'özel' ğüşiöç";
+            var leadingSpaceArtist=" Örnek Sanatçı";
+            var unicodeTagged=await metadata.WriteAsync([unicodePhoto],directory,false,new Dictionary<string,string>
+            {
+                {"EXIF:Artist",leadingSpaceArtist},
+                {"EXIF:UserComment",multilineComment}
+            });
+            var readBack=await metadata.ReadAsync(unicodeTagged[0]);
+            Check(readBack.GetValueOrDefault("EXIF:Artist")==leadingSpaceArtist,"ExifTool did not preserve leading space or non-ASCII tag and path");
+            Check(readBack.GetValueOrDefault("EXIF:UserComment")==multilineComment,"ExifTool multiline comment mismatch");
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("TMP", prevTmp);
+            Environment.SetEnvironmentVariable("TEMP", prevTemp);
+        }
+
+        Console.WriteLine(JsonSerializer.Serialize(new{passed=checks,scope="Verified ExifTool download, non-ASCII path, multiline and leading space tag write/read back"}));
     }
     finally{Directory.Delete(directory,true);}
 }

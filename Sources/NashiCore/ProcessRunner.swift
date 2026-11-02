@@ -126,15 +126,19 @@ public enum OutputFiles {
     }
     public static func unique(for input: URL, extension ext: String, suffix: String = "", directory: URL? = nil) -> URL {
         let dir = directory ?? input.deletingLastPathComponent()
-        let stem = input.deletingPathExtension().lastPathComponent + suffix
+        let source = input.deletingPathExtension().lastPathComponent
         let cleanExt = ext.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "."))
-        var candidate = dir.appendingPathComponent(stem).appendingPathExtension(cleanExt)
-        var index = 2
+        var candidate: URL, index = 1
         // lstat-based: a dangling link still occupies its name. fileExists would
         // report it free, so moves fail and atomic writes replace the link.
-        while (try? FileManager.default.attributesOfItem(atPath: candidate.path)) != nil {
-            candidate = dir.appendingPathComponent("\(stem) \(index)").appendingPathExtension(cleanExt); index += 1
-        }
+        repeat {
+            let tail = suffix + (index == 1 ? "" : " \(index)")
+            // macOS limits a name to 255 UTF-16 units of its decomposed form. The
+            // source part is shortened so the suffix and extension still fit.
+            var stem = source
+            while !stem.isEmpty, (stem + tail + (cleanExt.isEmpty ? "" : "." + cleanExt)).decomposedStringWithCanonicalMapping.utf16.count > 255 { stem.removeLast() }
+            candidate = dir.appendingPathComponent(stem + tail).appendingPathExtension(cleanExt); index += 1
+        } while (try? FileManager.default.attributesOfItem(atPath: candidate.path)) != nil
         return candidate
     }
     /// Moves `source` into `directory` under its own name, or "Name 2", "Name 3"…
