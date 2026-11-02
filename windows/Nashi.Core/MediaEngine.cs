@@ -356,7 +356,8 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
             if(options.EqualClips is null)points.RemoveAll(p=>info.Duration-p<.05);
         }
         if(points.Any(p=>!double.IsFinite(p)||p<=0||p>=info.Duration))throw new ArgumentException("A split point lies outside the video.");
-        var bounds=new[]{0d}.Concat(points.Distinct().Order()).Append(info.Duration).ToArray();
+        // Keep repeats: removed clips are numbered from the points as typed, so a repeat must fail the spacing check below rather than renumber them.
+        var bounds=new[]{0d}.Concat(points.Order()).Append(info.Duration).ToArray();
         if(bounds.Zip(bounds.Skip(1)).Any(p=>p.Second-p.First<.05))throw new ArgumentException("Keep split points at least 0.05 seconds apart.");
         if(options.DiscardedClips.Any(n=>n<0||n>=bounds.Length-1))throw new ArgumentException("A discarded clip is outside the range.");
         var retained=Enumerable.Range(0,bounds.Length-1).Except(options.DiscardedClips).ToList();if(retained.Count==0)throw new ArgumentException("Keep at least one clip.");

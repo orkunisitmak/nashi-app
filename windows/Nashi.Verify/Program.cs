@@ -184,6 +184,10 @@ if(Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG") is {} encoder && En
         var clips=await engine.ToolAsync("splitVideo",[source],directory,new(){EqualClips=2});Check(clips.Count==2,"Split count wrong");
         foreach(var clip in clips)Check((await engine.InspectAsync(clip)).Duration<1.25,"Split interval wrong");
         var sourceDuration=(await engine.InspectAsync(source)).Duration;var tail=await engine.ToolAsync("splitVideo",[source],directory,new(){SplitInterval=sourceDuration/2-.01});Check(tail.Count==2,"A sub-0.05 s interval remainder failed the split instead of joining the last clip");
+        // Typed points "1; 1" number the clips [0,1], [1,1] and [1,2]: removing clip 2 dropped [1,2] once the repeat was merged (as fixed on macOS).
+        var repeatSplitFolder=Path.Combine(directory,"Repeated split point");try{await engine.ToolAsync("splitVideo",[source],repeatSplitFolder,new(){SplitPoints=[1,1],DiscardedClips=[1]});throw new Exception("A repeated split point removed a different clip than the one chosen");}catch(ArgumentException){checks++;}
+        Check(!Directory.Exists(repeatSplitFolder)||!Directory.EnumerateFileSystemEntries(repeatSplitFolder).Any(),"A rejected split left files behind");
+        var repeatSplitKept=await engine.ToolAsync("splitVideo",[source],repeatSplitFolder,new(){SplitPoints=[1.5,.5],DiscardedClips=[0]});Check(repeatSplitKept.Select(Path.GetFileName).SequenceEqual(new[]{"Source ' $() Part 2.mp4","Source ' $() Part 3.mp4"}),"Unordered split points removed the wrong clip");
         var joined=await engine.ToolAsync("joinVideos",clips,directory,new());Check((await engine.InspectAsync(joined[0])).Duration>1.8,"Join lost content");
         // White 16:9 clips: DV stored at 720x480 with 32:27 pixels, then square 640x360. Both fit the 720x480 canvas as 720x405 between black bars;
         // fitting the stored 3:2 frame and then setting square pixels stretched the DV clip over the whole canvas.
