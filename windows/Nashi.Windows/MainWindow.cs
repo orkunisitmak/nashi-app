@@ -252,6 +252,8 @@ public sealed partial class MainWindow:Window
             if(choice.Id=="removeMetadata"){SetBusy(false);await EditMetadataAsync(selected);return;}
             if(choice.Id=="readQRCode"){SetBusy(false);await ReadQrAsync(selected);return;}
             if(!imageSelection&&!mediaSelection&&choice.Id is not ("extractArchive" or "unzip")){SetBusy(false);await EditDocumentAsync(choice,selected,requestedFormat);return;}
+            // Crop, cover and annotate are about one picture: with several selected, edit each one in turn.
+            if(imageSelection&&selected.Length>1&&choice.Id is "crop" or "redactImage" or "annotate"){SetBusy(false);await EditImagesOneByOneAsync(choice,selected);return;}
             if(imageSelection)preview=ImageEngine.Load(input);
             else if(mediaSelection)
             {
@@ -265,9 +267,11 @@ public sealed partial class MainWindow:Window
             }
             SetBusy(false);var editor=new ToolEditor(this,choice.Id,choice.Title,input,info,preview,selected,choice.Id=="convert"?FeatureCatalog.Formats(selected):null);editor.ConfigureProfiles(preferences,requestedFormat);editor.ConfigureMediaRuntime(tools);var accepted=editor.ShowDialog()==true;if(temporary is not null)File.Delete(temporary);if(!accepted)return;
             var inputs=choice.Id is "cropVideo" or "redactVideo" or "annotate"?new[]{input}:editor.OrderedInputs;
+            // The name box is a WPF control: read it here on the UI thread, not inside the export worker.
+            var outputName=editor.OutputName;
             if(imageSelection)await RunAsync(async(destination,p,t)=>
             {
-                using var tx=new ExportTransaction(destination);var exported=await OnStaAsync(()=>ImageEngine.Apply(choice.Id,inputs,tx.StagingDirectory,editor.ImageOptions with{EncoderPath=tools.Ready?tools.Executable("ffmpeg"):null},choice.Id=="convert"?editor.Format:null,t,p));
+                using var tx=new ExportTransaction(destination);var exported=await OnStaAsync(()=>ImageEngine.Apply(choice.Id,inputs,tx.StagingDirectory,editor.ImageOptions with{OutputName=outputName,EncoderPath=tools.Ready?tools.Executable("ffmpeg"):null},choice.Id=="convert"?editor.Format:null,t,p));
                 if(choice.Id=="convert"&&editor.PreserveImageMetadata&&editor.Format is not ("pdf" or "bmp" or "gif"))
                 {
                     await metadataService.InstallAsync(p,t);for(var n=0;n<exported.Count;n++)await metadataService.CopyImageTagsAsync(inputs[n],exported[n],t);

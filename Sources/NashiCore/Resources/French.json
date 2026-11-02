@@ -1430,6 +1430,12 @@
   "Save downloaded media to…": "Enregistrer les médias téléchargés dans…",
   "Original image · ready to download": "Image originale · prête à télécharger",
   "YouTube thumbnail · best available full-size image": "Miniature YouTube · meilleure image en taille réelle disponible",
+  "Previous image": "Image précédente",
+  "Next image": "Image suivante",
+  "Page {0} of {1}": "Page {0} sur {1}",
+  "File name": "Nom du fichier",
+  "Without .pdf. Leave empty for the default name.": "Sans .pdf. Laissez vide pour le nom par défaut.",
+  "Preview unavailable": "Aperçu indisponible",
   "No tools for this file type": "Aucun outil pour ce type de fichier",
   "Details": "Détails",
   "Copy details": "Copier les détails"

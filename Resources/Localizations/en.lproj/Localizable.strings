@@ -1058,6 +1058,7 @@
 "FILE ACTIONS" = "FILE ACTIONS";
 "FILE ACTIONS WHEEL" = "FILE ACTIONS WHEEL";
 "FILE ACTIONS · WHILE DRAGGING" = "FILE ACTIONS · WHILE DRAGGING";
+"FILE NAME" = "FILE NAME";
 "FILE ORDER" = "FILE ORDER";
 "FILE PATHS COPIED." = "FILE PATHS COPIED.";
 "FILE SIZE" = "FILE SIZE";
@@ -1133,6 +1134,7 @@
 "File actions" = "File actions";
 "File actions wheel" = "File actions wheel";
 "File actions · while dragging" = "File actions · while dragging";
+"File name" = "File name";
 "File order" = "File order";
 "File paths copied." = "File paths copied.";
 "File size" = "File size";
@@ -1531,6 +1533,7 @@
 "NEW FEATURES AND SMALL IMPROVEMENTS, DELIVERED RIGHT HERE." = "NEW FEATURES AND SMALL IMPROVEMENTS, DELIVERED RIGHT HERE.";
 "NEXT" = "NEXT";
 "NEXT FRAME" = "NEXT FRAME";
+"NEXT IMAGE" = "NEXT IMAGE";
 "NEXT PAGE" = "NEXT PAGE";
 "NEXT, DOWNLOAD THE MISSING TOOLS FOR MEDIA AND OFFICE FILES. TOOLS ALREADY ON YOUR COMPUTER DO NOT NEED ANOTHER DOWNLOAD." = "NEXT, DOWNLOAD THE MISSING TOOLS FOR MEDIA AND OFFICE FILES. TOOLS ALREADY ON YOUR COMPUTER DO NOT NEED ANOTHER DOWNLOAD.";
 "NICE FILES.\nNO FUSS." = "NICE FILES.\nNO FUSS.";
@@ -1587,6 +1590,7 @@
 "New features and small improvements, delivered right here." = "New features and small improvements, delivered right here.";
 "Next" = "Next";
 "Next frame" = "Next frame";
+"Next image" = "Next image";
 "Next page" = "Next page";
 "Next, download the missing tools for media and Office files. Tools already on your computer do not need another download." = "Next, download the missing tools for media and Office files. Tools already on your computer do not need another download.";
 "Nice files.\nNo fuss." = "Nice files.\nNo fuss.";
@@ -1787,9 +1791,11 @@
 "PREVIEW PROCESSED" = "PREVIEW PROCESSED";
 "PREVIEW READY · EXPORT USES YOUR ORIGINAL FILE." = "PREVIEW READY · EXPORT USES YOUR ORIGINAL FILE.";
 "PREVIEW RIGHT" = "PREVIEW RIGHT";
+"PREVIEW UNAVAILABLE" = "PREVIEW UNAVAILABLE";
 "PREVIEW USES THE FIRST 12 SECONDS. EXPORT INCLUDES THE FULL RECORDING." = "PREVIEW USES THE FIRST 12 SECONDS. EXPORT INCLUDES THE FULL RECORDING.";
 "PREVIEW VISUALIZATION" = "PREVIEW VISUALIZATION";
 "PREVIOUS FRAME" = "PREVIOUS FRAME";
+"PREVIOUS IMAGE" = "PREVIOUS IMAGE";
 "PREVIOUS PAGE" = "PREVIOUS PAGE";
 "PRIVATE REPOSITORY · TOKEN SAVED IN KEYCHAIN" = "PRIVATE REPOSITORY · TOKEN SAVED IN KEYCHAIN";
 "PROCESSED PREVIEW UNAVAILABLE FOR THIS WINDOWS CODEC." = "PROCESSED PREVIEW UNAVAILABLE FOR THIS WINDOWS CODEC.";
@@ -1802,7 +1808,11 @@
 "PUBLIC UPDATES WORK WITHOUT A TOKEN." = "PUBLIC UPDATES WORK WITHOUT A TOKEN.";
 "Padding" = "Padding";
 "Page %@" = "Page %@";
+"Page %@ of %@" = "Page %@ of %@";
+"Page %@ of %lld" = "Page %@ of %lld";
 "Page %lld" = "Page %lld";
+"Page %lld of %@" = "Page %lld of %@";
+"Page %lld of %lld" = "Page %lld of %lld";
 "Page numbers" = "Page numbers";
 "Page ranges" = "Page ranges";
 "Page ranges, for example 1-3, 5" = "Page ranges, for example 1-3, 5";
@@ -1869,10 +1879,12 @@
 "Preview Visualization" = "Preview Visualization";
 "Preview position" = "Preview position";
 "Preview ready · export uses your original file." = "Preview ready · export uses your original file.";
+"Preview unavailable" = "Preview unavailable";
 "Preview unavailable: %@" = "Preview unavailable: %@";
 "Preview unavailable: %lld" = "Preview unavailable: %lld";
 "Preview uses the first 12 seconds. Export includes the full recording." = "Preview uses the first 12 seconds. Export includes the full recording.";
 "Previous frame" = "Previous frame";
+"Previous image" = "Previous image";
 "Previous page" = "Previous page";
 "Private repository · Token saved in Keychain" = "Private repository · Token saved in Keychain";
 "Processed preview unavailable for this Windows codec." = "Processed preview unavailable for this Windows codec.";
@@ -2788,6 +2800,7 @@
 "WINDOW MANAGEMENT · DRAG A TITLE BAR, THEN SHIFT OR ALT" = "WINDOW MANAGEMENT · DRAG A TITLE BAR, THEN SHIFT OR ALT";
 "WINDOWS COULD NOT ADD NASHI TO THE SYSTEM TRAY." = "WINDOWS COULD NOT ADD NASHI TO THE SYSTEM TRAY.";
 "WINDOWS COULD NOT CREATE A TRAY ICON." = "WINDOWS COULD NOT CREATE A TRAY ICON.";
+"WITHOUT .PDF. LEAVE EMPTY FOR THE DEFAULT NAME." = "WITHOUT .PDF. LEAVE EMPTY FOR THE DEFAULT NAME.";
 "WORKING…" = "WORKING…";
 "Wait for the processed preview to finish before resetting." = "Wait for the processed preview to finish before resetting.";
 "Waveform" = "Waveform";
@@ -2804,6 +2817,7 @@
 "Window management · drag a title bar, then Shift or Alt" = "Window management · drag a title bar, then Shift or Alt";
 "Windows could not add Nashi to the system tray." = "Windows could not add Nashi to the system tray.";
 "Windows could not create a tray icon." = "Windows could not create a tray icon.";
+"Without .pdf. Leave empty for the default name." = "Without .pdf. Leave empty for the default name.";
 "Working…" = "Working…";
 "X %@, Y %@, width %@, height %@" = "X %@, Y %@, width %@, height %@";
 "X %@, Y %@, width %@, height %lld" = "X %@, Y %@, width %@, height %lld";

@@ -6,7 +6,7 @@ namespace Nashi.Core;
 
 public static partial class DocumentEngine
 {
-    public static IReadOnlyList<string> Pdf(string tool,IReadOnlyList<string> inputs,string destination,int[]? pages=null,CancellationToken token=default,Dictionary<int,int>? rotations=null,int pagesPerFile=1,int[]? pageRotations=null,string password="",bool uniformWidth=false,string pageRanges="")
+    public static IReadOnlyList<string> Pdf(string tool,IReadOnlyList<string> inputs,string destination,int[]? pages=null,CancellationToken token=default,Dictionary<int,int>? rotations=null,int pagesPerFile=1,int[]? pageRotations=null,string password="",bool uniformWidth=false,string pageRanges="",string? outputName=null)
     {
         using var tx=new ExportTransaction(destination);var outputs=new List<string>();
         if(tool=="mergePDFs")
@@ -14,7 +14,7 @@ public static partial class DocumentEngine
             if(inputs.Count<2)throw new ArgumentException("Choose at least two PDFs.");
             using var merged=new PdfDocument();
             foreach(var file in inputs){token.ThrowIfCancellationRequested();using var source=PdfReader.Open(file,password,PdfDocumentOpenMode.Import);RequireRebuildable(source,tool);foreach(var page in source.Pages)merged.AddPage(page);}
-            var output=SafePaths.Unique(tx.StagingDirectory,"Merged.pdf");merged.Save(output);outputs.Add(output);
+            var output=SafePaths.Unique(tx.StagingDirectory,SafePaths.FileStem(outputName,"Merged",".pdf")+".pdf");merged.Save(output);outputs.Add(output);
         }
         else foreach(var input in inputs)
         {
