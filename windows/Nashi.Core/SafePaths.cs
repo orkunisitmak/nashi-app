@@ -28,7 +28,10 @@ public static class SafePaths
         var stem = Path.GetFileNameWithoutExtension(filename); var extension = Path.GetExtension(filename);
         for (var number = 1; number < 100_000; number++)
         {
-            var candidate = Path.Combine(directory, number == 1 ? filename : $"{stem} {number}{extension}");
+            var name = number == 1 ? filename : $"{stem} {number}{extension}";
+            // File.Exists does not reliably report DOS device names (CON.txt, AUX.jpg) as taken.
+            if (OperatingSystem.IsWindows() && Devices.Contains(name.Split('.')[0].TrimEnd(' '))) continue;
+            var candidate = Path.Combine(directory, name);
             if (!File.Exists(candidate) && !Directory.Exists(candidate)) return candidate;
         }
         throw new IOException("Too many files already use this name.");
