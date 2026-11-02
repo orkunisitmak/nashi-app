@@ -11,16 +11,25 @@ internal static class UpdateInstaller
         var target=Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory);var parent=Path.GetDirectoryName(target)??throw new IOException("Extract Nashi into its own writable folder first.");
         if(target==Path.GetPathRoot(target)||(File.GetAttributes(target)&FileAttributes.ReparsePoint)!=0)throw new IOException("Use a regular writable folder for portable updates.");
         var stage=Path.Combine(parent,".nashi-update-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(stage);
+        // Ownership lease for CleanUpUpdateRemnants (App.xaml): a stage stays
+        // wards only while the process that created it is genuinely alive.
+        File.WriteAllText(Path.Combine(stage,"owner.txt"),Environment.ProcessId+"\n"+System.Diagnostics.Process.GetCurrentProcess().StartTime.Ticks.ToString(System.Globalization.CultureInfo.InvariantCulture));
         try
         {
             var archive=Path.Combine(stage,"update.zip");await VerifiedDownload.FetchAsync(new(update.Url),archive,update.Length,p=>progress.Report(new(p*.85,"Downloading Nashi "+update.Version+"…")),token);
             progress.Report(new(.86,"Verifying update signature…"));await PublicUpdates.VerifyAsync(archive,update,token);
-            var payload=Path.Combine(stage,"payload");Directory.CreateDirectory(payload);PublicUpdates.ExtractVerified(archive,payload,token);
+            var payload=Path.Combine(stage,"payload");Directory.CreateDirectory(payload);PublicUpdates.ExtractVerified(archive,payload,token);File.Delete(archive);
             var version=FileVersionInfo.GetVersionInfo(Path.Combine(payload,"Nashi.dll")).FileVersion;
             var expected=Version.Parse(update.Version);var expectedFileVersion=new Version(expected.Major,expected.Minor,Math.Max(0,expected.Build),Math.Max(0,expected.Revision));
             if(!Version.TryParse(version,out var parsed)||parsed!=expectedFileVersion)throw new InvalidDataException("The signed package version does not match this update.");
             var worker=Path.Combine(stage,"worker");Directory.CreateDirectory(worker);
-            foreach(var file in Directory.EnumerateFiles(payload))File.Copy(file,Path.Combine(worker,Path.GetFileName(file)));
+            // Recursive copy: the published tree contains WPF satellite-culture
+            // folders (cs … zh-Hant) plus licenses/; a root-only copy silently
+            // dropped them from every updated installation.
+            foreach(var file in Directory.EnumerateFiles(payload,"*",SearchOption.AllDirectories))
+            {
+                var destinationFile=Path.Combine(worker,Path.GetRelativePath(payload,file));Directory.CreateDirectory(Path.GetDirectoryName(destinationFile)!);File.Copy(file,destinationFile);
+            }
             var request=new InstallRequest(Environment.ProcessId,target,payload,stage);
             var fileName=Path.Combine(stage,"request.json");await File.WriteAllTextAsync(fileName,JsonSerializer.Serialize(request),token);
             token.ThrowIfCancellationRequested();var start=new ProcessStartInfo(Path.Combine(worker,"Nashi.exe")){UseShellExecute=false,WorkingDirectory=worker};start.ArgumentList.Add("--apply-update");start.ArgumentList.Add(fileName);(Process.Start(start)??throw new IOException("Cannot start update installer.")).Dispose();
@@ -32,14 +41,44 @@ internal static class UpdateInstaller
         var request=JsonSerializer.Deserialize<InstallRequest>(File.ReadAllText(requestFile))??throw new InvalidDataException("No install request.");
         var stage=Path.GetFullPath(request.Stage);var target=Path.GetFullPath(request.Target);var payload=Path.GetFullPath(request.Payload);
         if(!Path.GetFileName(stage).StartsWith(".nashi-update-",StringComparison.Ordinal)||Path.GetDirectoryName(stage)!=Path.GetDirectoryName(target)||payload!=Path.Combine(stage,"payload")||Path.GetFullPath(requestFile)!=Path.Combine(stage,"request.json"))throw new InvalidDataException("Invalid install paths.");
-        try{using var old=Process.GetProcessById(request.ProcessId);if(!old.WaitForExit(60000))throw new IOException("Nashi is still running.");}catch(ArgumentException){}
+        try{using var old=Process.GetProcessById(request.ProcessId);if(!old.HasExited&&!old.WaitForExit(60000))throw new IOException("Nashi is still running.");}catch(ArgumentException){}catch(InvalidOperationException){}
         var backup=target+".backup-"+Guid.NewGuid().ToString("N");
         Directory.Move(target,backup);
         try{Directory.Move(payload,target);}catch{Directory.Move(backup,target);throw;}
+        // Prune must not abort the relaunch: if cleanup trips, the update is
+        // already in place and the previous version stays recoverable.
+        TryPruneBackups(target,backup);
         Process.Start(new ProcessStartInfo(Path.Combine(target,"Nashi.exe")){UseShellExecute=true,WorkingDirectory=target})?.Dispose();
         // Backups remain recoverable; the app never recursively deletes a user's
         // portable directory merely because an update succeeded.
         return 0;
     }
     private sealed record InstallRequest(int ProcessId,string Target,string Payload,string Stage);
+
+    // Prune failure cannot abort an applied update; per-directory errors are
+    // retried by the next launch instead of blocking the relaunch.
+    private static void TryPruneBackups(string target,string keep)
+    {
+        try
+        {
+            var prefix=Path.GetFileName(target)+".backup-";var parent=Path.GetDirectoryName(target);
+            if(parent is null)return;
+            foreach(var directory in Directory.GetDirectories(parent,prefix+"*"))
+            {
+                if(string.Equals(directory,keep,StringComparison.OrdinalIgnoreCase))continue;
+                // Only the updater owns backups whose suffix is exactly one
+                // GUID ("N" hex form); anything else sharing the prefix — say,
+                // "Nashi.backup-personal" — belongs to the user.
+                var suffix=Path.GetFileName(directory)[prefix.Length..];
+                if(suffix.Length!=32||suffix.Any(c=>!char.IsAsciiHexDigit(c)))continue;
+                try{Directory.Delete(directory,true);}
+                catch(IOException){}
+                catch(UnauthorizedAccessException){}
+                catch(System.Security.SecurityException){}
+            }
+        }
+        catch(IOException){}
+        catch(UnauthorizedAccessException){}
+        catch(System.Security.SecurityException){}
+    }
 }
