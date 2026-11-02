@@ -23,6 +23,7 @@ class OwnerMergeTests(unittest.TestCase):
     def test_owner_only_and_ready_same_repository(self):
         self.assertTrue(merge.eligible(pull(), SHA))
         for key, value in [("draft", True), ("state", "closed"), ("user", {"id": 1}),
+                           ("user", None),
                            ("base", {"ref": "other"}), ("head", {"sha": SHA, "repo": None}),
                            ("head", {"sha": SHA, "repo": {"full_name": "someone/fork"}})]:
             pr = pull();pr[key] = value
