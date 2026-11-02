@@ -421,13 +421,16 @@
 "CHOOSE A FOLDER" = "CHOOSE A FOLDER";
 "CHOOSE A FOLDER WHERE NASHI MAY SAVE RESULTS. EVERY FOLDER INSIDE IT IS INCLUDED." = "CHOOSE A FOLDER WHERE NASHI MAY SAVE RESULTS. EVERY FOLDER INSIDE IT IS INCLUDED.";
 "CHOOSE A HEX BACKGROUND COLOR, SUCH AS #FFFFFF OR #00FFFFFF." = "CHOOSE A HEX BACKGROUND COLOR, SUCH AS #FFFFFF OR #00FFFFFF.";
+"CHOOSE A LARGER QR IMAGE SIZE FOR THIS TEXT." = "CHOOSE A LARGER QR IMAGE SIZE FOR THIS TEXT.";
 "CHOOSE A LARGER TARGET SIZE." = "CHOOSE A LARGER TARGET SIZE.";
+"CHOOSE A LOCAL FOLDER AND A PNG FILENAME." = "CHOOSE A LOCAL FOLDER AND A PNG FILENAME.";
 "CHOOSE A NONEMPTY IMAGE." = "CHOOSE A NONEMPTY IMAGE.";
 "CHOOSE A PDF SMALLER THAN 200 MB." = "CHOOSE A PDF SMALLER THAN 200 MB.";
 "CHOOSE A PDF WITH 1 TO 1,000 PAGES." = "CHOOSE A PDF WITH 1 TO 1,000 PAGES.";
 "CHOOSE A PLAIN OUTPUT FILENAME." = "CHOOSE A PLAIN OUTPUT FILENAME.";
 "CHOOSE A POSITIVE SIZE OR A REDUCTION BELOW 100%. ZERO USES AUTOMATIC COMPRESSION." = "CHOOSE A POSITIVE SIZE OR A REDUCTION BELOW 100%. ZERO USES AUTOMATIC COMPRESSION.";
 "CHOOSE A POSITIVE TARGET SIZE OR A REDUCTION BETWEEN 0 AND 100%." = "CHOOSE A POSITIVE TARGET SIZE OR A REDUCTION BETWEEN 0 AND 100%.";
+"CHOOSE A QR SIZE BETWEEN 64 AND 2,048 PIXELS AND L, M, Q, OR H CORRECTION." = "CHOOSE A QR SIZE BETWEEN 64 AND 2,048 PIXELS AND L, M, Q, OR H CORRECTION.";
 "CHOOSE A READABLE LOCAL MEDIA FILE." = "CHOOSE A READABLE LOCAL MEDIA FILE.";
 "CHOOSE A RECTANGLE INSIDE THE VIDEO." = "CHOOSE A RECTANGLE INSIDE THE VIDEO.";
 "CHOOSE A STILL IMAGE FOR THE VIDEO." = "CHOOSE A STILL IMAGE FOR THE VIDEO.";
@@ -549,6 +552,7 @@
 "COULD NOT COPY THE QR CODES." = "COULD NOT COPY THE QR CODES.";
 "COULD NOT COPY THE SELECTED FILE PATHS." = "COULD NOT COPY THE SELECTED FILE PATHS.";
 "COULD NOT COPY THE SELECTED FILES." = "COULD NOT COPY THE SELECTED FILES.";
+"COULD NOT CREATE THE QR CODE." = "COULD NOT CREATE THE QR CODE.";
 "COULD NOT DECODE THE AUDIO WAVEFORM." = "COULD NOT DECODE THE AUDIO WAVEFORM.";
 "COULD NOT INSPECT MEDIA INFORMATION." = "COULD NOT INSPECT MEDIA INFORMATION.";
 "COULD NOT ORIENT IMAGE." = "COULD NOT ORIENT IMAGE.";
@@ -561,8 +565,10 @@
 "CREATE A NEW FLOAT" = "CREATE A NEW FLOAT";
 "CREATE COLLAGE" = "CREATE COLLAGE";
 "CREATE PDF" = "CREATE PDF";
+"CREATE QR CODE" = "CREATE QR CODE";
 "CREATE VISUALIZATION" = "CREATE VISUALIZATION";
 "CREATED" = "CREATED";
+"CREATED LOCALLY. NO UPLOAD." = "CREATED LOCALLY. NO UPLOAD.";
 "CROP" = "CROP";
 "CROP AREA" = "CROP AREA";
 "CROP COORDINATES MUST BE FINITE." = "CROP COORDINATES MUST BE FINITE.";
@@ -621,6 +627,7 @@
 "Choose ZIP, TAR or GZIP." = "Choose ZIP, TAR or GZIP.";
 "Choose a PDF smaller than 200 MB." = "Choose a PDF smaller than 200 MB.";
 "Choose a PDF with 1 to 1,000 pages." = "Choose a PDF with 1 to 1,000 pages.";
+"Choose a QR size between 64 and 2,048 pixels and L, M, Q, or H correction." = "Choose a QR size between 64 and 2,048 pixels and L, M, Q, or H correction.";
 "Choose a background image." = "Choose a background image.";
 "Choose a canvas within 100 MP and 30,000 pixels." = "Choose a canvas within 100 MP and 30,000 pixels.";
 "Choose a complete RTFD folder containing TXT.rtf." = "Choose a complete RTFD folder containing TXT.rtf.";
@@ -631,7 +638,9 @@
 "Choose a folder" = "Choose a folder";
 "Choose a folder where Nashi may save results. Every folder inside it is included." = "Choose a folder where Nashi may save results. Every folder inside it is included.";
 "Choose a hex background color, such as #FFFFFF or #00FFFFFF." = "Choose a hex background color, such as #FFFFFF or #00FFFFFF.";
+"Choose a larger QR image size for this text." = "Choose a larger QR image size for this text.";
 "Choose a larger target size." = "Choose a larger target size.";
+"Choose a local folder and a PNG filename." = "Choose a local folder and a PNG filename.";
 "Choose a nonempty image." = "Choose a nonempty image.";
 "Choose a plain output filename." = "Choose a plain output filename.";
 "Choose a positive size or a reduction below 100%. Zero uses automatic compression." = "Choose a positive size or a reduction below 100%. Zero uses automatic compression.";
@@ -773,6 +782,7 @@
 "Could not copy the QR codes." = "Could not copy the QR codes.";
 "Could not copy the selected file paths." = "Could not copy the selected file paths.";
 "Could not copy the selected files." = "Could not copy the selected files.";
+"Could not create the QR code." = "Could not create the QR code.";
 "Could not decode the audio waveform." = "Could not decode the audio waveform.";
 "Could not inspect media information." = "Could not inspect media information.";
 "Could not open %@." = "Could not open %@.";
@@ -788,10 +798,12 @@
 "Cover style" = "Cover style";
 "Create Collage" = "Create Collage";
 "Create PDF" = "Create PDF";
+"Create QR Code" = "Create QR Code";
 "Create a New Float" = "Create a New Float";
 "Create a new Float" = "Create a new Float";
 "Create visualization" = "Create visualization";
 "Created" = "Created";
+"Created locally. No upload." = "Created locally. No upload.";
 "Crop" = "Crop";
 "Crop Image" = "Crop Image";
 "Crop Image · Nashi" = "Crop Image · Nashi";
@@ -995,9 +1007,11 @@
 "ENTER A FINITE NUMBER." = "ENTER A FINITE NUMBER.";
 "ENTER A POSITIVE, FINITE TARGET SIZE." = "ENTER A POSITIVE, FINITE TARGET SIZE.";
 "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%." = "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%.";
+"ENTER BETWEEN 1 AND 2,000 UTF-8 BYTES FOR THE QR CODE." = "ENTER BETWEEN 1 AND 2,000 UTF-8 BYTES FOR THE QR CODE.";
 "ENTER PAGE NUMBERS WITHIN THIS PDF, IN THE DESIRED ORDER." = "ENTER PAGE NUMBERS WITHIN THIS PDF, IN THE DESIRED ORDER.";
 "EPUB LAYOUT" = "EPUB LAYOUT";
 "EPUB layout" = "EPUB layout";
+"ERROR CORRECTION" = "ERROR CORRECTION";
 "ESC TO CLOSE" = "ESC TO CLOSE";
 "EVERYTHING HAS A NEXT FORM." = "EVERYTHING HAS A NEXT FORM.";
 "EXPAND FLOAT" = "EXPAND FLOAT";
@@ -1029,9 +1043,11 @@
 "Enter a target of at least one byte and less than %lld bytes." = "Enter a target of at least one byte and less than %lld bytes.";
 "Enter a valid number for %@." = "Enter a valid number for %@.";
 "Enter a valid number for %lld." = "Enter a valid number for %lld.";
+"Enter between 1 and 2,000 UTF-8 bytes for the QR code." = "Enter between 1 and 2,000 UTF-8 bytes for the QR code.";
 "Enter page numbers within this PDF, in the desired order." = "Enter page numbers within this PDF, in the desired order.";
 "Equal clips: %@" = "Equal clips: %@";
 "Equal clips: %lld" = "Equal clips: %lld";
+"Error correction" = "Error correction";
 "Esc to close" = "Esc to close";
 "Every redaction area must have positive dimensions and fit completely inside the %@ × %@ pixel image. Adjust the areas for this image and try again." = "Every redaction area must have positive dimensions and fit completely inside the %@ × %@ pixel image. Adjust the areas for this image and try again.";
 "Every redaction area must have positive dimensions and fit completely inside the %@ × %lld pixel image. Adjust the areas for this image and try again." = "Every redaction area must have positive dimensions and fit completely inside the %@ × %lld pixel image. Adjust the areas for this image and try again.";
@@ -1205,6 +1221,7 @@
 "GAMMA" = "GAMMA";
 "GAMMA MUST BE POSITIVE; CONTRAST AND SATURATION CANNOT BE NEGATIVE." = "GAMMA MUST BE POSITIVE; CONTRAST AND SATURATION CANNOT BE NEGATIVE.";
 "GENERAL" = "GENERAL";
+"GENERATE QR CODE" = "GENERATE QR CODE";
 "GET STARTED" = "GET STARTED";
 "GIF FRAME RATE" = "GIF FRAME RATE";
 "GIF FRAMES PER SECOND" = "GIF FRAMES PER SECOND";
@@ -1228,6 +1245,7 @@
 "Gamma" = "Gamma";
 "Gamma must be positive; contrast and saturation cannot be negative." = "Gamma must be positive; contrast and saturation cannot be negative.";
 "General" = "General";
+"Generate QR Code" = "Generate QR Code";
 "Get started" = "Get started";
 "GitHub release connection" = "GitHub release connection";
 "GitHub repository" = "GitHub repository";
@@ -2067,6 +2085,7 @@
 "SAVE NEW FILES TO…" = "SAVE NEW FILES TO…";
 "SAVE ORGANIZED COPY ↗" = "SAVE ORGANIZED COPY ↗";
 "SAVE ORGANIZED PDF" = "SAVE ORGANIZED PDF";
+"SAVE PNG…" = "SAVE PNG…";
 "SAVE REDACTED COPY" = "SAVE REDACTED COPY";
 "SAVE REPORT…" = "SAVE REPORT…";
 "SAVE SPEED COPY" = "SAVE SPEED COPY";
@@ -2196,6 +2215,7 @@
 "Save 1 frame" = "Save 1 frame";
 "Save Connection" = "Save Connection";
 "Save Downloads Here" = "Save Downloads Here";
+"Save PNG…" = "Save PNG…";
 "Save a copy" = "Save a copy";
 "Save a cropped copy (Return or ⌘S)" = "Save a cropped copy (Return or ⌘S)";
 "Save a fresh copy (⌘S)" = "Save a fresh copy (⌘S)";
@@ -2366,6 +2386,7 @@
 "TEXT" = "TEXT";
 "TEXT ADAPTS TO THE READER’S SCREEN AND FONT SIZE. BEST FOR READING." = "TEXT ADAPTS TO THE READER’S SCREEN AND FONT SIZE. BEST FOR READING.";
 "TEXT OR CALLOUT" = "TEXT OR CALLOUT";
+"TEXT OR URL" = "TEXT OR URL";
 "TEXT SIZE" = "TEXT SIZE";
 "TEXTURE" = "TEXTURE";
 "THAT PDF SIZE CANNOT BE REACHED WHILE KEEPING SELECTABLE TEXT, LINKS AND ANNOTATIONS. CHOOSE A LARGER TARGET." = "THAT PDF SIZE CANNOT BE REACHED WHILE KEEPING SELECTABLE TEXT, LINKS AND ANNOTATIONS. CHOOSE A LARGER TARGET.";
@@ -2416,6 +2437,7 @@
 "THE SITE RETURNED TOO MUCH METADATA. TRY AN INDIVIDUAL MEDIA LINK." = "THE SITE RETURNED TOO MUCH METADATA. TRY AN INDIVIDUAL MEDIA LINK.";
 "THE START AND END TIMES MUST DESCRIBE A NONEMPTY RANGE INSIDE THE MEDIA." = "THE START AND END TIMES MUST DESCRIBE A NONEMPTY RANGE INSIDE THE MEDIA.";
 "THE TEXT CLIPPING'S RESOURCE DATA IS DAMAGED." = "THE TEXT CLIPPING'S RESOURCE DATA IS DAMAGED.";
+"THE TEXT IS TOO LONG FOR THIS QR CORRECTION LEVEL." = "THE TEXT IS TOO LONG FOR THIS QR CORRECTION LEVEL.";
 "THE UPDATE DOES NOT CONTAIN NASHI." = "THE UPDATE DOES NOT CONTAIN NASHI.";
 "THE UPDATE NEEDS ANOTHER TRY" = "THE UPDATE NEEDS ANOTHER TRY";
 "THE UPDATE SIGNATURE IS INVALID. YOUR EXISTING APP WAS KEPT." = "THE UPDATE SIGNATURE IS INVALID. YOUR EXISTING APP WAS KEPT.";
@@ -2506,6 +2528,7 @@
 "Terminal app" = "Terminal app";
 "Text" = "Text";
 "Text adapts to the reader’s screen and font size. Best for reading." = "Text adapts to the reader’s screen and font size. Best for reading.";
+"Text or URL" = "Text or URL";
 "Text or callout" = "Text or callout";
 "Text size" = "Text size";
 "Texture" = "Texture";
@@ -2581,6 +2604,7 @@
 "The text clipping's resource data is damaged." = "The text clipping's resource data is damaged.";
 "The text encoding of %@ could not be read." = "The text encoding of %@ could not be read.";
 "The text encoding of %lld could not be read." = "The text encoding of %lld could not be read.";
+"The text is too long for this QR correction level." = "The text is too long for this QR correction level.";
 "The update does not contain Nashi." = "The update does not contain Nashi.";
 "The update needs another try" = "The update needs another try";
 "The update signature is invalid. Your existing app was kept." = "The update signature is invalid. Your existing app was kept.";

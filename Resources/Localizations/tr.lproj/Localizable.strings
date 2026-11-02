@@ -421,13 +421,16 @@
 "CHOOSE A FOLDER" = "BİR KLASÖR SEÇ";
 "CHOOSE A FOLDER WHERE NASHI MAY SAVE RESULTS. EVERY FOLDER INSIDE IT IS INCLUDED." = "NASHI'NİN SONUÇLARI KAYDEDEBİLECEĞİ BİR KLASÖR SEÇ. İÇİNDEKİ TÜM KLASÖRLER DE DAHİL EDİLİR.";
 "CHOOSE A HEX BACKGROUND COLOR, SUCH AS #FFFFFF OR #00FFFFFF." = "#FFFFFF VEYA #00FFFFFF GİBİ ONALTILIK BİR ARKA PLAN RENGİ SEÇ.";
+"CHOOSE A LARGER QR IMAGE SIZE FOR THIS TEXT." = "BU METİN İÇİN DAHA BÜYÜK BİR QR GÖRSEL BOYUTU SEÇ.";
 "CHOOSE A LARGER TARGET SIZE." = "DAHA BÜYÜK BİR HEDEF BOYUT SEÇ.";
+"CHOOSE A LOCAL FOLDER AND A PNG FILENAME." = "YEREL BİR KLASÖR VE PNG DOSYA ADI SEÇ.";
 "CHOOSE A NONEMPTY IMAGE." = "BOŞ OLMAYAN BİR GÖRSEL SEÇ.";
 "CHOOSE A PDF SMALLER THAN 200 MB." = "200 MB'TAN KÜÇÜK BİR PDF SEÇ.";
 "CHOOSE A PDF WITH 1 TO 1,000 PAGES." = "1 İLE 1.000 SAYFA ARASINDA BİR PDF SEÇ.";
 "CHOOSE A PLAIN OUTPUT FILENAME." = "SADE BİR ÇIKTI DOSYA ADI SEÇ.";
 "CHOOSE A POSITIVE SIZE OR A REDUCTION BELOW 100%. ZERO USES AUTOMATIC COMPRESSION." = "POZİTİF BİR BOYUT VEYA %100'ÜN ALTINDA BİR KÜÇÜLTME SEÇ. SIFIR, OTOMATİK SIKIŞTIRMA KULLANIR.";
 "CHOOSE A POSITIVE TARGET SIZE OR A REDUCTION BETWEEN 0 AND 100%." = "POZİTİF BİR HEDEF BOYUT VEYA %0 İLE %100 ARASINDA BİR KÜÇÜLTME SEÇ.";
+"CHOOSE A QR SIZE BETWEEN 64 AND 2,048 PIXELS AND L, M, Q, OR H CORRECTION." = "64 İLE 2.048 PİKSEL ARASINDA QR BOYUTU VE L, M, Q VEYA H DÜZELTME DÜZEYİ SEÇ.";
 "CHOOSE A READABLE LOCAL MEDIA FILE." = "OKUNABİLİR BİR YEREL MEDYA DOSYASI SEÇ.";
 "CHOOSE A RECTANGLE INSIDE THE VIDEO." = "VİDEONUN İÇİNDE KALAN BİR DİKDÖRTGEN SEÇ.";
 "CHOOSE A STILL IMAGE FOR THE VIDEO." = "VİDEO İÇİN SABİT BİR GÖRSEL SEÇ.";
@@ -549,6 +552,7 @@
 "COULD NOT COPY THE QR CODES." = "QR KODLARI KOPYALANAMADI.";
 "COULD NOT COPY THE SELECTED FILE PATHS." = "SEÇİLİ DOSYA YOLLARI KOPYALANAMADI.";
 "COULD NOT COPY THE SELECTED FILES." = "SEÇİLİ DOSYALAR KOPYALANAMADI.";
+"COULD NOT CREATE THE QR CODE." = "QR KODU OLUŞTURULAMADI.";
 "COULD NOT DECODE THE AUDIO WAVEFORM." = "SESİN DALGA BİÇİMİ ÇÖZÜMLENEMEDİ.";
 "COULD NOT INSPECT MEDIA INFORMATION." = "MEDYA BİLGİLERİ İNCELENEMEDİ.";
 "COULD NOT ORIENT IMAGE." = "GÖRSELİN YÖNÜ DÜZELTİLEMEDİ.";
@@ -561,8 +565,10 @@
 "CREATE A NEW FLOAT" = "YENİ YÜZEN PENCERE OLUŞTUR";
 "CREATE COLLAGE" = "KOLAJ OLUŞTUR";
 "CREATE PDF" = "PDF OLUŞTUR";
+"CREATE QR CODE" = "QR KODU OLUŞTUR";
 "CREATE VISUALIZATION" = "GÖRSELLEŞTİRME OLUŞTUR";
 "CREATED" = "OLUŞTURULMA";
+"CREATED LOCALLY. NO UPLOAD." = "YEREL OLARAK OLUŞTURULUR. YÜKLEME YAPILMAZ.";
 "CROP" = "KIRP";
 "CROP AREA" = "KIRPMA ALANI";
 "CROP COORDINATES MUST BE FINITE." = "KIRPMA KOORDİNATLARI SONLU SAYILAR OLMALI.";
@@ -621,6 +627,7 @@
 "Choose ZIP, TAR or GZIP." = "ZIP, TAR veya GZIP seç.";
 "Choose a PDF smaller than 200 MB." = "200 MB'tan küçük bir PDF seç.";
 "Choose a PDF with 1 to 1,000 pages." = "1 ile 1.000 sayfa arasında bir PDF seç.";
+"Choose a QR size between 64 and 2,048 pixels and L, M, Q, or H correction." = "64 ile 2.048 piksel arasında QR boyutu ve L, M, Q veya H düzeltme düzeyi seç.";
 "Choose a background image." = "Bir arka plan görseli seç.";
 "Choose a canvas within 100 MP and 30,000 pixels." = "100 MP ve 30.000 pikseli aşmayan bir tuval seç.";
 "Choose a complete RTFD folder containing TXT.rtf." = "TXT.rtf içeren eksiksiz bir RTFD klasörü seç.";
@@ -631,7 +638,9 @@
 "Choose a folder" = "Bir klasör seç";
 "Choose a folder where Nashi may save results. Every folder inside it is included." = "Nashi'nin sonuçları kaydedebileceği bir klasör seç. İçindeki tüm klasörler de dahil edilir.";
 "Choose a hex background color, such as #FFFFFF or #00FFFFFF." = "#FFFFFF veya #00FFFFFF gibi onaltılık bir arka plan rengi seç.";
+"Choose a larger QR image size for this text." = "Bu metin için daha büyük bir QR görsel boyutu seç.";
 "Choose a larger target size." = "Daha büyük bir hedef boyut seç.";
+"Choose a local folder and a PNG filename." = "Yerel bir klasör ve PNG dosya adı seç.";
 "Choose a nonempty image." = "Boş olmayan bir görsel seç.";
 "Choose a plain output filename." = "Sade bir çıktı dosya adı seç.";
 "Choose a positive size or a reduction below 100%. Zero uses automatic compression." = "Pozitif bir boyut veya %100'ün altında bir küçültme seç. Sıfır, otomatik sıkıştırma kullanır.";
@@ -773,6 +782,7 @@
 "Could not copy the QR codes." = "QR kodları kopyalanamadı.";
 "Could not copy the selected file paths." = "Seçili dosya yolları kopyalanamadı.";
 "Could not copy the selected files." = "Seçili dosyalar kopyalanamadı.";
+"Could not create the QR code." = "QR kodu oluşturulamadı.";
 "Could not decode the audio waveform." = "Sesin dalga biçimi çözümlenemedi.";
 "Could not inspect media information." = "Medya bilgileri incelenemedi.";
 "Could not open %@." = "%@ açılamadı.";
@@ -788,10 +798,12 @@
 "Cover style" = "Kaplama stili";
 "Create Collage" = "Kolaj Oluştur";
 "Create PDF" = "PDF Oluştur";
+"Create QR Code" = "QR Kodu Oluştur";
 "Create a New Float" = "Yeni Yüzen Pencere Oluştur";
 "Create a new Float" = "Yeni yüzen pencere oluştur";
 "Create visualization" = "Görselleştirme oluştur";
 "Created" = "Oluşturulma";
+"Created locally. No upload." = "Yerel olarak oluşturulur. Yükleme yapılmaz.";
 "Crop" = "Kırp";
 "Crop Image" = "Görseli Kırp";
 "Crop Image · Nashi" = "Görseli Kırp · Nashi";
@@ -995,9 +1007,11 @@
 "ENTER A FINITE NUMBER." = "GEÇERLİ BİR SAYI GİR.";
 "ENTER A POSITIVE, FINITE TARGET SIZE." = "POZİTİF VE GEÇERLİ BİR HEDEF BOYUT GİR.";
 "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%." = "%0'DAN BÜYÜK VE %100'DEN KÜÇÜK BİR KÜÇÜLTME GİR.";
+"ENTER BETWEEN 1 AND 2,000 UTF-8 BYTES FOR THE QR CODE." = "QR KODU İÇİN 1 İLE 2.000 UTF-8 BAYT ARASINDA METİN GİR.";
 "ENTER PAGE NUMBERS WITHIN THIS PDF, IN THE DESIRED ORDER." = "BU PDF'DEKİ SAYFA NUMARALARINI İSTEDİĞİN SIRAYLA GİR.";
 "EPUB LAYOUT" = "EPUB DÜZENİ";
 "EPUB layout" = "EPUB düzeni";
+"ERROR CORRECTION" = "HATA DÜZELTME";
 "ESC TO CLOSE" = "KAPATMAK İÇİN ESC";
 "EVERYTHING HAS A NEXT FORM." = "HER DOSYANIN YENİ BİR HÂLİ VAR.";
 "EXPAND FLOAT" = "FLOAT’I GENİŞLET";
@@ -1029,9 +1043,11 @@
 "Enter a target of at least one byte and less than %lld bytes." = "En az bir bayt ve %lld bayttan küçük bir hedef gir.";
 "Enter a valid number for %@." = "%@ için geçerli bir sayı gir.";
 "Enter a valid number for %lld." = "%lld için geçerli bir sayı gir.";
+"Enter between 1 and 2,000 UTF-8 bytes for the QR code." = "QR kodu için 1 ile 2.000 UTF-8 bayt arasında metin gir.";
 "Enter page numbers within this PDF, in the desired order." = "Bu PDF'deki sayfa numaralarını istediğin sırayla gir.";
 "Equal clips: %@" = "Eşit klip sayısı: %@";
 "Equal clips: %lld" = "Eşit klip sayısı: %lld";
+"Error correction" = "Hata düzeltme";
 "Esc to close" = "Kapatmak için Esc";
 "Every redaction area must have positive dimensions and fit completely inside the %@ × %@ pixel image. Adjust the areas for this image and try again." = "Her sansür alanının boyutları sıfırdan büyük olmalı ve alan %@ × %@ piksellik görselin tamamen içinde kalmalı. Alanları bu görsele göre ayarla ve yeniden dene.";
 "Every redaction area must have positive dimensions and fit completely inside the %@ × %lld pixel image. Adjust the areas for this image and try again." = "Her sansür alanının boyutları sıfırdan büyük olmalı ve alan %@ × %lld piksellik görselin tamamen içinde kalmalı. Alanları bu görsele göre ayarla ve yeniden dene.";
@@ -1205,6 +1221,7 @@
 "GAMMA" = "GAMA";
 "GAMMA MUST BE POSITIVE; CONTRAST AND SATURATION CANNOT BE NEGATIVE." = "GAMA POZİTİF OLMALI; KONTRAST VE DOYGUNLUK NEGATİF OLAMAZ.";
 "GENERAL" = "GENEL";
+"GENERATE QR CODE" = "QR KODU ÜRET";
 "GET STARTED" = "BAŞLA";
 "GIF FRAME RATE" = "GIF KARE HIZI";
 "GIF FRAMES PER SECOND" = "GIF SANİYEDEKİ KARE SAYISI";
@@ -1228,6 +1245,7 @@
 "Gamma" = "Gama";
 "Gamma must be positive; contrast and saturation cannot be negative." = "Gama pozitif olmalı; kontrast ve doygunluk negatif olamaz.";
 "General" = "Genel";
+"Generate QR Code" = "QR Kodu Üret";
 "Get started" = "Başla";
 "GitHub release connection" = "GitHub sürüm bağlantısı";
 "GitHub repository" = "GitHub deposu";
@@ -2067,6 +2085,7 @@
 "SAVE NEW FILES TO…" = "YENİ DOSYALARI ŞURAYA KAYDET…";
 "SAVE ORGANIZED COPY ↗" = "DÜZENLENMİŞ KOPYAYI KAYDET ↗";
 "SAVE ORGANIZED PDF" = "DÜZENLENMİŞ PDF'Yİ KAYDET";
+"SAVE PNG…" = "PNG KAYDET…";
 "SAVE REDACTED COPY" = "SANSÜRLENMİŞ KOPYAYI KAYDET";
 "SAVE REPORT…" = "RAPORU KAYDET…";
 "SAVE SPEED COPY" = "HIZI DEĞİŞTİRİLMİŞ KOPYAYI KAYDET";
@@ -2196,6 +2215,7 @@
 "Save 1 frame" = "1 kare kaydet";
 "Save Connection" = "Bağlantıyı Kaydet";
 "Save Downloads Here" = "İndirmeleri Buraya Kaydet";
+"Save PNG…" = "PNG Kaydet…";
 "Save a copy" = "Kopya kaydet";
 "Save a cropped copy (Return or ⌘S)" = "Kırpılmış kopyayı kaydet (Enter veya ⌘S)";
 "Save a fresh copy (⌘S)" = "Yeni bir kopya kaydet (⌘S)";
@@ -2366,6 +2386,7 @@
 "TEXT" = "METİN";
 "TEXT ADAPTS TO THE READER’S SCREEN AND FONT SIZE. BEST FOR READING." = "METİN, OKUYUCUNUN EKRANINA VE YAZI BOYUTUNA UYUM SAĞLAR. OKUMAK İÇİN EN İYİSİ.";
 "TEXT OR CALLOUT" = "METİN VEYA AÇIKLAMA";
+"TEXT OR URL" = "METİN VEYA URL";
 "TEXT SIZE" = "METİN BOYUTU";
 "TEXTURE" = "DOKU";
 "THAT PDF SIZE CANNOT BE REACHED WHILE KEEPING SELECTABLE TEXT, LINKS AND ANNOTATIONS. CHOOSE A LARGER TARGET." = "SEÇİLEBİLİR METİN, BAĞLANTILAR VE NOTLAR KORUNARAK BU PDF BOYUTUNA İNİLEMİYOR. DAHA BÜYÜK BİR HEDEF SEÇ.";
@@ -2416,6 +2437,7 @@
 "THE SITE RETURNED TOO MUCH METADATA. TRY AN INDIVIDUAL MEDIA LINK." = "SİTE ÇOK FAZLA META VERİ DÖNDÜRDÜ. TEK BİR MEDYANIN BAĞLANTISINI DENE.";
 "THE START AND END TIMES MUST DESCRIBE A NONEMPTY RANGE INSIDE THE MEDIA." = "BAŞLANGIÇ VE BİTİŞ ZAMANLARI MEDYANIN İÇİNDE BOŞ OLMAYAN BİR ARALIK BELİRTMELİ.";
 "THE TEXT CLIPPING'S RESOURCE DATA IS DAMAGED." = "METİN KIRPINTISININ KAYNAK VERİSİ BOZUK.";
+"THE TEXT IS TOO LONG FOR THIS QR CORRECTION LEVEL." = "METİN BU QR HATA DÜZELTME DÜZEYİ İÇİN ÇOK UZUN.";
 "THE UPDATE DOES NOT CONTAIN NASHI." = "GÜNCELLEME NASHI'Yİ İÇERMİYOR.";
 "THE UPDATE NEEDS ANOTHER TRY" = "GÜNCELLEMEYİ YENİDEN DENEMEK GEREKİYOR";
 "THE UPDATE SIGNATURE IS INVALID. YOUR EXISTING APP WAS KEPT." = "GÜNCELLEME İMZASI GEÇERSİZ. MEVCUT UYGULAMAN KORUNDU.";
@@ -2506,6 +2528,7 @@
 "Terminal app" = "Terminal uygulaması";
 "Text" = "Metin";
 "Text adapts to the reader’s screen and font size. Best for reading." = "Metin, okuyucunun ekranına ve yazı boyutuna uyum sağlar. Okumak için en iyisi.";
+"Text or URL" = "Metin veya URL";
 "Text or callout" = "Metin veya açıklama";
 "Text size" = "Metin boyutu";
 "Texture" = "Doku";
@@ -2581,6 +2604,7 @@
 "The text clipping's resource data is damaged." = "Metin kırpıntısının kaynak verisi bozuk.";
 "The text encoding of %@ could not be read." = "%@ dosyasının metin kodlaması okunamadı.";
 "The text encoding of %lld could not be read." = "%lld dosyasının metin kodlaması okunamadı.";
+"The text is too long for this QR correction level." = "Metin bu QR hata düzeltme düzeyi için çok uzun.";
 "The update does not contain Nashi." = "Güncelleme Nashi'yi içermiyor.";
 "The update needs another try" = "Güncellemeyi yeniden denemek gerekiyor";
 "The update signature is invalid. Your existing app was kept." = "Güncelleme imzası geçersiz. Mevcut uygulaman korundu.";

@@ -1432,5 +1432,17 @@
   "YouTube thumbnail · best available full-size image": "YouTube küçük resmi · en iyi tam boyutlu görsel",
   "No tools for this file type": "Bu dosya türü için araç yok",
   "Details": "Ayrıntılar",
-  "Copy details": "Ayrıntıları kopyala"
+  "Copy details": "Ayrıntıları kopyala",
+  "Create QR Code": "QR Kodu Oluştur",
+  "Generate QR Code": "QR Kodu Üret",
+  "Text or URL": "Metin veya URL",
+  "Error correction": "Hata düzeltme",
+  "Created locally. No upload.": "Yerel olarak oluşturulur. Yükleme yapılmaz.",
+  "Save PNG…": "PNG Kaydet…",
+  "Enter between 1 and 2,000 UTF-8 bytes for the QR code.": "QR kodu için 1 ile 2.000 UTF-8 bayt arasında metin gir.",
+  "Choose a QR size between 64 and 2,048 pixels and L, M, Q, or H correction.": "64 ile 2.048 piksel arasında QR boyutu ve L, M, Q veya H düzeltme düzeyi seç.",
+  "Could not create the QR code.": "QR kodu oluşturulamadı.",
+  "The text is too long for this QR correction level.": "Metin bu QR hata düzeltme düzeyi için çok uzun.",
+  "Choose a larger QR image size for this text.": "Bu metin için daha büyük bir QR görsel boyutu seç.",
+  "Choose a local folder and a PNG filename.": "Yerel bir klasör ve PNG dosya adı seç."
 }
