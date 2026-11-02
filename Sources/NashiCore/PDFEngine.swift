@@ -47,7 +47,7 @@ public enum PDFEngine {
         let ranges=ranges.replacingOccurrences(of:#"\s*-\s*"#,with:"-",options:.regularExpression)
         var result:[Int]=[]
         for part in ranges.split(separator:",") {
-            let pieces=part.trimmingCharacters(in:.whitespaces).split(separator:"-")
+            let pieces=part.trimmingCharacters(in:.whitespaces).split(separator:"-",omittingEmptySubsequences:false)
             if pieces.count==1,let n=Int(pieces[0]),n>0,n<=count { result.append(n-1) }
             else if pieces.count==2,let a=Int(pieces[0]),let b=Int(pieces[1]),a>0,b>0,a<=count,b<=count {
                 result += stride(from:a,through:b,by:a<=b ? 1 : -1).map { $0-1 }
