@@ -40,3 +40,13 @@ test('playground Library search ignores spaces around the query', () => {
   assert.deepEqual(names.filter(name => foldSearchText(name).includes(foldSearchText(' AVİF'))), ['AVIF-export.jpg']);
   assert.equal(foldSearchText('  '), '');
 });
+
+test('playground Convert Audio Channels Mono mixes both levels like the app', async () => {
+  const src = fs.readFileSync(new URL('../docs/assets/playground.js', import.meta.url), 'utf8').split('\n').find(line => line.startsWith('function audioWav('));
+  globalThis.Blob = class { constructor(parts) { this.buf = parts[0]; } };
+  const audioWav = new Function(`${src}; return audioWav;`)();
+  const left = new Float32Array(4).fill(0.8), right = new Float32Array(4).fill(0.8);
+  const audioBuffer = {sampleRate: 8000, length: 4, numberOfChannels: 2, getChannelData: c => c ? right : left};
+  const mono = (l, r) => new DataView(audioWav({id: 'audioChannels', audioBuffer, values: {channels: 'mono', left: l, right: r}}).buf).getInt16(44, true) / 32767;
+  for (const [l, r, want] of [[100, 100, 0.8], [0, 100, 0.4], [100, 50, 0.6], [0, 0, 0]]) assert.ok(Math.abs(mono(l, r) - want) < 0.01);
+});
