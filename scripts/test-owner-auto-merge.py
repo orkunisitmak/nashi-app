@@ -24,7 +24,8 @@ class OwnerMergeTests(unittest.TestCase):
         self.assertTrue(merge.eligible(pull(), SHA))
         for key, value in [("draft", True), ("state", "closed"), ("user", {"id": 1}),
                            ("user", None),
-                           ("base", {"ref": "other"}), ("head", {"sha": SHA, "repo": None}),
+                           ("base", {"ref": "other"}), ("base", {"ref": "main", "repo": None}),
+                           ("head", {"sha": SHA, "repo": None}),
                            ("head", {"sha": SHA, "repo": {"full_name": "someone/fork"}})]:
             pr = pull();pr[key] = value
             self.assertFalse(merge.eligible(pr, SHA), key)
