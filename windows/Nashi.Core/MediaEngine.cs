@@ -129,7 +129,8 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
             {
                 RequireVideo(info);
                 // GIF viewers ignore a pixel aspect, so non-square pixels are resized to their displayed shape (as on macOS).
-                if (format == "gif") arguments.AddRange(["-filter_complex",$"[0:v]fps={options.GifFrameRate},scale=w='min({options.GifWidth},iw)':h=-2:reset_sar=1,split[p0][p1];[p0]palettegen[pal];[p1][pal]paletteuse=dither=sierra2_4a","-an","-loop","0"]);
+                // GIF has no even-size rule: h=-2 stretched a 641x361 recording to 641x362, so the height only keeps the shape.
+                if (format == "gif") arguments.AddRange(["-filter_complex",$"[0:v]fps={options.GifFrameRate},scale=w='min({options.GifWidth},iw)':h=-1:reset_sar=1,split[p0][p1];[p0]palettegen[pal];[p1][pal]paletteuse=dither=sierra2_4a","-an","-loop","0"]);
                 else
                 {
                     arguments.AddRange(["-map","0:v:0","-map","0:a:0?"]);
