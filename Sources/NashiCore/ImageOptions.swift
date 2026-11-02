@@ -1,7 +1,7 @@
 import Foundation
 
 /// Neutral values leave the corresponding image adjustment unchanged.
-/// Tonal/color amounts use -1...1, exposure uses EV and gamma uses its actual exponent.
+/// Tonal/color amounts use -1...1, exposure uses EV and gamma above 1 brightens (output = input^(1/gamma)).
 public struct ImageAdjustments: Codable, Sendable {
     public var exposure: Double = 0
     public var brightness: Double = 0
