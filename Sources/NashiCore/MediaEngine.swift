@@ -58,7 +58,8 @@ public enum MediaEngine {
 
     public static func inspect(_ input: URL, token: CancellationToken = .init()) throws -> MediaInfo {
         try validateInput(input, token: token)
-        let result = try ProcessRunner.run(Dependencies.executable("ffprobe"), ["-v", "error", "-show_format", "-show_streams", "-show_chapters", "-of", "json", input.path], token: token)
+        // Warnings are read only to learn whether the duration below is a guess.
+        let result = try ProcessRunner.run(Dependencies.executable("ffprobe"), ["-v", "warning", "-show_format", "-show_streams", "-show_chapters", "-of", "json", input.path], token: token)
         guard let root = try JSONSerialization.jsonObject(with: result.output) as? [String: Any] else { throw NashiError.failed("Could not inspect media information.") }
         let format = root["format"] as? [String: Any] ?? [:]
         let streams = (root["streams"] as? [[String: Any]] ?? []).map { item in
@@ -77,10 +78,23 @@ public enum MediaEngine {
         let chapters = (root["chapters"] as? [[String: Any]] ?? []).enumerated().map { index, item in
             MediaChapter(index: index, start: number(item["start_time"]) ?? 0, end: number(item["end_time"]) ?? 0, metadata: tags(item["tags"]))
         }
-        let duration = number(format["duration"]) ?? streams.compactMap(\.duration).max() ?? 0
+        var duration = number(format["duration"]) ?? streams.compactMap(\.duration).max() ?? 0
+        // Raw ADTS AAC and MP3 without a length header store no duration, so ffprobe guesses one from the bitrate.
+        // A recording that goes quiet shortens the guess, and trims, bleeps and visualizations then stopped there.
+        if String(decoding: result.errorOutput, as: UTF8.self).contains("Estimating duration from bitrate"), let measured = try measuredDuration(input, token: token) { duration = measured }
         // A symlink's own size is a few bytes; compression targets come from the media it points to.
         let size = (try input.resolvingSymlinksInPath().resourceValues(forKeys: [.fileSizeKey]).fileSize).map(Int64.init) ?? 0
         return MediaInfo(duration: duration, size: size, format: format["format_name"] as? String ?? input.pathExtension, streams: streams, chapters: chapters, metadata: tags(format["tags"]))
+    }
+
+    /// The end of the last packet, read by copying every stream to the null muxer without decoding.
+    /// Nil when that fails, so the file stays usable with ffprobe's guess; cancellation still throws.
+    private static func measuredDuration(_ input: URL, token: CancellationToken) throws -> Double? {
+        let result: ProcessResult
+        do { result = try ffmpeg(["-i", input.path, "-map", "0", "-c", "copy", "-f", "null", "-"], token: token) }
+        catch { try token.check(); return nil }
+        let ends = result.text.split(separator: "\n").compactMap { $0.hasPrefix("out_time_us=") ? Double($0.dropFirst("out_time_us=".count)) : nil }
+        return ends.last.flatMap { $0.isFinite && $0 > 0 ? $0 / 1_000_000 : nil }
     }
 
     /// Keys are `file:title`, `track[0]:language`, or `chapter[0]:title`.
