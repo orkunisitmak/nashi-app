@@ -88,6 +88,21 @@ final class PDFScanRectificationTests: XCTestCase {
         XCTAssertEqual(PDFOfficeCodec.dominantScript(["Total", "Итого"]), .cyrillic)
     }
 
+    func testRectifiedScanEnablesBoxDetection() throws {
+        // After rectification, the Word output should contain artwork (box/frame
+        // detection is enabled), not just plain text. The artwork title appears
+        // only when the artwork layer is generated.
+        let url = root.appendingPathComponent("Rectified route.pdf")
+        try XCTUnwrap(try photographed("Rectified route", degrees: -4).dataRepresentation()).write(to: url)
+        let work = root.appendingPathComponent("work2", isDirectory: true)
+        try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
+        let fodt = try PDFOfficeCodec.prepare(url, to: "docx", at: work, options: OperationOptions(), token: .init())
+        let xml = try String(contentsOf: fodt, encoding: .utf8)
+        XCTAssertTrue(xml.contains("Original page artwork"), "Artwork is generated for rectified scans")
+        // The artwork should be JPEG (photographic content)
+        XCTAssertTrue(xml.contains("image/jpeg"), "Photographic artwork uses JPEG")
+    }
+
     func testQuadGeometry() {
         let square = PDFScanRectification.Quad(topLeft: CGPoint(x: 0, y: 10), topRight: CGPoint(x: 10, y: 10), bottomLeft: .zero, bottomRight: CGPoint(x: 10, y: 0))
         XCTAssertEqual(PDFScanRectification.area(square), 100, accuracy: 0.001)

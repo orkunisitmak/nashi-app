@@ -70,3 +70,23 @@ with UForge's engine, re-exports the DOCX to PDF and writes, per page:
 
 Output lands in `build/pdf-fidelity/compare/`. Unit tests for the individual
 behaviours are in `Tests/NashiCoreTests/PDFLayoutReconstructionTests.swift`.
+
+## Scanned and photographed pages
+
+A photographed page (paper on a desk, tilted or in perspective) is first cut
+to the paper and flattened by `PDFScanRectification`, then converted with the
+regular reconstruction path. Once the page is axis-aligned and desk-free:
+
+- **Box/frame detection is enabled** even though the page is a scan. The
+  framed sections and shaded bands of a utility bill become real Word tables
+  with cell borders and shading, the same as native-text PDFs.
+- **Artwork resolution is higher** (3x instead of 2.5x) so QR codes, fine
+  print and ruled grids stay sharp in the background layer.
+- **JPEG quality is higher** (88% instead of 82%) to preserve camera
+  detail and avoid blurring ruled lines.
+- **Text erasure tolerance is wider** (85 instead of 70) because camera
+  text has softer anti-aliased edges. The wider tolerance erases the ink
+  cleanly, leaving a smooth background behind the editable text.
+- **Multi-word OCR lines are split at wide gaps** so that side-by-side
+  columns (amounts next to labels, payment totals next to their headings)
+  are recognised as separate table cells.

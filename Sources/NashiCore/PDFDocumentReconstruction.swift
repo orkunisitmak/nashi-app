@@ -71,6 +71,10 @@ enum PDFDocumentReconstruction {
         var ink: [(rect: CGRect, color: String?)]
         var scanned: Bool
         var photographic: Bool
+        /// The page went through `PDFScanRectification`: it is a clean,
+        /// axis-aligned image of the paper without the desk, so box/frame
+        /// detection and higher artwork resolution are safe.
+        var rectified: Bool = false
     }
     /// Header and footer rows repeated across pages. Digit groups that follow
     /// the page number (or equal the page count) become Word fields.
@@ -432,13 +436,18 @@ enum PDFDocumentReconstruction {
             }
             // Placed photos become their own pictures in Word, cut from the
             // artwork (so text recognised inside them is already lifted out).
-            let pictures = text.scanned || !withArtwork ? [] : try PDFPlacedImages.regions(page, token: token).filter { $0.width * $0.height >= 300 && $0.width * $0.height < box.width * box.height * 0.85 }
+            // A rectified scan is clean enough for placed-image detection too.
+            let skipImages = (text.scanned && !text.rectified) || !withArtwork
+            let pictures = skipImages ? [] : try PDFPlacedImages.regions(page, token: token).filter { $0.width * $0.height >= 300 && $0.width * $0.height < box.width * box.height * 0.85 }
             let tables = blocks.compactMap { block -> [Row]? in if case .table(let rows) = block { return rows }; return nil }
             // Every placed image, however large or clipped, keeps boxes off it.
             // Boxes (like page furniture) are only looked for on document-sized
-            // pages, and never on scans, whose noise makes bands unreliable.
-            let placedAll = text.scanned || !withArtwork ? [] : try PDFPlacedImages.regions(page, token: token)
-            let art = withArtwork ? try artwork(page, ink: text.ink, tables: tables, pictures: pictures, placed: placedAll, contents: text.scanned || box.height < 300 ? [] : blocks.map(\.bounds), photographic: text.photographic, token: token) : nil
+            // pages. Raw scans have noise that makes bands unreliable, but a
+            // rectified scan (straightened photo) is clean enough for box and
+            // grid detection — it gives the utility bill its framed sections.
+            let placedAll = skipImages ? [] : try PDFPlacedImages.regions(page, token: token)
+            let allowBoxes = !text.scanned || text.rectified
+            let art = withArtwork ? try artwork(page, ink: text.ink, tables: tables, pictures: pictures, placed: placedAll, contents: !allowBoxes || box.height < 300 ? [] : blocks.map(\.bounds), photographic: text.photographic, token: token) : nil
             // Blocks inside a recognised box are laid out by that box's table.
             writer.boxes = []
             for found in art?.boxes ?? [] {
@@ -876,10 +885,17 @@ enum PDFDocumentReconstruction {
         let box = page.bounds(for: .cropBox)
         let placed = try PDFPlacedImages.regions(page, token: token)
         let photographic = placed.contains { $0.width * $0.height > box.width * box.height * 0.04 }
+        // A rectified page is a single image filling the entire crop box
+        // (output of PDFScanRectification). It is clean enough for box/frame
+        // detection, so it gets higher artwork resolution and frame analysis.
+        let rectified = placed.count == 1 && {
+            let area = placed[0].width * placed[0].height
+            return area > box.width * box.height * 0.9
+        }()
         guard let attributed = page.attributedString, attributed.length > 0,
               !attributed.string.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             let cells = try PDFOfficeCodec.recognizedCells(page, token: token)
-            return PageText(rows: ocrRows(cells), ink: cells.map { ($0.rect, $0.color) }, scanned: true, photographic: true)
+            return PageText(rows: ocrRows(cells), ink: cells.map { ($0.rect, $0.color) }, scanned: true, photographic: true, rectified: rectified)
         }
         let ns = attributed.string as NSString
         var glyphs: [Cell] = []
@@ -1002,9 +1018,50 @@ enum PDFDocumentReconstruction {
             let group = classes.first { $0.contains(value) } ?? [value]
             return (group.sorted()[group.count / 2] * 2).rounded() / 2
         }
-        return zip(cells, raw).map { cell, value in
-            Row(cells: [Cell(runs: [.init(text: cell.text, style: TextStyle(family: "Arial", size: size(value), color: cell.color ?? "#1A1A1A"))], bounds: cell.rect)])
-        }.sorted { $0.bounds.midY > $1.bounds.midY }
+        // Split long OCR lines into separate cells when a wide gap between
+        // words likely marks separate table columns. This lets textBlocks()
+        // find column structure in the recognised text the same way it does
+        // for native text, giving utility bills their columnar layout.
+        var rows: [Row] = []
+        for (cell, value) in zip(cells, raw) {
+            let fontSize = size(value)
+            let style = TextStyle(family: "Arial", size: fontSize, color: cell.color ?? "#1A1A1A")
+            let words = cell.text.split(separator: " ", omittingEmptySubsequences: true)
+            // A line with a single word or a very short line stays whole.
+            if words.count <= 1 || cell.rect.width < fontSize * 4 {
+                rows.append(Row(cells: [Cell(runs: [.init(text: cell.text, style: style)], bounds: cell.rect)]))
+                continue
+            }
+            // Distribute the line's width proportionally to each word's
+            // measured width, then split at gaps wider than 1.5x the font size
+            // (the typical space between table columns in a bill).
+            let measured = words.map { width(of: String($0), style: style) }
+            let totalMeasured = measured.reduce(0, +)
+            let spaceWidth = max(1, (cell.rect.width - totalMeasured) / CGFloat(words.count - 1))
+            let columnGap = fontSize * 1.5
+            var cells_: [Cell] = []
+            var x = cell.rect.minX
+            var group: [(text: String, x: CGFloat, w: CGFloat)] = []
+            for (index, word) in words.enumerated() {
+                let w = measured[index]
+                if !group.isEmpty && spaceWidth > columnGap {
+                    // Flush the accumulated group as one cell.
+                    let text = group.map(\.text).joined(separator: " ")
+                    let gx = group.first!.x, gw = x - gx - spaceWidth
+                    cells_.append(Cell(runs: [.init(text: text, style: style)], bounds: CGRect(x: gx, y: cell.rect.minY, width: max(1, gw), height: cell.rect.height)))
+                    group = []
+                }
+                group.append((String(word), x, w))
+                x += w + spaceWidth
+            }
+            if !group.isEmpty {
+                let text = group.map(\.text).joined(separator: " ")
+                let gx = group.first!.x
+                cells_.append(Cell(runs: [.init(text: text, style: style)], bounds: CGRect(x: gx, y: cell.rect.minY, width: max(1, cell.rect.maxX - gx), height: cell.rect.height)))
+            }
+            rows.append(Row(cells: cells_.isEmpty ? [Cell(runs: [.init(text: cell.text, style: style)], bounds: cell.rect)] : cells_))
+        }
+        return rows.sorted { $0.bounds.midY > $1.bounds.midY }
     }
 
     /// Drops glyphs drawn at an angle (stamps, seals, watermarks, rotated
@@ -1270,7 +1327,7 @@ enum PDFDocumentReconstruction {
             guard y1 - y0 > 2, always || ink[y0..<y1].reduce(0, +) * 2000 > (y1 - y0) * image.width / 7,
                   let crop = image.cropping(to: CGRect(x: 0, y: y0, width: image.width, height: y1 - y0)) else { return nil }
             let representation = NSBitmapImageRep(cgImage: crop)
-            if photographic, let jpeg = representation.representation(using: .jpeg, properties: [.compressionFactor: 0.82]) { return (jpeg, true) }
+            if photographic, let jpeg = representation.representation(using: .jpeg, properties: [.compressionFactor: 0.88]) { return (jpeg, true) }
             return representation.representation(using: .png, properties: [:]).map { ($0, false) }
         }
     }
@@ -1279,7 +1336,9 @@ enum PDFDocumentReconstruction {
         try token.check()
         guard let cgPage = page.pageRef else { return nil }
         let bounds = PDFOfficeCodec.visualBounds(page)
-        let scale: CGFloat = 2.5
+        // Photographic pages (scans, photos) get a higher render so lines,
+        // QR codes and fine print stay sharp in the Word artwork.
+        let scale: CGFloat = photographic ? 3.0 : 2.5
         let width = Int(ceil(bounds.width * scale)), height = Int(ceil(bounds.height * scale))
         guard width > 0, height > 0, width <= 12000, height <= 12000 else { return nil }
         var pixels = [UInt8](repeating: 255, count: width * height * 4)
@@ -1611,7 +1670,10 @@ enum PDFDocumentReconstruction {
         let d = (ink.0 - background.0, ink.1 - background.1, ink.2 - background.2)
         let dd = d.0 * d.0 + d.1 * d.1 + d.2 * d.2
         guard dd > 900 else { return }
-        let tolerance = color == nil ? 70 * 70 : 48 * 48
+        // Scanned text (color == nil) has softer edges and anti-aliasing from
+        // the camera; a wider tolerance erases the ink cleanly, leaving a
+        // smooth background for the artwork layer behind the editable text.
+        let tolerance = color == nil ? 85 * 85 : 48 * 48
         for y in top...bottom {
             var mask = [Bool](repeating: false, count: x1 - x0 + 1)
             for x in x0...x1 {
