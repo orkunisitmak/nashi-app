@@ -194,7 +194,8 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
             case "trimVideo":case "trimAudio":
                 if(tool=="trimAudio")RequireAudio(info);else RequireVideo(info);
                 var range=TimeRange(options.Start,options.End,info.Duration);duration=range.End-range.Start;
-                args.AddRange(["-ss",Number(range.Start),"-t",Number(duration.Value)]);
+                // Output -ss/-t cut after -af, so silence removal would search the whole file; read only the selection instead (as on macOS).
+                string[] span=["-ss",Number(range.Start),"-t",Number(duration.Value)];if(tool=="trimAudio"&&options.TrimSilence)args.InsertRange(0,span);else args.AddRange(span);
                 if(tool=="trimAudio")
                 {
                     args.AddRange(["-map","0:a:0","-vn"]);
