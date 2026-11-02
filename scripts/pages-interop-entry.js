@@ -121,7 +121,10 @@ export function read(data) {
     for (const paragraph of storage.paragraphs()) {
       check();
       const style = paragraph.styleId !== undefined ? stylesheet.style(paragraph.styleId)?.resolved() ?? {} : {};
-      let block = {type: "paragraph", paragraph: style.paragraph ?? {}, character: character(style.character), runs: []};
+      // A page break (U+000C) or section break (U+0004, which starts a new page)
+      // terminates the previous paragraph and is not part of any paragraph text.
+      const pageBreak = [12, 4].includes(storage.text.charCodeAt(paragraph.start - 1));
+      let block = {type: "paragraph", paragraph: pageBreak ? {...style.paragraph, pageBreakBefore: true} : style.paragraph ?? {}, character: character(style.character), runs: []};
       const stops = new Set([paragraph.start,paragraph.end]);
       for (const run of styleRuns) { if (run.start > paragraph.start && run.start < paragraph.end) stops.add(run.start); if (run.end > paragraph.start && run.end < paragraph.end) stops.add(run.end); }
       for (const link of links) { if (link.start > paragraph.start && link.start < paragraph.end) stops.add(link.start); if (link.end > paragraph.start && link.end < paragraph.end) stops.add(link.end); }
