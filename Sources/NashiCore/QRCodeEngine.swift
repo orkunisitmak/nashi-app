@@ -59,6 +59,7 @@ public enum QRCodeEngine {
     }
     private static func scanImage(_ image:CGImage,input:URL,page:Int?,token:CancellationToken) throws -> [QRCodeMatch] {
         try token.check()
+        if [.none,.noneSkipFirst,.noneSkipLast].contains(image.alphaInfo) { return try detect(image,input:input,page:page,token:token) }
         let flattened=try detect(onWhite(image),input:input,page:page,token:token)
         return flattened.isEmpty ? try detect(image,input:input,page:page,token:token) : flattened
     }
