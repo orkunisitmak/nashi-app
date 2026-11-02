@@ -175,6 +175,9 @@ enum PDFOfficeCodec {
     private static func positionedCells(_ page: PDFPage, token: CancellationToken) throws -> [TextCell] {
         guard let string = page.string, !string.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return try recognizedCells(page, token: token) }
         let ns = string as NSString
+        // Selections are in unrotated page space; rows and columns are read
+        // from the page as displayed, so map them through the page rotation.
+        let displayed = page.transform(for: .mediaBox)
         var characters: [TextCell] = []
         var index = 0
         while index < ns.length {
@@ -184,7 +187,7 @@ enum PDFOfficeCodec {
             index = NSMaxRange(range)
             if value == "\n" || value == "\r" { continue }
             guard let selection = page.selection(for: range) else { continue }
-            let bounds = selection.bounds(for: page)
+            let bounds = selection.bounds(for: page).applying(displayed).standardized
             guard bounds.width > 0, bounds.height > 0, !bounds.isInfinite, !bounds.isNull else { continue }
             characters.append(.init(text: value, rect: bounds))
         }
