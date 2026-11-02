@@ -40,3 +40,11 @@ test('playground Library search ignores spaces around the query', () => {
   assert.deepEqual(names.filter(name => foldSearchText(name).includes(foldSearchText(' AVİF'))), ['AVIF-export.jpg']);
   assert.equal(foldSearchText('  '), '');
 });
+
+test('playground split keeps repeated pages like the app', () => {
+  const src = fs.readFileSync(new URL('../docs/assets/playground.js', import.meta.url), 'utf8').split('\n').find(l => l.startsWith('function parsePages('));
+  const parsePages = new Function('L', src + '; return parsePages;')(a => a);
+  assert.deepEqual(parsePages('1,1,2', 5), [0, 0, 1]);
+  assert.deepEqual(parsePages('1-3,2', 5), [0, 1, 2, 1]);
+  assert.deepEqual(parsePages('', 3), [0, 1, 2]);
+});
