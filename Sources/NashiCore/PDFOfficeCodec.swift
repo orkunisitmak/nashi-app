@@ -45,12 +45,18 @@ enum PDFOfficeCodec {
     }
 
     static func prepare(_ input: URL, to format: String, at work: URL, options: OperationOptions, token: CancellationToken) throws -> URL {
-        guard let pdf = PDFDocument(url: input) else { throw NashiError.invalidInput("This PDF could not be opened.") }
-        if pdf.isLocked && !pdf.unlock(withPassword: options.password) { throw NashiError.invalidInput("The PDF password is incorrect or missing.") }
-        guard pdf.pageCount > 0 else { throw NashiError.invalidInput("This PDF contains no pages.") }
-        if format == "pptx" { return try presentation(pdf, at: work, token: token) }
+        guard let source = PDFDocument(url: input) else { throw NashiError.invalidInput("This PDF could not be opened.") }
+        if source.isLocked && !source.unlock(withPassword: options.password) { throw NashiError.invalidInput("The PDF password is incorrect or missing.") }
+        guard source.pageCount > 0 else { throw NashiError.invalidInput("This PDF contains no pages.") }
+        if format == "pptx" { return try presentation(source, at: work, token: token) }
+        // Photographed documents are cut to the paper and straightened first,
+        // so OCR reads horizontal lines and the desk stays out of the result.
+        // Slides and "keep pages as pictures" show the page exactly as it is.
+        let keepsPages = ["docx", "pages"].contains(format) && options.pdfOfficeLayout == "preservePages"
+        var pdf = source
+        if !keepsPages, let flattened = try PDFScanRectification.rectified(source, token: token) { pdf = flattened }
         if format == "xlsx" { return try spreadsheet(pdf, at: work, token: token) }
-        if ["docx", "pages"].contains(format) && options.pdfOfficeLayout == "preservePages" {
+        if keepsPages {
             return try PDFDocumentReconstruction.preservePages(pdf, at: work.appendingPathComponent("PDF pages.fodt"), options: options, token: token)
         }
         if format == "txt" || format == "md" {
@@ -81,12 +87,18 @@ enum PDFOfficeCodec {
         let image = page.thumbnail(of: size, for: .cropBox)
         var rect = CGRect(origin: .zero, size: size)
         guard let cgImage = image.cgImage(forProposedRect: &rect, context: nil, hints: nil) else { return [] }
-        let request = VNRecognizeTextRequest()
-        request.recognitionLevel = .accurate
-        request.usesLanguageCorrection = true
-        request.recognitionLanguages = ["tr-TR", "en-US"]
-        try VNImageRequestHandler(cgImage: cgImage).perform([request])
+        var observations = try recognize(cgImage, languages: ocrLanguages, detect: true)
         try token.check()
+        // Vision reads a page best with its script's languages first. A page
+        // that turns out to be mostly Cyrillic is read again that way, with
+        // Russian/Ukrainian spelling correction instead of Turkish/English.
+        let first = observations.compactMap { $0.topCandidates(1).first?.string }
+        if dominantScript(first) == .cyrillic {
+            let again = try recognize(cgImage, languages: cyrillicLanguages, detect: false)
+            try token.check()
+            let letters = { (items: [VNRecognizedTextObservation]) in items.compactMap { $0.topCandidates(1).first?.string }.joined().filter(\.isLetter).count }
+            if letters(again) >= letters(observations) * 8 / 10 { observations = again }
+        }
         let width = cgImage.width, height = cgImage.height
         var pixels = [UInt8](repeating: 255, count: width * height * 4)
         pixels.withUnsafeMutableBytes { raw in
@@ -112,7 +124,7 @@ enum PDFOfficeCodec {
             guard abs(c.0 - paper.0) + abs(c.1 - paper.1) + abs(c.2 - paper.2) > 90 else { return nil }
             return String(format: "#%02X%02X%02X", c.0, c.1, c.2)
         }
-        return (request.results ?? []).compactMap { observation in
+        return observations.compactMap { observation in
             // A lone recognised character is usually a logo, bullet or mark, not text.
             guard let candidate = observation.topCandidates(1).first, candidate.confidence >= 0.45,
                   candidate.string.filter({ $0.isLetter || $0.isNumber }).count >= 2 else { return nil }
@@ -123,6 +135,41 @@ enum PDFOfficeCodec {
             let r = observation.boundingBox
             return TextCell(text: candidate.string, rect: CGRect(x: bounds.minX + r.minX * bounds.width, y: bounds.minY + r.minY * bounds.height, width: r.width * bounds.width, height: r.height * bounds.height), color: ink(r))
         }
+    }
+
+    /// OCR languages in priority order. Vision also detects the language of
+    /// each page, so Turkish and English documents read as before while
+    /// Russian, Ukrainian and the main Western European languages are read
+    /// with their own alphabets and spelling instead of Latin look-alikes.
+    static let ocrLanguages = ["tr-TR", "en-US", "ru-RU", "uk-UA", "de-DE", "fr-FR", "es-ES", "it-IT", "pt-BR"]
+    static let cyrillicLanguages = ["ru-RU", "uk-UA", "en-US"]
+
+    enum Script { case latin, cyrillic, other }
+
+    /// The alphabet most letters of the recognised lines are written in.
+    static func dominantScript(_ lines: [String]) -> Script {
+        var latin = 0, cyrillic = 0, other = 0
+        for scalar in lines.joined().unicodeScalars where scalar.properties.isAlphabetic {
+            switch scalar.value {
+            case 0x0041...0x024F: latin += 1
+            case 0x0400...0x052F: cyrillic += 1
+            default: other += 1
+            }
+        }
+        if cyrillic > 0, cyrillic * 4 >= (latin + cyrillic + other) { return .cyrillic }
+        return latin >= other ? .latin : .other
+    }
+
+    private static func recognize(_ image: CGImage, languages: [String], detect: Bool) throws -> [VNRecognizedTextObservation] {
+        let request = VNRecognizeTextRequest()
+        request.recognitionLevel = .accurate
+        request.usesLanguageCorrection = true
+        let supported = Set((try? request.supportedRecognitionLanguages()) ?? ["en-US"])
+        let usable = languages.filter(supported.contains)
+        request.recognitionLanguages = usable.isEmpty ? ["en-US"] : usable
+        request.automaticallyDetectsLanguage = detect
+        try VNImageRequestHandler(cgImage: image).perform([request])
+        return request.results ?? []
     }
 
     private static func presentation(_ pdf: PDFDocument, at work: URL, token: CancellationToken) throws -> URL {

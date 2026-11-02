@@ -17,7 +17,8 @@ PDF.
 | Placed photos and screenshots | Separate pictures at their exact position. |
 | Everything else — page colour, rules, charts, logos, signatures, stamps, seals, watermarks | The page artwork: the page rendered with the editable text lifted out, anchored behind the text. |
 | Text set at an angle (seal rings, stamps, diagonal watermarks) | Stays in the artwork instead of turning into stray letters. |
-| Scanned pages and pictures of text | On-device OCR (Turkish and English); the recognised lines become editable text in their own ink colour, and the scan without that text becomes the artwork. |
+| Scanned pages and pictures of text | On-device OCR with automatic language detection (Turkish, English, Russian, Ukrainian, German, French, Spanish, Italian, Portuguese). A page that is mostly Cyrillic is read a second time with Russian/Ukrainian first, so letters are not turned into Latin look-alikes. The recognised lines become editable text in their own ink colour, and the scan without that text becomes the artwork. |
+| Phone photos of a document (paper on a desk, tilted or in perspective) | The sheet is found, cut out and flattened before OCR, like a scanner app: the Word page has the paper's proportions (842pt on its long side), lines are horizontal and the desk is gone. Born-digital pages, flatbed scans and "keep pages as pictures" are left exactly as they are. |
 
 Glyph positions come from PDFKit's per-character bounds, not from selection
 boxes: PDFKit can join lines from neighbouring cells into one "line" (a
