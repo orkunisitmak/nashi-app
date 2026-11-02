@@ -48,6 +48,16 @@ final class OutputFilesMoveTests:XCTestCase {
         XCTAssertEqual(try OutputFiles.move(folder,into:destination).lastPathComponent,"Album 2")
     }
 
+    func testMoveShortensANameAtTheLengthLimitWhenItIsTaken() throws {
+        let destination=root.appendingPathComponent("Destination",isDirectory:true)
+        try FileManager.default.createDirectory(at:destination,withIntermediateDirectories:true)
+        let name=String(repeating:"a",count:251)+".pdf"
+        _=try OutputFiles.move(try source(name,"a"),into:destination)
+        let moved=try OutputFiles.move(try source(name,"b"),into:destination)
+        XCTAssertEqual(moved.lastPathComponent,String(repeating:"a",count:249)+" 2.pdf")
+        XCTAssertEqual(try Data(contentsOf:moved),Data("b".utf8))
+    }
+
     func testMoveReportsAMissingSourceWithoutCreatingAnything() throws {
         let destination=root.appendingPathComponent("Destination",isDirectory:true)
         try FileManager.default.createDirectory(at:destination,withIntermediateDirectories:true)

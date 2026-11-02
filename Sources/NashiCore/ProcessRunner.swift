@@ -150,8 +150,9 @@ public enum OutputFiles {
     static func move(_ source:URL,into directory:URL,willMove:((URL)->Void)?) throws -> URL {
         // attributesOfItem does not follow links, so a dangling link also takes a name.
         let taken={ (url:URL) in (try? FileManager.default.attributesOfItem(atPath:url.path)) != nil }
-        var target=directory.appendingPathComponent(source.lastPathComponent),index=2
-        func next() { target=directory.appendingPathComponent("\(source.deletingPathExtension().lastPathComponent) \(index)").appendingPathExtension(source.pathExtension.lowercased());index+=1 }
+        var target=directory.appendingPathComponent(source.lastPathComponent)
+        // unique skips taken names and shortens the stem so " 2" still fits in 255 units.
+        func next() { target=unique(for:source,extension:source.pathExtension,directory:directory) }
         while true {
             while taken(target) { next() }
             willMove?(target)
