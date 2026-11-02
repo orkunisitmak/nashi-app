@@ -346,6 +346,7 @@
 "BALANCED" = "BALANCED";
 "BARS" = "BARS";
 "BESIDE ORIGINAL FILES" = "BESIDE ORIGINAL FILES";
+"BESIDE THE ORIGINAL" = "BESIDE THE ORIGINAL";
 "BEST AVAILABLE" = "BEST AVAILABLE";
 "BETTER TOGETHER." = "BETTER TOGETHER.";
 "BITRATE" = "BITRATE";
@@ -366,6 +367,7 @@
 "Balanced" = "Balanced";
 "Bars" = "Bars";
 "Beside original files" = "Beside original files";
+"Beside the original" = "Beside the original";
 "Best available" = "Best available";
 "Better together." = "Better together.";
 "Bitrate" = "Bitrate";
@@ -391,6 +393,7 @@
 "CANVAS" = "CANVAS";
 "CANVAS HEIGHT" = "CANVAS HEIGHT";
 "CANVAS WIDTH" = "CANVAS WIDTH";
+"CHANGE FOLDER…" = "CHANGE FOLDER…";
 "CHANGE SPEED" = "CHANGE SPEED";
 "CHANGE SPEED · NASHI" = "CHANGE SPEED · NASHI";
 "CHANGE VIDEO SPEED" = "CHANGE VIDEO SPEED";
@@ -587,6 +590,7 @@
 "Canvas" = "Canvas";
 "Canvas height" = "Canvas height";
 "Canvas width" = "Canvas width";
+"Change Folder…" = "Change Folder…";
 "Change Speed" = "Change Speed";
 "Change Speed · Nashi" = "Change Speed · Nashi";
 "Change Video Speed" = "Change Video Speed";
@@ -1264,6 +1268,7 @@
 "IMAGE SIZE" = "IMAGE SIZE";
 "IMAGES" = "IMAGES";
 "IMAGES, VIDEOS, DOCUMENTS, AND ALL THE LITTLE THINGS IN BETWEEN." = "IMAGES, VIDEOS, DOCUMENTS, AND ALL THE LITTLE THINGS IN BETWEEN.";
+"IN A FOLDER" = "IN A FOLDER";
 "INK COLOR" = "INK COLOR";
 "INPUT AND OUTPUT FORMAT." = "INPUT AND OUTPUT FORMAT.";
 "INPUT FORMAT" = "INPUT FORMAT";
@@ -1294,6 +1299,7 @@
 "Image size" = "Image size";
 "Images" = "Images";
 "Images, videos, documents, and all the little things in between." = "Images, videos, documents, and all the little things in between.";
+"In a folder" = "In a folder";
 "Ink color" = "Ink color";
 "Input and output format." = "Input and output format.";
 "Input format" = "Input format";
@@ -1521,7 +1527,7 @@
 "NASHI CONVERT WHEEL" = "NASHI CONVERT WHEEL";
 "NASHI IS ALREADY RUNNING BUT IS STILL STARTING. OPEN IT FROM THE SYSTEM TRAY OR TRY AGAIN IN A MOMENT." = "NASHI IS ALREADY RUNNING BUT IS STILL STARTING. OPEN IT FROM THE SYSTEM TRAY OR TRY AGAIN IN A MOMENT.";
 "NASHI IS STILL RUNNING." = "NASHI IS STILL RUNNING.";
-"NASHI SAVES RESULTS BESIDE THE ORIGINALS. ALLOW A FOLDER ONCE TO INCLUDE EVERY FOLDER INSIDE IT." = "NASHI SAVES RESULTS BESIDE THE ORIGINALS. ALLOW A FOLDER ONCE TO INCLUDE EVERY FOLDER INSIDE IT.";
+"NASHI SAVES RESULTS BESIDE THE ORIGINALS UNLESS SETTINGS › GENERAL NAMES ANOTHER FOLDER. ALLOW A FOLDER ONCE TO INCLUDE EVERY FOLDER INSIDE IT." = "NASHI SAVES RESULTS BESIDE THE ORIGINALS UNLESS SETTINGS › GENERAL NAMES ANOTHER FOLDER. ALLOW A FOLDER ONCE TO INCLUDE EVERY FOLDER INSIDE IT.";
 "NASHI SETTINGS" = "NASHI SETTINGS";
 "NASHI TOOLS WHEEL" = "NASHI TOOLS WHEEL";
 "NASHI UPDATE" = "NASHI UPDATE";
@@ -1529,6 +1535,7 @@
 "NASHI WEB MEDIA WHEEL" = "NASHI WEB MEDIA WHEEL";
 "NASHI · FEATURES & SHORTCUTS" = "NASHI · FEATURES & SHORTCUTS";
 "NEW FEATURES AND SMALL IMPROVEMENTS, DELIVERED RIGHT HERE." = "NEW FEATURES AND SMALL IMPROVEMENTS, DELIVERED RIGHT HERE.";
+"NEW FILES ARE WRITTEN HERE INSTEAD OF BESIDE THE ORIGINALS." = "NEW FILES ARE WRITTEN HERE INSTEAD OF BESIDE THE ORIGINALS.";
 "NEXT" = "NEXT";
 "NEXT FRAME" = "NEXT FRAME";
 "NEXT PAGE" = "NEXT PAGE";
@@ -1578,13 +1585,14 @@
 "Nashi convert wheel" = "Nashi convert wheel";
 "Nashi is already running but is still starting. Open it from the system tray or try again in a moment." = "Nashi is already running but is still starting. Open it from the system tray or try again in a moment.";
 "Nashi is still running." = "Nashi is still running.";
-"Nashi saves results beside the originals. Allow a folder once to include every folder inside it." = "Nashi saves results beside the originals. Allow a folder once to include every folder inside it.";
+"Nashi saves results beside the originals unless Settings › General names another folder. Allow a folder once to include every folder inside it." = "Nashi saves results beside the originals unless Settings › General names another folder. Allow a folder once to include every folder inside it.";
 "Nashi tools wheel" = "Nashi tools wheel";
 "Nashi update" = "Nashi update";
 "Nashi update could not finish" = "Nashi update could not finish";
 "Nashi web media wheel" = "Nashi web media wheel";
 "Nashi · Features & shortcuts" = "Nashi · Features & shortcuts";
 "New features and small improvements, delivered right here." = "New features and small improvements, delivered right here.";
+"New files are written here instead of beside the originals." = "New files are written here instead of beside the originals.";
 "Next" = "Next";
 "Next frame" = "Next frame";
 "Next page" = "Next page";
@@ -1949,6 +1957,7 @@
 "RESIZE IMAGE" = "RESIZE IMAGE";
 "RESTORE CLIPS" = "RESTORE CLIPS";
 "RESTORE DEFAULTS" = "RESTORE DEFAULTS";
+"RESULTS GO BESIDE THE ORIGINAL FILE UNLESS YOU CHOOSE A FOLDER." = "RESULTS GO BESIDE THE ORIGINAL FILE UNLESS YOU CHOOSE A FOLDER.";
 "REVEAL FINISHED FILES IN EXPLORER" = "REVEAL FINISHED FILES IN EXPLORER";
 "REVEAL FINISHED FILES IN FINDER" = "REVEAL FINISHED FILES IN FINDER";
 "RIGHT" = "RIGHT";
@@ -2025,6 +2034,7 @@
 "Restore Clips" = "Restore Clips";
 "Restore Defaults" = "Restore Defaults";
 "Restore defaults" = "Restore defaults";
+"Results go beside the original file unless you choose a folder." = "Results go beside the original file unless you choose a folder.";
 "Reveal finished files in Explorer" = "Reveal finished files in Explorer";
 "Reveal finished files in Finder" = "Reveal finished files in Finder";
 "Right" = "Right";
@@ -2051,6 +2061,8 @@
 "SAVE AUDIO COPY" = "SAVE AUDIO COPY";
 "SAVE BLEEPED COPY" = "SAVE BLEEPED COPY";
 "SAVE CONNECTION" = "SAVE CONNECTION";
+"SAVE COPIES" = "SAVE COPIES";
+"SAVE COPIES TO" = "SAVE COPIES TO";
 "SAVE COPY" = "SAVE COPY";
 "SAVE CROPPED COPY" = "SAVE CROPPED COPY";
 "SAVE DEFAULTS" = "SAVE DEFAULTS";
@@ -2058,6 +2070,7 @@
 "SAVE DOWNLOADED MEDIA TO…" = "SAVE DOWNLOADED MEDIA TO…";
 "SAVE DOWNLOADS HERE" = "SAVE DOWNLOADS HERE";
 "SAVE EDITED COPY" = "SAVE EDITED COPY";
+"SAVE HERE" = "SAVE HERE";
 "SAVE METADATA COPY" = "SAVE METADATA COPY";
 "SAVE MUTED COPY" = "SAVE MUTED COPY";
 "SAVE NEW COPIES" = "SAVE NEW COPIES";
@@ -2195,7 +2208,9 @@
 "Save %lld frames" = "Save %lld frames";
 "Save 1 frame" = "Save 1 frame";
 "Save Connection" = "Save Connection";
+"Save Copies To" = "Save Copies To";
 "Save Downloads Here" = "Save Downloads Here";
+"Save Here" = "Save Here";
 "Save a copy" = "Save a copy";
 "Save a cropped copy (Return or ⌘S)" = "Save a cropped copy (Return or ⌘S)";
 "Save a fresh copy (⌘S)" = "Save a fresh copy (⌘S)";
@@ -2203,6 +2218,7 @@
 "Save as" = "Save as";
 "Save audio copy" = "Save audio copy";
 "Save bleeped copy" = "Save bleeped copy";
+"Save copies" = "Save copies";
 "Save copy" = "Save copy";
 "Save cropped copy" = "Save cropped copy";
 "Save defaults" = "Save defaults";
@@ -2377,6 +2393,7 @@
 "THE ARCHIVE ENTRY LEAVES ITS DESTINATION." = "THE ARCHIVE ENTRY LEAVES ITS DESTINATION.";
 "THE ARCHIVE EXPANDS BEYOND THE 20 GB SAFETY LIMIT." = "THE ARCHIVE EXPANDS BEYOND THE 20 GB SAFETY LIMIT.";
 "THE ARCHIVE HAS TOO MANY ENTRIES (100,000 LIMIT)." = "THE ARCHIVE HAS TOO MANY ENTRIES (100,000 LIMIT).";
+"THE CHOSEN FOLDER IS NO LONGER AVAILABLE. RESULTS GO BESIDE THE ORIGINALS UNTIL YOU CHOOSE ANOTHER." = "THE CHOSEN FOLDER IS NO LONGER AVAILABLE. RESULTS GO BESIDE THE ORIGINALS UNTIL YOU CHOOSE ANOTHER.";
 "THE CLIPPING EXCEEDS 200 MB." = "THE CLIPPING EXCEEDS 200 MB.";
 "THE CLIPPING HAS NO READABLE TEXT. INCLUDE ITS ORIGINAL RESOURCE FORK/APPLEDOUBLE SIDECAR, OR PASTE ITS TEXT INTO NASHI." = "THE CLIPPING HAS NO READABLE TEXT. INCLUDE ITS ORIGINAL RESOURCE FORK/APPLEDOUBLE SIDECAR, OR PASTE ITS TEXT INTO NASHI.";
 "THE DOCUMENT HAS NO EDITABLE BODY." = "THE DOCUMENT HAS NO EDITABLE BODY.";
@@ -2533,6 +2550,7 @@
 "The archive entry leaves its destination." = "The archive entry leaves its destination.";
 "The archive expands beyond the 20 GB safety limit." = "The archive expands beyond the 20 GB safety limit.";
 "The archive has too many entries (100,000 limit)." = "The archive has too many entries (100,000 limit).";
+"The chosen folder is no longer available. Results go beside the originals until you choose another." = "The chosen folder is no longer available. Results go beside the originals until you choose another.";
 "The clipping exceeds 200 MB." = "The clipping exceeds 200 MB.";
 "The clipping has no readable text. Include its original resource fork/AppleDouble sidecar, or paste its text into Nashi." = "The clipping has no readable text. Include its original resource fork/AppleDouble sidecar, or paste its text into Nashi.";
 "The crop rectangle must fit completely inside the %@ × %@ pixel image." = "The crop rectangle must fit completely inside the %@ × %@ pixel image.";

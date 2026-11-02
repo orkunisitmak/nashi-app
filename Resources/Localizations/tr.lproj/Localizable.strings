@@ -346,6 +346,7 @@
 "BALANCED" = "DENGELİ";
 "BARS" = "ÇUBUKLAR";
 "BESIDE ORIGINAL FILES" = "ORİJİNAL DOSYALARIN YANINA";
+"BESIDE THE ORIGINAL" = "ORİJİNALİN YANINA";
 "BEST AVAILABLE" = "MEVCUT EN İYİ KALİTE";
 "BETTER TOGETHER." = "BİRLİKTE DAHA GÜZEL.";
 "BITRATE" = "BİT HIZI";
@@ -366,6 +367,7 @@
 "Balanced" = "Dengeli";
 "Bars" = "Çubuklar";
 "Beside original files" = "Orijinal dosyaların yanına";
+"Beside the original" = "Orijinalin yanına";
 "Best available" = "Mevcut en iyi kalite";
 "Better together." = "Birlikte daha güzel.";
 "Bitrate" = "Bit hızı";
@@ -391,6 +393,7 @@
 "CANVAS" = "TUVAL";
 "CANVAS HEIGHT" = "TUVAL YÜKSEKLİĞİ";
 "CANVAS WIDTH" = "TUVAL GENİŞLİĞİ";
+"CHANGE FOLDER…" = "KLASÖRÜ DEĞİŞTİR…";
 "CHANGE SPEED" = "HIZI DEĞİŞTİR";
 "CHANGE SPEED · NASHI" = "HIZI DEĞİŞTİR · NASHI";
 "CHANGE VIDEO SPEED" = "VİDEO HIZINI DEĞİŞTİR";
@@ -587,6 +590,7 @@
 "Canvas" = "Tuval";
 "Canvas height" = "Tuval yüksekliği";
 "Canvas width" = "Tuval genişliği";
+"Change Folder…" = "Klasörü değiştir…";
 "Change Speed" = "Hızı Değiştir";
 "Change Speed · Nashi" = "Hızı Değiştir · Nashi";
 "Change Video Speed" = "Video Hızını Değiştir";
@@ -1264,6 +1268,7 @@
 "IMAGE SIZE" = "GÖRSEL BOYUTU";
 "IMAGES" = "GÖRSELLER";
 "IMAGES, VIDEOS, DOCUMENTS, AND ALL THE LITTLE THINGS IN BETWEEN." = "GÖRSELLER, VİDEOLAR, BELGELER VE DİĞER TÜM DOSYALARIN.";
+"IN A FOLDER" = "BİR KLASÖRE";
 "INK COLOR" = "KALEM RENGİ";
 "INPUT AND OUTPUT FORMAT." = "GİRDİ VE ÇIKTI BİÇİMİ.";
 "INPUT FORMAT" = "GİRDİ BİÇİMİ";
@@ -1294,6 +1299,7 @@
 "Image size" = "Görsel boyutu";
 "Images" = "Görseller";
 "Images, videos, documents, and all the little things in between." = "Görseller, videolar, belgeler ve diğer tüm dosyaların.";
+"In a folder" = "Bir klasöre";
 "Ink color" = "Kalem rengi";
 "Input and output format." = "Girdi ve çıktı biçimi.";
 "Input format" = "Girdi biçimi";
@@ -1521,7 +1527,7 @@
 "NASHI CONVERT WHEEL" = "NASHI DÖNÜŞTÜRME ÇARKI";
 "NASHI IS ALREADY RUNNING BUT IS STILL STARTING. OPEN IT FROM THE SYSTEM TRAY OR TRY AGAIN IN A MOMENT." = "NASHI ZATEN ÇALIŞIYOR AMA HÂLÂ AÇILIYOR. SİSTEM TEPSİSİNDEN AÇ VEYA BİRAZDAN TEKRAR DENE.";
 "NASHI IS STILL RUNNING." = "NASHI HÂLÂ ÇALIŞIYOR.";
-"NASHI SAVES RESULTS BESIDE THE ORIGINALS. ALLOW A FOLDER ONCE TO INCLUDE EVERY FOLDER INSIDE IT." = "NASHI SONUÇLARI ORİJİNALLERİN YANINA KAYDEDER. BİR KLASÖRE VERİLEN İZİN, İÇİNDEKİ KLASÖRLERİ DE KAPSAR.";
+"NASHI SAVES RESULTS BESIDE THE ORIGINALS UNLESS SETTINGS › GENERAL NAMES ANOTHER FOLDER. ALLOW A FOLDER ONCE TO INCLUDE EVERY FOLDER INSIDE IT." = "NASHI SONUÇLARI ORİJİNALLERİN YANINA KAYDEDER; AYARLAR › GENEL BÖLÜMÜNDE BAŞKA BİR KLASÖR SEÇİLMEDİĞİ SÜRECE. BİR KLASÖRE BİR KEZ İZİN VER; İÇİNDEKİ TÜM KLASÖRLER DAHİL OLUR.";
 "NASHI SETTINGS" = "NASHI AYARLARI";
 "NASHI TOOLS WHEEL" = "NASHI DOSYA ARAÇLARI ÇARKI";
 "NASHI UPDATE" = "NASHI GÜNCELLEMESİ";
@@ -1529,6 +1535,7 @@
 "NASHI WEB MEDIA WHEEL" = "NASHI WEB MEDYASI ÇARKI";
 "NASHI · FEATURES & SHORTCUTS" = "NASHI · ÖZELLİKLER VE KISAYOLLAR";
 "NEW FEATURES AND SMALL IMPROVEMENTS, DELIVERED RIGHT HERE." = "YENİ ÖZELLİKLER VE KÜÇÜK İYİLEŞTİRMELER, DOĞRUDAN BURADA.";
+"NEW FILES ARE WRITTEN HERE INSTEAD OF BESIDE THE ORIGINALS." = "YENİ DOSYALAR ORİJİNALLERİN YANINA DEĞİL BURAYA YAZILIR.";
 "NEXT" = "İLERİ";
 "NEXT FRAME" = "SONRAKİ KARE";
 "NEXT PAGE" = "SONRAKİ SAYFA";
@@ -1578,13 +1585,14 @@
 "Nashi convert wheel" = "Nashi dönüştürme çarkı";
 "Nashi is already running but is still starting. Open it from the system tray or try again in a moment." = "Nashi zaten çalışıyor ama hâlâ açılıyor. Sistem tepsisinden aç veya birazdan tekrar dene.";
 "Nashi is still running." = "Nashi hâlâ çalışıyor.";
-"Nashi saves results beside the originals. Allow a folder once to include every folder inside it." = "Nashi sonuçları orijinallerin yanına kaydeder. Bir klasöre verilen izin, içindeki klasörleri de kapsar.";
+"Nashi saves results beside the originals unless Settings › General names another folder. Allow a folder once to include every folder inside it." = "Nashi sonuçları orijinallerin yanına kaydeder; Ayarlar › Genel bölümünde başka bir klasör seçilmediği sürece. Bir klasöre bir kez izin ver; içindeki tüm klasörler dahil olur.";
 "Nashi tools wheel" = "Nashi dosya araçları çarkı";
 "Nashi update" = "Nashi güncellemesi";
 "Nashi update could not finish" = "Nashi güncellemesi tamamlanamadı";
 "Nashi web media wheel" = "Nashi web medyası çarkı";
 "Nashi · Features & shortcuts" = "Nashi · Özellikler ve kısayollar";
 "New features and small improvements, delivered right here." = "Yeni özellikler ve küçük iyileştirmeler, doğrudan burada.";
+"New files are written here instead of beside the originals." = "Yeni dosyalar orijinallerin yanına değil buraya yazılır.";
 "Next" = "İleri";
 "Next frame" = "Sonraki kare";
 "Next page" = "Sonraki sayfa";
@@ -1949,6 +1957,7 @@
 "RESIZE IMAGE" = "GÖRSELİ BOYUTLANDIR";
 "RESTORE CLIPS" = "KLİPLERİ GERİ GETİR";
 "RESTORE DEFAULTS" = "VARSAYILANLARA DÖN";
+"RESULTS GO BESIDE THE ORIGINAL FILE UNLESS YOU CHOOSE A FOLDER." = "BİR KLASÖR SEÇMEZSEN SONUÇLAR ORİJİNAL DOSYANIN YANINA KAYDEDİLİR.";
 "REVEAL FINISHED FILES IN EXPLORER" = "TAMAMLANAN DOSYALARI DOSYA GEZGİNİ'NDE GÖSTER";
 "REVEAL FINISHED FILES IN FINDER" = "TAMAMLANAN DOSYALARI FINDER'DA GÖSTER";
 "RIGHT" = "SAĞ";
@@ -2025,6 +2034,7 @@
 "Restore Clips" = "Klipleri Geri Getir";
 "Restore Defaults" = "Varsayılanlara Dön";
 "Restore defaults" = "Varsayılanlara dön";
+"Results go beside the original file unless you choose a folder." = "Bir klasör seçmezsen sonuçlar orijinal dosyanın yanına kaydedilir.";
 "Reveal finished files in Explorer" = "Tamamlanan dosyaları Dosya Gezgini'nde göster";
 "Reveal finished files in Finder" = "Tamamlanan dosyaları Finder'da göster";
 "Right" = "Sağ";
@@ -2051,6 +2061,8 @@
 "SAVE AUDIO COPY" = "SES KOPYASINI KAYDET";
 "SAVE BLEEPED COPY" = "BİP EKLENMİŞ KOPYAYI KAYDET";
 "SAVE CONNECTION" = "BAĞLANTIYI KAYDET";
+"SAVE COPIES" = "KOPYALARI KAYDET";
+"SAVE COPIES TO" = "KOPYALARI ŞURAYA KAYDET";
 "SAVE COPY" = "KOPYAYI KAYDET";
 "SAVE CROPPED COPY" = "KIRPILMIŞ KOPYAYI KAYDET";
 "SAVE DEFAULTS" = "VARSAYILANLARI KAYDET";
@@ -2058,6 +2070,7 @@
 "SAVE DOWNLOADED MEDIA TO…" = "İNDİRİLEN MEDYAYI ŞURAYA KAYDET…";
 "SAVE DOWNLOADS HERE" = "İNDİRMELERİ BURAYA KAYDET";
 "SAVE EDITED COPY" = "DÜZENLENMİŞ KOPYAYI KAYDET";
+"SAVE HERE" = "BURAYA KAYDET";
 "SAVE METADATA COPY" = "META VERİ KOPYASINI KAYDET";
 "SAVE MUTED COPY" = "SESSİZ KOPYAYI KAYDET";
 "SAVE NEW COPIES" = "YENİ KOPYALARI KAYDET";
@@ -2195,7 +2208,9 @@
 "Save %lld frames" = "%lld kare kaydet";
 "Save 1 frame" = "1 kare kaydet";
 "Save Connection" = "Bağlantıyı Kaydet";
+"Save Copies To" = "Kopyaları şuraya kaydet";
 "Save Downloads Here" = "İndirmeleri Buraya Kaydet";
+"Save Here" = "Buraya kaydet";
 "Save a copy" = "Kopya kaydet";
 "Save a cropped copy (Return or ⌘S)" = "Kırpılmış kopyayı kaydet (Enter veya ⌘S)";
 "Save a fresh copy (⌘S)" = "Yeni bir kopya kaydet (⌘S)";
@@ -2203,6 +2218,7 @@
 "Save as" = "Farklı kaydet";
 "Save audio copy" = "Ses kopyasını kaydet";
 "Save bleeped copy" = "Bip eklenmiş kopyayı kaydet";
+"Save copies" = "Kopyaları kaydet";
 "Save copy" = "Kopyayı kaydet";
 "Save cropped copy" = "Kırpılmış kopyayı kaydet";
 "Save defaults" = "Varsayılanları kaydet";
@@ -2377,6 +2393,7 @@
 "THE ARCHIVE ENTRY LEAVES ITS DESTINATION." = "ARŞİVDEKİ BİR ÖĞE HEDEF KLASÖRÜN DIŞINA ÇIKIYOR.";
 "THE ARCHIVE EXPANDS BEYOND THE 20 GB SAFETY LIMIT." = "ARŞİV AÇILDIĞINDA 20 GB'LIK GÜVENLİK SINIRINI AŞIYOR.";
 "THE ARCHIVE HAS TOO MANY ENTRIES (100,000 LIMIT)." = "ARŞİVDE ÇOK FAZLA ÖĞE VAR (SINIR 100.000).";
+"THE CHOSEN FOLDER IS NO LONGER AVAILABLE. RESULTS GO BESIDE THE ORIGINALS UNTIL YOU CHOOSE ANOTHER." = "SEÇİLEN KLASÖR ARTIK KULLANILAMIYOR. BAŞKA BİR KLASÖR SEÇENE KADAR SONUÇLAR ORİJİNALLERİN YANINA KAYDEDİLİR.";
 "THE CLIPPING EXCEEDS 200 MB." = "METİN KIRPINTISI 200 MB'I AŞIYOR.";
 "THE CLIPPING HAS NO READABLE TEXT. INCLUDE ITS ORIGINAL RESOURCE FORK/APPLEDOUBLE SIDECAR, OR PASTE ITS TEXT INTO NASHI." = "METİN KIRPINTISINDA OKUNABİLİR METİN YOK. ORİJİNAL RESOURCE FORK/APPLEDOUBLE DOSYASINI DA EKLE VEYA METNİNİ NASHI'YE YAPIŞTIR.";
 "THE DOCUMENT HAS NO EDITABLE BODY." = "BELGEDE DÜZENLENEBİLİR BİR İÇERİK YOK.";
@@ -2533,6 +2550,7 @@
 "The archive entry leaves its destination." = "Arşivdeki bir öğe hedef klasörün dışına çıkıyor.";
 "The archive expands beyond the 20 GB safety limit." = "Arşiv açıldığında 20 GB'lık güvenlik sınırını aşıyor.";
 "The archive has too many entries (100,000 limit)." = "Arşivde çok fazla öğe var (sınır 100.000).";
+"The chosen folder is no longer available. Results go beside the originals until you choose another." = "Seçilen klasör artık kullanılamıyor. Başka bir klasör seçene kadar sonuçlar orijinallerin yanına kaydedilir.";
 "The clipping exceeds 200 MB." = "Metin kırpıntısı 200 MB'ı aşıyor.";
 "The clipping has no readable text. Include its original resource fork/AppleDouble sidecar, or paste its text into Nashi." = "Metin kırpıntısında okunabilir metin yok. Orijinal resource fork/AppleDouble dosyasını da ekle veya metnini Nashi'ye yapıştır.";
 "The crop rectangle must fit completely inside the %@ × %@ pixel image." = "Kırpma alanı %@ × %@ piksellik görselin tamamen içinde kalmalı.";
