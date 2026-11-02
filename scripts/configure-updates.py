@@ -24,6 +24,8 @@ def apply_configuration(info_path, configuration_path, environ=None):
             configuration = plistlib.load(stream)
         feed = configuration.get("FeedURL", "")
         key = configuration.get("PublicEDKey", "")
+        if not isinstance(key, str):
+            raise ValueError("PublicEDKey must be a string")
         address = urlsplit(feed)
         local = configuration.get("LocalDevelopment", False) is True
         loopback = address.hostname in {"localhost", "127.0.0.1", "::1"}
