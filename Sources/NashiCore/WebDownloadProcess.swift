@@ -18,7 +18,9 @@ enum WebDownloadProcess {
         posix_spawn_file_actions_addclose(&actions,errors.fileHandleForReading.fileDescriptor)
         posix_spawn_file_actions_addclose(&actions,output.fileHandleForWriting.fileDescriptor)
         posix_spawn_file_actions_addclose(&actions,errors.fileHandleForWriting.fileDescriptor)
-        posix_spawnattr_setflags(&attributes,Int16(POSIX_SPAWN_SETPGROUP))
+        // Inherit only the descriptors set up above: another operation's pipe held
+        // open by this child would never reach EOF while the download runs.
+        posix_spawnattr_setflags(&attributes,Int16(POSIX_SPAWN_SETPGROUP|POSIX_SPAWN_CLOEXEC_DEFAULT))
         posix_spawnattr_setpgroup(&attributes,0)
         let args=([executable.path]+arguments).map{strdup($0)}+[nil]
         let environment=ProcessInfo.processInfo.environment.map{strdup("\($0.key)=\($0.value)")}+[nil]

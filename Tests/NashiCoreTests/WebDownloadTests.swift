@@ -47,6 +47,28 @@ final class WebDownloadTests:XCTestCase {
         let token=CancellationToken();token.cancel()
         XCTAssertThrowsError(try WebDownloadProcess.run(URL(fileURLWithPath:"/bin/sleep"),["30"],token:token,timeout:30))
     }
+    func testExtractorDoesNotHoldAnotherOperationsPipeOpen() throws {
+        // Gated by FIFOs: the child reports it is running, the other pipe's owner closes its
+        // writer, EOF is probed without blocking, then the child is released.
+        let root=FileManager.default.temporaryDirectory.appendingPathComponent("NashiWebFD-\(UUID().uuidString)",isDirectory:true)
+        try FileManager.default.createDirectory(at:root,withIntermediateDirectories:true);defer { try? FileManager.default.removeItem(at:root) }
+        let started=root.appendingPathComponent("started").path,gate=root.appendingPathComponent("gate").path
+        XCTAssertEqual(mkfifo(started,0o600),0);XCTAssertEqual(mkfifo(gate,0o600),0)
+        let other=Pipe() // e.g. a concurrent conversion's output pipe, not yet handed to its process
+        let finished=expectation(description:"extractor returned")
+        DispatchQueue.global().async {
+            _=try? WebDownloadProcess.run(URL(fileURLWithPath:"/bin/sh"),["-c","echo up > \"$1\"; read x < \"$2\"","sh",started,gate],token:.init(),timeout:60)
+            finished.fulfill()
+        }
+        var byte:UInt8=0
+        let running=open(started,O_RDONLY);_=read(running,&byte,1);close(running)
+        try other.fileHandleForWriting.close()
+        let reader=other.fileHandleForReading.fileDescriptor;_=fcntl(reader,F_SETFL,O_NONBLOCK)
+        let count=read(reader,&byte,1),error=errno
+        let release=open(gate,O_WRONLY);_=write(release,"go\n",3);close(release)
+        wait(for:[finished],timeout:30)
+        XCTAssertEqual(count,0,"the extractor inherited another pipe's writer (errno \(error))")
+    }
     func testErrorsDoNotExposeSourceSecrets() {
         let message=WebDownloadEngine.friendlyError("ERROR 403: https://example.org/private?token=secret")
         XCTAssertFalse(message.contains("secret"));XCTAssertFalse(message.contains("https://"))
