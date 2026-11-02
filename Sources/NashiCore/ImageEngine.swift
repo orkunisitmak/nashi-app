@@ -9,13 +9,14 @@ import Vision
 public enum ImageEngine {
     private static let imageColorSpace = CGColorSpace(name: CGColorSpace.sRGB)!
     private static let imageContext = CIContext(options: [.cacheIntermediates: false])
-    public static func load(_ url: URL) throws -> CGImage {
+    public static func load(_ url: URL) throws -> CGImage { try load(url,page:0) }
+    public static func load(_ url: URL, page: Int) throws -> CGImage {
         if let source = CGImageSourceCreateWithURL(url as CFURL, nil) {
             // The thumbnail transform also applies the pixel aspect ratio implied by unequal
             // horizontal and vertical DPI, which resamples the stored pixels. Orient those files here.
-            let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString:Any]
+            let properties = CGImageSourceCopyPropertiesAtIndex(source, page, nil) as? [CFString:Any]
             let squarePixels = (properties?[kCGImagePropertyDPIWidth] as? Double) == (properties?[kCGImagePropertyDPIHeight] as? Double)
-            if let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [kCGImageSourceCreateThumbnailFromImageAlways:true, kCGImageSourceCreateThumbnailWithTransform:squarePixels, kCGImageSourceThumbnailMaxPixelSize:32000] as CFDictionary) {
+            if let image = CGImageSourceCreateThumbnailAtIndex(source, page, [kCGImageSourceCreateThumbnailFromImageAlways:true, kCGImageSourceCreateThumbnailWithTransform:squarePixels, kCGImageSourceThumbnailMaxPixelSize:32000] as CFDictionary) {
                 let orientation = (properties?[kCGImagePropertyOrientation] as? NSNumber)?.int32Value ?? 1
                 if squarePixels || !(2...8).contains(orientation) { return image }
                 let oriented = CIImage(cgImage: image).oriented(forExifOrientation: orientation)
@@ -23,6 +24,7 @@ public enum ImageEngine {
                 return result
             }
         }
+        guard page == 0 else { throw NashiError.invalidInput("This image could not be decoded.") }
         if let image = NSImage(contentsOf: url), let cg = image.cgImage(forProposedRect:nil,context:nil,hints:nil) { return cg }
         // FFmpeg handles additional decoders (including animated inputs' first frame).
         let temp = try OutputFiles.temporaryDirectory(); defer { try? FileManager.default.removeItem(at:temp) }
@@ -30,6 +32,12 @@ public enum ImageEngine {
         try ProcessRunner.run(Dependencies.executable("ffmpeg"), ["-v","error","-i",url.path,"-frames:v","1",png.path])
         guard let source=CGImageSourceCreateWithURL(png as CFURL,nil),let cg=CGImageSourceCreateImageAtIndex(source,0,nil) else { throw NashiError.invalidInput("This image could not be decoded.") }
         return cg
+    }
+
+    /// Pages of a multi-page TIFF (scanned or faxed documents). Every other image, including animations, is one page.
+    public static func pageCount(_ url: URL) -> Int {
+        guard let source=CGImageSourceCreateWithURL(url as CFURL,nil),CGImageSourceGetType(source) as String? == UTType.tiff.identifier else { return 1 }
+        return max(1,CGImageSourceGetCount(source))
     }
 
     public static func convert(_ input: URL, to format: String, options: OperationOptions, token: CancellationToken) throws -> [URL] {
