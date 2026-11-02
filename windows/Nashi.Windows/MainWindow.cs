@@ -188,6 +188,7 @@ public sealed partial class MainWindow:Window
     }
     private void DeleteFromLibrary(LibraryEntry entry)
     {
+        if(busy)return;
         var existing=entry.AvailablePaths;
         var question=existing.Length>1?L10n.Text($"{existing.Length} files will be deleted?"):L10n.Text("Delete “{0}”?").Replace("{0}",entry.Name);
         var answer=MessageBox.Show(this,question+Environment.NewLine+Environment.NewLine+L10n.Text("The files go to the Recycle Bin and their Library entry is removed. You can restore them from the Recycle Bin."),L10n.Text("Delete file"),MessageBoxButton.YesNo,MessageBoxImage.Warning,MessageBoxResult.No);
@@ -196,6 +197,7 @@ public sealed partial class MainWindow:Window
         try{library.Remove(entry.Id);}catch(Exception error)when(error is IOException or UnauthorizedAccessException){L10n.SetText(status,"Library could not be saved");return;}
         if(selectedLibraryId==entry.Id)selectedLibraryId=null;
         L10n.SetText(status,existing.Length==0?"The file was already missing; the Library entry is removed.":existing.Length>1?"Files moved to the Recycle Bin.":"Moved to the Recycle Bin.");
+        foreach(var p in existing){files.Remove(p);}Refresh();
         RenderLibrary();
     }
     private void OpenDownload()

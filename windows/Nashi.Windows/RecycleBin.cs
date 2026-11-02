@@ -7,7 +7,7 @@ namespace Nashi.Windows;
 internal static class RecycleBin
 {
     private const uint Delete = 3;
-    private const ushort Silent = 0x0004, NoConfirmation = 0x0010, AllowUndo = 0x0040, NoErrorUi = 0x0400;
+    private const ushort Silent = 0x0004, AllowUndo = 0x0040, NoErrorUi = 0x0400;
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     private struct FileOperation
@@ -32,7 +32,7 @@ internal static class RecycleBin
         var operation = new FileOperation
         {
             Owner = owner, Function = Delete, From = string.Join("\0", targets) + "\0\0",
-            Flags = AllowUndo | NoConfirmation | NoErrorUi | Silent
+            Flags = AllowUndo | NoErrorUi | Silent
         };
         var result = SHFileOperation(ref operation);
         return result == 0 && !operation.Aborted && targets.All(p => !File.Exists(p) && !Directory.Exists(p));
