@@ -26,11 +26,20 @@ public sealed partial class MainWindow
         Closed+=(_,_)=>{launchTimer?.Stop();tray?.Dispose();};if(tray is not null&&Environment.GetCommandLineArgs().Contains("--background"))Hide();
     }
     private void ShowMain(){Show();if(WindowState==WindowState.Minimized)WindowState=WindowState.Normal;Activate();if(monitorToolSetup)Dispatcher.BeginInvoke(OfferFirstRunTools);}
-    private System.Windows.Controls.ContextMenu TrayMenu()
+    // Internal for the native interaction check, which drives the real menu item.
+    internal System.Windows.Controls.ContextMenu TrayMenu()
     {
         var menu=new System.Windows.Controls.ContextMenu();
         void Item(string text,Action action){var item=new System.Windows.Controls.MenuItem();L10n.Bind(item,System.Windows.Controls.HeaderedItemsControl.HeaderProperty,text);item.Click+=(_,_)=>action();menu.Items.Add(item);}
-        Item("Open Nashi",ShowMain);Item("Library",()=>{ShowMain();ShowLibrary(true);});Item("Download copied link",OpenCopiedLink);Item("Settings",()=>{ShowMain();ShowSettings();});Item(update is null?"Check for updates":"Update to "+update.Version,()=>{ShowMain();_ = CheckUpdatesAsync(true);});menu.Items.Add(new System.Windows.Controls.Separator());Item("Quit Nashi",()=>{if(busy){ShowMain();L10n.SetText(status,"Finish or cancel the current operation before quitting.");return;}quitting=true;Application.Current.Shutdown();});return menu;
+        Item("Open Nashi",ShowMain);Item("Library",()=>{ShowMain();ShowLibrary(true);});Item("Download copied link",OpenCopiedLink);Item("Settings",()=>{ShowMain();ShowSettings();});menu.Items.Add(DragShortcutsItem());Item(update is null?"Check for updates":"Update to "+update.Version,()=>{ShowMain();_ = CheckUpdatesAsync(true);});menu.Items.Add(new System.Windows.Controls.Separator());Item("Quit Nashi",()=>{if(busy){ShowMain();L10n.SetText(status,"Finish or cancel the current operation before quitting.");return;}quitting=true;Application.Current.Shutdown();});return menu;
+    }
+    // Same setting as the Settings toggle, reachable without leaving a game or an editor.
+    // Disabled while a dialog is open so an open Settings window cannot show a stale value.
+    private System.Windows.Controls.MenuItem DragShortcutsItem()
+    {
+        var item=new System.Windows.Controls.MenuItem{IsCheckable=true,IsChecked=preferences.Value.Enabled,IsEnabled=IsEnabled};L10n.Bind(item,System.Windows.Controls.HeaderedItemsControl.HeaderProperty,"Enable Nashi drag shortcuts");
+        item.Click+=(_,_)=>{try{preferences.Save(preferences.Value with{Enabled=item.IsChecked});ApplyPreferences();}catch(Exception error) when(error is IOException or UnauthorizedAccessException){item.IsChecked=preferences.Value.Enabled;ShowMain();L10n.SetText(status,error.Message);}};
+        return item;
     }
     private void ApplyPreferences(){L10n.Language=preferences.Value.Language;Feedback.Enabled=preferences.Value.Feedback;WheelPresentation.Preferences=preferences.Value;}
     private void ShowSettings(){new SettingsWindow(this,preferences,ApplyPreferences,()=>CheckUpdatesAsync(true),library).ShowDialog();appearance.SelectedItem=char.ToUpper(library.Appearance[0])+library.Appearance[1..];}
