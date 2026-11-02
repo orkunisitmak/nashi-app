@@ -67,6 +67,7 @@ internal static class GlobalGestureChecks
                 check(controller.ActiveWheel is not {Revealed:true},"A plain Shift-drag without files showed the global wheel");
             }
             finally{DesktopInput.HoldMouse(false);DesktopInput.Hold(Key.LeftShift,false);DesktopInput.Pump(250);plain.Close();}
+            check(controller.UsesMouseHook,"Global drag detection installed its mouse button hook");DesktopInput.Pump(400);check(!controller.FastCheckRunning,"Global drag detection stopped polling while no button is held");
             if(controller.LinkShortcutRegistered){DesktopInput.Key(owner,Key.D,control:true,shift:true);check(selected=="link-shortcut","Global copied-link shortcut Ctrl+Shift+D");}
             var main=owner as MainWindow;var beforeLaunch=main?.SelectedFiles.ToArray();var modal=new Window{Owner=owner,Width=300,Height=200,WindowStartupLocation=WindowStartupLocation.CenterOwner,Content=new System.Windows.Controls.Border{Background=System.Windows.Media.Brushes.DarkOliveGreen}};Exception? modalError=null;
             modal.Dispatcher.BeginInvoke(()=>
