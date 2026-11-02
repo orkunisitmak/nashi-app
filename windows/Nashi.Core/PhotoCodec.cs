@@ -96,12 +96,34 @@ public static class PhotoCodec
         if(o.Blur>0)image.Blur(0,Math.Min(50,o.Blur));
         if(o.Sharpen>0||o.Clarity>0||o.Texture>0)image.UnsharpMask(0,1+Math.Max(0,o.Clarity)*3,Math.Max(0,o.Sharpen)+Math.Max(0,o.Texture),.02);
         if(o.Grain>0)image.AddNoise(NoiseType.Gaussian,Math.Min(1,o.Grain)*.15,Channels.RGB);
-        if(o.Vignette>0)image.Vignette(0,Math.Max(1,Math.Min(image.Width,image.Height)*o.Vignette*.25),0,0);
+        if(o.Vignette>0)Vignette(image,Math.Min(2,o.Vignette));
         return image.ToByteArray(MagickFormat.Png);
     }
     public static IReadOnlyDictionary<string,string> Metadata(string input)
     {
         using var image=Read(input);var values=new SortedDictionary<string,string>(StringComparer.Ordinal);foreach(var name in image.AttributeNames){var value=image.GetAttribute(name);if(!string.IsNullOrEmpty(value))values[name]=value;}
         var exif=image.GetExifProfile();if(exif is not null)foreach(var v in exif.Values)values["EXIF · "+v.Tag]=v.ToString()??"";return values;
+    }
+    /// Darkens the edges like macOS CIVignette: in linear light, colour is multiplied by (1-d²/4)^(2·intensity),
+    /// d being the distance from the centre over half the shorter side. Alpha is kept. ImageMagick's
+    /// Vignette instead faded the edges to the white background colour and painted over transparency.
+    private static void Vignette(MagickImage image,double intensity)
+    {
+        // The loop reads three colour channels; make that hold for any input, not only after Adjust's grey expansion.
+        if(image.ColorSpace!=ColorSpace.sRGB)image.ColorSpace=ColorSpace.sRGB;
+        var linear=new double[256];for(var i=0;i<256;i++){var c=i/255d;linear[i]=c<=.04045?c/12.92:Math.Pow((c+.055)/1.055,2.4);}
+        var srgb=new byte[65536];for(var i=0;i<srgb.Length;i++){var c=i/65535d;srgb[i]=(byte)Math.Round(255*(c<=.0031308?c*12.92:1.055*Math.Pow(c,1/2.4)-.055));}
+        var width=(int)image.Width;var height=(int)image.Height;var channels=(int)image.ChannelCount;var radius=Math.Min(width,height)/2d;
+        using var pixels=image.GetPixelsUnsafe();
+        for(var y=0;y<height;y++)
+        {
+            var row=pixels.GetArea(0,y,(uint)width,1)!;var dy=(y+.5-height/2d)/radius;
+            for(var x=0;x<width;x++)
+            {
+                var dx=(x+.5-width/2d)/radius;var falloff=1-(dx*dx+dy*dy)/4;var factor=falloff>0?Math.Pow(falloff,2*intensity):0;
+                for(int c=0,i=x*channels;c<3;c++)row[i+c]=srgb[(int)(linear[row[i+c]]*factor*65535+.5)];
+            }
+            pixels.SetArea(0,y,(uint)width,1,row);
+        }
     }
 }

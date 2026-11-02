@@ -350,6 +350,18 @@ internal static class ParityChecks
         // Only the centre is measured: edge pixels are clamped, so border stripes cannot fully average out.
         using(var stripes=new MagickImage(MagickColors.White,200,80)){for(var x=0;x<200;x+=8)new ImageMagick.Drawing.Drawables().FillColor(MagickColors.Black).Rectangle(x,0,x+3,79).Draw(stripes);
             using var blurred=new MagickImage(PhotoCodec.Adjust(stripes.ToByteArray(MagickFormat.Png),new(){Blur=24}));using var centre=blurred.CloneArea(new MagickGeometry(50,20,100,40));var spread=centre.Statistics().GetChannel(PixelChannel.Red)!.StandardDeviation/Quantum.Max;check(spread<.02,$"Redaction blur left stripe detail visible (spread {spread:0.000})");}
+        // Vignette darkens the edges like macOS CIVignette and keeps transparency. Expected values are the Mac's
+        // for a 200 × 100 grey (128) photo at Vignette 1; a PNG without bKGD reads with a white background.
+        using(var grey=new MagickImage(new MagickColor(128,128,128,128),200,100)){grey.BackgroundColor=MagickColors.White;using var vignetted=new MagickImage(PhotoCodec.Adjust(grey.ToByteArray(MagickFormat.Png),new(){Vignette=1}));using var pixels=vignetted.GetPixels();
+            foreach(var (x,y,expected) in new[]{(0,0,0),(10,50,23),(50,50,98),(25,25,50),(100,50,128)}){var colour=pixels.GetPixel(x,y).ToColor()!;check(Math.Abs(colour.R-expected)<=2&&colour.G==colour.R&&colour.B==colour.R&&colour.A==128,$"Vignette differs from macOS at {x},{y}: {colour}, expected grey {expected} at alpha 128");}}
+        // A greyscale JPEG reaches Adjust as a Gray PNG, with or without alpha; Vignette must darken only the colour and keep alpha.
+        foreach(var vignetteAlpha in new[]{false,true})
+        {
+            using var vignetteGrey=new MagickImage(new MagickColor(128,128,128,(byte)(vignetteAlpha?128:255)),200,100);vignetteGrey.HasAlpha=vignetteAlpha;vignetteGrey.Settings.SetDefine(MagickFormat.Png,"color-type",vignetteAlpha?"4":"0");var vignetteSource=vignetteGrey.ToByteArray(MagickFormat.Png);
+            using(var read=new MagickImage(vignetteSource))check(read.ColorSpace==ColorSpace.Gray&&read.HasAlpha==vignetteAlpha,$"Greyscale Vignette fixture reads as {read.ColorSpace} with alpha {read.HasAlpha}");
+            using var vignetteResult=new MagickImage(PhotoCodec.Adjust(vignetteSource,new(){Vignette=1}));using var vignettePixels=vignetteResult.GetPixels();var corner=vignettePixels.GetPixel(0,0).ToColor()!;var centre=vignettePixels.GetPixel(100,50).ToColor()!;
+            check(corner.R<=2&&Math.Abs(centre.R-128)<=2&&corner.A==(vignetteAlpha?128:255)&&centre.A==corner.A,$"Vignette on a greyscale PNG {(vignetteAlpha?"with":"without")} alpha gave corner {corner} and centre {centre}");
+        }
         // A killed tool can still hold a staged file when the user cancels.
         Exception? outcome=null;var hidden=false;FileStream? held=null;string? staging=null;var cleanup=new System.Diagnostics.Stopwatch();
         try{using var tx=new ExportTransaction(Path.Combine(root,"Held export"));staging=tx.StagingDirectory;hidden=File.GetAttributes(staging).HasFlag(FileAttributes.Hidden);held=File.Create(Path.Combine(staging,"partial.mp4"));cleanup.Start();throw new OperationCanceledException();}
