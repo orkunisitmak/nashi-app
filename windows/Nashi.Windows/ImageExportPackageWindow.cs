@@ -85,7 +85,7 @@ public sealed class ImageExportPackageWindow : Window
     }
     private void AddRow(ImageExportVariant variant)
     {
-        var format = new ComboBox { ItemsSource = ImageExportPackage.Formats, SelectedItem = variant.Format };
+        var format = new ComboBox { ItemsSource = ImageExportPackage.Formats, SelectedItem = variant.Format, MinWidth = 0 };
         var edge = new TextBox { Text = variant.MaxDimension.ToString(CultureInfo.InvariantCulture) };
         var folder = new TextBox { Text = variant.Subfolder };
         AutomationProperties.SetName(format, L10n.Text("Format")); AutomationProperties.SetName(edge, L10n.Text("Longest edge (px)")); AutomationProperties.SetName(folder, L10n.Text("Subfolder"));

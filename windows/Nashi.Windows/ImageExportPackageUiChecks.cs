@@ -21,6 +21,11 @@ internal static class ImageExportPackageUiChecks
                 var dialog = new ImageExportPackageWindow(owner, [source], store);
                 dialog.Show(); dialog.UpdateLayout(); DesktopInput.Pump();
                 var export = Find<Button>(dialog, "PackageExport");
+                var format = Descendants(dialog).OfType<ComboBox>().First(field => ReferenceEquals(field.ItemsSource, ImageExportPackage.Formats));
+                var firstEdge = Descendants(dialog).OfType<TextBox>().First(field => AutomationProperties.GetName(field) == L10n.Text("Longest edge (px)"));
+                var formatBounds = format.TransformToAncestor(dialog).TransformBounds(new Rect(format.RenderSize));
+                var edgeBounds = firstEdge.TransformToAncestor(dialog).TransformBounds(new Rect(firstEdge.RenderSize));
+                check(formatBounds.Right <= edgeBounds.Left, "Package format picker stays inside its column without overlapping the size field");
                 check(export.IsEnabled && dialog.Package.Plan([source]).Count == 3, "Native package editor previews the three example variants");
                 var preview = Find<TextBlock>(dialog, "PackagePreview");
                 check(preview.Text.Contains("web/") && preview.Text.Contains("thumbnail/"), "Native preview includes variant subfolders");
