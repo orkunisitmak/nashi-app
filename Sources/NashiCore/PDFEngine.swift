@@ -246,8 +246,12 @@ public enum PDFEngine {
             let mapped=PDFDestination(page:copy,at:original.point);mapped.zoom=original.zoom;return mapped
         }
         for index in 0..<result.pageCount {
-            for annotation in result.page(at:index)?.annotations ?? [] {
-                if let action=annotation.action as? PDFActionGoTo,let mapped=destination(action.destination) { annotation.action=PDFActionGoTo(destination:mapped) }
+            // A copied page loses the page of each link target, so read the target from the source page.
+            let originals=source.page(at:index)?.annotations ?? [],copies=result.page(at:index)?.annotations ?? []
+            guard originals.count==copies.count else { continue }
+            for (original,annotation) in zip(originals,copies) {
+                if let action=original.action as? PDFActionGoTo,let mapped=destination(action.destination) { annotation.action=PDFActionGoTo(destination:mapped) }
+                else if let target=original.destination,let mapped=destination(target) { annotation.action=PDFActionGoTo(destination:mapped) }
             }
         }
         var visited=Set<ObjectIdentifier>()
