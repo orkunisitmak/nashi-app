@@ -174,6 +174,19 @@ final class DocumentEngineTests: XCTestCase {
         XCTAssertEqual(try fm.destinationOfSymbolicLink(atPath: link.path), root.appendingPathComponent("Missing folder").path)
     }
 
+    func testExtractingAnArchiveNamedAtTheLengthLimitShortensTheFolderName() throws {
+        let payload = root.appendingPathComponent("Payload", isDirectory: true)
+        try FileManager.default.createDirectory(at: payload, withIntermediateDirectories: true)
+        try Data("data\n".utf8).write(to: payload.appendingPathComponent("a.txt"))
+        let archive = root.appendingPathComponent(String(repeating: "a", count: 251) + ".zip")
+        try ArchiveCodec.create(from: payload, at: archive, format: "zip", token: .init())
+        let first = try XCTUnwrap(DocumentEngine.extractArchive(archive, options: .init(), token: .init()).first)
+        let second = try XCTUnwrap(DocumentEngine.extractArchive(archive, options: .init(), token: .init()).first)
+        XCTAssertEqual(first.lastPathComponent, String(repeating: "a", count: 245) + " Extracted")
+        XCTAssertEqual(second.lastPathComponent, String(repeating: "a", count: 243) + " Extracted 2")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: first.appendingPathComponent("a.txt").path))
+    }
+
     func testDanglingLinksBesideTheInputKeepTheirNamesAndAreNotReplaced() throws {
         let fm = FileManager.default
         func danglingLink(_ name: String) throws -> URL {
