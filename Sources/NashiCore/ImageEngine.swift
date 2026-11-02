@@ -126,7 +126,7 @@ public enum ImageEngine {
                 case .frameImage: image=try frame(image,options:options); suffix=" - Framed"
                 default: throw NashiError.unsupported("\(kind.title) is not an image operation.")
                 }
-                let output=OutputFiles.unique(for:input,extension:kind == .annotateImage ? "png" : ext,suffix:suffix,directory:options.outputDirectory)
+                let output=OutputFiles.unique(for:input,extension:ext,suffix:suffix,directory:options.outputDirectory)
                 try write(image,to:output,quality:options.quality)
                 outputs.append(output)
             } catch NashiError.invalidInput(let message) where kind == .cropImage || kind == .redactImage {
