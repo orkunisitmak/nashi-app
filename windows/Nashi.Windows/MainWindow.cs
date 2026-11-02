@@ -27,7 +27,7 @@ public sealed partial class MainWindow:Window
     private readonly TextBox search=new(){ToolTip="Find a file or tool in Library",MinWidth=200};
     private readonly DockPanel manage=new();private readonly FileGarden garden=new();private readonly StackPanel webContent=new();private Window? webWindow;
     internal Window DownloadWindow=>webWindow??this;
-    private readonly Button homeButton,libraryButton,updateButton,toolsSetupButton;private readonly ComboBox appearance;
+    private readonly Button homeButton,libraryButton,updateButton,toolsSetupButton,clearHistoryButton;private readonly ComboBox appearance;
     private readonly StackPanel workArea=new();
     private readonly ScrollViewer homeScroll=new(),libraryScroll=new();
     private bool busy,checking,toolSetupOffered;private WindowsUpdate? update;private Border? updateBanner;
@@ -71,7 +71,7 @@ public sealed partial class MainWindow:Window
         var webHeader=new DockPanel();var shortcut=Text("Ctrl+Shift+D",12,"Muted");DockPanel.SetDock(shortcut,Dock.Right);webHeader.Children.Add(shortcut);var arrow=Text("↓",28,"Gold");arrow.Margin=new(0,0,14,0);DockPanel.SetDock(arrow,Dock.Left);webHeader.Children.Add(arrow);var caption=new StackPanel();caption.SetValue(TextBlock.TextAlignmentProperty,TextAlignment.Left);caption.Children.Add(Text("Download a link",15));caption.Children.Add(Text("Video, audio, or an image. Straight into your tools.",12,"Muted"));webHeader.Children.Add(caption);var webButton=Button("",OpenDownload);webButton.Content=webHeader;webButton.HorizontalContentAlignment=HorizontalAlignment.Stretch;webButton.Margin=new(0);webButton.Padding=new(18);webButton.BorderThickness=new(0);var webLanding=Card(webButton);webLanding.Padding=new(0);workArea.Children.Add(webLanding);workArea.Children.Add(actions);
         var recentHeading=new DockPanel{Margin=new(0,24,0,10)};var all=Button("See all  ↗",()=>ShowLibrary(true));DockPanel.SetDock(all,Dock.Right);recentHeading.Children.Add(all);recentSearch.TextChanged+=(_,_)=>RenderLibrary();DockPanel.SetDock(recentSearch,Dock.Right);recentHeading.Children.Add(recentSearch);var recentTitle=new StackPanel{Orientation=Orientation.Horizontal,VerticalAlignment=VerticalAlignment.Center};recentTitle.Children.Add(Text("Freshly made",19));recentCount.Margin=new(10,0,0,0);recentTitle.Children.Add(recentCount);recentHeading.Children.Add(recentTitle);home.Children.Add(recentHeading);var recentCard=Card(recentRows);recentCard.Padding=new(7);home.Children.Add(recentCard);
         var footer=new WrapPanel{Margin=new(0,14,0,0)};footer.Children.Add(Button("Set up media tools",async()=>await SetupAsync()));footer.Children.Add(Button("Set up office tools",async()=>await SetupOfficeAsync()));footer.Children.Add(Button("Features & shortcuts",ShowShortcuts));home.Children.Add(new Expander{Header="Tools & shortcuts",Content=footer,Margin=new(4,8,4,0)});
-        libraryPage.Children.Add(Text("Your Library",30));libraryPage.Children.Add(Text("Freshly made, pasted, and ready for another round.",14,"Muted"));
+        var libraryHeading=new DockPanel();clearHistoryButton=Button("Clear history",ClearLibraryHistory);DockPanel.SetDock(clearHistoryButton,Dock.Right);libraryHeading.Children.Add(clearHistoryButton);libraryHeading.Children.Add(Text("Your Library",30));libraryPage.Children.Add(libraryHeading);libraryPage.Children.Add(Text("Freshly made, pasted, and ready for another round.",14,"Muted"));
         var searchLabel=Text("Find a file or tool  ·  Ctrl+F",12,"Muted");searchLabel.Margin=new(4,20,4,0);libraryPage.Children.Add(searchLabel);libraryPage.Children.Add(search);libraryPage.Children.Add(libraryRows);search.TextChanged+=(_,_)=>RenderLibrary();
         AutomationProperties.SetAutomationId(search,"LibrarySearch");AutomationProperties.SetAutomationId(link,"DownloadLink");AutomationProperties.SetAutomationId(list,"SelectedFiles");
         Closing+=(_,e)=>{if(busy){e.Cancel=true;L10n.SetText(status,"Finish the current operation or choose Cancel before closing Nashi.");}};
@@ -172,6 +172,8 @@ public sealed partial class MainWindow:Window
     }
     private void RenderLibrary()
     {
+        clearHistoryButton.IsEnabled=!busy&&library.Entries.Count>0;
+        if(selectedLibraryId is {} selected&&!library.Entries.Any(e=>e.Id==selected))selectedLibraryId=null;
         libraryCards.Clear();libraryRows.Children.Clear();recentRows.Children.Clear();var filtered=SearchLibrary(search.Text).ToArray();
         if(filtered.Length==0)libraryRows.Children.Add(Card(Text(library.Entries.Count==0?"Nothing here yet. Paste something or make your first fresh copy.":"No matches. Try a file name or tool.",14,"Muted")));
         foreach(var entry in filtered)libraryRows.Children.Add(LibraryRow(entry));
@@ -185,7 +187,7 @@ public sealed partial class MainWindow:Window
         var reveal=Button("▱",()=>{var existing=entry.AvailablePaths;if(existing.Length>0)Reveal(existing[0]);else{L10n.SetText(status,"This file has moved or was deleted.");RenderLibrary();}});reveal.IsEnabled=available.Length>0;L10n.Bind(reveal,System.Windows.FrameworkElement.ToolTipProperty,"Show in Explorer");AutomationProperties.SetName(reveal,"Show "+entry.Name+" in Explorer");buttons.Children.Add(reveal);
         var fileIcon=new Image{Width=29,Height=29,Margin=new(0,0,12,0),VerticalAlignment=VerticalAlignment.Center};FileArtwork.Bind(fileIcon,entry.Paths[0]);DockPanel.SetDock(fileIcon,Dock.Left);row.Children.Add(fileIcon);var text=new StackPanel{Margin=new(0,0,12,0),VerticalAlignment=VerticalAlignment.Center};var name=Text(entry.Name,12,localize:false);name.TextWrapping=TextWrapping.NoWrap;name.TextTrimming=TextTrimming.CharacterEllipsis;name.ToolTip=string.Join(Environment.NewLine,entry.Paths);text.Children.Add(name);var info=new StackPanel{Orientation=Orientation.Horizontal};info.Children.Add(Text(entry.Action,10,"Muted"));info.Children.Add(Text("  ·  "+entry.Created.ToLocalTime().ToString("g"),10,"Muted",localize:false));if(available.Length<entry.Paths.Length){info.Children.Add(Text("  ·  ",10,"Muted",localize:false));info.Children.Add(Text("Files missing",10,"Muted"));}text.Children.Add(info);row.Children.Add(text);
         var preview=Button("◉",()=>PreviewEntry(entry));preview.IsEnabled=available.Length>0;L10n.Bind(preview,System.Windows.FrameworkElement.ToolTipProperty,"Preview");AutomationProperties.SetName(preview,"Preview "+entry.Name);buttons.Children.Insert(0,preview);
-        var card=Card(row);if(!compact)ConfigureLibraryRow(card,entry);card.Padding=new(14,10,14,10);if(compact){card.CornerRadius=new(12);card.BorderThickness=new(0);card.Margin=new(0,0,0,2);}return card;
+        var card=Card(row);var menu=new ContextMenu();var remove=new MenuItem();L10n.Bind(remove,HeaderedItemsControl.HeaderProperty,"Remove from history");remove.IsEnabled=!busy;remove.Click+=(_,_)=>RemoveLibraryEntry(entry.Id);menu.Items.Add(remove);card.ContextMenu=menu;if(!compact)ConfigureLibraryRow(card,entry);card.Padding=new(14,10,14,10);if(compact){card.CornerRadius=new(12);card.BorderThickness=new(0);card.Margin=new(0,0,0,2);}return card;
     }
     private void OpenDownload()
     {

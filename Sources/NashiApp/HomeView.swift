@@ -14,6 +14,7 @@ struct HomeView:View {
     @State private var targeted=false
     @State private var historySearch=""
     @State private var allHistory=false
+    @State private var clearHistoryConfirmation=false
     @State private var toolsReady=ExternalToolSetup.status.ready
     private var formats:[String] { FeatureCatalog.formats(for:state.inputs) }
     private var tools:[ToolKind] { FeatureCatalog.tools(for:state.inputs) }
@@ -91,13 +92,20 @@ struct HomeView:View {
         ScrollViewReader { scroll in
             ScrollView {
                 VStack(alignment:.leading,spacing:16) {
-                    Text("Your Library").font(.system(size:30,weight:.bold,design:.rounded))
+                    HStack {
+                        Text("Your Library").font(.system(size:30,weight:.bold,design:.rounded))
+                        Spacer()
+                        Button("Clear history") { clearHistoryConfirmation=true }.disabled(state.working || state.history.isEmpty)
+                    }.confirmationDialog("Clear Library history?",isPresented:$clearHistoryConfirmation) {
+                        Button("Clear history",role:.destructive) { state.clearHistory() }
+                        Button("Cancel",role:.cancel) {}
+                    } message: { Text("This removes history entries. Your files stay on disk.") }
                     Text("Freshly made, pasted, and ready for another round.").font(.callout).foregroundStyle(.secondary)
                     TextField("Find a file or tool · ⌘F",text:$state.libraryQuery).textFieldStyle(.roundedBorder).focused($librarySearchFocused)
                     if let error=state.error {HStack{Label { LText(error) } icon:{ Image(systemName:"exclamationmark.circle") }.font(.caption).foregroundStyle(.orange);Spacer();Button("Dismiss"){state.error=nil}.buttonStyle(NashiButtonStyle(.quiet,compact:true))}}
                     if state.filteredHistory.isEmpty {LText(state.history.isEmpty ? "Nothing here yet. Paste something or make your first fresh copy.":"No matches. Try a file name or tool.").foregroundStyle(.secondary).padding(20)}
                     ForEach(state.filteredHistory) {job in
-                        RecentFileRow(job:job,canReuse:!state.working,onPreview:{state.preview(job)},onReuse:{urls in guard !state.working else{return};state.inputs=urls;state.libraryVisible=false})
+                        RecentFileRow(job:job,canReuse:!state.working,onPreview:{state.preview(job)},onReuse:{urls in guard !state.working else{return};state.inputs=urls;state.libraryVisible=false},onRemove:{state.removeHistory(job.id)})
                             .nashiCard(radius:16).overlay(RoundedRectangle(cornerRadius:16).strokeBorder(state.selectedHistoryID==job.id ? Color.nashi:Color.clear,lineWidth:1.5))
                             .contentShape(Rectangle()).onTapGesture {state.selectedHistoryID=job.id;librarySearchFocused=false}.id(job.id)
                     }
@@ -206,7 +214,7 @@ struct HomeView:View {
                     RecentFileRow(job:job,canReuse:!state.working,onPreview:{state.preview(job)},onReuse:{ urls in
                         guard !state.working else { return }
                         state.inputs=urls
-                    })
+                    },onRemove:{state.removeHistory(job.id)})
                 }
             }.padding(7).nashiCard()
             if state.history.count>3 && historySearch.isEmpty {
@@ -244,6 +252,7 @@ private struct RecentFileRow:View {
     let canReuse:Bool
     let onPreview:()->Void
     let onReuse:([URL])->Void
+    let onRemove:()->Void
     @State private var hovered=false
     private var urls:[URL] { job.outputs.map{URL(fileURLWithPath:$0)} }
     private var available:[URL] { urls.filter{FileManager.default.fileExists(atPath:$0.path)} }
@@ -264,6 +273,7 @@ private struct RecentFileRow:View {
             Button { NSWorkspace.shared.activateFileViewerSelecting(available) } label:{Image(systemName:"folder").font(.system(size:13))}
                 .buttonStyle(NashiButtonStyle(.quiet,compact:true)).disabled(available.isEmpty).help("Show in Finder").accessibilityLabel("Show \(urls.first?.lastPathComponent ?? "result") in Finder")
         }.padding(.horizontal,10).padding(.vertical,8).background(hovered ? NashiPalette.inset.opacity(0.75):Color.clear,in:RoundedRectangle(cornerRadius:14))
+            .contextMenu { Button("Remove from history",role:.destructive,action:onRemove).disabled(!canReuse) }
             .onHover{hovered=$0}.nashiAnimation(value:hovered)
     }
 }

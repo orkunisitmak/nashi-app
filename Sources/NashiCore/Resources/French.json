@@ -1432,5 +1432,10 @@
   "YouTube thumbnail · best available full-size image": "Miniature YouTube · meilleure image en taille réelle disponible",
   "No tools for this file type": "Aucun outil pour ce type de fichier",
   "Details": "Détails",
-  "Copy details": "Copier les détails"
+  "Copy details": "Copier les détails",
+  "Clear history": "Effacer l’historique",
+  "Clear Library history?": "Effacer l’historique de la bibliothèque ?",
+  "This removes history entries. Your files stay on disk.": "Les entrées de l’historique seront supprimées. Vos fichiers restent sur le disque.",
+  "Remove from history": "Retirer de l’historique",
+  "Library history could not be saved.": "L’historique de la bibliothèque n’a pas pu être enregistré."
 }

@@ -67,6 +67,17 @@ struct JobRecord:Codable,Identifiable {
         let record:JobRecord?
         init(from decoder:Decoder) throws { record=try? JobRecord(from:decoder) }
     }
+    func removeHistory(_ id:UUID) {
+        guard !working else { return }
+        history.removeAll { $0.id==id }
+        if selectedHistoryID==id { selectedHistoryID=nil }
+        saveHistory()
+    }
+    func clearHistory() {
+        guard !working else { return }
+        history=[];selectedHistoryID=nil;saveHistory()
+    }
+    private func saveHistory() { if let data=try? JSONEncoder().encode(history) { historyDefaults.set(data,forKey:"history") } }
     func retainToolWindow(_ window:NSWindow) {
         toolWindows.append(window);let id=ObjectIdentifier(window)
         windowObservers[id]=NotificationCenter.default.addObserver(forName:NSWindow.willCloseNotification,object:window,queue:.main) { [weak self] _ in Task { @MainActor in guard let self else { return };self.toolWindows.removeAll{ObjectIdentifier($0)==id};if let token=self.windowObservers.removeValue(forKey:id) { NotificationCenter.default.removeObserver(token) } } }
