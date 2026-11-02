@@ -19,6 +19,7 @@ struct ToolEditor:View {
         }
     }
     @State private var options=OperationOptions()
+    @State private var annotationHistory=ImageAnnotationHistory()
     @State private var image:NSImage?
     @State private var baseImage:CGImage?
     @State private var showOriginal=false
@@ -367,8 +368,8 @@ struct ToolEditor:View {
             Picker("Font",selection:$annotationFontFamily) { Text("System").tag("system");Text("Rounded").tag("rounded");Text("Serif").tag("serif");Text("Monospaced").tag("monospaced") }
             slider("Stroke width",value:$annotationStroke,range:1...40,unit:"px");slider("Text size",value:$annotationFont,range:8...160,unit:"px")
             LText(selectingAnnotations ? "Drag an existing annotation to move it; drag its handles to resize. Turn off Select / Move to draw.":"Drag to draw with the selected tool. Use Select / Move to edit an existing annotation.").font(.caption).foregroundStyle(.secondary).fixedSize(horizontal:false,vertical:true)
-            HStack { Button("Undo") { if !options.imageAnnotations.isEmpty { options.imageAnnotations.removeLast() } };Button("Clear") { options.imageAnnotations=[] } }
-            ForEach(Array(options.imageAnnotations.enumerated()),id:\.offset) { index,a in HStack { Text("\(index+1). \(a.kind.rawValue.capitalized)");Spacer();Button("Delete") { options.imageAnnotations.remove(at:index) } } }
+            HStack { Button("Undo") { undoAnnotations() }.disabled(!annotationHistory.canUndo);Button("Redo") { redoAnnotations() }.disabled(!annotationHistory.canRedo);Button("Clear") { changeAnnotations { $0=[] } }.disabled(options.imageAnnotations.isEmpty) }
+            ForEach(Array(options.imageAnnotations.enumerated()),id:\.offset) { index,a in HStack { Text("\(index+1). \(a.kind.rawValue.capitalized)");Spacer();Button("Delete") { changeAnnotations { $0.remove(at:index) } } } }
         }
     }
     var frameControls:some View {
@@ -500,7 +501,7 @@ struct ToolEditor:View {
     var metadataGroups:[String] { Array(Set(visibleMetadata.map(metadataGroup))).sorted() }
     func metadataGroup(_ key:String)->String { if let separator=key.firstIndex(of:category == .image ? ".":":") { return String(key[..<separator]) };return category == .pdf ? "Document":"File" }
     var imagePreview:some View {
-        ImageEditPreview(image:showOriginal ? baseImage.map{NSImage(cgImage:$0,size:.zero)}:image,imageSize:showOriginal ? imageSize:(previewSize ?? imageSize),crop:tool == .cropImage ? options.crop:nil,redactions:options.redactions,annotations:options.imageAnnotations,redactionColor:Color(cgColor:ImageEngine.color(options.backgroundColor).copy(alpha:1)!),zoom:previewZoom,onStroke:tool == .annotateImage && !selectingAnnotations ? addAnnotation:nil,onMoveAnnotation:{i,r,points in options.imageAnnotations[i].rect=r;options.imageAnnotations[i].points=points},onMoveRedaction:{i,r in options.redactions[i]=r},onMoveCrop:{r in setCrop(r)},cropEnabled:tool == .cropImage,cropAspectRatio:cropAspectRatio,onCropInteraction:cropInteraction,annotationStyle:tool == .annotateImage ? annotationStyle:nil,annotationSource:baseImage,selectAnnotations:selectingAnnotations) { rect in
+        ImageEditPreview(image:showOriginal ? baseImage.map{NSImage(cgImage:$0,size:.zero)}:image,imageSize:showOriginal ? imageSize:(previewSize ?? imageSize),crop:tool == .cropImage ? options.crop:nil,redactions:options.redactions,annotations:options.imageAnnotations,redactionColor:Color(cgColor:ImageEngine.color(options.backgroundColor).copy(alpha:1)!),zoom:previewZoom,onStroke:tool == .annotateImage && !selectingAnnotations ? addAnnotation:nil,onMoveAnnotation:{i,r,points in options.imageAnnotations[i].rect=r;options.imageAnnotations[i].points=points},onAnnotationInteraction:{active in if active { annotationHistory.beginInteraction(options.imageAnnotations) } else { annotationHistory.endInteraction(options.imageAnnotations) }},onMoveRedaction:{i,r in options.redactions[i]=r},onMoveCrop:{r in setCrop(r)},cropEnabled:tool == .cropImage,cropAspectRatio:cropAspectRatio,onCropInteraction:cropInteraction,annotationStyle:tool == .annotateImage ? annotationStyle:nil,annotationSource:baseImage,selectAnnotations:selectingAnnotations) { rect in
             switch tool {
             case .cropImage: setCrop(rect)
             case .redactImage: options.redactions.append(rect)
@@ -628,7 +629,7 @@ struct ToolEditor:View {
     func reset() {
         disposeMedia();previewToken=CancellationToken();visualizationToken=CancellationToken()
         isLoading=true;readyToApply=false;inputs=originalInputs;options=OperationOptions()
-        pdfEditor.reset();selectedSplitClip=nil;aspect="Free";cropInteracting=false;equalClips=2
+        pdfEditor.reset();annotationHistory.reset();selectedSplitClip=nil;aspect="Free";cropInteracting=false;equalClips=2
         width=0;height=0;image=nil;baseImage=nil;imageSize=CGSize(width:100,height:100);pixelAspect=1;previewSize=nil;previewZoom=1;showOriginal=false
         duration=0;frameRate=30;playhead=0;playerReachedEnd=false;playingRange=false;processedPlayback=false;processedDuration=nil
         waveform=[];leftWaveform=[];rightWaveform=[];processedWaveform=nil;playbackURL=nil;visualizationReady=false;processedPreviewBusy=false;visualizationBusy=false;previewError=nil
@@ -712,8 +713,15 @@ struct ToolEditor:View {
     func addAnnotation(_ rect:EditRect,_ points:[ImagePoint]) {
         guard var a=AnnotationDrawing.draft(style:annotationStyle,points:points) else { return }
         if annotationKind == .image { let panel=NSOpenPanel();guard panel.runModal() == .OK else { return };a.imageURL=panel.url }
-        options.imageAnnotations.append(a)
+        changeAnnotations { $0.append(a) }
     }
+    func changeAnnotations(_ edit:(inout [ImageAnnotation])->Void) {
+        let before=options.imageAnnotations
+        edit(&options.imageAnnotations)
+        annotationHistory.record(before:before,after:options.imageAnnotations)
+    }
+    func undoAnnotations() { if let annotations=annotationHistory.undo(options.imageAnnotations) { options.imageAnnotations=annotations } }
+    func redoAnnotations() { if let annotations=annotationHistory.redo(options.imageAnnotations) { options.imageAnnotations=annotations } }
     func setCrop(_ rect:EditRect) {
         var r=rect
         // Whole pixels, rounded down, except that floating-point noise just under an
@@ -746,6 +754,7 @@ struct ToolEditor:View {
     func handleShortcut(_ command:EditorKeyboardCommand)->Bool {
         guard !isLoading,readyToApply,!state.working else { return false }
         if command == .save { guard canApply else { return false };apply();return true }
+        if command == .undo || command == .redo { guard tool == .annotateImage else { return false };if command == .undo { undoAnnotations() } else { redoAnnotations() };return true }
         if command == .confirmCrop { guard isCropTool,canApply else { return false };apply();return true }
         guard (audio || video),player != nil,!previewBusy else { return false }
         switch command {
@@ -769,7 +778,7 @@ struct ToolEditor:View {
             if tool == .splitVideo { addSplitPoint() }
             else if tool == .videoSnapshots { options.snapshotTimes.append(playhead) }
             else { return false }
-        case .save,.confirmCrop: break
+        case .save,.confirmCrop,.undo,.redo: break
         }
         return true
     }

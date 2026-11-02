@@ -13,6 +13,7 @@ struct ImageEditPreview:View {
     var zoom:CGFloat=1
     var onStroke:((EditRect,[ImagePoint])->Void)? = nil
     var onMoveAnnotation:((Int,EditRect,[ImagePoint])->Void)? = nil
+    var onAnnotationInteraction:((Bool)->Void)? = nil
     var onMoveRedaction:((Int,EditRect)->Void)? = nil
     var onMoveCrop:((EditRect)->Void)? = nil
     var cropEnabled=false
@@ -68,6 +69,7 @@ struct ImageEditPreview:View {
                         if annotationStyle != nil,let onStroke { onStroke(rect,stroke) }
                         else if cropEnabled ? (rect.width>=1 && rect.height>=1):(rect.width>0 && rect.height>0 && (rect.width>1 || rect.height>1)) { onRect(rect) }
                     }
+                    if case .annotation=target { onAnnotationInteraction?(false) }
                     target=nil;startingRect=nil;stroke=[];dragRect=nil
                     if cropEnabled { onCropInteraction?(false) }
                 }).accessibilityLabel(cropEnabled ? "Crop selection canvas":annotationStyle != nil ? "Annotation canvas":"Image editing canvas")
@@ -85,13 +87,13 @@ struct ImageEditPreview:View {
         let count=annotations.count==1 ? "1 annotation":"\(annotations.count) annotations"
         return ([mode,count]+(selectedAnnotation.map{ ["selected \($0+1)"] } ?? [])).map{ AppLocalization.text($0,language:language) }.joined(separator:", ")
     }
-    func cancelDrag() { target=nil;startingRect=nil;startingPoints=[];stroke=[];dragRect=nil }
+    func cancelDrag() { if case .annotation=target { onAnnotationInteraction?(false) };target=nil;startingRect=nil;startingPoints=[];stroke=[];dragRect=nil }
     func updateDrag(_ value:DragGesture.Value,origin:CGPoint,ratio:CGFloat) {
         let start=pixel(value.startLocation,origin:origin,ratio:ratio)
         let point=cropEnabled ? CGPoint(x:(value.location.x-origin.x)/ratio,y:(value.location.y-origin.y)/ratio):pixel(value.location,origin:origin,ratio:ratio)
         if target==nil {
             if (cropEnabled || annotationStyle != nil),!CGRect(origin:origin,size:CGSize(width:imageSize.width*ratio,height:imageSize.height*ratio)).contains(value.startLocation) { target = .ignored;return }
-            chooseTarget(start,tolerance:10/max(0.1,ratio));stroke=[ImagePoint(x:start.x,y:start.y)]
+            chooseTarget(start,tolerance:10/max(0.1,ratio));if case .annotation=target { onAnnotationInteraction?(true) };stroke=[ImagePoint(x:start.x,y:start.y)]
             if cropEnabled { onCropInteraction?(true) }
         }
         let locked=NSEvent.modifierFlags.contains(.shift)
