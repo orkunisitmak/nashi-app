@@ -105,6 +105,10 @@ public enum MediaEngine {
                 arguments += ["-map", "-0:\(stream.index)"]
             }
         }
+        // The MP4 muxer has no sample entry for codec-less data tracks (such as GoPro timecode and
+        // firmware data) and refuses the whole copy, so those tracks cannot be kept in this container.
+        let unwritable = !removeAll && ["mp4", "m4a", "m4v"].contains(ext) ? info.streams.filter { $0.kind == "data" && ["unknown", "none"].contains($0.codec) }.map(\.index) : []
+        for index in unwritable { arguments += ["-map", "-0:\(index)"] }
         for key in metadata.keys.sorted() {
             guard let value = metadata[key], !key.isEmpty, !key.contains("\0"), !value.contains("\0") else { throw NashiError.invalidInput("Metadata fields cannot be empty or contain null characters.") }
             // Remove All already clears every tag and drops chapters, artwork and data tracks; the
@@ -118,6 +122,11 @@ public enum MediaEngine {
                 let removed = Set(info.streams.filter { $0.kind == "data" || $0.isAttachedPicture }.map(\.index))
                 guard !removed.contains(index) else { throw NashiError.invalidInput("Track \(index) is removed with all metadata: \(key)") }
                 specifier = "-metadata:s:\(index - removed.filter { $0 < index }.count)"
+            }
+            if !unwritable.isEmpty, specifier.hasPrefix("-metadata:s:"), let index = Int(specifier.dropFirst("-metadata:s:".count)) {
+                // The editor sends every listed field; a track that is left out keeps no tags.
+                if unwritable.contains(index) { continue }
+                specifier = "-metadata:s:\(index - unwritable.filter { $0 < index }.count)"
             }
             arguments += [specifier, "\(field)=\(value)"]
         }
