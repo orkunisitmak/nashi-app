@@ -1452,6 +1452,8 @@
 "METADATA TOOLS ARE NOT READY." = "META VERİ ARAÇLARI HAZIR DEĞİL.";
 "METADATA TOOLS CHECKSUM MISMATCH." = "META VERİ ARAÇLARININ SAĞLAMA TOPLAMI EŞLEŞMİYOR.";
 "METADATA · NASHI" = "META VERİLER · NASHI";
+"MICROSOFT EDGE WEBVIEW2 COULD NOT PRINT THIS HTML FILE TO PDF." = "MİCROSOFT EDGE WEBVİEW2 BU HTML DOSYASINI PDF OLARAK YAZDIRAMADI.";
+"MICROSOFT EDGE WEBVIEW2 STOPPED WHILE RENDERING THE HTML FILE. NO PDF WAS EXPORTED." = "MİCROSOFT EDGE WEBVİEW2, HTML DOSYASINI İŞLERKEN DURDU. PDF DIŞA AKTARILMADI.";
 "MIDDLE THIRD" = "ORTA ÜÇTE BİR";
 "MONO" = "MONO";
 "MONOSPACED" = "EŞ ARALIKLI";
@@ -1499,6 +1501,8 @@
 "Metadata tools are not ready." = "Meta veri araçları hazır değil.";
 "Metadata tools checksum mismatch." = "Meta veri araçlarının sağlama toplamı eşleşmiyor.";
 "Metadata · Nashi" = "Meta Veriler · Nashi";
+"Microsoft Edge WebView2 could not print this HTML file to PDF." = "Microsoft Edge WebView2 bu HTML dosyasını PDF olarak yazdıramadı.";
+"Microsoft Edge WebView2 stopped while rendering the HTML file. No PDF was exported." = "Microsoft Edge WebView2, HTML dosyasını işlerken durdu. PDF dışa aktarılmadı.";
 "Middle third" = "Orta üçte bir";
 "Mono" = "Mono";
 "Monospaced" = "Eş aralıklı";
@@ -2392,6 +2396,8 @@
 "THE FILE HAS NO AUDIO TRACK." = "DOSYADA SES İZİ YOK.";
 "THE FILE HAS NO PLAYABLE AUDIO OR VIDEO TRACK." = "DOSYADA OYNATILABİLİR BİR SES VEYA VİDEO İZİ YOK.";
 "THE FILE HAS NO VIDEO TRACK." = "DOSYADA VİDEO İZİ YOK.";
+"THE HTML FILE COULD NOT BE OPENED." = "HTML DOSYASI AÇILAMADI.";
+"THE HTML FILE DID NOT FINISH RENDERING. NO PDF WAS EXPORTED." = "HTML DOSYASININ İŞLENMESİ TAMAMLANMADI. PDF DIŞA AKTARILMADI.";
 "THE IMAGE DOWNLOAD ENDED EARLY." = "GÖRSEL İNDİRMESİ ERKEN SONA ERDİ.";
 "THE IMAGE ORDER MUST INCLUDE EVERY IMAGE ONCE." = "GÖRSEL SIRASINDA HER GÖRSEL BİR KEZ YER ALMALI.";
 "THE MEDIA SERVER REDIRECTED TO AN INSECURE URL." = "MEDYA SUNUCUSU GÜVENLİ OLMAYAN BİR ADRESE YÖNLENDİRDİ.";
@@ -2434,6 +2440,7 @@
 "THIS FILE IS NOT A GZIP STREAM." = "BU DOSYA BİR GZIP AKIŞI DEĞİL.";
 "THIS FORMAT CAN BE IMPORTED. CHOOSE AN OUTPUT FORMAT IN THE SIDEBAR TO CONFIGURE ITS DEFAULTS." = "BU BİÇİM İÇE AKTARILABİLİR. VARSAYILANLARI AYARLAMAK İÇİN KENAR ÇUBUĞUNDAN BİR ÇIKTI BİÇİMİ SEÇ.";
 "THIS FORMAT USES ITS ORIGINAL DOCUMENT STRUCTURE. NO EXPORT DEFAULTS ARE NEEDED." = "BU BİÇİM ORİJİNAL BELGE YAPISINI KULLANIR. DIŞA AKTARMA TERCİHİ GEREKMEZ.";
+"THIS HTML FILE WOULD NEED MORE THAN 1,000 PDF PAGES." = "BU HTML DOSYASI 1.000'DEN FAZLA PDF SAYFASI GEREKTİRİR.";
 "THIS IMAGE COULD NOT BE DECODED." = "BU GÖRSELİN KODU ÇÖZÜLEMEDİ.";
 "THIS IMAGE EXCEEDS 100 MP." = "BU GÖRSEL 100 MP'Yİ AŞIYOR.";
 "THIS IMAGE EXCEEDS 200 MB." = "BU GÖRSEL 200 MB'I AŞIYOR.";
@@ -2514,6 +2521,8 @@
 "The EPUB contains XML entity declarations, which are not supported." = "EPUB dosyası, desteklenmeyen XML varlık bildirimleri içeriyor.";
 "The EPUB contains no readable chapters." = "EPUB dosyasında okunabilir bölüm yok.";
 "The EPUB has no package document." = "EPUB dosyasında paket belgesi yok.";
+"The HTML file could not be opened." = "HTML dosyası açılamadı.";
+"The HTML file did not finish rendering. No PDF was exported." = "HTML dosyasının işlenmesi tamamlanmadı. PDF dışa aktarılmadı.";
 "The PDF contains no pages." = "PDF'de sayfa yok.";
 "The PDF page is too large to render at this resolution." = "PDF sayfası bu çözünürlükte işlenemeyecek kadar büyük.";
 "The Pages document could not be read: %@." = "Pages belgesi okunamadı: %@.";
@@ -2590,6 +2599,7 @@
 "The upstream server did not return a successful HTTPS download." = "Kaynak sunucu başarılı bir HTTPS indirmesi döndürmedi.";
 "The video has no readable dimensions." = "Videonun boyutları okunamıyor.";
 "These files have moved or were deleted." = "Bu dosyalar taşınmış veya silinmiş.";
+"This HTML file would need more than 1,000 PDF pages." = "Bu HTML dosyası 1.000'den fazla PDF sayfası gerektirir.";
 "This PDF contains no pages." = "Bu PDF'de sayfa yok.";
 "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported." = "Bu PDF'de birleştirme, bölme veya sayfaları yeniden sıralama sırasında korunamayan form alanları ya da ekler var. Kopya dışa aktarılmadı.";
 "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported." = "Bu PDF'de meta veri temizliği sırasında korunamayan form alanları ya da ekler var. Kopya dışa aktarılmadı.";

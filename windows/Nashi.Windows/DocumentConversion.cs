@@ -20,6 +20,9 @@ public sealed class DocumentConversion(OfficeRuntime runtime,Toolchain tools)
             if(FeatureCatalog.IsArchive(input)){outputs.AddRange(ArchiveEngine.Convert(input,format,tx.StagingDirectory,options.Password,progress,token));continue;}
             if(ext is "srt" or "vtt")
             {var path=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+"."+format);await File.WriteAllTextAsync(path,SubtitleCodec.Convert(LegacyTextCodec.Decode(await File.ReadAllBytesAsync(input,token)),format),new UTF8Encoding(false),token);outputs.Add(path);continue;}
+            // The office importer drops most CSS layout and every script; WebView2 prints the page as Edge shows it.
+            if(ext=="html"&&format=="pdf"&&HtmlPdf.Available)
+            {var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+".pdf");await HtmlPdf.RenderAsync(input,output,token);outputs.Add(output);progress?.Report(new((i+1d)/inputs.Count*.98,"Saving document…"));continue;}
             var engine=runtime.Executable is {} office?new OfficeDocuments(office,tools.Ready?tools.Executable("deno"):"",AppContext.BaseDirectory):null;
             if(ext=="pages"){if(engine is null||!tools.Ready)throw new InvalidOperationException("Set up office and media tools once to enable native Pages interoperability.");source=await engine.PagesReadAsync(input,work,token);}
             if(ext=="rtfd"){source=await RichTextAttachments.Materialize(input,work,token);}

@@ -96,6 +96,15 @@ public partial class App:Application
             }
             return;
         }
+        if(e.Args.Contains("--smoke-test-html"))
+        {
+            // HTML to PDF checks alone; they send no desktop input.
+            IsSmokeTest=true;ShutdownMode=ShutdownMode.OnExplicitShutdown;
+            var directory=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY")??Path.Combine(Path.GetTempPath(),"Nashi-HtmlPdf-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(directory);
+            var checks=0;var failures=new List<string>();
+            try{HtmlPdfChecks.Run(directory,(passed,message)=>{if(!passed)throw new Exception(message);checks++;});}catch(Exception error){failures.Add(error.ToString());}
+            File.WriteAllText(Path.Combine(directory,"html-pdf.json"),System.Text.Json.JsonSerializer.Serialize(new{checks,failures,runtime=HtmlPdf.RuntimeVersion}));Shutdown(failures.Count==0?0:1);return;
+        }
         if(e.Args.Contains("--smoke-test")){IsSmokeTest=true;try{NativeExceptionTrace.Install();SmokeTests.Run();Shutdown(0);}catch(Exception error){Console.Error.WriteLine(error);var directory=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");if(directory is not null){Directory.CreateDirectory(directory);File.WriteAllText(Path.Combine(directory,"error.txt"),error.ToString());}Shutdown(1);}return;}
         if(e.Args.Length==1&&e.Args[0]=="--install-update"){ShutdownMode=ShutdownMode.OnExplicitShutdown;_ = InstallUpdateAsync();return;}
         instance=new SingleInstance();Exit+=(_,_)=>instance.Dispose();var paths=e.Args.Where(p=>File.Exists(p)||Directory.Exists(p)).ToArray();
