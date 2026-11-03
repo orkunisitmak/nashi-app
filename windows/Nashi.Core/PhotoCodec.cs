@@ -44,11 +44,15 @@ public static class PhotoCodec
     }
     public static byte[] Png(string input){using var image=Read(input);return image.ToByteArray(MagickFormat.Png);}
     // Pictures inside documents are read under the same policy and limits as image files. The caller names the format from the
-    // picture's signature, so ImageMagick never picks a coder from the bytes themselves.
-    public static byte[] Png(byte[] data,MagickFormat format)
+    // picture's signature, so ImageMagick never picks a coder from the bytes themselves. A PNG that would outgrow maxBytes is
+    // scaled down in steps of 70 % per side; the document keeps its own display size for the picture.
+    public static byte[] Png(byte[] data,MagickFormat format,int maxBytes=int.MaxValue)
     {
         var settings=new MagickReadSettings{FrameCount=1,Format=format};var info=new MagickImageInfo(data,settings);if((ulong)info.Width*info.Height>100_000_000)throw new InvalidDataException("This image exceeds 100 MP.");
-        using var image=new MagickImage(data,settings);return image.ToByteArray(MagickFormat.Png);
+        using var image=new MagickImage(data,settings);var png=image.ToByteArray(MagickFormat.Png);
+        // Each step scales the original, so rounding and resampling don't add up.
+        for(var scale=.7;png.Length>maxBytes&&image.Width*scale>=1&&image.Height*scale>=1;scale*=.7){using var smaller=image.Clone();smaller.Resize(new Percentage(scale*100));png=smaller.ToByteArray(MagickFormat.Png);}
+        return png;
     }
     public static (uint Width,uint Height) Size(byte[] data,MagickFormat format){var info=new MagickImageInfo(data,new MagickReadSettings{FrameCount=1,Format=format});return(info.Width,info.Height);}
     public static void EncodePng(byte[] pixels,string output,string format,int quality=85,string? encoder=null,CancellationToken token=default)

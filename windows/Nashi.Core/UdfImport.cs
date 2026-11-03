@@ -35,6 +35,8 @@ public sealed partial class OfficeDocuments
     }
     // How UYAP introduces a served document's access code at the foot of each page.
     private const string UyapAccessLead="UYAP Bilişim Sistemindeki bu dokümana http://vatandas.uyap.gov.tr adresinden ";
+    // UDF -> DOCX reads pictures up to this size, so DOCX -> UDF writes none larger.
+    private const int PictureLimit=20_000_000;
     private static string? ImageExtension(byte[] data)=>data switch{[0x89,0x50,0x4E,0x47,..]=>"png",[0xFF,0xD8,..]=>"jpeg",[0x47,0x49,0x46,..]=>"gif",[0x42,0x4D,..]=>"bmp",_=>null};
     // The pictures UYAP shows as they are, and the other kinds Word documents hold, which are stored as PNG. The format comes from
     // the signature, never from ImageMagick's own guess, so no other coder reads a document's bytes.
@@ -211,7 +213,7 @@ public sealed partial class OfficeDocuments
         private void Image(XElement image,StringBuilder xml,Part part)
         {
             byte[] data;try{data=Convert.FromBase64String(image.Attribute("imageData")?.Value??"");}catch(FormatException){return;}
-            if(data.Length>20_000_000||ImageExtension(data) is not {} extension)return;
+            if(data.Length>PictureLimit||ImageExtension(data) is not {} extension)return;
             // Sizes are pixels at 96 DPI, as udf-cli and the UDF toolkit write them; an image never grows past the text width.
             var w=Number(image.Attribute("width")?.Value);var h=Number(image.Attribute("height")?.Value);
             if(w is not >0||h is not >0){try{var size=PhotoCodec.Size(data,PictureFormat(data)!.Value);w=size.Width;h=size.Height;}catch(Exception error)when(error is ImageMagick.MagickException or ArgumentException){return;}if(w is not >0||h is not >0)return;}

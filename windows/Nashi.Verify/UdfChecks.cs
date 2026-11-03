@@ -132,5 +132,9 @@ internal static class UdfChecks
         }
         var picturesUdf=Path.Combine(root,"Pictures.udf");OfficeDocuments.DocxToUdf(pictures,picturesUdf);var images=OfficeDocuments.ReadUdf(picturesUdf).Descendants("image").ToList();
         check(Validate(check,picturesUdf)=="\uFFFC\n"&&images.Count==1&&Convert.FromBase64String(images[0].Attribute("imageData")!.Value).AsSpan().StartsWith(new byte[]{0x89,0x50,0x4E,0x47}),"A Word TIFF was not stored as PNG, or unrecognised picture data reached ImageMagick");
+        // A converted picture whose PNG would outgrow the limit UDF -> DOCX reads back is scaled down in proportion instead of being lost there.
+        var noise=new byte[64*32*3];new Random(7).NextBytes(noise);byte[] noisy;using(var picture=new ImageMagick.MagickImage()){picture.ReadPixels(noise,new ImageMagick.PixelReadSettings(64,32,ImageMagick.StorageType.Char,ImageMagick.PixelMapping.RGB));noisy=picture.ToByteArray(ImageMagick.MagickFormat.Tiff);}
+        var shrunk=PhotoCodec.Png(noisy,ImageMagick.MagickFormat.Tiff,3000);var full=PhotoCodec.Png(noisy,ImageMagick.MagickFormat.Tiff);var shrunkSize=PhotoCodec.Size(shrunk,ImageMagick.MagickFormat.Png);
+        check(full.Length>3000&&shrunk.Length<=3000&&shrunk.AsSpan().StartsWith(new byte[]{0x89,0x50,0x4E,0x47})&&shrunkSize.Width<64&&Math.Abs(shrunkSize.Width/(double)shrunkSize.Height-2)<.15,"A converted picture over the size limit was not scaled down in proportion: "+shrunk.Length+" bytes, "+shrunkSize);
     }
 }

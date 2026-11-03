@@ -189,15 +189,16 @@ public sealed partial class OfficeDocuments
                 }
             }
         }
-        // UYAP's Java editor shows PNG, JPEG, GIF and BMP. TIFF, WebP, EMF and WMF pictures are stored as PNG, within the limits of image files;
-        // anything else, or a picture that cannot be read, is left out.
+        // UYAP's Java editor shows PNG, JPEG, GIF and BMP. TIFF, WebP, EMF and WMF pictures are stored as PNG, within the limits of image files
+        // and scaled down where the PNG would outgrow PictureLimit; anything else, or a picture that cannot be read, is left out.
         private void Picture(XElement element,List<Segment> runs)
         {
             var id=element.Descendants().Select(e=>Attr(e,"embed")??(e.Name.LocalName=="imagedata"?Attr(e,"id"):null)).FirstOrDefault(v=>v is not null);
-            if(id is null||!relations.TryGetValue(id,out var part)||zip.GetEntry(part) is not {} entry||entry.Length>20_000_000)return;
-            byte[] data;using(var source=entry.Open())using(var bytes=new MemoryStream()){var buffer=new byte[81920];int count;while((count=source.Read(buffer))>0){if(bytes.Length+count>20_000_000)return;bytes.Write(buffer,0,count);}data=bytes.ToArray();}
+            if(id is null||!relations.TryGetValue(id,out var part)||zip.GetEntry(part) is not {} entry||entry.Length>PictureLimit)return;
+            byte[] data;using(var source=entry.Open())using(var bytes=new MemoryStream()){var buffer=new byte[81920];int count;while((count=source.Read(buffer))>0){if(bytes.Length+count>PictureLimit)return;bytes.Write(buffer,0,count);}data=bytes.ToArray();}
             if(PictureFormat(data) is not {} format)return;
-            double width=0,height=0;try{if(ImageExtension(data) is null){data=PhotoCodec.Png(data,format);format=ImageMagick.MagickFormat.Png;}var size=PhotoCodec.Size(data,format);width=size.Width;height=size.Height;}catch(Exception error)when(error is ImageMagick.MagickException or ArgumentException or InvalidDataException){return;}
+            // The size is read before a conversion, which may scale the pixels down.
+            double width=0,height=0;try{var size=PhotoCodec.Size(data,format);width=size.Width;height=size.Height;if(ImageExtension(data) is null)data=PhotoCodec.Png(data,format,PictureLimit);}catch(Exception error)when(error is ImageMagick.MagickException or ArgumentException or InvalidDataException){return;}if(data.Length>PictureLimit)return;
             // Sizes are pixels at 96 DPI (EMU/9525), as udf-cli and the UDF toolkit write them.
             var extent=element.Descendants().FirstOrDefault(e=>e.Name.LocalName=="extent");if(Num(extent,"cx") is >0 and var cx&&Num(extent,"cy") is >0 and var cy){width=cx/9525;height=cy/9525;}
             if(width>0&&height>0)runs.Add(new('i',"",null,data,width,height));
