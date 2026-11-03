@@ -32,7 +32,9 @@ public enum TargetSizeSearch {
             let candidate=TargetSizeCandidate(quality:quality,scale:scale,bytes:try encode(quality,scale))
             if smallest == nil || candidate.bytes<smallest!.bytes { smallest=candidate };return candidate
         }
-        let top=max(1,min(100,startQuality)),floor=min(qualityFloor,top)
+        // The floor only protects detail when resizing can take over; without resizing (Quality priority)
+        // the search may go down to quality 1 before reporting the target as unreachable.
+        let top=max(1,min(100,startQuality)),floor=allowResize ? min(qualityFloor,top):1
         for scale in allowResize ? scales : [1] {
             if attempts>=maxAttempts { break }
             if !lossy {

@@ -34,7 +34,9 @@ public static class TargetSizeSearch
             token.ThrowIfCancellationRequested();attempts++;var candidate=new TargetSizeCandidate(quality,scale,encode(quality,scale));
             if(smallest is null||candidate.Bytes<smallest.Bytes)smallest=candidate;return candidate;
         }
-        var top=Math.Clamp(startQuality,1,100);var floor=Math.Min(QualityFloor,top);
+        // The floor only protects detail when resizing can take over; without resizing (Quality priority)
+        // the search may go down to quality 1 before reporting the target as unreachable.
+        var top=Math.Clamp(startQuality,1,100);var floor=allowResize?Math.Min(QualityFloor,top):1;
         foreach(var scale in allowResize?Scales:Scales[..1])
         {
             if(attempts>=MaxAttempts)break;

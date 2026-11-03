@@ -22,8 +22,11 @@ final class TargetSizeSearchTests: XCTestCase {
     func testResizesBeforeDroppingBelowQualityFloorAndReportsUnreachable() throws {
         let resized=try XCTUnwrap(TargetSizeSearch.run(originalBytes:200000,targetBytes:9000,startQuality:90,lossy:true,allowResize:true,encode:smooth).best)
         XCTAssertLessThan(resized.scale,1);XCTAssertGreaterThanOrEqual(resized.quality,TargetSizeSearch.qualityFloor)
-        let quality=try TargetSizeSearch.run(originalBytes:200000,targetBytes:5000,startQuality:90,lossy:true,allowResize:false,encode:smooth)
-        XCTAssertEqual(quality.status,.bestEffortAboveTarget);XCTAssertNil(quality.best);XCTAssertGreaterThan(try XCTUnwrap(quality.smallest).bytes,5000)
+        // Without resizing the search goes below the quality floor: quality 20 is the highest that fits 5000 bytes.
+        let quality=try XCTUnwrap(TargetSizeSearch.run(originalBytes:200000,targetBytes:5000,startQuality:90,lossy:true,allowResize:false,encode:smooth).best)
+        XCTAssertEqual(quality.quality,20);XCTAssertEqual(quality.scale,1);XCTAssertEqual(quality.bytes,5000)
+        let unreachable=try TargetSizeSearch.run(originalBytes:200000,targetBytes:1000,startQuality:90,lossy:true,allowResize:false,encode:smooth)
+        XCTAssertEqual(unreachable.status,.bestEffortAboveTarget);XCTAssertNil(unreachable.best);XCTAssertGreaterThan(try XCTUnwrap(unreachable.smallest).bytes,1000)
     }
 
     func testLosslessAlreadyUnderTargetPlateauAndInvalidTarget() throws {
