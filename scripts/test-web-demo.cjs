@@ -29,6 +29,49 @@ const ids=['compress','removeMetadata','editImage','annotateImage','frameImage',
  await test('Multiple PDFs use the batch tool wheel including Merge PDFs',async()=>{await page.locator('[data-group="pdf"]').click();await page.locator('.demo-file').nth(1).click({modifiers:['Shift']});await page.locator('[data-mode="tools"]').click();assert.ok(await page.getByRole('menuitem',{name:"PDF'leri Birleştir",exact:true}).isVisible());const wheel=await page.locator('.demo-wheel').boundingBox(),center=await page.locator('.demo-wheel .wheel-center').boundingBox();assert.ok(Math.abs(center.x+center.width/2-wheel.x-wheel.width/2)<1);assert.ok(Math.abs(center.y+center.height/2-wheel.y-wheel.height/2)<1);assert.ok(!(await page.getByRole('menuitem',{name:"PDF'yi Düzenle",exact:true}).count()));await page.keyboard.press('Escape');});
  await test('Crop drag + Shift exports a square with real pixel dimensions',async()=>{await openTool('cropImage');const canvas=page.locator('dialog canvas'),r=await canvas.boundingBox();await page.mouse.move(r.x+r.width*.04,r.y+r.height*.05);await page.mouse.down();await page.keyboard.down('Shift');await page.mouse.move(r.x+r.width*.35,r.y+r.height*.55,{steps:12});await page.mouse.up();await page.keyboard.up('Shift');const dimensions=await page.locator('.editor-dialog-status').textContent();const nums=dimensions.match(/\d+/g).map(Number);assert.ok(Math.abs(nums[0]-nums[1])<=1,dimensions);await canvas.press('Enter');await page.locator('dialog').waitFor({state:'detached'});await page.locator('#demo-library').click();const u=await page.locator('.library-item a').first().getAttribute('href');const actual=await page.evaluate(async u=>{const b=await createImageBitmap(await(await fetch(u)).blob());return[b.width,b.height];},u);assert.ok(Math.abs(actual[0]-actual[1])<=1,actual);await page.locator('.close-editor').click();});
  await test('Annotation has exactly one active tool and Undo affects the export',async()=>{await openTool('annotateImage');await page.locator('[data-draw-tool="rectangle"]').click();assert.equal(await page.locator('[data-draw-tool][aria-pressed="true"]').count(),1);const r=await page.locator('dialog canvas').boundingBox();await page.mouse.move(r.x+30,r.y+30);await page.mouse.down();await page.mouse.move(r.x+160,r.y+120,{steps:8});await page.mouse.up();const before=await page.locator('dialog canvas').evaluate(c=>c.toDataURL());await page.getByRole('button',{name:'Son çizimi geri al',exact:true}).click();const after=await page.locator('dialog canvas').evaluate(c=>c.toDataURL());assert.notEqual(before,after);await page.locator('.close-editor').click();});
+ // Hold the real encoder callback to exercise Close/Reset while Save is pending.
+ const pauseImageExport=()=>page.evaluate(()=>{
+  const prototype=HTMLCanvasElement.prototype,original=prototype.toBlob;
+  window.nashiRestoreEncoder=()=>{prototype.toBlob=original;delete window.nashiResumeExport;delete window.nashiRestoreEncoder;};
+  prototype.toBlob=function(callback,...args){return original.call(this,blob=>{window.nashiResumeExport=()=>callback(blob);},...args);};
+ });
+ const finishImageExport=async()=>{await page.evaluate(()=>{const resume=window.nashiResumeExport;window.nashiRestoreEncoder();resume();});await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));};
+ for(const action of ['close','reset'])await test('Pending image Save is discarded after '+action,async()=>{
+  await openTool('editImage');const before=await page.locator('#library-count').textContent();
+  await pauseImageExport();
+  try{
+   await page.locator('dialog .export-button').click();await page.waitForFunction(()=>typeof window.nashiResumeExport==='function');
+   if(action==='close')await page.keyboard.press('Escape');
+   else{await page.locator('dialog .reset-button').click();await page.waitForFunction(()=>!document.querySelector('dialog .export-button')?.disabled);}
+   await finishImageExport();
+   assert.equal(await page.locator('#library-count').textContent(),before);
+   assert.equal(await page.locator('dialog').count(),action==='close'?0:1);
+   if(action==='reset'){assert.ok(await page.locator('dialog .export-button').isEnabled());await page.locator('.close-editor').click();}
+  }finally{await page.evaluate(()=>window.nashiRestoreEncoder?.());}
+ });
+ await test('Pending Save shortcut does not start a second image export',async()=>{
+  await openTool('editImage');const before=Number(await page.locator('#library-count').textContent());
+  await pauseImageExport();
+  try{
+   await page.locator('dialog .export-button').click();await page.waitForFunction(()=>typeof window.nashiResumeExport==='function');
+   assert.ok(await page.locator('dialog .export-button').isDisabled());await page.keyboard.press('Control+s');
+   await finishImageExport();assert.equal(Number(await page.locator('#library-count').textContent()),before+1);
+   assert.equal(await page.locator('dialog').count(),0);
+  }finally{await page.evaluate(()=>window.nashiRestoreEncoder?.());}
+ });
+ await test('Failed PDF split leaves no earlier parts in Library and can retry',async()=>{
+  await openTool('splitPDF');const before=Number(await page.locator('#library-count').textContent());
+  await page.evaluate(()=>{
+   const original=PDFLib.PDFDocument.create;let created=0;
+   window.nashiRestorePDF=()=>{PDFLib.PDFDocument.create=original;delete window.nashiRestorePDF;};
+   PDFLib.PDFDocument.create=async function(...args){const pdf=await original.apply(this,args);if(++created===2)pdf.save=async()=>{throw Error('Synthetic split failure');};return pdf;};
+  });
+  try{
+   await page.locator('dialog .export-button').click();await page.waitForFunction(()=>!document.querySelector('dialog .export-button')?.disabled);
+   assert.equal(Number(await page.locator('#library-count').textContent()),before);
+   await page.evaluate(()=>window.nashiRestorePDF());await save();assert.equal(Number(await page.locator('#library-count').textContent()),before+3);
+  }finally{await page.evaluate(()=>window.nashiRestorePDF?.());}
+ });
  await test('Video playback shortcuts, In/Out drag and field synchronization',async()=>{await openTool('trimVideo');const out=page.getByRole('button',{name:'Bitiş tutamacı'}),r=await out.boundingBox(),track=await page.locator('.trim-track').boundingBox();await page.mouse.move(r.x+r.width/2,r.y+r.height/2);await page.mouse.down();await page.mouse.move(track.x+track.width*.7,r.y+r.height/2,{steps:18});await page.mouse.up();const end=Number(await page.getByLabel('Bitiş (saniye)',{exact:true}).inputValue());assert.ok(end>7&&end<10,end);const start=page.getByRole('button',{name:'Başlangıç tutamacı'}),s=await start.boundingBox();await page.mouse.move(s.x+s.width/2,s.y+20);await page.mouse.down();await page.mouse.move(track.x+track.width*.2,s.y+20,{steps:18});await page.mouse.up();assert.ok(Number(await page.getByLabel('Başlangıç (saniye)',{exact:true}).inputValue())>2);await page.locator('dialog video').press('ArrowRight');const t=await page.locator('dialog video').evaluate(v=>v.currentTime);assert.ok(t>=.98&&t<=1.1,t);await page.keyboard.press('Space');await page.waitForFunction(()=>!document.querySelector('dialog video').paused);await page.keyboard.press('Space');assert.equal(await page.locator('dialog video').evaluate(v=>v.paused),true);await page.keyboard.press('o');assert.ok(Number(await page.getByLabel('Bitiş (saniye)',{exact:true}).inputValue())>2);await page.locator('.close-editor').click();});
  for(const id of ids)await test('Tool '+id+' opens, applies settings and records its result',async()=>{const before=Number(await page.locator('#library-count').textContent());await openTool(id);if(id==='cropImage')await page.getByRole('button',{name:'Tümünü Seç',exact:true}).click();await save();assert.ok(Number(await page.locator('#library-count').textContent())>before);});
  await test('PDF output has valid page objects and merge keeps six pages',async()=>{await page.locator('#demo-library').click();const row=page.locator('.library-item').filter({hasText:'field-notes-mergePDF.pdf'}).first();const u=await row.locator('a').getAttribute('href');const count=await page.evaluate(async u=>{const b=await(await fetch(u)).arrayBuffer();return(await PDFLib.PDFDocument.load(b)).getPageCount();},u);assert.equal(count,6);await page.locator('.close-editor').click();});
