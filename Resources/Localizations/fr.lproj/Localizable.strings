@@ -1315,6 +1315,8 @@
 "Invalid page range: %lld. Use numbers between 1 and %lld." = "Plage de pages invalide : %lld. Utilisez des nombres entre 1 et %lld.";
 "Invalid public update location or size." = "Emplacement ou taille de mise à jour publique invalide.";
 "Invalid subtitle timestamp." = "Horodatage de sous-titre invalide.";
+"Invalid subtitle timestamp: %@" = "Horodatage de sous-titre non valide : %@";
+"Invalid subtitle timestamp: %lld" = "Horodatage de sous-titre non valide : %lld";
 "Invalid text clipping resources." = "Les ressources du fragment ne sont pas valides.";
 "Invalid update manifest." = "Manifeste de mise à jour invalide.";
 "Invalid update signature length." = "Longueur de signature de mise à jour invalide.";
@@ -2632,6 +2634,8 @@
 "This repository is private" = "Ce dépôt est privé";
 "This size cannot be reached. Choose a larger target or smaller dimensions." = "Cette taille est impossible à atteindre. Choisissez une cible plus grande ou des dimensions plus petites.";
 "This source uses more than 32-bit integer audio. Choose an output bit depth in settings." = "Cette source utilise un audio entier de plus de 32 bits. Choisissez une profondeur de bits de sortie dans les réglages.";
+"This subtitle timestamp is too large to convert: %@" = "Cet horodatage de sous-titre est trop grand pour être converti : %@";
+"This subtitle timestamp is too large to convert: %lld" = "Cet horodatage de sous-titre est trop grand pour être converti : %lld";
 "This text clipping contains no supported text resource." = "Ce fragment ne contient aucune ressource texte prise en charge.";
 "This text is too large to paste. Choose a text file instead." = "Ce texte est trop volumineux pour être collé. Choisissez plutôt un fichier texte.";
 "This text is too large to preview. Use Open to read the complete file." = "Ce texte est trop volumineux pour l’aperçu. Utilisez Ouvrir pour lire le fichier complet.";

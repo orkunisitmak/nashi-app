@@ -1315,6 +1315,8 @@
 "Invalid page range: %lld. Use numbers between 1 and %lld." = "Geçersiz sayfa aralığı: %lld. 1 ile %lld arasında sayılar kullan.";
 "Invalid public update location or size." = "Güncellemenin konumu veya boyutu geçersiz.";
 "Invalid subtitle timestamp." = "Altyazı zaman damgası geçersiz.";
+"Invalid subtitle timestamp: %@" = "Altyazı zaman damgası geçersiz: %@";
+"Invalid subtitle timestamp: %lld" = "Altyazı zaman damgası geçersiz: %lld";
 "Invalid text clipping resources." = "Metin kırpıntısının kaynakları geçersiz.";
 "Invalid update manifest." = "Güncelleme bilgisi geçersiz.";
 "Invalid update signature length." = "Güncelleme imzasının uzunluğu geçersiz.";
@@ -2632,6 +2634,8 @@
 "This repository is private" = "Bu depo gizli";
 "This size cannot be reached. Choose a larger target or smaller dimensions." = "Bu boyuta inilemiyor. Daha büyük bir hedef veya daha küçük boyutlar seç.";
 "This source uses more than 32-bit integer audio. Choose an output bit depth in settings." = "Bu kaynak 32 bitten yüksek tam sayı ses kullanıyor. Ayarlardan bir çıkış bit derinliği seç.";
+"This subtitle timestamp is too large to convert: %@" = "Bu altyazı zaman damgası dönüştürülemeyecek kadar büyük: %@";
+"This subtitle timestamp is too large to convert: %lld" = "Bu altyazı zaman damgası dönüştürülemeyecek kadar büyük: %lld";
 "This text clipping contains no supported text resource." = "Bu metin kırpıntısında desteklenen bir metin kaynağı yok.";
 "This text is too large to paste. Choose a text file instead." = "Bu metin yapıştırmak için çok büyük. Bunun yerine bir metin dosyası seç.";
 "This text is too large to preview. Use Open to read the complete file." = "Bu metin önizleme için çok büyük. Dosyanın tamamını okumak için Aç'ı kullan.";

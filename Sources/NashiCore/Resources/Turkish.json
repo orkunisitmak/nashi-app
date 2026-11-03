@@ -1185,6 +1185,8 @@
   "Invalid metadata stream/chapter.": "Meta veri akışı veya bölümü geçersiz.",
   "Invalid public update location or size.": "Güncellemenin konumu veya boyutu geçersiz.",
   "Invalid subtitle timestamp.": "Altyazı zaman damgası geçersiz.",
+  "Invalid subtitle timestamp: {0}": "Altyazı zaman damgası geçersiz: {0}",
+  "This subtitle timestamp is too large to convert: {0}": "Bu altyazı zaman damgası dönüştürülemeyecek kadar büyük: {0}",
   "Invalid update manifest.": "Güncelleme bilgisi geçersiz.",
   "Invalid update signature length.": "Güncelleme imzasının uzunluğu geçersiz.",
   "Invalid update signature.": "Güncelleme imzası geçersiz.",

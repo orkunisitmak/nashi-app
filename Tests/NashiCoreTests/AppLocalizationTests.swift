@@ -204,4 +204,12 @@ final class AppLocalizationTests:XCTestCase {
             XCTAssertEqual(AppLocalization.text(source,language:"en"),source)
         }
     }
+    /// SubtitleCodec appends the offending timestamp, so the sentences are looked up through {0} templates.
+    func testSubtitleTimestampErrorsKeepTheTimestamp() {
+        XCTAssertEqual(AppLocalization.text("Invalid subtitle timestamp: 00:01:75,000",language:"tr"),"Altyazı zaman damgası geçersiz: 00:01:75,000")
+        XCTAssertEqual(AppLocalization.text("Invalid subtitle timestamp: 00:01:75,000",language:"fr"),"Horodatage de sous-titre non valide : 00:01:75,000")
+        XCTAssertEqual(AppLocalization.text("This subtitle timestamp is too large to convert: 99:00:00.000",language:"tr"),"Bu altyazı zaman damgası dönüştürülemeyecek kadar büyük: 99:00:00.000")
+        XCTAssertEqual(AppLocalization.text("This subtitle timestamp is too large to convert: 99:00:00.000",language:"fr"),"Cet horodatage de sous-titre est trop grand pour être converti : 99:00:00.000")
+        XCTAssertEqual(AppLocalization.text("Invalid subtitle timestamp: 00:01:75,000",language:"en"),"Invalid subtitle timestamp: 00:01:75,000")
+    }
 }
