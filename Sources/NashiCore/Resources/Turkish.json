@@ -1432,5 +1432,10 @@
   "YouTube thumbnail · best available full-size image": "YouTube küçük resmi · en iyi tam boyutlu görsel",
   "No tools for this file type": "Bu dosya türü için araç yok",
   "Details": "Ayrıntılar",
-  "Copy details": "Ayrıntıları kopyala"
+  "Copy details": "Ayrıntıları kopyala",
+  "Priority": "Öncelik",
+  "Size": "Boyut",
+  "Size may lower the resolution.": "Boyut önceliği çözünürlüğü düşürebilir.",
+  "Quality keeps the resolution.": "Kalite önceliği çözünürlüğü korur.",
+  "This size can't be reached without lowering the resolution. Choose a larger target or Size priority.": "Bu boyuta çözünürlüğü düşürmeden inilemiyor. Daha büyük bir hedef ya da Boyut önceliği seç."
 }

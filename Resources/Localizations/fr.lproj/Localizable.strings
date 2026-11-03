@@ -1791,6 +1791,7 @@
 "PREVIEW VISUALIZATION" = "APERÇU DE LA VISUALISATION";
 "PREVIOUS FRAME" = "IMAGE PRÉCÉDENTE";
 "PREVIOUS PAGE" = "PAGE PRÉCÉDENTE";
+"PRIORITY" = "PRIORITÉ";
 "PRIVATE REPOSITORY · TOKEN SAVED IN KEYCHAIN" = "DÉPÔT PRIVÉ · JETON ENREGISTRÉ DANS LE TROUSSEAU";
 "PROCESSED PREVIEW UNAVAILABLE FOR THIS WINDOWS CODEC." = "APERÇU TRAITÉ INDISPONIBLE POUR CE CODEC WINDOWS.";
 "PROCESSED PREVIEW · EXPORT USES THE ORIGINAL FILE." = "APERÇU TRAITÉ · L’EXPORT UTILISE LE FICHIER D’ORIGINE.";
@@ -1874,6 +1875,7 @@
 "Preview uses the first 12 seconds. Export includes the full recording." = "L’aperçu utilise les 12 premières secondes. L’export inclut l’enregistrement complet.";
 "Previous frame" = "Image précédente";
 "Previous page" = "Page précédente";
+"Priority" = "Priorité";
 "Private repository · Token saved in Keychain" = "Dépôt privé · Jeton enregistré dans le trousseau";
 "Processed preview unavailable for this Windows codec." = "Aperçu traité indisponible pour ce codec Windows.";
 "Processed preview · export uses the original file." = "Aperçu traité · l’export utilise le fichier d’origine.";
@@ -1889,12 +1891,14 @@
 "QR codes copied." = "Codes QR copiés.";
 "QUALITY" = "QUALITÉ";
 "QUALITY (%)" = "QUALITÉ (%)";
+"QUALITY KEEPS THE RESOLUTION." = "LA PRIORITÉ QUALITÉ CONSERVE LA RÉSOLUTION.";
 "QUICK LOOK" = "COUP D’ŒIL";
 "QUICK PICKS" = "SÉLECTION RAPIDE";
 "QUICK PREVIEW" = "APERÇU RAPIDE";
 "QUIT NASHI" = "QUITTER NASHI";
 "Quality" = "Qualité";
 "Quality (%)" = "Qualité (%)";
+"Quality keeps the resolution." = "La priorité Qualité conserve la résolution.";
 "Quick Look" = "Coup d’œil";
 "Quick Preview" = "Aperçu rapide";
 "Quit Nashi" = "Quitter Nashi";
@@ -2137,6 +2141,8 @@
 "SHOW NASHI IN FINDER" = "AFFICHER NASHI DANS LE FINDER";
 "SHOW ORIGINAL" = "AFFICHER L’ORIGINAL";
 "SILENCE THRESHOLD" = "SEUIL DE SILENCE";
+"SIZE" = "TAILLE";
+"SIZE MAY LOWER THE RESOLUTION." = "LA PRIORITÉ TAILLE PEUT RÉDUIRE LA RÉSOLUTION.";
 "SKIP TOUR" = "PASSER LA VISITE";
 "SLIDES" = "DIAPOSITIVES";
 "SMALL · 1280 PX" = "PETIT · 1280 PX";
@@ -2307,6 +2313,8 @@
 "Show less" = "Afficher moins";
 "Show original" = "Afficher l’original";
 "Silence threshold" = "Seuil de silence";
+"Size" = "Taille";
+"Size may lower the resolution." = "La priorité Taille peut réduire la résolution.";
 "Skip tour" = "Passer la visite";
 "Slides" = "Diapositives";
 "Small · 1280 px" = "Petit · 1280 px";
@@ -2456,6 +2464,7 @@
 "THIS POST CONTAINS VIDEOS. USE ITS REEL LINK TO DOWNLOAD VIDEO." = "CETTE PUBLICATION CONTIENT DES VIDÉOS. UTILISEZ SON LIEN REEL POUR TÉLÉCHARGER LA VIDÉO.";
 "THIS REPOSITORY IS PRIVATE" = "CE DÉPÔT EST PRIVÉ";
 "THIS RTFD ATTACHMENT SYNTAX COULD NOT BE PRESERVED." = "CETTE SYNTAXE DE PIÈCE JOINTE RTFD N’A PAS PU ÊTRE PRÉSERVÉE.";
+"THIS SIZE CAN'T BE REACHED WITHOUT LOWERING THE RESOLUTION. CHOOSE A LARGER TARGET OR SIZE PRIORITY." = "IMPOSSIBLE D’ATTEINDRE CETTE TAILLE SANS RÉDUIRE LA RÉSOLUTION. CHOISISSEZ UNE CIBLE PLUS GRANDE OU LA PRIORITÉ TAILLE.";
 "THIS SIZE CANNOT BE REACHED. CHOOSE A LARGER TARGET OR SMALLER DIMENSIONS." = "CETTE TAILLE EST IMPOSSIBLE À ATTEINDRE. CHOISISSEZ UNE CIBLE PLUS GRANDE OU DES DIMENSIONS PLUS PETITES.";
 "THIS SOURCE USES MORE THAN 32-BIT INTEGER AUDIO. CHOOSE AN OUTPUT BIT DEPTH IN SETTINGS." = "CETTE SOURCE UTILISE UN AUDIO ENTIER DE PLUS DE 32 BITS. CHOISISSEZ UNE PROFONDEUR DE BITS DE SORTIE DANS LES RÉGLAGES.";
 "THIS TEXT CLIPPING CONTAINS NO SUPPORTED TEXT RESOURCE." = "CE FRAGMENT NE CONTIENT AUCUNE RESSOURCE TEXTE PRISE EN CHARGE.";
@@ -2630,6 +2639,7 @@
 "This post contains videos, not photos. Use its Reel link to download video." = "Cette publication contient des vidéos, pas des photos. Utilisez son lien Reel pour télécharger la vidéo.";
 "This post contains videos. Use its Reel link to download video." = "Cette publication contient des vidéos. Utilisez son lien Reel pour télécharger la vidéo.";
 "This repository is private" = "Ce dépôt est privé";
+"This size can't be reached without lowering the resolution. Choose a larger target or Size priority." = "Impossible d’atteindre cette taille sans réduire la résolution. Choisissez une cible plus grande ou la priorité Taille.";
 "This size cannot be reached. Choose a larger target or smaller dimensions." = "Cette taille est impossible à atteindre. Choisissez une cible plus grande ou des dimensions plus petites.";
 "This source uses more than 32-bit integer audio. Choose an output bit depth in settings." = "Cette source utilise un audio entier de plus de 32 bits. Choisissez une profondeur de bits de sortie dans les réglages.";
 "This text clipping contains no supported text resource." = "Ce fragment ne contient aucune ressource texte prise en charge.";

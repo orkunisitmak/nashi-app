@@ -15,11 +15,11 @@ public static partial class ImageEngine
         }
         // The source file can stand in for the output only when no edit reached the pixels; flips, 180° turns and annotations keep the size but must still be encoded and measured.
         var keepsOriginal=options.Annotated is null&&!options.FlipHorizontal&&!options.FlipVertical&&((options.Rotation%360)+360)%360==0&&image.PixelWidth==source.PixelWidth&&image.PixelHeight==source.PixelHeight&&FeatureCatalog.Extension(input)==format;
-        var outcome=target is {} limit?TargetSizeSearch.Run(keepsOriginal?original:long.MaxValue,limit,quality,lossy,true,(q,scale)=>{progress?.Report(new(null,$"Fitting image · attempt {++attempt}…"));Encode(q,scale);return new FileInfo(output).Length;},token):null;
+        var outcome=target is {} limit?TargetSizeSearch.Run(keepsOriginal?original:long.MaxValue,limit,quality,lossy,!options.PreferQuality,(q,scale)=>{progress?.Report(new(null,$"Fitting image · attempt {++attempt}…"));Encode(q,scale);return new FileInfo(output).Length;},token):null;
         if(outcome is {Status:TargetSizeStatus.BestEffortAboveTarget})
         {
             if(File.Exists(output))File.Delete(output);
-            throw new IOException("The requested image size could not be reached. Choose a larger target.");
+            throw new IOException(options.PreferQuality?"This size can't be reached without lowering the resolution. Choose a larger target or Size priority.":"The requested image size could not be reached. Choose a larger target.");
         }
         var best=outcome?.Best;if(best is null)Encode(quality,1);else if(new FileInfo(output).Length!=best.Bytes){Encode(best.Quality,best.Scale);if(new FileInfo(output).Length>target){File.Delete(output);throw new IOException("The requested image size could not be reached. Choose a larger target.");}}
         if((best?.Scale??1)==1&&keepsOriginal&&original<new FileInfo(output).Length)File.Copy(input,output,true);

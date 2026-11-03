@@ -1791,6 +1791,7 @@
 "PREVIEW VISUALIZATION" = "PREVIEW VISUALIZATION";
 "PREVIOUS FRAME" = "PREVIOUS FRAME";
 "PREVIOUS PAGE" = "PREVIOUS PAGE";
+"PRIORITY" = "PRIORITY";
 "PRIVATE REPOSITORY · TOKEN SAVED IN KEYCHAIN" = "PRIVATE REPOSITORY · TOKEN SAVED IN KEYCHAIN";
 "PROCESSED PREVIEW UNAVAILABLE FOR THIS WINDOWS CODEC." = "PROCESSED PREVIEW UNAVAILABLE FOR THIS WINDOWS CODEC.";
 "PROCESSED PREVIEW · EXPORT USES THE ORIGINAL FILE." = "PROCESSED PREVIEW · EXPORT USES THE ORIGINAL FILE.";
@@ -1874,6 +1875,7 @@
 "Preview uses the first 12 seconds. Export includes the full recording." = "Preview uses the first 12 seconds. Export includes the full recording.";
 "Previous frame" = "Previous frame";
 "Previous page" = "Previous page";
+"Priority" = "Priority";
 "Private repository · Token saved in Keychain" = "Private repository · Token saved in Keychain";
 "Processed preview unavailable for this Windows codec." = "Processed preview unavailable for this Windows codec.";
 "Processed preview · export uses the original file." = "Processed preview · export uses the original file.";
@@ -1889,12 +1891,14 @@
 "QR codes copied." = "QR codes copied.";
 "QUALITY" = "QUALITY";
 "QUALITY (%)" = "QUALITY (%)";
+"QUALITY KEEPS THE RESOLUTION." = "QUALITY KEEPS THE RESOLUTION.";
 "QUICK LOOK" = "QUICK LOOK";
 "QUICK PICKS" = "QUICK PICKS";
 "QUICK PREVIEW" = "QUICK PREVIEW";
 "QUIT NASHI" = "QUIT NASHI";
 "Quality" = "Quality";
 "Quality (%)" = "Quality (%)";
+"Quality keeps the resolution." = "Quality keeps the resolution.";
 "Quick Look" = "Quick Look";
 "Quick Preview" = "Quick Preview";
 "Quit Nashi" = "Quit Nashi";
@@ -2137,6 +2141,8 @@
 "SHOW NASHI IN FINDER" = "SHOW NASHI IN FINDER";
 "SHOW ORIGINAL" = "SHOW ORIGINAL";
 "SILENCE THRESHOLD" = "SILENCE THRESHOLD";
+"SIZE" = "SIZE";
+"SIZE MAY LOWER THE RESOLUTION." = "SIZE MAY LOWER THE RESOLUTION.";
 "SKIP TOUR" = "SKIP TOUR";
 "SLIDES" = "SLIDES";
 "SMALL · 1280 PX" = "SMALL · 1280 PX";
@@ -2307,6 +2313,8 @@
 "Show less" = "Show less";
 "Show original" = "Show original";
 "Silence threshold" = "Silence threshold";
+"Size" = "Size";
+"Size may lower the resolution." = "Size may lower the resolution.";
 "Skip tour" = "Skip tour";
 "Slides" = "Slides";
 "Small · 1280 px" = "Small · 1280 px";
@@ -2456,6 +2464,7 @@
 "THIS POST CONTAINS VIDEOS. USE ITS REEL LINK TO DOWNLOAD VIDEO." = "THIS POST CONTAINS VIDEOS. USE ITS REEL LINK TO DOWNLOAD VIDEO.";
 "THIS REPOSITORY IS PRIVATE" = "THIS REPOSITORY IS PRIVATE";
 "THIS RTFD ATTACHMENT SYNTAX COULD NOT BE PRESERVED." = "THIS RTFD ATTACHMENT SYNTAX COULD NOT BE PRESERVED.";
+"THIS SIZE CAN'T BE REACHED WITHOUT LOWERING THE RESOLUTION. CHOOSE A LARGER TARGET OR SIZE PRIORITY." = "THIS SIZE CAN'T BE REACHED WITHOUT LOWERING THE RESOLUTION. CHOOSE A LARGER TARGET OR SIZE PRIORITY.";
 "THIS SIZE CANNOT BE REACHED. CHOOSE A LARGER TARGET OR SMALLER DIMENSIONS." = "THIS SIZE CANNOT BE REACHED. CHOOSE A LARGER TARGET OR SMALLER DIMENSIONS.";
 "THIS SOURCE USES MORE THAN 32-BIT INTEGER AUDIO. CHOOSE AN OUTPUT BIT DEPTH IN SETTINGS." = "THIS SOURCE USES MORE THAN 32-BIT INTEGER AUDIO. CHOOSE AN OUTPUT BIT DEPTH IN SETTINGS.";
 "THIS TEXT CLIPPING CONTAINS NO SUPPORTED TEXT RESOURCE." = "THIS TEXT CLIPPING CONTAINS NO SUPPORTED TEXT RESOURCE.";
@@ -2630,6 +2639,7 @@
 "This post contains videos, not photos. Use its Reel link to download video." = "This post contains videos, not photos. Use its Reel link to download video.";
 "This post contains videos. Use its Reel link to download video." = "This post contains videos. Use its Reel link to download video.";
 "This repository is private" = "This repository is private";
+"This size can't be reached without lowering the resolution. Choose a larger target or Size priority." = "This size can't be reached without lowering the resolution. Choose a larger target or Size priority.";
 "This size cannot be reached. Choose a larger target or smaller dimensions." = "This size cannot be reached. Choose a larger target or smaller dimensions.";
 "This source uses more than 32-bit integer audio. Choose an output bit depth in settings." = "This source uses more than 32-bit integer audio. Choose an output bit depth in settings.";
 "This text clipping contains no supported text resource." = "This text clipping contains no supported text resource.";

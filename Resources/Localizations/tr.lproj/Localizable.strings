@@ -1791,6 +1791,7 @@
 "PREVIEW VISUALIZATION" = "GÖRSELLEŞTİRMEYİ ÖNİZLE";
 "PREVIOUS FRAME" = "ÖNCEKİ KARE";
 "PREVIOUS PAGE" = "ÖNCEKİ SAYFA";
+"PRIORITY" = "ÖNCELİK";
 "PRIVATE REPOSITORY · TOKEN SAVED IN KEYCHAIN" = "GİZLİ DEPO · TOKEN ANAHTAR ZİNCİRİ'NDE KAYITLI";
 "PROCESSED PREVIEW UNAVAILABLE FOR THIS WINDOWS CODEC." = "BU WINDOWS CODEC'İ İÇİN İŞLENMİŞ ÖNİZLEME KULLANILAMIYOR.";
 "PROCESSED PREVIEW · EXPORT USES THE ORIGINAL FILE." = "İŞLENMİŞ ÖNİZLEME · DIŞA AKTARMADA ORİJİNAL DOSYA KULLANILIR.";
@@ -1874,6 +1875,7 @@
 "Preview uses the first 12 seconds. Export includes the full recording." = "Önizleme ilk 12 saniyeyi kullanır. Dışa aktarma kaydın tamamını içerir.";
 "Previous frame" = "Önceki kare";
 "Previous page" = "Önceki sayfa";
+"Priority" = "Öncelik";
 "Private repository · Token saved in Keychain" = "Gizli depo · Token Anahtar Zinciri'nde kayıtlı";
 "Processed preview unavailable for this Windows codec." = "Bu Windows codec'i için işlenmiş önizleme kullanılamıyor.";
 "Processed preview · export uses the original file." = "İşlenmiş önizleme · dışa aktarmada orijinal dosya kullanılır.";
@@ -1889,12 +1891,14 @@
 "QR codes copied." = "QR kodları kopyalandı.";
 "QUALITY" = "KALİTE";
 "QUALITY (%)" = "KALİTE (%)";
+"QUALITY KEEPS THE RESOLUTION." = "KALİTE ÖNCELİĞİ ÇÖZÜNÜRLÜĞÜ KORUR.";
 "QUICK LOOK" = "HIZLI BAKIŞ";
 "QUICK PICKS" = "HIZLI SEÇİM";
 "QUICK PREVIEW" = "HIZLI ÖNİZLEME";
 "QUIT NASHI" = "NASHI'DEN ÇIK";
 "Quality" = "Kalite";
 "Quality (%)" = "Kalite (%)";
+"Quality keeps the resolution." = "Kalite önceliği çözünürlüğü korur.";
 "Quick Look" = "Hızlı Bakış";
 "Quick Preview" = "Hızlı Önizleme";
 "Quit Nashi" = "Nashi'den Çık";
@@ -2137,6 +2141,8 @@
 "SHOW NASHI IN FINDER" = "NASHI'Yİ FINDER'DA GÖSTER";
 "SHOW ORIGINAL" = "ORİJİNALİ GÖSTER";
 "SILENCE THRESHOLD" = "SESSİZLİK EŞİĞİ";
+"SIZE" = "BOYUT";
+"SIZE MAY LOWER THE RESOLUTION." = "BOYUT ÖNCELİĞİ ÇÖZÜNÜRLÜĞÜ DÜŞÜREBİLİR.";
 "SKIP TOUR" = "TURU GEÇ";
 "SLIDES" = "SUNUMLAR";
 "SMALL · 1280 PX" = "KÜÇÜK · 1280 PX";
@@ -2307,6 +2313,8 @@
 "Show less" = "Daha az göster";
 "Show original" = "Orijinali göster";
 "Silence threshold" = "Sessizlik eşiği";
+"Size" = "Boyut";
+"Size may lower the resolution." = "Boyut önceliği çözünürlüğü düşürebilir.";
 "Skip tour" = "Turu geç";
 "Slides" = "Sunumlar";
 "Small · 1280 px" = "Küçük · 1280 px";
@@ -2456,6 +2464,7 @@
 "THIS POST CONTAINS VIDEOS. USE ITS REEL LINK TO DOWNLOAD VIDEO." = "BU GÖNDERİDE VİDEO VAR. VİDEOYU İNDİRMEK İÇİN REEL BAĞLANTISINI KULLAN.";
 "THIS REPOSITORY IS PRIVATE" = "BU DEPO GİZLİ";
 "THIS RTFD ATTACHMENT SYNTAX COULD NOT BE PRESERVED." = "BU RTFD EKİNİN YAPISI KORUNAMADI.";
+"THIS SIZE CAN'T BE REACHED WITHOUT LOWERING THE RESOLUTION. CHOOSE A LARGER TARGET OR SIZE PRIORITY." = "BU BOYUTA ÇÖZÜNÜRLÜĞÜ DÜŞÜRMEDEN İNİLEMİYOR. DAHA BÜYÜK BİR HEDEF YA DA BOYUT ÖNCELİĞİ SEÇ.";
 "THIS SIZE CANNOT BE REACHED. CHOOSE A LARGER TARGET OR SMALLER DIMENSIONS." = "BU BOYUTA İNİLEMİYOR. DAHA BÜYÜK BİR HEDEF VEYA DAHA KÜÇÜK BOYUTLAR SEÇ.";
 "THIS SOURCE USES MORE THAN 32-BIT INTEGER AUDIO. CHOOSE AN OUTPUT BIT DEPTH IN SETTINGS." = "BU KAYNAK 32 BİTTEN YÜKSEK TAM SAYI SES KULLANIYOR. AYARLARDAN BİR ÇIKIŞ BİT DERİNLİĞİ SEÇ.";
 "THIS TEXT CLIPPING CONTAINS NO SUPPORTED TEXT RESOURCE." = "BU METİN KIRPINTISINDA DESTEKLENEN BİR METİN KAYNAĞI YOK.";
@@ -2630,6 +2639,7 @@
 "This post contains videos, not photos. Use its Reel link to download video." = "Bu gönderide fotoğraf değil, video var. Videoyu indirmek için gönderinin Reel bağlantısını kullan.";
 "This post contains videos. Use its Reel link to download video." = "Bu gönderide video var. Videoyu indirmek için Reel bağlantısını kullan.";
 "This repository is private" = "Bu depo gizli";
+"This size can't be reached without lowering the resolution. Choose a larger target or Size priority." = "Bu boyuta çözünürlüğü düşürmeden inilemiyor. Daha büyük bir hedef ya da Boyut önceliği seç.";
 "This size cannot be reached. Choose a larger target or smaller dimensions." = "Bu boyuta inilemiyor. Daha büyük bir hedef veya daha küçük boyutlar seç.";
 "This source uses more than 32-bit integer audio. Choose an output bit depth in settings." = "Bu kaynak 32 bitten yüksek tam sayı ses kullanıyor. Ayarlardan bir çıkış bit derinliği seç.";
 "This text clipping contains no supported text resource." = "Bu metin kırpıntısında desteklenen bir metin kaynağı yok.";

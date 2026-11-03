@@ -594,8 +594,9 @@ public enum ImageEngine {
         // Skipping the search is safe only when retainSmallerOriginal can fall back to the
         // untouched source; resized or re-encoded outputs must be measured against the target.
         let keepsOriginal=image.width==originalWidth && image.height==originalHeight && input.pathExtension.lowercased()==ext.lowercased()
-        let outcome=try target.map { try TargetSizeSearch.run(originalBytes:keepsOriginal ? inputSize:.max,targetBytes:$0,startQuality:start,lossy:lossy,allowResize:true,token:token,encode:encode) }
+        let outcome=try target.map { try TargetSizeSearch.run(originalBytes:keepsOriginal ? inputSize:.max,targetBytes:$0,startQuality:start,lossy:lossy,allowResize:!options.preferQuality,token:token,encode:encode) }
         if let outcome,outcome.status == .bestEffortAboveTarget {
+            if options.preferQuality { throw NashiError.failed("This size can't be reached without lowering the resolution. Choose a larger target or Size priority.") }
             throw NashiError.failed("The requested file size could not be reached. Choose a larger target.")
         }
         let best=outcome?.best
