@@ -33,21 +33,58 @@ public enum FileHasher {
         }
     }
 
+    /// One line of a `shasum`-style checksum file.
+    public enum ChecksumLine: Equatable {
+        /// Blank lines and `#` comments carry no checksum.
+        case ignored
+        /// A checksum entry: lowercase digest and the path exactly as written.
+        case entry(digest: String, path: String)
+        /// Text that is neither an entry nor a comment. A verify run counts it
+        /// as a failure instead of skipping it.
+        case damaged(String)
+    }
+
+    /// Number of hexadecimal characters each algorithm produces.
+    public static func digestLength(_ algorithm: Algorithm) -> Int {
+        switch algorithm {
+        case .md5: return 32
+        case .sha256: return 64
+        case .sha512: return 128
+        }
+    }
+
+    /// The algorithm a digest of `hexCharacters` belongs to, if any.
+    public static func algorithm(forDigestLength hexCharacters: Int) -> Algorithm? {
+        Algorithm.allCases.first { digestLength($0) == hexCharacters }
+    }
+
     /// Parses one line of a `shasum`-style checksum file.
     ///
-    /// Accepted forms are `<hex>  <path>` and `<hex> *<path>`, with the path
-    /// kept exactly as written so spaces in file names survive. Comment and
-    /// blank lines return `nil`.
-    public static func parseChecksumLine(_ line: String) -> (digest: String, path: String)? {
-        let trimmed = line.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty, !trimmed.hasPrefix("#") else { return nil }
-        let fields = trimmed.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
-        guard fields.count == 2 else { return nil }
-        let digest = String(fields[0])
-        guard digest.count >= 32, digest.allSatisfy(\.isHexDigit) else { return nil }
-        var path = String(fields[1]).trimmingCharacters(in: .whitespacesAndNewlines)
-        if path.hasPrefix("*") { path.removeFirst() }
-        return path.isEmpty ? nil : (digest.lowercased(), path)
+    /// Accepted forms are `<hex>   <path>` (text mode) and `<hex> *<path>`
+    /// (binary mode). The path is kept exactly as written, so leading or
+    /// trailing spaces and a name that really starts with `*` survive. Only a
+    /// `*` that follows the single-space binary separator is treated as a mode
+    /// marker.
+    public static func parseChecksumLine(_ line: String) -> ChecksumLine {
+        if line.allSatisfy({ $0 == " " || $0 == "\t" }) { return .ignored }
+        // Only a comment at the start of the line is a comment; a name may contain '#'.
+        if line.hasPrefix("#") { return .ignored }
+        guard let separator = line.firstIndex(of: " "),
+              let name = name(after: line.index(after: separator), in: line) else {
+            return .damaged(line)
+        }
+        let digest = String(line[line.startIndex..<separator])
+        guard digest.count >= 32, digest.allSatisfy(\.isHexDigit), !name.isEmpty else { return .damaged(line) }
+        return .entry(digest: digest.lowercased(), path: name)
+    }
+
+    /// Applies the one-character mode marker that follows the first space.
+    private static func name(after index: String.Index, in line: String) -> String? {
+        guard index < line.endIndex else { return nil }
+        if line[index] == "*" { return String(line[line.index(after: index)...]) }
+        guard line[index] == " " else { return nil }
+        let start = line.index(after: index)
+        return start < line.endIndex ? String(line[start...]) : nil
     }
 
     private static func stream<H: HashFunction>(_ url: URL, into hasher: H) throws -> H.Digest {

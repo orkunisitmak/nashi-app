@@ -24,15 +24,31 @@ final class FileHasherTests: XCTestCase {
         XCTAssertThrowsError(try FileHasher.digest(of: root))
     }
 
-    func testChecksumLineParsingKeepsSpacesAndBinaryMarker() {
-        XCTAssertEqual(FileHasher.parseChecksumLine("\(sha256OfABC)  a b/c.txt")?.path, "a b/c.txt")
-        XCTAssertEqual(FileHasher.parseChecksumLine("\(sha256OfABC) *photo 1.jpg")?.path, "photo 1.jpg")
-        XCTAssertEqual(FileHasher.parseChecksumLine("\(md5OfABC)  legacy.bin")?.digest, md5OfABC)
-        XCTAssertNil(FileHasher.parseChecksumLine(""))
-        XCTAssertNil(FileHasher.parseChecksumLine("# comment"))
-        XCTAssertNil(FileHasher.parseChecksumLine("not-a-digest  file.txt"))
-        XCTAssertNil(FileHasher.parseChecksumLine(sha256OfABC))
+    func testChecksumLineKeepsTheNameAsWritten() {
+        XCTAssertEqual(FileHasher.parseChecksumLine("\(sha256OfABC)  a b/c.txt"),
+                       .entry(digest: sha256OfABC, path: "a b/c.txt"))
+        XCTAssertEqual(FileHasher.parseChecksumLine("\(sha256OfABC) *photo 1.jpg"),
+                       .entry(digest: sha256OfABC, path: "photo 1.jpg"))
+        // Two spaces mean text mode, so a leading star belongs to the name.
+        XCTAssertEqual(FileHasher.parseChecksumLine("\(sha256OfABC)  *star.txt"),
+                       .entry(digest: sha256OfABC, path: "*star.txt"))
+        // The text separator is exactly two spaces; the rest of the name survives.
+        XCTAssertEqual(FileHasher.parseChecksumLine("\(sha256OfABC)   padded.txt"),
+                       .entry(digest: sha256OfABC, path: " padded.txt"))
+        XCTAssertEqual(FileHasher.parseChecksumLine("\(md5OfABC)  legacy.bin"), .entry(digest: md5OfABC, path: "legacy.bin"))
+        XCTAssertEqual(FileHasher.parseChecksumLine(""), .ignored)
+        XCTAssertEqual(FileHasher.parseChecksumLine("   "), .ignored)
+        XCTAssertEqual(FileHasher.parseChecksumLine("# comment"), .ignored)
     }
+
+    func testDamagedChecksumLinesAreNotSilentlySkipped() {
+        XCTAssertEqual(FileHasher.parseChecksumLine("not-a-digest  file.txt"), .damaged("not-a-digest  file.txt"))
+        XCTAssertEqual(FileHasher.parseChecksumLine(sha256OfABC), .damaged(sha256OfABC))
+        // One space is not the text-mode separator.
+        XCTAssertEqual(FileHasher.parseChecksumLine("\(sha256OfABC) file.txt"), .damaged("\(sha256OfABC) file.txt"))
+    }
+
+    private func parse(_ line:String) -> FileHasher.ChecksumLine { FileHasher.parseChecksumLine(line) }
 
     func testHashCommandPrintsDigestAndJSON() throws {
         let root = try OutputFiles.temporaryDirectory()
@@ -42,8 +58,9 @@ final class FileHasherTests: XCTestCase {
         XCTAssertEqual(NashiCommandLine.run(arguments: ["nashi-cli", "hash", file.path]), 0)
         XCTAssertEqual(NashiCommandLine.run(arguments: ["nashi-cli", "hash", file.path, "--json"]), 0)
         XCTAssertEqual(NashiCommandLine.run(arguments: ["nashi-cli", "hash", file.path, "--algorithm", "md5"]), 0)
-        XCTAssertNotEqual(NashiCommandLine.run(arguments: ["nashi-cli", "hash", file.path, "--algorithm", "sha1"]), 0)
-        XCTAssertNotEqual(NashiCommandLine.run(arguments: ["nashi-cli", "hash"]), 0)
+        XCTAssertEqual(NashiCommandLine.run(arguments: ["nashi-cli", "hash", file.path, "--algorithm", "sha1"]), 64)
+        XCTAssertEqual(NashiCommandLine.run(arguments: ["nashi-cli", "hash"]), 64)
+        XCTAssertEqual(NashiCommandLine.run(arguments: ["nashi-cli", "hash", file.path, "--algorithm"]), 64)
     }
 
     func testVerifyAcceptsMatchingChecksumsAndRejectsMismatches() throws {
@@ -61,6 +78,51 @@ final class FileHasherTests: XCTestCase {
 
         let empty = root.appendingPathComponent("empty.sha256")
         try Data("# nothing to check\n".utf8).write(to: empty)
-        XCTAssertNotEqual(NashiCommandLine.run(arguments: ["nashi-cli", "hash", "--verify", empty.path]), 0)
+        XCTAssertEqual(NashiCommandLine.run(arguments: ["nashi-cli", "hash", "--verify", empty.path]), 1)
+    }
+
+    func testVerifyCountsDamagedEntriesAsFailures() throws {
+        let root = try OutputFiles.temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appendingPathComponent("payload.txt")
+        try Data("abc".utf8).write(to: file)
+        let list = root.appendingPathComponent("damaged.sha256")
+        try Data("\(sha256OfABC)  payload.txt\n\(String(sha256OfABC.dropLast()))  truncated.txt\n".utf8).write(to: list)
+        XCTAssertEqual(NashiCommandLine.run(arguments: ["nashi-cli", "hash", "--verify", list.path]), 1)
+    }
+
+    func testVerifyReadsCRLFChecksumFiles() throws {
+        let root = try OutputFiles.temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appendingPathComponent("payload.txt")
+        try Data("abc".utf8).write(to: file)
+        let list = root.appendingPathComponent("crlf.sha256")
+        try Data("\(sha256OfABC)  payload.txt\r\n".utf8).write(to: list)
+        XCTAssertEqual(NashiCommandLine.run(arguments: ["nashi-cli", "hash", "--verify", list.path]), 0)
+    }
+
+    func testVerifyInfersTheAlgorithmFromTheDigestLength() throws {
+        let root = try OutputFiles.temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appendingPathComponent("payload.txt")
+        try Data("abc".utf8).write(to: file)
+        let list = root.appendingPathComponent("sha512sums")
+        try Data("\(sha512OfABC)  payload.txt\n".utf8).write(to: list)
+        XCTAssertEqual(NashiCommandLine.run(arguments: ["nashi-cli", "hash", "--verify", list.path]), 0)
+        // An explicit algorithm that does not match the digest is reported as a failure, not corruption.
+        XCTAssertEqual(NashiCommandLine.run(arguments: ["nashi-cli", "hash", "--verify", list.path, "--algorithm", "sha256"]), 1)
+    }
+
+    func testVerifyRejectsIgnoredArguments() throws {
+        let root = try OutputFiles.temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appendingPathComponent("payload.txt")
+        try Data("abc".utf8).write(to: file)
+        let list = root.appendingPathComponent("good.sha256")
+        try Data("\(sha256OfABC)  payload.txt\n".utf8).write(to: list)
+        XCTAssertEqual(NashiCommandLine.run(arguments: ["nashi-cli", "hash", file.path, "--verify", list.path]), 64)
+        XCTAssertEqual(NashiCommandLine.run(arguments: ["nashi-cli", "hash", "--verify", list.path, "--json"]), 64)
+        XCTAssertEqual(NashiCommandLine.run(arguments: ["nashi-cli", "hash", "--verify"]), 64)
+        XCTAssertEqual(NashiCommandLine.run(arguments: ["nashi-cli", "hash", "--verify", list.path, "--verify", list.path]), 64)
     }
 }
