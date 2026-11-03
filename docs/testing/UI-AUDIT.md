@@ -36,7 +36,7 @@ Both audit commands accept these optional filters:
 --language en|tr|fr|both
 ```
 
-Unknown scenes/options, empty selections, repeated scenes and invalid themes/languages fail. No filter means the complete matrix: **10 scenes × 2 appearances × 2 languages = 40 captures per platform**.
+Unknown scenes/options, empty selections, repeated scenes and invalid themes/languages fail. No filter means the complete matrix: **10 shared scenes × 2 appearances × 2 languages = 40 captures per platform**, plus the two Mac-only projects wheel scenes (**48 Mac captures**).
 
 | Scene ID | Production surface |
 | --- | --- |
