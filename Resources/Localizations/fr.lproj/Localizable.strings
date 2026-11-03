@@ -2093,6 +2093,7 @@
 "SELECT AN AREA TO REDACT, OR DETECT FACES OR TEXT." = "SÉLECTIONNEZ UNE ZONE À CAVIARDER, OU DÉTECTEZ LES VISAGES OU LE TEXTE.";
 "SELECT AT LEAST ONE AVAILABLE PHOTO." = "SÉLECTIONNEZ AU MOINS UNE PHOTO DISPONIBLE.";
 "SELECT AT LEAST ONE PAGE." = "SÉLECTIONNEZ AU MOINS UNE PAGE.";
+"SELECT FILES IN EXPLORER, RIGHT-CLICK, THEN SEND TO › NASHI TO OPEN THE TOOLS WHEEL. NO REGISTRY CHANGE; TURNING THIS OFF REMOVES THE SHORTCUT." = "SÉLECTIONNEZ DES FICHIERS DANS L’EXPLORATEUR, FAITES UN CLIC DROIT, PUIS ENVOYER VERS › NASHI POUR OUVRIR LA ROUE DES OUTILS. AUCUNE MODIFICATION DU REGISTRE ; DÉSACTIVER L’OPTION SUPPRIME LE RACCOURCI.";
 "SELECT ONE CROP RECTANGLE." = "SÉLECTIONNEZ UN SEUL RECTANGLE DE RECADRAGE.";
 "SELECT ONLY THIS REPOSITORY AND GIVE CONTENTS READ ACCESS. THE TOKEN STAYS IN THIS MAC’S KEYCHAIN." = "SÉLECTIONNEZ UNIQUEMENT CE DÉPÔT ET ACCORDEZ L’ACCÈS EN LECTURE À CONTENTS. LE JETON RESTE DANS LE TROUSSEAU DE CE MAC.";
 "SELECT PHOTOS" = "SÉLECTIONNER DES PHOTOS";
@@ -2134,6 +2135,7 @@
 "SHOW IN EXPLORER" = "AFFICHER DANS L’EXPLORATEUR";
 "SHOW IN FINDER" = "AFFICHER DANS LE FINDER";
 "SHOW LESS" = "AFFICHER MOINS";
+"SHOW NASHI IN EXPLORER'S SEND TO MENU" = "AFFICHER NASHI DANS LE MENU ENVOYER VERS DE L’EXPLORATEUR";
 "SHOW NASHI IN FINDER" = "AFFICHER NASHI DANS LE FINDER";
 "SHOW ORIGINAL" = "AFFICHER L’ORIGINAL";
 "SILENCE THRESHOLD" = "SEUIL DE SILENCE";
@@ -2258,6 +2260,7 @@
 "Select an area to redact, or detect faces or text." = "Sélectionnez une zone à caviarder, ou détectez les visages ou le texte.";
 "Select at least one available photo." = "Sélectionnez au moins une photo disponible.";
 "Select at least one page." = "Sélectionnez au moins une page.";
+"Select files in Explorer, right-click, then Send to › Nashi to open the tools wheel. No registry change; turning this off removes the shortcut." = "Sélectionnez des fichiers dans l’Explorateur, faites un clic droit, puis Envoyer vers › Nashi pour ouvrir la roue des outils. Aucune modification du registre ; désactiver l’option supprime le raccourci.";
 "Select one crop rectangle." = "Sélectionnez un seul rectangle de recadrage.";
 "Select only this repository and give Contents read access. The token stays in this Mac’s Keychain." = "Sélectionnez uniquement ce dépôt et accordez l’accès en lecture à Contents. Le jeton reste dans le trousseau de ce Mac.";
 "Select photos" = "Sélectionner des photos";
@@ -2300,6 +2303,7 @@
 "Shift to convert" = "Maj pour convertir";
 "Show %@ in Finder" = "Afficher %@ dans le Finder";
 "Show %lld in Finder" = "Afficher %lld dans le Finder";
+"Show Nashi in Explorer's Send to menu" = "Afficher Nashi dans le menu Envoyer vers de l’Explorateur";
 "Show Nashi in Finder" = "Afficher Nashi dans le Finder";
 "Show Original" = "Afficher l’original";
 "Show in Explorer" = "Afficher dans l’Explorateur";

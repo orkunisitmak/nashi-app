@@ -12,6 +12,8 @@ While dragging in Explorer or another application, **Ctrl** opens tools, **Shift
 
 **Ctrl+O** chooses files; **Ctrl+V** imports files/text/images/links outside text fields; **Ctrl+1/2** switches Home/Library; **Ctrl+F** searches; **Ctrl+U** checks updates. **Ctrl+Space** opens the selected files' wheel; choose **Convert** to select an output format. Arrows/Tab choose an item, Enter opens it and Escape closes it. In the Home file list, **Delete** removes the selected entries from Nashi without deleting the original files.
 
+**Right-click instead of dragging:** turn on **Show Nashi in Explorer's Send to menu** in Settings: select files, right-click, choose **Send to › Nashi** and the tools wheel opens for them. It adds one shortcut to your Send to folder (no registry change) and removes it when turned off.
+
 Media editors use **Space** for play/pause, **Left/Right** for one-second seeking, **Shift+Left/Right** for frame steps, **I/O** for range marks and **Shift+Space** to play the selected range. Crop supports drag, Shift ratio lock, selection move/resize, aspect presets and Enter save. Annotation supports Select/Move, Delete and Ctrl+Z. Normal text-field editing is preserved.
 
 `Nashi.Verify` checks the shared engine and security foundation. `Nashi --smoke-test` runs real Windows keyboard, clipboard, OLE drag, Library, editor and export checks and writes diagnostic JSON/PNG artifacts. See [verification details](FEATURE-PARITY.md#commands-and-evidence) before interpreting a CI artifact as a completed test or official release.

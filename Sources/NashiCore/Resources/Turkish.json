@@ -24,6 +24,8 @@
   "Glass": "Cam",
   "Solid": "Düz",
   "Launch at login": "Oturum açıldığında başlat",
+  "Show Nashi in Explorer's Send to menu": "Nashi'yi Explorer'ın Gönder menüsünde göster",
+  "Select files in Explorer, right-click, then Send to › Nashi to open the tools wheel. No registry change; turning this off removes the shortcut.": "Explorer'da dosyaları seç, sağ tıkla, ardından Gönder › Nashi ile araç çarkını aç. Kayıt defteri değişmez; kapatınca kısayol kaldırılır.",
   "Launch at login is unavailable for this copy.": "Bu kopyada otomatik başlatma kullanılamıyor.",
   "Allow Nashi in macOS Login Items.": "macOS Giriş Öğeleri bölümünden Nashi'ye izin ver.",
   "Open Login Items": "Giriş Öğelerini Aç",

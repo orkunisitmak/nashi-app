@@ -2093,6 +2093,7 @@
 "SELECT AN AREA TO REDACT, OR DETECT FACES OR TEXT." = "SANSÜRLENECEK BİR ALAN SEÇ YA DA YÜZLERİ VEYA METNİ ALGILA.";
 "SELECT AT LEAST ONE AVAILABLE PHOTO." = "KULLANILABİLİR EN AZ BİR FOTOĞRAF SEÇ.";
 "SELECT AT LEAST ONE PAGE." = "EN AZ BİR SAYFA SEÇ.";
+"SELECT FILES IN EXPLORER, RIGHT-CLICK, THEN SEND TO › NASHI TO OPEN THE TOOLS WHEEL. NO REGISTRY CHANGE; TURNING THIS OFF REMOVES THE SHORTCUT." = "EXPLORER'DA DOSYALARI SEÇ, SAĞ TIKLA, ARDINDAN GÖNDER › NASHI İLE ARAÇ ÇARKINI AÇ. KAYIT DEFTERİ DEĞİŞMEZ; KAPATINCA KISAYOL KALDIRILIR.";
 "SELECT ONE CROP RECTANGLE." = "TEK BİR KIRPMA ALANI SEÇ.";
 "SELECT ONLY THIS REPOSITORY AND GIVE CONTENTS READ ACCESS. THE TOKEN STAYS IN THIS MAC’S KEYCHAIN." = "YALNIZCA BU DEPOYU SEÇ VE CONTENTS OKUMA İZNİ VER. TOKEN BU MAC'İN ANAHTAR ZİNCİRİ'NDE KALIR.";
 "SELECT PHOTOS" = "FOTOĞRAFLARI SEÇ";
@@ -2134,6 +2135,7 @@
 "SHOW IN EXPLORER" = "DOSYA GEZGİNİ'NDE GÖSTER";
 "SHOW IN FINDER" = "FINDER'DA GÖSTER";
 "SHOW LESS" = "DAHA AZ GÖSTER";
+"SHOW NASHI IN EXPLORER'S SEND TO MENU" = "NASHI'Yİ EXPLORER'IN GÖNDER MENÜSÜNDE GÖSTER";
 "SHOW NASHI IN FINDER" = "NASHI'Yİ FINDER'DA GÖSTER";
 "SHOW ORIGINAL" = "ORİJİNALİ GÖSTER";
 "SILENCE THRESHOLD" = "SESSİZLİK EŞİĞİ";
@@ -2258,6 +2260,7 @@
 "Select an area to redact, or detect faces or text." = "Sansürlenecek bir alan seç ya da yüzleri veya metni algıla.";
 "Select at least one available photo." = "Kullanılabilir en az bir fotoğraf seç.";
 "Select at least one page." = "En az bir sayfa seç.";
+"Select files in Explorer, right-click, then Send to › Nashi to open the tools wheel. No registry change; turning this off removes the shortcut." = "Explorer'da dosyaları seç, sağ tıkla, ardından Gönder › Nashi ile araç çarkını aç. Kayıt defteri değişmez; kapatınca kısayol kaldırılır.";
 "Select one crop rectangle." = "Tek bir kırpma alanı seç.";
 "Select only this repository and give Contents read access. The token stays in this Mac’s Keychain." = "Yalnızca bu depoyu seç ve Contents okuma izni ver. Token bu Mac'in Anahtar Zinciri'nde kalır.";
 "Select photos" = "Fotoğrafları seç";
@@ -2300,6 +2303,7 @@
 "Shift to convert" = "Dönüştürmek için Shift";
 "Show %@ in Finder" = "%@ öğesini Finder'da göster";
 "Show %lld in Finder" = "%lld öğesini Finder'da göster";
+"Show Nashi in Explorer's Send to menu" = "Nashi'yi Explorer'ın Gönder menüsünde göster";
 "Show Nashi in Finder" = "Nashi'yi Finder'da Göster";
 "Show Original" = "Orijinali Göster";
 "Show in Explorer" = "Dosya Gezgini'nde Göster";
