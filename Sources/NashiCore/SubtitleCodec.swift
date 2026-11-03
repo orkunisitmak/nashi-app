@@ -82,10 +82,14 @@ enum SubtitleCodec {
         let hour = value / 3_600_000, min = value / 60_000 % 60, sec = value / 1000 % 60, ms = value % 1000
         return String(format: "%02lld:%02lld:%02lld%@%03lld", hour, min, sec, vtt ? "." : ",", ms)
     }
+    /// SRT files from VLC, mpv and Aegisub move a caption with the SSA-style {\an1} to {\an9} override, which players hide.
+    private static func withoutPositionTags(_ text: String) -> String {
+        text.replacingOccurrences(of: #"\{\\an[1-9]\}"#, with: "", options: .regularExpression)
+    }
     /// WebVTT reads a bare "<" as the start of a tag and ends a cue at "-->",
     /// so SRT text keeps its markup tags and escapes everything else.
     private static func vttText(_ text: String) -> String {
-        text.replacingOccurrences(of: #"<(?!/?[A-Za-z][^<>]*>)"#, with: "&lt;", options: .regularExpression)
+        withoutPositionTags(text).replacingOccurrences(of: #"<(?!/?[A-Za-z][^<>]*>)"#, with: "&lt;", options: .regularExpression)
             .replacingOccurrences(of: "-->", with: "--&gt;")
     }
     private static func srtText(_ text: String) -> String {
@@ -97,7 +101,7 @@ enum SubtitleCodec {
         return DocumentText.decodeEntities(webVTT, html: true)
     }
     private static func plainText(_ text: String) -> String {
-        let withoutTags = text.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+        let withoutTags = withoutPositionTags(text).replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
         // Direction marks keep right-to-left lines readable in the exported text too.
         return DocumentText.decodeEntities(withoutTags.replacingOccurrences(of: "&lrm;", with: "\u{200E}").replacingOccurrences(of: "&rlm;", with: "\u{200F}"), html: true)
     }

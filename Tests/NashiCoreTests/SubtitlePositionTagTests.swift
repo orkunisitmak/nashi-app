@@ -1,0 +1,15 @@
+import XCTest
+@testable import NashiCore
+
+final class SubtitlePositionTagTests: XCTestCase {
+    func testSSAPositionTagIsNotWrittenAsCaptionText() throws {
+        let root = try OutputFiles.temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let input = root.appendingPathComponent("Movie.srt")
+        try "1\n00:00:01,000 --> 00:00:03,000\n{\\an8}JOHN (on the radio)\n\n2\n00:00:04,000 --> 00:00:06,000\nHello {not a tag}.\n".write(to: input, atomically: true, encoding: .utf8)
+
+        let vtt = try SubtitleCodec.convert(input, to: "vtt", token: .init())
+        XCTAssertEqual(vtt, "WEBVTT\n\n00:00:01.000 --> 00:00:03.000\nJOHN (on the radio)\n\n00:00:04.000 --> 00:00:06.000\nHello {not a tag}.\n")
+        XCTAssertEqual(try SubtitleCodec.convert(input, to: "txt", token: .init()), "JOHN (on the radio)\n\nHello {not a tag}.\n")
+    }
+}
