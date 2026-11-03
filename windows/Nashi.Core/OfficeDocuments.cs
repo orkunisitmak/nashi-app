@@ -134,16 +134,18 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
                 // PdfPig measures a picture along its own sides and keeps its pixels unturned. A turned or mirrored picture covers the
                 // page area its corners span; where that area maps onto a render, the render shows it the way the page does.
                 var box=image.BoundingBox;UglyToad.PdfPig.Core.PdfPoint[] corners=[box.BottomLeft,box.BottomRight,box.TopLeft,box.TopRight];
-                double left=corners.Min(c=>c.X),right=corners.Max(c=>c.X),bottom=corners.Min(c=>c.Y),top=corners.Max(c=>c.Y);var area=new PdfArea(left,page.Height-top,right-left,top-bottom);
+                double left=corners.Min(c=>c.X),right=corners.Max(c=>c.X),bottom=corners.Min(c=>c.Y),top=corners.Max(c=>c.Y);
+                // Only the part on the page is rendered, so a render holds nothing beside the picture and keeps that part's size.
+                double visibleLeft=Math.Max(left,0),visibleTop=Math.Max(page.Height-top,0);var area=new PdfArea(visibleLeft,visibleTop,Math.Min(right,page.Width)-visibleLeft,Math.Min(page.Height-bottom,page.Height)-visibleTop);var shown=area.Width>0&&area.Height>0;
                 var upright=Math.Abs(box.BottomLeft.Y-box.BottomRight.Y)<.01&&Math.Abs(box.BottomLeft.X-box.TopLeft.X)<.01&&box.BottomRight.X>box.BottomLeft.X&&box.TopLeft.Y>box.BottomLeft.Y;
-                byte[]? data=null;var mime="image/png";var (width,height)=(area.Width,area.Height);if(!upright&&mappable){needed=true;data=pageImage?.Invoke(page.Number,area);}
+                byte[]? data=null;var mime="image/png";var (width,height)=(area.Width,area.Height);if(!upright&&mappable&&shown){needed=true;data=pageImage?.Invoke(page.Number,area);}
                 if(data is null)
                 {
                     if(image.TryGetPng(out var png))data=png;else if(image.RawBytes.Length>=2&&image.RawBytes[0]==0xff&&image.RawBytes[1]==0xd8){data=image.RawBytes.ToArray();mime="image/jpeg";}if(data?.Length>20_000_000)continue;
                     // Without a render a turned picture keeps its own proportions, unturned, rather than being stretched over the area.
                     if(data is not null)(width,height)=(box.Width,box.Height);
                     // A render is bounded by the page and DPI, like the whole-page renders below.
-                    else if(upright&&mappable){needed=true;data=pageImage?.Invoke(page.Number,area);}if(data is null)continue;
+                    else if(upright&&mappable&&shown){needed=true;data=pageImage?.Invoke(page.Number,area);}if(data is null)continue;
                 }
                 blocks.Add((page.Height-top,"<p><img style=\""+PictureStyle(width,height)+"\" src=\"data:"+mime+";base64,"+Convert.ToBase64String(data)+"\"/></p>"));
             }

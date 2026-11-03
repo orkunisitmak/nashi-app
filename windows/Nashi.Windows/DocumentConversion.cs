@@ -63,7 +63,7 @@ public sealed class DocumentConversion(OfficeRuntime runtime,Toolchain tools)
     private static byte[]? CropRendered(byte[] png,OfficeDocuments.PdfArea area,int dpi)
     {
         var page=ImageEngine.FromPng(png);var scale=dpi/72d;var x=Math.Clamp((int)Math.Floor(area.Left*scale),0,page.PixelWidth);var y=Math.Clamp((int)Math.Floor(area.Top*scale),0,page.PixelHeight);
-        var width=Math.Min(page.PixelWidth-x,(int)Math.Ceiling(area.Width*scale));var height=Math.Min(page.PixelHeight-y,(int)Math.Ceiling(area.Height*scale));
+        var width=Math.Clamp((int)Math.Ceiling((area.Left+area.Width)*scale),0,page.PixelWidth)-x;var height=Math.Clamp((int)Math.Ceiling((area.Top+area.Height)*scale),0,page.PixelHeight)-y;
         return width<1||height<1?null:ImageEngine.PngBytes(new CroppedBitmap(page,new System.Windows.Int32Rect(x,y,width,height)));
     }
     private static async Task<string> PdfPreservedHtml(string input,string work,int dpi,CancellationToken token,string password="")
