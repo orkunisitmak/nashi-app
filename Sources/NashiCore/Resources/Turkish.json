@@ -1281,6 +1281,8 @@
   "The requested PDF size could not be reached. Choose a larger target.": "İstenen PDF boyutuna inilemedi. Daha büyük bir hedef seç.",
   "PDF page is too large to render at this DPI.": "PDF sayfası bu DPI değerinde işlenemeyecek kadar büyük.",
   "This PDF is password protected. Enter its password.": "Bu PDF parolayla korunuyor. Parolasını gir.",
+  "This PDF could not be opened.": "Bu PDF açılamadı.",
+  "The PDF password is incorrect or missing.": "PDF parolası yanlış ya da eksik.",
   "The PDF contains no pages.": "PDF'de sayfa yok.",
   "Invalid page range: {0}. Use numbers between 1 and {1}.": "Geçersiz sayfa aralığı: {0}. 1 ile {1} arasında sayılar kullan.",
   "Select at least one page.": "En az bir sayfa seç.",

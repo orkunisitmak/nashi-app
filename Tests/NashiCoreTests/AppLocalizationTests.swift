@@ -204,4 +204,16 @@ final class AppLocalizationTests:XCTestCase {
             XCTAssertEqual(AppLocalization.text(source,language:"en"),source)
         }
     }
+    /// PDFEngine.open and PDFOfficeCodec.prepare errors reach the user through LText, so each sentence needs a catalog entry.
+    func testPDFOpenAndPasswordErrorsAreTranslated() {
+        let expected=[
+            "This PDF could not be opened.":("Bu PDF açılamadı.","Ce PDF n’a pas pu être ouvert."),
+            "The PDF password is incorrect or missing.":("PDF parolası yanlış ya da eksik.","Le mot de passe du PDF est incorrect ou manquant."),
+        ]
+        for (source,(tr,fr)) in expected {
+            XCTAssertEqual(AppLocalization.text(source,language:"tr"),tr)
+            XCTAssertEqual(AppLocalization.text(source,language:"fr"),fr)
+            XCTAssertEqual(AppLocalization.text(source,language:"en"),source)
+        }
+    }
 }

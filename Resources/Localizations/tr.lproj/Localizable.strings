@@ -2398,6 +2398,7 @@
 "THE OPERATION WAS CANCELLED." = "İŞLEM İPTAL EDİLDİ.";
 "THE PDF CONTAINS NO PAGES." = "PDF'DE SAYFA YOK.";
 "THE PDF PAGE IS TOO LARGE TO RENDER AT THIS RESOLUTION." = "PDF SAYFASI BU ÇÖZÜNÜRLÜKTE İŞLENEMEYECEK KADAR BÜYÜK.";
+"THE PDF PASSWORD IS INCORRECT OR MISSING." = "PDF PAROLASI YANLIŞ YA DA EKSİK.";
 "THE POST DID NOT RETURN READABLE PHOTO DETAILS." = "GÖNDERİ OKUNABİLİR FOTOĞRAF BİLGİSİ DÖNDÜRMEDİ.";
 "THE PROCESSING TOOL COULD NOT START." = "İŞLEME ARACI BAŞLATILAMADI.";
 "THE REQUESTED FILE SIZE COULD NOT BE REACHED. CHOOSE A LARGER TARGET." = "İSTENEN DOSYA BOYUTUNA İNİLEMEDİ. DAHA BÜYÜK BİR HEDEF SEÇ.";
@@ -2447,6 +2448,7 @@
 "THIS OUTPUT FORMAT HAS NO ADJUSTABLE CONVERSION DEFAULTS." = "BU ÇIKTI BİÇİMİNİN AYARLANABİLİR DÖNÜŞTÜRME TERCİHİ YOK.";
 "THIS PAGES FILE IS TOO LARGE OR IS NOT A REGULAR DOCUMENT FILE." = "BU PAGES DOSYASI ÇOK BÜYÜK YA DA NORMAL BİR BELGE DOSYASI DEĞİL.";
 "THIS PDF CONTAINS NO PAGES." = "BU PDF'DE SAYFA YOK.";
+"THIS PDF COULD NOT BE OPENED." = "BU PDF AÇILAMADI.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT MERGING, SPLITTING OR REORDERING PAGES CANNOT KEEP. NO COPY WAS EXPORTED." = "BU PDF'DE BİRLEŞTİRME, BÖLME VEYA SAYFALARI YENİDEN SIRALAMA SIRASINDA KORUNAMAYAN FORM ALANLARI YA DA EKLER VAR. KOPYA DIŞA AKTARILMADI.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT METADATA CLEANUP CANNOT KEEP. NO COPY WAS EXPORTED." = "BU PDF'DE META VERİ TEMİZLİĞİ SIRASINDA KORUNAMAYAN FORM ALANLARI YA DA EKLER VAR. KOPYA DIŞA AKTARILMADI.";
 "THIS PDF IS PASSWORD PROTECTED. ENTER ITS PASSWORD." = "BU PDF PAROLAYLA KORUNUYOR. PAROLASINI GİR.";
@@ -2516,6 +2518,7 @@
 "The EPUB has no package document." = "EPUB dosyasında paket belgesi yok.";
 "The PDF contains no pages." = "PDF'de sayfa yok.";
 "The PDF page is too large to render at this resolution." = "PDF sayfası bu çözünürlükte işlenemeyecek kadar büyük.";
+"The PDF password is incorrect or missing." = "PDF parolası yanlış ya da eksik.";
 "The Pages document could not be read: %@." = "Pages belgesi okunamadı: %@.";
 "The Pages document could not be read: %lld." = "Pages belgesi okunamadı: %lld.";
 "The UTF-16 text in %@ is damaged." = "%@ içindeki UTF-16 metin bozuk.";
@@ -2591,6 +2594,7 @@
 "The video has no readable dimensions." = "Videonun boyutları okunamıyor.";
 "These files have moved or were deleted." = "Bu dosyalar taşınmış veya silinmiş.";
 "This PDF contains no pages." = "Bu PDF'de sayfa yok.";
+"This PDF could not be opened." = "Bu PDF açılamadı.";
 "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported." = "Bu PDF'de birleştirme, bölme veya sayfaları yeniden sıralama sırasında korunamayan form alanları ya da ekler var. Kopya dışa aktarılmadı.";
 "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported." = "Bu PDF'de meta veri temizliği sırasında korunamayan form alanları ya da ekler var. Kopya dışa aktarılmadı.";
 "This PDF is password protected. Enter its password." = "Bu PDF parolayla korunuyor. Parolasını gir.";
