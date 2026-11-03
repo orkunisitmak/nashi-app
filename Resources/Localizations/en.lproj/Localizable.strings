@@ -214,6 +214,7 @@
 "ANNOTATE · NASHI" = "ANNOTATE · NASHI";
 "ANNOTATION CANVAS" = "ANNOTATION CANVAS";
 "ANNOTATION TEXT" = "ANNOTATION TEXT";
+"ANOTHER APP ALREADY USES THIS SHORTCUT. CHOOSE ANOTHER ONE." = "ANOTHER APP ALREADY USES THIS SHORTCUT. CHOOSE ANOTHER ONE.";
 "ANOTHER TASK IS RUNNING. YOUR LINK IS READY WHEN IT FINISHES." = "ANOTHER TASK IS RUNNING. YOUR LINK IS READY WHEN IT FINISHES.";
 "APPEARANCE" = "APPEARANCE";
 "APPEARANCE COULD NOT BE SAVED" = "APPEARANCE COULD NOT BE SAVED";
@@ -304,6 +305,7 @@
 "Annotate · Nashi" = "Annotate · Nashi";
 "Annotation canvas" = "Annotation canvas";
 "Annotation text" = "Annotation text";
+"Another app already uses this shortcut. Choose another one." = "Another app already uses this shortcut. Choose another one.";
 "Another task is running. Your link is ready when it finishes." = "Another task is running. Your link is ready when it finishes.";
 "Appearance" = "Appearance";
 "Appearance could not be saved" = "Appearance could not be saved";
@@ -1646,6 +1648,7 @@
 "Nothing here yet. Paste something or make your first fresh copy." = "Nothing here yet. Paste something or make your first fresh copy.";
 "Number" = "Number";
 "Number of clips" = "Number of clips";
+"OFF" = "OFF";
 "OFFICE CABINET IS MISSING A FILE." = "OFFICE CABINET IS MISSING A FILE.";
 "OFFICE CHECKSUM MISMATCH. NOTHING WAS INSTALLED." = "OFFICE CHECKSUM MISMATCH. NOTHING WAS INSTALLED.";
 "OFFICE DID NOT FINISH CONVERTING THIS DOCUMENT WITHIN 5 MINUTES. TRY AGAIN, OR CANCEL AND CHOOSE ANOTHER FORMAT." = "OFFICE DID NOT FINISH CONVERTING THIS DOCUMENT WITHIN 5 MINUTES. TRY AGAIN, OR CANCEL AND CHOOSE ANOTHER FORMAT.";
@@ -1670,6 +1673,7 @@
 "OPEN NASHI" = "OPEN NASHI";
 "OPEN PERMISSION SETTINGS…" = "OPEN PERMISSION SETTINGS…";
 "OPEN WHEEL" = "OPEN WHEEL";
+"OPENS A SMALL NASHI MENU AT THE CURSOR FROM ANY APP: COPY TEXT FROM SCREEN, SCAN QR CODES, USE A COPIED LINK OR OPEN NASHI." = "OPENS A SMALL NASHI MENU AT THE CURSOR FROM ANY APP: COPY TEXT FROM SCREEN, SCAN QR CODES, USE A COPIED LINK OR OPEN NASHI.";
 "OPTIONAL. YOU CAN CHANGE THIS IN SETTINGS." = "OPTIONAL. YOU CAN CHANGE THIS IN SETTINGS.";
 "ORGANIZE PDF" = "ORGANIZE PDF";
 "ORIGINAL" = "ORIGINAL";
@@ -1684,6 +1688,7 @@
 "OUTPUT FORMAT" = "OUTPUT FORMAT";
 "OUTPUT-ONLY FORMAT." = "OUTPUT-ONLY FORMAT.";
 "OWNER/REPOSITORY OR GITHUB URL" = "OWNER/REPOSITORY OR GITHUB URL";
+"Off" = "Off";
 "Office cabinet is missing a file." = "Office cabinet is missing a file.";
 "Office checksum mismatch. Nothing was installed." = "Office checksum mismatch. Nothing was installed.";
 "Office could not convert this document to %@. %@" = "Office could not convert this document to %@. %@";
@@ -1717,6 +1722,7 @@
 "Open wheel" = "Open wheel";
 "Opened in %@." = "Opened in %@.";
 "Opened in %lld." = "Opened in %lld.";
+"Opens a small Nashi menu at the cursor from any app: copy text from screen, scan QR codes, use a copied link or open Nashi." = "Opens a small Nashi menu at the cursor from any app: copy text from screen, scan QR codes, use a copied link or open Nashi.";
 "Optional. You can change this in Settings." = "Optional. You can change this in Settings.";
 "Organize PDF" = "Organize PDF";
 "Original" = "Original";
@@ -1906,6 +1912,7 @@
 "QUALITY" = "QUALITY";
 "QUALITY (%)" = "QUALITY (%)";
 "QUICK LOOK" = "QUICK LOOK";
+"QUICK MENU SHORTCUT" = "QUICK MENU SHORTCUT";
 "QUICK PICKS" = "QUICK PICKS";
 "QUICK PREVIEW" = "QUICK PREVIEW";
 "QUIT NASHI" = "QUIT NASHI";
@@ -1913,6 +1920,7 @@
 "Quality (%)" = "Quality (%)";
 "Quick Look" = "Quick Look";
 "Quick Preview" = "Quick Preview";
+"Quick menu shortcut" = "Quick menu shortcut";
 "Quit Nashi" = "Quit Nashi";
 "READ QR CODES" = "READ QR CODES";
 "READ QR CODES · NASHI" = "READ QR CODES · NASHI";

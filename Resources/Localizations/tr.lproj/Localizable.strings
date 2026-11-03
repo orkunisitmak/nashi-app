@@ -214,6 +214,7 @@
 "ANNOTATE · NASHI" = "İŞARETLE · NASHI";
 "ANNOTATION CANVAS" = "İŞARETLEME TUVALİ";
 "ANNOTATION TEXT" = "İŞARET METNİ";
+"ANOTHER APP ALREADY USES THIS SHORTCUT. CHOOSE ANOTHER ONE." = "BU KISAYOLU BAŞKA BİR UYGULAMA KULLANIYOR. BAŞKA BİR TANE SEÇ.";
 "ANOTHER TASK IS RUNNING. YOUR LINK IS READY WHEN IT FINISHES." = "BAŞKA BİR İŞLEM SÜRÜYOR. İŞLEM BİTTİĞİNDE BAĞLANTIN HAZIR OLACAK.";
 "APPEARANCE" = "GÖRÜNÜM";
 "APPEARANCE COULD NOT BE SAVED" = "GÖRÜNÜM KAYDEDİLEMEDİ";
@@ -304,6 +305,7 @@
 "Annotate · Nashi" = "İşaretle · Nashi";
 "Annotation canvas" = "İşaretleme tuvali";
 "Annotation text" = "İşaret metni";
+"Another app already uses this shortcut. Choose another one." = "Bu kısayolu başka bir uygulama kullanıyor. Başka bir tane seç.";
 "Another task is running. Your link is ready when it finishes." = "Başka bir işlem sürüyor. İşlem bittiğinde bağlantın hazır olacak.";
 "Appearance" = "Görünüm";
 "Appearance could not be saved" = "Görünüm kaydedilemedi";
@@ -1646,6 +1648,7 @@
 "Nothing here yet. Paste something or make your first fresh copy." = "Burada henüz bir şey yok. Bir dosya yapıştır veya ilk kopyanı oluştur.";
 "Number" = "Numara";
 "Number of clips" = "Klip sayısı";
+"OFF" = "KAPALI";
 "OFFICE CABINET IS MISSING A FILE." = "OFFICE PAKETİNDE BİR DOSYA EKSİK.";
 "OFFICE CHECKSUM MISMATCH. NOTHING WAS INSTALLED." = "OFFICE SAĞLAMA TOPLAMI EŞLEŞMİYOR. HİÇBİR ŞEY KURULMADI.";
 "OFFICE DID NOT FINISH CONVERTING THIS DOCUMENT WITHIN 5 MINUTES. TRY AGAIN, OR CANCEL AND CHOOSE ANOTHER FORMAT." = "OFFICE BU BELGEYİ 5 DAKİKA İÇİNDE DÖNÜŞTÜREMEDİ. YENİDEN DENE YA DA İPTAL EDİP BAŞKA BİR BİÇİM SEÇ.";
@@ -1670,6 +1673,7 @@
 "OPEN NASHI" = "NASHI'Yİ AÇ";
 "OPEN PERMISSION SETTINGS…" = "İZİN AYARLARINI AÇ…";
 "OPEN WHEEL" = "ÇARKI AÇ";
+"OPENS A SMALL NASHI MENU AT THE CURSOR FROM ANY APP: COPY TEXT FROM SCREEN, SCAN QR CODES, USE A COPIED LINK OR OPEN NASHI." = "HANGİ UYGULAMADA OLURSAN OL, İMLECİN YANINDA KÜÇÜK BİR NASHI MENÜSÜ AÇAR: EKRANDAN METİN KOPYALA, QR KODLARINI TARA, KOPYALANAN LİNKİ KULLAN YA DA NASHI'Yİ AÇ.";
 "OPTIONAL. YOU CAN CHANGE THIS IN SETTINGS." = "İSTEĞE BAĞLI. AYARLARDAN DEĞİŞTİREBİLİRSİN.";
 "ORGANIZE PDF" = "PDF'Yİ DÜZENLE";
 "ORIGINAL" = "ORİJİNAL";
@@ -1684,6 +1688,7 @@
 "OUTPUT FORMAT" = "ÇIKTI BİÇİMİ";
 "OUTPUT-ONLY FORMAT." = "YALNIZCA ÇIKTI BİÇİMİ.";
 "OWNER/REPOSITORY OR GITHUB URL" = "KULLANICI/DEPO VEYA GITHUB ADRESİ";
+"Off" = "Kapalı";
 "Office cabinet is missing a file." = "Office paketinde bir dosya eksik.";
 "Office checksum mismatch. Nothing was installed." = "Office sağlama toplamı eşleşmiyor. Hiçbir şey kurulmadı.";
 "Office could not convert this document to %@. %@" = "Office bu belgeyi %@ biçimine dönüştüremedi. %@";
@@ -1717,6 +1722,7 @@
 "Open wheel" = "Çarkı aç";
 "Opened in %@." = "%@ ile açıldı.";
 "Opened in %lld." = "%lld ile açıldı.";
+"Opens a small Nashi menu at the cursor from any app: copy text from screen, scan QR codes, use a copied link or open Nashi." = "Hangi uygulamada olursan ol, imlecin yanında küçük bir Nashi menüsü açar: ekrandan metin kopyala, QR kodlarını tara, kopyalanan linki kullan ya da Nashi'yi aç.";
 "Optional. You can change this in Settings." = "İsteğe bağlı. Ayarlardan değiştirebilirsin.";
 "Organize PDF" = "PDF'yi Düzenle";
 "Original" = "Orijinal";
@@ -1906,6 +1912,7 @@
 "QUALITY" = "KALİTE";
 "QUALITY (%)" = "KALİTE (%)";
 "QUICK LOOK" = "HIZLI BAKIŞ";
+"QUICK MENU SHORTCUT" = "HIZLI MENÜ KISAYOLU";
 "QUICK PICKS" = "HIZLI SEÇİM";
 "QUICK PREVIEW" = "HIZLI ÖNİZLEME";
 "QUIT NASHI" = "NASHI'DEN ÇIK";
@@ -1913,6 +1920,7 @@
 "Quality (%)" = "Kalite (%)";
 "Quick Look" = "Hızlı Bakış";
 "Quick Preview" = "Hızlı Önizleme";
+"Quick menu shortcut" = "Hızlı menü kısayolu";
 "Quit Nashi" = "Nashi'den Çık";
 "READ QR CODES" = "QR KODLARINI OKU";
 "READ QR CODES · NASHI" = "QR KODLARINI OKU · NASHI";

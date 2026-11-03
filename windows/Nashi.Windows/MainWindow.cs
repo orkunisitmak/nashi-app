@@ -83,7 +83,7 @@ public sealed partial class MainWindow:Window
         else if(preferences.RecoveryNotice is {} settingsNotice)L10n.SetText(status,settingsNotice);
         if(checkForUpdates)
         {
-            Loaded+=(_,_)=>SetupDesktop();Closed+=(_,_)=>globalDrag?.Dispose();
+            Loaded+=(_,_)=>SetupDesktop();Closed+=(_,_)=>{globalDrag?.Dispose();quickMenu?.Dispose();if(QuickMenuHotkey.Active==quickMenu)QuickMenuHotkey.Active=null;};
             if(offerToolSetup)Loaded+=(_,_)=>Dispatcher.BeginInvoke(OfferFirstRunTools);
             Loaded+=async(_,_)=>{if(preferences.Value.AutomaticUpdateChecks)await CheckUpdatesAsync(false);};
             var timer=new System.Windows.Threading.DispatcherTimer{Interval=TimeSpan.FromHours(1)};timer.Tick+=async(_,_)=>{if(preferences.Value.AutomaticUpdateChecks)await CheckUpdatesAsync(false);};Closed+=(_,_)=>timer.Stop();timer.Start();

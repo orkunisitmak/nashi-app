@@ -214,6 +214,7 @@
 "ANNOTATE · NASHI" = "ANNOTER · NASHI";
 "ANNOTATION CANVAS" = "CANEVAS D’ANNOTATION";
 "ANNOTATION TEXT" = "TEXTE DE L’ANNOTATION";
+"ANOTHER APP ALREADY USES THIS SHORTCUT. CHOOSE ANOTHER ONE." = "UNE AUTRE APPLICATION UTILISE DÉJÀ CE RACCOURCI. CHOISISSEZ-EN UN AUTRE.";
 "ANOTHER TASK IS RUNNING. YOUR LINK IS READY WHEN IT FINISHES." = "UNE AUTRE TÂCHE EST EN COURS. VOTRE LIEN SERA PRÊT DÈS QU’ELLE SERA TERMINÉE.";
 "APPEARANCE" = "APPARENCE";
 "APPEARANCE COULD NOT BE SAVED" = "IMPOSSIBLE D’ENREGISTRER L’APPARENCE";
@@ -304,6 +305,7 @@
 "Annotate · Nashi" = "Annoter · Nashi";
 "Annotation canvas" = "Canevas d’annotation";
 "Annotation text" = "Texte de l’annotation";
+"Another app already uses this shortcut. Choose another one." = "Une autre application utilise déjà ce raccourci. Choisissez-en un autre.";
 "Another task is running. Your link is ready when it finishes." = "Une autre tâche est en cours. Votre lien sera prêt dès qu’elle sera terminée.";
 "Appearance" = "Apparence";
 "Appearance could not be saved" = "Impossible d’enregistrer l’apparence";
@@ -1646,6 +1648,7 @@
 "Nothing here yet. Paste something or make your first fresh copy." = "Rien ici pour l’instant. Collez quelque chose ou créez votre première copie.";
 "Number" = "Numéro";
 "Number of clips" = "Nombre de clips";
+"OFF" = "DÉSACTIVÉ";
 "OFFICE CABINET IS MISSING A FILE." = "IL MANQUE UN FICHIER DANS LE CABINET OFFICE.";
 "OFFICE CHECKSUM MISMATCH. NOTHING WAS INSTALLED." = "SOMME DE CONTRÔLE OFFICE INCORRECTE. RIEN N’A ÉTÉ INSTALLÉ.";
 "OFFICE DID NOT FINISH CONVERTING THIS DOCUMENT WITHIN 5 MINUTES. TRY AGAIN, OR CANCEL AND CHOOSE ANOTHER FORMAT." = "OFFICE N’A PAS TERMINÉ LA CONVERSION DE CE DOCUMENT EN 5 MINUTES. RÉESSAYEZ, OU ANNULEZ ET CHOISISSEZ UN AUTRE FORMAT.";
@@ -1670,6 +1673,7 @@
 "OPEN NASHI" = "OUVRIR NASHI";
 "OPEN PERMISSION SETTINGS…" = "OUVRIR LES RÉGLAGES D’AUTORISATION…";
 "OPEN WHEEL" = "OUVRIR LA ROUE";
+"OPENS A SMALL NASHI MENU AT THE CURSOR FROM ANY APP: COPY TEXT FROM SCREEN, SCAN QR CODES, USE A COPIED LINK OR OPEN NASHI." = "OUVRE UN PETIT MENU NASHI PRÈS DU CURSEUR DEPUIS N’IMPORTE QUELLE APPLICATION : COPIER DU TEXTE À L’ÉCRAN, SCANNER DES CODES QR, UTILISER UN LIEN COPIÉ OU OUVRIR NASHI.";
 "OPTIONAL. YOU CAN CHANGE THIS IN SETTINGS." = "FACULTATIF. VOUS POUVEZ LE MODIFIER DANS LES RÉGLAGES.";
 "ORGANIZE PDF" = "ORGANISER UN PDF";
 "ORIGINAL" = "ORIGINAL";
@@ -1684,6 +1688,7 @@
 "OUTPUT FORMAT" = "FORMAT DE SORTIE";
 "OUTPUT-ONLY FORMAT." = "FORMAT DE SORTIE UNIQUEMENT.";
 "OWNER/REPOSITORY OR GITHUB URL" = "PROPRIÉTAIRE/DÉPÔT OU URL GITHUB";
+"Off" = "Désactivé";
 "Office cabinet is missing a file." = "Il manque un fichier dans le cabinet Office.";
 "Office checksum mismatch. Nothing was installed." = "Somme de contrôle Office incorrecte. Rien n’a été installé.";
 "Office could not convert this document to %@. %@" = "Office n’a pas pu convertir ce document en %@. %@";
@@ -1717,6 +1722,7 @@
 "Open wheel" = "Ouvrir la roue";
 "Opened in %@." = "Ouvert dans %@.";
 "Opened in %lld." = "Ouvert dans %lld.";
+"Opens a small Nashi menu at the cursor from any app: copy text from screen, scan QR codes, use a copied link or open Nashi." = "Ouvre un petit menu Nashi près du curseur depuis n’importe quelle application : copier du texte à l’écran, scanner des codes QR, utiliser un lien copié ou ouvrir Nashi.";
 "Optional. You can change this in Settings." = "Facultatif. Vous pouvez le modifier dans les Réglages.";
 "Organize PDF" = "Organiser un PDF";
 "Original" = "Original";
@@ -1906,6 +1912,7 @@
 "QUALITY" = "QUALITÉ";
 "QUALITY (%)" = "QUALITÉ (%)";
 "QUICK LOOK" = "COUP D’ŒIL";
+"QUICK MENU SHORTCUT" = "RACCOURCI DU MENU RAPIDE";
 "QUICK PICKS" = "SÉLECTION RAPIDE";
 "QUICK PREVIEW" = "APERÇU RAPIDE";
 "QUIT NASHI" = "QUITTER NASHI";
@@ -1913,6 +1920,7 @@
 "Quality (%)" = "Qualité (%)";
 "Quick Look" = "Coup d’œil";
 "Quick Preview" = "Aperçu rapide";
+"Quick menu shortcut" = "Raccourci du menu rapide";
 "Quit Nashi" = "Quitter Nashi";
 "READ QR CODES" = "LIRE LES CODES QR";
 "READ QR CODES · NASHI" = "LIRE LES CODES QR · NASHI";
