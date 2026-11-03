@@ -555,6 +555,7 @@
   "Could not decode the audio waveform.": "Sesin dalga biçimi çözümlenemedi.",
   "macOS could not open the generated media preview.": "macOS oluşturulan medya önizlemesini açamadı.",
   "Visualization dimensions must be between 16 and 8,192 pixels.": "Görselleştirme boyutları 16 ile 8.192 piksel arasında olmalı.",
+  "Image dimensions must be between 1 and 32,000 pixels.": "Görsel boyutları 1 ile 32.000 piksel arasında olmalı.",
   "Choose a still image for the video.": "Video için sabit bir görsel seç.",
   "Spectrum": "Spektrum",
   "Bars": "Çubuklar",

@@ -1257,6 +1257,7 @@
 "ICONS" = "ICONS";
 "IMAGE" = "IMAGE";
 "IMAGE COMPRESSION" = "IMAGE COMPRESSION";
+"IMAGE DIMENSIONS MUST BE BETWEEN 1 AND 32,000 PIXELS." = "IMAGE DIMENSIONS MUST BE BETWEEN 1 AND 32,000 PIXELS.";
 "IMAGE EDITING CANVAS" = "IMAGE EDITING CANVAS";
 "IMAGE EXCEEDS 200 MB." = "IMAGE EXCEEDS 200 MB.";
 "IMAGE FIT" = "IMAGE FIT";
@@ -1287,6 +1288,7 @@
 "Image" = "Image";
 "Image Compression" = "Image Compression";
 "Image compression" = "Image compression";
+"Image dimensions must be between 1 and 32,000 pixels." = "Image dimensions must be between 1 and 32,000 pixels.";
 "Image editing canvas" = "Image editing canvas";
 "Image exceeds 200 MB." = "Image exceeds 200 MB.";
 "Image fit" = "Image fit";

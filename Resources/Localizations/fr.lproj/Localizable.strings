@@ -1257,6 +1257,7 @@
 "ICONS" = "ICÔNES";
 "IMAGE" = "IMAGE";
 "IMAGE COMPRESSION" = "COMPRESSION D’IMAGE";
+"IMAGE DIMENSIONS MUST BE BETWEEN 1 AND 32,000 PIXELS." = "LES DIMENSIONS DE L’IMAGE DOIVENT ÊTRE COMPRISES ENTRE 1 ET 32 000 PIXELS.";
 "IMAGE EDITING CANVAS" = "CANEVAS DE MODIFICATION DE L’IMAGE";
 "IMAGE EXCEEDS 200 MB." = "L’IMAGE DÉPASSE 200 MO.";
 "IMAGE FIT" = "AJUSTEMENT DE L’IMAGE";
@@ -1287,6 +1288,7 @@
 "Image" = "Image";
 "Image Compression" = "Compression d’image";
 "Image compression" = "Compression de l’image";
+"Image dimensions must be between 1 and 32,000 pixels." = "Les dimensions de l’image doivent être comprises entre 1 et 32 000 pixels.";
 "Image editing canvas" = "Canevas de modification de l’image";
 "Image exceeds 200 MB." = "L’image dépasse 200 Mo.";
 "Image fit" = "Ajustement de l’image";
