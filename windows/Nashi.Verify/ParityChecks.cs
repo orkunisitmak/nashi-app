@@ -265,6 +265,17 @@ internal static class ParityChecks
             var cellTextRow=cellTextModel.RootElement.GetProperty("blocks")[0].GetProperty("rows")[0];
             check(cellTextRow[0].GetProperty("text").GetString()=="Name\tValue\nSecond line\nBefore\nIn 1\tDeep\nIn 2\nAfter"&&cellTextRow[1].GetProperty("text").GetString()=="555\u20110100\ncell"&&cellTextModel.RootElement.GetProperty("header").GetString()=="Company\tLtd\nConfidential","Pages interchange dropped tabs, line breaks, paragraphs or nested tables from Word table cells or headers");
         }
+        // Repeating sections and custom XML wrap rows and cells (w:sdt and w:customXml around w:tr or w:tc), also in a nested table.
+        {
+            string Cell(string text)=>"<w:tc><w:p><w:r><w:t>"+text+"</w:t></w:r></w:p></w:tc>";string Sdt(string content)=>"<w:sdt><w:sdtPr><w:tag w:val=\"t\"/></w:sdtPr><w:sdtContent>"+content+"</w:sdtContent></w:sdt>";string Custom(string content)=>"<w:customXml w:element=\"item\">"+content+"</w:customXml>";
+            var inner="<w:tbl>"+Sdt("<w:tr>"+Cell("x")+Sdt(Cell("y"))+"</w:tr>")+"</w:tbl>";
+            var body="<w:tbl><w:tr>"+Cell("A1")+Sdt(Cell("B1"))+"</w:tr>"+Sdt("<w:tr>"+Cell("A2")+Custom(Cell("B2"))+"</w:tr>")+Custom("<w:tr>"+Cell("A3")+Cell("B3")+"</w:tr>")
+                +"<w:tr><w:tc><w:tcPr><w:vMerge w:val=\"restart\"/></w:tcPr><w:p><w:r><w:t>Before</w:t></w:r></w:p>"+inner+"</w:tc>"+Cell("B4")+"</w:tr>"+Sdt("<w:tr><w:tc><w:tcPr><w:vMerge/></w:tcPr><w:p/></w:tc>"+Cell("B5")+"</w:tr>")+"</w:tbl><w:p/>";
+            using var wrappedModel=System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(OfficeDocuments.ReadDocx(Nested("Wrapped rows.docx",body))));var table=wrappedModel.RootElement.GetProperty("blocks")[0];
+            var rows=string.Join("|",table.GetProperty("rows").EnumerateArray().Select(r=>string.Join(",",r.EnumerateArray().Select(c=>c.GetProperty("text").GetString()))));
+            var merges=string.Join(";",table.GetProperty("merges").EnumerateArray().Select(m=>$"{m.GetProperty("row")},{m.GetProperty("column")},{m.GetProperty("rowCount")}x{m.GetProperty("columnCount")}"));
+            check(rows=="A1,B1|A2,B2|A3,B3|Before\nx\ty,B4|,B5"&&merges=="3,0,2x1",$"Pages interchange dropped Word table rows or cells inside content controls or custom XML: {rows.Replace("\n","\\n").Replace("\t","\\t")} merges {merges}");
+        }
         check(TooDeep(Nested("Deep body.docx",Deep(150,"<w:sdt><w:sdtContent>","</w:sdtContent></w:sdt>","<w:p/>")))&&TooDeep(Nested("Deep cell.docx","<w:tbl><w:tr><w:tc>"+Deep(300,"<w:customXml>","</w:customXml>","<w:p/>")+"</w:tc></w:tr></w:tbl>"))&&TooDeep(Nested("Deep paragraph.docx","<w:p>"+Deep(300,"<w:smartTag>","</w:smartTag>")+"</w:p>"))&&TooDeep(Nested("Deep run.docx","<w:p>"+deepText+"</w:p>"))&&TooDeep(Nested("Deep header.docx","<w:p/>","<w:p>"+deepText+"</w:p>")),"Pages interchange accepted content nested deeper than it can safely read");
         check(TooDeep(Nested("Stack bomb.docx","<w:p><w:r><w:t>"+Deep(50_000,"<w:x>","</w:x>","Deep text")+"</w:t></w:r></w:p>")),"Pages interchange did not reject a deeply nested document before overflowing the stack");
         // Word table merges as the Mac reads them: a vertical merge stops at a wider, missing or narrower cell, a spanning restart keeps its width,

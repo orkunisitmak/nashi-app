@@ -262,7 +262,9 @@ private enum PagesDOCXReader {
                 // A compact OOXML cell can otherwise request billions of empty
                 // cells, or overflow the column index with a negative span.
                 let maximumColumns = 1024
-                for (rowIndex,row) in element.elements("tr").enumerated() {
+                // Repeating sections and custom XML can wrap rows and cells (w:sdt, w:customXml).
+                let tableRows = blockElements(element).filter { $0.local == "tr" }
+                for (rowIndex,row) in tableRows.enumerated() {
                     var cells: [[String:Any]] = [], column = 0
                     // A vertical merge only survives rows that continue it in
                     // the same grid column; a wider or missing cell ends it.
@@ -277,7 +279,7 @@ private enum PagesDOCXReader {
                         column = skipped
                     }
                     var horizontalAnchor: Int?
-                    for cell in row.elements("tc") {
+                    for cell in blockElements(row) where cell.local == "tc" {
                         let properties = cell.first("tcPr")
                         let span: Int
                         if let gridSpan = properties?.first("gridSpan") {
@@ -328,7 +330,7 @@ private enum PagesDOCXReader {
                     rows.append(cells)
                 }
                 let widths = element.first("tblGrid")?.elements("gridCol").map { ($0.number("w") ?? 2400) / 20 } ?? []
-                return ["type":"table","rows":rows,"merges":merges,"columnWidths":widths,"headerRows":element.elements("tr").prefix(while: { row in row.first("trPr")?.first("tblHeader").map { !["0","false","off"].contains($0.attr("val") ?? "1") } ?? false }).count]
+                return ["type":"table","rows":rows,"merges":merges,"columnWidths":widths,"headerRows":tableRows.prefix(while: { row in row.first("trPr")?.first("tblHeader").map { !["0","false","off"].contains($0.attr("val") ?? "1") } ?? false }).count]
             }
             if ["sdt","sdtContent"].contains(element.local) {
                 // Block-level content controls are unwrapped by the caller's
@@ -396,7 +398,8 @@ private enum PagesDOCXReader {
         blockElements(cell).compactMap { child -> String? in
             if child.local == "p" { return plainText(child) }
             guard child.local == "tbl", depth < 32 else { return nil }
-            return child.elements("tr").map { $0.elements("tc").map { cellText($0, depth: depth + 1) }.joined(separator: "\t") }.joined(separator: "\n")
+            let rows = blockElements(child).filter { $0.local == "tr" }
+            return rows.map { row in blockElements(row).filter { $0.local == "tc" }.map { cellText($0, depth: depth + 1) }.joined(separator: "\t") }.joined(separator: "\n")
         }.joined(separator: "\n")
     }
     /// The external target of a `HYPERLINK "url" [\o "tip"] [\l "bookmark"]`
