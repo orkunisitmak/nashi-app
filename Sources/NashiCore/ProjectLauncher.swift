@@ -83,7 +83,9 @@ public enum ProjectLauncher {
     }
 
     private static func text(of file: URL) -> String? {
-        guard let size = (try? file.resourceValues(forKeys: [.fileSizeKey]))?.fileSize, size <= manifestByteLimit,
+        // Only regular files are opened: a FIFO or device named like a manifest could block the read.
+        guard let values = try? file.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey]), values.isRegularFile == true,
+              let size = values.fileSize, size <= manifestByteLimit,
               let data = try? Data(contentsOf: file) else { return nil }
         return String(data: data, encoding: .utf8)
     }

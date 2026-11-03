@@ -90,6 +90,15 @@ final class ProjectLauncherTests: XCTestCase {
         XCTAssertTrue(commands(noScripts).isEmpty)
     }
 
+    /// A FIFO named like a manifest must be skipped, never opened: reading it would wait for a writer.
+    func testManifestsThatAreNotRegularFilesAreSkippedWithoutBlocking() throws {
+        let folder = try project("fifo", files: ["Cargo.toml": "[package]"])
+        for name in ["package.json", "pubspec.yaml"] {
+            XCTAssertEqual(mkfifo(folder.appendingPathComponent(name).path, 0o600), 0)
+        }
+        XCTAssertEqual(ProjectLauncher.runCommands(for: folder).map(\.title), ["cargo run"])
+    }
+
     func testShellQuotingKeepsEveryWordLiteral() {
         XCTAssertEqual(ProjectLauncher.shellQuoted("plain"), "'plain'")
         XCTAssertEqual(ProjectLauncher.shellQuoted("it's"), #"'it'\''s'"#)

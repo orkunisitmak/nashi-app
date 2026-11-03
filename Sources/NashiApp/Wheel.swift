@@ -80,7 +80,7 @@ struct WheelItem {
             keyMonitor=NSEvent.addLocalMonitorForEvents(matching:[.keyDown,.flagsChanged]) { [weak self] event in
                 guard let self,self.panel?.isVisible == true else { return event }
                 if self.inputs.first?.isFileURL != false,event.type == .flagsChanged,let next=DragMonitor.mode(for:event.modifierFlags),next != self.mode { self.show(inputs:self.inputs,mode:next,at:NSEvent.mouseLocation,keyboard:keyboard);return nil }
-                if self.inputs.first?.isFileURL != false,event.type == .keyDown,let next=DragMonitor.mode(for:event.modifierFlags.subtracting(.function)),next != self.mode { self.show(inputs:self.inputs,mode:next,at:NSEvent.mouseLocation,keyboard:keyboard);return nil }
+                if self.inputs.first?.isFileURL != false,event.type == .keyDown,!Self.keyImpliesFunction(event),let next=DragMonitor.mode(for:event.modifierFlags),next != self.mode { self.show(inputs:self.inputs,mode:next,at:NSEvent.mouseLocation,keyboard:keyboard);return nil }
                 if event.type == .keyDown { self.wheel?.keyDown(with:event);return nil };return event
             }
         }
@@ -106,6 +106,10 @@ struct WheelItem {
         guard let folder=ProjectLauncher.projectFolder(in:inputs) else { return [] }
         let launches=ProjectLauncher.launches(for:folder,isInstalled:isInstalled)
         return launches.map{WheelItem(title:$0.title,symbol:$0.symbol,projectLaunch:$0)}+[WheelItem(title:FileAction.terminal.title,symbol:FileAction.terminal.symbol,action:.terminal)]
+    }
+    /// Arrow, Home/End, Page and F-keys report the fn flag without fn being held; only flagsChanged may switch wheels for them.
+    static func keyImpliesFunction(_ event:NSEvent)->Bool {
+        event.charactersIgnoringModifiers?.unicodeScalars.first.map{(0xF700...0xF8FF).contains($0.value)} ?? false
     }
     func hide() { keyboardMode=false;panel?.orderOut(nil);if let monitor=keyMonitor { NSEvent.removeMonitor(monitor);keyMonitor=nil } }
     func endDrag() { if !keyboardMode { hide() } }
