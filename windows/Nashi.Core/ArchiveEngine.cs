@@ -71,7 +71,8 @@ public static class ArchiveEngine
                 while((count=source.Read(buffer))>0){token.ThrowIfCancellationRequested();copied+=count;if(copied>4L*1024*1024*1024)throw new InvalidDataException("Archive expands beyond 4 GB.");target.Write(buffer,0,count);}
             }
             // A wrong key fails as whatever SharpCompress meets in the garbled data: "bad password", an unknown method, a CRC…
-            catch(Exception error)when(entry.IsEncrypted&&password is not null&&error is not (OperationCanceledException or InvalidDataException or IOException)){throw new InvalidDataException(WrongPassword,error);}
+            // Errors from writing the output (disk, permissions) keep their own message.
+            catch(Exception error)when(entry.IsEncrypted&&password is not null&&error is not (OperationCanceledException or InvalidDataException or IOException or UnauthorizedAccessException)){throw new InvalidDataException(WrongPassword,error);}
             // Keep each file's modification date, as macOS does; the file must be closed first.
             // SharpCompress reports some RAR 4 file times only as CreatedTime.
             if((entry.LastModifiedTime??entry.CreatedTime) is {Year:>=1970} modified)File.SetLastWriteTime(output,modified);
