@@ -534,6 +534,7 @@
 "CONVERTING DOWNLOADED AUDIO…" = "CONVERSION DE L’AUDIO TÉLÉCHARGÉ…";
 "COPIED ALL" = "TOUT COPIÉ";
 "COPIED LINK" = "LIEN COPIÉ";
+"COPIED TO THE CLIPBOARD. YOU CAN EDIT THE TEXT HERE AND COPY IT AGAIN." = "COPIÉ DANS LE PRESSE-PAPIERS. VOUS POUVEZ MODIFIER LE TEXTE ICI ET LE COPIER À NOUVEAU.";
 "COPY" = "COPIER";
 "COPY A FILE, SOME TEXT, AN IMAGE OR A PUBLIC MEDIA LINK FIRST." = "COPIEZ D’ABORD UN FICHIER, DU TEXTE, UNE IMAGE OU UN LIEN MÉDIA PUBLIC.";
 "COPY A LINK → ⌃⇧D, OR DRAG IT WITH ⌘." = "COPIEZ UN LIEN → ⌃⇧D, OU FAITES-LE GLISSER AVEC ⌘.";
@@ -544,6 +545,7 @@
 "COPY DETAILS" = "COPIER LES DÉTAILS";
 "COPY LINK" = "COPIER LE LIEN";
 "COPY PATH" = "COPIER LE CHEMIN";
+"COPY TEXT FROM SCREEN" = "COPIER DU TEXTE À L’ÉCRAN";
 "CORNER RADIUS" = "RAYON DES COINS";
 "CORNERS" = "COINS";
 "COULD NOT COPY THE QR CODE." = "IMPOSSIBLE DE COPIER LE CODE QR.";
@@ -758,6 +760,7 @@
 "Converting downloaded audio…" = "Conversion de l’audio téléchargé…";
 "Copied all" = "Tout copié";
 "Copied link" = "Lien copié";
+"Copied to the clipboard. You can edit the text here and copy it again." = "Copié dans le presse-papiers. Vous pouvez modifier le texte ici et le copier à nouveau.";
 "Copy" = "Copier";
 "Copy Path" = "Copier le chemin";
 "Copy a file, some text, an image or a public media link first." = "Copiez d’abord un fichier, du texte, une image ou un lien média public.";
@@ -769,6 +772,7 @@
 "Copy details" = "Copier les détails";
 "Copy link" = "Copier le lien";
 "Copy path" = "Copier le chemin";
+"Copy text from screen" = "Copier du texte à l’écran";
 "Corner radius" = "Rayon des coins";
 "Corners" = "Coins";
 "Could not copy the QR code." = "Impossible de copier le code QR.";
@@ -872,6 +876,7 @@
 "DRAG EITHER EDGE TO RESIZE THE RANGE, OR DRAG ITS MIDDLE TO MOVE IT." = "FAITES GLISSER UN BORD POUR REDIMENSIONNER LA PLAGE, OU SON MILIEU POUR LA DÉPLACER.";
 "DRAG INSIDE TO MOVE. DRAG NEAR A CORNER TO RESIZE. DRAG OUTSIDE TO START A NEW SELECTION." = "FAITES GLISSER À L’INTÉRIEUR POUR DÉPLACER. FAITES GLISSER PRÈS D’UN COIN POUR REDIMENSIONNER. FAITES GLISSER À L’EXTÉRIEUR POUR DÉMARRER UNE NOUVELLE SÉLECTION.";
 "DRAG ON THE PREVIEW TO ADD AN AREA. EACH AREA IS SAVED INTO THE NEW COPY." = "FAITES GLISSER SUR L’APERÇU POUR AJOUTER UNE ZONE. CHAQUE ZONE EST ENREGISTRÉE DANS LA NOUVELLE COPIE.";
+"DRAG OVER THE TEXT TO COPY · ESC TO CANCEL" = "FAITES GLISSER SUR LE TEXTE À COPIER · ÉCHAP POUR ANNULER";
 "DRAG SHORTCUTS" = "RACCOURCIS DE GLISSER-DÉPOSER";
 "DRAG THE STACK TO CARRY ALL FILES. DRAG THE PAPERCLIP TO MOVE FLOAT." = "FAITES GLISSER LA PILE POUR EMPORTER TOUS LES FICHIERS. FAITES GLISSER LE TROMBONE POUR DÉPLACER FLOAT.";
 "DRAG TO DRAW WITH THE SELECTED TOOL. USE SELECT / MOVE TO EDIT AN EXISTING ANNOTATION." = "FAITES GLISSER POUR DESSINER AVEC L’OUTIL SÉLECTIONNÉ. UTILISEZ SÉLECTIONNER / DÉPLACER POUR MODIFIER UNE ANNOTATION EXISTANTE.";
@@ -965,6 +970,7 @@
 "Drag either edge to resize the range, or drag its middle to move it." = "Faites glisser un bord pour redimensionner la plage, ou son milieu pour la déplacer.";
 "Drag inside to move. Drag near a corner to resize. Drag outside to start a new selection." = "Faites glisser à l’intérieur pour déplacer. Faites glisser près d’un coin pour redimensionner. Faites glisser à l’extérieur pour démarrer une nouvelle sélection.";
 "Drag on the preview to add an area. Each area is saved into the new copy." = "Faites glisser sur l’aperçu pour ajouter une zone. Chaque zone est enregistrée dans la nouvelle copie.";
+"Drag over the text to copy · Esc to cancel" = "Faites glisser sur le texte à copier · Échap pour annuler";
 "Drag shortcuts" = "Raccourcis de glisser-déposer";
 "Drag the stack to carry all files. Drag the paperclip to move Float." = "Faites glisser la pile pour emporter tous les fichiers. Faites glisser le trombone pour déplacer Float.";
 "Drag to draw with the selected tool. Use Select / Move to edit an existing annotation." = "Faites glisser pour dessiner avec l’outil sélectionné. Utilisez Sélectionner / Déplacer pour modifier une annotation existante.";
@@ -1554,6 +1560,7 @@
 "NO QR CODES THIS TIME." = "AUCUN CODE QR CETTE FOIS.";
 "NO READABLE TEXT WAS FOUND IN THIS TEXT CLIPPING." = "AUCUN TEXTE LISIBLE N’A ÉTÉ TROUVÉ DANS CE FRAGMENT.";
 "NO TEXT COULD BE EXTRACTED OR RECOGNIZED IN THIS PDF." = "AUCUN TEXTE N’A PU ÊTRE EXTRAIT OU RECONNU DANS CE PDF.";
+"NO TEXT FOUND IN THE SELECTED AREA. SELECT A LARGER AREA OR ZOOM IN FIRST." = "AUCUN TEXTE TROUVÉ DANS LA ZONE SÉLECTIONNÉE. SÉLECTIONNEZ UNE ZONE PLUS GRANDE OU ZOOMEZ D’ABORD.";
 "NO TIMED SUBTITLE CUES WERE FOUND IN THIS FILE." = "AUCUNE RÉPLIQUE DE SOUS-TITRE HORODATÉE N’A ÉTÉ TROUVÉE DANS CE FICHIER.";
 "NO TIMED SUBTITLE CUES WERE FOUND." = "AUCUNE RÉPLIQUE DE SOUS-TITRE HORODATÉE N’A ÉTÉ TROUVÉE.";
 "NO TOOLS FOR THIS FILE TYPE" = "AUCUN OUTIL POUR CE TYPE DE FICHIER";
@@ -1622,6 +1629,7 @@
 "No public downloadable media found. Some sites require sign-in or do not expose downloadable media." = "Aucun média public téléchargeable trouvé. Certains sites exigent une connexion ou n’exposent pas de médias téléchargeables.";
 "No readable text was found in this text clipping." = "Aucun texte lisible n’a été trouvé dans ce fragment.";
 "No text could be extracted or recognized in this PDF." = "Aucun texte n’a pu être extrait ou reconnu dans ce PDF.";
+"No text found in the selected area. Select a larger area or zoom in first." = "Aucun texte trouvé dans la zone sélectionnée. Sélectionnez une zone plus grande ou zoomez d’abord.";
 "No timed subtitle cues were found in this file." = "Aucune réplique de sous-titre horodatée n’a été trouvée dans ce fichier.";
 "No timed subtitle cues were found." = "Aucune réplique de sous-titre horodatée n’a été trouvée.";
 "No tools for this file type" = "Aucun outil pour ce type de fichier";

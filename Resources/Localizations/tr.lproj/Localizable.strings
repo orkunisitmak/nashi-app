@@ -534,6 +534,7 @@
 "CONVERTING DOWNLOADED AUDIO…" = "İNDİRİLEN SES DÖNÜŞTÜRÜLÜYOR…";
 "COPIED ALL" = "TÜMÜ KOPYALANDI";
 "COPIED LINK" = "KOPYALANAN BAĞLANTI";
+"COPIED TO THE CLIPBOARD. YOU CAN EDIT THE TEXT HERE AND COPY IT AGAIN." = "PANOYA KOPYALANDI. METNİ BURADA DÜZENLEYİP YENİDEN KOPYALAYABİLİRSİN.";
 "COPY" = "KOPYALA";
 "COPY A FILE, SOME TEXT, AN IMAGE OR A PUBLIC MEDIA LINK FIRST." = "ÖNCE BİR DOSYA, METİN, GÖRSEL VEYA HERKESE AÇIK BİR MEDYA BAĞLANTISI KOPYALA.";
 "COPY A LINK → ⌃⇧D, OR DRAG IT WITH ⌘." = "BAĞLANTIYI KOPYALA → ⌃⇧D VEYA ⌘ İLE SÜRÜKLE.";
@@ -544,6 +545,7 @@
 "COPY DETAILS" = "AYRINTILARI KOPYALA";
 "COPY LINK" = "BAĞLANTIYI KOPYALA";
 "COPY PATH" = "YOLU KOPYALA";
+"COPY TEXT FROM SCREEN" = "EKRANDAN METİN KOPYALA";
 "CORNER RADIUS" = "KÖŞE YUVARLAKLIĞI";
 "CORNERS" = "KÖŞELER";
 "COULD NOT COPY THE QR CODE." = "QR KODU KOPYALANAMADI.";
@@ -758,6 +760,7 @@
 "Converting downloaded audio…" = "İndirilen ses dönüştürülüyor…";
 "Copied all" = "Tümü kopyalandı";
 "Copied link" = "Kopyalanan bağlantı";
+"Copied to the clipboard. You can edit the text here and copy it again." = "Panoya kopyalandı. Metni burada düzenleyip yeniden kopyalayabilirsin.";
 "Copy" = "Kopyala";
 "Copy Path" = "Yolu Kopyala";
 "Copy a file, some text, an image or a public media link first." = "Önce bir dosya, metin, görsel veya herkese açık bir medya bağlantısı kopyala.";
@@ -769,6 +772,7 @@
 "Copy details" = "Ayrıntıları kopyala";
 "Copy link" = "Bağlantıyı kopyala";
 "Copy path" = "Yolu kopyala";
+"Copy text from screen" = "Ekrandan metin kopyala";
 "Corner radius" = "Köşe yuvarlaklığı";
 "Corners" = "Köşeler";
 "Could not copy the QR code." = "QR kodu kopyalanamadı.";
@@ -872,6 +876,7 @@
 "DRAG EITHER EDGE TO RESIZE THE RANGE, OR DRAG ITS MIDDLE TO MOVE IT." = "ARALIĞI BOYUTLANDIRMAK İÇİN KENARLARINDAN BİRİNİ, TAŞIMAK İÇİN ORTASINI SÜRÜKLE.";
 "DRAG INSIDE TO MOVE. DRAG NEAR A CORNER TO RESIZE. DRAG OUTSIDE TO START A NEW SELECTION." = "TAŞIMAK İÇİN ALANIN İÇİNİ, BOYUTLANDIRMAK İÇİN KÖŞEYİ SÜRÜKLE. YENİ SEÇİM İÇİN ALANIN DIŞINDA SÜRÜKLE.";
 "DRAG ON THE PREVIEW TO ADD AN AREA. EACH AREA IS SAVED INTO THE NEW COPY." = "ALAN EKLEMEK İÇİN ÖNİZLEMEDE SÜRÜKLE. HER ALAN YENİ KOPYAYA İŞLENİR.";
+"DRAG OVER THE TEXT TO COPY · ESC TO CANCEL" = "KOPYALANACAK METNİN ÜZERİNDEN SÜRÜKLE · İPTAL İÇİN ESC";
 "DRAG SHORTCUTS" = "SÜRÜKLEME KISAYOLLARI";
 "DRAG THE STACK TO CARRY ALL FILES. DRAG THE PAPERCLIP TO MOVE FLOAT." = "TÜM DOSYALARI TAŞIMAK İÇİN YIĞINI, FLOAT’IN YERİNİ DEĞİŞTİRMEK İÇİN ATACI SÜRÜKLEYİN.";
 "DRAG TO DRAW WITH THE SELECTED TOOL. USE SELECT / MOVE TO EDIT AN EXISTING ANNOTATION." = "SEÇİLİ ARAÇLA ÇİZMEK İÇİN SÜRÜKLE. BİR İŞARETİ DÜZENLEMEK İÇİN SEÇ / TAŞI'YI KULLAN.";
@@ -965,6 +970,7 @@
 "Drag either edge to resize the range, or drag its middle to move it." = "Aralığı boyutlandırmak için kenarlarından birini, taşımak için ortasını sürükle.";
 "Drag inside to move. Drag near a corner to resize. Drag outside to start a new selection." = "Taşımak için alanın içini, boyutlandırmak için köşeyi sürükle. Yeni seçim için alanın dışında sürükle.";
 "Drag on the preview to add an area. Each area is saved into the new copy." = "Alan eklemek için önizlemede sürükle. Her alan yeni kopyaya işlenir.";
+"Drag over the text to copy · Esc to cancel" = "Kopyalanacak metnin üzerinden sürükle · İptal için Esc";
 "Drag shortcuts" = "Sürükleme kısayolları";
 "Drag the stack to carry all files. Drag the paperclip to move Float." = "Tüm dosyaları taşımak için yığını, Float’ın yerini değiştirmek için atacı sürükleyin.";
 "Drag to draw with the selected tool. Use Select / Move to edit an existing annotation." = "Seçili araçla çizmek için sürükle. Bir işareti düzenlemek için Seç / Taşı'yı kullan.";
@@ -1554,6 +1560,7 @@
 "NO QR CODES THIS TIME." = "QR KODU BULUNAMADI.";
 "NO READABLE TEXT WAS FOUND IN THIS TEXT CLIPPING." = "BU METİN KIRPINTISINDA OKUNABİLİR METİN BULUNAMADI.";
 "NO TEXT COULD BE EXTRACTED OR RECOGNIZED IN THIS PDF." = "BU PDF'DEN METİN ÇIKARILAMADI VEYA TANINAMADI.";
+"NO TEXT FOUND IN THE SELECTED AREA. SELECT A LARGER AREA OR ZOOM IN FIRST." = "SEÇİLEN ALANDA METİN BULUNAMADI. DAHA GENİŞ BİR ALAN SEÇ YA DA ÖNCE YAKINLAŞTIR.";
 "NO TIMED SUBTITLE CUES WERE FOUND IN THIS FILE." = "BU DOSYADA ZAMANLANMIŞ ALTYAZI SATIRI BULUNAMADI.";
 "NO TIMED SUBTITLE CUES WERE FOUND." = "ZAMANLANMIŞ ALTYAZI SATIRI BULUNAMADI.";
 "NO TOOLS FOR THIS FILE TYPE" = "BU DOSYA TÜRÜ İÇİN ARAÇ YOK";
@@ -1622,6 +1629,7 @@
 "No public downloadable media found. Some sites require sign-in or do not expose downloadable media." = "Herkese açık, indirilebilir medya bulunamadı. Bazı siteler giriş gerektirir veya medyayı indirmeye açmaz.";
 "No readable text was found in this text clipping." = "Bu metin kırpıntısında okunabilir metin bulunamadı.";
 "No text could be extracted or recognized in this PDF." = "Bu PDF'den metin çıkarılamadı veya tanınamadı.";
+"No text found in the selected area. Select a larger area or zoom in first." = "Seçilen alanda metin bulunamadı. Daha geniş bir alan seç ya da önce yakınlaştır.";
 "No timed subtitle cues were found in this file." = "Bu dosyada zamanlanmış altyazı satırı bulunamadı.";
 "No timed subtitle cues were found." = "Zamanlanmış altyazı satırı bulunamadı.";
 "No tools for this file type" = "Bu dosya türü için araç yok";

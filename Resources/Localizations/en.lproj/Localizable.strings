@@ -534,6 +534,7 @@
 "CONVERTING DOWNLOADED AUDIO…" = "CONVERTING DOWNLOADED AUDIO…";
 "COPIED ALL" = "COPIED ALL";
 "COPIED LINK" = "COPIED LINK";
+"COPIED TO THE CLIPBOARD. YOU CAN EDIT THE TEXT HERE AND COPY IT AGAIN." = "COPIED TO THE CLIPBOARD. YOU CAN EDIT THE TEXT HERE AND COPY IT AGAIN.";
 "COPY" = "COPY";
 "COPY A FILE, SOME TEXT, AN IMAGE OR A PUBLIC MEDIA LINK FIRST." = "COPY A FILE, SOME TEXT, AN IMAGE OR A PUBLIC MEDIA LINK FIRST.";
 "COPY A LINK → ⌃⇧D, OR DRAG IT WITH ⌘." = "COPY A LINK → ⌃⇧D, OR DRAG IT WITH ⌘.";
@@ -544,6 +545,7 @@
 "COPY DETAILS" = "COPY DETAILS";
 "COPY LINK" = "COPY LINK";
 "COPY PATH" = "COPY PATH";
+"COPY TEXT FROM SCREEN" = "COPY TEXT FROM SCREEN";
 "CORNER RADIUS" = "CORNER RADIUS";
 "CORNERS" = "CORNERS";
 "COULD NOT COPY THE QR CODE." = "COULD NOT COPY THE QR CODE.";
@@ -758,6 +760,7 @@
 "Converting downloaded audio…" = "Converting downloaded audio…";
 "Copied all" = "Copied all";
 "Copied link" = "Copied link";
+"Copied to the clipboard. You can edit the text here and copy it again." = "Copied to the clipboard. You can edit the text here and copy it again.";
 "Copy" = "Copy";
 "Copy Path" = "Copy Path";
 "Copy a file, some text, an image or a public media link first." = "Copy a file, some text, an image or a public media link first.";
@@ -769,6 +772,7 @@
 "Copy details" = "Copy details";
 "Copy link" = "Copy link";
 "Copy path" = "Copy path";
+"Copy text from screen" = "Copy text from screen";
 "Corner radius" = "Corner radius";
 "Corners" = "Corners";
 "Could not copy the QR code." = "Could not copy the QR code.";
@@ -872,6 +876,7 @@
 "DRAG EITHER EDGE TO RESIZE THE RANGE, OR DRAG ITS MIDDLE TO MOVE IT." = "DRAG EITHER EDGE TO RESIZE THE RANGE, OR DRAG ITS MIDDLE TO MOVE IT.";
 "DRAG INSIDE TO MOVE. DRAG NEAR A CORNER TO RESIZE. DRAG OUTSIDE TO START A NEW SELECTION." = "DRAG INSIDE TO MOVE. DRAG NEAR A CORNER TO RESIZE. DRAG OUTSIDE TO START A NEW SELECTION.";
 "DRAG ON THE PREVIEW TO ADD AN AREA. EACH AREA IS SAVED INTO THE NEW COPY." = "DRAG ON THE PREVIEW TO ADD AN AREA. EACH AREA IS SAVED INTO THE NEW COPY.";
+"DRAG OVER THE TEXT TO COPY · ESC TO CANCEL" = "DRAG OVER THE TEXT TO COPY · ESC TO CANCEL";
 "DRAG SHORTCUTS" = "DRAG SHORTCUTS";
 "DRAG THE STACK TO CARRY ALL FILES. DRAG THE PAPERCLIP TO MOVE FLOAT." = "DRAG THE STACK TO CARRY ALL FILES. DRAG THE PAPERCLIP TO MOVE FLOAT.";
 "DRAG TO DRAW WITH THE SELECTED TOOL. USE SELECT / MOVE TO EDIT AN EXISTING ANNOTATION." = "DRAG TO DRAW WITH THE SELECTED TOOL. USE SELECT / MOVE TO EDIT AN EXISTING ANNOTATION.";
@@ -965,6 +970,7 @@
 "Drag either edge to resize the range, or drag its middle to move it." = "Drag either edge to resize the range, or drag its middle to move it.";
 "Drag inside to move. Drag near a corner to resize. Drag outside to start a new selection." = "Drag inside to move. Drag near a corner to resize. Drag outside to start a new selection.";
 "Drag on the preview to add an area. Each area is saved into the new copy." = "Drag on the preview to add an area. Each area is saved into the new copy.";
+"Drag over the text to copy · Esc to cancel" = "Drag over the text to copy · Esc to cancel";
 "Drag shortcuts" = "Drag shortcuts";
 "Drag the stack to carry all files. Drag the paperclip to move Float." = "Drag the stack to carry all files. Drag the paperclip to move Float.";
 "Drag to draw with the selected tool. Use Select / Move to edit an existing annotation." = "Drag to draw with the selected tool. Use Select / Move to edit an existing annotation.";
@@ -1554,6 +1560,7 @@
 "NO QR CODES THIS TIME." = "NO QR CODES THIS TIME.";
 "NO READABLE TEXT WAS FOUND IN THIS TEXT CLIPPING." = "NO READABLE TEXT WAS FOUND IN THIS TEXT CLIPPING.";
 "NO TEXT COULD BE EXTRACTED OR RECOGNIZED IN THIS PDF." = "NO TEXT COULD BE EXTRACTED OR RECOGNIZED IN THIS PDF.";
+"NO TEXT FOUND IN THE SELECTED AREA. SELECT A LARGER AREA OR ZOOM IN FIRST." = "NO TEXT FOUND IN THE SELECTED AREA. SELECT A LARGER AREA OR ZOOM IN FIRST.";
 "NO TIMED SUBTITLE CUES WERE FOUND IN THIS FILE." = "NO TIMED SUBTITLE CUES WERE FOUND IN THIS FILE.";
 "NO TIMED SUBTITLE CUES WERE FOUND." = "NO TIMED SUBTITLE CUES WERE FOUND.";
 "NO TOOLS FOR THIS FILE TYPE" = "NO TOOLS FOR THIS FILE TYPE";
@@ -1622,6 +1629,7 @@
 "No public downloadable media found. Some sites require sign-in or do not expose downloadable media." = "No public downloadable media found. Some sites require sign-in or do not expose downloadable media.";
 "No readable text was found in this text clipping." = "No readable text was found in this text clipping.";
 "No text could be extracted or recognized in this PDF." = "No text could be extracted or recognized in this PDF.";
+"No text found in the selected area. Select a larger area or zoom in first." = "No text found in the selected area. Select a larger area or zoom in first.";
 "No timed subtitle cues were found in this file." = "No timed subtitle cues were found in this file.";
 "No timed subtitle cues were found." = "No timed subtitle cues were found.";
 "No tools for this file type" = "No tools for this file type";
