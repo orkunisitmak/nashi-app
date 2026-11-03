@@ -10,7 +10,10 @@ internal static class UpdateInstaller
     {
         var target=Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory);var parent=Path.GetDirectoryName(target)??throw new IOException("Extract Nashi into its own writable folder first.");
         if(target==Path.GetPathRoot(target)||(File.GetAttributes(target)&FileAttributes.ReparsePoint)!=0)throw new IOException("Use a regular writable folder for portable updates.");
-        var stage=Path.Combine(parent,".nashi-update-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(stage);
+        // Updating a backup would leave a second, nested copy of Nashi beside the one that is kept up to date.
+        if(UpdateCleanup.MainFolder(target) is {} main)throw new IOException("This Nashi runs from a backup an update kept. Open Nashi from "+main+" to update it.");
+        // Staging and backups are hidden, so a Nashi kept on the Desktop does not fill it with folders.
+        var stage=Path.Combine(parent,".nashi-update-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(stage);File.SetAttributes(stage,File.GetAttributes(stage)|FileAttributes.Hidden);
         try
         {
             var archive=Path.Combine(stage,"update.zip");await VerifiedDownload.FetchAsync(new(update.Url),archive,update.Length,p=>progress.Report(new(p*.85,"Downloading Nashi "+update.Version+"…")),token);
@@ -36,9 +39,10 @@ internal static class UpdateInstaller
         var backup=target+".backup-"+Guid.NewGuid().ToString("N");
         Directory.Move(target,backup);
         try{Directory.Move(payload,target);}catch{Directory.Move(backup,target);throw;}
+        try{File.SetAttributes(backup,File.GetAttributes(backup)|FileAttributes.Hidden);}catch(Exception error)when(error is IOException or UnauthorizedAccessException){}
         Process.Start(new ProcessStartInfo(Path.Combine(target,"Nashi.exe")){UseShellExecute=true,WorkingDirectory=target})?.Dispose();
-        // Backups remain recoverable; the app never recursively deletes a user's
-        // portable directory merely because an update succeeded.
+        // This backup stays recoverable. The new version removes older backups and this staging folder once this
+        // worker has exited (UpdateCleanup), keeping one way back.
         return 0;
     }
     private sealed record InstallRequest(int ProcessId,string Target,string Payload,string Stage);

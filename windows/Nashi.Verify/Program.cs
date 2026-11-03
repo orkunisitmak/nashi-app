@@ -20,6 +20,7 @@ try
     await DownloadChecks.Run(Check,root);
     ToolSetupChecks.Run(Check,root);
     var parityRoot=Path.Combine(root,"Parity");Directory.CreateDirectory(parityRoot);try{ParityChecks.Run(Check,parityRoot);}finally{Directory.Delete(parityRoot,true);}
+    var cleanupRoot=Path.Combine(root,"Update cleanup");Directory.CreateDirectory(cleanupRoot);try{UpdateCleanupChecks.Run(Check,cleanupRoot);}finally{Directory.Delete(cleanupRoot,true);}
     Check(FeatureCatalog.IsVideo("Clip.m4v")&&FeatureCatalog.IsAudio("Clip.aac"),"Media preview classification differs from Mac aliases");
     foreach(var area in new[]{new WindowFrame(0,24,1511,910),new WindowFrame(-1920,-1030,1920,1006),new WindowFrame(1512,40,1727,1090)})
     {

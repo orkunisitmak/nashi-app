@@ -54,7 +54,7 @@ The public app is written to `build/Nashi.app`. Large runtimes are installed thr
 
 ## Privacy and updates
 
-Conversion/editing run locally. Web downloads contact the selected media site. No analytics, cloud account or browser-cookie import is built in. Official releases update through this public repository without a GitHub account or token. macOS verifies the signed feed and archive; Windows verifies the archive signature and version before replacement. Active operations finish or cancel before the app exits for an update. Portable Windows updates retain the previous folder as a recoverable backup.
+Conversion/editing run locally. Web downloads contact the selected media site. No analytics, cloud account or browser-cookie import is built in. Official releases update through this public repository without a GitHub account or token. macOS verifies the signed feed and archive; Windows verifies the archive signature and version before replacement. Active operations finish or cancel before the app exits for an update. Portable Windows updates keep the previous version as one hidden backup folder beside the app; older backups and finished update downloads are removed.
 
 ## License and acknowledgments
 

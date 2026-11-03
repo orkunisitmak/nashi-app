@@ -1331,6 +1331,7 @@
   "Update manifest is too large.": "Güncelleme bilgisi çok büyük.",
   "Update size mismatch.": "Güncelleme boyutu eşleşmiyor.",
   "Upstream download checksum mismatch. Nothing was installed.": "İndirilen aracın sağlama toplamı eşleşmiyor. Hiçbir şey kurulmadı.",
+  "This Nashi runs from a backup an update kept. Open Nashi from {0} to update it.": "Bu Nashi, bir güncellemenin sakladığı yedekten çalışıyor. Güncellemek için Nashi'yi {0} klasöründen aç.",
   "Use a regular writable folder for portable updates.": "Taşınabilir güncellemeler için yazılabilir, normal bir klasör kullan.",
   "Use a static SVG without embedded scripts or HTML.": "Gömülü betik veya HTML içermeyen statik bir SVG kullan.",
   "Windows could not add Nashi to the system tray.": "Windows, Nashi'yi sistem tepsisine ekleyemedi.",

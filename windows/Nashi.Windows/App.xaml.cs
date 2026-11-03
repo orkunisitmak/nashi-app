@@ -103,6 +103,8 @@ public partial class App:Application
         // Float shelves have no owner. Closing Nashi (not hiding it to the tray) must end the
         // process instead of leaving it behind a shelf with a closed main window.
         var window=new MainWindow(paths,offerToolSetup:!e.Args.Contains("--background"));MainWindow=window;ShutdownMode=ShutdownMode.OnMainWindowClose;instance.Start(incoming=>Dispatcher.BeginInvoke(()=>window.AcceptLaunch(incoming)));window.Show();
+        // Earlier updates' leftovers are cleared in the background; a folder that cannot be removed now is tried on a later launch.
+        _ = Task.Run(()=>{try{Nashi.Core.UpdateCleanup.Run(AppContext.BaseDirectory,DateTime.UtcNow);}catch(Exception error)when(error is IOException or UnauthorizedAccessException or System.Security.SecurityException){}});
         windowManagement=new WindowManagement(notice:message=>MessageBox.Show(L10n.Text(message),L10n.Text("Window arrangement"),MessageBoxButton.OK,MessageBoxImage.Information),isEnabled:()=>window.WindowManagementEnabled);
     }
     internal static void UseSavedLanguage(Func<string>? readLanguage=null)
