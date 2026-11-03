@@ -41,6 +41,15 @@ internal static class BackgroundRemovalChecks
         check(new BackgroundRemoval.Options(500,-3).Clamped==new BackgroundRemoval.Options(100,0),"Tolerance and feather must stay in range");
         var everything=Canvas(10,10,White);check(BackgroundRemoval.Remove(everything,10,10,new(100,0)).Removed==100,"Tolerance 100 may clear an image that is all background");
 
+        // A new background colour: white for a product page, with soft edges blended into it.
+        var filled=Canvas(30,30,(0,170,80));Fill(filled,30,10,10,10,10,Red);Fill(filled,30,9,10,1,10,(100,95,55));
+        BackgroundRemoval.Remove(filled,30,30,new(12,2,((byte)255,(byte)255,(byte)255)));
+        check(filled[3]==255&&filled[0]==255&&filled[1]==255&&filled[2]==255,"The removed background must become the chosen colour, opaque");
+        check(Alpha(filled,30,15,15)==255&&filled[(15*30+15)*4+2]==200,"The subject must keep its colour on a new background");
+        var blend=filled[(15*30+9)*4+2];check(blend is >100 and <255&&Alpha(filled,30,9,15)==255,"A soft edge must blend into the new background: "+blend);
+        check(BackgroundRemoval.ParseColor("#fff")==((byte)255,(byte)255,(byte)255)&&BackgroundRemoval.ParseColor(" 1E90FF ")==((byte)30,(byte)144,(byte)255)&&BackgroundRemoval.ParseColor("#12345")is null&&BackgroundRemoval.ParseColor("red") is null&&BackgroundRemoval.ParseColor(null) is null,"Colours must be read as #RGB or #RRGGBB only");
+        var half=new byte[]{0,0,255,128};BackgroundRemoval.Flatten(half,((byte)0,(byte)0,(byte)0));check(half[2]==128&&half[3]==255,"Flattening must blend by alpha");
+        check(new BackgroundRemoval.Options(500,-3,((byte)1,(byte)2,(byte)3)).Clamped.Fill==((byte)1,(byte)2,(byte)3),"Clamping must keep the fill colour");
         using(var cancelled=new CancellationTokenSource()){cancelled.Cancel();var large=Canvas(1000,1000,White);try{BackgroundRemoval.Remove(large,1000,1000,new(),cancelled.Token);check(false,"Cancellation ignored");}catch(OperationCanceledException){check(true,"Cancelled removal");}}
         foreach(var (w,h,length) in new[]{(0,10,0),(10,10,399),(20_000,20_000,4)})
         {try{BackgroundRemoval.Background(new byte[length],w,h);check(false,"Invalid image size accepted");}catch(ArgumentException){check(true,"Invalid image rejected");}}

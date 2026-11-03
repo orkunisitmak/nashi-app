@@ -350,6 +350,7 @@
 "BEST AVAILABLE" = "MEVCUT EN İYİ KALİTE";
 "BETTER TOGETHER." = "BİRLİKTE DAHA GÜZEL.";
 "BITRATE" = "BİT HIZI";
+"BLACK" = "SİYAH";
 "BLACKS" = "SİYAHLAR";
 "BLEEP" = "BİP";
 "BLEEP AUDIO" = "SESE BİP EKLE";
@@ -371,6 +372,7 @@
 "Best available" = "Mevcut en iyi kalite";
 "Better together." = "Birlikte daha güzel.";
 "Bitrate" = "Bit hızı";
+"Black" = "Siyah";
 "Blacks" = "Siyahlar";
 "Bleep" = "Bip";
 "Bleep Audio" = "Sese Bip Ekle";
@@ -468,7 +470,7 @@
 "CHOOSE ONE OF THE EDITABLE METADATA FIELDS." = "DÜZENLENEBİLİR META VERİ ALANLARINDAN BİRİNİ SEÇ.";
 "CHOOSE OUTPUT FOLDER…" = "ÇIKTI KLASÖRÜNÜ SEÇ…";
 "CHOOSE PAGE RANGES SUCH AS 1-3, 5 WITHIN THE PDF PAGE COUNT." = "PDF'NİN SAYFA SAYISI İÇİNDE 1-3, 5 GİBİ SAYFA ARALIKLARI SEÇ.";
-"CHOOSE PNG, WEBP, TIFF OR AVIF TO KEEP A TRANSPARENT BACKGROUND." = "ŞEFFAF ARKA PLANI KORUMAK İÇİN PNG, WEBP, TIFF VEYA AVIF SEÇ.";
+"CHOOSE PNG, WEBP, TIFF OR AVIF TO KEEP A TRANSPARENT BACKGROUND, OR PICK A NEW BACKGROUND COLOR FOR ANY FORMAT." = "ŞEFFAF ARKA PLANI KORUMAK İÇİN PNG, WEBP, TIFF VEYA AVIF SEÇ YA DA HER BİÇİM İÇİN YENİ BİR ARKA PLAN RENGİ BELİRLE.";
 "CHOOSE SET UP MEDIA TOOLS FIRST." = "ÖNCE MEDYA ARAÇLARINI KUR'U SEÇ.";
 "CHOOSE SET UP MEDIA TOOLS ONCE TO ENABLE MEDIA EDITING." = "MEDYA DÜZENLEMEYİ AÇMAK İÇİN BİR KEZ MEDYA ARAÇLARINI KUR'U SEÇ.";
 "CHOOSE SET UP MEDIA TOOLS ONCE TO ENABLE WEB DOWNLOADS." = "WEB'DEN İNDİRMEYİ AÇMAK İÇİN BİR KEZ MEDYA ARAÇLARINI KUR'U SEÇ.";
@@ -577,6 +579,8 @@
 "CTRL+O  CHOOSE FILES\nCTRL+V  PASTE FILES, TEXT, AN IMAGE OR LINK\nCTRL+SPACE / ENTER  OPEN TOOLS\nCTRL+1 / CTRL+2  HOME / LIBRARY\nCTRL+F  FIND IN LIBRARY\nCTRL+SHIFT+D  USE A COPIED DOWNLOAD LINK\nCTRL+U  CHECK FOR UPDATES\n\nWHEEL: ARROWS / TAB TO CHOOSE, ENTER TO OPEN, ESC TO CLOSE\nMEDIA: SPACE PLAY/PAUSE, ←/→ 1 SECOND, SHIFT+←/→ 1/30S, I/O SET RANGE\nCROP: DRAG, SHIFT LOCKS RATIO, ENTER SAVES\nEDITING TEXT: NORMAL PASTE AND ARROW KEYS ARE PRESERVED." = "CTRL+O  DOSYA SEÇ\nCTRL+V  DOSYA, METİN, GÖRSEL VEYA BAĞLANTI YAPIŞTIR\nCTRL+SPACE / ENTER  ARAÇLARI AÇ\nCTRL+1 / CTRL+2  ANA SAYFA / KİTAPLIK\nCTRL+F  KİTAPLIKTA ARA\nCTRL+SHIFT+D  KOPYALANAN İNDİRME BAĞLANTISINI KULLAN\nCTRL+U  GÜNCELLEMELERİ DENETLE\n\nÇARK: SEÇMEK İÇİN OKLAR / TAB, AÇMAK İÇİN ENTER, KAPATMAK İÇİN ESC\nMEDYA: SPACE OYNAT/DURAKLAT, ←/→ 1 SANİYE, SHIFT+←/→ 1/30 SN, I/O ARALIĞI AYARLA\nKIRPMA: SÜRÜKLE, SHIFT ORANI KİLİTLER, ENTER KAYDEDER\nMETİN DÜZENLERKEN: NORMAL YAPIŞTIRMA VE OK TUŞLARI OLDUĞU GİBİ ÇALIŞIR.";
 "CTRL+O  CHOOSE FILES\nCTRL+V  PASTE FILES, TEXT, AN IMAGE OR LINK\nCTRL+SPACE / ENTER  OPEN TOOLS AND CONVERSIONS\nDELETE  REMOVE SELECTED FILES FROM NASHI\nCTRL+1 / CTRL+2  HOME / LIBRARY\nCTRL+F  FIND IN LIBRARY\nCTRL+SHIFT+D  USE A COPIED DOWNLOAD LINK\nCTRL+U  CHECK FOR UPDATES\n\nWHEEL: ARROWS / TAB TO CHOOSE, ENTER TO OPEN, ESC TO CLOSE\nMEDIA: SPACE PLAY/PAUSE, ←/→ 1 SECOND, SHIFT+←/→ 1/30S, I/O SET RANGE\nCROP: DRAG, SHIFT LOCKS RATIO, ENTER SAVES\nEDITING TEXT: NORMAL PASTE AND ARROW KEYS ARE PRESERVED." = "CTRL+O  DOSYA SEÇ\nCTRL+V  DOSYA, METİN, GÖRSEL VEYA BAĞLANTI YAPIŞTIR\nCTRL+SPACE / ENTER  ARAÇLARI VE DÖNÜŞTÜRMELERİ AÇ\nDELETE  SEÇİLİ DOSYALARI NASHI LİSTESİNDEN KALDIR\nCTRL+1 / CTRL+2  ANA SAYFA / KİTAPLIK\nCTRL+F  KİTAPLIKTA ARA\nCTRL+SHIFT+D  KOPYALANAN İNDİRME BAĞLANTISINI KULLAN\nCTRL+U  GÜNCELLEMELERİ DENETLE\n\nÇARK: SEÇMEK İÇİN OKLAR / TAB, AÇMAK İÇİN ENTER, KAPATMAK İÇİN ESC\nMEDYA: SPACE OYNAT/DURAKLAT, ←/→ 1 SANİYE, SHIFT+←/→ 1/30 SN, I/O ARALIĞI AYARLA\nKIRPMA: SÜRÜKLE, SHIFT ORANI KİLİTLER, ENTER KAYDEDER\nMETİN DÜZENLERKEN: NORMAL YAPIŞTIRMA VE OK TUŞLARI OLDUĞU GİBİ ÇALIŞIR.";
 "CTRL+SHIFT+D  USE A COPIED LINK  ·  PUBLIC, DOWNLOADABLE MEDIA" = "CTRL+SHIFT+D  KOPYALANAN BAĞLANTIYI KULLAN  ·  HERKESE AÇIK, İNDİRİLEBİLİR MEDYA";
+"CUSTOM COLOR" = "ÖZEL RENK";
+"CUSTOM COLOR (#RRGGBB)" = "ÖZEL RENK (#RRGGBB)";
 "CUSTOM DIMENSIONS" = "ÖZEL BOYUTLAR";
 "CUT" = "KES";
 "Callout" = "Açıklama";
@@ -614,7 +618,7 @@
 "Choose Files" = "Dosya Seç";
 "Choose Files…" = "Dosya Seç…";
 "Choose Find media to inspect this link." = "Bu bağlantıyı incelemek için Medyayı bul'u seç.";
-"Choose PNG, WebP, TIFF or AVIF to keep a transparent background." = "Şeffaf arka planı korumak için PNG, WebP, TIFF veya AVIF seç.";
+"Choose PNG, WebP, TIFF or AVIF to keep a transparent background, or pick a new background color for any format." = "Şeffaf arka planı korumak için PNG, WebP, TIFF veya AVIF seç ya da her biçim için yeni bir arka plan rengi belirle.";
 "Choose SRT, VTT or TXT." = "SRT, VTT veya TXT seç.";
 "Choose Set up media tools first." = "Önce Medya araçlarını kur'u seç.";
 "Choose Set up media tools once to enable media editing." = "Medya düzenlemeyi açmak için bir kez Medya araçlarını kur'u seç.";
@@ -807,6 +811,8 @@
 "Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved." = "Ctrl+O  Dosya seç\nCtrl+V  Dosya, metin, görsel veya bağlantı yapıştır\nCtrl+Space / Enter  Araçları aç\nCtrl+1 / Ctrl+2  Ana Sayfa / Kitaplık\nCtrl+F  Kitaplıkta ara\nCtrl+Shift+D  Kopyalanan indirme bağlantısını kullan\nCtrl+U  Güncellemeleri denetle\n\nÇark: seçmek için oklar / Tab, açmak için Enter, kapatmak için Esc\nMedya: Space oynat/duraklat, ←/→ 1 saniye, Shift+←/→ 1/30 sn, I/O aralığı ayarla\nKırpma: sürükle, Shift oranı kilitler, Enter kaydeder\nMetin düzenlerken: normal yapıştırma ve ok tuşları olduğu gibi çalışır.";
 "Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools and conversions\nDelete  Remove selected files from Nashi\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved." = "Ctrl+O  Dosya seç\nCtrl+V  Dosya, metin, görsel veya bağlantı yapıştır\nCtrl+Space / Enter  Araçları ve dönüştürmeleri aç\nDelete  Seçili dosyaları Nashi listesinden kaldır\nCtrl+1 / Ctrl+2  Ana Sayfa / Kitaplık\nCtrl+F  Kitaplıkta ara\nCtrl+Shift+D  Kopyalanan indirme bağlantısını kullan\nCtrl+U  Güncellemeleri denetle\n\nÇark: seçmek için oklar / Tab, açmak için Enter, kapatmak için Esc\nMedya: Space oynat/duraklat, ←/→ 1 saniye, Shift+←/→ 1/30 sn, I/O aralığı ayarla\nKırpma: sürükle, Shift oranı kilitler, Enter kaydeder\nMetin düzenlerken: normal yapıştırma ve ok tuşları olduğu gibi çalışır.";
 "Ctrl+Shift+D  Use a copied link  ·  Public, downloadable media" = "Ctrl+Shift+D  Kopyalanan bağlantıyı kullan  ·  Herkese açık, indirilebilir medya";
+"Custom color" = "Özel renk";
+"Custom color (#RRGGBB)" = "Özel renk (#RRGGBB)";
 "Custom dimensions" = "Özel boyutlar";
 "Cut" = "Kes";
 "DARK" = "KOYU";
@@ -997,6 +1003,7 @@
 "ENABLE NASHI DRAG SHORTCUTS" = "NASHI SÜRÜKLEME KISAYOLLARINI ETKİNLEŞTİR";
 "ENCODED PIXELS, COLOR PROFILE AND DISPLAY ORIENTATION ARE PRESERVED." = "KODLANMIŞ PİKSELLER, RENK PROFİLİ VE GÖRÜNTÜ YÖNÜ KORUNUR.";
 "END" = "BİTİŞ";
+"ENTER A COLOR SUCH AS #FFFFFF." = "#FFFFFF GİBİ BİR RENK GİR.";
 "ENTER A FINITE NUMBER." = "GEÇERLİ BİR SAYI GİR.";
 "ENTER A POSITIVE, FINITE TARGET SIZE." = "POZİTİF VE GEÇERLİ BİR HEDEF BOYUT GİR.";
 "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%." = "%0'DAN BÜYÜK VE %100'DEN KÜÇÜK BİR KÜÇÜLTME GİR.";
@@ -1028,6 +1035,7 @@
 "Enable Nashi drag shortcuts" = "Nashi sürükleme kısayollarını etkinleştir";
 "Encoded pixels, color profile and display orientation are preserved." = "Kodlanmış pikseller, renk profili ve görüntü yönü korunur.";
 "End" = "Bitiş";
+"Enter a color such as #FFFFFF." = "#FFFFFF gibi bir renk gir.";
 "Enter a finite number." = "Geçerli bir sayı gir.";
 "Enter a positive, finite target size." = "Pozitif ve geçerli bir hedef boyut gir.";
 "Enter a reduction greater than 0% and less than 100%." = "%0'dan büyük ve %100'den küçük bir küçültme gir.";
@@ -1536,6 +1544,7 @@
 "NASHI UPDATE COULD NOT FINISH" = "NASHI GÜNCELLEMESİ TAMAMLANAMADI";
 "NASHI WEB MEDIA WHEEL" = "NASHI WEB MEDYASI ÇARKI";
 "NASHI · FEATURES & SHORTCUTS" = "NASHI · ÖZELLİKLER VE KISAYOLLAR";
+"NEW BACKGROUND" = "YENİ ARKA PLAN";
 "NEW FEATURES AND SMALL IMPROVEMENTS, DELIVERED RIGHT HERE." = "YENİ ÖZELLİKLER VE KÜÇÜK İYİLEŞTİRMELER, DOĞRUDAN BURADA.";
 "NEXT" = "İLERİ";
 "NEXT FRAME" = "SONRAKİ KARE";
@@ -1592,6 +1601,7 @@
 "Nashi update could not finish" = "Nashi güncellemesi tamamlanamadı";
 "Nashi web media wheel" = "Nashi web medyası çarkı";
 "Nashi · Features & shortcuts" = "Nashi · Özellikler ve kısayollar";
+"New background" = "Yeni arka plan";
 "New features and small improvements, delivered right here." = "Yeni özellikler ve küçük iyileştirmeler, doğrudan burada.";
 "Next" = "İleri";
 "Next frame" = "Sonraki kare";
@@ -2791,6 +2801,7 @@
 "WELCOME…" = "HOŞ GELDİN…";
 "WHEEL FINISH" = "ÇARK GÖRÜNÜMÜ";
 "WHEEL SIZE" = "ÇARK BOYUTU";
+"WHITE" = "BEYAZ";
 "WHITES" = "BEYAZLAR";
 "WIDTH" = "GENİŞLİK";
 "WINDOW" = "PENCERE";
@@ -2807,6 +2818,7 @@
 "Welcome…" = "Hoş Geldin…";
 "Wheel finish" = "Çark görünümü";
 "Wheel size" = "Çark boyutu";
+"White" = "Beyaz";
 "Whites" = "Beyazlar";
 "Width" = "Genişlik";
 "Window" = "Pencere";

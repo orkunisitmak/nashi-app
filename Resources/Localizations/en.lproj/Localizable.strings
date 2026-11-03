@@ -350,6 +350,7 @@
 "BEST AVAILABLE" = "BEST AVAILABLE";
 "BETTER TOGETHER." = "BETTER TOGETHER.";
 "BITRATE" = "BITRATE";
+"BLACK" = "BLACK";
 "BLACKS" = "BLACKS";
 "BLEEP" = "BLEEP";
 "BLEEP AUDIO" = "BLEEP AUDIO";
@@ -371,6 +372,7 @@
 "Best available" = "Best available";
 "Better together." = "Better together.";
 "Bitrate" = "Bitrate";
+"Black" = "Black";
 "Blacks" = "Blacks";
 "Bleep" = "Bleep";
 "Bleep Audio" = "Bleep Audio";
@@ -468,7 +470,7 @@
 "CHOOSE ONE OF THE EDITABLE METADATA FIELDS." = "CHOOSE ONE OF THE EDITABLE METADATA FIELDS.";
 "CHOOSE OUTPUT FOLDER…" = "CHOOSE OUTPUT FOLDER…";
 "CHOOSE PAGE RANGES SUCH AS 1-3, 5 WITHIN THE PDF PAGE COUNT." = "CHOOSE PAGE RANGES SUCH AS 1-3, 5 WITHIN THE PDF PAGE COUNT.";
-"CHOOSE PNG, WEBP, TIFF OR AVIF TO KEEP A TRANSPARENT BACKGROUND." = "CHOOSE PNG, WEBP, TIFF OR AVIF TO KEEP A TRANSPARENT BACKGROUND.";
+"CHOOSE PNG, WEBP, TIFF OR AVIF TO KEEP A TRANSPARENT BACKGROUND, OR PICK A NEW BACKGROUND COLOR FOR ANY FORMAT." = "CHOOSE PNG, WEBP, TIFF OR AVIF TO KEEP A TRANSPARENT BACKGROUND, OR PICK A NEW BACKGROUND COLOR FOR ANY FORMAT.";
 "CHOOSE SET UP MEDIA TOOLS FIRST." = "CHOOSE SET UP MEDIA TOOLS FIRST.";
 "CHOOSE SET UP MEDIA TOOLS ONCE TO ENABLE MEDIA EDITING." = "CHOOSE SET UP MEDIA TOOLS ONCE TO ENABLE MEDIA EDITING.";
 "CHOOSE SET UP MEDIA TOOLS ONCE TO ENABLE WEB DOWNLOADS." = "CHOOSE SET UP MEDIA TOOLS ONCE TO ENABLE WEB DOWNLOADS.";
@@ -577,6 +579,8 @@
 "CTRL+O  CHOOSE FILES\nCTRL+V  PASTE FILES, TEXT, AN IMAGE OR LINK\nCTRL+SPACE / ENTER  OPEN TOOLS\nCTRL+1 / CTRL+2  HOME / LIBRARY\nCTRL+F  FIND IN LIBRARY\nCTRL+SHIFT+D  USE A COPIED DOWNLOAD LINK\nCTRL+U  CHECK FOR UPDATES\n\nWHEEL: ARROWS / TAB TO CHOOSE, ENTER TO OPEN, ESC TO CLOSE\nMEDIA: SPACE PLAY/PAUSE, ←/→ 1 SECOND, SHIFT+←/→ 1/30S, I/O SET RANGE\nCROP: DRAG, SHIFT LOCKS RATIO, ENTER SAVES\nEDITING TEXT: NORMAL PASTE AND ARROW KEYS ARE PRESERVED." = "CTRL+O  CHOOSE FILES\nCTRL+V  PASTE FILES, TEXT, AN IMAGE OR LINK\nCTRL+SPACE / ENTER  OPEN TOOLS\nCTRL+1 / CTRL+2  HOME / LIBRARY\nCTRL+F  FIND IN LIBRARY\nCTRL+SHIFT+D  USE A COPIED DOWNLOAD LINK\nCTRL+U  CHECK FOR UPDATES\n\nWHEEL: ARROWS / TAB TO CHOOSE, ENTER TO OPEN, ESC TO CLOSE\nMEDIA: SPACE PLAY/PAUSE, ←/→ 1 SECOND, SHIFT+←/→ 1/30S, I/O SET RANGE\nCROP: DRAG, SHIFT LOCKS RATIO, ENTER SAVES\nEDITING TEXT: NORMAL PASTE AND ARROW KEYS ARE PRESERVED.";
 "CTRL+O  CHOOSE FILES\nCTRL+V  PASTE FILES, TEXT, AN IMAGE OR LINK\nCTRL+SPACE / ENTER  OPEN TOOLS AND CONVERSIONS\nDELETE  REMOVE SELECTED FILES FROM NASHI\nCTRL+1 / CTRL+2  HOME / LIBRARY\nCTRL+F  FIND IN LIBRARY\nCTRL+SHIFT+D  USE A COPIED DOWNLOAD LINK\nCTRL+U  CHECK FOR UPDATES\n\nWHEEL: ARROWS / TAB TO CHOOSE, ENTER TO OPEN, ESC TO CLOSE\nMEDIA: SPACE PLAY/PAUSE, ←/→ 1 SECOND, SHIFT+←/→ 1/30S, I/O SET RANGE\nCROP: DRAG, SHIFT LOCKS RATIO, ENTER SAVES\nEDITING TEXT: NORMAL PASTE AND ARROW KEYS ARE PRESERVED." = "CTRL+O  CHOOSE FILES\nCTRL+V  PASTE FILES, TEXT, AN IMAGE OR LINK\nCTRL+SPACE / ENTER  OPEN TOOLS AND CONVERSIONS\nDELETE  REMOVE SELECTED FILES FROM NASHI\nCTRL+1 / CTRL+2  HOME / LIBRARY\nCTRL+F  FIND IN LIBRARY\nCTRL+SHIFT+D  USE A COPIED DOWNLOAD LINK\nCTRL+U  CHECK FOR UPDATES\n\nWHEEL: ARROWS / TAB TO CHOOSE, ENTER TO OPEN, ESC TO CLOSE\nMEDIA: SPACE PLAY/PAUSE, ←/→ 1 SECOND, SHIFT+←/→ 1/30S, I/O SET RANGE\nCROP: DRAG, SHIFT LOCKS RATIO, ENTER SAVES\nEDITING TEXT: NORMAL PASTE AND ARROW KEYS ARE PRESERVED.";
 "CTRL+SHIFT+D  USE A COPIED LINK  ·  PUBLIC, DOWNLOADABLE MEDIA" = "CTRL+SHIFT+D  USE A COPIED LINK  ·  PUBLIC, DOWNLOADABLE MEDIA";
+"CUSTOM COLOR" = "CUSTOM COLOR";
+"CUSTOM COLOR (#RRGGBB)" = "CUSTOM COLOR (#RRGGBB)";
 "CUSTOM DIMENSIONS" = "CUSTOM DIMENSIONS";
 "CUT" = "CUT";
 "Callout" = "Callout";
@@ -614,7 +618,7 @@
 "Choose Files" = "Choose Files";
 "Choose Files…" = "Choose Files…";
 "Choose Find media to inspect this link." = "Choose Find media to inspect this link.";
-"Choose PNG, WebP, TIFF or AVIF to keep a transparent background." = "Choose PNG, WebP, TIFF or AVIF to keep a transparent background.";
+"Choose PNG, WebP, TIFF or AVIF to keep a transparent background, or pick a new background color for any format." = "Choose PNG, WebP, TIFF or AVIF to keep a transparent background, or pick a new background color for any format.";
 "Choose SRT, VTT or TXT." = "Choose SRT, VTT or TXT.";
 "Choose Set up media tools first." = "Choose Set up media tools first.";
 "Choose Set up media tools once to enable media editing." = "Choose Set up media tools once to enable media editing.";
@@ -807,6 +811,8 @@
 "Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved." = "Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved.";
 "Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools and conversions\nDelete  Remove selected files from Nashi\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved." = "Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools and conversions\nDelete  Remove selected files from Nashi\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved.";
 "Ctrl+Shift+D  Use a copied link  ·  Public, downloadable media" = "Ctrl+Shift+D  Use a copied link  ·  Public, downloadable media";
+"Custom color" = "Custom color";
+"Custom color (#RRGGBB)" = "Custom color (#RRGGBB)";
 "Custom dimensions" = "Custom dimensions";
 "Cut" = "Cut";
 "DARK" = "DARK";
@@ -997,6 +1003,7 @@
 "ENABLE NASHI DRAG SHORTCUTS" = "ENABLE NASHI DRAG SHORTCUTS";
 "ENCODED PIXELS, COLOR PROFILE AND DISPLAY ORIENTATION ARE PRESERVED." = "ENCODED PIXELS, COLOR PROFILE AND DISPLAY ORIENTATION ARE PRESERVED.";
 "END" = "END";
+"ENTER A COLOR SUCH AS #FFFFFF." = "ENTER A COLOR SUCH AS #FFFFFF.";
 "ENTER A FINITE NUMBER." = "ENTER A FINITE NUMBER.";
 "ENTER A POSITIVE, FINITE TARGET SIZE." = "ENTER A POSITIVE, FINITE TARGET SIZE.";
 "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%." = "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%.";
@@ -1028,6 +1035,7 @@
 "Enable Nashi drag shortcuts" = "Enable Nashi drag shortcuts";
 "Encoded pixels, color profile and display orientation are preserved." = "Encoded pixels, color profile and display orientation are preserved.";
 "End" = "End";
+"Enter a color such as #FFFFFF." = "Enter a color such as #FFFFFF.";
 "Enter a finite number." = "Enter a finite number.";
 "Enter a positive, finite target size." = "Enter a positive, finite target size.";
 "Enter a reduction greater than 0% and less than 100%." = "Enter a reduction greater than 0% and less than 100%.";
@@ -1536,6 +1544,7 @@
 "NASHI UPDATE COULD NOT FINISH" = "NASHI UPDATE COULD NOT FINISH";
 "NASHI WEB MEDIA WHEEL" = "NASHI WEB MEDIA WHEEL";
 "NASHI · FEATURES & SHORTCUTS" = "NASHI · FEATURES & SHORTCUTS";
+"NEW BACKGROUND" = "NEW BACKGROUND";
 "NEW FEATURES AND SMALL IMPROVEMENTS, DELIVERED RIGHT HERE." = "NEW FEATURES AND SMALL IMPROVEMENTS, DELIVERED RIGHT HERE.";
 "NEXT" = "NEXT";
 "NEXT FRAME" = "NEXT FRAME";
@@ -1592,6 +1601,7 @@
 "Nashi update could not finish" = "Nashi update could not finish";
 "Nashi web media wheel" = "Nashi web media wheel";
 "Nashi · Features & shortcuts" = "Nashi · Features & shortcuts";
+"New background" = "New background";
 "New features and small improvements, delivered right here." = "New features and small improvements, delivered right here.";
 "Next" = "Next";
 "Next frame" = "Next frame";
@@ -2791,6 +2801,7 @@
 "WELCOME…" = "WELCOME…";
 "WHEEL FINISH" = "WHEEL FINISH";
 "WHEEL SIZE" = "WHEEL SIZE";
+"WHITE" = "WHITE";
 "WHITES" = "WHITES";
 "WIDTH" = "WIDTH";
 "WINDOW" = "WINDOW";
@@ -2807,6 +2818,7 @@
 "Welcome…" = "Welcome…";
 "Wheel finish" = "Wheel finish";
 "Wheel size" = "Wheel size";
+"White" = "White";
 "Whites" = "Whites";
 "Width" = "Width";
 "Window" = "Window";

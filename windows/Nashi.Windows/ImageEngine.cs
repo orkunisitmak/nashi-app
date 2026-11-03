@@ -88,7 +88,7 @@ public static partial class ImageEngine
                 // 48 MP JPEG re-saved as PNG took ~5-10 s and grew from 8 MB to 52 MB. Writing HEIC needs the
                 // media tools on Windows, so without them a HEIC source keeps the previous PNG output.
                 case "redactImage":image=Redact(image,options.Redactions,options.RedactionStyle);if(ext=="heic"&&options.EncoderPath is null)ext="png";break;
-                case "convert" when options.RemoveBackground is {} background&&TransparentFormats.Contains(ext):image=WithoutBackground(image,background,token);break;
+                case "convert" when options.RemoveBackground is {} background&&(TransparentFormats.Contains(ext)||background.Fill is not null&&ext is not ("gif" or "pdf")):image=WithoutBackground(image,background,token);break;
                 case "convert":case "compress":case "removeMetadata":case "annotate":break;
                 default:throw new ArgumentException("Unsupported image tool.");
             }

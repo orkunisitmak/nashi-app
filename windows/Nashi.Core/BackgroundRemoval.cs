@@ -11,9 +11,28 @@ public static class BackgroundRemoval
     public const string NoSolidBackground="This image has no solid background to remove. It works best on product shots, logos and scans on a plain color.";
     /// <param name="Tolerance">How far a colour may differ from the background, 0–100 (percent of the RGB range).</param>
     /// <param name="Feather">Width in pixels of the soft edge around the subject, 0–10.</param>
-    public sealed record Options(int Tolerance=12,int Feather=1)
+    /// <param name="Fill">A colour that replaces the background (a white product background, a passport photo
+    /// colour); null keeps it transparent. Soft edges blend into it, so any output format can be used.</param>
+    public sealed record Options(int Tolerance=12,int Feather=1,(byte R,byte G,byte B)? Fill=null)
     {
-        public Options Clamped=>new(Math.Clamp(Tolerance,0,100),Math.Clamp(Feather,0,10));
+        public Options Clamped=>this with{Tolerance=Math.Clamp(Tolerance,0,100),Feather=Math.Clamp(Feather,0,10)};
+    }
+    /// <summary>"#RRGGBB" or "RRGGBB" (also "#RGB"); null when it is not a colour.</summary>
+    public static (byte R,byte G,byte B)? ParseColor(string? text)
+    {
+        var hex=(text??"").Trim().TrimStart('#');
+        if(hex.Length==3)hex=string.Concat(hex.Select(c=>new string(c,2)));
+        if(hex.Length!=6||!int.TryParse(hex,System.Globalization.NumberStyles.HexNumber,System.Globalization.CultureInfo.InvariantCulture,out var value))return null;
+        return ((byte)(value>>16),(byte)(value>>8),(byte)value);
+    }
+    /// <summary>Blends every pixel over a solid colour and makes the image opaque.</summary>
+    public static void Flatten(byte[] bgra,(byte R,byte G,byte B) fill)
+    {
+        for(var i=0;i<bgra.Length;i+=4)
+        {
+            var alpha=bgra[i+3];if(alpha==255)continue;
+            bgra[i]=(byte)((bgra[i]*alpha+fill.B*(255-alpha)+127)/255);bgra[i+1]=(byte)((bgra[i+1]*alpha+fill.G*(255-alpha)+127)/255);bgra[i+2]=(byte)((bgra[i+2]*alpha+fill.R*(255-alpha)+127)/255);bgra[i+3]=255;
+        }
     }
     public sealed record Result(int Removed,byte Red,byte Green,byte Blue);
 
@@ -81,6 +100,7 @@ public static class BackgroundRemoval
             }
         }
         for(var p=0;p<count;p++)if(removed[p]){var i=p*4;bgra[i]=bgra[i+1]=bgra[i+2]=bgra[i+3]=0;total++;}
+        if(options.Fill is {} fill)Flatten(bgra,fill);
         return new(total,r,g,b);
     }
 

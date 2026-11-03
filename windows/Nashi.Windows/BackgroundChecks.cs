@@ -26,6 +26,10 @@ internal static class BackgroundChecks
         }
         var jpg=ImageEngine.Load(ImageEngine.Apply("convert",[source],output,options,"jpg").Single());
         check(Alpha(jpg,2,2)==255,"JPG has no transparency, so the background must be kept");
+        // A new background colour works for JPG too: a light blue studio background.
+        var blue=ImageEngine.Load(ImageEngine.Apply("convert",[source],output,new ImageOptions{RemoveBackground=new(12,1,((byte)210,(byte)230,(byte)255))},"jpg").Single());
+        var corner=new byte[4];new FormatConvertedBitmap(blue,PixelFormats.Bgra32,null,0).CopyPixels(new Int32Rect(2,2,1,1),corner,4,0);var middle=new byte[4];new FormatConvertedBitmap(blue,PixelFormats.Bgra32,null,0).CopyPixels(new Int32Rect(60,40,1,1),middle,4,0);
+        check(Math.Abs(corner[2]-210)<8&&Math.Abs(corner[1]-230)<8&&corner[0]>245&&middle[0]>180&&middle[2]<60,"A filled JPG must show the new background around the unchanged subject");
         check(original.SequenceEqual(File.ReadAllBytes(source))&&Directory.GetFiles(output,"Product*.png").Length==1,"The original must stay as it was");
         var second=ImageEngine.Apply("convert",[source],output,options,"png").Single();check(Path.GetFileName(second)!="Product.png"&&File.Exists(Path.Combine(output,"Product.png")),"A second export must get a new name");
 
@@ -44,7 +48,11 @@ internal static class BackgroundChecks
             var editor=new ToolEditor(owner,"convert","Convert",source,preview:ImageEngine.Load(source),inputs:[source],outputFormats:["jpg","png","webp"]);
             var box=editor.RemoveBackgroundForTest;check(box is not null,"Convert must offer Remove background for images");
             var formats=(System.Windows.Controls.ComboBox)Descendants(editor).OfType<System.Windows.Controls.ComboBox>().First(c=>c.Items.Contains("png"));
-            formats.SelectedItem="jpg";check(!box!.IsEnabled&&editor.BackgroundSettings is null,"JPG must not offer a transparent background");
+            formats.SelectedItem="jpg";box!.IsChecked=true;check(box.IsEnabled&&editor.BackgroundSettings is null,"JPG must not get a transparent background");
+            editor.FillForTest.SelectedItem=ToolEditor.White;check(editor.BackgroundSettings?.Fill==((byte)255,(byte)255,(byte)255),"JPG must accept a new background colour");
+            editor.FillForTest.SelectedItem=ToolEditor.Custom;editor.FieldForTest(ToolEditor.CustomColor).Text="#1E90FF";check(editor.BackgroundSettings?.Fill==((byte)30,(byte)144,(byte)255),"A custom background colour must be read");
+            editor.FieldForTest(ToolEditor.CustomColor).Text="blue";try{_=editor.BackgroundSettings;check(false,"An invalid colour was accepted");}catch(ArgumentException error){check(error.Message==ToolEditor.InvalidColor,"An invalid colour must be explained");}
+            editor.FillForTest.SelectedItem=ToolEditor.Transparent;box.IsChecked=false;
             formats.SelectedItem="png";box.IsChecked=true;
             var until=DateTime.UtcNow.AddSeconds(15);while(!editor.BackgroundPreviewForTest.IsCompleted&&DateTime.UtcNow<until)DesktopInput.Pump(30);DesktopInput.Pump(60);
             check(editor.PreviewForTest is {} preview&&Alpha(preview,2,2)==0&&Alpha(preview,60,40)==255,"The preview must show the background removed");

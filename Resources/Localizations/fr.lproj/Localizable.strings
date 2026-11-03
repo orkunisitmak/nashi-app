@@ -350,6 +350,7 @@
 "BEST AVAILABLE" = "OPTIMALE";
 "BETTER TOGETHER." = "MIEUX ENSEMBLE.";
 "BITRATE" = "DÉBIT";
+"BLACK" = "NOIR";
 "BLACKS" = "NOIRS";
 "BLEEP" = "BIP";
 "BLEEP AUDIO" = "MASQUER L’AUDIO PAR UN BIP";
@@ -371,6 +372,7 @@
 "Best available" = "Optimale";
 "Better together." = "Mieux ensemble.";
 "Bitrate" = "Débit";
+"Black" = "Noir";
 "Blacks" = "Noirs";
 "Bleep" = "Bip";
 "Bleep Audio" = "Masquer l’audio par un bip";
@@ -468,7 +470,7 @@
 "CHOOSE ONE OF THE EDITABLE METADATA FIELDS." = "CHOISISSEZ L’UN DES CHAMPS DE MÉTADONNÉES MODIFIABLES.";
 "CHOOSE OUTPUT FOLDER…" = "CHOISIR LE DOSSIER DE SORTIE…";
 "CHOOSE PAGE RANGES SUCH AS 1-3, 5 WITHIN THE PDF PAGE COUNT." = "CHOISISSEZ DES PLAGES DE PAGES COMME 1-3, 5 DANS LE NOMBRE DE PAGES DU PDF.";
-"CHOOSE PNG, WEBP, TIFF OR AVIF TO KEEP A TRANSPARENT BACKGROUND." = "CHOISISSEZ PNG, WEBP, TIFF OU AVIF POUR CONSERVER UN ARRIÈRE-PLAN TRANSPARENT.";
+"CHOOSE PNG, WEBP, TIFF OR AVIF TO KEEP A TRANSPARENT BACKGROUND, OR PICK A NEW BACKGROUND COLOR FOR ANY FORMAT." = "CHOISISSEZ PNG, WEBP, TIFF OU AVIF POUR CONSERVER UN ARRIÈRE-PLAN TRANSPARENT, OU CHOISISSEZ UNE NOUVELLE COULEUR D’ARRIÈRE-PLAN POUR TOUT FORMAT.";
 "CHOOSE SET UP MEDIA TOOLS FIRST." = "CHOISISSEZ D’ABORD CONFIGURER LES OUTILS MULTIMÉDIAS.";
 "CHOOSE SET UP MEDIA TOOLS ONCE TO ENABLE MEDIA EDITING." = "CHOISISSEZ CONFIGURER LES OUTILS MULTIMÉDIAS UNE FOIS POUR ACTIVER LA MODIFICATION DES MÉDIAS.";
 "CHOOSE SET UP MEDIA TOOLS ONCE TO ENABLE WEB DOWNLOADS." = "CHOISISSEZ CONFIGURER LES OUTILS MULTIMÉDIAS UNE FOIS POUR ACTIVER LES TÉLÉCHARGEMENTS WEB.";
@@ -577,6 +579,8 @@
 "CTRL+O  CHOOSE FILES\nCTRL+V  PASTE FILES, TEXT, AN IMAGE OR LINK\nCTRL+SPACE / ENTER  OPEN TOOLS\nCTRL+1 / CTRL+2  HOME / LIBRARY\nCTRL+F  FIND IN LIBRARY\nCTRL+SHIFT+D  USE A COPIED DOWNLOAD LINK\nCTRL+U  CHECK FOR UPDATES\n\nWHEEL: ARROWS / TAB TO CHOOSE, ENTER TO OPEN, ESC TO CLOSE\nMEDIA: SPACE PLAY/PAUSE, ←/→ 1 SECOND, SHIFT+←/→ 1/30S, I/O SET RANGE\nCROP: DRAG, SHIFT LOCKS RATIO, ENTER SAVES\nEDITING TEXT: NORMAL PASTE AND ARROW KEYS ARE PRESERVED." = "CTRL+O  CHOISIR DES FICHIERS\nCTRL+V  COLLER DES FICHIERS, DU TEXTE, UNE IMAGE OU UN LIEN\nCTRL+ESPACE / ENTRÉE  OUVRIR LES OUTILS\nCTRL+1 / CTRL+2  ACCUEIL / BIBLIOTHÈQUE\nCTRL+F  RECHERCHER DANS LA BIBLIOTHÈQUE\nCTRL+MAJ+D  UTILISER UN LIEN DE TÉLÉCHARGEMENT COPIÉ\nCTRL+U  RECHERCHER LES MISES À JOUR\n\nROUE : FLÈCHES / TAB POUR CHOISIR, ENTRÉE POUR OUVRIR, ÉCHAP POUR FERMER\nMÉDIAS : ESPACE LECTURE/PAUSE, ←/→ 1 SECONDE, MAJ+←/→ 1/30 S, I/O DÉFINIR LA PLAGE\nRECADRAGE : GLISSER, MAJ VERROUILLE LES PROPORTIONS, ENTRÉE ENREGISTRE\nMODIFICATION DE TEXTE : LE COLLAGE ET LES FLÈCHES FONCTIONNENT NORMALEMENT.";
 "CTRL+O  CHOOSE FILES\nCTRL+V  PASTE FILES, TEXT, AN IMAGE OR LINK\nCTRL+SPACE / ENTER  OPEN TOOLS AND CONVERSIONS\nDELETE  REMOVE SELECTED FILES FROM NASHI\nCTRL+1 / CTRL+2  HOME / LIBRARY\nCTRL+F  FIND IN LIBRARY\nCTRL+SHIFT+D  USE A COPIED DOWNLOAD LINK\nCTRL+U  CHECK FOR UPDATES\n\nWHEEL: ARROWS / TAB TO CHOOSE, ENTER TO OPEN, ESC TO CLOSE\nMEDIA: SPACE PLAY/PAUSE, ←/→ 1 SECOND, SHIFT+←/→ 1/30S, I/O SET RANGE\nCROP: DRAG, SHIFT LOCKS RATIO, ENTER SAVES\nEDITING TEXT: NORMAL PASTE AND ARROW KEYS ARE PRESERVED." = "CTRL+O  CHOISIR DES FICHIERS\nCTRL+V  COLLER DES FICHIERS, DU TEXTE, UNE IMAGE OU UN LIEN\nCTRL+ESPACE / ENTRÉE  OUVRIR LES OUTILS ET LES CONVERSIONS\nSUPPR  RETIRER LES FICHIERS SÉLECTIONNÉS DE NASHI\nCTRL+1 / CTRL+2  ACCUEIL / BIBLIOTHÈQUE\nCTRL+F  RECHERCHER DANS LA BIBLIOTHÈQUE\nCTRL+MAJ+D  UTILISER UN LIEN DE TÉLÉCHARGEMENT COPIÉ\nCTRL+U  RECHERCHER LES MISES À JOUR\n\nROUE : FLÈCHES / TAB POUR CHOISIR, ENTRÉE POUR OUVRIR, ÉCHAP POUR FERMER\nMÉDIAS : ESPACE LECTURE/PAUSE, ←/→ 1 SECONDE, MAJ+←/→ 1/30 S, I/O DÉFINIR LA PLAGE\nRECADRAGE : GLISSER, MAJ VERROUILLE LES PROPORTIONS, ENTRÉE ENREGISTRE\nMODIFICATION DE TEXTE : LE COLLAGE ET LES FLÈCHES FONCTIONNENT NORMALEMENT.";
 "CTRL+SHIFT+D  USE A COPIED LINK  ·  PUBLIC, DOWNLOADABLE MEDIA" = "CTRL+MAJ+D  UTILISER UN LIEN COPIÉ  ·  MÉDIAS PUBLICS TÉLÉCHARGEABLES";
+"CUSTOM COLOR" = "COULEUR PERSONNALISÉE";
+"CUSTOM COLOR (#RRGGBB)" = "COULEUR PERSONNALISÉE (#RRGGBB)";
 "CUSTOM DIMENSIONS" = "DIMENSIONS PERSONNALISÉES";
 "CUT" = "COUPER";
 "Callout" = "Légende";
@@ -614,7 +618,7 @@
 "Choose Files" = "Choisir des fichiers";
 "Choose Files…" = "Choisir des fichiers…";
 "Choose Find media to inspect this link." = "Choisissez Rechercher le média pour inspecter ce lien.";
-"Choose PNG, WebP, TIFF or AVIF to keep a transparent background." = "Choisissez PNG, WebP, TIFF ou AVIF pour conserver un arrière-plan transparent.";
+"Choose PNG, WebP, TIFF or AVIF to keep a transparent background, or pick a new background color for any format." = "Choisissez PNG, WebP, TIFF ou AVIF pour conserver un arrière-plan transparent, ou choisissez une nouvelle couleur d’arrière-plan pour tout format.";
 "Choose SRT, VTT or TXT." = "Choisissez SRT, VTT ou TXT.";
 "Choose Set up media tools first." = "Choisissez d’abord Configurer les outils multimédias.";
 "Choose Set up media tools once to enable media editing." = "Choisissez Configurer les outils multimédias une fois pour activer la modification des médias.";
@@ -807,6 +811,8 @@
 "Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved." = "Ctrl+O  Choisir des fichiers\nCtrl+V  Coller des fichiers, du texte, une image ou un lien\nCtrl+Espace / Entrée  Ouvrir les outils\nCtrl+1 / Ctrl+2  Accueil / Bibliothèque\nCtrl+F  Rechercher dans la bibliothèque\nCtrl+Maj+D  Utiliser un lien de téléchargement copié\nCtrl+U  Rechercher les mises à jour\n\nRoue : flèches / Tab pour choisir, Entrée pour ouvrir, Échap pour fermer\nMédias : Espace lecture/pause, ←/→ 1 seconde, Maj+←/→ 1/30 s, I/O définir la plage\nRecadrage : glisser, Maj verrouille les proportions, Entrée enregistre\nModification de texte : le collage et les flèches fonctionnent normalement.";
 "Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools and conversions\nDelete  Remove selected files from Nashi\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved." = "Ctrl+O  Choisir des fichiers\nCtrl+V  Coller des fichiers, du texte, une image ou un lien\nCtrl+Espace / Entrée  Ouvrir les outils et les conversions\nSuppr  Retirer les fichiers sélectionnés de Nashi\nCtrl+1 / Ctrl+2  Accueil / Bibliothèque\nCtrl+F  Rechercher dans la bibliothèque\nCtrl+Maj+D  Utiliser un lien de téléchargement copié\nCtrl+U  Rechercher les mises à jour\n\nRoue : flèches / Tab pour choisir, Entrée pour ouvrir, Échap pour fermer\nMédias : Espace lecture/pause, ←/→ 1 seconde, Maj+←/→ 1/30 s, I/O définir la plage\nRecadrage : glisser, Maj verrouille les proportions, Entrée enregistre\nModification de texte : le collage et les flèches fonctionnent normalement.";
 "Ctrl+Shift+D  Use a copied link  ·  Public, downloadable media" = "Ctrl+Maj+D  Utiliser un lien copié  ·  Médias publics téléchargeables";
+"Custom color" = "Couleur personnalisée";
+"Custom color (#RRGGBB)" = "Couleur personnalisée (#RRGGBB)";
 "Custom dimensions" = "Dimensions personnalisées";
 "Cut" = "Couper";
 "DARK" = "SOMBRE";
@@ -997,6 +1003,7 @@
 "ENABLE NASHI DRAG SHORTCUTS" = "ACTIVER LES RACCOURCIS DE GLISSER-DÉPOSER DE NASHI";
 "ENCODED PIXELS, COLOR PROFILE AND DISPLAY ORIENTATION ARE PRESERVED." = "LES PIXELS ENCODÉS, LE PROFIL COLORIMÉTRIQUE ET L’ORIENTATION D’AFFICHAGE SONT CONSERVÉS.";
 "END" = "FIN";
+"ENTER A COLOR SUCH AS #FFFFFF." = "SAISISSEZ UNE COULEUR COMME #FFFFFF.";
 "ENTER A FINITE NUMBER." = "SAISISSEZ UN NOMBRE FINI.";
 "ENTER A POSITIVE, FINITE TARGET SIZE." = "SAISISSEZ UNE TAILLE CIBLE POSITIVE ET FINIE.";
 "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%." = "SAISISSEZ UNE RÉDUCTION SUPÉRIEURE À 0 % ET INFÉRIEURE À 100 %.";
@@ -1028,6 +1035,7 @@
 "Enable Nashi drag shortcuts" = "Activer les raccourcis de glisser-déposer de Nashi";
 "Encoded pixels, color profile and display orientation are preserved." = "Les pixels encodés, le profil colorimétrique et l’orientation d’affichage sont conservés.";
 "End" = "Fin";
+"Enter a color such as #FFFFFF." = "Saisissez une couleur comme #FFFFFF.";
 "Enter a finite number." = "Saisissez un nombre fini.";
 "Enter a positive, finite target size." = "Saisissez une taille cible positive et finie.";
 "Enter a reduction greater than 0% and less than 100%." = "Saisissez une réduction supérieure à 0 % et inférieure à 100 %.";
@@ -1536,6 +1544,7 @@
 "NASHI UPDATE COULD NOT FINISH" = "LA MISE À JOUR DE NASHI N’A PAS PU SE TERMINER";
 "NASHI WEB MEDIA WHEEL" = "ROUE DES MÉDIAS WEB NASHI";
 "NASHI · FEATURES & SHORTCUTS" = "NASHI · FONCTIONNALITÉS ET RACCOURCIS";
+"NEW BACKGROUND" = "NOUVEL ARRIÈRE-PLAN";
 "NEW FEATURES AND SMALL IMPROVEMENTS, DELIVERED RIGHT HERE." = "DE NOUVELLES FONCTIONNALITÉS ET DE PETITES AMÉLIORATIONS, LIVRÉES ICI MÊME.";
 "NEXT" = "SUIVANT";
 "NEXT FRAME" = "IMAGE SUIVANTE";
@@ -1592,6 +1601,7 @@
 "Nashi update could not finish" = "La mise à jour de Nashi n’a pas pu se terminer";
 "Nashi web media wheel" = "Roue des médias web Nashi";
 "Nashi · Features & shortcuts" = "Nashi · Fonctionnalités et raccourcis";
+"New background" = "Nouvel arrière-plan";
 "New features and small improvements, delivered right here." = "De nouvelles fonctionnalités et de petites améliorations, livrées ici même.";
 "Next" = "Suivant";
 "Next frame" = "Image suivante";
@@ -2791,6 +2801,7 @@
 "WELCOME…" = "BIENVENUE…";
 "WHEEL FINISH" = "FINITION DE LA ROUE";
 "WHEEL SIZE" = "TAILLE DE LA ROUE";
+"WHITE" = "BLANC";
 "WHITES" = "BLANCS";
 "WIDTH" = "LARGEUR";
 "WINDOW" = "FENÊTRE";
@@ -2807,6 +2818,7 @@
 "Welcome…" = "Bienvenue…";
 "Wheel finish" = "Finition de la roue";
 "Wheel size" = "Taille de la roue";
+"White" = "Blanc";
 "Whites" = "Blancs";
 "Width" = "Largeur";
 "Window" = "Fenêtre";
