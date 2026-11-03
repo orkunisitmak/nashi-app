@@ -33,6 +33,8 @@ public sealed partial class OfficeDocuments
         for(var i=0;i<value.Length;i++){if(XmlConvert.IsXmlChar(value[i]))safe.Append(value[i]);else if(i+1<value.Length&&XmlConvert.IsXmlSurrogatePair(value[i+1],value[i])){safe.Append(value,i,2);i++;}}
         return safe.ToString();
     }
+    // How UYAP introduces a served document's access code at the foot of each page.
+    private const string UyapAccessLead="UYAP Bilişim Sistemindeki bu dokümana http://vatandas.uyap.gov.tr adresinden ";
     private static string? ImageExtension(byte[] data)=>data switch{[0x89,0x50,0x4E,0x47,..]=>"png",[0xFF,0xD8,..]=>"jpeg",[0x47,0x49,0x46,..]=>"gif",[0x42,0x4D,..]=>"bmp",_=>null};
     private sealed class UdfImport
     {
@@ -41,10 +43,11 @@ public sealed partial class OfficeDocuments
         private sealed class Part(string name,string? color){public string Name=name;public string? Color=color;public List<string> Relations=[];}
         private readonly XElement template;private readonly string text;private readonly Dictionary<string,XElement> styles=new(StringComparer.Ordinal);private readonly XElement? page;
         private readonly List<(string Name,byte[] Data)> media=[];private readonly Dictionary<string,int> lists=new(StringComparer.Ordinal);
-        private readonly double width;private int pictures;private bool pageBreak;private XElement? header,footer;
+        private readonly double width;private readonly string webId;private int pictures;private bool pageBreak;private XElement? header,footer;
         public UdfImport(XElement template)
         {
             this.template=template;text=template.Element("content")?.Value??"";page=template.Element("properties")?.Element("pageFormat");
+            webId=string.Join(' ',(template.Element("webID")?.Attribute("id")?.Value??"").Split((char[]?)null,StringSplitOptions.RemoveEmptyEntries));
             foreach(var style in template.Element("styles")?.Elements("style")??[])if(style.Attribute("name")?.Value is {} name)styles[name]=style;
             width=Math.Max(72,PageSize().Width-Margin("leftMargin",42.52)-Margin("rightMargin",28.35));
         }
@@ -69,6 +72,8 @@ public sealed partial class OfficeDocuments
         {
             var document=new Part("document",null);var body=new StringBuilder();if(template.Element("elements") is {} elements)Content(elements,body,0,document);
             if(body.Length==0||EndsWithTable(body))body.Append("<w:p/>");
+            // A document UYAP serves carries its access code (webID), which UYAP prints under every page.
+            if(webId.Length>0)footer??=new XElement("footer");
             var headerLater=Number(header?.Attribute("startPage")?.Value)>=2;var footerLater=Number(footer?.Attribute("startPage")?.Value)>=2;var titlePage=header is not null&&headerLater||footer is not null&&footerLater;
             var parts=new List<(string File,string Xml,Part Part,string Type,string Kind)>();
             void Add(XElement container,string kind,string type,bool blank){var part=new Part(kind+(parts.Count+1),Rgb(container.Attribute("foreground")?.Value));parts.Add((part.Name+".xml",Furniture(blank?null:container,kind=="header"?"hdr":"ftr",part),part,type,kind));}
@@ -116,7 +121,16 @@ public sealed partial class OfficeDocuments
         {
             var xml=new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><w:").Append(root).Append(Namespaces).Append('>');var start=xml.Length;
             if(container is not null){Content(container,xml,1,part);if(root=="ftr"&&container.Attribute("pageNumber-spec") is not null)PageNumber(container,xml);}
+            if(root=="ftr"&&webId.Length>0)Access(xml);
             if(xml.Length==start||EndsWithTable(xml))xml.Append("<w:p/>");return xml.Append("</w:").Append(root).Append('>').ToString();
+        }
+        // UYAP's own wording, under a rule, with the code in a fixed-width face as UYAP draws it, so whoever receives the
+        // PDF can open the original at vatandas.uyap.gov.tr.
+        private void Access(StringBuilder xml)
+        {
+            const string small="<w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"12\"/><w:szCs w:val=\"12\"/></w:rPr>";
+            xml.Append("<w:p><w:pPr><w:pBdr><w:top w:val=\"single\" w:sz=\"4\" w:space=\"1\" w:color=\"000000\"/></w:pBdr><w:spacing w:before=\"40\" w:after=\"0\"/><w:jc w:val=\"left\"/></w:pPr><w:r>").Append(small).Append("<w:t xml:space=\"preserve\">").Append(Escaped(UyapAccessLead)).Append("</w:t></w:r>")
+                .Append("<w:r><w:rPr><w:rFonts w:ascii=\"Courier New\" w:hAnsi=\"Courier New\" w:cs=\"Courier New\"/><w:sz w:val=\"16\"/><w:szCs w:val=\"16\"/></w:rPr><w:t xml:space=\"preserve\">").Append(Escaped(webId)).Append("</w:t></w:r><w:r>").Append(small).Append("<w:t xml:space=\"preserve\"> ile erişebilirsiniz.</w:t></w:r></w:p>");
         }
         // UYAP draws the page number itself from the footer's pageNumber-* settings, at the bottom right: an optional label,
         // the page and, with a separator, the page count.

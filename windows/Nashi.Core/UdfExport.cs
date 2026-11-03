@@ -134,6 +134,8 @@ public sealed partial class OfficeDocuments
                 if(label.Suffix=='\t')runs.Add(new('\t',"\t",label.Format));else if(label.Suffix==' ')runs.Add(new('t'," ",label.Format));
             }
             ParagraphInto(properties,paragraph);foreach(var child in element.Elements())Visit(child,runs,style.C);
+            // An access code vouches only for the document UYAP served; a copy edited in Word and written as UDF again must not carry it on.
+            if(furniture&&string.Concat(runs.Where(r=>r.Kind=='t').Select(r=>r.Text)).TrimStart().StartsWith(UyapAccessLead.TrimEnd(),StringComparison.Ordinal))return;
             if(runs.FindIndex(r=>r.Kind=='f') is >=0 and var page)
             {
                 string Text(IEnumerable<Segment> part)=>string.Concat(part.Where(r=>r.Kind is 't' or '\t').Select(r=>r.Text)).Trim();var count=runs.FindIndex(page+1,r=>r.Kind=='f'&&r.Text!="PAGE");

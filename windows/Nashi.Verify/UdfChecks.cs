@@ -50,7 +50,7 @@ internal static class UdfChecks
             +Paragraph(" Alignment=\"3\" TabSet=\"183.0:0:0\" LeftIndent=\"0.0\" Hanging=\"190.0\"",Leaf("content","MÜŞTEKİ\t:"," bold=\"true\""),Leaf("content"," Uzun bir adres satırı\n"))+Paragraph("",Leaf("content","\u200B\n"));
         var footer="<footer pageNumber-spec=\"BSP32_2120\" pageNumber-foreStr=\"Sayfa\" pageNumber-seperator=\"/\" pageNumber-fontFace=\"Arial\" pageNumber-fontSize=\"11\">"+Paragraph("",Leaf("content","\n"))+"</footer>";
         var content="<?xml version=\"1.0\" encoding=\"UTF-8\" ?> \n\n<template format_id=\"1.8\" >\n<content><![CDATA["+text.ToString().Replace("]]>","]]]]><![CDATA[>")+"]]></content><properties><pageFormat mediaSizeName=\"1\" leftMargin=\"70.866\" rightMargin=\"70.866\" topMargin=\"56.7\" bottomMargin=\"56.7\" paperOrientation=\"1\" headerFOffset=\"15.0\" footerFOffset=\"28.3\" /></properties>\n<elements >\n"
-            +header+body+footer+"</elements>\n<styles><style name=\"default\" family=\"Dialog\" size=\"12\" foreground=\"-16777216\" /><style name=\"hvl-default\" family=\"Times New Roman\" size=\"12\" /><style name=\"edf_1\" resolver=\"hvl-default\" size=\"14\" /></styles>\n</template>";
+            +header+body+footer+"</elements>\n<styles><style name=\"default\" family=\"Dialog\" size=\"12\" foreground=\"-16777216\" /><style name=\"hvl-default\" family=\"Times New Roman\" size=\"12\" /><style name=\"edf_1\" resolver=\"hvl-default\" size=\"14\" /></styles>\n<webID id=\"Ab12cD3  -  eF45gH6  -  iJ78kL9  -  MnOPQR=\" >\n\n</webID>\n</template>";
         var udf=Path.Combine(root,"Tensip zaptı.udf");
         using(var zip=ZipFile.Open(udf,ZipArchiveMode.Create)){Entry(zip,"documentproperties.xml","<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE properties SYSTEM \"http://java.sun.com/dtd/properties.dtd\">\n<properties><entry key=\"uyapsicil\">1</entry></properties>");Entry(zip,"content.xml",content);using var sign=zip.CreateEntry("sign.sgn").Open();sign.Write(new byte[]{1,2,3});}
         check(Validate(check,udf)==text.ToString(),"The UYAP-shaped fixture or its CDATA split is malformed");
@@ -63,7 +63,9 @@ internal static class UdfChecks
         check(document.Contains("<w:pageBreakBefore/>")&&!document.Contains("\u200B")&&!document.Contains("\uFFFC")&&Part(docx,"word/media/image1.png").Length>0&&Part(docx,"word/numbering.xml").Contains("%1-"),"UDF page break, placeholders, image or list numbering were lost");
         // UYAP's Hanging moves the wrapped lines, not the first; its stops stay measured from the first line, and UYAP's default stops are 72 points apart.
         check(document.Contains("<w:tab w:val=\"left\" w:leader=\"none\" w:pos=\"3660\"/>")&&document.Contains("<w:ind w:left=\"3800\" w:right=\"0\" w:hanging=\"3800\"/>")&&Part(docx,"word/settings.xml").Contains("<w:defaultTabStop w:val=\"1440\"/>"),"UDF hanging indent or default tab stops were lost");
-        var footerPart=Part(docx,"word/footer3.xml");check(footerPart.Contains(" PAGE ")&&footerPart.Contains(" NUMPAGES ")&&footerPart.Contains("Sayfa "),"UDF page number was lost");
+        var footerPart=Part(docx,"word/footer3.xml");
+        // UYAP prints a served document's access code under every page, the first one too.
+        check(footerPart.Contains("UYAP Bilişim Sistemindeki bu dokümana http://vatandas.uyap.gov.tr adresinden ")&&footerPart.Contains(">Ab12cD3 - eF45gH6 - iJ78kL9 - MnOPQR=<")&&Part(docx,"word/footer4.xml").Contains("Ab12cD3 - eF45gH6"),"The UYAP access code was not printed under the pages");check(footerPart.Contains(" PAGE ")&&footerPart.Contains(" NUMPAGES ")&&footerPart.Contains("Sayfa "),"UDF page number was lost");
         using(var model=JsonDocument.Parse(JsonSerializer.Serialize(OfficeDocuments.ReadDocx(docx))))
         {
             var words=string.Concat(model.RootElement.GetProperty("blocks").EnumerateArray().Where(b=>b.GetProperty("type").GetString()=="paragraph").Select(b=>string.Concat(b.GetProperty("runs").EnumerateArray().Select(r=>r.TryGetProperty("text",out var t)?t.GetString():"/"))+"|"));
@@ -75,6 +77,7 @@ internal static class UdfChecks
         var party=OfficeDocuments.ReadUdf(back).Element("elements")!.Elements("paragraph").First(p=>p.Attribute("Hanging") is not null);
         check(party.Attribute("LeftIndent")?.Value=="0.0"&&party.Attribute("Hanging")?.Value=="190.0"&&party.Attribute("TabSet")?.Value?.StartsWith("183.0:0:0,190.0:0:0,216.0:0:0",StringComparison.Ordinal)==true,"A UYAP party block lost its hanging indent or colon stop in a round trip: "+party);
         check(OfficeDocuments.ReadUdf(back).Element("elements")!.Element("header")?.Attribute("startPage")?.Value=="2","A header starting on page 2 came back on the first page too");
+        check(!again.Contains("vatandas.uyap.gov.tr",StringComparison.Ordinal)&&!again.Contains("Ab12cD3",StringComparison.Ordinal),"A copy written as UDF again kept the original's access code");
     }
     private static void DocxToUyap(Action<bool,string> check,string root)
     {
