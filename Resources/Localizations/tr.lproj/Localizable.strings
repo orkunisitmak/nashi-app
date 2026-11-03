@@ -2590,6 +2590,8 @@
 "The upstream server did not return a successful HTTPS download." = "Kaynak sunucu başarılı bir HTTPS indirmesi döndürmedi.";
 "The video has no readable dimensions." = "Videonun boyutları okunamıyor.";
 "These files have moved or were deleted." = "Bu dosyalar taşınmış veya silinmiş.";
+"This Nashi runs from a backup an update kept. Open Nashi from %@ to update it." = "Bu Nashi, bir güncellemenin sakladığı yedekten çalışıyor. Güncellemek için Nashi'yi %@ klasöründen aç.";
+"This Nashi runs from a backup an update kept. Open Nashi from %lld to update it." = "Bu Nashi, bir güncellemenin sakladığı yedekten çalışıyor. Güncellemek için Nashi'yi %lld klasöründen aç.";
 "This PDF contains no pages." = "Bu PDF'de sayfa yok.";
 "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported." = "Bu PDF'de birleştirme, bölme veya sayfaları yeniden sıralama sırasında korunamayan form alanları ya da ekler var. Kopya dışa aktarılmadı.";
 "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported." = "Bu PDF'de meta veri temizliği sırasında korunamayan form alanları ya da ekler var. Kopya dışa aktarılmadı.";

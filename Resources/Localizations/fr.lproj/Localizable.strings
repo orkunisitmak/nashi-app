@@ -2590,6 +2590,8 @@
 "The upstream server did not return a successful HTTPS download." = "Le serveur amont n’a pas fourni de téléchargement HTTPS réussi.";
 "The video has no readable dimensions." = "Les dimensions de la vidéo sont illisibles.";
 "These files have moved or were deleted." = "Ces fichiers ont été déplacés ou supprimés.";
+"This Nashi runs from a backup an update kept. Open Nashi from %@ to update it." = "This Nashi runs from a backup an update kept. Open Nashi from %@ to update it.";
+"This Nashi runs from a backup an update kept. Open Nashi from %lld to update it." = "This Nashi runs from a backup an update kept. Open Nashi from %lld to update it.";
 "This PDF contains no pages." = "Ce PDF ne contient aucune page.";
 "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported." = "Ce PDF contient des champs de formulaire ou des pièces jointes que la fusion, la division ou la réorganisation des pages ne peut pas conserver. Aucune copie n’a été exportée.";
 "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported." = "Ce PDF contient des champs de formulaire ou des pièces jointes que le nettoyage des métadonnées ne peut pas conserver. Aucune copie n’a été exportée.";
