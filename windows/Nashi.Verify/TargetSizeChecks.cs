@@ -14,8 +14,11 @@ internal static class TargetSizeChecks
         check(bumpy.Status==TargetSizeStatus.Achieved&&bumpy.Best!.Bytes<=30000,"Non-monotonic size curve returned an oversized candidate");
         var resized=TargetSizeSearch.Run(200000,9000,90,true,true,Smooth);
         check(resized.Status==TargetSizeStatus.Achieved&&resized.Best!.Scale<1&&resized.Best.Quality>=TargetSizeSearch.QualityFloor,"Size priority did not resize before dropping below the quality floor");
+        // Without resizing the search goes below the quality floor: quality 20 is the highest that fits 5000 bytes.
         var quality=TargetSizeSearch.Run(200000,5000,90,true,false,Smooth);
-        check(quality.Status==TargetSizeStatus.BestEffortAboveTarget&&quality.Best is null&&quality.Smallest!.Bytes>5000,"An unreachable target was reported as achieved");
+        check(quality.Status==TargetSizeStatus.Achieved&&quality.Best is {Quality:20,Scale:1,Bytes:5000},"Quality priority rejected a fitting candidate below the quality floor");
+        var unreachable=TargetSizeSearch.Run(200000,1000,90,true,false,Smooth);
+        check(unreachable.Status==TargetSizeStatus.BestEffortAboveTarget&&unreachable.Best is null&&unreachable.Smallest!.Bytes>1000,"An unreachable target was reported as achieved");
         var lossless=TargetSizeSearch.Run(200000,60000,100,false,true,(q,s)=>(long)(200000*s*s));
         check(lossless.Status==TargetSizeStatus.Achieved&&lossless.Best!.Quality==100&&lossless.Best.Bytes<=60000,"Lossless search changed quality or missed a reachable size");
         check(TargetSizeSearch.Run(1000,1000,80,true,true,(_,_)=>throw new Exception("encoded")).Status==TargetSizeStatus.AlreadyUnderTarget,"A file already under target was re-encoded");
