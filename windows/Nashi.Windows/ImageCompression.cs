@@ -15,14 +15,20 @@ public static partial class ImageEngine
         }
         // The source file can stand in for the output only when no edit reached the pixels; flips, 180° turns and annotations keep the size but must still be encoded and measured.
         var keepsOriginal=options.Annotated is null&&!options.FlipHorizontal&&!options.FlipVertical&&((options.Rotation%360)+360)%360==0&&image.PixelWidth==source.PixelWidth&&image.PixelHeight==source.PixelHeight&&FeatureCatalog.Extension(input)==format;
-        var outcome=target is {} limit?TargetSizeSearch.Run(keepsOriginal?original:long.MaxValue,limit,quality,lossy,true,(q,scale)=>{progress?.Report(new(null,$"Fitting image · attempt {++attempt}…"));Encode(q,scale);return new FileInfo(output).Length;},token):null;
+        // Every attempt that fits is kept, so the chosen one is used as measured instead of being re-encoded.
+        var fitting=new Dictionary<(int,double),string>();
+        try
+        {
+        var outcome=target is {} limit?TargetSizeSearch.Run(keepsOriginal?original:long.MaxValue,limit,quality,lossy,true,(q,scale)=>{progress?.Report(new(null,$"Fitting image · attempt {++attempt}…"));Encode(q,scale);var bytes=new FileInfo(output).Length;if(bytes<=limit){var kept=output+"."+fitting.Count+".fit";File.Copy(output,kept,true);fitting[(q,scale)]=kept;}return bytes;},token):null;
         if(outcome is {Status:TargetSizeStatus.BestEffortAboveTarget})
         {
             if(File.Exists(output))File.Delete(output);
             throw new IOException("The requested image size could not be reached. Choose a larger target.");
         }
-        var best=outcome?.Best;if(best is null)Encode(quality,1);else if(new FileInfo(output).Length!=best.Bytes){Encode(best.Quality,best.Scale);if(new FileInfo(output).Length>target){File.Delete(output);throw new IOException("The requested image size could not be reached. Choose a larger target.");}}
+        var best=outcome?.Best;if(best is null)Encode(quality,1);else if(fitting.TryGetValue((best.Quality,best.Scale),out var chosen))File.Copy(chosen,output,true);else{Encode(best.Quality,best.Scale);if(new FileInfo(output).Length>target){File.Delete(output);throw new IOException("The requested image size could not be reached. Choose a larger target.");}}
         if((best?.Scale??1)==1&&keepsOriginal&&original<new FileInfo(output).Length)File.Copy(input,output,true);
+        }
+        finally{foreach(var kept in fitting.Values)if(File.Exists(kept))File.Delete(kept);}
     }
     internal static long? CompressionTarget(long original,long? bytes,double? percent)
     {

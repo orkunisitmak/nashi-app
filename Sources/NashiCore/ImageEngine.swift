@@ -580,6 +580,9 @@ public enum ImageEngine {
         let temporary=output.deletingLastPathComponent().appendingPathComponent(".nashi-\(UUID().uuidString)").appendingPathExtension(output.pathExtension)
         defer { try? FileManager.default.removeItem(at:temporary) }
         let quality=max(0.01,min(1,options.quality)),lossy=ext.lowercased() != "png"
+        // Every attempt that fits is kept, so the chosen one is used as measured instead of being re-encoded.
+        var fitting:[String:URL]=[:]
+        defer { for url in fitting.values { try? FileManager.default.removeItem(at:url) } }
         func encode(_ percent:Int,_ scale:Double) throws->Int64 {
             try token.check();try? FileManager.default.removeItem(at:temporary)
             // Round both sides from the same image and keep the shorter side at least one pixel,
@@ -588,7 +591,12 @@ public enum ImageEngine {
             let frame=scale<1 ? try resized(image,width:max(1,Int((Double(image.width)*fit).rounded())),height:max(1,Int((Double(image.height)*fit).rounded()))):image
             try write(frame,to:temporary,quality:Double(percent)/100)
             // The same URL is replaced on each pass; resourceValues can retain its first size.
-            return ((try FileManager.default.attributesOfItem(atPath:temporary.path))[.size] as? NSNumber)?.int64Value ?? 0
+            let size=((try FileManager.default.attributesOfItem(atPath:temporary.path))[.size] as? NSNumber)?.int64Value ?? 0
+            if let target,size<=target {
+                let kept=temporary.deletingPathExtension().appendingPathExtension("\(fitting.count).\(temporary.pathExtension)")
+                try? FileManager.default.removeItem(at:kept);try FileManager.default.copyItem(at:temporary,to:kept);fitting["\(percent)@\(scale)"]=kept
+            }
+            return size
         }
         let start=Int((quality*100).rounded())
         // Skipping the search is safe only when retainSmallerOriginal can fall back to the
@@ -599,9 +607,14 @@ public enum ImageEngine {
             throw NashiError.failed("The requested file size could not be reached. Choose a larger target.")
         }
         let best=outcome?.best
-        // Some encoders (FFmpeg WebP/AVIF) are not byte-for-byte repeatable, so the replay only has to fit the target.
-        if let best { if try encode(best.quality,best.scale) > (target ?? .max) { throw NashiError.failed("The requested file size could not be reached. Choose a larger target.") } }
-        else { _=try encode(start,1) }
+        if let best {
+            if let kept=fitting.removeValue(forKey:"\(best.quality)@\(best.scale)") {
+                try? FileManager.default.removeItem(at:temporary);try FileManager.default.moveItem(at:kept,to:temporary)
+            } else if try encode(best.quality,best.scale) > (target ?? .max) {
+                // Fallback only: a fitting candidate is always kept above.
+                throw NashiError.failed("The requested file size could not be reached. Choose a larger target.")
+            }
+        } else { _=try encode(start,1) }
         if (best?.scale ?? 1)==1,image.width==originalWidth,image.height==originalHeight { try OutputFiles.retainSmallerOriginal(input,output:temporary,target:target) }
         try FileManager.default.moveItem(at:temporary,to:output)
         return [output]
