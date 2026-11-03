@@ -43,6 +43,14 @@ public static class PhotoCodec
         }
     }
     public static byte[] Png(string input){using var image=Read(input);return image.ToByteArray(MagickFormat.Png);}
+    // Pictures inside documents are read under the same policy and limits as image files. The caller names the format from the
+    // picture's signature, so ImageMagick never picks a coder from the bytes themselves.
+    public static byte[] Png(byte[] data,MagickFormat format)
+    {
+        var settings=new MagickReadSettings{FrameCount=1,Format=format};var info=new MagickImageInfo(data,settings);if((ulong)info.Width*info.Height>100_000_000)throw new InvalidDataException("This image exceeds 100 MP.");
+        using var image=new MagickImage(data,settings);return image.ToByteArray(MagickFormat.Png);
+    }
+    public static (uint Width,uint Height) Size(byte[] data,MagickFormat format){var info=new MagickImageInfo(data,new MagickReadSettings{FrameCount=1,Format=format});return(info.Width,info.Height);}
     public static void EncodePng(byte[] pixels,string output,string format,int quality=85,string? encoder=null,CancellationToken token=default)
     {
         using var image=new MagickImage(pixels,new MagickReadSettings{Format=MagickFormat.Png});image.Strip();image.Quality=(uint)Math.Clamp(quality,1,100);

@@ -36,6 +36,15 @@ public sealed partial class OfficeDocuments
     // How UYAP introduces a served document's access code at the foot of each page.
     private const string UyapAccessLead="UYAP Bilişim Sistemindeki bu dokümana http://vatandas.uyap.gov.tr adresinden ";
     private static string? ImageExtension(byte[] data)=>data switch{[0x89,0x50,0x4E,0x47,..]=>"png",[0xFF,0xD8,..]=>"jpeg",[0x47,0x49,0x46,..]=>"gif",[0x42,0x4D,..]=>"bmp",_=>null};
+    // The pictures UYAP shows as they are, and the other kinds Word documents hold, which are stored as PNG. The format comes from
+    // the signature, never from ImageMagick's own guess, so no other coder reads a document's bytes.
+    private static ImageMagick.MagickFormat? PictureFormat(byte[] data)=>data switch
+    {
+        [0x89,0x50,0x4E,0x47,..]=>ImageMagick.MagickFormat.Png,[0xFF,0xD8,..]=>ImageMagick.MagickFormat.Jpeg,[0x47,0x49,0x46,..]=>ImageMagick.MagickFormat.Gif,[0x42,0x4D,..]=>ImageMagick.MagickFormat.Bmp,
+        [0x49,0x49,0x2A,0x00,..] or [0x4D,0x4D,0x00,0x2A,..]=>ImageMagick.MagickFormat.Tiff,[0x52,0x49,0x46,0x46,_,_,_,_,0x57,0x45,0x42,0x50,..]=>ImageMagick.MagickFormat.WebP,
+        [0x01,0x00,0x00,0x00,..] when data.Length>=44&&data.AsSpan(40,4).SequenceEqual(" EMF"u8)=>ImageMagick.MagickFormat.Emf,[0xD7,0xCD,0xC6,0x9A,..] or [0x01 or 0x02,0x00,0x09,0x00,..]=>ImageMagick.MagickFormat.Wmf,
+        _=>null
+    };
     private sealed class UdfImport
     {
         private const string Namespaces=" xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\" xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"";
@@ -205,7 +214,7 @@ public sealed partial class OfficeDocuments
             if(data.Length>20_000_000||ImageExtension(data) is not {} extension)return;
             // Sizes are pixels at 96 DPI, as udf-cli and the UDF toolkit write them; an image never grows past the text width.
             var w=Number(image.Attribute("width")?.Value);var h=Number(image.Attribute("height")?.Value);
-            if(w is not >0||h is not >0){try{var info=new ImageMagick.MagickImageInfo(data);w=info.Width;h=info.Height;}catch(Exception error)when(error is ImageMagick.MagickException or ArgumentException){return;}if(w is not >0||h is not >0)return;}
+            if(w is not >0||h is not >0){try{var size=PhotoCodec.Size(data,PictureFormat(data)!.Value);w=size.Width;h=size.Height;}catch(Exception error)when(error is ImageMagick.MagickException or ArgumentException){return;}if(w is not >0||h is not >0)return;}
             var scale=Math.Min(1,width*96/72/w.Value);var cx=(long)(w.Value*scale*9525);var cy=(long)(h.Value*scale*9525);
             pictures++;var id="rIdImage"+pictures;var name="image"+pictures+"."+extension;media.Add((name,data));part.Relations.Add("<Relationship Id=\""+id+"\" Type=\""+Relationship+"image\" Target=\"media/"+name+"\"/>");
             xml.Append("<w:r><w:drawing><wp:inline distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\"><wp:extent cx=\"").Append(cx).Append("\" cy=\"").Append(cy).Append("\"/><wp:docPr id=\"").Append(pictures).Append("\" name=\"Picture ").Append(pictures)

@@ -118,5 +118,19 @@ internal static class UdfChecks
         var breakOnly=Path.Combine(root,"Page break only.docx");using(var zip=ZipFile.Open(breakOnly,ZipArchiveMode.Create))Entry(zip,"word/document.xml","<w:document "+w+"><w:body><w:p><w:r><w:t>Bir</w:t></w:r></w:p><w:p><w:r><w:br w:type=\"page\"/></w:r></w:p><w:p><w:r><w:t>İki</w:t></w:r></w:p></w:body></w:document>");
         var breakUdf=Path.Combine(root,"Page break only.udf");OfficeDocuments.DocxToUdf(breakOnly,breakUdf);check(Validate(check,breakUdf)=="Bir\n\u200B\nİki\n"&&OfficeDocuments.ReadUdf(breakUdf).Element("elements")!.Elements("page-break").Count()==1,"A paragraph holding only a page break started the next page with an empty line");
         check(xml.Contains("leftMargin=\"85.05\"")&&xml.Contains("paperOrientation=\"1\"")&&xml.Contains("headerFOffset=\"35.45\""),"DOCX page setup was lost");
+        // A Word TIFF is stored as PNG. Data without a known picture signature never reaches ImageMagick, which would otherwise pick
+        // a coder from the bytes themselves; an SVG text is left out although ImageMagick could draw it.
+        byte[] tiff;using(var picture=new ImageMagick.MagickImage(Convert.FromBase64String(Png),new ImageMagick.MagickReadSettings{Format=ImageMagick.MagickFormat.Png}))tiff=picture.ToByteArray(ImageMagick.MagickFormat.Tiff);
+        static string Drawing(string id)=>"<w:r><w:drawing><wp:inline><wp:extent cx=\"952500\" cy=\"952500\"/><a:graphic><a:graphicData><pic:pic><pic:blipFill><a:blip r:embed=\""+id+"\"/></pic:blipFill></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>";
+        var pictures=Path.Combine(root,"Pictures.docx");
+        using(var zip=ZipFile.Open(pictures,ZipArchiveMode.Create))
+        {
+            Entry(zip,"word/document.xml","<w:document "+w+"><w:body><w:p>"+Drawing("rTiff")+Drawing("rSvg")+"</w:p></w:body></w:document>");
+            Entry(zip,"word/_rels/document.xml.rels","<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rTiff\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/image\" Target=\"media/image1.tiff\"/><Relationship Id=\"rSvg\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/image\" Target=\"media/image2.svg\"/></Relationships>");
+            Entry(zip,"word/media/image2.svg","<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"8\" height=\"8\"><rect width=\"8\" height=\"8\"/></svg>");
+            using var stored=zip.CreateEntry("word/media/image1.tiff").Open();stored.Write(tiff);
+        }
+        var picturesUdf=Path.Combine(root,"Pictures.udf");OfficeDocuments.DocxToUdf(pictures,picturesUdf);var images=OfficeDocuments.ReadUdf(picturesUdf).Descendants("image").ToList();
+        check(Validate(check,picturesUdf)=="\uFFFC\n"&&images.Count==1&&Convert.FromBase64String(images[0].Attribute("imageData")!.Value).AsSpan().StartsWith(new byte[]{0x89,0x50,0x4E,0x47}),"A Word TIFF was not stored as PNG, or unrecognised picture data reached ImageMagick");
     }
 }
