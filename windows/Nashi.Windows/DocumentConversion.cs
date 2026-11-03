@@ -68,7 +68,9 @@ public sealed class DocumentConversion(OfficeRuntime runtime,Toolchain tools)
     }
     private static async Task<string> PdfPreservedHtml(string input,string work,int dpi,CancellationToken token,string password="")
     {
-        var pages=await NativePdf.RenderAsync(input,dpi,token,password);return "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body style=\"margin:0\">"+string.Join("",pages.Select(p=>"<p style=\"page-break-after:always;margin:0\"><img style=\"width:100%;height:auto\" src=\"data:image/png;base64,"+Convert.ToBase64String(p)+"\"/></p>"))+"</body></html>";
+        // Each page keeps its proportions: its size in points is the render's pixels at this DPI.
+        var pages=await NativePdf.RenderAsync(input,dpi,token,password);string Style(byte[] page)=>OfficeDocuments.PngSize(page) is {} size?OfficeDocuments.PictureStyle(size.Width*72d/dpi,size.Height*72d/dpi):"width:100%;height:auto";
+        return "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body style=\"margin:0\">"+string.Join("",pages.Select(p=>"<p style=\"page-break-after:always;margin:0\"><img style=\""+Style(p)+"\" src=\"data:image/png;base64,"+Convert.ToBase64String(p)+"\"/></p>"))+"</body></html>";
     }
     private static string PdfTables(string input,string password)
     {

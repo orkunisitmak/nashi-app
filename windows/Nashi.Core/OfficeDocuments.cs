@@ -134,13 +134,28 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
                 byte[]? data=null;var mime="image/png";if(image.TryGetPng(out var png))data=png;else if(image.RawBytes.Length>=2&&image.RawBytes[0]==0xff&&image.RawBytes[1]==0xd8){data=image.RawBytes.ToArray();mime="image/jpeg";}if(data?.Length>20_000_000)continue;
                 // A render is bounded by the page and DPI, like the whole-page renders below.
                 if(data is null&&mappable){needed=true;data=pageImage?.Invoke(page.Number,new(image.BoundingBox.Left,page.Height-image.BoundingBox.Top,image.BoundingBox.Width,image.BoundingBox.Height));}if(data is null)continue;
-                blocks.Add((page.Height-image.BoundingBox.Top,"<p><img style=\"max-width:100%;width:"+image.BoundingBox.Width.ToString("0.###",System.Globalization.CultureInfo.InvariantCulture)+"pt;height:auto\" src=\"data:"+mime+";base64,"+Convert.ToBase64String(data)+"\"/></p>"));
+                blocks.Add((page.Height-image.BoundingBox.Top,"<p><img style=\""+PictureStyle(image.BoundingBox.Width,image.BoundingBox.Height)+"\" src=\"data:"+mime+";base64,"+Convert.ToBase64String(data)+"\"/></p>"));
             }
-            if(blocks.Count==0){needed=true;if(pageImage?.Invoke(page.Number,null) is {} rendered)blocks.Add((0,"<p><img style=\"max-width:100%;width:"+page.Width.ToString("0.###",System.Globalization.CultureInfo.InvariantCulture)+"pt;height:auto\" src=\"data:image/png;base64,"+Convert.ToBase64String(rendered)+"\"/></p>"));}
+            // A rotated page renders turned, so the render's own proportions give the height.
+            if(blocks.Count==0){needed=true;if(pageImage?.Invoke(page.Number,null) is {} rendered)blocks.Add((0,"<p><img style=\""+PictureStyle(page.Width,PngSize(rendered) is {} size?page.Width*size.Height/size.Width:page.Height)+"\" src=\"data:image/png;base64,"+Convert.ToBase64String(rendered)+"\"/></p>"));}
             if(needed)render.Add(page.Number);
             html.Append("<section style=\"page-break-after:always\">");foreach(var block in blocks.OrderBy(b=>b.Top))html.Append(block.Html);html.Append("</section>");
         }
         pagesToRender=render.ToArray();return html.Append("</body></html>").ToString();
+    }
+    // LibreOffice's HTML import takes a picture's height from its pixels at 96 DPI whatever height:auto says, and ignores
+    // max-width and @page: it lays the text out on A4 or Letter with 2 cm and 1 cm side margins. A picture therefore gets
+    // both sizes, as the PDF shows it, scaled down in proportion to fit a 510 × 735 pt column.
+    public static string PictureStyle(double width,double height)
+    {
+        if(!(double.IsFinite(width)&&double.IsFinite(height)&&width>0&&height>0))return "max-width:100%;height:auto";
+        var scale=Math.Min(1,Math.Min(510/width,735/height));return "width:"+CssNumber(width*scale)+"pt;height:"+CssNumber(height*scale)+"pt";
+    }
+    /// The pixel size from a PNG's header, or null for anything else.
+    public static (int Width,int Height)? PngSize(byte[] png)
+    {
+        if(png.Length<24||!png.AsSpan(0,8).SequenceEqual(new byte[]{0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A}))return null;
+        var width=System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(png.AsSpan(16));var height=System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(png.AsSpan(20));return width>0&&height>0?(width,height):null;
     }
     public static string SanitizedHtml(string html)
     {
