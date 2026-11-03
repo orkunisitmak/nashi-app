@@ -217,9 +217,11 @@ private enum PagesDOCXReader {
                 let properties = element.first("pPr")
                 let base = resolved(properties?.first("pStyle")?.attr("val"))
                 var runs: [[String:Any]] = []
-                // Open complex fields (fldChar begin ... end); a HYPERLINK
-                // field links its result runs once its instruction is complete.
-                var fields: [(instruction: String, link: String?)] = []
+                // Open complex fields (fldChar begin ... end). A field's instruction
+                // ends at its first separate, where a HYPERLINK field resolves its
+                // link once; each entry carries the innermost link in effect, so a
+                // run reads it in constant time however deeply fields nest.
+                var fields: [(instruction: String, link: String?, result: Bool)] = []
                 func visit(_ item: XMLElement, link: String? = nil) throws {
                     try token.check()
                     if item.local == "r" {
@@ -228,14 +230,19 @@ private enum PagesDOCXReader {
                         for child in item.elements(nil) {
                             if child.local == "fldChar" {
                                 switch child.attr("fldCharType") {
-                                case "begin": fields.append(("", nil))
-                                case "separate": if !fields.isEmpty { fields[fields.count-1].link = hyperlinkField(fields[fields.count-1].instruction) }
+                                case "begin": fields.append(("", fields.last?.link, false))
+                                case "separate":
+                                    if fields.last?.result == false {
+                                        let index = fields.count - 1
+                                        fields[index].link = hyperlinkField(fields[index].instruction) ?? fields[index].link
+                                        fields[index].result = true
+                                    }
                                 case "end": _ = fields.popLast()
                                 default: break
                                 }
                             }
-                            else if child.local == "instrText", !fields.isEmpty { fields[fields.count-1].instruction += text(child) }
-                            else if child.local == "t" { var run: [String:Any] = ["text":text(child),"character":formatting];if let link = link ?? fields.last(where: { $0.link != nil })?.link {run["link"]=link};runs.append(run) }
+                            else if child.local == "instrText", fields.last?.result == false { fields[fields.count-1].instruction += text(child) }
+                            else if child.local == "t" { var run: [String:Any] = ["text":text(child),"character":formatting];if let link = link ?? fields.last?.link {run["link"]=link};runs.append(run) }
                             else if child.local == "tab" { runs.append(["text":"\t","character":formatting]) }
                             else if child.local == "noBreakHyphen" { runs.append(["text":"\u{2011}","character":formatting]) }
                             else if child.local == "br", child.attr("type") == "page" { runs.append(["type":"pageBreak"]) }
