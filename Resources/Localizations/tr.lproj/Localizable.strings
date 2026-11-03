@@ -343,6 +343,7 @@
 "BACKGROUND BLUR" = "ARKA PLAN BULANIKLIĞI";
 "BACKGROUND COLOR" = "ARKA PLAN RENGİ";
 "BACKGROUND IMAGE…" = "ARKA PLAN GÖRSELİ…";
+"BACKGROUND TOLERANCE (%)" = "ARKA PLAN TOLERANSI (%)";
 "BALANCED" = "DENGELİ";
 "BARS" = "ÇUBUKLAR";
 "BESIDE ORIGINAL FILES" = "ORİJİNAL DOSYALARIN YANINA";
@@ -363,6 +364,7 @@
 "Background Image…" = "Arka Plan Görseli…";
 "Background blur" = "Arka plan bulanıklığı";
 "Background color" = "Arka plan rengi";
+"Background tolerance (%)" = "Arka plan toleransı (%)";
 "Balanced" = "Dengeli";
 "Bars" = "Çubuklar";
 "Beside original files" = "Orijinal dosyaların yanına";
@@ -466,6 +468,7 @@
 "CHOOSE ONE OF THE EDITABLE METADATA FIELDS." = "DÜZENLENEBİLİR META VERİ ALANLARINDAN BİRİNİ SEÇ.";
 "CHOOSE OUTPUT FOLDER…" = "ÇIKTI KLASÖRÜNÜ SEÇ…";
 "CHOOSE PAGE RANGES SUCH AS 1-3, 5 WITHIN THE PDF PAGE COUNT." = "PDF'NİN SAYFA SAYISI İÇİNDE 1-3, 5 GİBİ SAYFA ARALIKLARI SEÇ.";
+"CHOOSE PNG, WEBP, TIFF OR AVIF TO KEEP A TRANSPARENT BACKGROUND." = "ŞEFFAF ARKA PLANI KORUMAK İÇİN PNG, WEBP, TIFF VEYA AVIF SEÇ.";
 "CHOOSE SET UP MEDIA TOOLS FIRST." = "ÖNCE MEDYA ARAÇLARINI KUR'U SEÇ.";
 "CHOOSE SET UP MEDIA TOOLS ONCE TO ENABLE MEDIA EDITING." = "MEDYA DÜZENLEMEYİ AÇMAK İÇİN BİR KEZ MEDYA ARAÇLARINI KUR'U SEÇ.";
 "CHOOSE SET UP MEDIA TOOLS ONCE TO ENABLE WEB DOWNLOADS." = "WEB'DEN İNDİRMEYİ AÇMAK İÇİN BİR KEZ MEDYA ARAÇLARINI KUR'U SEÇ.";
@@ -611,6 +614,7 @@
 "Choose Files" = "Dosya Seç";
 "Choose Files…" = "Dosya Seç…";
 "Choose Find media to inspect this link." = "Bu bağlantıyı incelemek için Medyayı bul'u seç.";
+"Choose PNG, WebP, TIFF or AVIF to keep a transparent background." = "Şeffaf arka planı korumak için PNG, WebP, TIFF veya AVIF seç.";
 "Choose SRT, VTT or TXT." = "SRT, VTT veya TXT seç.";
 "Choose Set up media tools first." = "Önce Medya araçlarını kur'u seç.";
 "Choose Set up media tools once to enable media editing." = "Medya düzenlemeyi açmak için bir kez Medya araçlarını kur'u seç.";
@@ -977,6 +981,7 @@
 "Drop it like it’s… a file." = "Dosyanı buraya bırak.";
 "Drop something good." = "Bir dosya bırak.";
 "Duplicate" = "Çoğalt";
+"EDGE SOFTNESS (PX)" = "KENAR YUMUŞAKLIĞI (PX)";
 "EDIT" = "DÜZENLE";
 "EDIT FIELDS OR REMOVE METADATA. ENCODED AUDIO AND VIDEO STAY UNTOUCHED." = "ALANLARI DÜZENLE YA DA META VERİLERİ KALDIR. KODLANMIŞ SES VE GÖRÜNTÜ DEĞİŞMEZ.";
 "EDIT FIELDS OR REMOVE METADATA. ENCODED IMAGE PIXELS STAY UNTOUCHED." = "ALANLARI DÜZENLE YA DA META VERİLERİ KALDIR. GÖRSELİN PİKSELLERİ DEĞİŞMEZ.";
@@ -1007,6 +1012,7 @@
 "EXPOSURE" = "POZLAMA";
 "EXTRACT ARCHIVE" = "ARŞİVİ AÇ";
 "EXTRACT NASHI INTO ITS OWN WRITABLE FOLDER FIRST." = "ÖNCE NASHI'Yİ YAZILABİLİR, KENDİNE AİT BİR KLASÖRE ÇIKAR.";
+"Edge softness (px)" = "Kenar yumuşaklığı (px)";
 "Edit" = "Düzenle";
 "Edit Image" = "Görseli Düzenle";
 "Edit Photo" = "Fotoğrafı Düzenle";
@@ -1107,6 +1113,7 @@
 "FOLDERS" = "KLASÖRLER";
 "FONT" = "YAZI TİPİ";
 "FONT SIZE" = "YAZI BOYUTU";
+"FOR PRODUCT SHOTS, LOGOS AND SCANS ON A PLAIN COLOR. ONLY THE BACKGROUND TOUCHING THE IMAGE EDGES IS REMOVED; THIS IS NOT AI SUBJECT DETECTION." = "DÜZ RENK ÜZERİNDEKİ ÜRÜN FOTOĞRAFLARI, LOGOLAR VE TARAMALAR İÇİN. YALNIZCA GÖRSELİN KENARLARINA DEĞEN ARKA PLAN KALDIRILIR; BU BİR YAPAY ZEKÂ NESNE ALGILAMASI DEĞİLDİR.";
 "FORMAT COMPATIBILITY" = "BİÇİM UYUMLULUĞU";
 "FORMAT PREFERENCES" = "BİÇİM TERCİHLERİ";
 "FORMATS" = "BİÇİMLER";
@@ -1189,6 +1196,7 @@
 "Folders" = "Klasörler";
 "Font" = "Yazı tipi";
 "Font size" = "Yazı boyutu";
+"For product shots, logos and scans on a plain color. Only the background touching the image edges is removed; this is not AI subject detection." = "Düz renk üzerindeki ürün fotoğrafları, logolar ve taramalar için. Yalnızca görselin kenarlarına değen arka plan kaldırılır; bu bir yapay zekâ nesne algılaması değildir.";
 "Format Compatibility" = "Biçim Uyumluluğu";
 "Format preferences" = "Biçim tercihleri";
 "Formats" = "Biçimler";
@@ -2007,6 +2015,7 @@
 "Remove Image" = "Görseli Kaldır";
 "Remove Metadata" = "Meta Verileri Kaldır";
 "Remove all metadata" = "Tüm meta verileri kaldır";
+"Remove background" = "Arka planı kaldır";
 "Remove clips (numbers; separated by semicolons)" = "Çıkarılacak klipler (numara; noktalı virgülle ayır)";
 "Remove from Float" = "Yüzen Pencereden Kaldır";
 "Remove from selection" = "Seçimden kaldır";
@@ -2437,6 +2446,7 @@
 "THIS IMAGE COULD NOT BE DECODED." = "BU GÖRSELİN KODU ÇÖZÜLEMEDİ.";
 "THIS IMAGE EXCEEDS 100 MP." = "BU GÖRSEL 100 MP'Yİ AŞIYOR.";
 "THIS IMAGE EXCEEDS 200 MB." = "BU GÖRSEL 200 MB'I AŞIYOR.";
+"THIS IMAGE HAS NO SOLID BACKGROUND TO REMOVE. IT WORKS BEST ON PRODUCT SHOTS, LOGOS AND SCANS ON A PLAIN COLOR." = "BU GÖRSELDE KALDIRILACAK DÜZ BİR ARKA PLAN YOK. EN İYİ SONUCU DÜZ RENK ÜZERİNDEKİ ÜRÜN FOTOĞRAFLARI, LOGOLAR VE TARAMALARDA VERİR.";
 "THIS IMAGE IS TOO LARGE (100 MP LIMIT)." = "BU GÖRSEL ÇOK BÜYÜK (SINIR 100 MP).";
 "THIS IMAGE IS TOO LARGE TO PASTE. CHOOSE THE IMAGE FILE INSTEAD." = "BU GÖRSEL YAPIŞTIRMAK İÇİN ÇOK BÜYÜK. BUNUN YERİNE GÖRSEL DOSYASINI SEÇ.";
 "THIS IS A LIVE OR UPCOMING STREAM. USE A FINISHED VIDEO LINK." = "BU, CANLI VEYA HENÜZ BAŞLAMAMIŞ BİR YAYIN. TAMAMLANMIŞ BİR VİDEONUN BAĞLANTISINI KULLAN.";
@@ -2619,6 +2629,7 @@
 "This image could not be decoded." = "Bu görselin kodu çözülemedi.";
 "This image exceeds 100 MP." = "Bu görsel 100 MP'yi aşıyor.";
 "This image exceeds 200 MB." = "Bu görsel 200 MB'ı aşıyor.";
+"This image has no solid background to remove. It works best on product shots, logos and scans on a plain color." = "Bu görselde kaldırılacak düz bir arka plan yok. En iyi sonucu düz renk üzerindeki ürün fotoğrafları, logolar ve taramalarda verir.";
 "This image is too large (100 MP limit)." = "Bu görsel çok büyük (sınır 100 MP).";
 "This image is too large to paste. Choose the image file instead." = "Bu görsel yapıştırmak için çok büyük. Bunun yerine görsel dosyasını seç.";
 "This is a live or upcoming stream. Use a finished video link." = "Bu, canlı veya henüz başlamamış bir yayın. Tamamlanmış bir videonun bağlantısını kullan.";

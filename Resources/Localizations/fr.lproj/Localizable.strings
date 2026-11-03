@@ -343,6 +343,7 @@
 "BACKGROUND BLUR" = "FLOU D’ARRIÈRE-PLAN";
 "BACKGROUND COLOR" = "COULEUR D’ARRIÈRE-PLAN";
 "BACKGROUND IMAGE…" = "IMAGE D’ARRIÈRE-PLAN…";
+"BACKGROUND TOLERANCE (%)" = "TOLÉRANCE DE L’ARRIÈRE-PLAN (%)";
 "BALANCED" = "ÉQUILIBRÉ";
 "BARS" = "BARRES";
 "BESIDE ORIGINAL FILES" = "À CÔTÉ DES FICHIERS D’ORIGINE";
@@ -363,6 +364,7 @@
 "Background Image…" = "Image d’arrière-plan…";
 "Background blur" = "Flou d’arrière-plan";
 "Background color" = "Couleur d’arrière-plan";
+"Background tolerance (%)" = "Tolérance de l’arrière-plan (%)";
 "Balanced" = "Équilibré";
 "Bars" = "Barres";
 "Beside original files" = "À côté des fichiers d’origine";
@@ -466,6 +468,7 @@
 "CHOOSE ONE OF THE EDITABLE METADATA FIELDS." = "CHOISISSEZ L’UN DES CHAMPS DE MÉTADONNÉES MODIFIABLES.";
 "CHOOSE OUTPUT FOLDER…" = "CHOISIR LE DOSSIER DE SORTIE…";
 "CHOOSE PAGE RANGES SUCH AS 1-3, 5 WITHIN THE PDF PAGE COUNT." = "CHOISISSEZ DES PLAGES DE PAGES COMME 1-3, 5 DANS LE NOMBRE DE PAGES DU PDF.";
+"CHOOSE PNG, WEBP, TIFF OR AVIF TO KEEP A TRANSPARENT BACKGROUND." = "CHOISISSEZ PNG, WEBP, TIFF OU AVIF POUR CONSERVER UN ARRIÈRE-PLAN TRANSPARENT.";
 "CHOOSE SET UP MEDIA TOOLS FIRST." = "CHOISISSEZ D’ABORD CONFIGURER LES OUTILS MULTIMÉDIAS.";
 "CHOOSE SET UP MEDIA TOOLS ONCE TO ENABLE MEDIA EDITING." = "CHOISISSEZ CONFIGURER LES OUTILS MULTIMÉDIAS UNE FOIS POUR ACTIVER LA MODIFICATION DES MÉDIAS.";
 "CHOOSE SET UP MEDIA TOOLS ONCE TO ENABLE WEB DOWNLOADS." = "CHOISISSEZ CONFIGURER LES OUTILS MULTIMÉDIAS UNE FOIS POUR ACTIVER LES TÉLÉCHARGEMENTS WEB.";
@@ -611,6 +614,7 @@
 "Choose Files" = "Choisir des fichiers";
 "Choose Files…" = "Choisir des fichiers…";
 "Choose Find media to inspect this link." = "Choisissez Rechercher le média pour inspecter ce lien.";
+"Choose PNG, WebP, TIFF or AVIF to keep a transparent background." = "Choisissez PNG, WebP, TIFF ou AVIF pour conserver un arrière-plan transparent.";
 "Choose SRT, VTT or TXT." = "Choisissez SRT, VTT ou TXT.";
 "Choose Set up media tools first." = "Choisissez d’abord Configurer les outils multimédias.";
 "Choose Set up media tools once to enable media editing." = "Choisissez Configurer les outils multimédias une fois pour activer la modification des médias.";
@@ -977,6 +981,7 @@
 "Drop it like it’s… a file." = "Déposez-le comme si c’était… un fichier.";
 "Drop something good." = "Déposez quelque chose de bien.";
 "Duplicate" = "Dupliquer";
+"EDGE SOFTNESS (PX)" = "ADOUCISSEMENT DES BORDS (PX)";
 "EDIT" = "ÉDITION";
 "EDIT FIELDS OR REMOVE METADATA. ENCODED AUDIO AND VIDEO STAY UNTOUCHED." = "MODIFIEZ LES CHAMPS OU SUPPRIMEZ LES MÉTADONNÉES. L’AUDIO ET LA VIDÉO ENCODÉS RESTENT INCHANGÉS.";
 "EDIT FIELDS OR REMOVE METADATA. ENCODED IMAGE PIXELS STAY UNTOUCHED." = "MODIFIEZ LES CHAMPS OU SUPPRIMEZ LES MÉTADONNÉES. LES PIXELS ENCODÉS DE L’IMAGE RESTENT INCHANGÉS.";
@@ -1007,6 +1012,7 @@
 "EXPOSURE" = "EXPOSITION";
 "EXTRACT ARCHIVE" = "EXTRAIRE L’ARCHIVE";
 "EXTRACT NASHI INTO ITS OWN WRITABLE FOLDER FIRST." = "EXTRAYEZ D’ABORD NASHI DANS SON PROPRE DOSSIER ACCESSIBLE EN ÉCRITURE.";
+"Edge softness (px)" = "Adoucissement des bords (px)";
 "Edit" = "Édition";
 "Edit Image" = "Modifier l’image";
 "Edit Photo" = "Modifier la photo";
@@ -1107,6 +1113,7 @@
 "FOLDERS" = "DOSSIERS";
 "FONT" = "POLICE";
 "FONT SIZE" = "TAILLE DE LA POLICE";
+"FOR PRODUCT SHOTS, LOGOS AND SCANS ON A PLAIN COLOR. ONLY THE BACKGROUND TOUCHING THE IMAGE EDGES IS REMOVED; THIS IS NOT AI SUBJECT DETECTION." = "POUR LES PHOTOS DE PRODUITS, LOGOS ET NUMÉRISATIONS SUR FOND UNI. SEUL L’ARRIÈRE-PLAN QUI TOUCHE LES BORDS DE L’IMAGE EST SUPPRIMÉ ; IL NE S’AGIT PAS D’UNE DÉTECTION DE SUJET PAR IA.";
 "FORMAT COMPATIBILITY" = "COMPATIBILITÉ DES FORMATS";
 "FORMAT PREFERENCES" = "PRÉFÉRENCES DE FORMAT";
 "FORMATS" = "FORMATS";
@@ -1189,6 +1196,7 @@
 "Folders" = "Dossiers";
 "Font" = "Police";
 "Font size" = "Taille de la police";
+"For product shots, logos and scans on a plain color. Only the background touching the image edges is removed; this is not AI subject detection." = "Pour les photos de produits, logos et numérisations sur fond uni. Seul l’arrière-plan qui touche les bords de l’image est supprimé ; il ne s’agit pas d’une détection de sujet par IA.";
 "Format Compatibility" = "Compatibilité des formats";
 "Format preferences" = "Préférences de format";
 "Formats" = "Formats";
@@ -2007,6 +2015,7 @@
 "Remove Image" = "Retirer l’image";
 "Remove Metadata" = "Supprimer les métadonnées";
 "Remove all metadata" = "Supprimer toutes les métadonnées";
+"Remove background" = "Supprimer l’arrière-plan";
 "Remove clips (numbers; separated by semicolons)" = "Supprimer des clips (numéros ; séparés par des points-virgules)";
 "Remove from Float" = "Retirer de Float";
 "Remove from selection" = "Retirer de la sélection";
@@ -2437,6 +2446,7 @@
 "THIS IMAGE COULD NOT BE DECODED." = "IMPOSSIBLE DE DÉCODER CETTE IMAGE.";
 "THIS IMAGE EXCEEDS 100 MP." = "CETTE IMAGE DÉPASSE 100 MPX.";
 "THIS IMAGE EXCEEDS 200 MB." = "CETTE IMAGE DÉPASSE 200 MO.";
+"THIS IMAGE HAS NO SOLID BACKGROUND TO REMOVE. IT WORKS BEST ON PRODUCT SHOTS, LOGOS AND SCANS ON A PLAIN COLOR." = "CETTE IMAGE N’A PAS D’ARRIÈRE-PLAN UNI À SUPPRIMER. CELA FONCTIONNE MIEUX AVEC DES PHOTOS DE PRODUITS, LOGOS ET NUMÉRISATIONS SUR FOND UNI.";
 "THIS IMAGE IS TOO LARGE (100 MP LIMIT)." = "CETTE IMAGE EST TROP GRANDE (LIMITE DE 100 MPX).";
 "THIS IMAGE IS TOO LARGE TO PASTE. CHOOSE THE IMAGE FILE INSTEAD." = "CETTE IMAGE EST TROP GRANDE POUR ÊTRE COLLÉE. CHOISISSEZ PLUTÔT LE FICHIER IMAGE.";
 "THIS IS A LIVE OR UPCOMING STREAM. USE A FINISHED VIDEO LINK." = "IL S’AGIT D’UNE DIFFUSION EN DIRECT OU À VENIR. UTILISEZ LE LIEN D’UNE VIDÉO TERMINÉE.";
@@ -2619,6 +2629,7 @@
 "This image could not be decoded." = "Impossible de décoder cette image.";
 "This image exceeds 100 MP." = "Cette image dépasse 100 Mpx.";
 "This image exceeds 200 MB." = "Cette image dépasse 200 Mo.";
+"This image has no solid background to remove. It works best on product shots, logos and scans on a plain color." = "Cette image n’a pas d’arrière-plan uni à supprimer. Cela fonctionne mieux avec des photos de produits, logos et numérisations sur fond uni.";
 "This image is too large (100 MP limit)." = "Cette image est trop grande (limite de 100 Mpx).";
 "This image is too large to paste. Choose the image file instead." = "Cette image est trop grande pour être collée. Choisissez plutôt le fichier image.";
 "This is a live or upcoming stream. Use a finished video link." = "Il s’agit d’une diffusion en direct ou à venir. Utilisez le lien d’une vidéo terminée.";
