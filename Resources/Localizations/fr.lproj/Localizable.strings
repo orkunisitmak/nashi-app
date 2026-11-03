@@ -2441,6 +2441,8 @@
 "THIS IMAGE IS TOO LARGE TO PASTE. CHOOSE THE IMAGE FILE INSTEAD." = "CETTE IMAGE EST TROP GRANDE POUR ÊTRE COLLÉE. CHOISISSEZ PLUTÔT LE FICHIER IMAGE.";
 "THIS IS A LIVE OR UPCOMING STREAM. USE A FINISHED VIDEO LINK." = "IL S’AGIT D’UNE DIFFUSION EN DIRECT OU À VENIR. UTILISEZ LE LIEN D’UNE VIDÉO TERMINÉE.";
 "THIS IS NOT A MODERN PAGES DOCUMENT." = "CE N’EST PAS UN DOCUMENT PAGES MODERNE.";
+"THIS IS NOT A UYAP DOCUMENT: CONTENT.XML HAS NO TEMPLATE." = "THIS IS NOT A UYAP DOCUMENT: CONTENT.XML HAS NO TEMPLATE.";
+"THIS IS NOT A UYAP DOCUMENT: CONTENT.XML IS MISSING." = "THIS IS NOT A UYAP DOCUMENT: CONTENT.XML IS MISSING.";
 "THIS LINK DID NOT RETURN A DOWNLOADABLE IMAGE." = "CE LIEN N’A PAS RENVOYÉ D’IMAGE TÉLÉCHARGEABLE.";
 "THIS LINK REQUIRES A LOGIN OR IS RESTRICTED. TRY A PUBLIC SHARE LINK; NASHI DOES NOT READ YOUR BROWSER SESSIONS." = "CE LIEN NÉCESSITE UNE CONNEXION OU EST RESTREINT. ESSAYEZ UN LIEN DE PARTAGE PUBLIC ; NASHI NE LIT PAS VOS SESSIONS DE NAVIGATEUR.";
 "THIS MEDIA IS PROTECTED AND CANNOT BE DOWNLOADED HERE." = "CE MÉDIA EST PROTÉGÉ ET NE PEUT PAS ÊTRE TÉLÉCHARGÉ ICI.";
@@ -2461,6 +2463,7 @@
 "THIS TEXT CLIPPING CONTAINS NO SUPPORTED TEXT RESOURCE." = "CE FRAGMENT NE CONTIENT AUCUNE RESSOURCE TEXTE PRISE EN CHARGE.";
 "THIS TEXT IS TOO LARGE TO PASTE. CHOOSE A TEXT FILE INSTEAD." = "CE TEXTE EST TROP VOLUMINEUX POUR ÊTRE COLLÉ. CHOISISSEZ PLUTÔT UN FICHIER TEXTE.";
 "THIS TEXT IS TOO LARGE TO PREVIEW. USE OPEN TO READ THE COMPLETE FILE." = "CE TEXTE EST TROP VOLUMINEUX POUR L’APERÇU. UTILISEZ OUVRIR POUR LIRE LE FICHIER COMPLET.";
+"THIS UDF DOCUMENT IS TOO LARGE." = "THIS UDF DOCUMENT IS TOO LARGE.";
 "THIS WINDOW COULD NOT BE ARRANGED. THE APP MAY RESTRICT RESIZING." = "CETTE FENÊTRE N’A PAS PU ÊTRE DISPOSÉE. L’APP LIMITE PEUT-ÊTRE LE REDIMENSIONNEMENT.";
 "THIS WINDOWS CODEC CANNOT PLAY DIRECTLY. SET UP MEDIA TOOLS TO CREATE A LOCAL PREVIEW." = "CE CODEC WINDOWS NE PEUT PAS ÊTRE LU DIRECTEMENT. CONFIGUREZ LES OUTILS MULTIMÉDIAS POUR CRÉER UN APERÇU LOCAL.";
 "THIS WORD DOCUMENT CONTAINS AN INVALID OR OVERSIZED TABLE CELL SPAN. IT COULD NOT BE CONVERTED TO PAGES." = "CE DOCUMENT WORD CONTIENT UNE FUSION DE CELLULES DE TABLEAU INVALIDE OU TROP LARGE. IL N’A PAS PU ÊTRE CONVERTI EN PAGES.";
@@ -2598,6 +2601,7 @@
 "This PDF requires a valid password." = "Ce PDF nécessite un mot de passe valide.";
 "This Pages file is too large or is not a regular document file." = "Ce fichier Pages est trop volumineux ou n’est pas un fichier de document ordinaire.";
 "This RTFD attachment syntax could not be preserved." = "Cette syntaxe de pièce jointe RTFD n’a pas pu être préservée.";
+"This UDF document is too large." = "This UDF document is too large.";
 "This Windows codec cannot play directly. Set up media tools to create a local preview." = "Ce codec Windows ne peut pas être lu directement. Configurez les outils multimédias pour créer un aperçu local.";
 "This Word document contains a table wider than the supported limit of %@ columns. It could not be converted to Pages." = "Ce document Word contient un tableau plus large que la limite prise en charge de %@ colonnes. Il n’a pas pu être converti en Pages.";
 "This Word document contains a table wider than the supported limit of %lld columns. It could not be converted to Pages." = "Ce document Word contient un tableau plus large que la limite prise en charge de %lld colonnes. Il n’a pas pu être converti en Pages.";
@@ -2622,6 +2626,8 @@
 "This image is too large (100 MP limit)." = "Cette image est trop grande (limite de 100 Mpx).";
 "This image is too large to paste. Choose the image file instead." = "Cette image est trop grande pour être collée. Choisissez plutôt le fichier image.";
 "This is a live or upcoming stream. Use a finished video link." = "Il s’agit d’une diffusion en direct ou à venir. Utilisez le lien d’une vidéo terminée.";
+"This is not a UYAP document: content.xml has no template." = "This is not a UYAP document: content.xml has no template.";
+"This is not a UYAP document: content.xml is missing." = "This is not a UYAP document: content.xml is missing.";
 "This is not a modern Pages document." = "Ce n’est pas un document Pages moderne.";
 "This link did not return a downloadable image." = "Ce lien n’a pas renvoyé d’image téléchargeable.";
 "This link requires a login or is restricted. Try a public share link; Nashi does not read your browser sessions." = "Ce lien nécessite une connexion ou est restreint. Essayez un lien de partage public ; Nashi ne lit pas vos sessions de navigateur.";

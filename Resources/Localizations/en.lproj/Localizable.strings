@@ -2441,6 +2441,8 @@
 "THIS IMAGE IS TOO LARGE TO PASTE. CHOOSE THE IMAGE FILE INSTEAD." = "THIS IMAGE IS TOO LARGE TO PASTE. CHOOSE THE IMAGE FILE INSTEAD.";
 "THIS IS A LIVE OR UPCOMING STREAM. USE A FINISHED VIDEO LINK." = "THIS IS A LIVE OR UPCOMING STREAM. USE A FINISHED VIDEO LINK.";
 "THIS IS NOT A MODERN PAGES DOCUMENT." = "THIS IS NOT A MODERN PAGES DOCUMENT.";
+"THIS IS NOT A UYAP DOCUMENT: CONTENT.XML HAS NO TEMPLATE." = "THIS IS NOT A UYAP DOCUMENT: CONTENT.XML HAS NO TEMPLATE.";
+"THIS IS NOT A UYAP DOCUMENT: CONTENT.XML IS MISSING." = "THIS IS NOT A UYAP DOCUMENT: CONTENT.XML IS MISSING.";
 "THIS LINK DID NOT RETURN A DOWNLOADABLE IMAGE." = "THIS LINK DID NOT RETURN A DOWNLOADABLE IMAGE.";
 "THIS LINK REQUIRES A LOGIN OR IS RESTRICTED. TRY A PUBLIC SHARE LINK; NASHI DOES NOT READ YOUR BROWSER SESSIONS." = "THIS LINK REQUIRES A LOGIN OR IS RESTRICTED. TRY A PUBLIC SHARE LINK; NASHI DOES NOT READ YOUR BROWSER SESSIONS.";
 "THIS MEDIA IS PROTECTED AND CANNOT BE DOWNLOADED HERE." = "THIS MEDIA IS PROTECTED AND CANNOT BE DOWNLOADED HERE.";
@@ -2461,6 +2463,7 @@
 "THIS TEXT CLIPPING CONTAINS NO SUPPORTED TEXT RESOURCE." = "THIS TEXT CLIPPING CONTAINS NO SUPPORTED TEXT RESOURCE.";
 "THIS TEXT IS TOO LARGE TO PASTE. CHOOSE A TEXT FILE INSTEAD." = "THIS TEXT IS TOO LARGE TO PASTE. CHOOSE A TEXT FILE INSTEAD.";
 "THIS TEXT IS TOO LARGE TO PREVIEW. USE OPEN TO READ THE COMPLETE FILE." = "THIS TEXT IS TOO LARGE TO PREVIEW. USE OPEN TO READ THE COMPLETE FILE.";
+"THIS UDF DOCUMENT IS TOO LARGE." = "THIS UDF DOCUMENT IS TOO LARGE.";
 "THIS WINDOW COULD NOT BE ARRANGED. THE APP MAY RESTRICT RESIZING." = "THIS WINDOW COULD NOT BE ARRANGED. THE APP MAY RESTRICT RESIZING.";
 "THIS WINDOWS CODEC CANNOT PLAY DIRECTLY. SET UP MEDIA TOOLS TO CREATE A LOCAL PREVIEW." = "THIS WINDOWS CODEC CANNOT PLAY DIRECTLY. SET UP MEDIA TOOLS TO CREATE A LOCAL PREVIEW.";
 "THIS WORD DOCUMENT CONTAINS AN INVALID OR OVERSIZED TABLE CELL SPAN. IT COULD NOT BE CONVERTED TO PAGES." = "THIS WORD DOCUMENT CONTAINS AN INVALID OR OVERSIZED TABLE CELL SPAN. IT COULD NOT BE CONVERTED TO PAGES.";
@@ -2598,6 +2601,7 @@
 "This PDF requires a valid password." = "This PDF requires a valid password.";
 "This Pages file is too large or is not a regular document file." = "This Pages file is too large or is not a regular document file.";
 "This RTFD attachment syntax could not be preserved." = "This RTFD attachment syntax could not be preserved.";
+"This UDF document is too large." = "This UDF document is too large.";
 "This Windows codec cannot play directly. Set up media tools to create a local preview." = "This Windows codec cannot play directly. Set up media tools to create a local preview.";
 "This Word document contains a table wider than the supported limit of %@ columns. It could not be converted to Pages." = "This Word document contains a table wider than the supported limit of %@ columns. It could not be converted to Pages.";
 "This Word document contains a table wider than the supported limit of %lld columns. It could not be converted to Pages." = "This Word document contains a table wider than the supported limit of %lld columns. It could not be converted to Pages.";
@@ -2622,6 +2626,8 @@
 "This image is too large (100 MP limit)." = "This image is too large (100 MP limit).";
 "This image is too large to paste. Choose the image file instead." = "This image is too large to paste. Choose the image file instead.";
 "This is a live or upcoming stream. Use a finished video link." = "This is a live or upcoming stream. Use a finished video link.";
+"This is not a UYAP document: content.xml has no template." = "This is not a UYAP document: content.xml has no template.";
+"This is not a UYAP document: content.xml is missing." = "This is not a UYAP document: content.xml is missing.";
 "This is not a modern Pages document." = "This is not a modern Pages document.";
 "This link did not return a downloadable image." = "This link did not return a downloadable image.";
 "This link requires a login or is restricted. Try a public share link; Nashi does not read your browser sessions." = "This link requires a login or is restricted. Try a public share link; Nashi does not read your browser sessions.";

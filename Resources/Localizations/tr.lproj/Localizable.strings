@@ -2441,6 +2441,8 @@
 "THIS IMAGE IS TOO LARGE TO PASTE. CHOOSE THE IMAGE FILE INSTEAD." = "BU GÖRSEL YAPIŞTIRMAK İÇİN ÇOK BÜYÜK. BUNUN YERİNE GÖRSEL DOSYASINI SEÇ.";
 "THIS IS A LIVE OR UPCOMING STREAM. USE A FINISHED VIDEO LINK." = "BU, CANLI VEYA HENÜZ BAŞLAMAMIŞ BİR YAYIN. TAMAMLANMIŞ BİR VİDEONUN BAĞLANTISINI KULLAN.";
 "THIS IS NOT A MODERN PAGES DOCUMENT." = "BU, YENİ BİÇİMLİ BİR PAGES BELGESİ DEĞİL.";
+"THIS IS NOT A UYAP DOCUMENT: CONTENT.XML HAS NO TEMPLATE." = "BU BİR UYAP BELGESİ DEĞİL: CONTENT.XML ŞABLON İÇERMİYOR.";
+"THIS IS NOT A UYAP DOCUMENT: CONTENT.XML IS MISSING." = "BU BİR UYAP BELGESİ DEĞİL: CONTENT.XML BULUNAMADI.";
 "THIS LINK DID NOT RETURN A DOWNLOADABLE IMAGE." = "BU BAĞLANTIDAN İNDİRİLEBİLİR BİR GÖRSEL GELMEDİ.";
 "THIS LINK REQUIRES A LOGIN OR IS RESTRICTED. TRY A PUBLIC SHARE LINK; NASHI DOES NOT READ YOUR BROWSER SESSIONS." = "BU BAĞLANTI GİRİŞ GEREKTİRİYOR VEYA ERİŞİMİ KISITLI. HERKESE AÇIK BİR PAYLAŞIM BAĞLANTISI DENE; NASHI TARAYICI OTURUMLARINI OKUMAZ.";
 "THIS MEDIA IS PROTECTED AND CANNOT BE DOWNLOADED HERE." = "BU MEDYA KORUMALI VE BURADA İNDİRİLEMEZ.";
@@ -2461,6 +2463,7 @@
 "THIS TEXT CLIPPING CONTAINS NO SUPPORTED TEXT RESOURCE." = "BU METİN KIRPINTISINDA DESTEKLENEN BİR METİN KAYNAĞI YOK.";
 "THIS TEXT IS TOO LARGE TO PASTE. CHOOSE A TEXT FILE INSTEAD." = "BU METİN YAPIŞTIRMAK İÇİN ÇOK BÜYÜK. BUNUN YERİNE BİR METİN DOSYASI SEÇ.";
 "THIS TEXT IS TOO LARGE TO PREVIEW. USE OPEN TO READ THE COMPLETE FILE." = "BU METİN ÖNİZLEME İÇİN ÇOK BÜYÜK. DOSYANIN TAMAMINI OKUMAK İÇİN AÇ'I KULLAN.";
+"THIS UDF DOCUMENT IS TOO LARGE." = "BU UDF BELGESİ ÇOK BÜYÜK.";
 "THIS WINDOW COULD NOT BE ARRANGED. THE APP MAY RESTRICT RESIZING." = "BU PENCERE DÜZENLENEMEDİ. UYGULAMA YENİDEN BOYUTLANDIRMAYI KISITLIYOR OLABİLİR.";
 "THIS WINDOWS CODEC CANNOT PLAY DIRECTLY. SET UP MEDIA TOOLS TO CREATE A LOCAL PREVIEW." = "BU WINDOWS CODEC'İ DOĞRUDAN OYNATILAMIYOR. YEREL ÖNİZLEME OLUŞTURMAK İÇİN MEDYA ARAÇLARINI KUR.";
 "THIS WORD DOCUMENT CONTAINS AN INVALID OR OVERSIZED TABLE CELL SPAN. IT COULD NOT BE CONVERTED TO PAGES." = "BU WORD BELGESİNDE GEÇERSİZ VEYA ÇOK GENİŞ BİR TABLO HÜCRESİ BİRLEŞTİRMESİ VAR. PAGES BİÇİMİNE DÖNÜŞTÜRÜLEMEDİ.";
@@ -2598,6 +2601,7 @@
 "This PDF requires a valid password." = "Bu PDF için geçerli bir parola gerekiyor.";
 "This Pages file is too large or is not a regular document file." = "Bu Pages dosyası çok büyük ya da normal bir belge dosyası değil.";
 "This RTFD attachment syntax could not be preserved." = "Bu RTFD ekinin yapısı korunamadı.";
+"This UDF document is too large." = "Bu UDF belgesi çok büyük.";
 "This Windows codec cannot play directly. Set up media tools to create a local preview." = "Bu Windows codec'i doğrudan oynatılamıyor. Yerel önizleme oluşturmak için medya araçlarını kur.";
 "This Word document contains a table wider than the supported limit of %@ columns. It could not be converted to Pages." = "Bu Word belgesinde desteklenen %@ sütun sınırından daha geniş bir tablo var. Pages biçimine dönüştürülemedi.";
 "This Word document contains a table wider than the supported limit of %lld columns. It could not be converted to Pages." = "Bu Word belgesinde desteklenen %lld sütun sınırından daha geniş bir tablo var. Pages biçimine dönüştürülemedi.";
@@ -2622,6 +2626,8 @@
 "This image is too large (100 MP limit)." = "Bu görsel çok büyük (sınır 100 MP).";
 "This image is too large to paste. Choose the image file instead." = "Bu görsel yapıştırmak için çok büyük. Bunun yerine görsel dosyasını seç.";
 "This is a live or upcoming stream. Use a finished video link." = "Bu, canlı veya henüz başlamamış bir yayın. Tamamlanmış bir videonun bağlantısını kullan.";
+"This is not a UYAP document: content.xml has no template." = "Bu bir UYAP belgesi değil: content.xml şablon içermiyor.";
+"This is not a UYAP document: content.xml is missing." = "Bu bir UYAP belgesi değil: content.xml bulunamadı.";
 "This is not a modern Pages document." = "Bu, yeni biçimli bir Pages belgesi değil.";
 "This link did not return a downloadable image." = "Bu bağlantıdan indirilebilir bir görsel gelmedi.";
 "This link requires a login or is restricted. Try a public share link; Nashi does not read your browser sessions." = "Bu bağlantı giriş gerektiriyor veya erişimi kısıtlı. Herkese açık bir paylaşım bağlantısı dene; Nashi tarayıcı oturumlarını okumaz.";
