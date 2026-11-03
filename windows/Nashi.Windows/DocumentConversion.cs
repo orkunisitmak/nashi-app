@@ -26,6 +26,12 @@ public sealed class DocumentConversion(OfficeRuntime runtime,Toolchain tools)
             if(ext=="textclipping")source=await MaterializeClipping(input,work,token);
             if(ext is "txt" or "md" or "csv" or "tsv"){var normalized=Path.Combine(work,Path.GetFileName(input));await LegacyTextCodec.ToUtf8Async(input,normalized,token);source=normalized;}
             if(ext=="epub")source=EpubToHtml(input,work,token);
+            // UDF opens as DOCX without Office; Office takes that DOCX to every other format.
+            if(ext=="udf")
+            {
+                source=Path.Combine(work,Path.GetFileNameWithoutExtension(input)+".docx");OfficeDocuments.UdfToDocx(input,source);
+                if(format=="docx"){var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileName(source));File.Move(source,output);outputs.Add(output);continue;}
+            }
             if(ext=="pdf"&&format is "txt" or "md")
             {var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+"."+format);await File.WriteAllTextAsync(output,await PdfDocumentMedia.Text(input,options.Password,token),new UTF8Encoding(false),token);outputs.Add(output);continue;}
             if(ext=="pdf"&&format=="pptx")source=await PdfDocumentMedia.Slides(input,work,options.Dpi,options.Password,token);
@@ -42,11 +48,17 @@ public sealed class DocumentConversion(OfficeRuntime runtime,Toolchain tools)
             }
             if(format=="pages")
             {
-                if(!tools.Ready)throw new InvalidOperationException("Set up media tools once to enable the Pages runtime.");var docx=ext=="docx"?input:await Require(engine).OfficeAsync(source,"docx",work,token);var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+".pages");outputs.Add(await Require(engine).PagesWriteAsync(docx,output,token));continue;
+                if(!tools.Ready)throw new InvalidOperationException("Set up media tools once to enable the Pages runtime.");var docx=ext is "docx" or "udf"?source:await Require(engine).OfficeAsync(source,"docx",work,token);var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+".pages");outputs.Add(await Require(engine).PagesWriteAsync(docx,output,token));continue;
             }
             if(format=="epub"&&options.EpubLayout=="fixed")
             {var pdf=await Require(engine).OfficeAsync(source,"pdf",work,token);var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+".epub");EpubFixed(await NativePdf.RenderAsync(pdf,options.Dpi,token,ext=="pdf"?options.Password:""),output,Path.GetFileNameWithoutExtension(input));outputs.Add(output);continue;}
             if(FeatureCatalog.Extension(source)=="html"){var safe=Path.Combine(work,"Safe.html");await File.WriteAllTextAsync(safe,OfficeDocuments.SanitizedHtml(await File.ReadAllTextAsync(source,token)),token);source=safe;}
+            // A DOCX becomes UDF without Office; other documents reach it through Office's DOCX.
+            if(format=="udf")
+            {
+                var docx=ext=="docx"?input:await Require(engine).OfficeAsync(source,"docx",work,token);var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+".udf");
+                OfficeDocuments.DocxToUdf(docx,output);outputs.Add(output);progress?.Report(new((i+1d)/inputs.Count*.98,"Saving document…"));continue;
+            }
             var converted=await Require(engine).OfficeAsync(source,format,work,token);var target=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+"."+format);File.Move(converted,target);outputs.Add(target);progress?.Report(new((i+1d)/inputs.Count*.98,"Saving document…"));
         }
         return tx.Publish(outputs,token);
