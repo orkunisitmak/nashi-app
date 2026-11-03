@@ -51,7 +51,8 @@ public enum WindowPlacement: String, CaseIterable, Sendable, Codable {
         let range = horizontalRange
         // Adjacent regions share the same rounded boundary even at odd display widths.
         let start = (workArea.width * range.lowerBound * pixels).rounded()/pixels
-        let end = (workArea.width * range.upperBound * pixels).rounded()/pixels
+        // The right edge has no neighbour; keep it on the exact usable edge like maximize.
+        let end = range.upperBound == 1 ? workArea.width : (workArea.width * range.upperBound * pixels).rounded()/pixels
         let requested=end-start
         let minimum=minimumSize.width.isFinite ? max(0,minimumSize.width):0
         if minimum<=requested {return CGRect(x:workArea.minX+start,y:workArea.minY,width:requested,height:workArea.height)}

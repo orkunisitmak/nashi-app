@@ -200,6 +200,7 @@ import Sparkle
         stopBridge()
         for key in [Preference.repository, Preference.requiresToken, Preference.savedToken] { defaults.removeObject(forKey: key) }
         repository = nil
+        requiresToken = officialRepository == nil
         hasSavedToken = false
         availableVersion = nil
         lastError = nil

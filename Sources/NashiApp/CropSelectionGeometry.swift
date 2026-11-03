@@ -46,14 +46,14 @@ enum CropSelectionGeometry {
             let anchor = handle.x == 0 ? rect.maxX : rect.minX
             let available = handle.x == 0 ? anchor : bounds.width - anchor
             let maxHeight = 2 * min(rect.midY, bounds.height - rect.midY)
-            let width = min(max(1, handle.x == 0 ? anchor - point.x : point.x - anchor), available, maxHeight * ratio)
+            let width = min(max(max(1, ratio), handle.x == 0 ? anchor - point.x : point.x - anchor), available, maxHeight * ratio)
             return CGRect(x: handle.x == 0 ? anchor - width : anchor,
                           y: rect.midY - width / ratio / 2, width: width, height: width / ratio)
         }
         let anchor = handle.y == 0 ? rect.maxY : rect.minY
         let available = handle.y == 0 ? anchor : bounds.height - anchor
         let maxWidth = 2 * min(rect.midX, bounds.width - rect.midX)
-        let height = min(max(1, handle.y == 0 ? anchor - point.y : point.y - anchor), available, maxWidth / ratio)
+        let height = min(max(max(1, 1 / ratio), handle.y == 0 ? anchor - point.y : point.y - anchor), available, maxWidth / ratio)
         return CGRect(x: rect.midX - height * ratio / 2,
                       y: handle.y == 0 ? anchor - height : anchor, width: height * ratio, height: height)
     }

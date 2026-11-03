@@ -23,7 +23,8 @@ enum PagesCodec {
 
     static func model(_ input: URL, token: CancellationToken) throws -> [String: Any] {
         try token.check()
-        guard let size = try input.resourceValues(forKeys: [.fileSizeKey]).fileSize, size <= 200_000_000 else { throw NashiError.invalidInput("This Pages file is too large or is not a regular document file.") }
+        // A symlink's own size is a few bytes; the cap applies to the Pages file it points to.
+        guard let size = try input.resolvingSymlinksInPath().resourceValues(forKeys: [.fileSizeKey]).fileSize, size <= 200_000_000 else { throw NashiError.invalidInput("This Pages file is too large or is not a regular document file.") }
         let data = try Data(contentsOf: input)
         guard data.count > 16, data.starts(with: [0x50, 0x4b]) else { throw NashiError.invalidInput("This is not a modern Pages document.") }
         let engine = try Runtime(token: token)
@@ -95,7 +96,7 @@ enum PagesCodec {
             let width = number(setup["pageWidth"], 595.28), height = number(setup["pageHeight"], 841.89)
             let margins = ["topMargin", "rightMargin", "bottomMargin", "leftMargin"].map { "\(number(setup[$0], 56.69))pt" }.joined(separator: " ")
             var content = ""
-            if let header = model["header"] as? String, !header.isEmpty { content += "<header>\(escape(header))</header>" }
+            if let header = model["header"] as? String, !header.isEmpty { content += "<header>\(escape(header).replacingOccurrences(of: "\n", with: "<br/>"))</header>" }
             for block in model["blocks"] as? [[String: Any]] ?? [] {
                 try token.check()
                 if block["type"] as? String == "table" { content += table(block); continue }
@@ -121,7 +122,7 @@ enum PagesCodec {
                 }
                 content += "<p style=\"\(escape(css))\">\(runs.isEmpty ? "<br/>" : runs)</p>"
             }
-            if let footer = model["footer"] as? String, !footer.isEmpty { content += "<footer>\(escape(footer))</footer>" }
+            if let footer = model["footer"] as? String, !footer.isEmpty { content += "<footer>\(escape(footer).replacingOccurrences(of: "\n", with: "<br/>"))</footer>" }
             return "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/><title>Pages document</title><style>@page{size:\(width)pt \(height)pt;margin:\(margins)}body{font:12pt Helvetica,Arial,sans-serif}p{white-space:pre-wrap;margin:0 0 8pt}table{border-collapse:collapse;page-break-inside:auto}td,th{border:1px solid #888;padding:4pt;white-space:pre-wrap}img{max-width:100%;height:auto}header,footer{margin:8pt 0}</style></head><body>\(content)</body></html>"
         }
         static func table(_ block: [String: Any]) -> String {
@@ -143,7 +144,7 @@ enum PagesCodec {
         }
         static func characterCSS(_ value: [String: Any]) -> String {
             var css = ""
-            if let font = value["fontName"] as? String { css += "font-family:'\(font.replacingOccurrences(of: "'", with: "").replacingOccurrences(of: ";", with: ""))';" }
+            if let font = value["fontName"] as? String { css += "font-family:'\(String(String.UnicodeScalarView(font.unicodeScalars.filter { $0.value >= 0x20 && $0.value != 0x7f })).replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "'", with: "").replacingOccurrences(of: ";", with: ""))';" }
             if let size = value["fontSize"] as? NSNumber, size.doubleValue > 0 { css += "font-size:\(size.doubleValue)pt;" }
             if let bold = value["bold"] as? Bool { css += "font-weight:\(bold ? "bold" : "normal");" }
             if let italic = value["italic"] as? Bool { css += "font-style:\(italic ? "italic" : "normal");" }
@@ -151,7 +152,10 @@ enum PagesCodec {
             if number(value["underline"], 0) > 0 { decoration.append("underline") }
             if number(value["strikethru"], 0) > 0 { decoration.append("line-through") }
             if !decoration.isEmpty { css += "text-decoration:\(decoration.joined(separator: " "));" }
-            if let color = value["fontColor"] as? [String: Any] { css += "color:rgb(\(Int(number(color["r"], 0) * 255)),\(Int(number(color["g"], 0) * 255)),\(Int(number(color["b"], 0) * 255)));" }
+            if let color = value["fontColor"] as? [String: Any] {
+                let channel = { (key: String) -> Int in let value = number(color[key], 0); return value.isFinite ? Int(min(max(value, 0), 1) * 255) : 0 }
+                css += "color:rgb(\(channel("r")),\(channel("g")),\(channel("b")));"
+            }
             return css
         }
         static func number(_ value: Any?, _ fallback: Double) -> Double { (value as? NSNumber)?.doubleValue ?? fallback }
@@ -183,14 +187,16 @@ private enum PagesDOCXReader {
         let defaultParagraph = paragraph(defaults?.first("pPrDefault")?.first("pPr"))
         let relationships = try relationMap(package.appendingPathComponent("word/_rels/document.xml.rels"))
         let reader = Reader(package: package, relationships: relationships, styles: styles, defaultCharacter: defaultCharacter, defaultParagraph: defaultParagraph, token: token)
-        var model: [String: Any] = ["blocks": try body.elements(nil).compactMap { try reader.block($0) }]
+        var model: [String: Any] = ["blocks": try blockElements(body).flatMap { try reader.blocks($0) }]
         if let section = body.first("sectPr") {
             var page: [String: Any] = [:]
             if let size = section.first("pgSz") { if let w = size.number("w") { page["pageWidth"] = w / 20 }; if let h = size.number("h") { page["pageHeight"] = h / 20 } }
             if let margin = section.first("pgMar") { for (attribute,property) in [("left","leftMargin"),("right","rightMargin"),("top","topMargin"),("bottom","bottomMargin")] { if let value = margin.number(attribute) { page[property] = value / 20 } } }
             model["pageSetup"] = page
             for (reference,property) in [("headerReference","header"),("footerReference","footer")] {
-                if let id = section.first(reference)?.attr("id"), let target = relationships[id], let path = reader.localPath(target), let part = try? xml(path) { model[property] = part.rootElement()?.descendants("t").map(text).joined() }
+                // Pages keeps one header and footer; use the default variant, not even/first-page ones.
+                let entry = section.elements(reference).first { ($0.attr("type") ?? "default") == "default" }
+                if let id = entry?.attr("id"), let target = relationships[id], let path = reader.localPath(target), let part = try? xml(path) { model[property] = part.rootElement().map(plainText) }
             }
         }
         return model
@@ -211,27 +217,43 @@ private enum PagesDOCXReader {
                 let properties = element.first("pPr")
                 let base = resolved(properties?.first("pStyle")?.attr("val"))
                 var runs: [[String:Any]] = []
+                // Open complex fields (fldChar begin ... end); a HYPERLINK
+                // field links its result runs once its instruction is complete.
+                var fields: [(instruction: String, link: String?)] = []
                 func visit(_ item: XMLElement, link: String? = nil) throws {
                     try token.check()
                     if item.local == "r" {
                         let runBase = item.first("rPr")?.first("rStyle")?.attr("val").map {resolved($0).0} ?? [:]
-                        let formatting = base.0.merging(runBase) { _,new in new }.merging(character(item.first("rPr"))) { _,new in new }
+                        let formatting = PagesDOCXReader.visible(base.0.merging(runBase) { _,new in new }.merging(character(item.first("rPr"))) { _,new in new })
                         for child in item.elements(nil) {
-                            if child.local == "t" { var run: [String:Any] = ["text":text(child),"character":formatting];if let link {run["link"]=link};runs.append(run) }
+                            if child.local == "fldChar" {
+                                switch child.attr("fldCharType") {
+                                case "begin": fields.append(("", nil))
+                                case "separate": if !fields.isEmpty { fields[fields.count-1].link = hyperlinkField(fields[fields.count-1].instruction) }
+                                case "end": _ = fields.popLast()
+                                default: break
+                                }
+                            }
+                            else if child.local == "instrText", !fields.isEmpty { fields[fields.count-1].instruction += text(child) }
+                            else if child.local == "t" { var run: [String:Any] = ["text":text(child),"character":formatting];if let link = link ?? fields.last(where: { $0.link != nil })?.link {run["link"]=link};runs.append(run) }
                             else if child.local == "tab" { runs.append(["text":"\t","character":formatting]) }
+                            else if child.local == "noBreakHyphen" { runs.append(["text":"\u{2011}","character":formatting]) }
+                            else if child.local == "br", child.attr("type") == "page" { runs.append(["type":"pageBreak"]) }
                             else if child.local == "br" || child.local == "cr" { runs.append(["text":"\n","character":formatting]) }
                             else if ["drawing","pict"].contains(child.local), let image = try image(child) { runs.append(image) }
                         }
                     } else if item.local == "hyperlink" {
-                        let destination = item.attr("id").flatMap { relationships[$0] }
+                        var destination = item.attr("id").flatMap { relationships[$0] }
+                        // Word keeps a URL's #fragment in w:anchor, not in the relationship target.
+                        if let target = destination, !target.contains("#"), let anchor = item.attr("anchor")?.addingPercentEncoding(withAllowedCharacters: .urlFragmentAllowed), !anchor.isEmpty { destination = target + "#" + anchor }
                         for child in item.elements(nil) { try visit(child, link:destination) }
-                    } else if ["sdt","sdtContent","ins","smartTag"].contains(item.local) { for child in item.elements(nil) { try visit(child, link:link) } }
+                    } else if ["sdt","sdtContent","ins","smartTag","fldSimple","customXml","moveTo","dir","bdo"].contains(item.local) { for child in item.elements(nil) { try visit(child, link:link) } }
                 }
                 for child in element.elements(nil) { try visit(child) }
                 // An empty paragraph has no run from which to recover its font.
                 // Keep the paragraph mark's formatting, including tiny end
                 // paragraphs that prevent a final table from adding a blank page.
-                let paragraphCharacter = runs.isEmpty ? base.0.merging(character(properties?.first("rPr"))) { _,new in new } : base.0
+                let paragraphCharacter = PagesDOCXReader.visible(runs.isEmpty ? base.0.merging(character(properties?.first("rPr"))) { _,new in new } : base.0)
                 return ["type":"paragraph","runs":runs,"character":paragraphCharacter,"paragraph":base.1.merging(paragraph(properties)) { _,new in new }]
             }
             if element.local == "tbl" {
@@ -242,6 +264,19 @@ private enum PagesDOCXReader {
                 let maximumColumns = 1024
                 for (rowIndex,row) in element.elements("tr").enumerated() {
                     var cells: [[String:Any]] = [], column = 0
+                    // A vertical merge only survives rows that continue it in
+                    // the same grid column; a wider or missing cell ends it.
+                    var continued: [Int:(Int,Int)] = [:]
+                    // w:gridBefore leaves leading grid columns empty, so the
+                    // row's first cell starts that many columns to the right.
+                    if let raw = row.first("trPr")?.first("gridBefore")?.attr("val"), let skipped = Int(raw), skipped > 0 {
+                        guard skipped <= maximumColumns else {
+                            throw NashiError.invalidInput("This Word document contains a table wider than the supported limit of \(maximumColumns) columns. It could not be converted to Pages.")
+                        }
+                        cells = Array(repeating: ["text":""], count: skipped)
+                        column = skipped
+                    }
+                    var horizontalAnchor: Int?
                     for cell in row.elements("tc") {
                         let properties = cell.first("tcPr")
                         let span: Int
@@ -254,25 +289,46 @@ private enum PagesDOCXReader {
                         guard column <= maximumColumns - span else {
                             throw NashiError.invalidInput("This Word document contains a table wider than the supported limit of \(maximumColumns) columns. It could not be converted to Pages.")
                         }
-                        let value = cell.elements("p").map { paragraph in paragraph.descendants("t").map(text).joined() }.joined(separator:"\n")
+                        let value = cellText(cell)
                         var cellModel: [String:Any] = ["text":value]
                         if let fill = properties?.first("shd")?.attr("fill"), let color = color(fill) { cellModel["formatting"] = ["fill":["kind":"color","color":color]] }
                         cells.append(cellModel)
                         if span > 1 { for _ in 1..<span { cells.append(["text":""]) } }
+                        var extendsVertical = false
                         if let vertical = properties?.first("vMerge") {
-                            if vertical.attr("val") == "restart" { activeVertical[column] = (rowIndex,span) }
-                            else if let origin = activeVertical[column] {
+                            if vertical.attr("val") == "restart" { continued[column] = (rowIndex,span) }
+                            // A continuation narrower or wider than its restart
+                            // cannot extend the restart's rectangle without
+                            // swallowing or overlapping neighbouring cells.
+                            else if let origin = activeVertical[column], origin.1 == span {
+                                continued[column] = origin
+                                extendsVertical = true
                                 if let index = merges.firstIndex(where: {$0["row"] == origin.0 && $0["column"] == column}) { merges[index]["rowCount"] = rowIndex - origin.0 + 1 }
                                 else { merges.append(["row":origin.0,"column":column,"rowCount":rowIndex-origin.0+1,"columnCount":origin.1]) }
                             }
-                        } else { activeVertical[column] = nil }
-                        if span > 1 && properties?.first("vMerge") == nil { merges.append(["row":rowIndex,"column":column,"rowCount":1,"columnCount":span]) }
+                        }
+                        // Legacy w:hMerge continuations join the restart cell
+                        // to their left; cells that also merge vertically stay out.
+                        var joinsHorizontal = false
+                        if properties?.first("vMerge") == nil, let horizontal = properties?.first("hMerge") {
+                            if horizontal.attr("val") == "restart" { horizontalAnchor = column }
+                            else if let anchor = horizontalAnchor {
+                                joinsHorizontal = true
+                                if let index = merges.firstIndex(where: {$0["row"] == rowIndex && $0["column"] == anchor}) { merges[index]["columnCount"] = column + span - anchor }
+                                else { merges.append(["row":rowIndex,"column":anchor,"rowCount":1,"columnCount":column + span - anchor]) }
+                            }
+                        } else { horizontalAnchor = nil }
+                        // A restart's horizontal span is recorded now and grows
+                        // downward if continuations follow; it must not depend
+                        // on whether one does.
+                        if span > 1 && !extendsVertical && !joinsHorizontal { merges.append(["row":rowIndex,"column":column,"rowCount":1,"columnCount":span]) }
                         column += span
                     }
+                    activeVertical = continued
                     rows.append(cells)
                 }
                 let widths = element.first("tblGrid")?.elements("gridCol").map { ($0.number("w") ?? 2400) / 20 } ?? []
-                return ["type":"table","rows":rows,"merges":merges,"columnWidths":widths,"headerRows":element.elements("tr").prefix(while: {$0.first("trPr")?.first("tblHeader") != nil}).count]
+                return ["type":"table","rows":rows,"merges":merges,"columnWidths":widths,"headerRows":element.elements("tr").prefix(while: { row in row.first("trPr")?.first("tblHeader").map { !["0","false","off"].contains($0.attr("val") ?? "1") } ?? false }).count]
             }
             if ["sdt","sdtContent"].contains(element.local) {
                 // Block-level content controls are unwrapped by the caller's
@@ -280,6 +336,21 @@ private enum PagesDOCXReader {
                 return nil
             }
             return nil
+        }
+        /// A manual page break splits a Word paragraph: Pages has no inline page
+        /// break, so the text after it becomes a paragraph that starts a new page.
+        func blocks(_ element: XMLElement) throws -> [[String: Any]] {
+            guard let block = try block(element) else { return [] }
+            guard let runs = block["runs"] as? [[String:Any]], runs.contains(where: { $0["type"] as? String == "pageBreak" }) else { return [block] }
+            var segments: [[[String:Any]]] = [[]]
+            for run in runs { if run["type"] as? String == "pageBreak" { segments.append([]) } else { segments[segments.count-1].append(run) } }
+            let paragraph = block["paragraph"] as? [String:Any] ?? [:]
+            return segments.enumerated().map { index, segment in
+                var part = block
+                part["runs"] = segment
+                if index > 0 { part["paragraph"] = paragraph.merging(["pageBreakBefore":true]) { _,new in new } }
+                return part
+            }
         }
         func localPath(_ relative: String) -> URL? {
             guard URL(string:relative)?.scheme == nil else { return nil }
@@ -319,19 +390,81 @@ private enum PagesDOCXReader {
         guard let open=raw.firstIndex(of:">"),let close=raw.lastIndex(of:"<"),open<close else{return ""}
         return DocumentText.decodeEntities(String(raw[raw.index(after:open)..<close]))
     }
+    /// Plain text of a table cell. A nested table keeps its text as lines of
+    /// tab-separated cells, since a Pages cell cannot hold a table.
+    static func cellText(_ cell: XMLElement, depth: Int = 0) -> String {
+        blockElements(cell).compactMap { child -> String? in
+            if child.local == "p" { return plainText(child) }
+            guard child.local == "tbl", depth < 32 else { return nil }
+            return child.elements("tr").map { $0.elements("tc").map { cellText($0, depth: depth + 1) }.joined(separator: "\t") }.joined(separator: "\n")
+        }.joined(separator: "\n")
+    }
+    /// The external target of a `HYPERLINK "url" [\o "tip"] [\l "bookmark"]`
+    /// field instruction; bookmark-only links have no URL in the Pages model.
+    static func hyperlinkField(_ instruction: String) -> String? {
+        var tokens: [(value: String, quoted: Bool)] = [], index = instruction.startIndex
+        while index < instruction.endIndex {
+            if instruction[index].isWhitespace { index = instruction.index(after: index); continue }
+            if instruction[index] == "\"" {
+                let start = instruction.index(after: index)
+                let end = instruction[start...].firstIndex(of: "\"") ?? instruction.endIndex
+                tokens.append((String(instruction[start..<end]), true))
+                index = end < instruction.endIndex ? instruction.index(after: end) : end
+            } else {
+                let end = instruction[index...].firstIndex(where: \.isWhitespace) ?? instruction.endIndex
+                tokens.append((String(instruction[index..<end]), false))
+                index = end
+            }
+        }
+        guard tokens.first.map({ !$0.quoted && $0.value.uppercased() == "HYPERLINK" }) == true else { return nil }
+        var position = 1
+        while position < tokens.count {
+            let token = tokens[position]
+            if !token.quoted, token.value.hasPrefix("\\") { position += ["\\l","\\o","\\t"].contains(token.value.lowercased()) ? 2 : 1; continue }
+            return token.value.isEmpty ? nil : token.value
+        }
+        return nil
+    }
+    /// Block-level content controls and custom XML only wrap ordinary paragraphs and tables.
+    static func blockElements(_ parent: XMLElement) -> [XMLElement] {
+        parent.elements(nil).flatMap { ["sdt","sdtContent","customXml"].contains($0.local) ? blockElements($0) : [$0] }
+    }
+    /// Plain text of a paragraph or part: tabs, line breaks and paragraph boundaries are kept.
+    static func plainText(_ element: XMLElement) -> String {
+        var output = ""
+        func visit(_ item: XMLElement) {
+            switch item.local {
+            case "t": output += text(item)
+            case "tab": output += "\t"
+            case "noBreakHyphen": output += "\u{2011}"
+            case "br", "cr": output += "\n"
+            case "pPr", "rPr": return
+            default:
+                if item.local == "p", !output.isEmpty { output += "\n" }
+                item.elements(nil).forEach(visit)
+            }
+        }
+        visit(element)
+        return output
+    }
     static func character(_ element: XMLElement?) -> [String:Any] {
         guard let element else{return [:]};var result:[String:Any]=[:]
         for (name,key) in [("b","bold"),("i","italic")] {if let child=element.first(name){result[key] = !["0","false","off"].contains(child.attr("val") ?? "1")}}
         if let size=element.first("sz")?.number("val"){result["fontSize"]=size/2}
         if let font=element.first("rFonts")?.attr("ascii") ?? element.first("rFonts")?.attr("hAnsi"){result["fontName"]=font}
         if let value=element.first("color")?.attr("val"),let color=color(value){result["fontColor"]=color}
-        if let value=element.first("highlight")?.attr("val"),let color=color(value){result["backgroundColor"]=color}
+        // "none" must override a highlight inherited from a style; visible() drops the marker.
+        if let value=element.first("highlight")?.attr("val"){if value == "none" {result["backgroundColor"]=NSNull()} else if let color=color(highlights[value] ?? value){result["backgroundColor"]=color}}
         if let underline=element.first("u"){result["underline"] = underline.attr("val") == "none" ? 0 : underline.attr("val") == "double" ? 2 : 1}
-        if let strike=element.first("strike"){result["strikethru"] = strike.attr("val") == "0" ? 0 : 1}
+        if let strike=element.first("strike"){result["strikethru"] = ["0","false","off"].contains(strike.attr("val") ?? "1") ? 0 : 1}
         if let align=element.first("vertAlign")?.attr("val"){result["superscript"] = align == "superscript" ? 1 : align == "subscript" ? -1 : 0}
         if let language=element.first("lang")?.attr("val"){result["language"]=language}
         return result
     }
+    /// Drops the NSNull markers that clear an inherited property.
+    static func visible(_ character:[String:Any]) -> [String:Any] { character.filter { !($0.value is NSNull) } }
+    /// w:highlight takes ST_HighlightColor names, not hex values.
+    static let highlights=["black":"000000","blue":"0000FF","cyan":"00FFFF","green":"00FF00","magenta":"FF00FF","red":"FF0000","yellow":"FFFF00","white":"FFFFFF","darkBlue":"000080","darkCyan":"008080","darkGreen":"008000","darkMagenta":"800080","darkRed":"800000","darkYellow":"808000","darkGray":"808080","lightGray":"C0C0C0"]
     static func paragraph(_ element:XMLElement?) -> [String:Any] {
         guard let element else{return [:]};var result:[String:Any]=[:]
         if let alignment=element.first("jc")?.attr("val"){result["alignment"]=["left":0,"start":0,"right":1,"end":1,"center":2,"both":3,"distribute":3][alignment] ?? 0}
@@ -352,5 +485,7 @@ private extension XMLElement {
     func first(_ name:String) -> XMLElement? {elements(name).first}
     func descendants(_ name:String) -> [XMLElement] {elements(nil).flatMap{($0.local == name ? [$0] : []) + $0.descendants(name)}}
     func attr(_ name:String) -> String? {(attributes ?? []).first{($0.localName ?? $0.name?.split(separator:":").last.map(String.init)) == name}?.stringValue}
-    func number(_ name:String) -> Double? {attr(name).flatMap(Double.init)}
+    // "NaN", "inf" and overflowing values such as "1e999" parse as non-finite
+    // Doubles, which JSONSerialization rejects with an uncatchable exception.
+    func number(_ name:String) -> Double? {attr(name).flatMap(Double.init).flatMap{$0.isFinite ? $0 : nil}}
 }

@@ -14,6 +14,8 @@ public enum AnnotationDrawing {
         let width=maxX-minX,height=maxY-minY
         let linear=freehand || style.kind == .line || style.kind == .arrow
         guard linear ? max(width,height)>1:(width>=1 && height>=1) else { return nil }
+        // Blank text paints nothing, so it must not become an invisible, selectable mark.
+        if style.kind == .text && style.text.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty { return nil }
         item.rect=EditRect(x:minX,y:minY,width:width,height:height)
         if freehand { item.points=points }
         else if style.kind == .line || style.kind == .arrow { item.points=[first,last] }

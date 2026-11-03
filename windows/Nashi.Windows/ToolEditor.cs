@@ -23,6 +23,7 @@ public sealed partial class ToolEditor:Window
     internal RangeTimeline Timeline=>timeline;
     internal TextBox FieldForTest(string name)=>fields[name];
     internal bool AcceptForTest()=>ReadSettings(false);
+    internal void ChooseAnnotationImageForTest(string file)=>ChooseAnnotationImage(file);
     private readonly string input;private readonly MediaInfo? media;private readonly StackPanel options=new(){Margin=new(18,0,0,0)};
     public ToolEditor(Window owner,string tool,string title,string input,MediaInfo? media=null,BitmapSource? preview=null,IReadOnlyList<string>? inputs=null,string[]? outputFormats=null)
     {
@@ -129,7 +130,7 @@ public sealed partial class ToolEditor:Window
         foreach(var pair in defaults)fields[pair.Key].Text=pair.Value;
         foreach(var choice in new[]{drawingTool,backdrop,collageLayout,redactionStyle,visualization,redactMode,bleepMode,sampleDepth,documentLayout,epubLayout,aspectRatio})choice.SelectedIndex=0;
         flipHorizontal.IsChecked=flipVertical.IsChecked=trimSilence.IsChecked=joinClips.IsChecked=false;fitCollage.IsChecked=preserveMetadata.IsChecked=true;
-        backgroundImage=annotationImage=visualImage=null;archivePassword.Clear();
+        backgroundImage=visualImage=null;annotationImage=null;archivePassword.Clear();
         if(inputOrder.Items.Count>0){inputOrder.Items.Clear();foreach(var path in collageInputs)inputOrder.Items.Add(new ListBoxItem{Content=Path.GetFileName(path),Tag=path});OrderedInputs=collageInputs.ToArray();}
         var originalOrder=imageOrder.Items.Cast<ListBoxItem>().OrderBy(item=>(int)item.Tag).ToArray();imageOrder.Items.Clear();foreach(var item in originalOrder)imageOrder.Items.Add(item);
         while(drawing.Children.Count>1)drawing.Children.RemoveAt(drawing.Children.Count-1);

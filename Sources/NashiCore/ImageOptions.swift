@@ -94,6 +94,25 @@ public struct ImageAnnotation: Codable, Sendable {
     public var sourceRect: EditRect? = nil
     public var magnification: Double = 2
     public init(kind: ImageAnnotationKind, rect: EditRect) { self.kind = kind; self.rect = rect }
+    /// Omitted keys keep the defaults above. CLI options overlay defaults on
+    /// nested objects, but each annotation in the array is decoded as given.
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        kind = try values.decode(ImageAnnotationKind.self, forKey: .kind)
+        rect = try values.decode(EditRect.self, forKey: .rect)
+        points = try values.decodeIfPresent([ImagePoint].self, forKey: .points) ?? points
+        text = try values.decodeIfPresent(String.self, forKey: .text) ?? text
+        color = try values.decodeIfPresent(String.self, forKey: .color) ?? color
+        fillColor = try values.decodeIfPresent(String.self, forKey: .fillColor)
+        opacity = try values.decodeIfPresent(Double.self, forKey: .opacity) ?? opacity
+        strokeWidth = try values.decodeIfPresent(Double.self, forKey: .strokeWidth) ?? strokeWidth
+        fontSize = try values.decodeIfPresent(Double.self, forKey: .fontSize) ?? fontSize
+        fontFamily = try values.decodeIfPresent(String.self, forKey: .fontFamily) ?? fontFamily
+        number = try values.decodeIfPresent(Int.self, forKey: .number) ?? number
+        imageURL = try values.decodeIfPresent(URL.self, forKey: .imageURL)
+        sourceRect = try values.decodeIfPresent(EditRect.self, forKey: .sourceRect)
+        magnification = try values.decodeIfPresent(Double.self, forKey: .magnification) ?? magnification
+    }
 }
 
 public enum ImageRedactionStyle: String, Codable, CaseIterable, Sendable { case solid, blur, pixelate }

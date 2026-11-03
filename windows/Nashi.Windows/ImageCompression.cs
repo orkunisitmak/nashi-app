@@ -10,7 +10,8 @@ public static partial class ImageEngine
         void Encode(int q,double scale)
         {
             token.ThrowIfCancellationRequested();if(File.Exists(output))File.Delete(output);
-            var frame=scale<1?new TransformedBitmap(image,new ScaleTransform(Math.Max(1,(int)(image.PixelWidth*scale))/(double)image.PixelWidth,Math.Max(1,(int)(image.PixelHeight*scale))/(double)image.PixelHeight)):image;Save(frame,output,format,q,options.EncoderPath,token);
+            // Round both sides and keep the shorter one at least a pixel so tiny scale steps keep the aspect ratio (matches the Mac path).
+            var fit=Math.Max(scale,1d/Math.Min(image.PixelWidth,image.PixelHeight));var frame=scale<1?new TransformedBitmap(image,new ScaleTransform(Math.Max(1,(int)Math.Round(image.PixelWidth*fit))/(double)image.PixelWidth,Math.Max(1,(int)Math.Round(image.PixelHeight*fit))/(double)image.PixelHeight)):image;Save(frame,output,format,q,options.EncoderPath,token);
         }
         // The source file can stand in for the output only when no edit reached the pixels; flips, 180° turns and annotations keep the size but must still be encoded and measured.
         var keepsOriginal=options.Annotated is null&&!options.FlipHorizontal&&!options.FlipVertical&&((options.Rotation%360)+360)%360==0&&image.PixelWidth==source.PixelWidth&&image.PixelHeight==source.PixelHeight&&FeatureCatalog.Extension(input)==format;

@@ -75,6 +75,7 @@ struct SettingsView:View {
                                 .foregroundStyle(section==item ? NashiPalette.forest:Color.secondary)
                                 .padding(.horizontal,13).padding(.vertical,12)
                                 .background(section==item ? NashiPalette.sage:Color.clear,in:RoundedRectangle(cornerRadius:12))
+                                .contentShape(RoundedRectangle(cornerRadius:12))
                         }.buttonStyle(.plain).accessibilityAddTraits(section==item ? .isSelected:[])
                     }
                 }
@@ -145,7 +146,7 @@ struct SettingsView:View {
             DisclosureGroup("Additional options") { VStack(alignment:.leading,spacing:13) {
                 Toggle("Enable Nashi",isOn:$enabled)
                 Toggle("Reveal finished files in Finder",isOn:$reveal)
-                HStack { Text("Wheel size");Slider(value:$wheelScale,in:0.85...1.4).frame(width:230);Text("\(Int(wheelScale*100))%").monospacedDigit().frame(width:40) }
+                HStack { Text("Wheel size");Slider(value:$wheelScale,in:0.85...1.4).frame(width:230);Text(Int(wheelScale*100),format:.percent).monospacedDigit().frame(width:40) }
             }.padding(.top,12) }
         }.padding(26).frame(maxWidth:680) }.frame(maxWidth:.infinity)
     }
@@ -264,8 +265,8 @@ private struct FolderSettingsView:View {
     }
     private func refresh() { folders=FolderAccessPreferences.grants() }
     private func choose(home:Bool) {
-        let panel=NSOpenPanel();panel.title="Allow Folder Access";panel.prompt="Allow Access";panel.canChooseFiles=false;panel.canChooseDirectories=true;panel.allowsMultipleSelection=true
-        panel.message="Choose a folder where Nashi may save results. Every folder inside it is included."
+        let panel=NSOpenPanel();panel.title=L10n.text("Allow Folder Access");panel.prompt=L10n.text("Allow Access");panel.canChooseFiles=false;panel.canChooseDirectories=true;panel.allowsMultipleSelection=true
+        panel.message=L10n.text("Choose a folder where Nashi may save results. Every folder inside it is included.")
         if home { panel.directoryURL=FileManager.default.homeDirectoryForCurrentUser }
         if panel.runModal() == .OK { do { try FolderAccessPreferences.add(panel.urls);error=nil;refresh() } catch { self.error=error.localizedDescription } }
     }

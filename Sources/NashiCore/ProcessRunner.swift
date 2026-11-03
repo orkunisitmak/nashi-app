@@ -44,6 +44,7 @@ public enum ProcessRunner {
             group.wait()
             throw error
         }
+        running.insert(process); defer { running.remove(process) }
         while process.isRunning {
             if token.isCancelled {
                 process.terminate()
@@ -63,6 +64,20 @@ public enum ProcessRunner {
         return ProcessResult(output: captured.output, errorOutput: captured.errors)
     }
     private final class Capture: @unchecked Sendable { var output=Data(); var errors=Data() }
+
+    /// Stops every child still running, for app termination: a cancelled token is
+    /// only observed by the polling thread, which does not outlive the app.
+    public static func terminateAll() {
+        for process in running.snapshot() where process.isRunning { process.terminate() }
+    }
+    private static let running = Running()
+    private final class Running: @unchecked Sendable {
+        private let lock = NSLock()
+        private var processes: [ObjectIdentifier: Process] = [:]
+        func insert(_ process: Process) { lock.lock(); processes[ObjectIdentifier(process)] = process; lock.unlock() }
+        func remove(_ process: Process) { lock.lock(); processes[ObjectIdentifier(process)] = nil; lock.unlock() }
+        func snapshot() -> [Process] { lock.lock(); defer { lock.unlock() }; return Array(processes.values) }
+    }
 }
 
 public enum Dependencies {
@@ -111,14 +126,48 @@ public enum OutputFiles {
     }
     public static func unique(for input: URL, extension ext: String, suffix: String = "", directory: URL? = nil) -> URL {
         let dir = directory ?? input.deletingLastPathComponent()
-        let stem = input.deletingPathExtension().lastPathComponent + suffix
+        let source = input.deletingPathExtension().lastPathComponent
         let cleanExt = ext.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "."))
-        var candidate = dir.appendingPathComponent(stem).appendingPathExtension(cleanExt)
-        var index = 2
-        while FileManager.default.fileExists(atPath: candidate.path) {
-            candidate = dir.appendingPathComponent("\(stem) \(index)").appendingPathExtension(cleanExt); index += 1
-        }
+        var candidate: URL, index = 1
+        // lstat-based: a dangling link still occupies its name. fileExists would
+        // report it free, so moves fail and atomic writes replace the link.
+        repeat {
+            let tail = suffix + (index == 1 ? "" : " \(index)")
+            // macOS limits a name to 255 UTF-16 units of its decomposed form. The
+            // source part is shortened so the suffix and extension still fit.
+            var stem = source
+            while !stem.isEmpty, (stem + tail + (cleanExt.isEmpty ? "" : "." + cleanExt)).decomposedStringWithCanonicalMapping.utf16.count > 255 { stem.removeLast() }
+            candidate = dir.appendingPathComponent(stem + tail).appendingPathExtension(cleanExt); index += 1
+        } while (try? FileManager.default.attributesOfItem(atPath: candidate.path)) != nil
         return candidate
+    }
+    /// Moves `source` into `directory` under its own name, or "Name 2", "Name 3"…
+    /// when that is taken, and returns where it landed. An existing item is never
+    /// replaced, even one another app creates after the name was chosen.
+    public static func move(_ source:URL,into directory:URL) throws -> URL {
+        try move(source,into:directory,willMove:nil)
+    }
+    static func move(_ source:URL,into directory:URL,willMove:((URL)->Void)?) throws -> URL {
+        // attributesOfItem does not follow links, so a dangling link also takes a name.
+        let taken={ (url:URL) in (try? FileManager.default.attributesOfItem(atPath:url.path)) != nil }
+        var target=directory.appendingPathComponent(source.lastPathComponent)
+        // unique skips taken names and shortens the stem so " 2" still fits in 255 units.
+        func next() { target=unique(for:source,extension:source.pathExtension,directory:directory) }
+        while true {
+            while taken(target) { next() }
+            willMove?(target)
+            // moveItem checks the destination and then renames, so a file created
+            // in between is replaced. RENAME_EXCL checks and renames in one step.
+            let code=source.withUnsafeFileSystemRepresentation { from in
+                target.withUnsafeFileSystemRepresentation { to in renamex_np(from!,to!,UInt32(RENAME_EXCL))==0 ? 0:errno }
+            }
+            if code==0 { return target }
+            if code==EEXIST { next();continue }
+            // Other volumes (EXDEV) and file systems without RENAME_EXCL (exFAT:
+            // ENOTSUP) keep the previous behavior, which also reports other errors.
+            try FileManager.default.moveItem(at:source,to:target)
+            return target
+        }
     }
     public static func temporaryDirectory() throws -> URL {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("Nashi-\(UUID().uuidString)", isDirectory: true)

@@ -46,7 +46,10 @@ public static class PhotoCodec
     public static void EncodePng(byte[] pixels,string output,string format,int quality=85,string? encoder=null,CancellationToken token=default)
     {
         using var image=new MagickImage(pixels,new MagickReadSettings{Format=MagickFormat.Png});image.Strip();image.Quality=(uint)Math.Clamp(quality,1,100);
-        if(format=="heic"){if(encoder is null)throw new InvalidOperationException("Set up media tools once to enable HEIC encoding on Windows.");var width=(int)image.Width;var height=(int)image.Height;Task.Run(()=>HeifCodec.EncodeAsync(encoder,pixels,output,width,height,quality,token),token).GetAwaiter().GetResult();return;}image.Write(output,Format(format));
+        if(format=="heic"){if(encoder is null)throw new InvalidOperationException("Set up media tools once to enable HEIC encoding on Windows.");var width=(int)image.Width;var height=(int)image.Height;
+            // FFmpeg's HEVC still drops alpha; like macOS, keep it as a separate plane. Opaque images encode as before.
+            byte[]? alpha=null;if(!image.IsOpaque){using var mask=image.Separate(Channels.Alpha).Single();alpha=mask.ToByteArray(MagickFormat.Png);}
+            Task.Run(()=>HeifCodec.EncodeAsync(encoder,pixels,output,width,height,quality,token,alpha),token).GetAwaiter().GetResult();return;}image.Write(output,Format(format));
     }
     /// Encodes straight (non-premultiplied) BGRA32 pixels without an intermediate PNG.
     public static void EncodePixels(byte[] bgra,int width,int height,string output,string format,int quality=85,string? encoder=null,CancellationToken token=default)
@@ -60,11 +63,15 @@ public static class PhotoCodec
     public static MagickFormat Format(string format)=>format switch{"jpg"=>MagickFormat.Jpeg,"webp"=>MagickFormat.WebP,"heic"=>MagickFormat.Heic,"avif"=>MagickFormat.Avif,"tiff"=>MagickFormat.Tiff,"bmp"=>MagickFormat.Bmp,"gif"=>MagickFormat.Gif,"png"=>MagickFormat.Png,_=>throw new ArgumentException("Unsupported image format.")};
     public static byte[] Adjust(byte[] png,PhotoAdjustments o)
     {
-        foreach(var property in typeof(PhotoAdjustments).GetProperties()){var n=(double)property.GetValue(o)!;if(!double.IsFinite(n)||Math.Abs(n)>100)throw new ArgumentException("Choose finite photo adjustments within their ranges.");}
+        foreach(var property in typeof(PhotoAdjustments).GetProperties()){var n=(double)property.GetValue(o)!;if(!double.IsFinite(n)||Math.Abs(n)>(property.Name==nameof(PhotoAdjustments.Hue)?180:100))throw new ArgumentException("Choose finite photo adjustments within their ranges.");}
         if(o.Gamma<=0||o.Contrast<0||o.Saturation<0)throw new ArgumentException("Gamma must be positive; contrast and saturation cannot be negative.");
         using var image=new MagickImage(png,new MagickReadSettings{Format=MagickFormat.Png});
+        // The pixel loop below reads channels 0..2 as R, G, B and 3 as alpha. A grayscale
+        // PNG has one gray channel (plus alpha), so expand it to RGB first.
+        if(image.ColorType is ColorType.Grayscale or ColorType.GrayscaleAlpha){image.ColorSpace=ColorSpace.sRGB;image.ColorType=image.HasAlpha?ColorType.TrueColorAlpha:ColorType.TrueColor;}
         if(o.Exposure!=0)image.Evaluate(Channels.RGB,EvaluateOperator.Multiply,Math.Pow(2,o.Exposure));
-        image.BrightnessContrast(new Percentage(o.Brightness*100),new Percentage((o.Contrast-1)*50));
+        // Colour only, as on macOS: on alpha, brightness made transparent areas visible and contrast faded opaque ones.
+        image.BrightnessContrast(new Percentage(o.Brightness*100),new Percentage((o.Contrast-1)*50),Channels.RGB);
         if(o.Gamma!=1)image.GammaCorrect(o.Gamma,Channels.RGB);
         if(o.Shadows!=0||o.Highlights!=0||o.Whites!=0||o.Blacks!=0||o.Saturation!=1||o.Vibrance!=0||o.Temperature!=0||o.Tint!=0||o.Fade!=0)
         {
@@ -81,7 +88,7 @@ public static class PhotoCodec
         pixels.Dispose();
         }
         if(o.Hue!=0)image.Modulate(new Percentage(100),new Percentage(100),new Percentage(100+o.Hue/1.8));
-        if(o.Dehaze!=0)image.BrightnessContrast(new Percentage(-o.Dehaze*8),new Percentage(o.Dehaze*25));
+        if(o.Dehaze!=0)image.BrightnessContrast(new Percentage(-o.Dehaze*8),new Percentage(o.Dehaze*25),Channels.RGB);
         if(o.NoiseReduction>0)image.MedianFilter((uint)Math.Clamp(Math.Ceiling(o.NoiseReduction*2),1,3));
         // Blur is the Gaussian standard deviation, like macOS CIGaussianBlur's radius.
         // GaussianBlur(radius) keeps sigma at 1 (barely blurred, still readable when

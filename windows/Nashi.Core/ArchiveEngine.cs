@@ -18,9 +18,15 @@ public static class ArchiveEngine
         try{return StrictUtf8.GetString(bytes,index,count);}
         catch(DecoderFallbackException){return LegacyTextCodec.Oem.GetString(bytes,index,count);}
     }
+    /// Names outputs of "Name.tar.gz" after "Name", as is already done for "Name.tgz".
+    private static string Stem(string input)
+    {
+        var stem=Path.GetFileNameWithoutExtension(input);
+        return FeatureCatalog.Extension(input)=="gz"&&Path.GetExtension(stem).Equals(".tar",StringComparison.OrdinalIgnoreCase)?Path.GetFileNameWithoutExtension(stem):stem;
+    }
     public static IReadOnlyList<string> Extract(string input,string destination,string? password=null,IProgress<OperationProgress>? progress=null,CancellationToken token=default)
     {
-        using var tx=new ExportTransaction(destination);var folder=Path.Combine(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+" Extracted");Directory.CreateDirectory(folder);
+        using var tx=new ExportTransaction(destination);var folder=Path.Combine(tx.StagingDirectory,Stem(input)+" Extracted");Directory.CreateDirectory(folder);
         var sourcePath=input;
         using(var original=File.OpenRead(input))
         {
@@ -37,11 +43,14 @@ public static class ArchiveEngine
         var names=new HashSet<string>(StringComparer.OrdinalIgnoreCase);long copied=0;var index=0;
         foreach(var entry in entries)
         {
-            token.ThrowIfCancellationRequested();var name=entry.Key?.TrimEnd('/','\\');if(string.IsNullOrWhiteSpace(name))continue;
+            token.ThrowIfCancellationRequested();var name=entry.Key?.TrimEnd('/','\\');while(name?.StartsWith("./",StringComparison.Ordinal)==true)name=name[2..];if(string.IsNullOrWhiteSpace(name)||name==".")continue;
             var output=SafePaths.ArchiveEntry(folder,name);if(!names.Add(output)||!string.IsNullOrEmpty(entry.LinkTarget))throw new InvalidDataException("Archive contains duplicate paths or links.");
             if(entry.IsDirectory){Directory.CreateDirectory(output);continue;}Directory.CreateDirectory(Path.GetDirectoryName(output)!);
-            using var source=entry.OpenEntryStream();using var target=new FileStream(output,FileMode.CreateNew);var buffer=new byte[81920];int count;
-            while((count=source.Read(buffer))>0){token.ThrowIfCancellationRequested();copied+=count;if(copied>4L*1024*1024*1024)throw new InvalidDataException("Archive expands beyond 4 GB.");target.Write(buffer,0,count);}
+            using(var source=entry.OpenEntryStream())using(var target=new FileStream(output,FileMode.CreateNew)){var buffer=new byte[81920];int count;
+            while((count=source.Read(buffer))>0){token.ThrowIfCancellationRequested();copied+=count;if(copied>4L*1024*1024*1024)throw new InvalidDataException("Archive expands beyond 4 GB.");target.Write(buffer,0,count);}}
+            // Keep each file's modification date, as macOS does; the file must be closed first.
+            // SharpCompress reports some RAR 4 file times only as CreatedTime.
+            if((entry.LastModifiedTime??entry.CreatedTime) is {Year:>=1970} modified)File.SetLastWriteTime(output,modified);
             progress?.Report(new(++index/(double)Math.Max(1,entries.Length)*.98,"Extracting files…"));
         }
         return tx.Publish([folder],token);
@@ -50,10 +59,10 @@ public static class ArchiveEngine
     {
         if(format is not ("zip" or "tar" or "gz"))throw new ArgumentException("Choose ZIP, TAR or GZIP.");
         using var tx=new ExportTransaction(destination);var work=Path.Combine(tx.StagingDirectory,"contents");Directory.CreateDirectory(work);
-        var extracted=Extract(input,work,password,progress,token)[0];var output=Path.Combine(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+"."+format);
+        var extracted=Extract(input,work,password,progress,token)[0];var output=Path.Combine(tx.StagingDirectory,Stem(input)+"."+format);
         if(format=="zip")
         {
-            using var zip=ZipFile.Open(output,ZipArchiveMode.Create);foreach(var path in Directory.EnumerateFileSystemEntries(extracted,"*",SearchOption.AllDirectories)){token.ThrowIfCancellationRequested();var name=Path.GetRelativePath(extracted,path).Replace('\\','/');if(Directory.Exists(path)){zip.CreateEntry(name+"/");continue;}using var source=File.OpenRead(path);using var entry=zip.CreateEntry(name,CompressionLevel.Optimal).Open();var buffer=new byte[81920];int read;while((read=source.Read(buffer))>0){token.ThrowIfCancellationRequested();entry.Write(buffer,0,read);}}
+            using var zip=ZipFile.Open(output,ZipArchiveMode.Create);foreach(var path in Directory.EnumerateFileSystemEntries(extracted,"*",SearchOption.AllDirectories)){token.ThrowIfCancellationRequested();var name=Path.GetRelativePath(extracted,path).Replace('\\','/');if(Directory.Exists(path)){zip.CreateEntry(name+"/");continue;}using var source=File.OpenRead(path);var item=zip.CreateEntry(name,CompressionLevel.Optimal);if(File.GetLastWriteTime(path) is {Year:>=1980 and <=2107} modified)item.LastWriteTime=modified;using var entry=item.Open();var buffer=new byte[81920];int read;while((read=source.Read(buffer))>0){token.ThrowIfCancellationRequested();entry.Write(buffer,0,read);}}
         }
         else
         {

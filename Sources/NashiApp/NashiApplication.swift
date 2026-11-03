@@ -178,8 +178,8 @@ enum NashiApplication {
         monitor=DragMonitor(onEnd:{ [weak self] in self?.wheel.endDrag() }) { [weak self] urls,mode,point in self?.wheel.show(inputs:urls,mode:mode,at:point) }
         windowManagement=WindowManagementController(fileWheelIsVisible:{ [weak self] in self?.wheel.panel?.isVisible == true })
         windowManagement.onNotice = { message in
-            let alert=NSAlert();alert.messageText="Window arrangement";alert.informativeText=message
-            alert.addButton(withTitle:"OK");alert.runModal()
+            let alert=NSAlert();alert.messageText=L10n.text("Window arrangement");alert.informativeText=L10n.text(message)
+            alert.addButton(withTitle:L10n.text("OK"));alert.runModal()
         }
         state.onOpenWheel = { [weak self] in self?.wheel.show(inputs:self?.state.inputs ?? [],mode:.tools,at:NSEvent.mouseLocation,keyboard:true) }
         state.onWebDownload = { [weak self] url,mode in self?.showWebDownload(url,mode:mode) }
@@ -233,7 +233,7 @@ enum NashiApplication {
         if downloadWindow == nil {
             downloadWindow=makeToolWindow(title:"Download from the web",size:NSSize(width:660,height:680),view:WebDownloadView(model:downloadModel,state:state))
             downloadWindow?.contentMinSize=NSSize(width:620,height:520)
-            downloadModel.onUseFiles = { [weak self] in guard let self else { return };self.state.inputs=self.downloadModel.completed;self.downloadWindow?.close();self.showHome() }
+            downloadModel.onUseFiles = { [weak self] in guard let self,!self.state.working else { return };self.state.inputs=self.downloadModel.completed;self.downloadWindow?.close();self.showHome() }
         }
         downloadModel.open(url,mode:mode)
         downloadWindow?.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true)
@@ -255,13 +255,15 @@ enum NashiApplication {
     }
     func applicationWillTerminate(_ notification:Notification) {
         windowManagement?.stop()
+        // Previews and file inspection don't block quitting; their ffmpeg/ffprobe must not outlive Nashi.
+        ProcessRunner.terminateAll()
         if let downloadHotKey { UnregisterEventHotKey(downloadHotKey) }
         if let downloadHotKeyHandler { RemoveEventHandler(downloadHotKeyHandler) }
     }
     @objc func chooseFiles() {
         guard !state.working else { return }
         NSApp.activate(ignoringOtherApps:true)
-        let panel=NSOpenPanel();panel.allowsMultipleSelection=true;panel.canChooseDirectories=true;panel.prompt="Choose Files"
+        let panel=NSOpenPanel();panel.allowsMultipleSelection=true;panel.canChooseDirectories=true;panel.prompt=L10n.text("Choose Files")
         if panel.runModal() == .OK { state.inputs=panel.urls;showHome() }
     }
     @objc func showSettings() {
@@ -278,6 +280,7 @@ enum NashiApplication {
             let panel=ToolPanel(contentRect:NSRect(x:0,y:0,width:760,height:520),styleMask:[.borderless,.closable],backing:.buffered,defer:false)
             panel.title="Welcome to Nashi";panel.isReleasedWhenClosed=false;panel.isOpaque=false;panel.backgroundColor = .clear;panel.hasShadow=true;panel.hidesOnDeactivate=false
             let view=WelcomeView(onDone:{ [weak self] in self?.finishWelcome() },onClose:{ [weak self] in self?.finishWelcome() },onMinimize:{ [weak self] in self?.welcome?.orderOut(nil) })
+            panel.onPerformClose={ [weak self] in self?.finishWelcome() }
             panel.contentView=NSHostingView(rootView:view.nashiLanguage());panel.center();welcome=panel
         }
         welcome?.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true)
@@ -318,7 +321,7 @@ enum NashiApplication {
     }
     func application(_ application:NSApplication,open urls:[URL]) {
         if let web=urls.first(where:{!$0.isFileURL}),let valid=try? WebDownloadEngine.link(web.absoluteString) { showWebDownload(valid,mode:.video) }
-        else { state.inputs=urls;showHome();state.onOpenWheel?() }
+        else { if !state.working { state.inputs=urls };showHome();state.onOpenWheel?() }
     }
     func applicationShouldTerminate(_ sender:NSApplication)->NSApplication.TerminateReply {
         // Sparkle can resume an earlier install without the postponement callback.
@@ -344,13 +347,18 @@ enum NashiApplication {
 extension AppDelegate:NSMenuItemValidation {
     func validateMenuItem(_ menuItem:NSMenuItem)->Bool {
         if menuItem.action == #selector(checkForUpdates) { return !updater.isConfigured || (updater.canCheckForUpdates && !updater.isBusy) }
-        if menuItem.action == #selector(quit) { return !state.working }
+        if menuItem.action == #selector(quit) { return !state.working && !toolSetupWorking }
         return true
     }
 }
 final class ToolPanel:NSPanel {
     override var canBecomeKey:Bool { true }
     override var canBecomeMain:Bool { true }
-    // A borderless panel has no standard close button for AppKit to click.
-    override func performClose(_ sender:Any?) { close() }
+    // A borderless panel has no standard close button for AppKit to click or to validate
+    // Close Window against. An owner with its own close flow (Welcome) takes it through that flow.
+    var onPerformClose:(()->Void)?
+    override func performClose(_ sender:Any?) { if let onPerformClose { onPerformClose() } else { close() } }
+    override func validateUserInterfaceItem(_ item:NSValidatedUserInterfaceItem)->Bool {
+        item.action == #selector(performClose(_:)) ? styleMask.contains(.closable):super.validateUserInterfaceItem(item)
+    }
 }

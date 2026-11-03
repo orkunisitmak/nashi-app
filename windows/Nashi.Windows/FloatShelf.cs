@@ -77,7 +77,7 @@ public sealed class FloatShelf:Window
     }
     internal void Add(IEnumerable<string> incoming)
     {
-        foreach(var p in incoming.Where(p=>File.Exists(p)||Directory.Exists(p)).Take(1000)){var full=Path.GetFullPath(p);if(!paths.Contains(full,StringComparer.OrdinalIgnoreCase))paths.Add(full);}Reload();
+        foreach(var p in ShellShortcut.Resolve(incoming).Where(p=>File.Exists(p)||Directory.Exists(p)).Take(1000)){var full=Path.GetFullPath(p);if(!paths.Contains(full,StringComparer.OrdinalIgnoreCase))paths.Add(full);}Reload();
     }
     private string[] Selection()=>files.SelectedItems.Count>0?files.SelectedItems.Cast<ListBoxItem>().Select(i=>(string)i.Tag).ToArray():paths.Where(p=>File.Exists(p)||Directory.Exists(p)).ToArray();
     private void Reload()
