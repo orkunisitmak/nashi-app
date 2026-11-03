@@ -12,7 +12,10 @@ public enum PDFEngine {
     static func pageSize(of url: URL, pixelWidth: Int, pixelHeight: Int) -> NSSize {
         let properties = CGImageSourceCreateWithURL(url as CFURL, nil).flatMap { CGImageSourceCopyPropertiesAtIndex($0, 0, nil) } as? [CFString:Any]
         guard let dpi = properties?[kCGImagePropertyDPIWidth] as? Double, dpi.isFinite, dpi > 0, dpi == properties?[kCGImagePropertyDPIHeight] as? Double else { return NSSize(width:pixelWidth,height:pixelHeight) }
-        return NSSize(width:Double(pixelWidth)*72/dpi,height:Double(pixelHeight)*72/dpi)
+        let size = NSSize(width:Double(pixelWidth)*72/dpi,height:Double(pixelHeight)*72/dpi)
+        // A stored resolution that gives a page under 3 pt or over Acrobat's 14,400 pt limit is wrong metadata, not a real scan.
+        guard (3...14_400).contains(size.width), (3...14_400).contains(size.height) else { return NSSize(width:pixelWidth,height:pixelHeight) }
+        return size
     }
     public static func create(inputs: [URL], options: OperationOptions, token: CancellationToken, progress: ProgressHandler = {_,_ in}) throws -> [URL] {
         guard let first=inputs.first else { throw NashiError.invalidInput("Choose images to create a PDF.") }

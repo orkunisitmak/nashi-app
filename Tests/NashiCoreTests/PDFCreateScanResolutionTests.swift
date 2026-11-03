@@ -34,4 +34,16 @@ final class PDFCreateScanResolutionTests: XCTestCase {
         let box = try pageBox(image("Plain.jpg", width: 640, height: 480, dpi: nil))
         XCTAssertEqual(box.width, 640, accuracy: 1); XCTAssertEqual(box.height, 480, accuracy: 1)
     }
+
+    func testImplausibleStoredResolutionsKeepOnePixelPerPoint() throws {
+        for dpi in [1, 100_000] {
+            let box = try pageBox(image("Odd\(dpi).jpg", width: 4000, height: 3000, dpi: dpi))
+            XCTAssertEqual(box.width, 4000, accuracy: 1, "\(dpi) DPI"); XCTAssertEqual(box.height, 3000, accuracy: 1, "\(dpi) DPI")
+        }
+    }
+
+    func testFilmScanResolutionsAreStillHonored() throws {
+        let box = try pageBox(image("Film.jpg", width: 4000, height: 3000, dpi: 4000))
+        XCTAssertEqual(box.width, 72, accuracy: 1); XCTAssertEqual(box.height, 54, accuracy: 1)
+    }
 }
