@@ -25,22 +25,30 @@ final class AudioToolsAlbumArtTests: XCTestCase {
         _ = try MediaEngine.tool(tool, inputs: [input], options: options, token: .init())
         return String(decoding: try Data(contentsOf: log), as: UTF8.self).components(separatedBy: "ARGV\n").last!.split(separator: "\n").map(String.init)
     }
-    private func keepsArt(_ argv: [String]) -> Bool {
+    private func keepsArt(_ argv: [String], from input: String = "0:1") -> Bool {
         let pairs = Array(zip(argv, argv.dropFirst()))
-        return pairs.contains { $0 == "-map" && $1 == "0:1" } && pairs.contains { $0 == "-c:v" && $1 == "copy" } && !argv.contains("-vn")
+        return pairs.contains { $0 == "-map" && $1 == input } && pairs.contains { $0 == "-c:v" && $1 == "copy" } && !argv.contains("-vn")
     }
 
     func testAudioToolsKeepAnMP3sCoverPicture() throws {
-        XCTAssertTrue(keepsArt(try run(.trimAudio) { $0.start = 5; $0.end = 20 }))
+        XCTAssertTrue(keepsArt(try run(.trimAudio) { $0.start = 5; $0.end = 20 }, from: "1:1"))
         XCTAssertTrue(keepsArt(try run(.normalizeAudio)))
         XCTAssertTrue(keepsArt(try run(.audioChannels) { $0.channels = 1 }))
         XCTAssertTrue(keepsArt(try run(.redactAudio) { $0.audioRedactions = [TimeRange(start: 2, end: 3)] }))
     }
 
+    func testTrimReadsTheCoverFromAnUnseekedSecondInput() throws {
+        let argv = try run(.trimAudio) { $0.start = 5; $0.end = 20 }
+        let firstInput = try XCTUnwrap(argv.firstIndex(of: "-i")), seek = try XCTUnwrap(argv.firstIndex(of: "-ss"))
+        XCTAssertLessThan(seek, firstInput)
+        XCTAssertEqual(argv.filter { $0 == "-i" }.count, 2)
+        XCTAssertEqual(argv.filter { $0 == "-ss" }.count, 1)
+    }
+
     func testToolsStillDropPicturesWhenMetadataIsNotKeptOrThereIsNoCover() throws {
         let stripped = try run(.trimAudio) { $0.start = 5; $0.end = 20; $0.preserveMetadata = false }
-        XCTAssertFalse(stripped.contains("0:1")); XCTAssertTrue(stripped.contains("-vn"))
+        XCTAssertFalse(stripped.contains("0:1")); XCTAssertFalse(stripped.contains("1:1")); XCTAssertTrue(stripped.contains("-vn"))
         let plain = try run(.trimAudio, withArt: false) { $0.start = 5; $0.end = 20 }
-        XCTAssertFalse(plain.contains("0:1")); XCTAssertTrue(plain.contains("-vn"))
+        XCTAssertFalse(plain.contains("0:1")); XCTAssertFalse(plain.contains("1:1")); XCTAssertTrue(plain.contains("-vn"))
     }
 }

@@ -143,10 +143,10 @@ public enum MediaEngine {
     }
 
     /// Album art is an attached picture stream, not a tag; keep it where the container stores JPEG/PNG art.
-    private static func albumArtArguments(_ info: MediaInfo, ext: String, options: OperationOptions) -> [String]? {
+    private static func albumArtArguments(_ info: MediaInfo, ext: String, options: OperationOptions, input: Int = 0) -> [String]? {
         guard options.preserveMetadata, ["mp3", "m4a", "flac"].contains(ext),
               let artwork = info.streams.first(where: { $0.isAttachedPicture && ["mjpeg", "png"].contains($0.codec) }) else { return nil }
-        return ["-map", "0:\(artwork.index)", "-c:v", "copy"]
+        return ["-map", "\(input):\(artwork.index)", "-c:v", "copy"]
     }
 
     public static func convert(_ input: URL, to format: String, options: OperationOptions, token: CancellationToken, progress: @escaping ProgressHandler = {_,_ in}) throws -> [URL] {
@@ -278,9 +278,11 @@ public enum MediaEngine {
         let out = try outputURL(input, ext: ext, suffix: suffix, options: options)
         let range = ["-ss", decimal(interval.0), "-t", decimal(interval.1 - interval.0)]
         // Output -ss/-t cut after -af, so silence removal would scan the whole file; read only the selection instead.
-        var arguments = audio && options.trimSilence ? range + ["-i", input.path] : ["-i", input.path] + range
+        // An output-side -ss drops the attached cover packet, so a cover comes from a second, unseeked input.
+        let cover = audio ? albumArtArguments(info, ext: ext, options: options, input: 1) : nil
+        var arguments = audio && (options.trimSilence || cover != nil) ? range + ["-i", input.path] + (cover == nil ? [] : ["-i", input.path]) : ["-i", input.path] + range
         if audio {
-            arguments += ["-map", "0:a:0"] + (albumArtArguments(info, ext: ext, options: options) ?? ["-vn"])
+            arguments += ["-map", "0:a:0"] + (cover ?? ["-vn"])
             if options.trimSilence { arguments += ["-af", "silenceremove=start_periods=1:start_duration=0.02:start_threshold=\(decimal(options.silenceThresholdDb))dB,areverse,silenceremove=start_periods=1:start_duration=0.02:start_threshold=\(decimal(options.silenceThresholdDb))dB,areverse"] }
             arguments += audioEncoding(ext, quality: options.quality, source: info.audio, pcmCodec: try pcmCodec(for: ext, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset)
         } else { arguments += ["-map", "0:v:0", "-map", "0:a:0?"] + videoEncoding(ext, quality: options.quality, sourceAudio: info.audio) }
