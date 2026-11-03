@@ -165,8 +165,7 @@ struct JobRecord:Codable,Identifiable {
         case .terminal:
             let directory=((try? urls[0].resourceValues(forKeys:[.isDirectoryKey]).isDirectory) ?? false) ? urls[0] : urls[0].deletingLastPathComponent()
             // Terminal's Services integration opens the chosen folder without shell interpolation.
-            let preferred=UserDefaults.standard.string(forKey:"terminalApp") ?? "Terminal"
-            let app=preferred=="iTerm2" ? NSWorkspace.shared.urlForApplication(withBundleIdentifier:"com.googlecode.iterm2"):URL(fileURLWithPath:"/System/Applications/Utilities/Terminal.app")
+            let (preferred,app)=preferredTerminal()
             if let app {
                 NSWorkspace.shared.open([directory],withApplicationAt:app,configuration:NSWorkspace.OpenConfiguration()) { [weak self] _,error in
                     Task { @MainActor in
@@ -183,6 +182,34 @@ struct JobRecord:Codable,Identifiable {
             let shelf=FloatShelfController(urls:urls)
             shelf.onClose={ [weak self,weak shelf] in guard let shelf else { return };self?.floatShelves.removeAll{$0 === shelf} }
             floatShelves.append(shelf);shelf.showWindow(nil);reportSuccess(.action("Added to Float.",files:urls))
+        }
+    }
+    private func preferredTerminal()->(name:String,app:URL?) {
+        let preferred=UserDefaults.standard.string(forKey:"terminalApp") ?? "Terminal"
+        return (preferred,preferred=="iTerm2" ? NSWorkspace.shared.urlForApplication(withBundleIdentifier:"com.googlecode.iterm2"):URL(fileURLWithPath:"/System/Applications/Utilities/Terminal.app"))
+    }
+    /// Opens a project folder in an editor, or runs its commands in the preferred terminal app.
+    func launch(_ launch:ProjectLaunch,in folder:URL) {
+        if !working { activeTool=nil;activeInputs=[] }
+        let target:(name:String,app:URL?)
+        if case .openWith(let bundleIdentifier)=launch.kind { target=(launch.title,NSWorkspace.shared.urlForApplication(withBundleIdentifier:bundleIdentifier)) }
+        else { target=preferredTerminal() }
+        guard let app=target.app else { error="\(target.name) is not installed.";return }
+        var documents=[folder]
+        if case .terminal(let commands)=launch.kind {
+            // A one-shot .command file is how a terminal app is told what to run without Apple Events.
+            let script=FileManager.default.temporaryDirectory.appendingPathComponent("nashi-\(UUID().uuidString).command")
+            do {
+                try Data(ProjectLauncher.terminalScript(commands:commands,in:folder).utf8).write(to:script,options:.withoutOverwriting)
+                try FileManager.default.setAttributes([.posixPermissions:0o700],ofItemAtPath:script.path)
+            } catch { self.error=error.localizedDescription;return }
+            documents=[script]
+        }
+        NSWorkspace.shared.open(documents,withApplicationAt:app,configuration:NSWorkspace.OpenConfiguration()) { [weak self] _,error in
+            Task { @MainActor in
+                if let error { self?.error=error.localizedDescription }
+                else { self?.reportSuccess(.action("Opened in \(target.name).",files:[folder])) }
+            }
         }
     }
     func reportSuccess(_ notice:SuccessNotice) { error=nil;onSuccess?(notice) }

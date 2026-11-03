@@ -1,7 +1,7 @@
 import AppKit
 import NashiCore
 
-enum WheelMode:String,CaseIterable { case convert,tools,actions }
+enum WheelMode:String,CaseIterable { case convert,tools,actions,projects }
 final class WheelPanel:NSPanel { override var canBecomeKey:Bool { true } }
 enum WebWheelAction { case download,thumbnail,audio,copy,open }
 struct WheelItem {
@@ -11,6 +11,7 @@ struct WheelItem {
     var action:FileAction? = nil
     var webAction:WebWheelAction? = nil
     var windowPlacement:WindowPlacement? = nil
+    var projectLaunch:ProjectLaunch? = nil
 }
 
 @MainActor final class WheelController {
@@ -44,6 +45,7 @@ struct WheelItem {
         case .convert: items=FeatureCatalog.formats(for:inputs).map{WheelItem(title:$0 == "gz" ? "GZIP":$0.uppercased(),operation:.convert($0))}
         case .tools: items=FeatureCatalog.tools(for:inputs).map{WheelItem(title:FeatureCatalog.toolNames[$0] ?? $0.title,symbol:FeatureCatalog.toolSymbols[$0],operation:.tool($0))}
         case .actions: items=FileAction.allCases.map{WheelItem(title:$0.title,symbol:$0.symbol,action:$0)}
+        case .projects: items=Self.projectItems(for:inputs)
         } }
         let exists=panel?.isVisible ?? false
         let desiredSize=CGFloat(320*UserDefaults.standard.double(forKey:"wheelScale"))
@@ -78,7 +80,7 @@ struct WheelItem {
             keyMonitor=NSEvent.addLocalMonitorForEvents(matching:[.keyDown,.flagsChanged]) { [weak self] event in
                 guard let self,self.panel?.isVisible == true else { return event }
                 if self.inputs.first?.isFileURL != false,event.type == .flagsChanged,let next=DragMonitor.mode(for:event.modifierFlags),next != self.mode { self.show(inputs:self.inputs,mode:next,at:NSEvent.mouseLocation,keyboard:keyboard);return nil }
-                if self.inputs.first?.isFileURL != false,event.type == .keyDown,let next=DragMonitor.mode(for:event.modifierFlags),next != self.mode { self.show(inputs:self.inputs,mode:next,at:NSEvent.mouseLocation,keyboard:keyboard);return nil }
+                if self.inputs.first?.isFileURL != false,event.type == .keyDown,let next=DragMonitor.mode(for:event.modifierFlags.subtracting(.function)),next != self.mode { self.show(inputs:self.inputs,mode:next,at:NSEvent.mouseLocation,keyboard:keyboard);return nil }
                 if event.type == .keyDown { self.wheel?.keyDown(with:event);return nil };return event
             }
         }
@@ -97,6 +99,13 @@ struct WheelItem {
         // A job may have started while the wheel was open; keep its selection.
         guard !state.working else { return }
         state.inputs=inputs;if let action=item.action { state.perform(action) };if let op=item.operation { state.select(op) }
+        if let launch=item.projectLaunch,let folder=ProjectLauncher.projectFolder(in:inputs) { state.launch(launch,in:folder) }
+    }
+    /// Editor, assistant and run commands for one dragged folder, plus Terminal; nothing for files.
+    static func projectItems(for inputs:[URL])->[WheelItem] {
+        guard let folder=ProjectLauncher.projectFolder(in:inputs) else { return [] }
+        let launches=ProjectLauncher.launches(for:folder) { NSWorkspace.shared.urlForApplication(withBundleIdentifier:$0) != nil }
+        return launches.map{WheelItem(title:$0.title,symbol:$0.symbol,projectLaunch:$0)}+[WheelItem(title:FileAction.terminal.title,symbol:FileAction.terminal.symbol,action:.terminal)]
     }
     func hide() { keyboardMode=false;panel?.orderOut(nil);if let monitor=keyMonitor { NSEvent.removeMonitor(monitor);keyMonitor=nil } }
     func endDrag() { if !keyboardMode { hide() } }
@@ -168,7 +177,7 @@ final class WheelView:NSView {
         }
         let disc=geometry.disc;NSColor.controlBackgroundColor.setFill();disc.fill()
         func key(_ setting:String,_ fallback:String)->String { let name=UserDefaults.standard.string(forKey:setting) ?? fallback;return ModifierChord.legacy(name)?.symbols ?? name }
-        let emptyTitle=mode == .tools ? "No file tools\n\(key("convertKey","shift")) Convert\n\(key("actionsKey","control")) Actions":"No formats\n\(key("toolsKey","command")) Tools\n\(key("actionsKey","control")) Actions"
+        let emptyTitle=mode == .projects ? "No project here\nDrag one folder":mode == .tools ? "No file tools\n\(key("convertKey","shift")) Convert\n\(key("actionsKey","control")) Actions":"No formats\n\(key("toolsKey","command")) Tools\n\(key("actionsKey","control")) Actions"
         let title=selected.flatMap{items.indices.contains($0) ? items[$0].title:nil} ?? (items.isEmpty ? emptyTitle:(centerTitle ?? mode.rawValue.capitalized))
         let layout=WheelLabelLayout.fitted(L10n.text(title),font:NSFont.systemFont(ofSize:(items.isEmpty ? 10:11)*geometry.scale,weight:.semibold),
                                            color:.labelColor,inside:disc,centers:[center],
@@ -250,13 +259,14 @@ final class WheelAccessibilityItem:NSAccessibilityElement {
         case .conversions:return .convert
         case .tools:return .tools
         case .actions:return .actions
+        case .projects:return .projects
         case nil:return nil
         }
     }
     private func tick() {
         let down=NSEvent.pressedMouseButtons & 1 != 0 || CGEventSource.buttonState(.combinedSessionState,button:.left)
         let globalFlags=NSEvent.ModifierFlags(rawValue:UInt(CGEventSource.flagsState(.combinedSessionState).rawValue))
-        let flags=NSEvent.modifierFlags.union(globalFlags).intersection([.shift,.command,.control,.option])
+        let flags=NSEvent.modifierFlags.union(globalFlags).intersection(ModifierChord.supported)
         let board=NSPasteboard(name:.drag)
         let fresh=session.containsFreshDrag(isDown:down,changeCount:board.changeCount,now:ProcessInfo.processInfo.systemUptime)
         #if DEBUG

@@ -1432,5 +1432,10 @@
   "YouTube thumbnail · best available full-size image": "Miniature YouTube · meilleure image en taille réelle disponible",
   "No tools for this file type": "Aucun outil pour ce type de fichier",
   "Details": "Détails",
-  "Copy details": "Copier les détails"
+  "Copy details": "Copier les détails",
+  "Projects wheel": "Roue des projets",
+  "Projects": "Projets",
+  "No project here\nDrag one folder": "Aucun projet\nFaites glisser un dossier",
+  "Drag one project folder with the projects wheel to open it in VS Code, start Claude Code or run it. If fn also opens emoji or switches input, set System Settings › Keyboard › Press 🌐 key to Do Nothing.": "Faites glisser un dossier de projet avec la roue des projets pour l’ouvrir dans VS Code, lancer Claude Code ou l’exécuter. Si fn ouvre aussi les emoji ou change de source de saisie, réglez Réglages Système › Clavier › Appuyer sur la touche 🌐 pour sur Ne rien faire.",
+  "Nashi projects wheel": "Roue des projets Nashi"
 }

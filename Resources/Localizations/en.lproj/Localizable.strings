@@ -870,6 +870,7 @@
 "DRAG EITHER EDGE TO RESIZE THE RANGE, OR DRAG ITS MIDDLE TO MOVE IT." = "DRAG EITHER EDGE TO RESIZE THE RANGE, OR DRAG ITS MIDDLE TO MOVE IT.";
 "DRAG INSIDE TO MOVE. DRAG NEAR A CORNER TO RESIZE. DRAG OUTSIDE TO START A NEW SELECTION." = "DRAG INSIDE TO MOVE. DRAG NEAR A CORNER TO RESIZE. DRAG OUTSIDE TO START A NEW SELECTION.";
 "DRAG ON THE PREVIEW TO ADD AN AREA. EACH AREA IS SAVED INTO THE NEW COPY." = "DRAG ON THE PREVIEW TO ADD AN AREA. EACH AREA IS SAVED INTO THE NEW COPY.";
+"DRAG ONE PROJECT FOLDER WITH THE PROJECTS WHEEL TO OPEN IT IN VS CODE, START CLAUDE CODE OR RUN IT. IF FN ALSO OPENS EMOJI OR SWITCHES INPUT, SET SYSTEM SETTINGS › KEYBOARD › PRESS 🌐 KEY TO DO NOTHING." = "DRAG ONE PROJECT FOLDER WITH THE PROJECTS WHEEL TO OPEN IT IN VS CODE, START CLAUDE CODE OR RUN IT. IF FN ALSO OPENS EMOJI OR SWITCHES INPUT, SET SYSTEM SETTINGS › KEYBOARD › PRESS 🌐 KEY TO DO NOTHING.";
 "DRAG SHORTCUTS" = "DRAG SHORTCUTS";
 "DRAG THE STACK TO CARRY ALL FILES. DRAG THE PAPERCLIP TO MOVE FLOAT." = "DRAG THE STACK TO CARRY ALL FILES. DRAG THE PAPERCLIP TO MOVE FLOAT.";
 "DRAG TO DRAW WITH THE SELECTED TOOL. USE SELECT / MOVE TO EDIT AN EXISTING ANNOTATION." = "DRAG TO DRAW WITH THE SELECTED TOOL. USE SELECT / MOVE TO EDIT AN EXISTING ANNOTATION.";
@@ -963,6 +964,7 @@
 "Drag either edge to resize the range, or drag its middle to move it." = "Drag either edge to resize the range, or drag its middle to move it.";
 "Drag inside to move. Drag near a corner to resize. Drag outside to start a new selection." = "Drag inside to move. Drag near a corner to resize. Drag outside to start a new selection.";
 "Drag on the preview to add an area. Each area is saved into the new copy." = "Drag on the preview to add an area. Each area is saved into the new copy.";
+"Drag one project folder with the projects wheel to open it in VS Code, start Claude Code or run it. If fn also opens emoji or switches input, set System Settings › Keyboard › Press 🌐 key to Do Nothing." = "Drag one project folder with the projects wheel to open it in VS Code, start Claude Code or run it. If fn also opens emoji or switches input, set System Settings › Keyboard › Press 🌐 key to Do Nothing.";
 "Drag shortcuts" = "Drag shortcuts";
 "Drag the stack to carry all files. Drag the paperclip to move Float." = "Drag the stack to carry all files. Drag the paperclip to move Float.";
 "Drag to draw with the selected tool. Use Select / Move to edit an existing annotation." = "Drag to draw with the selected tool. Use Select / Move to edit an existing annotation.";
@@ -1521,6 +1523,7 @@
 "NASHI CONVERT WHEEL" = "NASHI CONVERT WHEEL";
 "NASHI IS ALREADY RUNNING BUT IS STILL STARTING. OPEN IT FROM THE SYSTEM TRAY OR TRY AGAIN IN A MOMENT." = "NASHI IS ALREADY RUNNING BUT IS STILL STARTING. OPEN IT FROM THE SYSTEM TRAY OR TRY AGAIN IN A MOMENT.";
 "NASHI IS STILL RUNNING." = "NASHI IS STILL RUNNING.";
+"NASHI PROJECTS WHEEL" = "NASHI PROJECTS WHEEL";
 "NASHI SAVES RESULTS BESIDE THE ORIGINALS. ALLOW A FOLDER ONCE TO INCLUDE EVERY FOLDER INSIDE IT." = "NASHI SAVES RESULTS BESIDE THE ORIGINALS. ALLOW A FOLDER ONCE TO INCLUDE EVERY FOLDER INSIDE IT.";
 "NASHI SETTINGS" = "NASHI SETTINGS";
 "NASHI TOOLS WHEEL" = "NASHI TOOLS WHEEL";
@@ -1545,6 +1548,7 @@
 "NO MEDIA OUTPUT WAS PRODUCED." = "NO MEDIA OUTPUT WAS PRODUCED.";
 "NO OUTPUT FORMATS" = "NO OUTPUT FORMATS";
 "NO OUTPUT WAS PRODUCED." = "NO OUTPUT WAS PRODUCED.";
+"NO PROJECT HERE\nDRAG ONE FOLDER" = "NO PROJECT HERE\nDRAG ONE FOLDER";
 "NO PUBLIC DOWNLOADABLE MEDIA FOUND. SOME SITES REQUIRE SIGN-IN OR DO NOT EXPOSE DOWNLOADABLE MEDIA." = "NO PUBLIC DOWNLOADABLE MEDIA FOUND. SOME SITES REQUIRE SIGN-IN OR DO NOT EXPOSE DOWNLOADABLE MEDIA.";
 "NO QR CODES FOUND. TRY A LARGER OR SHARPER IMAGE." = "NO QR CODES FOUND. TRY A LARGER OR SHARPER IMAGE.";
 "NO QR CODES THIS TIME." = "NO QR CODES THIS TIME.";
@@ -1578,6 +1582,7 @@
 "Nashi convert wheel" = "Nashi convert wheel";
 "Nashi is already running but is still starting. Open it from the system tray or try again in a moment." = "Nashi is already running but is still starting. Open it from the system tray or try again in a moment.";
 "Nashi is still running." = "Nashi is still running.";
+"Nashi projects wheel" = "Nashi projects wheel";
 "Nashi saves results beside the originals. Allow a folder once to include every folder inside it." = "Nashi saves results beside the originals. Allow a folder once to include every folder inside it.";
 "Nashi tools wheel" = "Nashi tools wheel";
 "Nashi update" = "Nashi update";
@@ -1613,6 +1618,7 @@
 "No media output was produced." = "No media output was produced.";
 "No output formats" = "No output formats";
 "No output was produced." = "No output was produced.";
+"No project here\nDrag one folder" = "No project here\nDrag one folder";
 "No public downloadable media found. Some sites require sign-in or do not expose downloadable media." = "No public downloadable media found. Some sites require sign-in or do not expose downloadable media.";
 "No readable text was found in this text clipping." = "No readable text was found in this text clipping.";
 "No text could be extracted or recognized in this PDF." = "No text could be extracted or recognized in this PDF.";
@@ -1797,6 +1803,8 @@
 "PROCESSED PREVIEW. CHOOSE ORIGINAL TO EDIT AREAS." = "PROCESSED PREVIEW. CHOOSE ORIGINAL TO EDIT AREAS.";
 "PROCESSING MEDIA…" = "PROCESSING MEDIA…";
 "PROCESSING…" = "PROCESSING…";
+"PROJECTS" = "PROJECTS";
+"PROJECTS WHEEL" = "PROJECTS WHEEL";
 "PROTECTED MEDIA CANNOT BE DOWNLOADED." = "PROTECTED MEDIA CANNOT BE DOWNLOADED.";
 "PUBLIC REPOSITORY · NO TOKEN NEEDED" = "PUBLIC REPOSITORY · NO TOKEN NEEDED";
 "PUBLIC UPDATES WORK WITHOUT A TOKEN." = "PUBLIC UPDATES WORK WITHOUT A TOKEN.";
@@ -1880,6 +1888,8 @@
 "Processed preview. Choose Original to edit areas." = "Processed preview. Choose Original to edit areas.";
 "Processing media…" = "Processing media…";
 "Processing…" = "Processing…";
+"Projects" = "Projects";
+"Projects wheel" = "Projects wheel";
 "Protected media cannot be downloaded." = "Protected media cannot be downloaded.";
 "Public repository · No token needed" = "Public repository · No token needed";
 "Public updates work without a token." = "Public updates work without a token.";
