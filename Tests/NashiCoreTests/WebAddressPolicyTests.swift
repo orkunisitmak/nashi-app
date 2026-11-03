@@ -9,7 +9,7 @@ final class WebAddressPolicyTests:XCTestCase {
 
     func testPrivateAndReservedIPv4LiteralsAreRejected() {
         for host in ["0.0.0.0","10.0.0.1","10.255.255.254","127.0.0.1","127.9.9.9","169.254.169.254","172.16.0.1",
-                     "172.31.255.255","192.168.0.1","192.0.0.1","192.0.2.5","198.18.0.1","198.51.100.7","203.0.113.9",
+                     "172.31.255.255","192.168.0.1","192.0.0.1","192.0.2.5","198.51.100.7","203.0.113.9",
                      "100.64.0.1","100.127.255.254","224.0.0.1","239.255.255.250","240.0.0.1","255.255.255.255"] {
             XCTAssertFalse(WebAddressPolicy.isPublicAddress(host),host)
             XCTAssertThrowsError(try WebAddressPolicy.validate(url("http://\(host)/media.mp4")),host)
@@ -59,8 +59,27 @@ final class WebAddressPolicyTests:XCTestCase {
         XCTAssertNoThrow(try WebAddressPolicy.validate(address,resolve:{_ in ["93.184.216.34"]}))
     }
 
-    func testHostThatDoesNotResolveIsRejected() {
-        XCTAssertThrowsError(try WebAddressPolicy.validate(url("https://media.example.org/clip.mp4"),resolve:{_ in []}))
+    func testHostLookupFailureHasItsOwnMessage() {
+        let address=url("https://media.example.org/clip.mp4")
+        XCTAssertThrowsError(try WebAddressPolicy.validate(address,resolve:{_ in []})) { error in
+            XCTAssertEqual((error as? NashiError)?.errorDescription,WebAddressPolicy.lookupFailureMessage)
+        }
+        // A proxy resolves the destination itself, so an unresolvable name is
+        // still handed to it instead of being refused.
+        XCTAssertNoThrow(try WebAddressPolicy.validate(address,resolve:{_ in []},usesProxy:{_ in true}))
+    }
+
+    func testFakeIPProxyRangeIsAccepted() {
+        // Clash and Surge in fake-IP mode answer every name from 198.18.0.0/15.
+        XCTAssertTrue(WebAddressPolicy.isPublicAddress("198.18.0.1"))
+        XCTAssertTrue(WebAddressPolicy.isPublicAddress("198.19.255.254"))
+        XCTAssertNoThrow(try WebAddressPolicy.validate(url("https://media.example.org/clip.mp4"),resolve:{_ in ["198.18.0.42"]}))
+    }
+
+    func testResolvedPrivateAddressKeepsTheBlockedMessage() {
+        XCTAssertThrowsError(try WebAddressPolicy.validate(url("https://media.example.org/clip.mp4"),resolve:{_ in ["10.1.2.3"]})) { error in
+            XCTAssertEqual((error as? NashiError)?.errorDescription,WebAddressPolicy.blockedMessage)
+        }
     }
 
     func testMalformedAddressesCountAsPrivate() {

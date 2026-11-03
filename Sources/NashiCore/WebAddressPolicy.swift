@@ -1,4 +1,5 @@
 import Foundation
+import CFNetwork
 
 /// Downloads leave the machine, so they may only target public internet hosts.
 ///
@@ -11,6 +12,10 @@ public enum WebAddressPolicy {
     /// One message for every blocked destination, so the UI never has to explain
     /// which internal range was hit.
     public static let blockedMessage = "Downloads work with public web addresses only. Private, local and link-local hosts are blocked."
+
+    /// A host that cannot be looked up is usually a typo or an offline network,
+    /// not a blocked destination, so it gets its own message.
+    public static let lookupFailureMessage = "That web address could not be looked up. Check the link and your connection, then try again."
 
     /// Checks what can be decided without touching the network: scheme, host
     /// shape, credentials in the URL, a named local host or a literal IP.
@@ -28,22 +33,46 @@ public enum WebAddressPolicy {
         return url
     }
 
-    /// Checks the host and every address it resolves to. A host that does not
-    /// resolve is refused here; the download would fail anyway.
+    /// Checks the host and every address it resolves to.
+    ///
+    /// A host that does not resolve is refused with the lookup message unless an
+    /// HTTP proxy is configured. In that case the proxy performs the lookup, and
+    /// refusing here would break networks where only the proxy can resolve
+    /// outside names.
     @discardableResult
     public static func validate(_ url: URL) throws -> URL {
-        try validate(url, resolve: systemAddresses)
+        try validate(url, resolve: systemAddresses, usesProxy: systemProxyIsConfigured)
     }
 
-    /// Same check with an injectable resolver, so tests never depend on DNS.
+    /// Same check with injectable DNS and proxy state, so tests never depend on
+    /// the machine's network configuration.
     @discardableResult
-    static func validate(_ url: URL, resolve: (String) -> [String]) throws -> URL {
+    static func validate(_ url: URL, resolve: (String) -> [String], usesProxy: (URL) -> Bool = {_ in false}) throws -> URL {
         try syntax(url)
         let name = normalized(url.host ?? "")
         guard !isNumericAddress(name) else { return url }
         let addresses = resolve(name)
-        guard !addresses.isEmpty, addresses.allSatisfy(isPublicAddress) else { throw NashiError.invalidInput(blockedMessage) }
+        guard !addresses.isEmpty else {
+            guard usesProxy(url) else { throw NashiError.invalidInput(lookupFailureMessage) }
+            return url
+        }
+        guard addresses.allSatisfy(isPublicAddress) else { throw NashiError.invalidInput(blockedMessage) }
         return url
+    }
+
+    /// True when macOS or the environment routes this URL through an HTTP proxy.
+    /// Such a proxy resolves the destination itself, which is the only lookup
+    /// some corporate and DNS-proxy networks allow.
+    static func systemProxyIsConfigured(_ url: URL) -> Bool {
+        let secure = url.scheme?.lowercased() == "https"
+        if let settings = CFNetworkCopySystemProxySettings()?.takeRetainedValue() as? [String: Any] {
+            let key = secure ? "HTTPSEnable" : "HTTPEnable"
+            if (settings[key] as? Int ?? 0) == 1 { return true }
+        }
+        let environment = ProcessInfo.processInfo.environment
+        let keys = secure ? ["HTTPS_PROXY", "https_proxy", "ALL_PROXY", "all_proxy"]
+                          : ["HTTP_PROXY", "http_proxy", "ALL_PROXY", "all_proxy"]
+        return keys.contains { !(environment[$0] ?? "").isEmpty }
     }
 
     /// True for addresses a public server could legitimately use. Anything the
@@ -113,7 +142,9 @@ public enum WebAddressPolicy {
             (0xC000_0000, 24),  // protocol assignments
             (0xC000_0200, 24),  // TEST-NET-1
             (0xC0A8_0000, 16),  // RFC 1918
-            (0xC612_0000, 15),  // benchmarking
+            // 198.18.0.0/15 is the benchmarking range, but DNS proxies in
+            // fake-IP mode (Clash, Surge) answer every name from it, so it is
+            // accepted on purpose.
             (0xC633_6400, 24),  // TEST-NET-2
             (0xCB00_7100, 24),  // TEST-NET-3
             (0xE000_0000, 4),   // multicast
@@ -149,10 +180,22 @@ public enum WebAddressPolicy {
 /// probe and by the direct download session, so a public URL cannot bounce to
 /// an internal service after the first check.
 final class PublicRedirectPolicy: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+    private let lock = NSLock()
+    private var refused = false
+
+    /// True after a redirect was refused. URLSession then hands the 3xx response
+    /// back to the caller, which must stop instead of forwarding the original
+    /// URL to an extractor that would follow the redirect itself.
+    var refusedRedirect: Bool {
+        lock.lock(); defer { lock.unlock() }
+        return refused
+    }
+
     func urlSession(_ session: URLSession, task: URLSessionTask,
                     willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest,
                     completionHandler: @escaping (URLRequest?) -> Void) {
         guard let url = request.url, (try? WebAddressPolicy.validate(url)) != nil else {
+            lock.lock(); refused = true; lock.unlock()
             completionHandler(nil)
             return
         }

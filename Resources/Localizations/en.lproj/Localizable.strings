@@ -2372,6 +2372,7 @@
 "TEXTURE" = "TEXTURE";
 "THAT PDF SIZE CANNOT BE REACHED WHILE KEEPING SELECTABLE TEXT, LINKS AND ANNOTATIONS. CHOOSE A LARGER TARGET." = "THAT PDF SIZE CANNOT BE REACHED WHILE KEEPING SELECTABLE TEXT, LINKS AND ANNOTATIONS. CHOOSE A LARGER TARGET.";
 "THAT PDF SIZE CANNOT BE REACHED WHILE KEEPING SELECTABLE TEXT, LINKS, AND ANNOTATIONS. CHOOSE A LARGER TARGET." = "THAT PDF SIZE CANNOT BE REACHED WHILE KEEPING SELECTABLE TEXT, LINKS, AND ANNOTATIONS. CHOOSE A LARGER TARGET.";
+"THAT WEB ADDRESS COULD NOT BE LOOKED UP. CHECK THE LINK AND YOUR CONNECTION, THEN TRY AGAIN." = "THAT WEB ADDRESS COULD NOT BE LOOKED UP. CHECK THE LINK AND YOUR CONNECTION, THEN TRY AGAIN.";
 "THE ARCHIVE CONTAINS A PATH OUTSIDE ITS EXTRACTION FOLDER." = "THE ARCHIVE CONTAINS A PATH OUTSIDE ITS EXTRACTION FOLDER.";
 "THE ARCHIVE CONTAINS AN ABSOLUTE PATH." = "THE ARCHIVE CONTAINS AN ABSOLUTE PATH.";
 "THE ARCHIVE CONTAINS AN UNNAMED ENTRY." = "THE ARCHIVE CONTAINS AN UNNAMED ENTRY.";
@@ -2513,6 +2514,7 @@
 "Texture" = "Texture";
 "That PDF size cannot be reached while keeping selectable text, links and annotations. Choose a larger target." = "That PDF size cannot be reached while keeping selectable text, links and annotations. Choose a larger target.";
 "That PDF size cannot be reached while keeping selectable text, links, and annotations. Choose a larger target." = "That PDF size cannot be reached while keeping selectable text, links, and annotations. Choose a larger target.";
+"That web address could not be looked up. Check the link and your connection, then try again." = "That web address could not be looked up. Check the link and your connection, then try again.";
 "The EPUB contains XML entity declarations, which are not supported." = "The EPUB contains XML entity declarations, which are not supported.";
 "The EPUB contains no readable chapters." = "The EPUB contains no readable chapters.";
 "The EPUB has no package document." = "The EPUB has no package document.";
