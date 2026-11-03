@@ -366,6 +366,7 @@
   "Connect your GitHub releases once. Nashi handles the next update checks.": "Connectez vos versions GitHub une fois. Nashi s’occupe des prochaines recherches de mises à jour.",
   "Connected to {0}": "Connecté à {0}",
   "Paste your GitHub token": "Collez votre jeton GitHub",
+  "Create a fine-grained token on GitHub": "Créer un jeton à portée précise sur GitHub",
   "Saved token · Leave blank to keep it": "Jeton enregistré · Laissez vide pour le conserver",
   "Checking releases…": "Recherche des versions…",
   "Ready for a fresh version?": "Prêt pour une nouvelle version ?",

@@ -366,6 +366,7 @@
   "Connect your GitHub releases once. Nashi handles the next update checks.": "GitHub sürümlerini bir kez bağla. Sonraki güncelleme denetimlerini Nashi üstlenir.",
   "Connected to {0}": "{0} deposuna bağlı",
   "Paste your GitHub token": "GitHub tokenını yapıştır",
+  "Create a fine-grained token on GitHub": "GitHub’da ince ayarlı token oluştur",
   "Saved token · Leave blank to keep it": "Kayıtlı token · Korumak için boş bırak",
   "Checking releases…": "Sürümler denetleniyor…",
   "Ready for a fresh version?": "Yeni sürüme hazır mısın?",

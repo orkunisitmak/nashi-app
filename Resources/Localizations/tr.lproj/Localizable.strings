@@ -558,6 +558,7 @@
 "COULDN’T FINISH" = "İŞLEM TAMAMLANAMADI";
 "COULDN’T OPEN THIS TOOL" = "BU ARAÇ AÇILAMADI";
 "COVER STYLE" = "KAPLAMA STİLİ";
+"CREATE A FINE-GRAINED TOKEN ON GITHUB" = "GITHUB’DA İNCE AYARLI TOKEN OLUŞTUR";
 "CREATE A NEW FLOAT" = "YENİ YÜZEN PENCERE OLUŞTUR";
 "CREATE COLLAGE" = "KOLAJ OLUŞTUR";
 "CREATE PDF" = "PDF OLUŞTUR";
@@ -789,6 +790,7 @@
 "Create Collage" = "Kolaj Oluştur";
 "Create PDF" = "PDF Oluştur";
 "Create a New Float" = "Yeni Yüzen Pencere Oluştur";
+"Create a fine-grained token on GitHub" = "GitHub’da ince ayarlı token oluştur";
 "Create a new Float" = "Yeni yüzen pencere oluştur";
 "Create visualization" = "Görselleştirme oluştur";
 "Created" = "Oluşturulma";
