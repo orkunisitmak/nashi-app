@@ -599,7 +599,8 @@ public enum ImageEngine {
             throw NashiError.failed("The requested file size could not be reached. Choose a larger target.")
         }
         let best=outcome?.best
-        if let best { if try encode(best.quality,best.scale) != best.bytes { throw NashiError.failed("The compressed size changed between attempts.") } }
+        // Some encoders (FFmpeg WebP/AVIF) are not byte-for-byte repeatable, so the replay only has to fit the target.
+        if let best { if try encode(best.quality,best.scale) > (target ?? .max) { throw NashiError.failed("The requested file size could not be reached. Choose a larger target.") } }
         else { _=try encode(start,1) }
         if (best?.scale ?? 1)==1,image.width==originalWidth,image.height==originalHeight { try OutputFiles.retainSmallerOriginal(input,output:temporary,target:target) }
         try FileManager.default.moveItem(at:temporary,to:output)
