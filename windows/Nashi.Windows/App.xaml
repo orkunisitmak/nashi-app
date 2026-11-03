@@ -41,8 +41,6 @@
  <Style TargetType="Expander">
   <Setter Property="Foreground" Value="{DynamicResource Ink}"/>
   <Setter Property="Background" Value="Transparent"/>
-  <Setter Property="FontSize" Value="12"/>
-  <Setter Property="FontWeight" Value="SemiBold"/>
   <Setter Property="Template">
    <Setter.Value>
     <ControlTemplate TargetType="Expander">
@@ -51,6 +49,7 @@
                     IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
                     Content="{TemplateBinding Header}" ContentTemplate="{TemplateBinding HeaderTemplate}"
                     Foreground="{TemplateBinding Foreground}"
+                    FontSize="12" FontWeight="SemiBold"
                     Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="2,6">
        <ToggleButton.Template>
         <ControlTemplate TargetType="ToggleButton">
