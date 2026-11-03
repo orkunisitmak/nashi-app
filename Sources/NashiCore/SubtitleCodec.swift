@@ -84,7 +84,9 @@ enum SubtitleCodec {
     }
     /// SRT files from VLC, mpv and Aegisub move a caption with the SSA-style {\an1} to {\an9} override, which players hide.
     private static func withoutPositionTags(_ text: String) -> String {
-        text.replacingOccurrences(of: #"\{\\an[1-9]\}"#, with: "", options: .regularExpression)
+        // A tag alone on its line leaves a blank line, which would end a WebVTT cue, so that line goes with it.
+        text.replacingOccurrences(of: #"(?m)^[ \t]*\{\\an[1-9]\}[ \t]*(?:\r?\n|$)"#, with: "", options: .regularExpression)
+            .replacingOccurrences(of: #"\{\\an[1-9]\}"#, with: "", options: .regularExpression)
     }
     /// WebVTT reads a bare "<" as the start of a tag and ends a cue at "-->",
     /// so SRT text keeps its markup tags and escapes everything else.
