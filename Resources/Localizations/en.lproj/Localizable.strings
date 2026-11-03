@@ -2433,6 +2433,8 @@
 "THESE FILES HAVE MOVED OR WERE DELETED." = "THESE FILES HAVE MOVED OR WERE DELETED.";
 "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE." = "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE.";
 "THIS DOCUMENT NESTS ITS CONTENT TOO DEEPLY TO CONVERT." = "THIS DOCUMENT NESTS ITS CONTENT TOO DEEPLY TO CONVERT.";
+"THIS E-INVOICE HAS NO EMBEDDED VIEW (XSLT) TO PRINT." = "THIS E-INVOICE HAS NO EMBEDDED VIEW (XSLT) TO PRINT.";
+"THIS E-INVOICE VIEW COULD NOT BE APPLIED. THE XML OR ITS EMBEDDED XSLT IS DAMAGED OR USES FEATURES NASHI DOES NOT RUN." = "THIS E-INVOICE VIEW COULD NOT BE APPLIED. THE XML OR ITS EMBEDDED XSLT IS DAMAGED OR USES FEATURES NASHI DOES NOT RUN.";
 "THIS FILE HAS MOVED OR WAS DELETED." = "THIS FILE HAS MOVED OR WAS DELETED.";
 "THIS FILE HAS MOVED OR WAS REMOVED." = "THIS FILE HAS MOVED OR WAS REMOVED.";
 "THIS FILE HAS NO AUDIO STREAM." = "THIS FILE HAS NO AUDIO STREAM.";
@@ -2619,6 +2621,8 @@
 "This conversion is not available for %lld." = "This conversion is not available for %lld.";
 "This crop applies to every selected image and must fit inside each one." = "This crop applies to every selected image and must fit inside each one.";
 "This document nests its content too deeply to convert." = "This document nests its content too deeply to convert.";
+"This e-invoice has no embedded view (XSLT) to print." = "This e-invoice has no embedded view (XSLT) to print.";
+"This e-invoice view could not be applied. The XML or its embedded XSLT is damaged or uses features Nashi does not run." = "This e-invoice view could not be applied. The XML or its embedded XSLT is damaged or uses features Nashi does not run.";
 "This file has moved or was deleted." = "This file has moved or was deleted.";
 "This file has moved or was removed." = "This file has moved or was removed.";
 "This file has no audio stream." = "This file has no audio stream.";

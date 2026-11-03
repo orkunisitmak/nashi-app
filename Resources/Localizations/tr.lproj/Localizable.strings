@@ -2433,6 +2433,8 @@
 "THESE FILES HAVE MOVED OR WERE DELETED." = "BU DOSYALAR TAŞINMIŞ VEYA SİLİNMİŞ.";
 "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE." = "BU KIRPMA, SEÇİLEN TÜM GÖRSELLERE UYGULANIR VE HER GÖRSELİN SINIRLARINA SIĞMALIDIR.";
 "THIS DOCUMENT NESTS ITS CONTENT TOO DEEPLY TO CONVERT." = "BU BELGENİN İÇERİĞİ DÖNÜŞTÜRÜLEMEYECEK KADAR İÇ İÇE.";
+"THIS E-INVOICE HAS NO EMBEDDED VIEW (XSLT) TO PRINT." = "BU E-FATURADA YAZDIRILACAK GÖMÜLÜ BİR GÖRÜNÜM (XSLT) YOK.";
+"THIS E-INVOICE VIEW COULD NOT BE APPLIED. THE XML OR ITS EMBEDDED XSLT IS DAMAGED OR USES FEATURES NASHI DOES NOT RUN." = "BU E-FATURA GÖRÜNÜMÜ UYGULANAMADI. XML YA DA GÖMÜLÜ XSLT BOZUK VEYA NASHI'NİN ÇALIŞTIRMADIĞI ÖZELLİKLER KULLANIYOR.";
 "THIS FILE HAS MOVED OR WAS DELETED." = "BU DOSYA TAŞINMIŞ VEYA SİLİNMİŞ.";
 "THIS FILE HAS MOVED OR WAS REMOVED." = "BU DOSYA TAŞINMIŞ VEYA SİLİNMİŞ.";
 "THIS FILE HAS NO AUDIO STREAM." = "BU DOSYADA SES YOK.";
@@ -2619,6 +2621,8 @@
 "This conversion is not available for %lld." = "%lld için bu dönüştürme kullanılamıyor.";
 "This crop applies to every selected image and must fit inside each one." = "Bu kırpma, seçilen tüm görsellere uygulanır ve her görselin sınırlarına sığmalıdır.";
 "This document nests its content too deeply to convert." = "Bu belgenin içeriği dönüştürülemeyecek kadar iç içe.";
+"This e-invoice has no embedded view (XSLT) to print." = "Bu e-faturada yazdırılacak gömülü bir görünüm (XSLT) yok.";
+"This e-invoice view could not be applied. The XML or its embedded XSLT is damaged or uses features Nashi does not run." = "Bu e-fatura görünümü uygulanamadı. XML ya da gömülü XSLT bozuk veya Nashi'nin çalıştırmadığı özellikler kullanıyor.";
 "This file has moved or was deleted." = "Bu dosya taşınmış veya silinmiş.";
 "This file has moved or was removed." = "Bu dosya taşınmış veya silinmiş.";
 "This file has no audio stream." = "Bu dosyada ses yok.";

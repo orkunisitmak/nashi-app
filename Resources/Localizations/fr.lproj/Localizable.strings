@@ -2433,6 +2433,8 @@
 "THESE FILES HAVE MOVED OR WERE DELETED." = "CES FICHIERS ONT ÉTÉ DÉPLACÉS OU SUPPRIMÉS.";
 "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE." = "CE RECADRAGE S’APPLIQUE À TOUTES LES IMAGES SÉLECTIONNÉES ET DOIT TENIR DANS CHACUNE D’ELLES.";
 "THIS DOCUMENT NESTS ITS CONTENT TOO DEEPLY TO CONVERT." = "LE CONTENU DE CE DOCUMENT EST TROP PROFONDÉMENT IMBRIQUÉ POUR ÊTRE CONVERTI.";
+"THIS E-INVOICE HAS NO EMBEDDED VIEW (XSLT) TO PRINT." = "CETTE FACTURE ÉLECTRONIQUE NE CONTIENT AUCUNE VUE INTÉGRÉE (XSLT) À IMPRIMER.";
+"THIS E-INVOICE VIEW COULD NOT BE APPLIED. THE XML OR ITS EMBEDDED XSLT IS DAMAGED OR USES FEATURES NASHI DOES NOT RUN." = "LA VUE DE CETTE FACTURE ÉLECTRONIQUE N’A PAS PU ÊTRE APPLIQUÉE. LE XML OU SON XSLT INTÉGRÉ EST ENDOMMAGÉ OU UTILISE DES FONCTIONS QUE NASHI N’EXÉCUTE PAS.";
 "THIS FILE HAS MOVED OR WAS DELETED." = "CE FICHIER A ÉTÉ DÉPLACÉ OU SUPPRIMÉ.";
 "THIS FILE HAS MOVED OR WAS REMOVED." = "CE FICHIER A ÉTÉ DÉPLACÉ OU SUPPRIMÉ.";
 "THIS FILE HAS NO AUDIO STREAM." = "CE FICHIER N’A PAS DE FLUX AUDIO.";
@@ -2619,6 +2621,8 @@
 "This conversion is not available for %lld." = "Cette conversion n’est pas disponible pour %lld.";
 "This crop applies to every selected image and must fit inside each one." = "Ce recadrage s’applique à toutes les images sélectionnées et doit tenir dans chacune d’elles.";
 "This document nests its content too deeply to convert." = "Le contenu de ce document est trop profondément imbriqué pour être converti.";
+"This e-invoice has no embedded view (XSLT) to print." = "Cette facture électronique ne contient aucune vue intégrée (XSLT) à imprimer.";
+"This e-invoice view could not be applied. The XML or its embedded XSLT is damaged or uses features Nashi does not run." = "La vue de cette facture électronique n’a pas pu être appliquée. Le XML ou son XSLT intégré est endommagé ou utilise des fonctions que Nashi n’exécute pas.";
 "This file has moved or was deleted." = "Ce fichier a été déplacé ou supprimé.";
 "This file has moved or was removed." = "Ce fichier a été déplacé ou supprimé.";
 "This file has no audio stream." = "Ce fichier n’a pas de flux audio.";

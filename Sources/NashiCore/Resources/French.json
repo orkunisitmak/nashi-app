@@ -1437,5 +1437,7 @@
   "The HTML file did not finish rendering. No PDF was exported.": "Le rendu du fichier HTML n’a pas abouti. Aucun PDF n’a été exporté.",
   "Microsoft Edge WebView2 could not print this HTML file to PDF.": "Microsoft Edge WebView2 n’a pas pu imprimer ce fichier HTML en PDF.",
   "Microsoft Edge WebView2 stopped while rendering the HTML file. No PDF was exported.": "Microsoft Edge WebView2 s’est arrêté pendant le rendu du fichier HTML. Aucun PDF n’a été exporté.",
+  "This e-invoice has no embedded view (XSLT) to print.": "Cette facture électronique ne contient aucune vue intégrée (XSLT) à imprimer.",
+  "This e-invoice view could not be applied. The XML or its embedded XSLT is damaged or uses features Nashi does not run.": "La vue de cette facture électronique n’a pas pu être appliquée. Le XML ou son XSLT intégré est endommagé ou utilise des fonctions que Nashi n’exécute pas.",
   "The HTML file could not be opened.": "Le fichier HTML n’a pas pu être ouvert."
 }

@@ -25,6 +25,7 @@ internal static class HtmlPdfChecks
         Limits(folder,check);
         Links(folder,check);
         Conversion(folder,check);
+        EInvoiceConversion(folder,check);
     }
 
     private static void Paths(string folder,Action<bool,string> check)
@@ -165,6 +166,26 @@ internal static class HtmlPdfChecks
         var again=Wait(new DocumentConversion(office,new Toolchain(tools)).ConvertAsync([page],"pdf",output,new DocumentOptions(),null,CancellationToken.None));
         check(again.Count==1&&again[0]!=outputs[0]&&File.Exists(outputs[0]),"A second export must choose a new name instead of replacing the first");
         using var pdf=UglyToad.PdfPig.PdfDocument.Open(outputs[0]);check(pdf.Information.Title=="e-Arşiv Fatura"&&pdf.GetPage(1).Text.Contains("Fatura"),"The converted PDF lost its text or file-name title");
+    }
+
+    private static void EInvoiceConversion(string folder,Action<bool,string> check)
+    {
+        // A synthetic UBL-TR e-Arşiv invoice whose embedded view draws its QR code with a script.
+        const string ubl="urn:oasis:names:specification:ubl:schema:xsd:";
+        var view=$"<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:inv=\"{ubl}Invoice-2\" xmlns:cac=\"{ubl}CommonAggregateComponents-2\" xmlns:cbc=\"{ubl}CommonBasicComponents-2\"><xsl:output method=\"html\" encoding=\"UTF-8\"/><xsl:template match=\"/\"><html><head><title></title></head><body><h1>Fatura No: <xsl:value-of select=\"/inv:Invoice/cbc:ID\"/></h1><p>Alıcı: <xsl:value-of select=\"//cac:AccountingCustomerParty//cbc:Name\"/></p><canvas id=\"qr\" width=\"120\" height=\"120\"></canvas><script>document.getElementById('qr').getContext('2d').fillRect(0,0,120,120);var p=document.createElement('p');p.textContent='QR drawn';document.body.appendChild(p);</script></body></html></xsl:template></xsl:stylesheet>";
+        var xml=$"<?xml version=\"1.0\" encoding=\"UTF-8\"?><Invoice xmlns=\"{ubl}Invoice-2\" xmlns:cac=\"{ubl}CommonAggregateComponents-2\" xmlns:cbc=\"{ubl}CommonBasicComponents-2\"><cbc:ID>NSH2026000000417</cbc:ID><cac:AdditionalDocumentReference><cbc:ID>1</cbc:ID><cbc:DocumentType>XSLT</cbc:DocumentType><cac:Attachment><cbc:EmbeddedDocumentBinaryObject filename=\"v.xslt\">{Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(view))}</cbc:EmbeddedDocumentBinaryObject></cac:Attachment></cac:AdditionalDocumentReference><cac:AccountingCustomerParty><cac:Party><cac:PartyName><cbc:Name>Çağrı Öztürk Ltd. Şti.</cbc:Name></cac:PartyName></cac:Party></cac:AccountingCustomerParty></Invoice>";
+        var site=Path.Combine(folder,"E-invoice");var tools=Path.Combine(site,"No tools");Directory.CreateDirectory(tools);var invoice=Path.Combine(site,"NSH2026000000417.xml");File.WriteAllText(invoice,xml,new System.Text.UTF8Encoding(false));
+        var output=Path.Combine(site,"Out");Directory.CreateDirectory(output);var office=new OfficeRuntime(tools);
+        check(FeatureCatalog.Formats([invoice]).SequenceEqual(["html","pdf"]),"Convert must offer HTML and PDF for an e-invoice");
+        var pdf=Wait(new DocumentConversion(office,new Toolchain(tools)).ConvertAsync([invoice],"pdf",output,new DocumentOptions(),null,CancellationToken.None)).Single();
+        using(var document=UglyToad.PdfPig.PdfDocument.Open(pdf))
+        {
+            var text=string.Concat(document.GetPages().Select(p=>p.Text));
+            check(Path.GetFileName(pdf)=="NSH2026000000417.pdf"&&text.Contains("NSH2026000000417")&&text.Contains("Çağrı Öztürk")&&text.Contains("QR drawn"),"An e-invoice must print its own view, script-drawn code included, without office tools: "+text);
+            check(document.Information.Title=="NSH2026000000417","An untitled invoice view must be named after the file");
+        }
+        var html=Wait(new DocumentConversion(office,new Toolchain(tools)).ConvertAsync([invoice],"html",output,new DocumentOptions(),null,CancellationToken.None)).Single();
+        check(Path.GetExtension(html)==".html"&&File.ReadAllText(html).Contains("Çağrı Öztürk Ltd. Şti.")&&File.ReadAllText(invoice)==xml,"An e-invoice must also save as its HTML view and stay unchanged");
     }
 
     private static bool Throws<T>(Action action,string? message=null)where T:Exception
