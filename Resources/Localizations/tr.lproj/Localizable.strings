@@ -2446,7 +2446,12 @@
 "THIS MEDIA IS PROTECTED AND CANNOT BE DOWNLOADED HERE." = "BU MEDYA KORUMALI VE BURADA İNDİRİLEMEZ.";
 "THIS OUTPUT FORMAT HAS NO ADJUSTABLE CONVERSION DEFAULTS." = "BU ÇIKTI BİÇİMİNİN AYARLANABİLİR DÖNÜŞTÜRME TERCİHİ YOK.";
 "THIS PAGES FILE IS TOO LARGE OR IS NOT A REGULAR DOCUMENT FILE." = "BU PAGES DOSYASI ÇOK BÜYÜK YA DA NORMAL BİR BELGE DOSYASI DEĞİL.";
+"THIS PDF CONTAINS ACCESSIBILITY TAGS. METADATA CLEANUP CANNOT SAFELY PRESERVE THOSE FEATURES. NO COPY WAS EXPORTED." = "BU PDF'DE ERİŞİLEBİLİRLİK ETİKETLERİ VAR. META VERİ TEMİZLİĞİ BU ÖZELLİKLERİ GÜVENLE KORUYAMAZ. KOPYA DIŞA AKTARILMADI.";
+"THIS PDF CONTAINS CUSTOM PAGE LABELS. METADATA CLEANUP CANNOT SAFELY PRESERVE THOSE FEATURES. NO COPY WAS EXPORTED." = "BU PDF'DE ÖZEL SAYFA ETİKETLERİ VAR. META VERİ TEMİZLİĞİ BU ÖZELLİKLERİ GÜVENLE KORUYAMAZ. KOPYA DIŞA AKTARILMADI.";
+"THIS PDF CONTAINS EMBEDDED FILES. METADATA CLEANUP CANNOT SAFELY PRESERVE THOSE FEATURES. NO COPY WAS EXPORTED." = "BU PDF'DE GÖMÜLÜ DOSYALAR VAR. META VERİ TEMİZLİĞİ BU ÖZELLİKLERİ GÜVENLE KORUYAMAZ. KOPYA DIŞA AKTARILMADI.";
+"THIS PDF CONTAINS FORM FIELDS. METADATA CLEANUP CANNOT SAFELY PRESERVE THOSE FEATURES. NO COPY WAS EXPORTED." = "BU PDF'DE FORM ALANLARI VAR. META VERİ TEMİZLİĞİ BU ÖZELLİKLERİ GÜVENLE KORUYAMAZ. KOPYA DIŞA AKTARILMADI.";
 "THIS PDF CONTAINS NO PAGES." = "BU PDF'DE SAYFA YOK.";
+"THIS PDF CONTAINS OPTIONAL CONTENT LAYERS. METADATA CLEANUP CANNOT SAFELY PRESERVE THOSE FEATURES. NO COPY WAS EXPORTED." = "BU PDF'DE İSTEĞE BAĞLI İÇERİK KATMANLARI VAR. META VERİ TEMİZLİĞİ BU ÖZELLİKLERİ GÜVENLE KORUYAMAZ. KOPYA DIŞA AKTARILMADI.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT MERGING, SPLITTING OR REORDERING PAGES CANNOT KEEP. NO COPY WAS EXPORTED." = "BU PDF'DE BİRLEŞTİRME, BÖLME VEYA SAYFALARI YENİDEN SIRALAMA SIRASINDA KORUNAMAYAN FORM ALANLARI YA DA EKLER VAR. KOPYA DIŞA AKTARILMADI.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT METADATA CLEANUP CANNOT KEEP. NO COPY WAS EXPORTED." = "BU PDF'DE META VERİ TEMİZLİĞİ SIRASINDA KORUNAMAYAN FORM ALANLARI YA DA EKLER VAR. KOPYA DIŞA AKTARILMADI.";
 "THIS PDF IS PASSWORD PROTECTED. ENTER ITS PASSWORD." = "BU PDF PAROLAYLA KORUNUYOR. PAROLASINI GİR.";
@@ -2590,7 +2595,12 @@
 "The upstream server did not return a successful HTTPS download." = "Kaynak sunucu başarılı bir HTTPS indirmesi döndürmedi.";
 "The video has no readable dimensions." = "Videonun boyutları okunamıyor.";
 "These files have moved or were deleted." = "Bu dosyalar taşınmış veya silinmiş.";
+"This PDF contains accessibility tags. Metadata cleanup cannot safely preserve those features. No copy was exported." = "Bu PDF'de erişilebilirlik etiketleri var. Meta veri temizliği bu özellikleri güvenle koruyamaz. Kopya dışa aktarılmadı.";
+"This PDF contains custom page labels. Metadata cleanup cannot safely preserve those features. No copy was exported." = "Bu PDF'de özel sayfa etiketleri var. Meta veri temizliği bu özellikleri güvenle koruyamaz. Kopya dışa aktarılmadı.";
+"This PDF contains embedded files. Metadata cleanup cannot safely preserve those features. No copy was exported." = "Bu PDF'de gömülü dosyalar var. Meta veri temizliği bu özellikleri güvenle koruyamaz. Kopya dışa aktarılmadı.";
+"This PDF contains form fields. Metadata cleanup cannot safely preserve those features. No copy was exported." = "Bu PDF'de form alanları var. Meta veri temizliği bu özellikleri güvenle koruyamaz. Kopya dışa aktarılmadı.";
 "This PDF contains no pages." = "Bu PDF'de sayfa yok.";
+"This PDF contains optional content layers. Metadata cleanup cannot safely preserve those features. No copy was exported." = "Bu PDF'de isteğe bağlı içerik katmanları var. Meta veri temizliği bu özellikleri güvenle koruyamaz. Kopya dışa aktarılmadı.";
 "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported." = "Bu PDF'de birleştirme, bölme veya sayfaları yeniden sıralama sırasında korunamayan form alanları ya da ekler var. Kopya dışa aktarılmadı.";
 "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported." = "Bu PDF'de meta veri temizliği sırasında korunamayan form alanları ya da ekler var. Kopya dışa aktarılmadı.";
 "This PDF is password protected. Enter its password." = "Bu PDF parolayla korunuyor. Parolasını gir.";

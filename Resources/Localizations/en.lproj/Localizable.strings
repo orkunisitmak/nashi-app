@@ -2446,7 +2446,12 @@
 "THIS MEDIA IS PROTECTED AND CANNOT BE DOWNLOADED HERE." = "THIS MEDIA IS PROTECTED AND CANNOT BE DOWNLOADED HERE.";
 "THIS OUTPUT FORMAT HAS NO ADJUSTABLE CONVERSION DEFAULTS." = "THIS OUTPUT FORMAT HAS NO ADJUSTABLE CONVERSION DEFAULTS.";
 "THIS PAGES FILE IS TOO LARGE OR IS NOT A REGULAR DOCUMENT FILE." = "THIS PAGES FILE IS TOO LARGE OR IS NOT A REGULAR DOCUMENT FILE.";
+"THIS PDF CONTAINS ACCESSIBILITY TAGS. METADATA CLEANUP CANNOT SAFELY PRESERVE THOSE FEATURES. NO COPY WAS EXPORTED." = "THIS PDF CONTAINS ACCESSIBILITY TAGS. METADATA CLEANUP CANNOT SAFELY PRESERVE THOSE FEATURES. NO COPY WAS EXPORTED.";
+"THIS PDF CONTAINS CUSTOM PAGE LABELS. METADATA CLEANUP CANNOT SAFELY PRESERVE THOSE FEATURES. NO COPY WAS EXPORTED." = "THIS PDF CONTAINS CUSTOM PAGE LABELS. METADATA CLEANUP CANNOT SAFELY PRESERVE THOSE FEATURES. NO COPY WAS EXPORTED.";
+"THIS PDF CONTAINS EMBEDDED FILES. METADATA CLEANUP CANNOT SAFELY PRESERVE THOSE FEATURES. NO COPY WAS EXPORTED." = "THIS PDF CONTAINS EMBEDDED FILES. METADATA CLEANUP CANNOT SAFELY PRESERVE THOSE FEATURES. NO COPY WAS EXPORTED.";
+"THIS PDF CONTAINS FORM FIELDS. METADATA CLEANUP CANNOT SAFELY PRESERVE THOSE FEATURES. NO COPY WAS EXPORTED." = "THIS PDF CONTAINS FORM FIELDS. METADATA CLEANUP CANNOT SAFELY PRESERVE THOSE FEATURES. NO COPY WAS EXPORTED.";
 "THIS PDF CONTAINS NO PAGES." = "THIS PDF CONTAINS NO PAGES.";
+"THIS PDF CONTAINS OPTIONAL CONTENT LAYERS. METADATA CLEANUP CANNOT SAFELY PRESERVE THOSE FEATURES. NO COPY WAS EXPORTED." = "THIS PDF CONTAINS OPTIONAL CONTENT LAYERS. METADATA CLEANUP CANNOT SAFELY PRESERVE THOSE FEATURES. NO COPY WAS EXPORTED.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT MERGING, SPLITTING OR REORDERING PAGES CANNOT KEEP. NO COPY WAS EXPORTED." = "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT MERGING, SPLITTING OR REORDERING PAGES CANNOT KEEP. NO COPY WAS EXPORTED.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT METADATA CLEANUP CANNOT KEEP. NO COPY WAS EXPORTED." = "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT METADATA CLEANUP CANNOT KEEP. NO COPY WAS EXPORTED.";
 "THIS PDF IS PASSWORD PROTECTED. ENTER ITS PASSWORD." = "THIS PDF IS PASSWORD PROTECTED. ENTER ITS PASSWORD.";
@@ -2590,7 +2595,12 @@
 "The upstream server did not return a successful HTTPS download." = "The upstream server did not return a successful HTTPS download.";
 "The video has no readable dimensions." = "The video has no readable dimensions.";
 "These files have moved or were deleted." = "These files have moved or were deleted.";
+"This PDF contains accessibility tags. Metadata cleanup cannot safely preserve those features. No copy was exported." = "This PDF contains accessibility tags. Metadata cleanup cannot safely preserve those features. No copy was exported.";
+"This PDF contains custom page labels. Metadata cleanup cannot safely preserve those features. No copy was exported." = "This PDF contains custom page labels. Metadata cleanup cannot safely preserve those features. No copy was exported.";
+"This PDF contains embedded files. Metadata cleanup cannot safely preserve those features. No copy was exported." = "This PDF contains embedded files. Metadata cleanup cannot safely preserve those features. No copy was exported.";
+"This PDF contains form fields. Metadata cleanup cannot safely preserve those features. No copy was exported." = "This PDF contains form fields. Metadata cleanup cannot safely preserve those features. No copy was exported.";
 "This PDF contains no pages." = "This PDF contains no pages.";
+"This PDF contains optional content layers. Metadata cleanup cannot safely preserve those features. No copy was exported." = "This PDF contains optional content layers. Metadata cleanup cannot safely preserve those features. No copy was exported.";
 "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported." = "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported.";
 "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported." = "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported.";
 "This PDF is password protected. Enter its password." = "This PDF is password protected. Enter its password.";
