@@ -102,9 +102,9 @@ struct WheelItem {
         if let launch=item.projectLaunch,let folder=ProjectLauncher.projectFolder(in:inputs) { state.launch(launch,in:folder) }
     }
     /// Editor, assistant and run commands for one dragged folder, plus Terminal; nothing for files.
-    static func projectItems(for inputs:[URL])->[WheelItem] {
+    static func projectItems(for inputs:[URL],isInstalled:(String)->Bool = { NSWorkspace.shared.urlForApplication(withBundleIdentifier:$0) != nil })->[WheelItem] {
         guard let folder=ProjectLauncher.projectFolder(in:inputs) else { return [] }
-        let launches=ProjectLauncher.launches(for:folder) { NSWorkspace.shared.urlForApplication(withBundleIdentifier:$0) != nil }
+        let launches=ProjectLauncher.launches(for:folder,isInstalled:isInstalled)
         return launches.map{WheelItem(title:$0.title,symbol:$0.symbol,projectLaunch:$0)}+[WheelItem(title:FileAction.terminal.title,symbol:FileAction.terminal.symbol,action:.terminal)]
     }
     func hide() { keyboardMode=false;panel?.orderOut(nil);if let monitor=keyMonitor { NSEvent.removeMonitor(monitor);keyMonitor=nil } }

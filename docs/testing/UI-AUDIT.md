@@ -47,6 +47,8 @@ Unknown scenes/options, empty selections, repeated scenes and invalid themes/lan
 | settings.formats | Format preferences |
 | settings.updates | Update preferences, without checking for an update |
 | wheel.pdf-multiple | Tools offered for two generated PDFs |
+| wheel.projects-node | Projects wheel for a generated Node folder with `dev` and `start` scripts |
+| wheel.projects-flutter | Projects wheel for a generated Flutter folder |
 | editor.crop-image | Image crop at minimum supported editor size |
 | editor.annotate-image | Annotation editor at minimum size |
 | editor.frame-image | Frame editor after its asynchronous preview is ready |
