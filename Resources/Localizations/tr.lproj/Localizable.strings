@@ -496,6 +496,8 @@
 "CLOSE" = "KAPAT";
 "CLOSE FLOAT WITHOUT DELETING FILES" = "DOSYALARI SİLMEDEN FLOAT’I KAPAT";
 "CLOSE WINDOW" = "PENCEREYİ KAPAT";
+"COLLAGE DIMENSIONS MUST BE BETWEEN 1 AND 32,000 PIXELS." = "KOLAJ BOYUTLARI 1 İLE 32.000 PİKSEL ARASINDA OLMALI.";
+"COLLAGE PADDING LEAVES NO SPACE FOR IMAGES." = "KENAR BOŞLUĞU GÖRSELLER İÇİN YER BIRAKMIYOR.";
 "COLLAPSE FLOAT" = "FLOAT’I DARALT";
 "COLOR" = "RENK";
 "COLUMN" = "SÜTUN";
@@ -697,6 +699,8 @@
 "Close" = "Kapat";
 "Close Float without deleting files" = "Dosyaları silmeden Float’ı kapat";
 "Close Window" = "Pencereyi Kapat";
+"Collage dimensions must be between 1 and 32,000 pixels." = "Kolaj boyutları 1 ile 32.000 piksel arasında olmalı.";
+"Collage padding leaves no space for images." = "Kenar boşluğu görseller için yer bırakmıyor.";
 "Collapse Float" = "Float’ı daralt";
 "Color" = "Renk";
 "Column" = "Sütun";
@@ -1921,6 +1925,7 @@
 "REDACT PHOTO" = "FOTOĞRAFI SANSÜRLE";
 "REDACT VIDEO" = "VİDEOYU SANSÜRLE";
 "REDO" = "YİNELE";
+"REDUCE COLLAGE SPACING OR INCREASE THE CANVAS." = "KOLAJ ARALIĞINI AZALT VEYA TUVALİ BÜYÜT.";
 "REDUCE PADDING OR SPACING TO FIT THE IMAGES." = "GÖRSELLERİN SIĞMASI İÇİN KENAR BOŞLUĞUNU VEYA ARALIĞI AZALT.";
 "REDUCE SPACING TO FIT THE FEATURED LAYOUT." = "ÖNE ÇIKAN DÜZENE SIĞMASI İÇİN ARALIĞI AZALT.";
 "REDUCTION (%; 0 = AUTO)" = "KÜÇÜLTME (%; 0 = OTOMATİK)";
@@ -1990,6 +1995,7 @@
 "Redaction coordinates must be finite for the %lld × %@ pixel image." = "Sansür koordinatları %lld × %@ piksellik görsel için sonlu sayılar olmalı.";
 "Redaction coordinates must be finite for the %lld × %lld pixel image." = "Sansür koordinatları %lld × %lld piksellik görsel için sonlu sayılar olmalı.";
 "Redo" = "Yinele";
+"Reduce collage spacing or increase the canvas." = "Kolaj aralığını azalt veya tuvali büyüt.";
 "Reduce padding or spacing to fit the images." = "Görsellerin sığması için kenar boşluğunu veya aralığı azalt.";
 "Reduce spacing to fit the featured layout." = "Öne çıkan düzene sığması için aralığı azalt.";
 "Reduction (%; 0 = auto)" = "Küçültme (%; 0 = otomatik)";
