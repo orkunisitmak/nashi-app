@@ -323,9 +323,20 @@ enum NashiApplication {
     /// Finder → Services → "Open in Nashi". Same downstream path as opening a
     /// document, so existing validation, history and wheel behaviour apply.
     @objc func nashiOpenFiles(_ pasteboard:NSPasteboard,userData:String?,error:AutoreleasingUnsafeMutablePointer<NSString>?) {
-        let files=ServiceInput.files(from:FinderServices.paths(from:pasteboard))
+        let files:[URL]
+        do { files=try ServiceInput.files(from:FinderServices.paths(from:pasteboard)) }
+        catch let failure {
+            error?.pointee = L10n.text(failure.localizedDescription) as NSString
+            return
+        }
         guard !files.isEmpty else {
             error?.pointee = L10n.text("Select at least one local file.") as NSString
+            return
+        }
+        // A running conversion owns the current inputs; replacing them here
+        // would swap files underneath the job.
+        guard !state.working else {
+            error?.pointee = L10n.text("Another task is running. Open these files when it finishes.") as NSString
             return
         }
         state.inputs=files

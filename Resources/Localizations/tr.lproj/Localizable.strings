@@ -214,6 +214,7 @@
 "ANNOTATE · NASHI" = "İŞARETLE · NASHI";
 "ANNOTATION CANVAS" = "İŞARETLEME TUVALİ";
 "ANNOTATION TEXT" = "İŞARET METNİ";
+"ANOTHER TASK IS RUNNING. OPEN THESE FILES WHEN IT FINISHES." = "BAŞKA BİR İŞLEM SÜRÜYOR. İŞLEM BİTTİĞİNDE BU DOSYALARI AÇABİLİRSİN.";
 "ANOTHER TASK IS RUNNING. YOUR LINK IS READY WHEN IT FINISHES." = "BAŞKA BİR İŞLEM SÜRÜYOR. İŞLEM BİTTİĞİNDE BAĞLANTIN HAZIR OLACAK.";
 "APPEARANCE" = "GÖRÜNÜM";
 "APPEARANCE COULD NOT BE SAVED" = "GÖRÜNÜM KAYDEDİLEMEDİ";
@@ -304,6 +305,7 @@
 "Annotate · Nashi" = "İşaretle · Nashi";
 "Annotation canvas" = "İşaretleme tuvali";
 "Annotation text" = "İşaret metni";
+"Another task is running. Open these files when it finishes." = "Başka bir işlem sürüyor. İşlem bittiğinde bu dosyaları açabilirsin.";
 "Another task is running. Your link is ready when it finishes." = "Başka bir işlem sürüyor. İşlem bittiğinde bağlantın hazır olacak.";
 "Appearance" = "Görünüm";
 "Appearance could not be saved" = "Görünüm kaydedilemedi";
@@ -447,6 +449,7 @@
 "CHOOSE AT LEAST TWO PDFS." = "EN AZ İKİ PDF SEÇ.";
 "CHOOSE AT LEAST TWO VIDEOS." = "EN AZ İKİ VİDEO SEÇ.";
 "CHOOSE AT MOST 10,000 CLIPS." = "EN FAZLA 10.000 KLİP SEÇ.";
+"CHOOSE AT MOST 200 FILES AT A TIME." = "BİR SEFERDE EN FAZLA 200 DOSYA SEÇ.";
 "CHOOSE BACKGROUND IMAGE…" = "ARKA PLAN GÖRSELİ SEÇ…";
 "CHOOSE BETWEEN 1 AND 1,000 PAGES PER FILE." = "DOSYA BAŞINA 1 İLE 1.000 ARASINDA SAYFA SEÇ.";
 "CHOOSE DIMENSIONS BETWEEN 1 AND 30,000 PIXELS (100 MP LIMIT)." = "1 İLE 30.000 PİKSEL ARASINDA BOYUTLAR SEÇ (SINIR 100 MP).";
@@ -655,6 +658,7 @@
 "Choose at least two PDFs." = "En az iki PDF seç.";
 "Choose at least two videos." = "En az iki video seç.";
 "Choose at most 10,000 clips." = "En fazla 10.000 klip seç.";
+"Choose at most 200 files at a time." = "Bir seferde en fazla 200 dosya seç.";
 "Choose background image…" = "Arka plan görseli seç…";
 "Choose between 1 and 1,000 pages per file." = "Dosya başına 1 ile 1.000 arasında sayfa seç.";
 "Choose dimensions between 1 and 30,000 pixels (100 MP limit)." = "1 ile 30.000 piksel arasında boyutlar seç (sınır 100 MP).";

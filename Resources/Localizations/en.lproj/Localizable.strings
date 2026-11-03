@@ -214,6 +214,7 @@
 "ANNOTATE · NASHI" = "ANNOTATE · NASHI";
 "ANNOTATION CANVAS" = "ANNOTATION CANVAS";
 "ANNOTATION TEXT" = "ANNOTATION TEXT";
+"ANOTHER TASK IS RUNNING. OPEN THESE FILES WHEN IT FINISHES." = "ANOTHER TASK IS RUNNING. OPEN THESE FILES WHEN IT FINISHES.";
 "ANOTHER TASK IS RUNNING. YOUR LINK IS READY WHEN IT FINISHES." = "ANOTHER TASK IS RUNNING. YOUR LINK IS READY WHEN IT FINISHES.";
 "APPEARANCE" = "APPEARANCE";
 "APPEARANCE COULD NOT BE SAVED" = "APPEARANCE COULD NOT BE SAVED";
@@ -304,6 +305,7 @@
 "Annotate · Nashi" = "Annotate · Nashi";
 "Annotation canvas" = "Annotation canvas";
 "Annotation text" = "Annotation text";
+"Another task is running. Open these files when it finishes." = "Another task is running. Open these files when it finishes.";
 "Another task is running. Your link is ready when it finishes." = "Another task is running. Your link is ready when it finishes.";
 "Appearance" = "Appearance";
 "Appearance could not be saved" = "Appearance could not be saved";
@@ -447,6 +449,7 @@
 "CHOOSE AT LEAST TWO PDFS." = "CHOOSE AT LEAST TWO PDFS.";
 "CHOOSE AT LEAST TWO VIDEOS." = "CHOOSE AT LEAST TWO VIDEOS.";
 "CHOOSE AT MOST 10,000 CLIPS." = "CHOOSE AT MOST 10,000 CLIPS.";
+"CHOOSE AT MOST 200 FILES AT A TIME." = "CHOOSE AT MOST 200 FILES AT A TIME.";
 "CHOOSE BACKGROUND IMAGE…" = "CHOOSE BACKGROUND IMAGE…";
 "CHOOSE BETWEEN 1 AND 1,000 PAGES PER FILE." = "CHOOSE BETWEEN 1 AND 1,000 PAGES PER FILE.";
 "CHOOSE DIMENSIONS BETWEEN 1 AND 30,000 PIXELS (100 MP LIMIT)." = "CHOOSE DIMENSIONS BETWEEN 1 AND 30,000 PIXELS (100 MP LIMIT).";
@@ -655,6 +658,7 @@
 "Choose at least two PDFs." = "Choose at least two PDFs.";
 "Choose at least two videos." = "Choose at least two videos.";
 "Choose at most 10,000 clips." = "Choose at most 10,000 clips.";
+"Choose at most 200 files at a time." = "Choose at most 200 files at a time.";
 "Choose background image…" = "Choose background image…";
 "Choose between 1 and 1,000 pages per file." = "Choose between 1 and 1,000 pages per file.";
 "Choose dimensions between 1 and 30,000 pixels (100 MP limit)." = "Choose dimensions between 1 and 30,000 pixels (100 MP limit).";

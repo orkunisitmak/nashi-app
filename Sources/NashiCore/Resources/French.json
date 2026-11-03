@@ -1136,6 +1136,8 @@
   "Choose files and a supported media format.": "Choisissez des fichiers et un format multimédia pris en charge.",
   "Choose files to zip.": "Choisissez des fichiers à compresser en ZIP.",
   "Select at least one local file.": "Sélectionnez au moins un fichier local.",
+  "Choose at most 200 files at a time.": "Choisissez au maximum 200 fichiers à la fois.",
+  "Another task is running. Open these files when it finishes.": "Une autre tâche est en cours. Ouvrez ces fichiers lorsqu'elle sera terminée.",
   "Choose finite photo adjustments within their ranges.": "Choisissez des réglages de photo finis, dans leurs plages.",
   "Choose media and a supported tool.": "Choisissez un média et un outil pris en charge.",
   "Choose one Instagram post with up to 50 items.": "Choisissez une seule publication Instagram contenant jusqu’à 50 éléments.",
