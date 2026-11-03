@@ -5,6 +5,9 @@ public sealed partial class ToolEditor
 {
     // The preset that last filled the size fields; editing the fields by hand drops it.
     private (double? Scale,int? LongestEdge,string Width,string Height)? compressionPreset;
+    // Size may lower the resolution to reach a target; Quality keeps the dimensions and reports an unreachable target.
+    private ComboBox? compressionPriority;
+    private bool PreferQuality=>compressionPriority?.SelectedIndex==1;
     private (double? Scale,int? LongestEdge)? CompressionPreset()=>compressionPreset is {} p&&fields["Width"].Text==p.Width&&fields["Height"].Text==p.Height?(p.Scale,p.LongestEdge):null;
     private void BuildCompressionOptions()
     {
@@ -15,6 +18,8 @@ public sealed partial class ToolEditor
             Field("Width",bitmap.PixelWidth);Field("Height",bitmap.PixelHeight);var size=new ComboBox{ItemsSource=new[]{"Original dimensions","75%","50%","25%","2560 px longest edge","1920 px longest edge","1280 px longest edge","Custom dimensions"},SelectedIndex=0};options.Children.Add(L10n.Label(new TextBlock{Text="Image size",Margin=new(4,12,4,0)}));options.Children.Add(size);size.SelectionChanged+=(_,_)=>{compressionPreset=null;if(size.SelectedIndex==7)return;var factor=size.SelectedIndex switch{1=>.75,2=>.5,3=>.25,4=>Math.Min(1,2560d/Math.Max(bitmap.PixelWidth,bitmap.PixelHeight)),5=>Math.Min(1,1920d/Math.Max(bitmap.PixelWidth,bitmap.PixelHeight)),6=>Math.Min(1,1280d/Math.Max(bitmap.PixelWidth,bitmap.PixelHeight)),_=>1};fields["Width"].Text=Number(Math.Max(1,Math.Round(bitmap.PixelWidth*factor)));fields["Height"].Text=Number(Math.Max(1,Math.Round(bitmap.PixelHeight*factor)));
                 if(size.SelectedIndex is >=1 and <=6)compressionPreset=(size.SelectedIndex<=3?factor:null,size.SelectedIndex>=4?new[]{2560,1920,1280}[size.SelectedIndex-4]:null,fields["Width"].Text,fields["Height"].Text);};
             resetCompression+=()=>size.SelectedIndex=0;
+            compressionPriority=new ComboBox{ItemsSource=new[]{"Size","Quality"},SelectedIndex=0};var priority=compressionPriority;options.Children.Add(L10n.Label(new TextBlock{Text="Priority",Margin=new(4,12,4,0)}));options.Children.Add(priority);var hint=L10n.Label(new TextBlock{Text="Size may lower the resolution.",Margin=new(4,4,4,0),Opacity=.7,TextWrapping=TextWrapping.Wrap});options.Children.Add(hint);priority.SelectionChanged+=(_,_)=>L10n.SetText(hint,priority.SelectedIndex==1?"Quality keeps the resolution.":"Size may lower the resolution.");
+            resetCompression+=()=>priority.SelectedIndex=0;
         }
     }
 }

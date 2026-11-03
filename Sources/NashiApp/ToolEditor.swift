@@ -62,6 +62,7 @@ struct ToolEditor:View {
     @State private var targetValue=1.0
     @State private var preset="Balanced"
     @State private var compressionSize="original"
+    @State private var compressionPriority="size"
     @State private var annotationKind:ImageAnnotationKind = .arrow
     @State private var selectingAnnotations=false
     @State private var annotationText="Text"
@@ -284,6 +285,10 @@ struct ToolEditor:View {
             }
             Divider();Toggle("Compress to target file size",isOn:$targetEnabled)
             if targetEnabled { HStack { TextField("Target",value:$targetValue,format:.number);Picker("Unit",selection:$targetMode) { Text("MB").tag("MB");Text("KB").tag("KB");Text("% reduction").tag("percent") }.frame(width:150) } }
+            if targetEnabled,category == .image {
+                Picker("Priority",selection:$compressionPriority) { Text("Size").tag("size");Text("Quality").tag("quality") }.pickerStyle(.segmented)
+                Text(compressionPriority=="size" ? "Size may lower the resolution.":"Quality keeps the resolution.").foregroundStyle(.secondary).font(.callout)
+            }
         }
     }
     var cropControls:some View {
@@ -635,7 +640,7 @@ struct ToolEditor:View {
         waveform=[];leftWaveform=[];rightWaveform=[];processedWaveform=nil;playbackURL=nil;visualizationReady=false;processedPreviewBusy=false;visualizationBusy=false;previewError=nil
         metadata=[:];originalMetadata=[:];metadataSearch="";metadataRemoveAll=false;addingMetadataField=false;newMetadataKey="{XMP-dc}.Title";newMetadataValue="";qrResults=[]
         annotationKind = .arrow;selectingAnnotations=false;annotationText="Text";annotationColor = .red;annotationStroke=3;annotationFont=24;annotationFontFamily="system"
-        targetEnabled=false;targetMode="MB";targetValue=1;preset="Balanced";compressionSize="original"
+        targetEnabled=false;targetMode="MB";targetValue=1;preset="Balanced";compressionSize="original";compressionPriority="size"
         if tool == .compress {
             let image=category == .image
             preset=(image ? FormatPreferences.shared.imageCompressionStrength:FormatPreferences.shared.videoCompressionStrength)=="strong" ? "Strong":"Balanced"
@@ -672,6 +677,7 @@ struct ToolEditor:View {
                     guard bytes.isFinite,bytes>=1,bytes<Double(Int64.max) else { previewError="Enter a target of at least one byte and less than \(Int64.max) bytes.";return }
                     applied.targetBytes=Int64(bytes)
                 }
+                applied.preferQuality=category == .image && compressionPriority=="quality"
             }
         }
         if tool == .redactImage { var redact=options.imageRedaction ?? ImageRedactionOptions();redact.style=options.redactionMode=="black" ? .solid:options.redactionMode=="pixelate" ? .pixelate:.blur;redact.color=options.backgroundColor;applied.imageRedaction=redact }

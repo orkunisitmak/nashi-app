@@ -69,6 +69,39 @@ final class TargetSizeSearchTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf:input),original)
     }
 
+    /// Seeded noise PNG: lossless and hard to compress, so a small target needs fewer pixels.
+    private func noisePNG(_ width:Int,_ height:Int,in folder:URL) throws -> URL {
+        let url=folder.appendingPathComponent("noise-\(width)x\(height).png")
+        var seed:UInt64=7,pixels=[UInt8](repeating:255,count:width*height*4)
+        for index in pixels.indices where index%4 != 3 { seed=seed &* 6364136223846793005 &+ 1442695040888963407;pixels[index]=UInt8(truncatingIfNeeded:seed>>56) }
+        try pixels.withUnsafeMutableBytes { buffer in
+            let context=try XCTUnwrap(CGContext(data:buffer.baseAddress,width:width,height:height,bitsPerComponent:8,bytesPerRow:width*4,space:CGColorSpace(name:CGColorSpace.sRGB)!,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue))
+            try ImageEngine.write(try XCTUnwrap(context.makeImage()),to:url)
+        }
+        return url
+    }
+
+    func testQualityPriorityKeepsDimensionsOrRefusesWithoutOutput() throws {
+        let folder=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:folder) }
+        let input=try noisePNG(256,192,in:folder),original=try Data(contentsOf:input),bytes=Int64(original.count)
+        var options=OperationOptions();options.outputDirectory=folder;options.targetBytes=bytes/4;options.preferQuality=true
+        // A lossless image four times too large cannot fit without fewer pixels.
+        XCTAssertThrowsError(try ImageEngine.compress(input,options:options,token:.init())) { error in
+            XCTAssertTrue("\(error)".contains("without lowering the resolution"),"\(error)")
+        }
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath:folder.path),[input.lastPathComponent])
+        // Size priority reaches the same target by resizing.
+        options.preferQuality=false
+        let resized=try XCTUnwrap(ImageEngine.compress(input,options:options,token:.init()).first)
+        XCTAssertLessThanOrEqual(Int64(try Data(contentsOf:resized).count),bytes/4)
+        XCTAssertLessThan(try ImageEngine.load(resized).width,256)
+        // A reachable target under Quality priority keeps the dimensions.
+        options.preferQuality=true;options.targetBytes=bytes*2
+        let kept=try XCTUnwrap(ImageEngine.compress(input,options:options,token:.init()).first),image=try ImageEngine.load(kept)
+        XCTAssertEqual(image.width,256);XCTAssertEqual(image.height,192)
+        XCTAssertEqual(try Data(contentsOf:input),original)
+    }
+
     func testCancellationStopsEncodingAndDescriptionIsPlain() {
         let token=CancellationToken();var probes=0
         XCTAssertThrowsError(try TargetSizeSearch.run(originalBytes:200000,targetBytes:10,startQuality:90,lossy:true,allowResize:true,token:token){ q,s in probes+=1;if probes==3 { token.cancel() };return self.smooth(q,s) })
