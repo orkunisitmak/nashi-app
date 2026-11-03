@@ -1440,6 +1440,7 @@
   "Save Copies To": "Enregistrer les copies dans",
   "Save Here": "Enregistrer ici",
   "New files are written here instead of beside the originals.": "Les nouveaux fichiers sont écrits ici au lieu d'être placés à côté des originaux.",
-  "The chosen folder is no longer available. Results go beside the originals until you choose another.": "Le dossier choisi n'est plus disponible. Les résultats sont placés à côté des originaux jusqu'à ce que vous en choisissiez un autre.",
+  "The chosen folder is unavailable right now. Results go beside the originals and return to this folder when it is available again.": "Le dossier choisi est indisponible pour le moment. Les résultats sont placés à côté des originaux et reviennent ici dès que le dossier est de nouveau disponible.",
+  "The folder could not be saved. Choose another folder.": "Le dossier n'a pas pu être enregistré. Choisissez un autre dossier.",
   "Results go beside the original file unless you choose a folder.": "Les résultats sont placés à côté du fichier d'origine, sauf si vous choisissez un dossier."
 }

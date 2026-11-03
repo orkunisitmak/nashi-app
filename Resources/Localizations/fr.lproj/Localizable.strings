@@ -2393,7 +2393,7 @@
 "THE ARCHIVE ENTRY LEAVES ITS DESTINATION." = "L’ENTRÉE DE L’ARCHIVE SORT DE SA DESTINATION.";
 "THE ARCHIVE EXPANDS BEYOND THE 20 GB SAFETY LIMIT." = "UNE FOIS DÉCOMPRESSÉE, L’ARCHIVE DÉPASSE LA LIMITE DE SÉCURITÉ DE 20 GO.";
 "THE ARCHIVE HAS TOO MANY ENTRIES (100,000 LIMIT)." = "L’ARCHIVE CONTIENT TROP D’ENTRÉES (LIMITE DE 100 000).";
-"THE CHOSEN FOLDER IS NO LONGER AVAILABLE. RESULTS GO BESIDE THE ORIGINALS UNTIL YOU CHOOSE ANOTHER." = "LE DOSSIER CHOISI N'EST PLUS DISPONIBLE. LES RÉSULTATS SONT PLACÉS À CÔTÉ DES ORIGINAUX JUSQU'À CE QUE VOUS EN CHOISISSIEZ UN AUTRE.";
+"THE CHOSEN FOLDER IS UNAVAILABLE RIGHT NOW. RESULTS GO BESIDE THE ORIGINALS AND RETURN TO THIS FOLDER WHEN IT IS AVAILABLE AGAIN." = "LE DOSSIER CHOISI EST INDISPONIBLE POUR LE MOMENT. LES RÉSULTATS SONT PLACÉS À CÔTÉ DES ORIGINAUX ET REVIENNENT ICI DÈS QUE LE DOSSIER EST DE NOUVEAU DISPONIBLE.";
 "THE CLIPPING EXCEEDS 200 MB." = "LE FRAGMENT DÉPASSE 200 MO.";
 "THE CLIPPING HAS NO READABLE TEXT. INCLUDE ITS ORIGINAL RESOURCE FORK/APPLEDOUBLE SIDECAR, OR PASTE ITS TEXT INTO NASHI." = "LE FRAGMENT NE CONTIENT AUCUN TEXTE LISIBLE. INCLUEZ SON FICHIER ANNEXE D’ORIGINE (RESOURCE FORK/APPLEDOUBLE) OU COLLEZ SON TEXTE DANS NASHI.";
 "THE DOCUMENT HAS NO EDITABLE BODY." = "LE DOCUMENT N’A PAS DE CORPS MODIFIABLE.";
@@ -2409,6 +2409,7 @@
 "THE FILE HAS NO AUDIO TRACK." = "LE FICHIER NE CONTIENT AUCUNE PISTE AUDIO.";
 "THE FILE HAS NO PLAYABLE AUDIO OR VIDEO TRACK." = "LE FICHIER NE CONTIENT AUCUNE PISTE AUDIO OU VIDÉO LISIBLE.";
 "THE FILE HAS NO VIDEO TRACK." = "LE FICHIER NE CONTIENT AUCUNE PISTE VIDÉO.";
+"THE FOLDER COULD NOT BE SAVED. CHOOSE ANOTHER FOLDER." = "LE DOSSIER N'A PAS PU ÊTRE ENREGISTRÉ. CHOISISSEZ UN AUTRE DOSSIER.";
 "THE IMAGE DOWNLOAD ENDED EARLY." = "LE TÉLÉCHARGEMENT DE L’IMAGE S’EST TERMINÉ PRÉMATURÉMENT.";
 "THE IMAGE ORDER MUST INCLUDE EVERY IMAGE ONCE." = "L’ORDRE DES IMAGES DOIT INCLURE CHAQUE IMAGE UNE FOIS.";
 "THE MEDIA SERVER REDIRECTED TO AN INSECURE URL." = "LE SERVEUR MULTIMÉDIA A REDIRIGÉ VERS UNE URL NON SÉCURISÉE.";
@@ -2550,7 +2551,7 @@
 "The archive entry leaves its destination." = "L’entrée de l’archive sort de sa destination.";
 "The archive expands beyond the 20 GB safety limit." = "Une fois décompressée, l’archive dépasse la limite de sécurité de 20 Go.";
 "The archive has too many entries (100,000 limit)." = "L’archive contient trop d’entrées (limite de 100 000).";
-"The chosen folder is no longer available. Results go beside the originals until you choose another." = "Le dossier choisi n'est plus disponible. Les résultats sont placés à côté des originaux jusqu'à ce que vous en choisissiez un autre.";
+"The chosen folder is unavailable right now. Results go beside the originals and return to this folder when it is available again." = "Le dossier choisi est indisponible pour le moment. Les résultats sont placés à côté des originaux et reviennent ici dès que le dossier est de nouveau disponible.";
 "The clipping exceeds 200 MB." = "Le fragment dépasse 200 Mo.";
 "The clipping has no readable text. Include its original resource fork/AppleDouble sidecar, or paste its text into Nashi." = "Le fragment ne contient aucun texte lisible. Incluez son fichier annexe d’origine (resource fork/AppleDouble) ou collez son texte dans Nashi.";
 "The crop rectangle must fit completely inside the %@ × %@ pixel image." = "Le rectangle de recadrage doit tenir entièrement dans l’image de %@ × %@ pixels.";
@@ -2569,6 +2570,7 @@
 "The file has no audio track." = "Le fichier ne contient aucune piste audio.";
 "The file has no playable audio or video track." = "Le fichier ne contient aucune piste audio ou vidéo lisible.";
 "The file has no video track." = "Le fichier ne contient aucune piste vidéo.";
+"The folder could not be saved. Choose another folder." = "Le dossier n'a pas pu être enregistré. Choisissez un autre dossier.";
 "The image download ended early." = "Le téléchargement de l’image s’est terminé prématurément.";
 "The image order must include every image once." = "L’ordre des images doit inclure chaque image une fois.";
 "The local document converter did not produce a %@ file. %@" = "Le convertisseur de documents local n’a pas produit de fichier %@. %@";

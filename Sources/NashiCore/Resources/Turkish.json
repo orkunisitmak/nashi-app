@@ -1440,6 +1440,7 @@
   "Save Copies To": "Kopyaları şuraya kaydet",
   "Save Here": "Buraya kaydet",
   "New files are written here instead of beside the originals.": "Yeni dosyalar orijinallerin yanına değil buraya yazılır.",
-  "The chosen folder is no longer available. Results go beside the originals until you choose another.": "Seçilen klasör artık kullanılamıyor. Başka bir klasör seçene kadar sonuçlar orijinallerin yanına kaydedilir.",
+  "The chosen folder is unavailable right now. Results go beside the originals and return to this folder when it is available again.": "Seçilen klasör şu anda kullanılamıyor. Sonuçlar orijinallerin yanına kaydedilir; klasör yeniden kullanılabilir olduğunda buraya döner.",
+  "The folder could not be saved. Choose another folder.": "Klasör kaydedilemedi. Başka bir klasör seç.",
   "Results go beside the original file unless you choose a folder.": "Bir klasör seçmezsen sonuçlar orijinal dosyanın yanına kaydedilir."
 }

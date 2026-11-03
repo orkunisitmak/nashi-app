@@ -2393,7 +2393,7 @@
 "THE ARCHIVE ENTRY LEAVES ITS DESTINATION." = "ARŞİVDEKİ BİR ÖĞE HEDEF KLASÖRÜN DIŞINA ÇIKIYOR.";
 "THE ARCHIVE EXPANDS BEYOND THE 20 GB SAFETY LIMIT." = "ARŞİV AÇILDIĞINDA 20 GB'LIK GÜVENLİK SINIRINI AŞIYOR.";
 "THE ARCHIVE HAS TOO MANY ENTRIES (100,000 LIMIT)." = "ARŞİVDE ÇOK FAZLA ÖĞE VAR (SINIR 100.000).";
-"THE CHOSEN FOLDER IS NO LONGER AVAILABLE. RESULTS GO BESIDE THE ORIGINALS UNTIL YOU CHOOSE ANOTHER." = "SEÇİLEN KLASÖR ARTIK KULLANILAMIYOR. BAŞKA BİR KLASÖR SEÇENE KADAR SONUÇLAR ORİJİNALLERİN YANINA KAYDEDİLİR.";
+"THE CHOSEN FOLDER IS UNAVAILABLE RIGHT NOW. RESULTS GO BESIDE THE ORIGINALS AND RETURN TO THIS FOLDER WHEN IT IS AVAILABLE AGAIN." = "SEÇİLEN KLASÖR ŞU ANDA KULLANILAMIYOR. SONUÇLAR ORİJİNALLERİN YANINA KAYDEDİLİR; KLASÖR YENİDEN KULLANILABİLİR OLDUĞUNDA BURAYA DÖNER.";
 "THE CLIPPING EXCEEDS 200 MB." = "METİN KIRPINTISI 200 MB'I AŞIYOR.";
 "THE CLIPPING HAS NO READABLE TEXT. INCLUDE ITS ORIGINAL RESOURCE FORK/APPLEDOUBLE SIDECAR, OR PASTE ITS TEXT INTO NASHI." = "METİN KIRPINTISINDA OKUNABİLİR METİN YOK. ORİJİNAL RESOURCE FORK/APPLEDOUBLE DOSYASINI DA EKLE VEYA METNİNİ NASHI'YE YAPIŞTIR.";
 "THE DOCUMENT HAS NO EDITABLE BODY." = "BELGEDE DÜZENLENEBİLİR BİR İÇERİK YOK.";
@@ -2409,6 +2409,7 @@
 "THE FILE HAS NO AUDIO TRACK." = "DOSYADA SES İZİ YOK.";
 "THE FILE HAS NO PLAYABLE AUDIO OR VIDEO TRACK." = "DOSYADA OYNATILABİLİR BİR SES VEYA VİDEO İZİ YOK.";
 "THE FILE HAS NO VIDEO TRACK." = "DOSYADA VİDEO İZİ YOK.";
+"THE FOLDER COULD NOT BE SAVED. CHOOSE ANOTHER FOLDER." = "KLASÖR KAYDEDİLEMEDİ. BAŞKA BİR KLASÖR SEÇ.";
 "THE IMAGE DOWNLOAD ENDED EARLY." = "GÖRSEL İNDİRMESİ ERKEN SONA ERDİ.";
 "THE IMAGE ORDER MUST INCLUDE EVERY IMAGE ONCE." = "GÖRSEL SIRASINDA HER GÖRSEL BİR KEZ YER ALMALI.";
 "THE MEDIA SERVER REDIRECTED TO AN INSECURE URL." = "MEDYA SUNUCUSU GÜVENLİ OLMAYAN BİR ADRESE YÖNLENDİRDİ.";
@@ -2550,7 +2551,7 @@
 "The archive entry leaves its destination." = "Arşivdeki bir öğe hedef klasörün dışına çıkıyor.";
 "The archive expands beyond the 20 GB safety limit." = "Arşiv açıldığında 20 GB'lık güvenlik sınırını aşıyor.";
 "The archive has too many entries (100,000 limit)." = "Arşivde çok fazla öğe var (sınır 100.000).";
-"The chosen folder is no longer available. Results go beside the originals until you choose another." = "Seçilen klasör artık kullanılamıyor. Başka bir klasör seçene kadar sonuçlar orijinallerin yanına kaydedilir.";
+"The chosen folder is unavailable right now. Results go beside the originals and return to this folder when it is available again." = "Seçilen klasör şu anda kullanılamıyor. Sonuçlar orijinallerin yanına kaydedilir; klasör yeniden kullanılabilir olduğunda buraya döner.";
 "The clipping exceeds 200 MB." = "Metin kırpıntısı 200 MB'ı aşıyor.";
 "The clipping has no readable text. Include its original resource fork/AppleDouble sidecar, or paste its text into Nashi." = "Metin kırpıntısında okunabilir metin yok. Orijinal resource fork/AppleDouble dosyasını da ekle veya metnini Nashi'ye yapıştır.";
 "The crop rectangle must fit completely inside the %@ × %@ pixel image." = "Kırpma alanı %@ × %@ piksellik görselin tamamen içinde kalmalı.";
@@ -2569,6 +2570,7 @@
 "The file has no audio track." = "Dosyada ses izi yok.";
 "The file has no playable audio or video track." = "Dosyada oynatılabilir bir ses veya video izi yok.";
 "The file has no video track." = "Dosyada video izi yok.";
+"The folder could not be saved. Choose another folder." = "Klasör kaydedilemedi. Başka bir klasör seç.";
 "The image download ended early." = "Görsel indirmesi erken sona erdi.";
 "The image order must include every image once." = "Görsel sırasında her görsel bir kez yer almalı.";
 "The local document converter did not produce a %@ file. %@" = "Yerel belge dönüştürücü bir %@ dosyası oluşturmadı. %@";

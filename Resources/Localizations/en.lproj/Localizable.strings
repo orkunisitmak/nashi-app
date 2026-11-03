@@ -2393,7 +2393,7 @@
 "THE ARCHIVE ENTRY LEAVES ITS DESTINATION." = "THE ARCHIVE ENTRY LEAVES ITS DESTINATION.";
 "THE ARCHIVE EXPANDS BEYOND THE 20 GB SAFETY LIMIT." = "THE ARCHIVE EXPANDS BEYOND THE 20 GB SAFETY LIMIT.";
 "THE ARCHIVE HAS TOO MANY ENTRIES (100,000 LIMIT)." = "THE ARCHIVE HAS TOO MANY ENTRIES (100,000 LIMIT).";
-"THE CHOSEN FOLDER IS NO LONGER AVAILABLE. RESULTS GO BESIDE THE ORIGINALS UNTIL YOU CHOOSE ANOTHER." = "THE CHOSEN FOLDER IS NO LONGER AVAILABLE. RESULTS GO BESIDE THE ORIGINALS UNTIL YOU CHOOSE ANOTHER.";
+"THE CHOSEN FOLDER IS UNAVAILABLE RIGHT NOW. RESULTS GO BESIDE THE ORIGINALS AND RETURN TO THIS FOLDER WHEN IT IS AVAILABLE AGAIN." = "THE CHOSEN FOLDER IS UNAVAILABLE RIGHT NOW. RESULTS GO BESIDE THE ORIGINALS AND RETURN TO THIS FOLDER WHEN IT IS AVAILABLE AGAIN.";
 "THE CLIPPING EXCEEDS 200 MB." = "THE CLIPPING EXCEEDS 200 MB.";
 "THE CLIPPING HAS NO READABLE TEXT. INCLUDE ITS ORIGINAL RESOURCE FORK/APPLEDOUBLE SIDECAR, OR PASTE ITS TEXT INTO NASHI." = "THE CLIPPING HAS NO READABLE TEXT. INCLUDE ITS ORIGINAL RESOURCE FORK/APPLEDOUBLE SIDECAR, OR PASTE ITS TEXT INTO NASHI.";
 "THE DOCUMENT HAS NO EDITABLE BODY." = "THE DOCUMENT HAS NO EDITABLE BODY.";
@@ -2409,6 +2409,7 @@
 "THE FILE HAS NO AUDIO TRACK." = "THE FILE HAS NO AUDIO TRACK.";
 "THE FILE HAS NO PLAYABLE AUDIO OR VIDEO TRACK." = "THE FILE HAS NO PLAYABLE AUDIO OR VIDEO TRACK.";
 "THE FILE HAS NO VIDEO TRACK." = "THE FILE HAS NO VIDEO TRACK.";
+"THE FOLDER COULD NOT BE SAVED. CHOOSE ANOTHER FOLDER." = "THE FOLDER COULD NOT BE SAVED. CHOOSE ANOTHER FOLDER.";
 "THE IMAGE DOWNLOAD ENDED EARLY." = "THE IMAGE DOWNLOAD ENDED EARLY.";
 "THE IMAGE ORDER MUST INCLUDE EVERY IMAGE ONCE." = "THE IMAGE ORDER MUST INCLUDE EVERY IMAGE ONCE.";
 "THE MEDIA SERVER REDIRECTED TO AN INSECURE URL." = "THE MEDIA SERVER REDIRECTED TO AN INSECURE URL.";
@@ -2550,7 +2551,7 @@
 "The archive entry leaves its destination." = "The archive entry leaves its destination.";
 "The archive expands beyond the 20 GB safety limit." = "The archive expands beyond the 20 GB safety limit.";
 "The archive has too many entries (100,000 limit)." = "The archive has too many entries (100,000 limit).";
-"The chosen folder is no longer available. Results go beside the originals until you choose another." = "The chosen folder is no longer available. Results go beside the originals until you choose another.";
+"The chosen folder is unavailable right now. Results go beside the originals and return to this folder when it is available again." = "The chosen folder is unavailable right now. Results go beside the originals and return to this folder when it is available again.";
 "The clipping exceeds 200 MB." = "The clipping exceeds 200 MB.";
 "The clipping has no readable text. Include its original resource fork/AppleDouble sidecar, or paste its text into Nashi." = "The clipping has no readable text. Include its original resource fork/AppleDouble sidecar, or paste its text into Nashi.";
 "The crop rectangle must fit completely inside the %@ × %@ pixel image." = "The crop rectangle must fit completely inside the %@ × %@ pixel image.";
@@ -2569,6 +2570,7 @@
 "The file has no audio track." = "The file has no audio track.";
 "The file has no playable audio or video track." = "The file has no playable audio or video track.";
 "The file has no video track." = "The file has no video track.";
+"The folder could not be saved. Choose another folder." = "The folder could not be saved. Choose another folder.";
 "The image download ended early." = "The image download ended early.";
 "The image order must include every image once." = "The image order must include every image once.";
 "The local document converter did not produce a %@ file. %@" = "The local document converter did not produce a %@ file. %@";
