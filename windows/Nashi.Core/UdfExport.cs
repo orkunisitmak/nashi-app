@@ -27,7 +27,7 @@ public sealed partial class OfficeDocuments
         private readonly Dictionary<string,(Dictionary<string,string> C,Dictionary<string,string> P)> resolved=new(StringComparer.Ordinal);
         private readonly Dictionary<string,int[]> counters=new(StringComparer.Ordinal);private readonly HashSet<string> restarted=new(StringComparer.Ordinal);
         private readonly Stack<(StringBuilder Instruction,bool Result,string? Page)> fields=new();private int instructions;private readonly StringBuilder text=new();
-        private Dictionary<string,string> relations;private bool furniture,pageNumbers;private int cells;private string pageLabel="",pageSeparator="/";private double defaultTab=36,textWidth=453.5;
+        private Dictionary<string,string> relations;private bool furniture,pageNumbers;private string? simpleCount;private int cells;private string pageLabel="",pageSeparator="/";private double defaultTab=36,textWidth=453.5;
         public UdfExport(ZipArchive zip)
         {
             this.zip=zip;var styleXml=zip.GetEntry("word/styles.xml") is not null?Xml(zip,"word/styles.xml").Root:null;defaults=Child(styleXml,"docDefaults");
@@ -142,12 +142,21 @@ public sealed partial class OfficeDocuments
             ParagraphInto(properties,paragraph);foreach(var child in element.Elements())Visit(child,runs,style.C);
             // An access code vouches only for the document UYAP served; a copy edited in Word and written as UDF again must not carry it on.
             if(furniture&&string.Concat(runs.Where(r=>r.Kind=='t').Select(r=>r.Text)).TrimStart().StartsWith(UyapAccessLead.TrimEnd(),StringComparison.Ordinal))return;
-            if(runs.FindIndex(r=>r.Kind=='f') is >=0 and var page)
+            // Word's PAGE field becomes UYAP's own page number, which UYAP draws at the bottom right as "label page/count". The label is the
+            // text just before PAGE, back to a tab or line break, and the separator the text up to a NUMPAGES or SECTIONPAGES right after it.
+            // Only those runs go: the rest of the paragraph stays text, and a page count that is no page number's keeps the number Word shows.
+            if(runs.FindIndex(r=>r.Kind=='f'&&r.Text=="PAGE") is >=0 and var page)
             {
-                string Text(IEnumerable<Segment> part)=>string.Concat(part.Where(r=>r.Kind is 't' or '\t').Select(r=>r.Text)).Trim();var count=runs.FindIndex(page+1,r=>r.Kind=='f'&&r.Text!="PAGE");
-                if(!pageNumbers){pageNumbers=true;pageLabel=Text(runs.Take(page));if(runs[page].Text=="PAGE"&&count>page&&Text(runs.Skip(page+1).Take(count-page-1)) is {Length:>0} separator)pageSeparator=separator;}
-                runs.Clear();
+                static bool Edge(Segment run)=>run.Kind is '\t' or 'n' or 'p';
+                var from=runs.FindLastIndex(page,Edge)+1;var to=runs.FindIndex(page,Edge) is >=0 and var stop?stop:runs.Count;
+                var count=runs.FindIndex(page+1,to-page-1,r=>r.Kind=='f'&&r.Text!="PAGE");
+                var last=count<0?page:runs.FindIndex(count+1,to-count-1,r=>r.Kind!='c') is >=0 and var next?next-1:to-1;
+                string Words(int start,int end)=>string.Concat(runs.Skip(start).Take(end-start).Where(r=>r.Kind=='t').Select(r=>r.Text)).Trim();
+                if(!pageNumbers){pageNumbers=true;pageLabel=Words(from,page);if(count>=0&&Words(page+1,count) is {Length:>0} separator)pageSeparator=separator;}
+                runs=runs.Where((run,i)=>!(i>=from&&i<page&&run.Kind=='t'||i>=page&&i<=last)).ToList();
+                if(runs.All(r=>r.Kind is 't' or '\t'&&r.Text.Trim().Length==0))runs.Clear();
             }
+            runs.RemoveAll(r=>r.Kind=='f');
             var tabs=TabSet(paragraph,runs.Any(r=>r.Kind=='\t'));
             // A paragraph ends at "\n" in UYAP, so a line break starts another paragraph with the same layout, and a page break
             // is an empty paragraph wrapped in <page-break>, as udf-cli writes it. Headers, footers and cells keep no page breaks.
@@ -168,7 +177,8 @@ public sealed partial class OfficeDocuments
             switch(item.Name.LocalName)
             {
                 case "r":Run(item,runs,format);break;
-                case "fldSimple" when Page(Attr(item,"instr")) is {} page:runs.Add(new('f',page,null));break;
+                case "fldSimple" when Page(Attr(item,"instr")) is {} page:
+                    runs.Add(new('f',page,null));if(page!="PAGE"){simpleCount=page;try{foreach(var child in item.Elements())Visit(child,runs,format);}finally{simpleCount=null;}}break;
                 // As in ReadDocx: links, content controls, insertions and simple fields hold ordinary runs; deletions and moved-away text do not.
                 case "hyperlink" or "sdt" or "sdtContent" or "ins" or "smartTag" or "fldSimple" or "customXml" or "moveTo" or "dir" or "bdo":foreach(var child in item.Elements())Visit(child,runs,format);break;
             }
@@ -207,8 +217,11 @@ public sealed partial class OfficeDocuments
                     continue;
                 }
                 if(name=="instrText"){if(fields.TryPeek(out var current)&&!current.Result)current.Instruction.Append(child.Value);continue;}
-                // A field's instruction is not text, and a page number's cached result in a header or footer would repeat on every page.
-                if(hidden||instructions>0||fields.TryPeek(out var field)&&field.Page is not null)continue;
+                // A field's instruction is not text, and a page number's cached result in a header or footer would repeat on every page. A page
+                // count's result is kept apart ('c'), so it stays the number Word shows wherever it is not a page number's count.
+                if(hidden||instructions>0)continue;
+                var result=fields.TryPeek(out var field)&&field.Page is not null?field.Page:simpleCount;
+                if(result=="PAGE")continue;if(result is not null){if(name=="t")runs.Add(new('c',child.Value,format));continue;}
                 switch(name)
                 {
                     case "t":runs.Add(new('t',child.Value,format));break;

@@ -155,12 +155,24 @@ internal static class UdfChecks
         check(Validate(check,hidden).EndsWith("Sonra\n",StringComparison.Ordinal),"A field closed in a hidden run swallowed the text after it");
         // A field's name ends where Word 16 ends it, at a tab, a line break, a no-break or ideographic space, or a quote; Word numbers
         // no pages for a switch written right after the name, an em space after or before it, or a quoted name with spaces in it.
+        // The page count names are read after a PAGE, where they count its pages.
         static string Complex(string code)=>begin+Instruction(code)+"<w:r>"+separate+"</w:r>"+Plain("1")+end;
         static string Simple(string code)=>"<w:fldSimple w:instr=\""+code+"\">"+Plain("1")+"</w:fldSimple>";
-        var named=new[]{Complex("PAGE\t\\* MERGEFORMAT"),Complex("PAGE\n\\* MERGEFORMAT"),Complex("&#13;PAGE"),Complex("PAGE\u00A0\\* MERGEFORMAT"),Complex("PAGE\u3000"),Complex("\"PAGE\""),Complex("NUMPAGES\"x\""),Complex("\tsectionpages"),Simple("PAGE&#9;\\* MERGEFORMAT")};
+        var named=new[]{Complex("PAGE\t\\* MERGEFORMAT"),Complex("PAGE\n\\* MERGEFORMAT"),Complex("&#13;PAGE"),Complex("PAGE\u00A0\\* MERGEFORMAT"),Complex("PAGE\u3000"),Complex("\"PAGE\""),Complex(" PAGE ")+Plain("/")+Complex("NUMPAGES\"x\""),Complex(" PAGE ")+Plain("/")+Complex("\tsectionpages"),Simple("PAGE&#9;\\* MERGEFORMAT")};
         var unnamed=new[]{Complex("PAGE\\* MERGEFORMAT"),Complex("PAGE\u2003\\* MERGEFORMAT"),Complex("\u2003PAGE"),Complex("\" PAGE \""),Complex("PAGE\u200B"),Simple("PAGE\\* MERGEFORMAT")};
         var misread=named.Select((field,i)=>(field,page:true,name:"Named field "+i)).Concat(unnamed.Select((field,i)=>(field,page:false,name:"Unnamed field "+i))).Where(f=>{var udf=Udf(Footer(f.name,f.field));return Numbered(udf)!=f.page||Validate(check,udf)!=(f.page?"Metin\n\u200B\n":"Metin\n1\n");}).Select(f=>f.name).ToList();
         check(!misread.Any(),"A footer field's name was not read as Word reads it: "+string.Join(", ",misread));
+        // Only the page number's own words leave the line: a file number after the page count, or before the label behind a tab, stays
+        // text, and a page count that is no page number's keeps the number Word shows.
+        static string Field(string code,string result)=>begin+Instruction(code)+"<w:r>"+separate+"</w:r>"+Plain(result)+end;
+        static string? Setting(string udf,string name)=>OfficeDocuments.ReadUdf(udf).Element("elements")!.Element("footer")?.Attribute("pageNumber-"+name)?.Value;
+        var after=Udf(Footer("Text after the page count",Plain("Sayfa ")+Field(" PAGE ","1")+Plain(" / ")+Field(" NUMPAGES ","3")+Plain(" - Dosya No: 2026/1")));
+        var before=Udf(Footer("Text before the page number","<w:r><w:t>Dosya No: 2026/1</w:t><w:tab/></w:r>"+Plain("Sayfa ")+Simple(" PAGE ")+Plain("/")+Simple(" NUMPAGES ")));
+        var total=Udf(Footer("Page count alone",Plain("Toplam ")+Field(" NUMPAGES ","3")+Plain(" sayfa")));
+        var sections=Udf(Footer("Section page count alone",Plain("Toplam ")+"<w:fldSimple w:instr=\" SECTIONPAGES \">"+Plain("3")+"</w:fldSimple>"+Plain(" sayfa")));
+        check(Validate(check,after)=="Metin\n - Dosya No: 2026/1\n"&&Setting(after,"foreStr")=="Sayfa "&&Setting(after,"seperator")=="/","Text after a footer's page count was lost");
+        check(Validate(check,before)=="Metin\nDosya No: 2026/1\t\n"&&Setting(before,"foreStr")=="Sayfa "&&Setting(before,"seperator")=="/","Text before a footer's page number, behind a tab, was lost or became its label");
+        check(Validate(check,total)=="Metin\nToplam 3 sayfa\n"&&!Numbered(total)&&Validate(check,sections)=="Metin\nToplam 3 sayfa\n"&&!Numbered(sections),"A page count without a page number became UYAP's page number or lost its number");
         var repeated=new StringBuilder(begin+"<w:r>"+page+separate+"</w:r>");var chunk="<w:r><w:instrText xml:space=\"preserve\"> "+new string('x',19)+"</w:instrText>"+separate+"<w:t>1</w:t></w:r>";
         for(var n=0;n<40_000;n++)repeated.Append(chunk);
         var repeatedDocx=Footer("Repeated separates",repeated.Append(end).ToString());var timer=System.Diagnostics.Stopwatch.StartNew();var many=Udf(repeatedDocx);var seconds=timer.Elapsed.TotalSeconds;
