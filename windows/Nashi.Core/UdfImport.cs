@@ -17,11 +17,11 @@ public sealed partial class OfficeDocuments
     {
         using var zip=ZipFile.OpenRead(input);if(zip.Entries.Count>1000)throw new InvalidDataException("This UDF document is too large.");
         var entry=zip.GetEntry("content.xml")??throw new InvalidDataException("This is not a UYAP document: content.xml is missing.");
-        const int limit=256_000_000;if(entry.Length>limit)throw new InvalidDataException("This UDF document is too large.");
-        using var memory=new MemoryStream();using(var stream=entry.Open()){var buffer=new byte[81920];int count;while((count=stream.Read(buffer))>0){if(memory.Length+count>limit)throw new InvalidDataException("This UDF document is too large.");memory.Write(buffer,0,count);}}
+        if(entry.Length>ContentLimit)throw new InvalidDataException("This UDF document is too large.");
+        using var memory=new MemoryStream();using(var stream=entry.Open()){var buffer=new byte[81920];int count;while((count=stream.Read(buffer))>0){if(memory.Length+count>ContentLimit)throw new InvalidDataException("This UDF document is too large.");memory.Write(buffer,0,count);}}
         // The editor writes UTF-8; content that is not valid UTF-8 comes from older exports in the Turkish code page.
         var data=memory.ToArray();string xml;try{xml=XmlText(data);}catch(XmlException){Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);xml=Encoding.GetEncoding(1254).GetString(data);}
-        var settings=new XmlReaderSettings{DtdProcessing=DtdProcessing.Ignore,XmlResolver=null,MaxCharactersInDocument=limit};
+        var settings=new XmlReaderSettings{DtdProcessing=DtdProcessing.Ignore,XmlResolver=null,MaxCharactersInDocument=ContentLimit};
         using(var scan=XmlReader.Create(new StringReader(xml),settings))while(scan.Read())if(scan.Depth>256)throw new InvalidDataException("This document nests its content too deeply to convert.");
         using var reader=XmlReader.Create(new StringReader(xml),settings);var root=XDocument.Load(reader).Root;
         return root is not null&&root.Name.LocalName=="template"?root:throw new InvalidDataException("This is not a UYAP document: content.xml has no template.");
@@ -37,6 +37,8 @@ public sealed partial class OfficeDocuments
     private const string UyapAccessLead="UYAP Bilişim Sistemindeki bu dokümana http://vatandas.uyap.gov.tr adresinden ";
     // UDF -> DOCX reads pictures up to this size, so DOCX -> UDF writes none larger.
     private const int PictureLimit=20_000_000;
+    // UDF -> DOCX reads a content.xml of up to this many bytes, so DOCX -> UDF writes none larger.
+    private const int ContentLimit=256_000_000;
     private static string? ImageExtension(byte[] data)=>data switch{[0x89,0x50,0x4E,0x47,..]=>"png",[0xFF,0xD8,..]=>"jpeg",[0x47,0x49,0x46,..]=>"gif",[0x42,0x4D,..]=>"bmp",_=>null};
     // The pictures UYAP shows as they are, and the other kinds Word documents hold, which are stored as PNG. The format comes from
     // the signature, never from ImageMagick's own guess, so no other coder reads a document's bytes.

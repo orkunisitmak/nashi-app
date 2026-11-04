@@ -9,10 +9,12 @@ public sealed partial class OfficeDocuments
 {
     /// Writes a DOCX as a UYAP document laid out as UYAP and udf-cli write one (see UdfImport.cs). List numbers are written
     /// as the text Word shows, so a petition's "1." and "a)" stay what they were whatever numbering UYAP would apply.
-    public static void DocxToUdf(string input,string output)
+    public static void DocxToUdf(string input,string output)=>DocxToUdf(input,output,ContentLimit);
+    // The limit is a parameter so Nashi.Verify can reach the refusal without writing 256 MB.
+    internal static void DocxToUdf(string input,string output,long contentLimit)
     {
         using var zip=ZipFile.OpenRead(input);if(zip.Entries.Count>10000||zip.Entries.Sum(e=>e.Length)>512_000_000||zip.Entries.GroupBy(e=>e.FullName,StringComparer.OrdinalIgnoreCase).Any(g=>g.Count()>1))throw new InvalidDataException("The document package is too large or contains duplicate entries.");
-        new UdfExport(zip).Write(output);
+        new UdfExport(zip).Write(output,contentLimit);
     }
     private sealed class UdfExport
     {
@@ -85,7 +87,7 @@ public sealed partial class OfficeDocuments
             if(depth==0)resolved[id]=(character,paragraph);return(character,paragraph);
         }
         private void RunStyle(string? id,Dictionary<string,string> into,int depth=0){if(depth>=16||id is null||!styles.TryGetValue(id,out var style))return;RunStyle(Attr(Child(style,"basedOn"),"val"),into,depth+1);CharacterInto(Child(style,"rPr"),into);}
-        public void Write(string output)
+        public void Write(string output,long contentLimit)
         {
             var body=Child(Xml(zip,"word/document.xml").Root,"body")??throw new InvalidDataException("The document has no editable body.");var section=Child(body,"sectPr");var elements=new StringBuilder();
             var size=Child(section,"pgSz");var margins=Child(section,"pgMar");textWidth=Math.Max(72,((Num(size,"w")??11906)-(Num(margins,"left")??1418)-(Num(margins,"right")??1418))/20);
@@ -105,6 +107,10 @@ public sealed partial class OfficeDocuments
             xml.Append("<properties><pageFormat mediaSizeName=\"1\" leftMargin=\"").Append(Margin("left",70.866)).Append("\" rightMargin=\"").Append(Margin("right",70.866)).Append("\" topMargin=\"").Append(Margin("top",70.866)).Append("\" bottomMargin=\"").Append(Margin("bottom",70.866))
                 .Append("\" paperOrientation=\"").Append(Attr(size,"orient")=="landscape"||Num(size,"w")>Num(size,"h")?"2":"1").Append("\" headerFOffset=\"").Append(Margin("header",35.4)).Append("\" footerFOffset=\"").Append(Margin("footer",35.4)).Append("\" /></properties>");
             xml.Append("\n<elements resolver=\"hvl-default\">\n").Append(elements).Append("</elements>\n").Append(Styles).Append("\n</template>\n");
+            // Pictures are stored as Base64, so a DOCX within its own limits can still outgrow what UDF -> DOCX and the preview read.
+            // The bytes are counted as they will be written (UTF-8, no BOM) before anything is created.
+            var encoder=Encoding.UTF8.GetEncoder();long bytes=0;foreach(var chunk in xml.GetChunks())bytes+=encoder.GetByteCount(chunk.Span,false);bytes+=encoder.GetByteCount([],true);
+            if(bytes>contentLimit)throw new InvalidDataException("This UDF document is too large.");
             using var archive=ZipFile.Open(output,ZipArchiveMode.Create);using var writer=new StreamWriter(archive.CreateEntry("content.xml",CompressionLevel.Optimal).Open(),new UTF8Encoding(false));writer.Write(xml);
         }
         private (XElement Root,Dictionary<string,string> Relations)? Furniture(XElement? section,string reference,string? type=null)

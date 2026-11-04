@@ -118,6 +118,11 @@ internal static class UdfChecks
         var breakOnly=Path.Combine(root,"Page break only.docx");using(var zip=ZipFile.Open(breakOnly,ZipArchiveMode.Create))Entry(zip,"word/document.xml","<w:document "+w+"><w:body><w:p><w:r><w:t>Bir</w:t></w:r></w:p><w:p><w:r><w:br w:type=\"page\"/></w:r></w:p><w:p><w:r><w:t>İki</w:t></w:r></w:p></w:body></w:document>");
         var breakUdf=Path.Combine(root,"Page break only.udf");OfficeDocuments.DocxToUdf(breakOnly,breakUdf);check(Validate(check,breakUdf)=="Bir\n\u200B\nİki\n"&&OfficeDocuments.ReadUdf(breakUdf).Element("elements")!.Elements("page-break").Count()==1,"A paragraph holding only a page break started the next page with an empty line");
         check(xml.Contains("leftMargin=\"85.05\"")&&xml.Contains("paperOrientation=\"1\"")&&xml.Contains("headerFOffset=\"35.45\""),"DOCX page setup was lost");
+        // DOCX -> UDF refuses a content.xml larger than UDF -> DOCX reads (256,000,000 bytes) before it creates the file. The limit is
+        // lowered to this document's own size, counted in UTF-8 bytes (its Turkish letters take two), to reach both sides of it.
+        static long ContentBytes(string package){using var zip=ZipFile.OpenRead(package);return zip.GetEntry("content.xml")!.Length;}
+        var written=ContentBytes(udf);var fits=Path.Combine(root,"Dilekçe at the limit.udf");var refused=Path.Combine(root,"Dilekçe over the limit.udf");OfficeDocuments.DocxToUdf(docx,fits,written);
+        check(written>xml.Length&&ContentBytes(fits)==written&&Throws(()=>OfficeDocuments.DocxToUdf(docx,refused,written-1))&&!File.Exists(refused),"DOCX -> UDF wrote a content.xml larger than UDF -> DOCX reads, or refused one that fits");
         // A field's instruction ends at its first separate. Instruction text after it must not turn a footer field into a page number,
         // nor be read again at every later separate (40,000 of them, each after more instruction text, took about 16 s before).
         // A field inside another field's instruction, complex or simple, is neither a page number nor text, a PAGE field without a
