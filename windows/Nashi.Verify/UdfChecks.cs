@@ -120,8 +120,8 @@ internal static class UdfChecks
         check(xml.Contains("leftMargin=\"85.05\"")&&xml.Contains("paperOrientation=\"1\"")&&xml.Contains("headerFOffset=\"35.45\""),"DOCX page setup was lost");
         // A field's instruction ends at its first separate. Instruction text after it must not turn a footer field into a page number,
         // nor be read again at every later separate (40,000 of them, each after more instruction text, took about 16 s before).
-        // A field inside another field's instruction is neither a page number nor text, a PAGE field without a cached result still
-        // numbers the pages, and a field mark in a hidden run still closes its field.
+        // A field inside another field's instruction, complex or simple, is neither a page number nor text, a PAGE field without a
+        // cached result still numbers the pages, and a field mark in a hidden run still closes its field.
         string Footer(string name,string field)
         {
             var path=Path.Combine(root,name+".docx");
@@ -139,6 +139,8 @@ internal static class UdfChecks
         check(Validate(check,late)=="Metin\n7\n"&&!Numbered(late),"Instruction text after a field's first separate made a footer field a page number");
         var nested=Udf(Footer("Nested field",begin+Instruction("IF ")+begin+Instruction(" PAGE ")+"<w:r>"+separate+"</w:r>"+Plain("1")+end+Instruction(" = 1 \"Ek\" \"\" ")+"<w:r>"+separate+"</w:r>"+Plain("Ek")+end));
         check(Validate(check,nested)=="Metin\nEk\n"&&!Numbered(nested),"A field inside another field's instruction became a page number or text");
+        var simple=Udf(Footer("Nested simple field",begin+Instruction("IF ")+"<w:fldSimple w:instr=\" PAGE \">"+Plain("1")+"</w:fldSimple>"+Instruction(" = 1 \"Ek\" \"\" ")+"<w:r>"+separate+"</w:r>"+Plain("Ek")+end));
+        check(Validate(check,simple)=="Metin\nEk\n"&&!Numbered(simple),"A simple field inside another field's instruction became a page number or text");
         var bare=Udf(Footer("Field without result",Plain("Sayfa ")+begin+"<w:r>"+page+"</w:r>"+end));
         check(Numbered(bare),"A footer PAGE field without a cached result lost its page number");
         var hidden=Udf(Footer("Hidden field end",begin+Instruction(" XE \"Dava\" ")+"<w:r><w:rPr><w:vanish/></w:rPr><w:fldChar w:fldCharType=\"end\"/></w:r></w:p><w:p>"+Plain("Sonra")));

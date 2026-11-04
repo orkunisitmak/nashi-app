@@ -162,13 +162,15 @@ public sealed partial class OfficeDocuments
             switch(item.Name.LocalName)
             {
                 case "r":Run(item,runs,format);break;
-                case "fldSimple" when furniture&&PageField(Attr(item,"instr")) is {} page:runs.Add(new('f',page,null));break;
+                case "fldSimple" when Page(Attr(item,"instr")) is {} page:runs.Add(new('f',page,null));break;
                 // As in ReadDocx: links, content controls, insertions and simple fields hold ordinary runs; deletions and moved-away text do not.
                 case "hyperlink" or "sdt" or "sdtContent" or "ins" or "smartTag" or "fldSimple" or "customXml" or "moveTo" or "dir" or "bdo":foreach(var child in item.Elements())Visit(child,runs,format);break;
             }
         }
         private static string? PageField(string? instruction)=>instruction?.Trim().Split(' ',2)[0].ToUpperInvariant() is ("PAGE" or "NUMPAGES" or "SECTIONPAGES") and var name?name:null;
-        private string? Page(StringBuilder instruction)=>furniture&&instructions==0?PageField(instruction.ToString()):null;
+        // Every page number comes through here, from complex and simple fields alike: only in a header or footer, and never from a
+        // field inside another field's instruction.
+        private string? Page(string? instruction)=>furniture&&instructions==0?PageField(instruction):null;
         private void Run(XElement run,List<Segment> runs,Dictionary<string,string> paragraphFormat)
         {
             var properties=Child(run,"rPr");var format=new Dictionary<string,string>(paragraphFormat,StringComparer.Ordinal);RunStyle(Attr(Child(properties,"rStyle"),"val"),format);CharacterInto(properties,format);var hidden=format.GetValueOrDefault("#hidden")=="true";
@@ -184,8 +186,8 @@ public sealed partial class OfficeDocuments
                     switch(Attr(child,"fldCharType"))
                     {
                         case "begin":fields.Push((new StringBuilder(),false,null));instructions++;break;
-                        case "separate":if(fields.TryPeek(out var open)&&!open.Result){fields.Pop();instructions--;var page=Page(open.Instruction);fields.Push((open.Instruction,true,page));if(page is not null)runs.Add(new('f',page,null));}break;
-                        case "end":if(fields.TryPop(out var closed)&&!closed.Result){instructions--;if(Page(closed.Instruction) is {} bare)runs.Add(new('f',bare,null));}break;
+                        case "separate":if(fields.TryPeek(out var open)&&!open.Result){fields.Pop();instructions--;var page=Page(open.Instruction.ToString());fields.Push((open.Instruction,true,page));if(page is not null)runs.Add(new('f',page,null));}break;
+                        case "end":if(fields.TryPop(out var closed)&&!closed.Result){instructions--;if(Page(closed.Instruction.ToString()) is {} bare)runs.Add(new('f',bare,null));}break;
                     }
                     continue;
                 }
