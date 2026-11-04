@@ -15,13 +15,23 @@ REQUIRED = {
     'PresentationFramework.dll', 'PresentationCore.dll', 'WindowsBase.dll',
     'PagesInterop.js', 'pages-windows.js', 'LICENSE.txt', 'THIRD-PARTY-NOTICES.txt',
 }
+WINDOWS_DEVICES = {'CON', 'PRN', 'AUX', 'NUL'} | {
+    f'{prefix}{number}' for prefix in ('COM', 'LPT') for number in '123456789\u00b9\u00b2\u00b3'
+}
 
 
 def digest(data):
+    """Return the SHA-256 digest used for file equality and the ZIP sidecar."""
     return hashlib.sha256(data).hexdigest()
 
 
 def verify(directory, archive):
+    """Validate a portable ZIP against its publish tree without extracting it.
+
+    Require the app's self-contained runtime and licenses, reject unsafe ZIP
+    entries (including directories), and compare every payload file's digest.
+    The returned checksum establishes equality, not publisher authenticity.
+    """
     directory, archive = Path(directory), Path(archive)
     files = {}
     for path in directory.rglob('*'):
@@ -46,6 +56,10 @@ def verify(directory, archive):
             parts = PurePosixPath(name).parts
             if not parts or name.startswith('/') or '\\' in name or ':' in name or any(p in {'.', '..'} for p in name.split('/') if p):
                 raise ValueError(f'Unsafe ZIP path: {name}')
+            # Win32 device names remain reserved with extensions and in directories.
+            # https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file
+            if any(part.rstrip(' .').split('.', 1)[0].upper() in WINDOWS_DEVICES for part in parts):
+                raise ValueError(f'Windows device name in ZIP path: {name}')
             key = name.rstrip('/').casefold()
             if key in names:
                 raise ValueError(f'Duplicate Windows ZIP path: {name}')
@@ -63,6 +77,7 @@ def verify(directory, archive):
 
 
 def main():
+    """Verify a publish directory/ZIP pair and write its SHA-256 sidecar."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('directory', type=Path)
     parser.add_argument('archive', type=Path)

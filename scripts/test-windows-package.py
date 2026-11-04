@@ -14,6 +14,7 @@ spec.loader.exec_module(package)
 
 class PackageTests(unittest.TestCase):
     def setUp(self):
+        """Create an isolated self-contained publish directory for each test."""
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
@@ -28,6 +29,7 @@ class PackageTests(unittest.TestCase):
         self.zip = self.root / 'Nashi.zip'
 
     def archive(self, omit=None, extra=None):
+        """Build an archive, optionally omitting a file or injecting an entry."""
         with zipfile.ZipFile(self.zip, 'w') as archive:
             for path in self.app.rglob('*'):
                 if path.is_file() and path.name != omit:
@@ -63,11 +65,26 @@ class PackageTests(unittest.TestCase):
             package.verify(self.app, self.zip)
 
     def test_unsafe_and_duplicate_paths(self):
+        """Reject traversal, absolute paths and Windows case collisions."""
         for name in ['../outside', '/outside', 'C:/outside', 'folder\\outside', 'nashi.EXE']:
             with self.subTest(name=name):
                 self.archive(extra=(name, b'unexpected'))
                 with self.assertRaises(ValueError):
                     package.verify(self.app, self.zip)
+
+    def test_windows_device_directories(self):
+        """Reject reserved names even in extra directory entries without files."""
+        for name in ['CON/', 'con.txt/', 'nested/LPT9/', 'COM1/', 'COM\u00b9/',
+                     'LPT\u00b3.txt/', 'PRN. /', 'aux.log/', 'nul/']:
+            with self.subTest(name=name):
+                self.archive(extra=(name, b''))
+                with self.assertRaisesRegex(ValueError, 'Windows device name'):
+                    package.verify(self.app, self.zip)
+
+    def test_ordinary_directory_with_device_prefix(self):
+        """Accept ordinary directory names that merely start with device names."""
+        self.archive(extra=('Console/', b''))
+        self.assertEqual(package.verify(self.app, self.zip)['files'], len(package.REQUIRED) + 2)
 
     def test_unexpected_file(self):
         self.archive(extra=('unexpected.txt', b'extra'))
