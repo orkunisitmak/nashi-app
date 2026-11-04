@@ -173,7 +173,16 @@ public sealed partial class OfficeDocuments
                 case "hyperlink" or "sdt" or "sdtContent" or "ins" or "smartTag" or "fldSimple" or "customXml" or "moveTo" or "dir" or "bdo":foreach(var child in item.Elements())Visit(child,runs,format);break;
             }
         }
-        private static string? PageField(string? instruction)=>instruction?.Trim().Split(' ',2)[0].ToUpperInvariant() is ("PAGE" or "NUMPAGES" or "SECTIONPAGES") and var name?name:null;
+        // The white space that ends a field's name in Word 16. Word reads an em space, a figure space or a line separator as part
+        // of the name, so PAGE followed by one of them numbers no pages in Word.
+        private static readonly char[] Blanks=[' ','\t','\n','\r','\u00A0','\u3000'],NameEnds=[..Blanks,'"'];
+        // A field's name is its instruction's first word as Word reads it: a blank or a quote ends it, and a quoted name keeps its
+        // spaces. Word numbers pages for PAGE<tab>\* MERGEFORMAT and for "PAGE", but not for PAGE\* MERGEFORMAT or " PAGE ".
+        private static string? PageField(string? instruction)
+        {
+            var rest=instruction?.TrimStart(Blanks)??"";var name=rest.StartsWith('"')?rest[1..].Split('"',2)[0]:rest.Split(NameEnds,2)[0];
+            return name.ToUpperInvariant() is ("PAGE" or "NUMPAGES" or "SECTIONPAGES") and var field?field:null;
+        }
         // Every page number comes through here, from complex and simple fields alike: only in a header or footer, and never from a
         // field inside another field's instruction.
         private string? Page(string? instruction)=>furniture&&instructions==0?PageField(instruction):null;

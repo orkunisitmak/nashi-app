@@ -153,6 +153,14 @@ internal static class UdfChecks
         check(Numbered(bare),"A footer PAGE field without a cached result lost its page number");
         var hidden=Udf(Footer("Hidden field end",begin+Instruction(" XE \"Dava\" ")+"<w:r><w:rPr><w:vanish/></w:rPr><w:fldChar w:fldCharType=\"end\"/></w:r></w:p><w:p>"+Plain("Sonra")));
         check(Validate(check,hidden).EndsWith("Sonra\n",StringComparison.Ordinal),"A field closed in a hidden run swallowed the text after it");
+        // A field's name ends where Word 16 ends it, at a tab, a line break, a no-break or ideographic space, or a quote; Word numbers
+        // no pages for a switch written right after the name, an em space after or before it, or a quoted name with spaces in it.
+        static string Complex(string code)=>begin+Instruction(code)+"<w:r>"+separate+"</w:r>"+Plain("1")+end;
+        static string Simple(string code)=>"<w:fldSimple w:instr=\""+code+"\">"+Plain("1")+"</w:fldSimple>";
+        var named=new[]{Complex("PAGE\t\\* MERGEFORMAT"),Complex("PAGE\n\\* MERGEFORMAT"),Complex("&#13;PAGE"),Complex("PAGE\u00A0\\* MERGEFORMAT"),Complex("PAGE\u3000"),Complex("\"PAGE\""),Complex("NUMPAGES\"x\""),Complex("\tsectionpages"),Simple("PAGE&#9;\\* MERGEFORMAT")};
+        var unnamed=new[]{Complex("PAGE\\* MERGEFORMAT"),Complex("PAGE\u2003\\* MERGEFORMAT"),Complex("\u2003PAGE"),Complex("\" PAGE \""),Complex("PAGE\u200B"),Simple("PAGE\\* MERGEFORMAT")};
+        var misread=named.Select((field,i)=>(field,page:true,name:"Named field "+i)).Concat(unnamed.Select((field,i)=>(field,page:false,name:"Unnamed field "+i))).Where(f=>{var udf=Udf(Footer(f.name,f.field));return Numbered(udf)!=f.page||Validate(check,udf)!=(f.page?"Metin\n\u200B\n":"Metin\n1\n");}).Select(f=>f.name).ToList();
+        check(!misread.Any(),"A footer field's name was not read as Word reads it: "+string.Join(", ",misread));
         var repeated=new StringBuilder(begin+"<w:r>"+page+separate+"</w:r>");var chunk="<w:r><w:instrText xml:space=\"preserve\"> "+new string('x',19)+"</w:instrText>"+separate+"<w:t>1</w:t></w:r>";
         for(var n=0;n<40_000;n++)repeated.Append(chunk);
         var repeatedDocx=Footer("Repeated separates",repeated.Append(end).ToString());var timer=System.Diagnostics.Stopwatch.StartNew();var many=Udf(repeatedDocx);var seconds=timer.Elapsed.TotalSeconds;
