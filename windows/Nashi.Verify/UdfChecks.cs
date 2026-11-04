@@ -118,6 +118,35 @@ internal static class UdfChecks
         var breakOnly=Path.Combine(root,"Page break only.docx");using(var zip=ZipFile.Open(breakOnly,ZipArchiveMode.Create))Entry(zip,"word/document.xml","<w:document "+w+"><w:body><w:p><w:r><w:t>Bir</w:t></w:r></w:p><w:p><w:r><w:br w:type=\"page\"/></w:r></w:p><w:p><w:r><w:t>İki</w:t></w:r></w:p></w:body></w:document>");
         var breakUdf=Path.Combine(root,"Page break only.udf");OfficeDocuments.DocxToUdf(breakOnly,breakUdf);check(Validate(check,breakUdf)=="Bir\n\u200B\nİki\n"&&OfficeDocuments.ReadUdf(breakUdf).Element("elements")!.Elements("page-break").Count()==1,"A paragraph holding only a page break started the next page with an empty line");
         check(xml.Contains("leftMargin=\"85.05\"")&&xml.Contains("paperOrientation=\"1\"")&&xml.Contains("headerFOffset=\"35.45\""),"DOCX page setup was lost");
+        // A field's instruction ends at its first separate. Instruction text after it must not turn a footer field into a page number,
+        // nor be read again at every later separate (40,000 of them, each after more instruction text, took about 16 s before).
+        // A field inside another field's instruction is neither a page number nor text, a PAGE field without a cached result still
+        // numbers the pages, and a field mark in a hidden run still closes its field.
+        string Footer(string name,string field)
+        {
+            var path=Path.Combine(root,name+".docx");
+            using var zip=ZipFile.Open(path,ZipArchiveMode.Create);
+            Entry(zip,"word/document.xml","<w:document "+w+"><w:body><w:p><w:r><w:t>Metin</w:t></w:r></w:p><w:sectPr><w:footerReference w:type=\"default\" r:id=\"rFooter\"/></w:sectPr></w:body></w:document>");
+            Entry(zip,"word/_rels/document.xml.rels","<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rFooter\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer\" Target=\"footer1.xml\"/></Relationships>");
+            Entry(zip,"word/footer1.xml","<w:ftr "+w+"><w:p>"+field+"</w:p></w:ftr>");return path;
+        }
+        string Udf(string docx){var output=Path.ChangeExtension(docx,".udf");OfficeDocuments.DocxToUdf(docx,output);return output;}
+        static bool Numbered(string udf)=>OfficeDocuments.ReadUdf(udf).Element("elements")!.Element("footer")?.Attribute("pageNumber-spec") is not null;
+        static string Instruction(string code)=>"<w:r><w:instrText xml:space=\"preserve\">"+code+"</w:instrText></w:r>";
+        static string Plain(string words)=>"<w:r><w:t xml:space=\"preserve\">"+words+"</w:t></w:r>";
+        const string begin="<w:r><w:fldChar w:fldCharType=\"begin\"/></w:r>",separate="<w:fldChar w:fldCharType=\"separate\"/>",end="<w:r><w:fldChar w:fldCharType=\"end\"/></w:r>",page="<w:instrText xml:space=\"preserve\"> PAGE </w:instrText>";
+        var late=Udf(Footer("Late instruction",begin+"<w:r>"+separate+"</w:r><w:r>"+page+separate+"</w:r>"+Plain("7")+end));
+        check(Validate(check,late)=="Metin\n7\n"&&!Numbered(late),"Instruction text after a field's first separate made a footer field a page number");
+        var nested=Udf(Footer("Nested field",begin+Instruction("IF ")+begin+Instruction(" PAGE ")+"<w:r>"+separate+"</w:r>"+Plain("1")+end+Instruction(" = 1 \"Ek\" \"\" ")+"<w:r>"+separate+"</w:r>"+Plain("Ek")+end));
+        check(Validate(check,nested)=="Metin\nEk\n"&&!Numbered(nested),"A field inside another field's instruction became a page number or text");
+        var bare=Udf(Footer("Field without result",Plain("Sayfa ")+begin+"<w:r>"+page+"</w:r>"+end));
+        check(Numbered(bare),"A footer PAGE field without a cached result lost its page number");
+        var hidden=Udf(Footer("Hidden field end",begin+Instruction(" XE \"Dava\" ")+"<w:r><w:rPr><w:vanish/></w:rPr><w:fldChar w:fldCharType=\"end\"/></w:r></w:p><w:p>"+Plain("Sonra")));
+        check(Validate(check,hidden).EndsWith("Sonra\n",StringComparison.Ordinal),"A field closed in a hidden run swallowed the text after it");
+        var repeated=new StringBuilder(begin+"<w:r>"+page+separate+"</w:r>");var chunk="<w:r><w:instrText xml:space=\"preserve\"> "+new string('x',19)+"</w:instrText>"+separate+"<w:t>1</w:t></w:r>";
+        for(var n=0;n<40_000;n++)repeated.Append(chunk);
+        var repeatedDocx=Footer("Repeated separates",repeated.Append(end).ToString());var timer=System.Diagnostics.Stopwatch.StartNew();var many=Udf(repeatedDocx);var seconds=timer.Elapsed.TotalSeconds;
+        check(seconds<5&&Numbered(many)&&!Validate(check,many).Contains('1'),"A footer page number with repeated separates was lost or read again at each one ("+seconds.ToString("0.0",System.Globalization.CultureInfo.InvariantCulture)+" s)");
         // A Word TIFF is stored as PNG. Data without a known picture signature never reaches ImageMagick, which would otherwise pick
         // a coder from the bytes themselves; an SVG text is left out although ImageMagick could draw it.
         byte[] tiff;using(var picture=new ImageMagick.MagickImage(Convert.FromBase64String(Png),new ImageMagick.MagickReadSettings{Format=ImageMagick.MagickFormat.Png}))tiff=picture.ToByteArray(ImageMagick.MagickFormat.Tiff);

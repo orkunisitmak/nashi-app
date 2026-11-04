@@ -24,7 +24,7 @@ public sealed partial class OfficeDocuments
         private readonly ZipArchive zip;private readonly Dictionary<string,XElement> styles=new(StringComparer.Ordinal);private readonly XElement? defaults,numbering;private readonly string? normal;private readonly string majorFont,minorFont;
         private readonly Dictionary<string,(Dictionary<string,string> C,Dictionary<string,string> P)> resolved=new(StringComparer.Ordinal);
         private readonly Dictionary<string,int[]> counters=new(StringComparer.Ordinal);private readonly HashSet<string> restarted=new(StringComparer.Ordinal);
-        private readonly Stack<(StringBuilder Instruction,bool Result)> fields=new();private readonly StringBuilder text=new();
+        private readonly Stack<(StringBuilder Instruction,bool Result,string? Page)> fields=new();private int instructions;private readonly StringBuilder text=new();
         private Dictionary<string,string> relations;private bool furniture,pageNumbers;private int cells;private string pageLabel="",pageSeparator="/";private double defaultTab=36,textWidth=453.5;
         public UdfExport(ZipArchive zip)
         {
@@ -115,7 +115,7 @@ public sealed partial class OfficeDocuments
         }
         private void Part((XElement Root,Dictionary<string,string> Relations) part,StringBuilder xml)
         {
-            var body=relations;relations=part.Relations;furniture=true;fields.Clear();try{Content(part.Root,xml,1);}finally{relations=body;furniture=false;fields.Clear();}
+            var body=relations;relations=part.Relations;furniture=true;fields.Clear();instructions=0;try{Content(part.Root,xml,1);}finally{relations=body;furniture=false;fields.Clear();instructions=0;}
         }
         private void Content(XElement container,StringBuilder xml,int depth)
         {
@@ -168,16 +168,30 @@ public sealed partial class OfficeDocuments
             }
         }
         private static string? PageField(string? instruction)=>instruction?.Trim().Split(' ',2)[0].ToUpperInvariant() is ("PAGE" or "NUMPAGES" or "SECTIONPAGES") and var name?name:null;
+        private string? Page(StringBuilder instruction)=>furniture&&instructions==0?PageField(instruction.ToString()):null;
         private void Run(XElement run,List<Segment> runs,Dictionary<string,string> paragraphFormat)
         {
-            var properties=Child(run,"rPr");var format=new Dictionary<string,string>(paragraphFormat,StringComparer.Ordinal);RunStyle(Attr(Child(properties,"rStyle"),"val"),format);CharacterInto(properties,format);if(format.GetValueOrDefault("#hidden")=="true")return;
+            var properties=Child(run,"rPr");var format=new Dictionary<string,string>(paragraphFormat,StringComparer.Ordinal);RunStyle(Attr(Child(properties,"rStyle"),"val"),format);CharacterInto(properties,format);var hidden=format.GetValueOrDefault("#hidden")=="true";
             foreach(var child in run.Elements())
             {
                 var name=child.Name.LocalName;
-                if(name=="fldChar"){switch(Attr(child,"fldCharType")){case "begin":fields.Push((new StringBuilder(),false));break;case "separate":if(fields.TryPop(out var open)){fields.Push((open.Instruction,true));if(furniture&&PageField(open.Instruction.ToString()) is {} page)runs.Add(new('f',page,null));}break;case "end":fields.TryPop(out _);break;}continue;}
-                if(name=="instrText"){if(fields.TryPeek(out var current))current.Instruction.Append(child.Value);continue;}
+                // A field's instruction ends at its first separate (or at its end when it has no result). Later instruction text and separates
+                // are ignored, so whether a header or footer field is a page number is decided once. A field inside another field's instruction,
+                // as in IF { PAGE } = 1, only feeds that instruction: it is no page number and its result is no text. Hidden runs still open
+                // and close fields, so the fields around them stay paired.
+                if(name=="fldChar")
+                {
+                    switch(Attr(child,"fldCharType"))
+                    {
+                        case "begin":fields.Push((new StringBuilder(),false,null));instructions++;break;
+                        case "separate":if(fields.TryPeek(out var open)&&!open.Result){fields.Pop();instructions--;var page=Page(open.Instruction);fields.Push((open.Instruction,true,page));if(page is not null)runs.Add(new('f',page,null));}break;
+                        case "end":if(fields.TryPop(out var closed)&&!closed.Result){instructions--;if(Page(closed.Instruction) is {} bare)runs.Add(new('f',bare,null));}break;
+                    }
+                    continue;
+                }
+                if(name=="instrText"){if(fields.TryPeek(out var current)&&!current.Result)current.Instruction.Append(child.Value);continue;}
                 // A field's instruction is not text, and a page number's cached result in a header or footer would repeat on every page.
-                if(fields.TryPeek(out var field)){if(!field.Result)continue;if(furniture&&PageField(field.Instruction.ToString()) is not null)continue;}
+                if(hidden||instructions>0||fields.TryPeek(out var field)&&field.Page is not null)continue;
                 switch(name)
                 {
                     case "t":runs.Add(new('t',child.Value,format));break;
