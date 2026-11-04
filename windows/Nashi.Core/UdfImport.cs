@@ -146,14 +146,14 @@ public sealed partial class OfficeDocuments
                 .Append("<w:r><w:rPr><w:rFonts w:ascii=\"Courier New\" w:hAnsi=\"Courier New\" w:cs=\"Courier New\"/><w:sz w:val=\"16\"/><w:szCs w:val=\"16\"/></w:rPr><w:t xml:space=\"preserve\">").Append(Escaped(webId)).Append("</w:t></w:r><w:r>").Append(small).Append("<w:t xml:space=\"preserve\"> ile erişebilirsiniz.</w:t></w:r></w:p>");
         }
         // UYAP draws the page number itself from the footer's pageNumber-* settings, at the bottom right: an optional label,
-        // the page and, with a separator, the page count.
+        // the page and, with a separator, the page count. The label is followed by one space, whether or not it holds one.
         private static void PageNumber(XElement footer,StringBuilder xml)
         {
             string? Setting(string name)=>footer.Attribute("pageNumber-"+name)?.Value;var properties=new StringBuilder("<w:rPr>");
             if(Font(Setting("fontFace")) is {} font)properties.Append("<w:rFonts w:ascii=\"").Append(Escaped(font)).Append("\" w:hAnsi=\"").Append(Escaped(font)).Append("\"/>");if(Setting("fontBold")=="true")properties.Append("<w:b/>");if(Setting("fontItalic")=="true")properties.Append("<w:i/>");
             if(Rgb(Setting("color")) is {} color)properties.Append("<w:color w:val=\"").Append(color).Append("\"/>");if(Number(Setting("fontSize")) is {} size&&size is >0 and <1000)properties.Append("<w:sz w:val=\"").Append((int)Math.Round(size*2)).Append("\"/>");
             var run="<w:r>"+properties.Append("</w:rPr>")+"<w:t xml:space=\"preserve\">";xml.Append("<w:p><w:pPr><w:jc w:val=\"right\"/></w:pPr>");
-            if(Setting("foreStr") is {Length:>0} label)xml.Append(run).Append(Escaped(label+" ")).Append("</w:t></w:r>");xml.Append("<w:fldSimple w:instr=\" PAGE \">").Append(run).Append("1</w:t></w:r></w:fldSimple>");
+            if(Setting("foreStr")?.Trim() is {Length:>0} label)xml.Append(run).Append(Escaped(label+" ")).Append("</w:t></w:r>");xml.Append("<w:fldSimple w:instr=\" PAGE \">").Append(run).Append("1</w:t></w:r></w:fldSimple>");
             if(Setting("seperator") is {Length:>0} separator)xml.Append(run).Append(Escaped(separator)).Append("</w:t></w:r><w:fldSimple w:instr=\" NUMPAGES \">").Append(run).Append("1</w:t></w:r></w:fldSimple>");
             xml.Append("</w:p>");
         }
