@@ -19,8 +19,8 @@ public sealed partial class OfficeDocuments
     private sealed class UdfExport
     {
         private const string Styles="<styles><style name=\"default\" description=\"Geçerli\" family=\"Dialog\" size=\"12\" bold=\"false\" italic=\"false\" foreground=\"-13421773\" FONT_ATTRIBUTE_KEY=\"javax.swing.plaf.FontUIResource[family=Dialog,name=Dialog,style=plain,size=12]\" /><style name=\"hvl-default\" family=\"Times New Roman\" size=\"12\" description=\"Gövde\" /></styles>";
-        // The page number settings of a footer UYAP wrote. UYAP draws "label page/count" itself at the bottom right, so a footer
-        // line holding Word's PAGE and NUMPAGES fields becomes these settings, with the line's own label and separator.
+        // The page number settings of a footer UYAP wrote. UYAP draws "label page/count" itself at the bottom right, so a header or
+        // footer line holding Word's PAGE field (and a NUMPAGES after it) becomes these settings, with the line's own label and separator.
         private string PageNumbers=>" pageNumber-spec=\"BSP32_2120\" pageNumber-color=\"-16777216\" pageNumber-fontFace=\"Arial\" pageNumber-fontSize=\"11\" pageNumber-fontBold=\"false\" pageNumber-fontItalic=\"false\" pageNumber-foreStr=\""+SecurityElement.Escape(XmlSafe(pageLabel.Length>0?pageLabel+" ":""))+"\" pageNumber-seperator=\""+SecurityElement.Escape(XmlSafe(pageSeparator))+"\"";
         private readonly record struct Segment(char Kind,string Text,Dictionary<string,string>? Format,byte[]? Image=null,double Width=0,double Height=0);
         private readonly ZipArchive zip;private readonly Dictionary<string,XElement> styles=new(StringComparer.Ordinal);private readonly XElement? defaults,numbering;private readonly string? normal;private readonly string majorFont,minorFont;
@@ -100,7 +100,10 @@ public sealed partial class OfficeDocuments
             }
             if(Furniture(section,"headerReference") is {} header){elements.Append(LaterPages()?"<header startPage=\"2\">":"<header>");Part(header,elements);elements.Append("</header>\n");}
             var bodyStart=text.Length;Content(body,elements,0);if(text.Length==bodyStart)Emit(elements,new(StringComparer.Ordinal),[],new(StringComparer.Ordinal),"");
-            if(Furniture(section,"footerReference") is {} footer){var footerElements=new StringBuilder();Part(footer,footerElements);elements.Append("<footer").Append(pageNumbers?PageNumbers:"").Append('>').Append(footerElements).Append("</footer>\n");}
+            // UYAP draws page numbers only from the footer's settings, so a page number found in the header alone gets an empty footer.
+            var footer=Furniture(section,"footerReference");var footerElements=new StringBuilder();
+            if(footer is {} part)Part(part,footerElements);else if(pageNumbers)Emit(footerElements,new(StringComparer.Ordinal),[],new(StringComparer.Ordinal),"");
+            if(footer is not null||pageNumbers)elements.Append("<footer").Append(pageNumbers?PageNumbers:"").Append('>').Append(footerElements).Append("</footer>\n");
             string Margin(string name,double fallback)=>Points(Math.Abs(Num(margins,name) is {} twips?twips/20:fallback));
             var xml=new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<template format_id=\"1.8\">\n<content><![CDATA[").Append(text.ToString().Replace("]]>","]]]]><![CDATA[>")).Append("]]></content>");
             // UYAP pages are A4; Java's orientation 2 (reverse landscape) is landscape however the value is read.

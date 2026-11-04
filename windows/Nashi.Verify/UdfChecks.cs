@@ -130,13 +130,13 @@ internal static class UdfChecks
         // nor be read again at every later separate (40,000 of them, each after more instruction text, took about 16 s before).
         // A field inside another field's instruction, complex or simple, is neither a page number nor text, a PAGE field without a
         // cached result still numbers the pages, and a field mark in a hidden run still closes its field.
-        string Footer(string name,string field)
+        string Footer(string name,string field,string part="footer")
         {
-            var path=Path.Combine(root,name+".docx");
+            var path=Path.Combine(root,name+".docx");var tag=part=="footer"?"ftr":"hdr";
             using var zip=ZipFile.Open(path,ZipArchiveMode.Create);
-            Entry(zip,"word/document.xml","<w:document "+w+"><w:body><w:p><w:r><w:t>Metin</w:t></w:r></w:p><w:sectPr><w:footerReference w:type=\"default\" r:id=\"rFooter\"/></w:sectPr></w:body></w:document>");
-            Entry(zip,"word/_rels/document.xml.rels","<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rFooter\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer\" Target=\"footer1.xml\"/></Relationships>");
-            Entry(zip,"word/footer1.xml","<w:ftr "+w+"><w:p>"+field+"</w:p></w:ftr>");return path;
+            Entry(zip,"word/document.xml","<w:document "+w+"><w:body><w:p><w:r><w:t>Metin</w:t></w:r></w:p><w:sectPr><w:"+part+"Reference w:type=\"default\" r:id=\"rPart\"/></w:sectPr></w:body></w:document>");
+            Entry(zip,"word/_rels/document.xml.rels","<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rPart\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/"+part+"\" Target=\""+part+"1.xml\"/></Relationships>");
+            Entry(zip,"word/"+part+"1.xml","<w:"+tag+" "+w+"><w:p>"+field+"</w:p></w:"+tag+">");return path;
         }
         string Udf(string docx){var output=Path.ChangeExtension(docx,".udf");OfficeDocuments.DocxToUdf(docx,output);return output;}
         static bool Numbered(string udf)=>OfficeDocuments.ReadUdf(udf).Element("elements")!.Element("footer")?.Attribute("pageNumber-spec") is not null;
@@ -163,16 +163,18 @@ internal static class UdfChecks
         var misread=named.Select((field,i)=>(field,page:true,name:"Named field "+i)).Concat(unnamed.Select((field,i)=>(field,page:false,name:"Unnamed field "+i))).Where(f=>{var udf=Udf(Footer(f.name,f.field));return Numbered(udf)!=f.page||Validate(check,udf)!=(f.page?"Metin\n\u200B\n":"Metin\n1\n");}).Select(f=>f.name).ToList();
         check(!misread.Any(),"A footer field's name was not read as Word reads it: "+string.Join(", ",misread));
         // Only the page number's own words leave the line: a file number after the page count, or before the label behind a tab, stays
-        // text, and a page count that is no page number's keeps the number Word shows.
+        // text; a page count that is no page number's keeps the number Word shows; and a page number in a header alone still reaches UYAP.
         static string Field(string code,string result)=>begin+Instruction(code)+"<w:r>"+separate+"</w:r>"+Plain(result)+end;
         static string? Setting(string udf,string name)=>OfficeDocuments.ReadUdf(udf).Element("elements")!.Element("footer")?.Attribute("pageNumber-"+name)?.Value;
         var after=Udf(Footer("Text after the page count",Plain("Sayfa ")+Field(" PAGE ","1")+Plain(" / ")+Field(" NUMPAGES ","3")+Plain(" - Dosya No: 2026/1")));
         var before=Udf(Footer("Text before the page number","<w:r><w:t>Dosya No: 2026/1</w:t><w:tab/></w:r>"+Plain("Sayfa ")+Simple(" PAGE ")+Plain("/")+Simple(" NUMPAGES ")));
         var total=Udf(Footer("Page count alone",Plain("Toplam ")+Field(" NUMPAGES ","3")+Plain(" sayfa")));
         var sections=Udf(Footer("Section page count alone",Plain("Toplam ")+"<w:fldSimple w:instr=\" SECTIONPAGES \">"+Plain("3")+"</w:fldSimple>"+Plain(" sayfa")));
+        var headed=Udf(Footer("Header page number",Plain("Sayfa ")+Field(" PAGE ","1"),"header"));
         check(Validate(check,after)=="Metin\n - Dosya No: 2026/1\n"&&Setting(after,"foreStr")=="Sayfa "&&Setting(after,"seperator")=="/","Text after a footer's page count was lost");
         check(Validate(check,before)=="Metin\nDosya No: 2026/1\t\n"&&Setting(before,"foreStr")=="Sayfa "&&Setting(before,"seperator")=="/","Text before a footer's page number, behind a tab, was lost or became its label");
         check(Validate(check,total)=="Metin\nToplam 3 sayfa\n"&&!Numbered(total)&&Validate(check,sections)=="Metin\nToplam 3 sayfa\n"&&!Numbered(sections),"A page count without a page number became UYAP's page number or lost its number");
+        check(Validate(check,headed)=="\u200B\nMetin\n\u200B\n"&&Setting(headed,"foreStr")=="Sayfa ","A header's page number was lost in a document without a footer");
         var repeated=new StringBuilder(begin+"<w:r>"+page+separate+"</w:r>");var chunk="<w:r><w:instrText xml:space=\"preserve\"> "+new string('x',19)+"</w:instrText>"+separate+"<w:t>1</w:t></w:r>";
         for(var n=0;n<40_000;n++)repeated.Append(chunk);
         var repeatedDocx=Footer("Repeated separates",repeated.Append(end).ToString());var timer=System.Diagnostics.Stopwatch.StartNew();var many=Udf(repeatedDocx);var seconds=timer.Elapsed.TotalSeconds;
