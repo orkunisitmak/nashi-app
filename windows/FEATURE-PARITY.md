@@ -6,7 +6,7 @@ These features are included in the published [0.7.5 release](https://github.com/
 
 | Area | Windows implementation | Verification |
 | --- | --- | --- |
-| Drag wheels | Ctrl tools, Shift convert, Alt file actions; configurable distinct chords, global copied-link shortcut, size/finish/animation/sound preferences | Real OLE drag with SendInput, file payload and browser URL/HTML fixtures |
+| Drag wheels | Ctrl tools, Shift convert, Alt file actions; configurable distinct chords, global copied-link shortcut, size/finish/animation/sound preferences; both pause under a fullscreen game or video | Real OLE drag with SendInput, file payload and browser URL/HTML fixtures; fullscreen game fixture with Shift/Ctrl drags and Ctrl+Shift+D |
 | Home / Library / clipboard | Shared pear artwork, colors, cards and actions; System/Light/Dark; file/text/image/link paste; search, reuse, missing files, persistence | Native keyboard/clipboard, restart and rendered light/dark/compact views |
 | Images | PNG/JPG/WebP/HEIC/AVIF/TIFF/BMP and SVG import; resize/rotate/flip, light/color/detail effects; original/result preview | Independent codec reads, orientation/color pixels and exported dimensions |
 | Crop / annotate / redact | Drag/Shift/Return, move/resize/aspects; independent marker/shapes/text/arrows/images/magnifier and Select/Move; undo/delete; multi-area solid/blur/pixelate, OCR/face assistance | Native drawing/keyboard, saved pixels, independent marks and original hashes |

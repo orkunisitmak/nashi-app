@@ -14,6 +14,17 @@ internal static class DesktopGeometry
     [DllImport("user32.dll")]private static extern bool IsWindowEnabled(IntPtr window);
     [DllImport("user32.dll")]private static extern bool SetWindowPos(IntPtr window,IntPtr after,int x,int y,int width,int height,uint flags);
     [DllImport("shcore.dll")]private static extern int GetDpiForMonitor(IntPtr monitor,int type,out uint x,out uint y);
+    [DllImport("user32.dll")]private static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")]private static extern int GetWindowLong(IntPtr window,int index);
+    [DllImport("user32.dll",CharSet=CharSet.Unicode)]private static extern int GetClassName(IntPtr window,System.Text.StringBuilder name,int count);
+    /// True while a borderless foreground window covers its whole monitor: a game, a video or an F11 browser.
+    /// The desktop and Explorer can fill a monitor without a caption too, but file drags start there.
+    internal static bool FullscreenForeground()
+    {
+        var window=GetForegroundWindow();if(window==IntPtr.Zero||(GetWindowLong(window,-16)&0x00C00000)==0x00C00000)return false; // WS_CAPTION: normal and maximized windows
+        var type=new System.Text.StringBuilder(32);GetClassName(window,type,type.Capacity);if(type.ToString() is "Progman" or "WorkerW" or "CabinetWClass")return false;
+        var info=new MonitorInfo{Size=Marshal.SizeOf<MonitorInfo>()};return GetWindowRect(window,out var r)&&GetMonitorInfo(MonitorFromWindow(window,2),ref info)&&r.Left<=info.Monitor.Left&&r.Top<=info.Monitor.Top&&r.Right>=info.Monitor.Right&&r.Bottom>=info.Monitor.Bottom;
+    }
     internal static void FitToWorkArea(Window window)
     {
         var handle=new WindowInteropHelper(window).Handle;var info=new MonitorInfo{Size=Marshal.SizeOf<MonitorInfo>()};if(!GetMonitorInfo(MonitorFromWindow(handle,2),ref info)||!GetWindowRect(handle,out var bounds))return;
