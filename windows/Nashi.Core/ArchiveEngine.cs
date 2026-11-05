@@ -47,6 +47,10 @@ public static class ArchiveEngine
         catch(Exception error)when(password is not null&&error.GetType().FullName=="SharpCompress.Compressors.LZMA.DataErrorException"){throw new InvalidDataException(WrongPassword,error);}
         // A WinZip AES key that fails its check makes the ZIP unrecognizable, so the format probe gives up first.
         catch(SharpCompress.Common.ArchiveOperationException error)when(password is not null&&Encrypted(sourcePath)){throw new InvalidDataException(WrongPassword,error);}
+        // A RAR whose headers are encrypted fails while listing its entries: RAR5 says the password did not match,
+        // RAR4 decrypts the headers into garbage and reports an unknown header.
+        catch(SharpCompress.Common.CryptographicException error)when(password is not null){throw new InvalidDataException(WrongPassword,error);}
+        catch(SharpCompress.Common.InvalidFormatException error)when(password is not null&&Encrypted(sourcePath)){throw new InvalidDataException(WrongPassword,error);}
     }
     private static bool Encrypted(string path)
     {

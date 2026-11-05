@@ -33,5 +33,19 @@
     "sha256": "c7ef3d8a60ad301c27889cf48fae6993c04162fa1694e69dfd2a967fd01e581f",
     "bytes": 253,
     "purpose": "7z with encrypted contents and headers, password \"password\", for archive password errors"
+  },
+  {
+    "file": "Rar.encrypted_filesAndHeader.rar",
+    "source": "https://raw.githubusercontent.com/adamhathcock/sharpcompress/0.50.5/tests/TestArchives/Archives/Rar.encrypted_filesAndHeader.rar",
+    "sha256": "3944a0cf36758d042c238dacae56a4fa494b6f790c4f0dd719d9a47b7c845202",
+    "bytes": 60172,
+    "purpose": "RAR4 with encrypted contents and headers, password \"test\", for archive password errors"
+  },
+  {
+    "file": "Rar5.encrypted_filesAndHeader.rar",
+    "source": "https://raw.githubusercontent.com/adamhathcock/sharpcompress/0.50.5/tests/TestArchives/Archives/Rar5.encrypted_filesAndHeader.rar",
+    "sha256": "63fc4b5576f7482311e950155607e171696588881bdd277c8c099efd2f98b6e2",
+    "bytes": 60686,
+    "purpose": "RAR5 with encrypted contents and headers, password \"test\", for archive password errors"
   }
 ]

@@ -95,14 +95,14 @@ try
     var rarFixtures=AppContext.BaseDirectory;while(!Directory.Exists(Path.Combine(rarFixtures,"Reference","archive-fixtures")))rarFixtures=Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(rarFixtures))??throw new DirectoryNotFoundException("Reference/archive-fixtures");rarFixtures=Path.Combine(rarFixtures,"Reference","archive-fixtures");
     Check(File.GetLastWriteTime(Path.Combine(ArchiveEngine.Extract(Path.Combine(rarFixtures,"test_read_format_rar.rar"),root)[0],"test.txt"))==new DateTime(2011,6,26,14,53,47)&&File.GetLastWriteTimeUtc(Path.Combine(ArchiveEngine.Extract(Path.Combine(rarFixtures,"test_read_format_rar5_stored.rar"),root)[0],"helloworld.txt"))==new DateTime(2018,9,26,4,43,42,DateTimeKind.Utc),"Extracted RAR files lost their modification dates");
     // An empty password box or a wrong password names the problem, not SharpCompress's "bad password" or "Data Error".
-    foreach(var encrypted in new[]{"test_read_format_zip_winzip_aes256.zip","nashi_encrypted_headers.7z"})
+    foreach(var (encrypted,correct) in new[]{("test_read_format_zip_winzip_aes256.zip","password"),("nashi_encrypted_headers.7z","password"),("Rar.encrypted_filesAndHeader.rar","test"),("Rar5.encrypted_filesAndHeader.rar","test")})
     {
         foreach(var (password,message) in new[]{((string?)"","This archive is protected. Enter its password."),(null,"This archive is protected. Enter its password."),("wrong","The password is incorrect, or the archive is damaged.")})
         {
             try{ArchiveEngine.Extract(Path.Combine(rarFixtures,encrypted),root,password);throw new Exception(encrypted+" opened without its password");}
             catch(InvalidDataException error){Check(error.Message==message&&AppLocalization.Text(message,"tr")!=message,encrypted+" reported \""+error.Message+"\" for the password \""+password+"\"");}
         }
-        Check(Directory.EnumerateFiles(ArchiveEngine.Extract(Path.Combine(rarFixtures,encrypted),root,"password")[0],"*",SearchOption.AllDirectories).Any(),encrypted+" did not open with its password");
+        Check(Directory.EnumerateFiles(ArchiveEngine.Extract(Path.Combine(rarFixtures,encrypted),root,correct)[0],"*",SearchOption.AllDirectories).Any(),encrypted+" did not open with its password");
     }
     Check(!Directory.EnumerateDirectories(root,".nashi-*").Any(),"A refused password left staging files");
     using(var converted=System.IO.Compression.ZipFile.OpenRead(ArchiveEngine.Convert(datedZip,"zip",root)[0]))Check(converted.GetEntry("Dated.txt")!.LastWriteTime.DateTime==dated,"Converted ZIP lost its file dates");
