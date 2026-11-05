@@ -59,6 +59,15 @@ internal static class GlobalGestureChecks
         try
         {
             Drag(Key.LeftCtrl,"tools","compress");Drag(Key.LeftAlt,"actions","share");Drag(Key.LeftShift,"convert","convert:"+FeatureCatalog.Formats([file])[0]);
+            var main=owner as MainWindow;
+            // Settings is a separate window, so unlike the modal editors below it must not pause the gesture.
+            if(main is not null)
+            {
+                phase="dragging with Settings open";main.ShowSettings();DesktopInput.Pump();var openSettings=main.OpenSettings;check(openSettings is {IsVisible:true}&&DesktopGeometry.IsInteractive(owner),"Settings opened as a separate window and left the main window enabled");main.ShowSettings();DesktopInput.Pump();check(main.OpenSettings==openSettings,"Opening Settings again reused its window");
+                Drag(Key.LeftCtrl,"tools","compress");
+                if(controller.LinkShortcutRegistered){selected=null;DesktopInput.Key(owner,Key.D,control:true,shift:true);check(selected=="link-shortcut","Global copied-link shortcut Ctrl+Shift+D with Settings open");}
+                openSettings?.Close();DesktopInput.Pump();check(main.OpenSettings is null,"Closing Settings released its window");
+            }
             // A mouse drag that carries no files (e.g. Shift+drag text selection) must not show a wheel.
             phase="plain Shift-drag";var plain=new Window{Width=320,Height=200,Left=bounds.Left,Top=bounds.Top,WindowStartupLocation=WindowStartupLocation.Manual,Content=new System.Windows.Controls.Border{Background=System.Windows.Media.Brushes.DarkSlateGray}};plain.Show();plain.Activate();DesktopInput.Pump(200);
             try
@@ -68,12 +77,12 @@ internal static class GlobalGestureChecks
             }
             finally{DesktopInput.HoldMouse(false);DesktopInput.Hold(Key.LeftShift,false);DesktopInput.Pump(250);plain.Close();}
             if(controller.LinkShortcutRegistered){DesktopInput.Key(owner,Key.D,control:true,shift:true);check(selected=="link-shortcut","Global copied-link shortcut Ctrl+Shift+D");}
-            var main=owner as MainWindow;var beforeLaunch=main?.SelectedFiles.ToArray();var modal=new Window{Owner=owner,Width=300,Height=200,WindowStartupLocation=WindowStartupLocation.CenterOwner,Content=new System.Windows.Controls.Border{Background=System.Windows.Media.Brushes.DarkOliveGreen}};Exception? modalError=null;
+            var beforeLaunch=main?.SelectedFiles.ToArray();var modal=new Window{Owner=owner,Width=300,Height=200,WindowStartupLocation=WindowStartupLocation.CenterOwner,Content=new System.Windows.Controls.Border{Background=System.Windows.Media.Brushes.DarkOliveGreen}};Exception? modalError=null;
             modal.Dispatcher.BeginInvoke(()=>
             {
                 try
                 {
-                    var p=modal.PointToScreen(new Point(60,70));DesktopInput.MovePointer(p);DesktopInput.HoldMouse(true);DesktopInput.Pump(80);DesktopInput.MovePointer(new(p.X+50,p.Y));DesktopInput.Hold(Key.LeftShift,true);DesktopInput.Pump(220);check(controller.ActiveWheel is null,"Modal Shift-drag did not open a competing global wheel");DesktopInput.HoldMouse(false);DesktopInput.Hold(Key.LeftShift,false);var before=selected;DesktopInput.Key(modal,Key.D,control:true,shift:true);check(selected==before,"Modal editor kept its keyboard focus during the global link shortcut");if(main is not null){main.AcceptLaunch([file]);main.AcceptLaunch([]);check(main.SelectedFiles.SequenceEqual(beforeLaunch!),"Second launch kept the modal editor's original file selection");}
+                    var p=modal.PointToScreen(new Point(60,70));DesktopInput.MovePointer(p);DesktopInput.HoldMouse(true);DesktopInput.Pump(80);DesktopInput.MovePointer(new(p.X+50,p.Y));DesktopInput.Hold(Key.LeftShift,true);DesktopInput.Pump(220);check(controller.ActiveWheel is null,"Modal Shift-drag did not open a competing global wheel");DesktopInput.HoldMouse(false);DesktopInput.Hold(Key.LeftShift,false);var before=selected;DesktopInput.Key(modal,Key.D,control:true,shift:true);check(selected==before,"Modal editor kept its keyboard focus during the global link shortcut");if(main is not null){main.AcceptLaunch([file]);main.AcceptLaunch([]);check(main.SelectedFiles.SequenceEqual(beforeLaunch!),"Second launch kept the modal editor's original file selection");main.ShowSettings();DesktopInput.Pump();check(main.OpenSettings is null,"Settings stayed closed behind the modal editor");}
                 }
                 catch(Exception error){modalError=error;}
                 finally{DesktopInput.HoldMouse(false);DesktopInput.Hold(Key.LeftShift,false);modal.Close();}
