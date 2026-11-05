@@ -163,7 +163,11 @@ public enum MediaEngine {
                 let scale = try scalingFilter(options, padToEven: false)
                 // GIF viewers ignore a pixel aspect, so non-square pixels are resized to their displayed shape.
                 let first = (["fps=\(options.gifFrameRate)"] + (scale.map { [$0] } ?? []) + ["scale=w='min(\(options.gifMaxWidth),iw)':h=-2:force_original_aspect_ratio=decrease:reset_sar=1"]).joined(separator: ",")
-                arguments += ["-filter_complex", "[0:v:0]\(first),split[p0][p1];[p0]palettegen=stats_mode=diff[pal];[p1][pal]paletteuse=dither=sierra2_4a", "-an", "-loop", "0"]
+                // Fast skips error diffusion; Maximum uses fewer colors and rewrites only the changed rectangle of each frame.
+                let palette = options.compressionPreset == "fast" ? (generate: "palettegen=stats_mode=diff", apply: "paletteuse=dither=bayer:bayer_scale=5")
+                    : options.compressionPreset == "maximum" ? (generate: "palettegen=max_colors=128:stats_mode=diff", apply: "paletteuse=dither=sierra2_4a:diff_mode=rectangle")
+                    : (generate: "palettegen=stats_mode=diff", apply: "paletteuse=dither=sierra2_4a")
+                arguments += ["-filter_complex", "[0:v:0]\(first),split[p0][p1];[p0]\(palette.generate)[pal];[p1][pal]\(palette.apply)", "-an", "-loop", "0"]
                 // Complex filters map their final output automatically.
                 arguments.removeSubrange(2..<4)
             } else {
