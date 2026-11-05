@@ -1,6 +1,4 @@
 using System.Runtime.InteropServices;
-using System.Diagnostics;
-using System.ComponentModel;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
@@ -19,8 +17,6 @@ public sealed class GlobalDragController:IDisposable
     [StructLayout(LayoutKind.Sequential)]internal struct NativePoint{public int X,Y;}
     [DllImport("user32.dll")]private static extern short GetAsyncKeyState(int key);
     [DllImport("user32.dll")]private static extern bool GetCursorPos(out NativePoint point);
-    [DllImport("user32.dll")]private static extern IntPtr GetForegroundWindow();
-    [DllImport("user32.dll")]private static extern uint GetWindowThreadProcessId(IntPtr window,out uint processId);
     [DllImport("user32.dll")]private static extern bool RegisterHotKey(IntPtr window,int id,uint modifiers,uint key);
     [DllImport("user32.dll")]private static extern bool UnregisterHotKey(IntPtr window,int id);
     [StructLayout(LayoutKind.Sequential)]private struct NativeRect{public int Left,Top,Right,Bottom;}
@@ -32,7 +28,8 @@ public sealed class GlobalDragController:IDisposable
     [DllImport("oleacc.dll")]private static extern int AccessibleObjectFromPoint(NativePoint point,[MarshalAs(UnmanagedType.Interface)]out object accessible,[MarshalAs(UnmanagedType.Struct)]out object child);
     private readonly Window owner;private readonly PreferencesStore preferences;private readonly Action<string,IDataObject,string?> dropped;private readonly Action link;private readonly System.Windows.Threading.DispatcherTimer timer;
     private NativePoint start;private bool down,opened;private Task<string?>? hint;private GlobalDropWheel? wheel;private HwndSource? source;private IntPtr handle;private bool? shortcutEnabled;
-    private IntPtr cachedForeground;private string? cachedProcessName;
+    private readonly ForegroundAppIdentity foregroundIdentity=new();
+    private readonly HotkeyRegistrationRetry hotkeyRetry=new();
     internal GlobalDropWheel? ActiveWheel=>wheel;
     public bool LinkShortcutRegistered{get;private set;}
     private bool OwnerAvailable=>DesktopGeometry.IsInteractive(owner);
@@ -42,23 +39,23 @@ public sealed class GlobalDragController:IDisposable
         if(new WindowInteropHelper(owner).Handle!=IntPtr.Zero)Register();else owner.SourceInitialized+=(_,_)=>Register();timer.Start();
     }
     private void Register(){handle=new WindowInteropHelper(owner).Handle;source=HwndSource.FromHwnd(handle);source.AddHook(Hook);UpdateShortcut();}
-    private bool IsExcludedApplication()
+    private bool IsExcludedApplication()=>foregroundIdentity.IsExcluded(preferences.Value.ShortcutExcludedApps);
+    private void UpdateShortcut()
     {
-        var ignored=preferences.Value.ShortcutExcludedApps;
-        if(string.IsNullOrWhiteSpace(ignored))return false;
-        var foreground=GetForegroundWindow();
-        if(cachedForeground!=foreground)
+        if(handle==IntPtr.Zero)return;
+        var enabled=preferences.Value.Enabled&&!IsExcludedApplication();
+        if(shortcutEnabled!=enabled)
         {
-            cachedForeground=foreground;cachedProcessName=null;
-            if(foreground!=IntPtr.Zero&&GetWindowThreadProcessId(foreground,out var pid)!=0&&pid!=0)
-            {
-                try{using var process=Process.GetProcessById(checked((int)pid));cachedProcessName=process.ProcessName;}
-                catch(ArgumentException){}catch(InvalidOperationException){}catch(Win32Exception){}
-            }
+            shortcutEnabled=enabled;
+            if(LinkShortcutRegistered)UnregisterHotKey(handle,7701);
+            LinkShortcutRegistered=false;
+            hotkeyRetry.Reset();
         }
-        return ShortcutAppFilter.IsExcluded(ignored,cachedProcessName);
+        var now=DateTimeOffset.UtcNow;
+        if(!hotkeyRetry.ShouldAttempt(enabled,LinkShortcutRegistered,now))return;
+        LinkShortcutRegistered=RegisterHotKey(handle,7701,0x4000|0x2|0x4,0x44);
+        if(!LinkShortcutRegistered)hotkeyRetry.RecordFailure(now);
     }
-    private void UpdateShortcut(){if(handle==IntPtr.Zero)return;var enabled=preferences.Value.Enabled&&!IsExcludedApplication();if(shortcutEnabled==enabled)return;shortcutEnabled=enabled;if(LinkShortcutRegistered)UnregisterHotKey(handle,7701);LinkShortcutRegistered=enabled&&RegisterHotKey(handle,7701,0x4000|0x2|0x4,0x44);}
     private IntPtr Hook(IntPtr window,int message,IntPtr w,IntPtr l,ref bool handled){if(message==0x0312&&w.ToInt32()==7701){if(preferences.Value.Enabled&&!IsExcludedApplication()&&OwnerAvailable)link();handled=true;}return IntPtr.Zero;}
     private static bool Held(int key)=>(GetAsyncKeyState(key)&0x8000)!=0;
     private string Chord(){var parts=new List<string>();if(Held(0x11))parts.Add("Ctrl");if(Held(0x10))parts.Add("Shift");if(Held(0x12))parts.Add("Alt");return string.Join('+',parts);}

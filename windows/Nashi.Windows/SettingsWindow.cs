@@ -24,6 +24,7 @@ public sealed partial class SettingsWindow:Window
         page.Children.Add(L10n.Label(new TextBlock{Text="Executable names separated by commas, for example: Photoshop, Illustrator. Leave blank to keep shortcuts active everywhere.",TextWrapping=TextWrapping.Wrap,Foreground=Theme.Brush("Muted")}));
         var names=new TextBox{Text=store.Value.ShortcutExcludedApps,Margin=new(4,8,4,4),ToolTip=L10n.Text("Excluded application process names")};
         System.Windows.Automation.AutomationProperties.SetAutomationId(names,"ShortcutExcludedApps");
+        System.Windows.Automation.AutomationProperties.SetName(names,L10n.Text("Excluded application process names"));
         void Commit(){if(names.Text!=store.Value.ShortcutExcludedApps)Save(store.Value with{ShortcutExcludedApps=names.Text});}
         names.LostKeyboardFocus+=(_,_)=>Commit();
         names.KeyDown+=(_,e)=>{if(e.Key==System.Windows.Input.Key.Enter){Commit();e.Handled=true;}};
