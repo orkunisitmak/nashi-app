@@ -19,15 +19,15 @@ public sealed partial class OfficeDocuments
     private sealed class UdfExport
     {
         private const string Styles="<styles><style name=\"default\" description=\"Geçerli\" family=\"Dialog\" size=\"12\" bold=\"false\" italic=\"false\" foreground=\"-13421773\" FONT_ATTRIBUTE_KEY=\"javax.swing.plaf.FontUIResource[family=Dialog,name=Dialog,style=plain,size=12]\" /><style name=\"hvl-default\" family=\"Times New Roman\" size=\"12\" description=\"Gövde\" /></styles>";
-        // The page number settings of a footer UYAP wrote. UYAP draws "label page/count" itself at the bottom right, so a header or
-        // footer line holding Word's PAGE field (and a NUMPAGES after it) becomes these settings, with the line's own label and separator.
-        private string PageNumbers=>" pageNumber-spec=\"BSP32_2120\" pageNumber-color=\"-16777216\" pageNumber-fontFace=\"Arial\" pageNumber-fontSize=\"11\" pageNumber-fontBold=\"false\" pageNumber-fontItalic=\"false\" pageNumber-foreStr=\""+SecurityElement.Escape(XmlSafe(pageLabel.Length>0?pageLabel+" ":""))+"\" pageNumber-seperator=\""+SecurityElement.Escape(XmlSafe(pageSeparator))+"\"";
+        // The page number settings of a footer UYAP wrote. UYAP draws the page number itself (see PageCount), so a header or footer line
+        // holding Word's PAGE field becomes these settings, with the line's own label, the separator before a page count, and its place.
+        private string PageNumbers=>" pageNumber-spec=\"BSP32_"+(PageAtBottom|pagePlace|(pageSeparator is null?0:PageCount)).ToString(CultureInfo.InvariantCulture)+"\" pageNumber-color=\"-16777216\" pageNumber-fontFace=\"Arial\" pageNumber-fontSize=\"11\" pageNumber-fontBold=\"false\" pageNumber-fontItalic=\"false\" pageNumber-foreStr=\""+SecurityElement.Escape(XmlSafe(pageLabel))+"\" pageNumber-seperator=\""+SecurityElement.Escape(XmlSafe(pageSeparator??""))+"\"";
         private readonly record struct Segment(char Kind,string Text,Dictionary<string,string>? Format,byte[]? Image=null,double Width=0,double Height=0);
         private readonly ZipArchive zip;private readonly Dictionary<string,XElement> styles=new(StringComparer.Ordinal);private readonly XElement? defaults,numbering;private readonly string? normal;private readonly string majorFont,minorFont;
         private readonly Dictionary<string,(Dictionary<string,string> C,Dictionary<string,string> P)> resolved=new(StringComparer.Ordinal);
         private readonly Dictionary<string,int[]> counters=new(StringComparer.Ordinal);private readonly HashSet<string> restarted=new(StringComparer.Ordinal);
         private readonly Stack<(StringBuilder Instruction,bool Result,string? Page)> fields=new();private int instructions;private readonly StringBuilder text=new();
-        private Dictionary<string,string> relations;private bool furniture,pageNumbers;private string? simpleCount;private int cells;private string pageLabel="",pageSeparator="/";private double defaultTab=36,textWidth=453.5;
+        private Dictionary<string,string> relations;private bool furniture,footing,pageNumbers,pageFromFooter;private string? simpleCount,pageSeparator;private int cells,pagePlace=PageAtRight;private string pageLabel="";private double defaultTab=36,textWidth=453.5;
         public UdfExport(ZipArchive zip)
         {
             this.zip=zip;var styleXml=zip.GetEntry("word/styles.xml") is not null?Xml(zip,"word/styles.xml").Root:null;defaults=Child(styleXml,"docDefaults");
@@ -98,11 +98,11 @@ public sealed partial class OfficeDocuments
                 if(Child(section,"titlePg") is not {} title||!On(title))return false;if(Furniture(section,"headerReference","first") is not {} first)return true;
                 return PlainText(first.Root).Trim().Length==0&&!first.Root.Descendants().Any(e=>e.Name.LocalName is "drawing" or "pict");
             }
-            if(Furniture(section,"headerReference") is {} header){elements.Append(LaterPages()?"<header startPage=\"2\">":"<header>");Part(header,elements);elements.Append("</header>\n");}
+            if(Furniture(section,"headerReference") is {} header){elements.Append(LaterPages()?"<header startPage=\"2\">":"<header>");Part(header,elements,false);elements.Append("</header>\n");}
             var bodyStart=text.Length;Content(body,elements,0);if(text.Length==bodyStart)Emit(elements,new(StringComparer.Ordinal),[],new(StringComparer.Ordinal),"");
             // UYAP draws page numbers only from the footer's settings, so a page number found in the header alone gets an empty footer.
             var footer=Furniture(section,"footerReference");var footerElements=new StringBuilder();
-            if(footer is {} part)Part(part,footerElements);else if(pageNumbers)Emit(footerElements,new(StringComparer.Ordinal),[],new(StringComparer.Ordinal),"");
+            if(footer is {} part)Part(part,footerElements,true);else if(pageNumbers)Emit(footerElements,new(StringComparer.Ordinal),[],new(StringComparer.Ordinal),"");
             if(footer is not null||pageNumbers)elements.Append("<footer").Append(pageNumbers?PageNumbers:"").Append('>').Append(footerElements).Append("</footer>\n");
             string Margin(string name,double fallback)=>Points(Math.Abs(Num(margins,name) is {} twips?twips/20:fallback));
             var xml=new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<template format_id=\"1.8\">\n<content><![CDATA[").Append(text.ToString().Replace("]]>","]]]]><![CDATA[>")).Append("]]></content>");
@@ -122,9 +122,9 @@ public sealed partial class OfficeDocuments
             var chosen=type is not null?references.FirstOrDefault(e=>Attr(e,"type")==type):references.FirstOrDefault(e=>Attr(e,"type") is null or "default")??references.FirstOrDefault();
             if(Attr(chosen,"id") is not {} id||!relations.TryGetValue(id,out var part)||zip.GetEntry(part) is null)return null;return(Xml(zip,part).Root!,Relations(part));
         }
-        private void Part((XElement Root,Dictionary<string,string> Relations) part,StringBuilder xml)
+        private void Part((XElement Root,Dictionary<string,string> Relations) part,StringBuilder xml,bool footer)
         {
-            var body=relations;relations=part.Relations;furniture=true;fields.Clear();instructions=0;try{Content(part.Root,xml,1);}finally{relations=body;furniture=false;fields.Clear();instructions=0;}
+            var body=relations;relations=part.Relations;furniture=true;footing=footer;fields.Clear();instructions=0;try{Content(part.Root,xml,1);}finally{relations=body;furniture=footing=false;fields.Clear();instructions=0;}
         }
         private void Content(XElement container,StringBuilder xml,int depth)
         {
@@ -145,19 +145,26 @@ public sealed partial class OfficeDocuments
             ParagraphInto(properties,paragraph);foreach(var child in element.Elements())Visit(child,runs,style.C);
             // An access code vouches only for the document UYAP served; a copy edited in Word and written as UDF again must not carry it on.
             if(furniture&&string.Concat(runs.Where(r=>r.Kind=='t').Select(r=>r.Text)).TrimStart().StartsWith(UyapAccessLead.TrimEnd(),StringComparison.Ordinal))return;
-            // Word's PAGE field becomes UYAP's own page number, which UYAP draws at the bottom right as "label page/count". The label is the
-            // text just before PAGE, back to a tab or line break, and the separator the text up to a NUMPAGES or SECTIONPAGES right after it.
-            // Only those runs go: the rest of the paragraph stays text, and a page count that is no page number's keeps the number Word shows.
+            // Word's PAGE field becomes UYAP's own page number. Its label is the text just before PAGE, back to a tab or line break, and its
+            // separator the text up to a NUMPAGES or SECTIONPAGES right after it; both are kept as Word shows them, and without a page count
+            // UYAP draws none. Only those runs go: the rest of the paragraph stays text, and a page count that is no page number's keeps the
+            // number Word shows. A footer's page number wins over a header's, since UYAP draws one.
             if(runs.FindIndex(r=>r.Kind=='f'&&r.Text=="PAGE") is >=0 and var page)
             {
                 static bool Edge(Segment run)=>run.Kind is '\t' or 'n' or 'p';
                 var from=runs.FindLastIndex(page,Edge)+1;var to=runs.FindIndex(page,Edge) is >=0 and var stop?stop:runs.Count;
                 var count=runs.FindIndex(page+1,to-page-1,r=>r.Kind=='f'&&r.Text!="PAGE");
                 var last=count<0?page:runs.FindIndex(count+1,to-count-1,r=>r.Kind!='c') is >=0 and var next?next-1:to-1;
-                string Words(int start,int end)=>string.Concat(runs.Skip(start).Take(end-start).Where(r=>r.Kind=='t').Select(r=>r.Text)).Trim();
-                if(!pageNumbers){pageNumbers=true;pageLabel=Words(from,page);if(count>=0&&Words(page+1,count) is {Length:>0} separator)pageSeparator=separator;}
-                runs=runs.Where((run,i)=>!(i>=from&&i<page&&run.Kind=='t'||i>=page&&i<=last)).ToList();
-                if(runs.All(r=>r.Kind is 't' or '\t'&&r.Text.Trim().Length==0))runs.Clear();
+                string Words(int start,int end)=>string.Concat(runs.Skip(start).Take(end-start).Where(r=>r.Kind=='t').Select(r=>r.Text));
+                var before=Words(from,page).TrimStart();var separator=count>=0?Words(page+1,count):null;var tabbed=from>0&&runs[from-1].Kind=='\t';
+                runs=runs.Where((run,i)=>!(i>=from&&i<page&&run.Kind=='t'||i>=page&&i<=last)).ToList();var alone=runs.All(r=>r.Kind is 't' or '\t'&&r.Text.Trim().Length==0);
+                // A page number alone on its line keeps the paragraph's alignment; one after a tab or beside other text stays at the right.
+                if(!pageNumbers||footing&&!pageFromFooter)
+                {
+                    pageNumbers=true;pageFromFooter=footing;pageLabel=before;pageSeparator=separator;
+                    pagePlace=alone&&!tabbed?paragraph.GetValueOrDefault("Alignment") switch{"1"=>PageCentred,"2"=>PageAtRight,_=>PageAtLeft}:PageAtRight;
+                }
+                if(alone)runs.Clear();
             }
             runs.RemoveAll(r=>r.Kind=='f');
             var tabs=TabSet(paragraph,runs.Any(r=>r.Kind=='\t'));

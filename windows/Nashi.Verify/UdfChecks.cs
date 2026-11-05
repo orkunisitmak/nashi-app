@@ -17,6 +17,14 @@ internal static class UdfChecks
         check(Throws(()=>OfficeDocuments.UdfToDocx(other,Path.Combine(root,"Other.docx"))),"An XML package that is not a UYAP template was converted");
     }
     private static bool Throws(Action action){try{action();return false;}catch(InvalidDataException){return true;}}
+    // A Word header or footer's page number paragraph, as its alignment, then its texts and {fields} in order.
+    private static string Drawn(string part)
+    {
+        XNamespace w="http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+        var paragraph=XDocument.Parse(part).Descendants(w+"p").FirstOrDefault(p=>p.Elements(w+"fldSimple").Any(f=>f.Attribute(w+"instr")?.Value.Trim()=="PAGE"));
+        if(paragraph is null)return "none";
+        return (paragraph.Element(w+"pPr")?.Element(w+"jc")?.Attribute(w+"val")?.Value??"")+":"+string.Join('|',paragraph.Elements().Where(e=>e.Name.LocalName is "r" or "fldSimple").Select(e=>e.Name.LocalName=="r"?string.Concat(e.Elements(w+"t").Select(t=>t.Value)):"{"+e.Attribute(w+"instr")!.Value.Trim()+"}"));
+    }
     private static void Entry(ZipArchive zip,string name,string text){using var writer=new StreamWriter(zip.CreateEntry(name).Open(),new UTF8Encoding(false));writer.Write(text);}
     private static string Part(string package,string name){using var zip=ZipFile.OpenRead(package);using var reader=new StreamReader(zip.GetEntry(name)?.Open()??throw new Exception("Missing "+name+" in "+Path.GetFileName(package)));return reader.ReadToEnd();}
     // Every paragraph's leaves follow one another and end with its "\n", and paragraphs follow one another through the whole text, as in UYAP's files.
@@ -65,7 +73,24 @@ internal static class UdfChecks
         check(document.Contains("<w:tab w:val=\"left\" w:leader=\"none\" w:pos=\"3660\"/>")&&document.Contains("<w:ind w:left=\"3800\" w:right=\"0\" w:hanging=\"3800\"/>")&&Part(docx,"word/settings.xml").Contains("<w:defaultTabStop w:val=\"1440\"/>"),"UDF hanging indent or default tab stops were lost");
         var footerPart=Part(docx,"word/footer3.xml");
         // UYAP prints a served document's access code under every page, the first one too.
-        check(footerPart.Contains("UYAP Bilişim Sistemindeki bu dokümana http://vatandas.uyap.gov.tr adresinden ")&&footerPart.Contains(">Ab12cD3 - eF45gH6 - iJ78kL9 - MnOPQR=<")&&Part(docx,"word/footer4.xml").Contains("Ab12cD3 - eF45gH6"),"The UYAP access code was not printed under the pages");check(footerPart.Contains(" PAGE ")&&footerPart.Contains(" NUMPAGES ")&&footerPart.Contains("Sayfa "),"UDF page number was lost");
+        check(footerPart.Contains("UYAP Bilişim Sistemindeki bu dokümana http://vatandas.uyap.gov.tr adresinden ")&&footerPart.Contains(">Ab12cD3 - eF45gH6 - iJ78kL9 - MnOPQR=<")&&Part(docx,"word/footer4.xml").Contains("Ab12cD3 - eF45gH6"),"The UYAP access code was not printed under the pages");
+        check(Drawn(footerPart)=="right:Sayfa|{PAGE}|/|{NUMPAGES}","UDF page number was lost or not drawn as UYAP draws it: "+Drawn(footerPart));
+        // UYAP 5.4.20 draws foreStr as written, the page, with spec bit 2048 the separator (a space when the attribute is missing) and the
+        // page count, then afterStr. It centres the number for bit 32, puts it at the right for 64, and at the left otherwise. A spec UYAP
+        // could not read keeps the count with a separator, at the right.
+        string Numbers(string name,string attributes)
+        {
+            var path=Path.Combine(root,name+".udf");
+            using(var zip=ZipFile.Open(path,ZipArchiveMode.Create))Entry(zip,"content.xml","<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<template format_id=\"1.8\">\n<content><![CDATA[Metin\n\n]]></content><properties><pageFormat mediaSizeName=\"1\" /></properties>\n<elements resolver=\"hvl-default\">\n<paragraph><content startOffset=\"0\" length=\"6\" /></paragraph>\n<footer"+attributes+"><paragraph><content startOffset=\"6\" length=\"1\" /></paragraph></footer>\n</elements>\n<styles><style name=\"hvl-default\" family=\"Times New Roman\" size=\"12\" /></styles>\n</template>");
+            var numbered=Path.ChangeExtension(path,".docx");OfficeDocuments.UdfToDocx(path,numbered);return Drawn(Part(numbered,"word/footer1.xml"));
+        }
+        var drawn=new[]{
+            (Numbers("Spec without the count"," pageNumber-spec=\"BSP32_72\" pageNumber-foreStr=\"Sayfa \" pageNumber-seperator=\"/\""),"right:Sayfa |{PAGE}"),
+            (Numbers("Count without a separator"," pageNumber-spec=\"BSP32_2088\""),"center:{PAGE}| |{NUMPAGES}"),
+            (Numbers("Empty separator and text after"," pageNumber-spec=\"2120\" pageNumber-foreStr=\"Sayfa\" pageNumber-seperator=\"\" pageNumber-afterStr=\" sayfa\""),"right:Sayfa|{PAGE}|{NUMPAGES}| sayfa"),
+            (Numbers("Page number at the left"," pageNumber-spec=\"BSP32_24\" pageNumber-seperator=\"/\""),"left:{PAGE}"),
+            (Numbers("Unreadable spec"," pageNumber-spec=\"BSP32_x\" pageNumber-seperator=\"-\""),"right:{PAGE}|-|{NUMPAGES}")};
+        check(drawn.All(d=>d.Item1==d.Item2),"A UDF page number did not come back as UYAP draws it: "+string.Join(", ",drawn.Where(d=>d.Item1!=d.Item2).Select(d=>d.Item1)));
         using(var model=JsonDocument.Parse(JsonSerializer.Serialize(OfficeDocuments.ReadDocx(docx))))
         {
             var words=string.Concat(model.RootElement.GetProperty("blocks").EnumerateArray().Where(b=>b.GetProperty("type").GetString()=="paragraph").Select(b=>string.Concat(b.GetProperty("runs").EnumerateArray().Select(r=>r.TryGetProperty("text",out var t)?t.GetString():"/"))+"|"));
@@ -78,6 +103,8 @@ internal static class UdfChecks
         check(party.Attribute("LeftIndent")?.Value=="0.0"&&party.Attribute("Hanging")?.Value=="190.0"&&party.Attribute("TabSet")?.Value?.StartsWith("183.0:0:0,190.0:0:0,216.0:0:0",StringComparison.Ordinal)==true,"A UYAP party block lost its hanging indent or colon stop in a round trip: "+party);
         check(OfficeDocuments.ReadUdf(back).Element("elements")!.Element("header")?.Attribute("startPage")?.Value=="2","A header starting on page 2 came back on the first page too");
         check(!again.Contains("vatandas.uyap.gov.tr",StringComparison.Ordinal)&&!again.Contains("Ab12cD3",StringComparison.Ordinal),"A copy written as UDF again kept the original's access code");
+        var backFooter=OfficeDocuments.ReadUdf(back).Element("elements")!.Element("footer");
+        check(backFooter?.Attribute("pageNumber-spec")?.Value=="BSP32_2120"&&backFooter.Attribute("pageNumber-foreStr")?.Value=="Sayfa"&&backFooter.Attribute("pageNumber-seperator")?.Value=="/","A UYAP page number changed in a round trip: "+backFooter);
     }
     private static void DocxToUyap(Action<bool,string> check,string root)
     {
@@ -113,8 +140,8 @@ internal static class UdfChecks
         var table=template.Element("elements")!.Element("table");
         check(table?.Attribute("columnCount")?.Value=="3"&&table.Attribute("columnSpans")?.Value=="100,150,200"&&table.Attribute("border")?.Value=="borderCell"&&table.Elements("row").All(r=>r.Elements("cell").Sum(c=>int.Parse(c.Attribute("colspan")?.Value??"1"))==3)&&xml.Contains("colspan=\"2\" fillColor=\"-2236963\""),"DOCX table columns, style borders or fills were lost");
         var footer=template.Element("elements")!.Element("footer");
-        check(template.Element("elements")!.Elements("page-break").Count()==1&&xml.Contains("width=\"100.0\" height=\"50.0\"")&&footer?.Attribute("pageNumber-spec") is not null&&footer.Attribute("pageNumber-foreStr")?.Value=="Sayfa "&&footer.Attribute("pageNumber-seperator")?.Value=="/","DOCX page break, image size or footer page number was lost");
-        // The label comes back to Word with one space before the page, although UYAP keeps a space in it ("Sayfa ").
+        check(template.Element("elements")!.Elements("page-break").Count()==1&&xml.Contains("width=\"100.0\" height=\"50.0\"")&&footer?.Attribute("pageNumber-spec")?.Value=="BSP32_2072"&&footer.Attribute("pageNumber-foreStr")?.Value=="Sayfa "&&footer.Attribute("pageNumber-seperator")?.Value==" / ","DOCX page break, image size or footer page number was lost");
+        // The label comes back to Word as UYAP draws it, with the one space it holds ("Sayfa ").
         var labelled=Path.Combine(root,"Dilekçe again.docx");OfficeDocuments.UdfToDocx(udf,labelled);var labelFooter=Part(labelled,"word/footer1.xml");
         check(labelFooter.Contains(">Sayfa </w:t>",StringComparison.Ordinal)&&!labelFooter.Contains("Sayfa  ",StringComparison.Ordinal),"A UDF page number label came back to Word with a second space");
         // Word keeps the mark of a paragraph that only holds a page break on the page before; UYAP must not start the next page with an empty line.
@@ -171,10 +198,52 @@ internal static class UdfChecks
         var total=Udf(Footer("Page count alone",Plain("Toplam ")+Field(" NUMPAGES ","3")+Plain(" sayfa")));
         var sections=Udf(Footer("Section page count alone",Plain("Toplam ")+"<w:fldSimple w:instr=\" SECTIONPAGES \">"+Plain("3")+"</w:fldSimple>"+Plain(" sayfa")));
         var headed=Udf(Footer("Header page number",Plain("Sayfa ")+Field(" PAGE ","1"),"header"));
-        check(Validate(check,after)=="Metin\n - Dosya No: 2026/1\n"&&Setting(after,"foreStr")=="Sayfa "&&Setting(after,"seperator")=="/","Text after a footer's page count was lost");
+        check(Validate(check,after)=="Metin\n - Dosya No: 2026/1\n"&&Setting(after,"foreStr")=="Sayfa "&&Setting(after,"seperator")==" / "&&Setting(after,"spec")=="BSP32_2120","Text after a footer's page count was lost");
         check(Validate(check,before)=="Metin\nDosya No: 2026/1\t\n"&&Setting(before,"foreStr")=="Sayfa "&&Setting(before,"seperator")=="/","Text before a footer's page number, behind a tab, was lost or became its label");
         check(Validate(check,total)=="Metin\nToplam 3 sayfa\n"&&!Numbered(total)&&Validate(check,sections)=="Metin\nToplam 3 sayfa\n"&&!Numbered(sections),"A page count without a page number became UYAP's page number or lost its number");
         check(Validate(check,headed)=="\u200B\nMetin\n\u200B\n"&&Setting(headed,"foreStr")=="Sayfa ","A header's page number was lost in a document without a footer");
+        // Without a page count UYAP draws none, so a lone PAGE clears spec bit 2048 and leaves no separator for UDF -> DOCX to read a count
+        // from. A page number alone on its line keeps its paragraph's alignment; one after a tab stays at the right, where UYAP puts it.
+        static string Aligned(string jc,string runs)=>"<w:pPr><w:jc w:val=\""+jc+"\"/></w:pPr>"+runs;
+        var lone=Udf(Footer("Page number without a count",Plain("Sayfa ")+Field(" PAGE ","1")));var loneDocx=Path.Combine(root,"Page number without a count again.docx");OfficeDocuments.UdfToDocx(lone,loneDocx);
+        check(Setting(lone,"spec")=="BSP32_24"&&Setting(lone,"seperator")==""&&Drawn(Part(loneDocx,"word/footer1.xml"))=="left:Sayfa |{PAGE}","A page number without a count gained one: "+Setting(lone,"spec")+", "+Drawn(Part(loneDocx,"word/footer1.xml")));
+        var centred=Udf(Footer("Centred page number",Aligned("center",Plain("Sayfa ")+Field(" PAGE ","1")+Plain(" / ")+Field(" NUMPAGES ","3"))));
+        var pushed=Udf(Footer("Page number after a tab",Aligned("center","<w:r><w:tab/></w:r>"+Field(" PAGE ","1"))));
+        var right=Udf(Footer("Right page number",Aligned("right",Field(" PAGE ","1")+Plain("/")+Field(" NUMPAGES ","3"))));
+        check(Setting(centred,"spec")=="BSP32_2088"&&Setting(pushed,"spec")=="BSP32_72"&&Setting(right,"spec")=="BSP32_2120","A page number lost its place: "+Setting(centred,"spec")+", "+Setting(pushed,"spec")+", "+Setting(right,"spec"));
+        // UYAP draws one page number, so a footer's wins over a header's, whichever part the section lists first.
+        var both=Path.Combine(root,"Header and footer page numbers.docx");
+        using(var zip=ZipFile.Open(both,ZipArchiveMode.Create))
+        {
+            Entry(zip,"word/document.xml","<w:document "+w+"><w:body><w:p><w:r><w:t>Metin</w:t></w:r></w:p><w:sectPr><w:footerReference w:type=\"default\" r:id=\"rFooter\"/><w:headerReference w:type=\"default\" r:id=\"rHeader\"/></w:sectPr></w:body></w:document>");
+            Entry(zip,"word/_rels/document.xml.rels","<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rHeader\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/header\" Target=\"header1.xml\"/><Relationship Id=\"rFooter\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer\" Target=\"footer1.xml\"/></Relationships>");
+            Entry(zip,"word/header1.xml","<w:hdr "+w+"><w:p>"+Aligned("center",Plain("\u00DCst ")+Field(" PAGE ","1"))+"</w:p></w:hdr>");
+            Entry(zip,"word/footer1.xml","<w:ftr "+w+"><w:p>"+Plain("Sayfa ")+Field(" PAGE ","1")+Plain(" - ")+Field(" NUMPAGES ","3")+"</w:p></w:ftr>");
+        }
+        var bothUdf=Udf(both);
+        var plainFooter=Path.Combine(root,"Header page number over a plain footer.docx");File.Copy(both,plainFooter);
+        using(var zip=ZipFile.Open(plainFooter,ZipArchiveMode.Update)){zip.GetEntry("word/footer1.xml")!.Delete();Entry(zip,"word/footer1.xml","<w:ftr "+w+"><w:p>"+Plain("Dosya No: 2026/1")+"</w:p></w:ftr>");}
+        var plainUdf=Udf(plainFooter);
+        check(Validate(check,plainUdf)=="\u200B\nMetin\nDosya No: 2026/1\n"&&Setting(plainUdf,"foreStr")=="Üst "&&Setting(plainUdf,"spec")=="BSP32_40","A header's page number was lost beside a footer without one: "+Setting(plainUdf,"foreStr")+"|"+Setting(plainUdf,"spec"));
+        check(Validate(check,bothUdf)=="\u200B\nMetin\n\u200B\n"&&Setting(bothUdf,"foreStr")=="Sayfa "&&Setting(bothUdf,"seperator")==" - "&&Setting(bothUdf,"spec")=="BSP32_2072","A header's page number won over the footer's: "+Setting(bothUdf,"foreStr")+"|"+Setting(bothUdf,"seperator")+"|"+Setting(bothUdf,"spec"));
+        // Word continues a list across the w:num instances of one abstract list. An instance with a start override restarts it, and the
+        // instances used after it go on from there. The labels are the ones Word 16 shows for these documents (ListFormat.ListString).
+        static string In(int num,int level,string words)=>"<w:p><w:pPr><w:numPr><w:ilvl w:val=\""+level+"\"/><w:numId w:val=\""+num+"\"/></w:numPr></w:pPr><w:r><w:t>"+words+"</w:t></w:r></w:p>";
+        string Listed(string name,string overrides,string body)
+        {
+            var path=Path.Combine(root,name+".docx");
+            using(var zip=ZipFile.Open(path,ZipArchiveMode.Create))
+            {
+                Entry(zip,"word/document.xml","<w:document "+w+"><w:body>"+body+"</w:body></w:document>");
+                Entry(zip,"word/numbering.xml","<w:numbering "+w+"><w:abstractNum w:abstractNumId=\"0\"><w:lvl w:ilvl=\"0\"><w:start w:val=\"1\"/><w:numFmt w:val=\"decimal\"/><w:lvlText w:val=\"%1.\"/></w:lvl><w:lvl w:ilvl=\"1\"><w:start w:val=\"1\"/><w:numFmt w:val=\"lowerLetter\"/><w:lvlText w:val=\"%2)\"/></w:lvl></w:abstractNum>"
+                    +"<w:num w:numId=\"1\"><w:abstractNumId w:val=\"0\"/></w:num><w:num w:numId=\"2\"><w:abstractNumId w:val=\"0\"/>"+overrides+"</w:num></w:numbering>");
+            }
+            return Validate(check,Udf(path));
+        }
+        var shared=Listed("Two instances of one list","",In(1,0,"A")+In(1,0,"B")+"<w:p><w:r><w:t>x</w:t></w:r></w:p>"+In(2,0,"C")+In(2,0,"D")+In(1,0,"E"));
+        var restarted=Listed("Instance with a start override","<w:lvlOverride w:ilvl=\"0\"><w:startOverride w:val=\"1\"/></w:lvlOverride>",In(1,0,"A")+In(1,0,"B")+In(2,0,"C")+In(2,0,"D")+In(1,0,"E"));
+        var levels=Listed("Instances across levels","",In(1,0,"A")+In(1,1,"B")+In(2,1,"C")+In(2,0,"D")+In(1,1,"E"));
+        check(shared=="1.\tA\n2.\tB\nx\n3.\tC\n4.\tD\n5.\tE\n"&&restarted=="1.\tA\n2.\tB\n1.\tC\n2.\tD\n3.\tE\n"&&levels=="1.\tA\na)\tB\nb)\tC\n2.\tD\na)\tE\n","List numbers across instances of one list differ from Word's: "+shared+"|"+restarted+"|"+levels);
         var repeated=new StringBuilder(begin+"<w:r>"+page+separate+"</w:r>");var chunk="<w:r><w:instrText xml:space=\"preserve\"> "+new string('x',19)+"</w:instrText>"+separate+"<w:t>1</w:t></w:r>";
         for(var n=0;n<40_000;n++)repeated.Append(chunk);
         var repeatedDocx=Footer("Repeated separates",repeated.Append(end).ToString());var timer=System.Diagnostics.Stopwatch.StartNew();var many=Udf(repeatedDocx);var seconds=timer.Elapsed.TotalSeconds;
