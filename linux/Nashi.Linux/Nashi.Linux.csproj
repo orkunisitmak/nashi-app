@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>Nashi.Linux</RootNamespace>
+    <AssemblyName>nashi</AssemblyName>
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <PublishSingleFile>false</PublishSingleFile>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <ApplicationIcon />
+    <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../windows/Nashi.Core/Nashi.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.22" />
+    <PackageReference Include="bblanchon.PDFium.Linux" Version="155.0.8044" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="../../Resources/Brand/NashiIcon.png" LogicalName="Nashi.Icon.png" />
+    <EmbeddedResource Include="../../Resources/Brand/NashiMark.png" LogicalName="Nashi.Mark.png" />
+    <EmbeddedResource Include="../../Resources/Brand/NashiMarkHappy.png" LogicalName="Nashi.MarkHappy.png" />
+    <Content Include="../../Resources/PagesInterop.js" Link="PagesInterop.js" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../scripts/pages-windows.js" Link="pages-windows.js" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../packaging/**" Link="packaging/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../Resources/Brand/NashiIcon.png" Link="packaging/nashi.png" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
