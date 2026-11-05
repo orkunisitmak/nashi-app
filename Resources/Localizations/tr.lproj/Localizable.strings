@@ -490,6 +490,8 @@
 "CLARITY" = "NETLİK";
 "CLEAR" = "TEMİZLE";
 "CLEAR FLOAT" = "YÜZEN PENCEREYİ TEMİZLE";
+"CLEAR HISTORY" = "GEÇMİŞİ TEMİZLE";
+"CLEAR LIBRARY HISTORY?" = "KİTAPLIK GEÇMİŞİ TEMİZLENSİN Mİ?";
 "CLEAR SELECTION" = "SEÇİMİ TEMİZLE";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "PANO MEŞGUL. TEKRAR DENE.";
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "PANO MEŞGUL. YENİDEN YAPIŞTIRMAYI DENE.";
@@ -689,7 +691,9 @@
 "Clarity" = "Netlik";
 "Clear" = "Temizle";
 "Clear Float" = "Yüzen Pencereyi Temizle";
+"Clear Library history?" = "Kitaplık geçmişi temizlensin mi?";
 "Clear Selection" = "Seçimi Temizle";
+"Clear history" = "Geçmişi temizle";
 "Clip %@" = "Klip %@";
 "Clip %lld" = "Klip %lld";
 "Clipboard is busy. Try Paste again." = "Pano meşgul. Yeniden yapıştırmayı dene.";
@@ -1372,6 +1376,7 @@
 "LET’S MAKE SOMETHING OF IT." = "HADİ YENİ BİR ŞEY YAPALIM.";
 "LET’S TRY THAT AGAIN." = "BİR DAHA DENEYELİM.";
 "LIBRARY" = "KİTAPLIK";
+"LIBRARY HISTORY COULD NOT BE SAVED." = "KİTAPLIK GEÇMİŞİ KAYDEDİLEMEDİ.";
 "LIBRARY IS TOO LARGE." = "KİTAPLIK ÇOK BÜYÜK.";
 "LIBREOFFICE 26.8.1 ENABLES OFFICE DOCUMENT CONVERSIONS. A 285 MB DOWNLOAD; ABOUT 1 GB INSTALLED. MPL 2.0 AND ITS INCLUDED THIRD-PARTY LICENSES." = "LIBREOFFICE 26.8.1, OFFICE BELGELERİNİ DÖNÜŞTÜRMEYİ SAĞLAR. İNDİRME 285 MB; KURULUM YAKLAŞIK 1 GB. MPL 2.0 VE İÇERDİĞİ ÜÇÜNCÜ TARAF LİSANSLARI GEÇERLİDİR.";
 "LIBREOFFICE 26.8.1 ENABLES OFFICE DOCUMENT CONVERSIONS. APPROXIMATELY 360 MB TO DOWNLOAD. MPL 2.0 AND ITS INCLUDED THIRD-PARTY LICENSES." = "LIBREOFFICE 26.8.1, OFFICE BELGELERİNİ DÖNÜŞTÜRMEYİ SAĞLAR. İNDİRME YAKLAŞIK 360 MB. MPL 2.0 VE İÇERDİĞİ ÜÇÜNCÜ TARAF LİSANSLARI GEÇERLİDİR.";
@@ -1404,6 +1409,7 @@
 "Let’s make something of it." = "Hadi yeni bir şey yapalım.";
 "Let’s try that again." = "Bir daha deneyelim.";
 "Library" = "Kitaplık";
+"Library history could not be saved." = "Kitaplık geçmişi kaydedilemedi.";
 "Library is too large." = "Kitaplık çok büyük.";
 "LibreOffice 26.8.1 enables Office document conversions. A 285 MB download; about 1 GB installed. MPL 2.0 and its included third-party licenses." = "LibreOffice 26.8.1, Office belgelerini dönüştürmeyi sağlar. İndirme 285 MB; kurulum yaklaşık 1 GB. MPL 2.0 ve içerdiği üçüncü taraf lisansları geçerlidir.";
 "LibreOffice 26.8.1 enables Office document conversions. Approximately 360 MB to download. MPL 2.0 and its included third-party licenses." = "LibreOffice 26.8.1, Office belgelerini dönüştürmeyi sağlar. İndirme yaklaşık 360 MB. MPL 2.0 ve içerdiği üçüncü taraf lisansları geçerlidir.";
@@ -1934,6 +1940,7 @@
 "REMOVE BACKGROUND" = "ARKA PLANI KALDIR";
 "REMOVE CLIPS (NUMBERS; SEPARATED BY SEMICOLONS)" = "ÇIKARILACAK KLİPLER (NUMARA; NOKTALI VİRGÜLLE AYIR)";
 "REMOVE FROM FLOAT" = "YÜZEN PENCEREDEN KALDIR";
+"REMOVE FROM HISTORY" = "GEÇMİŞTEN KALDIR";
 "REMOVE FROM SELECTION" = "SEÇİMDEN KALDIR";
 "REMOVE IMAGE" = "GÖRSELİ KALDIR";
 "REMOVE METADATA" = "META VERİLERİ KALDIR";
@@ -2009,6 +2016,7 @@
 "Remove all metadata" = "Tüm meta verileri kaldır";
 "Remove clips (numbers; separated by semicolons)" = "Çıkarılacak klipler (numara; noktalı virgülle ayır)";
 "Remove from Float" = "Yüzen Pencereden Kaldır";
+"Remove from history" = "Geçmişten kaldır";
 "Remove from selection" = "Seçimden kaldır";
 "Remove selected area" = "Seçili alanı kaldır";
 "Remove selected range" = "Seçili aralığı kaldır";
@@ -2454,6 +2462,7 @@
 "THIS PDF REQUIRES A VALID PASSWORD." = "BU PDF İÇİN GEÇERLİ BİR PAROLA GEREKİYOR.";
 "THIS POST CONTAINS VIDEOS, NOT PHOTOS. USE ITS REEL LINK TO DOWNLOAD VIDEO." = "BU GÖNDERİDE FOTOĞRAF DEĞİL, VİDEO VAR. VİDEOYU İNDİRMEK İÇİN GÖNDERİNİN REEL BAĞLANTISINI KULLAN.";
 "THIS POST CONTAINS VIDEOS. USE ITS REEL LINK TO DOWNLOAD VIDEO." = "BU GÖNDERİDE VİDEO VAR. VİDEOYU İNDİRMEK İÇİN REEL BAĞLANTISINI KULLAN.";
+"THIS REMOVES HISTORY ENTRIES. YOUR FILES STAY ON DISK." = "BU İŞLEM GEÇMİŞ KAYITLARINI KALDIRIR. DOSYALARIN DİSKTE KALIR.";
 "THIS REPOSITORY IS PRIVATE" = "BU DEPO GİZLİ";
 "THIS RTFD ATTACHMENT SYNTAX COULD NOT BE PRESERVED." = "BU RTFD EKİNİN YAPISI KORUNAMADI.";
 "THIS SIZE CANNOT BE REACHED. CHOOSE A LARGER TARGET OR SMALLER DIMENSIONS." = "BU BOYUTA İNİLEMİYOR. DAHA BÜYÜK BİR HEDEF VEYA DAHA KÜÇÜK BOYUTLAR SEÇ.";
@@ -2629,6 +2638,7 @@
 "This output format has no adjustable conversion defaults." = "Bu çıktı biçiminin ayarlanabilir dönüştürme tercihi yok.";
 "This post contains videos, not photos. Use its Reel link to download video." = "Bu gönderide fotoğraf değil, video var. Videoyu indirmek için gönderinin Reel bağlantısını kullan.";
 "This post contains videos. Use its Reel link to download video." = "Bu gönderide video var. Videoyu indirmek için Reel bağlantısını kullan.";
+"This removes history entries. Your files stay on disk." = "Bu işlem geçmiş kayıtlarını kaldırır. Dosyaların diskte kalır.";
 "This repository is private" = "Bu depo gizli";
 "This size cannot be reached. Choose a larger target or smaller dimensions." = "Bu boyuta inilemiyor. Daha büyük bir hedef veya daha küçük boyutlar seç.";
 "This source uses more than 32-bit integer audio. Choose an output bit depth in settings." = "Bu kaynak 32 bitten yüksek tam sayı ses kullanıyor. Ayarlardan bir çıkış bit derinliği seç.";

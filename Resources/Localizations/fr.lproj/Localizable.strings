@@ -490,6 +490,8 @@
 "CLARITY" = "CLARTÉ";
 "CLEAR" = "EFFACER";
 "CLEAR FLOAT" = "VIDER LE FLOAT";
+"CLEAR HISTORY" = "EFFACER L’HISTORIQUE";
+"CLEAR LIBRARY HISTORY?" = "EFFACER L’HISTORIQUE DE LA BIBLIOTHÈQUE ?";
 "CLEAR SELECTION" = "EFFACER LA SÉLECTION";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "LE PRESSE-PAPIERS EST OCCUPÉ. RÉESSAYEZ.";
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "LE PRESSE-PAPIERS EST OCCUPÉ. RÉESSAYEZ DE COLLER.";
@@ -689,7 +691,9 @@
 "Clarity" = "Clarté";
 "Clear" = "Effacer";
 "Clear Float" = "Vider le Float";
+"Clear Library history?" = "Effacer l’historique de la bibliothèque ?";
 "Clear Selection" = "Effacer la sélection";
+"Clear history" = "Effacer l’historique";
 "Clip %@" = "Clip %@";
 "Clip %lld" = "Clip %lld";
 "Clipboard is busy. Try Paste again." = "Le presse-papiers est occupé. Réessayez de coller.";
@@ -1372,6 +1376,7 @@
 "LET’S MAKE SOMETHING OF IT." = "FAISONS-EN QUELQUE CHOSE.";
 "LET’S TRY THAT AGAIN." = "RÉESSAYONS.";
 "LIBRARY" = "BIBLIOTHÈQUE";
+"LIBRARY HISTORY COULD NOT BE SAVED." = "L’HISTORIQUE DE LA BIBLIOTHÈQUE N’A PAS PU ÊTRE ENREGISTRÉ.";
 "LIBRARY IS TOO LARGE." = "LA BIBLIOTHÈQUE EST TROP VOLUMINEUSE.";
 "LIBREOFFICE 26.8.1 ENABLES OFFICE DOCUMENT CONVERSIONS. A 285 MB DOWNLOAD; ABOUT 1 GB INSTALLED. MPL 2.0 AND ITS INCLUDED THIRD-PARTY LICENSES." = "LIBREOFFICE 26.8.1 PERMET LES CONVERSIONS DE DOCUMENTS OFFICE. TÉLÉCHARGEMENT DE 285 MO ; ENVIRON 1 GO UNE FOIS INSTALLÉ. MPL 2.0 ET LES LICENCES TIERCES INCLUSES.";
 "LIBREOFFICE 26.8.1 ENABLES OFFICE DOCUMENT CONVERSIONS. APPROXIMATELY 360 MB TO DOWNLOAD. MPL 2.0 AND ITS INCLUDED THIRD-PARTY LICENSES." = "LIBREOFFICE 26.8.1 PERMET LES CONVERSIONS DE DOCUMENTS OFFICE. ENVIRON 360 MO À TÉLÉCHARGER. MPL 2.0 ET LES LICENCES TIERCES INCLUSES.";
@@ -1404,6 +1409,7 @@
 "Let’s make something of it." = "Faisons-en quelque chose.";
 "Let’s try that again." = "Réessayons.";
 "Library" = "Bibliothèque";
+"Library history could not be saved." = "L’historique de la bibliothèque n’a pas pu être enregistré.";
 "Library is too large." = "La bibliothèque est trop volumineuse.";
 "LibreOffice 26.8.1 enables Office document conversions. A 285 MB download; about 1 GB installed. MPL 2.0 and its included third-party licenses." = "LibreOffice 26.8.1 permet les conversions de documents Office. Téléchargement de 285 Mo ; environ 1 Go une fois installé. MPL 2.0 et les licences tierces incluses.";
 "LibreOffice 26.8.1 enables Office document conversions. Approximately 360 MB to download. MPL 2.0 and its included third-party licenses." = "LibreOffice 26.8.1 permet les conversions de documents Office. Environ 360 Mo à télécharger. MPL 2.0 et les licences tierces incluses.";
@@ -1934,6 +1940,7 @@
 "REMOVE BACKGROUND" = "SUPPRIMER L’ARRIÈRE-PLAN";
 "REMOVE CLIPS (NUMBERS; SEPARATED BY SEMICOLONS)" = "SUPPRIMER DES CLIPS (NUMÉROS ; SÉPARÉS PAR DES POINTS-VIRGULES)";
 "REMOVE FROM FLOAT" = "RETIRER DE FLOAT";
+"REMOVE FROM HISTORY" = "RETIRER DE L’HISTORIQUE";
 "REMOVE FROM SELECTION" = "RETIRER DE LA SÉLECTION";
 "REMOVE IMAGE" = "RETIRER L’IMAGE";
 "REMOVE METADATA" = "SUPPRIMER LES MÉTADONNÉES";
@@ -2009,6 +2016,7 @@
 "Remove all metadata" = "Supprimer toutes les métadonnées";
 "Remove clips (numbers; separated by semicolons)" = "Supprimer des clips (numéros ; séparés par des points-virgules)";
 "Remove from Float" = "Retirer de Float";
+"Remove from history" = "Retirer de l’historique";
 "Remove from selection" = "Retirer de la sélection";
 "Remove selected area" = "Retirer la zone sélectionnée";
 "Remove selected range" = "Retirer la plage sélectionnée";
@@ -2454,6 +2462,7 @@
 "THIS PDF REQUIRES A VALID PASSWORD." = "CE PDF NÉCESSITE UN MOT DE PASSE VALIDE.";
 "THIS POST CONTAINS VIDEOS, NOT PHOTOS. USE ITS REEL LINK TO DOWNLOAD VIDEO." = "CETTE PUBLICATION CONTIENT DES VIDÉOS, PAS DES PHOTOS. UTILISEZ SON LIEN REEL POUR TÉLÉCHARGER LA VIDÉO.";
 "THIS POST CONTAINS VIDEOS. USE ITS REEL LINK TO DOWNLOAD VIDEO." = "CETTE PUBLICATION CONTIENT DES VIDÉOS. UTILISEZ SON LIEN REEL POUR TÉLÉCHARGER LA VIDÉO.";
+"THIS REMOVES HISTORY ENTRIES. YOUR FILES STAY ON DISK." = "LES ENTRÉES DE L’HISTORIQUE SERONT SUPPRIMÉES. VOS FICHIERS RESTENT SUR LE DISQUE.";
 "THIS REPOSITORY IS PRIVATE" = "CE DÉPÔT EST PRIVÉ";
 "THIS RTFD ATTACHMENT SYNTAX COULD NOT BE PRESERVED." = "CETTE SYNTAXE DE PIÈCE JOINTE RTFD N’A PAS PU ÊTRE PRÉSERVÉE.";
 "THIS SIZE CANNOT BE REACHED. CHOOSE A LARGER TARGET OR SMALLER DIMENSIONS." = "CETTE TAILLE EST IMPOSSIBLE À ATTEINDRE. CHOISISSEZ UNE CIBLE PLUS GRANDE OU DES DIMENSIONS PLUS PETITES.";
@@ -2629,6 +2638,7 @@
 "This output format has no adjustable conversion defaults." = "Ce format de sortie n’a pas de réglages de conversion modifiables.";
 "This post contains videos, not photos. Use its Reel link to download video." = "Cette publication contient des vidéos, pas des photos. Utilisez son lien Reel pour télécharger la vidéo.";
 "This post contains videos. Use its Reel link to download video." = "Cette publication contient des vidéos. Utilisez son lien Reel pour télécharger la vidéo.";
+"This removes history entries. Your files stay on disk." = "Les entrées de l’historique seront supprimées. Vos fichiers restent sur le disque.";
 "This repository is private" = "Ce dépôt est privé";
 "This size cannot be reached. Choose a larger target or smaller dimensions." = "Cette taille est impossible à atteindre. Choisissez une cible plus grande ou des dimensions plus petites.";
 "This source uses more than 32-bit integer audio. Choose an output bit depth in settings." = "Cette source utilise un audio entier de plus de 32 bits. Choisissez une profondeur de bits de sortie dans les réglages.";

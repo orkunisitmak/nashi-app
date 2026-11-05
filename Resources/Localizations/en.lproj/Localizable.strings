@@ -490,6 +490,8 @@
 "CLARITY" = "CLARITY";
 "CLEAR" = "CLEAR";
 "CLEAR FLOAT" = "CLEAR FLOAT";
+"CLEAR HISTORY" = "CLEAR HISTORY";
+"CLEAR LIBRARY HISTORY?" = "CLEAR LIBRARY HISTORY?";
 "CLEAR SELECTION" = "CLEAR SELECTION";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "CLIPBOARD IS BUSY. TRY AGAIN.";
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "CLIPBOARD IS BUSY. TRY PASTE AGAIN.";
@@ -689,7 +691,9 @@
 "Clarity" = "Clarity";
 "Clear" = "Clear";
 "Clear Float" = "Clear Float";
+"Clear Library history?" = "Clear Library history?";
 "Clear Selection" = "Clear Selection";
+"Clear history" = "Clear history";
 "Clip %@" = "Clip %@";
 "Clip %lld" = "Clip %lld";
 "Clipboard is busy. Try Paste again." = "Clipboard is busy. Try Paste again.";
@@ -1372,6 +1376,7 @@
 "LET’S MAKE SOMETHING OF IT." = "LET’S MAKE SOMETHING OF IT.";
 "LET’S TRY THAT AGAIN." = "LET’S TRY THAT AGAIN.";
 "LIBRARY" = "LIBRARY";
+"LIBRARY HISTORY COULD NOT BE SAVED." = "LIBRARY HISTORY COULD NOT BE SAVED.";
 "LIBRARY IS TOO LARGE." = "LIBRARY IS TOO LARGE.";
 "LIBREOFFICE 26.8.1 ENABLES OFFICE DOCUMENT CONVERSIONS. A 285 MB DOWNLOAD; ABOUT 1 GB INSTALLED. MPL 2.0 AND ITS INCLUDED THIRD-PARTY LICENSES." = "LIBREOFFICE 26.8.1 ENABLES OFFICE DOCUMENT CONVERSIONS. A 285 MB DOWNLOAD; ABOUT 1 GB INSTALLED. MPL 2.0 AND ITS INCLUDED THIRD-PARTY LICENSES.";
 "LIBREOFFICE 26.8.1 ENABLES OFFICE DOCUMENT CONVERSIONS. APPROXIMATELY 360 MB TO DOWNLOAD. MPL 2.0 AND ITS INCLUDED THIRD-PARTY LICENSES." = "LIBREOFFICE 26.8.1 ENABLES OFFICE DOCUMENT CONVERSIONS. APPROXIMATELY 360 MB TO DOWNLOAD. MPL 2.0 AND ITS INCLUDED THIRD-PARTY LICENSES.";
@@ -1404,6 +1409,7 @@
 "Let’s make something of it." = "Let’s make something of it.";
 "Let’s try that again." = "Let’s try that again.";
 "Library" = "Library";
+"Library history could not be saved." = "Library history could not be saved.";
 "Library is too large." = "Library is too large.";
 "LibreOffice 26.8.1 enables Office document conversions. A 285 MB download; about 1 GB installed. MPL 2.0 and its included third-party licenses." = "LibreOffice 26.8.1 enables Office document conversions. A 285 MB download; about 1 GB installed. MPL 2.0 and its included third-party licenses.";
 "LibreOffice 26.8.1 enables Office document conversions. Approximately 360 MB to download. MPL 2.0 and its included third-party licenses." = "LibreOffice 26.8.1 enables Office document conversions. Approximately 360 MB to download. MPL 2.0 and its included third-party licenses.";
@@ -1934,6 +1940,7 @@
 "REMOVE BACKGROUND" = "REMOVE BACKGROUND";
 "REMOVE CLIPS (NUMBERS; SEPARATED BY SEMICOLONS)" = "REMOVE CLIPS (NUMBERS; SEPARATED BY SEMICOLONS)";
 "REMOVE FROM FLOAT" = "REMOVE FROM FLOAT";
+"REMOVE FROM HISTORY" = "REMOVE FROM HISTORY";
 "REMOVE FROM SELECTION" = "REMOVE FROM SELECTION";
 "REMOVE IMAGE" = "REMOVE IMAGE";
 "REMOVE METADATA" = "REMOVE METADATA";
@@ -2009,6 +2016,7 @@
 "Remove all metadata" = "Remove all metadata";
 "Remove clips (numbers; separated by semicolons)" = "Remove clips (numbers; separated by semicolons)";
 "Remove from Float" = "Remove from Float";
+"Remove from history" = "Remove from history";
 "Remove from selection" = "Remove from selection";
 "Remove selected area" = "Remove selected area";
 "Remove selected range" = "Remove selected range";
@@ -2454,6 +2462,7 @@
 "THIS PDF REQUIRES A VALID PASSWORD." = "THIS PDF REQUIRES A VALID PASSWORD.";
 "THIS POST CONTAINS VIDEOS, NOT PHOTOS. USE ITS REEL LINK TO DOWNLOAD VIDEO." = "THIS POST CONTAINS VIDEOS, NOT PHOTOS. USE ITS REEL LINK TO DOWNLOAD VIDEO.";
 "THIS POST CONTAINS VIDEOS. USE ITS REEL LINK TO DOWNLOAD VIDEO." = "THIS POST CONTAINS VIDEOS. USE ITS REEL LINK TO DOWNLOAD VIDEO.";
+"THIS REMOVES HISTORY ENTRIES. YOUR FILES STAY ON DISK." = "THIS REMOVES HISTORY ENTRIES. YOUR FILES STAY ON DISK.";
 "THIS REPOSITORY IS PRIVATE" = "THIS REPOSITORY IS PRIVATE";
 "THIS RTFD ATTACHMENT SYNTAX COULD NOT BE PRESERVED." = "THIS RTFD ATTACHMENT SYNTAX COULD NOT BE PRESERVED.";
 "THIS SIZE CANNOT BE REACHED. CHOOSE A LARGER TARGET OR SMALLER DIMENSIONS." = "THIS SIZE CANNOT BE REACHED. CHOOSE A LARGER TARGET OR SMALLER DIMENSIONS.";
@@ -2629,6 +2638,7 @@
 "This output format has no adjustable conversion defaults." = "This output format has no adjustable conversion defaults.";
 "This post contains videos, not photos. Use its Reel link to download video." = "This post contains videos, not photos. Use its Reel link to download video.";
 "This post contains videos. Use its Reel link to download video." = "This post contains videos. Use its Reel link to download video.";
+"This removes history entries. Your files stay on disk." = "This removes history entries. Your files stay on disk.";
 "This repository is private" = "This repository is private";
 "This size cannot be reached. Choose a larger target or smaller dimensions." = "This size cannot be reached. Choose a larger target or smaller dimensions.";
 "This source uses more than 32-bit integer audio. Choose an output bit depth in settings." = "This source uses more than 32-bit integer audio. Choose an output bit depth in settings.";

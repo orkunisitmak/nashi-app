@@ -1432,5 +1432,10 @@
   "YouTube thumbnail · best available full-size image": "YouTube küçük resmi · en iyi tam boyutlu görsel",
   "No tools for this file type": "Bu dosya türü için araç yok",
   "Details": "Ayrıntılar",
-  "Copy details": "Ayrıntıları kopyala"
+  "Copy details": "Ayrıntıları kopyala",
+  "Clear history": "Geçmişi temizle",
+  "Clear Library history?": "Kitaplık geçmişi temizlensin mi?",
+  "This removes history entries. Your files stay on disk.": "Bu işlem geçmiş kayıtlarını kaldırır. Dosyaların diskte kalır.",
+  "Remove from history": "Geçmişten kaldır",
+  "Library history could not be saved.": "Kitaplık geçmişi kaydedilemedi."
 }

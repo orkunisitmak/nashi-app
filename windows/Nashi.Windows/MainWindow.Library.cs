@@ -33,6 +33,21 @@ public sealed partial class MainWindow
         var remove=new FrameworkElementFactory(typeof(Button));remove.SetValue(ContentControl.ContentProperty,"×");remove.SetValue(Control.PaddingProperty,new Thickness(4,0,4,0));remove.SetValue(Control.BorderThicknessProperty,new Thickness(0));remove.SetValue(FrameworkElement.ToolTipProperty,L10n.Text("Remove from selection"));remove.SetBinding(FrameworkElement.TagProperty,new System.Windows.Data.Binding());remove.AddHandler(System.Windows.Controls.Button.ClickEvent,new RoutedEventHandler((sender,e)=>{if(sender is Button{Tag:string path}){files.Remove(path);Refresh();e.Handled=true;}}));row.AppendChild(remove);
         list.ItemTemplate=new DataTemplate{VisualTree=border};list.ItemContainerStyle=new Style(typeof(ListBoxItem),(Style)Application.Current.FindResource(typeof(ListBoxItem)));list.ItemContainerStyle.Setters.Add(new Setter(Control.PaddingProperty,new Thickness(0)));list.ItemContainerStyle.Setters.Add(new Setter(FrameworkElement.MarginProperty,new Thickness(0,3,6,0)));
     }
+    private void RemoveLibraryEntry(Guid id)
+    {
+        if(busy)return;
+        var position=Array.FindIndex(SearchLibrary(search.Text).ToArray(),e=>e.Id==id);
+        try{library.Remove(id);RenderLibrary();
+            if(LibraryVisible){var entries=SearchLibrary(search.Text).ToArray();if(entries.Length>0&&libraryCards.TryGetValue(entries[Math.Clamp(position,0,entries.Length-1)].Id,out var card)){SelectCard(entries[Math.Clamp(position,0,entries.Length-1)].Id);card.Focus();card.BringIntoView();}else search.Focus();}
+            else recentSearch.Focus();
+        }catch(Exception error)when(error is IOException or UnauthorizedAccessException){L10n.SetText(status,"Library history could not be saved.");}
+    }
+    private void ClearLibraryHistory()
+    {
+        if(busy||library.Entries.Count==0)return;
+        if(MessageBox.Show(this,L10n.Text("This removes history entries. Your files stay on disk."),L10n.Text("Clear Library history?"),MessageBoxButton.OKCancel,MessageBoxImage.Question)!=MessageBoxResult.OK)return;
+        try{library.Clear();RenderLibrary();search.Focus();}catch(Exception error)when(error is IOException or UnauthorizedAccessException){L10n.SetText(status,"Library history could not be saved.");}
+    }
     private void ConfigureLibraryRow(Border card,LibraryEntry entry)
     {
         libraryCards[entry.Id]=card;card.Tag=entry;card.Focusable=true;card.ToolTip=L10n.Text("Space: preview · Enter: use in Nashi");
