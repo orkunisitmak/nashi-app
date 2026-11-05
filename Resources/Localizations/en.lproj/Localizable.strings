@@ -826,6 +826,7 @@
 "DISMISS PREVIEW ERROR" = "DISMISS PREVIEW ERROR";
 "DOCUMENT XML IS TOO LARGE." = "DOCUMENT XML IS TOO LARGE.";
 "DOCUMENTS" = "DOCUMENTS";
+"DON'T SHOW THIS AGAIN" = "DON'T SHOW THIS AGAIN";
 "DONE" = "DONE";
 "DOWNLOAD" = "DOWNLOAD";
 "DOWNLOAD A LINK" = "DOWNLOAD A LINK";
@@ -907,6 +908,7 @@
 "Dismiss preview error" = "Dismiss preview error";
 "Document XML is too large." = "Document XML is too large.";
 "Documents" = "Documents";
+"Don't show this again" = "Don't show this again";
 "Done" = "Done";
 "Download" = "Download";
 "Download Audio" = "Download Audio";
@@ -1078,6 +1080,7 @@
 "FIND A RECENT FILE" = "FIND A RECENT FILE";
 "FIND IN LIBRARY…" = "FIND IN LIBRARY…";
 "FIND MEDIA" = "FIND MEDIA";
+"FINDER WILL RESTART" = "FINDER WILL RESTART";
 "FINDING THE MEDIA…" = "FINDING THE MEDIA…";
 "FINE-GRAINED ACCESS TOKEN" = "FINE-GRAINED ACCESS TOKEN";
 "FINE-TUNE" = "FINE-TUNE";
@@ -1155,6 +1158,7 @@
 "Find a recent file" = "Find a recent file";
 "Find in Library…" = "Find in Library…";
 "Find media" = "Find media";
+"Finder will restart" = "Finder will restart";
 "Finding the media…" = "Finding the media…";
 "Fine-grained access token" = "Fine-grained access token";
 "Fine-tune" = "Fine-tune";
@@ -2131,11 +2135,14 @@
 "SHARPNESS" = "SHARPNESS";
 "SHIFT LOCKS THE RATIO · RETURN CROPS\nDRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE." = "SHIFT LOCKS THE RATIO · RETURN CROPS\nDRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE.";
 "SHIFT TO CONVERT" = "SHIFT TO CONVERT";
+"SHOW HIDDEN FILES" = "SHOW HIDDEN FILES";
+"SHOW HIDDEN FILES TOGGLE IN THE MENU BAR" = "SHOW HIDDEN FILES TOGGLE IN THE MENU BAR";
 "SHOW IN EXPLORER" = "SHOW IN EXPLORER";
 "SHOW IN FINDER" = "SHOW IN FINDER";
 "SHOW LESS" = "SHOW LESS";
 "SHOW NASHI IN FINDER" = "SHOW NASHI IN FINDER";
 "SHOW ORIGINAL" = "SHOW ORIGINAL";
+"SHOWING OR HIDING HIDDEN FILES RESTARTS FINDER. FILE TRANSFERS IN PROGRESS WILL BE INTERRUPTED." = "SHOWING OR HIDING HIDDEN FILES RESTARTS FINDER. FILE TRANSFERS IN PROGRESS WILL BE INTERRUPTED.";
 "SILENCE THRESHOLD" = "SILENCE THRESHOLD";
 "SKIP TOUR" = "SKIP TOUR";
 "SLIDES" = "SLIDES";
@@ -2300,12 +2307,15 @@
 "Shift to convert" = "Shift to convert";
 "Show %@ in Finder" = "Show %@ in Finder";
 "Show %lld in Finder" = "Show %lld in Finder";
+"Show Hidden Files" = "Show Hidden Files";
 "Show Nashi in Finder" = "Show Nashi in Finder";
 "Show Original" = "Show Original";
+"Show hidden files toggle in the menu bar" = "Show hidden files toggle in the menu bar";
 "Show in Explorer" = "Show in Explorer";
 "Show in Finder" = "Show in Finder";
 "Show less" = "Show less";
 "Show original" = "Show original";
+"Showing or hiding hidden files restarts Finder. File transfers in progress will be interrupted." = "Showing or hiding hidden files restarts Finder. File transfers in progress will be interrupted.";
 "Silence threshold" = "Silence threshold";
 "Skip tour" = "Skip tour";
 "Slides" = "Slides";

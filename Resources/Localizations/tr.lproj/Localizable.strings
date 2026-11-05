@@ -826,6 +826,7 @@
 "DISMISS PREVIEW ERROR" = "ÖNİZLEME HATASINI KAPAT";
 "DOCUMENT XML IS TOO LARGE." = "BELGE XML'İ ÇOK BÜYÜK.";
 "DOCUMENTS" = "BELGELER";
+"DON'T SHOW THIS AGAIN" = "BİR DAHA GÖSTERME";
 "DONE" = "BİTTİ";
 "DOWNLOAD" = "İNDİR";
 "DOWNLOAD A LINK" = "BAĞLANTIDAN İNDİR";
@@ -907,6 +908,7 @@
 "Dismiss preview error" = "Önizleme hatasını kapat";
 "Document XML is too large." = "Belge XML'i çok büyük.";
 "Documents" = "Belgeler";
+"Don't show this again" = "Bir daha gösterme";
 "Done" = "Bitti";
 "Download" = "İndir";
 "Download Audio" = "Sesi İndir";
@@ -1078,6 +1080,7 @@
 "FIND A RECENT FILE" = "SON DOSYALARDA ARA";
 "FIND IN LIBRARY…" = "KİTAPLIKTA ARA…";
 "FIND MEDIA" = "MEDYAYI BUL";
+"FINDER WILL RESTART" = "FINDER YENİDEN BAŞLATILACAK";
 "FINDING THE MEDIA…" = "MEDYA BULUNUYOR…";
 "FINE-GRAINED ACCESS TOKEN" = "AYRINTILI ERİŞİM TOKENI";
 "FINE-TUNE" = "İNCE AYAR";
@@ -1155,6 +1158,7 @@
 "Find a recent file" = "Son dosyalarda ara";
 "Find in Library…" = "Kitaplıkta Ara…";
 "Find media" = "Medyayı bul";
+"Finder will restart" = "Finder yeniden başlatılacak";
 "Finding the media…" = "Medya bulunuyor…";
 "Fine-grained access token" = "Ayrıntılı erişim tokenı";
 "Fine-tune" = "İnce ayar";
@@ -2131,11 +2135,14 @@
 "SHARPNESS" = "KESKİNLİK";
 "SHIFT LOCKS THE RATIO · RETURN CROPS\nDRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE." = "SHIFT ORANI KİLİTLER · ENTER KIRPAR\nTAŞIMAK İÇİN ALANIN İÇİNİ, BOYUTLANDIRMAK İÇİN TUTAMAĞI SÜRÜKLE.";
 "SHIFT TO CONVERT" = "DÖNÜŞTÜRMEK İÇİN SHIFT";
+"SHOW HIDDEN FILES" = "GİZLİ DOSYALARI GÖSTER";
+"SHOW HIDDEN FILES TOGGLE IN THE MENU BAR" = "GİZLİ DOSYALAR TUŞUNU ÜST BARDA GÖSTER";
 "SHOW IN EXPLORER" = "DOSYA GEZGİNİ'NDE GÖSTER";
 "SHOW IN FINDER" = "FINDER'DA GÖSTER";
 "SHOW LESS" = "DAHA AZ GÖSTER";
 "SHOW NASHI IN FINDER" = "NASHI'Yİ FINDER'DA GÖSTER";
 "SHOW ORIGINAL" = "ORİJİNALİ GÖSTER";
+"SHOWING OR HIDING HIDDEN FILES RESTARTS FINDER. FILE TRANSFERS IN PROGRESS WILL BE INTERRUPTED." = "GİZLİ DOSYALARI GÖSTERMEK VEYA GİZLEMEK FINDER'I YENİDEN BAŞLATIR. DEVAM EDEN DOSYA AKTARIMLARI YARIDA KALIR.";
 "SILENCE THRESHOLD" = "SESSİZLİK EŞİĞİ";
 "SKIP TOUR" = "TURU GEÇ";
 "SLIDES" = "SUNUMLAR";
@@ -2300,12 +2307,15 @@
 "Shift to convert" = "Dönüştürmek için Shift";
 "Show %@ in Finder" = "%@ öğesini Finder'da göster";
 "Show %lld in Finder" = "%lld öğesini Finder'da göster";
+"Show Hidden Files" = "Gizli Dosyaları Göster";
 "Show Nashi in Finder" = "Nashi'yi Finder'da Göster";
 "Show Original" = "Orijinali Göster";
+"Show hidden files toggle in the menu bar" = "Gizli dosyalar tuşunu üst barda göster";
 "Show in Explorer" = "Dosya Gezgini'nde Göster";
 "Show in Finder" = "Finder'da Göster";
 "Show less" = "Daha az göster";
 "Show original" = "Orijinali göster";
+"Showing or hiding hidden files restarts Finder. File transfers in progress will be interrupted." = "Gizli dosyaları göstermek veya gizlemek Finder'ı yeniden başlatır. Devam eden dosya aktarımları yarıda kalır.";
 "Silence threshold" = "Sessizlik eşiği";
 "Skip tour" = "Turu geç";
 "Slides" = "Sunumlar";
