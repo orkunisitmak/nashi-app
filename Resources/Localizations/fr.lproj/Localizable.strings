@@ -495,6 +495,7 @@
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "LE PRESSE-PAPIERS EST OCCUPÉ. RÉESSAYEZ DE COLLER.";
 "CLOSE" = "FERMER";
 "CLOSE FLOAT WITHOUT DELETING FILES" = "FERMER FLOAT SANS SUPPRIMER LES FICHIERS";
+"CLOSE NASHI'S OPEN WINDOW FIRST." = "FERMEZ D’ABORD LA FENÊTRE OUVERTE DE NASHI.";
 "CLOSE WINDOW" = "FERMER LA FENÊTRE";
 "COLLAPSE FLOAT" = "RÉDUIRE FLOAT";
 "COLOR" = "COULEUR";
@@ -696,6 +697,7 @@
 "Clipboard is busy. Try again." = "Le presse-papiers est occupé. Réessayez.";
 "Close" = "Fermer";
 "Close Float without deleting files" = "Fermer Float sans supprimer les fichiers";
+"Close Nashi's open window first." = "Fermez d’abord la fenêtre ouverte de Nashi.";
 "Close Window" = "Fermer la fenêtre";
 "Collapse Float" = "Réduire Float";
 "Color" = "Couleur";
@@ -1519,6 +1521,7 @@
 "NASHI ACTIONS WHEEL" = "ROUE DES ACTIONS SUR LES FICHIERS NASHI";
 "NASHI CHECKS ONCE AN HOUR WHILE IT’S RUNNING. YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL." = "NASHI VÉRIFIE UNE FOIS PAR HEURE PENDANT SON EXÉCUTION. VOUS CHOISISSEZ QUAND TÉLÉCHARGER ET INSTALLER.";
 "NASHI CONVERT WHEEL" = "ROUE DE CONVERSION NASHI";
+"NASHI COULD NOT CAPTURE THE SCREEN." = "NASHI N’A PAS PU CAPTURER L’ÉCRAN.";
 "NASHI IS ALREADY RUNNING BUT IS STILL STARTING. OPEN IT FROM THE SYSTEM TRAY OR TRY AGAIN IN A MOMENT." = "NASHI EST DÉJÀ OUVERT MAIS DÉMARRE ENCORE. OUVREZ-LE DEPUIS LA ZONE DE NOTIFICATION OU RÉESSAYEZ DANS UN INSTANT.";
 "NASHI IS STILL RUNNING." = "NASHI EST TOUJOURS EN COURS D’EXÉCUTION.";
 "NASHI SAVES RESULTS BESIDE THE ORIGINALS. ALLOW A FOLDER ONCE TO INCLUDE EVERY FOLDER INSIDE IT." = "NASHI ENREGISTRE LES RÉSULTATS À CÔTÉ DES ORIGINAUX. AUTORISEZ UN DOSSIER UNE SEULE FOIS POUR INCLURE TOUS LES DOSSIERS QU’IL CONTIENT.";
@@ -1547,6 +1550,7 @@
 "NO OUTPUT WAS PRODUCED." = "AUCUNE SORTIE N’A ÉTÉ PRODUITE.";
 "NO PUBLIC DOWNLOADABLE MEDIA FOUND. SOME SITES REQUIRE SIGN-IN OR DO NOT EXPOSE DOWNLOADABLE MEDIA." = "AUCUN MÉDIA PUBLIC TÉLÉCHARGEABLE TROUVÉ. CERTAINS SITES EXIGENT UNE CONNEXION OU N’EXPOSENT PAS DE MÉDIAS TÉLÉCHARGEABLES.";
 "NO QR CODES FOUND. TRY A LARGER OR SHARPER IMAGE." = "AUCUN CODE QR TROUVÉ. ESSAYEZ UNE IMAGE PLUS GRANDE OU PLUS NETTE.";
+"NO QR CODES ON YOUR SCREENS. BRING THE WHOLE CODE INTO VIEW, LARGER AND SHARPER." = "AUCUN CODE QR SUR VOS ÉCRANS. AFFICHEZ LE CODE EN ENTIER, PLUS GRAND ET PLUS NET.";
 "NO QR CODES THIS TIME." = "AUCUN CODE QR CETTE FOIS.";
 "NO READABLE TEXT WAS FOUND IN THIS TEXT CLIPPING." = "AUCUN TEXTE LISIBLE N’A ÉTÉ TROUVÉ DANS CE FRAGMENT.";
 "NO TEXT COULD BE EXTRACTED OR RECOGNIZED IN THIS PDF." = "AUCUN TEXTE N’A PU ÊTRE EXTRAIT OU RECONNU DANS CE PDF.";
@@ -1576,6 +1580,7 @@
 "Nashi actions wheel" = "Roue des actions sur les fichiers Nashi";
 "Nashi checks once an hour while it’s running. You choose when to download and install." = "Nashi vérifie une fois par heure pendant son exécution. Vous choisissez quand télécharger et installer.";
 "Nashi convert wheel" = "Roue de conversion Nashi";
+"Nashi could not capture the screen." = "Nashi n’a pas pu capturer l’écran.";
 "Nashi is already running but is still starting. Open it from the system tray or try again in a moment." = "Nashi est déjà ouvert mais démarre encore. Ouvrez-le depuis la zone de notification ou réessayez dans un instant.";
 "Nashi is still running." = "Nashi est toujours en cours d’exécution.";
 "Nashi saves results beside the originals. Allow a folder once to include every folder inside it." = "Nashi enregistre les résultats à côté des originaux. Autorisez un dossier une seule fois pour inclure tous les dossiers qu’il contient.";
@@ -1595,6 +1600,7 @@
 "Nicely done. %lld files are ready." = "Bien joué. %lld fichiers sont prêts.";
 "Nicely done. 1 file is ready." = "Bien joué. 1 fichier est prêt.";
 "No QR codes found. Try a larger or sharper image." = "Aucun code QR trouvé. Essayez une image plus grande ou plus nette.";
+"No QR codes on your screens. Bring the whole code into view, larger and sharper." = "Aucun code QR sur vos écrans. Affichez le code en entier, plus grand et plus net.";
 "No QR codes this time." = "Aucun code QR cette fois.";
 "No crop selected" = "Aucune zone de recadrage sélectionnée";
 "No downloadable media was found. Use the video's share link, or Copy Image Address for a photo." = "Aucun média téléchargeable n’a été trouvé. Utilisez le lien de partage de la vidéo, ou Copier l’adresse de l’image pour une photo.";
@@ -1642,6 +1648,7 @@
 "OFFICE TOOLS READY." = "OUTILS BUREAUTIQUES PRÊTS.";
 "OFFICIAL PUBLIC RELEASES · NO ACCOUNT OR TOKEN NEEDED" = "VERSIONS PUBLIQUES OFFICIELLES · AUCUN COMPTE NI JETON NÉCESSAIRE";
 "OK" = "OK";
+"ON SCREEN" = "À L’ÉCRAN";
 "ON YOUR MAC" = "SUR VOTRE MAC";
 "ON YOUR PC" = "SUR VOTRE PC";
 "ONE DOWNLOAD PER TOOL GROUP. NO ACCOUNT OR GITHUB TOKEN." = "UN TÉLÉCHARGEMENT PAR GROUPE D’OUTILS. AUCUN COMPTE NI JETON GITHUB.";
@@ -1686,6 +1693,7 @@
 "Office tools ready" = "Outils bureautiques prêts";
 "Office tools ready." = "Outils bureautiques prêts.";
 "Official public releases · No account or token needed" = "Versions publiques officielles · Aucun compte ni jeton nécessaire";
+"On screen" = "À l’écran";
 "On your Mac" = "Sur votre Mac";
 "On your PC" = "Sur votre PC";
 "One download per tool group. No account or GitHub token." = "Un téléchargement par groupe d’outils. Aucun compte ni jeton GitHub.";
@@ -2082,6 +2090,7 @@
 "SAVING IMAGES…" = "ENREGISTREMENT DES IMAGES…";
 "SCAN AGAIN" = "ANALYSER À NOUVEAU";
 "SCAN COMPLETE." = "ANALYSE TERMINÉE.";
+"SCAN QR CODES ON SCREEN" = "SCANNER LES CODES QR À L’ÉCRAN";
 "SEARCH FORMATS" = "RECHERCHER DES FORMATS";
 "SEARCH METADATA" = "RECHERCHER DANS LES MÉTADONNÉES";
 "SECONDS" = "SECONDES";
@@ -2245,6 +2254,7 @@
 "Saving frame %lld of %@…" = "Enregistrement de l’image %lld sur %@…";
 "Saving frame %lld of %lld…" = "Enregistrement de l’image %lld sur %lld…";
 "Saving images…" = "Enregistrement des images…";
+"Scan QR codes on screen" = "Scanner les codes QR à l’écran";
 "Scan again" = "Analyser à nouveau";
 "Scan complete." = "Analyse terminée.";
 "Search formats" = "Rechercher des formats";

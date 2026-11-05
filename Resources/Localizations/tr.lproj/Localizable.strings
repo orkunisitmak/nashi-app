@@ -495,6 +495,7 @@
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "PANO MEŞGUL. YENİDEN YAPIŞTIRMAYI DENE.";
 "CLOSE" = "KAPAT";
 "CLOSE FLOAT WITHOUT DELETING FILES" = "DOSYALARI SİLMEDEN FLOAT’I KAPAT";
+"CLOSE NASHI'S OPEN WINDOW FIRST." = "ÖNCE NASHI'NİN AÇIK PENCERESİNİ KAPAT.";
 "CLOSE WINDOW" = "PENCEREYİ KAPAT";
 "COLLAPSE FLOAT" = "FLOAT’I DARALT";
 "COLOR" = "RENK";
@@ -696,6 +697,7 @@
 "Clipboard is busy. Try again." = "Pano meşgul. Tekrar dene.";
 "Close" = "Kapat";
 "Close Float without deleting files" = "Dosyaları silmeden Float’ı kapat";
+"Close Nashi's open window first." = "Önce Nashi'nin açık penceresini kapat.";
 "Close Window" = "Pencereyi Kapat";
 "Collapse Float" = "Float’ı daralt";
 "Color" = "Renk";
@@ -1519,6 +1521,7 @@
 "NASHI ACTIONS WHEEL" = "NASHI DOSYA İŞLEMLERİ ÇARKI";
 "NASHI CHECKS ONCE AN HOUR WHILE IT’S RUNNING. YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL." = "NASHI ÇALIŞIRKEN SAATTE BİR DENETLER. İNDİRME VE KURULUM ZAMANINI SEN SEÇERSİN.";
 "NASHI CONVERT WHEEL" = "NASHI DÖNÜŞTÜRME ÇARKI";
+"NASHI COULD NOT CAPTURE THE SCREEN." = "NASHI EKRANI YAKALAYAMADI.";
 "NASHI IS ALREADY RUNNING BUT IS STILL STARTING. OPEN IT FROM THE SYSTEM TRAY OR TRY AGAIN IN A MOMENT." = "NASHI ZATEN ÇALIŞIYOR AMA HÂLÂ AÇILIYOR. SİSTEM TEPSİSİNDEN AÇ VEYA BİRAZDAN TEKRAR DENE.";
 "NASHI IS STILL RUNNING." = "NASHI HÂLÂ ÇALIŞIYOR.";
 "NASHI SAVES RESULTS BESIDE THE ORIGINALS. ALLOW A FOLDER ONCE TO INCLUDE EVERY FOLDER INSIDE IT." = "NASHI SONUÇLARI ORİJİNALLERİN YANINA KAYDEDER. BİR KLASÖRE VERİLEN İZİN, İÇİNDEKİ KLASÖRLERİ DE KAPSAR.";
@@ -1547,6 +1550,7 @@
 "NO OUTPUT WAS PRODUCED." = "ÇIKTI OLUŞMADI.";
 "NO PUBLIC DOWNLOADABLE MEDIA FOUND. SOME SITES REQUIRE SIGN-IN OR DO NOT EXPOSE DOWNLOADABLE MEDIA." = "HERKESE AÇIK, İNDİRİLEBİLİR MEDYA BULUNAMADI. BAZI SİTELER GİRİŞ GEREKTİRİR VEYA MEDYAYI İNDİRMEYE AÇMAZ.";
 "NO QR CODES FOUND. TRY A LARGER OR SHARPER IMAGE." = "QR KODU BULUNAMADI. DAHA BÜYÜK VEYA DAHA NET BİR GÖRSEL DENE.";
+"NO QR CODES ON YOUR SCREENS. BRING THE WHOLE CODE INTO VIEW, LARGER AND SHARPER." = "EKRANLARINDA QR KODU YOK. KODUN TAMAMINI GÖRÜNÜR, DAHA BÜYÜK VE NET HÂLE GETİR.";
 "NO QR CODES THIS TIME." = "QR KODU BULUNAMADI.";
 "NO READABLE TEXT WAS FOUND IN THIS TEXT CLIPPING." = "BU METİN KIRPINTISINDA OKUNABİLİR METİN BULUNAMADI.";
 "NO TEXT COULD BE EXTRACTED OR RECOGNIZED IN THIS PDF." = "BU PDF'DEN METİN ÇIKARILAMADI VEYA TANINAMADI.";
@@ -1576,6 +1580,7 @@
 "Nashi actions wheel" = "Nashi dosya işlemleri çarkı";
 "Nashi checks once an hour while it’s running. You choose when to download and install." = "Nashi çalışırken saatte bir denetler. İndirme ve kurulum zamanını sen seçersin.";
 "Nashi convert wheel" = "Nashi dönüştürme çarkı";
+"Nashi could not capture the screen." = "Nashi ekranı yakalayamadı.";
 "Nashi is already running but is still starting. Open it from the system tray or try again in a moment." = "Nashi zaten çalışıyor ama hâlâ açılıyor. Sistem tepsisinden aç veya birazdan tekrar dene.";
 "Nashi is still running." = "Nashi hâlâ çalışıyor.";
 "Nashi saves results beside the originals. Allow a folder once to include every folder inside it." = "Nashi sonuçları orijinallerin yanına kaydeder. Bir klasöre verilen izin, içindeki klasörleri de kapsar.";
@@ -1595,6 +1600,7 @@
 "Nicely done. %lld files are ready." = "Hazır! %lld dosyan hazır.";
 "Nicely done. 1 file is ready." = "Hazır! 1 dosyan hazır.";
 "No QR codes found. Try a larger or sharper image." = "QR kodu bulunamadı. Daha büyük veya daha net bir görsel dene.";
+"No QR codes on your screens. Bring the whole code into view, larger and sharper." = "Ekranlarında QR kodu yok. Kodun tamamını görünür, daha büyük ve net hâle getir.";
 "No QR codes this time." = "QR kodu bulunamadı.";
 "No crop selected" = "Kırpma alanı seçilmedi";
 "No downloadable media was found. Use the video's share link, or Copy Image Address for a photo." = "İndirilebilir medya bulunamadı. Videonun paylaşım bağlantısını kullan; fotoğraf için görsel adresini kopyala.";
@@ -1642,6 +1648,7 @@
 "OFFICE TOOLS READY." = "OFİS ARAÇLARI HAZIR.";
 "OFFICIAL PUBLIC RELEASES · NO ACCOUNT OR TOKEN NEEDED" = "RESMİ HERKESE AÇIK SÜRÜMLER · HESAP VEYA TOKEN GEREKMEZ";
 "OK" = "TAMAM";
+"ON SCREEN" = "EKRANDA";
 "ON YOUR MAC" = "MAC'İNDE";
 "ON YOUR PC" = "BİLGİSAYARINDA";
 "ONE DOWNLOAD PER TOOL GROUP. NO ACCOUNT OR GITHUB TOKEN." = "HER ARAÇ GRUBU İÇİN BİR KEZ İNDİR. HESAP VEYA GITHUB TOKENI GEREKMEZ.";
@@ -1686,6 +1693,7 @@
 "Office tools ready" = "Ofis araçları hazır";
 "Office tools ready." = "Ofis araçları hazır.";
 "Official public releases · No account or token needed" = "Resmi herkese açık sürümler · Hesap veya token gerekmez";
+"On screen" = "Ekranda";
 "On your Mac" = "Mac'inde";
 "On your PC" = "Bilgisayarında";
 "One download per tool group. No account or GitHub token." = "Her araç grubu için bir kez indir. Hesap veya GitHub tokenı gerekmez.";
@@ -2082,6 +2090,7 @@
 "SAVING IMAGES…" = "GÖRSELLER KAYDEDİLİYOR…";
 "SCAN AGAIN" = "YENİDEN TARA";
 "SCAN COMPLETE." = "TARAMA TAMAMLANDI.";
+"SCAN QR CODES ON SCREEN" = "EKRANDAKİ QR KODLARINI TARA";
 "SEARCH FORMATS" = "BİÇİMLERDE ARA";
 "SEARCH METADATA" = "META VERİLERDE ARA";
 "SECONDS" = "SANİYE";
@@ -2245,6 +2254,7 @@
 "Saving frame %lld of %@…" = "Kare %lld/%@ kaydediliyor…";
 "Saving frame %lld of %lld…" = "Kare %lld/%lld kaydediliyor…";
 "Saving images…" = "Görseller kaydediliyor…";
+"Scan QR codes on screen" = "Ekrandaki QR kodlarını tara";
 "Scan again" = "Yeniden tara";
 "Scan complete." = "Tarama tamamlandı.";
 "Search formats" = "Biçimlerde ara";

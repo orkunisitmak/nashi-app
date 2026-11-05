@@ -41,6 +41,15 @@ public partial class App:Application
             catch(Exception error){failures.Add(error.ToString());}
             if(Interlocked.CompareExchange(ref finished,1,0)==0){Report(failures);Shutdown(failures.Count==0?0:1);}return;
         }
+        if(e.Args.Contains("--smoke-test-screen-qr"))
+        {
+            // Scan QR codes on screen alone: it shows a fixture window and keeps every capture in memory.
+            IsSmokeTest=true;ShutdownMode=ShutdownMode.OnExplicitShutdown;
+            var directory=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY")??Path.Combine(Path.GetTempPath(),"Nashi-ScreenQr-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(directory);
+            var checks=0;var failures=new List<string>();
+            try{ScreenQrChecks.Run((passed,message)=>{if(!passed)throw new Exception(message);checks++;});}catch(Exception error){failures.Add(error.ToString());}
+            File.WriteAllText(Path.Combine(directory,"screen-qr.json"),System.Text.Json.JsonSerializer.Serialize(new{checks,failures}));Shutdown(failures.Count==0?0:1);return;
+        }
         if(e.Args.Contains("--ui-audit"))
         {
             IsSmokeTest=true;ShutdownMode=ShutdownMode.OnExplicitShutdown;
