@@ -217,7 +217,8 @@ public enum ImageEngine {
             for index in xs.indices { parameters["inputPoint\(index)"] = CIVector(x:xs[index],y:ys[index]) }
             ci = ci.applyingFilter("CIToneCurve",parameters:parameters)
         }
-        if a.gamma != 1 { ci = ci.applyingFilter("CIGammaAdjust",parameters:["inputPower":max(0.1,min(5,a.gamma))]) }
+        // CIGammaAdjust computes in^power, so use 1/gamma to brighten above 1, as the Windows editor does.
+        if a.gamma != 1 { ci = ci.applyingFilter("CIGammaAdjust",parameters:["inputPower":1 / max(0.1,min(5,a.gamma))]) }
         if a.vibrance != 0 { ci = ci.applyingFilter("CIVibrance",parameters:["inputAmount":max(-1,min(1,a.vibrance))]) }
         if a.hue != 0 { ci = ci.applyingFilter("CIHueAdjust",parameters:["inputAngle":a.hue * .pi / 180]) }
         if a.dehaze != 0 { ci = colorControls(ci,parameters:[kCIInputContrastKey:1 + max(-1,min(1,a.dehaze))*0.65,kCIInputBrightnessKey:-a.dehaze*0.045,kCIInputSaturationKey:1+a.dehaze*0.12]) }
