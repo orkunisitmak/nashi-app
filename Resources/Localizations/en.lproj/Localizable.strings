@@ -214,6 +214,7 @@
 "ANNOTATE · NASHI" = "ANNOTATE · NASHI";
 "ANNOTATION CANVAS" = "ANNOTATION CANVAS";
 "ANNOTATION TEXT" = "ANNOTATION TEXT";
+"ANOTHER APP ALREADY USES THIS SHORTCUT. CHOOSE ANOTHER ONE." = "ANOTHER APP ALREADY USES THIS SHORTCUT. CHOOSE ANOTHER ONE.";
 "ANOTHER TASK IS RUNNING. YOUR LINK IS READY WHEN IT FINISHES." = "ANOTHER TASK IS RUNNING. YOUR LINK IS READY WHEN IT FINISHES.";
 "APPEARANCE" = "APPEARANCE";
 "APPEARANCE COULD NOT BE SAVED" = "APPEARANCE COULD NOT BE SAVED";
@@ -304,6 +305,7 @@
 "Annotate · Nashi" = "Annotate · Nashi";
 "Annotation canvas" = "Annotation canvas";
 "Annotation text" = "Annotation text";
+"Another app already uses this shortcut. Choose another one." = "Another app already uses this shortcut. Choose another one.";
 "Another task is running. Your link is ready when it finishes." = "Another task is running. Your link is ready when it finishes.";
 "Appearance" = "Appearance";
 "Appearance could not be saved" = "Appearance could not be saved";
@@ -495,6 +497,7 @@
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "CLIPBOARD IS BUSY. TRY PASTE AGAIN.";
 "CLOSE" = "CLOSE";
 "CLOSE FLOAT WITHOUT DELETING FILES" = "CLOSE FLOAT WITHOUT DELETING FILES";
+"CLOSE NASHI'S OPEN WINDOW FIRST." = "CLOSE NASHI'S OPEN WINDOW FIRST.";
 "CLOSE WINDOW" = "CLOSE WINDOW";
 "COLLAPSE FLOAT" = "COLLAPSE FLOAT";
 "COLOR" = "COLOR";
@@ -533,6 +536,7 @@
 "CONVERTING DOWNLOADED AUDIO…" = "CONVERTING DOWNLOADED AUDIO…";
 "COPIED ALL" = "COPIED ALL";
 "COPIED LINK" = "COPIED LINK";
+"COPIED TO THE CLIPBOARD. YOU CAN EDIT THE TEXT HERE AND COPY IT AGAIN." = "COPIED TO THE CLIPBOARD. YOU CAN EDIT THE TEXT HERE AND COPY IT AGAIN.";
 "COPY" = "COPY";
 "COPY A FILE, SOME TEXT, AN IMAGE OR A PUBLIC MEDIA LINK FIRST." = "COPY A FILE, SOME TEXT, AN IMAGE OR A PUBLIC MEDIA LINK FIRST.";
 "COPY A LINK → ⌃⇧D, OR DRAG IT WITH ⌘." = "COPY A LINK → ⌃⇧D, OR DRAG IT WITH ⌘.";
@@ -543,6 +547,7 @@
 "COPY DETAILS" = "COPY DETAILS";
 "COPY LINK" = "COPY LINK";
 "COPY PATH" = "COPY PATH";
+"COPY TEXT FROM SCREEN" = "COPY TEXT FROM SCREEN";
 "CORNER RADIUS" = "CORNER RADIUS";
 "CORNERS" = "CORNERS";
 "COULD NOT COPY THE QR CODE." = "COULD NOT COPY THE QR CODE.";
@@ -696,6 +701,7 @@
 "Clipboard is busy. Try again." = "Clipboard is busy. Try again.";
 "Close" = "Close";
 "Close Float without deleting files" = "Close Float without deleting files";
+"Close Nashi's open window first." = "Close Nashi's open window first.";
 "Close Window" = "Close Window";
 "Collapse Float" = "Collapse Float";
 "Color" = "Color";
@@ -756,6 +762,7 @@
 "Converting downloaded audio…" = "Converting downloaded audio…";
 "Copied all" = "Copied all";
 "Copied link" = "Copied link";
+"Copied to the clipboard. You can edit the text here and copy it again." = "Copied to the clipboard. You can edit the text here and copy it again.";
 "Copy" = "Copy";
 "Copy Path" = "Copy Path";
 "Copy a file, some text, an image or a public media link first." = "Copy a file, some text, an image or a public media link first.";
@@ -767,6 +774,7 @@
 "Copy details" = "Copy details";
 "Copy link" = "Copy link";
 "Copy path" = "Copy path";
+"Copy text from screen" = "Copy text from screen";
 "Corner radius" = "Corner radius";
 "Corners" = "Corners";
 "Could not copy the QR code." = "Could not copy the QR code.";
@@ -870,6 +878,7 @@
 "DRAG EITHER EDGE TO RESIZE THE RANGE, OR DRAG ITS MIDDLE TO MOVE IT." = "DRAG EITHER EDGE TO RESIZE THE RANGE, OR DRAG ITS MIDDLE TO MOVE IT.";
 "DRAG INSIDE TO MOVE. DRAG NEAR A CORNER TO RESIZE. DRAG OUTSIDE TO START A NEW SELECTION." = "DRAG INSIDE TO MOVE. DRAG NEAR A CORNER TO RESIZE. DRAG OUTSIDE TO START A NEW SELECTION.";
 "DRAG ON THE PREVIEW TO ADD AN AREA. EACH AREA IS SAVED INTO THE NEW COPY." = "DRAG ON THE PREVIEW TO ADD AN AREA. EACH AREA IS SAVED INTO THE NEW COPY.";
+"DRAG OVER THE TEXT TO COPY · ESC TO CANCEL" = "DRAG OVER THE TEXT TO COPY · ESC TO CANCEL";
 "DRAG SHORTCUTS" = "DRAG SHORTCUTS";
 "DRAG THE STACK TO CARRY ALL FILES. DRAG THE PAPERCLIP TO MOVE FLOAT." = "DRAG THE STACK TO CARRY ALL FILES. DRAG THE PAPERCLIP TO MOVE FLOAT.";
 "DRAG TO DRAW WITH THE SELECTED TOOL. USE SELECT / MOVE TO EDIT AN EXISTING ANNOTATION." = "DRAG TO DRAW WITH THE SELECTED TOOL. USE SELECT / MOVE TO EDIT AN EXISTING ANNOTATION.";
@@ -963,6 +972,7 @@
 "Drag either edge to resize the range, or drag its middle to move it." = "Drag either edge to resize the range, or drag its middle to move it.";
 "Drag inside to move. Drag near a corner to resize. Drag outside to start a new selection." = "Drag inside to move. Drag near a corner to resize. Drag outside to start a new selection.";
 "Drag on the preview to add an area. Each area is saved into the new copy." = "Drag on the preview to add an area. Each area is saved into the new copy.";
+"Drag over the text to copy · Esc to cancel" = "Drag over the text to copy · Esc to cancel";
 "Drag shortcuts" = "Drag shortcuts";
 "Drag the stack to carry all files. Drag the paperclip to move Float." = "Drag the stack to carry all files. Drag the paperclip to move Float.";
 "Drag to draw with the selected tool. Use Select / Move to edit an existing annotation." = "Drag to draw with the selected tool. Use Select / Move to edit an existing annotation.";
@@ -1519,6 +1529,7 @@
 "NASHI ACTIONS WHEEL" = "NASHI ACTIONS WHEEL";
 "NASHI CHECKS ONCE AN HOUR WHILE IT’S RUNNING. YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL." = "NASHI CHECKS ONCE AN HOUR WHILE IT’S RUNNING. YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL.";
 "NASHI CONVERT WHEEL" = "NASHI CONVERT WHEEL";
+"NASHI COULD NOT CAPTURE THE SCREEN." = "NASHI COULD NOT CAPTURE THE SCREEN.";
 "NASHI IS ALREADY RUNNING BUT IS STILL STARTING. OPEN IT FROM THE SYSTEM TRAY OR TRY AGAIN IN A MOMENT." = "NASHI IS ALREADY RUNNING BUT IS STILL STARTING. OPEN IT FROM THE SYSTEM TRAY OR TRY AGAIN IN A MOMENT.";
 "NASHI IS STILL RUNNING." = "NASHI IS STILL RUNNING.";
 "NASHI SAVES RESULTS BESIDE THE ORIGINALS. ALLOW A FOLDER ONCE TO INCLUDE EVERY FOLDER INSIDE IT." = "NASHI SAVES RESULTS BESIDE THE ORIGINALS. ALLOW A FOLDER ONCE TO INCLUDE EVERY FOLDER INSIDE IT.";
@@ -1547,9 +1558,11 @@
 "NO OUTPUT WAS PRODUCED." = "NO OUTPUT WAS PRODUCED.";
 "NO PUBLIC DOWNLOADABLE MEDIA FOUND. SOME SITES REQUIRE SIGN-IN OR DO NOT EXPOSE DOWNLOADABLE MEDIA." = "NO PUBLIC DOWNLOADABLE MEDIA FOUND. SOME SITES REQUIRE SIGN-IN OR DO NOT EXPOSE DOWNLOADABLE MEDIA.";
 "NO QR CODES FOUND. TRY A LARGER OR SHARPER IMAGE." = "NO QR CODES FOUND. TRY A LARGER OR SHARPER IMAGE.";
+"NO QR CODES ON YOUR SCREENS. BRING THE WHOLE CODE INTO VIEW, LARGER AND SHARPER." = "NO QR CODES ON YOUR SCREENS. BRING THE WHOLE CODE INTO VIEW, LARGER AND SHARPER.";
 "NO QR CODES THIS TIME." = "NO QR CODES THIS TIME.";
 "NO READABLE TEXT WAS FOUND IN THIS TEXT CLIPPING." = "NO READABLE TEXT WAS FOUND IN THIS TEXT CLIPPING.";
 "NO TEXT COULD BE EXTRACTED OR RECOGNIZED IN THIS PDF." = "NO TEXT COULD BE EXTRACTED OR RECOGNIZED IN THIS PDF.";
+"NO TEXT FOUND IN THE SELECTED AREA. SELECT A LARGER AREA OR ZOOM IN FIRST." = "NO TEXT FOUND IN THE SELECTED AREA. SELECT A LARGER AREA OR ZOOM IN FIRST.";
 "NO TIMED SUBTITLE CUES WERE FOUND IN THIS FILE." = "NO TIMED SUBTITLE CUES WERE FOUND IN THIS FILE.";
 "NO TIMED SUBTITLE CUES WERE FOUND." = "NO TIMED SUBTITLE CUES WERE FOUND.";
 "NO TOOLS FOR THIS FILE TYPE" = "NO TOOLS FOR THIS FILE TYPE";
@@ -1576,6 +1589,7 @@
 "Nashi actions wheel" = "Nashi actions wheel";
 "Nashi checks once an hour while it’s running. You choose when to download and install." = "Nashi checks once an hour while it’s running. You choose when to download and install.";
 "Nashi convert wheel" = "Nashi convert wheel";
+"Nashi could not capture the screen." = "Nashi could not capture the screen.";
 "Nashi is already running but is still starting. Open it from the system tray or try again in a moment." = "Nashi is already running but is still starting. Open it from the system tray or try again in a moment.";
 "Nashi is still running." = "Nashi is still running.";
 "Nashi saves results beside the originals. Allow a folder once to include every folder inside it." = "Nashi saves results beside the originals. Allow a folder once to include every folder inside it.";
@@ -1595,6 +1609,7 @@
 "Nicely done. %lld files are ready." = "Nicely done. %lld files are ready.";
 "Nicely done. 1 file is ready." = "Nicely done. 1 file is ready.";
 "No QR codes found. Try a larger or sharper image." = "No QR codes found. Try a larger or sharper image.";
+"No QR codes on your screens. Bring the whole code into view, larger and sharper." = "No QR codes on your screens. Bring the whole code into view, larger and sharper.";
 "No QR codes this time." = "No QR codes this time.";
 "No crop selected" = "No crop selected";
 "No downloadable media was found. Use the video's share link, or Copy Image Address for a photo." = "No downloadable media was found. Use the video's share link, or Copy Image Address for a photo.";
@@ -1616,6 +1631,7 @@
 "No public downloadable media found. Some sites require sign-in or do not expose downloadable media." = "No public downloadable media found. Some sites require sign-in or do not expose downloadable media.";
 "No readable text was found in this text clipping." = "No readable text was found in this text clipping.";
 "No text could be extracted or recognized in this PDF." = "No text could be extracted or recognized in this PDF.";
+"No text found in the selected area. Select a larger area or zoom in first." = "No text found in the selected area. Select a larger area or zoom in first.";
 "No timed subtitle cues were found in this file." = "No timed subtitle cues were found in this file.";
 "No timed subtitle cues were found." = "No timed subtitle cues were found.";
 "No tools for this file type" = "No tools for this file type";
@@ -1632,6 +1648,7 @@
 "Nothing here yet. Paste something or make your first fresh copy." = "Nothing here yet. Paste something or make your first fresh copy.";
 "Number" = "Number";
 "Number of clips" = "Number of clips";
+"OFF" = "OFF";
 "OFFICE CABINET IS MISSING A FILE." = "OFFICE CABINET IS MISSING A FILE.";
 "OFFICE CHECKSUM MISMATCH. NOTHING WAS INSTALLED." = "OFFICE CHECKSUM MISMATCH. NOTHING WAS INSTALLED.";
 "OFFICE DID NOT FINISH CONVERTING THIS DOCUMENT WITHIN 5 MINUTES. TRY AGAIN, OR CANCEL AND CHOOSE ANOTHER FORMAT." = "OFFICE DID NOT FINISH CONVERTING THIS DOCUMENT WITHIN 5 MINUTES. TRY AGAIN, OR CANCEL AND CHOOSE ANOTHER FORMAT.";
@@ -1642,6 +1659,7 @@
 "OFFICE TOOLS READY." = "OFFICE TOOLS READY.";
 "OFFICIAL PUBLIC RELEASES · NO ACCOUNT OR TOKEN NEEDED" = "OFFICIAL PUBLIC RELEASES · NO ACCOUNT OR TOKEN NEEDED";
 "OK" = "OK";
+"ON SCREEN" = "ON SCREEN";
 "ON YOUR MAC" = "ON YOUR MAC";
 "ON YOUR PC" = "ON YOUR PC";
 "ONE DOWNLOAD PER TOOL GROUP. NO ACCOUNT OR GITHUB TOKEN." = "ONE DOWNLOAD PER TOOL GROUP. NO ACCOUNT OR GITHUB TOKEN.";
@@ -1655,6 +1673,7 @@
 "OPEN NASHI" = "OPEN NASHI";
 "OPEN PERMISSION SETTINGS…" = "OPEN PERMISSION SETTINGS…";
 "OPEN WHEEL" = "OPEN WHEEL";
+"OPENS A SMALL NASHI MENU AT THE CURSOR FROM ANY APP: COPY TEXT FROM SCREEN, SCAN QR CODES, USE A COPIED LINK OR OPEN NASHI." = "OPENS A SMALL NASHI MENU AT THE CURSOR FROM ANY APP: COPY TEXT FROM SCREEN, SCAN QR CODES, USE A COPIED LINK OR OPEN NASHI.";
 "OPTIONAL. YOU CAN CHANGE THIS IN SETTINGS." = "OPTIONAL. YOU CAN CHANGE THIS IN SETTINGS.";
 "ORGANIZE PDF" = "ORGANIZE PDF";
 "ORIGINAL" = "ORIGINAL";
@@ -1669,6 +1688,7 @@
 "OUTPUT FORMAT" = "OUTPUT FORMAT";
 "OUTPUT-ONLY FORMAT." = "OUTPUT-ONLY FORMAT.";
 "OWNER/REPOSITORY OR GITHUB URL" = "OWNER/REPOSITORY OR GITHUB URL";
+"Off" = "Off";
 "Office cabinet is missing a file." = "Office cabinet is missing a file.";
 "Office checksum mismatch. Nothing was installed." = "Office checksum mismatch. Nothing was installed.";
 "Office could not convert this document to %@. %@" = "Office could not convert this document to %@. %@";
@@ -1686,6 +1706,7 @@
 "Office tools ready" = "Office tools ready";
 "Office tools ready." = "Office tools ready.";
 "Official public releases · No account or token needed" = "Official public releases · No account or token needed";
+"On screen" = "On screen";
 "On your Mac" = "On your Mac";
 "On your PC" = "On your PC";
 "One download per tool group. No account or GitHub token." = "One download per tool group. No account or GitHub token.";
@@ -1701,6 +1722,7 @@
 "Open wheel" = "Open wheel";
 "Opened in %@." = "Opened in %@.";
 "Opened in %lld." = "Opened in %lld.";
+"Opens a small Nashi menu at the cursor from any app: copy text from screen, scan QR codes, use a copied link or open Nashi." = "Opens a small Nashi menu at the cursor from any app: copy text from screen, scan QR codes, use a copied link or open Nashi.";
 "Optional. You can change this in Settings." = "Optional. You can change this in Settings.";
 "Organize PDF" = "Organize PDF";
 "Original" = "Original";
@@ -1890,6 +1912,7 @@
 "QUALITY" = "QUALITY";
 "QUALITY (%)" = "QUALITY (%)";
 "QUICK LOOK" = "QUICK LOOK";
+"QUICK MENU SHORTCUT" = "QUICK MENU SHORTCUT";
 "QUICK PICKS" = "QUICK PICKS";
 "QUICK PREVIEW" = "QUICK PREVIEW";
 "QUIT NASHI" = "QUIT NASHI";
@@ -1897,6 +1920,7 @@
 "Quality (%)" = "Quality (%)";
 "Quick Look" = "Quick Look";
 "Quick Preview" = "Quick Preview";
+"Quick menu shortcut" = "Quick menu shortcut";
 "Quit Nashi" = "Quit Nashi";
 "READ QR CODES" = "READ QR CODES";
 "READ QR CODES · NASHI" = "READ QR CODES · NASHI";
@@ -2082,6 +2106,7 @@
 "SAVING IMAGES…" = "SAVING IMAGES…";
 "SCAN AGAIN" = "SCAN AGAIN";
 "SCAN COMPLETE." = "SCAN COMPLETE.";
+"SCAN QR CODES ON SCREEN" = "SCAN QR CODES ON SCREEN";
 "SEARCH FORMATS" = "SEARCH FORMATS";
 "SEARCH METADATA" = "SEARCH METADATA";
 "SECONDS" = "SECONDS";
@@ -2245,6 +2270,7 @@
 "Saving frame %lld of %@…" = "Saving frame %lld of %@…";
 "Saving frame %lld of %lld…" = "Saving frame %lld of %lld…";
 "Saving images…" = "Saving images…";
+"Scan QR codes on screen" = "Scan QR codes on screen";
 "Scan again" = "Scan again";
 "Scan complete." = "Scan complete.";
 "Search formats" = "Search formats";

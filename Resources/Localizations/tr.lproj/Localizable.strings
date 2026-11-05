@@ -214,6 +214,7 @@
 "ANNOTATE · NASHI" = "İŞARETLE · NASHI";
 "ANNOTATION CANVAS" = "İŞARETLEME TUVALİ";
 "ANNOTATION TEXT" = "İŞARET METNİ";
+"ANOTHER APP ALREADY USES THIS SHORTCUT. CHOOSE ANOTHER ONE." = "BU KISAYOLU BAŞKA BİR UYGULAMA KULLANIYOR. BAŞKA BİR TANE SEÇ.";
 "ANOTHER TASK IS RUNNING. YOUR LINK IS READY WHEN IT FINISHES." = "BAŞKA BİR İŞLEM SÜRÜYOR. İŞLEM BİTTİĞİNDE BAĞLANTIN HAZIR OLACAK.";
 "APPEARANCE" = "GÖRÜNÜM";
 "APPEARANCE COULD NOT BE SAVED" = "GÖRÜNÜM KAYDEDİLEMEDİ";
@@ -304,6 +305,7 @@
 "Annotate · Nashi" = "İşaretle · Nashi";
 "Annotation canvas" = "İşaretleme tuvali";
 "Annotation text" = "İşaret metni";
+"Another app already uses this shortcut. Choose another one." = "Bu kısayolu başka bir uygulama kullanıyor. Başka bir tane seç.";
 "Another task is running. Your link is ready when it finishes." = "Başka bir işlem sürüyor. İşlem bittiğinde bağlantın hazır olacak.";
 "Appearance" = "Görünüm";
 "Appearance could not be saved" = "Görünüm kaydedilemedi";
@@ -495,6 +497,7 @@
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "PANO MEŞGUL. YENİDEN YAPIŞTIRMAYI DENE.";
 "CLOSE" = "KAPAT";
 "CLOSE FLOAT WITHOUT DELETING FILES" = "DOSYALARI SİLMEDEN FLOAT’I KAPAT";
+"CLOSE NASHI'S OPEN WINDOW FIRST." = "ÖNCE NASHI'NİN AÇIK PENCERESİNİ KAPAT.";
 "CLOSE WINDOW" = "PENCEREYİ KAPAT";
 "COLLAPSE FLOAT" = "FLOAT’I DARALT";
 "COLOR" = "RENK";
@@ -533,6 +536,7 @@
 "CONVERTING DOWNLOADED AUDIO…" = "İNDİRİLEN SES DÖNÜŞTÜRÜLÜYOR…";
 "COPIED ALL" = "TÜMÜ KOPYALANDI";
 "COPIED LINK" = "KOPYALANAN BAĞLANTI";
+"COPIED TO THE CLIPBOARD. YOU CAN EDIT THE TEXT HERE AND COPY IT AGAIN." = "PANOYA KOPYALANDI. METNİ BURADA DÜZENLEYİP YENİDEN KOPYALAYABİLİRSİN.";
 "COPY" = "KOPYALA";
 "COPY A FILE, SOME TEXT, AN IMAGE OR A PUBLIC MEDIA LINK FIRST." = "ÖNCE BİR DOSYA, METİN, GÖRSEL VEYA HERKESE AÇIK BİR MEDYA BAĞLANTISI KOPYALA.";
 "COPY A LINK → ⌃⇧D, OR DRAG IT WITH ⌘." = "BAĞLANTIYI KOPYALA → ⌃⇧D VEYA ⌘ İLE SÜRÜKLE.";
@@ -543,6 +547,7 @@
 "COPY DETAILS" = "AYRINTILARI KOPYALA";
 "COPY LINK" = "BAĞLANTIYI KOPYALA";
 "COPY PATH" = "YOLU KOPYALA";
+"COPY TEXT FROM SCREEN" = "EKRANDAN METİN KOPYALA";
 "CORNER RADIUS" = "KÖŞE YUVARLAKLIĞI";
 "CORNERS" = "KÖŞELER";
 "COULD NOT COPY THE QR CODE." = "QR KODU KOPYALANAMADI.";
@@ -696,6 +701,7 @@
 "Clipboard is busy. Try again." = "Pano meşgul. Tekrar dene.";
 "Close" = "Kapat";
 "Close Float without deleting files" = "Dosyaları silmeden Float’ı kapat";
+"Close Nashi's open window first." = "Önce Nashi'nin açık penceresini kapat.";
 "Close Window" = "Pencereyi Kapat";
 "Collapse Float" = "Float’ı daralt";
 "Color" = "Renk";
@@ -756,6 +762,7 @@
 "Converting downloaded audio…" = "İndirilen ses dönüştürülüyor…";
 "Copied all" = "Tümü kopyalandı";
 "Copied link" = "Kopyalanan bağlantı";
+"Copied to the clipboard. You can edit the text here and copy it again." = "Panoya kopyalandı. Metni burada düzenleyip yeniden kopyalayabilirsin.";
 "Copy" = "Kopyala";
 "Copy Path" = "Yolu Kopyala";
 "Copy a file, some text, an image or a public media link first." = "Önce bir dosya, metin, görsel veya herkese açık bir medya bağlantısı kopyala.";
@@ -767,6 +774,7 @@
 "Copy details" = "Ayrıntıları kopyala";
 "Copy link" = "Bağlantıyı kopyala";
 "Copy path" = "Yolu kopyala";
+"Copy text from screen" = "Ekrandan metin kopyala";
 "Corner radius" = "Köşe yuvarlaklığı";
 "Corners" = "Köşeler";
 "Could not copy the QR code." = "QR kodu kopyalanamadı.";
@@ -870,6 +878,7 @@
 "DRAG EITHER EDGE TO RESIZE THE RANGE, OR DRAG ITS MIDDLE TO MOVE IT." = "ARALIĞI BOYUTLANDIRMAK İÇİN KENARLARINDAN BİRİNİ, TAŞIMAK İÇİN ORTASINI SÜRÜKLE.";
 "DRAG INSIDE TO MOVE. DRAG NEAR A CORNER TO RESIZE. DRAG OUTSIDE TO START A NEW SELECTION." = "TAŞIMAK İÇİN ALANIN İÇİNİ, BOYUTLANDIRMAK İÇİN KÖŞEYİ SÜRÜKLE. YENİ SEÇİM İÇİN ALANIN DIŞINDA SÜRÜKLE.";
 "DRAG ON THE PREVIEW TO ADD AN AREA. EACH AREA IS SAVED INTO THE NEW COPY." = "ALAN EKLEMEK İÇİN ÖNİZLEMEDE SÜRÜKLE. HER ALAN YENİ KOPYAYA İŞLENİR.";
+"DRAG OVER THE TEXT TO COPY · ESC TO CANCEL" = "KOPYALANACAK METNİN ÜZERİNDEN SÜRÜKLE · İPTAL İÇİN ESC";
 "DRAG SHORTCUTS" = "SÜRÜKLEME KISAYOLLARI";
 "DRAG THE STACK TO CARRY ALL FILES. DRAG THE PAPERCLIP TO MOVE FLOAT." = "TÜM DOSYALARI TAŞIMAK İÇİN YIĞINI, FLOAT’IN YERİNİ DEĞİŞTİRMEK İÇİN ATACI SÜRÜKLEYİN.";
 "DRAG TO DRAW WITH THE SELECTED TOOL. USE SELECT / MOVE TO EDIT AN EXISTING ANNOTATION." = "SEÇİLİ ARAÇLA ÇİZMEK İÇİN SÜRÜKLE. BİR İŞARETİ DÜZENLEMEK İÇİN SEÇ / TAŞI'YI KULLAN.";
@@ -963,6 +972,7 @@
 "Drag either edge to resize the range, or drag its middle to move it." = "Aralığı boyutlandırmak için kenarlarından birini, taşımak için ortasını sürükle.";
 "Drag inside to move. Drag near a corner to resize. Drag outside to start a new selection." = "Taşımak için alanın içini, boyutlandırmak için köşeyi sürükle. Yeni seçim için alanın dışında sürükle.";
 "Drag on the preview to add an area. Each area is saved into the new copy." = "Alan eklemek için önizlemede sürükle. Her alan yeni kopyaya işlenir.";
+"Drag over the text to copy · Esc to cancel" = "Kopyalanacak metnin üzerinden sürükle · İptal için Esc";
 "Drag shortcuts" = "Sürükleme kısayolları";
 "Drag the stack to carry all files. Drag the paperclip to move Float." = "Tüm dosyaları taşımak için yığını, Float’ın yerini değiştirmek için atacı sürükleyin.";
 "Drag to draw with the selected tool. Use Select / Move to edit an existing annotation." = "Seçili araçla çizmek için sürükle. Bir işareti düzenlemek için Seç / Taşı'yı kullan.";
@@ -1519,6 +1529,7 @@
 "NASHI ACTIONS WHEEL" = "NASHI DOSYA İŞLEMLERİ ÇARKI";
 "NASHI CHECKS ONCE AN HOUR WHILE IT’S RUNNING. YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL." = "NASHI ÇALIŞIRKEN SAATTE BİR DENETLER. İNDİRME VE KURULUM ZAMANINI SEN SEÇERSİN.";
 "NASHI CONVERT WHEEL" = "NASHI DÖNÜŞTÜRME ÇARKI";
+"NASHI COULD NOT CAPTURE THE SCREEN." = "NASHI EKRANI YAKALAYAMADI.";
 "NASHI IS ALREADY RUNNING BUT IS STILL STARTING. OPEN IT FROM THE SYSTEM TRAY OR TRY AGAIN IN A MOMENT." = "NASHI ZATEN ÇALIŞIYOR AMA HÂLÂ AÇILIYOR. SİSTEM TEPSİSİNDEN AÇ VEYA BİRAZDAN TEKRAR DENE.";
 "NASHI IS STILL RUNNING." = "NASHI HÂLÂ ÇALIŞIYOR.";
 "NASHI SAVES RESULTS BESIDE THE ORIGINALS. ALLOW A FOLDER ONCE TO INCLUDE EVERY FOLDER INSIDE IT." = "NASHI SONUÇLARI ORİJİNALLERİN YANINA KAYDEDER. BİR KLASÖRE VERİLEN İZİN, İÇİNDEKİ KLASÖRLERİ DE KAPSAR.";
@@ -1547,9 +1558,11 @@
 "NO OUTPUT WAS PRODUCED." = "ÇIKTI OLUŞMADI.";
 "NO PUBLIC DOWNLOADABLE MEDIA FOUND. SOME SITES REQUIRE SIGN-IN OR DO NOT EXPOSE DOWNLOADABLE MEDIA." = "HERKESE AÇIK, İNDİRİLEBİLİR MEDYA BULUNAMADI. BAZI SİTELER GİRİŞ GEREKTİRİR VEYA MEDYAYI İNDİRMEYE AÇMAZ.";
 "NO QR CODES FOUND. TRY A LARGER OR SHARPER IMAGE." = "QR KODU BULUNAMADI. DAHA BÜYÜK VEYA DAHA NET BİR GÖRSEL DENE.";
+"NO QR CODES ON YOUR SCREENS. BRING THE WHOLE CODE INTO VIEW, LARGER AND SHARPER." = "EKRANLARINDA QR KODU YOK. KODUN TAMAMINI GÖRÜNÜR, DAHA BÜYÜK VE NET HÂLE GETİR.";
 "NO QR CODES THIS TIME." = "QR KODU BULUNAMADI.";
 "NO READABLE TEXT WAS FOUND IN THIS TEXT CLIPPING." = "BU METİN KIRPINTISINDA OKUNABİLİR METİN BULUNAMADI.";
 "NO TEXT COULD BE EXTRACTED OR RECOGNIZED IN THIS PDF." = "BU PDF'DEN METİN ÇIKARILAMADI VEYA TANINAMADI.";
+"NO TEXT FOUND IN THE SELECTED AREA. SELECT A LARGER AREA OR ZOOM IN FIRST." = "SEÇİLEN ALANDA METİN BULUNAMADI. DAHA GENİŞ BİR ALAN SEÇ YA DA ÖNCE YAKINLAŞTIR.";
 "NO TIMED SUBTITLE CUES WERE FOUND IN THIS FILE." = "BU DOSYADA ZAMANLANMIŞ ALTYAZI SATIRI BULUNAMADI.";
 "NO TIMED SUBTITLE CUES WERE FOUND." = "ZAMANLANMIŞ ALTYAZI SATIRI BULUNAMADI.";
 "NO TOOLS FOR THIS FILE TYPE" = "BU DOSYA TÜRÜ İÇİN ARAÇ YOK";
@@ -1576,6 +1589,7 @@
 "Nashi actions wheel" = "Nashi dosya işlemleri çarkı";
 "Nashi checks once an hour while it’s running. You choose when to download and install." = "Nashi çalışırken saatte bir denetler. İndirme ve kurulum zamanını sen seçersin.";
 "Nashi convert wheel" = "Nashi dönüştürme çarkı";
+"Nashi could not capture the screen." = "Nashi ekranı yakalayamadı.";
 "Nashi is already running but is still starting. Open it from the system tray or try again in a moment." = "Nashi zaten çalışıyor ama hâlâ açılıyor. Sistem tepsisinden aç veya birazdan tekrar dene.";
 "Nashi is still running." = "Nashi hâlâ çalışıyor.";
 "Nashi saves results beside the originals. Allow a folder once to include every folder inside it." = "Nashi sonuçları orijinallerin yanına kaydeder. Bir klasöre verilen izin, içindeki klasörleri de kapsar.";
@@ -1595,6 +1609,7 @@
 "Nicely done. %lld files are ready." = "Hazır! %lld dosyan hazır.";
 "Nicely done. 1 file is ready." = "Hazır! 1 dosyan hazır.";
 "No QR codes found. Try a larger or sharper image." = "QR kodu bulunamadı. Daha büyük veya daha net bir görsel dene.";
+"No QR codes on your screens. Bring the whole code into view, larger and sharper." = "Ekranlarında QR kodu yok. Kodun tamamını görünür, daha büyük ve net hâle getir.";
 "No QR codes this time." = "QR kodu bulunamadı.";
 "No crop selected" = "Kırpma alanı seçilmedi";
 "No downloadable media was found. Use the video's share link, or Copy Image Address for a photo." = "İndirilebilir medya bulunamadı. Videonun paylaşım bağlantısını kullan; fotoğraf için görsel adresini kopyala.";
@@ -1616,6 +1631,7 @@
 "No public downloadable media found. Some sites require sign-in or do not expose downloadable media." = "Herkese açık, indirilebilir medya bulunamadı. Bazı siteler giriş gerektirir veya medyayı indirmeye açmaz.";
 "No readable text was found in this text clipping." = "Bu metin kırpıntısında okunabilir metin bulunamadı.";
 "No text could be extracted or recognized in this PDF." = "Bu PDF'den metin çıkarılamadı veya tanınamadı.";
+"No text found in the selected area. Select a larger area or zoom in first." = "Seçilen alanda metin bulunamadı. Daha geniş bir alan seç ya da önce yakınlaştır.";
 "No timed subtitle cues were found in this file." = "Bu dosyada zamanlanmış altyazı satırı bulunamadı.";
 "No timed subtitle cues were found." = "Zamanlanmış altyazı satırı bulunamadı.";
 "No tools for this file type" = "Bu dosya türü için araç yok";
@@ -1632,6 +1648,7 @@
 "Nothing here yet. Paste something or make your first fresh copy." = "Burada henüz bir şey yok. Bir dosya yapıştır veya ilk kopyanı oluştur.";
 "Number" = "Numara";
 "Number of clips" = "Klip sayısı";
+"OFF" = "KAPALI";
 "OFFICE CABINET IS MISSING A FILE." = "OFFICE PAKETİNDE BİR DOSYA EKSİK.";
 "OFFICE CHECKSUM MISMATCH. NOTHING WAS INSTALLED." = "OFFICE SAĞLAMA TOPLAMI EŞLEŞMİYOR. HİÇBİR ŞEY KURULMADI.";
 "OFFICE DID NOT FINISH CONVERTING THIS DOCUMENT WITHIN 5 MINUTES. TRY AGAIN, OR CANCEL AND CHOOSE ANOTHER FORMAT." = "OFFICE BU BELGEYİ 5 DAKİKA İÇİNDE DÖNÜŞTÜREMEDİ. YENİDEN DENE YA DA İPTAL EDİP BAŞKA BİR BİÇİM SEÇ.";
@@ -1642,6 +1659,7 @@
 "OFFICE TOOLS READY." = "OFİS ARAÇLARI HAZIR.";
 "OFFICIAL PUBLIC RELEASES · NO ACCOUNT OR TOKEN NEEDED" = "RESMİ HERKESE AÇIK SÜRÜMLER · HESAP VEYA TOKEN GEREKMEZ";
 "OK" = "TAMAM";
+"ON SCREEN" = "EKRANDA";
 "ON YOUR MAC" = "MAC'İNDE";
 "ON YOUR PC" = "BİLGİSAYARINDA";
 "ONE DOWNLOAD PER TOOL GROUP. NO ACCOUNT OR GITHUB TOKEN." = "HER ARAÇ GRUBU İÇİN BİR KEZ İNDİR. HESAP VEYA GITHUB TOKENI GEREKMEZ.";
@@ -1655,6 +1673,7 @@
 "OPEN NASHI" = "NASHI'Yİ AÇ";
 "OPEN PERMISSION SETTINGS…" = "İZİN AYARLARINI AÇ…";
 "OPEN WHEEL" = "ÇARKI AÇ";
+"OPENS A SMALL NASHI MENU AT THE CURSOR FROM ANY APP: COPY TEXT FROM SCREEN, SCAN QR CODES, USE A COPIED LINK OR OPEN NASHI." = "HANGİ UYGULAMADA OLURSAN OL, İMLECİN YANINDA KÜÇÜK BİR NASHI MENÜSÜ AÇAR: EKRANDAN METİN KOPYALA, QR KODLARINI TARA, KOPYALANAN LİNKİ KULLAN YA DA NASHI'Yİ AÇ.";
 "OPTIONAL. YOU CAN CHANGE THIS IN SETTINGS." = "İSTEĞE BAĞLI. AYARLARDAN DEĞİŞTİREBİLİRSİN.";
 "ORGANIZE PDF" = "PDF'Yİ DÜZENLE";
 "ORIGINAL" = "ORİJİNAL";
@@ -1669,6 +1688,7 @@
 "OUTPUT FORMAT" = "ÇIKTI BİÇİMİ";
 "OUTPUT-ONLY FORMAT." = "YALNIZCA ÇIKTI BİÇİMİ.";
 "OWNER/REPOSITORY OR GITHUB URL" = "KULLANICI/DEPO VEYA GITHUB ADRESİ";
+"Off" = "Kapalı";
 "Office cabinet is missing a file." = "Office paketinde bir dosya eksik.";
 "Office checksum mismatch. Nothing was installed." = "Office sağlama toplamı eşleşmiyor. Hiçbir şey kurulmadı.";
 "Office could not convert this document to %@. %@" = "Office bu belgeyi %@ biçimine dönüştüremedi. %@";
@@ -1686,6 +1706,7 @@
 "Office tools ready" = "Ofis araçları hazır";
 "Office tools ready." = "Ofis araçları hazır.";
 "Official public releases · No account or token needed" = "Resmi herkese açık sürümler · Hesap veya token gerekmez";
+"On screen" = "Ekranda";
 "On your Mac" = "Mac'inde";
 "On your PC" = "Bilgisayarında";
 "One download per tool group. No account or GitHub token." = "Her araç grubu için bir kez indir. Hesap veya GitHub tokenı gerekmez.";
@@ -1701,6 +1722,7 @@
 "Open wheel" = "Çarkı aç";
 "Opened in %@." = "%@ ile açıldı.";
 "Opened in %lld." = "%lld ile açıldı.";
+"Opens a small Nashi menu at the cursor from any app: copy text from screen, scan QR codes, use a copied link or open Nashi." = "Hangi uygulamada olursan ol, imlecin yanında küçük bir Nashi menüsü açar: ekrandan metin kopyala, QR kodlarını tara, kopyalanan linki kullan ya da Nashi'yi aç.";
 "Optional. You can change this in Settings." = "İsteğe bağlı. Ayarlardan değiştirebilirsin.";
 "Organize PDF" = "PDF'yi Düzenle";
 "Original" = "Orijinal";
@@ -1890,6 +1912,7 @@
 "QUALITY" = "KALİTE";
 "QUALITY (%)" = "KALİTE (%)";
 "QUICK LOOK" = "HIZLI BAKIŞ";
+"QUICK MENU SHORTCUT" = "HIZLI MENÜ KISAYOLU";
 "QUICK PICKS" = "HIZLI SEÇİM";
 "QUICK PREVIEW" = "HIZLI ÖNİZLEME";
 "QUIT NASHI" = "NASHI'DEN ÇIK";
@@ -1897,6 +1920,7 @@
 "Quality (%)" = "Kalite (%)";
 "Quick Look" = "Hızlı Bakış";
 "Quick Preview" = "Hızlı Önizleme";
+"Quick menu shortcut" = "Hızlı menü kısayolu";
 "Quit Nashi" = "Nashi'den Çık";
 "READ QR CODES" = "QR KODLARINI OKU";
 "READ QR CODES · NASHI" = "QR KODLARINI OKU · NASHI";
@@ -2082,6 +2106,7 @@
 "SAVING IMAGES…" = "GÖRSELLER KAYDEDİLİYOR…";
 "SCAN AGAIN" = "YENİDEN TARA";
 "SCAN COMPLETE." = "TARAMA TAMAMLANDI.";
+"SCAN QR CODES ON SCREEN" = "EKRANDAKİ QR KODLARINI TARA";
 "SEARCH FORMATS" = "BİÇİMLERDE ARA";
 "SEARCH METADATA" = "META VERİLERDE ARA";
 "SECONDS" = "SANİYE";
@@ -2245,6 +2270,7 @@
 "Saving frame %lld of %@…" = "Kare %lld/%@ kaydediliyor…";
 "Saving frame %lld of %lld…" = "Kare %lld/%lld kaydediliyor…";
 "Saving images…" = "Görseller kaydediliyor…";
+"Scan QR codes on screen" = "Ekrandaki QR kodlarını tara";
 "Scan again" = "Yeniden tara";
 "Scan complete." = "Tarama tamamlandı.";
 "Search formats" = "Biçimlerde ara";

@@ -30,6 +30,9 @@ internal static class SmokeTests
         Progress("START ShellShortcutChecks");ShellShortcutChecks.Run(root,Check);
         Progress("START EditorReliabilityChecks");EditorReliabilityChecks.Run(root,Check);
         Progress("START InteractionChecks");InteractionChecks.Run(root,Check);
+        Progress("START ScreenQrChecks");ScreenQrChecks.Run(Check);
+        Progress("START ScreenTextChecks");ScreenTextChecks.Run(Check);
+        Progress("START QuickMenuChecks");QuickMenuChecks.Run(Check);
         var visual=new DrawingVisual();using(var dc=visual.RenderOpen()){dc.DrawRectangle(Brushes.DarkOliveGreen,null,new Rect(0,0,320,180));dc.DrawRectangle(Brushes.Gold,null,new Rect(20,20,120,80));}
         var bitmap=new RenderTargetBitmap(320,180,96,96,PixelFormats.Pbgra32);bitmap.Render(visual);var source=Path.Combine(root,"Source.png");ImageEngine.Save(bitmap,source,"png");
         const string query="/tEXt/{str=Comment}";
