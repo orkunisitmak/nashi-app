@@ -132,6 +132,10 @@ if(Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG") is {} encoder && En
         Check(Math.Abs((await engine.InspectAsync(memo)).Duration-10)<.1,"A raw AAC file's duration was taken from FFprobe's bitrate guess");
         var memoEnd=await engine.InspectAsync((await engine.ToolAsync("trimAudio",[memo],directory,new(){Start=1,End=9}))[0]);
         Check(Math.Abs(memoEnd.Duration-8)<.1,"Trimming a raw AAC file past FFprobe's bitrate guess failed or lost its end");
+        // ADTS headers with no sample rate FFmpeg accepts: FFprobe still guesses a length, while copying the stream fails.
+        var brokenMemo=Path.Combine(directory,"Broken memo.aac");var junk=new Random(7);
+        File.WriteAllBytes(brokenMemo,Enumerable.Range(0,400).SelectMany(_=>new byte[]{0xff,0xf1,0x50,0x80,0x02,0x1f,0xfc}.Concat(Enumerable.Range(0,9).Select(_=>(byte)junk.Next(256)))).ToArray());
+        Check((await engine.InspectAsync(brokenMemo)).Duration>0,"A raw AAC file FFmpeg cannot measure lost FFprobe's estimate");
         // iPhones store location, make, model and capture date as QuickTime keys, which the MP4 and MOV muxer writes only when asked to.
         var iphone=Path.Combine(directory,"IMG_0001.MOV");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","testsrc2=size=128x72:rate=12:duration=0.5","-c:v","libx264","-movflags","use_metadata_tags","-metadata","com.apple.quicktime.location.ISO6709=+35.6895+139.6917+040.000/","-metadata","com.apple.quicktime.make=Apple","-metadata","com.apple.quicktime.model=iPhone 15","-metadata","com.apple.quicktime.creationdate=2026-10-31T12:00:00+0900",iphone]);Check((await FileTags(iphone)).GetValueOrDefault("com.apple.quicktime.model")=="iPhone 15","iPhone fixture lacks its QuickTime keys");
         foreach(var (iphoneFormat,iphoneKeep) in new[]{("mp4",true),("mov",true),("m4v",true),("mkv",true),("mp4",false),("mov",false)})

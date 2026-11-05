@@ -98,8 +98,13 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
     private async Task<double?> MeasuredDurationAsync(string input,CancellationToken token)
     {
         double? end=null;const string prefix="out_time_us=";
-        await ProcessRunner.RunAsync(ffmpeg,["-hide_banner","-nostdin","-v","error","-nostats","-progress","pipe:1","-i",Path.GetFullPath(input),"-map","0","-c","copy","-f","null",OperatingSystem.IsWindows()?"NUL":"/dev/null"],token,
-            line=>{if(line.StartsWith(prefix,StringComparison.Ordinal)&&double.TryParse(line[prefix.Length..],NumberStyles.Float,CultureInfo.InvariantCulture,out var microseconds)&&double.IsFinite(microseconds)&&microseconds>0)end=microseconds/1_000_000;});
+        try
+        {
+            await ProcessRunner.RunAsync(ffmpeg,["-hide_banner","-nostdin","-v","error","-nostats","-progress","pipe:1","-i",Path.GetFullPath(input),"-map","0","-c","copy","-f","null",OperatingSystem.IsWindows()?"NUL":"/dev/null"],token,
+                line=>{if(line.StartsWith(prefix,StringComparison.Ordinal)&&double.TryParse(line[prefix.Length..],NumberStyles.Float,CultureInfo.InvariantCulture,out var microseconds)&&double.IsFinite(microseconds)&&microseconds>0)end=microseconds/1_000_000;});
+        }
+        // A file FFprobe reads but FFmpeg cannot copy keeps FFprobe's guess. Cancellation is checked before the exit code, so it still throws.
+        catch(IOException){return null;}
         return end;
     }
 
