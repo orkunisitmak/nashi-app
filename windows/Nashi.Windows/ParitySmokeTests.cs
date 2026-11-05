@@ -51,7 +51,8 @@ internal static class ParitySmokeTests
         var floatSink=new Border{Background=Brushes.AliceBlue,AllowDrop=true,Child=new TextBlock{Text="Copy-only Float drag fixture",Margin=new(12)}};
         var sinkWindow=new Window{Title="Float drag fixture",Content=floatSink,Width=250,Height=200,Left=shelf.Left+220,Top=shelf.Top,Topmost=true};string[]? carried=null;
         floatSink.DragOver+=(_,e)=>{e.Effects=DragDropEffects.Copy;e.Handled=true;};floatSink.Drop+=(_,e)=>{carried=e.Data.GetData(DataFormats.FileDrop) as string[];e.Effects=DragDropEffects.Copy;e.Handled=true;};sinkWindow.Show();DesktopInput.Pump();
-        var stack=Children(shelf).OfType<Canvas>().Single();var dragStart=stack.PointToScreen(new Point(35,50));var dragEnd=floatSink.PointToScreen(new Point(100,100));
+        // Fluent icon artwork adds nested Canvas elements; identify the actual drag surface.
+        var stack=Children(shelf).OfType<Canvas>().Single(c=>System.Windows.Automation.AutomationProperties.GetAutomationId(c)=="FloatStackCanvas");var dragStart=stack.PointToScreen(new Point(35,50));var dragEnd=floatSink.PointToScreen(new Point(100,100));
         Wait(Task.Run(async()=>{DesktopInput.MovePointer(dragStart);await Task.Delay(100);DesktopInput.HoldMouse(true);try{for(var step=1;step<=14;step++){DesktopInput.MovePointer(new Point(dragStart.X+(dragEnd.X-dragStart.X)*step/14,dragStart.Y+(dragEnd.Y-dragStart.Y)*step/14));await Task.Delay(35);}}finally{DesktopInput.HoldMouse(false);}}));DesktopInput.Pump();
         Check(carried is not null&&carried.Length==2&&carried.Contains(source)&&carried.Contains(qrImage),"Float stack did not carry both file paths through native drag/drop");sinkWindow.Close();
         Check(File.Exists(source)&&File.Exists(qrImage),"Copy-only Float drag changed originals");
