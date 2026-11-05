@@ -23,7 +23,7 @@ internal static class DesktopInput
     // NumLock on, Windows then releases Shift around them, so Shift+Right reaches WPF as plain Right.
     private static uint KeyFlags(int vk,bool up)=>(up?2u:0u)|(vk is >=0x21 and <=0x28 or 0x2D or 0x2E?1u:0u);
     internal static void Hold(Key key,bool pressed){var vk=KeyInterop.VirtualKeyFromKey(key);var input=new Input{Type=1,Data=new(){Keyboard=new(){Key=(ushort)vk,Flags=KeyFlags(vk,!pressed)}}};if(SendInput(1,[input],Marshal.SizeOf<Input>())!=1)throw new InvalidOperationException("Native key input unavailable.");}
-    internal static void HoldMouse(bool pressed){var input=new Input{Data=new(){Mouse=new(){Flags=pressed?2u:4u}}};if(SendInput(1,[input],Marshal.SizeOf<Input>())!=1)throw new InvalidOperationException("Native mouse input unavailable.");}
+    internal static void HoldMouse(bool pressed,bool right=false){var input=new Input{Data=new(){Mouse=new(){Flags=right?(pressed?8u:16u):(pressed?2u:4u)}}};if(SendInput(1,[input],Marshal.SizeOf<Input>())!=1)throw new InvalidOperationException("Native mouse input unavailable.");}
     internal static void Click(FrameworkElement view)
     {
         MovePointer(view.PointToScreen(new Point(view.ActualWidth/2,view.ActualHeight/2)));Pump(80);
