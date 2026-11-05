@@ -41,6 +41,15 @@ public partial class App:Application
             catch(Exception error){failures.Add(error.ToString());}
             if(Interlocked.CompareExchange(ref finished,1,0)==0){Report(failures);Shutdown(failures.Count==0?0:1);}return;
         }
+        if(e.Args.Contains("--smoke-test-screen-qr"))
+        {
+            // Scan QR codes on screen alone: it shows a fixture window and keeps every capture in memory.
+            IsSmokeTest=true;ShutdownMode=ShutdownMode.OnExplicitShutdown;
+            var directory=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY")??Path.Combine(Path.GetTempPath(),"Nashi-ScreenQr-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(directory);
+            var checks=0;var failures=new List<string>();
+            try{ScreenQrChecks.Run((passed,message)=>{if(!passed)throw new Exception(message);checks++;});}catch(Exception error){failures.Add(error.ToString());}
+            File.WriteAllText(Path.Combine(directory,"screen-qr.json"),System.Text.Json.JsonSerializer.Serialize(new{checks,failures}));Shutdown(failures.Count==0?0:1);return;
+        }
         if(e.Args.Contains("--ui-audit"))
         {
             IsSmokeTest=true;ShutdownMode=ShutdownMode.OnExplicitShutdown;
@@ -73,6 +82,15 @@ public partial class App:Application
         }
         if(e.Args.Length==2&&e.Args[0]=="--apply-update"){try{Shutdown(UpdateInstaller.Apply(e.Args[1]));}catch(Exception error){UseSavedLanguage();MessageBox.Show(L10n.Text(error.Message),L10n.Text("Nashi update could not finish"));Shutdown(1);}return;}
         if(e.Args.Contains("--verify-update-state")){try{ShutdownMode=ShutdownMode.OnExplicitShutdown;SmokeTests.VerifyUpdateState();Shutdown(0);}catch(Exception error){Console.Error.WriteLine(error);Shutdown(1);}return;}
+        if(e.Args.Contains("--smoke-test-screen-text"))
+        {
+            // Copy text from screen alone: OCR on rendered text and the selection window; every capture stays in memory.
+            IsSmokeTest=true;ShutdownMode=ShutdownMode.OnExplicitShutdown;
+            var directory=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY")??Path.Combine(Path.GetTempPath(),"Nashi-ScreenText-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(directory);
+            var checks=0;var failures=new List<string>();
+            try{ScreenTextChecks.Run((passed,message)=>{if(!passed)throw new Exception(message);checks++;});}catch(Exception error){failures.Add(error.ToString());}
+            File.WriteAllText(Path.Combine(directory,"screen-text.json"),System.Text.Json.JsonSerializer.Serialize(new{checks,failures}));Shutdown(failures.Count==0?0:1);return;
+        }
         if(e.Args.Contains("--smoke-test-file-actions"))
         {
             IsSmokeTest=true;ShutdownMode=ShutdownMode.OnExplicitShutdown;
