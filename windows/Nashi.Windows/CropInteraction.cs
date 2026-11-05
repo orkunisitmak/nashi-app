@@ -42,7 +42,7 @@ public sealed partial class ToolEditor
         catch(ArgumentException error)
         {
             if(App.IsSmokeTest)throw;
-            MessageBox.Show(this, L10n.Text(error.Message), L10n.Text("Check crop settings"));
+            MessageBox.Show(this, L10n.Text(error.Message), L10n.Text("Check your settings"));
             return;
         }
         var hasSelection = selection is not null && selection.Width > 0 && selection.Height > 0;
