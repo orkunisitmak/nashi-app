@@ -15,6 +15,15 @@ public partial class App:Application
         }
         DispatcherUnhandledException+=(_,error)=>{var folder=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");if(folder is not null){Directory.CreateDirectory(folder);File.WriteAllText(Path.Combine(folder,"dispatcher-error.txt"),error.Exception.ToString());error.Handled=true;Shutdown(1);}};
         base.OnStartup(e);
+        if(e.Args.Contains("--smoke-test-send-to"))
+        {
+            // Explorer › Send to alone; it uses a test folder, never the real Send to menu.
+            IsSmokeTest=true;ShutdownMode=ShutdownMode.OnExplicitShutdown;
+            var directory=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY")??Path.Combine(Path.GetTempPath(),"Nashi-SendTo-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(directory);
+            var checks=0;var failures=new List<string>();
+            try{SendToChecks.Run(directory,(passed,message)=>{if(!passed)throw new Exception(message);checks++;});}catch(Exception error){failures.Add(error.ToString());}
+            File.WriteAllText(Path.Combine(directory,"send-to.json"),System.Text.Json.JsonSerializer.Serialize(new{checks,failures}));Shutdown(failures.Count==0?0:1);return;
+        }
         if(e.Args.Contains("--smoke-test-interactions"))
         {
             IsSmokeTest=true;ShutdownMode=ShutdownMode.OnExplicitShutdown;
@@ -99,11 +108,14 @@ public partial class App:Application
         if(e.Args.Contains("--smoke-test")){IsSmokeTest=true;try{NativeExceptionTrace.Install();SmokeTests.Run();Shutdown(0);}catch(Exception error){Console.Error.WriteLine(error);var directory=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");if(directory is not null){Directory.CreateDirectory(directory);File.WriteAllText(Path.Combine(directory,"error.txt"),error.ToString());}Shutdown(1);}return;}
         if(e.Args.Length==1&&e.Args[0]=="--install-update"){ShutdownMode=ShutdownMode.OnExplicitShutdown;_ = InstallUpdateAsync();return;}
         instance=new SingleInstance();Exit+=(_,_)=>instance.Dispose();var paths=e.Args.Where(p=>File.Exists(p)||Directory.Exists(p)).ToArray();
-        if(!instance.Primary){ShutdownMode=ShutdownMode.OnExplicitShutdown;_ = ForwardAndExit(paths);return;}
+        var sendTo=e.Args.Contains(SendToMenu.Argument);if(!instance.Primary){ShutdownMode=ShutdownMode.OnExplicitShutdown;_ = ForwardAndExit(sendTo?[SendToMenu.Marker,..paths]:paths);return;}
         // Float shelves have no owner. Closing Nashi (not hiding it to the tray) must end the
         // process instead of leaving it behind a shelf with a closed main window.
         var window=new MainWindow(paths,offerToolSetup:!e.Args.Contains("--background"));MainWindow=window;ShutdownMode=ShutdownMode.OnMainWindowClose;instance.Start(incoming=>Dispatcher.BeginInvoke(()=>window.AcceptLaunch(incoming)));window.Show();
         windowManagement=new WindowManagement(notice:message=>MessageBox.Show(L10n.Text(message),L10n.Text("Window arrangement"),MessageBoxButton.OK,MessageBoxImage.Information),isEnabled:()=>window.WindowManagementEnabled);
+        // Explorer › Send to › Nashi: open the tools wheel for the files it passed.
+        if(sendTo&&paths.Length>0)window.AcceptLaunch([SendToMenu.Marker,..paths]);
+        try{SendToMenu.Refresh();}catch(Exception error)when(error is IOException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException){/* The menu keeps its previous target. */}
     }
     internal static void UseSavedLanguage(Func<string>? readLanguage=null)
     {

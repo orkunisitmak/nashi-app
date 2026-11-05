@@ -26,11 +26,23 @@ internal static class ShellShortcut
         }
         finally{Marshal.FinalReleaseComObject(link);}
     }
-    // Used by the smoke test to create a real shortcut through the same shell API.
-    internal static void Create(string shortcut,string target)
+    // Used by the smoke test and the Send to menu to create a real shortcut through the same shell API.
+    internal static void Create(string shortcut,string target,string? arguments=null,string? icon=null)
     {
         var link=(IShellLinkW)new ShellLink();
-        try{link.SetPath(target);((IPersistFile)link).Save(shortcut,true);}
+        try
+        {
+            link.SetPath(target);if(arguments is not null)link.SetArguments(arguments);if(icon is not null)link.SetIconLocation(icon,0);
+            link.SetWorkingDirectory(Path.GetDirectoryName(target)??"");((IPersistFile)link).Save(shortcut,true);
+        }
+        finally{Marshal.FinalReleaseComObject(link);}
+    }
+    /// <summary>The arguments a shortcut passes; empty when it cannot be read.</summary>
+    internal static string Arguments(string shortcut)
+    {
+        var link=(IShellLinkW)new ShellLink();
+        try{((IPersistFile)link).Load(shortcut,0);var buffer=new StringBuilder(32768);link.GetArguments(buffer,buffer.Capacity);return buffer.ToString();}
+        catch(Exception error)when(error is COMException or InvalidCastException or IOException or UnauthorizedAccessException or ArgumentException){return "";}
         finally{Marshal.FinalReleaseComObject(link);}
     }
     [ComImport,Guid("00021401-0000-0000-C000-000000000046")]private class ShellLink;

@@ -2093,6 +2093,7 @@
 "SELECT AN AREA TO REDACT, OR DETECT FACES OR TEXT." = "SELECT AN AREA TO REDACT, OR DETECT FACES OR TEXT.";
 "SELECT AT LEAST ONE AVAILABLE PHOTO." = "SELECT AT LEAST ONE AVAILABLE PHOTO.";
 "SELECT AT LEAST ONE PAGE." = "SELECT AT LEAST ONE PAGE.";
+"SELECT FILES IN EXPLORER, RIGHT-CLICK, THEN SEND TO › NASHI TO OPEN THE TOOLS WHEEL. NO REGISTRY CHANGE; TURNING THIS OFF REMOVES THE SHORTCUT." = "SELECT FILES IN EXPLORER, RIGHT-CLICK, THEN SEND TO › NASHI TO OPEN THE TOOLS WHEEL. NO REGISTRY CHANGE; TURNING THIS OFF REMOVES THE SHORTCUT.";
 "SELECT ONE CROP RECTANGLE." = "SELECT ONE CROP RECTANGLE.";
 "SELECT ONLY THIS REPOSITORY AND GIVE CONTENTS READ ACCESS. THE TOKEN STAYS IN THIS MAC’S KEYCHAIN." = "SELECT ONLY THIS REPOSITORY AND GIVE CONTENTS READ ACCESS. THE TOKEN STAYS IN THIS MAC’S KEYCHAIN.";
 "SELECT PHOTOS" = "SELECT PHOTOS";
@@ -2134,6 +2135,7 @@
 "SHOW IN EXPLORER" = "SHOW IN EXPLORER";
 "SHOW IN FINDER" = "SHOW IN FINDER";
 "SHOW LESS" = "SHOW LESS";
+"SHOW NASHI IN EXPLORER'S SEND TO MENU" = "SHOW NASHI IN EXPLORER'S SEND TO MENU";
 "SHOW NASHI IN FINDER" = "SHOW NASHI IN FINDER";
 "SHOW ORIGINAL" = "SHOW ORIGINAL";
 "SILENCE THRESHOLD" = "SILENCE THRESHOLD";
@@ -2258,6 +2260,7 @@
 "Select an area to redact, or detect faces or text." = "Select an area to redact, or detect faces or text.";
 "Select at least one available photo." = "Select at least one available photo.";
 "Select at least one page." = "Select at least one page.";
+"Select files in Explorer, right-click, then Send to › Nashi to open the tools wheel. No registry change; turning this off removes the shortcut." = "Select files in Explorer, right-click, then Send to › Nashi to open the tools wheel. No registry change; turning this off removes the shortcut.";
 "Select one crop rectangle." = "Select one crop rectangle.";
 "Select only this repository and give Contents read access. The token stays in this Mac’s Keychain." = "Select only this repository and give Contents read access. The token stays in this Mac’s Keychain.";
 "Select photos" = "Select photos";
@@ -2300,6 +2303,7 @@
 "Shift to convert" = "Shift to convert";
 "Show %@ in Finder" = "Show %@ in Finder";
 "Show %lld in Finder" = "Show %lld in Finder";
+"Show Nashi in Explorer's Send to menu" = "Show Nashi in Explorer's Send to menu";
 "Show Nashi in Finder" = "Show Nashi in Finder";
 "Show Original" = "Show Original";
 "Show in Explorer" = "Show in Explorer";

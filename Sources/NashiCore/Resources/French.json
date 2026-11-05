@@ -24,6 +24,8 @@
   "Glass": "Verre",
   "Solid": "Plein",
   "Launch at login": "Ouvrir avec la session",
+  "Show Nashi in Explorer's Send to menu": "Afficher Nashi dans le menu Envoyer vers de l’Explorateur",
+  "Select files in Explorer, right-click, then Send to › Nashi to open the tools wheel. No registry change; turning this off removes the shortcut.": "Sélectionnez des fichiers dans l’Explorateur, faites un clic droit, puis Envoyer vers › Nashi pour ouvrir la roue des outils. Aucune modification du registre ; désactiver l’option supprime le raccourci.",
   "Launch at login is unavailable for this copy.": "L’option Ouvrir avec la session n’est pas disponible pour cette copie.",
   "Allow Nashi in macOS Login Items.": "Autorisez Nashi dans les éléments d’ouverture de macOS.",
   "Open Login Items": "Ouvrir les éléments d’ouverture",
