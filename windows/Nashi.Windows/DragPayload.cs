@@ -4,6 +4,7 @@ using Nashi.Core;
 namespace Nashi.Windows;
 internal static class DragPayload
 {
+    internal static IReadOnlyList<ToolChoice> DownloadChoices(WebMediaPayload web)=>web.Kind switch{"youtube"=>[new("download:video","Download Video","↓"),new("download:thumbnail","Download Thumbnail","▣"),new("download:audio","Download Audio","♫")],"instagramPhotos"=>[new("download:photos","Download Images","▣")],"instagramReel"=>[new("download:video","Download Video","↓"),new("download:audio","Download Audio","♫")],"image"=>[new("download:image","Download Image","↓")],_=>[new("download:video","Download Video","↓"),new("download:audio","Download Audio","♫") ]};
     internal static string? Text(IDataObject data,string format,int limit=32768)
     {
         if(!data.GetDataPresent(format))return null;var value=data.GetData(format);if(value is string text)return text.Length<=limit?text:null;

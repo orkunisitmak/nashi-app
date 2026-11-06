@@ -26,7 +26,7 @@ public sealed partial class MainWindow
     {
         var menu=new System.Windows.Controls.ContextMenu();
         void Item(string text,Action action){var item=new System.Windows.Controls.MenuItem();L10n.Bind(item,System.Windows.Controls.HeaderedItemsControl.HeaderProperty,text);item.Click+=(_,_)=>action();menu.Items.Add(item);}
-        Item("Open Nashi",ShowMain);Item("Library",()=>{ShowMain();ShowLibrary(true);});Item("Screenshot & text",()=>OpenScreenshot());Item("Download copied link",OpenCopiedLink);Item("Settings",()=>{ShowMain();ShowSettings();});Item(update is null?"Check for updates":"Update to "+update.Version,()=>{ShowMain();_ = CheckUpdatesAsync(true);});menu.Items.Add(new System.Windows.Controls.Separator());Item("Quit Nashi",()=>{if(busy){ShowMain();L10n.SetText(status,"Finish or cancel the current operation before quitting.");return;}quitting=true;Application.Current.Shutdown();});return menu;
+        Item("Open Nashi",ShowMain);Item("Library",()=>{ShowMain();ShowLibrary(true);});Item("Screenshot & text",()=>OpenScreenshot());Item("Open copied link",OpenCopiedLink);Item("Settings",()=>{ShowMain();ShowSettings();});Item(update is null?"Check for updates":"Update to "+update.Version,()=>{ShowMain();_ = CheckUpdatesAsync(true);});menu.Items.Add(new System.Windows.Controls.Separator());Item("Quit Nashi",()=>{if(busy){ShowMain();L10n.SetText(status,"Finish or cancel the current operation before quitting.");return;}quitting=true;Application.Current.Shutdown();});return menu;
     }
     private void ApplyPreferences(){L10n.Language=preferences.Value.Language;Feedback.Enabled=preferences.Value.Feedback;WheelPresentation.Preferences=preferences.Value;}
     private SettingsWindow? settingsWindow;
@@ -38,9 +38,13 @@ public sealed partial class MainWindow
         if(settingsWindow is null){settingsWindow=new(this,preferences,ApplyPreferences,()=>CheckUpdatesAsync(true),library);settingsWindow.Closed+=(_,_)=>{settingsWindow=null;appearance.SelectedItem=char.ToUpper(library.Appearance[0])+library.Appearance[1..];};settingsWindow.Show();}
         Raise(settingsWindow);
     }
-    private void OpenCopiedLink()
+    private LinkDownloadWindow? linkDownloadWindow;
+    private void OpenCopiedLink()=>OpenCopiedLink(Clipboard.GetText);
+    internal void OpenCopiedLink(Func<string> readClipboard)
     {
-        if(busy)return;try{var payload=WebMediaPayload.Parse(Clipboard.GetText());if(payload is null){L10n.SetText(status,"Copy a public media link first.");return;}Show();if(WindowState==WindowState.Minimized)WindowState=WindowState.Normal;Activate();link.Text=payload.Url;SetDownloadKind(payload);OpenDownload();}catch(Exception error)when(ClipboardImport.IsClipboardError(error)){L10n.SetText(status,"Clipboard is busy. Try again.");}
+        if(busy)return;if(OpenModal() is {} modal){Raise(modal);return;}ShowMain();
+        if(linkDownloadWindow is null){linkDownloadWindow=new(this,(payload,action)=>OnGlobalDrop(action=="options"?"download:auto":action,new DataObject(DataFormats.UnicodeText,payload.Url),null),readClipboard);linkDownloadWindow.Closed+=(_,_)=>linkDownloadWindow=null;linkDownloadWindow.Show();}
+        Raise(linkDownloadWindow);linkDownloadWindow.Paste();
     }
     private void SetDownloadKind(WebMediaPayload payload,string? chosen=null)
     {

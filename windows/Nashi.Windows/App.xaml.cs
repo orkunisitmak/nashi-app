@@ -15,6 +15,12 @@ public partial class App:Application
         }
         DispatcherUnhandledException+=(_,error)=>{var folder=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");if(folder is not null){Directory.CreateDirectory(folder);File.WriteAllText(Path.Combine(folder,"dispatcher-error.txt"),error.Exception.ToString());error.Handled=true;Shutdown(1);}};
         base.OnStartup(e);
+        if(e.Args.Contains("--smoke-test-links"))
+        {
+            IsSmokeTest=true;ShutdownMode=ShutdownMode.OnExplicitShutdown;
+            var directory=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY")??Path.Combine(Path.GetTempPath(),"Nashi-Links-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(directory);
+            try{LinkDownloadChecks.Run(directory);Shutdown(0);}catch(Exception error){File.WriteAllText(Path.Combine(directory,"link-error.txt"),error.ToString());Shutdown(1);}return;
+        }
         if(e.Args.Contains("--smoke-test-capture"))
         {
             IsSmokeTest=true;ShutdownMode=ShutdownMode.OnExplicitShutdown;
