@@ -25,9 +25,11 @@ enum DragTrigger: Hashable, Sendable {
     private static let keyNames: [UInt16:String] = [36:"Return",48:"Tab",49:"Space",51:"Delete",96:"F5",97:"F6",98:"F7",99:"F3",100:"F8",101:"F9",103:"F11",109:"F10",111:"F12",115:"Home",116:"Page Up",117:"Forward Delete",118:"F4",119:"End",120:"F2",121:"Page Down",122:"F1",123:"←",124:"→",125:"↓",126:"↑"]
     init?(name:String) {
         if name.hasPrefix("mouse"),let button=Int(name.dropFirst(5)),(1...31).contains(button) { self = .mouse(button) }
-        else if name.hasPrefix("key"),let code=UInt16(name.dropFirst(3)) { self = .key(code) }
+        else if name.hasPrefix("key"),let code=UInt16(name.dropFirst(3)),Self.isKey(code) { self = .key(code) }
         else { return nil }
     }
+    /// A virtual key code the drag can poll; Escape cancels recording and modifiers belong to the chord.
+    static func isKey(_ code:UInt16)->Bool { code < 128 && code != 53 && !(54...63).contains(code) }
     var name: String { switch self { case .mouse(let button):return "mouse\(button)";case .key(let code):return "key\(code)" } }
     var title: String {
         switch self {

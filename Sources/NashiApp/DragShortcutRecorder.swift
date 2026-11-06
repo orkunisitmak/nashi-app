@@ -30,7 +30,7 @@ struct DragShortcutRecorder: View {
             switch event.type {
             case .leftMouseDown:stop();return event
             case .keyDown where event.keyCode == 53:stop()
-            case .keyDown:if !event.isARepeat { save(DragShortcut(chord:ModifierChord(event.modifierFlags),trigger:.key(event.keyCode))) }
+            case .keyDown:if !event.isARepeat,DragTrigger.isKey(event.keyCode) { save(DragShortcut(chord:ModifierChord(event.modifierFlags),trigger:.key(event.keyCode))) }
             case .rightMouseDown,.otherMouseDown:save(DragShortcut(chord:ModifierChord(event.modifierFlags),trigger:.mouse(event.buttonNumber)))
             default:
                 // A modifier-only shortcut is complete once every key of the chord has been released.

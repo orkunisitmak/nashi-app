@@ -61,7 +61,7 @@ import SwiftUI
         func wheel(_ flags:NSEvent.ModifierFlags,_ held:DragTrigger?=nil)->WheelShortcut? { ModifierPreferences.wheel(for:flags,pressed:{$0==held},defaults:defaults) }
         try check(wheel(.shift) == .conversions && wheel(.command) == .tools && wheel(.control) == .actions && wheel([]) == nil,"Default modifiers keep their wheels")
         for name in ["control+shift","command+mouse3","key49"] { try check(DragShortcut(name:name)?.name == name,"Name round trip: "+name) }
-        try check(DragShortcut(name:"") == nil && DragShortcut(name:"mouse0") == nil && DragShortcut(name:"command+nonsense") == nil,"Empty, drag-button and unknown names are refused")
+        try check(DragShortcut(name:"") == nil && DragShortcut(name:"mouse0") == nil && DragShortcut(name:"command+nonsense") == nil && DragShortcut(name:"key53") == nil && DragShortcut(name:"command+key56") == nil && DragShortcut(name:"key200") == nil,"Empty, drag-button, unknown, Escape, modifier and out-of-range names are refused")
         try check(ModifierChord.legacy("command+mouse3") == nil,"Older builds fall back to their default")
         try check(DragShortcut(chord:ModifierChord(.command),trigger:.mouse(3)).symbols == "⌘ Mouse 4" && DragShortcut(chord:ModifierChord(rawValue:0),trigger:.mouse(1)).label == "Right Click","Trigger titles read naturally")
 

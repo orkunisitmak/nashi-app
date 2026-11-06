@@ -3,8 +3,8 @@ internal static class DragShortcutChecks
 {
     internal static void Run(Action<bool,string> check,string root)
     {
-        foreach(var shortcut in new[]{"Ctrl","Shift+Alt","Ctrl+Shift+Alt","Mouse 4","Right Click","Ctrl+Mouse 5","Alt+F","Space","D1"})check(DragShortcut.IsValid(shortcut),"Valid drag shortcut was refused: "+shortcut);
-        foreach(var shortcut in new[]{null,"","Alt+Ctrl","Ctrl+Ctrl","F+G","Mouse 4+Ctrl","Ctrl+","Escape","Ctrl+Escape","Left Click","f"})check(!DragShortcut.IsValid(shortcut),"Invalid drag shortcut was accepted: "+shortcut);
+        foreach(var shortcut in new[]{"Ctrl","Shift+Alt","Ctrl+Shift+Alt","Mouse 4","Right Click","Ctrl+Mouse 5","Alt+F","Space","D1","Ctrl+OemPlus","NumPad5","F12","Return","Enter"})check(DragShortcut.IsValid(shortcut),"Valid drag shortcut was refused: "+shortcut);
+        foreach(var shortcut in new[]{null,"","Alt+Ctrl","Ctrl+Ctrl","F+G","Mouse 4+Ctrl","Ctrl+","Escape","Ctrl+Escape","Left Click","f","Ctrl+FakeKey","VolumeUp","LWin","LeftCtrl","ImeProcessed"})check(!DragShortcut.IsValid(shortcut),"Invalid drag shortcut was accepted: "+shortcut);
         check(DragShortcut.Chord("Ctrl+Alt+F")=="Ctrl+Alt"&&DragShortcut.Trigger("Ctrl+Alt+F")=="F"&&DragShortcut.Trigger("Ctrl+Alt") is null,"Drag shortcut parts were read incorrectly");
         check(DragShortcut.Compose("Ctrl","Mouse 4")=="Ctrl+Mouse 4"&&DragShortcut.Compose("","F")=="F"&&DragShortcut.Compose("Alt",null)=="Alt","Drag shortcut parts were joined incorrectly");
         (string,string)[] shortcuts=[("tools","Ctrl"),("convert","Mouse 4"),("actions","Ctrl+Mouse 5")];

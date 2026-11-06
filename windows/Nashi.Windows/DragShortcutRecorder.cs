@@ -28,7 +28,7 @@ internal sealed class DragShortcutRecorder:Button
         if(!Recording)return;e.Handled=true;var key=e.Key==Key.System?e.SystemKey:e.Key;
         if(key==Key.Escape)Stop();
         else if(Modifier(key)!=ModifierKeys.None)held|=Keyboard.Modifiers|Modifier(key);
-        else if(!e.IsRepeat&&key is not(Key.None or Key.LWin or Key.RWin or Key.ImeProcessed or Key.DeadCharProcessed))Record(DragShortcut.Compose(Chord(Keyboard.Modifiers),key.ToString()));
+        else if(!e.IsRepeat&&DragShortcut.Compose(Chord(Keyboard.Modifiers),key.ToString()) is var shortcut&&DragShortcut.IsValid(shortcut))Record(shortcut);
     }
     // A modifier-only shortcut is complete once every key of the chord has been released.
     private void KeyReleased(object sender,KeyEventArgs e)
