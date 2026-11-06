@@ -155,6 +155,16 @@ bool WheelOpen(Window w)=>w.GetVisualDescendants().OfType<WheelOverlay>().Any(o=
         Expect($"A watched folder turns a new PNG into JPG ({w.WatchedFolders} watched)",File.Exists(made)&&!File.Exists(Path.Combine(watched,"Incoming 2.jpg")));
         w.SaveLinuxSettings(w.LinuxSettings with{Watches=[]});
     }
+    // Linux extras: Copy Text and Rename appear for images; Rename plans, checks clashes and applies.
+    {
+        var extras=w.ChoicesFor(Fixtures("Photo.png"),"tools");
+        Expect("Copy Text and Rename are on the Tools wheel",extras.Any(c=>c.Id=="copyText")&&extras.Any(c=>c.Id=="rename"));
+        var folder=Path.Combine(output,"rename");if(Directory.Exists(folder))Directory.Delete(folder,true);Directory.CreateDirectory(folder);
+        var a=Path.Combine(folder,"IMG_1.png");var b=Path.Combine(folder,"IMG_2.png");File.Copy(Fixtures("Photo.png")[0],a);File.Copy(Fixtures("Photo.png")[0],b);
+        var rename=new RenameWindow([a,b]);var clash=!rename.Try("Same");var ok=rename.Try("Trip {n}");var done=RenameWindow.Apply(rename.Plan);
+        Expect($"Rename catches clashes and renames ({string.Join(", ",done.Select(Path.GetFileName))})",clash&&ok&&File.Exists(Path.Combine(folder,"Trip 01.png"))&&File.Exists(Path.Combine(folder,"Trip 02.png"))&&!File.Exists(a));
+        rename.Close();
+    }
     // The last tool comes back first on the Tools wheel as "Again".
     w.LastChoice=new ToolChoice("convert:jpg","Convert to JPG","↗");
     var again=w.ChoicesFor(Fixtures("Photo.png"),"tools");

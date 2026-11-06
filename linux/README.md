@@ -43,6 +43,14 @@ The wheel uses the macOS petal layout in every theme.
 
 `Meta+Alt+S` lets you select part of the screen with your desktop's screenshot tool (Spectacle, GNOME Screenshot, Xfce Screenshooter or Flameshot), saves the capture to Library and opens the Tools wheel on it, so you can annotate, redact, crop, read a QR code or convert it. `Meta+Alt+V` does the same for an image on the clipboard, or for files copied in your file manager. New results can be dragged straight out of the progress card or a Library preview into other apps.
 
+## Linux extras
+
+On top of the shared 27-tool catalog, the Linux app adds:
+
+- **Copy Text:** reads the text in images and PDF pages with Tesseract and puts it on the clipboard. Combined with `Meta+Alt+S`, you can grab any text on screen. Install more languages with your distribution, for example `tesseract-data-tur` on Arch or `tesseract-ocr-tur` on Debian/Ubuntu.
+- **Rename:** batch-renames files where they are, with a live preview. Patterns can use `{name}`, `{n}`, `{date}`, `{today}` and `{ext}`, plus a letter-case option. Clashes are shown before anything changes.
+- **Send to Phone:** sends files to a phone paired in KDE Connect, the Linux counterpart to the Windows share sheet.
+
 ## From the terminal
 
 ```sh

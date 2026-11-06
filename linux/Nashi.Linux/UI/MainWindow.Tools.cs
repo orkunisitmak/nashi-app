@@ -28,6 +28,8 @@ public sealed partial class MainWindow
         {
             if(choice.Id=="removeMetadata"){await EditMetadataAsync(selected);return;}
             if(choice.Id=="readQRCode"){await ReadQrAsync(selected);return;}
+            if(choice.Id=="copyText"){await CopyTextAsync(selected);return;}
+            if(choice.Id=="rename"){await RenameAsync(selected);return;}
             if(!imageSelection&&!mediaSelection&&choice.Id is not ("extractArchive" or "unzip")){await EditDocumentAsync(choice,selected,requestedFormat,quick);return;}
             MediaInfo? info=null;byte[]? preview=null;int sourceWidth=0,sourceHeight=0;
             if(imageSelection)
@@ -172,6 +174,7 @@ public sealed partial class MainWindow
                 case "float":
                     if(preferences.Value.FloatBehavior=="addToExisting"&&shelves.LastOrDefault(s=>s.IsVisible) is {} existing){existing.Add(paths);existing.Activate();break;}
                     var shelf=new FloatShelf(paths,this);shelves.Add(shelf);shelf.Closed+=(_,_)=>shelves.Remove(shelf);shelf.Show();break;
+                case "phone":await SendToPhoneAsync(paths);break;
                 case "move":await RunAsync((destination,p,t)=>FileMove.MoveAsync(paths,destination,p,t),"Move");files.Clear();break;
             }
         }

@@ -171,8 +171,8 @@ public sealed partial class MainWindow:Window
         stack.Children.Add(Ui.Text("File actions",11,"muted"));var actions=new WrapPanel();foreach(var choice in FileActionChoices())actions.Children.Add(Ui.Button(choice.Symbol+"  "+L10n.T(choice.Title),async()=>await PerformFileAction(choice.Id,files.ToArray()),"chip"));stack.Children.Add(actions);
         return stack;
     }
-    internal IReadOnlyList<ToolChoice> ToolChoices()=>FeatureCatalog.Tools(files).Select(id=>new ToolChoice(id,FeatureCatalog.ToolNames.GetValueOrDefault(id,id),Ui.Symbol(id))).ToList();
-    internal static IReadOnlyList<ToolChoice> FileActionChoices()=>[new("open","Open","↗"),new("reveal","Show in Folder","⌂"),new("float","Float","▣"),new("copy","Copy","▱"),new("move","Move","↗"),new("copyPath","Copy Path","↪"),new("terminal","Terminal",">_")];
+    internal IReadOnlyList<ToolChoice> ToolChoices()=>FeatureCatalog.Tools(files).Select(id=>new ToolChoice(id,FeatureCatalog.ToolNames.GetValueOrDefault(id,id),Ui.Symbol(id))).Concat(ExtraTools(files)).ToList();
+    internal static IReadOnlyList<ToolChoice> FileActionChoices()=>[new("open","Open","↗"),new("reveal","Show in Folder","⌂"),new("float","Float","▣"),new("copy","Copy","▱"),new("move","Move","↗"),new("copyPath","Copy Path","↪"),new("terminal","Terminal",">_"),..ExtraActions()];
     internal IReadOnlyList<ToolChoice> WheelChoices(string mode)=>ChoicesFor(files,mode);
     internal void ShowWheel()=>ShowWheel(null);
     internal void ShowWheel(string? initial)

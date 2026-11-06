@@ -23,6 +23,7 @@ public sealed partial class MainWindow
         if(mode=="convert")return formats.Select(f=>new ToolChoice("convert:"+f,f.ToUpperInvariant(),"↗")).ToList();
         var list=FeatureCatalog.Tools(paths).Select(id=>new ToolChoice(id,FeatureCatalog.ToolNames.GetValueOrDefault(id,id),Ui.Symbol(id))).ToList();
         if(formats.Length>0)list.Insert(0,new("convert","Convert","⇄"));
+        list.AddRange(ExtraTools(paths));
         if(LastChoice is {} last&&(last.Id.StartsWith("convert:",StringComparison.Ordinal)?formats.Contains(last.Id[8..]):list.Any(c=>c.Id==last.Id)))
             list.Insert(0,new(last.Id,L10n.T("Again")+": "+L10n.T(last.Title),"↻"));
         return list;
@@ -44,6 +45,11 @@ public sealed partial class MainWindow
         }
     }
 
+    internal async Task NotifyAsync(string summary,string body)
+    {
+        if(Environment.GetEnvironmentVariable("NASHI_NO_GLOBAL_SHORTCUTS")=="1")return;
+        notifications??=await Notifications.TryCreateAsync();if(notifications is not null)await notifications.ShowAsync(summary,body);
+    }
     /// Desktop notifications for work that finishes while the window is hidden.
     internal async Task NotifyDoneAsync(string label,IReadOnlyList<string> outputs,string? error=null)
     {
@@ -144,7 +150,8 @@ public sealed partial class MainWindow
     internal async Task RunGesture(string[] paths,ToolChoice choice)
     {
         files.Clear();Add(paths);
-        if(choice.Id is "open" or "reveal" or "copy" or "copyPath" or "terminal" or "float"){await PerformFileAction(choice.Id,paths);return;}
+        if(choice.Id is "open" or "reveal" or "copy" or "copyPath" or "terminal" or "float" or "phone"){await PerformFileAction(choice.Id,paths);return;}
+        if(choice.Id=="copyText"){await CopyTextAsync(paths);return;}
         if(FileActionChoices().Any(a=>a.Id==choice.Id)){Bring();await PerformFileAction(choice.Id,paths);return;}
         // Conversions and simple tools run at once with their saved defaults (Settings can turn this off);
         // a desktop notification reports the result while the window stays out of the way.

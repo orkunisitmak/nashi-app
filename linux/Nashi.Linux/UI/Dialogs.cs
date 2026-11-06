@@ -52,6 +52,26 @@ public static class Dialogs
         var close=Ui.Primary("Done",()=>dialog.Close());close.IsDefault=true;close.IsCancel=true;stack.Children.Add(close);
         dialog.Content=new ScrollViewer{Content=stack};return Show<object>(owner,dialog);
     }
+    /// Long text (recognized text) with Copy and Save.
+    public static Task TextResult(Window? owner,string title,string text,bool copied)
+    {
+        var dialog=Shell(title,640);dialog.SizeToContent=SizeToContent.Manual;dialog.Height=520;dialog.CanResize=true;
+        var box=new TextBox{Text=text,IsReadOnly=true,TextWrapping=TextWrapping.Wrap,AcceptsReturn=true};
+        var copy=Ui.Button("Copy",async()=>{if(dialog.Clipboard is {} clipboard)await clipboard.SetTextAsync(text);},"chip");
+        var save=Ui.Button("Save as text…",async()=>{var file=await dialog.StorageProvider.SaveFilePickerAsync(new(){SuggestedFileName="Text.txt",DefaultExtension="txt"});if(file?.TryGetLocalPath() is {} path)await File.WriteAllTextAsync(path,text);},"chip");
+        var done=Ui.Primary("Done",()=>dialog.Close());done.IsDefault=true;done.IsCancel=true;
+        var top=Ui.Stack(6,Ui.Title(title,22),Ui.Text(copied?"Copied to the clipboard.":"",12,"muted"));top.Margin=new(0,0,0,10);DockPanel.SetDock(top,Dock.Top);
+        var bottom=Ui.Row(0,copy,save,done);bottom.Margin=new(0,10,0,0);DockPanel.SetDock(bottom,Dock.Bottom);
+        dialog.Content=new DockPanel{Margin=new(24),Children={top,bottom,box}};return Show<object>(owner,dialog);
+    }
+    /// One choice from a short list; null when cancelled.
+    public static async Task<int?> Pick(Window? owner,string title,string text,string[] options)
+    {
+        var dialog=Shell(title);var list=new ListBox{ItemsSource=options,SelectedIndex=0,MaxHeight=240};
+        var ok=Ui.Primary("Continue",()=>dialog.Close(true));ok.IsDefault=true;var no=Ui.Button("Cancel",()=>dialog.Close(false));no.IsCancel=true;
+        dialog.Content=new StackPanel{Margin=new(24),Spacing=10,Children={Ui.Title(title,20),Ui.Text(text,13),list,Ui.Row(0,ok,no)}};
+        return await Show<bool>(owner,dialog)?list.SelectedIndex:null;
+    }
     public static async Task<string?> Folder(Window owner,string title)
     {
         var folders=await owner.StorageProvider.OpenFolderPickerAsync(new(){Title=L10n.T(title),AllowMultiple=false});
