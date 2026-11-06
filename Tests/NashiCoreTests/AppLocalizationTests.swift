@@ -204,4 +204,14 @@ final class AppLocalizationTests:XCTestCase {
             XCTAssertEqual(AppLocalization.text(source,language:"en"),source)
         }
     }
+    /// Remove Metadata shows its refusal through LText, so every feature sentence needs its own catalog entry.
+    func testMetadataCleanupRefusalsAreTranslated() {
+        for feature in ["form fields","embedded files","optional content layers","accessibility tags","custom page labels"] {
+            let source="This PDF contains \(feature). Metadata cleanup cannot safely preserve those features. No copy was exported."
+            XCTAssertNotEqual(AppLocalization.text(source,language:"tr"),source,feature)
+            XCTAssertNotEqual(AppLocalization.text(source,language:"fr"),source,feature)
+            XCTAssertEqual(AppLocalization.text(source,language:"en"),source)
+        }
+        XCTAssertEqual(AppLocalization.text("This PDF contains accessibility tags. Metadata cleanup cannot safely preserve those features. No copy was exported.",language:"tr"),"Bu PDF'de erişilebilirlik etiketleri var. Meta veri temizliği bu özellikleri güvenle koruyamaz. Kopya dışa aktarılmadı.")
+    }
 }

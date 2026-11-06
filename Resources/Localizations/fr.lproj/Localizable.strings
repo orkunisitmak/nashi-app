@@ -2446,7 +2446,12 @@
 "THIS MEDIA IS PROTECTED AND CANNOT BE DOWNLOADED HERE." = "CE MÉDIA EST PROTÉGÉ ET NE PEUT PAS ÊTRE TÉLÉCHARGÉ ICI.";
 "THIS OUTPUT FORMAT HAS NO ADJUSTABLE CONVERSION DEFAULTS." = "CE FORMAT DE SORTIE N’A PAS DE RÉGLAGES DE CONVERSION MODIFIABLES.";
 "THIS PAGES FILE IS TOO LARGE OR IS NOT A REGULAR DOCUMENT FILE." = "CE FICHIER PAGES EST TROP VOLUMINEUX OU N’EST PAS UN FICHIER DE DOCUMENT ORDINAIRE.";
+"THIS PDF CONTAINS ACCESSIBILITY TAGS. METADATA CLEANUP CANNOT SAFELY PRESERVE THOSE FEATURES. NO COPY WAS EXPORTED." = "CE PDF CONTIENT DES BALISES D’ACCESSIBILITÉ. LE NETTOYAGE DES MÉTADONNÉES NE PEUT PAS CONSERVER CES ÉLÉMENTS EN TOUTE SÉCURITÉ. AUCUNE COPIE N’A ÉTÉ EXPORTÉE.";
+"THIS PDF CONTAINS CUSTOM PAGE LABELS. METADATA CLEANUP CANNOT SAFELY PRESERVE THOSE FEATURES. NO COPY WAS EXPORTED." = "CE PDF CONTIENT DES ÉTIQUETTES DE PAGE PERSONNALISÉES. LE NETTOYAGE DES MÉTADONNÉES NE PEUT PAS CONSERVER CES ÉLÉMENTS EN TOUTE SÉCURITÉ. AUCUNE COPIE N’A ÉTÉ EXPORTÉE.";
+"THIS PDF CONTAINS EMBEDDED FILES. METADATA CLEANUP CANNOT SAFELY PRESERVE THOSE FEATURES. NO COPY WAS EXPORTED." = "CE PDF CONTIENT DES FICHIERS INTÉGRÉS. LE NETTOYAGE DES MÉTADONNÉES NE PEUT PAS CONSERVER CES ÉLÉMENTS EN TOUTE SÉCURITÉ. AUCUNE COPIE N’A ÉTÉ EXPORTÉE.";
+"THIS PDF CONTAINS FORM FIELDS. METADATA CLEANUP CANNOT SAFELY PRESERVE THOSE FEATURES. NO COPY WAS EXPORTED." = "CE PDF CONTIENT DES CHAMPS DE FORMULAIRE. LE NETTOYAGE DES MÉTADONNÉES NE PEUT PAS CONSERVER CES ÉLÉMENTS EN TOUTE SÉCURITÉ. AUCUNE COPIE N’A ÉTÉ EXPORTÉE.";
 "THIS PDF CONTAINS NO PAGES." = "CE PDF NE CONTIENT AUCUNE PAGE.";
+"THIS PDF CONTAINS OPTIONAL CONTENT LAYERS. METADATA CLEANUP CANNOT SAFELY PRESERVE THOSE FEATURES. NO COPY WAS EXPORTED." = "CE PDF CONTIENT DES CALQUES DE CONTENU OPTIONNEL. LE NETTOYAGE DES MÉTADONNÉES NE PEUT PAS CONSERVER CES ÉLÉMENTS EN TOUTE SÉCURITÉ. AUCUNE COPIE N’A ÉTÉ EXPORTÉE.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT MERGING, SPLITTING OR REORDERING PAGES CANNOT KEEP. NO COPY WAS EXPORTED." = "CE PDF CONTIENT DES CHAMPS DE FORMULAIRE OU DES PIÈCES JOINTES QUE LA FUSION, LA DIVISION OU LA RÉORGANISATION DES PAGES NE PEUT PAS CONSERVER. AUCUNE COPIE N’A ÉTÉ EXPORTÉE.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT METADATA CLEANUP CANNOT KEEP. NO COPY WAS EXPORTED." = "CE PDF CONTIENT DES CHAMPS DE FORMULAIRE OU DES PIÈCES JOINTES QUE LE NETTOYAGE DES MÉTADONNÉES NE PEUT PAS CONSERVER. AUCUNE COPIE N’A ÉTÉ EXPORTÉE.";
 "THIS PDF IS PASSWORD PROTECTED. ENTER ITS PASSWORD." = "CE PDF EST PROTÉGÉ PAR UN MOT DE PASSE. SAISISSEZ SON MOT DE PASSE.";
@@ -2590,7 +2595,12 @@
 "The upstream server did not return a successful HTTPS download." = "Le serveur amont n’a pas fourni de téléchargement HTTPS réussi.";
 "The video has no readable dimensions." = "Les dimensions de la vidéo sont illisibles.";
 "These files have moved or were deleted." = "Ces fichiers ont été déplacés ou supprimés.";
+"This PDF contains accessibility tags. Metadata cleanup cannot safely preserve those features. No copy was exported." = "Ce PDF contient des balises d’accessibilité. Le nettoyage des métadonnées ne peut pas conserver ces éléments en toute sécurité. Aucune copie n’a été exportée.";
+"This PDF contains custom page labels. Metadata cleanup cannot safely preserve those features. No copy was exported." = "Ce PDF contient des étiquettes de page personnalisées. Le nettoyage des métadonnées ne peut pas conserver ces éléments en toute sécurité. Aucune copie n’a été exportée.";
+"This PDF contains embedded files. Metadata cleanup cannot safely preserve those features. No copy was exported." = "Ce PDF contient des fichiers intégrés. Le nettoyage des métadonnées ne peut pas conserver ces éléments en toute sécurité. Aucune copie n’a été exportée.";
+"This PDF contains form fields. Metadata cleanup cannot safely preserve those features. No copy was exported." = "Ce PDF contient des champs de formulaire. Le nettoyage des métadonnées ne peut pas conserver ces éléments en toute sécurité. Aucune copie n’a été exportée.";
 "This PDF contains no pages." = "Ce PDF ne contient aucune page.";
+"This PDF contains optional content layers. Metadata cleanup cannot safely preserve those features. No copy was exported." = "Ce PDF contient des calques de contenu optionnel. Le nettoyage des métadonnées ne peut pas conserver ces éléments en toute sécurité. Aucune copie n’a été exportée.";
 "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported." = "Ce PDF contient des champs de formulaire ou des pièces jointes que la fusion, la division ou la réorganisation des pages ne peut pas conserver. Aucune copie n’a été exportée.";
 "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported." = "Ce PDF contient des champs de formulaire ou des pièces jointes que le nettoyage des métadonnées ne peut pas conserver. Aucune copie n’a été exportée.";
 "This PDF is password protected. Enter its password." = "Ce PDF est protégé par un mot de passe. Saisissez son mot de passe.";
