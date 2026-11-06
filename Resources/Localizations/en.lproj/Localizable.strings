@@ -496,6 +496,8 @@
 "CLOSE" = "CLOSE";
 "CLOSE FLOAT WITHOUT DELETING FILES" = "CLOSE FLOAT WITHOUT DELETING FILES";
 "CLOSE WINDOW" = "CLOSE WINDOW";
+"COLLAGE DIMENSIONS MUST BE BETWEEN 1 AND 32,000 PIXELS." = "COLLAGE DIMENSIONS MUST BE BETWEEN 1 AND 32,000 PIXELS.";
+"COLLAGE PADDING LEAVES NO SPACE FOR IMAGES." = "COLLAGE PADDING LEAVES NO SPACE FOR IMAGES.";
 "COLLAPSE FLOAT" = "COLLAPSE FLOAT";
 "COLOR" = "COLOR";
 "COLUMN" = "COLUMN";
@@ -697,6 +699,8 @@
 "Close" = "Close";
 "Close Float without deleting files" = "Close Float without deleting files";
 "Close Window" = "Close Window";
+"Collage dimensions must be between 1 and 32,000 pixels." = "Collage dimensions must be between 1 and 32,000 pixels.";
+"Collage padding leaves no space for images." = "Collage padding leaves no space for images.";
 "Collapse Float" = "Collapse Float";
 "Color" = "Color";
 "Column" = "Column";
@@ -1921,6 +1925,7 @@
 "REDACT PHOTO" = "REDACT PHOTO";
 "REDACT VIDEO" = "REDACT VIDEO";
 "REDO" = "REDO";
+"REDUCE COLLAGE SPACING OR INCREASE THE CANVAS." = "REDUCE COLLAGE SPACING OR INCREASE THE CANVAS.";
 "REDUCE PADDING OR SPACING TO FIT THE IMAGES." = "REDUCE PADDING OR SPACING TO FIT THE IMAGES.";
 "REDUCE SPACING TO FIT THE FEATURED LAYOUT." = "REDUCE SPACING TO FIT THE FEATURED LAYOUT.";
 "REDUCTION (%; 0 = AUTO)" = "REDUCTION (%; 0 = AUTO)";
@@ -1990,6 +1995,7 @@
 "Redaction coordinates must be finite for the %lld × %@ pixel image." = "Redaction coordinates must be finite for the %lld × %@ pixel image.";
 "Redaction coordinates must be finite for the %lld × %lld pixel image." = "Redaction coordinates must be finite for the %lld × %lld pixel image.";
 "Redo" = "Redo";
+"Reduce collage spacing or increase the canvas." = "Reduce collage spacing or increase the canvas.";
 "Reduce padding or spacing to fit the images." = "Reduce padding or spacing to fit the images.";
 "Reduce spacing to fit the featured layout." = "Reduce spacing to fit the featured layout.";
 "Reduction (%; 0 = auto)" = "Reduction (%; 0 = auto)";

@@ -496,6 +496,8 @@
 "CLOSE" = "FERMER";
 "CLOSE FLOAT WITHOUT DELETING FILES" = "FERMER FLOAT SANS SUPPRIMER LES FICHIERS";
 "CLOSE WINDOW" = "FERMER LA FENÊTRE";
+"COLLAGE DIMENSIONS MUST BE BETWEEN 1 AND 32,000 PIXELS." = "LES DIMENSIONS DU COLLAGE DOIVENT ÊTRE COMPRISES ENTRE 1 ET 32 000 PIXELS.";
+"COLLAGE PADDING LEAVES NO SPACE FOR IMAGES." = "LES MARGES NE LAISSENT PAS DE PLACE AUX IMAGES.";
 "COLLAPSE FLOAT" = "RÉDUIRE FLOAT";
 "COLOR" = "COULEUR";
 "COLUMN" = "COLONNE";
@@ -697,6 +699,8 @@
 "Close" = "Fermer";
 "Close Float without deleting files" = "Fermer Float sans supprimer les fichiers";
 "Close Window" = "Fermer la fenêtre";
+"Collage dimensions must be between 1 and 32,000 pixels." = "Les dimensions du collage doivent être comprises entre 1 et 32 000 pixels.";
+"Collage padding leaves no space for images." = "Les marges ne laissent pas de place aux images.";
 "Collapse Float" = "Réduire Float";
 "Color" = "Couleur";
 "Column" = "Colonne";
@@ -1921,6 +1925,7 @@
 "REDACT PHOTO" = "CAVIARDER LA PHOTO";
 "REDACT VIDEO" = "CAVIARDER LA VIDÉO";
 "REDO" = "RÉTABLIR";
+"REDUCE COLLAGE SPACING OR INCREASE THE CANVAS." = "RÉDUISEZ L’ESPACEMENT DU COLLAGE OU AGRANDISSEZ LE CANEVAS.";
 "REDUCE PADDING OR SPACING TO FIT THE IMAGES." = "RÉDUISEZ LES MARGES OU L’ESPACEMENT POUR QUE LES IMAGES TIENNENT.";
 "REDUCE SPACING TO FIT THE FEATURED LAYOUT." = "RÉDUISEZ L’ESPACEMENT POUR QUE LA MISE EN PAGE EN VEDETTE TIENNE.";
 "REDUCTION (%; 0 = AUTO)" = "RÉDUCTION (% ; 0 = AUTO)";
@@ -1990,6 +1995,7 @@
 "Redaction coordinates must be finite for the %lld × %@ pixel image." = "Les coordonnées de caviardage doivent être des nombres finis pour l’image de %lld × %@ pixels.";
 "Redaction coordinates must be finite for the %lld × %lld pixel image." = "Les coordonnées de caviardage doivent être des nombres finis pour l’image de %lld × %lld pixels.";
 "Redo" = "Rétablir";
+"Reduce collage spacing or increase the canvas." = "Réduisez l’espacement du collage ou agrandissez le canevas.";
 "Reduce padding or spacing to fit the images." = "Réduisez les marges ou l’espacement pour que les images tiennent.";
 "Reduce spacing to fit the featured layout." = "Réduisez l’espacement pour que la mise en page en vedette tienne.";
 "Reduction (%; 0 = auto)" = "Réduction (% ; 0 = auto)";
