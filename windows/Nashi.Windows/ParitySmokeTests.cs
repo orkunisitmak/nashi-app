@@ -44,9 +44,9 @@ internal static class ParitySmokeTests
         var grouped=DocumentEngine.Pdf("splitPDF",[qrPdf],outputs,pagesPerFile:2);Check(grouped.Count==1,"PDF pages-per-file split failed");
         var shelf=new FloatShelf([source,qrImage],(_,_)=>Task.CompletedTask,_=>{});shelf.Show();DesktopInput.Pump();
         Check(!shelf.IsExpanded&&Math.Abs(shelf.ActualWidth-112)<1,"Float did not start as a compact stack");Capture(shelf,root,"windows-float-stack.png");
-        DesktopInput.MovePointer(shelf.PointToScreen(new Point(40,45)));DesktopInput.Pump(500);Check(shelf.IsExpanded&&Math.Abs(shelf.ActualWidth-156)<1,"Float hover did not open the slim shelf");
+        DesktopInput.MovePointer(shelf.PointToScreen(new Point(40,45)));DesktopInput.Pump(500);Check(shelf.IsExpanded&&Math.Abs(shelf.ActualWidth-284)<1,"Float hover did not open the shelf");
         DesktopInput.MovePointer(shelf.PointToScreen(new Point(360,20)));DesktopInput.Pump(950);Check(!shelf.IsExpanded,"Float did not fold after the pointer left");
-        shelf.SetExpanded(true);DesktopInput.Pump(300);Check(shelf.IsExpanded&&Math.Abs(shelf.ActualWidth-156)<1,"Float did not expand into a slim shelf");
+        shelf.SetExpanded(true);DesktopInput.Pump(300);Check(shelf.IsExpanded&&Math.Abs(shelf.ActualWidth-284)<1,"Float did not expand into the shelf");
         var floatSink=new Border{Background=Brushes.AliceBlue,AllowDrop=true,Child=new TextBlock{Text="Copy-only Float drag fixture",Margin=new(12)}};
         var sinkWindow=new Window{Title="Float drag fixture",Content=floatSink,Width=250,Height=200,Left=shelf.Left+220,Top=shelf.Top,Topmost=true};string[]? carried=null;
         floatSink.DragOver+=(_,e)=>{e.Effects=DragDropEffects.Copy;e.Handled=true;};floatSink.Drop+=(_,e)=>{carried=e.Data.GetData(DataFormats.FileDrop) as string[];e.Effects=DragDropEffects.Copy;e.Handled=true;};sinkWindow.Show();DesktopInput.Pump();

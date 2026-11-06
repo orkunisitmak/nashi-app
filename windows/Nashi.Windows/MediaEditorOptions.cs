@@ -21,11 +21,11 @@ public sealed partial class ToolEditor
         }
         if(tool=="redactAudio")
         {
-            options.Children.Add(L10n.Label(new TextBlock{Text="Replace selected audio with"}));options.Children.Add(bleepMode);options.Children.Add(MainWindow.Button("Add selected range",()=>{try{var (a,b)=ReadPlaybackRange("Choose a valid range first.");bleepRanges.Add(new(a,b));ReloadRanges();}catch(ArgumentException error){MessageBox.Show(this,L10n.Text(error.Message),L10n.Text("Check selected range"));}}));options.Children.Add(rangesList);options.Children.Add(MainWindow.Button("Remove selected range",()=>{if(rangesList.SelectedIndex is var i&&i>=0&&i<bleepRanges.Count){bleepRanges.RemoveAt(i);ReloadRanges();}}));
+            options.Children.Add(L10n.Label(new TextBlock{Text="Replace selected audio with"}));options.Children.Add(bleepMode);options.Children.Add(MainWindow.Button("Add selected range",()=>{try{var (a,b)=ReadPlaybackRange("Choose a valid range first.");bleepRanges.Add(new(a,b));activePart=bleepRanges.Count-1;ReloadRanges();}catch(ArgumentException error){MessageBox.Show(this,L10n.Text(error.Message),L10n.Text("Check selected range"));}}));options.Children.Add(rangesList);options.Children.Add(MainWindow.Button("Remove selected range",()=>{if(rangesList.SelectedIndex is var i&&i>=0&&i<bleepRanges.Count){bleepRanges.RemoveAt(i);ReloadRanges();}}));
         }
         if(tool=="redactVideo"){options.Children.Add(L10n.Label(new TextBlock{Text="Cover style"}));options.Children.Add(redactMode);options.Children.Add(rangesList);options.Children.Add(MainWindow.Button("Remove selected area",()=>{var i=rangesList.SelectedIndex;if(i>=0&&i<videoRegions.Count){videoRegions.RemoveAt(i);var shape=drawing.Children.OfType<System.Windows.Shapes.Rectangle>().ElementAtOrDefault(i);if(shape is not null)drawing.Children.Remove(shape);ReloadRanges();}}));}
     }
-    private void ReloadRanges(){rangesList.ItemsSource=null;rangesList.ItemsSource=tool=="redactAudio"?bleepRanges.Select((r,i)=>$"{i+1} · {r.Start:0.###}–{r.End:0.###} s").ToArray():videoRegions.Select((r,i)=>$"{i+1} · {r.Width:0}×{r.Height:0} · {r.Start:0.###}–{r.End:0.###} s").ToArray();}
+    private void ReloadRanges(){afterRanges?.Invoke();rangesList.ItemsSource=null;rangesList.ItemsSource=tool=="redactAudio"?bleepRanges.Select((r,i)=>$"{i+1} · {r.Start:0.###}–{r.End:0.###} s").ToArray():videoRegions.Select((r,i)=>$"{i+1} · {r.Width:0}×{r.Height:0} · {r.Start:0.###}–{r.End:0.###} s").ToArray();}
     private (double Start,double End) ReadPlaybackRange(string message="Start must be before End, within the media duration.")
     {
         var a=Value("Start");var b=Value("End",duration);var end=RangeEnd();

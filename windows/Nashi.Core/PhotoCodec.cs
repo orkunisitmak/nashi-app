@@ -57,40 +57,30 @@ public static class PhotoCodec
         if(format=="heic"){byte[] png;using(var source=Read())png=source.ToByteArray(MagickFormat.Png);EncodePng(png,output,format,quality,encoder,token);return;}
         using var image=Read();image.Strip();image.Quality=(uint)Math.Clamp(quality,1,100);image.Write(output,Format(format));
     }
+    /// PNG made small the way image optimizers do it: at most 256 colors (transparency kept), maximum compression.
+    public static void EncodePalettePng(byte[] bgra,int width,int height,string output,int colors)
+    {
+        if(width<1||height<1||bgra.Length<(long)width*height*4)throw new ArgumentException("Choose a nonempty image.");
+        using var image=new MagickImage();image.ReadPixels(bgra,new PixelReadSettings((uint)width,(uint)height,StorageType.Char,PixelMapping.BGRA));image.ColorSpace=ColorSpace.sRGB;image.Strip();
+        image.Quantize(new QuantizeSettings{Colors=(uint)Math.Clamp(colors,2,256),DitherMethod=DitherMethod.FloydSteinberg});image.Settings.SetDefine(MagickFormat.Png,"compression-level","9");image.Write(output,MagickFormat.Png);
+    }
+    internal static int PaletteColors(int quality)=>quality>=85?256:quality>=70?160:96;
+    public static void EncodeCompressed(byte[] bgra,int width,int height,string output,string format,int quality){if(format=="png")EncodePalettePng(bgra,width,height,output,PaletteColors(quality));else EncodePixels(bgra,width,height,output,format,quality);}
     public static MagickFormat Format(string format)=>format switch{"jpg"=>MagickFormat.Jpeg,"webp"=>MagickFormat.WebP,"heic"=>MagickFormat.Heic,"avif"=>MagickFormat.Avif,"tiff"=>MagickFormat.Tiff,"bmp"=>MagickFormat.Bmp,"gif"=>MagickFormat.Gif,"png"=>MagickFormat.Png,_=>throw new ArgumentException("Unsupported image format.")};
     public static byte[] Adjust(byte[] png,PhotoAdjustments o)
     {
+        Validate(o);using var image=new MagickImage(png,new MagickReadSettings{Format=MagickFormat.Png});int width=(int)image.Width,height=(int)image.Height;
+        byte[] pixels;using(var read=image.GetPixels())pixels=read.ToByteArray(PixelMapping.BGRA)??throw new InvalidDataException("The photo has no pixels.");
+        var adjusted=PhotoPixels.Adjust(pixels,width,height,o);var opaque=!image.HasAlpha;
+        using var output=new MagickImage();output.ReadPixels(adjusted,new PixelReadSettings((uint)width,(uint)height,StorageType.Char,PixelMapping.BGRA));output.ColorSpace=ColorSpace.sRGB;if(opaque)output.HasAlpha=false;return output.ToByteArray(MagickFormat.Png);
+    }
+    /// The same adjustments on straight BGRA pixels (the live preview passes its size against the original as `scale`).
+    public static byte[] AdjustPixels(byte[] bgra,int width,int height,PhotoAdjustments o){Validate(o);return PhotoPixels.Adjust(bgra,width,height,o);}
+    public static void AdjustPixels(byte[] bgra,byte[] output,int width,int height,PhotoAdjustments o,double scale){Validate(o);PhotoPixels.Adjust(bgra,output,width,height,o,scale);}
+    private static void Validate(PhotoAdjustments o)
+    {
         foreach(var property in typeof(PhotoAdjustments).GetProperties()){var n=(double)property.GetValue(o)!;if(!double.IsFinite(n)||Math.Abs(n)>100)throw new ArgumentException("Choose finite photo adjustments within their ranges.");}
         if(o.Gamma<=0||o.Contrast<0||o.Saturation<0)throw new ArgumentException("Gamma must be positive; contrast and saturation cannot be negative.");
-        using var image=new MagickImage(png,new MagickReadSettings{Format=MagickFormat.Png});
-        if(o.Exposure!=0)image.Evaluate(Channels.RGB,EvaluateOperator.Multiply,Math.Pow(2,o.Exposure));
-        image.BrightnessContrast(new Percentage(o.Brightness*100),new Percentage((o.Contrast-1)*50));
-        if(o.Gamma!=1)image.GammaCorrect(o.Gamma,Channels.RGB);
-        if(o.Shadows!=0||o.Highlights!=0||o.Whites!=0||o.Blacks!=0||o.Saturation!=1||o.Vibrance!=0||o.Temperature!=0||o.Tint!=0||o.Fade!=0)
-        {
-        var pixels=image.GetPixels();
-        for(var y=0;y<image.Height;y++)for(var x=0;x<image.Width;x++)
-        {
-            var p=pixels.GetPixel(x,y);var r=p.GetChannel(0)/255d;var g=p.GetChannel(1)/255d;var b=p.GetChannel(2)/255d;var lum=.2126*r+.7152*g+.0722*b;
-            var tone=o.Shadows*Math.Pow(1-lum,2)*.3+o.Highlights*lum*lum*.3+o.Whites*Math.Pow(lum,4)*.3+o.Blacks*Math.Pow(1-lum,4)*.3;
-            var saturation=o.Saturation+o.Vibrance*(1-(Math.Max(r,Math.Max(g,b))-Math.Min(r,Math.Min(g,b))));
-            r=lum+(r-lum)*saturation+tone+o.Temperature*.12+o.Tint*.06;g=lum+(g-lum)*saturation+tone-o.Tint*.1;b=lum+(b-lum)*saturation+tone-o.Temperature*.12+o.Tint*.06;
-            var fade=Math.Clamp(o.Fade,0,1)*.3;r=r*(1-fade)+fade;g=g*(1-fade)+fade;b=b*(1-fade)+fade;
-            p.SetChannel(0,(byte)Math.Clamp(Math.Round(r*255),0,255));p.SetChannel(1,(byte)Math.Clamp(Math.Round(g*255),0,255));p.SetChannel(2,(byte)Math.Clamp(Math.Round(b*255),0,255));
-        }
-        pixels.Dispose();
-        }
-        if(o.Hue!=0)image.Modulate(new Percentage(100),new Percentage(100),new Percentage(100+o.Hue/1.8));
-        if(o.Dehaze!=0)image.BrightnessContrast(new Percentage(-o.Dehaze*8),new Percentage(o.Dehaze*25));
-        if(o.NoiseReduction>0)image.MedianFilter((uint)Math.Clamp(Math.Ceiling(o.NoiseReduction*2),1,3));
-        // Blur is the Gaussian standard deviation, like macOS CIGaussianBlur's radius.
-        // GaussianBlur(radius) keeps sigma at 1 (barely blurred, still readable when
-        // redacting) and its 2-D kernel is far slower than the separable Blur.
-        if(o.Blur>0)image.Blur(0,Math.Min(50,o.Blur));
-        if(o.Sharpen>0||o.Clarity>0||o.Texture>0)image.UnsharpMask(0,1+Math.Max(0,o.Clarity)*3,Math.Max(0,o.Sharpen)+Math.Max(0,o.Texture),.02);
-        if(o.Grain>0)image.AddNoise(NoiseType.Gaussian,Math.Min(1,o.Grain)*.15,Channels.RGB);
-        if(o.Vignette>0)image.Vignette(0,Math.Max(1,Math.Min(image.Width,image.Height)*o.Vignette*.25),0,0);
-        return image.ToByteArray(MagickFormat.Png);
     }
     public static IReadOnlyDictionary<string,string> Metadata(string input)
     {

@@ -15,6 +15,7 @@ public static class NativePdf
         using var pdf=PdfRasterDocument.Open(path,password);var images=new List<byte[]>();long total=0;
         for(var i=0;i<pdf.PageCount;i++){token.ThrowIfCancellationRequested();var image=pdf.RenderPage(i,dpi,token);total+=image.LongLength;if(total>512_000_000)throw new InvalidDataException("Rendered pages exceed 512 MB. Choose a lower DPI or split the PDF first.");images.Add(image);}return images.ToArray();
     },token);
+    public static Task<int> PageCountAsync(string path,string password="")=>Task.Run(()=>{using var pdf=PdfRasterDocument.Open(path,password);return pdf.PageCount;});
     // Only the listed 1-based pages, so a fallback for a few pages does not render a whole document.
     public static Task<Dictionary<int,byte[]>> RenderPagesAsync(string path,IReadOnlyCollection<int> pages,int dpi=144,CancellationToken token=default,string password="")=>Task.Run(()=>
     {

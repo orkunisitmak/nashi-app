@@ -10,7 +10,7 @@ internal sealed class FilePreviewWindow:Window
 {
     private readonly string[] paths;private int index;
     private readonly Toolchain tools;private readonly OfficeRuntime office;private readonly string temporary=Path.Combine(Path.GetTempPath(),"Nashi-quick-preview-"+Guid.NewGuid().ToString("N"));private CancellationTokenSource lifetime=new();
-    private readonly ContentControl content=new();private readonly TextBlock caption=new(){TextTrimming=TextTrimming.CharacterEllipsis,VerticalAlignment=VerticalAlignment.Center};
+    private readonly ContentControl content=new();private readonly TextBlock caption=new(){FontSize=15,FontWeight=FontWeights.SemiBold,TextTrimming=TextTrimming.CharacterEllipsis,VerticalAlignment=VerticalAlignment.Center};
     private MediaElement? player;private bool playing;private readonly Slider scrub=new(){Minimum=0,Maximum=1,MinWidth=140};
     private PdfRasterDocument? pdfDocument;
     private readonly System.Windows.Threading.DispatcherTimer timer=new(){Interval=TimeSpan.FromMilliseconds(150)};
@@ -22,12 +22,14 @@ internal sealed class FilePreviewWindow:Window
         this.tools=tools??new Toolchain(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Nashi","Tools","v1"),Environment.GetEnvironmentVariable("PATH"));
         this.office=office??new OfficeRuntime(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Nashi","Tools"));
         this.paths=paths.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();if(this.paths.Length==0)throw new ArgumentException("Choose a file to preview.");
-        Owner=owner;Title="Preview · Nashi";Width=800;Height=620;MinWidth=560;MinHeight=400;WindowStartupLocation=WindowStartupLocation.CenterOwner;Theme.Attach(this);
-        var root=new DockPanel{Margin=new(20)};Content=root;var header=new DockPanel{Margin=new(0,0,0,14)};DockPanel.SetDock(header,Dock.Top);root.Children.Add(header);
+        Owner=owner;Title="Preview · Nashi";Width=800;Height=620;MinWidth=560;MinHeight=400;WindowStartupLocation=WindowStartupLocation.CenterOwner;Theme.Attach(this);L10n.Bind(this,Ui.HeadingProperty,"Preview");
+        var root=new DockPanel{Margin=new(16,2,16,14)};Content=root;var header=new DockPanel{Margin=new(4,0,0,10)};DockPanel.SetDock(header,Dock.Top);root.Children.Add(header);
         var navigation=new StackPanel{Orientation=Orientation.Horizontal};DockPanel.SetDock(navigation,Dock.Right);header.Children.Add(navigation);
-        navigation.Children.Add(MainWindow.Button("←",()=>Navigate(-1)));navigation.Children.Add(MainWindow.Button("→",()=>Navigate(1)));navigation.Children.Add(MainWindow.Button("Open",()=>{if(File.Exists(CurrentPath)||Directory.Exists(CurrentPath))MainWindow.OpenUrl(CurrentPath);}));header.Children.Add(caption);
-        var footer=new StackPanel();DockPanel.SetDock(footer,Dock.Bottom);root.Children.Add(footer);transport.Children.Add(MainWindow.Button("Play / pause",Toggle));transport.Children.Add(scrub);footer.Children.Add(transport);
-        footer.Children.Add(L10n.Label(new TextBlock{Text="←/→ files · Media: Space play/pause, ←/→ 1s, Alt+←/→ files · Esc closes",FontSize=11,Foreground=Theme.Brush("Muted"),Margin=new(0,12,0,0)}));root.Children.Add(content);
+        // Previous and next are icon buttons; Open hands the file to its default app.
+        Button Step(string glyph,string name,int delta){var step=MainWindow.Button(glyph,()=>Navigate(delta));step.Style=Ui.Style("Round");step.Width=step.Height=32;step.Margin=new(0,0,6,0);L10n.Bind(step,ToolTipProperty,name);System.Windows.Automation.AutomationProperties.SetName(step,name);return step;}
+        navigation.Children.Add(Step("\uE72B","Previous",-1));navigation.Children.Add(Step("\uE72A","Next",1));var open=MainWindow.Button("Open",()=>{if(File.Exists(CurrentPath)||Directory.Exists(CurrentPath))MainWindow.OpenUrl(CurrentPath);});open.Margin=new(0);navigation.Children.Add(open);header.Children.Add(caption);
+        var footer=new StackPanel();DockPanel.SetDock(footer,Dock.Bottom);root.Children.Add(footer);var playPause=MainWindow.Button("Play / pause",Toggle);Ui.SetIcon(playPause,"play",13);transport.Children.Add(playPause);scrub.VerticalAlignment=VerticalAlignment.Center;scrub.Margin=new(8,0,0,0);transport.Children.Add(scrub);transport.Margin=new(0,10,0,0);footer.Children.Add(transport);
+        footer.Children.Add(L10n.Label(new TextBlock{Text="←/→ files · Media: Space play/pause, ←/→ 1s, Alt+←/→ files · Esc closes",FontSize=11,Foreground=Theme.Brush("Muted"),Margin=new(4,10,0,0)}));var stage=new Border{CornerRadius=new(14),Padding=new(10),Child=content};stage.SetResourceReference(Border.BackgroundProperty,"Media");root.Children.Add(stage);
         scrub.ValueChanged+=(_,_)=>{if(!updating&&player is not null)player.Position=TimeSpan.FromSeconds(scrub.Value);};
         timer.Tick+=(_,_)=>{if(player is null)return;updating=true;scrub.Value=player.Position.TotalSeconds;updating=false;};
         PreviewKeyDown+=(_,e)=>{var key=e.Key==Key.System?e.SystemKey:e.Key;var modifiers=Keyboard.Modifiers;if(key==Key.Escape){Close();e.Handled=true;return;}if(ClipboardImport.IsEditing(Keyboard.FocusedElement as DependencyObject)&&Keyboard.FocusedElement is not TextBox{IsReadOnly:true})return;
@@ -53,7 +55,7 @@ internal sealed class FilePreviewWindow:Window
                 if(office.Executable is null){content.Content=L10n.Label(new TextBlock{Text="Set up office tools in Nashi to preview this document here, or use Open.",TextWrapping=TextWrapping.Wrap});return;}
                 Directory.CreateDirectory(temporary);path=(await new DocumentConversion(office,tools).ConvertAsync([path],"pdf",temporary,new(),null,token))[0];token.ThrowIfCancellationRequested();
             }
-            if(FeatureCatalog.IsImage(path))content.Content=new Image{Source=ImageEngine.Load(path),Stretch=Stretch.Uniform};
+            if(FeatureCatalog.IsImage(path)){var picture=await Task.Run(()=>ImageEngine.Load(path),token);if(token.IsCancellationRequested)return;content.Content=new Image{Source=picture,Stretch=Stretch.Uniform};}
             else if(FeatureCatalog.Extension(path)=="pdf")
             {
                 // Load pages on demand rather than decoding every page before showing the first.
