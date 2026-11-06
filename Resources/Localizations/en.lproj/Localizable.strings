@@ -2100,6 +2100,10 @@
 "SEND IT ON ITS WAY" = "SEND IT ON ITS WAY";
 "SERIF" = "SERIF";
 "SET" = "SET";
+"SET END AT PLAYHEAD (O)" = "SET END AT PLAYHEAD (O)";
+"SET END HERE" = "SET END HERE";
+"SET START AT PLAYHEAD (I)" = "SET START AT PLAYHEAD (I)";
+"SET START HERE" = "SET START HERE";
 "SET UP MEDIA TOOLS" = "SET UP MEDIA TOOLS";
 "SET UP MEDIA TOOLS FOR THIS CODEC, OR USE OPEN TO PREVIEW IN ITS DEFAULT APP." = "SET UP MEDIA TOOLS FOR THIS CODEC, OR USE OPEN TO PREVIEW IN ITS DEFAULT APP.";
 "SET UP MEDIA TOOLS ONCE TO ENABLE HEIC ENCODING ON WINDOWS." = "SET UP MEDIA TOOLS ONCE TO ENABLE HEIC ENCODING ON WINDOWS.";
@@ -2267,6 +2271,10 @@
 "Send it on its way" = "Send it on its way";
 "Serif" = "Serif";
 "Set" = "Set";
+"Set End Here" = "Set End Here";
+"Set Start Here" = "Set Start Here";
+"Set end at playhead (O)" = "Set end at playhead (O)";
+"Set start at playhead (I)" = "Set start at playhead (I)";
 "Set up Nashi tools" = "Set up Nashi tools";
 "Set up media tools" = "Set up media tools";
 "Set up media tools for this codec, or use Open to preview in its default app." = "Set up media tools for this codec, or use Open to preview in its default app.";

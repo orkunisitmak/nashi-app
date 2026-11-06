@@ -2100,6 +2100,10 @@
 "SEND IT ON ITS WAY" = "DÉPLACEZ, COPIEZ, PARTAGEZ";
 "SERIF" = "EMPATTEMENT";
 "SET" = "DÉFINIR";
+"SET END AT PLAYHEAD (O)" = "PLACER LA FIN À LA TÊTE DE LECTURE (O)";
+"SET END HERE" = "FIN ICI";
+"SET START AT PLAYHEAD (I)" = "PLACER LE DÉBUT À LA TÊTE DE LECTURE (I)";
+"SET START HERE" = "DÉBUT ICI";
 "SET UP MEDIA TOOLS" = "CONFIGURER LES OUTILS MULTIMÉDIAS";
 "SET UP MEDIA TOOLS FOR THIS CODEC, OR USE OPEN TO PREVIEW IN ITS DEFAULT APP." = "CONFIGUREZ LES OUTILS MULTIMÉDIAS POUR CE CODEC, OU UTILISEZ OUVRIR POUR L’APERÇU DANS L’APP PAR DÉFAUT.";
 "SET UP MEDIA TOOLS ONCE TO ENABLE HEIC ENCODING ON WINDOWS." = "CONFIGUREZ UNE FOIS LES OUTILS MULTIMÉDIAS POUR ACTIVER L’ENCODAGE HEIC SOUS WINDOWS.";
@@ -2267,6 +2271,10 @@
 "Send it on its way" = "Déplacez, copiez, partagez";
 "Serif" = "Empattement";
 "Set" = "Définir";
+"Set End Here" = "Fin ici";
+"Set Start Here" = "Début ici";
+"Set end at playhead (O)" = "Placer la fin à la tête de lecture (O)";
+"Set start at playhead (I)" = "Placer le début à la tête de lecture (I)";
 "Set up Nashi tools" = "Configurer les outils de Nashi";
 "Set up media tools" = "Configurer les outils multimédias";
 "Set up media tools for this codec, or use Open to preview in its default app." = "Configurez les outils multimédias pour ce codec, ou utilisez Ouvrir pour l’aperçu dans l’app par défaut.";
