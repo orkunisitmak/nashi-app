@@ -52,7 +52,7 @@ public static class Cli
         catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or InvalidOperationException or UnauthorizedAccessException or FileNotFoundException)
         {Console.Error.WriteLine("\n"+error.Message);return 1;}
     }
-    private static async Task<IReadOnlyList<string>> ConvertAsync(IReadOnlyList<string> inputs,string format,string destination,PreferencesStore preferences,Toolchain tools,IProgress<OperationProgress> progress,CancellationToken token)
+    internal static async Task<IReadOnlyList<string>> ConvertAsync(IReadOnlyList<string> inputs,string format,string destination,PreferencesStore preferences,Toolchain tools,IProgress<OperationProgress> progress,CancellationToken token)
     {
         var profile=preferences.Profile(format);
         if(inputs.All(FeatureCatalog.IsImage))

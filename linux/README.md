@@ -35,6 +35,14 @@ When you drop on a conversion or a simple tool, it runs straight away with its s
 
 The wheel uses the macOS petal layout in every theme.
 
+## Watched folders
+
+**Settings → Automation** converts new files that land in a folder while Nashi runs, including from the tray. For example, HEIC photos synced into Downloads appear as JPG next to the originals. Each rule has a folder, extensions and a target format, and uses your saved export defaults. Originals are never changed. Partial downloads (`.part`, `.crdownload`) and hidden files are skipped, and Nashi ignores its own results so a rule can't loop. Each result goes to Library and shows a notification.
+
+## Screenshots and copied images
+
+`Meta+Alt+S` lets you select part of the screen with your desktop's screenshot tool (Spectacle, GNOME Screenshot, Xfce Screenshooter or Flameshot), saves the capture to Library and opens the Tools wheel on it, so you can annotate, redact, crop, read a QR code or convert it. `Meta+Alt+V` does the same for an image on the clipboard, or for files copied in your file manager. New results can be dragged straight out of the progress card or a Library preview into other apps.
+
 ## From the terminal
 
 ```sh

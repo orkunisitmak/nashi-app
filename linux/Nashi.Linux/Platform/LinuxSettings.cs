@@ -29,6 +29,8 @@ public sealed record LinuxSettings
     /// Conversions and simple tools chosen on the gesture layer run at once with their saved defaults.
     public bool GestureQuickRun{get;init;}=true;
     public bool StartAtLogin{get;init;}
+    /// Watched folders: new files there are converted automatically while Nashi runs.
+    public List<FolderRule> Watches{get;init;}=[];
 
     private static string File=>Path.Combine(AppPaths.Data,"linux.json");
     public static LinuxSettings Load()
@@ -40,7 +42,8 @@ public sealed record LinuxSettings
             // Unknown or missing entries fall back to defaults, so a newer or older file never breaks startup.
             var shortcuts=Actions.ToDictionary(a=>a.Id,a=>loaded.Shortcuts?.GetValueOrDefault(a.Id) is {} combo&&(combo.Length==0||KeyCombo.ToQt(combo) is not null)?combo:a.Default);
             var gestures=Directions.ToDictionary(d=>d,d=>loaded.Gestures?.GetValueOrDefault(d) is {} wheel&&Wheels.Contains(wheel)?wheel:new LinuxSettings().Gestures[d]);
-            return loaded with{Shortcuts=shortcuts,Gestures=gestures,Theme=Themes.Contains(loaded.Theme)?loaded.Theme:"classic"};
+            var watches=(loaded.Watches??[]).Where(w=>w is not null&&Path.IsPathFullyQualified(w.Folder??"")&&w.Extensions is {Length:>0}&&!string.IsNullOrWhiteSpace(w.Format)).Take(50).ToList();
+            return loaded with{Watches=watches,Shortcuts=shortcuts,Gestures=gestures,Theme=Themes.Contains(loaded.Theme)?loaded.Theme:"classic"};
         }
         catch(Exception error)when(error is JsonException or IOException or UnauthorizedAccessException){return new();}
     }

@@ -76,11 +76,38 @@ public sealed class SettingsWindow:Window
             Ui.Text("Gesture directions",13,"title").Also(t=>t.Margin=new(0,18,0,4)),
             Ui.Text("While dragging files anywhere, press the gesture shortcut, then move the pointer. The direction picks the wheel; drop on a slice to run it.",11,"muted").Also(t=>t.Margin=new(0,0,0,8)),directions,quickRun);
 
+        // Automation: watched folders.
+        var rules=new StackPanel{Spacing=10};var ruleRows=new List<Func<FolderRule?>>();
+        void AddRule(FolderRule rule)
+        {
+            var folderBox=new TextBox{Text=rule.Folder};var extensions=new TextBox{Text=string.Join(", ",rule.Extensions),PlaceholderText="heic, heif"};
+            var format=new ComboBox{MinWidth=110};var on=new CheckBox{Content=L10n.T("On"),IsChecked=rule.Enabled};
+            void Formats()
+            {
+                var first=(extensions.Text??"").Split(',',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries).FirstOrDefault()?.TrimStart('.')??"";
+                var options=first.Length==0?[]:FeatureCatalog.Formats(["x."+first]);var keep=format.SelectedItem as string??rule.Format;
+                format.ItemsSource=options;format.SelectedItem=options.Contains(keep)?keep:options.FirstOrDefault();
+            }
+            extensions.TextChanged+=(_,_)=>Formats();Formats();
+            var card=new Border{Classes={"inset"},Padding=new(12)};
+            var remove=Ui.Button("✕",()=>{rules.Children.Remove(card);},"chip",tip:"Remove rule");
+            Func<FolderRule?> read=()=>card.Parent is null?null:new FolderRule(folderBox.Text??"",(extensions.Text??"").Split(',',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries).Select(e=>e.TrimStart('.').ToLowerInvariant()).ToArray(),format.SelectedItem as string??"",on.IsChecked==true);
+            ruleRows.Add(read);
+            var top=new DockPanel();DockPanel.SetDock(remove,Dock.Right);top.Children.Add(remove);top.Children.Add(Browse(folderBox));
+            card.Child=Ui.Stack(8,top,Ui.Wrap(Ui.Field("When new files with these extensions arrive",extensions).Also(f=>f.MinWidth=260),new Control{Width=12},Ui.Field("Convert them to",format),new Control{Width=12},on.Also(c=>c.VerticalAlignment=VerticalAlignment.Center)));
+            rules.Children.Add(card);
+        }
+        foreach(var rule in linux.Watches)AddRule(rule);
+        var automation=Ui.Stack(6,Ui.Text("Watched folders",13,"title"),
+            Ui.Text("While Nashi runs (also in the tray), new files that land in these folders are converted beside the original with your saved export defaults. Originals are never changed, partial downloads are skipped, and each result goes to Library with a notification.",11,"muted"),
+            rules,Ui.Button("Add a watched folder",()=>AddRule(new FolderRule(AppPaths.Downloads,["heic","heif"],"jpg")),"chip"),
+            Ui.Text("Example: photos from a phone sync into Downloads as HEIC and appear as JPG next to them.",11,"muted"));
         var tabs=new TabControl{Items=
         {
             new TabItem{Header=L10n.T("General"),Content=Scroll(general)},
             new TabItem{Header=L10n.T("Appearance"),Content=Scroll(look)},
             new TabItem{Header=L10n.T("Shortcuts & gestures"),Content=Scroll(keys)},
+            new TabItem{Header=L10n.T("Automation"),Content=Scroll(automation)},
         }};
         var save=Ui.Primary("Save",()=>
         {
@@ -91,7 +118,13 @@ public sealed class SettingsWindow:Window
                 main.library.SetAppearance(Ui.Value(appearance));
                 var combos=boxes.ToDictionary(b=>b.Key,b=>b.Value.Combo);
                 var duplicate=combos.Where(c=>c.Value.Length>0).GroupBy(c=>c.Value).FirstOrDefault(g=>g.Count()>1);if(duplicate is not null)throw new ArgumentException(L10n.T("Two Nashi actions use the same keys:")+" "+duplicate.Key);
-                var next=linux with{GlobalShortcuts=enabled.IsChecked==true,Shortcuts=combos,Gestures=pickers.ToDictionary(x=>x.Key,x=>Ui.Value(x.Value)),Theme=theme,RunInBackground=background.IsChecked==true,GestureQuickRun=quickRun.IsChecked==true,StartAtLogin=login.IsChecked==true};
+                var watches=ruleRows.Select(r=>r()).OfType<FolderRule>().ToList();
+                foreach(var w in watches)
+                {
+                    if(!Directory.Exists(w.Folder))throw new ArgumentException(L10n.T("Choose an existing watched folder:")+" "+w.Folder);
+                    if(w.Extensions.Length==0||w.Format.Length==0||w.Extensions.Any(e=>!FeatureCatalog.Formats(["x."+e]).Contains(w.Format)))throw new ArgumentException(L10n.T("Choose extensions that can become")+" "+w.Format.ToUpperInvariant());
+                }
+                var next=linux with{Watches=watches,GlobalShortcuts=enabled.IsChecked==true,Shortcuts=combos,Gestures=pickers.ToDictionary(x=>x.Key,x=>Ui.Value(x.Value)),Theme=theme,RunInBackground=background.IsChecked==true,GestureQuickRun=quickRun.IsChecked==true,StartAtLogin=login.IsChecked==true};
                 main.SaveLinuxSettings(next);App.SetBackground(main,next.RunInBackground);saved=true;Close(true);
             }
             catch(Exception error)when(error is ArgumentException or IOException or UnauthorizedAccessException){problem.Text=L10n.T(error.Message);}

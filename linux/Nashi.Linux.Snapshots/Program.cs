@@ -53,9 +53,11 @@ if(fixtures is not null)
     };
     foreach(var (name,editor) in editors){editor.Show();Save(editor,name);editor.Close();}
     main=new MainWindow([]);main.Show();var setup=new SetupWindow(main);setup.Show();Save(setup,"12-setup");setup.Close();
+    main.SaveLinuxSettings(main.LinuxSettings with{Watches=[new Nashi.Linux.FolderRule(fixtures,["heic","heif"],"jpg")]});
     var settings=new SettingsWindow(main);settings.Show();Save(settings,"13-settings");
     var tabs=settings.GetVisualDescendants().OfType<TabControl>().First();
-    tabs.SelectedIndex=1;Save(settings,"13b-settings-appearance");tabs.SelectedIndex=2;Save(settings,"13c-settings-shortcuts");settings.Close();main.Close();
+    tabs.SelectedIndex=1;Save(settings,"13b-settings-appearance");tabs.SelectedIndex=2;Save(settings,"13c-settings-shortcuts");tabs.SelectedIndex=3;Save(settings,"13d-settings-automation");settings.Close();
+    main.SaveLinuxSettings(main.LinuxSettings with{Watches=[]});main.Close();
     // Every theme, light and dark, on a busy Home.
     foreach(var theme in new[]{"brutalist","glass","frosted","classic"})foreach(var variant in new[]{"light","dark"})
     {
@@ -143,6 +145,15 @@ bool WheelOpen(Window w)=>w.GetVisualDescendants().OfType<WheelOverlay>().Any(o=
         var petals=w.Gestures.FirstOrDefault()?.Wheel.Items??[];
         Expect($"A copied image opens the Tools wheel ({string.Join(", ",petals.Take(4).Select(i=>i.Title))}…)",petals.Any(i=>i.Id=="editImage"));
         w.CloseGestures();Pump();
+    }
+    // A watched folder converts new files on its own.
+    {
+        var watched=Path.Combine(output,"watched");if(Directory.Exists(watched))Directory.Delete(watched,true);Directory.CreateDirectory(watched);
+        w.SaveLinuxSettings(w.LinuxSettings with{Watches=[new Nashi.Linux.FolderRule(watched,["png"],"jpg")]});
+        File.Copy(Fixtures("Photo.png")[0],Path.Combine(watched,"Incoming.png"));
+        var made=Path.Combine(watched,"Incoming.jpg");for(var n=0;n<300&&!File.Exists(made);n++){Pump();Thread.Sleep(50);}
+        Expect($"A watched folder turns a new PNG into JPG ({w.WatchedFolders} watched)",File.Exists(made)&&!File.Exists(Path.Combine(watched,"Incoming 2.jpg")));
+        w.SaveLinuxSettings(w.LinuxSettings with{Watches=[]});
     }
     // The last tool comes back first on the Tools wheel as "Again".
     w.LastChoice=new ToolChoice("convert:jpg","Convert to JPG","↗");

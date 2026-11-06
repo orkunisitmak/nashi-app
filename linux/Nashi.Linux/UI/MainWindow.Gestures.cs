@@ -171,5 +171,20 @@ public sealed partial class MainWindow
         if(shortcuts is not null){try{await shortcuts.DeactivateAsync();}catch(Exception error)when(error is Tmds.DBus.Protocol.DBusExceptionBase or IOException){}shortcuts.Dispose();}
         Close();(Avalonia.Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.Shutdown();
     }
-    internal void SaveLinuxSettings(LinuxSettings next){next.Save();LinuxSettings=next;}
+    internal void SaveLinuxSettings(LinuxSettings next){next.Save();LinuxSettings=next;StartWatching();}
+    private FolderWatcher? watcher;
+    internal int WatchedFolders=>watcher?.Count??0;
+    /// (Re)starts the watched-folder rules from Settings → Automation.
+    internal void StartWatching()
+    {
+        watcher?.Dispose();watcher=null;if(LinuxSettings.Watches.Count==0)return;
+        watcher=new FolderWatcher(LinuxSettings.Watches,
+            (path,format,token)=>Engine.Cli.ConvertAsync([path],format,Path.GetDirectoryName(path)!,preferences,tools,new Progress<OperationProgress>(),token),
+            (rule,outputs,error)=>Dispatcher.UIThread.Post(()=>
+            {
+                var label="Convert to "+rule.Format.ToUpperInvariant();
+                if(outputs.Count>0){Record(label,outputs);if(page=="home")RenderPage();}
+                _=NotifyDoneAsync(label,outputs,error);
+            }));
+    }
 }
