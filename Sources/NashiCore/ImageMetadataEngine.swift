@@ -111,9 +111,12 @@ public enum ImageMetadataEngine {
             let tag=try tagName(key),expected=(["GPS:GPSLatitude","GPS:GPSLongitude"].contains(tag) ? Double(value).map{String(abs($0))}:nil) ?? value
             guard equivalent(actual,expected) else { throw NashiError.failed("The metadata field \(key) was not written. No output was saved.") }
         }
+        // The editor also lists ImageIO names (for example {Exif}.CameraOwnerName for
+        // ExifTool's OwnerName). Check removals against that same combined view.
+        let displayed=changes.removals.isEmpty ? written:try ImageEngine.readMetadata(staged,token:token)
         for key in changes.removals {
             let expectedKey=displayKey(try tagName(key))
-            guard !written.keys.contains(where:{$0.caseInsensitiveCompare(expectedKey) == .orderedSame}) else { throw NashiError.failed("The metadata field \(key) could not be removed.") }
+            guard !displayed.keys.contains(where:{$0.caseInsensitiveCompare(expectedKey) == .orderedSame}) else { throw NashiError.failed("The metadata field \(key) could not be removed.") }
         }
         guard sourceHash==SHA256.hash(data:try Data(contentsOf:input)) else { throw NashiError.failed("The source changed during this operation. No output was saved.") }
         try token.check()

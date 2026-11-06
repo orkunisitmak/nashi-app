@@ -28,6 +28,7 @@ struct ImageEditPreview:View {
     @State private var stroke:[ImagePoint]=[]
     @State private var dragRect:EditRect?
     @State private var selectedAnnotation:Int?
+    @AppStorage("appLanguage") private var language="en"
     typealias Handle=CropSelectionGeometry.Handle
     enum DragTarget { case crop(Handle?),annotation(Int,Handle?),redaction(Int,Handle?),new,ignored }
     var body:some View {
@@ -65,12 +66,12 @@ struct ImageEditPreview:View {
                     updateDrag(value,origin:origin,ratio:ratio)
                     if case .new=target,let rect=dragRect {
                         if annotationStyle != nil,let onStroke { onStroke(rect,stroke) }
-                        else if cropEnabled ? (rect.width>=1 && rect.height>=1):(rect.width>1 || rect.height>1) { onRect(rect) }
+                        else if cropEnabled ? (rect.width>=1 && rect.height>=1):(rect.width>0 && rect.height>0 && (rect.width>1 || rect.height>1)) { onRect(rect) }
                     }
                     target=nil;startingRect=nil;stroke=[];dragRect=nil
                     if cropEnabled { onCropInteraction?(false) }
                 }).accessibilityLabel(cropEnabled ? "Crop selection canvas":annotationStyle != nil ? "Annotation canvas":"Image editing canvas")
-                    .accessibilityValue(cropEnabled ? crop.map{ "X \(Int($0.x)), Y \(Int($0.y)), width \(Int($0.width)), height \(Int($0.height))" } ?? "No crop selected":annotationCanvasValue)
+                    .accessibilityValue(cropEnabled ? AppLocalization.text(crop.map{ "X \(Int($0.x)), Y \(Int($0.y)), width \(Int($0.width)), height \(Int($0.height))" } ?? "No crop selected",language:language):annotationCanvasValue)
                     .help(cropEnabled ? "Drag to select. Drag inside to move. Hold Shift to lock aspect ratio. Return saves a cropped copy.":"")
             }.clipped()
         }
@@ -81,7 +82,8 @@ struct ImageEditPreview:View {
     var annotationCanvasValue:String {
         guard let annotationStyle else { return "" }
         let mode=selectAnnotations ? "Select / Move":annotationStyle.kind.rawValue.capitalized
-        return "\(mode), \(annotations.count) annotations" + (selectedAnnotation.map{ ", selected \($0+1)" } ?? "")
+        let count=annotations.count==1 ? "1 annotation":"\(annotations.count) annotations"
+        return ([mode,count]+(selectedAnnotation.map{ ["selected \($0+1)"] } ?? [])).map{ AppLocalization.text($0,language:language) }.joined(separator:", ")
     }
     func cancelDrag() { target=nil;startingRect=nil;startingPoints=[];stroke=[];dragRect=nil }
     func updateDrag(_ value:DragGesture.Value,origin:CGPoint,ratio:CGFloat) {
@@ -111,7 +113,7 @@ struct ImageEditPreview:View {
             }
         case .redaction(let i,let resize): if let r=startingRect { onMoveRedaction?(i,changed(r,start:start,current:point,resize:resize)) }
         case .annotation(let i,let resize):
-            if let r=startingRect { let updated=changed(r,start:start,current:point,resize:resize);let points=startingPoints.map{p in ImagePoint(x:updated.x+(p.x-r.x)*(updated.width/max(1,r.width)),y:updated.y+(p.y-r.y)*(updated.height/max(1,r.height)))};onMoveAnnotation?(i,updated,points) }
+            if let r=startingRect { let updated=changed(r,start:start,current:point,resize:resize);let points=startingPoints.map{p in ImagePoint(x:updated.x+(r.width>0 ? (p.x-r.x)/r.width*updated.width:0),y:updated.y+(r.height>0 ? (p.y-r.y)/r.height*updated.height:0))};onMoveAnnotation?(i,updated,points) }
         case .ignored,nil:break
         }
     }

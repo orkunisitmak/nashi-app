@@ -349,7 +349,9 @@ private final class GitHubHTTPTransfer: NSObject, URLSessionDataDelegate, @unche
         switch response.statusCode {
         case 200: error = nil
         case 401: error = .unauthorized
-        case 403: error = response.value(forHTTPHeaderField: "X-RateLimit-Remaining") == "0" ? .rateLimited : .forbidden
+        // A secondary rate limit is a 403 with Retry-After while requests remain.
+        case 403: error = response.value(forHTTPHeaderField: "X-RateLimit-Remaining") == "0" ||
+            response.value(forHTTPHeaderField: "Retry-After") != nil ? .rateLimited : .forbidden
         case 404: error = .notFound
         case 429: error = .rateLimited
         default: error = .invalidResponse

@@ -61,9 +61,9 @@ public sealed partial class MainWindow
     {
         // Rows still waiting for the typing pause are shown first, so the focused row is the one that stays.
         if(searchTyping.IsEnabled)RenderLibrary();
-        var entries=library.Search(search.Text).ToArray();if(entries.Length==0)return;var old=Array.FindIndex(entries,e=>e.Id==selectedLibraryId);var next=old<0?0:Math.Clamp(old+direction,0,entries.Length-1);SelectCard(entries[next].Id);if(libraryCards.TryGetValue(entries[next].Id,out var card)){card.Focus();card.BringIntoView();}
+        var entries=SearchLibrary(search.Text).ToArray();if(entries.Length==0)return;var old=Array.FindIndex(entries,e=>e.Id==selectedLibraryId);var next=old<0?0:Math.Clamp(old+direction,0,entries.Length-1);SelectCard(entries[next].Id);if(libraryCards.TryGetValue(entries[next].Id,out var card)){card.Focus();card.BringIntoView();}
     }
-    private LibraryEntry? SelectedLibrary()=>library.Search(search.Text).FirstOrDefault(e=>e.Id==selectedLibraryId)??library.Search(search.Text).FirstOrDefault();
+    private LibraryEntry? SelectedLibrary()=>SearchLibrary(search.Text).FirstOrDefault(e=>e.Id==selectedLibraryId)??SearchLibrary(search.Text).FirstOrDefault();
     private void PreviewSelectedLibrary(){if(SelectedLibrary() is {} entry)PreviewEntry(entry);}
     private void PreviewEntry(LibraryEntry entry){if(entry.AvailablePaths.Length>0)new FilePreviewWindow(this,entry.AvailablePaths).Show();else L10n.SetText(status,"These files have moved or were deleted.");}
     private void ReuseSelectedLibrary(){if(busy||SelectedLibrary() is not {} entry)return;files.Clear();Add(entry.AvailablePaths);ShowLibrary(false);}

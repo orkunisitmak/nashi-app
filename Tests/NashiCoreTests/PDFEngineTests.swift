@@ -50,6 +50,21 @@ final class PDFEngineTests:XCTestCase {
         XCTAssertEqual(pdf.pageCount,3);XCTAssertEqual(pdf.page(at:0)?.rotation,90);XCTAssertEqual(pdf.page(at:2)?.rotation,180)
         XCTAssertTrue(pdf.page(at:0)!.string!.contains("Page Two"));XCTAssertEqual(try Data(contentsOf:source),before)
     }
+    func testPageEditsOfAPasswordProtectedPDFKeepTitleAndAuthor() throws {
+        let document=PDFDocument();for _ in 0..<2 { document.insert(PDFPage(),at:document.pageCount) }
+        document.documentAttributes=[PDFDocumentAttribute.titleAttribute:"Board minutes",PDFDocumentAttribute.authorAttribute:"Ayla"]
+        let source=root.appendingPathComponent("Locked.pdf")
+        XCTAssertTrue(document.write(to:source,withOptions:[.ownerPasswordOption:"synthetic-owner",.userPasswordOption:"synthetic-password"]))
+        var options=OperationOptions();options.password="synthetic-password";options.pageRanges="2"
+        for (tool,inputs) in [(ToolKind.splitPDF,[source]),(.organizePDF,[source]),(.mergePDF,[source,source])] {
+            options.outputDirectory=root.appendingPathComponent(UUID().uuidString,isDirectory:true)
+            try FileManager.default.createDirectory(at:options.outputDirectory!,withIntermediateDirectories:true)
+            let output=try XCTUnwrap(PDFEngine.tool(tool,inputs:inputs,options:options,token:.init()).first)
+            let attributes=try PDFEngine.open(output,password:"synthetic-password").documentAttributes ?? [:]
+            XCTAssertEqual(attributes[PDFDocumentAttribute.titleAttribute] as? String,"Board minutes","\(tool)")
+            XCTAssertEqual(attributes[PDFDocumentAttribute.authorAttribute] as? String,"Ayla","\(tool)")
+        }
+    }
     func testUniformWidthScalesPagesProportionallyWithoutRasterizingText() throws {
         let input=try fixture();var options=OperationOptions();options.pdfUniformWidth=true
         let output=try PDFEngine.tool(.organizePDF,inputs:[input],options:options,token:.init())[0],pdf=try PDFEngine.open(output)
@@ -83,6 +98,27 @@ final class PDFEngineTests:XCTestCase {
         let input=try fixture();var options=OperationOptions();options.targetBytes = -1
         XCTAssertThrowsError(try PDFEngine.tool(.compress,inputs:[input],options:options,token:.init()))
         let token=CancellationToken();token.cancel();XCTAssertThrowsError(try PDFEngine.render(input,to:"jpg",options:.init(),token:token))
+    }
+    func testCompressionTargetTheOriginalAlreadyMeetsKeepsTheOriginal() throws {
+        // PDFKit's rewrite of a small text PDF, and a raster pass of a small vector drawing,
+        // are larger than the source. A target the source already meets must still succeed.
+        for content in ["BT /F1 18 Tf 40 300 Td (Quarterly report) Tj ET\n","0 0 1 rg 20 20 360 360 re f\n"] {
+            let objects=["<< /Type /Catalog /Pages 2 0 R >>","<< /Type /Pages /Kids [3 0 R] /Count 1 >>","<< /Type /Page /Parent 2 0 R /MediaBox [0 0 400 400] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>","<< /Length \(content.utf8.count) >>\nstream\n\(content)\nendstream","<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"]
+            var data=Data("%PDF-1.7\n".utf8),offsets=[Int]()
+            for (index,object) in objects.enumerated() { offsets.append(data.count);data.append(Data("\(index+1) 0 obj\n\(object)\nendobj\n".utf8)) }
+            let xref=data.count;data.append(Data("xref\n0 \(objects.count+1)\n0000000000 65535 f \n".utf8))
+            for offset in offsets { data.append(Data(String(format:"%010d 00000 n \n",offset).utf8)) }
+            data.append(Data("trailer\n<< /Size \(objects.count+1) /Root 1 0 R >>\nstartxref\n\(xref)\n%%EOF\n".utf8))
+            let input=root.appendingPathComponent(UUID().uuidString+".pdf");try data.write(to:input)
+            var options=OperationOptions();options.targetBytes=Int64(data.count);options.outputDirectory=root.appendingPathComponent(UUID().uuidString,isDirectory:true)
+            try FileManager.default.createDirectory(at:options.outputDirectory!,withIntermediateDirectories:true)
+            let output=try XCTUnwrap(PDFEngine.tool(.compress,inputs:[input],options:options,token:.init()).first)
+            XCTAssertEqual(try Data(contentsOf:output),data)
+            options.targetBytes=Int64(data.count-1);options.outputDirectory=root.appendingPathComponent(UUID().uuidString,isDirectory:true)
+            try FileManager.default.createDirectory(at:options.outputDirectory!,withIntermediateDirectories:true)
+            XCTAssertThrowsError(try PDFEngine.tool(.compress,inputs:[input],options:options,token:.init()))
+            XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath:options.outputDirectory!.path),[])
+        }
     }
     func testDefaultCompressionDoesNotEnlargeSmallImagesOrRasterizeSmallVectorPDFs() throws {
         let image=root.appendingPathComponent("Small.png")

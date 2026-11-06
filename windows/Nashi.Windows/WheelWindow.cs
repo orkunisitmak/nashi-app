@@ -12,9 +12,9 @@ public sealed record ToolChoice(string Id,string Title,string Symbol,WindowPlace
 public sealed class WheelWindow:Window
 {
     private readonly List<Button> buttons=[];
-    private readonly IReadOnlyList<ToolChoice> choices;
+    private IReadOnlyList<ToolChoice> choices;
     private readonly Action<ToolChoice> select;
-    private readonly WheelFace face;
+    private WheelFace face=null!;
     private int selected=-1;
     internal int SelectedIndex=>selected;
     internal void HoverScreen(Point point)
@@ -35,15 +35,39 @@ public sealed class WheelWindow:Window
         return false;
     }
     private void Highlight(int index){if(selected==index)return;selected=index;face.Hot(index);if(index>=0)Feedback.Hover(index);}
-    public WheelWindow(Window? owner,IReadOnlyList<ToolChoice> tools,Action<ToolChoice> select,bool externalDrag=false)
+    private readonly bool externalDrag;private readonly Func<string,IReadOnlyList<ToolChoice>>? modes;private string mode="tools";private readonly Viewbox holder=new(){Stretch=Stretch.Uniform};
+    /// Ctrl, Shift and Alt switch between Tools, Convert and File actions (as configured in Settings), like the wheel that opens while dragging.
+    internal bool SwitchMode(string modifier,IReadOnlyCollection<string> held)
     {
-        this.choices=tools.Take(12).ToArray();this.select=select;if(owner is not null)Owner=owner;Title=externalDrag?"Nashi Window Management":"Nashi tools";Width=WheelPresentation.Diameter*WheelPresentation.Preferences.WheelScale;Height=Width;WindowStyle=WindowStyle.None;AllowsTransparency=true;Background=Brushes.Transparent;ResizeMode=ResizeMode.NoResize;ShowInTaskbar=false;WindowStartupLocation=externalDrag?WindowStartupLocation.Manual:WindowStartupLocation.CenterOwner;
+        if(modes is null)return false;var preferences=WheelPresentation.Preferences;string? best=null;var size=0;
+        foreach(var (kind,combo) in new[]{("tools",preferences.ToolsModifier),("convert",preferences.ConvertModifier),("actions",preferences.ActionsModifier)})
+        {var set=combo.Split('+');if(set.Contains(modifier)&&set.All(m=>m==modifier||held.Contains(m))&&set.Length>size){best=kind;size=set.Length;}}
+        if(best is null||best==mode)return false;var next=modes(best);if(next.Count==0)return false;mode=best;Populate(next);return true;
+    }
+    internal string Mode=>mode;
+    private static string? ModifierName(Key key)=>key switch{Key.LeftCtrl or Key.RightCtrl=>"Ctrl",Key.LeftShift or Key.RightShift=>"Shift",Key.LeftAlt or Key.RightAlt=>"Alt",_=>null};
+    private static List<string> HeldModifiers()
+    {
+        var held=new List<string>();if(Keyboard.IsKeyDown(Key.LeftCtrl)||Keyboard.IsKeyDown(Key.RightCtrl))held.Add("Ctrl");if(Keyboard.IsKeyDown(Key.LeftShift)||Keyboard.IsKeyDown(Key.RightShift))held.Add("Shift");if(Keyboard.IsKeyDown(Key.LeftAlt)||Keyboard.IsKeyDown(Key.RightAlt))held.Add("Alt");return held;
+    }
+    public WheelWindow(Window? owner,IReadOnlyList<ToolChoice> tools,Action<ToolChoice> select,bool externalDrag=false,Func<string,IReadOnlyList<ToolChoice>>? modes=null,string initialMode="tools")
+    {
+        mode=initialMode;choices=tools;this.select=select;this.externalDrag=externalDrag;this.modes=modes;if(owner is not null)Owner=owner;Title=externalDrag?"Nashi Window Management":"Nashi tools";Width=WheelPresentation.Diameter*WheelPresentation.Preferences.WheelScale;Height=Width;WindowStyle=WindowStyle.None;AllowsTransparency=true;Background=Brushes.Transparent;ResizeMode=ResizeMode.NoResize;ShowInTaskbar=false;WindowStartupLocation=externalDrag?WindowStartupLocation.Manual:WindowStartupLocation.CenterOwner;
         if(externalDrag){ShowActivated=false;Topmost=true;Focusable=false;}
-        var name=externalDrag?"Arrange window":choices.All(t=>t.Id.StartsWith("convert:"))?"Convert":choices.Any(t=>t.Id=="float")?"File actions":"Tools";
-        face=new WheelFace(choices,name,externalDrag?"Release to place · Esc cancels":"Esc to close",buttons:true);var canvas=face.Canvas;
-        KeyboardNavigation.SetTabNavigation(canvas,KeyboardNavigationMode.Cycle);Content=new Viewbox{Child=canvas,Stretch=Stretch.Uniform};
+        Content=holder;
         // Glass: what is really under the wheel (Nashi or another app), frosted behind the disc.
         if(WheelPresentation.Clear)Loaded+=async(_,_)=>Lens.SetSupply(this,await Lens.UnderAsync(this));
+        Populate(tools);
+        PreviewKeyDown+=(_,e)=>{var key=e.Key==Key.System?e.SystemKey:e.Key;if(modes is not null&&ModifierName(key) is {} modifier){var held=HeldModifiers();if(!held.Contains(modifier))held.Add(modifier);if(SwitchMode(modifier,held)){e.Handled=true;return;}}e.Handled=Navigate(e.Key);};
+        Loaded+=(_,_)=>{face.Enter();Feedback.Opened();if(!externalDrag&&buttons.Count>0)buttons[0].Focus();};bool closing=false;Closing+=(_,_)=>closing=true;Deactivated+=(_,_)=>{if(!externalDrag&&!closing&&IsVisible)Close();};
+    }
+    // Builds the wheel for one set of choices; a mode switch calls it again.
+    private void Populate(IReadOnlyList<ToolChoice> tools)
+    {
+        choices=tools.Take(12).ToArray();selected=-1;buttons.Clear();
+        var name=externalDrag?"Arrange window":choices.All(t=>t.Id.StartsWith("convert:"))?"Convert":choices.Any(t=>t.Id=="float")?"File actions":"Tools";
+        face=new WheelFace(choices,name,externalDrag?"Release to place · Esc cancels":"Esc to close",buttons:true);var canvas=face.Canvas;
+        KeyboardNavigation.SetTabNavigation(canvas,KeyboardNavigationMode.Cycle);holder.Child=canvas;
         for(var i=0;i<choices.Count;i++)
         {
             var choice=choices[i];var index=i;var button=(Button)face.Captions[i];buttons.Add(button);var petal=face.Petals[i];
@@ -52,7 +76,7 @@ public sealed class WheelWindow:Window
         }
         canvas.MouseMove+=(_,e)=>face.Aim(e.GetPosition(canvas));
         var center=new Button{Style=(Style)Application.Current.FindResource("WheelLabelButton"),Focusable=false,Width=WheelFace.HubSize,Height=WheelFace.HubSize,Background=Brushes.Transparent};Canvas.SetLeft(center,WheelFace.Middle-WheelFace.HubSize/2);Canvas.SetTop(center,WheelFace.Middle-WheelFace.HubSize/2);canvas.Children.Add(center);center.Click+=(_,_)=>Close();
-        PreviewKeyDown+=(_,e)=>{e.Handled=Navigate(e.Key);};Loaded+=(_,_)=>{face.Enter();Feedback.Opened();if(!externalDrag&&buttons.Count>0)buttons[0].Focus();};bool closing=false;Closing+=(_,_)=>closing=true;Deactivated+=(_,_)=>{if(!externalDrag&&!closing&&IsVisible)Close();};
+        if(IsLoaded){face.Enter();Feedback.Opened();if(!externalDrag&&buttons.Count>0)buttons[0].Focus();}
     }
 }
 // The wheel's sound, made here in memory: a note per item on a pentatonic scale, so sweeping across plays a quiet arpeggio.

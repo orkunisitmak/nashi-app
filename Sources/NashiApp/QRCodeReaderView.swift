@@ -21,9 +21,12 @@ import NashiCore
         let source=inputs,password=password,cancel=token,model=self
         Task {
             do {
-                report=try await Task.detached(priority:.userInitiated) {
+                let scanned=try await Task.detached(priority:.userInitiated) {
                     try QRCodeEngine.scan(source,password:password,token:cancel) { amount,message in Task { @MainActor in model.progress=amount;model.label=message } }
                 }.value
+                // A Cancel or window close can land after the engine's last check.
+                try cancel.check()
+                report=scanned
                 if report.errors.isEmpty { onSuccess(SuccessNotice(title:"Scan complete.",detail:"\(report.results.count) QR code\(report.results.count == 1 ? "":"s") found.")) }
             } catch { self.error=error.localizedDescription }
             busy=false
@@ -31,12 +34,12 @@ import NashiCore
     }
     func copy(_ result:QRCodeMatch) {
         NSPasteboard.general.clearContents()
-        if NSPasteboard.general.setString(result.text,forType:.string) { copied.insert(result.id);onSuccess(SuccessNotice(title:"QR code copied.",detail:"Ready to paste.")) }
+        if NSPasteboard.general.setString(result.text,forType:.string) { copied=[result.id];copiedAll=false;onSuccess(SuccessNotice(title:"QR code copied.",detail:"Ready to paste.")) }
         else { error="Could not copy the QR code." }
     }
     func copyAll() {
         NSPasteboard.general.clearContents()
-        if NSPasteboard.general.setString(report.results.map(\.text).joined(separator:"\n"),forType:.string) { copiedAll=true;onSuccess(SuccessNotice(title:"QR codes copied.",detail:"\(report.results.count) ready to paste.")) }
+        if NSPasteboard.general.setString(report.results.map(\.text).joined(separator:"\n"),forType:.string) { copied=[];copiedAll=true;onSuccess(SuccessNotice(title:"QR codes copied.",detail:"\(report.results.count) ready to paste.")) }
         else { error="Could not copy the QR codes." }
     }
     func saveReport() {
@@ -45,10 +48,18 @@ import NashiCore
             do { let encoder=JSONEncoder();encoder.outputFormatting=[.prettyPrinted,.sortedKeys];try encoder.encode(report).write(to:url,options:.atomic);onSuccess(.action("Report saved.",files:[url])) } catch { self.error=error.localizedDescription }
         }
     }
+    /// Scan errors read "<file name>: <message>" (QRCodeEngine.scan). The file name stays verbatim; the message is UI copy.
+    static func errorText(_ error:String,inputs:[URL],language:String)->String {
+        guard let name=inputs.map(\.lastPathComponent).filter({ error.hasPrefix($0+": ") }).max(by:{ $0.count<$1.count }) else { return AppLocalization.text(error,language:language) }
+        let message=String(error.dropFirst(name.count+2)),translated=AppLocalization.text(message,language:language)
+        guard translated != message else { return error }
+        return name+(AppLocalization.normalizedLanguage(language) == "fr" ? "\u{00A0}: ":": ")+translated
+    }
 }
 
 struct QRCodeReaderView:View {
     @StateObject private var model:QRCodeReaderModel
+    @AppStorage("appLanguage") private var language="en"
     @MainActor init(inputs:[URL],onSuccess:@escaping(SuccessNotice)->Void) { _model=StateObject(wrappedValue:QRCodeReaderModel(inputs:inputs,onSuccess:onSuccess)) }
     var body:some View {
         VStack(spacing:0) {
@@ -58,7 +69,8 @@ struct QRCodeReaderView:View {
             }.padding(20)
             Divider()
             if model.busy {
-                HStack(spacing:12) { ProgressView().controlSize(.small);VStack(alignment:.leading,spacing:4) { Text("Looking for little squares…").font(.system(size:12,weight:.semibold,design:.rounded));Text(model.label).font(.caption).foregroundStyle(.secondary).lineLimit(1) };Spacer();Button("Cancel") { model.token.cancel() }.buttonStyle(NashiButtonStyle(.secondary,compact:true)) }.padding(20)
+                // The engine's page progress ("scan.pdf, page 3") is app copy; a bare file name stays verbatim.
+                HStack(spacing:12) { ProgressView().controlSize(.small);VStack(alignment:.leading,spacing:4) { Text("Looking for little squares…").font(.system(size:12,weight:.semibold,design:.rounded));Group { if model.label.range(of:#", page [0-9]+$"#,options:.regularExpression) != nil { LText(model.label) } else { Text(model.label) } }.font(.caption).foregroundStyle(.secondary).lineLimit(1) };Spacer();Button("Cancel") { model.token.cancel() }.buttonStyle(NashiButtonStyle(.secondary,compact:true)) }.padding(20)
             }
             ScrollView {
                 VStack(alignment:.leading,spacing:14) {
@@ -71,7 +83,7 @@ struct QRCodeReaderView:View {
                             Text(result.text).font(.system(size:13)).textSelection(.enabled).frame(maxWidth:.infinity,alignment:.leading)
                         }.padding(18).nashiCard(radius:18)
                     }
-                    ForEach(model.report.errors,id:\.self) { Text($0).font(.caption).foregroundStyle(.orange) }
+                    ForEach(model.report.errors,id:\.self) { Text(verbatim:QRCodeReaderModel.errorText($0,inputs:model.inputs,language:language)).font(.caption).foregroundStyle(.orange) }
                     if let error=model.error { LText(error).font(.caption).foregroundStyle(.orange) }
                 }.padding(20)
             }

@@ -1,6 +1,7 @@
 import XCTest
 import AppKit
 import PDFKit
+import WebKit
 @testable import NashiCore
 
 final class HTMLToPDFTests: XCTestCase {
@@ -140,6 +141,40 @@ final class HTMLToPDFTests: XCTestCase {
         }
         _ = wait(seconds: 2) { false }
         XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: site.path).sorted(), ["Breaks.html", "Long.html", "Tall.html", "assets"])
+    }
+
+    func testCancellingWhilePrintingShowsNoAlertAndPublishesNothing() throws {
+        // The page names itself PRINTING when printing starts, then holds the print for four seconds,
+        // so the conversion is cancelled and its work folder removed before AppKit saves the PDF.
+        _ = NSApplication.shared
+        let input = site.appendingPathComponent("Held.html")
+        try ("<!doctype html><meta charset=\"utf-8\"><title>Held</title><script>addEventListener('beforeprint', () => { document.title = 'PRINTING'; const end = Date.now() + 4000; while (Date.now() < end) {} })</script>" + String(repeating: "<p>Nashi cancellation fixture.</p>", count: 50)).write(to: input, atomically: true, encoding: .utf8)
+        let token = CancellationToken(), lock = NSLock()
+        var finished = false, failure: Error?, alert: String?
+        DispatchQueue.global().async {
+            var caught: Error?
+            do { _ = try ConversionEngine.run(.init(inputs: [input], operation: .convert("pdf")), token: token) } catch { caught = error }
+            lock.lock(); finished = true; failure = caught; lock.unlock()
+        }
+        // An app-modal alert would block the main thread until someone dismisses it.
+        let watchdog = Timer(timeInterval: 0.1, repeats: true) { _ in
+            MainActor.assumeIsolated {
+                guard let window = NSApp.modalWindow else { return }
+                func texts(_ view: NSView) -> [String] { ((view as? NSTextField).map { [$0.stringValue] } ?? []) + view.subviews.flatMap(texts) }
+                alert = window.contentView.map(texts)?.joined(separator: " / ") ?? "?"
+                NSApp.abortModal()
+            }
+        }
+        RunLoop.main.add(watchdog, forMode: .common)
+        defer { watchdog.invalidate() }
+        XCTAssertTrue(wait(seconds: 30) { NSApp.windows.contains { ($0.contentView as? WKWebView)?.title == "PRINTING" } }, "Printing never started.")
+        token.cancel()
+        XCTAssertTrue(wait(seconds: 30) { lock.lock(); defer { lock.unlock() }; return finished })
+        _ = wait(seconds: 8) { false }
+        lock.lock(); defer { lock.unlock() }
+        guard case NashiError.cancelled? = failure as? NashiError else { return XCTFail("\(String(describing: failure))") }
+        XCTAssertNil(alert, "A cancelled conversion showed an alert.")
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: site.path).sorted(), ["Held.html", "assets"])
     }
 
     /// Keeps the main run loop turning, as WebKit and URLSession callbacks need it.

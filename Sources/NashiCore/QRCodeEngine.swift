@@ -31,8 +31,9 @@ public enum QRCodeEngine {
                     for pageIndex in 0..<document.pageCount {
                         try token.check()
                         guard let page=document.page(at:pageIndex) else { continue }
-                        let box=page.bounds(for:.mediaBox),scale=min(3,4096/max(box.width,box.height))
-                        let thumbnail=page.thumbnail(of:NSSize(width:max(1,box.width*scale),height:max(1,box.height*scale)),for:.mediaBox)
+                        // Read only what viewers show: the CropBox.
+                        let box=page.bounds(for:.cropBox),scale=min(3,4096/max(box.width,box.height))
+                        let thumbnail=page.thumbnail(of:NSSize(width:max(1,box.width*scale),height:max(1,box.height*scale)),for:.cropBox)
                         guard let image=thumbnail.cgImage(forProposedRect:nil,context:nil,hints:nil) else { throw NashiError.failed("Could not render PDF page \(pageIndex+1).") }
                         report.results += try scanImage(image,input:input,page:pageIndex+1,token:token)
                         progress((Double(index)+Double(pageIndex+1)/Double(max(1,document.pageCount)))/Double(max(1,inputs.count)),"\(input.lastPathComponent), page \(pageIndex+1)")
@@ -58,10 +59,23 @@ public enum QRCodeEngine {
     }
     private static func scanImage(_ image:CGImage,input:URL,page:Int?,token:CancellationToken) throws -> [QRCodeMatch] {
         try token.check()
+        if [.none,.noneSkipFirst,.noneSkipLast].contains(image.alphaInfo) { return try detect(image,input:input,page:page,token:token) }
+        let flattened=try detect(onWhite(image),input:input,page:page,token:token)
+        return flattened.isEmpty ? try detect(image,input:input,page:page,token:token) : flattened
+    }
+    private static func detect(_ image:CGImage,input:URL,page:Int?,token:CancellationToken) throws -> [QRCodeMatch] {
         let request=VNDetectBarcodesRequest();request.symbologies=[.qr]
         try VNImageRequestHandler(cgImage:image).perform([request]);try token.check()
         return request.results?.compactMap { observation in
             observation.payloadStringValue.map{QRCodeMatch(sourceName:input.lastPathComponent,sourcePath:input.path,page:page,text:$0)}
         } ?? []
+    }
+    /// Vision reads transparent pixels as black, so a code with no background looks like a solid square. Light-on-transparent codes only read unflattened, so that scan is the fallback.
+    private static func onWhite(_ image:CGImage)->CGImage {
+        guard let context=CGContext(data:nil,width:image.width,height:image.height,bitsPerComponent:8,bytesPerRow:0,space:CGColorSpace(name:CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB(),bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue) else { return image }
+        let rect=CGRect(x:0,y:0,width:image.width,height:image.height)
+        context.setFillColor(CGColor(red:1,green:1,blue:1,alpha:1));context.fill(rect)
+        context.draw(image,in:rect)
+        return context.makeImage() ?? image
     }
 }

@@ -130,11 +130,7 @@ public sealed partial class MainWindow:Window
         page.ScrollToVerticalOffset(page.VerticalOffset-e.Delta);
         e.Handled=true;
     }
-    private IEnumerable<LibraryEntry> SearchLibrary(string query)
-    {
-        var original=library.Search(query).Select(e=>e.Id).ToHashSet();
-        return library.Entries.Where(e=>original.Contains(e.Id)||AppLocalization.Matches(e.Action,query,L10n.Language));
-    }
+    private IEnumerable<LibraryEntry> SearchLibrary(string query)=>library.Search(query,L10n.Language);
     // Display sizes use the display cut and tighter weight steps: 24+ bold, 17+ semibold.
     private static TextBlock Text(string value,double size,string? color=null,bool localize=true,FontWeight? weight=null)
     {
@@ -145,12 +141,12 @@ public sealed partial class MainWindow:Window
     private static Border Card(UIElement content,double radius=20,Thickness? padding=null)=>Ui.Card(content,radius,padding);
     public static Button Button(string title,Action action){var button=L10n.Content(new Button{Content=title});button.Click+=(_,_)=>action();return button;}
     internal static Button Primary(string title,Action action){var button=Button(title,action);button.Style=Ui.Style("Signature");return button;}
-    public static void OpenUrl(string url)=>Process.Start(new ProcessStartInfo(url){UseShellExecute=true});
-    public static void Reveal(string path){var full=Path.GetFullPath(path);if(!File.Exists(full)&&!Directory.Exists(full)){var parent=Path.GetDirectoryName(full);if(parent is null||!Directory.Exists(parent))return;full=parent;Process.Start(new ProcessStartInfo("explorer.exe"){UseShellExecute=false,Arguments=Quoted(full)});return;}Process.Start(new ProcessStartInfo("explorer.exe"){UseShellExecute=false,Arguments="/select,"+Quoted(full)});}
+    public static void OpenUrl(string url)=>Process.Start(new ProcessStartInfo(url){UseShellExecute=true})?.Dispose();
+    public static void Reveal(string path){var full=Path.GetFullPath(path);if(!File.Exists(full)&&!Directory.Exists(full)){var parent=Path.GetDirectoryName(full);if(parent is null||!Directory.Exists(parent))return;full=parent;Process.Start(new ProcessStartInfo("explorer.exe"){UseShellExecute=false,Arguments=Quoted(full)})?.Dispose();return;}Process.Start(new ProcessStartInfo("explorer.exe"){UseShellExecute=false,Arguments="/select,"+Quoted(full)})?.Dispose();}
     // One argument for explorer.exe: a trailing backslash (a drive root) must be doubled or it escapes the closing quote.
     private static string Quoted(string path)=>"\""+path+(path.EndsWith('\\')?"\\":"")+"\"";
     private void Choose(){if(busy)return;var picker=new OpenFileDialog{Multiselect=true,Title=L10n.Text("Choose files for Nashi")};if(picker.ShowDialog(this)==true){Add(picker.FileNames);ShowLibrary(false);}}
-    private void Add(IEnumerable<string> paths){foreach(var path in paths.Where(p=>File.Exists(p)||Directory.Exists(p))){var full=Path.GetFullPath(path);if(!files.Contains(full))files.Add(full);}Refresh();}
+    private void Add(IEnumerable<string> paths){foreach(var path in ShellShortcut.Resolve(paths).Where(p=>File.Exists(p)||Directory.Exists(p))){var full=Path.GetFullPath(path);if(!files.Contains(full))files.Add(full);}Refresh();}
     internal void ShowLibrary(bool visible)
     {
         var changed=LibraryVisible!=visible;
@@ -275,15 +271,28 @@ public sealed partial class MainWindow:Window
         actions.Children.Clear();
         BuildSelectionActions();
     }
+    // Tools, Convert and File actions: the wheel opens on the first one that has something for the selection, and Ctrl, Shift or Alt (as set in Settings) switch between them.
+    private IReadOnlyList<ToolChoice> WheelChoices(string mode)
+    {
+        if(files.Count==0)return [];
+        if(mode=="actions")return [new("share","Share","◉"),new("float","Float","▣"),new("copy","Copy","▱"),new("move","Move","↗"),new("copyPath","Copy Path","↪"),new("terminal","Terminal",">_")];
+        if(mode=="convert")return FeatureCatalog.Formats(files).Select(format=>new ToolChoice("convert:"+format,format.ToUpperInvariant(),"↗")).ToArray();
+        var tools=Choices().ToList();if(FeatureCatalog.Formats(files).Length>0)tools.Insert(0,new("convert","Convert","⇄"));return tools;
+    }
+    private static readonly string[] FileActionIds=["share","float","copy","move","copyPath","terminal"];
+    private async Task ChooseFromWheel(ToolChoice choice)
+    {
+        if(choice.Id=="convert")ShowConversionWheel();else if(FileActionIds.Contains(choice.Id))await PerformFileAction(choice.Id,files.ToArray());else await EditAsync(choice);
+    }
     private void ShowWheel()
     {
-        if(busy)return;var choices=Choices().ToList();if(FeatureCatalog.Formats(files).Length>0)choices.Insert(0,new("convert","Convert","⇄"));
-        if(choices.Count>0)new WheelWindow(this,choices,async choice=>{if(choice.Id=="convert")ShowConversionWheel();else await EditAsync(choice);}).Show();
+        if(busy)return;var mode=new[]{"tools","convert","actions"}.FirstOrDefault(m=>WheelChoices(m).Count>0);
+        if(mode is not null)new WheelWindow(this,WheelChoices(mode),async choice=>await ChooseFromWheel(choice),modes:WheelChoices,initialMode:mode).Show();
     }
     private void ShowConversionWheel()
     {
-        if(busy)return;var choices=FeatureCatalog.Formats(files).Select(format=>new ToolChoice("convert:"+format,format.ToUpperInvariant(),"↗")).ToArray();
-        if(choices.Length>0)new WheelWindow(this,choices,async choice=>await EditAsync(choice)).Show();
+        if(busy)return;var choices=WheelChoices("convert");
+        if(choices.Count>0)new WheelWindow(this,choices,async choice=>await ChooseFromWheel(choice),modes:WheelChoices,initialMode:"convert").Show();
     }
     private async Task EditAsync(ToolChoice choice)
     {
@@ -352,7 +361,7 @@ public sealed partial class MainWindow:Window
         try{var url=WebDownload.Validate(payload?.Url??link.Text).AbsoluteUri;await RunAsync((destination,p,t)=>new WebDownload(tools).DownloadAsync(url,kind,destination,p,t,webQuality.SelectedIndex==1?1080:webQuality.SelectedIndex==2?720:null,kind=="photos"?new HashSet<int>(selectedWebPhotos):null),"Download "+kind);}catch(Exception error){MessageBox.Show(webWindow??this,L10n.Text(error.Message),L10n.Text("Check your link"));}
     }
     internal void OfferUpdate(WindowsUpdate candidate){update=candidate;L10n.Bind(updateButton,ContentControl.ContentProperty,"Update to "+candidate.Version);if(updateBanner is not null)updateBanner.Visibility=Visibility.Visible;tray?.UpdateAvailable(candidate.Version);}
-    private async Task CheckUpdatesAsync(bool user)
+    internal async Task CheckUpdatesAsync(bool user)
     {
         if(busy||checking)return;checking=true;updateButton.IsEnabled=false;if(user)L10n.SetText(status,"Checking for updates…");try
         {

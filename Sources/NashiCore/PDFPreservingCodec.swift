@@ -16,7 +16,8 @@ enum PDFPreservingCodec {
         var sources: [String] = [], totalBytes: Int64 = 0, pageCount = 0
         for (index, input) in inputs.enumerated() {
             try token.check()
-            let values = try input.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey])
+            // A symlink is never a regular file itself; check and size the PDF it points to.
+            let values = try input.resolvingSymlinksInPath().resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey])
             guard values.isRegularFile == true, let size = values.fileSize, size > 0, size <= 100_000_000 else {
                 throw NashiError.invalidInput("This PDF is empty, is not a regular file, or exceeds the 100 MB page-editing limit.")
             }

@@ -118,7 +118,12 @@ function pruneForms(doc){
   const remove=widgets.map((w,i)=>({i,p:widgetPages.get(w.dict)})).filter(w=>!w.p).map(x=>x.i);
   for(const w of widgets){const p=widgetPages.get(w.dict);if(p)w.setP(p);}
   if(remove.length===widgets.length){form.acroForm.removeField(field.acroField);doc.context.delete(field.ref);record.push({field:field.getName(),removed:'field'});}
-  else {for(const i of remove.reverse())field.acroField.removeWidget(i);record.push({field:field.getName(),removedWidgets:remove.length});}
+  else {
+   // A button's /Opt holds one export value per widget in /Kids order; remove the value with its widget.
+   const opt=field instanceof PDFLib.PDFRadioGroup||field instanceof PDFLib.PDFCheckBox?field.acroField.dict.lookup(name('Opt')):undefined,aligned=opt instanceof PDFArray&&opt.size()===widgets.length;
+   for(const i of remove.reverse()){field.acroField.removeWidget(i);if(aligned)opt.remove(i);}
+   record.push({field:field.getName(),removedWidgets:remove.length});
+  }
  }
  return record;
 }
@@ -162,6 +167,10 @@ function importRich(dest,src,prefix,includeAttachments=true){
  const copier=PDFObjectCopier.for(src.context,dest.context),pages=[];
  for(const p of src.getPages()){
   const ref=copier.copy(p.ref),leaf=dest.context.lookup(ref);
+  // The copier keeps the attributes a page inherits; one it leaves at its default must
+  // not pick up the destination's page-tree values (/Rotate 0, CropBox = MediaBox).
+  if(!leaf.has(name('Rotate')))leaf.set(name('Rotate'),dest.context.obj(0));
+  if(!leaf.has(name('CropBox'))&&leaf.has(name('MediaBox')))leaf.set(name('CropBox'),leaf.get(name('MediaBox')));
   const copy=PDFPage.of(leaf,ref,dest);dest.addPage(copy);pages.push(copy);
  }
  const sourceForm=src.catalog.get(name('AcroForm'));
@@ -169,7 +178,9 @@ function importRich(dest,src,prefix,includeAttachments=true){
   const copied=copier.copy(sourceForm),dict=dest.context.lookup(copied,PDFDict),fields=dict.lookup(name('Fields'),PDFArray);
   const da=importFormResources(dest,dict,prefix);
   if(!dest.catalog.has(name('AcroForm')))dest.catalog.set(name('AcroForm'),dest.context.obj({Fields:[]}));
-  const group=dest.context.obj({T:PDFHexString.fromText(prefix),Kids:fields}),groupRef=dest.context.register(group);if(da)group.set(name('DA'),da);const q=dict.get(name('Q'));if(q)group.set(name('Q'),q);
+  const group=dest.context.obj({T:PDFHexString.fromText(prefix),Kids:fields}),groupRef=dest.context.register(group);if(da)group.set(name('DA'),da);
+  // A field without /Q would otherwise inherit the destination form's default alignment.
+  group.set(name('Q'),dict.get(name('Q'))||dest.context.obj(0));
   for(const ref of fields.asArray())dest.context.lookup(ref,PDFDict).set(name('Parent'),groupRef);
   dest.catalog.lookup(name('AcroForm'),PDFDict).lookup(name('Fields'),PDFArray).push(groupRef);
  }
@@ -194,6 +205,9 @@ function sortAttachmentNames(doc) {
 }
 async function load(base64) {check();let d;try{d=await PDFDocument.load(base64,{parseSpeed:Infinity,updateMetadata:false,throwOnInvalidObject:true});}catch(error){if(error instanceof PDFLib.EncryptedPDFError||String(error.message||error).startsWith('Input document to `PDFDocument.load` is encrypted.'))unsupported("encryption");throw error;}check();return d;}
 function setPageOrder(doc,pages) {
+ // Re-added pages hang off the root page-tree node, and emptied intermediate
+ // nodes are pruned. Keep what each page inherited from them, as pdf-lib's copier does.
+ for(const page of pages)for(const key of ["Resources","MediaBox","CropBox","Rotate"]){const value=page.node.getInheritableAttribute(name(key));if(value&&!page.node.get(name(key)))page.node.set(name(key),value);}
  while(doc.getPageCount()){check();doc.removePage(0);}
  for(const page of pages){check();doc.addPage(page);}
 }

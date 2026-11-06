@@ -15,16 +15,16 @@ REQUIRED_CHECKS = {"security", "mac-source", "windows"}
 def eligible(pr, head):
     return (bool(re.fullmatch(r"[0-9a-f]{40}", head))
             and pr.get("state") == "open" and not pr.get("draft", True)
-            and pr.get("user", {}).get("id") == OWNER_ID
+            and (pr.get("user") or {}).get("id") == OWNER_ID
             and pr.get("base", {}).get("ref") == "main"
-            and pr.get("base", {}).get("repo", {}).get("full_name") == REPOSITORY
+            and (pr.get("base", {}).get("repo") or {}).get("full_name") == REPOSITORY
             and (pr.get("head", {}).get("repo") or {}).get("full_name") == REPOSITORY
             and pr.get("head", {}).get("sha") == head)
 
 
 def checks_passed(checks, head):
     passed = {c["name"] for c in checks
-              if c.get("head_sha") == head and c.get("app", {}).get("id") == ACTIONS_APP_ID
+              if c.get("head_sha") == head and (c.get("app") or {}).get("id") == ACTIONS_APP_ID
               and c.get("status") == "completed" and c.get("conclusion") == "success"}
     return REQUIRED_CHECKS <= passed
 
