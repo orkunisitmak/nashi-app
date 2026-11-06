@@ -43,6 +43,12 @@ The wheel uses the macOS petal layout in every theme.
 
 `Meta+Alt+S` lets you select part of the screen with your desktop's screenshot tool (Spectacle, GNOME Screenshot, Xfce Screenshooter or Flameshot), saves the capture to Library and opens the Tools wheel on it, so you can annotate, redact, crop, read a QR code or convert it. `Meta+Alt+V` does the same for an image on the clipboard, or for files copied in your file manager. New results can be dragged straight out of the progress card or a Library preview into other apps.
 
+## Everyday touches
+
+- **Quick look:** click a file on Home for a large preview with its size, pixels or length. ← and → move through the selection, and Space or Escape closes it.
+- **Again:** your last tool or conversion appears as the first petal on the Tools wheel and as a button on Home whenever it fits the new files. Nashi remembers it after a restart.
+- **Library filters:** All, Conversions, Tools, Downloads, Pasted and Screenshots, each with a count. Drag a preview to take its files into another app.
+
 ## Linux extras
 
 On top of the shared 27-tool catalog, the Linux app adds:

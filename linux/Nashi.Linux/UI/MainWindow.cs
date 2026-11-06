@@ -28,7 +28,7 @@ public sealed partial class MainWindow:Window
     private readonly ContentControl pageHost=new();private TextBlock status=new();
     private readonly TextBox link=new(){PlaceholderText="Paste a public video, image or audio page link"};
     private TextBox? librarySearch;private Border? dropCard;
-    private string page="home";private bool busy;private string statusText="Files stay on your computer.";
+    private string page="home";private string libraryKind="all";private bool busy;private string statusText="Files stay on your computer.";
     private readonly List<FloatShelf> shelves=[];
     internal bool Busy=>busy;
 
@@ -197,8 +197,18 @@ public sealed partial class MainWindow:Window
         var stack=new StackPanel{Spacing=6};stack.Children.Add(Ui.Title("Your Library",30));stack.Children.Add(Ui.Text("Freshly made, pasted, and ready for another round.",14,"muted"));
         var label=Ui.Text("Find a file or tool  ·  Ctrl+F",12,"muted");label.Margin=new(4,16,4,0);stack.Children.Add(label);
         var rows=new StackPanel{Spacing=4};var query=librarySearch?.Text??"";librarySearch=new TextBox{PlaceholderText=L10n.T("Find a file or tool in Library"),Text=query};
-        void Render(){rows.Children.Clear();var found=library.Search(librarySearch.Text??"",L10n.Language).ToList();foreach(var entry in found)rows.Children.Add(LibraryRow(entry));if(found.Count==0)rows.Children.Add(Ui.Text(library.Entries.Count==0?"Nothing yet. Your fresh copies will appear here.":"No matches.",13,"muted"));}
-        librarySearch.TextChanged+=(_,_)=>Render();Render();stack.Children.Add(librarySearch);stack.Children.Add(Ui.Card(rows));
+        // Filter chips by kind of entry: conversions, tools, downloads, pastes and screenshots.
+        var kinds=new (string Id,string Label)[]{("all","All"),("convert","Conversions"),("tools","Tools"),("download","Downloads"),("paste","Pasted"),("screenshot","Screenshots")};
+        var chips=new WrapPanel{Margin=new(0,6,0,0)};
+        bool Fits(LibraryEntry e,string? kind=null)=>(kind??libraryKind) switch
+        {
+            "convert"=>e.Action.StartsWith("Convert",StringComparison.Ordinal),"download"=>e.Action.StartsWith("Download",StringComparison.Ordinal),
+            "paste"=>e.Action=="Paste","screenshot"=>e.Action=="Screenshot",
+            "tools"=>!e.Action.StartsWith("Convert",StringComparison.Ordinal)&&!e.Action.StartsWith("Download",StringComparison.Ordinal)&&e.Action is not ("Paste" or "Screenshot"),_=>true
+        };
+        void Chips(){chips.Children.Clear();foreach(var (id,text) in kinds){var count=library.Entries.Count(e=>Fits(e,id));if(count==0&&id!="all")continue;chips.Children.Add(Ui.Button($"{L10n.T(text)}  {count}",()=>{libraryKind=id;Chips();Render();},"chip"+(libraryKind==id?" primary":"")));}}
+        void Render(){rows.Children.Clear();var found=library.Search(librarySearch.Text??"",L10n.Language).Where(e=>Fits(e)).ToList();foreach(var entry in found)rows.Children.Add(LibraryRow(entry));if(found.Count==0)rows.Children.Add(Ui.Text(library.Entries.Count==0?"Nothing yet. Your fresh copies will appear here.":"No matches.",13,"muted"));}
+        librarySearch.TextChanged+=(_,_)=>Render();Chips();Render();stack.Children.Add(librarySearch);stack.Children.Add(chips);stack.Children.Add(Ui.Card(rows));
         stack.Children.Add(Ui.Text($"Library keeps the last {LibraryStore.Limit} successful exports and clipboard imports.",11,"muted"));
         return stack;
     }
