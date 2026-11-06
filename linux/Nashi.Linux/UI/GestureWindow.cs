@@ -20,7 +20,7 @@ public sealed class GestureWindow:Window
     private readonly Canvas canvas=new();private readonly Border hint;private readonly TextBlock hintText=new(){FontSize=15,TextAlignment=TextAlignment.Center,TextWrapping=TextWrapping.Wrap,MaxWidth=560};
     private readonly PetalWheel wheel=new(WheelSize){IsVisible=false};
     private Point? origin;private string? mode;private string[]? files;private string? url;private bool clickMode;
-    private readonly DispatcherTimer idle=new(){Interval=TimeSpan.FromSeconds(7)};
+    private readonly DispatcherTimer idle=new(){Interval=TimeSpan.FromSeconds(9)};private readonly DispatcherTimer nudge=new(){Interval=TimeSpan.FromSeconds(2.5)};
     public PetalWheel Wheel=>wheel;
 
     /// NASHI_DEBUG_GESTURE=1 writes what the layer receives to ~/.local/share/Nashi/gesture.log.
@@ -43,11 +43,14 @@ public sealed class GestureWindow:Window
         canvas.PointerPressed+=(_,e)=>{if(!clickMode||e.Source==canvas)closeAll();};
         KeyDown+=(_,e)=>{if(e.Key==Key.Escape)closeAll();else if(clickMode&&e.Key==Key.Enter)wheel.Choose();};
         idle.Tick+=(_,_)=>{idle.Stop();if(origin is null&&!clickMode)closeAll();};
+        // Some sessions don't pass a drag from Wayland apps to this layer (KWin's XWayland bridge can get
+        // stuck until the next login). Say so, and offer the copy-and-shortcut route that always works.
+        nudge.Tick+=(_,_)=>{nudge.Stop();if(origin is null&&!clickMode){var paste=settings.Shortcuts.GetValueOrDefault("clipboard","");SetHint(L10n.T("The drag didn't reach Nashi.")+"\n"+L10n.T("Drop the files, press Ctrl+C on them, then")+" "+(paste.Length>0?paste:"Ctrl+V")+".");}};
         Opened+=(_,_)=>
         {
             Log($"layer opened on {screen.Bounds} mode={fixedMode??"gesture"}");
             if(presetFiles is {Length:>0}){files=presetFiles;origin=new(Width/2,Height/2);clickMode=true;ShowWheel(fixedMode??"tools");}
-            else{SetHint(fixedMode is null?Directions():L10n.T("Keep dragging here, then drop on a slice."));idle.Start();}
+            else{SetHint(fixedMode is null?Directions():L10n.T("Keep dragging here, then drop on a slice."));idle.Start();nudge.Start();}
             Activate();
         };
     }
@@ -76,7 +79,7 @@ public sealed class GestureWindow:Window
 
     private void OnDrag(object? sender,DragEventArgs e)
     {
-        idle.Stop();var point=e.GetPosition(canvas);e.DragEffects=DragDropEffects.Copy;
+        idle.Stop();nudge.Stop();var point=e.GetPosition(canvas);e.DragEffects=DragDropEffects.Copy;
         if(origin is null||mode is null)Log($"{e.RoutedEvent?.Name} at {point:F0} files={(files??Files(e))?.Length.ToString()??"not yet"} modifiers={e.KeyModifiers}");
         // Some toolkits only hand over the files on drop; the wheel then finishes after the drop.
         files??=Files(e);if(files is null)url??=Url(e);
