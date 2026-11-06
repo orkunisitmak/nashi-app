@@ -157,8 +157,13 @@ public sealed class ToolEditor:Window
     private (NumericUpDown Reduction,NumericUpDown Target) SizeTargets()
     {
         var reduction=Ui.Number(0,0,99);var target=Ui.Number(0,0,10_000_000,50);
-        Add("Reduction (%; 0 = auto)",reduction);Add("Target size (KB; 0 = auto)",target,"A target size wins over the reduction.");return(reduction,target);
+        Add("Reduction (%; 0 = auto)",reduction);Add("Target size (KB; 0 = auto)",target,"A target size wins over the reduction.");
+        // One-click limits for where files usually go, with a little room under each limit.
+        var chips=SizePresets.Select(p=>(Control)Ui.Button(p.Label,()=>target.Value=p.Kilobytes,"chip",L10n.T("Sets the target size to")+$" {p.Kilobytes/1024.0:0.#} MB")).ToArray();
+        Add("Fit for",Ui.Wrap(chips));return(reduction,target);
     }
+    /// Upload limits: Discord (free) 10 MB, WhatsApp 16 MB, email attachments 25 MB (Gmail, Outlook).
+    internal static readonly (string Label,int Kilobytes)[] SizePresets=[("Discord · 10 MB",9_700),("WhatsApp · 16 MB",15_800),("Email · 25 MB",24_000)];
     private (long? Bytes,double? Percent) ReadTargets((NumericUpDown Reduction,NumericUpDown Target) fields)
     {
         var target=Ui.Read(fields.Target);var reduction=Ui.Read(fields.Reduction);return(target>0?(long)(target*1024):null,target>0||reduction<=0?null:reduction);

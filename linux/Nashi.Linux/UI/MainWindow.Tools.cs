@@ -30,6 +30,7 @@ public sealed partial class MainWindow
             if(choice.Id=="readQRCode"){await ReadQrAsync(selected);return;}
             if(choice.Id=="copyText"){await CopyTextAsync(selected);return;}
             if(choice.Id=="rename"){await RenameAsync(selected);return;}
+            if(choice.Id.StartsWith("fit:",StringComparison.Ordinal)){await FitAsync(selected,choice.Id[4..]);return;}
             if(!imageSelection&&!mediaSelection&&choice.Id is not ("extractArchive" or "unzip")){await EditDocumentAsync(choice,selected,requestedFormat,quick);return;}
             MediaInfo? info=null;byte[]? preview=null;int sourceWidth=0,sourceHeight=0;
             if(imageSelection)

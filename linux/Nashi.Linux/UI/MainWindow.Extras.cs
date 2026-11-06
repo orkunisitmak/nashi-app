@@ -14,6 +14,22 @@ public sealed partial class MainWindow
     {
         if(paths.Count>0&&paths.All(p=>FeatureCatalog.IsImage(p)||FeatureCatalog.Extension(p)=="pdf")&&PdfDocumentMedia.OcrAvailable)yield return new("copyText","Copy Text","¶");
         if(paths.Count>0)yield return new("rename","Rename","✎");
+        // Videos over an app's upload limit: one petal shrinks them to fit, no options asked.
+        if(paths.Count>0&&paths.All(FeatureCatalog.IsVideo))
+        {
+            long Largest(){try{return paths.Max(p=>new FileInfo(p).Length);}catch(IOException){return 0;}}
+            var largest=Largest();
+            foreach(var (id,title,kilobytes) in FitTargets)if(largest>kilobytes*1024L)yield return new("fit:"+id,title,"⇩");
+        }
+    }
+    /// The gesture petals for ToolEditor.SizePresets (Discord and WhatsApp; email is rarely needed for one video).
+    internal static readonly (string Id,string Title,int Kilobytes)[] FitTargets=[("discord","Fit for Discord",ToolEditor.SizePresets[0].Kilobytes),("whatsapp","Fit for WhatsApp",ToolEditor.SizePresets[1].Kilobytes)];
+    /// Compresses videos to an upload limit with the shared two-pass encoder.
+    private async Task FitAsync(IReadOnlyList<string> inputs,string target)
+    {
+        var (_,title,kilobytes)=FitTargets.First(f=>f.Id==target);
+        if(!HasMedia){await OfferMediaSetup();return;}
+        await RunAsync((destination,p,t)=>new MediaEngine(tools.Executable("ffmpeg"),tools.Executable("ffprobe")).ToolAsync("compress",inputs,destination,new MediaOptions{Quality=.8,TargetBytes=kilobytes*1024L},p,t),title);
     }
     internal static IEnumerable<ToolChoice> ExtraActions(){if(KdeConnect is not null)yield return new("phone","Send to Phone","📱");}
 

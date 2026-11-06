@@ -62,6 +62,7 @@ On top of the shared 27-tool catalog, the Linux app adds:
 - **Copy Text:** reads the text in images and PDF pages with Tesseract and puts it on the clipboard. Combined with `Meta+Alt+S`, you can grab any text on screen. Install more languages with your distribution, for example `tesseract-data-tur` on Arch or `tesseract-ocr-tur` on Debian/Ubuntu.
 - **Rename:** batch-renames files where they are, with a live preview. Patterns can use `{name}`, `{n}`, `{date}`, `{today}` and `{ext}`, plus a letter-case option. Clashes are shown before anything changes.
 - **Send to Phone:** sends files to a phone paired in KDE Connect, the Linux counterpart to the Windows share sheet.
+- **Fit for Discord / WhatsApp:** videos larger than the upload limit (Discord 10 MB, WhatsApp 16 MB) get a petal that shrinks them under it in one go. The compress tools for images, videos and PDFs also have one-click **Fit for** targets: Discord, WhatsApp and email (25 MB).
 
 ## From the terminal
 

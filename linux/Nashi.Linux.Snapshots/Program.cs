@@ -231,5 +231,19 @@ Flow("TXT → DOCX",[flowNotes],"convert:docx",o=>o[0].EndsWith(".docx"));
 Flow("trim video",[flowClip],"trimVideo",o=>o[0].EndsWith(".mp4"),e=>{foreach(var box in e.GetVisualDescendants().OfType<TextBox>().Take(2).ToList())box.Text=box.Text=="0"?"0.5":"2";});
 Flow("MP4 → GIF",[flowClip],"convert:gif",o=>o[0].EndsWith(".gif"));
 Flow("video snapshots",[flowClip],"videoSnapshots",o=>o.Length==4);
+// Fit for Discord: a video over 10 MB gets the petal, a small one does not, and the result fits.
+if(hasMedia)
+{
+    var big=Path.Combine(work,"Big Clip.mp4");
+    using(var make=System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("ffmpeg",["-v","error","-y","-f","lavfi","-i","testsrc2=size=1280x720:rate=30","-t","8","-vf","noise=alls=40:allf=t","-c:v","libx264","-preset","ultrafast","-b:v","14M","-maxrate","14M","-bufsize","28M",big]){RedirectStandardError=true})!)make.WaitForExit();
+    var offered=MainWindow.ExtraTools([big]).Any(t=>t.Id=="fit:discord")&&!MainWindow.ExtraTools([flowClip]).Any(t=>t.Id.StartsWith("fit:"));
+    var window=new MainWindow([]);window.Show();window.UseFiles([big]);var before=window.library.Entries.Count;
+    var run=window.EditAsync(new ToolChoice("fit:discord","Fit for Discord","⇩"));for(var n=0;n<12000&&!run.IsCompleted;n++){Pump();Thread.Sleep(10);}
+    var made=window.library.Entries.Count>before?window.library.Entries[0].AvailablePaths:[];
+    var size=made.Length>0?new FileInfo(made[0]).Length:0;
+    var ok=offered&&run.IsCompletedSuccessfully&&size>0&&size<=ToolEditor.SizePresets[0].Kilobytes*1024L;if(!ok)failures++;
+    Console.WriteLine($"  {(ok?"pass":"FAIL")}  flow fit for Discord · {new FileInfo(big).Length/1048576.0:0.0} MB → {size/1048576.0:0.0} MB {(offered?"":"(petal not offered as expected)")} {(run.IsFaulted?run.Exception?.GetBaseException().Message:"")}");
+    window.Close();
+}
 Console.WriteLine(failures==0?"flows passed":$"{failures} flow(s) failed");
 return failures==0?0:1;

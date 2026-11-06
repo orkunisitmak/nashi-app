@@ -187,7 +187,7 @@ public sealed partial class MainWindow
         // Conversions and simple tools run at once with their saved defaults (Settings can turn this off);
         // a desktop notification reports the result while the window stays out of the way.
         var id=choice.Id.StartsWith("convert:",StringComparison.Ordinal)?"convert":choice.Id;
-        var quick=LinuxSettings.GestureQuickRun&&Quick(id is "mergePDF"?"mergePDFs":id)&&preferences.Value.OutputMode!="ask";
+        var quick=id.StartsWith("fit:",StringComparison.Ordinal)||LinuxSettings.GestureQuickRun&&Quick(id is "mergePDF"?"mergePDFs":id)&&preferences.Value.OutputMode!="ask";
         if(!quick)Bring();
         await EditAsync(choice,quick);
     }
