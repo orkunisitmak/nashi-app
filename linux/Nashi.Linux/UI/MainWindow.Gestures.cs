@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Input.Platform;
 using Avalonia.Threading;
 using Nashi.Core;
 namespace Nashi.Linux.UI;
@@ -12,6 +13,8 @@ public sealed partial class MainWindow
     internal Dictionary<string,string> ShortcutProblems{get;}=[];
     internal bool ShortcutsAvailable=>shortcuts is not null;
 
+    /// The last tool or conversion, offered first on the Tools wheel when it fits the new files.
+    internal ToolChoice? LastChoice{get;set;}
     internal IReadOnlyList<ToolChoice> ChoicesFor(IReadOnlyList<string> paths,string mode)
     {
         if(paths.Count==0)return [];
@@ -19,7 +22,26 @@ public sealed partial class MainWindow
         var formats=FeatureCatalog.Formats(paths);
         if(mode=="convert")return formats.Select(f=>new ToolChoice("convert:"+f,f.ToUpperInvariant(),"↗")).ToList();
         var list=FeatureCatalog.Tools(paths).Select(id=>new ToolChoice(id,FeatureCatalog.ToolNames.GetValueOrDefault(id,id),Ui.Symbol(id))).ToList();
-        if(formats.Length>0)list.Insert(0,new("convert","Convert","⇄"));return list;
+        if(formats.Length>0)list.Insert(0,new("convert","Convert","⇄"));
+        if(LastChoice is {} last&&(last.Id.StartsWith("convert:",StringComparison.Ordinal)?formats.Contains(last.Id[8..]):list.Any(c=>c.Id==last.Id)))
+            list.Insert(0,new(last.Id,L10n.T("Again")+": "+L10n.T(last.Title),"↻"));
+        return list;
+    }
+    /// What a dragged web link can become (like the macOS web wheel).
+    internal static IReadOnlyList<ToolChoice> WebChoices(string url)
+    {
+        var image=Uri.TryCreate(url,UriKind.Absolute,out var uri)&&new[]{".jpg",".jpeg",".png",".webp",".gif",".avif"}.Any(e=>uri.AbsolutePath.EndsWith(e,StringComparison.OrdinalIgnoreCase));
+        List<ToolChoice> list=image?[new("web:image","Download image","↓")]:[new("web:video","Download video","▷"),new("web:audio","Audio MP3","♫"),new("web:thumbnail","Thumbnail","▣")];
+        list.Add(new("web:copy","Copy link","↪"));list.Add(new("web:open","Open link","↗"));return list;
+    }
+    internal async Task RunWebGesture(string url,ToolChoice choice)
+    {
+        switch(choice.Id)
+        {
+            case "web:copy":if(Clipboard is {} clipboard)await clipboard.SetTextAsync(url);break;
+            case "web:open":LinuxShell.Open(url);break;
+            default:await DownloadUrlAsync(url,choice.Id[4..]);break;
+        }
     }
 
     /// Desktop notifications for work that finishes while the window is hidden.

@@ -127,6 +127,19 @@ bool WheelOpen(Window w)=>w.GetVisualDescendants().OfType<WheelOverlay>().Any(o=
             w.CloseGestures();Pump();
         }
     }
+    // A web link dragged from a browser gets the download wheel.
+    {
+        w.StartGesture(null);Pump();var layer=w.Gestures.First();var web=new Avalonia.Input.DataTransfer();web.Add(Avalonia.Input.DataTransferItem.CreateText("https://www.youtube.com/watch?v=dQw4w9WgXcQ"));
+        layer.DragDrop(new Point(600,400),Avalonia.Input.Raw.RawDragEventType.DragEnter,web,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);
+        layer.DragDrop(new Point(760,400),Avalonia.Input.Raw.RawDragEventType.DragOver,web,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);Pump();
+        Expect($"A dragged link opens the download wheel ({string.Join(", ",layer.Wheel.Items.Select(i=>i.Title))})",layer.Wheel.Items.Any(i=>i.Id=="web:video")&&layer.Wheel.Items.Any(i=>i.Id=="web:copy"));
+        Save(layer,"16-gesture-web");w.CloseGestures();Pump();
+    }
+    // The last tool comes back first on the Tools wheel as "Again".
+    w.LastChoice=new ToolChoice("convert:jpg","Convert to JPG","↗");
+    var again=w.ChoicesFor(Fixtures("Photo.png"),"tools");
+    Expect($"Again petal leads the Tools wheel ({again[0].Title})",again[0].Symbol=="↻"&&again[0].Id=="convert:jpg");
+    w.LastChoice=null;
     // Focus in the link box must not swallow the wheel shortcut.
     var linkBox=w.GetVisualDescendants().OfType<TextBox>().First();linkBox.Focus();Pump();
     w.KeyPress(Avalonia.Input.Key.Space,Avalonia.Input.RawInputModifiers.Control,Avalonia.Input.PhysicalKey.Space,null);Pump();

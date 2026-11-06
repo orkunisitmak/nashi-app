@@ -17,6 +17,9 @@ public sealed partial class MainWindow
     internal async Task EditAsync(ToolChoice choice,bool quick=false)
     {
         if(busy||files.Count==0)return;
+        // Remember it for the "Again" petal (the Again petal itself keeps the original).
+        if(FileActionChoices().All(a=>a.Id!=choice.Id)&&choice.Id!="convert"&&choice.Symbol!="↻")
+            LastChoice=choice.Id.StartsWith("convert:",StringComparison.Ordinal)?choice with{Title="Convert to "+choice.Id[8..].ToUpperInvariant()}:choice;
         var requestedFormat=choice.Id.StartsWith("convert:",StringComparison.Ordinal)?choice.Id[8..]:null;
         if(requestedFormat is not null)choice=new("convert","Convert to "+requestedFormat.ToUpperInvariant(),"↗");
         choice=choice with{Id=choice.Id switch{"cropImage"=>"crop","annotateImage"=>"annotate","mergePDF"=>"mergePDFs",_=>choice.Id}};

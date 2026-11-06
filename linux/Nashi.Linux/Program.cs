@@ -6,6 +6,13 @@ internal static class Program
     public static int Main(string[] args)
     {
         if(args is ["--version"]){Console.WriteLine("Nashi "+typeof(Program).Assembly.GetName().Version?.ToString(3)+" for Linux");return 0;}
+        if(args is ["--notify-check"])
+        {
+            using var notes=Notifications.TryCreateAsync().GetAwaiter().GetResult();
+            if(notes is null){Console.WriteLine("No notification service in this session.");return 2;}
+            var id=notes.ShowAsync("Nashi","Notification check · Bildirim denemesi",[("default","Open")]).GetAwaiter().GetResult();
+            Console.WriteLine(id>0?$"PASS notification {id} shown":"FAIL notification refused");return id>0?0:1;
+        }
         if(args is ["--shortcuts-check"])return ShortcutsCheck().GetAwaiter().GetResult();
         if(args.Length>0&&args[0]=="--self-test")return Engine.SelfTest.RunAsync(args.Length>1?args[1]:null).GetAwaiter().GetResult();
         var files=args.Where(a=>!a.StartsWith("--",StringComparison.Ordinal)).ToArray();

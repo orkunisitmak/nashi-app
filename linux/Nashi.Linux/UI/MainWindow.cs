@@ -320,16 +320,18 @@ public sealed partial class MainWindow:Window
             if(destination is null)return;
         }
         SetBusy(true);using var cancellation=new CancellationTokenSource();var toast=new Toast(L10n.T(label),cancellation.Cancel);toastLayer.Children.Clear();toastLayer.Children.Add(toast);
+        // Hidden window (gesture or tray): a small card in the screen corner shows the progress instead.
+        var hud=IsVisible?null:new ProgressHud(this,L10n.T(label),cancellation.Cancel);hud?.Show();
         try
         {
-            var outputs=await work(destination,new Progress<OperationProgress>(toast.Update),cancellation.Token);
+            var outputs=await work(destination,new Progress<OperationProgress>(p=>{toast.Update(p);hud?.Update(p);}),cancellation.Token);
             toast.Complete(outputs,()=>toastLayer.Children.Remove(toast));Record(label,outputs);_=NotifyDoneAsync(label,outputs);
             SetStatus($"Saved {outputs.Count} new {(outputs.Count==1?"file":"files")}. Originals kept.");
             if(preferences.Value.RevealFinished&&outputs.Count>0)LinuxShell.Reveal(outputs[0]);
         }
         catch(OperationCanceledException){toastLayer.Children.Remove(toast);SetStatus("Cancelled. Originals kept.");}
         catch(Exception error){toastLayer.Children.Remove(toast);if(!IsVisible){_=NotifyDoneAsync(label,[],error.Message);}else await Dialogs.Message(this,"Couldn’t finish",L10n.T(error.Message));}
-        finally{SetBusy(false);if(page=="home")RenderPage();}
+        finally{hud?.Close();SetBusy(false);if(page=="home")RenderPage();}
     }
     private void SetBusy(bool value){busy=value;pageHost.IsEnabled=!value;}
     /// Long setup steps share the progress toast but are not recorded in Library.
@@ -341,9 +343,11 @@ public sealed partial class MainWindow:Window
         catch(Exception error){toastLayer.Children.Remove(toast);await Dialogs.Message(this,"Setup could not finish",L10n.T(error.Message));return false;}
         finally{SetBusy(false);}
     }
-    private async Task DownloadAsync(string kind,string quality)
+    private Task DownloadAsync(string kind,string quality)=>DownloadUrlAsync(link.Text??"",kind,quality);
+    internal async Task DownloadUrlAsync(string text,string kind,string quality="best")
     {
-        string url;try{url=WebDownload.Validate(link.Text??"").AbsoluteUri;}catch(ArgumentException error){await Dialogs.Message(this,"Download a link",L10n.T(error.Message));return;}
+        string url;try{url=WebDownload.Validate(text).AbsoluteUri;}catch(ArgumentException error){await Dialogs.Message(this,"Download a link",L10n.T(error.Message));return;}
+        if(kind!="image"&&!HasDownloader)Bring();
         if(kind!="image"&&!HasDownloader)
         {
             if(await Dialogs.Confirm(this,"Set up media tools","Web downloads need yt-dlp. Download the verified media tools now? Existing tools on your system are kept.","Download"))await new SetupWindow(this).InstallMediaAsync();

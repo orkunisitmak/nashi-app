@@ -18,7 +18,7 @@ public sealed class GestureWindow:Window
     private readonly MainWindow main;private readonly string? fixedMode;private readonly Action closeAll;private readonly LinuxSettings settings;
     private readonly Canvas canvas=new();private readonly Border hint;private readonly TextBlock hintText=new(){FontSize=15,TextAlignment=TextAlignment.Center,TextWrapping=TextWrapping.Wrap,MaxWidth=560};
     private readonly PetalWheel wheel=new(WheelSize){IsVisible=false};
-    private Point? origin;private string? mode;private string[]? files;private bool clickMode;
+    private Point? origin;private string? mode;private string[]? files;private string? url;private bool clickMode;
     private readonly DispatcherTimer idle=new(){Interval=TimeSpan.FromSeconds(7)};
     public PetalWheel Wheel=>wheel;
 
@@ -63,6 +63,14 @@ public sealed class GestureWindow:Window
         Canvas.SetTop(hint,Math.Clamp(near is null?at.Y-size.Height/2:at.Y+WheelSize/2+14,12,Math.Max(12,Height-size.Height-12)));
     }
     private string[]? Files(DragEventArgs e)=>e.DataTransfer.TryGetFiles()?.Select(f=>f.TryGetLocalPath()).OfType<string>().ToArray() is {Length:>0} paths?paths:null;
+    /// A dragged web link (browser address bar, link or image), when no files come with the drag.
+    private static string? Url(DragEventArgs e)
+    {
+        string? text=e.DataTransfer.TryGetText();
+        if(text is null&&e.DataTransfer.TryGetValue(ClipboardFiles.UriList) is {} bytes)text=System.Text.Encoding.UTF8.GetString(bytes);
+        var first=text?.Split(['\r','\n'],StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries).FirstOrDefault(l=>!l.StartsWith('#'));
+        return first is not null&&Uri.TryCreate(first,UriKind.Absolute,out var uri)&&uri.Scheme is "http" or "https"?uri.AbsoluteUri:null;
+    }
     private Point WheelOrigin=>new(Canvas.GetLeft(wheel),Canvas.GetTop(wheel));
 
     private void OnDrag(object? sender,DragEventArgs e)
@@ -70,7 +78,7 @@ public sealed class GestureWindow:Window
         idle.Stop();var point=e.GetPosition(canvas);e.DragEffects=DragDropEffects.Copy;
         if(origin is null||mode is null)Log($"{e.RoutedEvent?.Name} at {point:F0} files={(files??Files(e))?.Length.ToString()??"not yet"} modifiers={e.KeyModifiers}");
         // Some toolkits only hand over the files on drop; the wheel then finishes after the drop.
-        files??=Files(e);
+        files??=Files(e);if(files is null)url??=Url(e);
         if(origin is null){origin=point;if(fixedMode is not null)ShowWheel(fixedMode);return;}
         if(mode is null&&fixedMode is null)
         {
@@ -84,12 +92,12 @@ public sealed class GestureWindow:Window
     }
     private void OnDrop(object? sender,DragEventArgs e)
     {
-        files=Files(e)??files;var point=e.GetPosition(canvas);
+        files=Files(e)??files;if(files is null)url??=Url(e);var point=e.GetPosition(canvas);
         if(wheel.IsVisible)wheel.Selected=wheel.HitTest(point-WheelOrigin);
         Log($"Drop at {point:F0} files={files?.Length.ToString()??"none"} mode={mode} petal={wheel.SelectedItem?.Id}");
-        if(files is null||mode is null){closeAll();return;}
+        if(files is null&&url is null||mode is null){closeAll();return;}
         // Without the files during the drag the petals were placeholders; now show the real ones to click.
-        if(wheel.Items.All(i=>i.Id.StartsWith("placeholder:",StringComparison.Ordinal))){clickMode=true;ShowWheel(mode);return;}
+        if(url is null&&wheel.Items.All(i=>i.Id.StartsWith("placeholder:",StringComparison.Ordinal))){clickMode=true;ShowWheel(mode);return;}
         if(wheel.SelectedItem is {} chosen)_=Choose(chosen);else closeAll();
     }
     private void ShowWheel(string target)
@@ -98,7 +106,9 @@ public sealed class GestureWindow:Window
         // Keep the whole wheel on screen even when the drag entered near an edge.
         var margin=WheelSize/2+8;center=new(Math.Clamp(center.X,margin,Math.Max(margin,Width-margin)),Math.Clamp(center.Y,margin,Math.Max(margin,Height-margin)));origin=center;
         var title=target switch{"convert"=>"Convert","actions"=>"File actions",_=>"Tools"};
-        var choices=files is null?[new ToolChoice("placeholder:"+target,title,Ui.Symbol(target=="actions"?"copy":target))]:main.ChoicesFor(files,target);
+        // A web link gets the download wheel whatever the direction.
+        if(files is null&&url is not null)title="Web link";
+        var choices=files is not null?main.ChoicesFor(files,target):url is not null?MainWindow.WebChoices(url):[new ToolChoice("placeholder:"+target,title,Ui.Symbol(target=="actions"?"copy":target))];
         if(choices.Count==0){wheel.IsVisible=false;SetHint(L10n.T("Nothing in this wheel fits these files."),center);return;}
         wheel.Items=choices;wheel.CenterTitle=L10n.T(title);wheel.IsVisible=true;
         Canvas.SetLeft(wheel,center.X-WheelSize/2);Canvas.SetTop(wheel,center.Y-WheelSize/2);
@@ -106,6 +116,7 @@ public sealed class GestureWindow:Window
     }
     private async Task Choose(ToolChoice choice)
     {
+        if(url is not null&&choice.Id.StartsWith("web:",StringComparison.Ordinal)){var link=url;closeAll();await main.RunWebGesture(link,choice);return;}
         if(files is null){closeAll();return;}
         // Tools offers Convert as one petal; it opens the format wheel in place.
         if(choice.Id=="convert"){clickMode=true;ShowWheel("convert");return;}
