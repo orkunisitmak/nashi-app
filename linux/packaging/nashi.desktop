@@ -1,0 +1,16 @@
+[Desktop Entry]
+Type=Application
+Version=1.5
+Name=Nashi
+GenericName=File Converter
+GenericName[tr]=Dosya Dönüştürücü
+Comment=Convert, fine-tune and send your files on their way
+Comment[tr]=Dosyalarını dönüştür, ince ayar yap ve paylaş
+Exec=@EXEC@ %F
+Icon=@ICON@
+Terminal=false
+StartupNotify=true
+StartupWMClass=nashi
+Categories=Utility;FileTools;
+Keywords=convert;converter;compress;pdf;image;video;audio;crop;qr;dönüştür;sıkıştır;
+MimeType=image/png;image/jpeg;image/webp;image/heic;image/heif;image/tiff;image/svg+xml;image/avif;image/bmp;image/gif;audio/mpeg;audio/mp4;audio/x-m4a;audio/x-wav;audio/wav;audio/flac;audio/ogg;audio/opus;audio/x-aiff;audio/x-ms-wma;audio/aac;video/mp4;video/quicktime;video/x-matroska;video/webm;video/x-msvideo;video/x-ms-wmv;video/x-m4v;application/pdf;application/vnd.ms-powerpoint;application/vnd.openxmlformats-officedocument.presentationml.presentation;application/vnd.openxmlformats-officedocument.wordprocessingml.document;application/vnd.apple.pages;application/x-iwork-pages-sffpages;text/markdown;application/rtf;text/rtf;text/html;application/epub+zip;text/plain;application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;application/vnd.ms-excel;application/vnd.oasis.opendocument.spreadsheet;text/csv;text/tab-separated-values;application/x-subrip;text/vtt;application/zip;application/x-tar;application/gzip;application/x-compressed-tar;application/vnd.rar;application/x-rar;

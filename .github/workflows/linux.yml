@@ -30,3 +30,37 @@ jobs:
           NASHI_VERIFY_DOWNLOAD_TOOLS: '1'
           NASHI_VERIFY_TOOLS_DIRECTORY: '${{ runner.temp }}/Nashi-Test-Tools'
         run: dotnet run --project windows/Nashi.Verify -c Release --no-build
+  linux-app:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        with:
+          dotnet-version: '10.0.x'
+      - name: Install the system helpers the app uses
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg tesseract-ocr libreoffice-writer-nogui fonts-dejavu-core
+      - name: Build the Linux app and release archive
+        run: scripts/build-linux.sh
+      - name: Engine self-test with real exports
+        run: build/linux/Nashi/nashi --self-test "${{ runner.temp }}/nashi-self-test"
+      - name: Headless UI screenshots and tool flows
+        env:
+          XDG_DATA_HOME: '${{ runner.temp }}/nashi-ui-data'
+        run: |
+          dotnet restore linux/Nashi.Linux.Snapshots --locked-mode
+          dotnet run --project linux/Nashi.Linux.Snapshots -c Release --no-restore -- "${{ runner.temp }}/nashi-ui" "${{ runner.temp }}/nashi-self-test/fixtures"
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        if: always()
+        with:
+          name: nashi-linux-x64
+          path: |
+            build/linux/Nashi-Linux-x64.tar.gz
+            build/linux/Nashi-Linux-x64.tar.gz.sha256
+            ${{ runner.temp }}/nashi-ui/*.png
+            ${{ runner.temp }}/nashi-self-test/self-test.json
+          if-no-files-found: warn

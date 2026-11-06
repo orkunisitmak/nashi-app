@@ -16,5 +16,7 @@ internal static class Program
         try{return BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);}
         finally{SingleInstance.Stop();}
     }
-    public static AppBuilder BuildAvaloniaApp()=>AppBuilder.Configure<App>().UsePlatformDetect().WithInterFont().LogToTrace();
+    public static AppBuilder BuildAvaloniaApp()=>AppBuilder.Configure<App>().UsePlatformDetect().WithInterFont()
+        // Matches StartupWMClass in nashi.desktop, so docks and task bars show the Nashi icon.
+        .With(new X11PlatformOptions{WmClass="nashi"}).LogToTrace();
 }

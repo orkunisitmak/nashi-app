@@ -33,7 +33,10 @@
     <Content Include="../../scripts/pages-windows.js" Link="pages-windows.js" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../../LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="../packaging/**" Link="packaging/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../packaging/nashi.desktop" Link="packaging/nashi.desktop" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../packaging/install.sh" Link="install.sh" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../packaging/uninstall.sh" Link="uninstall.sh" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../README.md" Link="README.md" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../../Resources/Brand/NashiIcon.png" Link="packaging/nashi.png" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
