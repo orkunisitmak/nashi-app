@@ -1,6 +1,6 @@
 # Nashi for Linux
 
-Nashi for Linux is a native desktop app built with [Avalonia](https://avaloniaui.net/) on top of the same `Nashi.Core` engine the Windows app uses. It shares the 46-format / 27-tool catalog, the pear artwork, the gold-and-sage palette, the English and Turkish copy, and the Home, wheel, Library, Settings and Finish setup workflows. It runs on X11 and on Wayland (through XWayland) with GNOME, KDE Plasma, Xfce, Cinnamon and other desktops.
+Nashi for Linux is a native desktop app built with [Avalonia](https://avaloniaui.net/) 12 on top of the same `Nashi.Core` engine the Windows app uses. It shares the 46-format / 27-tool catalog, the pear artwork, the gold-and-sage palette, the English and Turkish copy, and the Home, wheel, Library, Settings and Finish setup workflows. It runs on X11 and on Wayland (through XWayland) with GNOME, KDE Plasma, Xfce, Cinnamon and other desktops.
 
 ## Install
 
@@ -9,6 +9,31 @@ Nashi for Linux is a native desktop app built with [Avalonia](https://avaloniaui
 3. Run `Nashi/install.sh` for your user only (no administrator password), or `sudo Nashi/install.sh --system` for every user (installs to `/opt/nashi`).
 
 Nashi then appears in your applications menu and under **Open With** for supported files, and `nashi` works in a terminal. You can also run `Nashi/nashi` straight from the extracted folder without installing. `uninstall.sh` removes the app but keeps your Library and settings. The build is self-contained, so you don't need to install .NET.
+
+## Drag gestures and system-wide shortcuts
+
+On macOS and Windows you hold a modifier while dragging a file anywhere to get the wheel. Wayland doesn't show an app another app's drag, so on Linux you press a **system-wide shortcut while dragging** instead. Nashi registers these with KDE Plasma (kglobalaccel). You can change them under **Settings → Shortcuts & gestures** by clicking a shortcut and pressing the new keys. Nashi warns you when another app already uses a combination.
+
+| Default | What it does |
+| --- | --- |
+| `Meta+Space` | **Gesture:** while dragging files (from Dolphin, the desktop, anywhere), press it, then move ← for File actions, → for Convert or ↑ for Tools, and drop on a petal. ↓ cancels. Each direction can be changed in Settings. |
+| `Meta+Alt+C` / `Meta+Alt+T` / `Meta+Alt+A` | Open the Convert, Tools or File actions wheel straight away; drop the dragged files on a petal |
+| `Meta+Alt+V` | Wheel for the files you copied in your file manager (`Ctrl+C`), with no dragging needed |
+| `Meta+Alt+N` | Show Nashi |
+| `Meta+Alt+D` | Download a copied link |
+
+When you drop on a conversion or a simple tool, it runs straight away with its saved export defaults and a desktop notification reports the result. Tools that need your input, like crop, redact or trim, open their editor instead. You can turn this off in Settings. Nashi stays in the system tray when you close its window, so the shortcuts keep working. **Start Nashi in the tray when I log in** keeps them available after a restart. On desktops without kglobalaccel, use `Ctrl+Space` inside Nashi, or hold Ctrl, Shift or Alt while dropping files on its window.
+
+## Themes
+
+**Settings → Appearance** previews each theme live, in light or dark:
+
+- **Classic:** the pear palette shared with macOS and Windows.
+- **Glass:** a see-through window with tinted panes.
+- **Frosted glass:** your desktop is blurred behind Nashi, using KDE's blur.
+- **Brutalist:** square corners, heavy outlines, hard shadows and loud yellow.
+
+The wheel uses the macOS petal layout in every theme.
 
 ## Finish setup
 
@@ -25,7 +50,7 @@ Setup shows the right install command for Debian/Ubuntu, Fedora, Arch and openSU
 
 ## Shortcuts
 
-**Ctrl+O** chooses files and **Ctrl+V** pastes files, file paths, links, images or text outside text fields. **Ctrl+Space** opens the wheel for the selected files: **Tab** switches between Tools, Convert and File actions, the arrow keys move, **Enter** chooses and **Escape** closes. **Ctrl+1/2** switch between Home and Library, **Ctrl+F** searches Library, **Ctrl+Shift+D** downloads a copied public link and **Delete** removes the selected entries from Nashi without deleting the files themselves.
+**Ctrl+O** chooses files and **Ctrl+V** pastes files, file paths, links, images or text outside text fields. **Ctrl+Space** opens the wheel for the selected files: **Tab** switches between Tools, Convert and File actions, the arrow keys move, **Enter** chooses and **Escape** closes. **Ctrl+1/2** switch between Home and Library, **Ctrl+F** searches Library, **Ctrl+Shift+D** downloads a copied public link and **Delete** clears the selection on Home (the files themselves stay where they are), and the ✕ on a file preview removes just that one.
 
 You can drag files from any file manager onto the window. **Float** keeps files in a small always-on-top window you can drag them out of. **Copy** puts files on the clipboard the way file managers expect (`text/uri-list` and `x-special/gnome-copied-files`), and **Show in Folder** selects the file in your file manager when it supports `org.freedesktop.FileManager1`. If another Nashi window is already open, a second launch (for example **Open With → Nashi**) passes its files to that window.
 
