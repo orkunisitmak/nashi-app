@@ -166,6 +166,8 @@ public sealed partial class MainWindow:Window
     {
         var stack=new StackPanel{Spacing=4,Margin=new(0,6,0,0)};
         var formats=FeatureCatalog.Formats(files);
+        // The last tool, one click away when it fits these files too.
+        if(ChoicesFor(files,"tools").FirstOrDefault() is {Symbol:"↻"} again)stack.Children.Add(Ui.Button("↻  "+again.Title,async()=>await EditAsync(again),"primary chip").Also(b=>b.Margin=new(0,0,0,6)));
         if(formats.Length>0){stack.Children.Add(Ui.Text("Convert to",11,"muted"));var wrap=new WrapPanel();foreach(var format in formats)wrap.Children.Add(Ui.Button(format.ToUpperInvariant(),async()=>await EditAsync(new("convert:"+format,"Convert to "+format.ToUpperInvariant(),"↗")),"chip"));stack.Children.Add(wrap);}
         var toolChoices=ToolChoices();
         if(toolChoices.Count>0){stack.Children.Add(Ui.Text("Tools",11,"muted"));var wrap=new WrapPanel();foreach(var choice in toolChoices)wrap.Children.Add(Ui.Button(choice.Symbol+"  "+L10n.T(choice.Title),async()=>await EditAsync(choice),"chip"));stack.Children.Add(wrap);}

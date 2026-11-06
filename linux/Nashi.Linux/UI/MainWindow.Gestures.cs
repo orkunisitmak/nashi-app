@@ -14,7 +14,12 @@ public sealed partial class MainWindow
     internal bool ShortcutsAvailable=>shortcuts is not null;
 
     /// The last tool or conversion, offered first on the Tools wheel when it fits the new files.
-    internal ToolChoice? LastChoice{get;set;}
+    internal ToolChoice? LastChoice
+    {
+        get=>LinuxSettings.LastAction is {Length:>0} id?new ToolChoice(id,LinuxSettings.LastActionTitle??id,"↗"):null;
+        // Kept in linux.json so "Again" survives a restart.
+        set{if(value?.Id==LinuxSettings.LastAction)return;var next=LinuxSettings with{LastAction=value?.Id,LastActionTitle=value?.Title};try{next.Save();LinuxSettings=next;}catch(IOException){LinuxSettings=next;}}
+    }
     internal IReadOnlyList<ToolChoice> ChoicesFor(IReadOnlyList<string> paths,string mode)
     {
         if(paths.Count==0)return [];

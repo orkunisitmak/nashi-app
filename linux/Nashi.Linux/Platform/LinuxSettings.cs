@@ -31,6 +31,9 @@ public sealed record LinuxSettings
     public bool StartAtLogin{get;init;}
     /// Watched folders: new files there are converted automatically while Nashi runs.
     public List<FolderRule> Watches{get;init;}=[];
+    /// The last tool or conversion, offered as "Again".
+    public string? LastAction{get;init;}
+    public string? LastActionTitle{get;init;}
 
     private static string File=>Path.Combine(AppPaths.Data,"linux.json");
     public static LinuxSettings Load()
