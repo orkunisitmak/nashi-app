@@ -6,6 +6,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using ImageMagick;
 using FontWeight = Avalonia.Media.FontWeight;
 using Nashi.Core;
@@ -66,7 +67,7 @@ public static class Thumbnails
 /// One selected file: preview (or kind badge), name and size, with a remove button.
 public sealed class FileTile:Border
 {
-    public FileTile(string path,Action? remove,double width=132)
+    public FileTile(string path,Action? remove,double width=132,Action? open=null)
     {
         Classes.Add("tile");Width=width;Padding=new(8);Margin=new(0,0,10,10);
         var (label,color)=Thumbnails.Kind(path);
@@ -85,6 +86,8 @@ public sealed class FileTile:Border
             PointerEntered+=(_,_)=>close.IsVisible=true;PointerExited+=(_,_)=>close.IsVisible=false;
         }
         Child=grid;ToolTip.SetTip(this,path);
+        // A click opens the quick look; the ✕ handles its own click.
+        if(open is not null){Cursor=new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand);PointerReleased+=(_,e)=>{if(e.InitialPressMouseButton==Avalonia.Input.MouseButton.Left&&e.Source is not Button&&(e.Source as Avalonia.Visual)?.FindAncestorOfType<Button>() is null)open();};}
         _=Load(path,picture,badge);
     }
     private static async Task Load(string path,Image picture,Border badge)

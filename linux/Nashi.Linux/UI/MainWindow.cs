@@ -128,7 +128,8 @@ public sealed partial class MainWindow:Window
         head.Children.Add(title);
         var picks=new WrapPanel{Margin=new(0,12,0,4),Children={Ui.Primary("Open wheel",ShowWheel),Ui.Button("Add or change files",ChooseFiles),Ui.Button("Paste",PasteAsync,tip:"Ctrl+V"),Ui.Button("Clear",()=>files.Clear())}};
         var tiles=new WrapPanel{Margin=new(0,8,0,0)};
-        foreach(var path in files.Take(60))tiles.Children.Add(new FileTile(path,()=>files.Remove(path)));
+        var shown=files.Take(60).ToList();
+        for(var n=0;n<shown.Count;n++){var path=shown[n];var at=n;tiles.Children.Add(new FileTile(path,()=>files.Remove(path),open:()=>new PreviewWindow(this,shown,at).Show(this)));}
         if(files.Count>60)tiles.Children.Add(Ui.Text(L10n.T($"and {files.Count-60} more"),12,"muted",false).Also(t=>t.VerticalAlignment=VerticalAlignment.Center));
         var stack=new StackPanel{Spacing=6,Children={head,picks,tiles,SelectionActions(),ShortcutHints()}};
         dropCard=Ui.Card(stack);return dropCard;

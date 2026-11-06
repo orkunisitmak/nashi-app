@@ -52,6 +52,12 @@ if(fixtures is not null)
         ("11-editor-redact",new ToolEditor("redactImage","Redact Photo",[photo],null,prefs,preview:png,sourceWidth:w,sourceHeight:h)),
     };
     foreach(var (name,editor) in editors){editor.Show();Save(editor,name);editor.Close();}
+    {
+        var host=new MainWindow([]);host.Show();var look=new PreviewWindow(host,[photo,Fixtures("Second.jpg")[0]],0);look.Show();
+        for(var n=0;n<40;n++){Pump();Thread.Sleep(25);}Save(look,"17-preview");
+        look.KeyPress(Avalonia.Input.Key.Right,Avalonia.Input.RawInputModifiers.None,Avalonia.Input.PhysicalKey.ArrowRight,null);Pump();
+        Console.WriteLine(look.Title?.StartsWith("Second.jpg")==true?"  pass  key Quick look moves with →":"  FAIL  key Quick look moves with →");look.Close();host.Close();
+    }
     main=new MainWindow([]);main.Show();var setup=new SetupWindow(main);setup.Show();Save(setup,"12-setup");setup.Close();
     main.SaveLinuxSettings(main.LinuxSettings with{Watches=[new Nashi.Linux.FolderRule(fixtures,["heic","heif"],"jpg")]});
     var settings=new SettingsWindow(main);settings.Show();Save(settings,"13-settings");
