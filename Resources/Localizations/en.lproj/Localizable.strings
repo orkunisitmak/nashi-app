@@ -1315,6 +1315,8 @@
 "Invalid page range: %lld. Use numbers between 1 and %lld." = "Invalid page range: %lld. Use numbers between 1 and %lld.";
 "Invalid public update location or size." = "Invalid public update location or size.";
 "Invalid subtitle timestamp." = "Invalid subtitle timestamp.";
+"Invalid subtitle timestamp: %@" = "Invalid subtitle timestamp: %@";
+"Invalid subtitle timestamp: %lld" = "Invalid subtitle timestamp: %lld";
 "Invalid text clipping resources." = "Invalid text clipping resources.";
 "Invalid update manifest." = "Invalid update manifest.";
 "Invalid update signature length." = "Invalid update signature length.";
@@ -2632,6 +2634,8 @@
 "This repository is private" = "This repository is private";
 "This size cannot be reached. Choose a larger target or smaller dimensions." = "This size cannot be reached. Choose a larger target or smaller dimensions.";
 "This source uses more than 32-bit integer audio. Choose an output bit depth in settings." = "This source uses more than 32-bit integer audio. Choose an output bit depth in settings.";
+"This subtitle timestamp is too large to convert: %@" = "This subtitle timestamp is too large to convert: %@";
+"This subtitle timestamp is too large to convert: %lld" = "This subtitle timestamp is too large to convert: %lld";
 "This text clipping contains no supported text resource." = "This text clipping contains no supported text resource.";
 "This text is too large to paste. Choose a text file instead." = "This text is too large to paste. Choose a text file instead.";
 "This text is too large to preview. Use Open to read the complete file." = "This text is too large to preview. Use Open to read the complete file.";

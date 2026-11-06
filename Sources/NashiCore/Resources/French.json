@@ -1184,6 +1184,8 @@
   "Invalid metadata stream/chapter.": "Flux ou chapitre de métadonnées invalide.",
   "Invalid public update location or size.": "Emplacement ou taille de mise à jour publique invalide.",
   "Invalid subtitle timestamp.": "Horodatage de sous-titre invalide.",
+  "Invalid subtitle timestamp: {0}": "Horodatage de sous-titre non valide : {0}",
+  "This subtitle timestamp is too large to convert: {0}": "Cet horodatage de sous-titre est trop grand pour être converti : {0}",
   "Invalid update manifest.": "Manifeste de mise à jour invalide.",
   "Invalid update signature length.": "Longueur de signature de mise à jour invalide.",
   "Invalid update signature.": "Signature de mise à jour invalide.",
