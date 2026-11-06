@@ -26,7 +26,7 @@ Windows görüntüsü, [PR #1](https://github.com/orkunisitmak/nashi-app/pull/1)
 
 - **[macOS ZIP · Apple Silicon, macOS 13+](https://github.com/orkunisitmak/nashi-app/releases/latest/download/Nashi-macOS-arm64.zip):** ZIP’i aç, Nashi.app’i Uygulamalar klasörüne taşı ve aç. macOS kataloğu 27 araç, 46 girdi formatı ve 276 dönüşüm yolu içerir.
 - **[Windows x64 ZIP · yerel önizleme](https://github.com/orkunisitmak/nashi-app/releases/latest/download/Nashi-Windows-x64.zip):** ZIP’in tamamını kendine ait, yazılabilir bir klasöre çıkar ve Nashi.exe’yi aç. Ayrıca .NET kurmak gerekmez. Güncelleme için klasörün bütünlüğünü koru. [Windows özellikleri ve farkları](windows/README.md).
-- **Linux x64 (`Nashi-Linux-x64.tar.gz`):** arşivi çıkar ve `Nashi/install.sh` dosyasını çalıştır ya da `Nashi/nashi` dosyasını doğrudan aç. Ayrıca .NET kurman gerekmez. GNOME, KDE Plasma, Xfce ve diğer masaüstlerinde X11 ve Wayland üzerinde çalışır. LibreOffice ve Tesseract dağıtımından gelir. [Linux kurulumu, ayarlar ve farklar](linux/README.md).
+- **Linux x64 (`Nashi-Linux-x64.tar.gz`):** arşivi çıkar ve `Nashi/install.sh` dosyasını çalıştır ya da `Nashi/nashi` dosyasını doğrudan aç. Ayrıca .NET kurman gerekmez. GNOME, KDE Plasma, Xfce ve diğer masaüstlerinde X11 ve Wayland üzerinde çalışır. LibreOffice ve Tesseract dağıtımından gelir. [Linux kurulumu, ayarlar ve farklar](linux/README.md). KDE Plasma’da dosyaları sol ekran kenarına sürükleyerek (tuşsuz) ya da sürüklerken `Meta+Space`’e basarak çarkı her yerde açabilirsin.
 
 ### Linux’a kurulum
 

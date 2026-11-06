@@ -28,7 +28,7 @@ Windows screenshot: native UI test capture from the released 0.7.5 code, verifie
 
 - **[macOS ZIP · Apple Silicon, macOS 13+](https://github.com/orkunisitmak/nashi-app/releases/latest/download/Nashi-macOS-arm64.zip):** extract, move Nashi.app to your Applications folder and open it. The full macOS catalog has 27 tools, 46 input formats and 276 conversion routes.
 - **[Windows x64 ZIP](https://github.com/orkunisitmak/nashi-app/releases/latest/download/Nashi-Windows-x64.zip):** extract the entire archive into its own writable folder, then open Nashi.exe. No separate .NET install is required. Keep the folder together so portable updates can replace the app safely. [Windows features and differences](windows/README.md).
-- **Linux x64 (`Nashi-Linux-x64.tar.gz`):** extract the archive and run `Nashi/install.sh`, or open `Nashi/nashi` directly. No separate .NET install is required. It works on X11 and Wayland with GNOME, KDE Plasma, Xfce and other desktops. LibreOffice and Tesseract come from your distribution. [Linux install, setup and differences](linux/README.md).
+- **Linux x64 (`Nashi-Linux-x64.tar.gz`):** extract the archive and run `Nashi/install.sh`, or open `Nashi/nashi` directly. No separate .NET install is required. It works on X11 and Wayland with GNOME, KDE Plasma, Xfce and other desktops. LibreOffice and Tesseract come from your distribution. [Linux install, setup and differences](linux/README.md). Drag files to the left screen edge (no key) or press `Meta+Space` while dragging to get the wheel anywhere on KDE Plasma.
 
 ### Install on Linux
 

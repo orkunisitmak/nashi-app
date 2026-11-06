@@ -124,6 +124,7 @@ public sealed partial class MainWindow
         GestureWindow.Log("native Wayland drop target ready");return wayland;
     }
     internal IReadOnlyList<GestureWindow> Gestures=>gestures;
+    internal void HideNativeOverlay()=>wayland?.Hide();
     internal void CloseGestures(){wayland?.Hide();foreach(var layer in gestures.ToList())layer.Close();gestures.Clear();}
     /// Files copied in a file manager (Ctrl+C) get a wheel to click, without dragging.
     private async Task ClipboardWheelAsync()

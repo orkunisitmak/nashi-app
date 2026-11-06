@@ -48,7 +48,8 @@ public sealed class GestureWindow:Window
         dwell.Tick+=(_,_)=>{dwell.Stop();if(mode=="modes"&&pending is {} next&&wheel.SelectedItem?.Id==next)ShowWheel(next[5..]);};
         // Some sessions don't pass a drag from Wayland apps to this layer (KWin's XWayland bridge can get
         // stuck until the next login). Say so, and offer the copy-and-shortcut route that always works.
-        nudge.Tick+=(_,_)=>{nudge.Stop();if(origin is null&&!clickMode){var paste=settings.Shortcuts.GetValueOrDefault("clipboard","");SetHint(L10n.T("The drag didn't reach Nashi.")+"\n"+L10n.T("Drop the files, press Ctrl+C on them, then")+" "+(paste.Length>0?paste:"Ctrl+V")+".");}};
+        // No drag after 2.5 s: drop the native overlay so clicks reach this layer again (a click closes it).
+        nudge.Tick+=(_,_)=>{nudge.Stop();if(origin is null&&!clickMode){main.HideNativeOverlay();var paste=settings.Shortcuts.GetValueOrDefault("clipboard","");SetHint(L10n.T("The drag didn't reach Nashi.")+"\n"+L10n.T("Drop the files, press Ctrl+C on them, then")+" "+(paste.Length>0?paste:"Ctrl+V")+".");}};
         Opened+=(_,_)=>
         {
             Log($"layer opened on {screen.Bounds} mode={fixedMode??"gesture"}");
