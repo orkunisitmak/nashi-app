@@ -106,9 +106,24 @@ public sealed partial class MainWindow
         CloseGestures();if(busy){Bring();SetStatus("Finish the current operation first.");return;}
         var screens=presetFiles is null?Screens.All.ToList():[Screens.Primary??Screens.All[0]];
         foreach(var screen in screens){var layer=new GestureWindow(this,screen,fixedMode,CloseGestures,presetFiles);gestures.Add(layer);layer.Show();}
+        // While a drag gesture is open, also listen on Wayland directly: KWin's XWayland drag bridge can
+        // stop passing drags mid-session, but a layer-shell overlay always gets them.
+        if(presetFiles is null&&Wayland() is {} native)native.Show();
+    }
+    private WaylandDropTarget? wayland;private bool waylandTried;
+    private WaylandDropTarget? Wayland()
+    {
+        if(waylandTried||Environment.GetEnvironmentVariable("NASHI_NO_GLOBAL_SHORTCUTS")=="1")return wayland;waylandTried=true;
+        wayland=WaylandDropTarget.TryCreate();if(wayland is null){GestureWindow.Log("native Wayland drop target unavailable");return null;}
+        GestureWindow? Layer()=>gestures.FirstOrDefault(g=>g.IsVisible);
+        wayland.Entered+=(x,y)=>Dispatcher.UIThread.Post(()=>Layer()?.ExternalDrag(x,y));
+        wayland.Moved+=(x,y)=>Dispatcher.UIThread.Post(()=>Layer()?.ExternalDrag(x,y));
+        wayland.Offered+=uris=>Dispatcher.UIThread.Post(()=>Layer()?.ExternalOffer(uris));
+        wayland.Dropped+=(uris,x,y)=>Dispatcher.UIThread.Post(()=>{wayland.Hide();Layer()?.ExternalDrop(uris,x,y);});
+        GestureWindow.Log("native Wayland drop target ready");return wayland;
     }
     internal IReadOnlyList<GestureWindow> Gestures=>gestures;
-    internal void CloseGestures(){foreach(var layer in gestures.ToList())layer.Close();gestures.Clear();}
+    internal void CloseGestures(){wayland?.Hide();foreach(var layer in gestures.ToList())layer.Close();gestures.Clear();}
     /// Files copied in a file manager (Ctrl+C) get a wheel to click, without dragging.
     private async Task ClipboardWheelAsync()
     {

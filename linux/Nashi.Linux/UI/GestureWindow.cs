@@ -79,10 +79,41 @@ public sealed class GestureWindow:Window
 
     private void OnDrag(object? sender,DragEventArgs e)
     {
-        idle.Stop();nudge.Stop();var point=e.GetPosition(canvas);e.DragEffects=DragDropEffects.Copy;
+        e.DragEffects=DragDropEffects.Copy;var point=e.GetPosition(canvas);
         if(origin is null||mode is null)Log($"{e.RoutedEvent?.Name} at {point:F0} files={(files??Files(e))?.Length.ToString()??"not yet"} modifiers={e.KeyModifiers}");
         // Some toolkits only hand over the files on drop; the wheel then finishes after the drop.
         files??=Files(e);if(files is null)url??=Url(e);
+        Track(point);
+    }
+    private void OnDrop(object? sender,DragEventArgs e)
+    {
+        files=Files(e)??files;if(files is null)url??=Url(e);Release(e.GetPosition(canvas));
+    }
+    /// The same drag, delivered straight from Wayland (see WaylandDropTarget), in screen pixels.
+    internal void ExternalDrag(double screenX,double screenY)
+    {
+        var point=this.PointToClient(new PixelPoint((int)screenX,(int)screenY));
+        if(origin is null)Log($"Wayland enter at {point:F0}");Track(point);
+    }
+    /// Files (or a link) from a Wayland drag that is still in progress.
+    internal void ExternalOffer(string[] uris)
+    {
+        var paths=uris.Where(u=>u.StartsWith("file://",StringComparison.Ordinal)&&Uri.TryCreate(u,UriKind.Absolute,out _)).Select(u=>new Uri(u).LocalPath).Where(p=>File.Exists(p)||Directory.Exists(p)).ToArray();
+        if(paths.Length>0)files??=paths;else url??=uris.FirstOrDefault(u=>u.StartsWith("http",StringComparison.OrdinalIgnoreCase));
+        Log($"Wayland offer: {paths.Length} file(s){(url is null?"":", link")}");
+        if(mode is not null&&wheel.Items.Any(i=>i.Id.StartsWith("placeholder:",StringComparison.Ordinal)))ShowWheel(mode);
+    }
+    internal void ExternalDrop(string[] uris,double screenX,double screenY)
+    {
+        var paths=uris.Where(u=>u.StartsWith("file://",StringComparison.Ordinal)&&Uri.TryCreate(u,UriKind.Absolute,out _)).Select(u=>new Uri(u).LocalPath).Where(p=>File.Exists(p)||Directory.Exists(p)).ToArray();
+        if(paths.Length>0)files=paths;else url??=uris.FirstOrDefault(u=>u.StartsWith("http",StringComparison.OrdinalIgnoreCase));
+        Log($"Wayland drop: {uris.Length} uri(s), {paths.Length} file(s)");
+        // Wayland gives the files only now; an open wheel of placeholders becomes the real one to click.
+        Release(this.PointToClient(new PixelPoint((int)screenX,(int)screenY)));
+    }
+    private void Track(Point point)
+    {
+        idle.Stop();nudge.Stop();
         if(origin is null){origin=point;if(fixedMode is not null)ShowWheel(fixedMode);return;}
         if(mode is null&&fixedMode is null)
         {
@@ -94,15 +125,21 @@ public sealed class GestureWindow:Window
         }
         if(wheel.IsVisible)wheel.Selected=wheel.HitTest(point-WheelOrigin);
     }
-    private void OnDrop(object? sender,DragEventArgs e)
+    private void Release(Point point)
     {
-        files=Files(e)??files;if(files is null)url??=Url(e);var point=e.GetPosition(canvas);
-        if(wheel.IsVisible)wheel.Selected=wheel.HitTest(point-WheelOrigin);
-        Log($"Drop at {point:F0} files={files?.Length.ToString()??"none"} mode={mode} petal={wheel.SelectedItem?.Id}");
+        if(wheel.IsVisible&&wheel.Items.All(i=>!i.Id.StartsWith("placeholder:",StringComparison.Ordinal)))wheel.Selected=wheel.HitTest(point-WheelOrigin);
+        var chosen=wheel.SelectedItem;
+        Log($"Drop at {point:F0} files={files?.Length.ToString()??"none"} mode={mode} petal={chosen?.Id}");
         if(files is null&&url is null||mode is null){closeAll();return;}
-        // Without the files during the drag the petals were placeholders; now show the real ones to click.
-        if(url is null&&wheel.Items.All(i=>i.Id.StartsWith("placeholder:",StringComparison.Ordinal))){clickMode=true;ShowWheel(mode);return;}
-        if(wheel.SelectedItem is {} chosen)_=Choose(chosen);else closeAll();
+        // Without the files during the drag the petals were placeholders. Pick the same petal by position
+        // when it can be found; otherwise show the real wheel to click.
+        if(wheel.Items.Any(i=>i.Id.StartsWith("placeholder:",StringComparison.Ordinal)))
+        {
+            ShowWheel(mode);var real=wheel.HitTest(point-WheelOrigin);
+            if(real>=0){_=Choose(wheel.Items[real]);return;}
+            clickMode=true;SetHint(L10n.T("Choose a slice."),origin);return;
+        }
+        if(chosen is not null)_=Choose(chosen);else closeAll();
     }
     private void ShowWheel(string target)
     {

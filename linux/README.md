@@ -22,6 +22,8 @@ On macOS and Windows you hold a modifier while dragging a file anywhere to get t
 | `Meta+Alt+N` | Show Nashi |
 | `Meta+Alt+D` | Download a copied link |
 
+While the gesture is open, Nashi also listens directly on Wayland through a transparent layer-shell overlay on KDE Plasma, Sway, Hyprland and other wlroots compositors. Drags therefore arrive even when the compositor's XWayland drag bridge stops passing them, which was seen on Plasma 6.8 mid-session. The dragged files are read while you are still dragging, so the wheel shows the real choices before you drop.
+
 When you drop on a conversion or a simple tool, it runs straight away with its saved export defaults and a desktop notification reports the result. Tools that need your input, like crop, redact or trim, open their editor instead. You can turn this off in Settings. Nashi stays in the system tray when you close its window, so the shortcuts keep working. **Start Nashi in the tray when I log in** keeps them available after a restart. On desktops without kglobalaccel, use `Ctrl+Space` inside Nashi, or hold Ctrl, Shift or Alt while dropping files on its window.
 
 ## Themes
