@@ -1,6 +1,7 @@
 using Nashi.Core;
 internal static class DragShortcutChecks
 {
+    /// Checks drag shortcut parsing, matching, titles and persistence under `root`.
     internal static void Run(Action<bool,string> check,string root)
     {
         foreach(var shortcut in new[]{"Ctrl","Shift+Alt","Ctrl+Shift+Alt","Mouse 4","Right Click","Ctrl+Mouse 5","Alt+F","Space","D1","Ctrl+OemPlus","NumPad5","F12","Return","Enter"})check(DragShortcut.IsValid(shortcut),"Valid drag shortcut was refused: "+shortcut);

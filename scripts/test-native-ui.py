@@ -49,6 +49,7 @@ def bundle_for_audit(binary, output):
 
 
 def main():
+    """Run the native UI captures and own-window QA modes, then check their reports."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--app", default=".build/debug/Nashi")
     parser.add_argument("--output", default="build/native-ui")

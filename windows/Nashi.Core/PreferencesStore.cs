@@ -18,6 +18,7 @@ public sealed class PreferencesStore
     {
         file=Path.Combine(directory,"preferences.json");if(!File.Exists(file))return;try{if(new FileInfo(file).Length>1_000_000)throw new InvalidDataException();Value=JsonSerializer.Deserialize<Preferences>(File.ReadAllText(file))??new();Value=Value with{Language=AppLocalization.Normalize(Value.Language)};Validate(Value);}catch(Exception error)when(error is JsonException or IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException){RecoveryNotice="Settings could not be loaded. Defaults are in use.";Value=new();}
     }
+    /// Throws when preferences are out of range, including invalid or shared drag shortcuts.
     private static void Validate(Preferences p)
     {
         if(p.Language is not ("en" or "tr")||p.Formats is null||p.Formats.Count>100||p.Formats.Any(pair=>pair.Value is null)||p.WheelFinish is not ("glass" or "solid")||p.FloatBehavior is not ("createNew" or "addToExisting")||p.OutputFolder is null||p.DownloadFolder is null)throw new ArgumentException("Invalid preferences.");

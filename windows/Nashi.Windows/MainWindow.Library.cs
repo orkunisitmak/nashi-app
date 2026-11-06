@@ -51,6 +51,7 @@ public sealed partial class MainWindow
     private void PreviewSelectedLibrary(){if(SelectedLibrary() is {} entry)PreviewEntry(entry);}
     private void PreviewEntry(LibraryEntry entry){if(entry.AvailablePaths.Length>0)new FilePreviewWindow(this,entry.AvailablePaths).Show();else L10n.SetText(status,"These files have moved or were deleted.");}
     private void ReuseSelectedLibrary(){if(busy||SelectedLibrary() is not {} entry)return;files.Clear();Add(entry.AvailablePaths);ShowLibrary(false);}
+    /// Refreshes the Home title, drag shortcut hints and actions for the current files.
     private void BuildSelectionActions()
     {
         L10n.SetText(homeTitle,files.Count==0?"Your files. Their next form.":"Let’s make something of it.");

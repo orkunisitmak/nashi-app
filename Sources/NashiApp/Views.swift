@@ -40,6 +40,7 @@ struct SettingsView:View {
         if !apps.contains(where:{$0.0==terminalApplication}) { apps.append((terminalApplication,"\(terminalApplication) (Not installed)")) }
         return apps
     }
+    /// The Settings sections; General holds the drag shortcut recorders.
     var body:some View {
         HStack(spacing:0) {
             sidebar

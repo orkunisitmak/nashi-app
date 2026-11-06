@@ -24,6 +24,7 @@ internal static class ParitySmokeTests
         using var watchdog=new System.Threading.Timer(_=>{var root=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");if(root is not null)File.WriteAllText(Path.Combine(root,"dialog-timeout.txt"),"Native editor did not complete: "+editor.GetType().Name);Environment.Exit(1);},null,TimeSpan.FromSeconds(25),System.Threading.Timeout.InfiniteTimeSpan);
         Exception? error=null;editor.Dispatcher.BeginInvoke(()=>{try{DesktopInput.Pump();actions(editor);Children(editor).OfType<Canvas>().FirstOrDefault()?.Focus();DesktopInput.Key(editor,Key.Enter);}catch(Exception e){error=e;editor.Close();}});var accepted=editor.ShowDialog()==true;if(error is not null)throw error;return accepted;
     }
+    /// Drives real windows with native input; returns the number of passed checks.
     public static int Run(string root,Window owner,string source,BitmapSource bitmap,Toolchain tools)
     {
         var problems=new List<string>();var checks=0;void Check(bool value,string message){if(!value)throw new Exception(message);checks++;File.WriteAllText(Path.Combine(root,"parity-progress.json"),JsonSerializer.Serialize(new{passed=checks,lastCheck=message}));}

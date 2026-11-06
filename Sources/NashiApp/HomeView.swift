@@ -165,6 +165,7 @@ struct HomeView:View {
         else if state.inputs.count==1 { Text(verbatim:state.inputs[0].deletingLastPathComponent().abbreviatingWithTildeInPath) }
         else { LText("Keep them together, or give each one a fresh start.") }
     }
+    /// A Home hint for a stored drag shortcut name.
     private func shortcut(_ key:String,_ title:String)->some View {
         HStack(spacing:5) { Text(DragShortcut(name:key)?.symbols ?? key).font(.system(size:12,weight:.semibold));LText(title).font(.system(size:10,weight:.medium)) }
             .foregroundStyle(NashiPalette.forest).padding(.horizontal,9).padding(.vertical,6).background(NashiPalette.sage.opacity(0.65),in:RoundedRectangle(cornerRadius:8))

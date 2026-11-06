@@ -12,9 +12,13 @@ public static class DragShortcut
         .Concat(new[]{"Multiply","Add","Separator","Subtract","Decimal","Divide","Space","Tab","Enter","Return","Back","Insert","Delete","Home","End","PageUp","Prior","PageDown","Next","Left","Up","Right","Down",
             "CapsLock","Capital","Scroll","NumLock","Pause","PrintScreen","Snapshot","Apps",
             "OemSemicolon","Oem1","OemPlus","OemComma","OemMinus","OemPeriod","OemQuestion","Oem2","OemTilde","Oem3","OemOpenBrackets","Oem4","OemPipe","Oem5","OemCloseBrackets","Oem6","OemQuotes","Oem7","Oem8","OemBackslash","Oem102"}).ToHashSet();
+    /// The modifier part of a shortcut, in Ctrl+Shift+Alt order.
     public static string Chord(string shortcut){var parts=shortcut.Split('+');return string.Join('+',modifiers.Where(modifier=>parts.Contains(modifier)));}
+    /// The key or mouse button part of a shortcut, if any.
     public static string? Trigger(string shortcut)=>shortcut.Split('+').FirstOrDefault(part=>!modifiers.Contains(part));
+    /// Joins a modifier chord and an optional key or mouse button.
     public static string Compose(string chord,string? trigger)=>string.Join('+',new[]{chord,trigger}.Where(part=>!string.IsNullOrEmpty(part)));
+    /// True for modifiers in Ctrl+Shift+Alt order followed by at most one known key or mouse button.
     public static bool IsValid(string? shortcut)
     {
         if(string.IsNullOrEmpty(shortcut)||Compose(Chord(shortcut),Trigger(shortcut))!=shortcut)return false;
@@ -27,5 +31,6 @@ public static class DragShortcut
         foreach(var (kind,shortcut) in shortcuts)if(chord.Length>0&&shortcut==chord)return kind;
         return null;
     }
+    /// The shortcut as people read it: digit keys without the D prefix, mouse buttons translated.
     public static string Title(string shortcut,string language)=>string.Join('+',shortcut.Split('+').Select(part=>mouseButtons.Contains(part)?AppLocalization.Text(part,language):Regex.IsMatch(part,"^D[0-9]$")?part[1..]:part));
 }

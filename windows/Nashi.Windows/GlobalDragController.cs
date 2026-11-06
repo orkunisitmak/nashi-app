@@ -41,8 +41,10 @@ public sealed class GlobalDragController:IDisposable
     private void UpdateShortcut(){if(handle==IntPtr.Zero)return;var enabled=preferences.Value.Enabled;if(shortcutEnabled==enabled)return;shortcutEnabled=enabled;if(LinkShortcutRegistered)UnregisterHotKey(handle,7701);LinkShortcutRegistered=enabled&&RegisterHotKey(handle,7701,0x4000|0x2|0x4,0x44);}
     private IntPtr Hook(IntPtr window,int message,IntPtr w,IntPtr l,ref bool handled){if(message==0x0312&&w.ToInt32()==7701){if(preferences.Value.Enabled&&OwnerAvailable)link();handled=true;}return IntPtr.Zero;}
     private static bool Held(int key)=>(GetAsyncKeyState(key)&0x8000)!=0;
+    /// True while the key or mouse button part of a drag shortcut is held.
     internal static bool TriggerHeld(string trigger)=>trigger switch{"Right Click"=>PrimaryMouseButton.SecondaryIsPressed,"Middle Click"=>Held(0x04),"Mouse 4"=>Held(0x05),"Mouse 5"=>Held(0x06),_=>Enum.TryParse<Key>(trigger,out var key)&&Held(KeyInterop.VirtualKeyFromKey(key))};
     private string Chord(){var parts=new List<string>();if(Held(0x11))parts.Add("Ctrl");if(Held(0x10))parts.Add("Shift");if(Held(0x12))parts.Add("Alt");return string.Join('+',parts);}
+    /// Runs on the timer: once a primary-button drag moves, opens the wheel whose shortcut is held.
     private void Poll()
     {
         UpdateShortcut();if(!preferences.Value.Enabled||!OwnerAvailable){wheel?.Close();wheel=null;down=false;opened=false;hint=null;return;}var held=PrimaryMouseButton.IsPressed;GetCursorPos(out var point);

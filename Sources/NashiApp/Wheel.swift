@@ -130,6 +130,7 @@ final class WheelView:NSView {
     var radius:CGFloat { geometry.radius }
     var inner:CGFloat { geometry.inner }
     func petal(_ index:Int)->NSBezierPath { geometry.petal(index) }
+    /// Draws the petals, or an empty state naming the other wheels' shortcuts.
     override func draw(_ dirtyRect:NSRect) {
         if labelBounds != bounds { labelLayouts.removeAll();labelBounds=bounds }
         let solid=UserDefaults.standard.string(forKey:"conversionFanTheme")=="metallic"
@@ -245,6 +246,7 @@ final class WheelAccessibilityItem:NSAccessibilityElement {
         timer=Timer(timeInterval:0.025,repeats:true) { [weak self] _ in Task { @MainActor in self?.tick() } }
         RunLoop.main.add(timer!,forMode:.common)
     }
+    /// The wheel mode for the held modifiers and, when `pressed` is given, the held key or button.
     static func mode(for flags:NSEvent.ModifierFlags,pressed:((DragTrigger)->Bool)?=nil)->WheelMode? {
         switch ModifierPreferences.wheel(for:flags,pressed:pressed) {
         case .conversions:return .convert
@@ -253,6 +255,7 @@ final class WheelAccessibilityItem:NSAccessibilityElement {
         case nil:return nil
         }
     }
+    /// Polls the drag and opens or switches the wheel whose shortcut is held.
     private func tick() {
         let down=NSEvent.pressedMouseButtons & 1 != 0 || CGEventSource.buttonState(.combinedSessionState,button:.left)
         let globalFlags=NSEvent.ModifierFlags(rawValue:UInt(CGEventSource.flagsState(.combinedSessionState).rawValue))

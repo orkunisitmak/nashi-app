@@ -10,6 +10,7 @@ import ApplicationServices
 
 @main
 enum NashiApplication {
+    /// Runs the command line, an own-window QA mode when a test flag is given, or the app.
     @MainActor static func main() {
         if CommandLine.arguments.count>1,["convert","tool","inspect","catalog","dependencies"].contains(CommandLine.arguments[1]) { exit(NashiCommandLine.run()) }
         let app=NSApplication.shared

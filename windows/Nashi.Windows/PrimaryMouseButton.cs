@@ -7,5 +7,6 @@ internal static class PrimaryMouseButton
     [DllImport("user32.dll")]private static extern int GetSystemMetrics(int metric);
     internal static int VirtualKey(bool swapped)=>swapped?0x02:0x01;
     internal static bool IsPressed=>(GetAsyncKeyState(VirtualKey(GetSystemMetrics(23)!=0))&0x8000)!=0;
+    /// True while the button Windows treats as right click is held, honoring swapped buttons.
     internal static bool SecondaryIsPressed=>(GetAsyncKeyState(VirtualKey(GetSystemMetrics(23)==0))&0x8000)!=0;
 }

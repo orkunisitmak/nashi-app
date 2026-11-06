@@ -17,6 +17,7 @@ import SwiftUI
     private var recording=false
     private var saved:String { ModifierPreferences.shortcut(for:.tools,defaults:defaults).name }
     init(output:URL) { self.output=output }
+    /// Runs the checks, writes `drag-shortcuts.json` and exits with the result.
     func applicationDidFinishLaunching(_ notification:Notification) {
         Task {
             var failure:String?
@@ -28,9 +29,12 @@ import SwiftUI
             window?.close();exit(failure == nil ? 0:1)
         }
     }
+    /// Records a passed check, or throws with its label.
     private func check(_ value:Bool,_ label:String)throws { if !value { throw NSError(domain:"Nashi Shortcut QA",code:1,userInfo:[NSLocalizedDescriptionKey:label]) };checks.append(label) }
     private func pause()async { try? await Task.sleep(nanoseconds:120_000_000) }
+    /// Queues an event for this app and gives it time to arrive.
     private func post(_ event:NSEvent?)async { if let event { NSApp.postEvent(event,atStart:false) };await pause() }
+    /// Sends a primary click at a point in the smoke window.
     private func click(_ point:NSPoint)async {
         for type in [NSEvent.EventType.leftMouseDown,.leftMouseUp] { await post(NSEvent.mouseEvent(with:type,location:point,modifierFlags:[],timestamp:ProcessInfo.processInfo.systemUptime,windowNumber:window.windowNumber,context:nil,eventNumber:0,clickCount:1,pressure:1)) }
     }
@@ -43,19 +47,23 @@ import SwiftUI
         }
         throw NSError(domain:"Nashi Shortcut QA",code:2,userInfo:[NSLocalizedDescriptionKey:"Recording did not start"])
     }
+    /// Waits briefly for the recorder to store `name`.
     private func saved(is name:String)async->Bool {
         for _ in 0..<16 where saved != name { await pause() }
         return saved == name
     }
     private var center:NSPoint { NSPoint(x:window.contentLayoutRect.midX,y:window.contentLayoutRect.midY) }
+    /// Queues a key or modifier event for the smoke window.
     private func key(_ type:NSEvent.EventType,_ code:UInt16,_ flags:NSEvent.ModifierFlags=[])async {
         await post(NSEvent.keyEvent(with:type,location:.zero,modifierFlags:flags,timestamp:ProcessInfo.processInfo.systemUptime,windowNumber:window.windowNumber,context:nil,characters:"",charactersIgnoringModifiers:"",isARepeat:false,keyCode:code))
     }
+    /// Queues a right or other mouse button press with modifiers.
     private func mouse(_ button:Int64,_ flags:CGEventFlags=[])async {
         let event=CGEvent(mouseEventSource:nil,mouseType:button == 1 ? .rightMouseDown:.otherMouseDown,mouseCursorPosition:.zero,mouseButton:.center)
         event?.setIntegerValueField(.mouseEventButtonNumber,value:button);event?.flags=flags
         await post(event.flatMap{NSEvent(cgEvent:$0)})
     }
+    /// Checks shortcut storage and matching, then drives the real recorder.
     private func run()async throws {
         defaults.removePersistentDomain(forName:suite)
         func wheel(_ flags:NSEvent.ModifierFlags,_ held:DragTrigger?=nil)->WheelShortcut? { ModifierPreferences.wheel(for:flags,pressed:{$0==held},defaults:defaults) }

@@ -10,6 +10,7 @@ struct DragShortcutRecorder: View {
     @State private var monitor:Any?
     @State private var held=NSEvent.ModifierFlags()
     @State private var conflict:WheelShortcut?
+    /// The saved shortcut as a button, or a prompt while recording.
     var body: some View {
         VStack(alignment:.trailing,spacing:4) {
             if monitor == nil {
@@ -24,6 +25,7 @@ struct DragShortcutRecorder: View {
         .onDisappear(perform:stop)
         .onReceive(NotificationCenter.default.publisher(for:NSWindow.didResignKeyNotification)) { _ in stop() }
     }
+    /// Watches this window's keys and buttons until a shortcut is saved, Escape is pressed or a primary click lands.
     private func start() {
         conflict=nil;held=[]
         monitor=NSEvent.addLocalMonitorForEvents(matching:[.keyDown,.flagsChanged,.leftMouseDown,.rightMouseDown,.otherMouseDown]) { event in
@@ -42,7 +44,9 @@ struct DragShortcutRecorder: View {
         }
         onRecording(true)
     }
+    /// Removes the event monitor and shows the saved shortcut again.
     private func stop() { if let monitor { NSEvent.removeMonitor(monitor);self.monitor=nil;onRecording(false) } }
+    /// Stops recording and saves the shortcut unless another wheel already uses it.
     private func save(_ shortcut:DragShortcut) {
         stop();conflict=ModifierPreferences.conflict(shortcut,for:wheel,defaults:defaults)
         if ModifierPreferences.set(shortcut,for:wheel,defaults:defaults) { onChange() }

@@ -23,6 +23,7 @@ struct ModifierChord: RawRepresentable, Hashable, Identifiable, Sendable {
 enum DragTrigger: Hashable, Sendable {
     case mouse(Int), key(UInt16)
     private static let keyNames: [UInt16:String] = [36:"Return",48:"Tab",49:"Space",51:"Delete",96:"F5",97:"F6",98:"F7",99:"F3",100:"F8",101:"F9",103:"F11",109:"F10",111:"F12",115:"Home",116:"Page Up",117:"Forward Delete",118:"F4",119:"End",120:"F2",121:"Page Down",122:"F1",123:"←",124:"→",125:"↓",126:"↑"]
+    /// Reads a stored `mouse<button>` or `key<code>` part.
     init?(name:String) {
         if name.hasPrefix("mouse"),let button=Int(name.dropFirst(5)),(1...31).contains(button) { self = .mouse(button) }
         else if name.hasPrefix("key"),let code=UInt16(name.dropFirst(3)),Self.isKey(code) { self = .key(code) }
@@ -30,7 +31,9 @@ enum DragTrigger: Hashable, Sendable {
     }
     /// A virtual key code the drag can poll; Escape cancels recording and modifiers belong to the chord.
     static func isKey(_ code:UInt16)->Bool { code < 128 && code != 53 && !(54...63).contains(code) }
+    /// The stored form, such as `mouse3` or `key49`.
     var name: String { switch self { case .mouse(let button):return "mouse\(button)";case .key(let code):return "key\(code)" } }
+    /// The button or key as Settings and the wheel show it.
     var title: String {
         switch self {
         case .mouse(1):return L10n.text("Right Click")
@@ -67,9 +70,13 @@ struct DragShortcut: Hashable, Sendable {
         if isEmpty { return nil }
     }
     var isEmpty: Bool { chord.isEmpty && trigger == nil }
+    /// The stored `convertKey`-style name, such as `command+mouse3`.
     var name: String { ([chord.title.lowercased().replacingOccurrences(of:" + ",with:"+")]+[trigger?.name].compactMap{$0}).filter{!$0.isEmpty}.joined(separator:"+") }
+    /// The short form for hints, such as `⌘ Mouse 4`.
     var symbols: String { ([chord.symbols]+[trigger?.title].compactMap{$0}).filter{!$0.isEmpty}.joined(separator:" ") }
+    /// The spelled-out form, such as `Command + Mouse 4`.
     var title: String { ([chord.title]+[trigger?.title].compactMap{$0}).filter{!$0.isEmpty}.joined(separator:" + ") }
+    /// Symbols, then the title, as the Settings button shows them.
     var label: String { [chord.symbols,title].filter{!$0.isEmpty}.joined(separator:"  ") }
 }
 
@@ -91,13 +98,16 @@ enum ModifierPreferences {
         if let name=defaults.string(forKey:wheel.legacyKey),let chord=ModifierChord.legacy(name) { return chord }
         return wheel.defaultChord
     }
+    /// The wheel's shortcut: a stored trigger shortcut, otherwise its modifier chord.
     static func shortcut(for wheel:WheelShortcut,defaults:UserDefaults = .standard)->DragShortcut {
         if let name=defaults.string(forKey:wheel.legacyKey),let shortcut=DragShortcut(name:name),shortcut.trigger != nil { return shortcut }
         return DragShortcut(chord:chord(for:wheel,defaults:defaults))
     }
+    /// The other wheel that already uses `shortcut`, if any.
     static func conflict(_ shortcut:DragShortcut,for wheel:WheelShortcut,defaults:UserDefaults = .standard)->WheelShortcut? {
         WheelShortcut.allCases.first{$0 != wheel && self.shortcut(for:$0,defaults:defaults)==shortcut}
     }
+    /// Saves `shortcut` for `wheel`; returns false when it is empty or another wheel uses it.
     @discardableResult static func set(_ shortcut:DragShortcut,for wheel:WheelShortcut,defaults:UserDefaults = .standard)->Bool {
         guard !shortcut.isEmpty,conflict(shortcut,for:wheel,defaults:defaults) == nil else { return false }
         // A zero mask sends older builds to their default instead of a chord two triggers may share.

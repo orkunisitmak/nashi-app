@@ -9,6 +9,7 @@ public sealed partial class SettingsWindow:Window
     private readonly LibraryStore? appearanceStore;
     private readonly PreferencesStore store;private readonly Action changed;
     private readonly StackPanel page=new(){Margin=new(28)};private readonly ListBox sections=new(){Width=175,ItemsSource=new[]{"General","Formats","Compatibility","Folders","Updates","About"},SelectedIndex=0};
+    /// `changed` runs after each saved change; `update` checks for updates.
     public SettingsWindow(Window owner,PreferencesStore store,Action changed,Func<Task> update,LibraryStore? appearanceStore=null)
     {
         this.appearanceStore=appearanceStore;L10n.Choices(sections);
@@ -18,6 +19,7 @@ public sealed partial class SettingsWindow:Window
     private void Heading(string title,string hint){page.Children.Add(L10n.Label(new TextBlock{Text=title,FontSize=28,FontWeight=FontWeights.Bold}));page.Children.Add(L10n.Label(new TextBlock{Text=hint,TextWrapping=TextWrapping.Wrap,Margin=new(0,8,0,20),Foreground=Theme.Brush("Muted")}));}
     private void Toggle(string title,bool value,Action<bool> save){var box=L10n.Content(new CheckBox{Content=title,IsChecked=value,Margin=new(4,12,4,12)});box.Checked+=(_,_)=>save(true);box.Unchecked+=(_,_)=>save(false);page.Children.Add(box);}
     private void Pick(string title,string[] values,string value,Action<string> save){page.Children.Add(L10n.Label(new TextBlock{Text=title,Margin=new(4,12,4,0)}));var combo=new ComboBox{ItemsSource=values,SelectedItem=value};combo.SelectionChanged+=(_,_)=>{if(combo.SelectedItem is string selected)save(selected);};page.Children.Add(combo);}
+    /// Adds a labeled drag shortcut recorder that saves through the store.
     private void Recorder(string title,Func<Preferences,string> read,Func<string,Preferences> write){page.Children.Add(L10n.Label(new TextBlock{Text=title,Margin=new(4,12,4,0)}));var recorder=new DragShortcutRecorder(()=>read(store.Value),value=>Save(write(value)));System.Windows.Automation.AutomationProperties.SetName(recorder,L10n.Text(title));page.Children.Add(recorder);}
     private void LanguagePicker()
     {
@@ -26,6 +28,7 @@ public sealed partial class SettingsWindow:Window
         System.Windows.Automation.AutomationProperties.SetAutomationId(language,"AppLanguage");
         language.SelectionChanged+=(_,_)=>Save(store.Value with{Language=language.SelectedIndex==1?"tr":"en"});page.Children.Add(language);
     }
+    /// Rebuilds the page for the selected section.
     private void ShowSection(Func<Task> update)
     {
         page.Children.Clear();switch(sections.SelectedItem as string)
