@@ -16,6 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="../../windows/Nashi.Core/Nashi.Core.csproj" />
   </ItemGroup>
+  <ItemGroup><InternalsVisibleTo Include="Nashi.Linux.Snapshots" /></ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.22" />
     <PackageReference Include="Avalonia.Desktop" Version="11.3.22" />
@@ -24,6 +25,7 @@
     <PackageReference Include="bblanchon.PDFium.Linux" Version="155.0.8044" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Resources/Turkish.Linux.json" LogicalName="Nashi.Turkish.Linux.json" />
     <EmbeddedResource Include="../../Resources/Brand/NashiIcon.png" LogicalName="Nashi.Icon.png" />
     <EmbeddedResource Include="../../Resources/Brand/NashiMark.png" LogicalName="Nashi.Mark.png" />
     <EmbeddedResource Include="../../Resources/Brand/NashiMarkHappy.png" LogicalName="Nashi.MarkHappy.png" />

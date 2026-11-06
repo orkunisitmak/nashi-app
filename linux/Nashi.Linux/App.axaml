@@ -1,0 +1,148 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Nashi.Linux.App"
+             RequestedThemeVariant="Default">
+  <!-- The same palette as macOS and Windows (windows/Nashi.Windows/Theme.cs). -->
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+          <SolidColorBrush x:Key="Paper" Color="#F9F6ED"/>
+          <SolidColorBrush x:Key="Ink" Color="#243B2B"/>
+          <SolidColorBrush x:Key="Surface" Color="#FFFEF7"/>
+          <SolidColorBrush x:Key="Inset" Color="#F1EDE0"/>
+          <SolidColorBrush x:Key="Muted" Color="#596650"/>
+          <SolidColorBrush x:Key="Line" Color="#DCDDD1"/>
+          <SolidColorBrush x:Key="Sage" Color="#E0EBD2"/>
+          <SolidColorBrush x:Key="Sand" Color="#F6E7BE"/>
+          <SolidColorBrush x:Key="Scrim" Color="#66243B2B"/>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Dark">
+          <SolidColorBrush x:Key="Paper" Color="#111A14"/>
+          <SolidColorBrush x:Key="Ink" Color="#E7EBE6"/>
+          <SolidColorBrush x:Key="Surface" Color="#1C281F"/>
+          <SolidColorBrush x:Key="Inset" Color="#151F18"/>
+          <SolidColorBrush x:Key="Muted" Color="#A9B5A8"/>
+          <SolidColorBrush x:Key="Line" Color="#344237"/>
+          <SolidColorBrush x:Key="Sage" Color="#243928"/>
+          <SolidColorBrush x:Key="Sand" Color="#3C3421"/>
+          <SolidColorBrush x:Key="Scrim" Color="#99000000"/>
+        </ResourceDictionary>
+      </ResourceDictionary.ThemeDictionaries>
+      <LinearGradientBrush x:Key="Gold" StartPoint="0%,0%" EndPoint="100%,0%">
+        <GradientStop Offset="0" Color="#E3B859"/>
+        <GradientStop Offset="1" Color="#F5D17D"/>
+      </LinearGradientBrush>
+      <SolidColorBrush x:Key="GoldInk" Color="#243B2B"/>
+      <!-- Fluent controls (sliders, checkboxes, focus rings) use Nashi's gold instead of the system blue. -->
+      <Color x:Key="SystemAccentColor">#C9962E</Color>
+      <Color x:Key="SystemAccentColorDark1">#B8862A</Color>
+      <Color x:Key="SystemAccentColorDark2">#A07423</Color>
+      <Color x:Key="SystemAccentColorDark3">#86611D</Color>
+      <Color x:Key="SystemAccentColorLight1">#E3B859</Color>
+      <Color x:Key="SystemAccentColorLight2">#F0CC78</Color>
+      <Color x:Key="SystemAccentColorLight3">#F5D17D</Color>
+      <SolidColorBrush x:Key="GoldText" Color="#C9962E"/>
+    </ResourceDictionary>
+  </Application.Resources>
+  <Application.Styles>
+    <FluentTheme/>
+    <Style Selector="Window">
+      <Setter Property="Background" Value="{DynamicResource Paper}"/>
+      <Setter Property="Foreground" Value="{DynamicResource Ink}"/>
+    </Style>
+    <Style Selector="TextBlock.muted"><Setter Property="Foreground" Value="{DynamicResource Muted}"/></Style>
+    <Style Selector="TextBlock.gold"><Setter Property="Foreground" Value="{DynamicResource GoldText}"/></Style>
+    <Style Selector="TextBlock.title"><Setter Property="FontWeight" Value="Bold"/></Style>
+    <Style Selector="Border.card">
+      <Setter Property="Background" Value="{DynamicResource Surface}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="18"/>
+      <Setter Property="Padding" Value="22"/>
+    </Style>
+    <Style Selector="Border.inset">
+      <Setter Property="Background" Value="{DynamicResource Inset}"/>
+      <Setter Property="CornerRadius" Value="12"/>
+      <Setter Property="Padding" Value="10"/>
+    </Style>
+    <Style Selector="Border.pill">
+      <Setter Property="Background" Value="{DynamicResource Sage}"/>
+      <Setter Property="CornerRadius" Value="999"/>
+      <Setter Property="Padding" Value="10,3"/>
+      <Setter Property="HorizontalAlignment" Value="Left"/>
+    </Style>
+    <Style Selector="Border.warn">
+      <Setter Property="Background" Value="{DynamicResource Sand}"/>
+    </Style>
+    <Style Selector="Border.pill TextBlock">
+      <Setter Property="TextWrapping" Value="NoWrap"/>
+    </Style>
+    <Style Selector="Border.drop">
+      <Setter Property="BorderBrush" Value="{DynamicResource GoldText}"/>
+      <Setter Property="BorderThickness" Value="2"/>
+    </Style>
+    <Style Selector="Button">
+      <Setter Property="CornerRadius" Value="10"/>
+      <Setter Property="Padding" Value="14,8"/>
+      <Setter Property="Margin" Value="0,0,8,8"/>
+      <Setter Property="Background" Value="{DynamicResource Inset}"/>
+      <Setter Property="Foreground" Value="{DynamicResource Ink}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+    </Style>
+    <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource Sage}"/>
+      <Setter Property="Foreground" Value="{DynamicResource Ink}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
+    </Style>
+    <Style Selector="Button.primary">
+      <Setter Property="Background" Value="{DynamicResource Gold}"/>
+      <Setter Property="Foreground" Value="{DynamicResource GoldInk}"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    <Style Selector="Button.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#F5D17D"/>
+      <Setter Property="Foreground" Value="{DynamicResource GoldInk}"/>
+    </Style>
+    <Style Selector="Button.chip">
+      <Setter Property="CornerRadius" Value="999"/>
+      <Setter Property="Padding" Value="12,6"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Margin" Value="0,0,6,6"/>
+    </Style>
+    <Style Selector="Button.quiet">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Padding" Value="10,6"/>
+      <Setter Property="FontSize" Value="12"/>
+    </Style>
+    <Style Selector="Button.active">
+      <Setter Property="Background" Value="{DynamicResource Sand}"/>
+    </Style>
+    <Style Selector="Button.wheel">
+      <Setter Property="CornerRadius" Value="999"/>
+      <Setter Property="Background" Value="{DynamicResource Surface}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="Margin" Value="0"/>
+      <Setter Property="HorizontalContentAlignment" Value="Center"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Button.wheel:focus /template/ ContentPresenter#PART_ContentPresenter, Button.wheel.selected /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource Gold}"/>
+      <Setter Property="Foreground" Value="{DynamicResource GoldInk}"/>
+    </Style>
+    <Style Selector="TextBox, ComboBox, NumericUpDown">
+      <Setter Property="CornerRadius" Value="10"/>
+    </Style>
+    <Style Selector="ListBox">
+      <Setter Property="Background" Value="Transparent"/>
+    </Style>
+    <Style Selector="ProgressBar">
+      <Setter Property="Foreground" Value="{DynamicResource Gold}"/>
+    </Style>
+  </Application.Styles>
+</Application>
