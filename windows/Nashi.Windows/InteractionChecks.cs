@@ -123,5 +123,6 @@ internal static class InteractionChecks
             window.Close();L10n.Language=language;Feedback.Enabled=feedback;
         }
         foreach(var result in results)check(result.Passed,result.Message);
+        DownloadSaveChecks.Run(root,check);
     }
 }

@@ -6,9 +6,10 @@ internal static class WebDropChecks
 {
     internal static void Run(string root,Action<bool,string> check)
     {
+
         var directory=Path.Combine(root,"web-drop-"+Guid.NewGuid().ToString("N"));
         var library=new LibraryStore(Path.Combine(directory,"library"));var destination=Path.Combine(directory,"downloads");
-        new PreferencesStore(library.DirectoryPath).Save(new(){KeepInTray=false,Feedback=false,OutputMode="ask",DownloadFolder=destination});
+        new PreferencesStore(library.DirectoryPath).Save(new(){KeepInTray=false,Feedback=false,OutputMode="ask",DownloadFolder=destination,AskBeforeDownload=false});
         var window=new MainWindow(library:library,checkForUpdates:false,offerToolSetup:false);
         const string image="https://raw.githubusercontent.com/orkunisitmak/nashi-app/4f051ab04bc48ea2efb5338abed4990536cb4d97/Resources/Brand/NashiMark.png";
         try

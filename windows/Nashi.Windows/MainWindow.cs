@@ -105,7 +105,7 @@ public sealed partial class MainWindow:Window
         e.Handled=true;
     }
     private IEnumerable<LibraryEntry> SearchLibrary(string query)=>library.Search(query,L10n.Language);
-    private static TextBlock Text(string value,double size,string? color=null,bool localize=true)
+    internal static TextBlock Text(string value,double size,string? color=null,bool localize=true)
     {
         var text=new TextBlock{Text=value,FontSize=size,TextWrapping=TextWrapping.Wrap,VerticalAlignment=VerticalAlignment.Center,FontWeight=size>=17?FontWeights.SemiBold:FontWeights.Normal};if(color is not null)text.SetResourceReference(TextBlock.ForegroundProperty,color);return localize?L10n.Label(text):text;
     }
@@ -304,7 +304,18 @@ public sealed partial class MainWindow:Window
         var payload=WebMediaPayload.Parse(link.Text);var kind=downloadKind.SelectedItem as string??"video";
         if(!tools.Ready&&kind!="image"&&payload?.Kind!="image"&&!(kind=="thumbnail"&&payload?.Kind=="youtube")){MessageBox.Show(webWindow??this,L10n.Text("Choose Set up media tools once to enable web downloads."),L10n.Text("Media setup"));return;}
         if(kind=="photos"&&inspectedLink!=link.Text){await InspectWebLinkAsync();return;}
-        try{var url=WebDownload.Validate(payload?.Url??link.Text).AbsoluteUri;await RunAsync((destination,p,t)=>new WebDownload(tools).DownloadAsync(url,kind,destination,p,t,webQuality.SelectedIndex==1?1080:webQuality.SelectedIndex==2?720:null,kind=="photos"?new HashSet<int>(selectedWebPhotos):null),"Download "+kind,destinationFolder);}catch(Exception error){MessageBox.Show(webWindow??this,L10n.Text(error.Message),L10n.Text("Check your link"));}
+        try
+        {
+            var uri=WebDownload.Validate(payload?.Url??link.Text);var engine=new WebDownload(tools);string? fileName=null;destinationFolder??=preferences.Value.DownloadFolder;
+            if(preferences.Value.AskBeforeDownload)
+            {
+                var suggestion=kind=="photos"?"Instagram "+uri.Segments.Last().Trim('/'):payload?.Kind=="image"?Path.GetFileNameWithoutExtension(Uri.UnescapeDataString(uri.LocalPath)):L10n.Text("Web media");
+                var dialog=new DownloadSaveWindow(webWindow?.IsActive==true?webWindow:this,destinationFolder,suggestion,kind!="photos"&&payload?.Kind!="image"?async token=>(await engine.InspectAsync(uri.AbsoluteUri,token)).Title:null);
+                if(dialog.ShowDialog()!=true)return;destinationFolder=dialog.DirectoryPath;fileName=dialog.FileName;
+            }
+            await RunAsync((destination,p,t)=>engine.DownloadAsync(uri.AbsoluteUri,kind,destination,p,t,webQuality.SelectedIndex==1?1080:webQuality.SelectedIndex==2?720:null,kind=="photos"?new HashSet<int>(selectedWebPhotos):null,fileName),"Download "+kind,destinationFolder);
+        }
+        catch(Exception error){MessageBox.Show(webWindow??this,L10n.Text(error.Message),L10n.Text("Check your link"));}
     }
     private async Task SetupAsync()
     {

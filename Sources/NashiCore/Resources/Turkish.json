@@ -1433,5 +1433,20 @@
   "YouTube thumbnail · best available full-size image": "YouTube küçük resmi · en iyi tam boyutlu görsel",
   "No tools for this file type": "Bu dosya türü için araç yok",
   "Details": "Ayrıntılar",
-  "Copy details": "Ayrıntıları kopyala"
+  "Copy details": "Ayrıntıları kopyala",
+  "Save your download · Nashi": "İndirmeyi kaydet · Nashi",
+  "Save your download": "İndirmeyi kaydet",
+  "Choose a name and folder for this download.": "Bu indirme için bir ad ve klasör seç.",
+  "File name": "Dosya adı",
+  "Save to folder": "Kayıt klasörü",
+  "Choose folder…": "Klasör seç…",
+  "The file extension is added automatically.": "Dosya uzantısı otomatik eklenir.",
+  "Your default folder stays the same. Existing files are kept.": "Varsayılan klasörün değişmez. Mevcut dosyalar korunur.",
+  "Reading the media title…": "Medya başlığı alınıyor…",
+  "Could not read the media title. Enter a name to continue.": "Medya başlığı alınamadı. Devam etmek için bir ad yaz.",
+  "Choose a download folder to continue.": "Devam etmek için bir indirme klasörü seç.",
+  "Ask for a name and folder before downloading media": "Medya indirmeden önce ad ve klasör sor",
+  "Turn off to download directly to your default folder.": "Doğrudan varsayılan klasörüne indirmek için kapat.",
+  "Use 1–160 characters without folders or these characters: < > : \" / \\ | ? *": "1–160 karakter kullan; klasör yolu veya şu karakterleri yazma: < > : \" / \\ | ? *",
+  "This file name is reserved. Choose another name.": "Bu dosya adı sistem tarafından ayrılmış. Başka bir ad seç."
 }
