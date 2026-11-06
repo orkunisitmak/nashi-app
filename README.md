@@ -30,6 +30,27 @@ Windows screenshot: native UI test capture from the released 0.7.5 code, verifie
 - **[Windows x64 ZIP](https://github.com/orkunisitmak/nashi-app/releases/latest/download/Nashi-Windows-x64.zip):** extract the entire archive into its own writable folder, then open Nashi.exe. No separate .NET install is required. Keep the folder together so portable updates can replace the app safely. [Windows features and differences](windows/README.md).
 - **Linux x64 (`Nashi-Linux-x64.tar.gz`):** extract the archive and run `Nashi/install.sh`, or open `Nashi/nashi` directly. No separate .NET install is required. It works on X11 and Wayland with GNOME, KDE Plasma, Xfce and other desktops. LibreOffice and Tesseract come from your distribution. [Linux install, setup and differences](linux/README.md).
 
+### Install on Linux
+
+From a release archive (no .NET needed):
+
+```sh
+sha256sum -c Nashi-Linux-x64.tar.gz.sha256
+tar -xzf Nashi-Linux-x64.tar.gz
+Nashi/install.sh                 # current user; use: sudo Nashi/install.sh --system for everyone
+```
+
+From source (needs the [.NET 10 SDK](https://dotnet.microsoft.com/download)):
+
+```sh
+git clone https://github.com/orkunisitmak/nashi-app.git
+cd nashi-app
+scripts/build-linux.sh
+build/linux/Nashi/install.sh
+```
+
+Nashi then appears in your applications menu and under **Open With**, and `nashi` works in a terminal. Office and OCR helpers come from your distribution, for example on Debian/Ubuntu: `sudo apt install libreoffice tesseract-ocr tesseract-ocr-tur`. **Finish setup** shows the right command for Fedora, Arch and openSUSE. To remove the app, run `~/.local/share/nashi-app/uninstall.sh`; your Library and settings are kept.
+
 First launch guides you through **Finish setup → Download missing tools** for hash-verified downloads directly from upstream. Media and Office tools install in sequence; existing tools are kept, and cancelled or failed setup can be retried. **Tools ready** appears only when both groups are available. Core native image/PDF features work immediately. [Exact versions, hashes and licenses](docs/dependencies.md).
 
 These first public builds do not have Apple notarization or Windows Authenticode publisher signing. Your OS may require first-launch approval; consult [Apple's guidance](https://support.apple.com/en-us/102445). Nashi does not disable system security settings. Official release assets include SHA-256 checksums. A CI artifact alone is not an official signed update.
