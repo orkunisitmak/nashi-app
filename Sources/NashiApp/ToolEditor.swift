@@ -755,10 +755,12 @@ struct ToolEditor:View {
         if isPlaying { player?.pause() }
         seek(startMoved ? range.start:range.end)
     }
+    /// Sets the trim start at the playhead (button and I); an end at or before it resets to the full duration.
     func markStart() {
         options.start=min(playhead,max(0,duration-0.01))
         if (options.end ?? duration)<=options.start { options.end=duration }
     }
+    /// Sets the trim end at the playhead (button and O); a start at or after it resets to zero.
     func markEnd() {
         options.end=min(duration,max(0.01,playhead))
         if options.start>=(options.end ?? duration) { options.start=0 }
@@ -979,9 +981,13 @@ struct AudioWaveformView:View {
 
 /// Start/end fields show and accept "mm:ss.000" while still taking plain seconds.
 struct MediaTimecodeFormat:ParseableFormatStyle {
+    /// Shows seconds as "mm:ss.000", or "h:mm:ss.000" from one hour.
     func format(_ value:Double)->String { MediaTimecode.format(value) }
+    /// Reads typed timecodes and plain seconds.
     var parseStrategy:Strategy { Strategy() }
+    /// Rejects malformed input so the field keeps its previous value.
     struct Strategy:ParseStrategy {
+        /// Returns seconds, or throws when the text is not a valid time.
         func parse(_ value:String) throws->Double {
             guard let seconds=MediaTimecode.parse(value) else { throw CocoaError(.formatting) }
             return seconds
