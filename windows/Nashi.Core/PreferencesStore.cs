@@ -16,7 +16,7 @@ public sealed class PreferencesStore
     private readonly string file;public Preferences Value{get;private set;}=new();public string? RecoveryNotice{get;private set;}
     public PreferencesStore(string directory)
     {
-        file=Path.Combine(directory,"preferences.json");AtomicFile.RecoverOrphan(file,contents=>ValidateRecovered(contents));
+        file=Path.Combine(directory,"preferences.json");AtomicFile.RecoverOrphan(file,ValidateRecovered,1_000_000);
         if(!File.Exists(file))return;
         try
         {

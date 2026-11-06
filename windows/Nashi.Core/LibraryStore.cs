@@ -22,11 +22,11 @@ public sealed class LibraryStore
     private sealed record State(string Appearance,List<LibraryEntry> Entries,bool WindowManagementEnabled=true);
     public LibraryStore(string? directory=null)
     {
-        DirectoryPath=directory??Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Nashi");AtomicFile.RecoverOrphan(FilePath);
+        DirectoryPath=directory??Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Nashi");AtomicFile.RecoverOrphan(FilePath,ValidateRecovery,4*1024*1024);
         if(!File.Exists(FilePath))return;
         try
         {
-            if(new FileInfo(FilePath).Length>4*1024*1024)throw new InvalidDataException("Library is too large.");
+            if(new FileInfo(FilePath).Length>LimitBytes)throw new InvalidDataException("Library is too large.");
             var loaded=JsonSerializer.Deserialize<State>(File.ReadAllText(FilePath))??throw new InvalidDataException("Empty Library.");
             if(loaded.Entries is null||loaded.Entries.Any(e=>e is null||e.Paths is null||e.Paths.Length==0||e.Paths.Length>10000||string.IsNullOrWhiteSpace(e.Action)||e.Paths.Any(p=>string.IsNullOrWhiteSpace(p)||!Path.IsPathFullyQualified(p))))throw new InvalidDataException("Invalid Library entry.");
             state=new(ValidAppearance(loaded.Appearance),loaded.Entries.OrderByDescending(e=>e.Created).Take(Limit).ToList(),loaded.WindowManagementEnabled);
@@ -49,6 +49,14 @@ public sealed class LibraryStore
     public void SetWindowManagement(bool enabled)=>Save(state with{WindowManagementEnabled=enabled});
     public IEnumerable<LibraryEntry> Search(string query)=>state.Entries.Where(e=>string.IsNullOrWhiteSpace(query)||e.Action.Contains(query,StringComparison.OrdinalIgnoreCase)||e.Paths.Any(p=>Path.GetFileName(p).Contains(query,StringComparison.OrdinalIgnoreCase)));
     private static string ValidAppearance(string? value)=>value is "light" or "dark"?value:"system";
+    private const long LimitBytes=4*1024*1024;
+    private static bool ValidateRecovery(string contents)
+    {
+        var loaded=JsonSerializer.Deserialize<State>(contents)??throw new InvalidDataException("Empty Library.");
+        if(loaded.Entries is null||loaded.Entries.Any(e=>e is null||e.Paths is null||e.Paths.Length==0||e.Paths.Length>10000||string.IsNullOrWhiteSpace(e.Action)||e.Paths.Any(p=>string.IsNullOrWhiteSpace(p)||!Path.IsPathFullyQualified(p))))throw new InvalidDataException("Invalid Library entry.");
+        ValidAppearance(loaded.Appearance);
+        return true;
+    }
     private void Save(State next)
     {
         AtomicFile.WriteAllText(FilePath,JsonSerializer.Serialize(next));state=next;
