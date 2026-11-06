@@ -4,7 +4,9 @@ namespace Nashi.Linux;
 /// and preferences live in ~/.local/share/Nashi, outside the install folder, exactly as on Windows.
 public static class AppPaths
 {
-    public static string Data=>Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Nashi");
+    // Create: .NET returns "" for a folder that does not exist yet (a fresh account without ~/.local/share),
+    // which would put Library and settings in whatever the current directory is.
+    public static string Data=>Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData,Environment.SpecialFolderOption.Create),"Nashi");
     public static string ToolsRoot=>Path.Combine(Data,"Tools");
     public static string Tools=>Path.Combine(ToolsRoot,"v1");
     public static string Downloads

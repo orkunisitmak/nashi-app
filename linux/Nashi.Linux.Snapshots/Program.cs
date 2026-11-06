@@ -9,8 +9,12 @@ using Nashi.Linux.UI;
 // Usage: nashi-snapshots <output folder> <fixture folder>
 // Renders every main screen to PNG, then drives real tool flows through the UI (open the tool,
 // press its default button, wait for the export) and checks each output and its Library entry.
-// Keep Library and settings away from the user's own: point XDG_DATA_HOME at a temp folder first.
 var output=Path.GetFullPath(args.Length>0?args[0]:"snapshots");var fixtures=args.Length>1?Path.GetFullPath(args[1]):null;Directory.CreateDirectory(output);
+// Library, settings, pasted files and the autostart entry all live under these: a test run must never
+// write over the person's own (it once did, when the variables were left to the caller).
+Environment.SetEnvironmentVariable("XDG_DATA_HOME",Path.Combine(output,"home","data"));Environment.SetEnvironmentVariable("XDG_CONFIG_HOME",Path.Combine(output,"home","config"));
+if(Directory.Exists(Path.Combine(output,"home")))Directory.Delete(Path.Combine(output,"home"),true);
+if(!AppPaths.Data.StartsWith(output,StringComparison.Ordinal)){Console.Error.WriteLine("Refusing to run: app data would go to "+AppPaths.Data);return 2;}
 // Never touch the desktop's real global shortcuts from a test run.
 Environment.SetEnvironmentVariable("NASHI_NO_GLOBAL_SHORTCUTS","1");
 // Continuations after await must come back to the UI thread, as in the real app.
@@ -170,6 +174,15 @@ bool WheelOpen(Window w)=>w.GetVisualDescendants().OfType<WheelOverlay>().Any(o=
         var rename=new RenameWindow([a,b]);var clash=!rename.Try("Same");var ok=rename.Try("Trip {n}");var done=RenameWindow.Apply(rename.Plan);
         Expect($"Rename catches clashes and renames ({string.Join(", ",done.Select(Path.GetFileName))})",clash&&ok&&File.Exists(Path.Combine(folder,"Trip 01.png"))&&File.Exists(Path.Combine(folder,"Trip 02.png"))&&!File.Exists(a));
         rename.Close();
+    }
+    // Set as Wallpaper: offered for one image where the desktop supports it; the copy is converted when
+    // the format is unusual and only the last five are kept. (The wallpaper itself is not changed here.)
+    {
+        var offered=w.ChoicesFor(Fixtures("Photo.png"),"tools").Any(c=>c.Id=="wallpaper");
+        var tiff=Path.Combine(output,"Scan.tif");using(var image=new ImageMagick.MagickImage(Fixtures("Photo.png")[0]))image.Write(tiff,ImageMagick.MagickFormat.Tiff);
+        var copies=Enumerable.Range(0,6).Select(_=>Wallpaper.Prepare(Fixtures("Photo.png")[0])).ToList();var converted=Wallpaper.Prepare(tiff);
+        var kept=Directory.GetFiles(Wallpaper.Folder).Length;
+        Expect($"Wallpaper copies ({(offered?"offered":"not offered: no plasma-apply-wallpaperimage or GNOME")}, {kept} kept, {Path.GetExtension(converted)})",(offered||!Wallpaper.Supported)&&converted.EndsWith(".png")&&File.Exists(converted)&&kept==5&&Path.GetDirectoryName(converted)==Wallpaper.Folder);
     }
     // The last tool comes back first on the Tools wheel as "Again".
     w.LastChoice=new ToolChoice("convert:jpg","Convert to JPG","↗");

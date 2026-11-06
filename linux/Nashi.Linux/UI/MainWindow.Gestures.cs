@@ -183,6 +183,7 @@ public sealed partial class MainWindow
         files.Clear();Add(paths);
         if(choice.Id is "open" or "reveal" or "copy" or "copyPath" or "terminal" or "float" or "phone"){await PerformFileAction(choice.Id,paths);return;}
         if(choice.Id=="copyText"){await CopyTextAsync(paths);return;}
+        if(choice.Id=="wallpaper"){await SetWallpaperAsync(paths[0]);return;}
         if(FileActionChoices().Any(a=>a.Id==choice.Id)){Bring();await PerformFileAction(choice.Id,paths);return;}
         // Conversions and simple tools run at once with their saved defaults (Settings can turn this off);
         // a desktop notification reports the result while the window stays out of the way.

@@ -14,6 +14,7 @@ public sealed partial class MainWindow
     {
         if(paths.Count>0&&paths.All(p=>FeatureCatalog.IsImage(p)||FeatureCatalog.Extension(p)=="pdf")&&PdfDocumentMedia.OcrAvailable)yield return new("copyText","Copy Text","¶");
         if(paths.Count>0)yield return new("rename","Rename","✎");
+        if(paths.Count==1&&FeatureCatalog.IsImage(paths[0])&&Wallpaper.Supported)yield return new("wallpaper","Set as Wallpaper","◩");
         // Videos over an app's upload limit: one petal shrinks them to fit, no options asked.
         if(paths.Count>0&&paths.All(FeatureCatalog.IsVideo))
         {
@@ -50,6 +51,19 @@ public sealed partial class MainWindow
         if(text.Length>0&&Clipboard is {} clipboard)await clipboard.SetTextAsync(text);
         if(!IsVisible){_=NotifyAsync(L10n.T(text.Length==0?"No text found":"Text copied"),text.Length==0?L10n.T("No readable text was found. Try a sharper or larger image."):text.Length>160?text[..160]+"…":text);return;}
         await Dialogs.TextResult(this,"Copy Text",text.Length==0?L10n.T("No readable text was found. Try a sharper or larger image."):text,text.Length>0);
+    }
+
+    private async Task SetWallpaperAsync(string path)
+    {
+        try
+        {
+            await Wallpaper.SetAsync(path);SetStatus(L10n.T("Wallpaper set."));
+            if(!IsVisible)_=NotifyAsync(L10n.T("Wallpaper set."),Path.GetFileName(path));
+        }
+        catch(Exception error)when(error is IOException or InvalidOperationException or UnauthorizedAccessException or ImageMagick.MagickException)
+        {
+            if(!IsVisible)_=NotifyAsync(L10n.T("Set as Wallpaper"),L10n.T(error.Message));else await Dialogs.Message(this,"Set as Wallpaper",L10n.T(error.Message));
+        }
     }
 
     private async Task RenameAsync(IReadOnlyList<string> paths)
