@@ -122,6 +122,28 @@ final class MediaConversionProfileTests: XCTestCase {
         XCTAssertEqual(try MediaEngine.inspect(retained).duration, 2, accuracy: 0.05)
     }
 
+    func testTrimSilenceLooksForSilenceInsideTheSelection() throws {
+        // Output -ss/-t cut after -af, so the silence filters would scan the file from its start to its end.
+        let root = try OutputFiles.temporaryDirectory(); addTeardownBlock { try? FileManager.default.removeItem(at: root) }
+        let log = root.appendingPathComponent("argv.log"), ffprobe = root.appendingPathComponent("ffprobe"), ffmpeg = root.appendingPathComponent("ffmpeg")
+        try Data("#!/bin/sh\necho '{\"format\":{\"duration\":\"60\"},\"streams\":[{\"index\":0,\"codec_type\":\"audio\",\"codec_name\":\"pcm_s16le\",\"channels\":2,\"sample_rate\":\"48000\"}]}'\n".utf8).write(to: ffprobe)
+        try Data("#!/bin/sh\nprintf '%s\\n' \"$@\" > '\(log.path)'\nfor last; do :; done\nprintf x > \"$last\"\n".utf8).write(to: ffmpeg)
+        for (variable, executable) in [("NASHI_FFPROBE", ffprobe), ("NASHI_FFMPEG", ffmpeg)] {
+            try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: executable.path)
+            let previous = ProcessInfo.processInfo.environment[variable]; setenv(variable, executable.path, 1)
+            addTeardownBlock { if let previous { setenv(variable, previous, 1) } else { unsetenv(variable) } }
+        }
+        let input = root.appendingPathComponent("Interview.wav"); try Data([1]).write(to: input)
+        for trimSilence in [true, false] {
+            var options = OperationOptions(); options.outputDirectory = root.appendingPathComponent("out \(trimSilence)"); options.trimSilence = trimSilence; options.start = 10; options.end = 20
+            _ = try MediaEngine.tool(.trimAudio, inputs: [input], options: options, token: .init())
+            let argv = try String(contentsOf: log, encoding: .utf8).split(separator: "\n").map(String.init)
+            let i = try XCTUnwrap(argv.firstIndex(of: "-i")), ss = try XCTUnwrap(argv.firstIndex(of: "-ss")), t = try XCTUnwrap(argv.firstIndex(of: "-t"))
+            XCTAssertEqual([argv[ss + 1], argv[t + 1]], ["10", "10"])
+            XCTAssertEqual(ss < i && t < i, trimSilence, "range must be read as input options only when silence is removed")
+        }
+    }
+
     func testNativeBleepAmplitudeAndValidationLimits() throws {
         let f = try Fixtures(); defer { f.remove() }
         XCTAssertThrowsError(try MediaEngine.tool(.redactAudio, inputs: [f.audio], options: .init(), token: .init()))

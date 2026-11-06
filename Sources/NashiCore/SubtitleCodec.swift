@@ -11,7 +11,9 @@ enum SubtitleCodec {
     static func convert(_ input: URL, to format: String, token: CancellationToken) throws -> String {
         try token.check()
         let source = try DocumentText.read(input)
-        let cues = try parse(source)
+        // WebVTT requires cues in start-time order; the stable sort keeps the
+        // file order of cues that start together.
+        let cues = try parse(source).sorted { $0.start < $1.start }
         switch format {
         case "vtt":
             return "WEBVTT\n\n" + cues.map { "\(timestamp($0.start, vtt: true)) --> \(timestamp($0.end, vtt: true))\($0.settings.isEmpty ? "" : " " + $0.settings)\n\(vttText($0.text))\n" }.joined(separator: "\n")
@@ -27,6 +29,8 @@ enum SubtitleCodec {
     static func parse(_ source: String) throws -> [Cue] {
         let normalized = source.replacingOccurrences(of: "\u{feff}", with: "").replacingOccurrences(of: "\r\n", with: "\n").replacingOccurrences(of: "\r", with: "\n")
         let lines = normalized.components(separatedBy: "\n")
+        let header = lines.first ?? ""
+        let webVTT = header == "WEBVTT" || header.hasPrefix("WEBVTT ") || header.hasPrefix("WEBVTT\t")
         let timing = try NSRegularExpression(pattern: #"^\s*((?:\d+:)?\d{2}:\d{2}[.,]\d{1,3})\s*-->\s*((?:\d+:)?\d{2}:\d{2}[.,]\d{1,3})(?:\s+(.*))?\s*$"#)
         var cues: [Cue] = [], index = 0
         while index < lines.count {
@@ -45,6 +49,12 @@ enum SubtitleCodec {
             index += 1
             var text: [String] = []
             while index < lines.count && !lines[index].trimmingCharacters(in: .whitespaces).isEmpty {
+                // WebVTT ends cue text at the next timing line. SRT files that
+                // omit the blank line also put the next cue's number before it.
+                if timing.firstMatch(in: lines[index], range: NSRange(location: 0, length: (lines[index] as NSString).length)) != nil {
+                    if !webVTT, text.last?.trimmingCharacters(in: .whitespaces).allSatisfy({ $0.isASCII && $0.isNumber }) == true { text.removeLast() }
+                    break
+                }
                 text.append(lines[index]); index += 1
             }
             cues.append(.init(start: start, end: end, text: text.joined(separator: "\n"), settings: settings))
@@ -96,6 +106,13 @@ enum SubtitleCodec {
 enum DocumentText {
     static func read(_ url: URL) throws -> String {
         let data = try Data(contentsOf: url)
+        // The UTF-32LE byte order mark begins with the UTF-16LE one.
+        if data.starts(with: [0xff, 0xfe, 0, 0]) || data.starts(with: [0, 0, 0xfe, 0xff]) {
+            guard let text = String(data: data, encoding: .utf32) else {
+                throw NashiError.invalidInput("The UTF-32 text in \(url.lastPathComponent) is damaged.")
+            }
+            return text
+        }
         // UTF-16 decoders can accept arbitrary pairs of legacy single-byte
         // characters. Only prefer UTF-16 when a BOM or a clear alternating
         // zero-byte pattern identifies it; otherwise a CP1252 document can

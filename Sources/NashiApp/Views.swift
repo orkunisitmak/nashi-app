@@ -75,6 +75,7 @@ struct SettingsView:View {
                                 .foregroundStyle(section==item ? NashiPalette.forest:Color.secondary)
                                 .padding(.horizontal,13).padding(.vertical,12)
                                 .background(section==item ? NashiPalette.sage:Color.clear,in:RoundedRectangle(cornerRadius:12))
+                                .contentShape(RoundedRectangle(cornerRadius:12))
                         }.buttonStyle(.plain).accessibilityAddTraits(section==item ? .isSelected:[])
                     }
                 }
@@ -261,8 +262,8 @@ private struct FolderSettingsView:View {
     }
     private func refresh() { folders=FolderAccessPreferences.grants() }
     private func choose(home:Bool) {
-        let panel=NSOpenPanel();panel.title="Allow Folder Access";panel.prompt="Allow Access";panel.canChooseFiles=false;panel.canChooseDirectories=true;panel.allowsMultipleSelection=true
-        panel.message="Choose a folder where Nashi may save results. Every folder inside it is included."
+        let panel=NSOpenPanel();panel.title=L10n.text("Allow Folder Access");panel.prompt=L10n.text("Allow Access");panel.canChooseFiles=false;panel.canChooseDirectories=true;panel.allowsMultipleSelection=true
+        panel.message=L10n.text("Choose a folder where Nashi may save results. Every folder inside it is included.")
         if home { panel.directoryURL=FileManager.default.homeDirectoryForCurrentUser }
         if panel.runModal() == .OK { do { try FolderAccessPreferences.add(panel.urls);error=nil;refresh() } catch { self.error=error.localizedDescription } }
     }

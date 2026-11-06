@@ -11,7 +11,7 @@ public sealed partial class ToolEditor
 {
     private readonly List<Rect> photoRegions=[];
     private readonly ComboBox backdrop=new(){ItemsSource=new[]{"solid","gradient","image"},SelectedIndex=0},collageLayout=new(){ItemsSource=new[]{"grid","row","column","featured"},SelectedIndex=0},redactionStyle=new(){ItemsSource=new[]{"solid","blur","pixelate"},SelectedIndex=0};
-    private string? backgroundImage,annotationImage;private string[] collageInputs=[];private readonly ListBox imageOrder=new(){MaxHeight=140};
+    private string? backgroundImage;private BitmapSource? annotationImage;private string[] collageInputs=[];private readonly ListBox imageOrder=new(){MaxHeight=140};
     private UIElement? annotationShape,selectedAnnotation;private Vector annotationOffset;private int strokeKind;private Point endPoint;private int markNumber=1;
     private System.Windows.Threading.DispatcherTimer? photoPreview;private bool showingOriginal;private readonly SemaphoreSlim previewGate=new(1,1);private long photoGeneration;
     private readonly CheckBox fitCollage=new(){Content="Fill cells (crop to fit)",IsChecked=true},flipHorizontal=new(){Content="Flip horizontally"},flipVertical=new(){Content="Flip vertically"};
@@ -50,7 +50,12 @@ public sealed partial class ToolEditor
             foreach(var box in fields.Values)box.TextChanged+=(_,_)=>QueuePhotoPreview();backdrop.SelectionChanged+=(_,_)=>QueuePhotoPreview();collageLayout.SelectionChanged+=(_,_)=>QueuePhotoPreview();Closed+=(_,_)=>photoPreview.Stop();
             var original=L10n.Content(new CheckBox{Content="Show original",Margin=new(4,14,4,4)});original.Checked+=(_,_)=>{showingOriginal=true;photoPreview.Stop();photoGeneration++;SetPhotoPreview(bitmap!);};original.Unchecked+=(_,_)=>{showingOriginal=false;QueuePhotoPreview();};resetPhotoView=()=>original.IsChecked=false;previewStack.Children.Add(original);Loaded+=(_,_)=>QueuePhotoPreview();
         }
-        if(tool=="annotate")options.Children.Add(MainWindow.Button("Choose annotation image…",()=>{var picker=new OpenFileDialog{Filter="Images|*.png;*.jpg;*.webp;*.heic;*.avif;*.bmp"};if(picker.ShowDialog(this)==true){annotationImage=picker.FileName;drawingTool.SelectedIndex=9;}}));
+        if(tool=="annotate")options.Children.Add(MainWindow.Button("Choose annotation image…",()=>{var picker=new OpenFileDialog{Filter="Images|*.png;*.jpg;*.webp;*.heic;*.avif;*.bmp"};if(picker.ShowDialog(this)==true)ChooseAnnotationImage(picker.FileName);}));
+    }
+    private void ChooseAnnotationImage(string file)
+    {
+        try{annotationImage=ImageEngine.Load(file);drawingTool.SelectedIndex=9;}
+        catch(Exception error)when(error is ArgumentException or FormatException or InvalidDataException or ImageMagick.MagickException or IOException or NotSupportedException or UnauthorizedAccessException){if(App.IsSmokeTest)throw;MessageBox.Show(this,L10n.Text(error.Message),L10n.Text("Check drawing settings"));}
     }
     private void RotatePhoto(int degrees)
     {
@@ -118,7 +123,7 @@ public sealed partial class ToolEditor
         }
         else if(strokeKind is 8 or 9)
         {
-            if(strokeKind==9&&annotationImage is null){dragging=false;drawing.ReleaseMouseCapture();return;}annotationShape=new Image{Source=strokeKind==9?ImageEngine.Load(annotationImage!):bitmap,Stretch=Stretch.Fill,IsHitTestVisible=false};
+            if(strokeKind==9&&annotationImage is null){dragging=false;drawing.ReleaseMouseCapture();return;}annotationShape=new Image{Source=strokeKind==9?annotationImage:bitmap,Stretch=Stretch.Fill,IsHitTestVisible=false};
         }
         else annotationShape=new Rectangle{Stroke=ink,StrokeThickness=thickness,IsHitTestVisible=false};
         drawing.Children.Add(annotationShape);Canvas.SetLeft(annotationShape,annotationShape is Polyline?0:origin.X);Canvas.SetTop(annotationShape,annotationShape is Polyline?0:origin.Y);

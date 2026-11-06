@@ -46,7 +46,7 @@ struct UpdateSettingsView:View {
                 HStack(spacing:12) {
                     Image(systemName:"externaldrive.badge.person.crop").foregroundStyle(NashiPalette.forest)
                     VStack(alignment:.leading,spacing:4) {
-                        Text(updater.repository?.slug ?? updater.officialRepository?.slug ?? "GitHub release connection").font(.headline)
+                        Group { if let slug=updater.repository?.slug ?? updater.officialRepository?.slug { Text(verbatim:slug) } else { LText("GitHub release connection") } }.font(.headline)
                         Text(updater.repository == nil ? (updater.officialRepository == nil ? "Connect a private or public updates repository.":"Official public releases · No account or token needed"):updater.requiresToken ? "Private repository · Token saved in Keychain":"Public repository · No token needed")
                             .font(.caption).foregroundStyle(.secondary)
                     }
@@ -71,7 +71,7 @@ struct UpdateSettingsView:View {
                             Divider()
                             HStack {
                                 VStack(alignment:.leading,spacing:5) {
-                                    Text(statusTitle).font(.headline)
+                                    LText(statusTitle).font(.headline)
                                     if let date=updater.lastCheckedAt { Text("Last checked \(date,format:Date.FormatStyle(date:.abbreviated,time:.shortened))").font(.caption).foregroundStyle(.secondary) }
                                     else { Text("No update checks yet").font(.caption).foregroundStyle(.secondary) }
                                 }
@@ -142,7 +142,7 @@ struct UpdateConnectionView:View {
                     }
                 }.padding(20).nashiCard().disabled(!updater.canChangeConnection)
                 if let message {
-                    Label(message,systemImage:"checkmark.circle").font(.system(size:12)).foregroundStyle(NashiPalette.forest).fixedSize(horizontal:false,vertical:true)
+                    Label { LText(message) } icon:{ Image(systemName:"checkmark.circle") }.font(.system(size:12)).foregroundStyle(NashiPalette.forest).fixedSize(horizontal:false,vertical:true)
                 }
                 if let error {
                     Label(error,systemImage:"exclamationmark.circle").font(.system(size:12)).foregroundStyle(.secondary).fixedSize(horizontal:false,vertical:true)

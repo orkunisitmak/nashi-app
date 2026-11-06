@@ -64,7 +64,8 @@ enum XMPPacketEditor {
             let node:XMLElement
             if let existing { node=existing }
             else {
-                let uri=owner.resolveNamespace(forName:prefix+":"+name)?.stringValue ?? schemas[prefix]
+                // ExifTool declares each namespace on its own Description.
+                let uri=try ([owner]+descriptions(doc)).lazy.compactMap{$0.resolveNamespace(forName:prefix+":"+name)?.stringValue}.first ?? schemas[prefix]
                 guard let uri,!uri.isEmpty else { throw NashiError.invalidInput("The custom XMP namespace \(prefix) is not declared in this file.") }
                 owner.addNamespace(XMLNode.namespace(withName:prefix,stringValue:uri) as! XMLNode)
                 let local=prefix=="dc" ? name.prefix(1).lowercased()+name.dropFirst():name
@@ -87,6 +88,8 @@ enum XMPPacketEditor {
         }
         // ExifTool accepts packets beginning at xpacket or the xmpmeta root.
         // Remove Foundation's XML declaration from this standalone UTF-8 packet.
+        // A UTF-16 source would otherwise be serialized in its own encoding.
+        doc.characterEncoding="UTF-8"
         let serialized=String(decoding:doc.xmlData(options:[.nodeCompactEmptyElement]),as:UTF8.self)
         let packet=serialized.replacingOccurrences(of:"^<\\?xml[^?]*\\?>",with:"",options:.regularExpression)
         return Data(packet.trimmingCharacters(in:.whitespacesAndNewlines).utf8)

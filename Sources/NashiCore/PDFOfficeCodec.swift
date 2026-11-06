@@ -26,9 +26,9 @@ enum PDFOfficeCodec {
         }
         context.setFillColor(CGColor(gray: 1, alpha: 1)); context.fill(CGRect(x: 0, y: 0, width: width, height: height))
         context.scaleBy(x: scale, y: scale)
-        if crop != nil { context.translateBy(x: -bounds.minX, y: -bounds.minY) }
-        else { context.concatenate(cgPage.getDrawingTransform(.cropBox, rect: bounds, rotate: 0, preserveAspectRatio: true)) }
-        context.drawPDFPage(cgPage)
+        if crop != nil { context.translateBy(x: -bounds.minX, y: -bounds.minY); context.drawPDFPage(cgPage) }
+        // A whole page keeps its annotations, such as stamps and filled form fields, as viewers show it.
+        else { page.draw(with: .cropBox, to: context) }
         try token.check()
         guard let image = context.makeImage(), let data = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) else { throw NashiError.failed("The PDF page image could not be written.") }
         return data
@@ -48,7 +48,8 @@ enum PDFOfficeCodec {
             for index in 0..<pdf.pageCount {
                 try token.check()
                 guard let page = pdf.page(at: index) else { continue }
-                pages.append(try text(page, token: token))
+                let value = try text(page, token: token)
+                pages.append(format == "md" ? markdown(value) : value)
             }
             let output = work.appendingPathComponent("Extracted text").appendingPathExtension(format)
             let content = pages.joined(separator: format == "md" ? "\n\n---\n\n" : "\n\n\u{0c}\n\n")
@@ -62,6 +63,14 @@ enum PDFOfficeCodec {
     static func text(_ page: PDFPage, token: CancellationToken) throws -> String {
         if let text = page.string, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return text }
         return try recognizedCells(page, token: token).sorted { $0.rect.midY > $1.rect.midY }.map(\.text).joined(separator: "\n")
+    }
+
+    /// PDF text is literal. Without escapes Markdown reads "*", "_", "[", "<",
+    /// "&" or a leading "#", "-" or "1." in it as formatting and hides them.
+    static func markdown(_ text: String) -> String {
+        text.replacingOccurrences(of: #"[\\`*_\[\]<>&~|]"#, with: #"\\$0"#, options: .regularExpression)
+            .replacingOccurrences(of: #"(?m)^([ \t]*)([#+=-])"#, with: #"$1\\$2"#, options: .regularExpression)
+            .replacingOccurrences(of: #"(?m)^([ \t]*\d+)([.)])"#, with: #"$1\\$2"#, options: .regularExpression)
     }
 
     static func recognizedCells(_ page: PDFPage, token: CancellationToken) throws -> [TextCell] {
@@ -147,7 +156,9 @@ enum PDFOfficeCodec {
                     values[column] += (values[column].isEmpty ? "" : " ") + cell.text
                 }
                 table += "<table:table-row>" + values.map { value in
-                    if value.range(of: #"^-?(?:0|[1-9]\d*)(?:\.\d+)?$"#, options: .regularExpression) != nil, Double(value) != nil {
+                    // Only 15 significant digits survive a spreadsheet's binary64
+                    // value; longer digit runs (IDs, account numbers) stay text.
+                    if value.range(of: #"^-?(?:0|[1-9]\d*)(?:\.\d+)?$"#, options: .regularExpression) != nil, value.filter(\.isWholeNumber).count <= 15, Double(value) != nil {
                         return "<table:table-cell office:value-type=\"float\" office:value=\"\(value)\"><text:p>\(value)</text:p></table:table-cell>"
                     }
                     return "<table:table-cell office:value-type=\"string\"><text:p>\(DocumentText.escapeXML(value))</text:p></table:table-cell>"
@@ -166,6 +177,9 @@ enum PDFOfficeCodec {
     private static func positionedCells(_ page: PDFPage, token: CancellationToken) throws -> [TextCell] {
         guard let string = page.string, !string.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return try recognizedCells(page, token: token) }
         let ns = string as NSString
+        // Selections are in unrotated page space; rows and columns are read
+        // from the page as displayed, so map them through the page rotation.
+        let displayed = page.transform(for: .mediaBox)
         var characters: [TextCell] = []
         var index = 0
         while index < ns.length {
@@ -175,7 +189,7 @@ enum PDFOfficeCodec {
             index = NSMaxRange(range)
             if value == "\n" || value == "\r" { continue }
             guard let selection = page.selection(for: range) else { continue }
-            let bounds = selection.bounds(for: page)
+            let bounds = selection.bounds(for: page).applying(displayed).standardized
             guard bounds.width > 0, bounds.height > 0, !bounds.isInfinite, !bounds.isNull else { continue }
             characters.append(.init(text: value, rect: bounds))
         }

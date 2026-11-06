@@ -174,6 +174,19 @@ final class DocumentEngineTests: XCTestCase {
         XCTAssertEqual(try fm.destinationOfSymbolicLink(atPath: link.path), root.appendingPathComponent("Missing folder").path)
     }
 
+    func testExtractingAnArchiveNamedAtTheLengthLimitShortensTheFolderName() throws {
+        let payload = root.appendingPathComponent("Payload", isDirectory: true)
+        try FileManager.default.createDirectory(at: payload, withIntermediateDirectories: true)
+        try Data("data\n".utf8).write(to: payload.appendingPathComponent("a.txt"))
+        let archive = root.appendingPathComponent(String(repeating: "a", count: 251) + ".zip")
+        try ArchiveCodec.create(from: payload, at: archive, format: "zip", token: .init())
+        let first = try XCTUnwrap(DocumentEngine.extractArchive(archive, options: .init(), token: .init()).first)
+        let second = try XCTUnwrap(DocumentEngine.extractArchive(archive, options: .init(), token: .init()).first)
+        XCTAssertEqual(first.lastPathComponent, String(repeating: "a", count: 245) + " Extracted")
+        XCTAssertEqual(second.lastPathComponent, String(repeating: "a", count: 243) + " Extracted 2")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: first.appendingPathComponent("a.txt").path))
+    }
+
     func testDanglingLinksBesideTheInputKeepTheirNamesAndAreNotReplaced() throws {
         let fm = FileManager.default
         func danglingLink(_ name: String) throws -> URL {
@@ -270,6 +283,27 @@ final class DocumentEngineTests: XCTestCase {
         let html = try DocumentText.read(convert(docx, "html"))
         XCTAssertTrue(html.contains("data:image/"))
         XCTAssertFalse(html.contains("src=\"file:"))
+    }
+
+    func testRTFDAttachmentWithQuestionMarkInNameKeepsItsPicture() throws {
+        // Cocoa writes "Why?.png" as file:///Why?.png; parsed as a URL that is "Why" plus a query.
+        let text = NSMutableAttributedString(string: "Before\n")
+        for (index, name) in ["Why?.png", "photo.png"].enumerated() {
+            let bitmap = try XCTUnwrap(NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: index + 2, pixelsHigh: index + 2, bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0))
+            let wrapper = FileWrapper(regularFileWithContents: try XCTUnwrap(bitmap.representation(using: .png, properties: [:]))); wrapper.preferredFilename = name
+            text.append(NSAttributedString(attachment: NSTextAttachment(fileWrapper: wrapper)))
+        }
+        let rtfd = root.appendingPathComponent("Question.rtfd", isDirectory: true)
+        try text.fileWrapper(from: NSRange(location: 0, length: text.length), documentAttributes: [.documentType: NSAttributedString.DocumentType.rtfd]).write(to: rtfd, options: .atomic, originalContentsURL: nil)
+        let work = root.appendingPathComponent("Work", isDirectory: true)
+        try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
+        let html = try RichTextCodec.materializeHTML(rtfd, in: work)
+        let prepared = work.appendingPathComponent("Prepared.html")
+        try DocumentEngine.embedHTMLImages(html, output: prepared, token: .init())
+        let source = try DocumentText.read(prepared)
+        let sources = try NSRegularExpression(pattern: #"<img src="([^"]*)""#).matches(in: source, range: NSRange(source.startIndex..., in: source)).map { (source as NSString).substring(with: $0.range(at: 1)) }
+        XCTAssertEqual(sources.count, 2, source)
+        XCTAssertTrue(sources.allSatisfy { $0.hasPrefix("data:image/png;base64,") }, source)
     }
 
     func testSpreadsheetFormulaSurvivesXLSXODSRoundTrip() throws {

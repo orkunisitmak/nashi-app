@@ -92,6 +92,29 @@ public enum AppLocalization {
         // Window titles: translate the title, keep the app suffix ("Convert to JPG · Nashi").
         let suffix = " · Nashi"
         if source.count > suffix.count, source.hasSuffix(suffix) { return text(String(source.dropLast(suffix.count)), language: language) + suffix }
+        // Batch status lines: "File 2 of 5 · <status>" (ConversionEngine.run). A template capture is never translated,
+        // so translate the prefix and the status separately.
+        if let prefix = source.range(of: #"^File [0-9]+ of [0-9]+ · "#, options: .regularExpression) {
+            return text(String(source[..<prefix.upperBound].dropLast(3)), language: language) + " · " + text(String(source[prefix.upperBound...]), language: language)
+        }
+        return templateText(source, table: table) ?? fileMessage(source, language: language, table: table) ?? source
+    }
+    /// Batch errors name the failed input first: "<file name>: <message>" (ImageEngine.tool). Translate the message and
+    /// keep the name verbatim. The name ends in its extension but may itself contain ": ", so only the last ": " that
+    /// follows an extension is the boundary, and the whole rest must be a catalog message. Nothing left of that boundary
+    /// is ever translated, and copy without an extension before ": " ("Original size: …") is unaffected.
+    private static func fileMessage(_ source: String, language: String, table: Table) -> String? {
+        var end = source.endIndex
+        while let separator = source.range(of: ": ", options: .backwards, range: source.startIndex..<end) {
+            let name = String(source[..<separator.lowerBound])
+            guard name.range(of: #"\.[\p{L}\p{N}]{0,9}\p{L}[\p{L}\p{N}]{0,9}$"#, options: .regularExpression) != nil else { end = separator.lowerBound; continue }
+            let message = String(source[separator.upperBound...])
+            guard let value = table.entries[message] ?? templateText(message, table: table) else { return nil }
+            return name + (normalizedLanguage(language) == "fr" ? "\u{00A0}: " : ": ") + value
+        }
+        return nil
+    }
+    private static func templateText(_ source: String, table: Table) -> String? {
         for template in table.templates {
             guard let match = template.expression.firstMatch(in:source,range:NSRange(source.startIndex...,in:source)) else { continue }
             let marker = try! NSRegularExpression(pattern:#"\{([0-9])\}"#)
@@ -104,6 +127,6 @@ public enum AppLocalization {
             }
             return result
         }
-        return source
+        return nil
     }
 }

@@ -27,11 +27,21 @@ def expand(language,values):
 tables={language:expand(language,json.loads((resources/name).read_text(encoding='utf-8'))) for language,name in catalogs.items()}
 # Turkish.json defines the source key set; a string missing from another catalog falls back to English.
 english=tables['tr']
-# Literal copy handed to LText or NashiPill must have a Turkish entry, or it silently stays English.
-call=re.compile(r'(?:LText\(|NashiPill\(title:)((?:[^()\n]|\([^()\n]*\))*?)(?:\)|,(?:symbol|color):)')
-missing=sorted({(source.relative_to(root).as_posix(),literal) for source in (root/'Sources/NashiApp').rglob('*.swift') for match in call.finditer(source.read_text(encoding='utf-8'))
- for literal in re.findall(r'"((?:[^"\\]|\\.)*)"',match.group(1)) if '\\(' not in literal and re.search('[A-Za-z]',literal) and literal not in english})
-if missing:raise SystemExit('Missing Turkish copy:\n'+'\n'.join(f'  {path}: {literal}' for path,literal in missing))
+# Literal copy handed to LText, NashiPill or L10n must have an entry in every catalog, or it silently stays English.
+call=re.compile(r'(?:LText\(|NashiPill\(title:|L10n\.(?:text|uppercase)\()((?:[^()\n]|\([^()\n]*\))*?)(?:\)|,(?:symbol|color):)')
+# Success toast titles reach LText(notice.title) indirectly; only their first literal is the title.
+title=re.compile(r'(?:SuccessNotice\(title:|\.action\()("(?:[^"\\]|\\.)*")')
+# A simple interpolation is looked up through its {0} template ("Opened in \(app)." -> "Opened in {0}.").
+interpolation=re.compile(r'\\\((?:[^()"]|\([^()"]*\))*\)')
+def template(literal):
+ count=itertools.count()
+ return interpolation.sub(lambda _:'{'+str(next(count))+'}',literal)
+routed={(source.relative_to(root).as_posix(),template(literal)) for source in (root/'Sources/NashiApp').rglob('*.swift')
+ for text in [source.read_text(encoding='utf-8')]
+ for literal in [literal for match in call.finditer(text) for literal in re.findall(r'"((?:[^"\\]|\\.)*)"',match.group(1))]+[match.group(1)[1:-1] for match in title.finditer(text)]}
+missing=sorted((path,literal,language) for path,literal in routed for language in catalogs
+ if '\\(' not in literal and re.search('[A-Za-z]',literal) and literal not in tables[language])
+if missing:raise SystemExit('Missing translated copy:\n'+'\n'.join(f'  {path}: {literal} [{language}]' for path,literal,language in missing))
 for language in ['en',*catalogs]:
  directory=root/'Resources/Localizations'/f'{language}.lproj'
  if not check:directory.mkdir(parents=True,exist_ok=True)

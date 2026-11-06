@@ -115,8 +115,8 @@ public enum DocumentEngine {
     public static func extractArchive(_ input: URL, options: OperationOptions, token: CancellationToken) throws -> [URL] {
         let parent = options.outputDirectory ?? input.deletingLastPathComponent()
         try FileManager.default.createDirectory(at: parent, withIntermediateDirectories: true)
-        let name = archiveNamed(input).deletingPathExtension().lastPathComponent + " Extracted"
-        let output = uniqueFolder(name, in: parent)
+        let output = OutputFiles.unique(for: archiveNamed(input), extension: "", suffix: " Extracted", directory: parent)
+        let name = output.lastPathComponent
         let work = try OutputFiles.temporaryDirectory()
         defer { try? FileManager.default.removeItem(at: work) }
         let extracted = work.appendingPathComponent(name, isDirectory: true)
@@ -276,14 +276,6 @@ public enum DocumentEngine {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         return OutputFiles.unique(for: input, extension: format, directory: directory)
     }
-    private static func uniqueFolder(_ name: String, in parent: URL) -> URL {
-        var candidate = parent.appendingPathComponent(name, isDirectory: true), index = 2
-        // lstat-based, so a dangling link with this name is not chosen for moveItem.
-        while (try? FileManager.default.attributesOfItem(atPath: candidate.path)) != nil {
-            candidate = parent.appendingPathComponent("\(name) \(index)", isDirectory: true); index += 1
-        }
-        return candidate
-    }
     private static func publish(_ source: URL, to output: URL, token: CancellationToken) throws -> [URL] {
         try token.check()
         try OutputFiles.validate([source])
@@ -307,8 +299,10 @@ enum RichTextCodec {
             let pattern = try NSRegularExpression(pattern: #"(?i)\bsrc\s*=\s*(["'])(file:[^"']+)\1"#)
             for match in pattern.matches(in: html, range: NSRange(html.startIndex..., in: html)).reversed() {
                 let source = (html as NSString).substring(with: match.range(at: 2))
-                guard let original = URL(string: source) else { continue }
-                let candidate = directory.appendingPathComponent(original.lastPathComponent)
+                // Cocoa leaves "?" in a file name unescaped; read the name from the raw
+                // link, as a URL parser would take "Why?.png" for "Why" and a query.
+                guard let name = source.split(separator: "/").last?.removingPercentEncoding, !name.contains("/") else { continue }
+                let candidate = directory.appendingPathComponent(name)
                 if FileManager.default.fileExists(atPath: candidate.path), let range = Range(match.range(at: 2), in: html) {
                     html.replaceSubrange(range, with: candidate.absoluteString)
                 }

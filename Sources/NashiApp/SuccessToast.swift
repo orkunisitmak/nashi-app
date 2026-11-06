@@ -5,13 +5,15 @@ struct SuccessNotice {
     let title:String
     let detail:String
     var files:[URL]=[]
+    /// File names stay verbatim; counts and result copy in the detail line are UI copy.
+    var detailIsFileName=false
 
     static func filesReady(_ files:[URL])->SuccessNotice {
         SuccessNotice(title:files.isEmpty ? "Nicely done.":"Nicely done. \(files.count) file\(files.count == 1 ? " is":"s are") ready.",
-                      detail:files.first?.lastPathComponent ?? "Your task is complete.",files:files)
+                      detail:files.first?.lastPathComponent ?? "Your task is complete.",files:files,detailIsFileName:!files.isEmpty)
     }
     static func action(_ title:String,files:[URL])->SuccessNotice {
-        SuccessNotice(title:title,detail:files.count == 1 ? files[0].lastPathComponent:"\(files.count) files",files:files)
+        SuccessNotice(title:title,detail:files.count == 1 ? files[0].lastPathComponent:"\(files.count) files",files:files,detailIsFileName:files.count == 1)
     }
 }
 
@@ -84,7 +86,7 @@ private struct SuccessToastView:View {
             NashiCheck()
             VStack(alignment:.leading,spacing:5) {
                 LText(notice.title).font(.system(size:13,weight:.semibold,design:.rounded)).lineLimit(2)
-                Text(notice.detail).font(.system(size:11)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                Group { if notice.detailIsFileName { Text(notice.detail) } else { LText(notice.detail) } }.font(.system(size:11)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
             }.frame(maxWidth:.infinity,alignment:.leading)
             if !notice.files.isEmpty {
                 Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting(notice.files) }

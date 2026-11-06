@@ -148,12 +148,9 @@ struct JobRecord:Codable,Identifiable {
             if panel.runModal() == .OK,let directory=panel.url {
                 var moved:[URL:URL]=[:],failure:Error?
                 do { for source in urls {
-                    var target=directory.appendingPathComponent(source.lastPathComponent)
+                    let target=directory.appendingPathComponent(source.lastPathComponent)
                     if target.standardizedFileURL == source.standardizedFileURL || sameFolder(source.deletingLastPathComponent(),directory) { continue }
-                    // Same names as OutputFiles.unique, but attributesOfItem does not follow links, so a dangling link also takes a name.
-                    var index=2
-                    while (try? FileManager.default.attributesOfItem(atPath:target.path)) != nil { target=directory.appendingPathComponent("\(source.deletingPathExtension().lastPathComponent) \(index)").appendingPathExtension(source.pathExtension.lowercased());index+=1 }
-                    try FileManager.default.moveItem(at:source,to:target);moved[source]=target
+                    moved[source]=try OutputFiles.move(source,into:directory)
                 } } catch { failure=error }
                 // Point the selection at the moved files first: changing it clears the previous result, not this one.
                 inputs=inputs.map{moved[$0] ?? $0}

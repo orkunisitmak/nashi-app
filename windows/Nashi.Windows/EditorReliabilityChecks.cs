@@ -13,6 +13,9 @@ internal static class EditorReliabilityChecks
     }
     internal static void Run(string root,Action<bool,string> check)
     {
+        void Trace(string phase)=>File.AppendAllText(Path.Combine(root,"editor-progress.log"),$"{DateTimeOffset.UtcNow:O} {phase}{Environment.NewLine}");
+        using var editorWatchdog=new System.Threading.Timer(_=>{File.WriteAllText(Path.Combine(root,"editor-timeout.txt"),"Editor reliability checks exceeded 180 seconds. See editor-progress.log.");DesktopInput.HoldMouse(false);Environment.Exit(1);},null,TimeSpan.FromSeconds(180),System.Threading.Timeout.InfiniteTimeSpan);
+        Trace("START audio editor");
         var audio=Path.Combine(root,"Reliability.wav");
         using(var writer=new BinaryWriter(File.Create(audio)))
         {
@@ -56,24 +59,24 @@ internal static class EditorReliabilityChecks
             }
             finally{convert.Close();}
             var pixels=System.Windows.Media.Imaging.BitmapSource.Create(100,60,96,96,PixelFormats.Bgra32,null,new byte[100*60*4],100*4);pixels.Freeze();
-            var image=Path.Combine(root,"Reliability.png");ImageEngine.Save(pixels,image,"png");var photo=new ToolEditor(owner,"editImage","Edit Photo",image,preview:pixels);
+            Trace("START photo editor");var image=Path.Combine(root,"Reliability.png");ImageEngine.Save(pixels,image,"png");var photo=new ToolEditor(owner,"editImage","Edit Photo",image,preview:pixels);
             try
             {
-                photo.Show();DesktopInput.Pump();photo.FieldForTest("Degrees").Text="invalid";var rotate=Children(photo).OfType<Button>().Single(b=>b.Content as string=="Rotate Right");
+                Trace("photo show and invalid rotation");photo.Show();DesktopInput.Pump();photo.FieldForTest("Degrees").Text="invalid";var rotate=Children(photo).OfType<Button>().Single(b=>b.Content as string=="Rotate Right");
                 Exception? failure=null;try{rotate.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));}catch(Exception error){failure=error;}
                 check(failure is null&&photo.FieldForTest("Width").Text=="100","Invalid photo rotation escaped the editor or partially changed dimensions");
                 photo.FieldForTest("Degrees").Text="0";rotate.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 check(photo.FieldForTest("Degrees").Text=="90"&&photo.FieldForTest("Width").Text=="60","Photo rotation did not recover after correcting invalid input");
-                photo.AcceptForTest();var turned=ImageEngine.Load(ImageEngine.Apply("editImage",[image],root,photo.ImageOptions)[0]);
+                Trace("photo first image export");photo.AcceptForTest();var turned=ImageEngine.Load(ImageEngine.Apply("editImage",[image],root,photo.ImageOptions)[0]);
                 check(turned.PixelWidth==60&&turned.PixelHeight==100,$"Rotate Right distorted the photo to {turned.PixelWidth}×{turned.PixelHeight}");
-                Children(photo).OfType<Button>().Single(b=>b.Content as string=="↶ Reset").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));photo.FieldForTest("Degrees").Text="45";DesktopInput.Pump(1500);photo.AcceptForTest();
-                var tilted=ImageEngine.Load(ImageEngine.Apply("editImage",[image],root,photo.ImageOptions)[0]);
+                Children(photo).OfType<Button>().Single(b=>b.Content as string=="↶ Reset").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));Trace("photo reset and 45-degree preview");photo.FieldForTest("Degrees").Text="45";DesktopInput.Pump(1500);photo.AcceptForTest();
+                Trace("photo second image export");var tilted=ImageEngine.Load(ImageEngine.Apply("editImage",[image],root,photo.ImageOptions)[0]);
                 check(photo.IsVisible&&tilted.PixelWidth==114&&tilted.PixelHeight==114,$"A 45° photo rotation crashed the preview or lost the turned corners: {tilted.PixelWidth}×{tilted.PixelHeight}");
                 var shown=(System.Windows.Media.Imaging.BitmapSource)((Image)Children(photo).OfType<Canvas>().First(c=>c.Children.Count>0&&c.Children[0] is Image).Children[0]).Source;
                 check(shown.PixelWidth==114&&shown.PixelHeight==114,$"The 45° preview ({shown.PixelWidth}×{shown.PixelHeight}) differs from the exported photo");
             }
-            finally{photo.Close();}
-            var single=new ToolEditor(owner,"resize","Resize",image,preview:pixels);
+            finally{Trace("photo close");photo.Close();}
+            Trace("START single-image resize editor");var single=new ToolEditor(owner,"resize","Resize",image,preview:pixels);
             try
             {
                 single.Show();DesktopInput.Pump();single.FieldForTest("Height").Text="30";single.AcceptForTest();var exact=ImageEngine.Load(ImageEngine.Apply("resize",[image],root,single.ImageOptions)[0]);
@@ -128,6 +131,17 @@ internal static class EditorReliabilityChecks
                 check(canvas.Children.Count==shapes,"A click without a drag left a redaction box that is never exported");
             }
             finally{cover.Close();}
+            var annotate=new ToolEditor(owner,"annotate","Annotate Photo",image,preview:pixels);
+            try
+            {
+                annotate.Show();DesktopInput.Pump();var canvas=Children(annotate).OfType<Canvas>().First(c=>c.Children.Count>0&&c.Children[0] is Image);var mode=Children(annotate).OfType<ComboBox>().Single(c=>c.Items.Contains("Marker"));
+                var notImage=Path.Combine(root,"Reliability not an image.png");File.WriteAllText(notImage,"not an image");
+                foreach(var unreadable in new[]{notImage,Path.Combine(root,"Reliability missing.png")}){Exception? failure=null;try{annotate.ChooseAnnotationImageForTest(unreadable);}catch(Exception error){failure=error;}check(failure is IOException or NotSupportedException&&mode.SelectedItem as string=="Marker","An unreadable annotation image was not rejected when chosen: "+Path.GetFileName(unreadable)+" "+failure?.GetType().Name);}
+                var sticker=Path.Combine(root,"Reliability sticker.png");File.Copy(image,sticker,true);annotate.ChooseAnnotationImageForTest(sticker);File.Delete(sticker);var shapes=canvas.Children.Count;
+                Exception? placing=null;try{foreach(var routed in new[]{UIElement.MouseLeftButtonDownEvent,UIElement.MouseLeftButtonUpEvent})canvas.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice,0,MouseButton.Left){RoutedEvent=routed});}catch(Exception error){placing=error;}
+                check(placing is null&&mode.SelectedItem as string=="Image"&&canvas.Children.Count==shapes+1&&canvas.Children[^1] is Image{Source:System.Windows.Media.Imaging.BitmapSource{PixelWidth:100}},"Placing an annotation image reread the file after it was chosen: "+placing?.GetType().Name);
+            }
+            finally{annotate.Close();}
             var video=new ToolEditor(owner,"redactVideo","Redact Video",audio,new MediaInfo(5,new FileInfo(audio).Length,[new MediaStream(0,"video","h264",100,60,false)]),pixels);
             try
             {
