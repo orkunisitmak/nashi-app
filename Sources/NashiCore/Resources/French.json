@@ -555,6 +555,7 @@
   "Could not decode the audio waveform.": "Impossible de décoder la forme d’onde audio.",
   "macOS could not open the generated media preview.": "macOS n’a pas pu ouvrir l’aperçu multimédia généré.",
   "Visualization dimensions must be between 16 and 8,192 pixels.": "Les dimensions de la visualisation doivent être comprises entre 16 et 8 192 pixels.",
+  "Image dimensions must be between 1 and 32,000 pixels.": "Les dimensions de l’image doivent être comprises entre 1 et 32 000 pixels.",
   "Choose a still image for the video.": "Choisissez une image fixe pour la vidéo.",
   "Spectrum": "Spectre",
   "Bars": "Barres",

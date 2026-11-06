@@ -1257,6 +1257,7 @@
 "ICONS" = "SİMGELER";
 "IMAGE" = "GÖRSEL";
 "IMAGE COMPRESSION" = "GÖRSEL SIKIŞTIRMA";
+"IMAGE DIMENSIONS MUST BE BETWEEN 1 AND 32,000 PIXELS." = "GÖRSEL BOYUTLARI 1 İLE 32.000 PİKSEL ARASINDA OLMALI.";
 "IMAGE EDITING CANVAS" = "GÖRSEL DÜZENLEME TUVALİ";
 "IMAGE EXCEEDS 200 MB." = "GÖRSEL 200 MB'I AŞIYOR.";
 "IMAGE FIT" = "GÖRSEL YERLEŞİMİ";
@@ -1287,6 +1288,7 @@
 "Image" = "Görsel";
 "Image Compression" = "Görsel Sıkıştırma";
 "Image compression" = "Görsel sıkıştırma";
+"Image dimensions must be between 1 and 32,000 pixels." = "Görsel boyutları 1 ile 32.000 piksel arasında olmalı.";
 "Image editing canvas" = "Görsel düzenleme tuvali";
 "Image exceeds 200 MB." = "Görsel 200 MB'ı aşıyor.";
 "Image fit" = "Görsel yerleşimi";

@@ -204,4 +204,11 @@ final class AppLocalizationTests:XCTestCase {
             XCTAssertEqual(AppLocalization.text(source,language:"en"),source)
         }
     }
+    /// Edit Image and Compress show the size limit through LText, so the sentence needs a catalog entry.
+    func testImageDimensionLimitErrorIsTranslated() {
+        let source="Image dimensions must be between 1 and 32,000 pixels."
+        XCTAssertEqual(AppLocalization.text(source,language:"tr"),"Görsel boyutları 1 ile 32.000 piksel arasında olmalı.")
+        XCTAssertEqual(AppLocalization.text(source,language:"fr"),"Les dimensions de l’image doivent être comprises entre 1 et 32 000 pixels.")
+        XCTAssertEqual(AppLocalization.text(source,language:"en"),source)
+    }
 }
