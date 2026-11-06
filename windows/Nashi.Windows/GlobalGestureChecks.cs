@@ -81,6 +81,11 @@ internal static class GlobalGestureChecks
                 check(controller.ActiveWheel is not {Revealed:true},"A plain Shift-drag without files showed the global wheel");
             }
             finally{DesktopInput.HoldMouse(false);DesktopInput.Hold(Key.LeftShift,false);DesktopInput.Pump(250);plain.Close();}
+            // An OLE drag the hidden wheel has nothing for (a Premiere clip Alt-drag, #768) must reach the app below.
+            check(GlobalDropWheel.PassesThrough(false,0,false,true)&&!GlobalDropWheel.PassesThrough(false,0,false,false)&&!GlobalDropWheel.PassesThrough(false,2,false,true)&&!GlobalDropWheel.PassesThrough(false,0,true,true)&&!GlobalDropWheel.PassesThrough(true,0,false,true),"Hidden wheel pass-through ignored files, links, the no-tools message or a pending link hint");
+            var probe=new GlobalDropWheel("actions",1,(_,_)=>{},()=>null,()=>true);probe.Show();DesktopInput.Pump(80);
+            try{check(!probe.PassingThrough,"A new hidden wheel was click-through before any drag reached it");probe.PassThrough();check(probe.PassingThrough&&!probe.Revealed&&probe.IsVisible,"Hidden wheel did not become click-through for a drag it cannot use");check(Task.Run(()=>probe.State).Result.EndsWith("passThrough=True"),"Wheel state was not readable off the UI thread after pass-through");}
+            finally{probe.Close();}
             if(controller.LinkShortcutRegistered){selected=null;DesktopInput.Key(owner,Key.D,control:true,shift:true);check(selected=="link-shortcut","Global copied-link shortcut Ctrl+Shift+D");}
             var beforeLaunch=main?.SelectedFiles.ToArray();var modal=new Window{Owner=owner,Width=300,Height=200,WindowStartupLocation=WindowStartupLocation.CenterOwner,Content=new System.Windows.Controls.Border{Background=System.Windows.Media.Brushes.DarkOliveGreen}};Exception? modalError=null;
             modal.Dispatcher.BeginInvoke(()=>
