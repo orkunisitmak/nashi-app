@@ -33,7 +33,7 @@ public static class AtomicFile
         }
     }
 
-    public static void RecoverOrphan(string path, Func<string, bool>? validate = null)
+    public static void RecoverOrphan(string path, Func<string, bool>? validate = null, long? maxBytes = null)
     {
         var full = Path.GetFullPath(path);
         var directory = Path.GetDirectoryName(full);
@@ -43,7 +43,7 @@ public static class AtomicFile
         {
             var orphan = Directory.EnumerateFiles(directory, name + ".*.tmp")
                 .OrderByDescending(candidate => File.GetLastWriteTimeUtc(candidate))
-                .FirstOrDefault(candidate => File.Exists(candidate) && IsValidJson(candidate, validate));
+                .FirstOrDefault(candidate => File.Exists(candidate) && IsValidJson(candidate, validate, maxBytes));
             if (orphan is null) return;
             if (!File.Exists(full)) File.Move(orphan, full);
             else if (File.GetLastWriteTimeUtc(orphan) > File.GetLastWriteTimeUtc(full)) File.Move(orphan, full, true);
@@ -72,10 +72,11 @@ public static class AtomicFile
         throw new IOException("Could not create a private temporary directory.");
     }
 
-    private static bool IsValidJson(string file, Func<string, bool>? validate)
+    private static bool IsValidJson(string file, Func<string, bool>? validate, long? maxBytes)
     {
         try
         {
+            if(maxBytes is not null && new FileInfo(file).Length>maxBytes.Value)return false;
             var contents = File.ReadAllText(file);
             System.Text.Json.JsonDocument.Parse(contents).Dispose();
             return validate?.Invoke(contents) ?? true;

@@ -72,11 +72,11 @@ internal static class UpdateInstaller
             }
             catch(Exception restoreError)
             {
-                throw new IOException("Nashi could not install the update, and the previous installation could not be restored from "+backup+".",new AggregateException(payloadError,restoreError));
+                throw new IOException("Nashi could not install the update ("+payloadError.Message+") and the previous installation could not be restored from "+backup+": "+restoreError.Message,new AggregateException(payloadError,restoreError));
             }
-            throw new IOException("Nashi could not install the update; the previous installation was restored.",payloadError);
+            throw new IOException("Nashi could not install the update; the previous installation was restored: "+payloadError.Message,payloadError);
         }
-        Process.Start(new ProcessStartInfo(Path.Combine(target,"Nashi.exe")){UseShellExecute=true,WorkingDirectory=target});
+        using var restarted=Process.Start(new ProcessStartInfo(Path.Combine(target,"Nashi.exe")){UseShellExecute=true,WorkingDirectory=target});
         // Backups remain recoverable; the app never recursively deletes a user's
         // portable directory merely because an update succeeded.
         return 0;
