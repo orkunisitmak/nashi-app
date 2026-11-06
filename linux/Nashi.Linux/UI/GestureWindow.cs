@@ -20,6 +20,7 @@ public sealed class GestureWindow:Window
     private readonly Canvas canvas=new();private readonly Border hint;private readonly TextBlock hintText=new(){FontSize=15,TextAlignment=TextAlignment.Center,TextWrapping=TextWrapping.Wrap,MaxWidth=560};
     private readonly PetalWheel wheel=new(WheelSize){IsVisible=false};
     private Point? origin;private string? mode;private string[]? files;private string? url;private bool clickMode;
+    private readonly DispatcherTimer dwell=new(){Interval=TimeSpan.FromMilliseconds(350)};private string? pending;
     private readonly DispatcherTimer idle=new(){Interval=TimeSpan.FromSeconds(9)};private readonly DispatcherTimer nudge=new(){Interval=TimeSpan.FromSeconds(2.5)};
     public PetalWheel Wheel=>wheel;
 
@@ -43,6 +44,8 @@ public sealed class GestureWindow:Window
         canvas.PointerPressed+=(_,e)=>{if(!clickMode||e.Source==canvas)closeAll();};
         KeyDown+=(_,e)=>{if(e.Key==Key.Escape)closeAll();else if(clickMode&&e.Key==Key.Enter)wheel.Choose();};
         idle.Tick+=(_,_)=>{idle.Stop();if(origin is null&&!clickMode)closeAll();};
+        // The hot edge opens a wheel of the three wheels; resting on one for a moment opens it.
+        dwell.Tick+=(_,_)=>{dwell.Stop();if(mode=="modes"&&pending is {} next&&wheel.SelectedItem?.Id==next)ShowWheel(next[5..]);};
         // Some sessions don't pass a drag from Wayland apps to this layer (KWin's XWayland bridge can get
         // stuck until the next login). Say so, and offer the copy-and-shortcut route that always works.
         nudge.Tick+=(_,_)=>{nudge.Stop();if(origin is null&&!clickMode){var paste=settings.Shortcuts.GetValueOrDefault("clipboard","");SetHint(L10n.T("The drag didn't reach Nashi.")+"\n"+L10n.T("Drop the files, press Ctrl+C on them, then")+" "+(paste.Length>0?paste:"Ctrl+V")+".");}};
@@ -50,7 +53,7 @@ public sealed class GestureWindow:Window
         {
             Log($"layer opened on {screen.Bounds} mode={fixedMode??"gesture"}");
             if(presetFiles is {Length:>0}){files=presetFiles;origin=new(Width/2,Height/2);clickMode=true;ShowWheel(fixedMode??"tools");}
-            else{SetHint(fixedMode is null?Directions():L10n.T("Keep dragging here, then drop on a slice."));idle.Start();nudge.Start();}
+            else{SetHint(fixedMode is null?Directions():fixedMode=="modes"?L10n.T("Keep dragging: rest on Tools, Convert or File actions."):L10n.T("Keep dragging here, then drop on a slice."));idle.Start();nudge.Start();}
             Activate();
         };
     }
@@ -124,6 +127,7 @@ public sealed class GestureWindow:Window
             ShowWheel(target);return;
         }
         if(wheel.IsVisible)wheel.Selected=wheel.HitTest(point-WheelOrigin);
+        if(mode=="modes"){var id=wheel.SelectedItem?.Id;if(id!=pending){pending=id;dwell.Stop();if(id is not null)dwell.Start();}}
     }
     private void Release(Point point)
     {
@@ -131,6 +135,7 @@ public sealed class GestureWindow:Window
         var chosen=wheel.SelectedItem;
         Log($"Drop at {point:F0} files={files?.Length.ToString()??"none"} mode={mode} petal={chosen?.Id}");
         if(files is null&&url is null||mode is null){closeAll();return;}
+        if(chosen?.Id.StartsWith("mode:",StringComparison.Ordinal)==true){clickMode=true;ShowWheel(chosen.Id[5..]);SetHint(L10n.T("Choose a slice."),origin);return;}
         // Without the files during the drag the petals were placeholders. Pick the same petal by position
         // when it can be found; otherwise show the real wheel to click.
         if(wheel.Items.Any(i=>i.Id.StartsWith("placeholder:",StringComparison.Ordinal)))
@@ -146,7 +151,15 @@ public sealed class GestureWindow:Window
         mode=target;var center=origin??new Point(Width/2,Height/2);
         // Keep the whole wheel on screen even when the drag entered near an edge.
         var margin=WheelSize/2+8;center=new(Math.Clamp(center.X,margin,Math.Max(margin,Width-margin)),Math.Clamp(center.Y,margin,Math.Max(margin,Height-margin)));origin=center;
-        var title=target switch{"convert"=>"Convert","actions"=>"File actions",_=>"Tools"};
+        var title=target switch{"convert"=>"Convert","actions"=>"File actions","modes"=>"Nashi",_=>"Tools"};
+        if(target=="modes")
+        {
+            IReadOnlyList<ToolChoice> modes=[new("mode:tools","Tools","⚙"),new("mode:convert","Convert","⇄"),new("mode:actions","File actions","▱")];
+            if(files is not null)modes=modes.Where(m=>main.ChoicesFor(files,m.Id[5..]).Count>0).ToList();
+            if(files is null&&url is not null){ShowWheel("convert");return;}
+            wheel.Items=modes;wheel.CenterTitle="Nashi";wheel.IsVisible=true;
+            Canvas.SetLeft(wheel,center.X-WheelSize/2);Canvas.SetTop(wheel,center.Y-WheelSize/2);SetHint(L10n.T("Rest on a wheel to open it."),center);return;
+        }
         // A web link gets the download wheel whatever the direction.
         if(files is null&&url is not null)title="Web link";
         var choices=files is not null?main.ChoicesFor(files,target):url is not null?MainWindow.WebChoices(url):[new ToolChoice("placeholder:"+target,title,Ui.Symbol(target=="actions"?"copy":target))];

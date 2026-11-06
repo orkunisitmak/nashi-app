@@ -10,6 +10,10 @@ Nashi for Linux is a native desktop app built with [Avalonia](https://avaloniaui
 
 Nashi then appears in your applications menu and under **Open With** for supported files, and `nashi` works in a terminal. You can also run `Nashi/nashi` straight from the extracted folder without installing. `uninstall.sh` removes the app but keeps your Library and settings. The build is self-contained, so you don't need to install .NET.
 
+## Hot edge: just drag
+
+Drag files (from Dolphin, the desktop or anywhere else) to the **left edge of the screen**, with no key. A small wheel of the three wheels opens. Rest on Tools, Convert or File actions for a moment to open that wheel, then drop on a petal. The edge is an invisible 2-pixel Wayland layer-shell strip. Its corners are left free for the desktop's own corner actions. You can choose the left, right or bottom edge, or turn it off, under **Settings → Shortcuts & gestures → Hot edge**. It needs a Wayland compositor with layer-shell: KDE Plasma, Sway or Hyprland.
+
 ## Drag gestures and system-wide shortcuts
 
 On macOS and Windows you hold a modifier while dragging a file anywhere to get the wheel. Wayland doesn't show an app another app's drag, so on Linux you press a **system-wide shortcut while dragging** instead. Nashi registers these with KDE Plasma (kglobalaccel). You can change them under **Settings → Shortcuts & gestures** by clicking a shortcut and pressing the new keys. Nashi warns you when another app already uses a combination.

@@ -28,6 +28,8 @@ public sealed record LinuxSettings
     public bool RunInBackground{get;init;}=true;
     /// Conversions and simple tools chosen on the gesture layer run at once with their saved defaults.
     public bool GestureQuickRun{get;init;}=true;
+    /// Hot edge: drag files to this screen edge to open the wheel without a key ("off", "left", "right", "bottom").
+    public string HotEdge{get;init;}="left";
     public bool StartAtLogin{get;init;}
     /// Watched folders: new files there are converted automatically while Nashi runs.
     public List<FolderRule> Watches{get;init;}=[];
@@ -46,7 +48,7 @@ public sealed record LinuxSettings
             var shortcuts=Actions.ToDictionary(a=>a.Id,a=>loaded.Shortcuts?.GetValueOrDefault(a.Id) is {} combo&&(combo.Length==0||KeyCombo.ToQt(combo) is not null)?combo:a.Default);
             var gestures=Directions.ToDictionary(d=>d,d=>loaded.Gestures?.GetValueOrDefault(d) is {} wheel&&Wheels.Contains(wheel)?wheel:new LinuxSettings().Gestures[d]);
             var watches=(loaded.Watches??[]).Where(w=>w is not null&&Path.IsPathFullyQualified(w.Folder??"")&&w.Extensions is {Length:>0}&&!string.IsNullOrWhiteSpace(w.Format)).Take(50).ToList();
-            return loaded with{Watches=watches,Shortcuts=shortcuts,Gestures=gestures,Theme=Themes.Contains(loaded.Theme)?loaded.Theme:"classic"};
+            return loaded with{HotEdge=loaded.HotEdge is "off" or "left" or "right" or "bottom"?loaded.HotEdge:"left",Watches=watches,Shortcuts=shortcuts,Gestures=gestures,Theme=Themes.Contains(loaded.Theme)?loaded.Theme:"classic"};
         }
         catch(Exception error)when(error is JsonException or IOException or UnauthorizedAccessException){return new();}
     }

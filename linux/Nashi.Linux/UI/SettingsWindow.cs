@@ -72,10 +72,11 @@ public sealed class SettingsWindow:Window
             var label=Ui.Text(labels[d],13).Also(t=>{t.VerticalAlignment=VerticalAlignment.Center;t.Margin=new(0,0,0,8);});Grid.SetRow(label,n);Grid.SetRow(picker,n);Grid.SetColumn(picker,1);directions.Children.Add(label);directions.Children.Add(picker);
         }
         var available=main.ShortcutsAvailable||!linux.GlobalShortcuts?null:Ui.Text("System-wide shortcuts need KDE Plasma (kglobalaccel). On other desktops, use Ctrl+Space and drop modifiers inside Nashi.",12,"muted");
+        var hotEdge=Ui.Choice([("off","Off"),("left","Left edge"),("right","Right edge"),("bottom","Bottom edge")],linux.HotEdge);
         var quickRun=new CheckBox{Content=L10n.T("Conversions and simple tools chosen by gesture run at once with their saved defaults"),IsChecked=linux.GestureQuickRun};
         var keys=Ui.Stack(4,enabled,available??new Control(),Ui.Text("Click a shortcut, then press the new keys. Esc cancels, Backspace clears. Each needs at least one of Meta, Ctrl, Alt or Shift.",11,"muted").Also(t=>t.Margin=new(0,4,0,8)),list,
             Ui.Text("Gesture directions",13,"title").Also(t=>t.Margin=new(0,18,0,4)),
-            Ui.Text("While dragging files anywhere, press the gesture shortcut, then move the pointer. The direction picks the wheel; drop on a slice to run it.",11,"muted").Also(t=>t.Margin=new(0,0,0,8)),directions,quickRun);
+            Ui.Text("While dragging files anywhere, press the gesture shortcut, then move the pointer. The direction picks the wheel; drop on a slice to run it.",11,"muted").Also(t=>t.Margin=new(0,0,0,8)),directions,quickRun,Ui.Text("Hot edge",13,"title").Also(t=>t.Margin=new(0,18,0,4)),Ui.Field("Drag files to this screen edge to open the wheel, no key needed",hotEdge,"Corners stay free for the desktop's own corner actions. Needs Wayland with layer-shell (KDE Plasma, Sway, Hyprland)."));
 
         // Automation: watched folders.
         var rules=new StackPanel{Spacing=10};var ruleRows=new List<Func<FolderRule?>>();
@@ -125,7 +126,7 @@ public sealed class SettingsWindow:Window
                     if(!Directory.Exists(w.Folder))throw new ArgumentException(L10n.T("Choose an existing watched folder:")+" "+w.Folder);
                     if(w.Extensions.Length==0||w.Format.Length==0||w.Extensions.Any(e=>!FeatureCatalog.Formats(["x."+e]).Contains(w.Format)))throw new ArgumentException(L10n.T("Choose extensions that can become")+" "+w.Format.ToUpperInvariant());
                 }
-                var next=linux with{Watches=watches,GlobalShortcuts=enabled.IsChecked==true,Shortcuts=combos,Gestures=pickers.ToDictionary(x=>x.Key,x=>Ui.Value(x.Value)),Theme=theme,RunInBackground=background.IsChecked==true,GestureQuickRun=quickRun.IsChecked==true,StartAtLogin=login.IsChecked==true};
+                var next=linux with{Watches=watches,GlobalShortcuts=enabled.IsChecked==true,Shortcuts=combos,Gestures=pickers.ToDictionary(x=>x.Key,x=>Ui.Value(x.Value)),Theme=theme,RunInBackground=background.IsChecked==true,GestureQuickRun=quickRun.IsChecked==true,HotEdge=Ui.Value(hotEdge),StartAtLogin=login.IsChecked==true};
                 main.SaveLinuxSettings(next);App.SetBackground(main,next.RunInBackground);saved=true;Close(true);
             }
             catch(Exception error)when(error is ArgumentException or IOException or UnauthorizedAccessException){problem.Text=L10n.T(error.Message);}

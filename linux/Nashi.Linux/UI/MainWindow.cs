@@ -48,7 +48,7 @@ public sealed partial class MainWindow:Window
         SingleInstance.FilesReceived+=paths=>Dispatcher.UIThread.Post(()=>{Add(paths);Bring();});
         _=InitShortcutsAsync();
         if(HasMedia)Thumbnails.Ffmpeg=tools.Executable("ffmpeg");
-        StartWatching();
+        StartWatching();ApplyHotEdge();
     }
 
     /// Builds the whole window; used again when the language changes.

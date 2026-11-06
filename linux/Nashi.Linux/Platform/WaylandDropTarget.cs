@@ -58,7 +58,8 @@ public sealed unsafe class WaylandDropTarget
 
     // ---- state ----------------------------------------------------------------------------
     private readonly nint display;private nint compositor,shm,seat,manager,shell,device;
-    private nint surface,layer,pool,buffer;private int width,height;private nint offer;private readonly HashSet<string> mimes=[];private readonly Dictionary<nint,HashSet<string>> offers=[];
+    private sealed class Pane{public nint Surface,Layer,Pool,Buffer;public int Width,Height;}
+    private Pane? overlay,edge;private nint offer;private readonly HashSet<string> mimes=[];private readonly Dictionary<nint,HashSet<string>> offers=[];
     private uint serial;private double x,y;private bool inside;
     private readonly GCHandle self;private readonly object gate=new();
     /// Pointer position in screen pixels (layer surface covers the output).
@@ -68,6 +69,8 @@ public sealed unsafe class WaylandDropTarget
     public event Action<string[],double,double>? Dropped;
     /// The dragged URIs, read while the drag is still going on.
     public event Action<string[]>? Offered;
+    /// A drag touched the hot edge strip.
+    public event Action<double,double>? EdgeEntered;
 
     private WaylandDropTarget(nint display){this.display=display;self=GCHandle.Alloc(this);}
     public static WaylandDropTarget? TryCreate()
@@ -92,54 +95,67 @@ public sealed unsafe class WaylandDropTarget
     }
 
     /// Covers the screen with an invisible overlay that accepts drops until Hide.
-    public void Show()
+    public void Show(){lock(gate)overlay??=Open(15,-1,0,0,(0,0,0,0),"nashi-gesture");}
+    public void Hide(){lock(gate)Close(ref overlay);}
+    /// The hot edge: an invisible 2-pixel strip along one screen edge (corners left free for the
+    /// desktop's own corner actions). A drag that touches it raises EdgeEntered, no key needed.
+    public void ShowEdge(string side)
     {
         lock(gate)
         {
-            if(layer!=0)return;
-            long* a=stackalloc long[6];
-            a[0]=0;surface=wl_proxy_marshal_array_flags(compositor,0,Surface,wl_proxy_get_version(compositor),0,a);
-            var name=Str("nashi-gesture");
-            a[0]=0;a[1]=surface;a[2]=0;a[3]=3;a[4]=name;   // layer 3 = overlay, output null = current one
-            layer=wl_proxy_marshal_array_flags(shell,0,LayerSurface,1,0,a);
-            wl_proxy_add_listener(layer,LayerListener,GCHandle.ToIntPtr(self));
-            a[0]=15;wl_proxy_marshal_array_flags(layer,1,0,1,0,a);   // anchor all edges
-            a[0]=-1;wl_proxy_marshal_array_flags(layer,2,0,1,0,a);   // exclusive zone -1: ignore panels, cover everything
-            a[0]=0;a[1]=0;wl_proxy_marshal_array_flags(layer,0,0,1,0,a);   // size 0,0: the compositor sizes it
-            wl_proxy_marshal_array_flags(surface,6,0,wl_proxy_get_version(surface),0,a);   // commit, then wait for configure
-            wl_display_flush(display);
+            Close(ref edge);
+            // Anchors: top 1, bottom 2, left 4, right 8. Margins: top, right, bottom, left.
+            edge=side switch
+            {
+                "left"=>Open(1|2|4,0,2,0,(48,0,48,0),"nashi-edge"),
+                "right"=>Open(1|2|8,0,2,0,(48,0,48,0),"nashi-edge"),
+                "bottom"=>Open(4|8|2,0,0,2,(0,48,0,48),"nashi-edge"),
+                _=>null
+            };
         }
     }
-    public void Hide()
+    private Pane Open(uint anchor,int exclusive,uint w,uint h,(int Top,int Right,int Bottom,int Left) margin,string name)
     {
-        lock(gate)
-        {
-            if(layer==0)return;long* a=stackalloc long[1];
-            wl_proxy_marshal_array_flags(layer,7,0,1,Destroy,a);layer=0;
-            if(buffer!=0){wl_proxy_marshal_array_flags(buffer,0,0,1,Destroy,a);buffer=0;}
-            if(pool!=0){wl_proxy_marshal_array_flags(pool,1,0,1,Destroy,a);pool=0;}
-            wl_proxy_marshal_array_flags(surface,0,0,wl_proxy_get_version(surface),Destroy,a);surface=0;
-            wl_display_flush(display);
-        }
+        var pane=new Pane();long* a=stackalloc long[6];
+        a[0]=0;pane.Surface=wl_proxy_marshal_array_flags(compositor,0,Surface,wl_proxy_get_version(compositor),0,a);
+        a[0]=0;a[1]=pane.Surface;a[2]=0;a[3]=3;a[4]=Str(name);   // layer 3 = overlay, output null = current one
+        pane.Layer=wl_proxy_marshal_array_flags(shell,0,LayerSurface,1,0,a);
+        wl_proxy_add_listener(pane.Layer,LayerListener,GCHandle.ToIntPtr(self));
+        a[0]=anchor;wl_proxy_marshal_array_flags(pane.Layer,1,0,1,0,a);
+        a[0]=exclusive;wl_proxy_marshal_array_flags(pane.Layer,2,0,1,0,a);   // -1: ignore panels and cover everything
+        a[0]=margin.Top;a[1]=margin.Right;a[2]=margin.Bottom;a[3]=margin.Left;wl_proxy_marshal_array_flags(pane.Layer,3,0,1,0,a);
+        a[0]=w;a[1]=h;wl_proxy_marshal_array_flags(pane.Layer,0,0,1,0,a);   // 0 = sized by the anchors
+        wl_proxy_marshal_array_flags(pane.Surface,6,0,wl_proxy_get_version(pane.Surface),0,a);   // commit, then wait for configure
+        wl_display_flush(display);return pane;
+    }
+    private void Close(ref Pane? pane)
+    {
+        if(pane is null)return;long* a=stackalloc long[1];
+        wl_proxy_marshal_array_flags(pane.Layer,7,0,1,Destroy,a);
+        if(pane.Buffer!=0)wl_proxy_marshal_array_flags(pane.Buffer,0,0,1,Destroy,a);
+        if(pane.Pool!=0)wl_proxy_marshal_array_flags(pane.Pool,1,0,1,Destroy,a);
+        wl_proxy_marshal_array_flags(pane.Surface,0,0,wl_proxy_get_version(pane.Surface),Destroy,a);
+        pane=null;wl_display_flush(display);
     }
     private void Configure(nint layerSurface,uint configureSerial,uint w,uint h)
     {
         lock(gate)
         {
-            if(layerSurface!=layer||w==0||h==0)return;long* a=stackalloc long[6];
-            a[0]=configureSerial;wl_proxy_marshal_array_flags(layer,6,0,1,0,a);   // ack_configure
-            if(buffer==0||w!=width||h!=height)
+            var pane=overlay?.Layer==layerSurface?overlay:edge?.Layer==layerSurface?edge:null;
+            if(pane is null||w==0||h==0)return;long* a=stackalloc long[6];
+            a[0]=configureSerial;wl_proxy_marshal_array_flags(pane.Layer,6,0,1,0,a);   // ack_configure
+            if(pane.Buffer==0||w!=pane.Width||h!=pane.Height)
             {
-                if(buffer!=0){wl_proxy_marshal_array_flags(buffer,0,0,1,Destroy,a);buffer=0;}if(pool!=0){wl_proxy_marshal_array_flags(pool,1,0,1,Destroy,a);pool=0;}
-                width=(int)w;height=(int)h;var size=(long)width*height*4;
+                if(pane.Buffer!=0)wl_proxy_marshal_array_flags(pane.Buffer,0,0,1,Destroy,a);if(pane.Pool!=0)wl_proxy_marshal_array_flags(pane.Pool,1,0,1,Destroy,a);
+                pane.Width=(int)w;pane.Height=(int)h;var size=(long)pane.Width*pane.Height*4;
                 // A zero-filled ARGB8888 buffer is fully transparent; ftruncate zero-fills, so no mmap is needed.
                 var fd=memfd_create("nashi-drop",1);if(fd<0)return;ftruncate(fd,size);
-                a[0]=0;a[1]=fd;a[2]=size;pool=wl_proxy_marshal_array_flags(shm,0,ShmPool,1,0,a);close(fd);
-                a[0]=0;a[1]=0;a[2]=width;a[3]=height;a[4]=width*4;a[5]=0;buffer=wl_proxy_marshal_array_flags(pool,0,Buffer,1,0,a);
+                a[0]=0;a[1]=fd;a[2]=size;pane.Pool=wl_proxy_marshal_array_flags(shm,0,ShmPool,1,0,a);close(fd);
+                a[0]=0;a[1]=0;a[2]=pane.Width;a[3]=pane.Height;a[4]=pane.Width*4;a[5]=0;pane.Buffer=wl_proxy_marshal_array_flags(pane.Pool,0,Buffer,1,0,a);
             }
-            a[0]=buffer;a[1]=0;a[2]=0;wl_proxy_marshal_array_flags(surface,1,0,wl_proxy_get_version(surface),0,a);   // attach
-            a[0]=0;a[1]=0;a[2]=width;a[3]=height;wl_proxy_marshal_array_flags(surface,2,0,wl_proxy_get_version(surface),0,a);   // damage
-            wl_proxy_marshal_array_flags(surface,6,0,wl_proxy_get_version(surface),0,a);   // commit
+            a[0]=pane.Buffer;a[1]=0;a[2]=0;wl_proxy_marshal_array_flags(pane.Surface,1,0,wl_proxy_get_version(pane.Surface),0,a);   // attach
+            a[0]=0;a[1]=0;a[2]=pane.Width;a[3]=pane.Height;wl_proxy_marshal_array_flags(pane.Surface,2,0,wl_proxy_get_version(pane.Surface),0,a);   // damage
+            wl_proxy_marshal_array_flags(pane.Surface,6,0,wl_proxy_get_version(pane.Surface),0,a);   // commit
             wl_display_flush(display);
         }
     }
@@ -178,7 +194,9 @@ public sealed unsafe class WaylandDropTarget
     }
     [UnmanagedCallersOnly]private static void OnEnter(nint data,nint device,uint serial,nint surface,int fx,int fy,nint offer)
     {
-        var t=Of(data);bool ours;lock(t.gate){ours=surface==t.surface&&surface!=0;t.serial=serial;t.offer=offer;t.early=null;t.mimes.Clear();if(t.offers.TryGetValue(offer,out var set))t.mimes.UnionWith(set);}
+        var t=Of(data);bool ours,atEdge;lock(t.gate){ours=surface!=0&&surface==t.overlay?.Surface;atEdge=surface!=0&&surface==t.edge?.Surface;t.serial=serial;t.offer=offer;t.early=null;t.mimes.Clear();if(t.offers.TryGetValue(offer,out var set))t.mimes.UnionWith(set);}
+        // The hot edge only announces the drag; the full overlay then takes it over.
+        if(atEdge&&t.overlay is null){t.EdgeEntered?.Invoke(fx/256.0,fy/256.0);return;}
         if(!ours||offer==0)return;
         t.inside=true;t.x=fx/256.0;t.y=fy/256.0;
         long* a=stackalloc long[2];var mime=t.Mime();var m=mime is null?0:Str(mime);

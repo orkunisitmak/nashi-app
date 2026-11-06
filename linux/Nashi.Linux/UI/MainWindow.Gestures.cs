@@ -119,6 +119,7 @@ public sealed partial class MainWindow
         wayland.Entered+=(x,y)=>Dispatcher.UIThread.Post(()=>Layer()?.ExternalDrag(x,y));
         wayland.Moved+=(x,y)=>Dispatcher.UIThread.Post(()=>Layer()?.ExternalDrag(x,y));
         wayland.Offered+=uris=>Dispatcher.UIThread.Post(()=>Layer()?.ExternalOffer(uris));
+        wayland.EdgeEntered+=(_,_)=>Dispatcher.UIThread.Post(()=>{if(gestures.Count==0&&!busy){GestureWindow.Log("hot edge");StartGesture("modes");}});
         wayland.Dropped+=(uris,x,y)=>Dispatcher.UIThread.Post(()=>{wayland.Hide();Layer()?.ExternalDrop(uris,x,y);});
         GestureWindow.Log("native Wayland drop target ready");return wayland;
     }
@@ -200,7 +201,9 @@ public sealed partial class MainWindow
     }
     /// Wheel size, animations and sound from the shared preferences.
     internal void ApplyFeel(){var p=preferences.Value;PetalWheel.Scale=Math.Clamp(p.WheelScale,.85,1.4);PetalWheel.Animate=p.Animations;Sound.Enabled=p.Feedback;}
-    internal void SaveLinuxSettings(LinuxSettings next){next.Save();LinuxSettings=next;StartWatching();}
+    internal void SaveLinuxSettings(LinuxSettings next){next.Save();LinuxSettings=next;StartWatching();ApplyHotEdge();}
+    /// Keeps the invisible hot-edge strip on the chosen screen edge (Wayland compositors with layer-shell).
+    internal void ApplyHotEdge(){if(LinuxSettings.HotEdge!="off"&&Wayland() is {} native)native.ShowEdge(LinuxSettings.HotEdge);else wayland?.ShowEdge("off");}
     private FolderWatcher? watcher;
     internal int WatchedFolders=>watcher?.Count??0;
     /// (Re)starts the watched-folder rules from Settings → Automation.
