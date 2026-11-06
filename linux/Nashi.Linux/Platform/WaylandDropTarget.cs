@@ -161,6 +161,8 @@ public sealed unsafe class WaylandDropTarget
     }
 
     // ---- events -----------------------------------------------------------------------------
+    /// Never let an exception leave a native callback: it would end the whole app (and its tray icon).
+    private static void Fault(Exception error){try{UI.GestureWindow.Log("wayland callback failed: "+error.Message);}catch{}}
     private static WaylandDropTarget Of(nint data)=>(WaylandDropTarget)GCHandle.FromIntPtr(data).Target!;
     private static readonly nint RegistryListener=Listener((delegate* unmanaged<nint,nint,uint,nint,uint,void>)&OnGlobal,(delegate* unmanaged<nint,nint,uint,void>)&OnNothing3);
     private static readonly nint DeviceListener=Listener((delegate* unmanaged<nint,nint,nint,void>)&OnDataOffer,(delegate* unmanaged<nint,nint,uint,nint,int,int,nint,void>)&OnEnter,(delegate* unmanaged<nint,nint,void>)&OnLeave,
@@ -171,6 +173,7 @@ public sealed unsafe class WaylandDropTarget
 
     [UnmanagedCallersOnly]private static void OnGlobal(nint data,nint registry,uint name,nint iface,uint version)
     {
+        try{
         var t=Of(data);var text=Marshal.PtrToStringUTF8(iface);long* a=stackalloc long[4];
         nint Bind(nint target,uint v){a[0]=name;a[1]=*(nint*)target;a[2]=v;a[3]=0;return wl_proxy_marshal_array_flags(registry,0,target,v,0,a);}
         switch(text)
@@ -182,18 +185,27 @@ public sealed unsafe class WaylandDropTarget
             case "zwlr_layer_shell_v1":t.shell=Bind(LayerShell,1);break;
         }
     }
+        catch(Exception error){Fault(error);}
+    }
     [UnmanagedCallersOnly]private static void OnNothing3(nint data,nint proxy,uint value){}
     [UnmanagedCallersOnly]private static void OnNothingOffer(nint data,nint proxy,nint offer){}
     [UnmanagedCallersOnly]private static void OnDataOffer(nint data,nint device,nint offer)
     {
+        try{
         var t=Of(data);lock(t.gate)t.offers[offer]=[];wl_proxy_add_listener(offer,OfferListener,data);
+    }
+        catch(Exception error){Fault(error);}
     }
     [UnmanagedCallersOnly]private static void OnOfferMime(nint data,nint offer,nint mime)
     {
+        try{
         var t=Of(data);var text=Marshal.PtrToStringUTF8(mime);if(text is null)return;lock(t.gate)if(t.offers.TryGetValue(offer,out var set))set.Add(text);
+    }
+        catch(Exception error){Fault(error);}
     }
     [UnmanagedCallersOnly]private static void OnEnter(nint data,nint device,uint serial,nint surface,int fx,int fy,nint offer)
     {
+        try{
         var t=Of(data);bool ours,atEdge;lock(t.gate){ours=surface!=0&&surface==t.overlay?.Surface;atEdge=surface!=0&&surface==t.edge?.Surface;t.serial=serial;t.offer=offer;t.early=null;t.mimes.Clear();if(t.offers.TryGetValue(offer,out var set))t.mimes.UnionWith(set);}
         // The hot edge only announces the drag; the full overlay then takes it over.
         if(atEdge&&t.overlay is null){t.EdgeEntered?.Invoke(fx/256.0,fy/256.0);return;}
@@ -205,12 +217,25 @@ public sealed unsafe class WaylandDropTarget
         wl_display_flush(t.display);t.Entered?.Invoke(t.x,t.y);
         if(mime is not null){t.early=t.ReadAsync(offer,mime);var read=t.early;_=read.ContinueWith(r=>{if(r.IsCompletedSuccessfully&&r.Result.Length>0)t.Offered?.Invoke(r.Result);},TaskScheduler.Default);}
     }
-    [UnmanagedCallersOnly]private static void OnLeave(nint data,nint device){var t=Of(data);if(!t.inside)return;t.inside=false;t.Left?.Invoke();}
-    [UnmanagedCallersOnly]private static void OnMotion(nint data,nint device,uint time,int fx,int fy){var t=Of(data);if(!t.inside)return;t.x=fx/256.0;t.y=fy/256.0;t.Moved?.Invoke(t.x,t.y);}
+        catch(Exception error){Fault(error);}
+    }
+    [UnmanagedCallersOnly]private static void OnLeave(nint data,nint device)
+    {
+        try{var t=Of(data);if(!t.inside)return;t.inside=false;t.Left?.Invoke();}
+        catch(Exception error){Fault(error);}
+    }
+    [UnmanagedCallersOnly]private static void OnMotion(nint data,nint device,uint time,int fx,int fy)
+    {
+        try{var t=Of(data);if(!t.inside)return;t.x=fx/256.0;t.y=fy/256.0;t.Moved?.Invoke(t.x,t.y);}
+        catch(Exception error){Fault(error);}
+    }
     [UnmanagedCallersOnly]private static void OnDrop(nint data,nint device)
     {
+        try{
         var t=Of(data);if(!t.inside||t.offer==0)return;t.inside=false;var offer=t.offer;var (dx,dy)=(t.x,t.y);var early=t.early;
         _=WaylandDropFlow.FinishAsync(t,offer,early,dx,dy);
+    }
+        catch(Exception error){Fault(error);}
     }
     /// Ends the transfer (finish + destroy) once the dropped data has been read.
     internal void FinishOffer(nint offer)
@@ -244,7 +269,7 @@ public sealed unsafe class WaylandDropTarget
             return Encoding.UTF8.GetString(bytes.ToArray()).Split(['\r','\n'],StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries).Where(l=>!l.StartsWith('#')).ToArray();
         });
     }
-    [UnmanagedCallersOnly]private static void OnConfigure(nint data,nint layer,uint serial,uint w,uint h)=>Of(data).Configure(layer,serial,w,h);
+    [UnmanagedCallersOnly]private static void OnConfigure(nint data,nint layer,uint serial,uint w,uint h){try{Of(data).Configure(layer,serial,w,h);}catch(Exception error){Fault(error);}}
     [UnmanagedCallersOnly]private static void OnClosed(nint data,nint layer){}
     private string? Mime()=>mimes.Contains("text/uri-list")?"text/uri-list":mimes.Contains("text/x-moz-url")?null:mimes.Contains("text/plain;charset=utf-8")?"text/plain;charset=utf-8":mimes.Contains("text/plain")?"text/plain":mimes.Contains("UTF8_STRING")?"UTF8_STRING":null;
 }
