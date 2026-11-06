@@ -76,7 +76,7 @@ public enum PDFEngine {
                     try token.check()
                     let selection=Array(order[start..<min(start+chunk,order.count)])
                     let bytes=try pageEditedData([input],selections:[selection],password:options.password,token:token)
-                    let output=folder.appendingPathComponent(String(format:"Pages %03d-%03d.pdf",start+1,min(start+chunk,order.count)))
+                    let output=OutputFiles.unique(for:folder.appendingPathComponent(String(format:"Pages %03d-%03d",selection[0]+1,selection[selection.count-1]+1)),extension:"pdf",directory:folder)
                     try bytes.write(to:output,options:.atomic);outputs.append(output)
                     progress(Double(min(start+chunk,order.count))/Double(order.count),"Saved \(min(start+chunk,order.count)) of \(order.count) pages")
                 }
