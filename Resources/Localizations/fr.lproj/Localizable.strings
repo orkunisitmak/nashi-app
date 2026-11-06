@@ -2398,6 +2398,7 @@
 "THE OPERATION WAS CANCELLED." = "L’OPÉRATION A ÉTÉ ANNULÉE.";
 "THE PDF CONTAINS NO PAGES." = "LE PDF NE CONTIENT AUCUNE PAGE.";
 "THE PDF PAGE IS TOO LARGE TO RENDER AT THIS RESOLUTION." = "LA PAGE PDF EST TROP GRANDE POUR ÊTRE RENDUE À CETTE RÉSOLUTION.";
+"THE PDF PASSWORD IS INCORRECT OR MISSING." = "LE MOT DE PASSE DU PDF EST INCORRECT OU MANQUANT.";
 "THE POST DID NOT RETURN READABLE PHOTO DETAILS." = "LA PUBLICATION N’A PAS RENVOYÉ D’INFORMATIONS LISIBLES SUR LES PHOTOS.";
 "THE PROCESSING TOOL COULD NOT START." = "L’OUTIL DE TRAITEMENT N’A PAS PU DÉMARRER.";
 "THE REQUESTED FILE SIZE COULD NOT BE REACHED. CHOOSE A LARGER TARGET." = "LA TAILLE DE FICHIER DEMANDÉE N’A PAS PU ÊTRE ATTEINTE. CHOISISSEZ UNE CIBLE PLUS GRANDE.";
@@ -2447,6 +2448,7 @@
 "THIS OUTPUT FORMAT HAS NO ADJUSTABLE CONVERSION DEFAULTS." = "CE FORMAT DE SORTIE N’A PAS DE RÉGLAGES DE CONVERSION MODIFIABLES.";
 "THIS PAGES FILE IS TOO LARGE OR IS NOT A REGULAR DOCUMENT FILE." = "CE FICHIER PAGES EST TROP VOLUMINEUX OU N’EST PAS UN FICHIER DE DOCUMENT ORDINAIRE.";
 "THIS PDF CONTAINS NO PAGES." = "CE PDF NE CONTIENT AUCUNE PAGE.";
+"THIS PDF COULD NOT BE OPENED." = "CE PDF N’A PAS PU ÊTRE OUVERT.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT MERGING, SPLITTING OR REORDERING PAGES CANNOT KEEP. NO COPY WAS EXPORTED." = "CE PDF CONTIENT DES CHAMPS DE FORMULAIRE OU DES PIÈCES JOINTES QUE LA FUSION, LA DIVISION OU LA RÉORGANISATION DES PAGES NE PEUT PAS CONSERVER. AUCUNE COPIE N’A ÉTÉ EXPORTÉE.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT METADATA CLEANUP CANNOT KEEP. NO COPY WAS EXPORTED." = "CE PDF CONTIENT DES CHAMPS DE FORMULAIRE OU DES PIÈCES JOINTES QUE LE NETTOYAGE DES MÉTADONNÉES NE PEUT PAS CONSERVER. AUCUNE COPIE N’A ÉTÉ EXPORTÉE.";
 "THIS PDF IS PASSWORD PROTECTED. ENTER ITS PASSWORD." = "CE PDF EST PROTÉGÉ PAR UN MOT DE PASSE. SAISISSEZ SON MOT DE PASSE.";
@@ -2516,6 +2518,7 @@
 "The EPUB has no package document." = "L’EPUB ne contient pas de document de paquetage.";
 "The PDF contains no pages." = "Le PDF ne contient aucune page.";
 "The PDF page is too large to render at this resolution." = "La page PDF est trop grande pour être rendue à cette résolution.";
+"The PDF password is incorrect or missing." = "Le mot de passe du PDF est incorrect ou manquant.";
 "The Pages document could not be read: %@." = "Le document Pages n’a pas pu être lu : %@.";
 "The Pages document could not be read: %lld." = "Le document Pages n’a pas pu être lu : %lld.";
 "The UTF-16 text in %@ is damaged." = "Le texte UTF-16 de %@ est endommagé.";
@@ -2591,6 +2594,7 @@
 "The video has no readable dimensions." = "Les dimensions de la vidéo sont illisibles.";
 "These files have moved or were deleted." = "Ces fichiers ont été déplacés ou supprimés.";
 "This PDF contains no pages." = "Ce PDF ne contient aucune page.";
+"This PDF could not be opened." = "Ce PDF n’a pas pu être ouvert.";
 "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported." = "Ce PDF contient des champs de formulaire ou des pièces jointes que la fusion, la division ou la réorganisation des pages ne peut pas conserver. Aucune copie n’a été exportée.";
 "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported." = "Ce PDF contient des champs de formulaire ou des pièces jointes que le nettoyage des métadonnées ne peut pas conserver. Aucune copie n’a été exportée.";
 "This PDF is password protected. Enter its password." = "Ce PDF est protégé par un mot de passe. Saisissez son mot de passe.";

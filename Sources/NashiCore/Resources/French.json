@@ -1280,6 +1280,8 @@
   "The requested PDF size could not be reached. Choose a larger target.": "La taille de PDF demandée n’a pas pu être atteinte. Choisissez une cible plus grande.",
   "PDF page is too large to render at this DPI.": "La page PDF est trop grande pour être rendue à ce DPI.",
   "This PDF is password protected. Enter its password.": "Ce PDF est protégé par un mot de passe. Saisissez son mot de passe.",
+  "This PDF could not be opened.": "Ce PDF n’a pas pu être ouvert.",
+  "The PDF password is incorrect or missing.": "Le mot de passe du PDF est incorrect ou manquant.",
   "The PDF contains no pages.": "Le PDF ne contient aucune page.",
   "Invalid page range: {0}. Use numbers between 1 and {1}.": "Plage de pages invalide : {0}. Utilisez des nombres entre 1 et {1}.",
   "Select at least one page.": "Sélectionnez au moins une page.",

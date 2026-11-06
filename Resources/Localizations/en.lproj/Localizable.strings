@@ -2398,6 +2398,7 @@
 "THE OPERATION WAS CANCELLED." = "THE OPERATION WAS CANCELLED.";
 "THE PDF CONTAINS NO PAGES." = "THE PDF CONTAINS NO PAGES.";
 "THE PDF PAGE IS TOO LARGE TO RENDER AT THIS RESOLUTION." = "THE PDF PAGE IS TOO LARGE TO RENDER AT THIS RESOLUTION.";
+"THE PDF PASSWORD IS INCORRECT OR MISSING." = "THE PDF PASSWORD IS INCORRECT OR MISSING.";
 "THE POST DID NOT RETURN READABLE PHOTO DETAILS." = "THE POST DID NOT RETURN READABLE PHOTO DETAILS.";
 "THE PROCESSING TOOL COULD NOT START." = "THE PROCESSING TOOL COULD NOT START.";
 "THE REQUESTED FILE SIZE COULD NOT BE REACHED. CHOOSE A LARGER TARGET." = "THE REQUESTED FILE SIZE COULD NOT BE REACHED. CHOOSE A LARGER TARGET.";
@@ -2447,6 +2448,7 @@
 "THIS OUTPUT FORMAT HAS NO ADJUSTABLE CONVERSION DEFAULTS." = "THIS OUTPUT FORMAT HAS NO ADJUSTABLE CONVERSION DEFAULTS.";
 "THIS PAGES FILE IS TOO LARGE OR IS NOT A REGULAR DOCUMENT FILE." = "THIS PAGES FILE IS TOO LARGE OR IS NOT A REGULAR DOCUMENT FILE.";
 "THIS PDF CONTAINS NO PAGES." = "THIS PDF CONTAINS NO PAGES.";
+"THIS PDF COULD NOT BE OPENED." = "THIS PDF COULD NOT BE OPENED.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT MERGING, SPLITTING OR REORDERING PAGES CANNOT KEEP. NO COPY WAS EXPORTED." = "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT MERGING, SPLITTING OR REORDERING PAGES CANNOT KEEP. NO COPY WAS EXPORTED.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT METADATA CLEANUP CANNOT KEEP. NO COPY WAS EXPORTED." = "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT METADATA CLEANUP CANNOT KEEP. NO COPY WAS EXPORTED.";
 "THIS PDF IS PASSWORD PROTECTED. ENTER ITS PASSWORD." = "THIS PDF IS PASSWORD PROTECTED. ENTER ITS PASSWORD.";
@@ -2516,6 +2518,7 @@
 "The EPUB has no package document." = "The EPUB has no package document.";
 "The PDF contains no pages." = "The PDF contains no pages.";
 "The PDF page is too large to render at this resolution." = "The PDF page is too large to render at this resolution.";
+"The PDF password is incorrect or missing." = "The PDF password is incorrect or missing.";
 "The Pages document could not be read: %@." = "The Pages document could not be read: %@.";
 "The Pages document could not be read: %lld." = "The Pages document could not be read: %lld.";
 "The UTF-16 text in %@ is damaged." = "The UTF-16 text in %@ is damaged.";
@@ -2591,6 +2594,7 @@
 "The video has no readable dimensions." = "The video has no readable dimensions.";
 "These files have moved or were deleted." = "These files have moved or were deleted.";
 "This PDF contains no pages." = "This PDF contains no pages.";
+"This PDF could not be opened." = "This PDF could not be opened.";
 "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported." = "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported.";
 "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported." = "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported.";
 "This PDF is password protected. Enter its password." = "This PDF is password protected. Enter its password.";
