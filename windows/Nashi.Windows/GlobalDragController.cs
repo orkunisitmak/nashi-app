@@ -17,7 +17,6 @@ public sealed class GlobalDragController:IDisposable
     [StructLayout(LayoutKind.Sequential)]internal struct NativePoint{public int X,Y;}
     [DllImport("user32.dll")]private static extern short GetAsyncKeyState(int key);
     [DllImport("user32.dll")]private static extern bool GetCursorPos(out NativePoint point);
-    [DllImport("user32.dll")]private static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll")]private static extern bool RegisterHotKey(IntPtr window,int id,uint modifiers,uint key);
     [DllImport("user32.dll")]private static extern bool UnregisterHotKey(IntPtr window,int id);
     [StructLayout(LayoutKind.Sequential)]private struct NativeRect{public int Left,Top,Right,Bottom;}
@@ -29,6 +28,8 @@ public sealed class GlobalDragController:IDisposable
     [DllImport("oleacc.dll")]private static extern int AccessibleObjectFromPoint(NativePoint point,[MarshalAs(UnmanagedType.Interface)]out object accessible,[MarshalAs(UnmanagedType.Struct)]out object child);
     private readonly Window owner;private readonly PreferencesStore preferences;private readonly Action<string,IDataObject,string?> dropped;private readonly Action link;private readonly System.Windows.Threading.DispatcherTimer timer;
     private NativePoint start;private bool down,opened;private Task<string?>? hint;private GlobalDropWheel? wheel;private HwndSource? source;private IntPtr handle;private bool? shortcutEnabled;
+    private readonly ForegroundAppIdentity foregroundIdentity=new();
+    private readonly HotkeyRegistrationRetry hotkeyRetry=new();
     internal GlobalDropWheel? ActiveWheel=>wheel;
     public bool LinkShortcutRegistered{get;private set;}
     private bool OwnerAvailable=>DesktopGeometry.IsInteractive(owner);
@@ -38,13 +39,29 @@ public sealed class GlobalDragController:IDisposable
         if(new WindowInteropHelper(owner).Handle!=IntPtr.Zero)Register();else owner.SourceInitialized+=(_,_)=>Register();timer.Start();
     }
     private void Register(){handle=new WindowInteropHelper(owner).Handle;source=HwndSource.FromHwnd(handle);source.AddHook(Hook);UpdateShortcut();}
-    private void UpdateShortcut(){if(handle==IntPtr.Zero)return;var enabled=preferences.Value.Enabled;if(shortcutEnabled==enabled)return;shortcutEnabled=enabled;if(LinkShortcutRegistered)UnregisterHotKey(handle,7701);LinkShortcutRegistered=enabled&&RegisterHotKey(handle,7701,0x4000|0x2|0x4,0x44);}
-    private IntPtr Hook(IntPtr window,int message,IntPtr w,IntPtr l,ref bool handled){if(message==0x0312&&w.ToInt32()==7701){if(preferences.Value.Enabled&&OwnerAvailable)link();handled=true;}return IntPtr.Zero;}
+    private bool IsExcludedApplication()=>foregroundIdentity.IsExcluded(preferences.Value.ShortcutExcludedApps);
+    private void UpdateShortcut()
+    {
+        if(handle==IntPtr.Zero)return;
+        var enabled=preferences.Value.Enabled&&!IsExcludedApplication();
+        if(shortcutEnabled!=enabled)
+        {
+            shortcutEnabled=enabled;
+            if(LinkShortcutRegistered)UnregisterHotKey(handle,7701);
+            LinkShortcutRegistered=false;
+            hotkeyRetry.Reset();
+        }
+        var now=DateTimeOffset.UtcNow;
+        if(!hotkeyRetry.ShouldAttempt(enabled,LinkShortcutRegistered,now))return;
+        LinkShortcutRegistered=RegisterHotKey(handle,7701,0x4000|0x2|0x4,0x44);
+        if(!LinkShortcutRegistered)hotkeyRetry.RecordFailure(now);
+    }
+    private IntPtr Hook(IntPtr window,int message,IntPtr w,IntPtr l,ref bool handled){if(message==0x0312&&w.ToInt32()==7701){if(preferences.Value.Enabled&&!IsExcludedApplication()&&OwnerAvailable)link();handled=true;}return IntPtr.Zero;}
     private static bool Held(int key)=>(GetAsyncKeyState(key)&0x8000)!=0;
     private string Chord(){var parts=new List<string>();if(Held(0x11))parts.Add("Ctrl");if(Held(0x10))parts.Add("Shift");if(Held(0x12))parts.Add("Alt");return string.Join('+',parts);}
     private void Poll()
     {
-        UpdateShortcut();if(!preferences.Value.Enabled||!OwnerAvailable){wheel?.Close();wheel=null;down=false;opened=false;hint=null;return;}var held=PrimaryMouseButton.IsPressed;GetCursorPos(out var point);
+        UpdateShortcut();if(shortcutEnabled!=true||!OwnerAvailable){wheel?.Close();wheel=null;down=false;opened=false;hint=null;return;}var held=PrimaryMouseButton.IsPressed;GetCursorPos(out var point);
         if(!held){if(down){down=false;opened=false;hint=null;if(wheel is {IsVisible:true}){var old=wheel;var dismiss=new System.Windows.Threading.DispatcherTimer{Interval=TimeSpan.FromMilliseconds(150)};dismiss.Tick+=(_,_)=>{dismiss.Stop();if(old.IsVisible)old.Close();};dismiss.Start();}wheel=null;}return;}
         if(!down){down=true;start=point;opened=false;hint=null;return;}if(opened||Math.Abs(point.X-start.X)+Math.Abs(point.Y-start.Y)<10)return;
         hint??=Task.Run(()=>LinkAt(start));var chord=Chord();var p=preferences.Value;var kind=chord==p.ToolsModifier?"tools":chord==p.ConvertModifier?"convert":chord==p.ActionsModifier?"actions":null;if(kind is null)return;opened=true;if(InMoveSize())return;
