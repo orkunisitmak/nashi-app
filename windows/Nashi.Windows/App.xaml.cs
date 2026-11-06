@@ -103,6 +103,9 @@ public partial class App:Application
         // Float shelves have no owner. Closing Nashi (not hiding it to the tray) must end the
         // process instead of leaving it behind a shelf with a closed main window.
         var window=new MainWindow(paths,offerToolSetup:!e.Args.Contains("--background"));MainWindow=window;ShutdownMode=ShutdownMode.OnMainWindowClose;instance.Start(incoming=>Dispatcher.BeginInvoke(()=>window.AcceptLaunch(incoming)));window.Show();
+        // Leftover update stages (the apply-worker cannot delete its own running
+        // folder) are swept by a safe background pass on every normal launch.
+        _=Task.Run(CleanUpUpdateRemnants);
         windowManagement=new WindowManagement(notice:message=>MessageBox.Show(L10n.Text(message),L10n.Text("Window arrangement"),MessageBoxButton.OK,MessageBoxImage.Information),isEnabled:()=>window.WindowManagementEnabled);
     }
     internal static void UseSavedLanguage(Func<string>? readLanguage=null)
@@ -116,6 +119,66 @@ public partial class App:Application
         try{await instance!.Notify(paths);Shutdown(0);}catch(Exception error)when(error is IOException or OperationCanceledException or UnauthorizedAccessException){UseSavedLanguage();MessageBox.Show(L10n.Text("Nashi is already running but is still starting. Open it from the system tray or try again in a moment."),"Nashi");Shutdown(1);}
     }
     protected override void OnExit(ExitEventArgs e){windowManagement?.Dispose();Feedback.Stop();PdfRasterDocument.Shutdown();base.OnExit(e);}
+    // The apply-update worker cannot delete the folder it runs from, so stage
+    // folders linger after every update. A normal launch is the safe sweeper:
+    // each stage is either finished (its ownership lease expired) or still
+    // guarded by a live owner process or a locked worker executable.
+    private static void CleanUpUpdateRemnants()
+    {
+        try
+        {
+            var target=Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory);var parent=Path.GetDirectoryName(target);
+            if(parent is null||Path.GetFileName(parent).StartsWith(".nashi-update-",StringComparison.Ordinal))return;
+            foreach(var stage in Directory.GetDirectories(parent,".nashi-update-*"))
+            {
+                // Only directories whose suffix is exactly one GUID belong to
+                // the updater; anything else sharing the prefix is not ours.
+                if(!GuidExactSuffix(Path.GetFileName(stage),".nashi-update-"))continue;
+                if(OwnerLeaseIsLive(stage))continue;
+                var workerExecutable=Path.Combine(stage,"worker","Nashi.exe");
+                if(File.Exists(workerExecutable)&&!InstallFileIsFree(workerExecutable))continue;
+                try{Directory.Delete(stage,true);}catch(IOException){}catch(UnauthorizedAccessException){}catch(System.Security.SecurityException){}
+            }
+            var prefix=Path.GetFileName(target)+".backup-";
+            var backups=Directory.GetDirectories(parent,prefix+"*").Where(d=>GuidExactSuffix(Path.GetFileName(d),prefix)).OrderByDescending(Directory.GetCreationTime).ToArray();
+            foreach(var obsolete in backups.Skip(1))try{Directory.Delete(obsolete,true);}catch(IOException){}catch(UnauthorizedAccessException){}catch(System.Security.SecurityException){}
+        }
+        catch(IOException){}
+        catch(UnauthorizedAccessException){}
+        catch(System.Security.SecurityException){}
+        catch(ArgumentException){}
+    }
+    /* Ownership lease check: staging records its creator's process id and
+     * start time; the stage counts as abandoned only when no live process
+     * matches both, so PID reuse cannot make the sweeper delete an active
+     * update handoff. */
+    private static bool OwnerLeaseIsLive(string stage)
+    {
+        try
+        {
+            var lines=File.ReadAllLines(Path.Combine(stage,"owner.txt"));
+            if(lines.Length<2||!int.TryParse(lines[0],System.Globalization.CultureInfo.InvariantCulture,out var pid))return false;
+            using var process=System.Diagnostics.Process.GetProcessById(pid);if(process.HasExited)return false;
+            return process.StartTime.Ticks==long.Parse(lines[1],System.Globalization.CultureInfo.InvariantCulture);
+        }
+        catch(ArgumentException){}
+        catch(InvalidOperationException){}
+        catch(IOException){}
+        catch(FormatException){}
+        catch(OverflowException){}
+        catch(System.Security.SecurityException){}
+        return false;
+    }
+    private static bool GuidExactSuffix(string name,string prefix)
+    {
+        var suffix=name[prefix.Length..];
+        return suffix.Length==32&&suffix.All(char.IsAsciiHexDigit);
+    }
+    private static bool InstallFileIsFree(string path)
+    {
+        try{using var stream=File.Open(path,FileMode.Open,FileAccess.ReadWrite,FileShare.None);return true;}
+        catch(Exception error)when(error is IOException or UnauthorizedAccessException or System.Security.SecurityException){return false;}
+    }
     private async Task InstallUpdateAsync()
     {
         try
