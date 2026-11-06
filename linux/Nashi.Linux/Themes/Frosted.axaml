@@ -1,0 +1,57 @@
+<!-- Frosted glass: the desktop behind Nashi is blurred by the compositor (KDE blur-behind),
+     and cards are milky panes on top of it, like iOS and Windows 11 acrylic. -->
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Styles.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+          <SolidColorBrush x:Key="Paper" Color="#8CF9F6ED"/>
+          <SolidColorBrush x:Key="Ink" Color="#17261B"/>
+          <SolidColorBrush x:Key="Surface" Color="#A6FFFFFF"/>
+          <SolidColorBrush x:Key="Inset" Color="#73FFFFFF"/>
+          <SolidColorBrush x:Key="Muted" Color="#3B4737"/>
+          <SolidColorBrush x:Key="Line" Color="#B3FFFFFF"/>
+          <SolidColorBrush x:Key="Sage" Color="#99E0EBD2"/>
+          <SolidColorBrush x:Key="Sand" Color="#B3F6E7BE"/>
+          <SolidColorBrush x:Key="Scrim" Color="#40243B2B"/>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Dark">
+          <SolidColorBrush x:Key="Paper" Color="#730B120D"/>
+          <SolidColorBrush x:Key="Ink" Color="#F3F6F2"/>
+          <SolidColorBrush x:Key="Surface" Color="#66293A2D"/>
+          <SolidColorBrush x:Key="Inset" Color="#59101A13"/>
+          <SolidColorBrush x:Key="Muted" Color="#C9D3C8"/>
+          <SolidColorBrush x:Key="Line" Color="#40FFFFFF"/>
+          <SolidColorBrush x:Key="Sage" Color="#663E6B47"/>
+          <SolidColorBrush x:Key="Sand" Color="#66574A26"/>
+          <SolidColorBrush x:Key="Scrim" Color="#66000000"/>
+        </ResourceDictionary>
+      </ResourceDictionary.ThemeDictionaries>
+      <LinearGradientBrush x:Key="Gold" StartPoint="0%,0%" EndPoint="100%,100%">
+        <GradientStop Offset="0" Color="#E6E3B859"/>
+        <GradientStop Offset="1" Color="#E6F5D17D"/>
+      </LinearGradientBrush>
+      <SolidColorBrush x:Key="GoldInk" Color="#1B2A1F"/>
+      <SolidColorBrush x:Key="GoldHover" Color="#F5D17D"/>
+      <SolidColorBrush x:Key="GoldText" Color="#E3B859"/>
+      <SolidColorBrush x:Key="WheelLine" Color="#66FFFFFF"/>
+        <Color x:Key="SystemAccentColor">#C9962E</Color>
+        <Color x:Key="SystemAccentColorDark1">#B8862A</Color>
+        <Color x:Key="SystemAccentColorDark2">#A07423</Color>
+        <Color x:Key="SystemAccentColorDark3">#86611D</Color>
+        <Color x:Key="SystemAccentColorLight1">#E3B859</Color>
+        <Color x:Key="SystemAccentColorLight2">#F0CC78</Color>
+        <Color x:Key="SystemAccentColorLight3">#F5D17D</Color>
+    </ResourceDictionary>
+  </Styles.Resources>
+  <Style Selector="Window">
+    <Setter Property="TransparencyLevelHint" Value="Blur, Transparent"/>
+  </Style>
+  <Style Selector="Border.card">
+    <Setter Property="BoxShadow" Value="0 10 40 0 #26000000"/>
+    <Setter Property="CornerRadius" Value="22"/>
+  </Style>
+  <Style Selector="Button">
+    <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
+  </Style>
+</Styles>

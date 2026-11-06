@@ -53,7 +53,16 @@ if(fixtures is not null)
     };
     foreach(var (name,editor) in editors){editor.Show();Save(editor,name);editor.Close();}
     main=new MainWindow([]);main.Show();var setup=new SetupWindow(main);setup.Show();Save(setup,"12-setup");setup.Close();
-    var settings=new SettingsWindow(main);settings.Show();Save(settings,"13-settings");settings.Close();main.Close();
+    var settings=new SettingsWindow(main);settings.Show();Save(settings,"13-settings");
+    var tabs=settings.GetVisualDescendants().OfType<TabControl>().First();
+    tabs.SelectedIndex=1;Save(settings,"13b-settings-appearance");tabs.SelectedIndex=2;Save(settings,"13c-settings-shortcuts");settings.Close();main.Close();
+    // Every theme, light and dark, on a busy Home.
+    foreach(var theme in new[]{"brutalist","glass","frosted","classic"})foreach(var variant in new[]{"light","dark"})
+    {
+        App.ApplyTheme(theme);var themed=new MainWindow([]);App.ApplyAppearance(variant);themed.Width=900;themed.Height=900;themed.Show();themed.UseFiles(Fixtures("Photo.png","Second.jpg"));
+        Save(themed,$"20-theme-{theme}-{variant}");if(variant=="light"){themed.ShowWheel();Save(themed,$"21-wheel-{theme}");}themed.Close();
+    }
+    App.ApplyAppearance("light");
 }
 
 // ── Keyboard ─────────────────────────────────────────────────────────────────────────
@@ -75,11 +84,11 @@ bool WheelOpen(Window w)=>w.GetVisualDescendants().OfType<WheelOverlay>().Any(o=
     Expect("Ctrl+1 returns Home",w.GetVisualDescendants().OfType<TextBlock>().Any(t=>t.Text=="Let’s make something of it."));
     w.KeyPress(Avalonia.Input.Key.Space,Avalonia.Input.RawInputModifiers.Control,Avalonia.Input.PhysicalKey.Space,null);Pump();
     var wheel=w.GetVisualDescendants().OfType<WheelOverlay>().First();
-    string Highlighted()=>wheel.GetVisualDescendants().OfType<Button>().Where(b=>b.Classes.Contains("selected")).Select(b=>ToolTip.GetTip(b) as string).FirstOrDefault()??"";
+    string Highlighted()=>wheel.Wheel.SelectedItem?.Title??"";
     var first=Highlighted();w.KeyPress(Avalonia.Input.Key.Right,Avalonia.Input.RawInputModifiers.None,Avalonia.Input.PhysicalKey.ArrowRight,null);Pump();
     Expect($"Arrow moves the wheel ({first} → {Highlighted()})",first.Length>0&&Highlighted()!=first);
     w.KeyPress(Avalonia.Input.Key.Tab,Avalonia.Input.RawInputModifiers.None,Avalonia.Input.PhysicalKey.Tab,null);Pump();
-    Expect("Tab switches to Convert",wheel.GetVisualDescendants().OfType<Button>().Any(b=>ToolTip.GetTip(b) as string=="JPG"));
+    Expect("Tab switches to Convert",wheel.Wheel.Items.Any(i=>i.Title=="JPG"));
     w.KeyPress(Avalonia.Input.Key.Escape,Avalonia.Input.RawInputModifiers.None,Avalonia.Input.PhysicalKey.Escape,null);Pump();
     Expect("Escape closes it again",!WheelOpen(w));
     foreach(var (modifier,expected) in new[]{(Avalonia.Input.RawInputModifiers.Shift,"JPG"),(Avalonia.Input.RawInputModifiers.Alt,"Terminal"),(Avalonia.Input.RawInputModifiers.Control,"Edit Photo")})
@@ -88,7 +97,7 @@ bool WheelOpen(Window w)=>w.GetVisualDescendants().OfType<WheelOverlay>().Any(o=
         if(item is not null)data.Add(Avalonia.Input.DataTransferItem.CreateFile(item));
         w.DragDrop(new Point(300,300),Avalonia.Input.Raw.RawDragEventType.DragEnter,data,Avalonia.Input.DragDropEffects.Copy,modifier);
         w.DragDrop(new Point(300,300),Avalonia.Input.Raw.RawDragEventType.Drop,data,Avalonia.Input.DragDropEffects.Copy,modifier);Pump();
-        var opened=w.GetVisualDescendants().OfType<WheelOverlay>().FirstOrDefault()?.GetVisualDescendants().OfType<Button>().Any(b=>ToolTip.GetTip(b) as string==expected)==true;
+        var opened=w.GetVisualDescendants().OfType<WheelOverlay>().FirstOrDefault()?.Wheel.Items.Any(i=>i.Title==expected)==true;
         Expect($"Drop with {modifier} opens the wheel at {expected}",item is not null&&opened);
         w.KeyPress(Avalonia.Input.Key.Escape,Avalonia.Input.RawInputModifiers.None,Avalonia.Input.PhysicalKey.Escape,null);Pump();
     }
@@ -99,12 +108,12 @@ bool WheelOpen(Window w)=>w.GetVisualDescendants().OfType<WheelOverlay>().Any(o=
         w.StartGesture(null);Pump();var layer=w.Gestures.First();
         var data=Drag();layer.DragDrop(new Point(600,400),Avalonia.Input.Raw.RawDragEventType.DragEnter,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);Pump();
         layer.DragDrop(new Point(480,405),Avalonia.Input.Raw.RawDragEventType.DragOver,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);Pump();
-        var slices=layer.GetVisualDescendants().OfType<Button>().Where(b=>b.Classes.Contains("wheel")).ToList();
-        Expect($"Gesture left opens File actions ({string.Join(", ",slices.Select(b=>ToolTip.GetTip(b)))})",slices.Any(b=>ToolTip.GetTip(b) as string=="Copy Path"));
+        var petals=layer.Wheel.Items;
+        Expect($"Gesture left opens File actions ({string.Join(", ",petals.Select(i=>i.Title))})",petals.Any(i=>i.Title=="Copy Path"));
         Save(layer,"14-gesture-left");
-        var copyPath=slices.First(b=>ToolTip.GetTip(b) as string=="Copy Path");var at=new Point(Canvas.GetLeft(copyPath)+copyPath.Width/2,Canvas.GetTop(copyPath)+copyPath.Height/2);
+        var copyIndex=petals.ToList().FindIndex(i=>i.Title=="Copy Path");var at=layer.Wheel.TranslatePoint(layer.Wheel.PetalCenter(copyIndex),layer)!.Value;
         layer.DragDrop(at,Avalonia.Input.Raw.RawDragEventType.DragOver,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);Pump();
-        Expect("Hovering a slice highlights it",copyPath.Classes.Contains("selected"));
+        Expect("Hovering a petal highlights it",layer.Wheel.SelectedItem?.Title=="Copy Path");
         layer.DragDrop(at,Avalonia.Input.Raw.RawDragEventType.Drop,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);for(var n=0;n<20;n++){Pump();Thread.Sleep(10);}
         Expect("Dropping on Copy Path runs it and closes the layer",!w.Gestures.Any(l=>l.IsVisible)&&w.GetVisualDescendants().OfType<TextBlock>().Any(t=>t.Text=="File paths copied."));
         // Right opens Convert; up opens Tools.
@@ -113,7 +122,7 @@ bool WheelOpen(Window w)=>w.GetVisualDescendants().OfType<WheelOverlay>().Any(o=
             w.StartGesture(null);Pump();layer=w.Gestures.First();data=Drag();
             layer.DragDrop(new Point(600,400),Avalonia.Input.Raw.RawDragEventType.DragEnter,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);
             layer.DragDrop(new Point(600+dx,400+dy),Avalonia.Input.Raw.RawDragEventType.DragOver,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);Pump();
-            Expect($"Gesture ({dx},{dy}) opens the wheel with {expected}",layer.GetVisualDescendants().OfType<Button>().Any(b=>ToolTip.GetTip(b) as string==expected));
+            Expect($"Gesture ({dx},{dy}) opens the wheel with {expected}",layer.Wheel.Items.Any(i=>i.Title==expected));
             if(expected=="JPG")Save(layer,"15-gesture-right");
             w.CloseGestures();Pump();
         }

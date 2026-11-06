@@ -61,42 +61,6 @@ public sealed class FloatShelf:Window
     }
 }
 
-public sealed class SettingsWindow:Window
-{
-    public SettingsWindow(MainWindow main)
-    {
-        Title=L10n.T("Settings")+" · Nashi";Width=560;SizeToContent=SizeToContent.Height;CanResize=false;WindowStartupLocation=WindowStartupLocation.CenterOwner;ShowInTaskbar=false;
-        var p=main.preferences.Value;
-        var language=Ui.Choice([("en","English"),("tr","Türkçe")],p.Language);var appearance=Ui.Choice([("system","System"),("light","Light"),("dark","Dark")],main.library.Appearance);
-        var output=Ui.Choice([("beside","Beside the original"),("folder","In a folder"),("ask","Ask every time")],p.OutputMode);var folder=new TextBox{Text=p.OutputFolder,PlaceholderText=L10n.T("Choose a folder")};
-        var downloads=new TextBox{Text=string.IsNullOrWhiteSpace(p.DownloadFolder)||p.DownloadFolder==new Preferences().DownloadFolder&&!Directory.Exists(p.DownloadFolder)?AppPaths.Downloads:p.DownloadFolder};
-        var reveal=new CheckBox{Content=L10n.T("Show new files in the file manager when finished"),IsChecked=p.RevealFinished};
-        var floating=Ui.Choice([("createNew","Open a new Float"),("addToExisting","Add to the open Float")],p.FloatBehavior);
-        Control Browse(TextBox box)=>new DockPanel{Children={Ui.Button("Choose…",async()=>{if(await Dialogs.Folder(this,"Choose a folder") is {} chosen)box.Text=chosen;},"chip").Also(b=>{DockPanel.SetDock(b,Dock.Right);b.Margin=new(8,0,0,0);}),box}};
-        var problem=new TextBlock{Foreground=Brushes.IndianRed,TextWrapping=TextWrapping.Wrap};
-        var save=Ui.Primary("Save",()=>
-        {
-            try
-            {
-                var mode=Ui.Value(output);if(mode=="folder"&&!Directory.Exists(folder.Text))throw new ArgumentException("Choose an existing output folder.");
-                main.preferences.Save(p with{Language=Ui.Value(language),OutputMode=mode,OutputFolder=folder.Text??"",DownloadFolder=downloads.Text??AppPaths.Downloads,RevealFinished=reveal.IsChecked==true,FloatBehavior=Ui.Value(floating)});
-                main.library.SetAppearance(Ui.Value(appearance));Close(true);
-            }
-            catch(Exception error)when(error is ArgumentException or IOException or UnauthorizedAccessException){problem.Text=L10n.T(error.Message);}
-        });
-        save.IsDefault=true;var cancel=Ui.Button("Cancel",()=>Close(false));cancel.IsCancel=true;
-        Content=new StackPanel{Margin=new(24),Spacing=2,Children=
-        {
-            Ui.Title("Settings",24).Also(t=>t.Margin=new(0,0,0,14)),
-            Ui.Wrap(Ui.Field("Language",language),new Control{Width=16},Ui.Field("Appearance",appearance)),
-            Ui.Field("Save new files",output),Ui.Field("Output folder",Browse(folder)),Ui.Field("Save downloaded media to…",Browse(downloads)),
-            Ui.Field("Float",floating),reveal,
-            Ui.Text(L10n.T("Library and settings:")+" "+main.library.DirectoryPath,11,"muted",false).Also(t=>t.Margin=new(0,12,0,0)),
-            problem,Ui.Row(0,save,cancel).Also(r=>r.Margin=new(0,10,0,0))
-        }};
-    }
-}
-
 /// Finish setup: what is ready, and how to get the rest. Media tools are downloaded with
 /// pinned SHA-256 hashes (Nashi.Core Toolchain); LibreOffice and Tesseract come from the distribution.
 public sealed class SetupWindow:Window
