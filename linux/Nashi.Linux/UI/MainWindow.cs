@@ -85,7 +85,8 @@ public sealed partial class MainWindow:Window
 
         var drop=new StackPanel{Spacing=8};
         drop.Children.Add(new Border{Classes={"pill"},Child=Ui.Text(files.Count==0?"✦  START HERE":"✦  READY WHEN YOU ARE",11)});
-        drop.Children.Add(Ui.Title(files.Count switch{0=>L10n.T("Drop something good."),1=>Path.GetFileName(files[0]),_=>L10n.T($"{files.Count} files, ready to go.")},23).Also(t=>t.Text=t.Text));
+        // A single file shows its own name, which is never looked up in the translation catalog.
+        drop.Children.Add(Ui.Text(files.Count switch{0=>L10n.T("Drop something good."),1=>Path.GetFileName(files[0]),_=>L10n.T($"{files.Count} files, ready to go.")},23,"title",false));
         drop.Children.Add(Ui.Text(files.Count switch{0=>"Images, videos, documents, and all the little things in between.",1=>Path.GetDirectoryName(files[0])!,_=>"Keep them together, or give each one a fresh start."},12,"muted",files.Count!=1));
         var picks=new WrapPanel{Margin=new(0,8,0,0)};
         picks.Children.Add(files.Count==0?Ui.Primary("Choose files",ChooseFiles):Ui.Button("Add or change files",ChooseFiles));
