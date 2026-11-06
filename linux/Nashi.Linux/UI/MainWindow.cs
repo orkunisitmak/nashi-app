@@ -35,7 +35,7 @@ public sealed partial class MainWindow:Window
     public MainWindow(string[] arguments)
     {
         library=new LibraryStore();preferences=new PreferencesStore(library.DirectoryPath);
-        L10n.Language=preferences.Value.Language;App.ApplyAppearance(library.Appearance);
+        L10n.Language=preferences.Value.Language;App.ApplyAppearance(library.Appearance);ApplyFeel();
         Title="Nashi";Width=900;Height=820;MinWidth=640;MinHeight=560;WindowStartupLocation=WindowStartupLocation.CenterScreen;
         try{Icon=new WindowIcon(Ui.Asset("Icon"));}catch(FileNotFoundException){}
         DragDrop.SetAllowDrop(this,true);AddHandler(DragDrop.DragOverEvent,OnDragOver);AddHandler(DragDrop.DragLeaveEvent,(_,_)=>dropCard?.Classes.Remove("drop"));AddHandler(DragDrop.DropEvent,OnDrop);

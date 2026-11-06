@@ -15,7 +15,11 @@ public sealed class PetalWheel:Control
 {
     private IReadOnlyList<ToolChoice> items=[];private int selected=-1;
     public IReadOnlyList<ToolChoice> Items{get=>items;set{items=value;selected=-1;InvalidateVisual();}}
-    public int Selected{get=>selected;set{var next=value>=0&&value<items.Count?value:-1;if(next==selected)return;selected=next;SelectionChanged?.Invoke(SelectedItem);InvalidateVisual();}}
+    public int Selected{get=>selected;set{var next=value>=0&&value<items.Count?value:-1;if(next==selected)return;selected=next;if(next>=0)Sound.Tick();SelectionChanged?.Invoke(SelectedItem);InvalidateVisual();}}
+    /// Settings → Appearance: the bloom when a wheel appears.
+    public static bool Animate{get;set;}=true;
+    /// Settings → Appearance: wheel size (the shared WheelScale preference, 0.85–1.4).
+    public static double Scale{get;set;}=1;
     public ToolChoice? SelectedItem=>selected>=0?items[selected]:null;
     /// Shown in the centre when nothing is highlighted.
     public string CenterTitle{get;set;}="";
@@ -24,15 +28,16 @@ public sealed class PetalWheel:Control
 
     public PetalWheel(double size=360)
     {
-        Width=Height=size;Focusable=false;Cursor=new Cursor(StandardCursorType.Hand);
-        // A short bloom when the wheel appears (skipped when animations are off in Settings).
-        Opacity=0;RenderTransform=new ScaleTransform(.9,.9);RenderTransformOrigin=RelativePoint.Center;
-        Transitions=[new DoubleTransition{Property=OpacityProperty,Duration=TimeSpan.FromMilliseconds(140)},new TransformOperationsTransition{Property=RenderTransformProperty,Duration=TimeSpan.FromMilliseconds(170),Easing=new Avalonia.Animation.Easings.CubicEaseOut()}];
-        AttachedToVisualTree+=(_,_)=>Avalonia.Threading.Dispatcher.UIThread.Post(()=>{Opacity=1;RenderTransform=Avalonia.Media.Transformation.TransformOperations.Parse("scale(1)");},Avalonia.Threading.DispatcherPriority.Render);
+        Width=Height=size*Scale;Focusable=false;Cursor=new Cursor(StandardCursorType.Hand);
         ActualThemeVariantChanged+=(_,_)=>InvalidateVisual();
         PointerMoved+=(_,e)=>Selected=HitTest(e.GetPosition(this));
         PointerExited+=(_,_)=>Selected=-1;
         PointerReleased+=(_,e)=>{if(e.InitialPressMouseButton==MouseButton.Left&&HitTest(e.GetPosition(this)) is var n and >=0)Chosen?.Invoke(items[n]);};
+        // A short bloom when the wheel appears (skipped when animations are off in Settings).
+        if(!Animate)return;
+        Opacity=0;RenderTransform=new ScaleTransform(.9,.9);RenderTransformOrigin=RelativePoint.Center;
+        Transitions=[new DoubleTransition{Property=OpacityProperty,Duration=TimeSpan.FromMilliseconds(140)},new TransformOperationsTransition{Property=RenderTransformProperty,Duration=TimeSpan.FromMilliseconds(170),Easing=new Avalonia.Animation.Easings.CubicEaseOut()}];
+        AttachedToVisualTree+=(_,_)=>Avalonia.Threading.Dispatcher.UIThread.Post(()=>{Opacity=1;RenderTransform=Avalonia.Media.Transformation.TransformOperations.Parse("scale(1)");},Avalonia.Threading.DispatcherPriority.Render);
     }
 
     private double Size=>Math.Min(Bounds.Width>0?Bounds.Width:Width,Bounds.Height>0?Bounds.Height:Height);

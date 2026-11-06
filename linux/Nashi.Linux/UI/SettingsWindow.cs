@@ -34,6 +34,7 @@ public sealed class SettingsWindow:Window
 
         // Appearance
         var appearance=Ui.Choice([("system","System"),("light","Light"),("dark","Dark")],main.library.Appearance);
+        var wheelSize=Ui.Slider(85,140,Math.Round(p.WheelScale*100),5);var animations=new CheckBox{Content=L10n.T("Animations"),IsChecked=p.Animations};var feedback=new CheckBox{Content=L10n.T("Wheel sound"),IsChecked=p.Feedback};
         appearance.SelectionChanged+=(_,_)=>App.ApplyAppearance(Ui.Value(appearance));
         var cards=new WrapPanel();
         foreach(var (id,name,blurb) in new[]{("classic","Classic","The pear palette shared with macOS and Windows."),("glass","Glass","Clear panes; your desktop shows through."),("frosted","Frosted glass","The desktop behind Nashi is blurred, like acrylic."),("brutalist","Brutalist","Square, heavy outlines, hard shadows, loud yellow.")})
@@ -41,7 +42,7 @@ public sealed class SettingsWindow:Window
             var card=ThemeCard(id,name,blurb);card.PointerPressed+=(_,_)=>{theme=id;App.ApplyTheme(id);foreach(var c in cards.Children.OfType<Border>())c.Classes.Set("chosen",(string?)c.Tag==id);};
             card.Classes.Set("chosen",id==theme);cards.Children.Add(card);
         }
-        var look=Ui.Stack(2,Ui.Field("Appearance",appearance),Ui.Text("Theme",13,"title").Also(t=>t.Margin=new(0,10,0,6)),cards,
+        var look=Ui.Stack(2,Ui.Field("Appearance",appearance),Ui.Field("Wheel size",Ui.Labeled(wheelSize,v=>$"{v:0}%")),Ui.Row(16,animations,feedback),Ui.Text("Theme",13,"title").Also(t=>t.Margin=new(0,10,0,6)),cards,
             Ui.Text("Glass and Frosted glass need a compositor (KDE Plasma, GNOME and most desktops have one). Frosted glass uses KDE's blur; elsewhere it looks like Glass.",11,"muted").Also(t=>t.Margin=new(0,8,0,0)));
 
         // Shortcuts & gestures
@@ -114,7 +115,7 @@ public sealed class SettingsWindow:Window
             try
             {
                 var mode=Ui.Value(output);if(mode=="folder"&&!Directory.Exists(folder.Text))throw new ArgumentException("Choose an existing output folder.");
-                main.preferences.Save(p with{Language=Ui.Value(language),OutputMode=mode,OutputFolder=folder.Text??"",DownloadFolder=downloads.Text??AppPaths.Downloads,RevealFinished=reveal.IsChecked==true,FloatBehavior=Ui.Value(floating)});
+                main.preferences.Save(p with{Language=Ui.Value(language),OutputMode=mode,OutputFolder=folder.Text??"",DownloadFolder=downloads.Text??AppPaths.Downloads,RevealFinished=reveal.IsChecked==true,FloatBehavior=Ui.Value(floating),WheelScale=wheelSize.Value/100,Animations=animations.IsChecked==true,Feedback=feedback.IsChecked==true});main.ApplyFeel();
                 main.library.SetAppearance(Ui.Value(appearance));
                 var combos=boxes.ToDictionary(b=>b.Key,b=>b.Value.Combo);
                 var duplicate=combos.Where(c=>c.Value.Length>0).GroupBy(c=>c.Value).FirstOrDefault(g=>g.Count()>1);if(duplicate is not null)throw new ArgumentException(L10n.T("Two Nashi actions use the same keys:")+" "+duplicate.Key);

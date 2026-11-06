@@ -14,7 +14,8 @@ namespace Nashi.Linux.UI;
 /// wheel at once. Without a drag, the wheel works by clicking (used for copied files).
 public sealed class GestureWindow:Window
 {
-    private const double Threshold=70,WheelSize=380;
+    private const double Threshold=70;
+    private static double WheelSize=>380*PetalWheel.Scale;
     private readonly MainWindow main;private readonly string? fixedMode;private readonly Action closeAll;private readonly LinuxSettings settings;
     private readonly Canvas canvas=new();private readonly Border hint;private readonly TextBlock hintText=new(){FontSize=15,TextAlignment=TextAlignment.Center,TextWrapping=TextWrapping.Wrap,MaxWidth=560};
     private readonly PetalWheel wheel=new(WheelSize){IsVisible=false};

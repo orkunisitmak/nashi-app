@@ -171,6 +171,8 @@ public sealed partial class MainWindow
         if(shortcuts is not null){try{await shortcuts.DeactivateAsync();}catch(Exception error)when(error is Tmds.DBus.Protocol.DBusExceptionBase or IOException){}shortcuts.Dispose();}
         Close();(Avalonia.Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.Shutdown();
     }
+    /// Wheel size, animations and sound from the shared preferences.
+    internal void ApplyFeel(){var p=preferences.Value;PetalWheel.Scale=Math.Clamp(p.WheelScale,.85,1.4);PetalWheel.Animate=p.Animations;Sound.Enabled=p.Feedback;}
     internal void SaveLinuxSettings(LinuxSettings next){next.Save();LinuxSettings=next;StartWatching();}
     private FolderWatcher? watcher;
     internal int WatchedFolders=>watcher?.Count??0;
