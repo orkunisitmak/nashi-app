@@ -105,7 +105,10 @@ public sealed partial class MainWindow
     {
         CloseGestures();if(busy){Bring();SetStatus("Finish the current operation first.");return;}
         var screens=presetFiles is null?Screens.All.ToList():[Screens.Primary??Screens.All[0]];
-        foreach(var screen in screens){var layer=new GestureWindow(this,screen,fixedMode,CloseGestures,presetFiles);gestures.Add(layer);layer.Show();}
+        foreach(var screen in screens){var layer=new GestureWindow(this,screen,fixedMode,CloseGestures,presetFiles);gestures.Add(layer);
+            // While dragging, make the layer a dock: KWin keeps Show Desktop on for docks (notifications and normal windows end it), so a drag from the desktop does not bring every window back.
+            if(presetFiles is null)Platform.X11WindowType.Set(layer,"dock");
+            layer.Show();}
         // While a drag gesture is open, also listen on Wayland directly: KWin's XWayland drag bridge can
         // stop passing drags mid-session, but a layer-shell overlay always gets them.
         if(presetFiles is null&&Wayland() is {} native)native.Show();

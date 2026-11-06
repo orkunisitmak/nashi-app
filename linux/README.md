@@ -12,7 +12,7 @@ Nashi then appears in your applications menu and under **Open With** for support
 
 ## Hot edge: just drag
 
-Drag files (from Dolphin, the desktop or anywhere else) to the **left edge of the screen**, with no key. A small wheel of the three wheels opens. Rest on Tools, Convert or File actions for a moment to open that wheel, then drop on a petal. The edge is an invisible 2-pixel Wayland layer-shell strip. Its corners are left free for the desktop's own corner actions. You can choose the left, right or bottom edge, or turn it off, under **Settings → Shortcuts & gestures → Hot edge**. It needs a Wayland compositor with layer-shell: KDE Plasma, Sway or Hyprland.
+Drag files (from Dolphin, the desktop or anywhere else) to the **left edge of the screen**, with no key. A small wheel of the three wheels opens. Rest on Tools, Convert or File actions for a moment to open that wheel, then drop on a petal. The edge is an invisible 2-pixel Wayland layer-shell strip. Its corners are left free for the desktop's own corner actions. You can choose the left, right or bottom edge, or turn it off, under **Settings → Shortcuts & gestures → Hot edge**. It needs a Wayland compositor with layer-shell: KDE Plasma, Sway or Hyprland. It also works after Show Desktop (Meta+D or a screen corner): the strip and the wheel are docks to KWin, so your windows stay hidden while you drag from the desktop.
 
 ## Drag gestures and system-wide shortcuts
 

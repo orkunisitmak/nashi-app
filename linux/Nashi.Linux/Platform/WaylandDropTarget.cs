@@ -94,8 +94,12 @@ public sealed unsafe class WaylandDropTarget
         catch(Exception error)when(error is DllNotFoundException or EntryPointNotFoundException){return null;}
     }
 
+    /// The layer-shell namespace. KWin turns it into a window type, and an unknown name becomes a
+    /// normal window, which Show Desktop hides. As "dock" both surfaces stay in place over the
+    /// desktop, where files are usually dragged from after Show Desktop.
+    private const string Dock="dock";
     /// Covers the screen with an invisible overlay that accepts drops until Hide.
-    public void Show(){lock(gate)overlay??=Open(15,-1,0,0,(0,0,0,0),"nashi-gesture");}
+    public void Show(){lock(gate)overlay??=Open(15,-1,0,0,(0,0,0,0),Dock);}
     public void Hide(){lock(gate)Close(ref overlay);}
     /// The hot edge: an invisible 2-pixel strip along one screen edge (corners left free for the
     /// desktop's own corner actions). A drag that touches it raises EdgeEntered, no key needed.
@@ -107,9 +111,9 @@ public sealed unsafe class WaylandDropTarget
             // Anchors: top 1, bottom 2, left 4, right 8. Margins: top, right, bottom, left.
             edge=side switch
             {
-                "left"=>Open(1|2|4,0,2,0,(48,0,48,0),"nashi-edge"),
-                "right"=>Open(1|2|8,0,2,0,(48,0,48,0),"nashi-edge"),
-                "bottom"=>Open(4|8|2,0,0,2,(0,48,0,48),"nashi-edge"),
+                "left"=>Open(1|2|4,0,2,0,(48,0,48,0),Dock),
+                "right"=>Open(1|2|8,0,2,0,(48,0,48,0),Dock),
+                "bottom"=>Open(4|8|2,0,0,2,(0,48,0,48),Dock),
                 _=>null
             };
         }
