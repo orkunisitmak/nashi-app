@@ -71,9 +71,10 @@ public sealed class SettingsWindow:Window
             var label=Ui.Text(labels[d],13).Also(t=>{t.VerticalAlignment=VerticalAlignment.Center;t.Margin=new(0,0,0,8);});Grid.SetRow(label,n);Grid.SetRow(picker,n);Grid.SetColumn(picker,1);directions.Children.Add(label);directions.Children.Add(picker);
         }
         var available=main.ShortcutsAvailable||!linux.GlobalShortcuts?null:Ui.Text("System-wide shortcuts need KDE Plasma (kglobalaccel). On other desktops, use Ctrl+Space and drop modifiers inside Nashi.",12,"muted");
+        var quickRun=new CheckBox{Content=L10n.T("Conversions and simple tools chosen by gesture run at once with their saved defaults"),IsChecked=linux.GestureQuickRun};
         var keys=Ui.Stack(4,enabled,available??new Control(),Ui.Text("Click a shortcut, then press the new keys. Esc cancels, Backspace clears. Each needs at least one of Meta, Ctrl, Alt or Shift.",11,"muted").Also(t=>t.Margin=new(0,4,0,8)),list,
             Ui.Text("Gesture directions",13,"title").Also(t=>t.Margin=new(0,18,0,4)),
-            Ui.Text("While dragging files anywhere, press the gesture shortcut, then move the pointer. The direction picks the wheel; drop on a slice to run it.",11,"muted").Also(t=>t.Margin=new(0,0,0,8)),directions);
+            Ui.Text("While dragging files anywhere, press the gesture shortcut, then move the pointer. The direction picks the wheel; drop on a slice to run it.",11,"muted").Also(t=>t.Margin=new(0,0,0,8)),directions,quickRun);
 
         var tabs=new TabControl{Items=
         {
@@ -90,7 +91,7 @@ public sealed class SettingsWindow:Window
                 main.library.SetAppearance(Ui.Value(appearance));
                 var combos=boxes.ToDictionary(b=>b.Key,b=>b.Value.Combo);
                 var duplicate=combos.Where(c=>c.Value.Length>0).GroupBy(c=>c.Value).FirstOrDefault(g=>g.Count()>1);if(duplicate is not null)throw new ArgumentException(L10n.T("Two Nashi actions use the same keys:")+" "+duplicate.Key);
-                var next=linux with{GlobalShortcuts=enabled.IsChecked==true,Shortcuts=combos,Gestures=pickers.ToDictionary(x=>x.Key,x=>Ui.Value(x.Value)),Theme=theme,RunInBackground=background.IsChecked==true,StartAtLogin=login.IsChecked==true};
+                var next=linux with{GlobalShortcuts=enabled.IsChecked==true,Shortcuts=combos,Gestures=pickers.ToDictionary(x=>x.Key,x=>Ui.Value(x.Value)),Theme=theme,RunInBackground=background.IsChecked==true,GestureQuickRun=quickRun.IsChecked==true,StartAtLogin=login.IsChecked==true};
                 main.SaveLinuxSettings(next);App.SetBackground(main,next.RunInBackground);saved=true;Close(true);
             }
             catch(Exception error)when(error is ArgumentException or IOException or UnauthorizedAccessException){problem.Text=L10n.T(error.Message);}

@@ -21,6 +21,7 @@ public sealed class ToolEditor:Window
     private readonly byte[]? preview;private readonly int sourceWidth,sourceHeight;private readonly bool metadataReady;
     private readonly StackPanel form=new(){Spacing=2};private readonly TextBlock problem=new(){Foreground=Brushes.IndianRed,TextWrapping=TextWrapping.Wrap,IsVisible=false};
     private Func<Task>? collect;private List<string> order;
+    public string Tool=>tool;
     public string Format{get;private set;}="";
     public ImageOptions ImageOptions{get;private set;}=new();
     public MediaOptions MediaOptions{get;private set;}=new();
@@ -44,6 +45,12 @@ public sealed class ToolEditor:Window
     private bool AllImages=>inputs.All(FeatureCatalog.IsImage);
     private bool AllMedia=>inputs.All(p=>FeatureCatalog.IsVideo(p)||FeatureCatalog.IsAudio(p));
     private bool AllPdf=>inputs.All(p=>FeatureCatalog.Extension(p)=="pdf");
+    /// Collects the defaults without showing the window (a gesture's quick run). False when a value is missing.
+    internal async Task<bool> AcceptDefaultsAsync()
+    {
+        try{if(collect is not null)await collect();return true;}
+        catch(Exception error)when(error is ArgumentException or FormatException or InvalidDataException or OverflowException){return false;}
+    }
     private async Task AcceptAsync()
     {
         try{if(collect is not null)await collect();Close(true);}

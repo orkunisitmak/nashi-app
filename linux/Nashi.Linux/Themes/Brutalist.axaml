@@ -56,6 +56,17 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
     <Setter Property="BorderThickness" Value="2"/>
   </Style>
+  <Style Selector="Border.tile, Border.tile-frame">
+    <Setter Property="CornerRadius" Value="0"/>
+    <Setter Property="BorderThickness" Value="2"/>
+  </Style>
+  <Style Selector="Rectangle.dashed">
+    <Setter Property="RadiusX" Value="0"/>
+    <Setter Property="RadiusY" Value="0"/>
+    <Setter Property="Stroke" Value="{DynamicResource Line}"/>
+    <Setter Property="StrokeThickness" Value="3"/>
+    <Setter Property="Opacity" Value="1"/>
+  </Style>
   <Style Selector="Border.disc">
     <Setter Property="CornerRadius" Value="0"/>
   </Style>

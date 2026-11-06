@@ -27,7 +27,7 @@ public sealed partial class MainWindow:Window
     private readonly Grid layers=new();private readonly Panel overlay=new(){IsVisible=false};private readonly Panel toastLayer=new(){HorizontalAlignment=HorizontalAlignment.Right,VerticalAlignment=VerticalAlignment.Bottom,Margin=new(0,0,24,24)};
     private readonly ContentControl pageHost=new();private TextBlock status=new();
     private readonly TextBox link=new(){PlaceholderText="Paste a public video, image or audio page link"};
-    private ListBox? fileList;private TextBox? librarySearch;private Border? dropCard;
+    private TextBox? librarySearch;private Border? dropCard;
     private string page="home";private bool busy;private string statusText="Files stay on your computer.";
     private readonly List<FloatShelf> shelves=[];
     internal bool Busy=>busy;
@@ -47,6 +47,7 @@ public sealed partial class MainWindow:Window
         foreach(var notice in new[]{library.RecoveryNotice,preferences.RecoveryNotice})if(notice is not null)SetStatus(notice);
         SingleInstance.FilesReceived+=paths=>Dispatcher.UIThread.Post(()=>{Add(paths);Bring();});
         _=InitShortcutsAsync();
+        if(HasMedia)Thumbnails.Ffmpeg=tools.Executable("ffmpeg");
     }
 
     /// Builds the whole window; used again when the language changes.
@@ -88,28 +89,7 @@ public sealed partial class MainWindow:Window
         var intro=Ui.Text("Convert, fine-tune, and send them on their way.",14,"muted");intro.Margin=new(0,6,0,20);home.Children.Add(intro);
         if(!SetupReady)home.Children.Add(SetupBanner());
 
-        var drop=new StackPanel{Spacing=8};
-        drop.Children.Add(new Border{Classes={"pill"},Child=Ui.Text(files.Count==0?"✦  START HERE":"✦  READY WHEN YOU ARE",11)});
-        // A single file shows its own name, which is never looked up in the translation catalog.
-        drop.Children.Add(Ui.Text(files.Count switch{0=>L10n.T("Drop something good."),1=>Path.GetFileName(files[0]),_=>L10n.T($"{files.Count} files, ready to go.")},23,"title",false));
-        drop.Children.Add(Ui.Text(files.Count switch{0=>"Images, videos, documents, and all the little things in between.",1=>Path.GetDirectoryName(files[0])!,_=>"Keep them together, or give each one a fresh start."},12,"muted",files.Count!=1));
-        var picks=new WrapPanel{Margin=new(0,8,0,0)};
-        picks.Children.Add(files.Count==0?Ui.Primary("Choose files",ChooseFiles):Ui.Button("Add or change files",ChooseFiles));
-        picks.Children.Add(Ui.Button("Paste",PasteAsync,tip:"Ctrl+V"));
-        if(files.Count>0){picks.Children.Add(Ui.Primary("Open wheel",ShowWheel));picks.Children.Add(Ui.Button("Clear",()=>files.Clear()));}
-        drop.Children.Add(picks);
-        if(files.Count>0)
-        {
-            fileList=new ListBox{ItemsSource=files.Select(Path.GetFileName).ToList(),SelectionMode=SelectionMode.Multiple,MaxHeight=130};
-            ToolTip.SetTip(fileList,L10n.T("Delete removes the selected entries from Nashi without deleting the original files."));
-            drop.Children.Add(new Border{Classes={"inset"},Padding=new(4),Child=fileList});
-            drop.Children.Add(SelectionActions());
-        }
-        drop.Children.Add(Ui.Text("Ctrl+O  Choose  ·  Ctrl+V  Paste  ·  Ctrl+Space  Wheel  ·  Ctrl+2  Library",11,"muted"));
-        drop.Children.Add(Ui.Text("Hold Ctrl, Shift or Alt while dropping files to open Tools, Convert or File actions.",11,"muted"));
-        var dropGrid=new Grid{ColumnDefinitions=new("*,150")};dropGrid.Children.Add(drop);
-        var garden=new Image{Source=Ui.Asset(files.Count==0?"Mark":"MarkHappy"),Width=120,Height=120,VerticalAlignment=VerticalAlignment.Top,Opacity=.95};Grid.SetColumn(garden,1);dropGrid.Children.Add(garden);
-        dropCard=Ui.Card(dropGrid);home.Children.Add(dropCard);
+        home.Children.Add(files.Count==0?EmptyDropCard():SelectionCard());
 
         home.Children.Add(DownloadCard());
 
@@ -119,6 +99,47 @@ public sealed partial class MainWindow:Window
         if(library.Entries.Count==0)recent.Children.Add(Ui.Text("Nothing yet. Your fresh copies will appear here.",13,"muted"));
         home.Children.Add(Ui.Card(recent));
         return home;
+    }
+    /// Nothing selected: one big, dashed drop target that also teaches the shortcuts.
+    private Control EmptyDropCard()
+    {
+        var text=new StackPanel{Spacing=8,VerticalAlignment=VerticalAlignment.Center};
+        text.Children.Add(new Border{Classes={"pill"},Child=Ui.Text("✦  START HERE",11)});
+        text.Children.Add(Ui.Text(L10n.T("Drop something good."),26,"title",false));
+        text.Children.Add(Ui.Text("Images, videos, documents, and all the little things in between.",13,"muted"));
+        text.Children.Add(new WrapPanel{Margin=new(0,10,0,0),Children={Ui.Primary("Choose files",ChooseFiles),Ui.Button("Paste",PasteAsync,tip:"Ctrl+V")}});
+        var grid=new Grid{ColumnDefinitions=new("*,170"),Margin=new(30,26)};grid.Children.Add(text);
+        var pear=new Image{Source=Ui.Asset("Mark"),Width=140,Height=140,VerticalAlignment=VerticalAlignment.Center};Grid.SetColumn(pear,1);grid.Children.Add(pear);
+        var stack=new StackPanel{Spacing=12,Children={new DashedOutline(grid)}};
+        stack.Children.Add(ShortcutHints());
+        dropCard=Ui.Card(stack);dropCard.Classes.Add("hero");return dropCard;
+    }
+    /// Files selected: previews you can remove one by one, then everything Nashi can do with them.
+    private Control SelectionCard()
+    {
+        var head=new DockPanel();
+        var happy=new Image{Source=Ui.Asset("MarkHappy"),Width=84,Height=84,VerticalAlignment=VerticalAlignment.Top};DockPanel.SetDock(happy,Dock.Right);head.Children.Add(happy);
+        var title=new StackPanel{Spacing=6};
+        title.Children.Add(new Border{Classes={"pill"},Child=Ui.Text("✦  READY WHEN YOU ARE",11)});
+        // A single file shows its own name, which is never looked up in the translation catalog.
+        title.Children.Add(Ui.Text(files.Count==1?Path.GetFileName(files[0]):L10n.T($"{files.Count} files, ready to go."),23,"title",false));
+        title.Children.Add(Ui.Text(files.Count==1?Path.GetDirectoryName(files[0])!:L10n.T("Keep them together, or give each one a fresh start."),12,"muted",false));
+        head.Children.Add(title);
+        var picks=new WrapPanel{Margin=new(0,12,0,4),Children={Ui.Primary("Open wheel",ShowWheel),Ui.Button("Add or change files",ChooseFiles),Ui.Button("Paste",PasteAsync,tip:"Ctrl+V"),Ui.Button("Clear",()=>files.Clear())}};
+        var tiles=new WrapPanel{Margin=new(0,8,0,0)};
+        foreach(var path in files.Take(60))tiles.Children.Add(new FileTile(path,()=>files.Remove(path)));
+        if(files.Count>60)tiles.Children.Add(Ui.Text(L10n.T($"and {files.Count-60} more"),12,"muted",false).Also(t=>t.VerticalAlignment=VerticalAlignment.Center));
+        var stack=new StackPanel{Spacing=6,Children={head,picks,tiles,SelectionActions(),ShortcutHints()}};
+        dropCard=Ui.Card(stack);return dropCard;
+    }
+    private Control ShortcutHints()
+    {
+        var hints=new StackPanel{Spacing=3};
+        hints.Children.Add(Ui.Text("Ctrl+O  Choose  ·  Ctrl+V  Paste  ·  Ctrl+Space  Wheel  ·  Ctrl+2  Library",11,"muted"));
+        if(ShortcutsAvailable&&LinuxSettings.Shortcuts.GetValueOrDefault("gesture") is {Length:>0} gesture)
+            hints.Children.Add(Ui.Text(L10n.T("Anywhere: start dragging files, press")+" "+gesture+" "+L10n.T("and move ←  →  ↑ to pick a wheel."),11,"gold",false));
+        else hints.Children.Add(Ui.Text("Hold Ctrl, Shift or Alt while dropping files to open Tools, Convert or File actions.",11,"muted"));
+        return hints;
     }
     private Control SetupBanner()
     {
@@ -188,7 +209,10 @@ public sealed partial class MainWindow:Window
             buttons.Children.Add(Ui.Button("Show in Folder",()=>LinuxShell.Reveal(available[0]),"chip"));
         }
         var when=entry.Created.LocalDateTime.ToString("g",System.Globalization.CultureInfo.GetCultureInfo(L10n.Language=="tr"?"tr-TR":"en-US"));
-        row.Children.Add(Ui.Stack(2,Ui.Text(entry.Name,14,null,false),Ui.Text(L10n.T(entry.Action)+"  ·  "+when+(available.Length<entry.Paths.Length?"  ·  "+L10n.T("Moved or deleted"):""),11,"muted",false)));
+        var preview=new Border{Width=44,Height=44,CornerRadius=new(8),ClipToBounds=true,Margin=new(0,0,12,0),Classes={"tile-frame"}};DockPanel.SetDock(preview,Dock.Left);row.Children.Add(preview);
+        var (kind,color)=Thumbnails.Kind(entry.Paths[0]);preview.Background=new SolidColorBrush(color);preview.Child=new TextBlock{Text=kind,FontSize=kind.Length>4?9:11,FontWeight=FontWeight.Bold,Foreground=Brushes.White,HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center};
+        if(available.Length>0)_=Task.Run(async()=>{if(await Thumbnails.GetAsync(available[0],96) is {} bitmap)await Dispatcher.UIThread.InvokeAsync(()=>preview.Child=new Image{Source=bitmap,Stretch=Stretch.UniformToFill});});
+        row.Children.Add(Ui.Stack(2,Ui.Text(entry.Name,14,null,false),Ui.Text(L10n.T(entry.Action)+"  ·  "+when+(available.Length<entry.Paths.Length?"  ·  "+L10n.T("Moved or deleted"):""),11,"muted",false)).Also(x=>x.VerticalAlignment=VerticalAlignment.Center));
         return new Border{Child=row,Padding=new(8,6),CornerRadius=new(10)};
     }
     internal void Record(string action,IEnumerable<string> paths){library.Record(action,paths);}
@@ -250,10 +274,8 @@ public sealed partial class MainWindow:Window
         else if(ctrl&&e.Key==Key.D1){ShowHome();e.Handled=true;}
         else if(ctrl&&(e.Key==Key.D2||e.Key==Key.F)){ShowLibrary();e.Handled=true;}
         else if(ctrl&&e.Key==Key.Q){Close();e.Handled=true;}
-        else if(e.Key==Key.Delete&&!inText&&fileList?.SelectedItems is {Count:>0} selected&&page=="home")
-        {
-            var names=selected.Cast<string>().ToHashSet();foreach(var path in files.Where(p=>names.Contains(Path.GetFileName(p))).ToList())files.Remove(path);e.Handled=true;
-        }
+        // Delete on Home clears the selection (files stay where they are); single files have their own ✕.
+        else if(e.Key==Key.Delete&&!inText&&page=="home"&&files.Count>0){files.Clear();e.Handled=true;}
     }
     private async Task PasteLinkAsync()
     {
@@ -301,12 +323,12 @@ public sealed partial class MainWindow:Window
         try
         {
             var outputs=await work(destination,new Progress<OperationProgress>(toast.Update),cancellation.Token);
-            toast.Complete(outputs,()=>toastLayer.Children.Remove(toast));Record(label,outputs);
+            toast.Complete(outputs,()=>toastLayer.Children.Remove(toast));Record(label,outputs);_=NotifyDoneAsync(label,outputs);
             SetStatus($"Saved {outputs.Count} new {(outputs.Count==1?"file":"files")}. Originals kept.");
             if(preferences.Value.RevealFinished&&outputs.Count>0)LinuxShell.Reveal(outputs[0]);
         }
         catch(OperationCanceledException){toastLayer.Children.Remove(toast);SetStatus("Cancelled. Originals kept.");}
-        catch(Exception error){toastLayer.Children.Remove(toast);await Dialogs.Message(this,"Couldn’t finish",L10n.T(error.Message));}
+        catch(Exception error){toastLayer.Children.Remove(toast);if(!IsVisible){_=NotifyDoneAsync(label,[],error.Message);}else await Dialogs.Message(this,"Couldn’t finish",L10n.T(error.Message));}
         finally{SetBusy(false);if(page=="home")RenderPage();}
     }
     private void SetBusy(bool value){busy=value;pageHost.IsEnabled=!value;}

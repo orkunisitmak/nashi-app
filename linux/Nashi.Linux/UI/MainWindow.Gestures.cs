@@ -7,7 +7,7 @@ namespace Nashi.Linux.UI;
 public sealed partial class MainWindow
 {
     internal LinuxSettings LinuxSettings{get;private set;}=LinuxSettings.Load();
-    private GlobalShortcuts? shortcuts;private readonly List<GestureWindow> gestures=[];private bool quitting;
+    private GlobalShortcuts? shortcuts;private Notifications? notifications;private readonly List<GestureWindow> gestures=[];private bool quitting;
     /// Shortcut ids KDE refused (keys owned by another app), shown in Settings.
     internal Dictionary<string,string> ShortcutProblems{get;}=[];
     internal bool ShortcutsAvailable=>shortcuts is not null;
@@ -22,6 +22,16 @@ public sealed partial class MainWindow
         if(formats.Length>0)list.Insert(0,new("convert","Convert","⇄"));return list;
     }
 
+    /// Desktop notifications for work that finishes while the window is hidden.
+    internal async Task NotifyDoneAsync(string label,IReadOnlyList<string> outputs,string? error=null)
+    {
+        if(IsVisible&&IsActive||Environment.GetEnvironmentVariable("NASHI_NO_GLOBAL_SHORTCUTS")=="1")return;
+        notifications??=await Notifications.TryCreateAsync();if(notifications is null)return;
+        if(error is not null){await notifications.ShowAsync(L10n.T("Couldn’t finish"),L10n.T(error),[("show",L10n.T("Open Nashi"))],_=>Bring());return;}
+        var body=string.Join("\n",outputs.Take(4).Select(Path.GetFileName))+(outputs.Count>4?"\n"+L10n.T($"and {outputs.Count-4} more"):"");
+        await notifications.ShowAsync(L10n.T(label)+" · "+L10n.T($"Saved {outputs.Count} new {(outputs.Count==1?"file":"files")}. Originals kept."),body,
+            [("default",L10n.T("Open")),("reveal",L10n.T("Show in Folder"))],action=>{if(outputs.Count==0)return;if(action=="reveal")LinuxShell.Reveal(outputs[0]);else LinuxShell.Open(outputs[0]);});
+    }
     internal async Task InitShortcutsAsync()
     {
         shortcuts?.Dispose();shortcuts=null;ShortcutProblems.Clear();
@@ -82,8 +92,13 @@ public sealed partial class MainWindow
     {
         files.Clear();Add(paths);
         if(choice.Id is "open" or "reveal" or "copy" or "copyPath" or "terminal" or "float"){await PerformFileAction(choice.Id,paths);return;}
-        Bring();
-        if(FileActionChoices().Any(a=>a.Id==choice.Id))await PerformFileAction(choice.Id,paths);else await EditAsync(choice);
+        if(FileActionChoices().Any(a=>a.Id==choice.Id)){Bring();await PerformFileAction(choice.Id,paths);return;}
+        // Conversions and simple tools run at once with their saved defaults (Settings can turn this off);
+        // a desktop notification reports the result while the window stays out of the way.
+        var id=choice.Id.StartsWith("convert:",StringComparison.Ordinal)?"convert":choice.Id;
+        var quick=LinuxSettings.GestureQuickRun&&Quick(id is "mergePDF"?"mergePDFs":id)&&preferences.Value.OutputMode!="ask";
+        if(!quick)Bring();
+        await EditAsync(choice,quick);
     }
     internal void Bring()
     {

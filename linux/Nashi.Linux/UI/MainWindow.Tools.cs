@@ -14,7 +14,7 @@ public sealed partial class MainWindow
 
     /// Same routing as the Windows EditAsync: images through the Linux image engine, audio and
     /// video through FFmpeg, archives, PDFs and documents through Nashi.Core and LibreOffice.
-    internal async Task EditAsync(ToolChoice choice)
+    internal async Task EditAsync(ToolChoice choice,bool quick=false)
     {
         if(busy||files.Count==0)return;
         var requestedFormat=choice.Id.StartsWith("convert:",StringComparison.Ordinal)?choice.Id[8..]:null;
@@ -25,7 +25,7 @@ public sealed partial class MainWindow
         {
             if(choice.Id=="removeMetadata"){await EditMetadataAsync(selected);return;}
             if(choice.Id=="readQRCode"){await ReadQrAsync(selected);return;}
-            if(!imageSelection&&!mediaSelection&&choice.Id is not ("extractArchive" or "unzip")){await EditDocumentAsync(choice,selected,requestedFormat);return;}
+            if(!imageSelection&&!mediaSelection&&choice.Id is not ("extractArchive" or "unzip")){await EditDocumentAsync(choice,selected,requestedFormat,quick);return;}
             MediaInfo? info=null;byte[]? preview=null;int sourceWidth=0,sourceHeight=0;
             if(imageSelection)
             {
@@ -44,7 +44,7 @@ public sealed partial class MainWindow
                 }
             }
             var editor=new ToolEditor(choice.Id,choice.Title,selected,choice.Id=="convert"?FeatureCatalog.Formats(selected):null,preferences,requestedFormat,info,preview,sourceWidth,sourceHeight,metadata.Executable is not null);
-            if(!await editor.ShowDialog<bool>(this))return;
+            if(!await Ask(editor,quick))return;
             var inputs=choice.Id is "cropVideo" or "redactVideo" or "annotate"?new[]{input}:editor.OrderedInputs;
             if(imageSelection)
             {
@@ -73,11 +73,19 @@ public sealed partial class MainWindow
     {
         if(await Dialogs.Confirm(this,"Media setup","Audio and video tools need FFmpeg. Download the verified media tools now, or install ffmpeg from your distribution.","Download"))await new SetupWindow(this).InstallMediaAsync();
     }
-    private async Task EditDocumentAsync(ToolChoice choice,string[] selected,string? requestedFormat)
+    /// Tools that make sense with their saved defaults, so a gesture can run them without a dialog.
+    internal static bool Quick(string tool)=>tool is "convert" or "compress" or "muteVideo" or "extractArchive" or "unzip" or "createPDF" or "mergePDFs" or "joinVideos" or "createCollage" or "splitPDF" or "videoSnapshots" or "normalizeAudio" or "frameImage";
+    /// Shows the tool's options, or (quick, from a gesture) takes the saved defaults straight away.
+    private async Task<bool> Ask(ToolEditor editor,bool quick)
+    {
+        if(quick&&Quick(editor.Tool)&&await editor.AcceptDefaultsAsync())return true;
+        Bring();return await editor.ShowDialog<bool>(this);
+    }
+    private async Task EditDocumentAsync(ToolChoice choice,string[] selected,string? requestedFormat,bool quick=false)
     {
         if(choice.Id=="convert")
         {
-            var editor=new ToolEditor("convert","Convert",selected,FeatureCatalog.Formats(selected),preferences,requestedFormat);if(!await editor.ShowDialog<bool>(this))return;
+            var editor=new ToolEditor("convert","Convert",selected,FeatureCatalog.Formats(selected),preferences,requestedFormat);if(!await Ask(editor,quick))return;
             var format=editor.Format;var options=editor.DocumentOptions;
             if(NeedsOffice(selected,format)&&office.Executable is null)
             {await Dialogs.Command(this,"Set up office tools","Document, slide and spreadsheet conversions use LibreOffice from your distribution. Install it, then try again:",LinuxOffice.InstallHint);return;}
@@ -85,11 +93,11 @@ public sealed partial class MainWindow
         }
         if(choice.Id=="organizePDF")
         {
-            var organizer=new ToolEditor("organizePDF",choice.Title,selected,null,preferences);if(!await organizer.ShowDialog<bool>(this))return;
+            var organizer=new ToolEditor("organizePDF",choice.Title,selected,null,preferences);if(!await Ask(organizer,false))return;
             var pages=organizer.Pages;var pageRotations=organizer.PageRotations;var uniform=organizer.UniformWidth;
             await RunAsync((destination,p,t)=>Task.Run(()=>DocumentEngine.Pdf("organizePDF",selected,destination,pages,t,pageRotations:pageRotations,uniformWidth:uniform),t),"Organize PDF");return;
         }
-        var dialog=new ToolEditor(choice.Id,choice.Title,selected,null,preferences);if(!await dialog.ShowDialog<bool>(this))return;
+        var dialog=new ToolEditor(choice.Id,choice.Title,selected,null,preferences);if(!await Ask(dialog,quick))return;
         if(choice.Id=="compress"){var options=dialog.ImageOptions;var password=dialog.DocumentOptions.Password;await RunAsync((destination,p,t)=>PdfCompression.RunAsync(selected,destination,options,password,p,t),"Compress PDF");return;}
         var inputs=dialog.OrderedInputs;var pagesPerFile=dialog.PagesPerFile;var pdfPassword=dialog.DocumentOptions.Password;var ranges=dialog.PageRanges;
         await RunAsync((destination,p,t)=>Task.Run(()=>DocumentEngine.Pdf(choice.Id,inputs,destination,null,t,pagesPerFile:pagesPerFile,password:pdfPassword,pageRanges:ranges),t),choice.Title);

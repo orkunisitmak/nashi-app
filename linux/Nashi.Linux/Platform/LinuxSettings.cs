@@ -25,6 +25,8 @@ public sealed record LinuxSettings
     public Dictionary<string,string> Gestures{get;init;}=new(){["left"]="actions",["right"]="convert",["up"]="tools",["down"]="none"};
     public string Theme{get;init;}="classic";
     public bool RunInBackground{get;init;}=true;
+    /// Conversions and simple tools chosen on the gesture layer run at once with their saved defaults.
+    public bool GestureQuickRun{get;init;}=true;
     public bool StartAtLogin{get;init;}
 
     private static string File=>Path.Combine(AppPaths.Data,"linux.json");
