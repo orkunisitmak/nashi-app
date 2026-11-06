@@ -558,6 +558,7 @@
 "COULDN’T FINISH" = "COULDN’T FINISH";
 "COULDN’T OPEN THIS TOOL" = "COULDN’T OPEN THIS TOOL";
 "COVER STYLE" = "COVER STYLE";
+"CREATE A FINE-GRAINED TOKEN ON GITHUB" = "CREATE A FINE-GRAINED TOKEN ON GITHUB";
 "CREATE A NEW FLOAT" = "CREATE A NEW FLOAT";
 "CREATE COLLAGE" = "CREATE COLLAGE";
 "CREATE PDF" = "CREATE PDF";
@@ -789,6 +790,7 @@
 "Create Collage" = "Create Collage";
 "Create PDF" = "Create PDF";
 "Create a New Float" = "Create a New Float";
+"Create a fine-grained token on GitHub" = "Create a fine-grained token on GitHub";
 "Create a new Float" = "Create a new Float";
 "Create visualization" = "Create visualization";
 "Created" = "Created";

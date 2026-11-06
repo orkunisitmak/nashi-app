@@ -558,6 +558,7 @@
 "COULDN’T FINISH" = "IMPOSSIBLE DE TERMINER";
 "COULDN’T OPEN THIS TOOL" = "IMPOSSIBLE D’OUVRIR CET OUTIL";
 "COVER STYLE" = "STYLE DE POCHETTE";
+"CREATE A FINE-GRAINED TOKEN ON GITHUB" = "CRÉER UN JETON À PORTÉE PRÉCISE SUR GITHUB";
 "CREATE A NEW FLOAT" = "CRÉER UN NOUVEAU FLOAT";
 "CREATE COLLAGE" = "CRÉER UN COLLAGE";
 "CREATE PDF" = "CRÉER UN PDF";
@@ -789,6 +790,7 @@
 "Create Collage" = "Créer un collage";
 "Create PDF" = "Créer un PDF";
 "Create a New Float" = "Créer un nouveau Float";
+"Create a fine-grained token on GitHub" = "Créer un jeton à portée précise sur GitHub";
 "Create a new Float" = "Créer un nouveau Float";
 "Create visualization" = "Créer la visualisation";
 "Created" = "Création";
