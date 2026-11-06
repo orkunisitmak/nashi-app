@@ -135,6 +135,15 @@ bool WheelOpen(Window w)=>w.GetVisualDescendants().OfType<WheelOverlay>().Any(o=
         Expect($"A dragged link opens the download wheel ({string.Join(", ",layer.Wheel.Items.Select(i=>i.Title))})",layer.Wheel.Items.Any(i=>i.Id=="web:video")&&layer.Wheel.Items.Any(i=>i.Id=="web:copy"));
         Save(layer,"16-gesture-web");w.CloseGestures();Pump();
     }
+    // A copied image (a screenshot) gets the Tools wheel through the clipboard shortcut.
+    {
+        var clip=new Avalonia.Input.DataTransfer();var item=new Avalonia.Input.DataTransferItem();item.Set(Nashi.Linux.ClipboardFiles.Png,File.ReadAllBytes(Fixtures("Photo.png")[0]));clip.Add(item);
+        w.Clipboard!.SetDataAsync(clip).GetAwaiter().GetResult();Pump();
+        w.PressShortcut("clipboard");for(var n=0;n<60&&w.Gestures.Count==0;n++){Pump();Thread.Sleep(20);}for(var n=0;n<10;n++)Pump();
+        var petals=w.Gestures.FirstOrDefault()?.Wheel.Items??[];
+        Expect($"A copied image opens the Tools wheel ({string.Join(", ",petals.Take(4).Select(i=>i.Title))}…)",petals.Any(i=>i.Id=="editImage"));
+        w.CloseGestures();Pump();
+    }
     // The last tool comes back first on the Tools wheel as "Again".
     w.LastChoice=new ToolChoice("convert:jpg","Convert to JPG","↗");
     var again=w.ChoicesFor(Fixtures("Photo.png"),"tools");

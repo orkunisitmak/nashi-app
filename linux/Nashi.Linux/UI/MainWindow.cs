@@ -211,6 +211,7 @@ public sealed partial class MainWindow:Window
         var when=entry.Created.LocalDateTime.ToString("g",System.Globalization.CultureInfo.GetCultureInfo(L10n.Language=="tr"?"tr-TR":"en-US"));
         var preview=new Border{Width=44,Height=44,CornerRadius=new(8),ClipToBounds=true,Margin=new(0,0,12,0),Classes={"tile-frame"}};DockPanel.SetDock(preview,Dock.Left);row.Children.Add(preview);
         var (kind,color)=Thumbnails.Kind(entry.Paths[0]);preview.Background=new SolidColorBrush(color);preview.Child=new TextBlock{Text=kind,FontSize=kind.Length>4?9:11,FontWeight=FontWeight.Bold,Foreground=Brushes.White,HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center};
+        if(available.Length>0){DragOut.Attach(preview,()=>available);ToolTip.SetTip(preview,L10n.T("Drag the files anywhere"));}
         if(available.Length>0)_=Task.Run(async()=>{if(await Thumbnails.GetAsync(available[0],96) is {} bitmap)await Dispatcher.UIThread.InvokeAsync(()=>preview.Child=new Image{Source=bitmap,Stretch=Stretch.UniformToFill});});
         row.Children.Add(Ui.Stack(2,Ui.Text(entry.Name,14,null,false),Ui.Text(L10n.T(entry.Action)+"  ·  "+when+(available.Length<entry.Paths.Length?"  ·  "+L10n.T("Moved or deleted"):""),11,"muted",false)).Also(x=>x.VerticalAlignment=VerticalAlignment.Center));
         return new Border{Child=row,Padding=new(8,6),CornerRadius=new(10)};

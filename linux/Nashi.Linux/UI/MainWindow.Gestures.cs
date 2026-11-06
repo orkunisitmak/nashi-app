@@ -75,6 +75,8 @@ public sealed partial class MainWindow
     /// Who already owns these keys outside Nashi, for the shortcut editor.
     internal async Task<string?> ShortcutOwnerAsync(string combo)=>shortcuts is null?null:await shortcuts.OwnerAsync(combo);
 
+    /// Runs a global shortcut as if KDE had sent it (tests and the tray menu).
+    internal void PressShortcut(string id)=>OnGlobalShortcut(id);
     private void OnGlobalShortcut(string id)
     {
         GestureWindow.Log("shortcut "+id);
@@ -83,6 +85,7 @@ public sealed partial class MainWindow
             case "gesture":StartGesture(null);break;
             case "convert" or "tools" or "actions":StartGesture(id);break;
             case "clipboard":_=Ui.Guard(ClipboardWheelAsync);break;
+            case "capture":_=Ui.Guard(CaptureAsync);break;
             case "open":Bring();break;
             case "download":Bring();_=Ui.Guard(PasteLinkAsync);break;
         }
@@ -105,8 +108,36 @@ public sealed partial class MainWindow
             if(paths.Length==0)foreach(var format in new[]{ClipboardFiles.GnomeFiles,ClipboardFiles.UriList})
                 if(await Avalonia.Input.Platform.ClipboardExtensions.TryGetValueAsync(clipboard,format) is {} bytes&&ClipboardFiles.ParseUris(System.Text.Encoding.UTF8.GetString(bytes)) is {Count:>0} parsed){paths=parsed.ToArray();break;}
         }
+        // A copied image (a screenshot, an image from a browser) becomes a file in Library first.
+        if(paths.Length==0&&Clipboard is {} images)
+        {
+            byte[]? png=await Avalonia.Input.Platform.ClipboardExtensions.TryGetValueAsync(images,ClipboardFiles.Png);
+            if(png is not {Length:>0}&&await Avalonia.Input.Platform.ClipboardExtensions.TryGetBitmapAsync(images) is {} bitmap){using var stream=new MemoryStream();
+#pragma warning disable CS0618 // PNG defaults are what we want here.
+                bitmap.Save(stream);
+#pragma warning restore CS0618
+                png=stream.ToArray();}
+            if(png is {Length:>0}){var file=ClipboardFiles.SaveImport(library.DirectoryPath,"Pasted image","png",png);Record("Paste",[file]);paths=[file];}
+        }
         if(paths.Length==0){Bring();SetStatus("Copy files in your file manager first, then press the shortcut.");return;}
         StartGesture("tools",paths);
+    }
+    /// Lets you pick a part of the screen, saves it to Library and opens the Tools wheel on it
+    /// (annotate, redact, crop, read a QR code, convert…). Uses the desktop's own screenshot tool.
+    private async Task CaptureAsync()
+    {
+        var folder=Path.Combine(library.DirectoryPath,"Clipboard");Directory.CreateDirectory(folder);
+        var file=SafePaths.Unique(folder,$"Screenshot {DateTime.Now:yyyy-MM-dd HH.mm.ss}.png");
+        (string Tool,string[] Arguments)[] tools=[("spectacle",["-b","-n","-r","-o",file]),("gnome-screenshot",["-a","-f",file]),("xfce4-screenshooter",["-r","-s",file]),("flameshot",["gui","-p",folder])];
+        foreach(var (tool,arguments) in tools)
+        {
+            if(LinuxShell.FindInPath(tool) is not {} executable)continue;
+            try{await ProcessRunner.RunAsync(executable,arguments,CancellationToken.None);}catch(IOException){return;}
+            var made=File.Exists(file)?file:tool=="flameshot"?Directory.GetFiles(folder,"*.png").OrderByDescending(File.GetLastWriteTimeUtc).FirstOrDefault(f=>File.GetLastWriteTimeUtc(f)>DateTime.UtcNow.AddMinutes(-2)):null;
+            if(made is null)return;   // selection cancelled
+            Record("Screenshot",[made]);StartGesture("tools",[made]);return;
+        }
+        await Dialogs.Command(this,"Capture part of the screen","Install a screenshot tool, then try again:",LinuxShell.InstallCommand("spectacle"));
     }
     /// Runs a slice chosen on the gesture layer. File actions run in place; tools and
     /// conversions bring Nashi forward for their options and progress.

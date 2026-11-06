@@ -28,6 +28,11 @@ public sealed class Toast:Border
         var buttons=new WrapPanel();
         if(outputs.Count>0){buttons.Children.Add(Ui.Button("Open",()=>LinuxShell.Open(outputs[0]),"chip"));buttons.Children.Add(Ui.Button("Show in Folder",()=>LinuxShell.Reveal(outputs[0]),"chip"));}
         buttons.Children.Add(Ui.Button("Done",close,"chip"));body.Children.Add(buttons);
+        if(outputs.Count>0)
+        {
+            var handle=new Border{Classes={"inset"},Padding=new(10,6),Child=Ui.Text(L10n.T("Drag the new files anywhere  ⇲"),11,"muted",false)};
+            DragOut.Attach(handle,()=>outputs);body.Children.Add(handle);
+        }
         DispatcherTimer.RunOnce(close,TimeSpan.FromSeconds(outputs.Count==0?3:12));
     }
 }

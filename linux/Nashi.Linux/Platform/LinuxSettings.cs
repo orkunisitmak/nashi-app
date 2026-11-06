@@ -11,7 +11,8 @@ public sealed record LinuxSettings
         ("convert","Convert wheel","Meta+Alt+C"),
         ("tools","Tools wheel","Meta+Alt+T"),
         ("actions","File actions wheel","Meta+Alt+A"),
-        ("clipboard","Wheel for copied files","Meta+Alt+V"),
+        ("clipboard","Wheel for copied files or a copied image","Meta+Alt+V"),
+        ("capture","Capture part of the screen, then pick a tool","Meta+Alt+S"),
         ("open","Show Nashi","Meta+Alt+N"),
         ("download","Download a copied link","Meta+Alt+D"),
     ];
