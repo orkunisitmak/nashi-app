@@ -10,6 +10,6 @@
     <ProjectReference Include="../Nashi.Linux/Nashi.Linux.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Avalonia.Headless" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Headless" Version="12.1.5" />
   </ItemGroup>
 </Project>

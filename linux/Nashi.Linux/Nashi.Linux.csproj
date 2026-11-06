@@ -18,11 +18,13 @@
   </ItemGroup>
   <ItemGroup><InternalsVisibleTo Include="Nashi.Linux.Snapshots" /></ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.3.22" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.3.22" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.22" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.22" />
+    <PackageReference Include="Avalonia" Version="12.1.5" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.5" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.5" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.5" />
     <PackageReference Include="bblanchon.PDFium.Linux" Version="155.0.8044" />
+    <!-- Already shipped with Avalonia.FreeDesktop; referenced directly for KDE global shortcuts. -->
+    <PackageReference Include="Tmds.DBus.Protocol" Version="0.94.1" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources/Turkish.Linux.json" LogicalName="Nashi.Turkish.Linux.json" />

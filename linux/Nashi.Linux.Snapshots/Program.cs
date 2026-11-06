@@ -11,11 +11,15 @@ using Nashi.Linux.UI;
 // press its default button, wait for the export) and checks each output and its Library entry.
 // Keep Library and settings away from the user's own: point XDG_DATA_HOME at a temp folder first.
 var output=Path.GetFullPath(args.Length>0?args[0]:"snapshots");var fixtures=args.Length>1?Path.GetFullPath(args[1]):null;Directory.CreateDirectory(output);
+// Never touch the desktop's real global shortcuts from a test run.
+Environment.SetEnvironmentVariable("NASHI_NO_GLOBAL_SHORTCUTS","1");
 // Continuations after await must come back to the UI thread, as in the real app.
 SynchronizationContext.SetSynchronizationContext(new AvaloniaSynchronizationContext());
 AppBuilder.Configure<App>().UseSkia().UseHeadless(new AvaloniaHeadlessPlatformOptions{UseHeadlessDrawing=false}).WithInterFont().SetupWithoutStarting();
 void Pump(){for(var n=0;n<6;n++){Dispatcher.UIThread.RunJobs();AvaloniaHeadlessPlatform.ForceRenderTimerTick();}}
+#pragma warning disable CS0618 // PNG defaults are fine for review screenshots.
 void Save(Window window,string name){Pump();using var frame=window.CaptureRenderedFrame();frame?.Save(Path.Combine(output,name+".png"));Console.WriteLine("saved "+name);}
+#pragma warning restore CS0618
 string[] Fixtures(params string[] names)=>fixtures is null?[]:names.Select(n=>Path.Combine(fixtures,n)).Where(File.Exists).ToArray();
 
 App.ApplyAppearance("light");
@@ -87,6 +91,32 @@ bool WheelOpen(Window w)=>w.GetVisualDescendants().OfType<WheelOverlay>().Any(o=
         var opened=w.GetVisualDescendants().OfType<WheelOverlay>().FirstOrDefault()?.GetVisualDescendants().OfType<Button>().Any(b=>ToolTip.GetTip(b) as string==expected)==true;
         Expect($"Drop with {modifier} opens the wheel at {expected}",item is not null&&opened);
         w.KeyPress(Avalonia.Input.Key.Escape,Avalonia.Input.RawInputModifiers.None,Avalonia.Input.PhysicalKey.Escape,null);Pump();
+    }
+    // Gesture layer: a drag enters it, moves left (File actions by default), then drops on a slice.
+    {
+        var target=Fixtures("Photo.png")[0];w.UseFiles([]);
+        Avalonia.Input.DataTransfer Drag(){var d=new Avalonia.Input.DataTransfer();var f=w.StorageProvider.TryGetFileFromPathAsync(new Uri(target)).GetAwaiter().GetResult();if(f is not null)d.Add(Avalonia.Input.DataTransferItem.CreateFile(f));return d;}
+        w.StartGesture(null);Pump();var layer=w.Gestures.First();
+        var data=Drag();layer.DragDrop(new Point(600,400),Avalonia.Input.Raw.RawDragEventType.DragEnter,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);Pump();
+        layer.DragDrop(new Point(480,405),Avalonia.Input.Raw.RawDragEventType.DragOver,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);Pump();
+        var slices=layer.GetVisualDescendants().OfType<Button>().Where(b=>b.Classes.Contains("wheel")).ToList();
+        Expect($"Gesture left opens File actions ({string.Join(", ",slices.Select(b=>ToolTip.GetTip(b)))})",slices.Any(b=>ToolTip.GetTip(b) as string=="Copy Path"));
+        Save(layer,"14-gesture-left");
+        var copyPath=slices.First(b=>ToolTip.GetTip(b) as string=="Copy Path");var at=new Point(Canvas.GetLeft(copyPath)+copyPath.Width/2,Canvas.GetTop(copyPath)+copyPath.Height/2);
+        layer.DragDrop(at,Avalonia.Input.Raw.RawDragEventType.DragOver,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);Pump();
+        Expect("Hovering a slice highlights it",copyPath.Classes.Contains("selected"));
+        layer.DragDrop(at,Avalonia.Input.Raw.RawDragEventType.Drop,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);for(var n=0;n<20;n++){Pump();Thread.Sleep(10);}
+        Expect("Dropping on Copy Path runs it and closes the layer",!w.Gestures.Any(l=>l.IsVisible)&&w.GetVisualDescendants().OfType<TextBlock>().Any(t=>t.Text=="File paths copied."));
+        // Right opens Convert; up opens Tools.
+        foreach(var (dx,dy,expected) in new[]{(140.0,0.0,"JPG"),(0.0,-140.0,"Edit Photo")})
+        {
+            w.StartGesture(null);Pump();layer=w.Gestures.First();data=Drag();
+            layer.DragDrop(new Point(600,400),Avalonia.Input.Raw.RawDragEventType.DragEnter,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);
+            layer.DragDrop(new Point(600+dx,400+dy),Avalonia.Input.Raw.RawDragEventType.DragOver,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);Pump();
+            Expect($"Gesture ({dx},{dy}) opens the wheel with {expected}",layer.GetVisualDescendants().OfType<Button>().Any(b=>ToolTip.GetTip(b) as string==expected));
+            if(expected=="JPG")Save(layer,"15-gesture-right");
+            w.CloseGestures();Pump();
+        }
     }
     // Focus in the link box must not swallow the wheel shortcut.
     var linkBox=w.GetVisualDescendants().OfType<TextBox>().First();linkBox.Focus();Pump();

@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input.Platform;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -67,7 +68,7 @@ public sealed class SettingsWindow:Window
         Title=L10n.T("Settings")+" · Nashi";Width=560;SizeToContent=SizeToContent.Height;CanResize=false;WindowStartupLocation=WindowStartupLocation.CenterOwner;ShowInTaskbar=false;
         var p=main.preferences.Value;
         var language=Ui.Choice([("en","English"),("tr","Türkçe")],p.Language);var appearance=Ui.Choice([("system","System"),("light","Light"),("dark","Dark")],main.library.Appearance);
-        var output=Ui.Choice([("beside","Beside the original"),("folder","In a folder"),("ask","Ask every time")],p.OutputMode);var folder=new TextBox{Text=p.OutputFolder,Watermark=L10n.T("Choose a folder")};
+        var output=Ui.Choice([("beside","Beside the original"),("folder","In a folder"),("ask","Ask every time")],p.OutputMode);var folder=new TextBox{Text=p.OutputFolder,PlaceholderText=L10n.T("Choose a folder")};
         var downloads=new TextBox{Text=string.IsNullOrWhiteSpace(p.DownloadFolder)||p.DownloadFolder==new Preferences().DownloadFolder&&!Directory.Exists(p.DownloadFolder)?AppPaths.Downloads:p.DownloadFolder};
         var reveal=new CheckBox{Content=L10n.T("Show new files in the file manager when finished"),IsChecked=p.RevealFinished};
         var floating=Ui.Choice([("createNew","Open a new Float"),("addToExisting","Add to the open Float")],p.FloatBehavior);

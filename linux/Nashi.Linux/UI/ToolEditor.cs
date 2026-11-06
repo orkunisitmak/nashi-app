@@ -144,7 +144,7 @@ public sealed class ToolEditor:Window
         if(inputs.Any(p=>FeatureCatalog.Extension(p)=="pdf")&&format is "txt" or "md")panel.Children.Add(Ui.Text("Scanned pages are read with Tesseract OCR when it is installed.",11,"muted"));
         return()=>profile with{Dpi=dpi is null?profile.Dpi:(int)Ui.Read(dpi),Layout=layout is null?profile.Layout:Ui.Value(layout),EpubLayout=epub is null?profile.EpubLayout:Ui.Value(epub)};
     }
-    private static TextBox Password()=>new(){PasswordChar='•',Watermark=L10n.T("Password")};
+    private static TextBox Password()=>new(){PasswordChar='•',PlaceholderText=L10n.T("Password")};
 
     // ── Image tools ───────────────────────────────────────────────────────────────────
     private (NumericUpDown Reduction,NumericUpDown Target) SizeTargets()
@@ -185,7 +185,7 @@ public sealed class ToolEditor:Window
     {
         var canvas=Region(RegionMode.Draw);if(canvas is null)return;
         var kind=Ui.Choice([("pen","Pen"),("box","Box"),("text","Text")],"pen");var color=Ui.Choice([("#E5484D","Red"),("#E3B859","Gold"),("#30A46C","Green"),("#0090FF","Blue"),("#000000","Black"),("#FFFFFF","White")],"#E5484D");
-        var width=Ui.Slider(1,40,6);var text=new TextBox{Watermark=L10n.T("Annotation text")};var size=Ui.Number(36,8,400,4);
+        var width=Ui.Slider(1,40,6);var text=new TextBox{PlaceholderText=L10n.T("Annotation text")};var size=Ui.Number(36,8,400,4);
         void Sync(){canvas.Tool=Ui.Value(kind);canvas.Color=Ui.Value(color);canvas.StrokeWidth=width.Value/canvas.Scale*Math.Max(1,sourceWidth/1200d);canvas.Text=text.Text??"";canvas.FontSize=Ui.Read(size);}
         kind.SelectionChanged+=(_,_)=>Sync();color.SelectionChanged+=(_,_)=>Sync();width.PropertyChanged+=(_,e)=>{if(e.Property==Slider.ValueProperty)Sync();};text.TextChanged+=(_,_)=>Sync();size.ValueChanged+=(_,_)=>Sync();Sync();
         var grid=Ui.Wrap(Ui.Field("Tool",kind),new Control{Width=12},Ui.Field("Ink color",color));Add(grid);Add("Stroke width",Ui.Labeled(width,v=>$"{v:0}"));
@@ -347,7 +347,7 @@ public sealed class ToolEditor:Window
     }
     private void BuildAudioRedact()
     {
-        var mode=Ui.Choice([("bleep","Bleep"),("mute","Silence")],"bleep");var ranges=new TextBox{AcceptsReturn=true,Height=80,Watermark="1.5-2.8; 0:42-0:45"};
+        var mode=Ui.Choice([("bleep","Bleep"),("mute","Silence")],"bleep");var ranges=new TextBox{AcceptsReturn=true,Height=80,PlaceholderText="1.5-2.8; 0:42-0:45"};
         Add("Replace with",mode);Add("Ranges",ranges,"Start-end pairs, separated by semicolons.");
         collect=()=>
         {
@@ -365,7 +365,7 @@ public sealed class ToolEditor:Window
     }
     private void BuildSplitPdf()
     {
-        var per=Ui.Number(1,1,1000);var ranges=new TextBox{Watermark="1-3, 5, 8-"};var password=Password();
+        var per=Ui.Number(1,1,1000);var ranges=new TextBox{PlaceholderText="1-3, 5, 8-"};var password=Password();
         Add("Pages per file",per);Add("Page ranges",ranges,"Leave empty for every page.");Add("Password",password,"Only needed for protected PDFs.");
         collect=()=>{PagesPerFile=(int)Ui.Read(per);PageRanges=ranges.Text??"";DocumentOptions=new(Password:password.Text??"");return Task.CompletedTask;};
     }

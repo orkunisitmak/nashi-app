@@ -26,7 +26,7 @@ public sealed partial class MainWindow:Window
     internal readonly MetadataService metadata=new(AppPaths.ToolsRoot,Environment.GetEnvironmentVariable("PATH"));
     private readonly Grid layers=new();private readonly Panel overlay=new(){IsVisible=false};private readonly Panel toastLayer=new(){HorizontalAlignment=HorizontalAlignment.Right,VerticalAlignment=VerticalAlignment.Bottom,Margin=new(0,0,24,24)};
     private readonly ContentControl pageHost=new();private TextBlock status=new();
-    private readonly TextBox link=new(){Watermark="Paste a public video, image or audio page link"};
+    private readonly TextBox link=new(){PlaceholderText="Paste a public video, image or audio page link"};
     private ListBox? fileList;private TextBox? librarySearch;private Border? dropCard;
     private string page="home";private bool busy;private string statusText="Files stay on your computer.";
     private readonly List<FloatShelf> shelves=[];
@@ -40,12 +40,13 @@ public sealed partial class MainWindow:Window
         try{Icon=new WindowIcon(Ui.Asset("Icon"));}catch(FileNotFoundException){}
         DragDrop.SetAllowDrop(this,true);AddHandler(DragDrop.DragOverEvent,OnDragOver);AddHandler(DragDrop.DragLeaveEvent,(_,_)=>dropCard?.Classes.Remove("drop"));AddHandler(DragDrop.DropEvent,OnDrop);
         AddHandler(KeyDownEvent,OnKey,RoutingStrategies.Tunnel);
-        Closing+=(_,e)=>{if(busy){e.Cancel=true;SetStatus("Finish the current operation or choose Cancel before closing Nashi.");}};
+        Closing+=OnClosing;
         files.CollectionChanged+=(_,_)=>{if(page=="home")RenderPage();};
         Build();
         Add(arguments.Where(a=>!a.StartsWith("--",StringComparison.Ordinal)).Select(a=>a.StartsWith("file://",StringComparison.Ordinal)?new Uri(a).LocalPath:a));
         foreach(var notice in new[]{library.RecoveryNotice,preferences.RecoveryNotice})if(notice is not null)SetStatus(notice);
-        SingleInstance.FilesReceived+=paths=>Dispatcher.UIThread.Post(()=>{Add(paths);ShowHome();Activate();});
+        SingleInstance.FilesReceived+=paths=>Dispatcher.UIThread.Post(()=>{Add(paths);Bring();});
+        _=InitShortcutsAsync();
     }
 
     /// Builds the whole window; used again when the language changes.
@@ -57,7 +58,7 @@ public sealed partial class MainWindow:Window
         controls.Children.Add(Ui.Button(SetupReady?"Tools ready":"Finish setup",async()=>await new SetupWindow(this).ShowDialog(this),"quiet"+(SetupReady?"":" active")));
         controls.Children.Add(Ui.Button("Home",ShowHome,"quiet"+(page=="home"?" active":"")));
         controls.Children.Add(Ui.Button("Library",ShowLibrary,"quiet"+(page=="library"?" active":"")));
-        controls.Children.Add(Ui.Button("Settings",async()=>{if(await new SettingsWindow(this).ShowDialog<bool>(this)){L10n.Language=preferences.Value.Language;App.ApplyAppearance(library.Appearance);Build();}},"quiet"));
+        controls.Children.Add(Ui.Button("Settings",OpenSettingsAsync,"quiet"));
         var brand=Ui.Row(10,new Image{Source=Ui.Asset("Mark"),Width=40,Height=40},new TextBlock{Text="Nashi",FontSize=20,FontWeight=FontWeight.Bold,VerticalAlignment=VerticalAlignment.Center},new Border{Classes={"pill"},VerticalAlignment=VerticalAlignment.Center,Child=Ui.Text("On your PC",11,"muted")});
         header.Children.Add(brand);
         status=Ui.Text(statusText,12,"muted");status.Margin=new(4,12,4,0);DockPanel.SetDock(status,Dock.Bottom);root.Children.Add(status);
@@ -66,6 +67,10 @@ public sealed partial class MainWindow:Window
         root.Children.Add(new ScrollViewer{Content=pageHost,HorizontalScrollBarVisibility=Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled});
         layers.Children.Clear();layers.Children.Add(root);layers.Children.Add(toastLayer);layers.Children.Add(overlay);Content=layers;
         RenderPage();
+    }
+    internal async Task OpenSettingsAsync()
+    {
+        if(await new SettingsWindow(this).ShowDialog<bool>(this)){L10n.Language=preferences.Value.Language;App.ApplyAppearance(library.Appearance);Build();await InitShortcutsAsync();}
     }
     internal bool HasMedia{get{try{tools.Executable("ffmpeg");tools.Executable("ffprobe");return true;}catch(FileNotFoundException){return false;}}}
     internal bool HasDownloader{get{try{tools.Executable("yt-dlp");return true;}catch(FileNotFoundException){return false;}}}
@@ -130,7 +135,7 @@ public sealed partial class MainWindow:Window
         DockPanel.SetDock(save,Dock.Right);row.Children.Add(save);
         var options=Ui.Row(0,kind,quality);options.Margin=new(8,0,0,0);kind.Margin=new(0,0,8,0);quality.Margin=new(0,0,8,0);DockPanel.SetDock(options,Dock.Right);row.Children.Add(options);
         // The link box survives re-renders so a pasted link is kept; detach it from the previous view first.
-        (link.Parent as Panel)?.Children.Remove(link);link.Watermark=L10n.T("Paste a public video, image or audio page link");row.Children.Add(link);
+        (link.Parent as Panel)?.Children.Remove(link);link.PlaceholderText=L10n.T("Paste a public video, image or audio page link");row.Children.Add(link);
         var card=Ui.Card(Ui.Stack(2,Ui.Text("Download a link",17,"title"),Ui.Text("Video, audio, or an image. Straight into your tools.",12,"muted"),row,Ui.Text("Ctrl+Shift+D  Use a copied link  ·  Public, downloadable media",11,"muted")));
         card.Margin=new(0,14,0,0);return card;
     }
@@ -146,13 +151,7 @@ public sealed partial class MainWindow:Window
     }
     internal IReadOnlyList<ToolChoice> ToolChoices()=>FeatureCatalog.Tools(files).Select(id=>new ToolChoice(id,FeatureCatalog.ToolNames.GetValueOrDefault(id,id),Ui.Symbol(id))).ToList();
     internal static IReadOnlyList<ToolChoice> FileActionChoices()=>[new("open","Open","↗"),new("reveal","Show in Folder","⌂"),new("float","Float","▣"),new("copy","Copy","▱"),new("move","Move","↗"),new("copyPath","Copy Path","↪"),new("terminal","Terminal",">_")];
-    internal IReadOnlyList<ToolChoice> WheelChoices(string mode)
-    {
-        if(files.Count==0)return [];
-        if(mode=="actions")return FileActionChoices();
-        if(mode=="convert")return FeatureCatalog.Formats(files).Select(f=>new ToolChoice("convert:"+f,f.ToUpperInvariant(),"↗")).ToList();
-        var list=ToolChoices().ToList();if(FeatureCatalog.Formats(files).Length>0)list.Insert(0,new("convert","Convert","⇄"));return list;
-    }
+    internal IReadOnlyList<ToolChoice> WheelChoices(string mode)=>ChoicesFor(files,mode);
     internal void ShowWheel()=>ShowWheel(null);
     internal void ShowWheel(string? initial)
     {
@@ -172,7 +171,7 @@ public sealed partial class MainWindow:Window
     {
         var stack=new StackPanel{Spacing=6};stack.Children.Add(Ui.Title("Your Library",30));stack.Children.Add(Ui.Text("Freshly made, pasted, and ready for another round.",14,"muted"));
         var label=Ui.Text("Find a file or tool  ·  Ctrl+F",12,"muted");label.Margin=new(4,16,4,0);stack.Children.Add(label);
-        var rows=new StackPanel{Spacing=4};var query=librarySearch?.Text??"";librarySearch=new TextBox{Watermark=L10n.T("Find a file or tool in Library"),Text=query};
+        var rows=new StackPanel{Spacing=4};var query=librarySearch?.Text??"";librarySearch=new TextBox{PlaceholderText=L10n.T("Find a file or tool in Library"),Text=query};
         void Render(){rows.Children.Clear();var found=library.Search(librarySearch.Text??"",L10n.Language).ToList();foreach(var entry in found)rows.Children.Add(LibraryRow(entry));if(found.Count==0)rows.Children.Add(Ui.Text(library.Entries.Count==0?"Nothing yet. Your fresh copies will appear here.":"No matches.",13,"muted"));}
         librarySearch.TextChanged+=(_,_)=>Render();Render();stack.Children.Add(librarySearch);stack.Children.Add(Ui.Card(rows));
         stack.Children.Add(Ui.Text($"Library keeps the last {LibraryStore.Limit} successful exports and clipboard imports.",11,"muted"));
