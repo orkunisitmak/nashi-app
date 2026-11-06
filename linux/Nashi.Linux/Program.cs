@@ -16,6 +16,13 @@ internal static class Program
             Console.WriteLine(id>0?$"PASS notification {id} shown":"FAIL notification refused");return id>0?0:1;
         }
         if(args is ["--shortcuts-check"])return ShortcutsCheck().GetAwaiter().GetResult();
+        // Opens the hot edge strip and the drop overlay on every monitor for a few seconds (for checks in a nested compositor).
+        if(args is ["--layer-check",..])
+        {
+            var target=WaylandDropTarget.TryCreate();if(target is null){Console.WriteLine("No layer-shell in this session.");return 2;}
+            target.ShowEdge("left");target.Show();Console.WriteLine("monitors: "+target.Describe());
+            Thread.Sleep(TimeSpan.FromSeconds(args.Length>1&&double.TryParse(args[1],System.Globalization.CultureInfo.InvariantCulture,out var wait)?wait:3));return 0;
+        }
         if(args.Length>0&&args[0]=="--self-test")return Engine.SelfTest.RunAsync(args.Length>1?args[1]:null).GetAwaiter().GetResult();
         var files=args.Where(a=>!a.StartsWith("--",StringComparison.Ordinal)).ToArray();
         // A second launch (for example "Open with Nashi") hands its files to the open window.

@@ -6,6 +6,23 @@ namespace Nashi.Linux;
 /// GNOME, KDE Plasma, Xfce, Cinnamon and other desktops, on X11 and Wayland.
 public static class LinuxShell
 {
+    /// KWin's "Legacy applications (X11): apply scaling themselves" sets [Xwayland] Scale in kwinrc;
+    /// X11 coordinates are then logical pixels times that. Other compositors: 1.
+    public static double XwaylandScale()
+    {
+        try
+        {
+            var path=Path.Combine(Environment.GetEnvironmentVariable("XDG_CONFIG_HOME") is {Length:>0} c?c:Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),".config"),"kwinrc");
+            if(!File.Exists(path))return 1;var inside=false;
+            foreach(var line in File.ReadLines(path))
+            {
+                var text=line.Trim();if(text.StartsWith('[')){inside=text=="[Xwayland]";continue;}
+                if(inside&&text.StartsWith("Scale=",StringComparison.Ordinal)&&double.TryParse(text[6..],System.Globalization.NumberStyles.Float,System.Globalization.CultureInfo.InvariantCulture,out var scale)&&scale>0)return scale;
+            }
+        }
+        catch(IOException){}
+        return 1;
+    }
     public static string? FindInPath(string name)
     {
         foreach(var entry in (Environment.GetEnvironmentVariable("PATH")??"").Split(Path.PathSeparator,StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries))

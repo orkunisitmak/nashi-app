@@ -58,11 +58,20 @@ public sealed unsafe class WaylandDropTarget
 
     // ---- state ----------------------------------------------------------------------------
     private readonly nint display;private nint compositor,shm,seat,manager,shell,device;
-    private sealed class Pane{public nint Surface,Layer,Pool,Buffer;public int Width,Height;}
-    private Pane? overlay,edge;private nint offer;private readonly HashSet<string> mimes=[];private readonly Dictionary<nint,HashSet<string>> offers=[];
+    private sealed class Pane{public nint Surface,Layer,Pool,Buffer;public int Width,Height;public Screen? Screen;}
+    /// A monitor (wl_output) and its top-left corner in the compositor's global space.
+    private sealed class Screen
+    {
+        public uint Name;public nint Proxy;public int X,Y,ModeWidth,ModeHeight,Scale=1,Transform;
+        // Logical size: the current mode divided by the scale, turned for 90°/270° rotations (odd transforms).
+        public int Width=>(Transform%2==1?ModeHeight:ModeWidth)/Math.Max(1,Scale);
+        public int Height=>(Transform%2==1?ModeWidth:ModeHeight)/Math.Max(1,Scale);
+    }
+    private readonly List<Screen> screens=[];private readonly List<Pane> overlays=[],edges=[];private string edgeSide="off";private Pane? current;
+    private nint offer;private readonly HashSet<string> mimes=[];private readonly Dictionary<nint,HashSet<string>> offers=[];
     private uint serial;private double x,y;private bool inside;
     private readonly GCHandle self;private readonly object gate=new();
-    /// Pointer position in screen pixels (layer surface covers the output).
+    /// Pointer position in the compositor's global space (logical pixels; the layer covers each output).
     public event Action<double,double>? Entered,Moved;
     public event Action? Left;
     /// The dropped URIs (file:// paths or web links) and where they were dropped.
@@ -99,30 +108,52 @@ public sealed unsafe class WaylandDropTarget
     /// desktop, where files are usually dragged from after Show Desktop.
     private const string Dock="dock";
     /// Covers the screen with an invisible overlay that accepts drops until Hide.
-    public void Show(){lock(gate)overlay??=Open(15,-1,0,0,(0,0,0,0),Dock);}
-    public void Hide(){lock(gate)Close(ref overlay);}
+    public void Show(){lock(gate){if(overlays.Count>0)return;foreach(var screen in Outputs())overlays.Add(Open(15,-1,0,0,(0,0,0,0),Dock,screen));}}
+    public void Hide(){lock(gate){foreach(var pane in overlays)Close(pane);overlays.Clear();}}
+    internal string Describe(){lock(gate)return string.Join(", ",screens.Select(s=>$"{s.Width}x{s.Height}+{s.X}+{s.Y}"))+$" · {edges.Count} edge strip(s), {overlays.Count} overlay(s)";}
+    /// Every monitor, or one null entry (the compositor's current output) when none were announced.
+    private IEnumerable<Screen?> Outputs()=>screens.Count>0?screens:new Screen?[]{null};
     /// The hot edge: an invisible 2-pixel strip along one screen edge (corners left free for the
     /// desktop's own corner actions). A drag that touches it raises EdgeEntered, no key needed.
     public void ShowEdge(string side)
     {
         lock(gate)
         {
-            Close(ref edge);
-            // Anchors: top 1, bottom 2, left 4, right 8. Margins: top, right, bottom, left.
-            edge=side switch
-            {
-                "left"=>Open(1|2|4,0,2,0,(48,0,48,0),Dock),
-                "right"=>Open(1|2|8,0,2,0,(48,0,48,0),Dock),
-                "bottom"=>Open(4|8|2,0,0,2,(0,48,0,48),Dock),
-                _=>null
-            };
+            edgeSide=side;RebuildEdges();
         }
     }
-    private Pane Open(uint anchor,int exclusive,uint w,uint h,(int Top,int Right,int Bottom,int Left) margin,string name)
+    /// Strips only on outer edges: a left strip on a monitor with another one to its left would
+    /// catch every drag that crosses between the two.
+    private void RebuildEdges()
     {
-        var pane=new Pane();long* a=stackalloc long[6];
+        foreach(var pane in edges)Close(pane);edges.Clear();if(shell==0)return;
+        foreach(var screen in Outputs())if(Outer(screen)&&Edge(screen) is {} pane)edges.Add(pane);
+    }
+    private bool Outer(Screen? screen)
+    {
+        if(screen is null||screen.Width==0)return true;
+        bool Overlaps(int a0,int a1,int b0,int b1)=>a0<b1&&b0<a1;
+        return !screens.Any(o=>o!=screen&&o.Width>0&&edgeSide switch
+        {
+            "left"=>Math.Abs(o.X+o.Width-screen.X)<=1&&Overlaps(o.Y,o.Y+o.Height,screen.Y,screen.Y+screen.Height),
+            "right"=>Math.Abs(screen.X+screen.Width-o.X)<=1&&Overlaps(o.Y,o.Y+o.Height,screen.Y,screen.Y+screen.Height),
+            "bottom"=>Math.Abs(screen.Y+screen.Height-o.Y)<=1&&Overlaps(o.X,o.X+o.Width,screen.X,screen.X+screen.Width),
+            _=>false
+        });
+    }
+    /// Anchors: top 1, bottom 2, left 4, right 8. Margins: top, right, bottom, left.
+    private Pane? Edge(Screen? screen)=>edgeSide switch
+    {
+        "left"=>Open(1|2|4,0,2,0,(48,0,48,0),Dock,screen),
+        "right"=>Open(1|2|8,0,2,0,(48,0,48,0),Dock,screen),
+        "bottom"=>Open(4|8|2,0,0,2,(0,48,0,48),Dock,screen),
+        _=>null
+    };
+    private Pane Open(uint anchor,int exclusive,uint w,uint h,(int Top,int Right,int Bottom,int Left) margin,string name,Screen? screen)
+    {
+        var pane=new Pane{Screen=screen};long* a=stackalloc long[6];
         a[0]=0;pane.Surface=wl_proxy_marshal_array_flags(compositor,0,Surface,wl_proxy_get_version(compositor),0,a);
-        a[0]=0;a[1]=pane.Surface;a[2]=0;a[3]=3;a[4]=Str(name);   // layer 3 = overlay, output null = current one
+        a[0]=0;a[1]=pane.Surface;a[2]=screen?.Proxy??0;a[3]=3;a[4]=Str(name);   // layer 3 = overlay, output null = current one
         pane.Layer=wl_proxy_marshal_array_flags(shell,0,LayerSurface,1,0,a);
         wl_proxy_add_listener(pane.Layer,LayerListener,GCHandle.ToIntPtr(self));
         a[0]=anchor;wl_proxy_marshal_array_flags(pane.Layer,1,0,1,0,a);
@@ -132,20 +163,20 @@ public sealed unsafe class WaylandDropTarget
         wl_proxy_marshal_array_flags(pane.Surface,6,0,wl_proxy_get_version(pane.Surface),0,a);   // commit, then wait for configure
         wl_display_flush(display);return pane;
     }
-    private void Close(ref Pane? pane)
+    private void Close(Pane pane)
     {
-        if(pane is null)return;long* a=stackalloc long[1];
+        long* a=stackalloc long[1];if(current==pane)current=null;
         wl_proxy_marshal_array_flags(pane.Layer,7,0,1,Destroy,a);
         if(pane.Buffer!=0)wl_proxy_marshal_array_flags(pane.Buffer,0,0,1,Destroy,a);
         if(pane.Pool!=0)wl_proxy_marshal_array_flags(pane.Pool,1,0,1,Destroy,a);
         wl_proxy_marshal_array_flags(pane.Surface,0,0,wl_proxy_get_version(pane.Surface),Destroy,a);
-        pane=null;wl_display_flush(display);
+        wl_display_flush(display);
     }
     private void Configure(nint layerSurface,uint configureSerial,uint w,uint h)
     {
         lock(gate)
         {
-            var pane=overlay?.Layer==layerSurface?overlay:edge?.Layer==layerSurface?edge:null;
+            var pane=overlays.Concat(edges).FirstOrDefault(p=>p.Layer==layerSurface);
             if(pane is null||w==0||h==0)return;long* a=stackalloc long[6];
             a[0]=configureSerial;wl_proxy_marshal_array_flags(pane.Layer,6,0,1,0,a);   // ack_configure
             if(pane.Buffer==0||w!=pane.Width||h!=pane.Height)
@@ -168,7 +199,9 @@ public sealed unsafe class WaylandDropTarget
     /// Never let an exception leave a native callback: it would end the whole app (and its tray icon).
     private static void Fault(Exception error){try{UI.GestureWindow.Log("wayland callback failed: "+error.Message);}catch{}}
     private static WaylandDropTarget Of(nint data)=>(WaylandDropTarget)GCHandle.FromIntPtr(data).Target!;
-    private static readonly nint RegistryListener=Listener((delegate* unmanaged<nint,nint,uint,nint,uint,void>)&OnGlobal,(delegate* unmanaged<nint,nint,uint,void>)&OnNothing3);
+    private static readonly nint RegistryListener=Listener((delegate* unmanaged<nint,nint,uint,nint,uint,void>)&OnGlobal,(delegate* unmanaged<nint,nint,uint,void>)&OnGlobalRemove);
+    private static readonly nint OutputListener=Listener((delegate* unmanaged<nint,nint,int,int,int,int,int,nint,nint,int,void>)&OnOutputGeometry,(delegate* unmanaged<nint,nint,uint,int,int,int,void>)&OnOutputMode,
+        (delegate* unmanaged<nint,nint,void>)&OnOutputDone,(delegate* unmanaged<nint,nint,int,void>)&OnOutputScale);
     private static readonly nint DeviceListener=Listener((delegate* unmanaged<nint,nint,nint,void>)&OnDataOffer,(delegate* unmanaged<nint,nint,uint,nint,int,int,nint,void>)&OnEnter,(delegate* unmanaged<nint,nint,void>)&OnLeave,
         (delegate* unmanaged<nint,nint,uint,int,int,void>)&OnMotion,(delegate* unmanaged<nint,nint,void>)&OnDrop,(delegate* unmanaged<nint,nint,nint,void>)&OnNothingOffer);
     private static readonly nint OfferListener=Listener((delegate* unmanaged<nint,nint,nint,void>)&OnOfferMime,(delegate* unmanaged<nint,nint,uint,void>)&OnNothing3,(delegate* unmanaged<nint,nint,uint,void>)&OnNothing3);
@@ -187,11 +220,51 @@ public sealed unsafe class WaylandDropTarget
             case "wl_seat" when t.seat==0:t.seat=Bind(Seat,Math.Min(version,5));break;
             case "wl_data_device_manager":t.manager=Bind(DeviceManager,Math.Min(version,3));break;
             case "zwlr_layer_shell_v1":t.shell=Bind(LayerShell,1);break;
+            case "wl_output":
+            {
+                var screen=new Screen{Name=name,Proxy=Bind(Output,Math.Min(version,2))};wl_proxy_add_listener(screen.Proxy,OutputListener,data);
+                // A monitor plugged in later gets the strips rebuilt once its layout is known (done event).
+                lock(t.gate)t.screens.Add(screen);
+                break;
+            }
         }
     }
         catch(Exception error){Fault(error);}
     }
     [UnmanagedCallersOnly]private static void OnNothing3(nint data,nint proxy,uint value){}
+    private void WithScreen(nint output,Action<Screen> change){lock(gate)if(screens.FirstOrDefault(s=>s.Proxy==output) is {} screen)change(screen);}
+    [UnmanagedCallersOnly]private static void OnOutputGeometry(nint data,nint output,int x,int y,int pw,int ph,int subpixel,nint make,nint model,int transform)
+    {
+        try{Of(data).WithScreen(output,s=>{s.X=x;s.Y=y;s.Transform=transform;});}catch(Exception error){Fault(error);}
+    }
+    [UnmanagedCallersOnly]private static void OnOutputMode(nint data,nint output,uint flags,int w,int h,int refresh)
+    {
+        try{if((flags&1)!=0)Of(data).WithScreen(output,s=>{s.ModeWidth=w;s.ModeHeight=h;});}catch(Exception error){Fault(error);}   // 1 = current mode
+    }
+    [UnmanagedCallersOnly]private static void OnOutputScale(nint data,nint output,int factor)
+    {
+        try{Of(data).WithScreen(output,s=>s.Scale=factor);}catch(Exception error){Fault(error);}
+    }
+    /// A monitor's layout is complete (first announced, moved or resized): place the strips again.
+    [UnmanagedCallersOnly]private static void OnOutputDone(nint data,nint output)
+    {
+        try{var t=Of(data);lock(t.gate)if(t.edgeSide!="off")t.RebuildEdges();}catch(Exception error){Fault(error);}
+    }
+    /// A monitor was unplugged: its strips and overlays go with it.
+    [UnmanagedCallersOnly]private static void OnGlobalRemove(nint data,nint registry,uint name)
+    {
+        try
+        {
+            var t=Of(data);
+            lock(t.gate)
+            {
+                if(t.screens.FirstOrDefault(s=>s.Name==name) is not {} screen)return;
+                foreach(var pane in t.overlays.Where(p=>p.Screen==screen).ToList()){t.Close(pane);t.overlays.Remove(pane);}
+                t.screens.Remove(screen);wl_proxy_destroy(screen.Proxy);if(t.edgeSide!="off")t.RebuildEdges();
+            }
+        }
+        catch(Exception error){Fault(error);}
+    }
     [UnmanagedCallersOnly]private static void OnNothingOffer(nint data,nint proxy,nint offer){}
     [UnmanagedCallersOnly]private static void OnDataOffer(nint data,nint device,nint offer)
     {
@@ -210,11 +283,16 @@ public sealed unsafe class WaylandDropTarget
     [UnmanagedCallersOnly]private static void OnEnter(nint data,nint device,uint serial,nint surface,int fx,int fy,nint offer)
     {
         try{
-        var t=Of(data);bool ours,atEdge;lock(t.gate){ours=surface!=0&&surface==t.overlay?.Surface;atEdge=surface!=0&&surface==t.edge?.Surface;t.serial=serial;t.offer=offer;t.early=null;t.mimes.Clear();if(t.offers.TryGetValue(offer,out var set))t.mimes.UnionWith(set);}
+        var t=Of(data);Pane? pane,edge;bool covered;
+        lock(t.gate)
+        {
+            pane=surface==0?null:t.overlays.FirstOrDefault(p=>p.Surface==surface);edge=surface==0?null:t.edges.FirstOrDefault(p=>p.Surface==surface);covered=t.overlays.Count>0;
+            t.current=pane;t.serial=serial;t.offer=offer;t.early=null;t.mimes.Clear();if(t.offers.TryGetValue(offer,out var set))t.mimes.UnionWith(set);
+        }
         // The hot edge only announces the drag; the full overlay then takes it over.
-        if(atEdge&&t.overlay is null){t.EdgeEntered?.Invoke(fx/256.0,fy/256.0);return;}
-        if(!ours||offer==0)return;
-        t.inside=true;t.x=fx/256.0;t.y=fy/256.0;
+        if(edge is not null&&!covered){var (ex,ey)=Global(edge,fx,fy);t.EdgeEntered?.Invoke(ex,ey);return;}
+        if(pane is null||offer==0)return;
+        t.inside=true;(t.x,t.y)=Global(pane,fx,fy);
         long* a=stackalloc long[2];var mime=t.Mime();var m=mime is null?0:Str(mime);
         a[0]=serial;a[1]=m;wl_proxy_marshal_array_flags(offer,0,0,wl_proxy_get_version(offer),0,a);   // accept
         if(wl_proxy_get_version(offer)>=3){a[0]=1;a[1]=1;wl_proxy_marshal_array_flags(offer,4,0,wl_proxy_get_version(offer),0,a);}   // set_actions copy
@@ -223,6 +301,8 @@ public sealed unsafe class WaylandDropTarget
     }
         catch(Exception error){Fault(error);}
     }
+    /// Surface-local fixed-point coordinates to the global space (the monitor's corner plus the offset).
+    private static (double X,double Y) Global(Pane pane,int fx,int fy)=>((pane.Screen?.X??0)+fx/256.0,(pane.Screen?.Y??0)+fy/256.0);
     [UnmanagedCallersOnly]private static void OnLeave(nint data,nint device)
     {
         try{var t=Of(data);if(!t.inside)return;t.inside=false;t.Left?.Invoke();}
@@ -230,7 +310,7 @@ public sealed unsafe class WaylandDropTarget
     }
     [UnmanagedCallersOnly]private static void OnMotion(nint data,nint device,uint time,int fx,int fy)
     {
-        try{var t=Of(data);if(!t.inside)return;t.x=fx/256.0;t.y=fy/256.0;t.Moved?.Invoke(t.x,t.y);}
+        try{var t=Of(data);if(!t.inside||t.current is not {} pane)return;(t.x,t.y)=Global(pane,fx,fy);t.Moved?.Invoke(t.x,t.y);}
         catch(Exception error){Fault(error);}
     }
     [UnmanagedCallersOnly]private static void OnDrop(nint data,nint device)

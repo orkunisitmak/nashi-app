@@ -23,6 +23,8 @@ public sealed class GestureWindow:Window
     private readonly DispatcherTimer dwell=new(){Interval=TimeSpan.FromMilliseconds(350)};private string? pending;
     private readonly DispatcherTimer idle=new(){Interval=TimeSpan.FromSeconds(9)};private readonly DispatcherTimer nudge=new(){Interval=TimeSpan.FromSeconds(2.5)};
     public PetalWheel Wheel=>wheel;
+    /// The monitor this layer covers, in X pixels.
+    internal PixelRect Area{get;}
 
     /// NASHI_DEBUG_GESTURE=1 writes what the layer receives to ~/.local/share/Nashi/gesture.log.
     private static readonly bool Debug=Environment.GetEnvironmentVariable("NASHI_DEBUG_GESTURE")=="1";
@@ -30,7 +32,7 @@ public sealed class GestureWindow:Window
 
     public GestureWindow(MainWindow main,Screen screen,string? fixedMode,Action closeAll,string[]? presetFiles=null)
     {
-        this.main=main;this.fixedMode=fixedMode;this.closeAll=closeAll;settings=main.LinuxSettings;
+        this.main=main;this.fixedMode=fixedMode;this.closeAll=closeAll;settings=main.LinuxSettings;Area=screen.Bounds;
         Title="Nashi gesture";WindowDecorations=WindowDecorations.None;Topmost=true;ShowInTaskbar=false;CanResize=false;
         TransparencyLevelHint=[WindowTransparencyLevel.Transparent];Background=Brushes.Transparent;
         WindowStartupLocation=WindowStartupLocation.Manual;Position=screen.Bounds.Position;Width=screen.Bounds.Width/screen.Scaling;Height=screen.Bounds.Height/screen.Scaling;
@@ -94,9 +96,9 @@ public sealed class GestureWindow:Window
         files=Files(e)??files;if(files is null)url??=Url(e);Release(e.GetPosition(canvas));
     }
     /// The same drag, delivered straight from Wayland (see WaylandDropTarget), in screen pixels.
-    internal void ExternalDrag(double screenX,double screenY)
+    internal void ExternalDrag(PixelPoint screen)
     {
-        var point=this.PointToClient(new PixelPoint((int)screenX,(int)screenY));
+        var point=this.PointToClient(screen);
         if(origin is null)Log($"Wayland enter at {point:F0}");Track(point);
     }
     /// Files (or a link) from a Wayland drag that is still in progress.
@@ -107,13 +109,13 @@ public sealed class GestureWindow:Window
         Log($"Wayland offer: {paths.Length} file(s){(url is null?"":", link")}");
         if(mode is not null&&wheel.Items.Any(i=>i.Id.StartsWith("placeholder:",StringComparison.Ordinal)))ShowWheel(mode);
     }
-    internal void ExternalDrop(string[] uris,double screenX,double screenY)
+    internal void ExternalDrop(string[] uris,PixelPoint screen)
     {
         var paths=uris.Where(u=>u.StartsWith("file://",StringComparison.Ordinal)&&Uri.TryCreate(u,UriKind.Absolute,out _)).Select(u=>new Uri(u).LocalPath).Where(p=>File.Exists(p)||Directory.Exists(p)).ToArray();
         if(paths.Length>0)files=paths;else url??=uris.FirstOrDefault(u=>u.StartsWith("http",StringComparison.OrdinalIgnoreCase));
         Log($"Wayland drop: {uris.Length} uri(s), {paths.Length} file(s)");
         // Wayland gives the files only now; an open wheel of placeholders becomes the real one to click.
-        Release(this.PointToClient(new PixelPoint((int)screenX,(int)screenY)));
+        Release(this.PointToClient(screen));
     }
     private void Track(Point point)
     {

@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input.Platform;
 using Avalonia.Threading;
@@ -118,17 +119,22 @@ public sealed partial class MainWindow
     {
         if(waylandTried||Environment.GetEnvironmentVariable("NASHI_NO_GLOBAL_SHORTCUTS")=="1")return wayland;waylandTried=true;
         wayland=WaylandDropTarget.TryCreate();if(wayland is null){GestureWindow.Log("native Wayland drop target unavailable");return null;}
-        GestureWindow? Layer()=>gestures.FirstOrDefault(g=>g.IsVisible);
-        wayland.Entered+=(x,y)=>Dispatcher.UIThread.Post(()=>Layer()?.ExternalDrag(x,y));
-        wayland.Moved+=(x,y)=>Dispatcher.UIThread.Post(()=>Layer()?.ExternalDrag(x,y));
+        // One layer per monitor: the drag belongs to the one it first entered, even when it crosses screens.
+        GestureWindow? Layer()=>nativeLayer is {IsVisible:true}?nativeLayer:gestures.FirstOrDefault(g=>g.IsVisible);
+        wayland.Entered+=(x,y)=>Dispatcher.UIThread.Post(()=>{var at=XPixels(x,y);if(nativeLayer is not {IsVisible:true})nativeLayer=gestures.FirstOrDefault(g=>g.IsVisible&&g.Area.Contains(at))??Layer();nativeLayer?.ExternalDrag(at);});
+        wayland.Moved+=(x,y)=>Dispatcher.UIThread.Post(()=>Layer()?.ExternalDrag(XPixels(x,y)));
         wayland.Offered+=uris=>Dispatcher.UIThread.Post(()=>Layer()?.ExternalOffer(uris));
         wayland.EdgeEntered+=(_,_)=>Dispatcher.UIThread.Post(()=>{if(gestures.Count==0&&!busy){GestureWindow.Log("hot edge");StartGesture("modes");}});
-        wayland.Dropped+=(uris,x,y)=>Dispatcher.UIThread.Post(()=>{wayland.Hide();Layer()?.ExternalDrop(uris,x,y);});
+        wayland.Dropped+=(uris,x,y)=>Dispatcher.UIThread.Post(()=>{wayland.Hide();Layer()?.ExternalDrop(uris,XPixels(x,y));});
         GestureWindow.Log("native Wayland drop target ready");return wayland;
     }
     internal IReadOnlyList<GestureWindow> Gestures=>gestures;
     internal void HideNativeOverlay()=>wayland?.Hide();
-    internal void CloseGestures(){wayland?.Hide();foreach(var layer in gestures.ToList())layer.Close();gestures.Clear();}
+    private GestureWindow? nativeLayer;
+    /// Wayland gives logical pixels; XWayland windows use them as is unless KWin scales XWayland apps.
+    private static readonly double XScale=LinuxShell.XwaylandScale();
+    private static PixelPoint XPixels(double x,double y)=>new((int)Math.Round(x*XScale),(int)Math.Round(y*XScale));
+    internal void CloseGestures(){wayland?.Hide();nativeLayer=null;foreach(var layer in gestures.ToList())layer.Close();gestures.Clear();}
     /// Files copied in a file manager (Ctrl+C) get a wheel to click, without dragging.
     private async Task ClipboardWheelAsync()
     {
