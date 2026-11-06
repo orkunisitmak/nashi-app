@@ -52,6 +52,49 @@ if(fixtures is not null)
     var settings=new SettingsWindow(main);settings.Show();Save(settings,"13-settings");settings.Close();main.Close();
 }
 
+// ── Keyboard ─────────────────────────────────────────────────────────────────────────
+// Real key events through the window, as the desktop delivers them.
+bool WheelOpen(Window w)=>w.GetVisualDescendants().OfType<WheelOverlay>().Any(o=>o.IsEffectivelyVisible);
+{
+    var keyFailures=0;void Expect(string name,bool ok){if(!ok)keyFailures++;Console.WriteLine($"  {(ok?"pass":"FAIL")}  key {name}");}
+    var w=new MainWindow([]);w.Show();Pump();
+    w.KeyPress(Avalonia.Input.Key.Space,Avalonia.Input.RawInputModifiers.Control,Avalonia.Input.PhysicalKey.Space,null);Pump();
+    Expect("Ctrl+Space without files gives a hint",!WheelOpen(w)&&w.GetVisualDescendants().OfType<TextBlock>().Any(t=>t.Text?.Contains("Choose or drop files first")==true));
+    if(fixtures is not null)w.UseFiles(Fixtures("Photo.png"));Pump();
+    w.KeyPress(Avalonia.Input.Key.Space,Avalonia.Input.RawInputModifiers.Control,Avalonia.Input.PhysicalKey.Space,null);Pump();
+    Expect("Ctrl+Space opens the wheel",WheelOpen(w));
+    w.KeyPress(Avalonia.Input.Key.Escape,Avalonia.Input.RawInputModifiers.None,Avalonia.Input.PhysicalKey.Escape,null);Pump();
+    Expect("Escape closes the wheel",!WheelOpen(w));
+    w.KeyPress(Avalonia.Input.Key.D2,Avalonia.Input.RawInputModifiers.Control,Avalonia.Input.PhysicalKey.Digit2,null);Pump();
+    Expect("Ctrl+2 opens Library",w.GetVisualDescendants().OfType<TextBlock>().Any(t=>t.Text=="Your Library"));
+    w.KeyPress(Avalonia.Input.Key.D1,Avalonia.Input.RawInputModifiers.Control,Avalonia.Input.PhysicalKey.Digit1,null);Pump();
+    Expect("Ctrl+1 returns Home",w.GetVisualDescendants().OfType<TextBlock>().Any(t=>t.Text=="Let’s make something of it."));
+    w.KeyPress(Avalonia.Input.Key.Space,Avalonia.Input.RawInputModifiers.Control,Avalonia.Input.PhysicalKey.Space,null);Pump();
+    var wheel=w.GetVisualDescendants().OfType<WheelOverlay>().First();
+    string Highlighted()=>wheel.GetVisualDescendants().OfType<Button>().Where(b=>b.Classes.Contains("selected")).Select(b=>ToolTip.GetTip(b) as string).FirstOrDefault()??"";
+    var first=Highlighted();w.KeyPress(Avalonia.Input.Key.Right,Avalonia.Input.RawInputModifiers.None,Avalonia.Input.PhysicalKey.ArrowRight,null);Pump();
+    Expect($"Arrow moves the wheel ({first} → {Highlighted()})",first.Length>0&&Highlighted()!=first);
+    w.KeyPress(Avalonia.Input.Key.Tab,Avalonia.Input.RawInputModifiers.None,Avalonia.Input.PhysicalKey.Tab,null);Pump();
+    Expect("Tab switches to Convert",wheel.GetVisualDescendants().OfType<Button>().Any(b=>ToolTip.GetTip(b) as string=="JPG"));
+    w.KeyPress(Avalonia.Input.Key.Escape,Avalonia.Input.RawInputModifiers.None,Avalonia.Input.PhysicalKey.Escape,null);Pump();
+    Expect("Escape closes it again",!WheelOpen(w));
+    foreach(var (modifier,expected) in new[]{(Avalonia.Input.RawInputModifiers.Shift,"JPG"),(Avalonia.Input.RawInputModifiers.Alt,"Terminal"),(Avalonia.Input.RawInputModifiers.Control,"Edit Photo")})
+    {
+        var data=new Avalonia.Input.DataTransfer();var item=w.StorageProvider.TryGetFileFromPathAsync(new Uri(Fixtures("Photo.png")[0])).GetAwaiter().GetResult();
+        if(item is not null)data.Add(Avalonia.Input.DataTransferItem.CreateFile(item));
+        w.DragDrop(new Point(300,300),Avalonia.Input.Raw.RawDragEventType.DragEnter,data,Avalonia.Input.DragDropEffects.Copy,modifier);
+        w.DragDrop(new Point(300,300),Avalonia.Input.Raw.RawDragEventType.Drop,data,Avalonia.Input.DragDropEffects.Copy,modifier);Pump();
+        var opened=w.GetVisualDescendants().OfType<WheelOverlay>().FirstOrDefault()?.GetVisualDescendants().OfType<Button>().Any(b=>ToolTip.GetTip(b) as string==expected)==true;
+        Expect($"Drop with {modifier} opens the wheel at {expected}",item is not null&&opened);
+        w.KeyPress(Avalonia.Input.Key.Escape,Avalonia.Input.RawInputModifiers.None,Avalonia.Input.PhysicalKey.Escape,null);Pump();
+    }
+    // Focus in the link box must not swallow the wheel shortcut.
+    var linkBox=w.GetVisualDescendants().OfType<TextBox>().First();linkBox.Focus();Pump();
+    w.KeyPress(Avalonia.Input.Key.Space,Avalonia.Input.RawInputModifiers.Control,Avalonia.Input.PhysicalKey.Space,null);Pump();
+    Expect("Ctrl+Space works while typing a link",WheelOpen(w));
+    w.Close();
+    if(keyFailures>0){Console.WriteLine($"{keyFailures} key check(s) failed");return 1;}
+}
 if(fixtures is null)return 0;
 // ── Flows ────────────────────────────────────────────────────────────────────────────
 var failures=0;

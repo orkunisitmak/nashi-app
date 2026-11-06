@@ -101,6 +101,7 @@ public sealed partial class MainWindow:Window
             drop.Children.Add(SelectionActions());
         }
         drop.Children.Add(Ui.Text("Ctrl+O  Choose  ·  Ctrl+V  Paste  ·  Ctrl+Space  Wheel  ·  Ctrl+2  Library",11,"muted"));
+        drop.Children.Add(Ui.Text("Hold Ctrl, Shift or Alt while dropping files to open Tools, Convert or File actions.",11,"muted"));
         var dropGrid=new Grid{ColumnDefinitions=new("*,150")};dropGrid.Children.Add(drop);
         var garden=new Image{Source=Ui.Asset(files.Count==0?"Mark":"MarkHappy"),Width=120,Height=120,VerticalAlignment=VerticalAlignment.Top,Opacity=.95};Grid.SetColumn(garden,1);dropGrid.Children.Add(garden);
         dropCard=Ui.Card(dropGrid);home.Children.Add(dropCard);
@@ -155,7 +156,7 @@ public sealed partial class MainWindow:Window
     internal void ShowWheel()=>ShowWheel(null);
     internal void ShowWheel(string? initial)
     {
-        if(busy||files.Count==0)return;var mode=initial??new[]{"tools","convert","actions"}.First(m=>WheelChoices(m).Count>0);
+        if(busy||files.Count==0)return;var mode=initial is not null&&WheelChoices(initial).Count>0?initial:new[]{"tools","convert","actions"}.First(m=>WheelChoices(m).Count>0);
         overlay.Children.Clear();overlay.Children.Add(new WheelOverlay(WheelChoices,mode,async choice=>{CloseOverlay();await ChooseFromWheel(choice);},CloseOverlay));overlay.IsVisible=true;
     }
     private void CloseOverlay(){overlay.IsVisible=false;overlay.Children.Clear();}
@@ -217,16 +218,36 @@ public sealed partial class MainWindow:Window
     {
         dropCard?.Classes.Remove("drop");if(busy)return;
         var dropped=e.DataTransfer.TryGetFiles()?.Select(f=>f.TryGetLocalPath()).OfType<string>().ToList()??[];
-        if(dropped.Count>0){if(page!="home")ShowHome();files.Clear();Add(dropped);return;}
+        if(dropped.Count>0)
+        {
+            if(page!="home")ShowHome();files.Clear();Add(dropped);
+            // Like dragging with a modifier on macOS and Windows: the chord held while dropping opens its wheel.
+            if(DropMode(e.KeyModifiers) is {} mode)Dispatcher.UIThread.Post(()=>ShowWheel(mode));
+            return;
+        }
         if(e.DataTransfer.TryGetText() is {} text&&Uri.TryCreate(text.Trim(),UriKind.Absolute,out var url)&&url.Scheme is "http" or "https"){link.Text=url.AbsoluteUri;if(page!="home")ShowHome();link.Focus();}
+    }
+    /// Ctrl → Tools, Shift → Convert, Alt → File actions by default; Settings can change the chords.
+    private string? DropMode(KeyModifiers modifiers)
+    {
+        var parts=new List<string>();if(modifiers.HasFlag(KeyModifiers.Control))parts.Add("Ctrl");if(modifiers.HasFlag(KeyModifiers.Shift))parts.Add("Shift");if(modifiers.HasFlag(KeyModifiers.Alt))parts.Add("Alt");
+        var chord=string.Join("+",parts);var p=preferences.Value;
+        return chord.Length==0?null:chord==p.ToolsModifier?"tools":chord==p.ConvertModifier?"convert":chord==p.ActionsModifier?"actions":null;
     }
     private void OnKey(object? sender,KeyEventArgs e)
     {
-        if(overlay.IsVisible)return;var ctrl=e.KeyModifiers.HasFlag(KeyModifiers.Control);var shift=e.KeyModifiers.HasFlag(KeyModifiers.Shift);var inText=FocusManager?.GetFocusedElement() is TextBox;
+        if(overlay.IsVisible){if(overlay.Children.FirstOrDefault() is WheelOverlay wheel)wheel.HandleKey(e);return;}
+        var ctrl=e.KeyModifiers.HasFlag(KeyModifiers.Control);var shift=e.KeyModifiers.HasFlag(KeyModifiers.Shift);var inText=FocusManager?.GetFocusedElement() is TextBox;
         if(ctrl&&e.Key==Key.O){_=Ui.Guard(ChooseFiles);e.Handled=true;}
         else if(ctrl&&shift&&e.Key==Key.D){_=Ui.Guard(PasteLinkAsync);e.Handled=true;}
         else if(ctrl&&e.Key==Key.V&&!inText){_=Ui.Guard(PasteAsync);e.Handled=true;}
-        else if(ctrl&&e.Key==Key.Space){ShowWheel();e.Handled=true;}
+        else if(ctrl&&e.Key==Key.Space)
+        {
+            // Without files there is nothing to turn the wheel for: say so, offer the file chooser, then open the wheel.
+            if(files.Count==0){SetStatus("Choose or drop files first, then press Ctrl+Space.");_=Ui.Guard(async()=>{await ChooseFiles();if(files.Count>0)ShowWheel();});}
+            else ShowWheel();
+            e.Handled=true;
+        }
         else if(ctrl&&e.Key==Key.D1){ShowHome();e.Handled=true;}
         else if(ctrl&&(e.Key==Key.D2||e.Key==Key.F)){ShowLibrary();e.Handled=true;}
         else if(ctrl&&e.Key==Key.Q){Close();e.Handled=true;}
