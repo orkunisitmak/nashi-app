@@ -6,6 +6,8 @@ internal static class Program
     public static int Main(string[] args)
     {
         if(args is ["--version"]){Console.WriteLine("Nashi "+typeof(Program).Assembly.GetName().Version?.ToString(3)+" for Linux");return 0;}
+        // Terminal commands: nashi convert / tool / formats / help.
+        if(args.Length>0&&Engine.Cli.Commands.Contains(args[0]))return Engine.Cli.RunAsync(args).GetAwaiter().GetResult();
         if(args is ["--notify-check"])
         {
             using var notes=Notifications.TryCreateAsync().GetAwaiter().GetResult();

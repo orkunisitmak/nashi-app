@@ -35,6 +35,17 @@ When you drop on a conversion or a simple tool, it runs straight away with its s
 
 The wheel uses the macOS petal layout in every theme.
 
+## From the terminal
+
+```sh
+nashi convert --to jpg ~/Pictures/*.heic       # each new file is printed on its own line
+nashi tool compress clip.mp4 --out ~/Videos     # tools that work with their saved defaults
+nashi formats report.pdf                        # what a file can become, and which tools fit
+nashi help
+```
+
+The terminal commands use the same engines and saved export defaults as the app, record their results in Library, and never change the originals. They exit with 0 on success, 1 on failure and 2 when the command is not valid.
+
 ## Finish setup
 
 Core image, PDF, QR, archive and subtitle tools work right away. **Finish setup** shows what is still missing and how to add it:

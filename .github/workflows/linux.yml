@@ -48,6 +48,13 @@ jobs:
         run: scripts/build-linux.sh
       - name: Engine self-test with real exports
         run: build/linux/Nashi/nashi --self-test "${{ runner.temp }}/nashi-self-test"
+      - name: Terminal commands
+        run: |
+          n=build/linux/Nashi/nashi; f="${{ runner.temp }}/nashi-self-test/fixtures"; o="${{ runner.temp }}/nashi-cli"
+          $n formats "$f/Photo.png"
+          $n convert --to webp "$f/Photo.png" --out "$o" | grep -q 'Photo.webp'
+          $n tool createPDF "$f/Photo.png" "$f/Second.jpg" --out "$o" | grep -q '.pdf'
+          ! $n convert --to mp3 "$f/Photo.png"
       - name: Headless UI screenshots and tool flows
         env:
           XDG_DATA_HOME: '${{ runner.temp }}/nashi-ui-data'
