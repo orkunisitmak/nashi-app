@@ -14,6 +14,7 @@ struct SettingsView:View {
     @ObservedObject private var preferences=FormatPreferences.shared
     @AppStorage("enabled") private var enabled=true
     @AppStorage("reveal") private var reveal=true
+    @AppStorage("hiddenFilesMenuItem") private var hiddenFilesMenuItem=true
     @AppStorage("wheelScale") private var wheelScale=1.0
     @AppStorage("conversionFanTheme") private var fanTheme="glass"
     @AppStorage("soundsAndHapticsEnabled") private var feedback=true
@@ -145,6 +146,7 @@ struct SettingsView:View {
             }
             DisclosureGroup("Additional options") { VStack(alignment:.leading,spacing:13) {
                 Toggle("Enable Nashi",isOn:$enabled)
+                Toggle("Show hidden files toggle in the menu bar",isOn:$hiddenFilesMenuItem)
                 Toggle("Reveal finished files in Finder",isOn:$reveal)
                 HStack { Text("Wheel size");Slider(value:$wheelScale,in:0.85...1.4).frame(width:230);Text(Int(wheelScale*100),format:.percent).monospacedDigit().frame(width:40) }
             }.padding(.top,12) }

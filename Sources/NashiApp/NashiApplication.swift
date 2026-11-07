@@ -122,7 +122,7 @@ enum NashiApplication {
 
     func applicationDidFinishLaunching(_ notification:Notification) {
         NashiAppearance.apply()
-        UserDefaults.standard.register(defaults:["enabled":true,"reveal":true,"sound":true,"convertKey":"shift","toolsKey":"command","actionsKey":"control","wheelScale":1.0,"windowManagementEnabled":true])
+        UserDefaults.standard.register(defaults:["enabled":true,"reveal":true,"sound":true,"convertKey":"shift","toolsKey":"command","actionsKey":"control","wheelScale":1.0,"windowManagementEnabled":true,"hiddenFilesMenuItem":true])
         let mainMenu=NSMenu();let appMenu=NSMenu()
         appMenu.addItem(withTitle:"Home",action:#selector(showHome),keyEquivalent:"1")
         appMenu.addItem(withTitle:"Library",action:#selector(showLibrary),keyEquivalent:"2")
@@ -145,6 +145,7 @@ enum NashiApplication {
         menu.addItem(withTitle:"Choose Files…",action:#selector(chooseFiles),keyEquivalent:"o")
         menu.addItem(withTitle:"Download Link…",action:#selector(showDownloadLink),keyEquivalent:"")
         menu.addItem(withTitle:"Enable Nashi",action:#selector(toggleEnabled),keyEquivalent:"").state = UserDefaults.standard.bool(forKey:"enabled") ? .on : .off
+        menu.addItem(withTitle:"Show Hidden Files",action:#selector(toggleHiddenFiles),keyEquivalent:"")
         menu.addItem(withTitle:"Settings…",action:#selector(showSettings),keyEquivalent:",")
         menu.addItem(withTitle:"Welcome…",action:#selector(showWelcome),keyEquivalent:"")
         menu.addItem(withTitle:"Recent Conversions",action:#selector(showHome),keyEquivalent:"")
@@ -301,7 +302,51 @@ enum NashiApplication {
         updateConnection?.contentMinSize=NSSize(width:560,height:570)
         updateConnection?.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true)
     }
-    func menuNeedsUpdate(_ menu:NSMenu) { menu.items.first(where:{$0.action == #selector(toggleEnabled)})?.state=UserDefaults.standard.bool(forKey:"enabled") ? .on:.off }
+    private var finderShowsHiddenFiles:Bool { CFPreferencesGetAppBooleanValue("AppleShowAllFiles" as CFString,"com.apple.finder" as CFString,nil) }
+    @objc func toggleHiddenFiles(_ sender:NSMenuItem) {
+        if !UserDefaults.standard.bool(forKey:"hiddenFilesWarningSuppressed") {
+            let alert=NSAlert();alert.messageText=L10n.text("Finder will restart");alert.informativeText=L10n.text("Showing or hiding hidden files restarts Finder. File transfers in progress will be interrupted.")
+            alert.addButton(withTitle:L10n.text("Continue"));alert.addButton(withTitle:L10n.text("Cancel"))
+            alert.showsSuppressionButton=true;alert.suppressionButton?.title=L10n.text("Don't show this again")
+            NSApp.activate(ignoringOtherApps:true)
+            guard alert.runModal() == .alertFirstButtonReturn else { return }
+            if alert.suppressionButton?.state == .on { UserDefaults.standard.set(true,forKey:"hiddenFilesWarningSuppressed") }
+        }
+        let value = !finderShowsHiddenFiles
+        CFPreferencesSetAppValue("AppleShowAllFiles" as CFString,value as CFBoolean,"com.apple.finder" as CFString);CFPreferencesAppSynchronize("com.apple.finder" as CFString)
+        sender.state=value ? .on : .off
+        reopenFinderWindowsAfterRelaunch(openFinderFolders())
+        // Finder reads this only at launch; launchd relaunches it.
+        _=try? Process.run(URL(fileURLWithPath:"/usr/bin/killall"),arguments:["Finder"])
+    }
+    private var finderRelaunchObserver:NSObjectProtocol?
+    /// Empty if the user denies Automation access to Finder.
+    private func openFinderFolders()->[URL] {
+        let source="""
+        set folders to {}
+        tell application "Finder" to repeat with w in Finder windows
+            try
+                set end of folders to URL of target of w
+            end try
+        end repeat
+        return folders
+        """
+        guard let list=NSAppleScript(source:source)?.executeAndReturnError(nil),list.numberOfItems>0 else { return [] }
+        return (1...list.numberOfItems).compactMap { list.atIndex($0)?.stringValue.flatMap(URL.init(string:)) }
+    }
+    private func reopenFinderWindowsAfterRelaunch(_ folders:[URL]) {
+        if let finderRelaunchObserver { NSWorkspace.shared.notificationCenter.removeObserver(finderRelaunchObserver);self.finderRelaunchObserver=nil }
+        guard !folders.isEmpty else { return }
+        finderRelaunchObserver=NSWorkspace.shared.notificationCenter.addObserver(forName:NSWorkspace.didLaunchApplicationNotification,object:nil,queue:.main) { [weak self] note in
+            guard (note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication)?.bundleIdentifier == "com.apple.finder" else { return }
+            MainActor.assumeIsolated { self?.reopenFinderWindowsAfterRelaunch([]) }
+            for folder in folders { NSWorkspace.shared.open(folder) }
+        }
+    }
+    func menuNeedsUpdate(_ menu:NSMenu) {
+        menu.items.first(where:{$0.action == #selector(toggleEnabled)})?.state=UserDefaults.standard.bool(forKey:"enabled") ? .on:.off
+        if let hidden=menu.items.first(where:{$0.action == #selector(toggleHiddenFiles)}) { hidden.isHidden = !UserDefaults.standard.bool(forKey:"hiddenFilesMenuItem");hidden.state=finderShowsHiddenFiles ? .on:.off }
+    }
     @objc func quit() { NSApp.terminate(nil) }
     func showProgress() {
         guard state.working else { return }
