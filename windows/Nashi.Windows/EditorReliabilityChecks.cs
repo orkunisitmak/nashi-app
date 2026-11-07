@@ -59,6 +59,30 @@ internal static class EditorReliabilityChecks
             }
             finally{convert.Close();}
             var pixels=System.Windows.Media.Imaging.BitmapSource.Create(100,60,96,96,PixelFormats.Bgra32,null,new byte[100*60*4],100*4);pixels.Freeze();
+            // A slow STA photo render must not block the WPF dispatcher or use an MTA thread.
+            using(var started=new ManualResetEventSlim(false))
+            using(var release=new ManualResetEventSlim(false))
+            {
+                var caller=Thread.CurrentThread.ManagedThreadId;
+                var work=MainWindow.OnStaAsync(()=>
+                {
+                    started.Set();
+                    if(!release.Wait(TimeSpan.FromSeconds(10)))throw new TimeoutException("Photo worker fixture was not released.");
+                    var rotated=ImageEngine.Rotate(pixels,45);
+                    return(Thread.CurrentThread.GetApartmentState()==ApartmentState.STA&&Thread.CurrentThread.ManagedThreadId!=caller,rotated.PixelWidth,rotated.PixelHeight);
+                });
+                try
+                {
+                    check(started.Wait(TimeSpan.FromSeconds(5)),"STA photo renderer did not start");
+                    var uiProgress=false;owner.Dispatcher.BeginInvoke(new Action(()=>uiProgress=true));DesktopInput.Pump(150);
+                    check(uiProgress&&!work.IsCompleted,"An in-flight photo render blocked the WPF dispatcher");
+                }
+                finally{release.Set();}
+                var timer=System.Diagnostics.Stopwatch.StartNew();
+                while(!work.IsCompleted&&timer.Elapsed<TimeSpan.FromSeconds(15))DesktopInput.Pump(100);
+                check(work.IsCompletedSuccessfully&&work.Result.Item1&&work.Result.PixelWidth==114&&work.Result.PixelHeight==114,
+                    "Background STA photo render did not match 45-degree export: "+work.Exception?.GetBaseException().Message);
+            }
             Trace("START photo editor");var image=Path.Combine(root,"Reliability.png");ImageEngine.Save(pixels,image,"png");var photo=new ToolEditor(owner,"editImage","Edit Photo",image,preview:pixels);
             try
             {
@@ -69,7 +93,7 @@ internal static class EditorReliabilityChecks
                 check(photo.FieldForTest("Degrees").Text=="90"&&photo.FieldForTest("Width").Text=="60","Photo rotation did not recover after correcting invalid input");
                 Trace("photo first image export");photo.AcceptForTest();var turned=ImageEngine.Load(ImageEngine.Apply("editImage",[image],root,photo.ImageOptions)[0]);
                 check(turned.PixelWidth==60&&turned.PixelHeight==100,$"Rotate Right distorted the photo to {turned.PixelWidth}×{turned.PixelHeight}");
-                Children(photo).OfType<Button>().Single(b=>b.Content as string=="↶ Reset").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));Trace("photo reset and 45-degree preview");photo.FieldForTest("Degrees").Text="45";DesktopInput.Pump(1500);photo.AcceptForTest();
+                Children(photo).OfType<Button>().Single(b=>b.Content as string=="↶ Reset").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));Trace("photo reset and 45-degree preview");photo.FieldForTest("Degrees").Text="45";Trace("45-degree field set; pumping WPF dispatcher");DesktopInput.Pump(1500);Trace("45-degree dispatcher pump returned");photo.AcceptForTest();Trace("45-degree editor options accepted");
                 Trace("photo second image export");var tilted=ImageEngine.Load(ImageEngine.Apply("editImage",[image],root,photo.ImageOptions)[0]);
                 check(photo.IsVisible&&tilted.PixelWidth==114&&tilted.PixelHeight==114,$"A 45° photo rotation crashed the preview or lost the turned corners: {tilted.PixelWidth}×{tilted.PixelHeight}");
                 var shown=(System.Windows.Media.Imaging.BitmapSource)((Image)Children(photo).OfType<Canvas>().First(c=>c.Children.Count>0&&c.Children[0] is Image).Children[0]).Source;

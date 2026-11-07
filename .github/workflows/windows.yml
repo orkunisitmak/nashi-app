@@ -28,6 +28,33 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           dotnet publish windows/Nashi.Windows -c Release --no-restore -o build/windows/Nashi
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Real WPF photo preview responsiveness regression
+        shell: pwsh
+        run: |
+          for ($attempt=1; $attempt -le 2; $attempt++) {
+            $directory = Join-Path '${{ github.workspace }}\build\windows-smoke' "photo-preview-$attempt"
+            New-Item -ItemType Directory -Force $directory | Out-Null
+            $start = [System.Diagnostics.ProcessStartInfo]::new((Resolve-Path build/windows/Nashi/Nashi.exe))
+            $start.UseShellExecute = $false
+            $start.Environment['NASHI_SMOKE_DIRECTORY'] = $directory
+            $start.ArgumentList.Add('--editor-smoke-test')
+            $start.ArgumentList.Add('--photo-only')
+            $process = [System.Diagnostics.Process]::Start($start)
+            try {
+              if (!$process.WaitForExit(120000)) {
+                $process.Kill($true)
+                throw "Photo-preview regression attempt $attempt did not terminate"
+              }
+              if ($process.ExitCode -ne 0) {
+                if (Test-Path (Join-Path $directory 'error.txt')) { Get-Content (Join-Path $directory 'error.txt') }
+                if (Test-Path (Join-Path $directory 'photo-timeout.txt')) { Get-Content (Join-Path $directory 'photo-timeout.txt') }
+                throw "Photo-preview regression attempt $attempt failed: $($process.ExitCode)"
+              }
+              $report = Get-Content (Join-Path $directory 'editor-result.json') -Raw | ConvertFrom-Json
+              if ($report.passed -lt 5) { throw "Photo-preview regression checked too few assertions: $($report.passed)" }
+              Write-Host "Photo-preview attempt $($attempt): $($report.passed) native assertions passed"
+            } finally { $process.Dispose() }
+          }
       - name: Install verified media tools and exercise real exports
         shell: pwsh
         env:
