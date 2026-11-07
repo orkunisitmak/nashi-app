@@ -1,5 +1,14 @@
 import Foundation
 
+/// A malformed command line: the caller asked for something the command does
+/// not accept. Separated from a failed operation so the process can exit with
+/// the usual usage status (64) instead of 1.
+struct UsageError: LocalizedError {
+    let message: String
+    init(_ message: String) { self.message = message }
+    var errorDescription: String? { message }
+}
+
 public enum NashiCommandLine {
     public static func run(arguments args:[String] = CommandLine.arguments) -> Int32 {
 do {
@@ -22,7 +31,81 @@ do {
     if args.count==2,args[1]=="dependencies" {
         var result:[String:String]=[:];for name in ["ffmpeg","ffprobe","soffice","exiftool"] { result[name]=try Dependencies.executable(name).path };print(String(decoding:try JSONSerialization.data(withJSONObject:result,options:.sortedKeys),as:UTF8.self));return flushResults()
     }
-    guard args.count>=4 else { fputs("Usage: nashi-cli convert FORMAT FILE... [--options JSON] [--json]\n       nashi-cli tool TOOL_ID FILE... [--options JSON] [--json]\n       nashi-cli inspect FILE\n       nashi-cli catalog\n       nashi-cli dependencies\n",stderr);return 64 }
+    if args.count>=3,args[1]=="hash" {
+        var algorithm=FileHasher.Algorithm.sha256,algorithmWasGiven=false,paths:[String]=[],verify:String?,jsonOutput=false,index=2
+        while index<args.count {
+            switch args[index] {
+            case "--algorithm":
+                guard index+1<args.count,let value=FileHasher.Algorithm(rawValue:args[index+1].lowercased()) else { throw UsageError("Unknown algorithm. Use sha256, sha512 or md5.") }
+                algorithm=value;algorithmWasGiven=true;index+=2
+            case "--verify":
+                guard index+1<args.count else { throw UsageError("--verify needs a checksum file.") }
+                guard verify==nil else { throw UsageError("--verify takes one checksum file.") }
+                verify=args[index+1];index+=2
+            case "--json": jsonOutput=true;index+=1
+            default: paths.append(args[index]);index+=1
+            }
+        }
+        if let verify {
+            // `--verify` checks the list, so extra file arguments would be ignored silently.
+            guard paths.isEmpty else { throw UsageError("hash --verify checks a checksum file, so it takes no other file arguments.") }
+            guard !jsonOutput else { throw UsageError("--json is not available with --verify.") }
+            let checksumFile=URL(fileURLWithPath:verify)
+            guard FileManager.default.fileExists(atPath:checksumFile.path) else { throw NashiError.invalidInput("File not found: \(checksumFile.lastPathComponent)") }
+            // Relative paths in a checksum file resolve next to that file, as `shasum -c` does.
+            let base=checksumFile.deletingLastPathComponent()
+            var entries:[(digest:String,path:String)]=[],damaged:[String]=[]
+            // `split(separator:"\n")` sees "\r\n" as one Character and would keep a CRLF list whole.
+            for line in try String(contentsOf:checksumFile,encoding:.utf8).split(whereSeparator:\.isNewline) {
+                switch FileHasher.parseChecksumLine(String(line)) {
+                case .ignored: break
+                case .entry(let digest,let path): entries.append((digest,path))
+                case .damaged(let text): damaged.append(text)
+                }
+            }
+            var selected=algorithm
+            if !algorithmWasGiven,let first=entries.first {
+                // `--verify SHA512SUMS` without `--algorithm` should not report corruption.
+                guard let inferred=FileHasher.algorithm(forDigestLength:first.digest.count) else {
+                    throw UsageError("Cannot tell the algorithm from a \(first.digest.count)-character digest. Pass --algorithm.")
+                }
+                selected=inferred
+            }
+            let expected=FileHasher.digestLength(selected)
+            var failures=0
+            for entry in entries {
+                guard entry.digest.count==expected else {
+                    print("FAILED \(entry.path) (digest has \(entry.digest.count) characters; \(selected.rawValue) uses \(expected))")
+                    failures+=1
+                    continue
+                }
+                let file=entry.path.hasPrefix("/") ? URL(fileURLWithPath:entry.path):base.appendingPathComponent(entry.path)
+                let actual=(try? FileHasher.digest(of:file.standardizedFileURL,algorithm:selected))?.lowercased()
+                let matches=actual==entry.digest
+                if !matches { failures+=1 }
+                print("\(matches ? "OK":"FAILED") \(entry.path)")
+            }
+            for text in damaged {
+                let shown=text.count>120 ? String(text.prefix(120))+"…":text
+                print("FAILED \(shown) (not a checksum line)")
+                failures+=1
+            }
+            let checked=entries.count+damaged.count
+            guard checked>0 else { throw NashiError.invalidInput("No checksum lines found in \(checksumFile.lastPathComponent).") }
+            fputs(failures==0 ? "All \(checked) checksums matched.\n":"\(failures) of \(checked) checksums failed.\n",stderr)
+            return failures==0 ? flushResults():1
+        }
+        guard !paths.isEmpty else { throw UsageError("hash needs at least one file.") }
+        var files:[[String:String]]=[]
+        for path in paths {
+            let url=URL(fileURLWithPath:path),digest=try FileHasher.digest(of:url,algorithm:algorithm)
+            files.append(["path":url.path,"hash":digest])
+            if !jsonOutput { print("\(digest)  \(url.path)") }
+        }
+        if jsonOutput { print(String(decoding:try JSONSerialization.data(withJSONObject:["algorithm":algorithm.rawValue,"files":files],options:[.sortedKeys]),as:UTF8.self)) }
+        return flushResults()
+    }
+    guard args.count>=4 else { fputs("Usage: nashi-cli convert FORMAT FILE... [--options JSON] [--json]\n       nashi-cli tool TOOL_ID FILE... [--options JSON] [--json]\n       nashi-cli inspect FILE\n       nashi-cli hash FILE... [--algorithm sha256|sha512|md5] [--json]\n       nashi-cli hash --verify CHECKSUMS [--algorithm sha256|sha512|md5]\n       nashi-cli catalog\n       nashi-cli dependencies\n",stderr);return 64 }
     var options=OperationOptions(), paths=Array(args.dropFirst(3))
     let jsonOutput=paths.contains("--json");paths.removeAll{$0=="--json"}
     if let i=paths.firstIndex(of:"--options"),i+1<paths.count {
@@ -56,7 +139,7 @@ do {
     if jsonOutput { print(String(decoding:try JSONEncoder().encode(outputs.map(\.path)),as:UTF8.self)) }
     else { for url in outputs { print(url.path) } }
     return flushResults()
-} catch { fputs("\(error.localizedDescription)\n",stderr);return 1 }
+} catch let error as UsageError { fputs("\(error.message)\n",stderr);return 64 } catch { fputs("\(error.localizedDescription)\n",stderr);return 1 }
 
     }
 

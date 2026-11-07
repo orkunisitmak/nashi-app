@@ -11,7 +11,7 @@ import ApplicationServices
 @main
 enum NashiApplication {
     @MainActor static func main() {
-        if CommandLine.arguments.count>1,["convert","tool","inspect","catalog","dependencies"].contains(CommandLine.arguments[1]) { exit(NashiCommandLine.run()) }
+        if CommandLine.arguments.count>1,["convert","tool","inspect","catalog","dependencies","hash"].contains(CommandLine.arguments[1]) { exit(NashiCommandLine.run()) }
         let app=NSApplication.shared
         if CommandLine.arguments.contains("--ui-audit") {
             do {
