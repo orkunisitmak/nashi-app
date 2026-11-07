@@ -1433,5 +1433,17 @@
   "YouTube thumbnail · best available full-size image": "Miniature YouTube · meilleure image en taille réelle disponible",
   "No tools for this file type": "Aucun outil pour ce type de fichier",
   "Details": "Détails",
-  "Copy details": "Copier les détails"
+  "Copy details": "Copier les détails",
+  "Create QR Code": "Créer un code QR",
+  "Generate QR Code": "Générer un code QR",
+  "Text or URL": "Texte ou URL",
+  "Error correction": "Correction d’erreurs",
+  "Created locally. No upload.": "Créé localement. Aucun envoi.",
+  "Save PNG…": "Enregistrer en PNG…",
+  "Enter between 1 and 2,000 UTF-8 bytes for the QR code.": "Saisissez entre 1 et 2 000 octets UTF-8 pour le code QR.",
+  "Choose a QR size between 64 and 2,048 pixels and L, M, Q, or H correction.": "Choisissez une taille QR entre 64 et 2 048 pixels et une correction L, M, Q ou H.",
+  "Could not create the QR code.": "Impossible de créer le code QR.",
+  "The text is too long for this QR correction level.": "Le texte est trop long pour ce niveau de correction QR.",
+  "Choose a larger QR image size for this text.": "Choisissez une image QR plus grande pour ce texte.",
+  "Choose a local folder and a PNG filename.": "Choisissez un dossier local et un nom de fichier PNG."
 }

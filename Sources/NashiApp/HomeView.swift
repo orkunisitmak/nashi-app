@@ -61,6 +61,7 @@ struct HomeView:View {
                         Spacer()
                     }.padding(.top,8).nashiEntrance()
                     dropZone.nashiEntrance(delay:0.04)
+                    Button { state.showQRCodeCreator() } label:{ Label("Create QR Code",systemImage:"qrcode") }.buttonStyle(NashiButtonStyle(.secondary)).disabled(state.working)
                     Button { state.onWebDownload?(WebLinkPayload.clipboardLink(),.video) } label:{
                         HStack(spacing:12) {
                             Image(systemName:"arrow.down.circle.fill").font(.system(size:25)).foregroundStyle(Color.nashi)
