@@ -66,7 +66,7 @@ public sealed partial class ToolEditor:Window
         if(tool=="convert")
         {
             var formats=outputFormats?.ToHashSet()??(media is not null?(media.Video is null?MediaEngine.AudioFormats:MediaEngine.VideoFormats.Concat(MediaEngine.AudioFormats).ToHashSet()):ImageEngine.Formats.ToHashSet());
-            options.Children.Add(L10n.Label(new TextBlock{Text="Output format",FontWeight=FontWeights.SemiBold}));format.ItemsSource=formats.Order().ToArray();format.SelectedIndex=0;options.Children.Add(format);
+            options.Children.Add(L10n.Label(new TextBlock{Text="Output format",FontWeight=FontWeights.SemiBold}));format.ItemsSource=formats.Order().ToArray();format.SelectedIndex=0;options.Children.Add(format);BuildBackgroundOptions();
         }
         if(tool is "trimVideo" or "trimAudio" or "redactAudio"){Field("Start",0);Field("End",duration);}
         if(tool=="resize"){Field("Width",bitmap?.PixelWidth??1280);Field("Height",bitmap?.PixelHeight??720);}
@@ -224,6 +224,7 @@ public sealed partial class ToolEditor:Window
             var preset=tool=="compress"?CompressionPreset():null;var sized=tool is "resize" or "compress" or "editImage";var batch=collageInputs.Length>1;
             int? Side(string key,double value)=>!fields.ContainsKey(key)||sized&&(preset is not null||SizeUntouched||batch&&Untouched(key))?null:(int)value;
             ImageOptions=PhotoSettings(new(Side("Width",w),Side("Height",h),(int)Value("Degrees",tool=="rotate"?90:0),tool=="crop"?new Int32Rect((int)x,(int)y,(int)w,(int)h):null,(int)Value("Quality (%)",85),true,annotated))with{Scale=preset?.Scale,LongestEdge=preset?.LongestEdge};
+            if(tool=="convert")ImageOptions=ImageOptions with{RemoveBackground=BackgroundSettings};
             MediaOptions=MoreMediaSettings(MediaOptions);
             Format=format.SelectedItem as string??"png";
             if(tool=="splitPDF"&&(!int.TryParse(fields["Pages per file"].Text,NumberStyles.AllowLeadingWhite|NumberStyles.AllowTrailingWhite,CultureInfo.CurrentCulture,out var perFile)||perFile is <1 or >1000))throw new ArgumentException("Choose between 1 and 1,000 pages per file."); // validate while the editor is still open

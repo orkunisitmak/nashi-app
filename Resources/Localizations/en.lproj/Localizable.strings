@@ -343,6 +343,7 @@
 "BACKGROUND BLUR" = "BACKGROUND BLUR";
 "BACKGROUND COLOR" = "BACKGROUND COLOR";
 "BACKGROUND IMAGE…" = "BACKGROUND IMAGE…";
+"BACKGROUND TOLERANCE (%)" = "BACKGROUND TOLERANCE (%)";
 "BALANCED" = "BALANCED";
 "BARS" = "BARS";
 "BESIDE ORIGINAL FILES" = "BESIDE ORIGINAL FILES";
@@ -363,6 +364,7 @@
 "Background Image…" = "Background Image…";
 "Background blur" = "Background blur";
 "Background color" = "Background color";
+"Background tolerance (%)" = "Background tolerance (%)";
 "Balanced" = "Balanced";
 "Bars" = "Bars";
 "Beside original files" = "Beside original files";
@@ -466,6 +468,7 @@
 "CHOOSE ONE OF THE EDITABLE METADATA FIELDS." = "CHOOSE ONE OF THE EDITABLE METADATA FIELDS.";
 "CHOOSE OUTPUT FOLDER…" = "CHOOSE OUTPUT FOLDER…";
 "CHOOSE PAGE RANGES SUCH AS 1-3, 5 WITHIN THE PDF PAGE COUNT." = "CHOOSE PAGE RANGES SUCH AS 1-3, 5 WITHIN THE PDF PAGE COUNT.";
+"CHOOSE PNG, WEBP, TIFF OR AVIF TO KEEP A TRANSPARENT BACKGROUND." = "CHOOSE PNG, WEBP, TIFF OR AVIF TO KEEP A TRANSPARENT BACKGROUND.";
 "CHOOSE SET UP MEDIA TOOLS FIRST." = "CHOOSE SET UP MEDIA TOOLS FIRST.";
 "CHOOSE SET UP MEDIA TOOLS ONCE TO ENABLE MEDIA EDITING." = "CHOOSE SET UP MEDIA TOOLS ONCE TO ENABLE MEDIA EDITING.";
 "CHOOSE SET UP MEDIA TOOLS ONCE TO ENABLE WEB DOWNLOADS." = "CHOOSE SET UP MEDIA TOOLS ONCE TO ENABLE WEB DOWNLOADS.";
@@ -612,6 +615,7 @@
 "Choose Files" = "Choose Files";
 "Choose Files…" = "Choose Files…";
 "Choose Find media to inspect this link." = "Choose Find media to inspect this link.";
+"Choose PNG, WebP, TIFF or AVIF to keep a transparent background." = "Choose PNG, WebP, TIFF or AVIF to keep a transparent background.";
 "Choose SRT, VTT or TXT." = "Choose SRT, VTT or TXT.";
 "Choose Set up media tools first." = "Choose Set up media tools first.";
 "Choose Set up media tools once to enable media editing." = "Choose Set up media tools once to enable media editing.";
@@ -979,6 +983,7 @@
 "Drop it like it’s… a file." = "Drop it like it’s… a file.";
 "Drop something good." = "Drop something good.";
 "Duplicate" = "Duplicate";
+"EDGE SOFTNESS (PX)" = "EDGE SOFTNESS (PX)";
 "EDIT" = "EDIT";
 "EDIT FIELDS OR REMOVE METADATA. ENCODED AUDIO AND VIDEO STAY UNTOUCHED." = "EDIT FIELDS OR REMOVE METADATA. ENCODED AUDIO AND VIDEO STAY UNTOUCHED.";
 "EDIT FIELDS OR REMOVE METADATA. ENCODED IMAGE PIXELS STAY UNTOUCHED." = "EDIT FIELDS OR REMOVE METADATA. ENCODED IMAGE PIXELS STAY UNTOUCHED.";
@@ -1009,6 +1014,7 @@
 "EXPOSURE" = "EXPOSURE";
 "EXTRACT ARCHIVE" = "EXTRACT ARCHIVE";
 "EXTRACT NASHI INTO ITS OWN WRITABLE FOLDER FIRST." = "EXTRACT NASHI INTO ITS OWN WRITABLE FOLDER FIRST.";
+"Edge softness (px)" = "Edge softness (px)";
 "Edit" = "Edit";
 "Edit Image" = "Edit Image";
 "Edit Photo" = "Edit Photo";
@@ -1109,6 +1115,7 @@
 "FOLDERS" = "FOLDERS";
 "FONT" = "FONT";
 "FONT SIZE" = "FONT SIZE";
+"FOR PRODUCT SHOTS, LOGOS AND SCANS ON A PLAIN COLOR. ONLY THE BACKGROUND TOUCHING THE IMAGE EDGES IS REMOVED; THIS IS NOT AI SUBJECT DETECTION." = "FOR PRODUCT SHOTS, LOGOS AND SCANS ON A PLAIN COLOR. ONLY THE BACKGROUND TOUCHING THE IMAGE EDGES IS REMOVED; THIS IS NOT AI SUBJECT DETECTION.";
 "FORMAT COMPATIBILITY" = "FORMAT COMPATIBILITY";
 "FORMAT PREFERENCES" = "FORMAT PREFERENCES";
 "FORMATS" = "FORMATS";
@@ -1191,6 +1198,7 @@
 "Folders" = "Folders";
 "Font" = "Font";
 "Font size" = "Font size";
+"For product shots, logos and scans on a plain color. Only the background touching the image edges is removed; this is not AI subject detection." = "For product shots, logos and scans on a plain color. Only the background touching the image edges is removed; this is not AI subject detection.";
 "Format Compatibility" = "Format Compatibility";
 "Format preferences" = "Format preferences";
 "Formats" = "Formats";
@@ -2009,6 +2017,7 @@
 "Remove Image" = "Remove Image";
 "Remove Metadata" = "Remove Metadata";
 "Remove all metadata" = "Remove all metadata";
+"Remove background" = "Remove background";
 "Remove clips (numbers; separated by semicolons)" = "Remove clips (numbers; separated by semicolons)";
 "Remove from Float" = "Remove from Float";
 "Remove from selection" = "Remove from selection";
@@ -2439,6 +2448,7 @@
 "THIS IMAGE COULD NOT BE DECODED." = "THIS IMAGE COULD NOT BE DECODED.";
 "THIS IMAGE EXCEEDS 100 MP." = "THIS IMAGE EXCEEDS 100 MP.";
 "THIS IMAGE EXCEEDS 200 MB." = "THIS IMAGE EXCEEDS 200 MB.";
+"THIS IMAGE HAS NO SOLID BACKGROUND TO REMOVE. IT WORKS BEST ON PRODUCT SHOTS, LOGOS AND SCANS ON A PLAIN COLOR." = "THIS IMAGE HAS NO SOLID BACKGROUND TO REMOVE. IT WORKS BEST ON PRODUCT SHOTS, LOGOS AND SCANS ON A PLAIN COLOR.";
 "THIS IMAGE IS TOO LARGE (100 MP LIMIT)." = "THIS IMAGE IS TOO LARGE (100 MP LIMIT).";
 "THIS IMAGE IS TOO LARGE TO PASTE. CHOOSE THE IMAGE FILE INSTEAD." = "THIS IMAGE IS TOO LARGE TO PASTE. CHOOSE THE IMAGE FILE INSTEAD.";
 "THIS IS A LIVE OR UPCOMING STREAM. USE A FINISHED VIDEO LINK." = "THIS IS A LIVE OR UPCOMING STREAM. USE A FINISHED VIDEO LINK.";
@@ -2621,6 +2631,7 @@
 "This image could not be decoded." = "This image could not be decoded.";
 "This image exceeds 100 MP." = "This image exceeds 100 MP.";
 "This image exceeds 200 MB." = "This image exceeds 200 MB.";
+"This image has no solid background to remove. It works best on product shots, logos and scans on a plain color." = "This image has no solid background to remove. It works best on product shots, logos and scans on a plain color.";
 "This image is too large (100 MP limit)." = "This image is too large (100 MP limit).";
 "This image is too large to paste. Choose the image file instead." = "This image is too large to paste. Choose the image file instead.";
 "This is a live or upcoming stream. Use a finished video link." = "This is a live or upcoming stream. Use a finished video link.";
