@@ -214,6 +214,7 @@
 "ANNOTATE · NASHI" = "ANNOTER · NASHI";
 "ANNOTATION CANVAS" = "CANEVAS D’ANNOTATION";
 "ANNOTATION TEXT" = "TEXTE DE L’ANNOTATION";
+"ANOTHER TASK IS RUNNING. OPEN THESE FILES WHEN IT FINISHES." = "UNE AUTRE TÂCHE EST EN COURS. OUVREZ CES FICHIERS LORSQU'ELLE SERA TERMINÉE.";
 "ANOTHER TASK IS RUNNING. YOUR LINK IS READY WHEN IT FINISHES." = "UNE AUTRE TÂCHE EST EN COURS. VOTRE LIEN SERA PRÊT DÈS QU’ELLE SERA TERMINÉE.";
 "APPEARANCE" = "APPARENCE";
 "APPEARANCE COULD NOT BE SAVED" = "IMPOSSIBLE D’ENREGISTRER L’APPARENCE";
@@ -304,6 +305,7 @@
 "Annotate · Nashi" = "Annoter · Nashi";
 "Annotation canvas" = "Canevas d’annotation";
 "Annotation text" = "Texte de l’annotation";
+"Another task is running. Open these files when it finishes." = "Une autre tâche est en cours. Ouvrez ces fichiers lorsqu'elle sera terminée.";
 "Another task is running. Your link is ready when it finishes." = "Une autre tâche est en cours. Votre lien sera prêt dès qu’elle sera terminée.";
 "Appearance" = "Apparence";
 "Appearance could not be saved" = "Impossible d’enregistrer l’apparence";
@@ -447,6 +449,7 @@
 "CHOOSE AT LEAST TWO PDFS." = "CHOISISSEZ AU MOINS DEUX PDF.";
 "CHOOSE AT LEAST TWO VIDEOS." = "CHOISISSEZ AU MOINS DEUX VIDÉOS.";
 "CHOOSE AT MOST 10,000 CLIPS." = "CHOISISSEZ 10 000 CLIPS AU MAXIMUM.";
+"CHOOSE AT MOST 200 FILES AT A TIME." = "CHOISISSEZ AU MAXIMUM 200 FICHIERS À LA FOIS.";
 "CHOOSE BACKGROUND IMAGE…" = "CHOISIR L’IMAGE D’ARRIÈRE-PLAN…";
 "CHOOSE BETWEEN 1 AND 1,000 PAGES PER FILE." = "CHOISISSEZ ENTRE 1 ET 1 000 PAGES PAR FICHIER.";
 "CHOOSE DIMENSIONS BETWEEN 1 AND 30,000 PIXELS (100 MP LIMIT)." = "CHOISISSEZ DES DIMENSIONS COMPRISES ENTRE 1 ET 30 000 PIXELS (LIMITE DE 100 MPX).";
@@ -656,6 +659,7 @@
 "Choose at least two PDFs." = "Choisissez au moins deux PDF.";
 "Choose at least two videos." = "Choisissez au moins deux vidéos.";
 "Choose at most 10,000 clips." = "Choisissez 10 000 clips au maximum.";
+"Choose at most 200 files at a time." = "Choisissez au maximum 200 fichiers à la fois.";
 "Choose background image…" = "Choisir l’image d’arrière-plan…";
 "Choose between 1 and 1,000 pages per file." = "Choisissez entre 1 et 1 000 pages par fichier.";
 "Choose dimensions between 1 and 30,000 pixels (100 MP limit)." = "Choisissez des dimensions comprises entre 1 et 30 000 pixels (limite de 100 Mpx).";
@@ -2094,6 +2098,7 @@
 "SELECT ALL" = "TOUT SÉLECTIONNER";
 "SELECT AN AREA TO REDACT, OR DETECT FACES OR TEXT." = "SÉLECTIONNEZ UNE ZONE À CAVIARDER, OU DÉTECTEZ LES VISAGES OU LE TEXTE.";
 "SELECT AT LEAST ONE AVAILABLE PHOTO." = "SÉLECTIONNEZ AU MOINS UNE PHOTO DISPONIBLE.";
+"SELECT AT LEAST ONE LOCAL FILE." = "SÉLECTIONNEZ AU MOINS UN FICHIER LOCAL.";
 "SELECT AT LEAST ONE PAGE." = "SÉLECTIONNEZ AU MOINS UNE PAGE.";
 "SELECT ONE CROP RECTANGLE." = "SÉLECTIONNEZ UN SEUL RECTANGLE DE RECADRAGE.";
 "SELECT ONLY THIS REPOSITORY AND GIVE CONTENTS READ ACCESS. THE TOKEN STAYS IN THIS MAC’S KEYCHAIN." = "SÉLECTIONNEZ UNIQUEMENT CE DÉPÔT ET ACCORDEZ L’ACCÈS EN LECTURE À CONTENTS. LE JETON RESTE DANS LE TROUSSEAU DE CE MAC.";
@@ -2259,6 +2264,7 @@
 "Select a clip and press Delete to remove it from the result." = "Sélectionnez un clip et appuyez sur Supprimer pour le retirer du résultat.";
 "Select an area to redact, or detect faces or text." = "Sélectionnez une zone à caviarder, ou détectez les visages ou le texte.";
 "Select at least one available photo." = "Sélectionnez au moins une photo disponible.";
+"Select at least one local file." = "Sélectionnez au moins un fichier local.";
 "Select at least one page." = "Sélectionnez au moins une page.";
 "Select one crop rectangle." = "Sélectionnez un seul rectangle de recadrage.";
 "Select only this repository and give Contents read access. The token stays in this Mac’s Keychain." = "Sélectionnez uniquement ce dépôt et accordez l’accès en lecture à Contents. Le jeton reste dans le trousseau de ce Mac.";
