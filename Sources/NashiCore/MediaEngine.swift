@@ -211,7 +211,7 @@ public enum MediaEngine {
                 case .muteVideo:
                     try requireVideo(info)
                     let out = try outputURL(input, ext: videoExtension(input), suffix: " Muted", options: options)
-                    try render(["-i", input.path, "-map", "0:v:0", "-c:v", "copy", "-an"], to: out, token: token, duration: info.duration, progress: itemProgress)
+                    try render(keepingQuickTimeKeys(["-i", input.path, "-map", "0:v:0", "-c:v", "copy", "-an"], info: info, ext: out.pathExtension), to: out, token: token, duration: info.duration, progress: itemProgress)
                     results.append(out)
                 case .trimVideo, .trimAudio: results += try trim(input, info: info, audio: kind == .trimAudio, options: options, token: token, progress: itemProgress)
                 case .cropVideo: results += try crop(input, info: info, options: options, token: token, progress: itemProgress)
@@ -283,7 +283,7 @@ public enum MediaEngine {
             if options.trimSilence { arguments += ["-af", "silenceremove=start_periods=1:start_duration=0.02:start_threshold=\(decimal(options.silenceThresholdDb))dB,areverse,silenceremove=start_periods=1:start_duration=0.02:start_threshold=\(decimal(options.silenceThresholdDb))dB,areverse"] }
             arguments += audioEncoding(ext, quality: options.quality, source: info.audio, pcmCodec: try pcmCodec(for: ext, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset)
         } else { arguments += ["-map", "0:v:0", "-map", "0:a:0?"] + videoEncoding(ext, quality: options.quality, sourceAudio: info.audio) }
-        try render(arguments, to: out, token: token, duration: audio && options.trimSilence ? nil : interval.1 - interval.0, progress: progress)
+        try render(keepingQuickTimeKeys(arguments, info: info, ext: ext), to: out, token: token, duration: audio && options.trimSilence ? nil : interval.1 - interval.0, progress: progress)
         return [out]
     }
 
@@ -294,7 +294,7 @@ public enum MediaEngine {
         let rect = try pixelRect(requested, width: width, height: height)
         let out = try outputURL(input, ext: videoExtension(input), suffix: " Cropped", options: options)
         let filter = "crop=\(rect.w):\(rect.h):\(rect.x):\(rect.y):exact=1,pad=ceil(iw/2)*2:ceil(ih/2)*2"
-        try render(["-i", input.path, "-map", "0:v:0", "-map", "0:a:0?", "-vf", filter] + videoEncoding(out.pathExtension, quality: options.quality, copyAudio: true), to: out, token: token, duration: info.duration, progress: progress)
+        try render(keepingQuickTimeKeys(["-i", input.path, "-map", "0:v:0", "-map", "0:a:0?", "-vf", filter] + videoEncoding(out.pathExtension, quality: options.quality, copyAudio: true), info: info, ext: out.pathExtension), to: out, token: token, duration: info.duration, progress: progress)
         return [out]
     }
 
@@ -305,7 +305,7 @@ public enum MediaEngine {
         var arguments = ["-i", input.path, "-map", "0:v:0", "-map", "0:a:0?", "-vf", "setpts=(PTS-STARTPTS)/\(decimal(options.speed))", "-r", decimal((info.video?.frameRate ?? 30) * options.speed), "-fps_mode", "cfr"]
         if info.hasAudio { arguments += ["-af", tempoFilter(options.speed)] }
         arguments += videoEncoding(out.pathExtension, quality: options.quality, sourceAudio: info.audio)
-        try render(arguments, to: out, token: token, duration: info.duration / options.speed, progress: progress)
+        try render(keepingQuickTimeKeys(arguments, info: info, ext: out.pathExtension), to: out, token: token, duration: info.duration / options.speed, progress: progress)
         return [out]
     }
 
@@ -527,7 +527,7 @@ public enum MediaEngine {
             previous = next
         }
         let out = try outputURL(input, ext: videoExtension(input), suffix: " Redacted", options: options)
-        try render(["-i", input.path, "-filter_complex", graph.joined(separator: ";"), "-map", "[\(previous)]", "-map", "0:a:0?"] + videoEncoding(out.pathExtension, quality: options.quality, copyAudio: true), to: out, token: token, duration: info.duration, progress: progress)
+        try render(keepingQuickTimeKeys(["-i", input.path, "-filter_complex", graph.joined(separator: ";"), "-map", "[\(previous)]", "-map", "0:a:0?"] + videoEncoding(out.pathExtension, quality: options.quality, copyAudio: true), info: info, ext: out.pathExtension), to: out, token: token, duration: info.duration, progress: progress)
         return [out]
     }
 
@@ -606,6 +606,15 @@ public enum MediaEngine {
     @discardableResult private static func ffmpeg(_ arguments: [String], token: CancellationToken, verbosity: String = "error", overwrite: Bool = false, duration: Double? = nil, progress: @escaping ProgressHandler = {_,_ in}) throws -> ProcessResult {
         let parser = FFmpegProgressParser(duration: duration, progress: progress)
         return try ProcessRunner.run(Dependencies.executable("ffmpeg"), ["-hide_banner", "-nostdin", "-v", verbosity, overwrite ? "-y" : "-n", "-nostats", "-stats_period", "0.2", "-progress", "pipe:1"] + arguments, token: token, onOutput: { parser.append($0) })
+    }
+
+    /// FFmpeg copies an iPhone video's location, make, model and capture date from the input, but the MP4/MOV
+    /// muxer writes those com.apple.quicktime.* keys only with +use_metadata_tags, as Convert already requests.
+    private static func keepingQuickTimeKeys(_ arguments: [String], info: MediaInfo, ext: String) -> [String] {
+        guard ["mp4", "mov", "m4v"].contains(ext.lowercased()), info.metadata.keys.contains(where: { $0.hasPrefix("com.apple.quicktime.") }) else { return arguments }
+        var result = arguments
+        if let flags = result.firstIndex(of: "-movflags") { result[flags + 1] += "+use_metadata_tags" } else { result += ["-movflags", "+use_metadata_tags"] }
+        return result
     }
 
     private static func render(_ arguments: [String], to output: URL, token: CancellationToken, duration: Double? = nil, progress: @escaping ProgressHandler = {_,_ in}) throws {
