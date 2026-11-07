@@ -393,7 +393,10 @@ private final class GitHubHTTPTransfer: NSObject, URLSessionDataDelegate, @unche
 
     private func drain() {
         guard !finished, !writing else { return }
-        guard !pending.isEmpty else {
+        // The last advertised bytes complete the consumer's download, so they wait
+        // for a clean upstream EOF; an oversized or failed body must not look whole.
+        let holdsTail = !upstreamFinished && pending.count == 1 && received == expectedSize
+        guard !pending.isEmpty, !holdsTail else {
             if upstreamFinished {
                 if expectedSize != received { finish(.failure(GitHubUpdateTransportError.invalidResponse)) }
                 else { finish(.success(Data())) }
