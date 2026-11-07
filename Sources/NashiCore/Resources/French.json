@@ -1093,6 +1093,8 @@
   "Archive expands beyond 4 GB.": "L’archive se décompresse au-delà de 4 Go.",
   "Archive has too many entries (10,000 limit).": "L’archive contient trop d’entrées (limite de 10 000).",
   "Archive size exceeds its declared limit.": "La taille de l’archive dépasse la limite déclarée.",
+  "This archive is protected. Enter its password.": "Cette archive est protégée. Saisissez son mot de passe.",
+  "The password is incorrect, or the archive is damaged.": "Le mot de passe est incorrect ou l’archive est endommagée.",
   "The archive has too many entries (100,000 limit).": "L’archive contient trop d’entrées (limite de 100 000).",
   "The archive expands beyond the 20 GB safety limit.": "Une fois décompressée, l’archive dépasse la limite de sécurité de 20 Go.",
   "An archive hard link does not point to a regular file.": "Un lien physique de l’archive ne pointe pas vers un fichier ordinaire.",
