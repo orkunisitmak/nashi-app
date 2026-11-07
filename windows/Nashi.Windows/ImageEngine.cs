@@ -15,10 +15,21 @@ public sealed record ImageOptions(int? Width=null,int? Height=null,int Rotation=
     // Size presets apply to each image's own dimensions rather than the first image's.
     public double? Scale{get;init;}public int? LongestEdge{get;init;}
     public string? EncoderPath{get;init;}
+    // Convert to a format with transparency can remove a solid or near-solid background (#617).
+    public BackgroundRemoval.Options? RemoveBackground{get;init;}
 }
 public static partial class ImageEngine
 {
     public static readonly string[] Formats=["png","jpg","webp","heic","avif","bmp","gif","tiff","pdf"];
+    /// <summary>Outputs that keep an alpha channel, so a removed background stays transparent.</summary>
+    public static readonly string[] TransparentFormats=["png","webp","tiff","avif"];
+    internal static BitmapSource WithoutBackground(BitmapSource image,BackgroundRemoval.Options options,CancellationToken token=default)
+    {
+        // WPF Bgra32 is straight (not premultiplied) alpha, as the engine expects.
+        var converted=image.Format==PixelFormats.Bgra32?image:new FormatConvertedBitmap(image,PixelFormats.Bgra32,null,0);var stride=checked(converted.PixelWidth*4);var pixels=new byte[checked(stride*converted.PixelHeight)];converted.CopyPixels(pixels,stride,0);
+        BackgroundRemoval.Remove(pixels,converted.PixelWidth,converted.PixelHeight,options,token);
+        var result=BitmapSource.Create(converted.PixelWidth,converted.PixelHeight,image.DpiX,image.DpiY,PixelFormats.Bgra32,null,pixels,stride);result.Freeze();return result;
+    }
     public static BitmapSource Load(string file)
     {
         if(FeatureCatalog.Extension(file) is "webp" or "heic" or "avif" or "svg")return FromPng(PhotoCodec.Png(file));
@@ -77,6 +88,7 @@ public static partial class ImageEngine
                 // 48 MP JPEG re-saved as PNG took ~5-10 s and grew from 8 MB to 52 MB. Writing HEIC needs the
                 // media tools on Windows, so without them a HEIC source keeps the previous PNG output.
                 case "redactImage":image=Redact(image,options.Redactions,options.RedactionStyle);if(ext=="heic"&&options.EncoderPath is null)ext="png";break;
+                case "convert" when options.RemoveBackground is {} background&&(TransparentFormats.Contains(ext)||background.Fill is not null&&ext is not ("gif" or "pdf")):image=WithoutBackground(image,background,token);break;
                 case "convert":case "compress":case "removeMetadata":case "annotate":break;
                 default:throw new ArgumentException("Unsupported image tool.");
             }
