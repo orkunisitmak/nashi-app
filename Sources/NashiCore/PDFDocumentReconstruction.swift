@@ -141,17 +141,17 @@ enum PDFDocumentReconstruction {
         for index in 0..<pdf.pageCount {
             try token.check()
             guard let page = pdf.page(at: index) else { continue }
-            let box = page.bounds(for: .cropBox)
+            let (rows, frame) = try textRows(page, token: token)
+            let box = page.bounds(for: .cropBox).applying(frame)
             // A fixed half-inch margin consumes most of a small PDF page.
             // Cap the ordinary margin while reserving at least 90% of a small
             // page's narrow dimension for editable content.
             let margin = min(36, min(box.width, box.height) * 0.05)
-            let rows = try textRows(page, token: token)
             var blocks = textBlocks(rows)
             let nativeText = !(page.string ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             for rect in try PDFPlacedImages.regions(page, token: token) {
                 if !nativeText && !rows.isEmpty && rect.width * rect.height > box.width * box.height * 0.8 { continue }
-                blocks.append(.image(rect))
+                blocks.append(.image(rect.applying(frame)))
             }
             blocks.sort { abs($0.bounds.maxY - $1.bounds.maxY) > 2 ? $0.bounds.maxY > $1.bounds.maxY : $0.bounds.minX < $1.bounds.minX }
             pageLayouts += "<style:page-layout style:name=\"PageLayout\(index)\"><style:page-layout-properties fo:page-width=\"\(box.width)pt\" fo:page-height=\"\(box.height)pt\" fo:margin=\"\(margin)pt\"/></style:page-layout>"
@@ -166,7 +166,7 @@ enum PDFDocumentReconstruction {
                 case .paragraph(let rows): body += writer.paragraph(rows, page: box, margin: margin, gap: gap)
                 case .table(let rows): body += writer.table(rows, page: box, margin: margin, gap: gap)
                 case .image(let rect):
-                    let png = try PDFOfficeCodec.rasterPNG(page, rect: rect, dpi: options.dpi, token: token)
+                    let png = try PDFOfficeCodec.rasterPNG(page, rect: rect, frame: frame, dpi: options.dpi, token: token)
                     body += writer.image(rect, png: png, page: box, margin: margin, gap: gap)
                 }
                 previousBottom = min(previousBottom, block.bounds.minY)
@@ -184,21 +184,22 @@ enum PDFDocumentReconstruction {
         return output
     }
 
-    private static func textRows(_ page: PDFPage, token: CancellationToken) throws -> [Row] {
+    /// Rows in the page's reading frame, and the transform from page space into it.
+    private static func textRows(_ page: PDFPage, token: CancellationToken) throws -> ([Row], CGAffineTransform) {
         guard let attributed = page.attributedString, attributed.length > 0,
               !attributed.string.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            return try PDFOfficeCodec.recognizedCells(page, token: token).map { Row(cells: [Cell(runs: [.init(text: $0.text, style: TextStyle(size: max(8, Double($0.rect.height) * 0.85)))], bounds: $0.rect)]) }.sorted { $0.bounds.midY > $1.bounds.midY }
+            return (try PDFOfficeCodec.recognizedCells(page, token: token).map { Row(cells: [Cell(runs: [.init(text: $0.text, style: TextStyle(size: max(8, Double($0.rect.height) * 0.85)))], bounds: $0.rect)]) }.sorted { $0.bounds.midY > $1.bounds.midY }, .identity)
         }
         let ns = attributed.string as NSString
         var glyphs: [Cell] = []
-        var index = 0
+        var index = 0, advance = CGVector.zero, last: CGRect?
         while index < ns.length {
             if index % 256 == 0 { try token.check() }
             let range = ns.rangeOfComposedCharacterSequence(at: index)
             let value = ns.substring(with: range)
             let attributes = attributed.attributes(at: index, effectiveRange: nil)
             index = NSMaxRange(range)
-            if value == "\n" || value == "\r" || value == "\u{0c}" { continue }
+            if value == "\n" || value == "\r" || value == "\u{0c}" { last = nil; continue }
             // characterBounds(at:) indexes PDF glyphs, while PDFKit inserts
             // line separators in string/attributedString. Selection ranges use
             // the normalized string indices and avoid losing a character at
@@ -206,8 +207,12 @@ enum PDFDocumentReconstruction {
             guard let selection = page.selection(for: range) else { continue }
             let rect = selection.bounds(for: page)
             if rect.isNull || rect.isInfinite || rect.width <= 0 || rect.height <= 0 { continue }
+            if let last { advance.dx += rect.midX - last.midX; advance.dy += rect.midY - last.midY }
+            last = rect
             glyphs.append(Cell(runs: [.init(text: value, style: style(attributes))], bounds: rect))
         }
+        let frame = PDFOfficeCodec.readingTransform(page, advance: advance)
+        for i in glyphs.indices { glyphs[i].bounds = glyphs[i].bounds.applying(frame) }
         var groups: [[Cell]] = []
         for glyph in glyphs.sorted(by: { $0.bounds.midY > $1.bounds.midY }) {
             if let row = groups.indices.reversed().first(where: { index in
@@ -245,7 +250,7 @@ enum PDFDocumentReconstruction {
             if let current, !current.text.trimmingCharacters(in: .whitespaces).isEmpty { cells.append(current) }
             if !cells.isEmpty { result.append(Row(cells: cells)) }
         }
-        return result.sorted { $0.bounds.midY > $1.bounds.midY }
+        return (result.sorted { $0.bounds.midY > $1.bounds.midY }, frame)
     }
 
     private static func textBlocks(_ rows: [Row]) -> [Block] {
