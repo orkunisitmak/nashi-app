@@ -6,28 +6,34 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Shell;
 using Microsoft.Win32;
 using Nashi.Core;
 namespace Nashi.Windows;
 
 public sealed partial class MainWindow:Window
 {
+    private const string PrivacyNote="Everything is processed on this PC. Nothing is uploaded.";
     private readonly ObservableCollection<string> files=[];
-    private readonly ListBox list=new(){MinHeight=0,MaxHeight=110};
+    private readonly ListBox list=new(){MinHeight=0,MaxHeight=76};
     private readonly Grid actions=new();
-    private readonly TextBlock selection=new(){FontSize=23,FontWeight=FontWeights.Bold,TextWrapping=TextWrapping.Wrap};
-    private readonly TextBlock status=Text("Files stay on your computer.",12,"Muted");
+    private readonly TextBlock selection=new(){FontSize=24,FontWeight=FontWeights.Bold,TextWrapping=TextWrapping.NoWrap,TextTrimming=TextTrimming.CharacterEllipsis};
+    private readonly TextBlock status=Text(PrivacyNote,11,"Muted");
     private readonly TextBox link=new(){ToolTip="Paste a public video, image or audio page link"};
     private readonly ComboBox downloadKind=new(){ItemsSource=new[]{"video","audio","thumbnail"},SelectedIndex=0,MinWidth=110};
     private readonly Toolchain tools=new(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Nashi","Tools","v1"),Environment.GetEnvironmentVariable("PATH"));
     private readonly LibraryStore library;
     private readonly PreferencesStore preferences;private GlobalDragController? globalDrag;
     private readonly StackPanel home=new(),libraryPage=new(),libraryRows=new(),recentRows=new();
-    private readonly TextBox recentSearch=new(){ToolTip="Find a recent file",Width=165};private readonly TextBlock recentCount=Text("0",11,"Muted");private Button? chooseFilesButton,openWheelButton;private readonly TextBlock fileDescription=Text("Images, videos, documents, and all the little things in between.",12,"Muted");
-    private readonly TextBox search=new(){ToolTip="Find a file or tool in Library",MinWidth=200};
-    private readonly DockPanel manage=new();private readonly FileGarden garden=new();private readonly StackPanel webContent=new();private Window? webWindow;
+    private Button? chooseFilesButton,openWheelButton;private readonly TextBlock fileDescription=Text("",12,"Muted",localize:false);
+    private readonly TextBox search=new(){ToolTip="Find a file or tool in Library",Width=214,MinHeight=34,Margin=new(0,0,8,0)};
+    private readonly StackPanel webContent=new();private readonly DockPanel webPage=new();private Window? webWindow;
     internal Window DownloadWindow=>webWindow??this;
-    private readonly Button homeButton,libraryButton,updateButton,toolsSetupButton;private readonly ComboBox appearance;
+    private readonly Button updateButton,toolsSetupButton;private readonly ComboBox appearance;
+    private readonly Segmented nav=new(glass:true);
+    private readonly Border dropCard;private readonly StackPanel emptyState=new(),selectionState=new();private readonly WrapPanel legend=new(){HorizontalAlignment=HorizontalAlignment.Center};
+    private readonly TextBlock dropTitle=Text("Drop files here",30),dropSubtitle=Text("Images, video, audio, PDFs, documents and archives.",13,"Muted");
+    private readonly TextBlock libraryCount=Text("",12,"Muted",localize:false);
     private readonly StackPanel workArea=new();
     private readonly ScrollViewer homeScroll=new(),libraryScroll=new();
     private bool busy,checking,toolSetupOffered;private WindowsUpdate? update;private Border? updateBanner;
@@ -41,42 +47,62 @@ public sealed partial class MainWindow:Window
     public MainWindow(string[]? initial=null,LibraryStore? library=null,bool checkForUpdates=true,bool offerToolSetup=true)
     {
         monitorToolSetup=checkForUpdates;
-        this.library=library??new LibraryStore();preferences=new(this.library.DirectoryPath);ApplyPreferences();Theme.Apply(this.library.Appearance);Theme.Attach(this);
-        Title="Nashi";Width=820;Height=780;MinWidth=700;MinHeight=580;WindowStartupLocation=WindowStartupLocation.CenterScreen;AllowDrop=true;
-        Icon=BitmapFrame.Create(new Uri("pack://application:,,,/Assets/NashiIcon.png"));
-        var root=new DockPanel{Margin=new(28,18,28,18)};Content=root;AddHandler(UIElement.PreviewMouseWheelEvent,new MouseWheelEventHandler(RoutePageMouseWheel),true);
-        var header=new DockPanel{Margin=new(0,0,0,18)};DockPanel.SetDock(header,Dock.Top);root.Children.Add(header);
-        var controls=new WrapPanel{HorizontalAlignment=HorizontalAlignment.Right,VerticalAlignment=VerticalAlignment.Center};DockPanel.SetDock(controls,Dock.Right);header.Children.Add(controls);
-        homeButton=Button("Home",()=>ShowLibrary(false));libraryButton=Button("Library",()=>ShowLibrary(true));toolsSetupButton=Button(tools.Ready&&officeRuntime.Executable is not null?"Tools ready":"Finish setup",ShowToolSetupMenu);controls.Children.Add(toolsSetupButton);controls.Children.Add(homeButton);controls.Children.Add(libraryButton);
+        this.library=library??new LibraryStore();preferences=new(this.library.DirectoryPath);ApplyPreferences();Theme.Apply(this.library.Appearance);Theme.Attach(this,toolbar:true);
+        Title="Nashi";Width=760;Height=690;MinWidth=700;MinHeight=580;WindowStartupLocation=WindowStartupLocation.CenterScreen;AllowDrop=true;
+        var root=new DockPanel();Content=root;AddHandler(UIElement.PreviewMouseWheelEvent,new MouseWheelEventHandler(RoutePageMouseWheel),true);
+        // Toolbar (60 px): the app glyph, Home and Library centered on the window, then setup, search and settings.
+        // The caption buttons sit to its right. Like the design's 1fr·auto·1fr grid, the switch only moves aside when space runs out.
+        var toolbar=new Grid{Height=60};DockPanel.SetDock(toolbar,Dock.Top);root.Children.Add(toolbar);
+        var brand=new StackPanel{Orientation=Orientation.Horizontal,VerticalAlignment=VerticalAlignment.Center,HorizontalAlignment=HorizontalAlignment.Left,Margin=new(18,0,0,0)};brand.Children.Add(Ui.Pear(16));var appName=Text("Nashi",12,"Muted",localize:false);appName.Margin=new(8,0,0,0);brand.Children.Add(appName);toolbar.Children.Add(brand);
+        var trail=new StackPanel{Orientation=Orientation.Horizontal,VerticalAlignment=VerticalAlignment.Center,HorizontalAlignment=HorizontalAlignment.Right,Margin=new(0,0,146,0)};toolbar.Children.Add(trail);WindowChrome.SetIsHitTestVisibleInChrome(trail,true);
+        nav.Add("Home",()=>ShowLibrary(false));nav.Add("Library",()=>ShowLibrary(true));nav.HorizontalAlignment=HorizontalAlignment.Left;WindowChrome.SetIsHitTestVisibleInChrome(nav,true);toolbar.Children.Add(nav);
+        void PlaceNav(){var left=(toolbar.ActualWidth-nav.ActualWidth)/2;left=Math.Min(left,toolbar.ActualWidth-146-trail.ActualWidth-8-nav.ActualWidth);nav.Margin=new(Math.Max(left,18+brand.ActualWidth+8),0,0,0);}
+        toolbar.SizeChanged+=(_,_)=>PlaceNav();trail.SizeChanged+=(_,_)=>PlaceNav();nav.SizeChanged+=(_,_)=>PlaceNav();
+        search.Style=Ui.Style("Field");search.MinHeight=38;search.Tag="Ctrl+F";Ui.SetIcon(search,"search",14);Ui.SetLens(search,"control");search.SetResourceReference(BackgroundProperty,"Glass");search.SetResourceReference(BorderBrushProperty,"Rim");L10n.Bind(search,Ui.HintProperty,"Search files and tools");trail.Children.Add(search);
+        var setupLabel=new StackPanel{Orientation=Orientation.Horizontal};var setupDot=new System.Windows.Shapes.Ellipse{Width=7,Height=7,Margin=new(0,0,6,0),VerticalAlignment=VerticalAlignment.Center};setupDot.SetResourceReference(System.Windows.Shapes.Shape.FillProperty,"Coral");setupLabel.Children.Add(setupDot);setupLabel.Children.Add(Text("Finish setup",13,weight:FontWeights.Medium));
+        toolsSetupButton=Button("",ShowToolSetupMenu);toolsSetupButton.Style=Ui.Style("GlassButton");toolsSetupButton.Content=setupLabel;toolsSetupButton.Margin=new(0,0,8,0);trail.Children.Add(toolsSetupButton);
+        var settings=Button("",ShowSettings);settings.Style=Ui.Style("GlassRound");settings.Content=Icons.Make("gear",17);settings.Margin=new(0);settings.ToolTip="Settings";AutomationProperties.SetName(settings,"Settings");trail.Children.Add(settings);
         appearance=new ComboBox{ItemsSource=new[]{"System","Light","Dark"},SelectedItem=char.ToUpper(this.library.Appearance[0])+this.library.Appearance[1..]};
         updateButton=Button("Check for updates",async()=>await CheckUpdatesAsync(true));
-        controls.Children.Add(Text("On your PC",11,"Muted"));controls.Children.Add(Button("Settings",ShowSettings));
-        var brand=new StackPanel{Orientation=Orientation.Horizontal};brand.Children.Add(new Image{Source=FileGarden.Artwork("NashiMark"),Width=40,Height=40,Margin=new(0,0,10,0)});brand.Children.Add(Text("Nashi",19));header.Children.Add(brand);foreach(var control in controls.Children.OfType<Button>()){control.Padding=new(10,6,10,6);control.FontSize=11;}
-        DockPanel.SetDock(status,Dock.Bottom);status.Margin=new(4,14,4,0);root.Children.Add(status);
+        // The status line doubles as the privacy note.
+        var note=new StackPanel{Orientation=Orientation.Horizontal,HorizontalAlignment=HorizontalAlignment.Center,Margin=new(20,8,20,12)};var lockIcon=Icons.Make("lock",12,"Muted");lockIcon.VerticalAlignment=VerticalAlignment.Top;lockIcon.Margin=new(0,1,6,0);note.Children.Add(lockIcon);status.MaxWidth=600;note.Children.Add(status);DockPanel.SetDock(note,Dock.Bottom);root.Children.Add(note);
         var pages=new Grid();homeScroll.Content=home;homeScroll.VerticalScrollBarVisibility=ScrollBarVisibility.Auto;homeScroll.HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled;libraryScroll.Content=libraryPage;libraryScroll.VerticalScrollBarVisibility=ScrollBarVisibility.Auto;libraryScroll.HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled;pages.Children.Add(homeScroll);pages.Children.Add(libraryScroll);root.Children.Add(pages);
-        var updateRow=new DockPanel();DockPanel.SetDock(updateButton,Dock.Right);updateRow.Children.Add(updateButton);var updateCaption=new StackPanel();updateCaption.Children.Add(Text("A little fresher. Ready when you are.",16));updateCaption.Children.Add(Text("You choose when to download and install.",12,"Muted"));updateRow.Children.Add(updateCaption);updateBanner=Card(updateRow);updateBanner.Visibility=Visibility.Collapsed;home.Children.Add(updateBanner);
-        home.Children.Add(homeTitle);var intro=Text("Convert, fine-tune, and send them on their way.",14,"Muted");intro.Margin=new(0,6,0,22);home.Children.Add(intro);
+        home.Margin=libraryPage.Margin=new(20,2,20,8);
+        var updateRow=new DockPanel();updateButton.VerticalAlignment=VerticalAlignment.Center;DockPanel.SetDock(updateButton,Dock.Right);updateRow.Children.Add(updateButton);var updateIcon=Ui.TileIcon("download");updateIcon.Margin=new(0,0,12,0);DockPanel.SetDock(updateIcon,Dock.Left);updateRow.Children.Add(updateIcon);var updateCaption=new StackPanel{VerticalAlignment=VerticalAlignment.Center};updateCaption.Children.Add(Text("Update available",13,weight:FontWeights.SemiBold));updateCaption.Children.Add(Text("You choose when to download and install.",11.5,"Muted"));updateRow.Children.Add(updateCaption);updateBanner=Card(updateRow);updateBanner.Padding=new(11,9,9,9);updateBanner.CornerRadius=new(18);updateBanner.Margin=new(0,0,0,12);updateBanner.Visibility=Visibility.Collapsed;home.Children.Add(updateBanner);
         home.Children.Add(workArea);
-        var drop=new Grid();drop.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});drop.ColumnDefinitions.Add(new(){Width=new(166)});
-        var dropText=new StackPanel();drop.Children.Add(dropText);dropText.Children.Add(selectionPill);selection.Margin=new(0,12,0,8);dropText.Children.Add(selection);dropText.Children.Add(fileDescription);
-        var picks=new WrapPanel{Margin=new(0,14,0,8)};chooseFilesButton=Primary("Choose files",Choose);picks.Children.Add(chooseFilesButton);openWheelButton=Primary("Open wheel",ShowWheel);picks.Children.Add(Button("Paste",PasteClipboard));picks.Children.Add(openWheelButton);dropText.Children.Add(picks);
-        Grid.SetColumn(garden,1);drop.Children.Add(garden);
-        var dropStack=new StackPanel();dropStack.Children.Add(drop);list.ItemsSource=files;list.SelectionMode=SelectionMode.Extended;
-        BuildFileChips();var clear=Button("Clear",()=>{files.Clear();Refresh();});DockPanel.SetDock(clear,Dock.Right);manage.Children.Add(clear);manage.Children.Add(list);dropStack.Children.Add(manage);
-        shortcutHints.Orientation=Orientation.Horizontal;shortcutHints.Margin=new(0,12,0,0);dropStack.Children.Add(shortcutHints);workArea.Children.Add(Card(dropStack));
-        actions.Margin=new(0,10,0,0);
-        var web=new StackPanel();web.Children.Add(Text("Download a link",17));web.Children.Add(Text("Video, audio, or an image. Straight into your tools.",12,"Muted"));
-        var download=new DockPanel{Margin=new(0,12,0,0)};var save=Primary("Download ↗",async()=>await DownloadAsync());DockPanel.SetDock(save,Dock.Right);download.Children.Add(save);DockPanel.SetDock(downloadKind,Dock.Right);download.Children.Add(downloadKind);download.Children.Add(link);web.Children.Add(download);
-        web.Children.Add(Text("Ctrl+Shift+D  Use a copied link  ·  Public, downloadable media",11,"Muted"));webContent.Margin=new(24);webContent.Children.Add(Text("Download from the web",27));webContent.Children.Add(Text("A link. A file. Yours to work with.",14,"Muted"));var webCard=Card(web);webCard.Margin=new(0,20,0,0);webContent.Children.Add(webCard);BuildWebOptions();
-        var webHeader=new DockPanel();var shortcut=Text("Ctrl+Shift+D",12,"Muted");DockPanel.SetDock(shortcut,Dock.Right);webHeader.Children.Add(shortcut);var arrow=Text("↓",28,"Gold");arrow.Margin=new(0,0,14,0);DockPanel.SetDock(arrow,Dock.Left);webHeader.Children.Add(arrow);var caption=new StackPanel();caption.SetValue(TextBlock.TextAlignmentProperty,TextAlignment.Left);caption.Children.Add(Text("Download a link",15));caption.Children.Add(Text("Video, audio, or an image. Straight into your tools.",12,"Muted"));webHeader.Children.Add(caption);var webButton=Button("",OpenDownload);webButton.Content=webHeader;webButton.SetResourceReference(StyleProperty,"CardButton");workArea.Children.Add(webButton);workArea.Children.Add(actions);
-        var recentHeading=new DockPanel{Margin=new(0,24,0,10)};var all=Button("See all  ↗",()=>ShowLibrary(true));DockPanel.SetDock(all,Dock.Right);recentHeading.Children.Add(all);recentSearch.TextChanged+=(_,_)=>RenderLibrary();DockPanel.SetDock(recentSearch,Dock.Right);recentHeading.Children.Add(recentSearch);var recentTitle=new StackPanel{Orientation=Orientation.Horizontal,VerticalAlignment=VerticalAlignment.Center};recentTitle.Children.Add(Text("Freshly made",19));recentCount.Margin=new(10,0,0,0);recentTitle.Children.Add(recentCount);recentHeading.Children.Add(recentTitle);home.Children.Add(recentHeading);var recentCard=Card(recentRows);recentCard.Padding=new(7);home.Children.Add(recentCard);
-        var footer=new WrapPanel{Margin=new(0,8,0,0)};var mediaBtn=Button("Set up media tools",async()=>await SetupAsync());mediaBtn.Padding=new(12,7,12,7);mediaBtn.FontSize=12;footer.Children.Add(mediaBtn);var officeBtn=Button("Set up office tools",async()=>await SetupOfficeAsync());officeBtn.Padding=new(12,7,12,7);officeBtn.FontSize=12;footer.Children.Add(officeBtn);var shortcutsBtn=Button("Features & shortcuts",ShowShortcuts);shortcutsBtn.Padding=new(12,7,12,7);shortcutsBtn.FontSize=12;footer.Children.Add(shortcutsBtn);home.Children.Add(new Expander{Header="Tools & shortcuts",Content=footer,Margin=new(4,8,4,0)});
-        libraryPage.Children.Add(Text("Your Library",30));libraryPage.Children.Add(Text("Freshly made, pasted, and ready for another round.",14,"Muted"));
-        var searchLabel=Text("Find a file or tool  ·  Ctrl+F",12,"Muted");searchLabel.Margin=new(4,20,4,0);libraryPage.Children.Add(searchLabel);libraryPage.Children.Add(search);libraryPage.Children.Add(libraryRows);search.TextChanged+=(_,_)=>RenderLibrary();
+        // Drop card: an invitation while empty, the selection and what to do with it once files arrive.
+        var glyph=new System.Windows.Shapes.Path{Data=Geometry.Parse("M13,6.5 H28 L37,15.5 V40 A2.5,2.5 0 0 1 34.5,42.5 H13 A2.5,2.5 0 0 1 10.5,40 V9 A2.5,2.5 0 0 1 13,6.5 Z M28,6.5 V15.5 H37 M24,20.5 V34 M18.5,28.6 L24,34.1 L29.5,28.6"),StrokeThickness=1.9,StrokeStartLineCap=PenLineCap.Round,StrokeEndLineCap=PenLineCap.Round,StrokeLineJoin=PenLineJoin.Round};glyph.SetResourceReference(System.Windows.Shapes.Shape.StrokeProperty,"Ink");
+        emptyState.Children.Add(new Viewbox{Width=56,Height=56,Margin=new(0,0,0,18),Child=new Canvas{Width=48,Height=48,Children={glyph}}});
+        dropTitle.TextAlignment=dropSubtitle.TextAlignment=TextAlignment.Center;emptyState.Children.Add(dropTitle);dropSubtitle.Margin=new(0,6,0,0);emptyState.Children.Add(dropSubtitle);
+        var picks=new StackPanel{Orientation=Orientation.Horizontal,HorizontalAlignment=HorizontalAlignment.Center,Margin=new(0,22,0,24)};chooseFilesButton=Primary("Choose Files…",Choose);Ui.SetIcon(chooseFilesButton,"plus");chooseFilesButton.Margin=new(0,0,10,0);picks.Children.Add(chooseFilesButton);var paste=Button("Paste",PasteClipboard);paste.Style=Ui.Style("Big");paste.Margin=new(0);Ui.SetIcon(paste,"paste");picks.Children.Add(paste);emptyState.Children.Add(picks);
+        emptyState.Children.Add(new Border{BorderThickness=new(0,1,0,0),Padding=new(0,14,0,0),Child=legend});((Border)emptyState.Children[^1]).SetResourceReference(Border.BorderBrushProperty,"Line");
+        var head=new DockPanel{Margin=new(2,2,2,16)};list.Margin=new(2,0,14,0);DockPanel.SetDock(list,Dock.Left);head.Children.Add(list);
+        var headButtons=new StackPanel{Orientation=Orientation.Horizontal,VerticalAlignment=VerticalAlignment.Center};var addFiles=Button("Add…",Choose);Ui.SetIcon(addFiles,"plus");addFiles.Margin=new(0,0,8,0);headButtons.Children.Add(addFiles);var clear=Button("Clear",()=>{files.Clear();Refresh();});clear.Style=Ui.Style("Plain");headButtons.Children.Add(clear);DockPanel.SetDock(headButtons,Dock.Right);head.Children.Add(headButtons);
+        var headText=new StackPanel{VerticalAlignment=VerticalAlignment.Center};selection.SetResourceReference(TextBlock.FontFamilyProperty,"DisplayFont");headText.Children.Add(selection);fileDescription.TextWrapping=TextWrapping.NoWrap;fileDescription.TextTrimming=TextTrimming.CharacterEllipsis;fileDescription.Margin=new(0,3,0,0);headText.Children.Add(fileDescription);head.Children.Add(headText);
+        selectionState.Children.Add(head);BuildFileStack();selectionState.Children.Add(actions);
+        var dropContent=new Grid();dropContent.Children.Add(emptyState);dropContent.Children.Add(selectionState);dropCard=Card(dropContent);dropCard.CornerRadius=new(24);workArea.Children.Add(dropCard);BuildJobCards();
+        openWheelButton=Primary("Open wheel",ShowWheel);Ui.SetIcon(openWheelButton,"convert");Ui.SetHint(openWheelButton,"Ctrl+Space");
+        // Download from Link: the link, what it points to, and how to save it. The page outlives each dialog.
+        webContent.Margin=new(20,6,20,8);BuildWebOptions();
+        var save=Primary("Download",async()=>await DownloadAsync());Ui.SetIcon(save,"download");save.Margin=new(0);var webFooter=new DockPanel{Margin=new(20,8,20,18)};DockPanel.SetDock(save,Dock.Right);webFooter.Children.Add(save);webFooter.Children.Add(Text("Tip: copy a link anywhere and press Ctrl+Shift+D.",11.5,"Muted"));
+        DockPanel.SetDock(webFooter,Dock.Bottom);webPage.Children.Add(webFooter);webPage.Children.Add(new ScrollViewer{Content=webContent,VerticalScrollBarVisibility=ScrollBarVisibility.Auto,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled});
+        // Download from Link: a quiet row under the drop card.
+        var linkRow=new DockPanel();var linkIcon=Ui.TileIcon("link");linkIcon.Margin=new(0,0,12,0);DockPanel.SetDock(linkIcon,Dock.Left);linkRow.Children.Add(linkIcon);
+        var linkTrail=new StackPanel{Orientation=Orientation.Horizontal,VerticalAlignment=VerticalAlignment.Center};linkTrail.Children.Add(Ui.Keycap("Ctrl+Shift+D"));var chevron=Icons.Make("chevRight",12,"Faint");chevron.Margin=new(6,0,0,0);linkTrail.Children.Add(chevron);DockPanel.SetDock(linkTrail,Dock.Right);linkRow.Children.Add(linkTrail);
+        var linkText=new StackPanel{VerticalAlignment=VerticalAlignment.Center};linkText.Children.Add(Text("Download from Link",13,weight:FontWeights.SemiBold));linkText.Children.Add(Text("Video, audio or images from a public page.",11.5,"Muted"));linkRow.Children.Add(linkText);
+        var webButton=Button("",OpenDownload);webButton.Style=Ui.Style("CardButton");webButton.Content=linkRow;webButton.Margin=new(0,12,0,0);workArea.Children.Add(webButton);
+        // Recent files
+        var recentHeading=new DockPanel{Margin=new(4,20,4,9)};var all=Button("Show All",()=>ShowLibrary(true));all.Style=Ui.Style("Plain");all.FontSize=12;all.MinHeight=26;all.Margin=new(0);DockPanel.SetDock(all,Dock.Right);recentHeading.Children.Add(all);recentHeading.Children.Add(Text("Recent",17));home.Children.Add(recentHeading);var recentCard=Card(recentRows,20,new(6));home.Children.Add(recentCard);
+        var libraryTitle=new StackPanel{Orientation=Orientation.Horizontal,Margin=new(4,2,4,12)};libraryTitle.Children.Add(Text("Library",30));libraryCount.Margin=new(10,8,0,0);libraryTitle.Children.Add(libraryCount);libraryPage.Children.Add(libraryTitle);
+        // Typing rebuilds the rows once the keys pause, not on every key.
+        libraryPage.Children.Add(Card(libraryRows,20,new(6)));searchTyping.Tick+=(_,_)=>RenderLibrary();search.TextChanged+=(_,_)=>{searchTyping.Stop();searchTyping.Start();};
+        var hints=new WrapPanel{HorizontalAlignment=HorizontalAlignment.Center,Margin=new(0,14,0,0)};void Hint(string label,params string[] keys){var group=new StackPanel{Orientation=Orientation.Horizontal,Margin=new(7,0,7,0)};foreach(var key in keys){var cap=Ui.Keycap(key);cap.Margin=new(0,0,4,0);group.Children.Add(cap);}var text=Text(label,11,"Muted");text.Margin=new(2,0,0,0);group.Children.Add(text);hints.Children.Add(group);}
+        Hint("Select","↑","↓");Hint("Preview","Space");Hint("Use","Enter");libraryPage.Children.Add(hints);
         AutomationProperties.SetAutomationId(search,"LibrarySearch");AutomationProperties.SetAutomationId(link,"DownloadLink");AutomationProperties.SetAutomationId(list,"SelectedFiles");
         Closing+=(_,e)=>{if(busy){e.Cancel=true;L10n.SetText(status,"Finish the current operation or choose Cancel before closing Nashi.");}};
-        DragOver+=(_,e)=>{e.Effects=!busy&&(e.Data.GetDataPresent(DataFormats.FileDrop)||e.Data.GetDataPresent(DataFormats.UnicodeText)||e.Data.GetDataPresent(DataFormats.Html)||e.Data.GetDataPresent("UniformResourceLocatorW"))?DragDropEffects.Copy:DragDropEffects.None;e.Handled=true;};
-        Drop+=(_,e)=>{if(!busy){if(!e.Data.GetDataPresent(DataFormats.FileDrop)&&DragPayload.Parse(e.Data) is not null)OnGlobalDrop("download:auto",e.Data,null);else Import(e.Data);}e.Handled=true;};
+        DragOver+=(_,e)=>{e.Effects=!busy&&(e.Data.GetDataPresent(DataFormats.FileDrop)||e.Data.GetDataPresent(DataFormats.UnicodeText)||e.Data.GetDataPresent(DataFormats.Html)||e.Data.GetDataPresent("UniformResourceLocatorW"))?DragDropEffects.Copy:DragDropEffects.None;ShowDropTarget(e.Effects==DragDropEffects.Copy?(e.Data.GetData(DataFormats.FileDrop) as string[])?.Length??0:null);e.Handled=true;};
+        DragLeave+=(_,e)=>{var point=e.GetPosition(this);if(point.X<=0||point.Y<=0||point.X>=ActualWidth||point.Y>=ActualHeight)ShowDropTarget(null);};
+        Drop+=(_,e)=>{ShowDropTarget(null);if(!busy){if(!e.Data.GetDataPresent(DataFormats.FileDrop)&&DragPayload.Parse(e.Data) is not null)OnGlobalDrop("download:auto",e.Data,null);else Import(e.Data);}e.Handled=true;};
         PreviewKeyDown+=(_,e)=>{if(HandleShortcut(e.Key,Keyboard.Modifiers,Keyboard.FocusedElement as DependencyObject))e.Handled=true;};
         if(initial is not null)Add(initial);else Refresh();ShowLibrary(false);RenderLibrary();Loaded+=(_,_)=>Theme.Entrance(LibraryVisible?libraryPage:home);
         if(this.library.RecoveryNotice is {} notice)L10n.SetText(status,notice);
@@ -105,14 +131,16 @@ public sealed partial class MainWindow:Window
         e.Handled=true;
     }
     private IEnumerable<LibraryEntry> SearchLibrary(string query)=>library.Search(query,L10n.Language);
-    private static TextBlock Text(string value,double size,string? color=null,bool localize=true)
+    // Display sizes use the display cut and tighter weight steps: 24+ bold, 17+ semibold.
+    private static TextBlock Text(string value,double size,string? color=null,bool localize=true,FontWeight? weight=null)
     {
-        var text=new TextBlock{Text=value,FontSize=size,TextWrapping=TextWrapping.Wrap,VerticalAlignment=VerticalAlignment.Center,FontWeight=size>=17?FontWeights.SemiBold:FontWeights.Normal};if(color is not null)text.SetResourceReference(TextBlock.ForegroundProperty,color);return localize?L10n.Label(text):text;
+        var text=new TextBlock{Text=value,FontSize=size,TextWrapping=TextWrapping.Wrap,VerticalAlignment=VerticalAlignment.Center,FontWeight=weight??(size>=24?FontWeights.Bold:size>=17?FontWeights.SemiBold:FontWeights.Normal)};
+        if(size>=17)text.SetResourceReference(TextBlock.FontFamilyProperty,"DisplayFont");if(color is not null)text.SetResourceReference(TextBlock.ForegroundProperty,color);return localize?L10n.Label(text):text;
     }
     internal bool WindowManagementEnabled=>library.WindowManagementEnabled;
-    private static Border Card(UIElement content){var card=new Border{CornerRadius=new(24),Padding=new(22),Margin=new(0,0,0,6),Child=content,BorderThickness=new(1)};card.SetResourceReference(Border.BackgroundProperty,"Surface");card.SetResourceReference(Border.BorderBrushProperty,"Line");return card;}
+    private static Border Card(UIElement content,double radius=20,Thickness? padding=null)=>Ui.Card(content,radius,padding);
     public static Button Button(string title,Action action){var button=L10n.Content(new Button{Content=title});button.Click+=(_,_)=>action();return button;}
-    internal static Button Primary(string title,Action action){var button=Button(title,action);button.Background=Theme.Primary;button.Foreground=new SolidColorBrush(Color.FromRgb(43,54,28));return button;}
+    internal static Button Primary(string title,Action action){var button=Button(title,action);button.Style=Ui.Style("Signature");return button;}
     public static void OpenUrl(string url)=>Process.Start(new ProcessStartInfo(url){UseShellExecute=true})?.Dispose();
     public static void Reveal(string path){var full=Path.GetFullPath(path);if(!File.Exists(full)&&!Directory.Exists(full)){var parent=Path.GetDirectoryName(full);if(parent is null||!Directory.Exists(parent))return;full=parent;Process.Start(new ProcessStartInfo("explorer.exe"){UseShellExecute=false,Arguments=Quoted(full)})?.Dispose();return;}Process.Start(new ProcessStartInfo("explorer.exe"){UseShellExecute=false,Arguments="/select,"+Quoted(full)})?.Dispose();}
     // One argument for explorer.exe: a trailing backslash (a drive root) must be doubled or it escapes the closing quote.
@@ -122,9 +150,9 @@ public sealed partial class MainWindow:Window
     internal void ShowLibrary(bool visible)
     {
         var changed=LibraryVisible!=visible;
-        if(!busy)L10n.SetText(status,"Files stay on your computer.");
+        if(!busy)L10n.SetText(status,PrivacyNote);
         selectedLibraryId=selectedLibraryId??library.Entries.FirstOrDefault()?.Id;home.Visibility=visible?Visibility.Collapsed:Visibility.Visible;libraryPage.Visibility=visible?Visibility.Visible:Visibility.Collapsed;homeScroll.IsHitTestVisible=!visible;libraryScroll.IsHitTestVisible=visible;
-        homeButton.SetResourceReference(Control.BackgroundProperty,visible?"Surface":"Sage");libraryButton.SetResourceReference(Control.BackgroundProperty,visible?"Sage":"Surface");if(visible)RenderLibrary();if(changed&&IsLoaded)Theme.Entrance(visible?libraryPage:home);
+        nav.Select(visible?1:0);search.Visibility=visible?Visibility.Visible:Visibility.Collapsed;ShowSetupState();if(visible)RenderLibrary();if(changed&&IsLoaded)Theme.Entrance(visible?libraryPage:home);
     }
     private void Record(string label,IReadOnlyList<string> paths)
     {
@@ -148,6 +176,7 @@ public sealed partial class MainWindow:Window
     internal bool HandleShortcut(Key key,ModifierKeys modifiers,DependencyObject? focus)
     {
         if(modifiers==ModifierKeys.Control&&key==Key.OemComma){ShowSettings();return true;}
+        if(modifiers==ModifierKeys.None&&key==Key.F1){ShowShortcuts();return true;}
         if(modifiers==ModifierKeys.Control&&key==Key.D1){ShowLibrary(false);return true;}
         if(modifiers==ModifierKeys.Control&&key==Key.D2){ShowLibrary(true);return true;}
         if(modifiers==ModifierKeys.Control&&key==Key.F){ShowLibrary(true);search.Focus();search.SelectAll();return true;}
@@ -170,38 +199,60 @@ public sealed partial class MainWindow:Window
         if((modifiers==ModifierKeys.Control&&key is Key.Space or Key.Enter)||(modifiers==ModifierKeys.None&&key==Key.Enter&&focus is not System.Windows.Controls.Button)){ShowWheel();return true;}
         return false;
     }
+    private readonly System.Windows.Threading.DispatcherTimer searchTyping=new(){Interval=TimeSpan.FromMilliseconds(150)};
+    // The reuse buttons of the rows on screen, so busy changes only enable or disable them instead of rebuilding every row.
+    private readonly List<(Button Button,bool Available)> reuseButtons=[];
     private void RenderLibrary()
     {
+        searchTyping.Stop();reuseButtons.Clear();
         libraryCards.Clear();libraryRows.Children.Clear();recentRows.Children.Clear();var filtered=SearchLibrary(search.Text).ToArray();
-        if(filtered.Length==0)libraryRows.Children.Add(Card(Text(library.Entries.Count==0?"Nothing here yet. Paste something or make your first fresh copy.":"No matches. Try a file name or tool.",14,"Muted")));
-        foreach(var entry in filtered)libraryRows.Children.Add(LibraryRow(entry));
-        recentCount.Text=library.Entries.Count.ToString();foreach(var entry in SearchLibrary(recentSearch.Text).Take(3))recentRows.Children.Add(LibraryRow(entry,true));
-        if(library.Entries.Count==0)recentRows.Children.Add(Card(Text("Your next fresh copy will land here.",13,"Muted")));
+        libraryCount.Text=L10n.Text(library.Entries.Count==1?"1 file":$"{library.Entries.Count} files");
+        if(filtered.Length==0)libraryRows.Children.Add(Empty(library.Entries.Count==0?"Nothing here yet. Paste something or make your first fresh copy.":"No matches. Try a file name or tool."));
+        // Grouped by day, newest first, the way the entries are stored.
+        string? group=null;foreach(var entry in filtered)
+        {
+            var day=entry.Created.ToLocalTime().Date;var next=day==DateTime.Today?"Today":day==DateTime.Today.AddDays(-1)?"Yesterday":"Earlier";
+            if(next!=group){group=next;var heading=Text(next,12,"Muted",weight:FontWeights.SemiBold);heading.Margin=new(10,libraryRows.Children.Count==0?4:12,10,4);libraryRows.Children.Add(heading);}
+            else if(libraryRows.Children.Count>0)libraryRows.Children.Add(Separator());
+            libraryRows.Children.Add(LibraryRow(entry));
+        }
+        foreach(var entry in library.Entries.Take(3)){if(recentRows.Children.Count>0)recentRows.Children.Add(Separator());recentRows.Children.Add(LibraryRow(entry,true));}
+        if(library.Entries.Count==0)recentRows.Children.Add(Empty("Your next fresh copy will land here."));
     }
+    // A hairline between rows, starting where the text starts.
+    private static Border Separator(){var line=new Border{Height=1,Margin=new(58,0,10,0),IsHitTestVisible=false};line.SetResourceReference(Border.BackgroundProperty,"Line");return line;}
+    private static TextBlock Empty(string message){var text=Text(message,13,"Muted");text.Margin=new(12,14,12,14);return text;}
+    // A row: thumbnail, name, what was done and when; preview, reuse and reveal appear on hover or selection.
     private Border LibraryRow(LibraryEntry entry,bool compact=false)
     {
-        var row=new DockPanel();var available=entry.AvailablePaths;var buttons=new WrapPanel{VerticalAlignment=VerticalAlignment.Center};DockPanel.SetDock(buttons,Dock.Right);row.Children.Add(buttons);
-        var reuse=Button("↖",()=>{if(busy)return;var existing=entry.AvailablePaths.ToArray();if(existing.Length==0){L10n.SetText(status,"These files have moved or were deleted.");RenderLibrary();return;}files.Clear();Add(existing);ShowLibrary(false);L10n.SetText(status,existing.Length==entry.Paths.Length?"Ready for another round.":"Available files selected. Some files have moved or were deleted.");});reuse.IsEnabled=!busy&&available.Length>0;L10n.Bind(reuse,System.Windows.FrameworkElement.ToolTipProperty,"Use in Nashi");AutomationProperties.SetName(reuse,"Use "+entry.Name+" again");buttons.Children.Add(reuse);
-        var reveal=Button("▱",()=>{var existing=entry.AvailablePaths;if(existing.Length>0)Reveal(existing[0]);else{L10n.SetText(status,"This file has moved or was deleted.");RenderLibrary();}});reveal.IsEnabled=available.Length>0;L10n.Bind(reveal,System.Windows.FrameworkElement.ToolTipProperty,"Show in Explorer");AutomationProperties.SetName(reveal,"Show "+entry.Name+" in Explorer");buttons.Children.Add(reveal);
-        var fileIcon=new Image{Width=29,Height=29,Margin=new(0,0,12,0),VerticalAlignment=VerticalAlignment.Center};FileArtwork.Bind(fileIcon,entry.Paths[0]);DockPanel.SetDock(fileIcon,Dock.Left);row.Children.Add(fileIcon);var text=new StackPanel{Margin=new(0,0,12,0),VerticalAlignment=VerticalAlignment.Center};var name=Text(entry.Name,12,localize:false);name.TextWrapping=TextWrapping.NoWrap;name.TextTrimming=TextTrimming.CharacterEllipsis;name.ToolTip=string.Join(Environment.NewLine,entry.Paths);text.Children.Add(name);var info=new StackPanel{Orientation=Orientation.Horizontal};info.Children.Add(Text(entry.Action,10,"Muted"));info.Children.Add(Text("  ·  "+entry.Created.ToLocalTime().ToString("g"),10,"Muted",localize:false));if(available.Length<entry.Paths.Length){info.Children.Add(Text("  ·  ",10,"Muted",localize:false));info.Children.Add(Text("Files missing",10,"Muted"));}text.Children.Add(info);row.Children.Add(text);
-        var preview=Button("◉",()=>PreviewEntry(entry));preview.IsEnabled=available.Length>0;L10n.Bind(preview,System.Windows.FrameworkElement.ToolTipProperty,"Preview");AutomationProperties.SetName(preview,"Preview "+entry.Name);buttons.Children.Insert(0,preview);
-        var card=Card(row);if(!compact)ConfigureLibraryRow(card,entry);card.Padding=new(14,10,14,10);if(compact){card.CornerRadius=new(12);card.BorderThickness=new(0);card.Margin=new(0,0,0,2);}return card;
+        var row=new DockPanel();var available=entry.AvailablePaths;var buttons=new StackPanel{Orientation=Orientation.Horizontal,VerticalAlignment=VerticalAlignment.Center,Opacity=0};DockPanel.SetDock(buttons,Dock.Right);row.Children.Add(buttons);
+        Button Action(string glyph,string tip,string name,Action action){var button=Button(glyph,action);button.Style=Ui.Style("IconPlain");L10n.Bind(button,FrameworkElement.ToolTipProperty,tip);AutomationProperties.SetName(button,name);buttons.Children.Add(button);return button;}
+        var preview=Action("\uE890","Preview","Preview "+entry.Name,()=>PreviewEntry(entry));preview.IsEnabled=available.Length>0;
+        var reuse=Action("\uE7A7","Use in Nashi","Use "+entry.Name+" again",()=>{if(busy)return;var existing=entry.AvailablePaths.ToArray();if(existing.Length==0){L10n.SetText(status,"These files have moved or were deleted.");RenderLibrary();return;}files.Clear();Add(existing);ShowLibrary(false);L10n.SetText(status,existing.Length==entry.Paths.Length?"Ready for another round.":"Available files selected. Some files have moved or were deleted.");});reuse.IsEnabled=!busy&&available.Length>0;reuseButtons.Add((reuse,available.Length>0));
+        var reveal=Action("\uE838","Show in Explorer","Show "+entry.Name+" in Explorer",()=>{var existing=entry.AvailablePaths;if(existing.Length>0)Reveal(existing[0]);else{L10n.SetText(status,"This file has moved or was deleted.");RenderLibrary();}});reveal.IsEnabled=available.Length>0;
+        var fileIcon=Ui.Thumb(entry.Paths[0],36);fileIcon.Margin=new(0,0,12,0);DockPanel.SetDock(fileIcon,Dock.Left);row.Children.Add(fileIcon);
+        var text=new StackPanel{Margin=new(0,0,12,0),VerticalAlignment=VerticalAlignment.Center};var name=Text(entry.Name,13,localize:false,weight:FontWeights.SemiBold);name.TextWrapping=TextWrapping.NoWrap;name.TextTrimming=TextTrimming.CharacterEllipsis;name.ToolTip=string.Join(Environment.NewLine,entry.Paths);text.Children.Add(name);
+        var info=new StackPanel{Orientation=Orientation.Horizontal,Margin=new(0,2,0,0)};info.Children.Add(Text(entry.Action,11.5,"Muted"));info.Children.Add(Text(" · "+entry.Created.ToLocalTime().ToString("g"),11.5,"Muted",localize:false));if(available.Length<entry.Paths.Length){info.Children.Add(Text(" · ",11.5,"Muted",localize:false));info.Children.Add(Text("Files missing",11.5,"Muted"));fileIcon.Opacity=name.Opacity=.45;}text.Children.Add(info);row.Children.Add(text);
+        var card=new Border{Child=row,CornerRadius=new(14),Padding=new(10,7,8,7),MinHeight=50,BorderThickness=new(1),Background=Brushes.Transparent,BorderBrush=Brushes.Transparent};
+        card.MouseEnter+=(_,_)=>Mark(card);card.MouseLeave+=(_,_)=>Mark(card);card.GotKeyboardFocus+=(_,_)=>Mark(card);card.LostKeyboardFocus+=(_,_)=>Mark(card);
+        if(!compact)ConfigureLibraryRow(card,entry);return card;
     }
     private void OpenDownload()
     {
         if(webWindow?.IsVisible==true){webWindow.Activate();link.Focus();return;}
-        var dialog=new Window{Owner=this,Title="Download from the web · Nashi",Width=800,Height=650,MinWidth=640,MinHeight=400,WindowStartupLocation=WindowStartupLocation.CenterOwner,Content=new ScrollViewer{Content=webContent,VerticalScrollBarVisibility=ScrollBarVisibility.Auto}};Theme.Attach(dialog);webWindow=dialog;
+        var dialog=new Window{Owner=this,Title="Download from the web · Nashi",Width=700,Height=580,MinWidth=640,MinHeight=400,WindowStartupLocation=WindowStartupLocation.CenterOwner,Content=webPage};Theme.Attach(dialog);L10n.Bind(dialog,Ui.HeadingProperty,"Download from Link");webWindow=dialog;
         dialog.Closing+=(_,e)=>{if(busy){e.Cancel=true;L10n.SetText(status,"Finish or cancel the current operation first.");}};
-        dialog.Closed+=(_,_)=>{inspection?.Cancel();if(dialog.Content is ScrollViewer scroll)scroll.Content=null;dialog.Content=null;webWindow=null;};dialog.PreviewKeyDown+=(_,e)=>{if(e.Key==Key.Escape&&!busy){dialog.Close();e.Handled=true;}};dialog.Show();link.Focus();
+        dialog.Closed+=(_,_)=>{inspection?.Cancel();dialog.Content=null;webWindow=null;};dialog.PreviewKeyDown+=(_,e)=>{if(e.Key==Key.Escape&&!busy){dialog.Close();e.Handled=true;}};
+        // The frame template arrives as the window opens and rebuilds its content, so the link field takes keyboard focus
+        // again once the window has drawn, and once more after input already queued.
+        void FocusLink(){if(webWindow is null)return;webWindow.Activate();Keyboard.Focus(link);}
+        dialog.Loaded+=(_,_)=>FocusLink();dialog.ContentRendered+=(_,_)=>FocusLink();dialog.Show();link.Focus();dialog.Dispatcher.BeginInvoke(FocusLink,System.Windows.Threading.DispatcherPriority.Input);
     }
-    private void SetBusy(bool value){busy=value;updateButton.IsEnabled=!value&&!checking;workArea.IsEnabled=!value;webContent.IsEnabled=!value;L10n.Bind(toolsSetupButton,ContentControl.ContentProperty,tools.Ready&&officeRuntime.Executable is not null?"Tools ready":"Finish setup");RenderLibrary();}
+    private void SetBusy(bool value){busy=value;updateButton.IsEnabled=!value&&!checking;workArea.IsEnabled=!value;webPage.IsEnabled=!value;ShowSetupState();foreach(var (button,available) in reuseButtons)button.IsEnabled=!value&&available;}
+    // Finish Setup stays in the toolbar only while media or office tools are missing.
+    private void ShowSetupState()=>toolsSetupButton.Visibility=!LibraryVisible&&!(tools.Ready&&officeRuntime.Executable is not null)?Visibility.Visible:Visibility.Collapsed;
     internal const string ShortcutHelp="Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools and conversions\nDelete  Remove selected files from Nashi\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved.";
-    private void ShowShortcuts()=>MessageBox.Show(this,L10n.Text(ShortcutHelp),L10n.Text("Nashi · Features & shortcuts"));
-    private sealed class FileNameConverter:System.Windows.Data.IValueConverter
-    {
-        public object Convert(object value,Type type,object parameter,System.Globalization.CultureInfo culture)=>Path.GetFileName((string)value);
-        public object ConvertBack(object value,Type type,object parameter,System.Globalization.CultureInfo culture)=>throw new NotSupportedException();
-    }
+    internal void ShowShortcuts()=>MessageBox.Show(this,L10n.Text(ShortcutHelp),L10n.Text("Nashi · Features & shortcuts"));
     private bool All(string[] extensions)=>files.Count>0&&files.All(p=>extensions.Contains(Path.GetExtension(p).TrimStart('.').ToLowerInvariant()));
     private bool Images=>files.Count>0&&files.All(FeatureCatalog.IsImage);
     private bool Video=>All(["mp4","mov","mkv","webm","avi","wmv","m4v","gif"]);
@@ -213,10 +264,11 @@ public sealed partial class MainWindow:Window
     private void Refresh()
     {
         // UI copy goes through L10n so it follows the language setting; file names and folder paths stay verbatim.
-        L10n.SetText(selectionPill,files.Count==0?"✦  START HERE":"✦  READY WHEN YOU ARE");
-        if(files.Count==1){selection.Text=Path.GetFileName(files[0]);fileDescription.Text=Path.GetDirectoryName(files[0])!;}
-        else{L10n.SetText(selection,files.Count==0?"Drop something good.":$"{files.Count} files, ready to go.");L10n.SetText(fileDescription,files.Count==0?"Images, videos, documents, and all the little things in between.":"Keep them together, or give each one a fresh start.");}
-        if(chooseFilesButton is not null){L10n.Bind(chooseFilesButton,ContentControl.ContentProperty,files.Count==0?"Choose files":"Add or change files");if(files.Count==0){chooseFilesButton.Background=Theme.Primary;chooseFilesButton.Foreground=new SolidColorBrush(Color.FromRgb(43,54,28));}else{chooseFilesButton.SetResourceReference(Control.BackgroundProperty,"Surface");chooseFilesButton.SetResourceReference(Control.ForegroundProperty,"Ink");}}if(openWheelButton is not null)openWheelButton.Visibility=files.Count>0?Visibility.Visible:Visibility.Collapsed;list.Visibility=manage.Visibility=files.Count==0?Visibility.Collapsed:Visibility.Visible;actions.Children.Clear();garden.SetSelected(files.Count>0);
+        emptyState.Visibility=files.Count==0?Visibility.Visible:Visibility.Collapsed;selectionState.Visibility=files.Count==0?Visibility.Collapsed:Visibility.Visible;
+        if(files.Count==1){selection.Text=Path.GetFileName(files[0]);fileDescription.Text=Path.GetDirectoryName(files[0])??"";}
+        else if(files.Count>1){var names=files.Select(Path.GetFileName).ToArray();fileDescription.Text=files.Count==2?$"{names[0]} {L10n.Text("and")} {names[1]}":$"{names[0]}, {names[1]} {L10n.Text($"and {files.Count-2} more")}";L10n.SetText(selection,$"{files.Count} files");}
+        if(files.Count>0&&SelectionSize() is {} size)fileDescription.Text+=(fileDescription.Text.Length>0?" · ":"")+size;
+        actions.Children.Clear();
         BuildSelectionActions();
     }
     // Tools, Convert and File actions: the wheel opens on the first one that has something for the selection, and Ctrl, Shift or Alt (as set in Settings) switch between them.
@@ -252,7 +304,8 @@ public sealed partial class MainWindow:Window
             if(choice.Id=="removeMetadata"){SetBusy(false);await EditMetadataAsync(selected);return;}
             if(choice.Id=="readQRCode"){SetBusy(false);await ReadQrAsync(selected);return;}
             if(!imageSelection&&!mediaSelection&&choice.Id is not ("extractArchive" or "unzip")){SetBusy(false);await EditDocumentAsync(choice,selected,requestedFormat);return;}
-            if(imageSelection)preview=ImageEngine.Load(input);
+            // Decoding a large photo takes a moment; it happens off the UI thread so the window stays responsive.
+            if(imageSelection)preview=await Task.Run(()=>ImageEngine.Load(input));
             else if(mediaSelection)
             {
                 if(!tools.Ready){MessageBox.Show(this,L10n.Text("Choose Set up media tools once to enable media editing."),L10n.Text("Media setup"));return;}
@@ -260,14 +313,14 @@ public sealed partial class MainWindow:Window
                 if(choice.Id is "cropVideo" or "redactVideo")
                 {
                     temporary=Path.Combine(Path.GetTempPath(),"Nashi-preview-"+Guid.NewGuid().ToString("N")+".png");
-                    await ProcessRunner.RunAsync(tools.Executable("ffmpeg"),["-v","error","-i",input,"-frames:v","1",temporary]);preview=ImageEngine.Load(temporary);
+                    await ProcessRunner.RunAsync(tools.Executable("ffmpeg"),["-v","error","-i",input,"-frames:v","1",temporary]);var frame=temporary;preview=await Task.Run(()=>ImageEngine.Load(frame));
                 }
             }
             SetBusy(false);var editor=new ToolEditor(this,choice.Id,choice.Title,input,info,preview,selected,choice.Id=="convert"?FeatureCatalog.Formats(selected):null);editor.ConfigureProfiles(preferences,requestedFormat);editor.ConfigureMediaRuntime(tools);var accepted=editor.ShowDialog()==true;if(temporary is not null)File.Delete(temporary);if(!accepted)return;
             var inputs=choice.Id is "cropVideo" or "redactVideo" or "annotate"?new[]{input}:editor.OrderedInputs;
             if(imageSelection)await RunAsync(async(destination,p,t)=>
             {
-                using var tx=new ExportTransaction(destination);var exported=await OnStaAsync(()=>ImageEngine.Apply(choice.Id,inputs,tx.StagingDirectory,editor.ImageOptions with{EncoderPath=tools.Ready?tools.Executable("ffmpeg"):null},choice.Id=="convert"?editor.Format:null,t,p));
+                using var tx=new ExportTransaction(destination);var exported=await OnStaAsync(()=>ImageEngine.Apply(choice.Id,inputs,tx.StagingDirectory,editor.ImageOptions with{EncoderPath=tools.Ready?tools.Executable("ffmpeg"):null},choice.Id is "convert" or "compress"?editor.Format:null,t,p));
                 if(choice.Id=="convert"&&editor.PreserveImageMetadata&&editor.Format is not ("pdf" or "bmp" or "gif"))
                 {
                     await metadataService.InstallAsync(p,t);for(var n=0;n<exported.Count;n++)await metadataService.CopyImageTagsAsync(inputs[n],exported[n],t);
@@ -286,10 +339,12 @@ public sealed partial class MainWindow:Window
         if(busy)return;var owner=webWindow?.IsActive==true?webWindow:this;string destination;
         if(label=="Move"||preferences.Value.OutputMode=="ask"||(files.Count==0&&owner==this)){var folder=new OpenFolderDialog{Title=L10n.Text("Save new files to…"),InitialDirectory=Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)};if(folder.ShowDialog(owner)!=true)return;destination=folder.FolderName;}
         else destination=owner==webWindow?preferences.Value.DownloadFolder:preferences.Value.OutputMode=="folder"&&!string.IsNullOrWhiteSpace(preferences.Value.OutputFolder)?preferences.Value.OutputFolder:Path.GetDirectoryName(files[0])!;
-        SetBusy(true);using var cancellation=new CancellationTokenSource();var toast=new ToastWindow(owner,cancellation.Cancel);toast.Show();
-        try{var outputs=await work(destination,new Progress<OperationProgress>(toast.Update),cancellation.Token);toast.Complete(outputs);Record(label,outputs);L10n.SetText(status,$"Saved {outputs.Count} new {(outputs.Count==1?"file":"files")}. Originals kept.");if(preferences.Value.RevealFinished&&outputs.Count>0)Reveal(outputs[0]);}
-        catch(OperationCanceledException){toast.Close();L10n.SetText(status,"Cancelled. Originals kept.");}
-        catch(Exception error){toast.Close();MessageBox.Show(this,L10n.Text(error.Message),L10n.Text("Couldn’t finish"),MessageBoxButton.OK,MessageBoxImage.Information);}
+        // Progress shows in the window while it is in view; otherwise in a toast. Either way a toast confirms the result.
+        SetBusy(true);using var cancellation=new CancellationTokenSource();var inWindow=owner==this&&IsVisible&&WindowState!=WindowState.Minimized&&jobCard is not null;ToastWindow? toast=null;
+        if(inWindow)ShowJob(label,cancellation.Cancel);else{toast=new ToastWindow(owner,cancellation.Cancel,files.FirstOrDefault());toast.Show();}
+        try{var outputs=await work(destination,new Progress<OperationProgress>(p=>{if(inWindow)UpdateJob(p);else toast?.Update(p);}),cancellation.Token);HideJob();if(toast is null){toast=new ToastWindow(owner,null,outputs.FirstOrDefault());toast.Show();}toast.Complete(outputs);Record(label,outputs);L10n.SetText(status,$"Saved {outputs.Count} new {(outputs.Count==1?"file":"files")}. Originals kept.");if(preferences.Value.RevealFinished&&outputs.Count>0)Reveal(outputs[0]);}
+        catch(OperationCanceledException){HideJob();toast?.Close();L10n.SetText(status,"Cancelled. Originals kept.");}
+        catch(Exception error){HideJob();toast?.Close();if(inWindow)ShowError("Couldn’t finish",error.Message,()=>_=RunAsync(work,label));else MessageBox.Show(this,L10n.Text(error.Message),L10n.Text("Couldn’t finish"),MessageBoxButton.OK,MessageBoxImage.Information);}
         finally{SetBusy(false);}
     }
     private static Task<IReadOnlyList<string>> OnStaAsync(Func<IReadOnlyList<string>> work)
@@ -305,21 +360,14 @@ public sealed partial class MainWindow:Window
         if(kind=="photos"&&inspectedLink!=link.Text){await InspectWebLinkAsync();return;}
         try{var url=WebDownload.Validate(payload?.Url??link.Text).AbsoluteUri;await RunAsync((destination,p,t)=>new WebDownload(tools).DownloadAsync(url,kind,destination,p,t,webQuality.SelectedIndex==1?1080:webQuality.SelectedIndex==2?720:null,kind=="photos"?new HashSet<int>(selectedWebPhotos):null),"Download "+kind);}catch(Exception error){MessageBox.Show(webWindow??this,L10n.Text(error.Message),L10n.Text("Check your link"));}
     }
-    private async Task SetupAsync()
-    {
-        if(busy)return;if(tools.Ready){L10n.SetText(status,"Media tools are already installed.");return;}
-        if(MessageBox.Show(this,L10n.Text("Download FFmpeg (~180 MB), yt-dlp and Deno directly from their official GitHub releases? SHA-256 hashes are verified before use. FFmpeg is GPL; the other upstream licenses and source links are listed on our Features page. No administrator password is needed."),L10n.Text("Set up media tools"),MessageBoxButton.OKCancel,MessageBoxImage.Information)!=MessageBoxResult.OK)return;
-        SetBusy(true);using var cancellation=new CancellationTokenSource();var toast=new ToastWindow(this,cancellation.Cancel);toast.Show();
-        try{await tools.InstallAsync(new Progress<OperationProgress>(toast.Update),cancellation.Token);toast.Close();L10n.SetText(status,"Media tools ready. You can edit, convert and download media.");}
-        catch(OperationCanceledException){toast.Close();L10n.SetText(status,"Setup cancelled.");}catch(Exception error){toast.Close();MessageBox.Show(this,L10n.Text(error.Message),L10n.Text("Setup couldn’t finish"));}finally{SetBusy(false);}
-    }
     internal void OfferUpdate(WindowsUpdate candidate){update=candidate;L10n.Bind(updateButton,ContentControl.ContentProperty,"Update to "+candidate.Version);if(updateBanner is not null)updateBanner.Visibility=Visibility.Visible;tray?.UpdateAvailable(candidate.Version);}
     internal async Task CheckUpdatesAsync(bool user)
     {
         if(busy||checking)return;checking=true;updateButton.IsEnabled=false;if(user)L10n.SetText(status,"Checking for updates…");try
         {
-            if(update is null){update=await PublicUpdates.CheckAsync(UpdateInstaller.Current);if(update is null){if(user)L10n.SetText(status,"You have the latest published Windows version.");return;}OfferUpdate(update);}if(!user)return;
-            if(busy)return;
+            if(update is null){update=await PublicUpdates.CheckAsync(UpdateInstaller.Current);if(update is null){if(user)L10n.SetText(status,"You have the latest published Windows version.");return;}OfferUpdate(update);}
+            // Background checks only offer the update (banner and tray); asking to install is for when the user asks.
+            if(!user||busy)return;
             if(MessageBox.Show(this,L10n.Text("Download, verify and install Nashi "+update.Version+"? The app will restart. No account or token is needed."),L10n.Text("Nashi update"),MessageBoxButton.OKCancel)!=MessageBoxResult.OK)return;
             SetBusy(true);using var cancellation=new CancellationTokenSource();var toast=new ToastWindow(this,cancellation.Cancel);toast.Show();
             try{await UpdateInstaller.StageAsync(update,new Progress<OperationProgress>(toast.Update),cancellation.Token);busy=false;Application.Current.Shutdown();}finally{toast.Close();SetBusy(false);}

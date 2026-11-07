@@ -45,15 +45,17 @@ internal static class ParitySmokeTests
         var grouped=DocumentEngine.Pdf("splitPDF",[qrPdf],outputs,pagesPerFile:2);Check(grouped.Count==1,"PDF pages-per-file split failed");
         var shelf=new FloatShelf([source,qrImage],(_,_)=>Task.CompletedTask,_=>{});shelf.Show();DesktopInput.Pump();
         Check(!shelf.IsExpanded&&Math.Abs(shelf.ActualWidth-112)<1,"Float did not start as a compact stack");Capture(shelf,root,"windows-float-stack.png");
-        DesktopInput.MovePointer(shelf.PointToScreen(new Point(40,45)));DesktopInput.Pump(500);Check(shelf.IsExpanded&&Math.Abs(shelf.ActualWidth-156)<1,"Float hover did not open the slim shelf");
+        DesktopInput.MovePointer(shelf.PointToScreen(new Point(40,45)));DesktopInput.Pump(500);Check(shelf.IsExpanded&&Math.Abs(shelf.ActualWidth-284)<1,"Float hover did not open the shelf");
         DesktopInput.MovePointer(shelf.PointToScreen(new Point(360,20)));DesktopInput.Pump(950);Check(!shelf.IsExpanded,"Float did not fold after the pointer left");
-        shelf.SetExpanded(true);DesktopInput.Pump(300);Check(shelf.IsExpanded&&Math.Abs(shelf.ActualWidth-156)<1,"Float did not expand into a slim shelf");
+        shelf.SetExpanded(true);DesktopInput.Pump(300);Check(shelf.IsExpanded&&Math.Abs(shelf.ActualWidth-284)<1,"Float did not expand into the shelf");
+        // The open shelf lists the files; the stack that carries them all sits on the folded shelf, so the drag starts there.
+        DesktopInput.MovePointer(shelf.PointToScreen(new Point(shelf.ActualWidth+300,40)));shelf.SetExpanded(false);DesktopInput.Pump(800);
         var floatSink=new Border{Background=Brushes.AliceBlue,AllowDrop=true,Child=new TextBlock{Text="Copy-only Float drag fixture",Margin=new(12)}};
         var sinkWindow=new Window{Title="Float drag fixture",Content=floatSink,Width=250,Height=200,Left=shelf.Left+220,Top=shelf.Top,Topmost=true};string[]? carried=null;
         floatSink.DragOver+=(_,e)=>{e.Effects=DragDropEffects.Copy;e.Handled=true;};floatSink.Drop+=(_,e)=>{carried=e.Data.GetData(DataFormats.FileDrop) as string[];e.Effects=DragDropEffects.Copy;e.Handled=true;};sinkWindow.Show();DesktopInput.Pump();
         var stack=Children(shelf).OfType<Canvas>().Single();var dragStart=stack.PointToScreen(new Point(35,50));var dragEnd=floatSink.PointToScreen(new Point(100,100));
         Wait(Task.Run(async()=>{DesktopInput.MovePointer(dragStart);await Task.Delay(100);DesktopInput.HoldMouse(true);try{for(var step=1;step<=14;step++){DesktopInput.MovePointer(new Point(dragStart.X+(dragEnd.X-dragStart.X)*step/14,dragStart.Y+(dragEnd.Y-dragStart.Y)*step/14));await Task.Delay(35);}}finally{DesktopInput.HoldMouse(false);}}));DesktopInput.Pump();
-        Check(carried is not null&&carried.Length==2&&carried.Contains(source)&&carried.Contains(qrImage),"Float stack did not carry both file paths through native drag/drop");sinkWindow.Close();
+        Check(carried is not null&&carried.Length==2&&carried.Contains(source)&&carried.Contains(qrImage),"Float stack did not carry both file paths through native drag/drop");sinkWindow.Close();DesktopInput.Pump(800);shelf.SetExpanded(true);DesktopInput.Pump(300);
         Check(File.Exists(source)&&File.Exists(qrImage),"Copy-only Float drag changed originals");
         var shelfList=Children(shelf).OfType<ListBox>().Single();shelfList.UnselectAll();shelfList.Focus();DesktopInput.Key(shelf,Key.Delete);Check(shelf.Paths.Count==2,"Float Delete without a selection removed files");
         shelf.Add([source]);Check(shelf.Paths.Count==2,"Float duplicated an existing path");

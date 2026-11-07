@@ -21,12 +21,6 @@ public sealed partial class MainWindow
         await RunAsync((destination,p,t)=>metadataService.WriteAsync(selected,destination,removeAll,changes,progress:p,token:t),"Metadata");
     }
     internal static string ToolSymbol(string id)=>id switch{"compress"=>"↘","removeMetadata"=>"◇","editImage"=>"☷","annotateImage"=>"✎","frameImage"=>"▣","cropImage" or "cropVideo"=>"⌗","trimAudio" or "trimVideo"=>"✂","muteVideo"=>"♫","normalizeAudio"=>"≋","audioChannels"=>"⇆","audioToVideo"=>"▷","createCollage"=>"▦","redactImage" or "redactVideo" or "redactAudio"=>"▨","readQRCode"=>"▧","mergePDF"=>"▣","splitPDF" or "splitVideo"=>"◫","organizePDF"=>"▤","extractArchive"=>"↗","createPDF"=>"▱","joinVideos"=>"⇥","videoSnapshots"=>"▣","changeVideoSpeed"=>"◴",_=>"↗"};
-    private async Task SetupOfficeAsync()
-    {
-        if(busy)return;if(officeRuntime.Executable is not null){L10n.SetText(status,"Office tools are ready.");return;}
-        if(MessageBox.Show(this,L10n.Text("Download LibreOffice 26.8.1 (~360 MB) from The Document Foundation? Its SHA-256 is checked, then the package is extracted into Nashi’s user tools folder. No administrator password or Office subscription is needed. LibreOffice retains its upstream licenses."),L10n.Text("Set up office tools"),MessageBoxButton.OKCancel)!=MessageBoxResult.OK)return;
-        SetBusy(true);using var cancellation=new CancellationTokenSource();var toast=new ToastWindow(this,cancellation.Cancel);toast.Show();try{await officeRuntime.InstallAsync(new Progress<OperationProgress>(toast.Update),cancellation.Token);toast.Complete([]);L10n.SetText(status,"Office tools ready.");}catch(OperationCanceledException){toast.Close();L10n.SetText(status,"Setup cancelled.");}catch(Exception error){toast.Close();MessageBox.Show(this,L10n.Text(error.Message),L10n.Text("Office setup could not finish"));}finally{SetBusy(false);}
-    }
     private async Task EditDocumentAsync(ToolChoice choice,string[] selected,string? requestedFormat=null)
     {
         if(choice.Id=="convert")
@@ -52,10 +46,11 @@ public sealed partial class MainWindow
         {
             foreach(var file in inputs)
             {
-                if(FeatureCatalog.Extension(file)=="pdf"){var pages=await NativePdf.RenderAsync(file,180);for(var n=0;n<pages.Length;n++)foreach(var value in NativePdf.DecodeQr(ImageEngine.FromPng(pages[n])))results.Add((Path.GetFileName(file)+$" · Page {n+1}",value));}
-                else foreach(var value in NativePdf.DecodeQr(ImageEngine.Load(file)))results.Add((Path.GetFileName(file),value));
+                // Reading a picture and searching it for codes is slow on large files, so both happen off the UI thread.
+                if(FeatureCatalog.Extension(file)=="pdf"){var pages=await NativePdf.RenderAsync(file,180);for(var n=0;n<pages.Length;n++){var page=pages[n];foreach(var value in await Task.Run(()=>NativePdf.DecodeQr(ImageEngine.FromPng(page))))results.Add((Path.GetFileName(file)+$" · Page {n+1}",value));}}
+                else foreach(var value in await Task.Run(()=>NativePdf.DecodeQr(ImageEngine.Load(file))))results.Add((Path.GetFileName(file),value));
             }
-            var window=new Window{Owner=this,Title="Read QR Codes · Nashi",Width=720,Height=520,WindowStartupLocation=WindowStartupLocation.CenterOwner};Theme.Attach(window);var stack=new StackPanel{Margin=new(26)};stack.Children.Add(Text("Read QR Codes",28));stack.Children.Add(Text(results.Count==0?"No QR codes found. Try a larger or sharper image.":$"{results.Count} QR {(results.Count==1?"code":"codes")} found.",14,"Muted"));
+            var window=new Window{Owner=this,Title="Read QR Codes · Nashi",Width=720,Height=520,WindowStartupLocation=WindowStartupLocation.CenterOwner};Theme.Attach(window);L10n.Bind(window,Ui.HeadingProperty,"Read QR Codes");var stack=new StackPanel{Margin=new(24,6,24,20)};stack.Children.Add(Text("Read QR Codes",28));stack.Children.Add(Text(results.Count==0?"No QR codes found. Try a larger or sharper image.":$"{results.Count} QR {(results.Count==1?"code":"codes")} found.",14,"Muted"));
             foreach(var result in results){var content=new StackPanel();content.Children.Add(Text(result.File,12,"Muted"));content.Children.Add(new TextBox{Text=result.Value,IsReadOnly=true,TextWrapping=TextWrapping.Wrap,MaxHeight=150});var buttons=new WrapPanel();buttons.Children.Add(Button("Copy",()=>{try{Clipboard.SetText(result.Value);}catch(Exception error)when(ClipboardImport.IsClipboardError(error)){MessageBox.Show(window,L10n.Text("Clipboard is busy. Try again."),"Nashi");}}));if(Uri.TryCreate(result.Value,UriKind.Absolute,out var url)&&url.Scheme is "http" or "https")buttons.Children.Add(Button("Open link",()=>OpenUrl(url.AbsoluteUri)));content.Children.Add(buttons);stack.Children.Add(Card(content));}window.Content=new ScrollViewer{Content=stack};window.ShowDialog();
         }finally{SetBusy(false);}
     }

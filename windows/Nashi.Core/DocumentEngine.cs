@@ -23,11 +23,11 @@ public static partial class DocumentEngine
             if(tool=="splitPDF")
             {
                 if(pagesPerFile<1||pagesPerFile>1000)throw new ArgumentException("Choose between 1 and 1,000 pages per file.");
-                var selected=pages??PageRange(pageRanges,source.PageCount);if(selected.Length==0||selected.Any(p=>p<1||p>source.PageCount))throw new ArgumentException("Choose valid PDF pages.");
-                for(var i=0;i<selected.Length;i+=pagesPerFile)
+                var files=pages?.Chunk(pagesPerFile).ToArray()??SplitParts(pageRanges,pagesPerFile,source.PageCount);if(files.Length==0||files.Any(file=>file.Any(p=>p<1||p>source.PageCount)))throw new ArgumentException("Choose valid PDF pages.");
+                for(var i=0;i<files.Length;i++)
                 {
-                    token.ThrowIfCancellationRequested();using var part=new PdfDocument();KeepInfo(source,part);foreach(var page in selected.Skip(i).Take(pagesPerFile))part.AddPage(source.Pages[page-1]);
-                    var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+$" Page {i+1}.pdf");part.Save(output);outputs.Add(output);
+                    token.ThrowIfCancellationRequested();using var part=new PdfDocument();KeepInfo(source,part);foreach(var page in files[i])part.AddPage(source.Pages[page-1]);
+                    var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+" "+SplitName(files[i],i)+".pdf");part.Save(output);outputs.Add(output);
                 }
             }
             else if(tool=="organizePDF")

@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 namespace Nashi.Windows;
 
 internal readonly record struct FileArtworkStamp(bool Exists,bool Directory,long Length,long Modified)
@@ -66,6 +67,8 @@ internal sealed class FileArtworkCache
 internal static class FileArtwork
 {
     private static readonly FileArtworkCache cache=new((path,stamp)=>ShellWorker.Run(()=>NativeIcon(path,stamp)));
+    // Pictures, videos and documents as Explorer shows them: their own thumbnail, or else their large type icon.
+    private static readonly FileArtworkCache thumbnails=new((path,stamp)=>ShellWorker.Run(()=>ShellImage(path,stamp,0x8)??ShellImage(path,stamp,0x4)??NativeIcon(path,stamp)),256);
     internal static readonly DependencyProperty PathProperty=DependencyProperty.RegisterAttached("Path",typeof(string),typeof(FileArtwork),new PropertyMetadata(null,PathChanged));
     private static readonly DependencyPropertyKey IsLoadingKey=DependencyProperty.RegisterAttachedReadOnly("IsLoading",typeof(bool),typeof(FileArtwork),new PropertyMetadata(false));
     private static readonly DependencyPropertyKey IsReadyKey=DependencyProperty.RegisterAttachedReadOnly("IsReady",typeof(bool),typeof(FileArtwork),new PropertyMetadata(true));
@@ -81,6 +84,7 @@ internal static class FileArtwork
     }
     private static readonly DependencyProperty BindingProperty=DependencyProperty.RegisterAttached("Binding",typeof(ArtworkBinding),typeof(FileArtwork));
     internal static void Bind(Image image,string path)=>image.SetValue(PathProperty,path);
+    internal static void BindThumbnail(Image image,string path){image.SetValue(BindingProperty,new ArtworkBinding(image,thumbnails));Bind(image,path);}
     internal static void BindForTest(Image image,string path,FileArtworkCache isolatedCache)
     {image.SetValue(BindingProperty,new ArtworkBinding(image,isolatedCache));Bind(image,path);}
     private static void PathChanged(DependencyObject value,DependencyPropertyChangedEventArgs args)
@@ -92,6 +96,8 @@ internal static class FileArtwork
     private sealed class ArtworkBinding
     {
         private readonly WeakReference<Image> target;private readonly FileArtworkCache source;private CancellationTokenSource? request;private Window? owner;private long generation;
+        // The path whose artwork the image shows; refreshing that same file keeps it on screen until the check is done.
+        private string? shown;
         internal ArtworkBinding(Image image,FileArtworkCache? source=null)
         {target=new(image);this.source=source??cache;image.Loaded+=Loaded;image.Unloaded+=Unloaded;}
         private void Loaded(object sender,RoutedEventArgs args)
@@ -105,7 +111,7 @@ internal static class FileArtwork
         {
             request?.Cancel();request?.Dispose();request=new();
             if(!target.TryGetTarget(out var image))return;
-            var path=image.GetValue(PathProperty) as string;image.Source=placeholder;var current=++generation;
+            var path=image.GetValue(PathProperty) as string;if(shown is null||!string.Equals(shown,path,StringComparison.Ordinal)){image.Source=placeholder;shown=null;}var current=++generation;
             image.SetValue(IsLoadingKey,!string.IsNullOrEmpty(path));image.SetValue(IsReadyKey,string.IsNullOrEmpty(path));
             if(!string.IsNullOrEmpty(path))_ = ApplyAsync(path,request.Token,current);
         }
@@ -117,7 +123,7 @@ internal static class FileArtwork
                 if(cancellation.IsCancellationRequested||!target.TryGetTarget(out var image))return;
                 await image.Dispatcher.InvokeAsync(()=>
                 {
-                    if(version==generation&&!cancellation.IsCancellationRequested&&target.TryGetTarget(out var current)&&Equals(current.GetValue(PathProperty),path))current.Source=artwork??placeholder;
+                    if(version==generation&&!cancellation.IsCancellationRequested&&target.TryGetTarget(out var current)&&Equals(current.GetValue(PathProperty),path)){current.Source=artwork??placeholder;shown=artwork is null?null:path;}
                 });
             }
             catch(OperationCanceledException){}
@@ -139,6 +145,36 @@ internal static class FileArtwork
         if(info.Icon==IntPtr.Zero)return null;
         try{var image=Imaging.CreateBitmapSourceFromHIcon(info.Icon,Int32Rect.Empty,System.Windows.Media.Imaging.BitmapSizeOptions.FromEmptyOptions());image.Freeze();return image;}finally{DestroyIcon(info.Icon);}
     }
+    // flags: SIIGBF_THUMBNAILONLY (8) or SIIGBF_ICONONLY (4). 128 px covers the largest tile at 2x.
+    private static ImageSource? ShellImage(string path,FileArtworkStamp stamp,int flags)
+    {
+        if(!stamp.Exists)return null;var bitmap=IntPtr.Zero;
+        try
+        {
+            SHCreateItemFromParsingName(path,IntPtr.Zero,typeof(IShellItemImageFactory).GUID,out var factory);
+            try{if(factory.GetImage(new ShellSize{Width=128,Height=128},flags|0x1,out bitmap)!=0||bitmap==IntPtr.Zero)return null;}finally{Marshal.ReleaseComObject(factory);}
+            var info=new DibInfo();if(GetObject(bitmap,Marshal.SizeOf<DibInfo>(),ref info)==0||info.Width<1||info.Height==0)return null;
+            int width=info.Width,height=Math.Abs(info.Height);var header=new DibHeader{Size=40,Width=width,Height=-height,Planes=1,BitCount=32};var pixels=new byte[width*height*4];var dc=GetDC(IntPtr.Zero);
+            try{if(GetDIBits(dc,bitmap,0,(uint)height,pixels,ref header,0)==0)return null;}finally{_ = ReleaseDC(IntPtr.Zero,dc);}
+            // Photos come back without alpha (all zero): they are opaque. Icons carry premultiplied alpha.
+            var alpha=false;for(var i=3;i<pixels.Length;i+=4)if(pixels[i]!=0){alpha=true;break;}
+            if(!alpha)for(var i=3;i<pixels.Length;i+=4)pixels[i]=255;
+            var image=BitmapSource.Create(width,height,96,96,alpha?PixelFormats.Pbgra32:PixelFormats.Bgra32,null,pixels,width*4);image.Freeze();return image;
+        }
+        catch(Exception error)when(error is COMException or ArgumentException or FileNotFoundException or UnauthorizedAccessException or InvalidCastException){return null;}
+        finally{if(bitmap!=IntPtr.Zero)DeleteObject(bitmap);}
+    }
+    [ComImport,Guid("bcc18b79-ba16-442f-80c4-8a59c30c463b"),InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    private interface IShellItemImageFactory{[PreserveSig]int GetImage(ShellSize size,int flags,out IntPtr bitmap);}
+    [StructLayout(LayoutKind.Sequential)]private struct ShellSize{public int Width,Height;}
+    [StructLayout(LayoutKind.Sequential)]private struct DibInfo{public int Type,Width,Height,WidthBytes;public short Planes,BitsPixel;public IntPtr Bits;}
+    [StructLayout(LayoutKind.Sequential)]private struct DibHeader{public int Size,Width,Height;public short Planes,BitCount;public int Compression,ImageSize,XPerMeter,YPerMeter,Used,Important;}
+    [DllImport("shell32.dll",CharSet=CharSet.Unicode,PreserveSig=false)]private static extern void SHCreateItemFromParsingName(string path,IntPtr context,[MarshalAs(UnmanagedType.LPStruct)]Guid interfaceId,out IShellItemImageFactory factory);
+    [DllImport("gdi32.dll")]private static extern int GetObject(IntPtr item,int size,ref DibInfo info);
+    [DllImport("gdi32.dll")]private static extern int GetDIBits(IntPtr dc,IntPtr bitmap,uint start,uint lines,[Out]byte[] bits,ref DibHeader header,uint usage);
+    [DllImport("gdi32.dll")]private static extern bool DeleteObject(IntPtr item);
+    [DllImport("user32.dll")]private static extern IntPtr GetDC(IntPtr window);
+    [DllImport("user32.dll")]private static extern int ReleaseDC(IntPtr window,IntPtr dc);
     /// Shell extensions can require COM/STA. A single background worker also bounds concurrent shell work.
     private static class ShellWorker
     {

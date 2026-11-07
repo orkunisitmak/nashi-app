@@ -14,7 +14,7 @@ public partial class App:Application
             Exit+=(_,exit)=>File.WriteAllText(Path.Combine(diagnostics,$"process-exit-{Environment.ProcessId}.json"),System.Text.Json.JsonSerializer.Serialize(new{mode=e.Args.FirstOrDefault(),code=exit.ApplicationExitCode,environmentCode=Environment.ExitCode}));
         }
         DispatcherUnhandledException+=(_,error)=>{var folder=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");if(folder is not null){Directory.CreateDirectory(folder);File.WriteAllText(Path.Combine(folder,"dispatcher-error.txt"),error.Exception.ToString());error.Handled=true;Shutdown(1);}};
-        base.OnStartup(e);
+        base.OnStartup(e);Memory.Watch();
         if(e.Args.Contains("--smoke-test-interactions"))
         {
             IsSmokeTest=true;ShutdownMode=ShutdownMode.OnExplicitShutdown;
@@ -114,6 +114,17 @@ public partial class App:Application
     private async Task ForwardAndExit(string[] paths)
     {
         try{await instance!.Notify(paths);Shutdown(0);}catch(Exception error)when(error is IOException or OperationCanceledException or UnauthorizedAccessException){UseSavedLanguage();MessageBox.Show(L10n.Text("Nashi is already running but is still starting. Open it from the system tray or try again in a moment."),"Nashi");Shutdown(1);}
+    }
+    // SegmentedCombo choices: the droplet follows the chosen item.
+    private void SegmentReady(object sender,RoutedEventArgs e)=>Glide.Place((System.Windows.Controls.ComboBox)sender,false);
+    private void SegmentChanged(object sender,System.Windows.Controls.SelectionChangedEventArgs e)=>Glide.Place((System.Windows.Controls.ComboBox)sender,true);
+    private void SegmentSized(object sender,SizeChangedEventArgs e)=>Glide.Place((System.Windows.Controls.ComboBox)sender,false);
+    // The items sit inline, where a ComboBox's arrow keys would only move a highlight: here they choose, as a segmented control's do.
+    private void SegmentKey(object sender,System.Windows.Input.KeyEventArgs e)
+    {
+        var combo=(System.Windows.Controls.ComboBox)sender;var last=combo.Items.Count-1;
+        var next=e.Key switch{System.Windows.Input.Key.Home=>0,System.Windows.Input.Key.End=>last,System.Windows.Input.Key.Left or System.Windows.Input.Key.Up=>Math.Max(0,combo.SelectedIndex-1),System.Windows.Input.Key.Right or System.Windows.Input.Key.Down=>Math.Min(last,combo.SelectedIndex+1),_=>-1};
+        if(next<0)return;combo.SelectedIndex=next;e.Handled=true;
     }
     protected override void OnExit(ExitEventArgs e){windowManagement?.Dispose();Feedback.Stop();PdfRasterDocument.Shutdown();base.OnExit(e);}
     private async Task InstallUpdateAsync()
