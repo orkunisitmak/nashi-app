@@ -1,4 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
-  <ItemGroup><ProjectReference Include="../Nashi.Core/Nashi.Core.csproj" /></ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Nashi.Core/Nashi.Core.csproj" />
+    <ProjectReference Include="../Nashi.Cli/Nashi.Cli.csproj" />
+  </ItemGroup>
 </Project>

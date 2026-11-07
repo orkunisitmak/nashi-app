@@ -101,6 +101,93 @@ try
     try{await PublicUpdates.VerifyAsync(fake,update);throw new Exception("Unsigned update accepted");}catch(InvalidDataException){checks++;}
     foreach(var url in new[]{"https://evil.example/replace.zip","file:///temp/file.zip","https://github.com/another/repo/releases/download/test/file.zip"})
     {try{PublicUpdates.Validate(update with{Url=url});throw new Exception("Untrusted update URL accepted");}catch(InvalidDataException){checks++;}}
+    var savedOut = Console.Out;
+    var savedErr = Console.Error;
+    try
+    {
+        using var outSw = new StringWriter();
+        using var errSw = new StringWriter();
+        Console.SetOut(outSw);
+        Console.SetError(errSw);
+
+        var catalogCode = await Nashi.Cli.Program.Main(["catalog"]);
+        Check(catalogCode == 0, "CLI catalog failed");
+        var catalogJson = outSw.ToString();
+        Check(catalogJson.Contains("conversionMatrix") || catalogJson.Contains("conversions"), "CLI catalog missing conversions");
+        Check(catalogJson.Contains("tools"), "CLI catalog missing tools");
+
+        var missingCode = await Nashi.Cli.Program.Main(["convert", "png", Path.Combine(root, "non_existent.docx")]);
+        Check(missingCode != 0, "CLI did not return non-zero exit code for missing file");
+        Check(errSw.ToString().Contains("not found", StringComparison.OrdinalIgnoreCase), "CLI did not report error for missing file");
+
+        var cliPhoto = Path.Combine(root, "CliInput.png");
+        using (var image = new ImageMagick.MagickImage(ImageMagick.MagickColors.Red, 16, 16))
+        {
+            image.Write(cliPhoto, ImageMagick.MagickFormat.Png);
+        }
+        var cliOutDir = Path.Combine(root, "CliOutput");
+        Directory.CreateDirectory(cliOutDir);
+        var convertCode = await Nashi.Cli.Program.Main(["convert", "jpg", cliPhoto, "--output", cliOutDir]);
+        Check(convertCode == 0, "CLI convert failed");
+        var expectedJpg = Path.Combine(cliOutDir, "CliInput.jpg");
+        Check(File.Exists(expectedJpg) && new FileInfo(expectedJpg).Length > 0, "CLI convert did not create expected output file");
+
+        var cliPhoto2 = Path.Combine(root, "CliInput2.png");
+        using (var image2 = new ImageMagick.MagickImage(ImageMagick.MagickColors.Blue, 16, 16))
+        {
+            image2.Write(cliPhoto2, ImageMagick.MagickFormat.Png);
+        }
+        var createPdfCode = await Nashi.Cli.Program.Main(["tool", "createPDF", cliPhoto, cliPhoto2, "--output", cliOutDir]);
+        Check(createPdfCode == 0, "CLI tool createPDF failed");
+        var expectedPdf = Path.Combine(cliOutDir, "Images.pdf");
+        Check(File.Exists(expectedPdf) && new FileInfo(expectedPdf).Length > 0, "CLI tool createPDF did not create output PDF");
+        using (var pdfDoc = UglyToad.PdfPig.PdfDocument.Open(expectedPdf))
+        {
+            Check(pdfDoc.NumberOfPages == 2, $"CLI createPDF expected 2 pages but got {pdfDoc.NumberOfPages}");
+        }
+
+        var notesTxt = Path.Combine(root, "notes.txt");
+        File.WriteAllText(notesTxt, "Sample text notes");
+        var dropNonImageCode = await Nashi.Cli.Program.Main(["tool", "createPDF", cliPhoto, notesTxt, "--output", cliOutDir]);
+        Check(dropNonImageCode != 0, "CLI tool createPDF must fail when non-image input is passed");
+
+        var resizeSizeCode = await Nashi.Cli.Program.Main(["resize", "32x32", cliPhoto, "--output", cliOutDir]);
+        Check(resizeSizeCode == 0, "CLI resize with dimensions failed");
+        var expected32 = Path.Combine(cliOutDir, "CliInput-32x32.png");
+        Check(File.Exists(expected32) && new FileInfo(expected32).Length > 0, "CLI resize did not create 32x32 output");
+        using (var rImg = Nashi.Core.PhotoCodec.Read(expected32))
+        {
+            Check(rImg.Width == 32 && rImg.Height == 32, $"Expected 32x32 but got {rImg.Width}x{rImg.Height}");
+        }
+
+        var resizePctCode = await Nashi.Cli.Program.Main(["resize", "50%", cliPhoto, "--output", cliOutDir]);
+        Check(resizePctCode == 0, "CLI resize with percentage failed");
+        var expected8 = Path.Combine(cliOutDir, "CliInput-8x8.png");
+        Check(File.Exists(expected8) && new FileInfo(expected8).Length > 0, "CLI resize did not create 50% (8x8) output");
+        using (var rImg = Nashi.Core.PhotoCodec.Read(expected8))
+        {
+            Check(rImg.Width == 8 && rImg.Height == 8, $"Expected 8x8 but got {rImg.Width}x{rImg.Height}");
+        }
+
+        var cliRect = Path.Combine(root, "CliRect.png");
+        using (var imageRect = new ImageMagick.MagickImage(ImageMagick.MagickColors.Green, 32, 16))
+        {
+            imageRect.Write(cliRect, ImageMagick.MagickFormat.Png);
+        }
+        var resizeOptCode = await Nashi.Cli.Program.Main(["resize", "24x24", cliRect, "--options", "{\"fit\":\"contain\",\"quality\":90}", "--output", cliOutDir]);
+        Check(resizeOptCode == 0, "CLI resize with --options failed");
+        var expectedOpt = Path.Combine(cliOutDir, "CliRect-24x12.png");
+        Check(File.Exists(expectedOpt) && new FileInfo(expectedOpt).Length > 0, "CLI resize did not create output with --options contain");
+        using (var rImg = Nashi.Core.PhotoCodec.Read(expectedOpt))
+        {
+            Check(rImg.Width == 24 && rImg.Height == 12, $"Expected 24x12 for contain scaling of 32x16 to 24x24, but got {rImg.Width}x{rImg.Height}");
+        }
+    }
+    finally
+    {
+        Console.SetOut(savedOut);
+        Console.SetError(savedErr);
+    }
     Console.WriteLine(JsonSerializer.Serialize(new { passed = checks, scope = "Cross-platform Windows engine safety foundation; no Windows GUI claimed" }));
 }
 finally { Directory.Delete(root, recursive: true); }
