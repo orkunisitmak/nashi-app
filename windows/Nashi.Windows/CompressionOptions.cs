@@ -62,7 +62,9 @@ public sealed partial class ToolEditor
             var bytes=await Task.Run(()=>{var temp=Path.Combine(Path.GetTempPath(),"nashi-estimate-"+Guid.NewGuid().ToString("N")+"."+kind);try{Nashi.Core.PhotoCodec.EncodeCompressed(pixels,w,h,temp,kind,quality);return new FileInfo(temp).Length;}finally{if(File.Exists(temp))File.Delete(temp);}});
             if(version!=estimateVersion)return;bytes=(long)(bytes*((double)width*height/((double)w*h)));var shown=target>0?Math.Min(bytes,(long)target):bytes;
             if(shown>=original&&kind==FeatureCatalog.Extension(input)&&width==bitmap.PixelWidth&&height==bitmap.PixelHeight){estimateText.Text=Weight(original);L10n.SetText(estimateNote,"Already compact: Nashi keeps the original. Try WebP, a smaller size or Strong.");return;}
-            estimateText.Text=$"{Weight(original)}  →  ~{Weight(shown)}";L10n.SetText(estimateNote,$"{Math.Max(0,1-shown/(double)original).ToString("P0",CultureInfo.CurrentCulture)} smaller"+(kind=="png"?", with fewer colors":""));
+            estimateText.Text=$"{Weight(original)}  →  ~{Weight(shown)}";var ratio=shown/(double)original;string Percent(double v)=>string.Concat(v.ToString("P0",CultureInfo.CurrentCulture).Where(c=>!char.IsWhiteSpace(c)));
+            // Without spaces the percentage still fills the translated note's {0} where it is written "12 %".
+            L10n.SetText(estimateNote,ratio>1?$"{Percent(ratio-1)} larger":$"{Percent(1-ratio)} smaller"+(kind=="png"?", with fewer colors":""));
         }
         catch(Exception error)when(error is ArgumentException or IOException or ImageMagick.MagickException or InvalidOperationException or UnauthorizedAccessException){if(version==estimateVersion){estimateText.Text=Weight(original);L10n.SetText(estimateNote,"The size can't be estimated for these settings.");}}
     }

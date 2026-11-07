@@ -118,7 +118,7 @@ public sealed partial class ToolEditor
                 if(mine!=reading)return;total=0;splitCanvas.Children.Clear();splitCells.Clear();if(!IsLoaded)return;var needsPassword=error.Message=="The PDF password is missing or incorrect.";locked.Visibility=needsPassword?Visibility.Visible:locked.Visibility;
                 ShowPreviewNotice(L10n.Text(needsPassword?"This PDF has a password. Type it to see the pages.":"The pages cannot be shown, but the split still works."));about.Text=L10n.Text("Each part becomes its own PDF; your original stays as it is.");
             }
-            catch(Exception error){if(mine!=reading)return;if(IsLoaded)ShowPreviewNotice(L10n.Text("Preview unavailable")+" · "+error.Message);}
+            catch(Exception error){if(mine!=reading)return;total=0;splitCanvas.Children.Clear();splitCells.Clear();if(IsLoaded)ShowPreviewNotice(L10n.Text("Preview unavailable")+" · "+error.Message);}
             chosen=false;cuts.Clear();left.Clear();mode.Select(0);Keep();Show();if(total>0)_ = LoadSplitPages();
         }
         var again=new System.Windows.Threading.DispatcherTimer{Interval=TimeSpan.FromMilliseconds(400)};again.Tick+=(_,_)=>{again.Stop();Read();};archivePassword.PasswordChanged+=(_,_)=>{again.Stop();again.Start();};Closed+=(_,_)=>again.Stop();

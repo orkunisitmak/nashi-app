@@ -113,7 +113,7 @@ public sealed partial class ToolEditor
     private void CoverSound(double now)
     {
         if(tool!="redactAudio")return;var inside=playing&&!processedPlayback?bleepRanges.FirstOrDefault(r=>now>=r.Start&&now<r.End):null;
-        if(inside is not null&&(!covering||now>=toneUntil)){if(!covering){covering=true;player.IsMuted=true;}if(bleepMode.SelectedItem as string!="mute"){Tone.Play(inside.End-now);toneUntil=now+Tone.Longest;}}
+        if(inside is not null&&(!covering||now>=toneUntil)){if(!covering){covering=true;player.IsMuted=true;}if(bleepMode.SelectedItem as string!="mute"){Tone.Play(inside.End-now);toneUntil=now+Math.Min(inside.End-now,Tone.Longest);}}
         else if(inside is null&&covering){covering=false;player.IsMuted=false;Tone.Stop();}
     }
     // Redact Video, live: an area shows its cover while the playhead is inside its time, and only an outline otherwise.

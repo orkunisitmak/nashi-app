@@ -22,6 +22,7 @@
 "%@ is enabled" = "%@ izni açık";
 "%@ is not installed." = "%@ kurulu değil.";
 "%@ items" = "%@ öğe";
+"%@ larger" = "%@ daha büyük";
 "%@ louder" = "%@ daha yüksek";
 "%@ pages" = "%@ sayfa";
 "%@ pages in all" = "Toplam %@ sayfa";
@@ -74,6 +75,7 @@
 "%lld is enabled" = "%lld izni açık";
 "%lld is not installed." = "%lld kurulu değil.";
 "%lld items" = "%lld öğe";
+"%lld larger" = "%lld daha büyük";
 "%lld louder" = "%lld daha yüksek";
 "%lld pages" = "%lld sayfa";
 "%lld pages in all" = "Toplam %lld sayfa";

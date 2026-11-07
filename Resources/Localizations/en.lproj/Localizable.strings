@@ -22,6 +22,7 @@
 "%@ is enabled" = "%@ is enabled";
 "%@ is not installed." = "%@ is not installed.";
 "%@ items" = "%@ items";
+"%@ larger" = "%@ larger";
 "%@ louder" = "%@ louder";
 "%@ pages" = "%@ pages";
 "%@ pages in all" = "%@ pages in all";
@@ -74,6 +75,7 @@
 "%lld is enabled" = "%lld is enabled";
 "%lld is not installed." = "%lld is not installed.";
 "%lld items" = "%lld items";
+"%lld larger" = "%lld larger";
 "%lld louder" = "%lld louder";
 "%lld pages" = "%lld pages";
 "%lld pages in all" = "%lld pages in all";

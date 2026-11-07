@@ -22,6 +22,7 @@
 "%@ is enabled" = "%@ est activé";
 "%@ is not installed." = "%@ n’est pas installé.";
 "%@ items" = "%@ éléments";
+"%@ larger" = "%@ larger";
 "%@ louder" = "%@ louder";
 "%@ pages" = "%@ pages";
 "%@ pages in all" = "%@ pages in all";
@@ -74,6 +75,7 @@
 "%lld is enabled" = "%lld est activé";
 "%lld is not installed." = "%lld n’est pas installé.";
 "%lld items" = "%lld éléments";
+"%lld larger" = "%lld larger";
 "%lld louder" = "%lld louder";
 "%lld pages" = "%lld pages";
 "%lld pages in all" = "%lld pages in all";

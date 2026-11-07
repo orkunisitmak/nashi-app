@@ -1672,5 +1672,6 @@
   "This PDF has a password. Type it to see the pages.": "Bu PDF parolalı. Sayfaları görmek için parolayı yaz.",
   "The pages cannot be shown, but the split still works.": "Sayfalar gösterilemiyor ama bölme çalışır.",
   "For desktop media players": "Masaüstü medya oynatıcıları için",
-  "{0} smaller, with fewer colors": "{0} daha küçük, daha az renkle"
+  "{0} smaller, with fewer colors": "{0} daha küçük, daha az renkle",
+  "{0} larger": "{0} daha büyük"
 }
