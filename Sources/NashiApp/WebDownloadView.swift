@@ -61,6 +61,8 @@ import NashiCore
         }
     }
     func cancelInspection() { inspection?.cancel();inspectionToken.cancel();revision=UUID();inspecting=false }
+    /// Cancels a running link check; the returned task ends once its yt-dlp process has exited.
+    func stopInspection()->Task<Void,Never>? { let running=inspecting ? inspection:nil;cancelInspection();return running }
     func configurationChanged() { guard !downloading else { return };completed=[];error=nil }
     func selectPhotos(_ ids:Set<Int>) { guard !downloading else { return };selectedPhotos=ids;configurationChanged() }
     func chooseDestination() {
