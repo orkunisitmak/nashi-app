@@ -1454,6 +1454,8 @@
 "METADATA TOOLS ARE NOT READY." = "METADATA TOOLS ARE NOT READY.";
 "METADATA TOOLS CHECKSUM MISMATCH." = "METADATA TOOLS CHECKSUM MISMATCH.";
 "METADATA · NASHI" = "METADATA · NASHI";
+"MICROSOFT EDGE WEBVIEW2 COULD NOT PRINT THIS HTML FILE TO PDF." = "MICROSOFT EDGE WEBVIEW2 COULD NOT PRINT THIS HTML FILE TO PDF.";
+"MICROSOFT EDGE WEBVIEW2 STOPPED WHILE RENDERING THE HTML FILE. NO PDF WAS EXPORTED." = "MICROSOFT EDGE WEBVIEW2 STOPPED WHILE RENDERING THE HTML FILE. NO PDF WAS EXPORTED.";
 "MIDDLE THIRD" = "MIDDLE THIRD";
 "MONO" = "MONO";
 "MONOSPACED" = "MONOSPACED";
@@ -1501,6 +1503,8 @@
 "Metadata tools are not ready." = "Metadata tools are not ready.";
 "Metadata tools checksum mismatch." = "Metadata tools checksum mismatch.";
 "Metadata · Nashi" = "Metadata · Nashi";
+"Microsoft Edge WebView2 could not print this HTML file to PDF." = "Microsoft Edge WebView2 could not print this HTML file to PDF.";
+"Microsoft Edge WebView2 stopped while rendering the HTML file. No PDF was exported." = "Microsoft Edge WebView2 stopped while rendering the HTML file. No PDF was exported.";
 "Middle third" = "Middle third";
 "Mono" = "Mono";
 "Monospaced" = "Monospaced";
@@ -2394,6 +2398,8 @@
 "THE FILE HAS NO AUDIO TRACK." = "THE FILE HAS NO AUDIO TRACK.";
 "THE FILE HAS NO PLAYABLE AUDIO OR VIDEO TRACK." = "THE FILE HAS NO PLAYABLE AUDIO OR VIDEO TRACK.";
 "THE FILE HAS NO VIDEO TRACK." = "THE FILE HAS NO VIDEO TRACK.";
+"THE HTML FILE COULD NOT BE OPENED." = "THE HTML FILE COULD NOT BE OPENED.";
+"THE HTML FILE DID NOT FINISH RENDERING. NO PDF WAS EXPORTED." = "THE HTML FILE DID NOT FINISH RENDERING. NO PDF WAS EXPORTED.";
 "THE IMAGE DOWNLOAD ENDED EARLY." = "THE IMAGE DOWNLOAD ENDED EARLY.";
 "THE IMAGE ORDER MUST INCLUDE EVERY IMAGE ONCE." = "THE IMAGE ORDER MUST INCLUDE EVERY IMAGE ONCE.";
 "THE MEDIA SERVER REDIRECTED TO AN INSECURE URL." = "THE MEDIA SERVER REDIRECTED TO AN INSECURE URL.";
@@ -2429,6 +2435,8 @@
 "THESE FILES HAVE MOVED OR WERE DELETED." = "THESE FILES HAVE MOVED OR WERE DELETED.";
 "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE." = "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE.";
 "THIS DOCUMENT NESTS ITS CONTENT TOO DEEPLY TO CONVERT." = "THIS DOCUMENT NESTS ITS CONTENT TOO DEEPLY TO CONVERT.";
+"THIS E-INVOICE HAS NO EMBEDDED VIEW (XSLT) TO PRINT." = "THIS E-INVOICE HAS NO EMBEDDED VIEW (XSLT) TO PRINT.";
+"THIS E-INVOICE VIEW COULD NOT BE APPLIED. THE XML OR ITS EMBEDDED XSLT IS DAMAGED OR USES FEATURES NASHI DOES NOT RUN." = "THIS E-INVOICE VIEW COULD NOT BE APPLIED. THE XML OR ITS EMBEDDED XSLT IS DAMAGED OR USES FEATURES NASHI DOES NOT RUN.";
 "THIS FILE HAS MOVED OR WAS DELETED." = "THIS FILE HAS MOVED OR WAS DELETED.";
 "THIS FILE HAS MOVED OR WAS REMOVED." = "THIS FILE HAS MOVED OR WAS REMOVED.";
 "THIS FILE HAS NO AUDIO STREAM." = "THIS FILE HAS NO AUDIO STREAM.";
@@ -2436,6 +2444,7 @@
 "THIS FILE IS NOT A GZIP STREAM." = "THIS FILE IS NOT A GZIP STREAM.";
 "THIS FORMAT CAN BE IMPORTED. CHOOSE AN OUTPUT FORMAT IN THE SIDEBAR TO CONFIGURE ITS DEFAULTS." = "THIS FORMAT CAN BE IMPORTED. CHOOSE AN OUTPUT FORMAT IN THE SIDEBAR TO CONFIGURE ITS DEFAULTS.";
 "THIS FORMAT USES ITS ORIGINAL DOCUMENT STRUCTURE. NO EXPORT DEFAULTS ARE NEEDED." = "THIS FORMAT USES ITS ORIGINAL DOCUMENT STRUCTURE. NO EXPORT DEFAULTS ARE NEEDED.";
+"THIS HTML FILE WOULD NEED MORE THAN 1,000 PDF PAGES." = "THIS HTML FILE WOULD NEED MORE THAN 1,000 PDF PAGES.";
 "THIS IMAGE COULD NOT BE DECODED." = "THIS IMAGE COULD NOT BE DECODED.";
 "THIS IMAGE EXCEEDS 100 MP." = "THIS IMAGE EXCEEDS 100 MP.";
 "THIS IMAGE EXCEEDS 200 MB." = "THIS IMAGE EXCEEDS 200 MB.";
@@ -2516,6 +2525,8 @@
 "The EPUB contains XML entity declarations, which are not supported." = "The EPUB contains XML entity declarations, which are not supported.";
 "The EPUB contains no readable chapters." = "The EPUB contains no readable chapters.";
 "The EPUB has no package document." = "The EPUB has no package document.";
+"The HTML file could not be opened." = "The HTML file could not be opened.";
+"The HTML file did not finish rendering. No PDF was exported." = "The HTML file did not finish rendering. No PDF was exported.";
 "The PDF contains no pages." = "The PDF contains no pages.";
 "The PDF page is too large to render at this resolution." = "The PDF page is too large to render at this resolution.";
 "The Pages document could not be read: %@." = "The Pages document could not be read: %@.";
@@ -2592,6 +2603,7 @@
 "The upstream server did not return a successful HTTPS download." = "The upstream server did not return a successful HTTPS download.";
 "The video has no readable dimensions." = "The video has no readable dimensions.";
 "These files have moved or were deleted." = "These files have moved or were deleted.";
+"This HTML file would need more than 1,000 PDF pages." = "This HTML file would need more than 1,000 PDF pages.";
 "This PDF contains no pages." = "This PDF contains no pages.";
 "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported." = "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported.";
 "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported." = "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported.";
@@ -2611,6 +2623,8 @@
 "This conversion is not available for %lld." = "This conversion is not available for %lld.";
 "This crop applies to every selected image and must fit inside each one." = "This crop applies to every selected image and must fit inside each one.";
 "This document nests its content too deeply to convert." = "This document nests its content too deeply to convert.";
+"This e-invoice has no embedded view (XSLT) to print." = "This e-invoice has no embedded view (XSLT) to print.";
+"This e-invoice view could not be applied. The XML or its embedded XSLT is damaged or uses features Nashi does not run." = "This e-invoice view could not be applied. The XML or its embedded XSLT is damaged or uses features Nashi does not run.";
 "This file has moved or was deleted." = "This file has moved or was deleted.";
 "This file has moved or was removed." = "This file has moved or was removed.";
 "This file has no audio stream." = "This file has no audio stream.";
