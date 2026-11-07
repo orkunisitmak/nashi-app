@@ -320,8 +320,14 @@ enum NashiApplication {
         state.retainToolWindow(window);window.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true)
     }
     func application(_ application:NSApplication,open urls:[URL]) {
-        if let web=urls.first(where:{!$0.isFileURL}),let valid=try? WebDownloadEngine.link(web.absoluteString) { showWebDownload(valid,mode:.video) }
-        else { if !state.working { state.inputs=urls };showHome();state.onOpenWheel?() }
+        if let web=urls.first(where:{!$0.isFileURL}) {
+            // A rejected link must say why instead of becoming a dead input row.
+            do { showWebDownload(try WebDownloadEngine.link(web.absoluteString),mode:.video) }
+            catch { state.error=error.localizedDescription;showHome() }
+            return
+        }
+        if !state.working { state.inputs=urls }
+        showHome();state.onOpenWheel?()
     }
     func applicationShouldTerminate(_ sender:NSApplication)->NSApplication.TerminateReply {
         // Sparkle can resume an earlier install without the postponement callback.

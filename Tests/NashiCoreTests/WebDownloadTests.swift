@@ -143,6 +143,33 @@ final class WebDownloadTests:XCTestCase {
         let files=try await WebDownloadEngine.download(info,mode:.video,maximumHeight:720,destination:root.appendingPathComponent("Downloads",isDirectory:true)) { _,_ in }
         XCTAssertEqual(files.map(\.lastPathComponent),["a.mp4"]);XCTAssertEqual(try String(contentsOf:files[0],encoding:.utf8),"H480")
     }
+    func testRefusedRedirectStopsInspectionBeforeYtDlp() async throws {
+        let fm=FileManager.default,root=try OutputFiles.temporaryDirectory();addTeardownBlock { try? FileManager.default.removeItem(at:root) }
+        let argv=root.appendingPathComponent("yt-dlp.argv")
+        for (name,body) in ["yt-dlp":"echo \"$@\" > '\(argv.path)'\nexit 0\n","deno":"exit 0\n","ffmpeg":"exit 0\n"] {
+            let tool=root.appendingPathComponent(name);try Data(("#!/bin/sh\n"+body).utf8).write(to:tool)
+            try fm.setAttributes([.posixPermissions:0o755],ofItemAtPath:tool.path)
+            let variable="NASHI_"+name.uppercased(),previous=ProcessInfo.processInfo.environment[variable]
+            setenv(variable,tool.path,1)
+            addTeardownBlock { if let previous { setenv(variable,previous,1) } else { unsetenv(variable) } }
+        }
+        var server:LoopbackServer!
+        server=try LoopbackServer { _ in
+            // The redirect target is loopback, so the session delegate must refuse it.
+            Data("HTTP/1.1 302 Found\r\nLocation: http://127.0.0.1:\(server.port)/secret\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".utf8)
+        }
+        defer { server.stop() }
+        let link=try XCTUnwrap(URL(string:"http://127.0.0.1:\(server.port)/photo.png"))
+        do {
+            _=try await WebDownloadEngine.inspectValidated(link)
+            XCTFail("A refused redirect must end the inspection")
+        } catch let error as NashiError {
+            XCTAssertEqual(error.errorDescription,WebAddressPolicy.blockedMessage)
+        }
+        XCTAssertFalse(fm.fileExists(atPath:argv.path),"yt-dlp must not receive a URL whose redirect was refused")
+        XCTAssertEqual(server.methods,["HEAD","GET"])
+    }
+
     // F3510: presigned storage links are signed for GET only and some servers refuse HEAD; the photo went to yt-dlp.
     func testDirectImageWhoseServerRefusesHEADStaysAPhoto() async throws {
         let fm=FileManager.default,root=try OutputFiles.temporaryDirectory();addTeardownBlock { try? FileManager.default.removeItem(at:root) }
@@ -161,12 +188,14 @@ final class WebDownloadTests:XCTestCase {
                 return Data("HTTP/1.1 \(ok ? 200:head) X\r\nContent-Type: \(ok ? "image/png":"application/xml")\r\nContent-Length: \(png.count)\r\nConnection: close\r\n\r\n".utf8)+(method=="GET" ? png:Data())
             }
             defer { server.stop() }
-            guard let info=try? await WebDownloadEngine.inspect(URL(string:"http://127.0.0.1:\(server.port)/photo.png?X-Amz-Signature=abc")!) else {
+            // The loopback URL is still refused by `inspect`; this exercises the
+            // HTTP behaviour behind the check without weakening production.
+            guard let info=try? await WebDownloadEngine.inspectValidated(URL(string:"http://127.0.0.1:\(server.port)/photo.png?X-Amz-Signature=abc")!) else {
                 XCTFail("HEAD \(head): the photo link was handed to yt-dlp (\(server.methods))");continue
             }
             XCTAssertEqual(info.kind,.image,"HEAD \(head)");XCTAssertTrue(info.direct,"HEAD \(head)");XCTAssertFalse(fm.fileExists(atPath:argv.path),"HEAD \(head)")
             XCTAssertEqual(server.methods,head==200 ? ["HEAD"]:["HEAD","GET"])
-            let files=try await WebDownloadEngine.download(info,mode:.original,maximumHeight:nil,destination:root.appendingPathComponent("Downloads \(head)")) { _,_ in }
+            let files=try await WebDownloadEngine.downloadValidated(info,mode:.original,maximumHeight:nil,destination:root.appendingPathComponent("Downloads \(head)")) { _,_ in }
             XCTAssertEqual(files.map(\.lastPathComponent),["photo.png"]);XCTAssertEqual(try Data(contentsOf:files[0]),png)
         }
     }
