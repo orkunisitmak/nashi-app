@@ -97,7 +97,7 @@ public sealed partial class MainWindow
             // Pressed again while the layer is up: step to the next wheel (or jump to the named one) in place.
             case "gesture" when OpenLayers() is {Count:>0} open:foreach(var layer in open)layer.NextWheel();break;
             case "convert" or "tools" or "actions" when OpenLayers() is {Count:>0} open:foreach(var layer in open)layer.SwitchTo(id);break;
-            case "gesture":StartGesture(null);break;
+            case "gesture":_=Ui.Guard(GestureOrSelectionAsync);break;
             case "convert" or "tools" or "actions":StartGesture(id);break;
             case "clipboard":_=Ui.Guard(ClipboardWheelAsync);break;
             case "capture":_=Ui.Guard(CaptureAsync);break;
@@ -134,6 +134,26 @@ public sealed partial class MainWindow
     }
     internal IReadOnlyList<GestureWindow> Gestures=>gestures;
     private List<GestureWindow> OpenLayers()=>gestures.Where(g=>g.IsVisible).ToList();
+    /// The gesture shortcut. During a drag the wheel follows the drag; without one, it opens where the
+    /// pointer is for the files selected in Dolphin (or copied with Ctrl+C in the last two minutes).
+    private async Task GestureOrSelectionAsync()
+    {
+        var native=Wayland();
+        // Ask Dolphin first, before the layer appears and focus could move.
+        var dolphin=native is {CanReadSelection:true}?DolphinSelection.ActiveWindowAsync():Task.FromResult<(string,string)?>(null);
+        StartGesture(null);if(native is null)return;
+        var started=gestures.ToList();
+        // A drag already under way reaches the layer within a frame or two.
+        for(var n=0;n<12;n++){await Task.Delay(25);if(!started.Any(g=>g.IsVisible)||started.Any(g=>g.HasDrag))return;}
+        var files=await DolphinSelection.FilesAsync(native,await dolphin);
+        if(!started.Any(g=>g.IsVisible)||started.Any(g=>g.HasDrag))return;
+        var at=native.PointerPosition is {} p?XPixels(p.X,p.Y):(PixelPoint?)null;
+        var layer=(at is {} point?started.FirstOrDefault(g=>g.IsVisible&&g.Area.Contains(point)):null)??started.FirstOrDefault(g=>g.IsVisible);
+        native.Hide();if(layer is null)return;
+        foreach(var other in started.Where(g=>g!=layer)){other.Close();gestures.Remove(other);}
+        GestureWindow.Log($"no drag; selection: {files.Length} file(s)");
+        if(files.Length>0)layer.UseSelection(files,at);else layer.ShowNote(L10n.T("Drag files, select them in Dolphin, or copy them first."),at);
+    }
     internal void HideNativeOverlay()=>wayland?.Hide();
     private GestureWindow? nativeLayer;
     /// Wayland gives logical pixels; XWayland windows use them as is unless KWin scales XWayland apps.

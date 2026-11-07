@@ -141,6 +141,12 @@ bool WheelOpen(Window w)=>w.GetVisualDescendants().OfType<WheelOverlay>().Any(o=
         w.PressShortcut("actions");Pump();
         Expect($"Meta+Alt+A over an open wheel switches to File actions ({layer.Mode})",layer.Mode=="actions"&&w.Gestures.Count(g=>g.IsVisible)>=1);
         w.CloseGestures();Pump();
+        // No drag: the wheel opens for selected files where the pointer is, to click.
+        {
+            w.StartGesture(null);Pump();layer=w.Gestures.First();layer.UseSelection([target],null);Pump();
+            Expect($"Selected files without a drag get a clickable wheel ({layer.Mode})",layer.Mode=="tools"&&layer.Wheel.IsVisible&&!layer.HasDrag&&layer.Wheel.Items.Any(i=>i.Title=="Edit Photo"));
+            Save(layer,"14b-gesture-selection");w.CloseGestures();Pump();
+        }
         // A cancelled drag (Esc) leaves the layer for good and closes it; a quick return keeps it.
         {
             w.StartGesture(null);Pump();layer=w.Gestures.First();data=Drag();

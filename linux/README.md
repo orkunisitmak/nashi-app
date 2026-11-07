@@ -20,7 +20,7 @@ On macOS and Windows you hold a modifier while dragging a file anywhere to get t
 
 | Default | What it does |
 | --- | --- |
-| `Meta+Space` | **Gesture:** while dragging files (from Dolphin, the desktop, anywhere), press it: the Tools wheel opens right under the pointer. Press it again for Convert, and again for File actions (or rest on a tab under the wheel for a moment). Drop on a petal; `Esc` cancels. Which wheel opens first can be changed in Settings. |
+| `Meta+Space` | **Gesture:** while dragging files (from Dolphin, the desktop, anywhere), press it: the Tools wheel opens right under the pointer. Press it again for Convert, and again for File actions (or rest on a tab under the wheel for a moment). Drop on a petal; `Esc` cancels. Which wheel opens first can be changed in Settings. Without a drag, press it after selecting files in Dolphin (or copying them with `Ctrl+C` anywhere in the last two minutes): the wheel opens where the pointer is, to click. Nashi borrows Dolphin's own Copy over D-Bus and puts your clipboard back afterwards. |
 | `Meta+Alt+C` / `Meta+Alt+T` / `Meta+Alt+A` | Open the Convert, Tools or File actions wheel straight away; drop the dragged files on a petal |
 | `Meta+Alt+V` | Wheel for the files you copied in your file manager (`Ctrl+C`), with no dragging needed |
 | `Meta+Alt+N` | Show Nashi |

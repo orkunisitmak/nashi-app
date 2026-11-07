@@ -9,7 +9,7 @@ namespace Nashi.Linux;
 /// enter/motion give the pointer, drop gives the text/uri-list. Avalonia keeps drawing the wheel
 /// underneath. When the compositor lacks layer-shell (GNOME) TryCreate returns null and the
 /// XWayland path is used alone.
-public sealed unsafe class WaylandDropTarget
+public sealed unsafe partial class WaylandDropTarget
 {
     // ---- libwayland-client ----------------------------------------------------------------
     private const string Lib="libwayland-client.so.0";
@@ -97,6 +97,7 @@ public sealed unsafe class WaylandDropTarget
             target.device=wl_proxy_marshal_array_flags(target.manager,1,Interface("wl_data_device_interface"),wl_proxy_get_version(target.manager),0,device);
             wl_proxy_add_listener(target.device,DeviceListener,GCHandle.ToIntPtr(target.self));
             wl_display_roundtrip(display);
+            target.StartControl();target.StartPointer();wl_display_roundtrip(display);
             new Thread(()=>{while(wl_display_dispatch(display)>=0){}}){IsBackground=true,Name="Nashi Wayland drops"}.Start();
             return target;
         }
@@ -109,7 +110,35 @@ public sealed unsafe class WaylandDropTarget
     private const string Dock="dock";
     /// Covers the screen with an invisible overlay that accepts drops until Hide.
     public void Show(){lock(gate){if(overlays.Count>0)return;foreach(var screen in Outputs())overlays.Add(Open(15,-1,0,0,(0,0,0,0),Dock,screen));}}
-    public void Hide(){lock(gate){foreach(var pane in overlays)Close(pane);overlays.Clear();}}
+    public void Hide(){lock(gate){foreach(var pane in overlays)Close(pane);overlays.Clear();PointerPosition=null;}}
+
+    // ---- the pointer over the overlay, for a wheel opened without a drag (selected files) ----
+    private nint pointer;private Pane? pointerPane;
+    /// Where the pointer is while the overlay is up (global space), once the compositor has said so.
+    public (double X,double Y)? PointerPosition{get;private set;}
+    private void StartPointer()
+    {
+        if(seat==0)return;long* a=stackalloc long[1];a[0]=0;
+        pointer=wl_proxy_marshal_array_flags(seat,0,Interface("wl_pointer_interface"),wl_proxy_get_version(seat),0,a);   // get_pointer
+        wl_proxy_add_listener(pointer,PointerListener,GCHandle.ToIntPtr(self));
+    }
+    private static readonly nint PointerListener=Listener((delegate* unmanaged<nint,nint,uint,nint,int,int,void>)&OnPointerEnter,(delegate* unmanaged<nint,nint,uint,nint,void>)&OnPointerLeave,
+        (delegate* unmanaged<nint,nint,uint,int,int,void>)&OnPointerMotion,(delegate* unmanaged<nint,nint,uint,uint,uint,uint,void>)&OnPointerButton,(delegate* unmanaged<nint,nint,uint,uint,int,void>)&OnPointerAxis,
+        (delegate* unmanaged<nint,nint,void>)&OnNothing2,(delegate* unmanaged<nint,nint,uint,void>)&OnNothing3,(delegate* unmanaged<nint,nint,uint,uint,void>)&OnPointerAxisStop,(delegate* unmanaged<nint,nint,uint,int,void>)&OnPointerAxisDiscrete);
+    [UnmanagedCallersOnly]private static void OnPointerEnter(nint data,nint p,uint serial,nint surface,int fx,int fy)
+    {
+        try{var t=Of(data);lock(t.gate){t.pointerPane=t.overlays.FirstOrDefault(o=>o.Surface==surface);if(t.pointerPane is {} pane)t.PointerPosition=Global(pane,fx,fy);}}catch(Exception error){Fault(error);}
+    }
+    [UnmanagedCallersOnly]private static void OnPointerLeave(nint data,nint p,uint serial,nint surface){try{var t=Of(data);lock(t.gate)t.pointerPane=null;}catch(Exception error){Fault(error);}}
+    [UnmanagedCallersOnly]private static void OnPointerMotion(nint data,nint p,uint time,int fx,int fy)
+    {
+        try{var t=Of(data);lock(t.gate)if(t.pointerPane is {} pane)t.PointerPosition=Global(pane,fx,fy);}catch(Exception error){Fault(error);}
+    }
+    [UnmanagedCallersOnly]private static void OnNothing2(nint data,nint proxy){}
+    [UnmanagedCallersOnly]private static void OnPointerButton(nint data,nint p,uint serial,uint time,uint button,uint state){}
+    [UnmanagedCallersOnly]private static void OnPointerAxis(nint data,nint p,uint time,uint axis,int value){}
+    [UnmanagedCallersOnly]private static void OnPointerAxisStop(nint data,nint p,uint time,uint axis){}
+    [UnmanagedCallersOnly]private static void OnPointerAxisDiscrete(nint data,nint p,uint axis,int value){}
     internal string Describe(){lock(gate)return string.Join(", ",screens.Select(s=>$"{s.Width}x{s.Height}+{s.X}+{s.Y}"))+$" · {edges.Count} edge strip(s), {overlays.Count} overlay(s)";}
     /// Every monitor, or one null entry (the compositor's current output) when none were announced.
     private IEnumerable<Screen?> Outputs()=>screens.Count>0?screens:new Screen?[]{null};
@@ -220,6 +249,7 @@ public sealed unsafe class WaylandDropTarget
             case "wl_seat" when t.seat==0:t.seat=Bind(Seat,Math.Min(version,5));break;
             case "wl_data_device_manager":t.manager=Bind(DeviceManager,Math.Min(version,3));break;
             case "zwlr_layer_shell_v1":t.shell=Bind(LayerShell,1);break;
+            case "ext_data_control_manager_v1":t.BindControl(registry,name);break;
             case "wl_output":
             {
                 var screen=new Screen{Name=name,Proxy=Bind(Output,Math.Min(version,2))};wl_proxy_add_listener(screen.Proxy,OutputListener,data);

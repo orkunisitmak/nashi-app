@@ -16,6 +16,12 @@ internal static class Program
             Console.WriteLine(id>0?$"PASS notification {id} shown":"FAIL notification refused");return id>0?0:1;
         }
         if(args is ["--shortcuts-check"])return ShortcutsCheck().GetAwaiter().GetResult();
+        // Prints the files selected in another app (primary selection), as the gesture shortcut sees them.
+        if(args is ["--selection-check"])
+        {
+            var target=WaylandDropTarget.TryCreate();if(target is null||!target.CanReadSelection){Console.WriteLine("This session does not let apps read the selection (ext-data-control-v1).");return 2;}
+            var uris=target.SelectedUrisAsync().GetAwaiter().GetResult();Console.WriteLine($"selected ({(DateTime.UtcNow-target.PrimaryChanged).TotalSeconds:0} s ago): "+(uris.Length==0?"nothing":string.Join(" ",uris))+" · formats: "+target.PrimaryFormats+" · clipboard: "+string.Join(", ",target.ClipboardFormats().Formats)+" = "+System.Text.Encoding.UTF8.GetString(target.Receive(target.ClipboardFormats().Offer,"text/plain;charset=utf-8",800).GetAwaiter().GetResult()??[]));return 0;
+        }
         // Opens the hot edge strip and the drop overlay on every monitor for a few seconds (for checks in a nested compositor).
         if(args is ["--layer-check",..])
         {

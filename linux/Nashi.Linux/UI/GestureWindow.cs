@@ -45,7 +45,8 @@ public sealed class GestureWindow:Window
         TransparencyLevelHint=[WindowTransparencyLevel.Transparent];Background=Brushes.Transparent;
         WindowStartupLocation=WindowStartupLocation.Manual;Position=screen.Bounds.Position;Width=screen.Bounds.Width/screen.Scaling;Height=screen.Bounds.Height/screen.Scaling;
         // A faint veil: it shows the layer is listening, and a non-null background is needed for drops.
-        canvas.Background=new SolidColorBrush(Color.FromArgb(56,12,18,14));Content=canvas;
+        // No dimming: the layer stays invisible. An almost transparent fill keeps it hit-testable for drops.
+        canvas.Background=new SolidColorBrush(Color.FromArgb(1,0,0,0));Content=canvas;
         hint=new Border{Classes={"card","gesture-hint"},Padding=new(22,14),Child=hintText,IsVisible=false};canvas.Children.Add(wheel);canvas.Children.Add(hint);
         var row=new StackPanel{Orientation=Avalonia.Layout.Orientation.Horizontal,Spacing=2};
         foreach(var (id,title,symbol) in Order)
@@ -93,6 +94,21 @@ public sealed class GestureWindow:Window
         ShowWheel(id);
     }
     internal string? Mode=>mode;
+    /// A drag has reached this layer.
+    internal bool HasDrag=>origin is not null&&!clickMode;
+    /// No drag: the wheel for the selected files, clicked, where the pointer is (screen pixels).
+    internal void UseSelection(string[] paths,PixelPoint? at)
+    {
+        idle.Stop();nudge.Stop();files=paths;clickMode=true;origin=at is {} p?this.PointToClient(p):new Point(Width/2,Height/2);
+        var ids=Order.Select(o=>o.Id).ToList();var first=Enumerable.Range(0,ids.Count).Select(i=>ids[(ids.IndexOf(startMode)+i)%ids.Count]).FirstOrDefault(Fits)??startMode;
+        ShowWheel(first);Activate();
+    }
+    /// A short note near the pointer, then the layer goes.
+    internal void ShowNote(string text,PixelPoint? at)
+    {
+        idle.Stop();nudge.Stop();SetHint(text,at is {} p?this.PointToClient(p)-new Point(0,WheelSize/2+30):null);
+        var close=new DispatcherTimer{Interval=TimeSpan.FromSeconds(2.2)};close.Tick+=(_,_)=>{close.Stop();closeAll();};close.Start();
+    }
     private bool Fits(string id)=>files is null||main.ChoicesFor(files,id).Count>0;
     private void HideHint()=>hint.IsVisible=false;
     private void SetHint(string text,Point? near=null)
