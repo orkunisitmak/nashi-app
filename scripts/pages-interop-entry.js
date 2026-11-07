@@ -47,6 +47,10 @@ export function write(json) {
       name: `Converted paragraph ${++ordinal}`, basedOn: baseId,
       character: {fontName: "Helvetica", fontSize: 12, ...character(block.character)}, paragraph: paragraphStyle(block.paragraph)
     });
+    // After the unterminated first paragraph, appending "" only adds its
+    // terminator and returns index 0, restyling that paragraph. Terminate it
+    // first so the empty paragraph (or table anchor) is a paragraph of its own.
+    if (!text && document.bodyText && !document.bodyText.endsWith("\n")) document.appendParagraph("");
     const index = document.appendParagraph(text, style);
     let offset = document.paragraphs()[index]?.start ?? start;
     for (const run of runs) {
