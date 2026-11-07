@@ -8,7 +8,9 @@ public enum ConversionEngine {
         let transaction=ExportTransaction()
         defer { transaction.cleanUp() }
         let groups:[[URL]]
-        if case .tool(let tool)=request.operation,[ToolKind.createPDF,.mergePDF,.createCollage,.joinVideos,.readQRCode].contains(tool) {
+        if case .imageExportPackage = request.operation {
+            groups=[request.inputs]
+        } else if case .tool(let tool)=request.operation,[ToolKind.createPDF,.mergePDF,.createCollage,.joinVideos,.readQRCode].contains(tool) {
             groups=[request.inputs]
         } else { groups=request.inputs.map{[$0]} }
         for (index,inputs) in groups.enumerated() {
@@ -33,6 +35,9 @@ public enum ConversionEngine {
     private static func perform(_ request:ConversionRequest,token:CancellationToken,progress:@escaping ProgressHandler) throws -> [URL] {
         var outputs:[URL]=[]
         switch request.operation {
+        case .imageExportPackage(let package):
+            guard let directory=request.options.outputDirectory else { throw NashiError.failed("Choose an output folder for the package.") }
+            outputs=try ImageExportPackageEngine.stage(inputs:request.inputs,package:package,directory:directory,token:token,progress:progress)
         case .convert(let format):
             for input in request.inputs {
                 try token.check();progress(OperationProgress.indeterminate,"Processing \(input.lastPathComponent)…")

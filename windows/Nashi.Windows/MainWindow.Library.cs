@@ -68,6 +68,13 @@ public sealed partial class MainWindow
         Tile(0,"Convert",$"{formats.Length} ways to change it","⇄",formats.Select(f=>(f.ToUpperInvariant(),(Action)(async()=>await EditAsync(new("convert:"+f,"Convert","↗"))))));
         Tile(1,"Fine-tune","Edit, compress, and more","☷",tools.Select(t=>(t.Title,(Action)(async()=>await EditAsync(t)))));
         Tile(2,"Move & share","Send it on its way","↗",new[]{("Share","share"),("Float","float"),("Copy","copy"),("Move","move"),("Copy Path","copyPath"),("Terminal","terminal")}.Select(t=>(t.Item1,(Action)(async()=>await PerformFileAction(t.Item2,files.ToArray())))));
+        if(files.All(FeatureCatalog.IsImage))
+        {
+            var package=Button("Export image package",async()=>await ShowImageExportPackageAsync());
+            package.ToolTip=L10n.Text("Several formats and sizes, in one export.");
+            System.Windows.Automation.AutomationProperties.SetAutomationId(package,"HomeExportPackage");
+            package.HorizontalAlignment=HorizontalAlignment.Left;stack.Children.Add(package);
+        }
         var quick=new WrapPanel{Margin=new(0,8,0,0)};quick.Children.Add(Text("QUICK PICKS",10,"Muted"));foreach(var format in formats.Take(4))quick.Children.Add(Button(format.ToUpperInvariant()+" ↗",async()=>await EditAsync(new("convert:"+format,"Convert","↗"))));stack.Children.Add(quick);
     }
 }

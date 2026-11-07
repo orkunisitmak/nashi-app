@@ -13,6 +13,11 @@ enum NashiApplication {
     @MainActor static func main() {
         if CommandLine.arguments.count>1,["convert","tool","inspect","catalog","dependencies"].contains(CommandLine.arguments[1]) { exit(NashiCommandLine.run()) }
         let app=NSApplication.shared
+        if CommandLine.arguments.contains("--image-package-smoke") {
+            guard CommandLine.arguments.count==3,CommandLine.arguments[1]=="--image-package-smoke",!CommandLine.arguments[2].hasPrefix("--") else {fputs("Use --image-package-smoke OUTPUT\n",stderr);exit(64)}
+            let runner=ImageExportPackageSmoke(output:URL(fileURLWithPath:CommandLine.arguments[2],isDirectory:true));app.delegate=runner;app.setActivationPolicy(.accessory)
+            withExtendedLifetime(runner){app.run()};return
+        }
         if CommandLine.arguments.contains("--ui-audit") {
             do {
                 let runner=UIAudit(options:try UIAuditOptions(arguments:CommandLine.arguments))
@@ -192,6 +197,11 @@ enum NashiApplication {
         state.onChooseFiles = { [weak self] in self?.chooseFiles() }
         state.onSettings = { [weak self] in self?.showSettings() }
         state.onShowTool = { [weak self] tool in self?.showTool(tool) }
+        state.onImageExportPackage = { [weak self] in
+            guard let self,!self.state.working else { return }
+            let window=self.makeToolWindow(title:"Export image package",size:NSSize(width:740,height:720),view:ImageExportPackageView(state:self.state,inputs:self.state.inputs))
+            self.state.retainToolWindow(window);window.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true)
+        }
         state.onEPUBOptions = { [weak self] in guard let self else { return };let window=self.makeWindow(title:"Convert to EPUB",size:NSSize(width:530,height:390),view:EPUBOptionsView(state:self.state,inputs:self.state.inputs));self.state.retainToolWindow(window);window.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true) }
         state.onJobStarted = { [weak self] in self?.successToast.dismiss();self?.showProgress() }
         state.onSuccess = { [weak self] notice in self?.progressToast.dismiss();self?.successToast.show(notice) }
