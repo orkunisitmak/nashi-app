@@ -19,9 +19,11 @@ public sealed partial class MainWindow
     }
     private void OfferFirstRunTools()
     {
-        if(toolSetupOffered || busy || tools.Ready && officeRuntime.Executable is not null)return;
-        toolSetupOffered=true;ShowToolSetupMenu();
+        if(toolSetupOffered || preferences.Value.ToolsPromptSeen || busy || tools.Ready && officeRuntime.Executable is not null)return;
+        toolSetupOffered=true;RememberToolsPrompt();ShowToolSetupMenu();
     }
+    // The offer opens by itself once; "Finish setup" and Settings stay available afterwards.
+    private void RememberToolsPrompt(){try{preferences.Save(preferences.Value with{ToolsPromptSeen=true});}catch(Exception error)when(error is IOException or UnauthorizedAccessException or ArgumentException){}}
     // The selected files as a small fanned stack of prints. It is still the file list: Ctrl+A selects, Delete removes.
     private void BuildFileStack()
     {
