@@ -28,6 +28,8 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
             var args=new List<string>{"-env:UserInstallation="+new Uri(profile+Path.DirectorySeparatorChar).AbsoluteUri,"--headless","--nologo","--nodefault","--nolockcheck","--nofirststartwizard","--norestore"};
             if(ext is "csv" or "tsv"){var (delimiter,language)=DelimitedLayout(input,ext);args.Add("--infilter=Text - txt - csv (StarCalc):"+delimiter+",34,76,1,,"+language+",true,true");}else if(ext=="txt")args.Add("--infilter=Text (encoded):UTF8,LF");else if(ext=="md")args.Add("--infilter=Markdown");
             if(ext=="html"&&format is "xlsx" or "ods" or "csv" or "tsv")args.Add("--infilter=HTML (StarCalc)");
+            // Distribution LibreOffice (7.x) opens HTML in Writer/Web, whose PDF export drops headings. Writer keeps them.
+            else if(OperatingSystem.IsLinux()&&ext=="html")args.Add("--infilter=HTML (StarWriter)");
             if(ext=="pdf"&&format=="pptx")args.Add("--infilter=impress_pdf_import");
             args.AddRange(["--convert-to",filter,"--outdir",rendered,Path.GetFullPath(input)]);
             // A stuck soffice otherwise keeps Nashi busy until the user cancels; stop it after a generous limit.
