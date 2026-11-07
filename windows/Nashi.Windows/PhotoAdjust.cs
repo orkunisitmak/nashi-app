@@ -104,8 +104,14 @@ public sealed partial class ToolEditor
     }
     private readonly PhotoRuler straighten=new(){Margin=new(0,2,0,0)};private bool keepShape=true,sizing;
     private double DegreesNow()=>double.TryParse(fields["Degrees"].Text,NumberStyles.Float,CultureInfo.CurrentCulture,out var value)&&double.IsFinite(value)?value:0;
-    // The picture's shape as it will be saved: a quarter turn swaps its sides.
-    private double PhotoAspect(){var turned=Math.Abs(Math.Round(DegreesNow()/90))%2==1;return turned?bitmap!.PixelHeight/(double)bitmap.PixelWidth:bitmap!.PixelWidth/(double)bitmap.PixelHeight;}
+    // The picture's size as it will be saved, as ImageEngine.Rotate draws it: a quarter turn swaps its sides,
+    // any other angle grows the canvas to hold the turned corners.
+    private (double Width,double Height) PhotoCanvas()
+    {
+        double w=bitmap!.PixelWidth,h=bitmap.PixelHeight;var angle=(((int)DegreesNow()%360)+360)%360;if(angle%90==0)return angle%180==0?(w,h):(h,w);
+        var radians=angle*Math.PI/180;var cos=Math.Abs(Math.Cos(radians));var sin=Math.Abs(Math.Sin(radians));return(Math.Ceiling(w*cos+h*sin),Math.Ceiling(w*sin+h*cos));
+    }
+    private double PhotoAspect(){var (w,h)=PhotoCanvas();return w/h;}
     private void FollowSide(TextBox changed,TextBox other,bool width)
     {
         if(sizing||!keepShape||bitmap is null||!double.TryParse(changed.Text,NumberStyles.Float,CultureInfo.CurrentCulture,out var value)||value<1)return;
@@ -113,7 +119,7 @@ public sealed partial class ToolEditor
     }
     private void ScalePhoto(double factor)
     {
-        if(bitmap is null)return;var turned=Math.Abs(Math.Round(DegreesNow()/90))%2==1;double w=turned?bitmap.PixelHeight:bitmap.PixelWidth,h=turned?bitmap.PixelWidth:bitmap.PixelHeight;
+        if(bitmap is null)return;var (w,h)=PhotoCanvas();
         sizing=true;try{fields["Width"].Text=Number(Math.Max(1,Math.Round(w*factor)));fields["Height"].Text=Number(Math.Max(1,Math.Round(h*factor)));}finally{sizing=false;}
     }
     private void ShowStraighten()

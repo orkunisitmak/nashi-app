@@ -1606,7 +1606,6 @@
   "{0} · {1} · {2}": "{0} · {1} · {2}",
   "Plays everywhere": "Her yerde oynar",
   "Apple devices and editing": "Apple aygıtları ve kurgu",
-  "Keeps every track": "Tüm izleri korur",
   "For websites": "Web siteleri için",
   "Silent looping animation": "Sessiz, döngülü animasyon",
   "Older Windows software": "Eski Windows yazılımları",
@@ -1669,5 +1668,7 @@
   "This PDF has one page, so there is nothing to split.": "Bu PDF tek sayfa, bölünecek bir şey yok.",
   "{0} PDFs selected. Each is split the same way.": "{0} PDF seçili. Hepsi aynı şekilde bölünür.",
   "This PDF has a password. Type it to see the pages.": "Bu PDF parolalı. Sayfaları görmek için parolayı yaz.",
-  "The pages cannot be shown, but the split still works.": "Sayfalar gösterilemiyor ama bölme çalışır."
+  "The pages cannot be shown, but the split still works.": "Sayfalar gösterilemiyor ama bölme çalışır.",
+  "For desktop media players": "Masaüstü medya oynatıcıları için",
+  "{0} smaller, with fewer colors": "{0} daha küçük, daha az renkle"
 }

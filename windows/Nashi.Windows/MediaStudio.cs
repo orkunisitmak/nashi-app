@@ -108,10 +108,12 @@ public sealed partial class ToolEditor
         CoverSound(now);CoverPicture(now);
     }
     // Bleep Audio, live: inside a covered part the sound goes quiet, and a bleep plays over it.
+    // A tone lasts at most Tone.Longest seconds; a longer covered part starts it again.
+    private double toneUntil;
     private void CoverSound(double now)
     {
         if(tool!="redactAudio")return;var inside=playing&&!processedPlayback?bleepRanges.FirstOrDefault(r=>now>=r.Start&&now<r.End):null;
-        if(inside is not null&&!covering){covering=true;player.IsMuted=true;if(bleepMode.SelectedItem as string!="mute")Tone.Play(inside.End-now);}
+        if(inside is not null&&(!covering||now>=toneUntil)){if(!covering){covering=true;player.IsMuted=true;}if(bleepMode.SelectedItem as string!="mute"){Tone.Play(inside.End-now);toneUntil=now+Tone.Longest;}}
         else if(inside is null&&covering){covering=false;player.IsMuted=false;Tone.Stop();}
     }
     // Redact Video, live: an area shows its cover while the playhead is inside its time, and only an outline otherwise.
@@ -144,10 +146,10 @@ public sealed partial class ToolEditor
 internal static class Tone
 {
     [DllImport("winmm.dll")]private static extern bool PlaySound(IntPtr sound,IntPtr module,uint flags);
-    private static byte[]? playing;
+    private static byte[]? playing;internal const double Longest=30;
     internal static void Play(double seconds)
     {
-        const int rate=22050;var samples=(int)(Math.Clamp(seconds,.05,30)*rate);var wave=GC.AllocateArray<byte>(44+samples*2,pinned:true);
+        const int rate=22050;var samples=(int)(Math.Clamp(seconds,.05,Longest)*rate);var wave=GC.AllocateArray<byte>(44+samples*2,pinned:true);
         using(var writer=new BinaryWriter(new MemoryStream(wave)))
         {
             writer.Write("RIFF"u8);writer.Write(36+samples*2);writer.Write("WAVEfmt "u8);writer.Write(16);writer.Write((short)1);writer.Write((short)1);writer.Write(rate);writer.Write(rate*2);writer.Write((short)2);writer.Write((short)16);writer.Write("data"u8);writer.Write(samples*2);

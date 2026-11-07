@@ -36,6 +36,7 @@
 "%@ selected" = "%@ sélectionnés";
 "%@ selected · Drag to carry files" = "%@ sélectionnés · Faites glisser pour emporter les fichiers";
 "%@ smaller" = "%@ smaller";
+"%@ smaller, with fewer colors" = "%@ smaller, with fewer colors";
 "%@ split points" = "%@ points de coupure";
 "%@ timeline" = "Chronologie %@";
 "%@ tools" = "%@ tools";
@@ -87,6 +88,7 @@
 "%lld selected" = "%lld sélectionnés";
 "%lld selected · Drag to carry files" = "%lld sélectionnés · Faites glisser pour emporter les fichiers";
 "%lld smaller" = "%lld smaller";
+"%lld smaller, with fewer colors" = "%lld smaller, with fewer colors";
 "%lld split points" = "%lld points de coupure";
 "%lld timeline" = "Chronologie %lld";
 "%lld tools" = "%lld tools";
@@ -1262,6 +1264,7 @@
 "FOLLOWS THE SYSTEM VOLUME." = "FOLLOWS THE SYSTEM VOLUME.";
 "FONT" = "POLICE";
 "FONT SIZE" = "TAILLE DE LA POLICE";
+"FOR DESKTOP MEDIA PLAYERS" = "FOR DESKTOP MEDIA PLAYERS";
 "FOR WEBSITES" = "FOR WEBSITES";
 "FORMAT" = "FORMAT";
 "FORMAT COMPATIBILITY" = "COMPATIBILITÉ DES FORMATS";
@@ -1351,6 +1354,7 @@
 "Follows the system volume." = "Follows the system volume.";
 "Font" = "Police";
 "Font size" = "Taille de la police";
+"For desktop media players" = "For desktop media players";
 "For websites" = "For websites";
 "Format" = "Format";
 "Format Compatibility" = "Compatibilité des formats";
@@ -1531,7 +1535,6 @@
 "KEEP THINGS\nMOVING." = "GARDEZ LE\nRYTHME.";
 "KEEP THIS FILE" = "KEEP THIS FILE";
 "KEEP THIS PART" = "KEEP THIS PART";
-"KEEPS EVERY TRACK" = "KEEPS EVERY TRACK";
 "KEEPS THE LOOK AND DIMENSIONS OF EACH PAGE. BEST FOR VISUAL LAYOUTS." = "CONSERVE L’APPARENCE ET LES DIMENSIONS DE CHAQUE PAGE. IDÉAL POUR LES MISES EN PAGE VISUELLES.";
 "Keep at least one clip." = "Conservez au moins un clip.";
 "Keep at least one page." = "Conservez au moins une page.";
@@ -1548,7 +1551,6 @@
 "Keep things\nmoving." = "Gardez le\nrythme.";
 "Keep this file" = "Keep this file";
 "Keep this part" = "Keep this part";
-"Keeps every track" = "Keeps every track";
 "Keeps the look and dimensions of each page. Best for visual layouts." = "Conserve l’apparence et les dimensions de chaque page. Idéal pour les mises en page visuelles.";
 "LANDSCAPE" = "PAYSAGE";
 "LANDSCAPE · 16:9" = "PAYSAGE · 16:9";

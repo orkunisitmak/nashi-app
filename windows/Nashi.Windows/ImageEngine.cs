@@ -40,7 +40,8 @@ public static partial class ImageEngine
         if(angle!=0)transforms.Children.Add(new RotateTransform(angle));
         if(transforms.Children.Count>0)image=new TransformedBitmap(image,transforms);
         // Color profile and rotation are worked out once, here; left lazy, every crop, preview and copy would redo them on the whole picture.
-        if(!ReferenceEquals(image,frame))image=new CachedBitmap(image,BitmapCreateOptions.None,BitmapCacheOption.OnLoad);
+        // Above 40 MP that copy would hold hundreds of MB, so those pictures stay lazy.
+        if(!ReferenceEquals(image,frame)&&(long)image.PixelWidth*image.PixelHeight<=40_000_000)image=new CachedBitmap(image,BitmapCreateOptions.None,BitmapCacheOption.OnLoad);
         image.Freeze();return image;
     }
 
@@ -93,6 +94,8 @@ public static partial class ImageEngine
     // The adjustments run straight on the picture's pixels (no PNG round trip).
     private static BitmapSource Adjusted(BitmapSource image,PhotoAdjustments adjustments)
     {
+        // Untouched dials change nothing, so a rotate or resize skips the pass over every pixel.
+        if(adjustments==new PhotoAdjustments()){var plain=new FormatConvertedBitmap(image,PixelFormats.Bgra32,null,0);plain.Freeze();return plain;}
         var straight=new FormatConvertedBitmap(image,PixelFormats.Bgra32,null,0);int w=straight.PixelWidth,h=straight.PixelHeight;var pixels=new byte[w*h*4];straight.CopyPixels(pixels,w*4,0);
         var adjusted=BitmapSource.Create(w,h,96,96,PixelFormats.Bgra32,null,PhotoCodec.AdjustPixels(pixels,w,h,adjustments),w*4);adjusted.Freeze();return adjusted;
     }

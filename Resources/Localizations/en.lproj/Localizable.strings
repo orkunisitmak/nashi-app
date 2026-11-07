@@ -36,6 +36,7 @@
 "%@ selected" = "%@ selected";
 "%@ selected · Drag to carry files" = "%@ selected · Drag to carry files";
 "%@ smaller" = "%@ smaller";
+"%@ smaller, with fewer colors" = "%@ smaller, with fewer colors";
 "%@ split points" = "%@ split points";
 "%@ timeline" = "%@ timeline";
 "%@ tools" = "%@ tools";
@@ -87,6 +88,7 @@
 "%lld selected" = "%lld selected";
 "%lld selected · Drag to carry files" = "%lld selected · Drag to carry files";
 "%lld smaller" = "%lld smaller";
+"%lld smaller, with fewer colors" = "%lld smaller, with fewer colors";
 "%lld split points" = "%lld split points";
 "%lld timeline" = "%lld timeline";
 "%lld tools" = "%lld tools";
@@ -1262,6 +1264,7 @@
 "FOLLOWS THE SYSTEM VOLUME." = "FOLLOWS THE SYSTEM VOLUME.";
 "FONT" = "FONT";
 "FONT SIZE" = "FONT SIZE";
+"FOR DESKTOP MEDIA PLAYERS" = "FOR DESKTOP MEDIA PLAYERS";
 "FOR WEBSITES" = "FOR WEBSITES";
 "FORMAT" = "FORMAT";
 "FORMAT COMPATIBILITY" = "FORMAT COMPATIBILITY";
@@ -1351,6 +1354,7 @@
 "Follows the system volume." = "Follows the system volume.";
 "Font" = "Font";
 "Font size" = "Font size";
+"For desktop media players" = "For desktop media players";
 "For websites" = "For websites";
 "Format" = "Format";
 "Format Compatibility" = "Format Compatibility";
@@ -1531,7 +1535,6 @@
 "KEEP THINGS\nMOVING." = "KEEP THINGS\nMOVING.";
 "KEEP THIS FILE" = "KEEP THIS FILE";
 "KEEP THIS PART" = "KEEP THIS PART";
-"KEEPS EVERY TRACK" = "KEEPS EVERY TRACK";
 "KEEPS THE LOOK AND DIMENSIONS OF EACH PAGE. BEST FOR VISUAL LAYOUTS." = "KEEPS THE LOOK AND DIMENSIONS OF EACH PAGE. BEST FOR VISUAL LAYOUTS.";
 "Keep at least one clip." = "Keep at least one clip.";
 "Keep at least one page." = "Keep at least one page.";
@@ -1548,7 +1551,6 @@
 "Keep things\nmoving." = "Keep things\nmoving.";
 "Keep this file" = "Keep this file";
 "Keep this part" = "Keep this part";
-"Keeps every track" = "Keeps every track";
 "Keeps the look and dimensions of each page. Best for visual layouts." = "Keeps the look and dimensions of each page. Best for visual layouts.";
 "LANDSCAPE" = "LANDSCAPE";
 "LANDSCAPE · 16:9" = "LANDSCAPE · 16:9";

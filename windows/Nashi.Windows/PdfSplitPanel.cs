@@ -99,11 +99,14 @@ public sealed partial class ToolEditor
             Outcome(made==1?L10n.Text("1 file"):string.Format(L10n.Text("{0} files"),made),string.Format(L10n.Text("{0} pages in all"),kept)+(kept<total?" · "+string.Format(L10n.Text("{0} pages left out"),total-kept):""));
         }
         afterReset+=()=>{chosen=false;cuts.Clear();left.Clear();mode.Select(0);wrong.Visibility=Visibility.Collapsed;Show();};
+        // A new password starts a new read; only the latest one may change what is shown.
+        var reading=0;
         async void Read()
         {
+            var mine=++reading;
             try
             {
-                total=collageInputs.Length==1?await NativePdf.PageCountAsync(input,archivePassword.Password):0;if(!IsLoaded)return;
+                var count=collageInputs.Length==1?await NativePdf.PageCountAsync(input,archivePassword.Password):0;if(!IsLoaded||mine!=reading)return;total=count;
                 ShowPreviewNotice(null);locked.Visibility=archivePassword.Password.Length>0?Visibility.Visible:Visibility.Collapsed;
                 about.Text=collageInputs.Length>1?string.Format(L10n.Text("{0} PDFs selected. Each is split the same way."),collageInputs.Length):total==1?L10n.Text("This PDF has one page, so there is nothing to split."):string.Format(L10n.Text("{0} pages."),total)+" "+L10n.Text("Each part becomes its own PDF; your original stays as it is.");
                 if(total>0)BuildSplitCells(total,ToggleCut,page=>{var parts=Parts();var n=Array.FindIndex(parts,p=>p.First<=page&&page<=p.Last);if(n>=0)ToggleFile(n);});
@@ -112,10 +115,10 @@ public sealed partial class ToolEditor
             catch(InvalidDataException error)
             {
                 // Nothing can be shown: the even split still works, and a password can still be typed.
-                total=0;splitCanvas.Children.Clear();splitCells.Clear();if(!IsLoaded)return;var needsPassword=error.Message=="The PDF password is missing or incorrect.";locked.Visibility=needsPassword?Visibility.Visible:locked.Visibility;
+                if(mine!=reading)return;total=0;splitCanvas.Children.Clear();splitCells.Clear();if(!IsLoaded)return;var needsPassword=error.Message=="The PDF password is missing or incorrect.";locked.Visibility=needsPassword?Visibility.Visible:locked.Visibility;
                 ShowPreviewNotice(L10n.Text(needsPassword?"This PDF has a password. Type it to see the pages.":"The pages cannot be shown, but the split still works."));about.Text=L10n.Text("Each part becomes its own PDF; your original stays as it is.");
             }
-            catch(Exception error)when(error is IOException or UnauthorizedAccessException){if(IsLoaded)ShowPreviewNotice(L10n.Text("Preview unavailable")+" · "+error.Message);}
+            catch(Exception error){if(mine!=reading)return;if(IsLoaded)ShowPreviewNotice(L10n.Text("Preview unavailable")+" · "+error.Message);}
             chosen=false;cuts.Clear();left.Clear();mode.Select(0);Keep();Show();if(total>0)_ = LoadSplitPages();
         }
         var again=new System.Windows.Threading.DispatcherTimer{Interval=TimeSpan.FromMilliseconds(400)};again.Tick+=(_,_)=>{again.Stop();Read();};archivePassword.PasswordChanged+=(_,_)=>{again.Stop();again.Start();};Closed+=(_,_)=>again.Stop();

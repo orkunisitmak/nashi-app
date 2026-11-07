@@ -61,6 +61,8 @@ public static partial class ImageEngine
     private static (BitmapSource Image,Rect Area) Cover(string path,double blur,int width,int height)
     {
         var source=Source(path,Math.Max(width,height));var scale=Math.Max(width/(double)source.PixelWidth,height/(double)source.PixelHeight);
+        // The cut-down copy cannot cover a tall canvas sharply; unless blur hides it, the full picture is used.
+        if(blur==0&&scale>1&&Math.Max(source.PixelWidth,source.PixelHeight)==2048){source=Source(path,int.MaxValue);scale=Math.Max(width/(double)source.PixelWidth,height/(double)source.PixelHeight);}
         var area=new Rect((width-source.PixelWidth*scale)/2,(height-source.PixelHeight*scale)/2,source.PixelWidth*scale,source.PixelHeight*scale);
         return(blur>0?Blurred(source,blur/scale):source,area);
     }

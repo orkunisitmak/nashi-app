@@ -8,7 +8,7 @@ namespace Nashi.Core;
 // original, so radii given in pixels shrink with it and both look alike.
 public static class PhotoPixels
 {
-    private static readonly ArrayPool<float> pool=ArrayPool<float>.Create(1<<27,8);
+    private static readonly ArrayPool<float> pool=ArrayPool<float>.Create(1<<22,4);
     private static readonly float[] toLinear=Enumerable.Range(0,256).Select(i=>(float)Linear(i/255d)).ToArray();
     private const int Steps=4096;
     private static readonly float[] toEncoded=Enumerable.Range(0,Steps+1).Select(i=>(float)Encoded(i/(double)Steps)).ToArray();

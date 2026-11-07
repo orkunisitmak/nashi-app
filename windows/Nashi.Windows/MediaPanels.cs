@@ -104,7 +104,7 @@ public sealed partial class ToolEditor
             ()=>{try{return Value(target)>0?null:Number(Value(share));}catch(ArgumentException){return null;}},value=>{fields[target].Text="0";fields[share].Text=value;},light=>{fields[share].TextChanged+=(_,_)=>light();fields[target].TextChanged+=(_,_)=>light();});
         // A size of one's own, in megabytes (the saved field is in kilobytes).
         var own=new TextBox{Style=Ui.Style("Unit"),Tag="MB",Margin=new(0,6,0,0)};L10n.Bind(own,ToolTipProperty,"Exact size");System.Windows.Automation.AutomationProperties.SetName(own,L10n.Text("Exact size"));
-        own.TextChanged+=(_,_)=>{if(!own.IsKeyboardFocusWithin)return;if(double.TryParse(own.Text,NumberStyles.Float,CultureInfo.CurrentCulture,out var mb)&&mb>0)fields[target].Text=Number(Math.Round(mb*1024));else if(own.Text.Trim().Length==0)fields[target].Text="0";};
+        own.TextChanged+=(_,_)=>{if(!own.IsKeyboardFocusWithin)return;if(double.TryParse(own.Text,NumberStyles.Float,CultureInfo.CurrentCulture,out var mb)&&mb>0)fields[target].Text=Number(Math.Round(mb*1024));else fields[target].Text=own.Text.Trim().Length==0?"0":own.Text;};
         fields[target].TextChanged+=(_,_)=>{if(own.IsKeyboardFocusWithin)return;try{var kb=Value(target);own.Text=kb>0?Number(Math.Round(kb/1024,2)):"";}catch(ArgumentException){}};
         options.Children.Add(L10n.Label(new TextBlock{Text="Or an exact size"}));options.Children.Add(own);
         Follow(()=>{try{var kb=Value(target);return(string.Format(L10n.Text("About {0}"),kb>0?Weight(kb*1024):Weight(media!.Bytes*(1-Value(share)/100))),string.Format(L10n.Text("Now {0}"),Weight(media!.Bytes)));}catch(ArgumentException){return("","");}},share,target);
@@ -268,7 +268,7 @@ public sealed partial class ToolEditor
         afterRanges+=()=>{if(add is not null&&activePart<0&&bleepRanges.Count>0)activePart=bleepRanges.Count-1;ShowParts();};afterReset+=()=>{activePart=-1;ShowParts();};ShowParts();
     }
     // Audio to Video: the frame's shape and what moves in it, shown as a still of the video it will make.
-    private readonly Image visualPreview=new(){Stretch=Stretch.Uniform};
+    private readonly Image visualPreview=new(){Stretch=Stretch.Uniform};private Action? visualChosen;
     private void ShapeVisualization()
     {
         Heading("Video");Stash("Width","Height");string Shape(){try{return Value("Width",1280)+"x"+Value("Height",720);}catch(ArgumentException){return "";}}
@@ -276,9 +276,10 @@ public sealed partial class ToolEditor
         Chips("Visualization",[("Waveform","waveform"),("Spectrum","spectrum"),("Bars","bars"),("Picture","image")],()=>visualization.SelectedItem as string,value=>{if(value=="image"&&visualImage is null){ChooseVisualImage();return;}visualization.SelectedItem=value;},light=>visualization.SelectionChanged+=(_,_)=>light());
         var picker=MainWindow.Button("Choose picture…",ChooseVisualImage);picker.Style=Ui.Style("Chip");picker.Margin=new(0,2,0,0);options.Children.Add(picker);
         void Show(){picker.Visibility=visualization.SelectedItem as string=="image"?Visibility.Visible:Visibility.Collapsed;try{Outcome(string.Format(L10n.Text("MP4 · {0} × {1} · {2}"),(int)Value("Width",1280),(int)Value("Height",720),Stamp(duration)));}catch(ArgumentException){}_ = DrawVisualization();_ = RenderVisualization();}
-        visualization.SelectionChanged+=(_,_)=>Show();fields["Width"].TextChanged+=(_,_)=>Show();fields["Height"].TextChanged+=(_,_)=>Show();afterReset+=Show;Show();
+        visualization.SelectionChanged+=(_,_)=>Show();fields["Width"].TextChanged+=(_,_)=>Show();fields["Height"].TextChanged+=(_,_)=>Show();afterReset+=Show;Show();visualChosen=Show;
     }
-    private void ChooseVisualImage(){var picker=new Microsoft.Win32.OpenFileDialog{Filter="Images|*.png;*.jpg;*.jpeg;*.bmp;*.webp"};if(picker.ShowDialog(this)==true){visualImage=picker.FileName;visualization.SelectedItem="image";}}
+    // Another picture keeps the same choice, so nothing else would redraw the preview.
+    private void ChooseVisualImage(){var picker=new Microsoft.Win32.OpenFileDialog{Filter="Images|*.png;*.jpg;*.jpeg;*.bmp;*.webp"};if(picker.ShowDialog(this)==true){visualImage=picker.FileName;var shown=visualization.SelectedItem as string=="image";visualization.SelectedItem="image";if(shown)visualChosen?.Invoke();}}
     // Normalize: three targets, each saying how much louder or quieter the sound becomes once measured.
     private double? loudness;
     private void ShapeLoudness()
@@ -344,7 +345,7 @@ public sealed partial class ToolEditor
         }
         format.SelectionChanged+=(_,_)=>Show();Show();
     }
-    private static string FormatUse(string format)=>format switch{"mp4"=>"Plays everywhere","mov"=>"Apple devices and editing","mkv"=>"Keeps every track","webm"=>"For websites","gif"=>"Silent looping animation","avi"=>"Older Windows software","wmv"=>"Windows Media","m4v"=>"iTunes and Apple TV","mp3"=>"Plays everywhere","m4a"=>"Small, Apple-friendly","wav"=>"Lossless, large","flac"=>"Lossless, smaller","ogg"=>"Open format","opus"=>"Smallest for voice","aiff"=>"Lossless, for Mac","wma"=>"Windows Media Audio","aac"=>"Small, widely supported",_=>""};
+    private static string FormatUse(string format)=>format switch{"mp4"=>"Plays everywhere","mov"=>"Apple devices and editing","mkv"=>"For desktop media players","webm"=>"For websites","gif"=>"Silent looping animation","avi"=>"Older Windows software","wmv"=>"Windows Media","m4v"=>"iTunes and Apple TV","mp3"=>"Plays everywhere","m4a"=>"Small, Apple-friendly","wav"=>"Lossless, large","flac"=>"Lossless, smaller","ogg"=>"Open format","opus"=>"Smallest for voice","aiff"=>"Lossless, for Mac","wma"=>"Windows Media Audio","aac"=>"Small, widely supported",_=>""};
     // A field moves (with its label) out of sight; it keeps working as the value saved.
     private void Stash(params string[] names)
     {

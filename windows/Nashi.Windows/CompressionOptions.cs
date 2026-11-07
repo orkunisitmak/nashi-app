@@ -62,7 +62,7 @@ public sealed partial class ToolEditor
             var bytes=await Task.Run(()=>{var temp=Path.Combine(Path.GetTempPath(),"nashi-estimate-"+Guid.NewGuid().ToString("N")+"."+kind);try{Nashi.Core.PhotoCodec.EncodeCompressed(pixels,w,h,temp,kind,quality);return new FileInfo(temp).Length;}finally{if(File.Exists(temp))File.Delete(temp);}});
             if(version!=estimateVersion)return;bytes=(long)(bytes*((double)width*height/((double)w*h)));var shown=target>0?Math.Min(bytes,(long)target):bytes;
             if(shown>=original&&kind==FeatureCatalog.Extension(input)&&width==bitmap.PixelWidth&&height==bitmap.PixelHeight){estimateText.Text=Weight(original);L10n.SetText(estimateNote,"Already compact: Nashi keeps the original. Try WebP, a smaller size or Strong.");return;}
-            estimateText.Text=$"{Weight(original)}  →  ~{Weight(shown)}";L10n.SetText(estimateNote,$"{Math.Max(0,1-shown/(double)original).ToString("P0",CultureInfo.CurrentCulture)} smaller");
+            estimateText.Text=$"{Weight(original)}  →  ~{Weight(shown)}";L10n.SetText(estimateNote,$"{Math.Max(0,1-shown/(double)original).ToString("P0",CultureInfo.CurrentCulture)} smaller"+(kind=="png"?", with fewer colors":""));
         }
         catch(Exception error)when(error is ArgumentException or IOException or ImageMagick.MagickException or InvalidOperationException or UnauthorizedAccessException){if(version==estimateVersion){estimateText.Text=Weight(original);L10n.SetText(estimateNote,"The size can't be estimated for these settings.");}}
     }

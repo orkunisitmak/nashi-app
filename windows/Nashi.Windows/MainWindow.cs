@@ -248,7 +248,7 @@ public sealed partial class MainWindow:Window
         void FocusLink(){if(webWindow is null)return;webWindow.Activate();Keyboard.Focus(link);}
         dialog.Loaded+=(_,_)=>FocusLink();dialog.ContentRendered+=(_,_)=>FocusLink();dialog.Show();link.Focus();dialog.Dispatcher.BeginInvoke(FocusLink,System.Windows.Threading.DispatcherPriority.Input);
     }
-    private void SetBusy(bool value){busy=value;updateButton.IsEnabled=!value&&!checking;workArea.IsEnabled=!value;webPage.IsEnabled=!value;ShowSetupState();foreach(var (button,available) in reuseButtons)button.IsEnabled=!value&&available;}
+    private void SetBusy(bool value){busy=value;updateButton.IsEnabled=!value&&!checking;foreach(UIElement part in workArea.Children)part.IsEnabled=!value||part==jobCard;webPage.IsEnabled=!value;ShowSetupState();foreach(var (button,available) in reuseButtons)button.IsEnabled=!value&&available;}
     // Finish Setup stays in the toolbar only while media or office tools are missing.
     private void ShowSetupState()=>toolsSetupButton.Visibility=!LibraryVisible&&!(tools.Ready&&officeRuntime.Executable is not null)?Visibility.Visible:Visibility.Collapsed;
     internal const string ShortcutHelp="Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools and conversions\nDelete  Remove selected files from Nashi\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved.";

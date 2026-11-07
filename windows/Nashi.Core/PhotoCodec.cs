@@ -65,7 +65,9 @@ public static class PhotoCodec
     {
         if(width<1||height<1||bgra.Length<(long)width*height*4)throw new ArgumentException("Choose a nonempty image.");
         using var image=new MagickImage();image.ReadPixels(bgra,new PixelReadSettings((uint)width,(uint)height,StorageType.Char,PixelMapping.BGRA));image.ColorSpace=ColorSpace.sRGB;image.Strip();
-        image.Quantize(new QuantizeSettings{Colors=(uint)Math.Clamp(colors,2,256),DitherMethod=DitherMethod.FloydSteinberg});image.Settings.SetDefine(MagickFormat.Png,"compression-level","9");image.Write(output,MagickFormat.Png);
+        // Too large to reduce within the memory limit, it keeps all its colors rather than failing.
+        try{image.Quantize(new QuantizeSettings{Colors=(uint)Math.Clamp(colors,2,256),DitherMethod=DitherMethod.FloydSteinberg});}catch(MagickResourceLimitErrorException){}
+        image.Settings.SetDefine(MagickFormat.Png,"compression-level","9");image.Write(output,MagickFormat.Png);
     }
     internal static int PaletteColors(int quality)=>quality>=85?256:quality>=70?160:96;
     public static void EncodeCompressed(byte[] bgra,int width,int height,string output,string format,int quality){if(format=="png")EncodePalettePng(bgra,width,height,output,PaletteColors(quality));else EncodePixels(bgra,width,height,output,format,quality);}

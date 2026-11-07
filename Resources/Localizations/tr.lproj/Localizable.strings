@@ -36,6 +36,7 @@
 "%@ selected" = "%@ seçili";
 "%@ selected · Drag to carry files" = "%@ seçili · Dosyaları taşımak için sürükle";
 "%@ smaller" = "%@ daha küçük";
+"%@ smaller, with fewer colors" = "%@ daha küçük, daha az renkle";
 "%@ split points" = "%@ bölme noktası";
 "%@ timeline" = "%@ zaman çizelgesi";
 "%@ tools" = "%@ araç";
@@ -87,6 +88,7 @@
 "%lld selected" = "%lld seçili";
 "%lld selected · Drag to carry files" = "%lld seçili · Dosyaları taşımak için sürükle";
 "%lld smaller" = "%lld daha küçük";
+"%lld smaller, with fewer colors" = "%lld daha küçük, daha az renkle";
 "%lld split points" = "%lld bölme noktası";
 "%lld timeline" = "%lld zaman çizelgesi";
 "%lld tools" = "%lld araç";
@@ -1262,6 +1264,7 @@
 "FOLLOWS THE SYSTEM VOLUME." = "SİSTEM SES DÜZEYİNİ İZLER.";
 "FONT" = "YAZI TİPİ";
 "FONT SIZE" = "YAZI BOYUTU";
+"FOR DESKTOP MEDIA PLAYERS" = "MASAÜSTÜ MEDYA OYNATICILARI İÇİN";
 "FOR WEBSITES" = "WEB SİTELERİ İÇİN";
 "FORMAT" = "BİÇİM";
 "FORMAT COMPATIBILITY" = "BİÇİM UYUMLULUĞU";
@@ -1351,6 +1354,7 @@
 "Follows the system volume." = "Sistem ses düzeyini izler.";
 "Font" = "Yazı tipi";
 "Font size" = "Yazı boyutu";
+"For desktop media players" = "Masaüstü medya oynatıcıları için";
 "For websites" = "Web siteleri için";
 "Format" = "Biçim";
 "Format Compatibility" = "Biçim Uyumluluğu";
@@ -1531,7 +1535,6 @@
 "KEEP THINGS\nMOVING." = "AKIŞINI\nKORU.";
 "KEEP THIS FILE" = "BU DOSYAYI GERİ AL";
 "KEEP THIS PART" = "BU PARÇAYI GERİ AL";
-"KEEPS EVERY TRACK" = "TÜM İZLERİ KORUR";
 "KEEPS THE LOOK AND DIMENSIONS OF EACH PAGE. BEST FOR VISUAL LAYOUTS." = "HER SAYFANIN GÖRÜNÜMÜNÜ VE BOYUTLARINI KORUR. GÖRSEL DÜZENLER İÇİN EN İYİSİ.";
 "Keep at least one clip." = "En az bir klip bırak.";
 "Keep at least one page." = "En az bir sayfa bırak.";
@@ -1548,7 +1551,6 @@
 "Keep things\nmoving." = "Akışını\nkoru.";
 "Keep this file" = "Bu dosyayı geri al";
 "Keep this part" = "Bu parçayı geri al";
-"Keeps every track" = "Tüm izleri korur";
 "Keeps the look and dimensions of each page. Best for visual layouts." = "Her sayfanın görünümünü ve boyutlarını korur. Görsel düzenler için en iyisi.";
 "LANDSCAPE" = "YATAY";
 "LANDSCAPE · 16:9" = "YATAY · 16:9";
