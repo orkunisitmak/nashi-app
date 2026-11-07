@@ -484,7 +484,7 @@
   "Choose your home folder or a folder where you save files.": "Ana klasörünü veya dosyalarını kaydettiğin bir klasörü seç.",
   "No folders allowed yet.": "Henüz izin verilen klasör yok.",
   "Remove All": "Tümünü Kaldır",
-  "Nashi saves results beside the originals. Allow a folder once to include every folder inside it.": "Nashi sonuçları orijinallerin yanına kaydeder. Bir klasöre verilen izin, içindeki klasörleri de kapsar.",
+  "Nashi saves results beside the originals unless Settings › General names another folder. Allow a folder once to include every folder inside it.": "Nashi sonuçları orijinallerin yanına kaydeder; Ayarlar › Genel bölümünde başka bir klasör seçilmediği sürece. Bir klasöre bir kez izin ver; içindeki tüm klasörler dahil olur.",
   "Save new copies": "Yeni kopyaları kaydet",
   "Beside original files": "Orijinal dosyaların yanına",
   "Ask each time": "Her seferinde sor",
@@ -1433,5 +1433,15 @@
   "YouTube thumbnail · best available full-size image": "YouTube küçük resmi · en iyi tam boyutlu görsel",
   "No tools for this file type": "Bu dosya türü için araç yok",
   "Details": "Ayrıntılar",
-  "Copy details": "Ayrıntıları kopyala"
+  "Copy details": "Ayrıntıları kopyala",
+  "Save copies": "Kopyaları kaydet",
+  "Beside the original": "Orijinalin yanına",
+  "In a folder": "Bir klasöre",
+  "Change Folder…": "Klasörü değiştir…",
+  "Save Copies To": "Kopyaları şuraya kaydet",
+  "Save Here": "Buraya kaydet",
+  "New files are written here instead of beside the originals.": "Yeni dosyalar orijinallerin yanına değil buraya yazılır.",
+  "The chosen folder is unavailable right now. Results go beside the originals and return to this folder when it is available again.": "Seçilen klasör şu anda kullanılamıyor. Sonuçlar orijinallerin yanına kaydedilir; klasör yeniden kullanılabilir olduğunda buraya döner.",
+  "The folder could not be saved. Choose another folder.": "Klasör kaydedilemedi. Başka bir klasör seç.",
+  "Results go beside the original file unless you choose a folder.": "Bir klasör seçmezsen sonuçlar orijinal dosyanın yanına kaydedilir."
 }

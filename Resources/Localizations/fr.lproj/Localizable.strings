@@ -346,6 +346,7 @@
 "BALANCED" = "ÉQUILIBRÉ";
 "BARS" = "BARRES";
 "BESIDE ORIGINAL FILES" = "À CÔTÉ DES FICHIERS D’ORIGINE";
+"BESIDE THE ORIGINAL" = "À CÔTÉ DE L'ORIGINAL";
 "BEST AVAILABLE" = "OPTIMALE";
 "BETTER TOGETHER." = "MIEUX ENSEMBLE.";
 "BITRATE" = "DÉBIT";
@@ -366,6 +367,7 @@
 "Balanced" = "Équilibré";
 "Bars" = "Barres";
 "Beside original files" = "À côté des fichiers d’origine";
+"Beside the original" = "À côté de l'original";
 "Best available" = "Optimale";
 "Better together." = "Mieux ensemble.";
 "Bitrate" = "Débit";
@@ -391,6 +393,7 @@
 "CANVAS" = "CANEVAS";
 "CANVAS HEIGHT" = "HAUTEUR DU CANEVAS";
 "CANVAS WIDTH" = "LARGEUR DU CANEVAS";
+"CHANGE FOLDER…" = "CHANGER DE DOSSIER…";
 "CHANGE SPEED" = "CHANGER LA VITESSE";
 "CHANGE SPEED · NASHI" = "CHANGER LA VITESSE · NASHI";
 "CHANGE VIDEO SPEED" = "CHANGER LA VITESSE DE LA VIDÉO";
@@ -588,6 +591,7 @@
 "Canvas" = "Canevas";
 "Canvas height" = "Hauteur du canevas";
 "Canvas width" = "Largeur du canevas";
+"Change Folder…" = "Changer de dossier…";
 "Change Speed" = "Changer la vitesse";
 "Change Speed · Nashi" = "Changer la vitesse · Nashi";
 "Change Video Speed" = "Changer la vitesse de la vidéo";
@@ -1266,6 +1270,7 @@
 "IMAGE SIZE" = "TAILLE DE L’IMAGE";
 "IMAGES" = "IMAGES";
 "IMAGES, VIDEOS, DOCUMENTS, AND ALL THE LITTLE THINGS IN BETWEEN." = "IMAGES, VIDÉOS, DOCUMENTS ET TOUS LES PETITS FORMATS ENTRE LES DEUX.";
+"IN A FOLDER" = "DANS UN DOSSIER";
 "INK COLOR" = "COULEUR DE L’ENCRE";
 "INPUT AND OUTPUT FORMAT." = "FORMAT D’ENTRÉE ET DE SORTIE.";
 "INPUT FORMAT" = "FORMAT D’ENTRÉE";
@@ -1296,6 +1301,7 @@
 "Image size" = "Taille de l’image";
 "Images" = "Images";
 "Images, videos, documents, and all the little things in between." = "Images, vidéos, documents et tous les petits formats entre les deux.";
+"In a folder" = "Dans un dossier";
 "Ink color" = "Couleur de l’encre";
 "Input and output format." = "Format d’entrée et de sortie.";
 "Input format" = "Format d’entrée";
@@ -1523,7 +1529,7 @@
 "NASHI CONVERT WHEEL" = "ROUE DE CONVERSION NASHI";
 "NASHI IS ALREADY RUNNING BUT IS STILL STARTING. OPEN IT FROM THE SYSTEM TRAY OR TRY AGAIN IN A MOMENT." = "NASHI EST DÉJÀ OUVERT MAIS DÉMARRE ENCORE. OUVREZ-LE DEPUIS LA ZONE DE NOTIFICATION OU RÉESSAYEZ DANS UN INSTANT.";
 "NASHI IS STILL RUNNING." = "NASHI EST TOUJOURS EN COURS D’EXÉCUTION.";
-"NASHI SAVES RESULTS BESIDE THE ORIGINALS. ALLOW A FOLDER ONCE TO INCLUDE EVERY FOLDER INSIDE IT." = "NASHI ENREGISTRE LES RÉSULTATS À CÔTÉ DES ORIGINAUX. AUTORISEZ UN DOSSIER UNE SEULE FOIS POUR INCLURE TOUS LES DOSSIERS QU’IL CONTIENT.";
+"NASHI SAVES RESULTS BESIDE THE ORIGINALS UNLESS SETTINGS › GENERAL NAMES ANOTHER FOLDER. ALLOW A FOLDER ONCE TO INCLUDE EVERY FOLDER INSIDE IT." = "NASHI ENREGISTRE LES RÉSULTATS À CÔTÉ DES ORIGINAUX, SAUF SI RÉGLAGES › GÉNÉRAL INDIQUE UN AUTRE DOSSIER. AUTORISEZ UN DOSSIER UNE FOIS POUR INCLURE TOUS SES SOUS-DOSSIERS.";
 "NASHI SETTINGS" = "RÉGLAGES DE NASHI";
 "NASHI TOOLS WHEEL" = "ROUE DES OUTILS DE FICHIER NASHI";
 "NASHI UPDATE" = "MISE À JOUR DE NASHI";
@@ -1531,6 +1537,7 @@
 "NASHI WEB MEDIA WHEEL" = "ROUE DES MÉDIAS WEB NASHI";
 "NASHI · FEATURES & SHORTCUTS" = "NASHI · FONCTIONNALITÉS ET RACCOURCIS";
 "NEW FEATURES AND SMALL IMPROVEMENTS, DELIVERED RIGHT HERE." = "DE NOUVELLES FONCTIONNALITÉS ET DE PETITES AMÉLIORATIONS, LIVRÉES ICI MÊME.";
+"NEW FILES ARE WRITTEN HERE INSTEAD OF BESIDE THE ORIGINALS." = "LES NOUVEAUX FICHIERS SONT ÉCRITS ICI AU LIEU D'ÊTRE PLACÉS À CÔTÉ DES ORIGINAUX.";
 "NEXT" = "SUIVANT";
 "NEXT FRAME" = "IMAGE SUIVANTE";
 "NEXT PAGE" = "PAGE SUIVANTE";
@@ -1580,13 +1587,14 @@
 "Nashi convert wheel" = "Roue de conversion Nashi";
 "Nashi is already running but is still starting. Open it from the system tray or try again in a moment." = "Nashi est déjà ouvert mais démarre encore. Ouvrez-le depuis la zone de notification ou réessayez dans un instant.";
 "Nashi is still running." = "Nashi est toujours en cours d’exécution.";
-"Nashi saves results beside the originals. Allow a folder once to include every folder inside it." = "Nashi enregistre les résultats à côté des originaux. Autorisez un dossier une seule fois pour inclure tous les dossiers qu’il contient.";
+"Nashi saves results beside the originals unless Settings › General names another folder. Allow a folder once to include every folder inside it." = "Nashi enregistre les résultats à côté des originaux, sauf si Réglages › Général indique un autre dossier. Autorisez un dossier une fois pour inclure tous ses sous-dossiers.";
 "Nashi tools wheel" = "Roue des outils de fichier Nashi";
 "Nashi update" = "Mise à jour de Nashi";
 "Nashi update could not finish" = "La mise à jour de Nashi n’a pas pu se terminer";
 "Nashi web media wheel" = "Roue des médias web Nashi";
 "Nashi · Features & shortcuts" = "Nashi · Fonctionnalités et raccourcis";
 "New features and small improvements, delivered right here." = "De nouvelles fonctionnalités et de petites améliorations, livrées ici même.";
+"New files are written here instead of beside the originals." = "Les nouveaux fichiers sont écrits ici au lieu d'être placés à côté des originaux.";
 "Next" = "Suivant";
 "Next frame" = "Image suivante";
 "Next page" = "Page suivante";
@@ -1951,6 +1959,7 @@
 "RESIZE IMAGE" = "REDIMENSIONNER L’IMAGE";
 "RESTORE CLIPS" = "RESTAURER LES CLIPS";
 "RESTORE DEFAULTS" = "RÉTABLIR LES RÉGLAGES PAR DÉFAUT";
+"RESULTS GO BESIDE THE ORIGINAL FILE UNLESS YOU CHOOSE A FOLDER." = "LES RÉSULTATS SONT PLACÉS À CÔTÉ DU FICHIER D'ORIGINE, SAUF SI VOUS CHOISISSEZ UN DOSSIER.";
 "REVEAL FINISHED FILES IN EXPLORER" = "AFFICHER LES FICHIERS TERMINÉS DANS L’EXPLORATEUR";
 "REVEAL FINISHED FILES IN FINDER" = "AFFICHER LES FICHIERS TERMINÉS DANS LE FINDER";
 "RIGHT" = "DROITE";
@@ -2027,6 +2036,7 @@
 "Restore Clips" = "Restaurer les clips";
 "Restore Defaults" = "Rétablir les réglages par défaut";
 "Restore defaults" = "Rétablir les réglages par défaut";
+"Results go beside the original file unless you choose a folder." = "Les résultats sont placés à côté du fichier d'origine, sauf si vous choisissez un dossier.";
 "Reveal finished files in Explorer" = "Afficher les fichiers terminés dans l’Explorateur";
 "Reveal finished files in Finder" = "Afficher les fichiers terminés dans le Finder";
 "Right" = "Droite";
@@ -2053,6 +2063,8 @@
 "SAVE AUDIO COPY" = "ENREGISTRER LA COPIE AUDIO";
 "SAVE BLEEPED COPY" = "ENREGISTRER LA COPIE AVEC BIP";
 "SAVE CONNECTION" = "ENREGISTRER LA CONNEXION";
+"SAVE COPIES" = "ENREGISTRER LES COPIES";
+"SAVE COPIES TO" = "ENREGISTRER LES COPIES DANS";
 "SAVE COPY" = "ENREGISTRER LA COPIE";
 "SAVE CROPPED COPY" = "ENREGISTRER LA COPIE RECADRÉE";
 "SAVE DEFAULTS" = "ENREGISTRER LES RÉGLAGES PAR DÉFAUT";
@@ -2060,6 +2072,7 @@
 "SAVE DOWNLOADED MEDIA TO…" = "ENREGISTRER LES MÉDIAS TÉLÉCHARGÉS DANS…";
 "SAVE DOWNLOADS HERE" = "ENREGISTRER LES TÉLÉCHARGEMENTS ICI";
 "SAVE EDITED COPY" = "ENREGISTRER LA COPIE MODIFIÉE";
+"SAVE HERE" = "ENREGISTRER ICI";
 "SAVE METADATA COPY" = "ENREGISTRER LA COPIE DES MÉTADONNÉES";
 "SAVE MUTED COPY" = "ENREGISTRER LA COPIE MUETTE";
 "SAVE NEW COPIES" = "ENREGISTRER LES NOUVELLES COPIES";
@@ -2197,7 +2210,9 @@
 "Save %lld frames" = "Enregistrer %lld images";
 "Save 1 frame" = "Enregistrer 1 image";
 "Save Connection" = "Enregistrer la connexion";
+"Save Copies To" = "Enregistrer les copies dans";
 "Save Downloads Here" = "Enregistrer les téléchargements ici";
+"Save Here" = "Enregistrer ici";
 "Save a copy" = "Enregistrer une copie";
 "Save a cropped copy (Return or ⌘S)" = "Enregistrer la copie recadrée (Retour ou ⌘S)";
 "Save a fresh copy (⌘S)" = "Enregistrer une nouvelle copie (⌘S)";
@@ -2205,6 +2220,7 @@
 "Save as" = "Enregistrer sous";
 "Save audio copy" = "Enregistrer la copie audio";
 "Save bleeped copy" = "Enregistrer la copie avec bip";
+"Save copies" = "Enregistrer les copies";
 "Save copy" = "Enregistrer la copie";
 "Save cropped copy" = "Enregistrer la copie recadrée";
 "Save defaults" = "Enregistrer les réglages par défaut";
@@ -2379,6 +2395,7 @@
 "THE ARCHIVE ENTRY LEAVES ITS DESTINATION." = "L’ENTRÉE DE L’ARCHIVE SORT DE SA DESTINATION.";
 "THE ARCHIVE EXPANDS BEYOND THE 20 GB SAFETY LIMIT." = "UNE FOIS DÉCOMPRESSÉE, L’ARCHIVE DÉPASSE LA LIMITE DE SÉCURITÉ DE 20 GO.";
 "THE ARCHIVE HAS TOO MANY ENTRIES (100,000 LIMIT)." = "L’ARCHIVE CONTIENT TROP D’ENTRÉES (LIMITE DE 100 000).";
+"THE CHOSEN FOLDER IS UNAVAILABLE RIGHT NOW. RESULTS GO BESIDE THE ORIGINALS AND RETURN TO THIS FOLDER WHEN IT IS AVAILABLE AGAIN." = "LE DOSSIER CHOISI EST INDISPONIBLE POUR LE MOMENT. LES RÉSULTATS SONT PLACÉS À CÔTÉ DES ORIGINAUX ET REVIENNENT ICI DÈS QUE LE DOSSIER EST DE NOUVEAU DISPONIBLE.";
 "THE CLIPPING EXCEEDS 200 MB." = "LE FRAGMENT DÉPASSE 200 MO.";
 "THE CLIPPING HAS NO READABLE TEXT. INCLUDE ITS ORIGINAL RESOURCE FORK/APPLEDOUBLE SIDECAR, OR PASTE ITS TEXT INTO NASHI." = "LE FRAGMENT NE CONTIENT AUCUN TEXTE LISIBLE. INCLUEZ SON FICHIER ANNEXE D’ORIGINE (RESOURCE FORK/APPLEDOUBLE) OU COLLEZ SON TEXTE DANS NASHI.";
 "THE DOCUMENT HAS NO EDITABLE BODY." = "LE DOCUMENT N’A PAS DE CORPS MODIFIABLE.";
@@ -2394,6 +2411,7 @@
 "THE FILE HAS NO AUDIO TRACK." = "LE FICHIER NE CONTIENT AUCUNE PISTE AUDIO.";
 "THE FILE HAS NO PLAYABLE AUDIO OR VIDEO TRACK." = "LE FICHIER NE CONTIENT AUCUNE PISTE AUDIO OU VIDÉO LISIBLE.";
 "THE FILE HAS NO VIDEO TRACK." = "LE FICHIER NE CONTIENT AUCUNE PISTE VIDÉO.";
+"THE FOLDER COULD NOT BE SAVED. CHOOSE ANOTHER FOLDER." = "LE DOSSIER N'A PAS PU ÊTRE ENREGISTRÉ. CHOISISSEZ UN AUTRE DOSSIER.";
 "THE IMAGE DOWNLOAD ENDED EARLY." = "LE TÉLÉCHARGEMENT DE L’IMAGE S’EST TERMINÉ PRÉMATURÉMENT.";
 "THE IMAGE ORDER MUST INCLUDE EVERY IMAGE ONCE." = "L’ORDRE DES IMAGES DOIT INCLURE CHAQUE IMAGE UNE FOIS.";
 "THE MEDIA SERVER REDIRECTED TO AN INSECURE URL." = "LE SERVEUR MULTIMÉDIA A REDIRIGÉ VERS UNE URL NON SÉCURISÉE.";
@@ -2535,6 +2553,7 @@
 "The archive entry leaves its destination." = "L’entrée de l’archive sort de sa destination.";
 "The archive expands beyond the 20 GB safety limit." = "Une fois décompressée, l’archive dépasse la limite de sécurité de 20 Go.";
 "The archive has too many entries (100,000 limit)." = "L’archive contient trop d’entrées (limite de 100 000).";
+"The chosen folder is unavailable right now. Results go beside the originals and return to this folder when it is available again." = "Le dossier choisi est indisponible pour le moment. Les résultats sont placés à côté des originaux et reviennent ici dès que le dossier est de nouveau disponible.";
 "The clipping exceeds 200 MB." = "Le fragment dépasse 200 Mo.";
 "The clipping has no readable text. Include its original resource fork/AppleDouble sidecar, or paste its text into Nashi." = "Le fragment ne contient aucun texte lisible. Incluez son fichier annexe d’origine (resource fork/AppleDouble) ou collez son texte dans Nashi.";
 "The crop rectangle must fit completely inside the %@ × %@ pixel image." = "Le rectangle de recadrage doit tenir entièrement dans l’image de %@ × %@ pixels.";
@@ -2553,6 +2572,7 @@
 "The file has no audio track." = "Le fichier ne contient aucune piste audio.";
 "The file has no playable audio or video track." = "Le fichier ne contient aucune piste audio ou vidéo lisible.";
 "The file has no video track." = "Le fichier ne contient aucune piste vidéo.";
+"The folder could not be saved. Choose another folder." = "Le dossier n'a pas pu être enregistré. Choisissez un autre dossier.";
 "The image download ended early." = "Le téléchargement de l’image s’est terminé prématurément.";
 "The image order must include every image once." = "L’ordre des images doit inclure chaque image une fois.";
 "The local document converter did not produce a %@ file. %@" = "Le convertisseur de documents local n’a pas produit de fichier %@. %@";
