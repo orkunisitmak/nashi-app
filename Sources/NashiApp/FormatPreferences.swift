@@ -86,12 +86,12 @@ struct FormatPreferenceItem:Identifiable,Hashable {
     let id:String
     let group:String
     var title:String { switch id { case "gz":return "GZIP";case "md":return "Markdown";case "textclipping":return "Text Clipping";default:return id.uppercased() } }
-    var isInputOnly:Bool { ["svg","ppt","xls","rtf","rtfd","textclipping","rar"].contains(id) }
+    var isInputOnly:Bool { ["svg","dng","ppt","xls","rtf","rtfd","textclipping","rar"].contains(id) }
     var isOutputOnly:Bool { FeatureCatalog.conversionMatrix[id] == nil }
     var compatibilityLabel:String { isInputOnly ? "Input-only format.":isOutputOnly ? "Output-only format.":"Input and output format." }
     var symbol:String { switch group { case "Images":return "photo";case "Audio":return "waveform";case "Video":return "film";case "Archives":return "archivebox";case "Spreadsheets":return "tablecells";case "Subtitles":return "captions.bubble";default:return "doc.text" } }
     static let groups:[(String,[String])]=[
-        ("Images",["jpg","png","webp","heic","tiff","svg","avif","bmp"]),
+        ("Images",["jpg","png","webp","heic","tiff","svg","avif","bmp","dng"]),
         ("Documents",["pdf","docx","pages","ppt","pptx","txt","md","rtf","rtfd","textclipping","html","epub"]),
         ("Spreadsheets",["xlsx","xls","ods","csv","tsv"]),
         ("Audio",["mp3","m4a","wav","flac","ogg","opus","aiff","wma"]),
