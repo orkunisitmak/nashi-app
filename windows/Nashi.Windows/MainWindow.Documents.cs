@@ -43,8 +43,8 @@ public sealed partial class MainWindow
         }
         var dialog=new ToolEditor(this,choice.Id,choice.Title,selected[0],inputs:selected);if(dialog.ShowDialog()!=true)return;if(choice.Id=="compress"){await RunAsync((destination,p,t)=>PdfCompression.RunAsync(selected,destination,dialog.ImageOptions,dialog.DocumentOptions.Password,p,t),"Compress PDF");return;}
         // PagesPerFile and PageRanges read editor text boxes, so capture them before leaving the UI thread.
-        var inputs=dialog.OrderedInputs;var pagesPerFile=dialog.PagesPerFile;var password=dialog.DocumentOptions.Password;var pageRanges=dialog.PageRanges;
-        await RunAsync((destination,p,t)=>Task.Run(()=>DocumentEngine.Pdf(choice.Id,inputs,destination,null,t,pagesPerFile:pagesPerFile,password:password,pageRanges:pageRanges),t),choice.Title);
+        var inputs=dialog.OrderedInputs;var outputName=dialog.OutputName;var pagesPerFile=dialog.PagesPerFile;var password=dialog.DocumentOptions.Password;var pageRanges=dialog.PageRanges;
+        await RunAsync((destination,p,t)=>Task.Run(()=>DocumentEngine.Pdf(choice.Id,inputs,destination,null,t,pagesPerFile:pagesPerFile,password:password,pageRanges:pageRanges,outputName:outputName),t),choice.Title);
     }
     private async Task ReadQrAsync(IReadOnlyList<string> inputs)
     {
