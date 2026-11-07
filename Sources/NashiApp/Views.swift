@@ -24,6 +24,7 @@ struct SettingsView:View {
     @State private var launchNeedsApproval=false
     @State private var launchUnavailable=false
     @State private var launchError:String?
+    @AppStorage(LaunchAtLogin.minimizedPreferenceKey) private var launchMinimized=LaunchAtLogin.isLaunchMinimizedDefault
     @AppStorage("reduceAnimations") private var reduceAnimations=false
     @AppStorage("appAppearance") private var appAppearance="system"
     @AppStorage("appLanguage") private var appLanguage="en"
@@ -58,7 +59,12 @@ struct SettingsView:View {
         }.frame(minWidth:790,minHeight:590).background(NashiPalette.canvas).tint(.nashi)
         .buttonStyle(NashiButtonStyle()).toggleStyle(.switch).groupBoxStyle(NashiGroupBoxStyle()).nashiAnimation(value:section)
         .onAppear(perform:readLaunchStatus)
+        .onReceive(NotificationCenter.default.publisher(for:NSApplication.didBecomeActiveNotification)) { _ in readLaunchStatus() }
         .onReceive(NotificationCenter.default.publisher(for:.showUpdateSettings)) { _ in section = .updates }
+        .onChange(of:launchMinimized) {
+            if let error=LaunchAtLogin.syncLaunchMinimized($0) { launchError=error.localizedDescription }
+            else { launchError=nil }
+        }
         .onChange(of:feedback) { UserDefaults.standard.set($0,forKey:"sound") }
         .onChange(of:appAppearance) { NashiAppearance.apply($0) }
         .onChange(of:appLanguage) { _ in NotificationCenter.default.post(name:.nashiLanguageChanged,object:nil) }
@@ -95,7 +101,8 @@ struct SettingsView:View {
                     Toggle("Launch at login",isOn:Binding(get:{launch},set:updateLaunch)).disabled(launchUnavailable)
                     if launchNeedsApproval { HStack { Text("Allow Nashi in macOS Login Items.").font(.caption).foregroundStyle(.secondary);Spacer();Button("Open Login Items") { SMAppService.openSystemSettingsLoginItems() } } }
                     if launchUnavailable { Text("Launch at login is unavailable for this copy.").font(.caption).foregroundStyle(.secondary) }
-                    if let launchError { Text(launchError).font(.caption).foregroundStyle(.secondary) }
+                    if let launchError { LText(launchError).font(.caption).foregroundStyle(.secondary) }
+                    Toggle("Launch minimized",isOn:$launchMinimized)
                     HStack {
                         Toggle("Sound and haptic feedback",isOn:$feedback)
                         Button("Try feedback") { _ = WheelFeedback.shared.testPreview() }
@@ -168,12 +175,14 @@ struct SettingsView:View {
     private func shortcut(_ wheel:WheelShortcut)->Binding<UInt> {
         Binding(get:{ModifierPreferences.chord(for:wheel).rawValue},set:{if ModifierPreferences.set(.init(rawValue:$0),for:wheel) { shortcutsRevision += 1 }})
     }
+    /// Refreshes the launch-at-login toggle state from the current system and LaunchAgent status.
     private func readLaunchStatus() {
-        let status=SMAppService.mainApp.status
-        launch=status == .enabled || status == .requiresApproval;launchNeedsApproval=status == .requiresApproval;launchUnavailable=status == .notFound
+        let status=LaunchAtLogin.status()
+        launch=status.isEnabled;launchNeedsApproval=status.needsApproval;launchUnavailable=status.isUnavailable
     }
+    /// Applies a new launch-at-login preference and records any registration error.
     private func updateLaunch(_ value:Bool) {
-        do { if value { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() };launchError=nil } catch { launchError=error.localizedDescription }
+        do { try LaunchAtLogin.setEnabled(value,launchMinimized:launchMinimized);launchError=nil } catch { launchError=error.localizedDescription }
         readLaunchStatus()
     }
 }
