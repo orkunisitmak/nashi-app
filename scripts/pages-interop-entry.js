@@ -36,6 +36,10 @@ export function write(json) {
   const bodyStyle = document.stylesheet.style("Body") ?? document.stylesheet.style("Normal") ?? document.stylesheet.styles().find(style => style.type === 2022);
   const baseId = typeof bodyStyle?.id === "bigint" ? bodyStyle.id : undefined;
   let ordinal = 0;
+  // A link ending at the current end of the body gets no closing smart-field
+  // entry, so it would swallow every later paragraph. Text is only appended
+  // after recorded offsets, so apply links once the body is complete.
+  const links = [];
   const appendParagraph = block => {
     check();
     const runs = block.runs ?? [{text: block.text ?? ""}];
@@ -59,7 +63,7 @@ export function write(json) {
       } else {
         const length = (run.text ?? "").length;
         if (length && run.character && Object.keys(run.character).length) document.applyCharacterFormatting(offset, offset + length, character(run.character));
-        if (length && run.link) document.insertLink(offset, offset + length, run.link);
+        if (length && run.link) links.push([offset, offset + length, run.link]);
         offset += length;
       }
     }
@@ -91,6 +95,7 @@ export function write(json) {
     else for (let column = 0; column < columnCount; column++) table.setColumnWidth(column,(block.width ?? 480) / columnCount);
     for (const merge of block.merges ?? []) if (merge.row + merge.rowCount <= rowCount && merge.column + merge.columnCount <= columnCount) table.mergeCells(merge.row,merge.column,merge.rowCount,merge.columnCount);
   }
+  for (const [start, end, url] of links) document.insertLink(start, end, url);
   check();
   const data = document.save();
   check();
