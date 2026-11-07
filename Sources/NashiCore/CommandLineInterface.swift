@@ -19,10 +19,11 @@ do {
         }
         print(String(decoding:try JSONSerialization.data(withJSONObject:result,options:.sortedKeys),as:UTF8.self));return flushResults()
     }
+    if args.count>=3,args[1]=="calc" { return calculate(args.dropFirst(2).joined(separator:" ")) }
     if args.count==2,args[1]=="dependencies" {
         var result:[String:String]=[:];for name in ["ffmpeg","ffprobe","soffice","exiftool"] { result[name]=try Dependencies.executable(name).path };print(String(decoding:try JSONSerialization.data(withJSONObject:result,options:.sortedKeys),as:UTF8.self));return flushResults()
     }
-    guard args.count>=4 else { fputs("Usage: nashi-cli convert FORMAT FILE... [--options JSON] [--json]\n       nashi-cli tool TOOL_ID FILE... [--options JSON] [--json]\n       nashi-cli inspect FILE\n       nashi-cli catalog\n       nashi-cli dependencies\n",stderr);return 64 }
+    guard args.count>=4 else { fputs("Usage: nashi-cli convert FORMAT FILE... [--options JSON] [--json]\n       nashi-cli tool TOOL_ID FILE... [--options JSON] [--json]\n       nashi-cli inspect FILE\n       nashi-cli catalog\n       nashi-cli dependencies\n       nashi-cli calc EXPRESSION\n",stderr);return 64 }
     var options=OperationOptions(), paths=Array(args.dropFirst(3))
     let jsonOutput=paths.contains("--json");paths.removeAll{$0=="--json"}
     if let i=paths.firstIndex(of:"--options"),i+1<paths.count {
@@ -103,6 +104,34 @@ do {
         func stop() { for (value,previous,source) in handled { var previous=previous;sigaction(value,&previous,nil);source.cancel() };handled=[] }
     }
 
+    /// `calc EXPRESSION`: prints "QUERY = ANSWER" and returns 0, or prints why there is no answer and returns 1.
+    /// Rates come from the cache and are downloaded only when a currency query has none or stale ones.
+    static func calculate(_ query:String,environment:[String:String]=ProcessInfo.processInfo.environment,defaults:UserDefaults=Calculator.appDefaults(),locale:Locale = .current,
+                          cacheURL:URL=CurrencyRateService.cacheURL,fetch:@escaping @Sendable () async throws->CurrencyRates={ try await CurrencyRateService.fetch() })->Int32 {
+        let local=Calculator.localCurrency(environment:environment,defaults:defaults,locale:locale)
+        final class RatesBox:@unchecked Sendable { var rates:CurrencyRates?;var fetched=false;init(_ rates:CurrencyRates?){self.rates=rates} }
+        let box=RatesBox(CurrencyRateService.cached(at:cacheURL))
+        var outcome=Calculator.evaluate(query,rates:box.rates,localCurrency:local,locale:locale)
+        let needsFetch:Bool
+        switch outcome {
+        case .needsRates?:needsFetch=true
+        case .answer(let answer)?:needsFetch=answer.kind == .currency && CurrencyRateService.isStale(box.rates)
+        case nil:needsFetch=false
+        }
+        if needsFetch {
+            // The command line is synchronous; wait for the one rate request.
+            let done=DispatchSemaphore(value:0)
+            Task.detached { if let fresh=try? await fetch() { box.rates=fresh;box.fetched=true };done.signal() }
+            done.wait()
+            if box.fetched,let rates=box.rates { CurrencyRateService.store(rates,at:cacheURL) }
+            outcome=Calculator.evaluate(query,rates:box.rates,localCurrency:local,locale:locale)
+        }
+        switch outcome {
+        case .answer(let answer)?:print("\(answer.detail) \(answer.text)");return 0
+        case .needsRates?:fputs("Currency rates are unavailable right now.\n",stderr);return 1
+        case nil:fputs("Nothing to calculate.\n",stderr);return 1
+        }
+    }
     private static func mergeDefaults(_ defaults:[String:Any],with supplied:[String:Any])->[String:Any] {
         defaults.merging(supplied) { old,new in
             if let old=old as? [String:Any],let new=new as? [String:Any] { return mergeDefaults(old,with:new) }

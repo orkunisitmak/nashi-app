@@ -28,6 +28,7 @@ struct SettingsView:View {
     @AppStorage("appAppearance") private var appAppearance="system"
     @AppStorage("appLanguage") private var appLanguage="en"
     @AppStorage("windowManagementEnabled") private var windowManagementEnabled=true
+    @AppStorage(Calculator.currencyPreferenceKey) private var calculatorCurrency="auto"
     @State private var windowAccessibility=AXIsProcessTrusted()
     @Environment(\.accessibilityReduceMotion) private var systemReducedMotion
     init(updater:AppUpdater,showingUpdates:Bool=false,initialSection:SettingsSection = .general) {
@@ -137,6 +138,16 @@ struct SettingsView:View {
                 }.padding(10)
             }
             .onReceive(Timer.publish(every:2,on:.main,in:.common).autoconnect()) { _ in windowAccessibility=AXIsProcessTrusted() }
+            GroupBox("Calculator") {
+                VStack(alignment:.leading,spacing:13) {
+                    HStack { Text("Local currency");Spacer();Picker("Local currency",selection:$calculatorCurrency) {
+                        Text("Automatic (\(Locale.current.currency?.identifier ?? "USD"))").tag("auto")
+                        ForEach(Locale.commonISOCurrencyCodes,id:\.self) { code in Text(verbatim:"\(code) · \(Locale(identifier:appLanguage).localizedString(forCurrencyCode:code) ?? code)").tag(code) }
+                    }.labelsHidden().frame(maxWidth:240).accessibilityIdentifier("CalculatorCurrency") }
+                    Text("Type on Home: 10+10, 1 USD, 1 USD to TRY or 5 km in mi. Currency amounts convert to this currency unless you name another. Exchange rates download only when you convert a currency.")
+                        .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal:false,vertical:true)
+                }.padding(10)
+            }
             GroupBox("File actions") {
                 VStack(spacing:16) {
                     HStack { Text("Float Behaviour");Spacer();Picker("Float behavior",selection:$floatBehavior) { Text("Create a New Float").tag("createNew");Text("Add Files to an Existing Float").tag("addToExisting") }.labelsHidden().frame(maxWidth:240) }
