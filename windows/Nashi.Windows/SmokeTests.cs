@@ -132,7 +132,14 @@ internal static class SmokeTests
         WindowManagementSmoke.Run(root,Check);
         Check(UIAudit.Run(Path.Combine(root,"ui-audit"))==0,"Isolated light/dark EN/TR UI audit failed; see ui-audit/manifest.json");
         Check(PdfRasterDocument.OpenDocuments==0,"Closed PDF previews retained native documents or pinned source buffers");
-        File.WriteAllText(Path.Combine(root,"smoke.json"),JsonSerializer.Serialize(new{passed=checks,scope="Native Windows SendInput keyboard routing, real OS clipboard text/image/files, Library restart/search/missing files, theme renders, image/PDF/ZIP operations.",extendedParity=Environment.GetEnvironmentVariable("GITHUB_ACTIONS")=="true"}));
+        var requireNative=Environment.GetEnvironmentVariable("GITHUB_ACTIONS")=="true"
+            ? Environment.GetEnvironmentVariable("NASHI_ALLOW_SIMULATED_INPUT")!="true"
+            : Environment.GetEnvironmentVariable("NASHI_REQUIRE_NATIVE_INPUT")=="true";
+        if(requireNative)Check(DesktopInput.NativeInputAvailable,"Native SendInput was required on CI (or via NASHI_REQUIRE_NATIVE_INPUT) but fell back to routed event simulation.");
+        var scope=DesktopInput.NativeInputAvailable
+            ? "Native Windows SendInput keyboard routing, real OS clipboard text/image/files, Library restart/search/missing files, theme renders, image/PDF/ZIP operations."
+            : "Simulated routed event keyboard/mouse routing fallback, real OS clipboard text/image/files, Library restart/search/missing files, theme renders, image/PDF/ZIP operations.";
+        File.WriteAllText(Path.Combine(root,"smoke.json"),JsonSerializer.Serialize(new{passed=checks,nativeInputAvailable=DesktopInput.NativeInputAvailable,simulatedChecks=DesktopInput.SimulatedChecks,scope,extendedParity=Environment.GetEnvironmentVariable("GITHUB_ACTIONS")=="true",nativeInputRequired=requireNative}));
         void Capture(Window view,string name){view.UpdateLayout();var capture=new RenderTargetBitmap((int)view.ActualWidth,(int)view.ActualHeight,96,96,PixelFormats.Pbgra32);capture.Render(view);ImageEngine.Save(capture,Path.Combine(root,name),"png");}
     }
     private static IEnumerable<DependencyObject> Descendants(DependencyObject root)

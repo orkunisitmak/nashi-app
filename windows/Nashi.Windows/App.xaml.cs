@@ -20,14 +20,14 @@ public partial class App:Application
             IsSmokeTest=true;ShutdownMode=ShutdownMode.OnExplicitShutdown;
             var directory=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY")??Path.Combine(Path.GetTempPath(),"Nashi-Interactions-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(directory);
             var failures=new List<string>();var checks=0;var finished=0;
-            void Report(IEnumerable<string> errors)=>File.WriteAllText(Path.Combine(directory,"interactions.json"),System.Text.Json.JsonSerializer.Serialize(new{checks=Volatile.Read(ref checks),failures=errors}));
+            void Report(IEnumerable<string> errors)=>File.WriteAllText(Path.Combine(directory,"interactions.json"),System.Text.Json.JsonSerializer.Serialize(new{checks=Volatile.Read(ref checks),failures=errors,nativeInputAvailable=DesktopInput.NativeInputAvailable,simulatedChecks=DesktopInput.SimulatedChecks}));
             using var watchdog=new System.Threading.Timer(_=>
             {
                 if(Interlocked.CompareExchange(ref finished,1,0)!=0)return;
                 try{Report(["Focused native interaction checks timed out."]);}
                 finally
                 {
-                    try{DesktopInput.HoldMouse(false);DesktopInput.Hold(System.Windows.Input.Key.LeftCtrl,false);}catch{}
+                    try{DesktopInput.ReleaseAll();}catch{}
                     Environment.Exit(1);
                 }
             },null,Timeout.Infinite,Timeout.Infinite);
