@@ -37,7 +37,7 @@ def apply_configuration(info_path, configuration_path, environ=None):
         info["SUPublicEDKey"] = key
         if configuration.get("GitHubOnly", False) is True:
             match = re.fullmatch(r"/([A-Za-z0-9][A-Za-z0-9-]{0,38})/([A-Za-z0-9_.-]{1,100})/releases/latest/download/appcast\.xml", address.path)
-            if address.hostname != "github.com" or address.scheme != "https" or address.query or not match:
+            if address.hostname != "github.com" or address.scheme != "https" or address.query or not match or match.group(2) in (".", ".."):
                 raise ValueError("GitHubOnly requires the repository's HTTPS latest appcast asset URL")
             # No unauthenticated checks before the user saves a connection.
             info.pop("SUFeedURL", None)
@@ -48,7 +48,7 @@ def apply_configuration(info_path, configuration_path, environ=None):
         if public_repository:
             if configuration.get("GitHubOnly",False) or feed != "https://github.com/"+public_repository+"/releases/latest/download/appcast.xml":
                 raise ValueError("PublicRepository must match the anonymous HTTPS feed")
-            if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9_.-]{1,100}",public_repository):
+            if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9_.-]{1,100}",public_repository) or public_repository.split("/")[1] in (".", ".."):
                 raise ValueError("Invalid PublicRepository")
             info["NashiPublicUpdateRepository"]=public_repository
         else:
