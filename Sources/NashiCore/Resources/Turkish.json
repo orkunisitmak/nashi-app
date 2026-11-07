@@ -1433,5 +1433,10 @@
   "YouTube thumbnail · best available full-size image": "YouTube küçük resmi · en iyi tam boyutlu görsel",
   "No tools for this file type": "Bu dosya türü için araç yok",
   "Details": "Ayrıntılar",
-  "Copy details": "Ayrıntıları kopyala"
+  "Copy details": "Ayrıntıları kopyala",
+  "Projects wheel": "Proje çarkı",
+  "Projects": "Projeler",
+  "No project here\nDrag one folder": "Proje yok\nTek bir klasör sürükle",
+  "Drag one project folder with the projects wheel to open it in VS Code, start Claude Code or run it. If fn also opens emoji or switches input, set System Settings › Keyboard › Press 🌐 key to Do Nothing.": "Proje çarkıyla tek bir proje klasörü sürükleyerek onu VS Code'da açabilir, Claude Code'u başlatabilir ya da çalıştırabilirsin. fn tuşu emoji de açıyor veya dil değiştiriyorsa Sistem Ayarları › Klavye › 🌐 tuşuna basınca seçeneğini Hiçbir Şey Yapma yap.",
+  "Nashi projects wheel": "Nashi proje çarkı"
 }

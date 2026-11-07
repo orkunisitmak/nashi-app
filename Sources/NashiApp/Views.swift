@@ -114,6 +114,7 @@ struct SettingsView:View {
                         Picker(LocalizedStringKey(wheel.title),selection:shortcut(wheel)) { ForEach(ModifierPreferences.available(for:wheel)) { chord in Text("\(chord.symbols)  \(chord.title)").tag(chord.rawValue) } }.labelsHidden().frame(maxWidth:240)
                     } }
                     Text("Tap the chosen modifier combination while dragging files.").font(.caption).foregroundStyle(.secondary)
+                    Text("Drag one project folder with the projects wheel to open it in VS Code, start Claude Code or run it. If fn also opens emoji or switches input, set System Settings › Keyboard › Press 🌐 key to Do Nothing.").font(.caption).foregroundStyle(.secondary).fixedSize(horizontal:false,vertical:true)
                 }.padding(10)
             }.id(shortcutsRevision)
             GroupBox("Window management") {
