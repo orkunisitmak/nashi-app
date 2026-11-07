@@ -27,7 +27,8 @@ export function write(json) {
   check();
   const model = JSON.parse(json);
   if (!Array.isArray(model.blocks)) throw new Error("Missing document content.");
-  const document = model.blocks.some(block => block.type === "table") ? PagesDocument.load(seed) : PagesDocument.blank();
+  // The blank donor has no section master, so headers/footers need the seed too.
+  const document = model.blocks.some(block => block.type === "table") || model.header || model.footer ? PagesDocument.load(seed) : PagesDocument.blank();
   document.body.setText("");
   for (const section of document.sections()) { section.setHeaderText(""); section.setFooterText(""); }
   if (model.pageSetup) document.setPageSetup(model.pageSetup);
