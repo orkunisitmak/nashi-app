@@ -2398,6 +2398,7 @@
 "THE IMAGE ORDER MUST INCLUDE EVERY IMAGE ONCE." = "L’ORDRE DES IMAGES DOIT INCLURE CHAQUE IMAGE UNE FOIS.";
 "THE MEDIA SERVER REDIRECTED TO AN INSECURE URL." = "LE SERVEUR MULTIMÉDIA A REDIRIGÉ VERS UNE URL NON SÉCURISÉE.";
 "THE OPERATION WAS CANCELLED." = "L’OPÉRATION A ÉTÉ ANNULÉE.";
+"THE PASSWORD IS INCORRECT, OR THE ARCHIVE IS DAMAGED." = "LE MOT DE PASSE EST INCORRECT OU L’ARCHIVE EST ENDOMMAGÉE.";
 "THE PDF CONTAINS NO PAGES." = "LE PDF NE CONTIENT AUCUNE PAGE.";
 "THE PDF PAGE IS TOO LARGE TO RENDER AT THIS RESOLUTION." = "LA PAGE PDF EST TROP GRANDE POUR ÊTRE RENDUE À CETTE RÉSOLUTION.";
 "THE POST DID NOT RETURN READABLE PHOTO DETAILS." = "LA PUBLICATION N’A PAS RENVOYÉ D’INFORMATIONS LISIBLES SUR LES PHOTOS.";
@@ -2427,6 +2428,7 @@
 "THE UPSTREAM SERVER DID NOT RETURN A SUCCESSFUL HTTPS DOWNLOAD." = "LE SERVEUR AMONT N’A PAS FOURNI DE TÉLÉCHARGEMENT HTTPS RÉUSSI.";
 "THE VIDEO HAS NO READABLE DIMENSIONS." = "LES DIMENSIONS DE LA VIDÉO SONT ILLISIBLES.";
 "THESE FILES HAVE MOVED OR WERE DELETED." = "CES FICHIERS ONT ÉTÉ DÉPLACÉS OU SUPPRIMÉS.";
+"THIS ARCHIVE IS PROTECTED. ENTER ITS PASSWORD." = "CETTE ARCHIVE EST PROTÉGÉE. SAISISSEZ SON MOT DE PASSE.";
 "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE." = "CE RECADRAGE S’APPLIQUE À TOUTES LES IMAGES SÉLECTIONNÉES ET DOIT TENIR DANS CHACUNE D’ELLES.";
 "THIS DOCUMENT NESTS ITS CONTENT TOO DEEPLY TO CONVERT." = "LE CONTENU DE CE DOCUMENT EST TROP PROFONDÉMENT IMBRIQUÉ POUR ÊTRE CONVERTI.";
 "THIS FILE HAS MOVED OR WAS DELETED." = "CE FICHIER A ÉTÉ DÉPLACÉ OU SUPPRIMÉ.";
@@ -2563,6 +2565,7 @@
 "The metadata field %@ could not be removed." = "Le champ de métadonnées %@ n’a pas pu être supprimé.";
 "The metadata field %lld could not be removed." = "Le champ de métadonnées %lld n’a pas pu être supprimé.";
 "The operation was cancelled." = "L’opération a été annulée.";
+"The password is incorrect, or the archive is damaged." = "Le mot de passe est incorrect ou l’archive est endommagée.";
 "The post did not return readable photo details." = "La publication n’a pas renvoyé d’informations lisibles sur les photos.";
 "The processing tool could not start." = "L’outil de traitement n’a pas pu démarrer.";
 "The requested PDF size could not be reached." = "La taille de PDF demandée n’a pas pu être atteinte.";
@@ -2607,6 +2610,7 @@
 "This Word document contains duplicate relationship identifiers. It could not be converted to Pages." = "Ce document Word contient des identifiants de relation en double. Il n’a pas pu être converti en Pages.";
 "This Word document contains duplicate style identifiers. It could not be converted to Pages." = "Ce document Word contient des identifiants de style en double. Il n’a pas pu être converti en Pages.";
 "This Word document has no editable body." = "Ce document Word n’a pas de corps modifiable.";
+"This archive is protected. Enter its password." = "Cette archive est protégée. Saisissez son mot de passe.";
 "This conversion is not available for %@." = "Cette conversion n’est pas disponible pour %@.";
 "This conversion is not available for %lld." = "Cette conversion n’est pas disponible pour %lld.";
 "This crop applies to every selected image and must fit inside each one." = "Ce recadrage s’applique à toutes les images sélectionnées et doit tenir dans chacune d’elles.";
