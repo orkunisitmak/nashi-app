@@ -12,6 +12,8 @@ public sealed record ImageOptions(int? Width=null,int? Height=null,int Rotation=
     public string RedactionStyle{get;init;}="solid";public Rect[] Redactions{get;init;}=[];
     public long? TargetBytes{get;init;}public double? ReductionPercent{get;init;}
     public bool FlipHorizontal{get;init;}public bool FlipVertical{get;init;}
+    // Compress: keep the dimensions; a target that needs a smaller image fails instead of resizing.
+    public bool PreferQuality{get;init;}
     // Size presets apply to each image's own dimensions rather than the first image's.
     public double? Scale{get;init;}public int? LongestEdge{get;init;}
     public string? EncoderPath{get;init;}
