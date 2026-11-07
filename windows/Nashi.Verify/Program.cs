@@ -64,6 +64,7 @@ try
     var unicodeFile=Path.Combine(root,"Türkçe 🍐.txt");File.WriteAllText(unicodeFile,"original");library.Record("Pasted text",[unicodeFile]);library.SetAppearance("dark");
     library.SetWindowManagement(false);
     var reopened=new LibraryStore(libraryDirectory);Check(reopened.Entries.Single().Paths.Single()==unicodeFile&&reopened.Appearance=="dark"&&!reopened.WindowManagementEnabled,"Library restart lost paths or settings");
+    var invalidLibraryOrphan=Path.Combine(libraryDirectory,"library.json")+"."+Guid.NewGuid().ToString("N")+".tmp";File.WriteAllText(invalidLibraryOrphan,"{\"Appearance\":\"system\",\"Entries\":[{\"Id\":\"00000000-0000-0000-0000-000000000000\",\"Created\":\"2026-01-01T00:00:00Z\",\"Action\":\"\",\"Paths\":[]}] }");new LibraryStore(libraryDirectory);Check(new LibraryStore(libraryDirectory).Entries.Count==1,"Schema-invalid Library recovery candidate replaced valid Library");
     Check(reopened.Search("Türkçe").Count()==1&&reopened.Search("PASTED").Count()==1&&reopened.Search("absent").Count()==0,"Library search failed");
     var namedLibrary=new LibraryStore(Path.Combine(root,"Named library"));var izmir=Path.Combine(root,"İzmir Café.txt");File.WriteAllText(izmir,"x");namedLibrary.Record("Resize Image",[izmir]);
     Check(new[]{"izmir","İZMİR","cafe"," İzmir "}.All(q=>namedLibrary.Search(q).Count()==1&&namedLibrary.Search(q,"tr").Count()==1)&&namedLibrary.Search("görseli boyut","tr").Count()==1&&namedLibrary.Search("Ankara","tr").Count()==0,"Library search missed a file name that differs only in case or accents, as macOS finds it");
@@ -71,6 +72,16 @@ try
     File.Delete(unicodeFile);Check(reopened.Entries.Single().AvailablePaths.Length==0,"Missing Library file was available");
     for(var i=0;i<55;i++)library.Record("ZIP "+i,[Path.Combine(root,"Output.txt")]);Check(library.Entries.Count==LibraryStore.Limit,"Library retention limit failed");
     Check(new LibraryStore(libraryDirectory).Entries.Count==LibraryStore.Limit,"Persisted Library limit failed");
+    var orphanDirectory=Path.Combine(root,"Preferences startup recovery");Directory.CreateDirectory(orphanDirectory);var orphanFile=Path.Combine(orphanDirectory,"preferences.json");File.WriteAllText(orphanFile+"."+Guid.NewGuid().ToString("N")+".tmp",System.Text.Json.JsonSerializer.Serialize(new Preferences()));new PreferencesStore(orphanDirectory);Check(File.Exists(orphanFile)&&new PreferencesStore(orphanDirectory).Value.Language=="en","Atomic preferences startup recovery failed");
+    var oversizedPreferencesDirectory=Path.Combine(root,"Oversized preferences startup recovery");Directory.CreateDirectory(oversizedPreferencesDirectory);var oversizedPreference=Path.Combine(oversizedPreferencesDirectory,"preferences.json")+"."+Guid.NewGuid().ToString("N")+".tmp";File.WriteAllText(oversizedPreference,new string('x',1_000_001));new PreferencesStore(oversizedPreferencesDirectory);Check(!File.Exists(Path.Combine(oversizedPreferencesDirectory,"preferences.json")),"Oversized preferences recovery candidate replaced preferences");
+    var containedRoot=Path.Combine(root,"contained");Check(!SafePaths.Contained(containedRoot,Path.Combine(root,"outside.txt"))&&SafePaths.Contained(containedRoot,Path.Combine(containedRoot,"inside.txt")),"SafePaths containment boundary failed");
+    var privateDirectory=AtomicFile.CreateTemporaryDirectory("Nashi-verify-");Check(Directory.Exists(privateDirectory)&&new DirectoryInfo(privateDirectory).Parent!.FullName.TrimEnd(Path.DirectorySeparatorChar)==Path.GetTempPath().TrimEnd(Path.DirectorySeparatorChar),"Secure temporary directory creation failed");Directory.Delete(privateDirectory,true);
+    var preferencesDirectory=Path.Combine(root,"Preferences recovery");Directory.CreateDirectory(preferencesDirectory);var preferencesFile=Path.Combine(preferencesDirectory,"preferences.json");File.WriteAllText(preferencesFile,"{broken");var preferencesRecovery=new PreferencesStore(preferencesDirectory);
+    Check(preferencesRecovery.Value.Language=="en"&&preferencesRecovery.RecoveryNotice is not null,"Corrupt preferences crashed or did not report recovery");
+    var preferenceCopies=Directory.GetFiles(preferencesDirectory,"preferences.json.recovered-*");Check(preferenceCopies.Length==1&&File.ReadAllText(preferenceCopies[0])=="{broken","Corrupt preferences recovery copy missing");
+    _ = new PreferencesStore(preferencesDirectory);
+    Check(Directory.GetFiles(preferencesDirectory,"preferences.json.recovered-*").Length==1&&!File.Exists(preferencesFile),"Corrupt preferences were copied or replayed repeatedly");
+    preferencesRecovery.Save(preferencesRecovery.Value with{Feedback=false});Check(!new PreferencesStore(preferencesDirectory).Value.Feedback,"Preferences did not recover after saving defaults");Directory.Delete(preferencesDirectory,true);
     var album=Path.Combine(root,"Exported album");Directory.CreateDirectory(album);library.Record("Extract ZIP",[album]);Check(new LibraryStore(libraryDirectory).Entries.First().AvailablePaths.Single()==album,"Library lost an exported directory");Directory.Delete(album);
     var broken=Path.Combine(libraryDirectory,"library.json");File.WriteAllText(broken,"{broken");var recovered=new LibraryStore(libraryDirectory);
     Check(recovered.Entries.Count==0&&recovered.RecoveryNotice is not null,"Corrupt Library crashed or did not report recovery");
@@ -369,4 +380,3 @@ sealed class InlineProgress(Action<OperationProgress> report):IProgress<Operatio
 {
     public void Report(OperationProgress value)=>report(value);
 }
-
