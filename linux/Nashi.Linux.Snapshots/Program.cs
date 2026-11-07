@@ -138,6 +138,30 @@ bool WheelOpen(Window w)=>w.GetVisualDescendants().OfType<WheelOverlay>().Any(o=
             if(expected=="JPG")Save(layer,"15-gesture-right");
             w.CloseGestures();Pump();
         }
+        // A short push is enough: 20 px picks nothing yet, 40 px opens the wheel with no slice chosen.
+        {
+            w.StartGesture(null);Pump();layer=w.Gestures.First();data=Drag();
+            layer.DragDrop(new Point(600,400),Avalonia.Input.Raw.RawDragEventType.DragEnter,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);
+            layer.DragDrop(new Point(580,400),Avalonia.Input.Raw.RawDragEventType.DragOver,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);Pump();
+            var early=layer.Wheel.IsVisible;
+            layer.DragDrop(new Point(560,402),Avalonia.Input.Raw.RawDragEventType.DragOver,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);Pump();
+            Expect("A 40 px push opens the wheel, with no slice chosen yet",!early&&layer.Wheel.IsVisible&&layer.Wheel.Items.Any(i=>i.Title=="Copy Path")&&layer.Wheel.SelectedItem is null);
+            w.CloseGestures();Pump();
+        }
+        // A cancelled drag (Esc) leaves the layer for good and closes it; a quick return keeps it.
+        {
+            w.StartGesture(null);Pump();layer=w.Gestures.First();data=Drag();
+            layer.DragDrop(new Point(600,400),Avalonia.Input.Raw.RawDragEventType.DragEnter,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);
+            layer.DragDrop(new Point(550,400),Avalonia.Input.Raw.RawDragEventType.DragOver,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);Pump();
+            // (Headless timers do not run, so the wait is checked as pending and then finished by hand.)
+            layer.DragLeft();var pending=layer.LeavePending;
+            layer.DragDrop(new Point(540,400),Avalonia.Input.Raw.RawDragEventType.DragOver,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);Pump();
+            var kept=pending&&!layer.LeavePending&&w.Gestures.Any(l=>l.IsVisible);
+            layer.DragLeft();if(layer.LeavePending)layer.LeaveNow();Pump();
+            Expect($"A drag that leaves for good closes the layer, a quick return keeps it (kept {kept}, open after {w.Gestures.Any(l=>l.IsVisible)})",kept&&!w.Gestures.Any(l=>l.IsVisible));
+            w.CloseGestures();Pump();
+        }
+        Expect("A function key alone can be the gesture shortcut, a letter alone cannot",KeyCombo.FromAvalonia(Avalonia.Input.Key.F8,Avalonia.Input.KeyModifiers.None)=="F8"&&KeyCombo.FromAvalonia(Avalonia.Input.Key.G,Avalonia.Input.KeyModifiers.None) is null&&KeyCombo.ToQt("F8")==0x01000037);
     }
     // A web link dragged from a browser gets the download wheel.
     {

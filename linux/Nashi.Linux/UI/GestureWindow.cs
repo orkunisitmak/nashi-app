@@ -14,13 +14,18 @@ namespace Nashi.Linux.UI;
 /// wheel at once. Without a drag, the wheel works by clicking (used for copied files).
 public sealed class GestureWindow:Window
 {
-    private const double Threshold=70;
+    /// How far a drag must lean after the shortcut to pick a wheel: a short push, well inside the
+    /// wheel's centre disc, so the wheel opens under the pointer with no slice chosen yet.
+    internal const double Threshold=36;
     private static double WheelSize=>380*PetalWheel.Scale;
     private readonly MainWindow main;private readonly string? fixedMode;private readonly Action closeAll;private readonly LinuxSettings settings;
     private readonly Canvas canvas=new();private readonly Border hint;private readonly TextBlock hintText=new(){FontSize=15,TextAlignment=TextAlignment.Center,TextWrapping=TextWrapping.Wrap,MaxWidth=560};
     private readonly PetalWheel wheel=new(WheelSize){IsVisible=false};
     private Point? origin;private string? mode;private string[]? files;private string? url;private bool clickMode;
     private readonly DispatcherTimer dwell=new(){Interval=TimeSpan.FromMilliseconds(350)};private string? pending;
+    // A drag that leaves the layer and does not come back (Esc, or a drop the compositor cancelled) closes it;
+    // the short wait covers moving onto the wheel or across to another monitor's layer.
+    private readonly DispatcherTimer gone=new(){Interval=TimeSpan.FromMilliseconds(500)};
     private readonly DispatcherTimer idle=new(){Interval=TimeSpan.FromSeconds(9)};private readonly DispatcherTimer nudge=new(){Interval=TimeSpan.FromSeconds(2.5)};
     public PetalWheel Wheel=>wheel;
     /// The monitor this layer covers, in X pixels.
@@ -46,6 +51,8 @@ public sealed class GestureWindow:Window
         canvas.PointerPressed+=(_,e)=>{if(!clickMode||e.Source==canvas)closeAll();};
         KeyDown+=(_,e)=>{if(e.Key==Key.Escape)closeAll();else if(clickMode&&e.Key==Key.Enter)wheel.Choose();};
         idle.Tick+=(_,_)=>{idle.Stop();if(origin is null&&!clickMode)closeAll();};
+        gone.Tick+=(_,_)=>LeaveNow();
+        canvas.AddHandler(DragDrop.DragLeaveEvent,(_,_)=>DragLeft());
         // The hot edge opens a wheel of the three wheels; resting on one for a moment opens it.
         dwell.Tick+=(_,_)=>{dwell.Stop();if(mode=="modes"&&pending is {} next&&wheel.SelectedItem?.Id==next)ShowWheel(next[5..]);};
         // Some sessions don't pass a drag from Wayland apps to this layer (KWin's XWayland bridge can get
@@ -117,9 +124,13 @@ public sealed class GestureWindow:Window
         // Wayland gives the files only now; an open wheel of placeholders becomes the real one to click.
         Release(this.PointToClient(screen));
     }
+    /// The drag went off the layer (Wayland leave, or an X11 drag leave).
+    internal void DragLeft(){if(!clickMode&&origin is not null)gone.Start();}
+    internal bool LeavePending=>gone.IsEnabled;
+    internal void LeaveNow(){gone.Stop();if(!clickMode){Log("drag left the layer, closing");closeAll();}}
     private void Track(Point point)
     {
-        idle.Stop();nudge.Stop();
+        idle.Stop();nudge.Stop();gone.Stop();
         if(origin is null){origin=point;if(fixedMode is not null)ShowWheel(fixedMode);return;}
         if(mode is null&&fixedMode is null)
         {
@@ -134,6 +145,7 @@ public sealed class GestureWindow:Window
     }
     private void Release(Point point)
     {
+        gone.Stop();
         if(wheel.IsVisible&&wheel.Items.All(i=>!i.Id.StartsWith("placeholder:",StringComparison.Ordinal)))wheel.Selected=wheel.HitTest(point-WheelOrigin);
         var chosen=wheel.SelectedItem;
         Log($"Drop at {point:F0} files={files?.Length.ToString()??"none"} mode={mode} petal={chosen?.Id}");

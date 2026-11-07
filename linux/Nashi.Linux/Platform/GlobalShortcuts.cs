@@ -139,7 +139,8 @@ public static class KeyCombo
         };
         if(name is null)return null;
         var parts=new List<string>();if(modifiers.HasFlag(Avalonia.Input.KeyModifiers.Meta))parts.Add("Meta");if(modifiers.HasFlag(Avalonia.Input.KeyModifiers.Control))parts.Add("Ctrl");if(modifiers.HasFlag(Avalonia.Input.KeyModifiers.Alt))parts.Add("Alt");if(modifiers.HasFlag(Avalonia.Input.KeyModifiers.Shift))parts.Add("Shift");
-        // A global shortcut needs at least one modifier, or it would take that key from every app.
-        if(parts.Count==0)return null;parts.Add(name);return string.Join("+",parts);
+        // A global shortcut needs a modifier, or it would take that key from every app. Function keys
+        // are the exception: one key (F8, say) is easy to press with the other hand while dragging.
+        if(parts.Count==0&&!(name.Length>1&&name[0]=='F'&&char.IsDigit(name[1])))return null;parts.Add(name);return string.Join("+",parts);
     }
 }

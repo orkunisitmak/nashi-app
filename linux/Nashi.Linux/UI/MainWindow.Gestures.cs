@@ -124,6 +124,7 @@ public sealed partial class MainWindow
         wayland.Entered+=(x,y)=>Dispatcher.UIThread.Post(()=>{var at=XPixels(x,y);if(nativeLayer is not {IsVisible:true})nativeLayer=gestures.FirstOrDefault(g=>g.IsVisible&&g.Area.Contains(at))??Layer();nativeLayer?.ExternalDrag(at);});
         wayland.Moved+=(x,y)=>Dispatcher.UIThread.Post(()=>Layer()?.ExternalDrag(XPixels(x,y)));
         wayland.Offered+=uris=>Dispatcher.UIThread.Post(()=>Layer()?.ExternalOffer(uris));
+        wayland.Left+=()=>Dispatcher.UIThread.Post(()=>Layer()?.DragLeft());
         wayland.EdgeEntered+=(_,_)=>Dispatcher.UIThread.Post(()=>{if(gestures.Count==0&&!busy){GestureWindow.Log("hot edge");StartGesture("modes");}});
         wayland.Dropped+=(uris,x,y)=>Dispatcher.UIThread.Post(()=>{wayland.Hide();Layer()?.ExternalDrop(uris,XPixels(x,y));});
         GestureWindow.Log("native Wayland drop target ready");return wayland;

@@ -16,11 +16,11 @@ Drag files (from Dolphin, the desktop or anywhere else) to the **left edge of th
 
 ## Drag gestures and system-wide shortcuts
 
-On macOS and Windows you hold a modifier while dragging a file anywhere to get the wheel. Wayland doesn't show an app another app's drag, so on Linux you press a **system-wide shortcut while dragging** instead. Nashi registers these with KDE Plasma (kglobalaccel). You can change them under **Settings → Shortcuts & gestures** by clicking a shortcut and pressing the new keys. Nashi warns you when another app already uses a combination.
+On macOS and Windows you hold a modifier while dragging a file anywhere to get the wheel. Wayland doesn't show an app another app's drag, so on Linux you press a **system-wide shortcut while dragging** instead. Nashi registers these with KDE Plasma (kglobalaccel). You can change them under **Settings → Shortcuts & gestures** by clicking a shortcut and pressing the new keys. Nashi warns you when another app already uses a combination. A function key on its own (for example `F8`) is allowed too, so the gesture is one key for the other hand while you drag.
 
 | Default | What it does |
 | --- | --- |
-| `Meta+Space` | **Gesture:** while dragging files (from Dolphin, the desktop, anywhere), press it, then move ← for File actions, → for Convert or ↑ for Tools, and drop on a petal. ↓ cancels. Each direction can be changed in Settings. |
+| `Meta+Space` | **Gesture:** while dragging files (from Dolphin, the desktop, anywhere), press it anywhere on the screen, then give the drag a short push (about 40 px) ← for File actions, → for Convert or ↑ for Tools. The wheel opens under the pointer; drop on a petal. ↓ cancels, and so does `Esc`. Each direction can be changed in Settings. |
 | `Meta+Alt+C` / `Meta+Alt+T` / `Meta+Alt+A` | Open the Convert, Tools or File actions wheel straight away; drop the dragged files on a petal |
 | `Meta+Alt+V` | Wheel for the files you copied in your file manager (`Ctrl+C`), with no dragging needed |
 | `Meta+Alt+N` | Show Nashi |
