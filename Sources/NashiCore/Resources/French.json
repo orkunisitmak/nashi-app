@@ -1433,5 +1433,10 @@
   "YouTube thumbnail · best available full-size image": "Miniature YouTube · meilleure image en taille réelle disponible",
   "No tools for this file type": "Aucun outil pour ce type de fichier",
   "Details": "Détails",
-  "Copy details": "Copier les détails"
+  "Copy details": "Copier les détails",
+  "This HTML file would need more than 1,000 PDF pages.": "Ce fichier HTML nécessiterait plus de 1 000 pages PDF.",
+  "The HTML file did not finish rendering. No PDF was exported.": "Le rendu du fichier HTML n’a pas abouti. Aucun PDF n’a été exporté.",
+  "Microsoft Edge WebView2 could not print this HTML file to PDF.": "Microsoft Edge WebView2 n’a pas pu imprimer ce fichier HTML en PDF.",
+  "Microsoft Edge WebView2 stopped while rendering the HTML file. No PDF was exported.": "Microsoft Edge WebView2 s’est arrêté pendant le rendu du fichier HTML. Aucun PDF n’a été exporté.",
+  "The HTML file could not be opened.": "Le fichier HTML n’a pas pu être ouvert."
 }

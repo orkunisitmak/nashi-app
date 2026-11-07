@@ -1433,5 +1433,10 @@
   "YouTube thumbnail · best available full-size image": "YouTube küçük resmi · en iyi tam boyutlu görsel",
   "No tools for this file type": "Bu dosya türü için araç yok",
   "Details": "Ayrıntılar",
-  "Copy details": "Ayrıntıları kopyala"
+  "Copy details": "Ayrıntıları kopyala",
+  "This HTML file would need more than 1,000 PDF pages.": "Bu HTML dosyası 1.000'den fazla PDF sayfası gerektirir.",
+  "The HTML file did not finish rendering. No PDF was exported.": "HTML dosyasının işlenmesi tamamlanmadı. PDF dışa aktarılmadı.",
+  "Microsoft Edge WebView2 could not print this HTML file to PDF.": "Microsoft Edge WebView2 bu HTML dosyasını PDF olarak yazdıramadı.",
+  "Microsoft Edge WebView2 stopped while rendering the HTML file. No PDF was exported.": "Microsoft Edge WebView2, HTML dosyasını işlerken durdu. PDF dışa aktarılmadı.",
+  "The HTML file could not be opened.": "HTML dosyası açılamadı."
 }

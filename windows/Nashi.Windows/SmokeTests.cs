@@ -28,6 +28,7 @@ internal static class SmokeTests
         void Check(bool value,string reason){Progress($"{(value?"PASS":"FAIL")} {checks+1}: {reason}");if(!value)throw new Exception(reason);checks++;}
         Progress("START TrayIconRecoveryChecks");TrayIconRecoveryChecks.Run(Check);
         Progress("START ShellShortcutChecks");ShellShortcutChecks.Run(root,Check);
+        Progress("START HtmlPdfChecks");HtmlPdfChecks.Run(root,Check);
         Progress("START EditorReliabilityChecks");EditorReliabilityChecks.Run(root,Check);
         Progress("START InteractionChecks");InteractionChecks.Run(root,Check);
         var visual=new DrawingVisual();using(var dc=visual.RenderOpen()){dc.DrawRectangle(Brushes.DarkOliveGreen,null,new Rect(0,0,320,180));dc.DrawRectangle(Brushes.Gold,null,new Rect(20,20,120,80));}
