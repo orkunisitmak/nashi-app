@@ -20,6 +20,33 @@
       <Setter Property="CornerRadius" Value="18"/>
       <Setter Property="Padding" Value="22"/>
     </Style>
+    <!-- Gesture switcher: one tab per wheel under the gesture wheel, the open one filled with gold. -->
+    <Style Selector="Border.gesture-switch">
+      <Setter Property="Background" Value="{DynamicResource Surface}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="999"/>
+      <Setter Property="Padding" Value="4"/>
+      <Setter Property="BoxShadow" Value="0 6 24 0 #33000000"/>
+    </Style>
+    <Style Selector="Border.gesture-tab">
+      <Setter Property="CornerRadius" Value="999"/>
+      <Setter Property="Padding" Value="14,7"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    <Style Selector="Border.gesture-tab TextBlock">
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
+    </Style>
+    <Style Selector="Border.gesture-tab:pointerover"><Setter Property="Background" Value="{DynamicResource Inset}"/></Style>
+    <Style Selector="Border.gesture-tab.active"><Setter Property="Background" Value="{DynamicResource Gold}"/></Style>
+    <Style Selector="Border.gesture-tab.active TextBlock"><Setter Property="Foreground" Value="{DynamicResource GoldInk}"/></Style>
+    <Style Selector="TextBlock.keyhint">
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
+    </Style>
     <Style Selector="Border.inset">
       <Setter Property="Background" Value="{DynamicResource Inset}"/>
       <Setter Property="CornerRadius" Value="12"/>

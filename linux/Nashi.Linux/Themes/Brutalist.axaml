@@ -51,6 +51,12 @@
     <Setter Property="BorderThickness" Value="3"/>
     <Setter Property="BoxShadow" Value="7 7 0 0 #0A0A0A"/>
   </Style>
+  <Style Selector="Border.gesture-switch">
+    <Setter Property="CornerRadius" Value="0"/>
+    <Setter Property="BorderThickness" Value="3"/>
+    <Setter Property="BoxShadow" Value="6 6 0 0 #0A0A0A"/>
+  </Style>
+  <Style Selector="Border.gesture-tab"><Setter Property="CornerRadius" Value="0"/></Style>
   <Style Selector="Border.inset, Border.pill">
     <Setter Property="CornerRadius" Value="0"/>
     <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>

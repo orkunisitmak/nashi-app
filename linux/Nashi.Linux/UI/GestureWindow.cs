@@ -9,20 +9,23 @@ namespace Nashi.Linux.UI;
 
 /// Wayland never shows an app another app's drag. A global shortcut pressed mid-drag opens this
 /// see-through layer on every screen; the drag that is already in progress then passes over it,
-/// so Nashi finally sees the pointer and the files. Moving left, right, up or down picks a wheel
-/// (Settings → Shortcuts & gestures), and dropping on a petal runs it. A direct shortcut opens one
-/// wheel at once. Without a drag, the wheel works by clicking (used for copied files).
+/// so Nashi finally sees the pointer and the files. The wheel opens right under the pointer; pressing
+/// the shortcut again (or resting on a tab of the switcher below the wheel) moves to the next wheel:
+/// Tools, Convert, File actions. Dropping on a petal runs it. Without a drag, the wheel works by
+/// clicking (used for copied files).
 public sealed class GestureWindow:Window
 {
-    /// How far a drag must lean after the shortcut to pick a wheel: a short push, well inside the
-    /// wheel's centre disc, so the wheel opens under the pointer with no slice chosen yet.
-    internal const double Threshold=36;
+    /// The wheels the shortcut steps through, in order.
+    internal static readonly (string Id,string Title,string Symbol)[] Order=[("tools","Tools","⚙"),("convert","Convert","⇄"),("actions","File actions","▱")];
     private static double WheelSize=>380*PetalWheel.Scale;
-    private readonly MainWindow main;private readonly string? fixedMode;private readonly Action closeAll;private readonly LinuxSettings settings;
+    private readonly MainWindow main;private string startMode;private readonly Action closeAll;private readonly LinuxSettings settings;
     private readonly Canvas canvas=new();private readonly Border hint;private readonly TextBlock hintText=new(){FontSize=15,TextAlignment=TextAlignment.Center,TextWrapping=TextWrapping.Wrap,MaxWidth=560};
     private readonly PetalWheel wheel=new(WheelSize){IsVisible=false};
     private Point? origin;private string? mode;private string[]? files;private string? url;private bool clickMode;
     private readonly DispatcherTimer dwell=new(){Interval=TimeSpan.FromMilliseconds(350)};private string? pending;
+    // The switcher: one tab per wheel under the wheel, the open one filled. Resting on a tab during a drag opens it.
+    private readonly Border switcher;private readonly Dictionary<string,Border> tabs=[];private readonly TextBlock keyHint=new(){Classes={"keyhint"},VerticalAlignment=Avalonia.Layout.VerticalAlignment.Center};
+    private readonly DispatcherTimer tabDwell=new(){Interval=TimeSpan.FromMilliseconds(260)};private string? tabPending;
     // A drag that leaves the layer and does not come back (Esc, or a drop the compositor cancelled) closes it;
     // the short wait covers moving onto the wheel or across to another monitor's layer.
     private readonly DispatcherTimer gone=new(){Interval=TimeSpan.FromMilliseconds(500)};
@@ -37,15 +40,23 @@ public sealed class GestureWindow:Window
 
     public GestureWindow(MainWindow main,Screen screen,string? fixedMode,Action closeAll,string[]? presetFiles=null)
     {
-        this.main=main;this.fixedMode=fixedMode;this.closeAll=closeAll;settings=main.LinuxSettings;Area=screen.Bounds;
+        this.main=main;settings=main.LinuxSettings;startMode=fixedMode??settings.FirstWheel;this.closeAll=closeAll;Area=screen.Bounds;
         Title="Nashi gesture";WindowDecorations=WindowDecorations.None;Topmost=true;ShowInTaskbar=false;CanResize=false;
         TransparencyLevelHint=[WindowTransparencyLevel.Transparent];Background=Brushes.Transparent;
         WindowStartupLocation=WindowStartupLocation.Manual;Position=screen.Bounds.Position;Width=screen.Bounds.Width/screen.Scaling;Height=screen.Bounds.Height/screen.Scaling;
         // A faint veil: it shows the layer is listening, and a non-null background is needed for drops.
         canvas.Background=new SolidColorBrush(Color.FromArgb(56,12,18,14));Content=canvas;
-        hint=new Border{Classes={"card","gesture-hint"},Padding=new(22,14),Child=hintText};canvas.Children.Add(wheel);canvas.Children.Add(hint);
+        hint=new Border{Classes={"card","gesture-hint"},Padding=new(22,14),Child=hintText,IsVisible=false};canvas.Children.Add(wheel);canvas.Children.Add(hint);
+        var row=new StackPanel{Orientation=Avalonia.Layout.Orientation.Horizontal,Spacing=2};
+        foreach(var (id,title,symbol) in Order)
+        {
+            var tab=new Border{Classes={"gesture-tab"},Child=new TextBlock{Text=symbol+"  "+L10n.T(title)}};tabs[id]=tab;row.Children.Add(tab);
+            tab.PointerPressed+=(_,e)=>{SwitchTo(id);e.Handled=true;};
+        }
+        var gesture=settings.Shortcuts.GetValueOrDefault("gesture","");keyHint.Text=gesture.Length>0?gesture+"  →":"";keyHint.Margin=new(10,0,8,0);row.Children.Add(keyHint);
+        switcher=new Border{Classes={"gesture-switch"},Child=row,IsVisible=false};canvas.Children.Add(switcher);
+        tabDwell.Tick+=(_,_)=>{tabDwell.Stop();if(tabPending is {} next&&next!=mode)ShowWheel(next);};
         wheel.Chosen+=async choice=>{if(clickMode)await Choose(choice);};
-        wheel.SelectionChanged+=item=>{if(item is not null)SetHint(L10n.T(item.Title),origin);};
         DragDrop.SetAllowDrop(canvas,true);
         canvas.AddHandler(DragDrop.DragEnterEvent,OnDrag);canvas.AddHandler(DragDrop.DragOverEvent,OnDrag);canvas.AddHandler(DragDrop.DropEvent,OnDrop);
         canvas.PointerPressed+=(_,e)=>{if(!clickMode||e.Source==canvas)closeAll();};
@@ -61,20 +72,32 @@ public sealed class GestureWindow:Window
         nudge.Tick+=(_,_)=>{nudge.Stop();if(origin is null&&!clickMode){main.HideNativeOverlay();var paste=settings.Shortcuts.GetValueOrDefault("clipboard","");SetHint(L10n.T("The drag didn't reach Nashi.")+"\n"+L10n.T("Drop the files, press Ctrl+C on them, then")+" "+(paste.Length>0?paste:"Ctrl+V")+".");}};
         Opened+=(_,_)=>
         {
-            Log($"layer opened on {screen.Bounds} mode={fixedMode??"gesture"}");
-            if(presetFiles is {Length:>0}){files=presetFiles;origin=new(Width/2,Height/2);clickMode=true;ShowWheel(fixedMode??"tools");}
-            else{SetHint(fixedMode is null?Directions():fixedMode=="modes"?L10n.T("Keep dragging: rest on Tools, Convert or File actions."):L10n.T("Keep dragging here, then drop on a slice."));idle.Start();nudge.Start();}
+            Log($"layer opened on {screen.Bounds} mode={startMode}");
+            // With a drag, nothing shows until it arrives: the wheel then opens under the pointer.
+            if(presetFiles is {Length:>0}){files=presetFiles;origin=new(Width/2,Height/2);clickMode=true;ShowWheel(startMode);}
+            else{idle.Start();nudge.Start();}
             Activate();
         };
     }
-    private string Directions()
+    /// The shortcut again: the next wheel that has something for these files.
+    internal void NextWheel()
     {
-        string Name(string d)=>settings.Gestures[d] switch{"actions"=>L10n.T("File actions"),"convert"=>L10n.T("Convert"),"tools"=>L10n.T("Tools"),_=>L10n.T("Cancel")};
-        return L10n.T("Keep dragging: move to pick a wheel")+$"\n←  {Name("left")}     →  {Name("right")}     ↑  {Name("up")}     ↓  {Name("down")}";
+        var current=mode is null||mode=="modes"?startMode:mode;var ids=Order.Select(o=>o.Id).ToList();var at=ids.IndexOf(current);
+        for(var step=1;step<=ids.Count;step++){var next=ids[(at+step+ids.Count)%ids.Count];if(Fits(next)){SwitchTo(next);return;}}
     }
+    /// Opens this wheel now, or once the drag arrives.
+    internal void SwitchTo(string id)
+    {
+        Log("switch to "+id);
+        if(origin is null){startMode=id;return;}
+        ShowWheel(id);
+    }
+    internal string? Mode=>mode;
+    private bool Fits(string id)=>files is null||main.ChoicesFor(files,id).Count>0;
+    private void HideHint()=>hint.IsVisible=false;
     private void SetHint(string text,Point? near=null)
     {
-        hintText.Text=text;hint.Measure(Size.Infinity);var size=hint.DesiredSize;
+        hint.IsVisible=true;hintText.Text=text;hint.Measure(Size.Infinity);var size=hint.DesiredSize;
         var at=near??new Point(Width/2,Height/2);
         Canvas.SetLeft(hint,Math.Clamp(at.X-size.Width/2,12,Math.Max(12,Width-size.Width-12)));
         Canvas.SetTop(hint,Math.Clamp(near is null?at.Y-size.Height/2:at.Y+WheelSize/2+14,12,Math.Max(12,Height-size.Height-12)));
@@ -131,33 +154,29 @@ public sealed class GestureWindow:Window
     private void Track(Point point)
     {
         idle.Stop();nudge.Stop();gone.Stop();
-        if(origin is null){origin=point;if(fixedMode is not null)ShowWheel(fixedMode);return;}
-        if(mode is null&&fixedMode is null)
-        {
-            var delta=point-origin.Value;if(Math.Sqrt(delta.X*delta.X+delta.Y*delta.Y)<Threshold)return;
-            var direction=Math.Abs(delta.X)>=Math.Abs(delta.Y)?(delta.X<0?"left":"right"):(delta.Y<0?"up":"down");
-            var target=settings.Gestures[direction];
-            if(target=="none"){SetHint(L10n.T("Drop anywhere to cancel."),origin);return;}
-            ShowWheel(target);return;
-        }
+        if(origin is null){origin=point;ShowWheel(startMode);return;}
         if(wheel.IsVisible)wheel.Selected=wheel.HitTest(point-WheelOrigin);
+        // Over a tab of the switcher: rest a moment to open that wheel.
+        var over=switcher.IsVisible?tabs.FirstOrDefault(t=>t.Value.IsVisible&&Contains(t.Value,point)).Key:null;
+        if(over!=tabPending){tabPending=over;tabDwell.Stop();if(over is not null&&over!=mode)tabDwell.Start();}
         if(mode=="modes"){var id=wheel.SelectedItem?.Id;if(id!=pending){pending=id;dwell.Stop();if(id is not null)dwell.Start();}}
     }
+    private bool Contains(Control control,Point point)=>control.TranslatePoint(new Point(0,0),canvas) is {} at&&new Rect(at,control.Bounds.Size).Contains(point);
     private void Release(Point point)
     {
-        gone.Stop();
+        gone.Stop();tabDwell.Stop();
         if(wheel.IsVisible&&wheel.Items.All(i=>!i.Id.StartsWith("placeholder:",StringComparison.Ordinal)))wheel.Selected=wheel.HitTest(point-WheelOrigin);
         var chosen=wheel.SelectedItem;
         Log($"Drop at {point:F0} files={files?.Length.ToString()??"none"} mode={mode} petal={chosen?.Id}");
         if(files is null&&url is null||mode is null){closeAll();return;}
-        if(chosen?.Id.StartsWith("mode:",StringComparison.Ordinal)==true){clickMode=true;ShowWheel(chosen.Id[5..]);SetHint(L10n.T("Choose a slice."),origin);return;}
+        if(chosen?.Id.StartsWith("mode:",StringComparison.Ordinal)==true){clickMode=true;ShowWheel(chosen.Id[5..]);return;}
         // Without the files during the drag the petals were placeholders. Pick the same petal by position
         // when it can be found; otherwise show the real wheel to click.
         if(wheel.Items.Any(i=>i.Id.StartsWith("placeholder:",StringComparison.Ordinal)))
         {
             ShowWheel(mode);var real=wheel.HitTest(point-WheelOrigin);
             if(real>=0){_=Choose(wheel.Items[real]);return;}
-            clickMode=true;SetHint(L10n.T("Choose a slice."),origin);return;
+            clickMode=true;return;
         }
         if(chosen is not null)_=Choose(chosen);else closeAll();
     }
@@ -172,16 +191,25 @@ public sealed class GestureWindow:Window
             IReadOnlyList<ToolChoice> modes=[new("mode:tools","Tools","⚙"),new("mode:convert","Convert","⇄"),new("mode:actions","File actions","▱")];
             if(files is not null)modes=modes.Where(m=>main.ChoicesFor(files,m.Id[5..]).Count>0).ToList();
             if(files is null&&url is not null){ShowWheel("convert");return;}
-            wheel.Items=modes;wheel.CenterTitle="Nashi";wheel.IsVisible=true;
-            Canvas.SetLeft(wheel,center.X-WheelSize/2);Canvas.SetTop(wheel,center.Y-WheelSize/2);SetHint(L10n.T("Rest on a wheel to open it."),center);return;
+            wheel.Items=modes;wheel.CenterTitle=L10n.T("Rest on one");wheel.IsVisible=true;switcher.IsVisible=false;HideHint();
+            Canvas.SetLeft(wheel,center.X-WheelSize/2);Canvas.SetTop(wheel,center.Y-WheelSize/2);return;
         }
         // A web link gets the download wheel whatever the direction.
         if(files is null&&url is not null)title="Web link";
         var choices=files is not null?main.ChoicesFor(files,target):url is not null?MainWindow.WebChoices(url):[new ToolChoice("placeholder:"+target,title,Ui.Symbol(target=="actions"?"copy":target))];
-        if(choices.Count==0){wheel.IsVisible=false;SetHint(L10n.T("Nothing in this wheel fits these files."),center);return;}
-        wheel.Items=choices;wheel.CenterTitle=L10n.T(title);wheel.IsVisible=true;
+        if(choices.Count==0){wheel.IsVisible=false;switcher.IsVisible=false;SetHint(L10n.T("Nothing in this wheel fits these files."),center);return;}
+        wheel.Items=choices;wheel.CenterTitle=L10n.T(title);wheel.IsVisible=true;HideHint();
         Canvas.SetLeft(wheel,center.X-WheelSize/2);Canvas.SetTop(wheel,center.Y-WheelSize/2);
-        SetHint(clickMode?L10n.T("Choose a slice."):L10n.T("Drop on a slice."),center);
+        ShowSwitcher(center);
+    }
+    /// The tabs under the wheel; a web link has only its download wheel, so no tabs then.
+    private void ShowSwitcher(Point center)
+    {
+        if(files is null&&url is not null){switcher.IsVisible=false;return;}
+        foreach(var (id,tab) in tabs){tab.Classes.Set("active",id==mode);tab.IsVisible=Fits(id);}
+        switcher.IsVisible=true;switcher.Measure(Size.Infinity);var size=switcher.DesiredSize;
+        Canvas.SetLeft(switcher,Math.Clamp(center.X-size.Width/2,12,Math.Max(12,Width-size.Width-12)));
+        Canvas.SetTop(switcher,Math.Clamp(center.Y+WheelSize/2+12,12,Math.Max(12,Height-size.Height-12)));
     }
     private async Task Choose(ToolChoice choice)
     {

@@ -113,41 +113,34 @@ bool WheelOpen(Window w)=>w.GetVisualDescendants().OfType<WheelOverlay>().Any(o=
         Expect($"Drop with {modifier} opens the wheel at {expected}",item is not null&&opened);
         w.KeyPress(Avalonia.Input.Key.Escape,Avalonia.Input.RawInputModifiers.None,Avalonia.Input.PhysicalKey.Escape,null);Pump();
     }
-    // Gesture layer: a drag enters it, moves left (File actions by default), then drops on a slice.
+    // Gesture layer: the wheel opens under the drag; the shortcut again steps Tools → Convert → File actions.
     {
         var target=Fixtures("Photo.png")[0];w.UseFiles([]);
         Avalonia.Input.DataTransfer Drag(){var d=new Avalonia.Input.DataTransfer();var f=w.StorageProvider.TryGetFileFromPathAsync(new Uri(target)).GetAwaiter().GetResult();if(f is not null)d.Add(Avalonia.Input.DataTransferItem.CreateFile(f));return d;}
-        w.StartGesture(null);Pump();var layer=w.Gestures.First();
-        var data=Drag();layer.DragDrop(new Point(600,400),Avalonia.Input.Raw.RawDragEventType.DragEnter,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);Pump();
-        layer.DragDrop(new Point(480,405),Avalonia.Input.Raw.RawDragEventType.DragOver,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);Pump();
+        void Over(GestureWindow l,Avalonia.Input.DataTransfer d,Point p,Avalonia.Input.Raw.RawDragEventType kind=Avalonia.Input.Raw.RawDragEventType.DragOver)=>l.DragDrop(p,kind,d,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);
+        w.StartGesture(null);Pump();var layer=w.Gestures.First();var data=Drag();
+        Over(layer,data,new Point(600,400),Avalonia.Input.Raw.RawDragEventType.DragEnter);Pump();
+        Expect($"The gesture opens the Tools wheel under the drag ({layer.Mode}, no slice chosen)",layer.Mode=="tools"&&layer.Wheel.IsVisible&&layer.Wheel.Items.Any(i=>i.Title=="Edit Photo")&&layer.Wheel.SelectedItem is null);
+        Save(layer,"14-gesture-tools");
+        w.PressShortcut("gesture");Pump();
+        Expect($"The shortcut again opens Convert ({layer.Mode})",layer.Mode=="convert"&&layer.Wheel.Items.Any(i=>i.Title=="JPG"));
+        Save(layer,"15-gesture-convert");
+        w.PressShortcut("gesture");Pump();
         var petals=layer.Wheel.Items;
-        Expect($"Gesture left opens File actions ({string.Join(", ",petals.Select(i=>i.Title))})",petals.Any(i=>i.Title=="Copy Path"));
-        Save(layer,"14-gesture-left");
+        Expect($"And again File actions ({string.Join(", ",petals.Select(i=>i.Title))})",layer.Mode=="actions"&&petals.Any(i=>i.Title=="Copy Path"));
         var copyIndex=petals.ToList().FindIndex(i=>i.Title=="Copy Path");var at=layer.Wheel.TranslatePoint(layer.Wheel.PetalCenter(copyIndex),layer)!.Value;
-        layer.DragDrop(at,Avalonia.Input.Raw.RawDragEventType.DragOver,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);Pump();
+        Over(layer,data,at);Pump();
         Expect("Hovering a petal highlights it",layer.Wheel.SelectedItem?.Title=="Copy Path");
-        layer.DragDrop(at,Avalonia.Input.Raw.RawDragEventType.Drop,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);for(var n=0;n<20;n++){Pump();Thread.Sleep(10);}
+        Over(layer,data,at,Avalonia.Input.Raw.RawDragEventType.Drop);for(var n=0;n<20;n++){Pump();Thread.Sleep(10);}
         Expect("Dropping on Copy Path runs it and closes the layer",!w.Gestures.Any(l=>l.IsVisible)&&w.GetVisualDescendants().OfType<TextBlock>().Any(t=>t.Text=="File paths copied."));
-        // Right opens Convert; up opens Tools.
-        foreach(var (dx,dy,expected) in new[]{(140.0,0.0,"JPG"),(0.0,-140.0,"Edit Photo")})
-        {
-            w.StartGesture(null);Pump();layer=w.Gestures.First();data=Drag();
-            layer.DragDrop(new Point(600,400),Avalonia.Input.Raw.RawDragEventType.DragEnter,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);
-            layer.DragDrop(new Point(600+dx,400+dy),Avalonia.Input.Raw.RawDragEventType.DragOver,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);Pump();
-            Expect($"Gesture ({dx},{dy}) opens the wheel with {expected}",layer.Wheel.Items.Any(i=>i.Title==expected));
-            if(expected=="JPG")Save(layer,"15-gesture-right");
-            w.CloseGestures();Pump();
-        }
-        // A short push is enough: 20 px picks nothing yet, 40 px opens the wheel with no slice chosen.
-        {
-            w.StartGesture(null);Pump();layer=w.Gestures.First();data=Drag();
-            layer.DragDrop(new Point(600,400),Avalonia.Input.Raw.RawDragEventType.DragEnter,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);
-            layer.DragDrop(new Point(580,400),Avalonia.Input.Raw.RawDragEventType.DragOver,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);Pump();
-            var early=layer.Wheel.IsVisible;
-            layer.DragDrop(new Point(560,402),Avalonia.Input.Raw.RawDragEventType.DragOver,data,Avalonia.Input.DragDropEffects.Copy,Avalonia.Input.RawInputModifiers.None);Pump();
-            Expect("A 40 px push opens the wheel, with no slice chosen yet",!early&&layer.Wheel.IsVisible&&layer.Wheel.Items.Any(i=>i.Title=="Copy Path")&&layer.Wheel.SelectedItem is null);
-            w.CloseGestures();Pump();
-        }
+        // Pressed twice before the drag arrives: the wheel opens on Convert straight away.
+        w.StartGesture(null);Pump();layer=w.Gestures.First();data=Drag();w.PressShortcut("gesture");Pump();
+        Over(layer,data,new Point(600,400),Avalonia.Input.Raw.RawDragEventType.DragEnter);Pump();
+        Expect($"A second press before the drag arrives opens Convert ({layer.Mode})",layer.Mode=="convert");
+        // A direct wheel shortcut while the layer is up jumps to that wheel in place.
+        w.PressShortcut("actions");Pump();
+        Expect($"Meta+Alt+A over an open wheel switches to File actions ({layer.Mode})",layer.Mode=="actions"&&w.Gestures.Count(g=>g.IsVisible)>=1);
+        w.CloseGestures();Pump();
         // A cancelled drag (Esc) leaves the layer for good and closes it; a quick return keeps it.
         {
             w.StartGesture(null);Pump();layer=w.Gestures.First();data=Drag();

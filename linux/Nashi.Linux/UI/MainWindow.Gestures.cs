@@ -94,6 +94,9 @@ public sealed partial class MainWindow
         GestureWindow.Log("shortcut "+id);
         switch(id)
         {
+            // Pressed again while the layer is up: step to the next wheel (or jump to the named one) in place.
+            case "gesture" when OpenLayers() is {Count:>0} open:foreach(var layer in open)layer.NextWheel();break;
+            case "convert" or "tools" or "actions" when OpenLayers() is {Count:>0} open:foreach(var layer in open)layer.SwitchTo(id);break;
             case "gesture":StartGesture(null);break;
             case "convert" or "tools" or "actions":StartGesture(id);break;
             case "clipboard":_=Ui.Guard(ClipboardWheelAsync);break;
@@ -130,6 +133,7 @@ public sealed partial class MainWindow
         GestureWindow.Log("native Wayland drop target ready");return wayland;
     }
     internal IReadOnlyList<GestureWindow> Gestures=>gestures;
+    private List<GestureWindow> OpenLayers()=>gestures.Where(g=>g.IsVisible).ToList();
     internal void HideNativeOverlay()=>wayland?.Hide();
     private GestureWindow? nativeLayer;
     /// Wayland gives logical pixels; XWayland windows use them as is unless KWin scales XWayland apps.

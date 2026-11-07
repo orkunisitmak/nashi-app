@@ -16,14 +16,13 @@ public sealed record LinuxSettings
         ("open","Show Nashi","Meta+Alt+N"),
         ("download","Download a copied link","Meta+Alt+D"),
     ];
-    public static readonly string[] Directions=["left","right","up","down"];
-    public static readonly string[] Wheels=["actions","convert","tools","none"];
+    public static readonly string[] Wheels=["tools","convert","actions"];
     public static readonly string[] Themes=["classic","glass","frosted","brutalist"];
 
     public bool GlobalShortcuts{get;init;}=true;
     public Dictionary<string,string> Shortcuts{get;init;}=Actions.ToDictionary(a=>a.Id,a=>a.Default);
-    /// Which wheel each gesture direction opens.
-    public Dictionary<string,string> Gestures{get;init;}=new(){["left"]="actions",["right"]="convert",["up"]="tools",["down"]="none"};
+    /// The wheel the gesture shortcut opens first; pressing it again steps to the next one.
+    public string FirstWheel{get;init;}="tools";
     public string Theme{get;init;}="classic";
     public bool RunInBackground{get;init;}=true;
     /// Conversions and simple tools chosen on the gesture layer run at once with their saved defaults.
@@ -46,9 +45,8 @@ public sealed record LinuxSettings
             var loaded=JsonSerializer.Deserialize<LinuxSettings>(System.IO.File.ReadAllText(File))??new();
             // Unknown or missing entries fall back to defaults, so a newer or older file never breaks startup.
             var shortcuts=Actions.ToDictionary(a=>a.Id,a=>loaded.Shortcuts?.GetValueOrDefault(a.Id) is {} combo&&(combo.Length==0||KeyCombo.ToQt(combo) is not null)?combo:a.Default);
-            var gestures=Directions.ToDictionary(d=>d,d=>loaded.Gestures?.GetValueOrDefault(d) is {} wheel&&Wheels.Contains(wheel)?wheel:new LinuxSettings().Gestures[d]);
             var watches=(loaded.Watches??[]).Where(w=>w is not null&&Path.IsPathFullyQualified(w.Folder??"")&&w.Extensions is {Length:>0}&&!string.IsNullOrWhiteSpace(w.Format)).Take(50).ToList();
-            return loaded with{HotEdge=loaded.HotEdge is "off" or "left" or "right" or "bottom"?loaded.HotEdge:"left",Watches=watches,Shortcuts=shortcuts,Gestures=gestures,Theme=Themes.Contains(loaded.Theme)?loaded.Theme:"classic"};
+            return loaded with{HotEdge=loaded.HotEdge is "off" or "left" or "right" or "bottom"?loaded.HotEdge:"left",Watches=watches,Shortcuts=shortcuts,FirstWheel=Wheels.Contains(loaded.FirstWheel)?loaded.FirstWheel:"tools",Theme=Themes.Contains(loaded.Theme)?loaded.Theme:"classic"};
         }
         catch(Exception error)when(error is JsonException or IOException or UnauthorizedAccessException){return new();}
     }
