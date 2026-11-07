@@ -39,6 +39,8 @@ jobs:
         run: python3 scripts/audit-public-tree.py
       - name: Build native macOS app
         run: swift build --product Nashi
+      - name: Build command line tool
+        run: swift build --product nashi-cli
       - name: Isolated native UI, accessibility and artwork checks
         run: python3 scripts/test-native-ui.py
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
