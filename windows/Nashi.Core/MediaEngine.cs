@@ -68,7 +68,8 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
     public async Task<MediaInfo> InspectAsync(string input, CancellationToken token = default)
     {
         if (!File.Exists(input)) throw new FileNotFoundException("Choose an existing media file.");
-        var result = await ProcessRunner.RunAsync(ffprobe, ["-v", "error", "-show_format", "-show_streams", "-of", "json", Path.GetFullPath(input)], token);
+        // Warnings are read only to learn whether the duration below is a guess.
+        var result = await ProcessRunner.RunAsync(ffprobe, ["-v", "warning", "-show_format", "-show_streams", "-of", "json", Path.GetFullPath(input)], token);
         using var json = JsonDocument.Parse(result.Output); var root = json.RootElement;
         var streams = new List<MediaStream>();
         foreach (var stream in root.GetProperty("streams").EnumerateArray())
@@ -84,11 +85,28 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
             streams.Add(new(stream.GetProperty("index").GetInt32(), GetString(stream,"codec_type"), GetString(stream,"codec_name"), width, height, attached,GetInt(stream,"bits_per_raw_sample")??GetInt(stream,"bits_per_sample")??0,GetString(stream,"sample_fmt"),ParseFrameRate(GetString(stream,"avg_frame_rate")),int.TryParse(GetString(stream,"sample_rate"),NumberStyles.Integer,CultureInfo.InvariantCulture,out var sampleRate)&&sampleRate>0?sampleRate:0,GetInt(stream,"channels") is {} channels&&channels is >0 and <=512?channels:0,turned?1:SampleAspect(GetString(stream,"sample_aspect_ratio"))));
         }
         var duration = root.TryGetProperty("format", out var format) && double.TryParse(GetString(format,"duration"), CultureInfo.InvariantCulture, out var seconds) && double.IsFinite(seconds) ? Math.Max(0,seconds) : 0;
+        // Raw ADTS AAC and MP3 without a length header store no duration, so FFprobe guesses one from the bitrate. A voice memo
+        // that goes quiet halves the guess, and trims, redactions and visualizations then stopped there. Measure it instead.
+        if(result.Error.Contains("Estimating duration from bitrate",StringComparison.Ordinal)&&await MeasuredDurationAsync(input,token) is {} measured)duration=measured;
         var oggTags=format.ValueKind==JsonValueKind.Object&&GetString(format,"format_name").Split(',').Contains("ogg")&&root.GetProperty("streams").EnumerateArray().FirstOrDefault(s=>GetString(s,"codec_type")=="audio") is {ValueKind:JsonValueKind.Object} audio&&audio.TryGetProperty("tags",out var audioTags)&&audioTags.ValueKind==JsonValueKind.Object&&audioTags.EnumerateObject().Any();
         var quickTimeKeys=format.ValueKind==JsonValueKind.Object&&format.TryGetProperty("tags",out var formatTags)&&formatTags.ValueKind==JsonValueKind.Object&&formatTags.EnumerateObject().Any(t=>t.Name.StartsWith("com.apple.quicktime.",StringComparison.Ordinal));
         // FileInfo sizes a symbolic link itself; compression targets come from the media it points to (as on macOS).
         var file=new FileInfo(input);
         return new(duration, (file.ResolveLinkTarget(true) as FileInfo??file).Length, streams){OggStreamTags=oggTags,QuickTimeKeys=quickTimeKeys};
+    }
+
+    // The end of the last packet, read by copying every stream to the null muxer without decoding.
+    private async Task<double?> MeasuredDurationAsync(string input,CancellationToken token)
+    {
+        double? end=null;const string prefix="out_time_us=";
+        try
+        {
+            await ProcessRunner.RunAsync(ffmpeg,["-hide_banner","-nostdin","-v","error","-nostats","-progress","pipe:1","-i",Path.GetFullPath(input),"-map","0","-c","copy","-f","null",OperatingSystem.IsWindows()?"NUL":"/dev/null"],token,
+                line=>{if(line.StartsWith(prefix,StringComparison.Ordinal)&&double.TryParse(line[prefix.Length..],NumberStyles.Float,CultureInfo.InvariantCulture,out var microseconds)&&double.IsFinite(microseconds)&&microseconds>0)end=microseconds/1_000_000;});
+        }
+        // A file FFprobe reads but FFmpeg cannot copy keeps FFprobe's guess. Cancellation is checked before the exit code, so it still throws.
+        catch(IOException){return null;}
+        return end;
     }
 
     // The last video packet's time from the container start, read without decoding: the final minute first, then the whole file.
