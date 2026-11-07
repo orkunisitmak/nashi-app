@@ -105,6 +105,7 @@
 "32-BIT INTEGER" = "32-BIT INTEGER";
 "32-bit float" = "32-bit float";
 "32-bit integer" = "32-bit integer";
+"4K UHD" = "4K UHD";
 "A DISCARDED CLIP IS OUTSIDE THE RANGE." = "A DISCARDED CLIP IS OUTSIDE THE RANGE.";
 "A FEW SMALL PREFERENCES. A SMOOTHER EVERYDAY." = "A FEW SMALL PREFERENCES. A SMOOTHER EVERYDAY.";
 "A FEW TOOLS. MORE POSSIBILITIES." = "A FEW TOOLS. MORE POSSIBILITIES.";
@@ -162,6 +163,10 @@
 "A subtitle cue ends before it starts." = "A subtitle cue ends before it starts.";
 "A table cell span is invalid or exceeds 1,024 columns." = "A table cell span is invalid or exceeds 1,024 columns.";
 "A waveform requires a finite media duration." = "A waveform requires a finite media duration.";
+"A4 LANDSCAPE" = "A4 LANDSCAPE";
+"A4 PORTRAIT" = "A4 PORTRAIT";
+"A4 landscape" = "A4 landscape";
+"A4 portrait" = "A4 portrait";
 "ABOUT" = "ABOUT";
 "ACCESSIBILITY" = "ACCESSIBILITY";
 "ACTIONS" = "ACTIONS";
@@ -215,6 +220,7 @@
 "ANNOTATION CANVAS" = "ANNOTATION CANVAS";
 "ANNOTATION TEXT" = "ANNOTATION TEXT";
 "ANOTHER TASK IS RUNNING. YOUR LINK IS READY WHEN IT FINISHES." = "ANOTHER TASK IS RUNNING. YOUR LINK IS READY WHEN IT FINISHES.";
+"APP" = "APP";
 "APPEARANCE" = "APPEARANCE";
 "APPEARANCE COULD NOT BE SAVED" = "APPEARANCE COULD NOT BE SAVED";
 "ARCHIVE CONTAINS A LINK." = "ARCHIVE CONTAINS A LINK.";
@@ -305,6 +311,7 @@
 "Annotation canvas" = "Annotation canvas";
 "Annotation text" = "Annotation text";
 "Another task is running. Your link is ready when it finishes." = "Another task is running. Your link is ready when it finishes.";
+"App" = "App";
 "Appearance" = "Appearance";
 "Appearance could not be saved" = "Appearance could not be saved";
 "Archive contains a link." = "Archive contains a link.";
@@ -348,11 +355,14 @@
 "BESIDE ORIGINAL FILES" = "BESIDE ORIGINAL FILES";
 "BEST AVAILABLE" = "BEST AVAILABLE";
 "BETTER TOGETHER." = "BETTER TOGETHER.";
+"BIOMETRIC PHOTO 50×60 MM" = "BIOMETRIC PHOTO 50×60 MM";
 "BITRATE" = "BITRATE";
+"BLACK MARGINS" = "BLACK MARGINS";
 "BLACKS" = "BLACKS";
 "BLEEP" = "BLEEP";
 "BLEEP AUDIO" = "BLEEP AUDIO";
 "BLUR" = "BLUR";
+"BLURRED COPY" = "BLURRED COPY";
 "BORDER" = "BORDER";
 "BOTTOM" = "BOTTOM";
 "BRIGHTNESS" = "BRIGHTNESS";
@@ -368,11 +378,14 @@
 "Beside original files" = "Beside original files";
 "Best available" = "Best available";
 "Better together." = "Better together.";
+"Biometric photo 50×60 mm" = "Biometric photo 50×60 mm";
 "Bitrate" = "Bitrate";
+"Black margins" = "Black margins";
 "Blacks" = "Blacks";
 "Bleep" = "Bleep";
 "Bleep Audio" = "Bleep Audio";
 "Blur" = "Blur";
+"Blurred copy" = "Blurred copy";
 "Border" = "Border";
 "Bottom" = "Bottom";
 "Brightness" = "Brightness";
@@ -395,6 +408,7 @@
 "CHANGE SPEED · NASHI" = "CHANGE SPEED · NASHI";
 "CHANGE VIDEO SPEED" = "CHANGE VIDEO SPEED";
 "CHANGE…" = "CHANGE…";
+"CHANNEL BANNER" = "CHANNEL BANNER";
 "CHANNELS" = "CHANNELS";
 "CHECK AUTOMATICALLY WHILE NASHI IS RUNNING" = "CHECK AUTOMATICALLY WHILE NASHI IS RUNNING";
 "CHECK DRAWING SETTINGS" = "CHECK DRAWING SETTINGS";
@@ -557,6 +571,7 @@
 "COULDN’T CHECK FOR UPDATES" = "COULDN’T CHECK FOR UPDATES";
 "COULDN’T FINISH" = "COULDN’T FINISH";
 "COULDN’T OPEN THIS TOOL" = "COULDN’T OPEN THIS TOOL";
+"COVER PHOTO" = "COVER PHOTO";
 "COVER STYLE" = "COVER STYLE";
 "CREATE A FINE-GRAINED TOKEN ON GITHUB" = "CREATE A FINE-GRAINED TOKEN ON GITHUB";
 "CREATE A NEW FLOAT" = "CREATE A NEW FLOAT";
@@ -576,6 +591,7 @@
 "CTRL+O  CHOOSE FILES\nCTRL+V  PASTE FILES, TEXT, AN IMAGE OR LINK\nCTRL+SPACE / ENTER  OPEN TOOLS AND CONVERSIONS\nDELETE  REMOVE SELECTED FILES FROM NASHI\nCTRL+1 / CTRL+2  HOME / LIBRARY\nCTRL+F  FIND IN LIBRARY\nCTRL+SHIFT+D  USE A COPIED DOWNLOAD LINK\nCTRL+U  CHECK FOR UPDATES\n\nWHEEL: ARROWS / TAB TO CHOOSE, ENTER TO OPEN, ESC TO CLOSE\nMEDIA: SPACE PLAY/PAUSE, ←/→ 1 SECOND, SHIFT+←/→ 1/30S, I/O SET RANGE\nCROP: DRAG, SHIFT LOCKS RATIO, ENTER SAVES\nEDITING TEXT: NORMAL PASTE AND ARROW KEYS ARE PRESERVED." = "CTRL+O  CHOOSE FILES\nCTRL+V  PASTE FILES, TEXT, AN IMAGE OR LINK\nCTRL+SPACE / ENTER  OPEN TOOLS AND CONVERSIONS\nDELETE  REMOVE SELECTED FILES FROM NASHI\nCTRL+1 / CTRL+2  HOME / LIBRARY\nCTRL+F  FIND IN LIBRARY\nCTRL+SHIFT+D  USE A COPIED DOWNLOAD LINK\nCTRL+U  CHECK FOR UPDATES\n\nWHEEL: ARROWS / TAB TO CHOOSE, ENTER TO OPEN, ESC TO CLOSE\nMEDIA: SPACE PLAY/PAUSE, ←/→ 1 SECOND, SHIFT+←/→ 1/30S, I/O SET RANGE\nCROP: DRAG, SHIFT LOCKS RATIO, ENTER SAVES\nEDITING TEXT: NORMAL PASTE AND ARROW KEYS ARE PRESERVED.";
 "CTRL+SHIFT+D  USE A COPIED LINK  ·  PUBLIC, DOWNLOADABLE MEDIA" = "CTRL+SHIFT+D  USE A COPIED LINK  ·  PUBLIC, DOWNLOADABLE MEDIA";
 "CUSTOM DIMENSIONS" = "CUSTOM DIMENSIONS";
+"CUSTOM SIZE" = "CUSTOM SIZE";
 "CUT" = "CUT";
 "Callout" = "Callout";
 "Cancel" = "Cancel";
@@ -592,6 +608,7 @@
 "Change Speed · Nashi" = "Change Speed · Nashi";
 "Change Video Speed" = "Change Video Speed";
 "Change…" = "Change…";
+"Channel banner" = "Channel banner";
 "Channels" = "Channels";
 "Check automatically while Nashi is running" = "Check automatically while Nashi is running";
 "Check drawing settings" = "Check drawing settings";
@@ -786,6 +803,7 @@
 "Couldn’t check for updates" = "Couldn’t check for updates";
 "Couldn’t finish" = "Couldn’t finish";
 "Couldn’t open this tool" = "Couldn’t open this tool";
+"Cover photo" = "Cover photo";
 "Cover style" = "Cover style";
 "Create Collage" = "Create Collage";
 "Create PDF" = "Create PDF";
@@ -806,6 +824,7 @@
 "Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools and conversions\nDelete  Remove selected files from Nashi\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved." = "Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools and conversions\nDelete  Remove selected files from Nashi\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved.";
 "Ctrl+Shift+D  Use a copied link  ·  Public, downloadable media" = "Ctrl+Shift+D  Use a copied link  ·  Public, downloadable media";
 "Custom dimensions" = "Custom dimensions";
+"Custom size" = "Custom size";
 "Cut" = "Cut";
 "DARK" = "DARK";
 "DEFAULTS APPLY WHENEVER YOU CHOOSE AN OUTPUT FORMAT." = "DEFAULTS APPLY WHENEVER YOU CHOOSE AN OUTPUT FORMAT.";
@@ -1072,6 +1091,7 @@
 "FILES MISSING" = "FILES MISSING";
 "FILES MOVED." = "FILES MOVED.";
 "FILES STAY ON YOUR COMPUTER." = "FILES STAY ON YOUR COMPUTER.";
+"FILL AND CROP" = "FILL AND CROP";
 "FILL CELLS (CROP EDGES)" = "FILL CELLS (CROP EDGES)";
 "FILL CELLS (CROP TO FIT)" = "FILL CELLS (CROP TO FIT)";
 "FIND A FILE OR TOOL  ·  CTRL+F" = "FIND A FILE OR TOOL  ·  CTRL+F";
@@ -1092,6 +1112,7 @@
 "FINISHING YOUR FILE…" = "FINISHING YOUR FILE…";
 "FIRST-TIME SETUP" = "FIRST-TIME SETUP";
 "FIT" = "FIT";
+"FIT INSIDE (KEEP EVERYTHING)" = "FIT INSIDE (KEEP EVERYTHING)";
 "FIT WHOLE IMAGE" = "FIT WHOLE IMAGE";
 "FITTING VIDEO TO THE SELECTED SIZE…" = "FITTING VIDEO TO THE SELECTED SIZE…";
 "FIXED PAGES" = "FIXED PAGES";
@@ -1122,6 +1143,7 @@
 "FRESH VERSIONS, ONE CLICK AWAY." = "FRESH VERSIONS, ONE CLICK AWAY.";
 "FRESHLY MADE" = "FRESHLY MADE";
 "FRESHLY MADE, PASTED, AND READY FOR ANOTHER ROUND." = "FRESHLY MADE, PASTED, AND READY FOR ANOTHER ROUND.";
+"FULL HD" = "FULL HD";
 "Fade" = "Fade";
 "Faster" = "Faster";
 "Featured" = "Featured";
@@ -1149,6 +1171,7 @@
 "Files stay on your computer." = "Files stay on your computer.";
 "Files were copied safely, but some originals could not be removed. New copies are in %@. Check the originals before retrying." = "Files were copied safely, but some originals could not be removed. New copies are in %@. Check the originals before retrying.";
 "Files were copied safely, but some originals could not be removed. New copies are in %lld. Check the originals before retrying." = "Files were copied safely, but some originals could not be removed. New copies are in %lld. Check the originals before retrying.";
+"Fill and crop" = "Fill and crop";
 "Fill cells (crop edges)" = "Fill cells (crop edges)";
 "Fill cells (crop to fit)" = "Fill cells (crop to fit)";
 "Find a file or tool  ·  Ctrl+F" = "Find a file or tool  ·  Ctrl+F";
@@ -1168,6 +1191,7 @@
 "Finishing media…" = "Finishing media…";
 "Finishing your file…" = "Finishing your file…";
 "Fit" = "Fit";
+"Fit inside (keep everything)" = "Fit inside (keep everything)";
 "Fit whole image" = "Fit whole image";
 "Fitting image · attempt %@…" = "Fitting image · attempt %@…";
 "Fitting image · attempt %lld…" = "Fitting image · attempt %lld…";
@@ -1204,6 +1228,7 @@
 "Fresh versions, one click away." = "Fresh versions, one click away.";
 "Freshly made" = "Freshly made";
 "Freshly made, pasted, and ready for another round." = "Freshly made, pasted, and ready for another round.";
+"Full HD" = "Full HD";
 "GAMMA" = "GAMMA";
 "GAMMA MUST BE POSITIVE; CONTRAST AND SATURATION CANNOT BE NEGATIVE." = "GAMMA MUST BE POSITIVE; CONTRAST AND SATURATION CANNOT BE NEGATIVE.";
 "GENERAL" = "GENERAL";
@@ -1240,6 +1265,7 @@
 "Gradient end" = "Gradient end";
 "Grain" = "Grain";
 "Grid" = "Grid";
+"HEADER" = "HEADER";
 "HEIGHT" = "HEIGHT";
 "HELLO" = "HELLO";
 "HIGHER QUALITY" = "HIGHER QUALITY";
@@ -1248,6 +1274,7 @@
 "HOLD A KEY WHILE DRAGGING IN FINDER" = "HOLD A KEY WHILE DRAGGING IN FINDER";
 "HOME" = "HOME";
 "HUE" = "HUE";
+"Header" = "Header";
 "Height" = "Height";
 "Hello" = "Hello";
 "Higher Quality" = "Higher Quality";
@@ -1256,6 +1283,7 @@
 "Hold a key while dragging in Finder" = "Hold a key while dragging in Finder";
 "Home" = "Home";
 "Hue" = "Hue";
+"ICON" = "ICON";
 "ICONS" = "ICONS";
 "IMAGE" = "IMAGE";
 "IMAGE COMPRESSION" = "IMAGE COMPRESSION";
@@ -1285,6 +1313,7 @@
 "INVALID UPDATE SIGNATURE LENGTH." = "INVALID UPDATE SIGNATURE LENGTH.";
 "INVALID UPDATE SIGNATURE." = "INVALID UPDATE SIGNATURE.";
 "INVALID YOUTUBE VIDEO ID." = "INVALID YOUTUBE VIDEO ID.";
+"Icon" = "Icon";
 "Icons" = "Icons";
 "Image" = "Image";
 "Image Compression" = "Image Compression";
@@ -1380,6 +1409,7 @@
 "LIGHT" = "LIGHT";
 "LIGHTING" = "LIGHTING";
 "LINE" = "LINE";
+"LINK PREVIEW (OPEN GRAPH)" = "LINK PREVIEW (OPEN GRAPH)";
 "LINK READY. CHOOSE A FORMAT, THEN DOWNLOAD." = "LINK READY. CHOOSE A FORMAT, THEN DOWNLOAD.";
 "LIST" = "LIST";
 "LITTLE TWEAKS.\nBIG DIFFERENCE." = "LITTLE TWEAKS.\nBIG DIFFERENCE.";
@@ -1412,6 +1442,7 @@
 "Light" = "Light";
 "Lighting" = "Lighting";
 "Line" = "Line";
+"Link preview (Open Graph)" = "Link preview (Open Graph)";
 "Link ready. Choose a format, then Download." = "Link ready. Choose a format, then Download.";
 "List" = "List";
 "Little tweaks.\nBig difference." = "Little tweaks.\nBig difference.";
@@ -1432,6 +1463,7 @@
 "MAKE SOME SPACE. KEEP WHAT MATTERS." = "MAKE SOME SPACE. KEEP WHAT MATTERS.";
 "MAKE YOUR POINT." = "MAKE YOUR POINT.";
 "MANAGE…" = "MANAGE…";
+"MARGINS" = "MARGINS";
 "MARKER" = "MARKER";
 "MATCH SOURCE" = "MATCH SOURCE";
 "MAXIMIZE" = "MAXIMIZE";
@@ -1478,6 +1510,7 @@
 "Make some space. Keep what matters." = "Make some space. Keep what matters.";
 "Make your point." = "Make your point.";
 "Manage…" = "Manage…";
+"Margins" = "Margins";
 "Marker" = "Marker";
 "Match Source" = "Match Source";
 "Match source" = "Match source";
@@ -1724,6 +1757,7 @@
 "PAGE RANGES, FOR EXAMPLE 1-3, 5" = "PAGE RANGES, FOR EXAMPLE 1-3, 5";
 "PAGES INPUT EXCEEDS 200 MB." = "PAGES INPUT EXCEEDS 200 MB.";
 "PAGES PER FILE" = "PAGES PER FILE";
+"PASSPORT PHOTO 35×45 MM" = "PASSPORT PHOTO 35×45 MM";
 "PASTE" = "PASTE";
 "PASTE A PUBLIC HTTP(S) MEDIA OR PAGE LINK." = "PASTE A PUBLIC HTTP(S) MEDIA OR PAGE LINK.";
 "PASTE A PUBLIC MEDIA LINK TO BEGIN." = "PASTE A PUBLIC MEDIA LINK TO BEGIN.";
@@ -1768,10 +1802,12 @@
 "PLAYBACK / DOCUMENT ORDER" = "PLAYBACK / DOCUMENT ORDER";
 "PLAYBACK SPEED" = "PLAYBACK SPEED";
 "PORTRAIT" = "PORTRAIT";
+"PORTRAIT POST" = "PORTRAIT POST";
 "PORTRAIT · 4:5" = "PORTRAIT · 4:5";
 "PORTRAIT · 9:16" = "PORTRAIT · 9:16";
 "POSITION X" = "POSITION X";
 "POSITION Y" = "POSITION Y";
+"POST IMAGE" = "POST IMAGE";
 "PREPARING A LOCAL PREVIEW…" = "PREPARING A LOCAL PREVIEW…";
 "PREPARING MEDIA…" = "PREPARING MEDIA…";
 "PREPARING MOVE…" = "PREPARING MOVE…";
@@ -1793,12 +1829,15 @@
 "PREVIEW VISUALIZATION" = "PREVIEW VISUALIZATION";
 "PREVIOUS FRAME" = "PREVIOUS FRAME";
 "PREVIOUS PAGE" = "PREVIOUS PAGE";
+"PRINT" = "PRINT";
 "PRIVATE REPOSITORY · TOKEN SAVED IN KEYCHAIN" = "PRIVATE REPOSITORY · TOKEN SAVED IN KEYCHAIN";
 "PROCESSED PREVIEW UNAVAILABLE FOR THIS WINDOWS CODEC." = "PROCESSED PREVIEW UNAVAILABLE FOR THIS WINDOWS CODEC.";
 "PROCESSED PREVIEW · EXPORT USES THE ORIGINAL FILE." = "PROCESSED PREVIEW · EXPORT USES THE ORIGINAL FILE.";
 "PROCESSED PREVIEW. CHOOSE ORIGINAL TO EDIT AREAS." = "PROCESSED PREVIEW. CHOOSE ORIGINAL TO EDIT AREAS.";
 "PROCESSING MEDIA…" = "PROCESSING MEDIA…";
 "PROCESSING…" = "PROCESSING…";
+"PROFILE BANNER" = "PROFILE BANNER";
+"PROFILE PHOTO" = "PROFILE PHOTO";
 "PROTECTED MEDIA CANNOT BE DOWNLOADED." = "PROTECTED MEDIA CANNOT BE DOWNLOADED.";
 "PUBLIC REPOSITORY · NO TOKEN NEEDED" = "PUBLIC REPOSITORY · NO TOKEN NEEDED";
 "PUBLIC UPDATES WORK WITHOUT A TOKEN." = "PUBLIC UPDATES WORK WITHOUT A TOKEN.";
@@ -1812,6 +1851,7 @@
 "Pages per file" = "Pages per file";
 "Pages per file: %@" = "Pages per file: %@";
 "Pages per file: %lld" = "Pages per file: %lld";
+"Passport photo 35×45 mm" = "Passport photo 35×45 mm";
 "Paste" = "Paste";
 "Paste a public http(s) media or page link." = "Paste a public http(s) media or page link.";
 "Paste a public media link to begin." = "Paste a public media link to begin.";
@@ -1845,10 +1885,12 @@
 "Playback / document order" = "Playback / document order";
 "Playback speed" = "Playback speed";
 "Portrait" = "Portrait";
+"Portrait post" = "Portrait post";
 "Portrait · 4:5" = "Portrait · 4:5";
 "Portrait · 9:16" = "Portrait · 9:16";
 "Position X" = "Position X";
 "Position Y" = "Position Y";
+"Post image" = "Post image";
 "Preparing %@…" = "Preparing %@…";
 "Preparing %lld…" = "Preparing %lld…";
 "Preparing a local preview…" = "Preparing a local preview…";
@@ -1876,12 +1918,15 @@
 "Preview uses the first 12 seconds. Export includes the full recording." = "Preview uses the first 12 seconds. Export includes the full recording.";
 "Previous frame" = "Previous frame";
 "Previous page" = "Previous page";
+"Print" = "Print";
 "Private repository · Token saved in Keychain" = "Private repository · Token saved in Keychain";
 "Processed preview unavailable for this Windows codec." = "Processed preview unavailable for this Windows codec.";
 "Processed preview · export uses the original file." = "Processed preview · export uses the original file.";
 "Processed preview. Choose Original to edit areas." = "Processed preview. Choose Original to edit areas.";
 "Processing media…" = "Processing media…";
 "Processing…" = "Processing…";
+"Profile banner" = "Profile banner";
+"Profile photo" = "Profile photo";
 "Protected media cannot be downloaded." = "Protected media cannot be downloaded.";
 "Public repository · No token needed" = "Public repository · No token needed";
 "Public updates work without a token." = "Public updates work without a token.";
@@ -2171,6 +2216,7 @@
 "SPLITTING REQUIRES A KNOWN DURATION." = "SPLITTING REQUIRES A KNOWN DURATION.";
 "SPREADSHEETS" = "SPREADSHEETS";
 "SQUARE" = "SQUARE";
+"SQUARE POST" = "SQUARE POST";
 "SQUARE · 1:1" = "SQUARE · 1:1";
 "STAGING CANNOT BE A SYMBOLIC LINK." = "STAGING CANNOT BE A SYMBOLIC LINK.";
 "START" = "START";
@@ -2179,7 +2225,9 @@
 "STARTING DOWNLOAD…" = "STARTING DOWNLOAD…";
 "STEREO" = "STEREO";
 "STILL IMAGE" = "STILL IMAGE";
+"STORY AND REELS" = "STORY AND REELS";
 "STRAIGHT TO THE GOOD STUFF." = "STRAIGHT TO THE GOOD STUFF.";
+"STRETCH TO SIZE" = "STRETCH TO SIZE";
 "STROKE WIDTH" = "STROKE WIDTH";
 "STRONG" = "STRONG";
 "STYLE" = "STYLE";
@@ -2341,6 +2389,7 @@
 "Splitting requires a known duration." = "Splitting requires a known duration.";
 "Spreadsheets" = "Spreadsheets";
 "Square" = "Square";
+"Square post" = "Square post";
 "Square · 1:1" = "Square · 1:1";
 "Staging cannot be a symbolic link." = "Staging cannot be a symbolic link.";
 "Start" = "Start";
@@ -2348,7 +2397,9 @@
 "Starting download…" = "Starting download…";
 "Stereo" = "Stereo";
 "Still image" = "Still image";
+"Story and Reels" = "Story and Reels";
 "Straight to the good stuff." = "Straight to the good stuff.";
+"Stretch to size" = "Stretch to size";
 "Stroke width" = "Stroke width";
 "Strong" = "Strong";
 "Style" = "Style";
@@ -2363,6 +2414,7 @@
 "TARGET LUFS" = "TARGET LUFS";
 "TARGET SIZE (KB; 0 = AUTO)" = "TARGET SIZE (KB; 0 = AUTO)";
 "TEMPERATURE" = "TEMPERATURE";
+"TEMPLATE" = "TEMPLATE";
 "TERMINAL" = "TERMINAL";
 "TERMINAL APP" = "TERMINAL APP";
 "TEXT" = "TEXT";
@@ -2504,6 +2556,7 @@
 "Target loudness" = "Target loudness";
 "Target size (KB; 0 = auto)" = "Target size (KB; 0 = auto)";
 "Temperature" = "Temperature";
+"Template" = "Template";
 "Terminal" = "Terminal";
 "Terminal app" = "Terminal app";
 "Text" = "Text";
@@ -2746,6 +2799,7 @@
 "VIBRANCE" = "VIBRANCE";
 "VIDEO" = "VIDEO";
 "VIDEO COMPRESSION" = "VIDEO COMPRESSION";
+"VIDEO COVER" = "VIDEO COVER";
 "VIDEO QUALITY" = "VIDEO QUALITY";
 "VIDEO SIZE" = "VIDEO SIZE";
 "VIDEO SNAPSHOTS" = "VIDEO SNAPSHOTS";
@@ -2768,6 +2822,7 @@
 "Video Compression" = "Video Compression";
 "Video Snapshots" = "Video Snapshots";
 "Video compression" = "Video compression";
+"Video cover" = "Video cover";
 "Video quality" = "Video quality";
 "Video size" = "Video size";
 "Video, audio, or an image. Straight into your tools." = "Video, audio, or an image. Straight into your tools.";
@@ -2777,11 +2832,14 @@
 "Visualization dimensions must be between 16 and 8,192 pixels." = "Visualization dimensions must be between 16 and 8,192 pixels.";
 "WAIT FOR THE PROCESSED PREVIEW TO FINISH BEFORE RESETTING." = "WAIT FOR THE PROCESSED PREVIEW TO FINISH BEFORE RESETTING.";
 "WAVEFORM" = "WAVEFORM";
+"WEB" = "WEB";
 "WEB MEDIA" = "WEB MEDIA";
 "WELCOME TO NASHI" = "WELCOME TO NASHI";
 "WELCOME…" = "WELCOME…";
 "WHEEL FINISH" = "WHEEL FINISH";
 "WHEEL SIZE" = "WHEEL SIZE";
+"WHEN THE SHAPE DIFFERS" = "WHEN THE SHAPE DIFFERS";
+"WHITE MARGINS" = "WHITE MARGINS";
 "WHITES" = "WHITES";
 "WIDTH" = "WIDTH";
 "WINDOW" = "WINDOW";
@@ -2793,11 +2851,14 @@
 "WORKING…" = "WORKING…";
 "Wait for the processed preview to finish before resetting." = "Wait for the processed preview to finish before resetting.";
 "Waveform" = "Waveform";
+"Web" = "Web";
 "Web media" = "Web media";
 "Welcome to Nashi" = "Welcome to Nashi";
 "Welcome…" = "Welcome…";
 "Wheel finish" = "Wheel finish";
 "Wheel size" = "Wheel size";
+"When the shape differs" = "When the shape differs";
+"White margins" = "White margins";
 "Whites" = "Whites";
 "Width" = "Width";
 "Window" = "Window";

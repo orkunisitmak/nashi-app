@@ -105,6 +105,7 @@
 "32-BIT INTEGER" = "ENTIER 32 BITS";
 "32-bit float" = "Virgule flottante 32 bits";
 "32-bit integer" = "Entier 32 bits";
+"4K UHD" = "4K UHD";
 "A DISCARDED CLIP IS OUTSIDE THE RANGE." = "UN CLIP SUPPRIMÉ EST EN DEHORS DE LA PLAGE.";
 "A FEW SMALL PREFERENCES. A SMOOTHER EVERYDAY." = "QUELQUES PETITES PRÉFÉRENCES. UN QUOTIDIEN PLUS FLUIDE.";
 "A FEW TOOLS. MORE POSSIBILITIES." = "QUELQUES OUTILS. PLUS DE POSSIBILITÉS.";
@@ -162,6 +163,10 @@
 "A subtitle cue ends before it starts." = "Une réplique de sous-titre se termine avant de commencer.";
 "A table cell span is invalid or exceeds 1,024 columns." = "La fusion d’une cellule de tableau est invalide ou dépasse 1 024 colonnes.";
 "A waveform requires a finite media duration." = "Une forme d’onde nécessite une durée de média finie.";
+"A4 LANDSCAPE" = "A4 PAYSAGE";
+"A4 PORTRAIT" = "A4 PORTRAIT";
+"A4 landscape" = "A4 paysage";
+"A4 portrait" = "A4 portrait";
 "ABOUT" = "À PROPOS";
 "ACCESSIBILITY" = "ACCESSIBILITÉ";
 "ACTIONS" = "ACTIONS";
@@ -215,6 +220,7 @@
 "ANNOTATION CANVAS" = "CANEVAS D’ANNOTATION";
 "ANNOTATION TEXT" = "TEXTE DE L’ANNOTATION";
 "ANOTHER TASK IS RUNNING. YOUR LINK IS READY WHEN IT FINISHES." = "UNE AUTRE TÂCHE EST EN COURS. VOTRE LIEN SERA PRÊT DÈS QU’ELLE SERA TERMINÉE.";
+"APP" = "APPLICATION";
 "APPEARANCE" = "APPARENCE";
 "APPEARANCE COULD NOT BE SAVED" = "IMPOSSIBLE D’ENREGISTRER L’APPARENCE";
 "ARCHIVE CONTAINS A LINK." = "L’ARCHIVE CONTIENT UN LIEN.";
@@ -305,6 +311,7 @@
 "Annotation canvas" = "Canevas d’annotation";
 "Annotation text" = "Texte de l’annotation";
 "Another task is running. Your link is ready when it finishes." = "Une autre tâche est en cours. Votre lien sera prêt dès qu’elle sera terminée.";
+"App" = "Application";
 "Appearance" = "Apparence";
 "Appearance could not be saved" = "Impossible d’enregistrer l’apparence";
 "Archive contains a link." = "L’archive contient un lien.";
@@ -348,11 +355,14 @@
 "BESIDE ORIGINAL FILES" = "À CÔTÉ DES FICHIERS D’ORIGINE";
 "BEST AVAILABLE" = "OPTIMALE";
 "BETTER TOGETHER." = "MIEUX ENSEMBLE.";
+"BIOMETRIC PHOTO 50×60 MM" = "PHOTO BIOMÉTRIQUE 50×60 MM";
 "BITRATE" = "DÉBIT";
+"BLACK MARGINS" = "MARGES NOIRES";
 "BLACKS" = "NOIRS";
 "BLEEP" = "BIP";
 "BLEEP AUDIO" = "MASQUER L’AUDIO PAR UN BIP";
 "BLUR" = "FLOU";
+"BLURRED COPY" = "COPIE FLOUTÉE";
 "BORDER" = "BORDURE";
 "BOTTOM" = "BAS";
 "BRIGHTNESS" = "LUMINOSITÉ";
@@ -368,11 +378,14 @@
 "Beside original files" = "À côté des fichiers d’origine";
 "Best available" = "Optimale";
 "Better together." = "Mieux ensemble.";
+"Biometric photo 50×60 mm" = "Photo biométrique 50×60 mm";
 "Bitrate" = "Débit";
+"Black margins" = "Marges noires";
 "Blacks" = "Noirs";
 "Bleep" = "Bip";
 "Bleep Audio" = "Masquer l’audio par un bip";
 "Blur" = "Flou";
+"Blurred copy" = "Copie floutée";
 "Border" = "Bordure";
 "Bottom" = "Bas";
 "Brightness" = "Luminosité";
@@ -395,6 +408,7 @@
 "CHANGE SPEED · NASHI" = "CHANGER LA VITESSE · NASHI";
 "CHANGE VIDEO SPEED" = "CHANGER LA VITESSE DE LA VIDÉO";
 "CHANGE…" = "MODIFIER…";
+"CHANNEL BANNER" = "BANNIÈRE DE CHAÎNE";
 "CHANNELS" = "CANAUX";
 "CHECK AUTOMATICALLY WHILE NASHI IS RUNNING" = "RECHERCHER AUTOMATIQUEMENT PENDANT QUE NASHI EST EN COURS D’EXÉCUTION";
 "CHECK DRAWING SETTINGS" = "VÉRIFIEZ LES RÉGLAGES DE DESSIN";
@@ -557,6 +571,7 @@
 "COULDN’T CHECK FOR UPDATES" = "IMPOSSIBLE DE RECHERCHER LES MISES À JOUR";
 "COULDN’T FINISH" = "IMPOSSIBLE DE TERMINER";
 "COULDN’T OPEN THIS TOOL" = "IMPOSSIBLE D’OUVRIR CET OUTIL";
+"COVER PHOTO" = "PHOTO DE COUVERTURE";
 "COVER STYLE" = "STYLE DE POCHETTE";
 "CREATE A FINE-GRAINED TOKEN ON GITHUB" = "CRÉER UN JETON À PORTÉE PRÉCISE SUR GITHUB";
 "CREATE A NEW FLOAT" = "CRÉER UN NOUVEAU FLOAT";
@@ -576,6 +591,7 @@
 "CTRL+O  CHOOSE FILES\nCTRL+V  PASTE FILES, TEXT, AN IMAGE OR LINK\nCTRL+SPACE / ENTER  OPEN TOOLS AND CONVERSIONS\nDELETE  REMOVE SELECTED FILES FROM NASHI\nCTRL+1 / CTRL+2  HOME / LIBRARY\nCTRL+F  FIND IN LIBRARY\nCTRL+SHIFT+D  USE A COPIED DOWNLOAD LINK\nCTRL+U  CHECK FOR UPDATES\n\nWHEEL: ARROWS / TAB TO CHOOSE, ENTER TO OPEN, ESC TO CLOSE\nMEDIA: SPACE PLAY/PAUSE, ←/→ 1 SECOND, SHIFT+←/→ 1/30S, I/O SET RANGE\nCROP: DRAG, SHIFT LOCKS RATIO, ENTER SAVES\nEDITING TEXT: NORMAL PASTE AND ARROW KEYS ARE PRESERVED." = "CTRL+O  CHOISIR DES FICHIERS\nCTRL+V  COLLER DES FICHIERS, DU TEXTE, UNE IMAGE OU UN LIEN\nCTRL+ESPACE / ENTRÉE  OUVRIR LES OUTILS ET LES CONVERSIONS\nSUPPR  RETIRER LES FICHIERS SÉLECTIONNÉS DE NASHI\nCTRL+1 / CTRL+2  ACCUEIL / BIBLIOTHÈQUE\nCTRL+F  RECHERCHER DANS LA BIBLIOTHÈQUE\nCTRL+MAJ+D  UTILISER UN LIEN DE TÉLÉCHARGEMENT COPIÉ\nCTRL+U  RECHERCHER LES MISES À JOUR\n\nROUE : FLÈCHES / TAB POUR CHOISIR, ENTRÉE POUR OUVRIR, ÉCHAP POUR FERMER\nMÉDIAS : ESPACE LECTURE/PAUSE, ←/→ 1 SECONDE, MAJ+←/→ 1/30 S, I/O DÉFINIR LA PLAGE\nRECADRAGE : GLISSER, MAJ VERROUILLE LES PROPORTIONS, ENTRÉE ENREGISTRE\nMODIFICATION DE TEXTE : LE COLLAGE ET LES FLÈCHES FONCTIONNENT NORMALEMENT.";
 "CTRL+SHIFT+D  USE A COPIED LINK  ·  PUBLIC, DOWNLOADABLE MEDIA" = "CTRL+MAJ+D  UTILISER UN LIEN COPIÉ  ·  MÉDIAS PUBLICS TÉLÉCHARGEABLES";
 "CUSTOM DIMENSIONS" = "DIMENSIONS PERSONNALISÉES";
+"CUSTOM SIZE" = "TAILLE PERSONNALISÉE";
 "CUT" = "COUPER";
 "Callout" = "Légende";
 "Cancel" = "Annuler";
@@ -592,6 +608,7 @@
 "Change Speed · Nashi" = "Changer la vitesse · Nashi";
 "Change Video Speed" = "Changer la vitesse de la vidéo";
 "Change…" = "Modifier…";
+"Channel banner" = "Bannière de chaîne";
 "Channels" = "Canaux";
 "Check automatically while Nashi is running" = "Rechercher automatiquement pendant que Nashi est en cours d’exécution";
 "Check drawing settings" = "Vérifiez les réglages de dessin";
@@ -786,6 +803,7 @@
 "Couldn’t check for updates" = "Impossible de rechercher les mises à jour";
 "Couldn’t finish" = "Impossible de terminer";
 "Couldn’t open this tool" = "Impossible d’ouvrir cet outil";
+"Cover photo" = "Photo de couverture";
 "Cover style" = "Style de pochette";
 "Create Collage" = "Créer un collage";
 "Create PDF" = "Créer un PDF";
@@ -806,6 +824,7 @@
 "Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools and conversions\nDelete  Remove selected files from Nashi\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved." = "Ctrl+O  Choisir des fichiers\nCtrl+V  Coller des fichiers, du texte, une image ou un lien\nCtrl+Espace / Entrée  Ouvrir les outils et les conversions\nSuppr  Retirer les fichiers sélectionnés de Nashi\nCtrl+1 / Ctrl+2  Accueil / Bibliothèque\nCtrl+F  Rechercher dans la bibliothèque\nCtrl+Maj+D  Utiliser un lien de téléchargement copié\nCtrl+U  Rechercher les mises à jour\n\nRoue : flèches / Tab pour choisir, Entrée pour ouvrir, Échap pour fermer\nMédias : Espace lecture/pause, ←/→ 1 seconde, Maj+←/→ 1/30 s, I/O définir la plage\nRecadrage : glisser, Maj verrouille les proportions, Entrée enregistre\nModification de texte : le collage et les flèches fonctionnent normalement.";
 "Ctrl+Shift+D  Use a copied link  ·  Public, downloadable media" = "Ctrl+Maj+D  Utiliser un lien copié  ·  Médias publics téléchargeables";
 "Custom dimensions" = "Dimensions personnalisées";
+"Custom size" = "Taille personnalisée";
 "Cut" = "Couper";
 "DARK" = "SOMBRE";
 "DEFAULTS APPLY WHENEVER YOU CHOOSE AN OUTPUT FORMAT." = "CES VALEURS PAR DÉFAUT S’APPLIQUENT CHAQUE FOIS QUE VOUS CHOISISSEZ UN FORMAT DE SORTIE.";
@@ -1072,6 +1091,7 @@
 "FILES MISSING" = "FICHIERS MANQUANTS";
 "FILES MOVED." = "FICHIERS DÉPLACÉS.";
 "FILES STAY ON YOUR COMPUTER." = "LES FICHIERS RESTENT SUR VOTRE ORDINATEUR.";
+"FILL AND CROP" = "REMPLIR ET RECADRER";
 "FILL CELLS (CROP EDGES)" = "REMPLIR LES CELLULES (ROGNER LES BORDS)";
 "FILL CELLS (CROP TO FIT)" = "REMPLIR LES CELLULES (ROGNER POUR AJUSTER)";
 "FIND A FILE OR TOOL  ·  CTRL+F" = "RECHERCHER UN FICHIER OU UN OUTIL  ·  CTRL+F";
@@ -1092,6 +1112,7 @@
 "FINISHING YOUR FILE…" = "FINALISATION DE VOTRE FICHIER…";
 "FIRST-TIME SETUP" = "PREMIÈRE CONFIGURATION";
 "FIT" = "AJUSTER";
+"FIT INSIDE (KEEP EVERYTHING)" = "AJUSTER (TOUT CONSERVER)";
 "FIT WHOLE IMAGE" = "AJUSTER L’IMAGE ENTIÈRE";
 "FITTING VIDEO TO THE SELECTED SIZE…" = "AJUSTEMENT DE LA VIDÉO À LA TAILLE CHOISIE…";
 "FIXED PAGES" = "PAGES FIXES";
@@ -1122,6 +1143,7 @@
 "FRESH VERSIONS, ONE CLICK AWAY." = "DE NOUVELLES VERSIONS, À UN CLIC.";
 "FRESHLY MADE" = "TOUT JUSTE CRÉÉS";
 "FRESHLY MADE, PASTED, AND READY FOR ANOTHER ROUND." = "TOUT JUSTE CRÉÉS, COLLÉS ET PRÊTS POUR UN NOUVEAU TOUR.";
+"FULL HD" = "FULL HD";
 "Fade" = "Fondu";
 "Faster" = "Plus rapide";
 "Featured" = "En vedette";
@@ -1149,6 +1171,7 @@
 "Files stay on your computer." = "Les fichiers restent sur votre ordinateur.";
 "Files were copied safely, but some originals could not be removed. New copies are in %@. Check the originals before retrying." = "Les fichiers ont été copiés en toute sécurité, mais certains originaux n’ont pas pu être supprimés. Les nouvelles copies se trouvent dans %@. Vérifiez les originaux avant de réessayer.";
 "Files were copied safely, but some originals could not be removed. New copies are in %lld. Check the originals before retrying." = "Les fichiers ont été copiés en toute sécurité, mais certains originaux n’ont pas pu être supprimés. Les nouvelles copies se trouvent dans %lld. Vérifiez les originaux avant de réessayer.";
+"Fill and crop" = "Remplir et recadrer";
 "Fill cells (crop edges)" = "Remplir les cellules (rogner les bords)";
 "Fill cells (crop to fit)" = "Remplir les cellules (rogner pour ajuster)";
 "Find a file or tool  ·  Ctrl+F" = "Rechercher un fichier ou un outil  ·  Ctrl+F";
@@ -1168,6 +1191,7 @@
 "Finishing media…" = "Finalisation du média…";
 "Finishing your file…" = "Finalisation de votre fichier…";
 "Fit" = "Ajuster";
+"Fit inside (keep everything)" = "Ajuster (tout conserver)";
 "Fit whole image" = "Ajuster l’image entière";
 "Fitting image · attempt %@…" = "Ajustement de l’image · tentative %@…";
 "Fitting image · attempt %lld…" = "Ajustement de l’image · tentative %lld…";
@@ -1204,6 +1228,7 @@
 "Fresh versions, one click away." = "De nouvelles versions, à un clic.";
 "Freshly made" = "Tout juste créés";
 "Freshly made, pasted, and ready for another round." = "Tout juste créés, collés et prêts pour un nouveau tour.";
+"Full HD" = "Full HD";
 "GAMMA" = "GAMMA";
 "GAMMA MUST BE POSITIVE; CONTRAST AND SATURATION CANNOT BE NEGATIVE." = "LE GAMMA DOIT ÊTRE POSITIF ; LE CONTRASTE ET LA SATURATION NE PEUVENT PAS ÊTRE NÉGATIFS.";
 "GENERAL" = "GÉNÉRAL";
@@ -1240,6 +1265,7 @@
 "Gradient end" = "Fin du dégradé";
 "Grain" = "Grain";
 "Grid" = "Grille";
+"HEADER" = "EN-TÊTE";
 "HEIGHT" = "HAUTEUR";
 "HELLO" = "BONJOUR";
 "HIGHER QUALITY" = "MEILLEURE QUALITÉ";
@@ -1248,6 +1274,7 @@
 "HOLD A KEY WHILE DRAGGING IN FINDER" = "MAINTENEZ UNE TOUCHE EN FAISANT GLISSER DANS LE FINDER";
 "HOME" = "ACCUEIL";
 "HUE" = "TEINTE";
+"Header" = "En-tête";
 "Height" = "Hauteur";
 "Hello" = "Bonjour";
 "Higher Quality" = "Meilleure qualité";
@@ -1256,6 +1283,7 @@
 "Hold a key while dragging in Finder" = "Maintenez une touche en faisant glisser dans le Finder";
 "Home" = "Accueil";
 "Hue" = "Teinte";
+"ICON" = "ICÔNE";
 "ICONS" = "ICÔNES";
 "IMAGE" = "IMAGE";
 "IMAGE COMPRESSION" = "COMPRESSION D’IMAGE";
@@ -1285,6 +1313,7 @@
 "INVALID UPDATE SIGNATURE LENGTH." = "LONGUEUR DE SIGNATURE DE MISE À JOUR INVALIDE.";
 "INVALID UPDATE SIGNATURE." = "SIGNATURE DE MISE À JOUR INVALIDE.";
 "INVALID YOUTUBE VIDEO ID." = "IDENTIFIANT DE VIDÉO YOUTUBE INVALIDE.";
+"Icon" = "Icône";
 "Icons" = "Icônes";
 "Image" = "Image";
 "Image Compression" = "Compression d’image";
@@ -1380,6 +1409,7 @@
 "LIGHT" = "CLAIR";
 "LIGHTING" = "ÉCLAIRAGE";
 "LINE" = "LIGNE";
+"LINK PREVIEW (OPEN GRAPH)" = "APERÇU DE LIEN (OPEN GRAPH)";
 "LINK READY. CHOOSE A FORMAT, THEN DOWNLOAD." = "LIEN PRÊT. CHOISISSEZ UN FORMAT, PUIS TÉLÉCHARGER.";
 "LIST" = "LISTE";
 "LITTLE TWEAKS.\nBIG DIFFERENCE." = "DE PETITES RETOUCHES.\nUNE GRANDE DIFFÉRENCE.";
@@ -1412,6 +1442,7 @@
 "Light" = "Clair";
 "Lighting" = "Éclairage";
 "Line" = "Ligne";
+"Link preview (Open Graph)" = "Aperçu de lien (Open Graph)";
 "Link ready. Choose a format, then Download." = "Lien prêt. Choisissez un format, puis Télécharger.";
 "List" = "Liste";
 "Little tweaks.\nBig difference." = "De petites retouches.\nUne grande différence.";
@@ -1432,6 +1463,7 @@
 "MAKE SOME SPACE. KEEP WHAT MATTERS." = "FAITES DE LA PLACE. GARDEZ L’ESSENTIEL.";
 "MAKE YOUR POINT." = "FAITES PASSER VOTRE MESSAGE.";
 "MANAGE…" = "GÉRER…";
+"MARGINS" = "MARGES";
 "MARKER" = "SURLIGNEUR";
 "MATCH SOURCE" = "IDENTIQUE À LA SOURCE";
 "MAXIMIZE" = "AGRANDIR";
@@ -1478,6 +1510,7 @@
 "Make some space. Keep what matters." = "Faites de la place. Gardez l’essentiel.";
 "Make your point." = "Faites passer votre message.";
 "Manage…" = "Gérer…";
+"Margins" = "Marges";
 "Marker" = "Surligneur";
 "Match Source" = "Identique à la source";
 "Match source" = "Identique à la source";
@@ -1724,6 +1757,7 @@
 "PAGE RANGES, FOR EXAMPLE 1-3, 5" = "PLAGES DE PAGES, PAR EXEMPLE 1-3, 5";
 "PAGES INPUT EXCEEDS 200 MB." = "LES PAGES EN ENTRÉE DÉPASSENT 200 MO.";
 "PAGES PER FILE" = "PAGES PAR FICHIER";
+"PASSPORT PHOTO 35×45 MM" = "PHOTO D’IDENTITÉ 35×45 MM";
 "PASTE" = "COLLER";
 "PASTE A PUBLIC HTTP(S) MEDIA OR PAGE LINK." = "COLLEZ UN LIEN HTTP(S) PUBLIC VERS UN MÉDIA OU UNE PAGE.";
 "PASTE A PUBLIC MEDIA LINK TO BEGIN." = "COLLEZ UN LIEN MÉDIA PUBLIC POUR COMMENCER.";
@@ -1768,10 +1802,12 @@
 "PLAYBACK / DOCUMENT ORDER" = "ORDRE DE LECTURE / DU DOCUMENT";
 "PLAYBACK SPEED" = "VITESSE DE LECTURE";
 "PORTRAIT" = "PORTRAIT";
+"PORTRAIT POST" = "PUBLICATION PORTRAIT";
 "PORTRAIT · 4:5" = "PORTRAIT · 4:5";
 "PORTRAIT · 9:16" = "PORTRAIT · 9:16";
 "POSITION X" = "POSITION X";
 "POSITION Y" = "POSITION Y";
+"POST IMAGE" = "IMAGE DE PUBLICATION";
 "PREPARING A LOCAL PREVIEW…" = "PRÉPARATION D’UN APERÇU LOCAL…";
 "PREPARING MEDIA…" = "PRÉPARATION DU MÉDIA…";
 "PREPARING MOVE…" = "PRÉPARATION DU DÉPLACEMENT…";
@@ -1793,12 +1829,15 @@
 "PREVIEW VISUALIZATION" = "APERÇU DE LA VISUALISATION";
 "PREVIOUS FRAME" = "IMAGE PRÉCÉDENTE";
 "PREVIOUS PAGE" = "PAGE PRÉCÉDENTE";
+"PRINT" = "IMPRESSION";
 "PRIVATE REPOSITORY · TOKEN SAVED IN KEYCHAIN" = "DÉPÔT PRIVÉ · JETON ENREGISTRÉ DANS LE TROUSSEAU";
 "PROCESSED PREVIEW UNAVAILABLE FOR THIS WINDOWS CODEC." = "APERÇU TRAITÉ INDISPONIBLE POUR CE CODEC WINDOWS.";
 "PROCESSED PREVIEW · EXPORT USES THE ORIGINAL FILE." = "APERÇU TRAITÉ · L’EXPORT UTILISE LE FICHIER D’ORIGINE.";
 "PROCESSED PREVIEW. CHOOSE ORIGINAL TO EDIT AREAS." = "APERÇU TRAITÉ. CHOISISSEZ ORIGINAL POUR MODIFIER LES ZONES.";
 "PROCESSING MEDIA…" = "TRAITEMENT DU MÉDIA…";
 "PROCESSING…" = "TRAITEMENT EN COURS…";
+"PROFILE BANNER" = "BANNIÈRE DE PROFIL";
+"PROFILE PHOTO" = "PHOTO DE PROFIL";
 "PROTECTED MEDIA CANNOT BE DOWNLOADED." = "LES MÉDIAS PROTÉGÉS NE PEUVENT PAS ÊTRE TÉLÉCHARGÉS.";
 "PUBLIC REPOSITORY · NO TOKEN NEEDED" = "DÉPÔT PUBLIC · AUCUN JETON NÉCESSAIRE";
 "PUBLIC UPDATES WORK WITHOUT A TOKEN." = "LES MISES À JOUR PUBLIQUES FONCTIONNENT SANS JETON.";
@@ -1812,6 +1851,7 @@
 "Pages per file" = "Pages par fichier";
 "Pages per file: %@" = "Pages par fichier : %@";
 "Pages per file: %lld" = "Pages par fichier : %lld";
+"Passport photo 35×45 mm" = "Photo d’identité 35×45 mm";
 "Paste" = "Coller";
 "Paste a public http(s) media or page link." = "Collez un lien http(s) public vers un média ou une page.";
 "Paste a public media link to begin." = "Collez un lien média public pour commencer.";
@@ -1845,10 +1885,12 @@
 "Playback / document order" = "Ordre de lecture / du document";
 "Playback speed" = "Vitesse de lecture";
 "Portrait" = "Portrait";
+"Portrait post" = "Publication portrait";
 "Portrait · 4:5" = "Portrait · 4:5";
 "Portrait · 9:16" = "Portrait · 9:16";
 "Position X" = "Position X";
 "Position Y" = "Position Y";
+"Post image" = "Image de publication";
 "Preparing %@…" = "Préparation de %@…";
 "Preparing %lld…" = "Préparation de %lld…";
 "Preparing a local preview…" = "Préparation d’un aperçu local…";
@@ -1876,12 +1918,15 @@
 "Preview uses the first 12 seconds. Export includes the full recording." = "L’aperçu utilise les 12 premières secondes. L’export inclut l’enregistrement complet.";
 "Previous frame" = "Image précédente";
 "Previous page" = "Page précédente";
+"Print" = "Impression";
 "Private repository · Token saved in Keychain" = "Dépôt privé · Jeton enregistré dans le trousseau";
 "Processed preview unavailable for this Windows codec." = "Aperçu traité indisponible pour ce codec Windows.";
 "Processed preview · export uses the original file." = "Aperçu traité · l’export utilise le fichier d’origine.";
 "Processed preview. Choose Original to edit areas." = "Aperçu traité. Choisissez Original pour modifier les zones.";
 "Processing media…" = "Traitement du média…";
 "Processing…" = "Traitement en cours…";
+"Profile banner" = "Bannière de profil";
+"Profile photo" = "Photo de profil";
 "Protected media cannot be downloaded." = "Les médias protégés ne peuvent pas être téléchargés.";
 "Public repository · No token needed" = "Dépôt public · Aucun jeton nécessaire";
 "Public updates work without a token." = "Les mises à jour publiques fonctionnent sans jeton.";
@@ -2171,6 +2216,7 @@
 "SPLITTING REQUIRES A KNOWN DURATION." = "LA DIVISION NÉCESSITE UNE DURÉE CONNUE.";
 "SPREADSHEETS" = "FEUILLES DE CALCUL";
 "SQUARE" = "CARRÉ";
+"SQUARE POST" = "PUBLICATION CARRÉE";
 "SQUARE · 1:1" = "CARRÉ · 1:1";
 "STAGING CANNOT BE A SYMBOLIC LINK." = "LE DOSSIER INTERMÉDIAIRE NE PEUT PAS ÊTRE UN LIEN SYMBOLIQUE.";
 "START" = "DÉBUT";
@@ -2179,7 +2225,9 @@
 "STARTING DOWNLOAD…" = "DÉMARRAGE DU TÉLÉCHARGEMENT…";
 "STEREO" = "STÉRÉO";
 "STILL IMAGE" = "IMAGE FIXE";
+"STORY AND REELS" = "STORY ET REELS";
 "STRAIGHT TO THE GOOD STUFF." = "DROIT AU BUT.";
+"STRETCH TO SIZE" = "ÉTIRER À LA TAILLE";
 "STROKE WIDTH" = "ÉPAISSEUR DU TRAIT";
 "STRONG" = "FORTE";
 "STYLE" = "STYLE";
@@ -2341,6 +2389,7 @@
 "Splitting requires a known duration." = "La division nécessite une durée connue.";
 "Spreadsheets" = "Feuilles de calcul";
 "Square" = "Carré";
+"Square post" = "Publication carrée";
 "Square · 1:1" = "Carré · 1:1";
 "Staging cannot be a symbolic link." = "Le dossier intermédiaire ne peut pas être un lien symbolique.";
 "Start" = "Début";
@@ -2348,7 +2397,9 @@
 "Starting download…" = "Démarrage du téléchargement…";
 "Stereo" = "Stéréo";
 "Still image" = "Image fixe";
+"Story and Reels" = "Story et Reels";
 "Straight to the good stuff." = "Droit au but.";
+"Stretch to size" = "Étirer à la taille";
 "Stroke width" = "Épaisseur du trait";
 "Strong" = "Forte";
 "Style" = "Style";
@@ -2363,6 +2414,7 @@
 "TARGET LUFS" = "LUFS CIBLE";
 "TARGET SIZE (KB; 0 = AUTO)" = "TAILLE CIBLE (KO ; 0 = AUTO)";
 "TEMPERATURE" = "TEMPÉRATURE";
+"TEMPLATE" = "MODÈLE";
 "TERMINAL" = "TERMINAL";
 "TERMINAL APP" = "APPLICATION TERMINAL";
 "TEXT" = "TEXTE";
@@ -2504,6 +2556,7 @@
 "Target loudness" = "Volume sonore cible";
 "Target size (KB; 0 = auto)" = "Taille cible (Ko ; 0 = auto)";
 "Temperature" = "Température";
+"Template" = "Modèle";
 "Terminal" = "Terminal";
 "Terminal app" = "Application Terminal";
 "Text" = "Texte";
@@ -2746,6 +2799,7 @@
 "VIBRANCE" = "ÉCLAT";
 "VIDEO" = "VIDÉO";
 "VIDEO COMPRESSION" = "COMPRESSION VIDÉO";
+"VIDEO COVER" = "COUVERTURE VIDÉO";
 "VIDEO QUALITY" = "QUALITÉ VIDÉO";
 "VIDEO SIZE" = "TAILLE DE LA VIDÉO";
 "VIDEO SNAPSHOTS" = "CAPTURES DE LA VIDÉO";
@@ -2768,6 +2822,7 @@
 "Video Compression" = "Compression vidéo";
 "Video Snapshots" = "Captures de la vidéo";
 "Video compression" = "Compression vidéo";
+"Video cover" = "Couverture vidéo";
 "Video quality" = "Qualité vidéo";
 "Video size" = "Taille de la vidéo";
 "Video, audio, or an image. Straight into your tools." = "Vidéo, audio ou image. Directement dans vos outils.";
@@ -2777,11 +2832,14 @@
 "Visualization dimensions must be between 16 and 8,192 pixels." = "Les dimensions de la visualisation doivent être comprises entre 16 et 8 192 pixels.";
 "WAIT FOR THE PROCESSED PREVIEW TO FINISH BEFORE RESETTING." = "ATTENDEZ LA FIN DE L’APERÇU TRAITÉ AVANT DE RÉINITIALISER.";
 "WAVEFORM" = "FORME D’ONDE";
+"WEB" = "WEB";
 "WEB MEDIA" = "MÉDIA WEB";
 "WELCOME TO NASHI" = "BIENVENUE DANS NASHI";
 "WELCOME…" = "BIENVENUE…";
 "WHEEL FINISH" = "FINITION DE LA ROUE";
 "WHEEL SIZE" = "TAILLE DE LA ROUE";
+"WHEN THE SHAPE DIFFERS" = "SI LES PROPORTIONS DIFFÈRENT";
+"WHITE MARGINS" = "MARGES BLANCHES";
 "WHITES" = "BLANCS";
 "WIDTH" = "LARGEUR";
 "WINDOW" = "FENÊTRE";
@@ -2793,11 +2851,14 @@
 "WORKING…" = "TRAITEMENT EN COURS…";
 "Wait for the processed preview to finish before resetting." = "Attendez la fin de l’aperçu traité avant de réinitialiser.";
 "Waveform" = "Forme d’onde";
+"Web" = "Web";
 "Web media" = "Média web";
 "Welcome to Nashi" = "Bienvenue dans Nashi";
 "Welcome…" = "Bienvenue…";
 "Wheel finish" = "Finition de la roue";
 "Wheel size" = "Taille de la roue";
+"When the shape differs" = "Si les proportions diffèrent";
+"White margins" = "Marges blanches";
 "Whites" = "Blancs";
 "Width" = "Largeur";
 "Window" = "Fenêtre";
