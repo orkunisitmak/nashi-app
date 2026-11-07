@@ -182,7 +182,7 @@
  <!-- A choice shown as a segmented capsule (Appearance, Format). It is still a ComboBox for keyboard and tests.
       The chosen item rests on a glass droplet taller than the track; it glides with a spring (App.Segment*). -->
  <Style x:Key="SegmentedCombo" TargetType="ComboBox"><Setter Property="FocusVisualStyle" Value="{StaticResource KeyFocus}"/><Setter Property="MinWidth" Value="0"/><Setter Property="Margin" Value="0"/><Setter Property="ItemTemplate" Value="{StaticResource ChoiceLabel}"/>
-  <EventSetter Event="Loaded" Handler="SegmentReady"/><EventSetter Event="SelectionChanged" Handler="SegmentChanged"/><EventSetter Event="SizeChanged" Handler="SegmentSized"/>
+  <EventSetter Event="Loaded" Handler="SegmentReady"/><EventSetter Event="SelectionChanged" Handler="SegmentChanged"/><EventSetter Event="SizeChanged" Handler="SegmentSized"/><EventSetter Event="PreviewKeyDown" Handler="SegmentKey"/>
   <Setter Property="ItemsPanel"><Setter.Value><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></Setter.Value></Setter>
   <Setter Property="ItemContainerStyle"><Setter.Value><Style TargetType="ComboBoxItem"><Setter Property="Foreground" Value="{DynamicResource Muted}"/><Setter Property="Cursor" Value="Hand"/><Setter Property="FontSize" Value="12"/><Setter Property="FontWeight" Value="Medium"/>
    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ComboBoxItem"><Grid MinHeight="25" Background="Transparent"><ContentPresenter Margin="11,0" VerticalAlignment="Center" HorizontalAlignment="Center"/></Grid>

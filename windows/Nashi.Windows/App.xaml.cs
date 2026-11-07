@@ -119,6 +119,13 @@ public partial class App:Application
     private void SegmentReady(object sender,RoutedEventArgs e)=>Glide.Place((System.Windows.Controls.ComboBox)sender,false);
     private void SegmentChanged(object sender,System.Windows.Controls.SelectionChangedEventArgs e)=>Glide.Place((System.Windows.Controls.ComboBox)sender,true);
     private void SegmentSized(object sender,SizeChangedEventArgs e)=>Glide.Place((System.Windows.Controls.ComboBox)sender,false);
+    // The items sit inline, where a ComboBox's arrow keys would only move a highlight: here they choose, as a segmented control's do.
+    private void SegmentKey(object sender,System.Windows.Input.KeyEventArgs e)
+    {
+        var combo=(System.Windows.Controls.ComboBox)sender;var last=combo.Items.Count-1;
+        var next=e.Key switch{System.Windows.Input.Key.Home=>0,System.Windows.Input.Key.End=>last,System.Windows.Input.Key.Left or System.Windows.Input.Key.Up=>Math.Max(0,combo.SelectedIndex-1),System.Windows.Input.Key.Right or System.Windows.Input.Key.Down=>Math.Min(last,combo.SelectedIndex+1),_=>-1};
+        if(next<0)return;combo.SelectedIndex=next;e.Handled=true;
+    }
     protected override void OnExit(ExitEventArgs e){windowManagement?.Dispose();Feedback.Stop();PdfRasterDocument.Shutdown();base.OnExit(e);}
     private async Task InstallUpdateAsync()
     {

@@ -230,7 +230,8 @@ public sealed partial class ToolEditor:Window
         if(processingPreview){time.Text=L10n.Text("Wait for the processed preview to finish before resetting.");return;}
         if(media is not null){if(processedPlayback)PlayOriginalPreview();player.Pause();playing=false;Seek(0);}
         resetCompression?.Invoke();resetPhotoView?.Invoke();resetPreviewZoom?.Invoke();
-        foreach(var pair in defaults)fields[pair.Key].Text=pair.Value;
+        // Width, height and turn come back together, so keeping the proportions must not answer each one with the others half restored.
+        sizing=true;try{foreach(var pair in defaults)fields[pair.Key].Text=pair.Value;}finally{sizing=false;}
         foreach(var choice in new[]{drawingTool,backdrop,collageLayout,redactionStyle,visualization,redactMode,bleepMode,sampleDepth,documentLayout,epubLayout,aspectRatio})choice.SelectedIndex=0;
         flipHorizontal.IsChecked=flipVertical.IsChecked=trimSilence.IsChecked=joinClips.IsChecked=false;fitCollage.IsChecked=preserveMetadata.IsChecked=true;
         backgroundImage=visualImage=null;annotationImage=null;archivePassword.Clear();
