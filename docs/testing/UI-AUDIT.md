@@ -13,6 +13,7 @@ swift build --product Nashi
 .build/debug/Nashi --ui-audit build/ui-audit-mac
 .build/debug/Nashi --range-accessibility-smoke build/range-accessibility-mac
 .build/debug/Nashi --file-artwork-smoke build/file-artwork-mac
+.build/debug/Nashi --drag-shortcut-smoke build/drag-shortcuts-mac
 ```
 
 An installed candidate app's `Contents/MacOS/Nashi` accepts the same flags. Prefer a packaged candidate for review of bundled resources. Use `--hold` on the Mac audit to inspect its final scene with Computer Use; `--keep-range-open` keeps the range fixture open after its checks.

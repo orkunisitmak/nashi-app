@@ -18,6 +18,7 @@ try
     var languageRoot=Path.Combine(root,"Language checks");Directory.CreateDirectory(languageRoot);
     try{LocalizationChecks.Run(Check,languageRoot);}finally{Directory.Delete(languageRoot,true);}
     await DownloadChecks.Run(Check,root);
+    var shortcutRoot=Path.Combine(root,"Drag shortcuts");Directory.CreateDirectory(shortcutRoot);try{DragShortcutChecks.Run(Check,shortcutRoot);}finally{Directory.Delete(shortcutRoot,true);}
     ToolSetupChecks.Run(Check,root);
     var parityRoot=Path.Combine(root,"Parity");Directory.CreateDirectory(parityRoot);try{ParityChecks.Run(Check,parityRoot);}finally{Directory.Delete(parityRoot,true);}
     Check(FeatureCatalog.IsVideo("Clip.m4v")&&FeatureCatalog.IsAudio("Clip.aac"),"Media preview classification differs from Mac aliases");

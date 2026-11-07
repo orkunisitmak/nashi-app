@@ -10,6 +10,7 @@ import ApplicationServices
 
 @main
 enum NashiApplication {
+    /// Runs the command line, an own-window QA mode when a test flag is given, or the app.
     @MainActor static func main() {
         if CommandLine.arguments.count>1,["convert","tool","inspect","catalog","dependencies"].contains(CommandLine.arguments[1]) { exit(NashiCommandLine.run()) }
         let app=NSApplication.shared
@@ -41,6 +42,10 @@ enum NashiApplication {
         }
         if let index=CommandLine.arguments.firstIndex(of:"--localization-smoke"),CommandLine.arguments.count>index+1 {
             let runner=LocalizationSmoke(output:URL(fileURLWithPath:CommandLine.arguments[index+1],isDirectory:true));app.delegate=runner;app.setActivationPolicy(.accessory)
+            withExtendedLifetime(runner){app.run()};return
+        }
+        if let index=CommandLine.arguments.firstIndex(of:"--drag-shortcut-smoke"),CommandLine.arguments.count>index+1 {
+            let runner=DragShortcutSmoke(output:URL(fileURLWithPath:CommandLine.arguments[index+1],isDirectory:true));app.delegate=runner;app.setActivationPolicy(.accessory)
             withExtendedLifetime(runner){app.run()};return
         }
         if CommandLine.arguments.contains("--window-management-status") {

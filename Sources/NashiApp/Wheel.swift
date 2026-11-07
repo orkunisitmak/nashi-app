@@ -130,6 +130,7 @@ final class WheelView:NSView {
     var radius:CGFloat { geometry.radius }
     var inner:CGFloat { geometry.inner }
     func petal(_ index:Int)->NSBezierPath { geometry.petal(index) }
+    /// Draws the petals, or an empty state naming the other wheels' shortcuts.
     override func draw(_ dirtyRect:NSRect) {
         if labelBounds != bounds { labelLayouts.removeAll();labelBounds=bounds }
         let solid=UserDefaults.standard.string(forKey:"conversionFanTheme")=="metallic"
@@ -167,7 +168,7 @@ final class WheelView:NSView {
             WheelLabelLayout.draw(layout,color:foreground)
         }
         let disc=geometry.disc;NSColor.controlBackgroundColor.setFill();disc.fill()
-        func key(_ setting:String,_ fallback:String)->String { let name=UserDefaults.standard.string(forKey:setting) ?? fallback;return ModifierChord.legacy(name)?.symbols ?? name }
+        func key(_ setting:String,_ fallback:String)->String { let name=UserDefaults.standard.string(forKey:setting) ?? fallback;return DragShortcut(name:name)?.symbols ?? name }
         let emptyTitle=mode == .tools ? "No file tools\n\(key("convertKey","shift")) Convert\n\(key("actionsKey","control")) Actions":"No formats\n\(key("toolsKey","command")) Tools\n\(key("actionsKey","control")) Actions"
         let title=selected.flatMap{items.indices.contains($0) ? items[$0].title:nil} ?? (items.isEmpty ? emptyTitle:(centerTitle ?? mode.rawValue.capitalized))
         let layout=WheelLabelLayout.fitted(L10n.text(title),font:NSFont.systemFont(ofSize:(items.isEmpty ? 10:11)*geometry.scale,weight:.semibold),
@@ -245,14 +246,16 @@ final class WheelAccessibilityItem:NSAccessibilityElement {
         timer=Timer(timeInterval:0.025,repeats:true) { [weak self] _ in Task { @MainActor in self?.tick() } }
         RunLoop.main.add(timer!,forMode:.common)
     }
-    static func mode(for flags:NSEvent.ModifierFlags)->WheelMode? {
-        switch ModifierPreferences.wheel(for:flags) {
+    /// The wheel mode for the held modifiers and, when `pressed` is given, the held key or button.
+    static func mode(for flags:NSEvent.ModifierFlags,pressed:((DragTrigger)->Bool)?=nil)->WheelMode? {
+        switch ModifierPreferences.wheel(for:flags,pressed:pressed) {
         case .conversions:return .convert
         case .tools:return .tools
         case .actions:return .actions
         case nil:return nil
         }
     }
+    /// Polls the drag and opens or switches the wheel whose shortcut is held.
     private func tick() {
         let down=NSEvent.pressedMouseButtons & 1 != 0 || CGEventSource.buttonState(.combinedSessionState,button:.left)
         let globalFlags=NSEvent.ModifierFlags(rawValue:UInt(CGEventSource.flagsState(.combinedSessionState).rawValue))
@@ -274,7 +277,7 @@ final class WheelAccessibilityItem:NSAccessibilityElement {
         }
         let point=NSEvent.mouseLocation
         guard hypot(point.x-downOrigin.x,point.y-downOrigin.y)>4,fresh else { return }
-        guard let mode=Self.mode(for:flags),!shown || mode != lastMode else { return }
+        guard let mode=Self.mode(for:flags,pressed:\.isPressed),!shown || mode != lastMode else { return }
         let urls=WebLinkPayload.urls(from:board)
         guard !urls.isEmpty else { return }
         if urls.first?.isFileURL != false || mode == .tools {
