@@ -3,7 +3,7 @@ import SwiftUI
 
 enum EditorKeyboardCommand: Equatable {
     case togglePlayback, nudge(direction: Int, fine: Bool), beginning, end
-    case playRange, markIn, markOut, addMarker, save, confirmCrop
+    case playRange, markIn, markOut, addMarker, save, confirmCrop, undo, redo
 
     static func decode(_ event: NSEvent) -> Self? {
         let modifiers = event.modifierFlags.intersection([.command, .control, .option, .shift])
@@ -13,6 +13,8 @@ enum EditorKeyboardCommand: Equatable {
             .replacingOccurrences(of: "ı", with: "i").replacingOccurrences(of: "i\u{307}", with: "i")
         let command: Self?
         if modifiers == .command, key == "s" { command = .save }
+        else if modifiers == .command, key == "z" { command = .undo }
+        else if modifiers == [.command,.shift], key == "z" { command = .redo }
         else if modifiers.isEmpty || modifiers == .shift {
             switch event.keyCode {
             case 36 where modifiers.isEmpty,76 where modifiers.isEmpty: command = .confirmCrop
