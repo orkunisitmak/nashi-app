@@ -20,7 +20,10 @@ Exact URLs, limits and hashes: [`ExternalToolSetup.swift`](../Sources/NashiCore/
 The first foreground launch opens the same two-group setup as macOS. Choose **Download missing tools**; media tools and Office tools install in sequence. Reopening an unfinished setup retries only missing groups. Image, PDF and ZIP features work immediately. Setup uses these pinned upstream releases:
 
 - [FFmpeg 9.0.2 full build, gyan.dev](https://github.com/GyanD/codexffmpeg/releases/tag/9.0.2), GPL. gyan.dev is listed by [FFmpeg’s official download page](https://ffmpeg.org/download.html). [Build information and sources](https://www.gyan.dev/ffmpeg/builds/).
-- The same yt-dlp and Deno releases above, using their Windows x64 assets.
+- [yt-dlp 2026.10.26](https://github.com/yt-dlp/yt-dlp/releases/tag/2026.10.26), GPLv3+ standalone Windows x64 combination with bundled EJS challenge scripts. [Sources and complete third-party licenses](https://github.com/yt-dlp/yt-dlp/tree/2026.10.26).
+- The same Deno release above, using its Windows x64 asset.
+
+Nashi marks the exact verified Windows media toolset after setup. When an app update changes the pinned toolset, existing bundled tools no longer count as ready and the foreground setup asks the user to refresh them. FFmpeg supplied on `PATH` remains under the user's package-manager control, but Nashi always uses its hash-verified official yt-dlp and Deno executables so stale or differently packaged PATH copies cannot bypass the matching bundled EJS scripts and runtime. Nashi explicitly disables yt-dlp plugins and remote components; the official executable already bundles its matching EJS scripts.
 
 Exact URLs and hashes: [`Toolchain.cs`](../windows/Nashi.Core/Toolchain.cs). [Windows availability and shortcuts](../windows/README.md). [Bundled Windows library notices](../windows/THIRD-PARTY-NOTICES.txt). The preview is self-contained and does not require .NET to be installed separately.
 
