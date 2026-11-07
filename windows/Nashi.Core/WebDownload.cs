@@ -15,8 +15,31 @@ public sealed partial class WebDownload(Toolchain tools)
     }
     public static Uri Validate(string input)
     {
-        if(!Uri.TryCreate(input,UriKind.Absolute,out var url)||url.Scheme is not ("http" or "https")||!string.IsNullOrEmpty(url.UserInfo)||url.IsLoopback||url.Host.EndsWith(".local",StringComparison.OrdinalIgnoreCase))throw new ArgumentException("Paste a public http(s) media or page link.");return url;
+        if(!Uri.TryCreate(input,UriKind.Absolute,out var url)||url.Scheme is not ("http" or "https")||!string.IsNullOrEmpty(url.UserInfo)||url.IsLoopback||IsLocalName(url.Host)||(System.Net.IPAddress.TryParse(url.Host.Trim('[',']'),out var address)&&IsPrivate(address)))throw new ArgumentException("Paste a public http(s) media or page link.");return url;
     }
+    // A trailing dot names the same host (`localhost.`), so compare without it. The returned Uri is unchanged.
+    private static bool IsLocalName(string host){var name=host.TrimEnd('.');return name.EndsWith(".local",StringComparison.OrdinalIgnoreCase)||name.Equals("localhost",StringComparison.OrdinalIgnoreCase)||name.EndsWith(".localhost",StringComparison.OrdinalIgnoreCase);}
+    // Literal private, link-local and carrier-grade NAT addresses never name a public media server.
+    internal static bool IsPrivate(System.Net.IPAddress address)
+    {
+        if(address.IsIPv4MappedToIPv6)address=address.MapToIPv4();
+        if(System.Net.IPAddress.IsLoopback(address)||address.Equals(System.Net.IPAddress.Any)||address.Equals(System.Net.IPAddress.IPv6Any))return true;
+        var b=address.GetAddressBytes();
+        if(b.Length==4)return b[0]==10||b[0]==127||(b[0]==172&&b[1] is >=16 and <=31)||(b[0]==192&&b[1]==168)||(b[0]==169&&b[1]==254)||(b[0]==100&&b[1] is >=64 and <=127)||(b[0]==198&&b[1] is 18 or 19);
+        return address.IsIPv6LinkLocal||address.IsIPv6SiteLocal||(b[0]&0xFE)==0xFC;
+    }
+    /// Handler for requests Nashi makes itself. A name that resolves to this computer or a private network is refused
+    /// when the connection is made, so DNS tricks and redirects cannot reach it. Behind a proxy the proxy resolves the
+    /// name, so the connection to the proxy itself is left alone. Media fetched by yt-dlp is not covered.
+    internal static SocketsHttpHandler PublicOnlyHandler()=>new(){AllowAutoRedirect=false,ConnectTimeout=TimeSpan.FromSeconds(30),ConnectCallback=async(context,token)=>
+    {
+        var host=context.DnsEndPoint.Host;var viaProxy=context.InitialRequestMessage?.RequestUri is {} target&&!string.Equals(target.DnsSafeHost,host,StringComparison.OrdinalIgnoreCase);
+        var addresses=System.Net.IPAddress.TryParse(host,out var literal)?new[]{literal}:await System.Net.Dns.GetHostAddressesAsync(host,token);
+        if(addresses.Length==0||(!viaProxy&&addresses.Any(IsPrivate)))throw new HttpRequestException("That link points to this computer or a private network.");
+        var socket=new System.Net.Sockets.Socket(System.Net.Sockets.SocketType.Stream,System.Net.Sockets.ProtocolType.Tcp){NoDelay=true};
+        try{await socket.ConnectAsync(addresses,context.DnsEndPoint.Port,token);return new System.Net.Sockets.NetworkStream(socket,true);}
+        catch{socket.Dispose();throw;}
+    }};
     internal string FfmpegLocation=>Path.GetDirectoryName(tools.Executable("ffmpeg"))!;
     public async Task<IReadOnlyList<string>> DownloadAsync(string input,string kind,string destination,IProgress<OperationProgress>? progress=null,CancellationToken token=default,int? maximumHeight=null,IReadOnlySet<int>? selectedPhotos=null)
     {
@@ -31,6 +54,8 @@ public sealed partial class WebDownload(Toolchain tools)
         }
         var args=new List<string>{"--ignore-config","--no-playlist","--no-part","--no-overwrites","--no-cache-dir","--restrict-filenames","--no-mtime","--progress","--newline","--progress-template","download:NASHI:%(progress.downloaded_bytes)s:%(progress.total_bytes,progress.total_bytes_estimate)s","--print","after_move:filepath","--ffmpeg-location",FfmpegLocation,"--js-runtimes","deno:"+tools.Executable("deno"),"-P",tx.StagingDirectory,"-o","%(title).160B [%(id)s].%(ext)s"};
         if(kind=="audio")args.AddRange(["-x","--audio-format","mp3"]);else if(kind=="thumbnail")args.AddRange(["--skip-download","--write-thumbnail","--convert-thumbnails","jpg"]);else args.AddRange(["-f",maximumHeight is {} height?$"bv*[height<={height}]+ba/b[height<={height}]/bv*+ba/b":"bv*+ba/b","--merge-output-format","mp4"]);
+        // yt-dlp resolves and connects itself: route it through a loopback proxy that refuses private and local addresses.
+        using var guard=PublicOnlyProxy.ForRequest(uri);if(guard is not null)args.AddRange(["--proxy",guard.Url]);
         args.AddRange(["--",uri.AbsoluteUri]);
         progress?.Report(new(null,"Resolving media…"));
         await ProcessRunner.RunAsync(tools.Executable("yt-dlp"),args,token,line=>
@@ -47,7 +72,7 @@ public sealed partial class WebDownload(Toolchain tools)
     }
     public async Task<WebPhoto[]> InspectPhotosAsync(string input,CancellationToken token=default)
     {
-        var uri=Validate(input);if(WebMediaPayload.Parse(input)?.Kind!="instagramPhotos")throw new ArgumentException("Choose an Instagram photo post link.");var result=await ProcessRunner.RunAsync(tools.Executable("yt-dlp"),["--ignore-config","--no-cache-dir","--yes-playlist","--playlist-end","51","--ignore-no-formats-error","--skip-download","--dump-single-json","--no-progress","--",uri.AbsoluteUri],token);return WebPhotos.Instagram(result.Output);
+        var uri=Validate(input);if(WebMediaPayload.Parse(input)?.Kind!="instagramPhotos")throw new ArgumentException("Choose an Instagram photo post link.");using var guard=PublicOnlyProxy.ForRequest(uri);var result=await ProcessRunner.RunAsync(tools.Executable("yt-dlp"),["--ignore-config","--no-cache-dir","--yes-playlist","--playlist-end","51","--ignore-no-formats-error","--skip-download","--dump-single-json","--no-progress",..(guard is null?Array.Empty<string>():["--proxy",guard.Url]),"--",uri.AbsoluteUri],token);return WebPhotos.Instagram(result.Output);
     }
     private sealed class ProgressScope(IProgress<OperationProgress>? progress,int index,int total):IProgress<OperationProgress>{public void Report(OperationProgress value)=>progress?.Report(value with{Fraction=value.Fraction is {} n?(index+n)/total*.98:null,Label=$"Photo {index+1} of {total}…"});}
 }
