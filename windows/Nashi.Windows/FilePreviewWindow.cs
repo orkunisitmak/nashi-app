@@ -48,7 +48,7 @@ internal sealed class FilePreviewWindow:Window
         {
             if(Directory.Exists(path)){content.Content=L10n.Label(new TextBlock{Text="Folder · "+Path.GetFileName(path)+"\nUse Open to view its contents.",TextWrapping=TextWrapping.Wrap});return;}
             if(!File.Exists(path))throw new FileNotFoundException("This file has moved or was removed.");
-            if(new[]{"docx","doc","rtf","rtfd","pages","xlsx","xls","ods","pptx","ppt","odp","epub"}.Contains(FeatureCatalog.Extension(path)))
+            if(new[]{"docx","doc","rtf","rtfd","pages","udf","xlsx","xls","ods","pptx","ppt","odp","epub"}.Contains(FeatureCatalog.Extension(path)))
             {
                 if(office.Executable is null){content.Content=L10n.Label(new TextBlock{Text="Set up office tools in Nashi to preview this document here, or use Open.",TextWrapping=TextWrapping.Wrap});return;}
                 Directory.CreateDirectory(temporary);path=(await new DocumentConversion(office,tools).ConvertAsync([path],"pdf",temporary,new(),null,token))[0];token.ThrowIfCancellationRequested();

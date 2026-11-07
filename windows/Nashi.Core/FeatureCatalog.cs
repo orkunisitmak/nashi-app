@@ -6,7 +6,16 @@ public static class FeatureCatalog
 {
     private sealed record Contract(Dictionary<string,string[]> ConversionMatrix,Dictionary<string,string[]> SingleTools,Dictionary<string,string[]> MultipleTools,Dictionary<string,string> ToolNames);
     private static readonly Contract Data=Load();
-    private static Contract Load(){using var stream=typeof(FeatureCatalog).Assembly.GetManifestResourceStream("Nashi.FeatureCatalog.json")!;return JsonSerializer.Deserialize<Contract>(stream,new JsonSerializerOptions{PropertyNameCaseInsensitive=true})!;}
+    private static Contract Load(){using var stream=typeof(FeatureCatalog).Assembly.GetManifestResourceStream("Nashi.FeatureCatalog.json")!;return WithUdf(JsonSerializer.Deserialize<Contract>(stream,new JsonSerializerOptions{PropertyNameCaseInsensitive=true})!);}
+    /// UYAP Doküman Editörü documents (.udf), which Turkish courts and lawyers exchange, convert natively on Windows only;
+    /// the shared contract above stays in parity with the Mac.
+    public static readonly string[] WindowsOnlyFormats=["udf"];
+    private static Contract WithUdf(Contract contract)
+    {
+        contract.ConversionMatrix["udf"]=["docx","pages","pdf","txt","md","html","epub","png","jpg"];contract.SingleTools["udf"]=[];contract.MultipleTools["udf"]=[];
+        foreach(var source in new[]{"docx","pages","pdf","rtf","rtfd","txt","md","epub","textclipping"})if(contract.ConversionMatrix.TryGetValue(source,out var formats))contract.ConversionMatrix[source]=[..formats,"udf"];
+        return contract;
+    }
     public static IReadOnlyDictionary<string,string[]> Conversions=>Data.ConversionMatrix;
     public static IReadOnlyDictionary<string,string> ToolNames=>Data.ToolNames;
     public static string Extension(string path)=>Path.GetExtension(path).TrimStart('.').ToLowerInvariant() switch{"jpeg"=>"jpg","tif"=>"tiff","heif"=>"heic","aif"=>"aiff","markdown"=>"md","htm"=>"html","gzip" or "tgz"=>"gz",var ext=>ext};
