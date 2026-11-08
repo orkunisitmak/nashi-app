@@ -26,9 +26,14 @@ public static class SafePaths
         if (Path.GetFileName(filename) != filename || filename.IndexOfAny(['/', '\\', ':', '\0']) >= 0)
             throw new ArgumentException("Choose a plain output filename.");
         var stem = Path.GetFileNameWithoutExtension(filename); var extension = Path.GetExtension(filename);
+        var reservedDevice = OperatingSystem.IsWindows() && Devices.Contains(filename.Split('.')[0].TrimEnd(' '));
+        var firstDot = filename.IndexOf('.');
         for (var number = 1; number < 100_000; number++)
         {
-            var name = number == 1 ? filename : $"{stem} {number}{extension}";
+            // Number before the first dot for reserved devices: CON.tar.gz -> CON 2.tar.gz.
+            var name = number == 1 ? filename : reservedDevice
+                ? filename.Insert(firstDot < 0 ? filename.Length : firstDot, $" {number}")
+                : $"{stem} {number}{extension}";
             // File.Exists does not reliably report DOS device names (CON.txt, AUX.jpg) as taken.
             if (OperatingSystem.IsWindows() && Devices.Contains(name.Split('.')[0].TrimEnd(' '))) continue;
             var candidate = Path.Combine(directory, name);
