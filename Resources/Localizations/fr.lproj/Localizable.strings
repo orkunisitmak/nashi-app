@@ -1876,6 +1876,8 @@
 "Preview uses the first 12 seconds. Export includes the full recording." = "L’aperçu utilise les 12 premières secondes. L’export inclut l’enregistrement complet.";
 "Previous frame" = "Image précédente";
 "Previous page" = "Page précédente";
+"Printing %@…" = "Impression de %@…";
+"Printing %lld…" = "Impression de %lld…";
 "Private repository · Token saved in Keychain" = "Dépôt privé · Jeton enregistré dans le trousseau";
 "Processed preview unavailable for this Windows codec." = "Aperçu traité indisponible pour ce codec Windows.";
 "Processed preview · export uses the original file." = "Aperçu traité · l’export utilise le fichier d’origine.";

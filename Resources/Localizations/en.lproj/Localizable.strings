@@ -1876,6 +1876,8 @@
 "Preview uses the first 12 seconds. Export includes the full recording." = "Preview uses the first 12 seconds. Export includes the full recording.";
 "Previous frame" = "Previous frame";
 "Previous page" = "Previous page";
+"Printing %@…" = "Printing %@…";
+"Printing %lld…" = "Printing %lld…";
 "Private repository · Token saved in Keychain" = "Private repository · Token saved in Keychain";
 "Processed preview unavailable for this Windows codec." = "Processed preview unavailable for this Windows codec.";
 "Processed preview · export uses the original file." = "Processed preview · export uses the original file.";

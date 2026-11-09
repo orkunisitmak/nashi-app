@@ -1876,6 +1876,8 @@
 "Preview uses the first 12 seconds. Export includes the full recording." = "Önizleme ilk 12 saniyeyi kullanır. Dışa aktarma kaydın tamamını içerir.";
 "Previous frame" = "Önceki kare";
 "Previous page" = "Önceki sayfa";
+"Printing %@…" = "%@ yazdırılıyor…";
+"Printing %lld…" = "%lld yazdırılıyor…";
 "Private repository · Token saved in Keychain" = "Gizli depo · Token Anahtar Zinciri'nde kayıtlı";
 "Processed preview unavailable for this Windows codec." = "Bu Windows codec'i için işlenmiş önizleme kullanılamıyor.";
 "Processed preview · export uses the original file." = "İşlenmiş önizleme · dışa aktarmada orijinal dosya kullanılır.";
