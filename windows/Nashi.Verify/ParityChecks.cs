@@ -20,6 +20,30 @@ internal static class ParityChecks
             check(runs[0].GetProperty("character").GetProperty("italic").GetBoolean()&&runs[2].GetProperty("character").GetProperty("backgroundColor").GetProperty("b").GetDouble()==0,"Character style inheritance or direct highlighting was lost");
         }
         check(FeatureCatalog.Conversions.Count==46&&FeatureCatalog.ToolNames.Count==27,"Mac/Windows catalog count diverged");
+        if (OperatingSystem.IsWindows())
+        {
+            var reserved = Path.Combine(root, "Reserved output names"); Directory.CreateDirectory(reserved);
+            var con = SafePaths.Unique(reserved, "CON.txt");
+            var aux = SafePaths.Unique(reserved, "AUX.jpg");
+            check(Path.GetFileName(con) == "CON 2.txt" && Path.GetFileName(aux) == "AUX 2.jpg",
+                "Windows reserved device names were offered as output files.");
+            File.WriteAllText(con, "synthetic"); File.WriteAllText(aux, "synthetic");
+            check(SafePaths.Unique(reserved, "CON.txt") == Path.Combine(reserved, "CON 3.txt"),
+                "Reserved output name fallback overwrote a previous export.");
+            var multiCon = SafePaths.Unique(reserved, "CON.tar.gz");
+            var multiAux = SafePaths.Unique(reserved, "AUX.backup.jpg");
+            check(Path.GetFileName(multiCon) == "CON 2.tar.gz" &&
+                  Path.GetFileName(multiAux) == "AUX 2.backup.jpg",
+                "Multi-dot reserved output names did not escape the DOS device prefix.");
+            File.WriteAllText(multiCon, "synthetic"); File.WriteAllText(multiAux, "synthetic");
+            check(File.Exists(multiCon) && File.Exists(multiAux) &&
+                  SafePaths.Unique(reserved, "CON.tar.gz") == Path.Combine(reserved, "CON 3.tar.gz"),
+                "Multi-dot reserved output names could not be written or numbered again.");
+            var ordinary = SafePaths.Unique(reserved, "report.final.txt");
+            File.WriteAllText(ordinary, "synthetic");
+            check(SafePaths.Unique(reserved, "report.final.txt") == Path.Combine(reserved, "report.final 2.txt"),
+                "Safe non-device multi-dot output numbering changed.");
+        }
         check(FeatureCatalog.Formats(["a.htm","b.html"]).SequenceEqual(new[]{"pdf"})&&FeatureCatalog.Tools(["a.html"]).Length==0,"HTML inputs lost their PDF route");
         check(FeatureCatalog.Formats(["a.jpeg","b.png"]).Contains("webp"),"Mixed image conversion intersection failed");
         check(!FeatureCatalog.Formats(["a.png","b.mp4"]).Any(),"Unrelated inputs offered an invalid format");
