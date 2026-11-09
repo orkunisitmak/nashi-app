@@ -63,12 +63,14 @@ public sealed class DocumentConversion(OfficeRuntime runtime,Toolchain tools)
     private static byte[]? CropRendered(byte[] png,OfficeDocuments.PdfArea area,int dpi)
     {
         var page=ImageEngine.FromPng(png);var scale=dpi/72d;var x=Math.Clamp((int)Math.Floor(area.Left*scale),0,page.PixelWidth);var y=Math.Clamp((int)Math.Floor(area.Top*scale),0,page.PixelHeight);
-        var width=Math.Min(page.PixelWidth-x,(int)Math.Ceiling(area.Width*scale));var height=Math.Min(page.PixelHeight-y,(int)Math.Ceiling(area.Height*scale));
+        var width=Math.Clamp((int)Math.Ceiling((area.Left+area.Width)*scale),0,page.PixelWidth)-x;var height=Math.Clamp((int)Math.Ceiling((area.Top+area.Height)*scale),0,page.PixelHeight)-y;
         return width<1||height<1?null:ImageEngine.PngBytes(new CroppedBitmap(page,new System.Windows.Int32Rect(x,y,width,height)));
     }
     private static async Task<string> PdfPreservedHtml(string input,string work,int dpi,CancellationToken token,string password="")
     {
-        var pages=await NativePdf.RenderAsync(input,dpi,token,password);return "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body style=\"margin:0\">"+string.Join("",pages.Select(p=>"<p style=\"page-break-after:always;margin:0\"><img style=\"width:100%;height:auto\" src=\"data:image/png;base64,"+Convert.ToBase64String(p)+"\"/></p>"))+"</body></html>";
+        // Each page keeps its proportions: its size in points is the render's pixels at this DPI.
+        var pages=await NativePdf.RenderAsync(input,dpi,token,password);string Style(byte[] page)=>OfficeDocuments.PngSize(page) is {} size?OfficeDocuments.PictureStyle(size.Width*72d/dpi,size.Height*72d/dpi):"width:100%;height:auto";
+        return "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/></head><body style=\"margin:0\">"+string.Join("",pages.Select(p=>"<p style=\"page-break-after:always;margin:0\"><img style=\""+Style(p)+"\" src=\"data:image/png;base64,"+Convert.ToBase64String(p)+"\"/></p>"))+"</body></html>";
     }
     private static string PdfTables(string input,string password)
     {

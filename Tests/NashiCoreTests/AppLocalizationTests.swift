@@ -204,4 +204,11 @@ final class AppLocalizationTests:XCTestCase {
             XCTAssertEqual(AppLocalization.text(source,language:"en"),source)
         }
     }
+    /// The token setup Link in UpdateConnectionView is a plain literal, so it resolves through the generated tables.
+    func testUpdateTokenLinkIsTranslated() {
+        let source="Create a fine-grained token on GitHub"
+        XCTAssertEqual(AppLocalization.text(source,language:"tr"),"GitHub’da ince ayarlı token oluştur")
+        XCTAssertEqual(AppLocalization.text(source,language:"fr"),"Créer un jeton à portée précise sur GitHub")
+        XCTAssertEqual(AppLocalization.text(source,language:"en"),source)
+    }
 }
