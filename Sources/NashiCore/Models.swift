@@ -195,6 +195,30 @@ public enum NashiError: LocalizedError {
     }
 }
 
+public enum FileAction: String, CaseIterable {
+    case airDrop, float, copy, move, copyPath, terminal
+    public var title: String {
+        switch self {
+        case .airDrop: return "AirDrop"
+        case .float: return "Float"
+        case .copy: return "Copy"
+        case .move: return "Move"
+        case .copyPath: return "Copy Path"
+        case .terminal: return "Terminal"
+        }
+    }
+    public var symbol: String {
+        switch self {
+        case .airDrop: return "dot.radiowaves.left.and.right"
+        case .float: return "rectangle.on.rectangle"
+        case .copy: return "doc.on.doc"
+        case .move: return "folder"
+        case .copyPath: return "link"
+        case .terminal: return "terminal"
+        }
+    }
+}
+
 /// A fraction in 0...1, or OperationProgress.indeterminate when the current
 /// stage has no measurable total. Labels describe real work, not a timer estimate.
 public typealias ProgressHandler = @Sendable (Double, String) -> Void
