@@ -33,7 +33,7 @@ public sealed partial class WebDownload(Toolchain tools)
             // yt-dlp tests formats in temporary files under its home path, which defaults to the working directory.
             "--paths","home:"+tx.StagingDirectory,"--paths","temp:"+tx.StagingDirectory,"-o","%(title).160B [%(id)s].%(ext)s"]);
         if(kind=="audio")args.AddRange(["-f","bestaudio/best","-x","--audio-format","mp3","--audio-quality","0"]);else if(kind=="thumbnail")args.AddRange(["--skip-download","--write-thumbnail","--convert-thumbnails","jpg"]);
-        else{var limit=maximumHeight is {} height?$"[height<=?{height}]":"";args.AddRange(["-f",$"bestvideo[ext=mp4]{limit}+bestaudio[ext=m4a]/best[ext=mp4]{limit}/bestvideo{limit}+bestaudio/best{limit}","--merge-output-format","mp4","--remux-video","mp4"]);}
+        else{var heightFilter=maximumHeight is {} height?$"[height<=?{height}]":"";args.AddRange(["-f",$"bestvideo[ext=mp4]{heightFilter}+bestaudio[ext=m4a]/best[ext=mp4]{heightFilter}/bestvideo{heightFilter}+bestaudio/best{heightFilter}","--merge-output-format","mp4","--remux-video","mp4"]);}
         args.AddRange(["--",uri.AbsoluteUri]);
         progress?.Report(new(null,"Resolving media…"));
         await RunYtDlpAsync(args,progress,token,line=>
