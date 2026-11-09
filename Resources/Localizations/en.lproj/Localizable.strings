@@ -997,6 +997,7 @@
 "ENTER A FINITE NUMBER." = "ENTER A FINITE NUMBER.";
 "ENTER A POSITIVE, FINITE TARGET SIZE." = "ENTER A POSITIVE, FINITE TARGET SIZE.";
 "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%." = "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%.";
+"ENTER A VALID TIMECODE OR SECONDS." = "ENTER A VALID TIMECODE OR SECONDS.";
 "ENTER PAGE NUMBERS WITHIN THIS PDF, IN THE DESIRED ORDER." = "ENTER PAGE NUMBERS WITHIN THIS PDF, IN THE DESIRED ORDER.";
 "EPUB LAYOUT" = "EPUB LAYOUT";
 "EPUB layout" = "EPUB layout";
@@ -1031,6 +1032,7 @@
 "Enter a target of at least one byte and less than %lld bytes." = "Enter a target of at least one byte and less than %lld bytes.";
 "Enter a valid number for %@." = "Enter a valid number for %@.";
 "Enter a valid number for %lld." = "Enter a valid number for %lld.";
+"Enter a valid timecode or seconds." = "Enter a valid timecode or seconds.";
 "Enter page numbers within this PDF, in the desired order." = "Enter page numbers within this PDF, in the desired order.";
 "Equal clips: %@" = "Equal clips: %@";
 "Equal clips: %lld" = "Equal clips: %lld";
@@ -2102,6 +2104,8 @@
 "SEND IT ON ITS WAY" = "SEND IT ON ITS WAY";
 "SERIF" = "SERIF";
 "SET" = "SET";
+"SET END HERE" = "SET END HERE";
+"SET START HERE" = "SET START HERE";
 "SET UP MEDIA TOOLS" = "SET UP MEDIA TOOLS";
 "SET UP MEDIA TOOLS FOR THIS CODEC, OR USE OPEN TO PREVIEW IN ITS DEFAULT APP." = "SET UP MEDIA TOOLS FOR THIS CODEC, OR USE OPEN TO PREVIEW IN ITS DEFAULT APP.";
 "SET UP MEDIA TOOLS ONCE TO ENABLE HEIC ENCODING ON WINDOWS." = "SET UP MEDIA TOOLS ONCE TO ENABLE HEIC ENCODING ON WINDOWS.";
@@ -2269,6 +2273,8 @@
 "Send it on its way" = "Send it on its way";
 "Serif" = "Serif";
 "Set" = "Set";
+"Set End Here" = "Set End Here";
+"Set Start Here" = "Set Start Here";
 "Set up Nashi tools" = "Set up Nashi tools";
 "Set up media tools" = "Set up media tools";
 "Set up media tools for this codec, or use Open to preview in its default app." = "Set up media tools for this codec, or use Open to preview in its default app.";

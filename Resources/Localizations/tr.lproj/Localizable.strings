@@ -997,6 +997,7 @@
 "ENTER A FINITE NUMBER." = "GEÇERLİ BİR SAYI GİR.";
 "ENTER A POSITIVE, FINITE TARGET SIZE." = "POZİTİF VE GEÇERLİ BİR HEDEF BOYUT GİR.";
 "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%." = "%0'DAN BÜYÜK VE %100'DEN KÜÇÜK BİR KÜÇÜLTME GİR.";
+"ENTER A VALID TIMECODE OR SECONDS." = "GEÇERLİ BİR ZAMAN KODU VEYA SANİYE GİR.";
 "ENTER PAGE NUMBERS WITHIN THIS PDF, IN THE DESIRED ORDER." = "BU PDF'DEKİ SAYFA NUMARALARINI İSTEDİĞİN SIRAYLA GİR.";
 "EPUB LAYOUT" = "EPUB DÜZENİ";
 "EPUB layout" = "EPUB düzeni";
@@ -1031,6 +1032,7 @@
 "Enter a target of at least one byte and less than %lld bytes." = "En az bir bayt ve %lld bayttan küçük bir hedef gir.";
 "Enter a valid number for %@." = "%@ için geçerli bir sayı gir.";
 "Enter a valid number for %lld." = "%lld için geçerli bir sayı gir.";
+"Enter a valid timecode or seconds." = "Geçerli bir zaman kodu veya saniye gir.";
 "Enter page numbers within this PDF, in the desired order." = "Bu PDF'deki sayfa numaralarını istediğin sırayla gir.";
 "Equal clips: %@" = "Eşit klip sayısı: %@";
 "Equal clips: %lld" = "Eşit klip sayısı: %lld";
@@ -2102,6 +2104,8 @@
 "SEND IT ON ITS WAY" = "TAŞI, KOPYALA, PAYLAŞ";
 "SERIF" = "SERİF";
 "SET" = "AYARLA";
+"SET END HERE" = "BİTİŞİ BURAYA AL";
+"SET START HERE" = "BAŞLANGICI BURAYA AL";
 "SET UP MEDIA TOOLS" = "MEDYA ARAÇLARINI KUR";
 "SET UP MEDIA TOOLS FOR THIS CODEC, OR USE OPEN TO PREVIEW IN ITS DEFAULT APP." = "BU CODEC İÇİN MEDYA ARAÇLARINI KUR VEYA AÇ İLE VARSAYILAN UYGULAMADA ÖNİZLE.";
 "SET UP MEDIA TOOLS ONCE TO ENABLE HEIC ENCODING ON WINDOWS." = "WINDOWS'TA HEIC OLARAK KAYDETMEK İÇİN BİR KEZ MEDYA ARAÇLARINI KUR.";
@@ -2269,6 +2273,8 @@
 "Send it on its way" = "Taşı, kopyala, paylaş";
 "Serif" = "Serif";
 "Set" = "Ayarla";
+"Set End Here" = "Bitişi Buraya Al";
+"Set Start Here" = "Başlangıcı Buraya Al";
 "Set up Nashi tools" = "Nashi araçlarını kur";
 "Set up media tools" = "Medya araçlarını kur";
 "Set up media tools for this codec, or use Open to preview in its default app." = "Bu codec için medya araçlarını kur veya Aç ile varsayılan uygulamada önizle.";
