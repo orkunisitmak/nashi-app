@@ -14,6 +14,7 @@ struct HomeView:View {
     @State private var targeted=false
     @State private var historySearch=""
     @State private var allHistory=false
+    @State private var showingClearHistoryAlert=false
     @State private var toolsReady=ExternalToolSetup.status.ready
     private var formats:[String] { FeatureCatalog.formats(for:state.inputs) }
     private var tools:[ToolKind] { FeatureCatalog.tools(for:state.inputs) }
@@ -95,9 +96,13 @@ struct HomeView:View {
                         Text("Your Library").font(.system(size:30,weight:.bold,design:.rounded))
                         Spacer()
                         if !state.history.isEmpty && !state.working {
-                            Button(action:state.clearHistory) {Image(systemName:"trash").font(.system(size:14,weight:.medium))}
+                            Button(action: { showingClearHistoryAlert = true }) {Image(systemName:"trash").font(.system(size:14,weight:.medium))}
                                 .buttonStyle(NashiButtonStyle(.quiet,compact:true))
                                 .help("Clear Library").accessibilityLabel("Clear all Library entries")
+                                .confirmationDialog("Clear Library", isPresented: $showingClearHistoryAlert) {
+                                    Button("Clear", role: .destructive) { state.clearHistory() }
+                                    Button("Cancel", role: .cancel) { }
+                                }
                         }
                     }
                     Text("Freshly made, pasted, and ready for another round.").font(.callout).foregroundStyle(.secondary)
