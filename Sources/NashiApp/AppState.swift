@@ -41,6 +41,22 @@ struct JobRecord:Codable,Identifiable {
             if let data=try? JSONEncoder().encode(history) {historyDefaults.set(data,forKey:"history")}
         }catch{self.error=error.localizedDescription}
     }
+    func removeHistoryEntry(_ id:UUID) {
+        guard !working else{return}
+        let previous=history
+        history.removeAll{$0.id==id}
+        if history.count==previous.count {return}
+        persistHistory()
+    }
+    func clearHistory() {
+        guard !working else{return}
+        guard history.count>0 else{return}
+        history.removeAll()
+        persistHistory()
+    }
+    private func persistHistory() {
+        if let data=try? JSONEncoder().encode(history) {historyDefaults.set(data,forKey:\"history\")}
+    }
     var token=CancellationToken()
     var onOpenWheel:(()->Void)?
     var onChooseFiles:(()->Void)?
