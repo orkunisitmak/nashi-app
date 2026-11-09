@@ -32,7 +32,7 @@ public sealed class GlobalDragController:IDisposable
     private static bool InMoveSize(){var info=new GuiThreadInfo{Size=Marshal.SizeOf<GuiThreadInfo>()};return GetGUIThreadInfo(0,ref info)&&(info.Flags&0x2)!=0;}
     [DllImport("oleacc.dll")]private static extern int AccessibleObjectFromPoint(NativePoint point,[MarshalAs(UnmanagedType.Interface)]out object accessible,[MarshalAs(UnmanagedType.Struct)]out object child);
     private readonly Window owner;private readonly PreferencesStore preferences;private readonly Action<string,IDataObject,string?> dropped;private readonly Action link;private readonly System.Windows.Threading.DispatcherTimer timer;
-    private readonly System.Windows.Threading.DispatcherTimer idle;private readonly MouseButtonHook? buttons;private bool disposed;private int graceTicks;
+    private readonly System.Windows.Threading.DispatcherTimer idle;private readonly MouseButtonHook? buttons;private bool disposed;private int graceTicks;private int hookWakes;
     private NativePoint start;private bool down,opened;private Task<string?>? hint;private GlobalDropWheel? wheel;private HwndSource? source;private IntPtr handle;private bool? shortcutEnabled;
     internal GlobalDropWheel? ActiveWheel=>wheel;
     public bool LinkShortcutRegistered{get;private set;}
@@ -42,11 +42,13 @@ public sealed class GlobalDragController:IDisposable
         this.owner=owner;this.preferences=preferences;this.dropped=dropped;this.link=link;timer=new(){Interval=TimeSpan.FromMilliseconds(40)};timer.Tick+=(_,_)=>Poll();
         idle=new(){Interval=TimeSpan.FromMilliseconds(500)};idle.Tick+=(_,_)=>IdleCheck();
         if(new WindowInteropHelper(owner).Handle!=IntPtr.Zero)Register();else owner.SourceInitialized+=(_,_)=>Register();
-        var dispatcher=owner.Dispatcher;buttons=MouseButtonHook.TryStart(()=>dispatcher.BeginInvoke(new Action(Wake)));timer.Start();if(buttons is not null)idle.Start();
+        var dispatcher=owner.Dispatcher;buttons=MouseButtonHook.TryStart(()=>{Interlocked.Increment(ref hookWakes);dispatcher.BeginInvoke(new Action(Wake));});timer.Start();if(buttons is not null)idle.Start();
     }
     /// True when the controller sleeps between drags instead of polling continuously.
     internal bool UsesMouseHook=>buttons is not null;
     internal bool FastCheckRunning=>timer.IsEnabled;
+    /// Button events the hook reported; lets the smoke test tell a hook wake from the 500 ms idle check.
+    internal int HookWakes=>Volatile.Read(ref hookWakes);
     // The hook reports a press slightly before Windows updates the state PrimaryMouseButton reads, so keep checking for a few ticks.
     private void Wake(){if(disposed)return;graceTicks=3;if(!timer.IsEnabled)timer.Start();Poll();}
     // Safety net: keeps the link shortcut in sync and starts the fast check if the hook missed a held button.
