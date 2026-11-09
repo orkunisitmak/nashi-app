@@ -20,7 +20,12 @@ do {
         print(String(decoding:try JSONSerialization.data(withJSONObject:result,options:.sortedKeys),as:UTF8.self));return flushResults()
     }
     if args.count==2,args[1]=="dependencies" {
-        var result:[String:String]=[:];for name in ["ffmpeg","ffprobe","soffice","exiftool"] { result[name]=try Dependencies.executable(name).path };print(String(decoding:try JSONSerialization.data(withJSONObject:result,options:.sortedKeys),as:UTF8.self));return flushResults()
+        // Every tool is reported, so one missing tool does not hide where the others are.
+        let report=dependencyReport { try? Dependencies.executable($0) }
+        print(String(decoding:try JSONSerialization.data(withJSONObject:report.json,options:.sortedKeys),as:UTF8.self))
+        let written=flushResults()
+        guard report.missing.isEmpty else { fputs("Missing tools: \(report.missing.joined(separator:", ")).\n",stderr);return 1 }
+        return written
     }
     guard args.count>=4 else { fputs("Usage: nashi-cli convert FORMAT FILE... [--options JSON] [--json]\n       nashi-cli tool TOOL_ID FILE... [--options JSON] [--json]\n       nashi-cli inspect FILE\n       nashi-cli catalog\n       nashi-cli dependencies\n",stderr);return 64 }
     var options=OperationOptions(), paths=Array(args.dropFirst(3))
@@ -60,6 +65,16 @@ do {
 
     }
 
+    /// The external tools Nashi runs, including the ones its setup downloads.
+    static let dependencyNames=["deno","exiftool","ffmpeg","ffprobe","soffice","yt-dlp"]
+    /// Maps each tool to its path, or to null when it cannot be found.
+    static func dependencyReport(resolve:(String)->URL?)->(json:[String:Any],missing:[String]) {
+        var json:[String:Any]=[:],missing:[String]=[]
+        for name in dependencyNames {
+            if let url=resolve(name) { json[name]=url.path } else { json[name]=NSNull();missing.append(name) }
+        }
+        return (json,missing)
+    }
     /// Scripts read results from stdout; a write that failed (full disk, unwritable descriptor) must not exit 0.
     private static func flushResults()->Int32 {
         guard fflush(stdout) != 0 || ferror(stdout) != 0 else { return 0 }
