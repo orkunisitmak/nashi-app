@@ -32,7 +32,7 @@ public sealed class GlobalDragController:IDisposable
     private static bool InMoveSize(){var info=new GuiThreadInfo{Size=Marshal.SizeOf<GuiThreadInfo>()};return GetGUIThreadInfo(0,ref info)&&(info.Flags&0x2)!=0;}
     [DllImport("oleacc.dll")]private static extern int AccessibleObjectFromPoint(NativePoint point,[MarshalAs(UnmanagedType.Interface)]out object accessible,[MarshalAs(UnmanagedType.Struct)]out object child);
     private readonly Window owner;private readonly PreferencesStore preferences;private readonly Action<string,IDataObject,string?> dropped;private readonly Action link;private readonly System.Windows.Threading.DispatcherTimer timer;
-    private readonly System.Windows.Threading.DispatcherTimer idle;private readonly MouseButtonHook? buttons;private bool disposed;private int graceTicks;private int hookWakes;
+    private readonly System.Windows.Threading.DispatcherTimer idle;private readonly MouseButtonHook? buttons;private bool disposed;private int graceTicks;private int hookWakes;private NativePoint pressPoint;private long pressTicks;
     private NativePoint start;private bool down,opened;private Task<string?>? hint;private GlobalDropWheel? wheel;private HwndSource? source;private IntPtr handle;private bool? shortcutEnabled;
     internal GlobalDropWheel? ActiveWheel=>wheel;
     public bool LinkShortcutRegistered{get;private set;}
@@ -42,7 +42,7 @@ public sealed class GlobalDragController:IDisposable
         this.owner=owner;this.preferences=preferences;this.dropped=dropped;this.link=link;timer=new(){Interval=TimeSpan.FromMilliseconds(40)};timer.Tick+=(_,_)=>Poll();
         idle=new(){Interval=TimeSpan.FromMilliseconds(500)};idle.Tick+=(_,_)=>IdleCheck();
         if(new WindowInteropHelper(owner).Handle!=IntPtr.Zero)Register();else owner.SourceInitialized+=(_,_)=>Register();
-        var dispatcher=owner.Dispatcher;buttons=MouseButtonHook.TryStart(()=>{Interlocked.Increment(ref hookWakes);dispatcher.BeginInvoke(new Action(Wake));});timer.Start();if(buttons is not null)idle.Start();
+        var dispatcher=owner.Dispatcher;buttons=MouseButtonHook.TryStart(()=>{Interlocked.Increment(ref hookWakes);dispatcher.BeginInvoke(new Action(WakeFromHook));});timer.Start();if(buttons is not null)idle.Start();
     }
     /// True when the controller sleeps between drags instead of polling continuously.
     internal bool UsesMouseHook=>buttons is not null;
@@ -50,6 +50,9 @@ public sealed class GlobalDragController:IDisposable
     /// Button events the hook reported; lets the smoke test tell a hook wake from the 500 ms idle check.
     internal int HookWakes=>Volatile.Read(ref hookWakes);
     // The hook reports a press slightly before Windows updates the state PrimaryMouseButton reads, so keep checking for a few ticks.
+    // The hook fires before Windows updates the button state, so the first Poll may not see the press yet. Keep
+    // where the pointer was at the press, so a quick move before the first 40 ms tick still counts toward 10 px.
+    private void WakeFromHook(){if(disposed)return;if(!down){GetCursorPos(out pressPoint);pressTicks=Environment.TickCount64;}Wake();}
     private void Wake(){if(disposed)return;graceTicks=3;if(!timer.IsEnabled)timer.Start();Poll();}
     // Safety net: keeps the link shortcut in sync and starts the fast check if the hook missed a held button.
     private void IdleCheck(){if(disposed)return;UpdateShortcut();if(!timer.IsEnabled&&PrimaryMouseButton.IsPressed)Wake();}
@@ -68,7 +71,7 @@ public sealed class GlobalDragController:IDisposable
     {
         UpdateShortcut();if(!preferences.Value.Enabled||!OwnerAvailable){wheel?.Close();wheel=null;down=false;opened=false;hint=null;return;}var held=PrimaryMouseButton.IsPressed;GetCursorPos(out var point);
         if(!held){if(down){down=false;opened=false;hint=null;if(wheel is {IsVisible:true}){var old=wheel;var dismiss=new System.Windows.Threading.DispatcherTimer{Interval=TimeSpan.FromMilliseconds(150)};dismiss.Tick+=(_,_)=>{dismiss.Stop();if(old.IsVisible)old.Close();};dismiss.Start();}wheel=null;}return;}
-        if(!down){down=true;start=point;opened=false;hint=null;return;}if(opened||Math.Abs(point.X-start.X)+Math.Abs(point.Y-start.Y)<10)return;
+        if(!down){down=true;start=pressTicks!=0&&Environment.TickCount64-pressTicks<250?pressPoint:point;pressTicks=0;opened=false;hint=null;return;}if(opened||Math.Abs(point.X-start.X)+Math.Abs(point.Y-start.Y)<10)return;
         hint??=Task.Run(()=>LinkAt(start));var chord=Chord();var p=preferences.Value;var kind=chord==p.ToolsModifier?"tools":chord==p.ConvertModifier?"convert":chord==p.ActionsModifier?"actions":null;if(kind is null)return;opened=true;if(InMoveSize())return;
         var sourceHint=hint;wheel=new GlobalDropWheel(kind,p.WheelScale,(data,id)=>dropped(id,data,sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null),()=>sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null,()=>sourceHint?.IsCompleted!=false);wheel.Show();DesktopGeometry.PlaceWheel(wheel,point.X,point.Y,WheelPresentation.Diameter*p.WheelScale);
     }

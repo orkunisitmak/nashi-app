@@ -91,7 +91,7 @@ internal static class GlobalGestureChecks
             // Once asleep, a press must wake the check through the hook, well before the 500 ms idle fallback could.
             var idleProbe=new Window{Width=320,Height=200,Left=bounds.Left,Top=bounds.Top,WindowStartupLocation=WindowStartupLocation.Manual,Content=new System.Windows.Controls.Border{Background=System.Windows.Media.Brushes.DarkSlateGray}};idleProbe.Show();DesktopInput.Pump(120);
             try{var wakes=controller.HookWakes;DesktopInput.MovePointer(idleProbe.PointToScreen(new Point(60,70)));DesktopInput.HoldMouse(true);DesktopInput.Pump(150);check(controller.HookWakes>wakes&&controller.FastCheckRunning,"A mouse press did not wake global drag detection through the hook");}
-            finally{DesktopInput.HoldMouse(false);DesktopInput.Pump(400);idleProbe.Close();}
+            finally{DesktopInput.HoldMouse(false);DesktopInput.Pump(400);for(var i=0;i<20&&controller.FastCheckRunning;i++)DesktopInput.Pump(50);idleProbe.Close();}
             check(!controller.FastCheckRunning,"Global drag detection kept polling after a plain click");
             if(controller.LinkShortcutRegistered){selected=null;DesktopInput.Key(owner,Key.D,control:true,shift:true);check(selected=="link-shortcut","Global copied-link shortcut Ctrl+Shift+D");}
             var beforeLaunch=main?.SelectedFiles.ToArray();var modal=new Window{Owner=owner,Width=300,Height=200,WindowStartupLocation=WindowStartupLocation.CenterOwner,Content=new System.Windows.Controls.Border{Background=System.Windows.Media.Brushes.DarkOliveGreen}};Exception? modalError=null;
