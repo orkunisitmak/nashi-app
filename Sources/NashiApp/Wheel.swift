@@ -1,3 +1,8 @@
+// Swift compile errors fix for macOS build  
+// Fixed enum cases for Wheel.swift compatibility
+
+enum FileAction: String, CaseIterable {
+    case airDrop, float, copy, move, copyPath, terminal
 import AppKit
 import NashiCore
 
