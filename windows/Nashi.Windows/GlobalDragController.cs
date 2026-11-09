@@ -42,7 +42,7 @@ public sealed class GlobalDragController:IDisposable
         this.owner=owner;this.preferences=preferences;this.dropped=dropped;this.link=link;timer=new(){Interval=TimeSpan.FromMilliseconds(40)};timer.Tick+=(_,_)=>Poll();
         idle=new(){Interval=TimeSpan.FromMilliseconds(500)};idle.Tick+=(_,_)=>IdleCheck();
         if(new WindowInteropHelper(owner).Handle!=IntPtr.Zero)Register();else owner.SourceInitialized+=(_,_)=>Register();
-        var dispatcher=owner.Dispatcher;buttons=MouseButtonHook.TryStart(()=>{Interlocked.Increment(ref hookWakes);dispatcher.BeginInvoke(new Action(WakeFromHook));});timer.Start();if(buttons is not null)idle.Start();
+        var dispatcher=owner.Dispatcher;buttons=MouseButtonHook.TryStart((x,y,pressed)=>{Interlocked.Increment(ref hookWakes);var at=new NativePoint{X=x,Y=y};var when=Environment.TickCount64;dispatcher.BeginInvoke(new Action(()=>WakeFromHook(at,when,pressed)));});timer.Start();if(buttons is not null)idle.Start();
     }
     /// True when the controller sleeps between drags instead of polling continuously.
     internal bool UsesMouseHook=>buttons is not null;
@@ -50,9 +50,10 @@ public sealed class GlobalDragController:IDisposable
     /// Button events the hook reported; lets the smoke test tell a hook wake from the 500 ms idle check.
     internal int HookWakes=>Volatile.Read(ref hookWakes);
     // The hook reports a press slightly before Windows updates the state PrimaryMouseButton reads, so keep checking for a few ticks.
-    // The hook fires before Windows updates the button state, so the first Poll may not see the press yet. Keep
-    // where the pointer was at the press, so a quick move before the first 40 ms tick still counts toward 10 px.
-    private void WakeFromHook(){if(disposed)return;if(!down){GetCursorPos(out pressPoint);pressTicks=Environment.TickCount64;}Wake();}
+    // The hook fires before Windows updates the button state, so the first Poll may not see the press yet. Keep the
+    // position Windows recorded with the press event itself, so a move before the dispatcher or the first 40 ms tick
+    // runs still counts toward 10 px.
+    private void WakeFromHook(NativePoint at,long when,bool pressed){if(disposed)return;if(pressed&&!down){pressPoint=at;pressTicks=when;}Wake();}
     private void Wake(){if(disposed)return;graceTicks=3;if(!timer.IsEnabled)timer.Start();Poll();}
     // Safety net: keeps the link shortcut in sync and starts the fast check if the hook missed a held button.
     private void IdleCheck(){if(disposed)return;UpdateShortcut();if(!timer.IsEnabled&&PrimaryMouseButton.IsPressed)Wake();}

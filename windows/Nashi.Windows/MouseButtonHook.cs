@@ -6,8 +6,9 @@ namespace Nashi.Windows;
 ///
 /// The low-level hook runs on its own thread with its own message loop. Windows waits for a
 /// low-level hook before it delivers mouse input to every other application, so the hook must
-/// never wait for Nashi's UI thread. The callback only looks at the message number and posts a
-/// notification; it never reads keys, pointer positions or window contents.
+/// never wait for Nashi's UI thread. The callback only looks at button messages, takes the pointer
+/// position Windows recorded for that button event, and posts a notification; it never reads keys,
+/// mouse moves or window contents.
 internal sealed class MouseButtonHook : IDisposable
 {
     private const int WhMouseLowLevel = 14;
@@ -46,7 +47,7 @@ internal sealed class MouseButtonHook : IDisposable
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
     private static extern IntPtr GetModuleHandle(string? name);
 
-    private readonly Action changed;
+    private readonly Action<int, int, bool> changed;
     // Kept in a field so the garbage collector never frees the delegate while Windows holds it.
     private readonly LowLevelMouseProc callback;
     private readonly Thread thread;
@@ -55,7 +56,7 @@ internal sealed class MouseButtonHook : IDisposable
     private uint threadId;
     private int disposed;
 
-    private MouseButtonHook(Action changed)
+    private MouseButtonHook(Action<int, int, bool> changed)
     {
         this.changed = changed;
         callback = Callback;
@@ -63,8 +64,9 @@ internal sealed class MouseButtonHook : IDisposable
     }
 
     /// Starts the hook, or returns null when Windows refuses it. Callers then fall back to polling.
-    /// `changed` runs on the hook thread and must return quickly (for example by posting to a dispatcher).
-    public static MouseButtonHook? TryStart(Action changed)
+    /// `changed` receives the event's screen position (physical pixels) and whether a button went down.
+    /// It runs on the hook thread and must return quickly (for example by posting to a dispatcher).
+    public static MouseButtonHook? TryStart(Action<int, int, bool> changed)
     {
         var instance = new MouseButtonHook(changed);
         instance.thread.Start();
@@ -107,11 +109,13 @@ internal sealed class MouseButtonHook : IDisposable
 
     private IntPtr Callback(int code, IntPtr message, IntPtr data)
     {
-        if (code >= 0 && Volatile.Read(ref disposed) == 0 && IsButton(message.ToInt32()))
+        var kind = message.ToInt32();
+        if (code >= 0 && Volatile.Read(ref disposed) == 0 && IsButton(kind))
         {
             try
             {
-                changed();
+                // MSLLHOOKSTRUCT starts with the event's POINT.
+                changed(Marshal.ReadInt32(data), Marshal.ReadInt32(data, 4), IsButtonDown(kind));
             }
             catch (InvalidOperationException)
             {
@@ -120,6 +124,9 @@ internal sealed class MouseButtonHook : IDisposable
         }
         return CallNextHookEx(IntPtr.Zero, code, message, data);
     }
+
+    internal static bool IsButtonDown(int message) =>
+        message is WmLButtonDown or WmRButtonDown or WmMButtonDown or WmXButtonDown;
 
     internal static bool IsButton(int message) => message is WmLButtonDown or WmLButtonUp or WmRButtonDown
         or WmRButtonUp or WmMButtonDown or WmMButtonUp or WmXButtonDown or WmXButtonUp;
