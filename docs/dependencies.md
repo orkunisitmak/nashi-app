@@ -10,7 +10,7 @@ Media tools enable video/audio conversion, media previews, less common image enc
 
 - [FFmpeg / ffprobe 9.0 Apple Silicon, OSXExperts](https://www.osxexperts.net/), GPL 2.0 or later. Downloaded executables are matched against the upstream published SHA-256. [FFmpeg sources](https://github.com/FFmpeg/FFmpeg). This is an end-user acquisition, not a redistribution of the upstream build by Nashi.
 - [LibreOffice 26.8.1, The Document Foundation](https://www.libreoffice.org/download/), MPL 2.0 and included third-party licenses. Official 285 MB DMG; SHA-256 pinned from its official mirror listing. The publisher’s app signature is retained. [Sources](https://www.libreoffice.org/about-us/source-code/).
-- [yt-dlp 2026.08.19](https://github.com/yt-dlp/yt-dlp/releases/tag/2026.08.19), GPLv3+ standalone combination. [Sources and complete third-party licenses](https://github.com/yt-dlp/yt-dlp/tree/2026.08.19).
+- [yt-dlp 2026.10.26](https://github.com/yt-dlp/yt-dlp/releases/tag/2026.10.26), GPLv3+ standalone combination. [Sources and complete third-party licenses](https://github.com/yt-dlp/yt-dlp/tree/2026.10.26).
 - [Deno 2.9.7](https://github.com/denoland/deno/releases/tag/v2.9.7), MIT and included dependency licenses. [Sources](https://github.com/denoland/deno/tree/v2.9.7).
 
 Exact URLs, limits and hashes: [`ExternalToolSetup.swift`](../Sources/NashiCore/ExternalToolSetup.swift). Other bundled library notices: [`Resources/THIRD-PARTY-NOTICES.txt`](../Resources/THIRD-PARTY-NOTICES.txt). ExifTool includes its complete Perl source; Sparkle includes its full license.

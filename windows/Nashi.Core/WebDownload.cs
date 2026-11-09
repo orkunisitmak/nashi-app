@@ -29,14 +29,17 @@ public sealed partial class WebDownload(Toolchain tools)
         {
             var photos=await InspectPhotosAsync(uri.AbsoluteUri,token);if(selectedPhotos is not null){if(selectedPhotos.Count==0||selectedPhotos.Any(id=>!photos.Any(p=>p.Id==id)))throw new ArgumentException("Select at least one available photo.");photos=photos.Where(p=>selectedPhotos.Contains(p.Id)).ToArray();}var outputs=new List<string>();var n=0;foreach(var photo in photos){var local=new ProgressScope(progress,n++,photos.Length);outputs.Add(await WebPhotos.DownloadImageAsync(photo.Url,tx.StagingDirectory,local,token,"Instagram "+uri.Segments.Last().Trim('/')+" "+photo.Id.ToString("00")));}return tx.Publish(outputs,token);
         }
-        var args=new List<string>{"--ignore-config","--no-playlist","--no-part","--no-overwrites","--no-cache-dir","--restrict-filenames","--no-mtime","--progress","--newline","--progress-template","download:NASHI:%(progress.downloaded_bytes)s:%(progress.total_bytes,progress.total_bytes_estimate)s","--print","after_move:filepath","--ffmpeg-location",FfmpegLocation,"--js-runtimes","deno:"+tools.Executable("deno"),"-P",tx.StagingDirectory,"-o","%(title).160B [%(id)s].%(ext)s"};
-        if(kind=="audio")args.AddRange(["-x","--audio-format","mp3"]);else if(kind=="thumbnail")args.AddRange(["--skip-download","--write-thumbnail","--convert-thumbnails","jpg"]);else args.AddRange(["-f",maximumHeight is {} height?$"bv*[height<={height}]+ba/b[height<={height}]/bv*+ba/b":"bv*+ba/b","--merge-output-format","mp4"]);
+        var args=BaseArguments(false);args.AddRange(["--no-part","--no-overwrites","--windows-filenames","--trim-filenames","180","--no-mtime","--progress","--newline","--progress-template","download:NASHI:%(progress.downloaded_bytes)s:%(progress.total_bytes,progress.total_bytes_estimate)s","--print","after_move:filepath",
+            // yt-dlp tests formats in temporary files under its home path, which defaults to the working directory.
+            "--paths","home:"+tx.StagingDirectory,"--paths","temp:"+tx.StagingDirectory,"-o","%(title).160B [%(id)s].%(ext)s"]);
+        if(kind=="audio")args.AddRange(["-f","bestaudio/best","-x","--audio-format","mp3","--audio-quality","0"]);else if(kind=="thumbnail")args.AddRange(["--skip-download","--write-thumbnail","--convert-thumbnails","jpg"]);
+        else{var limit=maximumHeight is {} height?$"[height<=?{height}]":"";args.AddRange(["-f",$"bestvideo[ext=mp4]{limit}+bestaudio[ext=m4a]/best[ext=mp4]{limit}/bestvideo{limit}+bestaudio/best{limit}","--merge-output-format","mp4","--remux-video","mp4"]);}
         args.AddRange(["--",uri.AbsoluteUri]);
         progress?.Report(new(null,"Resolving media…"));
-        await ProcessRunner.RunAsync(tools.Executable("yt-dlp"),args,token,line=>
+        await RunYtDlpAsync(args,progress,token,line=>
         {
             if(ProgressFraction(line) is {} fraction)progress?.Report(new(fraction,"Downloading media…"));
-        });
+        },()=>{foreach(var partial in Directory.GetFiles(tx.StagingDirectory))File.Delete(partial);});
         var files=Directory.GetFiles(tx.StagingDirectory).Where(p=>new FileInfo(p).Length>0).ToList();
         if(files.Count==0)throw new IOException("No public downloadable media found. Some sites require sign-in or do not expose downloadable media.");
         if(kind=="video"&&maximumHeight is {} limit)
@@ -47,7 +50,65 @@ public sealed partial class WebDownload(Toolchain tools)
     }
     public async Task<WebPhoto[]> InspectPhotosAsync(string input,CancellationToken token=default)
     {
-        var uri=Validate(input);if(WebMediaPayload.Parse(input)?.Kind!="instagramPhotos")throw new ArgumentException("Choose an Instagram photo post link.");var result=await ProcessRunner.RunAsync(tools.Executable("yt-dlp"),["--ignore-config","--no-cache-dir","--yes-playlist","--playlist-end","51","--ignore-no-formats-error","--skip-download","--dump-single-json","--no-progress","--",uri.AbsoluteUri],token);return WebPhotos.Instagram(result.Output);
+        var uri=Validate(input);if(WebMediaPayload.Parse(input)?.Kind!="instagramPhotos")throw new ArgumentException("Choose an Instagram photo post link.");var args=BaseArguments(true);args.AddRange(["--ignore-no-formats-error","--skip-download","--dump-single-json","--no-progress","--",uri.AbsoluteUri]);var result=await RunYtDlpAsync(args,null,token);return WebPhotos.Instagram(result.Output);
+    }
+    /// The same yt-dlp options as the Mac engine: no user config, plugins, self-update checks or remote
+    /// scripts; Nashi's FFmpeg and Deno; bounded retries. Windows also asks for UTF-8 so Turkish titles
+    /// and messages are not mangled by the console code page.
+    internal List<string> BaseArguments(bool photoPost)
+    {
+        var args=new List<string>{"--ignore-config","--no-plugin-dirs","--no-update","--no-cache-dir","--no-remote-components","--no-js-runtimes","--js-runtimes","deno:"+tools.Executable("deno"),"--ffmpeg-location",FfmpegLocation,"--socket-timeout","20","--retries","2","--extractor-retries","1","--no-colors","--encoding","utf-8"};
+        args.AddRange(photoPost?new[]{"--yes-playlist","--playlist-end","51"}:new[]{"--no-playlist","--playlist-items","1"});
+        return args;
+    }
+    /// Runs a yt-dlp that is at least the pinned release. When the site still rejects it (YouTube changes often),
+    /// Nashi's own copy updates itself once to the newest stable release and the request is retried.
+    internal async Task<ProcessResult> RunYtDlpAsync(List<string> args,IProgress<OperationProgress>? progress,CancellationToken token,Action<string>? outputLine=null,Action? beforeRetry=null)
+    {
+        var executable=await tools.CurrentYtDlpAsync(progress,token);
+        try{return await ProcessRunner.RunAsync(executable,args,token,outputLine);}
+        catch(IOException error)when(!token.IsCancellationRequested&&MayNeedNewerExtractor(error.Message))
+        {
+            progress?.Report(new(null,"Updating the web downloader…"));
+            if(!await tools.TryUpdateYtDlpAsync(token))throw Friendly(error);
+            beforeRetry?.Invoke();progress?.Report(new(null,"Resolving media…"));
+            try{return await ProcessRunner.RunAsync(await tools.CurrentYtDlpAsync(progress,token),args,token,outputLine);}
+            catch(IOException retry)when(!token.IsCancellationRequested){throw Friendly(retry);}
+        }
+        catch(IOException error)when(!token.IsCancellationRequested){throw Friendly(error);}
+    }
+    internal static bool MayNeedNewerExtractor(string diagnostic)
+    {
+        var lower=diagnostic.ToLowerInvariant();
+        return lower.Contains("http error 403")||lower.Contains("older than 90 days")||lower.Contains("unable to extract")||lower.Contains("nsig")||lower.Contains("signature")||lower.Contains("precondition check failed")||lower.Contains("http error 400");
+    }
+    private static WebDownloadException Friendly(IOException error)=>new(FriendlyError(error.Message),Details(error.Message),error);
+    /// Mirrors the Mac WebDownloadEngine.friendlyError wording, which is translated in the shared catalog.
+    public static string FriendlyError(string diagnostic)
+    {
+        var lower=diagnostic.ToLowerInvariant();
+        if(lower.Contains("sign in")||lower.Contains("login")||lower.Contains("cookies")||lower.Contains("private")||lower.Contains("age-restricted"))return "This link requires a login or is restricted. Try a public share link; Nashi does not read your browser sessions.";
+        if(lower.Contains("drm")||lower.Contains("protected"))return "This media is protected and cannot be downloaded here.";
+        if(lower.Contains("unsupported url")||lower.Contains("no video")||lower.Contains("no media"))return "No downloadable media was found. Use the video's share link, or Copy Image Address for a photo.";
+        if(lower.Contains("429")||lower.Contains("rate limit")||lower.Contains("too many requests"))return "The site is limiting requests. Wait a little and try again.";
+        if(lower.Contains("403")||lower.Contains("forbidden")||lower.Contains("not available")||lower.Contains("unavailable"))return "The site did not allow this download. The link may have expired or need a login.";
+        return "The site could not provide this media. Try a fresh public share link or a direct media URL.";
+    }
+    /// The last meaningful yt-dlp lines, ERROR lines first. Links can carry signed tokens and are removed;
+    /// the profile folder is shortened to ~.
+    public static string Details(string diagnostic)
+    {
+        var lines=diagnostic.Split('\n',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries).Where(l=>!l.StartsWith("NASHI:",StringComparison.Ordinal)&&!l.StartsWith("[download]",StringComparison.Ordinal)).ToArray();
+        var chosen=lines.Where(l=>l.StartsWith("ERROR:",StringComparison.Ordinal)).ToArray();if(chosen.Length==0)chosen=lines.TakeLast(3).ToArray();
+        var text=string.Join("\n",chosen.TakeLast(4));
+        text=System.Text.RegularExpressions.Regex.Replace(text,@"https?://\S+","<link>");
+        var home=Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);if(home.Length>3)text=text.Replace(home,"~",StringComparison.OrdinalIgnoreCase);
+        return text.Length>1200?text[^1200..]:text;
     }
     private sealed class ProgressScope(IProgress<OperationProgress>? progress,int index,int total):IProgress<OperationProgress>{public void Report(OperationProgress value)=>progress?.Report(value with{Fraction=value.Fraction is {} n?(index+n)/total*.98:null,Label=$"Photo {index+1} of {total}…"});}
+}
+/// A yt-dlp failure with a translatable summary (Message) and the cleaned diagnostic lines (Details).
+public sealed class WebDownloadException(string message,string details,Exception inner):IOException(message,inner)
+{
+    public string Details{get;}=details;
 }

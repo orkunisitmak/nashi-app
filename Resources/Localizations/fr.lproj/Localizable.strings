@@ -2692,6 +2692,7 @@
 "UPDATES ARE SIGNED AND VERIFIED BEFORE INSTALLATION. CHANGING REPOSITORIES KEEPS THE SAME TRUSTED SIGNING KEY. YOUR SETTINGS AND FILES STAY WITH YOU." = "LES MISES À JOUR SONT SIGNÉES ET VÉRIFIÉES AVANT L’INSTALLATION. CHANGER DE DÉPÔT CONSERVE LA MÊME CLÉ DE SIGNATURE DE CONFIANCE. VOS RÉGLAGES ET VOS FICHIERS SONT CONSERVÉS.";
 "UPDATES ARE VERIFIED BEFORE INSTALLATION. YOUR SETTINGS AND RECENT HISTORY STAY WITH YOU." = "LES MISES À JOUR SONT VÉRIFIÉES AVANT L’INSTALLATION. VOS RÉGLAGES ET VOTRE HISTORIQUE RÉCENT SONT CONSERVÉS.";
 "UPDATE…" = "METTRE À JOUR…";
+"UPDATING THE WEB DOWNLOADER…" = "MISE À JOUR DU TÉLÉCHARGEUR WEB…";
 "UPSTREAM DOWNLOAD CHECKSUM MISMATCH. NOTHING WAS INSTALLED." = "SOMME DE CONTRÔLE DU TÉLÉCHARGEMENT AMONT INCORRECTE. RIEN N’A ÉTÉ INSTALLÉ.";
 "UPSTREAM VERSIONS, LICENSES AND SOURCE LINKS" = "VERSIONS AMONT, LICENCES ET LIENS VERS LES SOURCES";
 "USE A REGULAR WRITABLE FOLDER FOR PORTABLE UPDATES." = "UTILISEZ UN DOSSIER ORDINAIRE ACCESSIBLE EN ÉCRITURE POUR LES MISES À JOUR PORTABLES.";
@@ -2729,6 +2730,7 @@
 "Updates are signed and verified before installation. Changing repositories keeps the same trusted signing key. Your settings and files stay with you." = "Les mises à jour sont signées et vérifiées avant l’installation. Changer de dépôt conserve la même clé de signature de confiance. Vos réglages et vos fichiers sont conservés.";
 "Updates are verified before installation. Your settings and recent history stay with you." = "Les mises à jour sont vérifiées avant l’installation. Vos réglages et votre historique récent sont conservés.";
 "Update…" = "Mettre à jour…";
+"Updating the web downloader…" = "Mise à jour du téléchargeur web…";
 "Upgraded from Tangerine? macOS may still show the previous name. Choose this Nashi app when adding it to %@." = "Vous venez de Tangerine ? macOS peut encore afficher l’ancien nom. Choisissez cette app Nashi en l’ajoutant à %@.";
 "Upgraded from Tangerine? macOS may still show the previous name. Choose this Nashi app when adding it to %lld." = "Vous venez de Tangerine ? macOS peut encore afficher l’ancien nom. Choisissez cette app Nashi en l’ajoutant à %lld.";
 "Upstream download checksum mismatch. Nothing was installed." = "Somme de contrôle du téléchargement amont incorrecte. Rien n’a été installé.";

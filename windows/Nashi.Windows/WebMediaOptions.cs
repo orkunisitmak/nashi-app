@@ -35,6 +35,6 @@ public sealed partial class MainWindow
                 if(!tools.Ready)throw new InvalidOperationException("Set up media tools once to inspect this media.");var info=await engine.InspectAsync(payload.Url,pending.Token);if(input!=link.Text||pending.IsCancellationRequested)return;webSummary.Text=info.Title+"\n"+info.Site+(info.Duration is {} seconds?" · "+TimeSpan.FromSeconds(seconds).ToString(@"hh\:mm\:ss"):"");if(info.AudioOnly){downloadKind.ItemsSource=new[]{"audio"};downloadKind.SelectedIndex=0;}
             }
             inspectedLink=input;
-        }catch(OperationCanceledException){}catch(Exception error){if(!pending.IsCancellationRequested)webSummary.Text=error.Message;}finally{if(inspection==pending)inspection=null;pending.Dispose();}
+        }catch(OperationCanceledException){}catch(Exception error){if(!pending.IsCancellationRequested)webSummary.Text=MainWindow.ErrorText(error);}finally{if(inspection==pending)inspection=null;pending.Dispose();}
     }
 }

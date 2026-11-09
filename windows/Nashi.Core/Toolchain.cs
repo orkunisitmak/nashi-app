@@ -39,6 +39,81 @@ public sealed class Toolchain(string directory,string? searchPath=null)
     }
     private bool Complete(string directory)=>Names.All(n=>Find(n,directory) is not null);
     public bool Ready=>Complete(DirectoryPath);
+
+    /// YouTube rejects old yt-dlp releases (HTTP 403), but setup runs only once and PATH copies
+    /// (winget, scoop, pip) are never refreshed by Nashi. Web downloads therefore ask for a yt-dlp
+    /// that is at least the pinned release; an older or missing one is replaced by Nashi's own
+    /// hash-verified copy in the tools folder, which then takes priority over PATH.
+    public const string PinnedYtDlpVersion="2026.10.26";
+    private static readonly SemaphoreSlim ytDlpGate=new(1,1);
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string,(DateTime Stamp,string? Version)> ytDlpVersions=new(StringComparer.OrdinalIgnoreCase);
+    public async Task<string> CurrentYtDlpAsync(IProgress<OperationProgress>? progress=null,CancellationToken token=default)
+    {
+        var existing=Find("yt-dlp",DirectoryPath);
+        if(existing is not null&&IsCurrent(await YtDlpVersionAsync(existing,token)))return existing;
+        await ytDlpGate.WaitAsync(token);
+        try
+        {
+            existing=Find("yt-dlp",DirectoryPath);
+            if(existing is not null&&IsCurrent(await YtDlpVersionAsync(existing,token)))return existing;
+            progress?.Report(new(null,"Updating the web downloader…"));
+            var package=Packages().Single(p=>p.Files.Any(f=>Path.GetFileNameWithoutExtension(f)=="yt-dlp"));
+            Directory.CreateDirectory(DirectoryPath);
+            var target=Path.Combine(DirectoryPath,package.Files[0]);var download=target+"."+Guid.NewGuid().ToString("N")+".part";
+            try
+            {
+                await VerifiedDownload.FetchAsync(new(package.Url),download,512L*1024*1024,p=>progress?.Report(new(p*.98,"Updating the web downloader…")),token);
+                string hash;await using(var stream=File.OpenRead(download))hash=Convert.ToHexString(await SHA256.HashDataAsync(stream,token)).ToLowerInvariant();
+                if(hash!=package.Sha256)throw new InvalidDataException("Upstream download checksum mismatch. Nothing was installed.");
+                ToolInstallation.MakeExecutable(download);File.Move(download,target,true);
+            }
+            finally{if(File.Exists(download))File.Delete(download);}
+            ytDlpVersions.TryRemove(target,out _);
+            return target;
+        }
+        finally{ytDlpGate.Release();}
+    }
+    /// Lets Nashi's own yt-dlp move to the newest stable release after a site rejected the pinned one.
+    /// yt-dlp checks the release's SHA2-256SUMS before replacing itself. Copies on PATH are left alone.
+    public async Task<bool> TryUpdateYtDlpAsync(CancellationToken token=default)
+    {
+        var own=Path.Combine(DirectoryPath,FileName("yt-dlp"));if(!Usable(own))return false;
+        await ytDlpGate.WaitAsync(token);
+        try
+        {
+            var before=await YtDlpVersionAsync(own,token);
+            try{await ProcessRunner.RunAsync(own,["--ignore-config","--no-colors","--update-to","stable"],token);}catch(IOException){return false;}
+            foreach(var old in Directory.GetFiles(DirectoryPath,FileName("yt-dlp")+".old*"))try{File.Delete(old);}catch(IOException){}catch(UnauthorizedAccessException){}
+            ytDlpVersions.TryRemove(own,out _);
+            var after=await YtDlpVersionAsync(own,token);
+            return after is not null&&after!=before;
+        }
+        finally{ytDlpGate.Release();}
+    }
+    private static bool IsCurrent(string? version)=>version is not null&&CompareVersions(version,PinnedYtDlpVersion)>=0;
+    /// yt-dlp versions are dates such as 2026.10.26, optionally followed by a nightly build number.
+    internal static int CompareVersions(string left,string right)
+    {
+        static long[] Parts(string value)=>value.Trim().Split('.').Select(p=>long.TryParse(p,System.Globalization.NumberStyles.None,System.Globalization.CultureInfo.InvariantCulture,out var n)?n:-1).ToArray();
+        var a=Parts(left);var b=Parts(right);
+        for(var i=0;i<Math.Max(a.Length,b.Length);i++){var x=i<a.Length?a[i]:0;var y=i<b.Length?b[i]:0;if(x!=y)return x.CompareTo(y);}
+        return 0;
+    }
+    private static async Task<string?> YtDlpVersionAsync(string path,CancellationToken token)
+    {
+        DateTime stamp;try{stamp=File.GetLastWriteTimeUtc(path);}catch(IOException){return null;}catch(UnauthorizedAccessException){return null;}
+        if(ytDlpVersions.TryGetValue(path,out var known)&&known.Stamp==stamp)return known.Version;
+        string? version=null;
+        try
+        {
+            var result=await ProcessRunner.RunAsync(path,["--ignore-config","--no-update","--version"],token);
+            var line=result.Output.Split('\n',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries).FirstOrDefault();
+            if(line is not null&&System.Text.RegularExpressions.Regex.IsMatch(line,@"^\d{4}\.\d{1,2}\.\d{1,2}(\.\d+)?$"))version=line;
+        }
+        catch(IOException){}catch(System.ComponentModel.Win32Exception){}
+        ytDlpVersions[path]=(stamp,version);
+        return version;
+    }
     public async Task InstallAsync(IProgress<OperationProgress>? progress=null,CancellationToken token=default)
     {
         token.ThrowIfCancellationRequested();if(Ready){progress?.Report(new(1,"Media tools ready"));return;}
@@ -46,7 +121,8 @@ public sealed class Toolchain(string directory,string? searchPath=null)
         var stage=Path.Combine(parent,"tools-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(stage);
         try
         {
-            var packages=Packages().Where(p=>p.Files.Any(f=>Installed(Path.GetFileNameWithoutExtension(f)) is null)).ToArray();
+            // yt-dlp ages quickly, so a PATH copy never replaces Nashi's own pinned download.
+            var packages=Packages().Where(p=>p.Files.Any(f=>Path.GetFileNameWithoutExtension(f) is var name&&(name=="yt-dlp"||Installed(name) is null))).ToArray();
             for(var n=0;n<packages.Length;n++)
             {
                 var package=packages[n];var archive=Path.Combine(stage,"package-"+n);
@@ -79,11 +155,11 @@ public sealed class Toolchain(string directory,string? searchPath=null)
     // Linux FFmpeg is pinned to a month-end BtbN build because daily builds are deleted after 14 days.
     private static Package[] Packages()=>OperatingSystem.IsWindows()?[
         new Package("FFmpeg 9.0","https://github.com/GyanD/codexffmpeg/releases/download/9.0.2/ffmpeg-9.0.2-full_build.zip","759d0a9831c436a0eb331ad36f236c06cb04aaa0005da46571f0e9d3d9206f6b",["ffmpeg.exe","ffprobe.exe"]),
-        new Package("yt-dlp","https://github.com/yt-dlp/yt-dlp/releases/download/2026.08.19/yt-dlp.exe","66674953fe251b89f4d08c5f0e35e0728679bd67ab3d7d05c0562af101dd3e7a",["yt-dlp.exe"]),
+        new Package("yt-dlp","https://github.com/yt-dlp/yt-dlp/releases/download/"+PinnedYtDlpVersion+"/yt-dlp.exe","f5389d3698ecde4ef06f4e6b1ce0294fe9ac1396228c8990b8d3416d6d177a7d",["yt-dlp.exe"]),
         new Package("Deno","https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-pc-windows-msvc.zip","a0c3101b4158d1dfb7d6a78a7bf0f3de80c96bb423c152beec8beb22786f2238",["deno.exe"])
     ]:OperatingSystem.IsLinux()&&RuntimeInformation.OSArchitecture==Architecture.X64?[
         new Package("FFmpeg 9.0","https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-09-30-13-08/ffmpeg-n9.0.2-17-g2a571b6068-linux64-gpl-9.0.tar.xz","68ee646831adaae2495618346f3bba94ff207ff83bbd34d643e7004730d66269",["ffmpeg","ffprobe"]),
-        new Package("yt-dlp","https://github.com/yt-dlp/yt-dlp/releases/download/2026.08.19/yt-dlp_linux","58162f9bfdc27458ea47bfcb311cf47028f17d8154a8bf7d689861d46399230a",["yt-dlp"]),
+        new Package("yt-dlp","https://github.com/yt-dlp/yt-dlp/releases/download/"+PinnedYtDlpVersion+"/yt-dlp_linux","767ba9dce7052aa196f8b12652f433d76de128ba168966fa84b6394d5e6c6795",["yt-dlp"]),
         new Package("Deno","https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip","c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490",["deno"])
     ]:throw new PlatformNotSupportedException("Media tools setup supports Windows and Linux x64.");
     // .NET cannot read xz, so SharpCompress streams the tar and only the wanted files reach the disk.
