@@ -9,6 +9,17 @@ final class CommandLineTests:XCTestCase {
         let result=try ProcessRunner.run(URL(fileURLWithPath:"/usr/bin/perl"),[script.path,"-config","","-ver"])
         XCTAssertEqual(result.text.trimmingCharacters(in:.whitespacesAndNewlines),"13.59")
     }
+    func testDependencyReportListsEveryToolAndContinuesPastMissingOnes() throws {
+        let report=NashiCommandLine.dependencyReport { $0=="ffmpeg" || $0=="deno" ? nil:URL(fileURLWithPath:"/tools/\($0)") }
+        XCTAssertEqual(Set(report.json.keys),["deno","exiftool","ffmpeg","ffprobe","soffice","yt-dlp"])
+        XCTAssertEqual(report.missing,["deno","ffmpeg"])
+        XCTAssertTrue(report.json["ffmpeg"] is NSNull)
+        XCTAssertEqual(report.json["yt-dlp"] as? String,"/tools/yt-dlp")
+        let data=try JSONSerialization.data(withJSONObject:report.json,options:.sortedKeys)
+        let decoded=try XCTUnwrap(JSONSerialization.jsonObject(with:data) as? [String:Any])
+        XCTAssertTrue(decoded["deno"] is NSNull)
+        XCTAssertEqual(decoded["soffice"] as? String,"/tools/soffice")
+    }
     func testPartialNestedImageOptionsUseDefaultsAndPerformRealEdits() throws {
         let root=try OutputFiles.temporaryDirectory();defer{try? FileManager.default.removeItem(at:root)}
         let input=root.appendingPathComponent("pattern.png"),destination=root.appendingPathComponent("Output")

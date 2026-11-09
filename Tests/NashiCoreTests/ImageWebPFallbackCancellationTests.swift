@@ -101,6 +101,26 @@ final class ImageWebPFallbackCancellationTests: XCTestCase {
         return (returned, cancelled, ffmpegAlive, leftovers)
     }
 
+    /// Annotate on a WebP photo keeps WebP, so its save goes through the same fallback and must stop on cancel.
+    func testCancelInterruptsAnnotateSavingAWebPAndLeavesNoOutput() throws {
+        let input = root.appendingPathComponent("Photo.webp")
+        // A 1x1 lossless WebP, decoded by ImageIO without FFmpeg.
+        try XCTUnwrap(Data(base64Encoded: "UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==")).write(to: input)
+        let fake = try makeFake()
+        var options = OperationOptions(); options.outputDirectory = try outputDirectory("annotate")
+        options.imageAnnotations = [ImageAnnotation(kind: .rectangle, rect: EditRect(x: 0, y: 0, width: 1, height: 1))]
+        let token = CancellationToken(), done = DispatchSemaphore(value: 0); var result: Result<[URL], Error>?
+        DispatchQueue.global().async { result = Result { try ImageEngine.tool(.annotateImage, inputs: [input], options: options, token: token) }; done.signal() }
+        XCTAssertTrue(awaitStarted(fake.started), "fake ffmpeg never started")
+        token.cancel()
+        let returned = done.wait(timeout: .now() + 10) == .success
+        if !returned { release(fake.release); _ = done.wait(timeout: .now() + 10) }
+        XCTAssertTrue(returned)
+        guard case .failure(NashiError.cancelled)? = result else { return XCTFail("expected cancellation, got \(String(describing: result))") }
+        XCTAssertFalse(alive(fake.pid), "fake ffmpeg left running")
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: options.outputDirectory!.path), [])
+    }
+
     func testCancelInterruptsRunningWebPFallbackEncode() throws {
         let input = try makePNG()
 

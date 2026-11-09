@@ -8,10 +8,19 @@ public enum PDFEngine {
         if pdf.isLocked && !pdf.unlock(withPassword:password) { throw NashiError.invalidInput("This PDF is password protected. Enter its password.") }
         guard pdf.pageCount>0 else { throw NashiError.invalidInput("The PDF contains no pages.") };return pdf
     }
+    /// One pixel is one point, unless the file states a square resolution: a 300 DPI A4 scan becomes an A4 page, as in Preview.
+    static func pageSize(of url: URL, pixelWidth: Int, pixelHeight: Int) -> NSSize {
+        let properties = CGImageSourceCreateWithURL(url as CFURL, nil).flatMap { CGImageSourceCopyPropertiesAtIndex($0, 0, nil) } as? [CFString:Any]
+        guard let dpi = properties?[kCGImagePropertyDPIWidth] as? Double, dpi.isFinite, dpi > 0, dpi == properties?[kCGImagePropertyDPIHeight] as? Double else { return NSSize(width:pixelWidth,height:pixelHeight) }
+        let size = NSSize(width:Double(pixelWidth)*72/dpi,height:Double(pixelHeight)*72/dpi)
+        // A stored resolution that gives a page under 3 pt or over Acrobat's 14,400 pt limit is wrong metadata, not a real scan.
+        guard (3...14_400).contains(size.width), (3...14_400).contains(size.height) else { return NSSize(width:pixelWidth,height:pixelHeight) }
+        return size
+    }
     public static func create(inputs: [URL], options: OperationOptions, token: CancellationToken, progress: ProgressHandler = {_,_ in}) throws -> [URL] {
         guard let first=inputs.first else { throw NashiError.invalidInput("Choose images to create a PDF.") }
         let pdf=PDFDocument()
-        for (index,input) in inputs.enumerated() { progress(Double(index)/Double(inputs.count),"Adding image \(index+1) of \(inputs.count)…");try token.check(); let cg=try ImageEngine.load(input); if let page=PDFPage(image:NSImage(cgImage:cg,size:NSSize(width:cg.width,height:cg.height))) { pdf.insert(page,at:pdf.pageCount) } }
+        for (index,input) in inputs.enumerated() { progress(Double(index)/Double(inputs.count),"Adding image \(index+1) of \(inputs.count)…");try token.check(); let cg=try ImageEngine.load(input); if let page=PDFPage(image:NSImage(cgImage:cg,size:pageSize(of:input,pixelWidth:cg.width,pixelHeight:cg.height))) { pdf.insert(page,at:pdf.pageCount) } }
         let output=OutputFiles.unique(for:first,extension:"pdf",directory:options.outputDirectory)
         progress(OperationProgress.indeterminate,"Writing PDF…")
         guard pdf.write(to:output) else { throw NashiError.failed("Could not create PDF.") };return [output]
@@ -76,7 +85,7 @@ public enum PDFEngine {
                     try token.check()
                     let selection=Array(order[start..<min(start+chunk,order.count)])
                     let bytes=try pageEditedData([input],selections:[selection],password:options.password,token:token)
-                    let output=folder.appendingPathComponent(String(format:"Pages %03d-%03d.pdf",start+1,min(start+chunk,order.count)))
+                    let output=OutputFiles.unique(for:folder.appendingPathComponent(String(format:"Pages %03d-%03d",selection[0]+1,selection[selection.count-1]+1)),extension:"pdf",directory:folder)
                     try bytes.write(to:output,options:.atomic);outputs.append(output)
                     progress(Double(min(start+chunk,order.count))/Double(order.count),"Saved \(min(start+chunk,order.count)) of \(order.count) pages")
                 }

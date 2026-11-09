@@ -48,7 +48,7 @@ public sealed class GlobalDragController:IDisposable
         if(!held){if(down){down=false;opened=false;hint=null;if(wheel is {IsVisible:true}){var old=wheel;var dismiss=new System.Windows.Threading.DispatcherTimer{Interval=TimeSpan.FromMilliseconds(150)};dismiss.Tick+=(_,_)=>{dismiss.Stop();if(old.IsVisible)old.Close();};dismiss.Start();}wheel=null;}return;}
         if(!down){down=true;start=point;opened=false;hint=null;return;}if(opened||Math.Abs(point.X-start.X)+Math.Abs(point.Y-start.Y)<10)return;
         hint??=Task.Run(()=>LinkAt(start));var chord=Chord();var p=preferences.Value;var kind=chord==p.ToolsModifier?"tools":chord==p.ConvertModifier?"convert":chord==p.ActionsModifier?"actions":null;if(kind is null)return;opened=true;if(InMoveSize())return;
-        var sourceHint=hint;wheel=new GlobalDropWheel(kind,p.WheelScale,(data,id)=>dropped(id,data,sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null),()=>sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null);wheel.Show();DesktopGeometry.PlaceWheel(wheel,point.X,point.Y,WheelPresentation.Diameter*p.WheelScale);
+        var sourceHint=hint;wheel=new GlobalDropWheel(kind,p.WheelScale,(data,id)=>dropped(id,data,sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null),()=>sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null,()=>sourceHint?.IsCompleted!=false);wheel.Show();DesktopGeometry.PlaceWheel(wheel,point.X,point.Y,WheelPresentation.Diameter*p.WheelScale);
     }
     private static string? LinkAt(NativePoint point)
     {
@@ -70,22 +70,33 @@ public sealed class GlobalDragController:IDisposable
 
 internal sealed class GlobalDropWheel:Window
 {
-    internal string State=>$"entered={entered}, over={over}, dropped={dropCount}, choices={choices.Count}, selection={selection}, revealed={Revealed}";private int entered,over,dropCount;
+    internal string State=>$"entered={entered}, over={over}, dropped={dropCount}, choices={choices.Count}, selection={selection}, revealed={Revealed}, passThrough={passThrough}";private int entered,over,dropCount;
     // The wheel opens almost transparent and only appears once an OLE drag carrying a file or
     // link reaches it. Plain mouse drags with a modifier (text selection, scrollbars) and OLE
-    // drags of other data, such as selected text, never show it.
+    // drags of other data, such as selected text or a Premiere clip, never show it.
     // Fully transparent layered pixels ignore hit tests, so keep a tiny non-zero opacity.
     private const double HiddenOpacity=.02;
     internal bool Revealed{get;private set;}
+    // A hidden wheel is still the OLE target under the pointer and refuses drags it has nothing
+    // for, so the app below never gets them (#768). Once a drag brings no file or link, and the
+    // start point's link hint has settled, WS_EX_TRANSPARENT lets OLE find that app on the next
+    // move. The window stays open until Poll closes it on release. The hint is read before Track
+    // builds choices, so a link it delivers in between is seen on the next move instead of lost.
+    // State is read off the UI thread, so it reports the flag PassThrough set; PassingThrough
+    // reads the real window style and needs the UI thread.
+    internal static bool PassesThrough(bool revealed,int choices,bool noTools,bool hintSettled)=>!revealed&&choices==0&&!noTools&&hintSettled;
+    private volatile bool passThrough;internal bool PassingThrough{get{var handle=new WindowInteropHelper(this).Handle;return handle!=IntPtr.Zero&&(WindowManagement.Native.GetWindowLongPtr(handle,-20).ToInt64()&0x20)!=0;}}
+    internal void PassThrough(){var handle=new WindowInteropHelper(this).Handle;if(handle==IntPtr.Zero||PassingThrough)return;_=WindowManagement.Native.SetWindowLongPtr(handle,-20,new nint(WindowManagement.Native.GetWindowLongPtr(handle,-20).ToInt64()|0x20));passThrough=PassingThrough;}
+    private void Settle(bool settled){if(choices.Count>0||noTools)Reveal();else if(PassesThrough(Revealed,choices.Count,noTools,settled))PassThrough();}
     private void Reveal(){if(Revealed)return;Revealed=true;foreach(var label in canvas.Children.OfType<Border>())label.Visibility=Visibility.Visible;WheelPresentation.Animate(this,HiddenOpacity);if(Opacity<1&&!HasAnimatedProperties)Opacity=1;}
-    private readonly string mode;private readonly Action<IDataObject,string> chosen;private readonly Func<string?> hint;private readonly Canvas canvas=new(){Width=540,Height=540,Background=Brushes.Transparent,AllowDrop=true};private string selection="";private IReadOnlyList<ToolChoice> choices=[];private string[] draggedFiles=[],resolvedFiles=[];
-    public GlobalDropWheel(string mode,double scale,Action<IDataObject,string> chosen,Func<string?> hint)
+    private readonly string mode;private readonly Action<IDataObject,string> chosen;private readonly Func<string?> hint;private readonly Func<bool> hintSettled;private readonly Canvas canvas=new(){Width=540,Height=540,Background=Brushes.Transparent,AllowDrop=true};private string selection="";private IReadOnlyList<ToolChoice> choices=[];private string[] draggedFiles=[],resolvedFiles=[];
+    public GlobalDropWheel(string mode,double scale,Action<IDataObject,string> chosen,Func<string?> hint,Func<bool> hintSettled)
     {
-        this.mode=mode;this.chosen=chosen;this.hint=hint;Title="Nashi · "+mode;Width=Height=WheelPresentation.Diameter*scale;WindowStyle=WindowStyle.None;AllowsTransparency=true;Background=Brushes.Transparent;ResizeMode=ResizeMode.NoResize;ShowInTaskbar=false;ShowActivated=false;Topmost=true;AllowDrop=true;Content=new Viewbox{Child=canvas};Build([]);Opacity=HiddenOpacity;
+        this.mode=mode;this.chosen=chosen;this.hint=hint;this.hintSettled=hintSettled;Title="Nashi · "+mode;Width=Height=WheelPresentation.Diameter*scale;WindowStyle=WindowStyle.None;AllowsTransparency=true;Background=Brushes.Transparent;ResizeMode=ResizeMode.NoResize;ShowInTaskbar=false;ShowActivated=false;Topmost=true;AllowDrop=true;Content=new Viewbox{Child=canvas};Build([]);Opacity=HiddenOpacity;
         // Reveal only once the payload offers choices. On entry the pointer sits in the center,
         // so e.Effects is still None even for a valid file drag.
-        DragEnter+=(_,e)=>{entered++;Track(e);if(choices.Count>0||noTools)Reveal();};
-        DragOver+=(_,e)=>{over++;Track(e);if(choices.Count>0||noTools)Reveal();};
+        DragEnter+=(_,e)=>{entered++;var settled=hintSettled();Track(e);Settle(settled);};
+        DragOver+=(_,e)=>{over++;var settled=hintSettled();Track(e);Settle(settled);};
         Drop+=(_,e)=>{dropCount++;Track(e);var id=selection;Close();if(id.Length>0)chosen(e.Data,id);e.Handled=true;};PreviewKeyDown+=(_,e)=>{if(e.Key==Key.Escape){Close();e.Handled=true;}};
     }
     private void Track(DragEventArgs e)
