@@ -23,6 +23,10 @@ public struct WebMediaInfo:Sendable {
 }
 
 public enum WebDownloadEngine {
+    /// Validates and parses a user-supplied http(s) link, rejecting private/link-local IPs.
+    /// - Parameter text: The raw link text from the user.
+    /// - Returns: A validated URL.
+    /// - Throws NashiError.invalidInput if the link is malformed or points to a private address.
     public static func link(_ text:String) throws -> URL {
         let value=text.trimmingCharacters(in:.whitespacesAndNewlines)
         guard value.utf8.count<=16_384,!value.unicodeScalars.contains(where:{CharacterSet.whitespacesAndNewlines.contains($0) || CharacterSet.controlCharacters.contains($0)}),
@@ -33,8 +37,14 @@ public enum WebDownloadEngine {
         return url
     }
     private static func isPrivateIp(_ host:String)->Bool {
-        let parts=host.split(separator:".").compactMap{Int($0)};guard parts.count==4 else { return false }
-        return parts[0]==10||(parts[0]==172&&parts[1]>=16&&parts[1]<=31)||(parts[0]==192&&parts[1]==168)||(parts[0]==169&&parts[1]==254)
+        // Strict IPv4: exactly 4 dot-separated numeric octets, each 0...255.
+        let v4=host.split(separator:".").compactMap{Int($0)};guard v4.count==4&&v4.allSatisfy({$0>=0&&$0<=255})&&v4.count==host.split(separator:".").count else {
+            // IPv6: reject loopback, link-local and unique-local addresses.
+            if host.hasPrefix("::1")||host.hasPrefix("fe80:")||host.hasPrefix("fc00:")||host.hasPrefix("fd00:") { return true }
+            return false
+        }
+        let a=v4[0],b=v4[1],c=v4[2]
+        return a==0||a==10||(a==100&&b>=64&&b<=127)||(a==172&&b>=16&&b<=31)||(a==192&&b==168)||(a==169&&b==254)||(a==192&&b==0&&c==2)||(a==198&&b==51&&c==100)||(a==203&&b==0&&c==113)
     }
     public static func inspect(_ url:URL,token:CancellationToken = .init()) async throws -> WebMediaInfo {
         let url=try link(url.absoluteString);try token.check()

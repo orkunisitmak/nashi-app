@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Net;
+using System.Net.Sockets;
 using System.Text.Json;
 namespace Nashi.Core;
 public sealed partial class WebDownload(Toolchain tools)
@@ -14,13 +15,20 @@ public sealed partial class WebDownload(Toolchain tools)
         if(parts.Length!=3||!double.TryParse(parts[1],NumberStyles.Float,CultureInfo.InvariantCulture,out var current)||!double.TryParse(parts[2],NumberStyles.Float,CultureInfo.InvariantCulture,out var total)||!double.IsFinite(current)||!double.IsFinite(total)||total<=0)return null;
         return Math.Clamp(current/total,0,.98);
     }
+    /// Validates a web download URL: must be absolute http(s), no credentials, not loopback, not .local, not a private/link-local IP.
+    /// - Parameter input: The URL string to validate.
+    /// - Returns: The validated Uri.
+    /// - Throws ArgumentException if the URL is not a public http(s) link.
     public static Uri Validate(string input)
     {
         if(!Uri.TryCreate(input,UriKind.Absolute,out var url)||url.Scheme is not ("http" or "https")||!string.IsNullOrEmpty(url.UserInfo)||url.IsLoopback||url.Host.EndsWith(".local",StringComparison.OrdinalIgnoreCase)||IsPrivateIp(url.Host))throw new ArgumentException("Paste a public http(s) media or page link.");return url;
     }
+    /// Checks whether an IP address string is private or link-local (RFC 1918, RFC 5737, RFC 3927, RFC 6598, etc.).
+    /// - Parameter host: The IP address string to check.
+    /// - Returns: true if the address is private/link-local and should be blocked.
     private static bool IsPrivateIp(string host)
     {
-        if(!IPAddress.TryParse(host,out var ip))return false;var b=ip.GetAddressBytes();return b.Length==4&&(b[0]==10||(b[0]==172&&b[1]>=16&&b[1]<=31)||(b[0]==192&&b[1]==168)||(b[0]==169&&b[1]==254));
+        if(!IPAddress.TryParse(host,out var ip))return false;if(ip.AddressFamily==System.Net.Sockets.AddressFamily.InterNetworkV6&&ip.IsIPv4MappedToIPv6)ip=ip.MapToIPv4();var b=ip.GetAddressBytes();return b.Length==4&&(b[0]==0||b[0]==10||(b[0]==100&&b[1]>=64&&b[1]<=127)||(b[0]==172&&b[1]>=16&&b[1]<=31)||(b[0]==192&&b[1]==168)||(b[0]==169&&b[1]==254)||(b[0]==192&&b[1]==0&&b[2]==2)||(b[0]==198&&b[1]==51&&b[2]==100)||(b[0]==203&&b[1]==0&&b[2]==113));
     }
     internal string FfmpegLocation=>Path.GetDirectoryName(tools.Executable("ffmpeg"))!;
     public async Task<IReadOnlyList<string>> DownloadAsync(string input,string kind,string destination,IProgress<OperationProgress>? progress=null,CancellationToken token=default,int? maximumHeight=null,IReadOnlySet<int>? selectedPhotos=null)
