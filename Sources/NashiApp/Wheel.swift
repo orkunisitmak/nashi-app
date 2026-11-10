@@ -1,6 +1,9 @@
 import AppKit
 import NashiCore
 
+// Swift compile errors fix for macOS build  
+// Fixed enum cases for Wheel.swift compatibility
+
 enum WheelMode:String,CaseIterable { case convert,tools,actions }
 final class WheelPanel:NSPanel { override var canBecomeKey:Bool { true } }
 enum WebWheelAction { case download,thumbnail,audio,copy,open }
@@ -43,7 +46,7 @@ struct WheelItem {
         } else { switch mode {
         case .convert: items=FeatureCatalog.formats(for:inputs).map{WheelItem(title:$0 == "gz" ? "GZIP":$0.uppercased(),operation:.convert($0))}
         case .tools: items=FeatureCatalog.tools(for:inputs).map{WheelItem(title:FeatureCatalog.toolNames[$0] ?? $0.title,symbol:FeatureCatalog.toolSymbols[$0],operation:.tool($0))}
-        case .actions: items=FileAction.allCases.map{WheelItem(title:$0.title,symbol:$0.symbol,action:$0)}
+        case .actions: items=NashiCore.FileAction.allCases.map{WheelItem(title:$0.title,symbol:$0.symbol,action:$0)}
         } }
         let exists=panel?.isVisible ?? false
         let desiredSize=CGFloat(320*UserDefaults.standard.double(forKey:"wheelScale"))
