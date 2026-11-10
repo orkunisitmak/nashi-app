@@ -478,6 +478,16 @@ struct ToolEditor:View {
                 Button("Move Left") { pdfEditor.moveSelected(by:-1) }.disabled(!pdfEditor.canMoveLeft)
                 Button("Move Right") { pdfEditor.moveSelected(by:1) }.disabled(!pdfEditor.canMoveRight)
             }
+            if pdfEditor.pages.isEmpty {
+                VStack(alignment:.leading,spacing:8) {
+                    SecureField("PDF password",text:$options.password)
+                    HStack(spacing:8) {
+                        Button("Unlock PDF") { Task { await load() } }.disabled(options.password.isEmpty)
+                        Button("Return") { options.password="";previewError=nil }
+                    }
+                    if let previewError { Text(previewError).font(.caption).foregroundStyle(.orange) }
+                }
+            }
             Toggle("Make all pages the same width",isOn:$options.pdfUniformWidth)
         }
     }
@@ -622,7 +632,7 @@ struct ToolEditor:View {
                 else { loaded=try await Task.detached { try MediaEngine.readMetadata(input,token:token) }.value }
                 try checkGeneration(generation,token:token);metadata=loaded;originalMetadata=loaded
             }
-            if tool == .organizePDF { pdfEditor.reset(document:try PDFEngine.open(input)) }
+            if tool == .organizePDF { pdfEditor.reset(document:try PDFEngine.open(input,password:options.password)) }
             if tool == .frameImage { options.imageFrame = .init() }
             if tool == .createCollage { options.collage = .init() }
             if tool == .audioToVideo { width=1920;height=1080;options.backgroundColor="#000000" }
@@ -642,6 +652,7 @@ struct ToolEditor:View {
         metadata=[:];originalMetadata=[:];metadataSearch="";metadataRemoveAll=false;addingMetadataField=false;newMetadataKey="{XMP-dc}.Title";newMetadataValue="";qrResults=[]
         annotationKind = .arrow;selectingAnnotations=false;annotationText="Text";annotationColor = .red;annotationStroke=3;annotationFont=24;annotationFontFamily="system"
         targetEnabled=false;targetMode="MB";targetValue=1;preset="Balanced";compressionSize="original"
+        options.password=""
         if tool == .compress {
             let image=category == .image
             preset=(image ? FormatPreferences.shared.imageCompressionStrength:FormatPreferences.shared.videoCompressionStrength)=="strong" ? "Strong":"Balanced"

@@ -1740,16 +1740,18 @@
 "PDF FORM APPEARANCES COULD NOT BE PREPARED." = "IMPOSSIBLE DE PRÉPARER L’APPARENCE DES FORMULAIRES PDF.";
 "PDF LAYOUT" = "MISE EN PAGE DU PDF";
 "PDF OUTPUT LAYOUT" = "MISE EN PAGE DE SORTIE PDF";
-"PDF PAGE EXCEEDS 100 MP." = "LA PAGE PDF DÉPASSE 100 MPX.";
+"PDF PAGE EXCEEDS 100 MP." = "LA PAGE PDF DÉPASSE 100 MPX.";
 "PDF PAGE IS TOO LARGE TO RENDER AT THIS DPI." = "LA PAGE PDF EST TROP GRANDE POUR ÊTRE RENDUE À CE DPI.";
+"PDF PASSWORD" = "MOT DE PASSE PDF";
 "PDF PASSWORD (IF NEEDED)" = "MOT DE PASSE DU PDF (SI NÉCESSAIRE)";
 "PDF PREVIEW BACKGROUND COULD NOT BE PREPARED." = "IMPOSSIBLE DE PRÉPARER L’ARRIÈRE-PLAN DE L’APERÇU PDF.";
 "PDF PREVIEW BITMAP COULD NOT BE ALLOCATED." = "IMPOSSIBLE D’ALLOUER LE BITMAP DE L’APERÇU PDF.";
 "PDF form appearances could not be prepared." = "Impossible de préparer l’apparence des formulaires PDF.";
 "PDF layout" = "Mise en page du PDF";
 "PDF output layout" = "Mise en page de sortie PDF";
-"PDF page exceeds 100 MP." = "La page PDF dépasse 100 Mpx.";
+"PDF page exceeds 100 MP." = "La page PDF dépasse 100 Mpx.";
 "PDF page is too large to render at this DPI." = "La page PDF est trop grande pour être rendue à ce DPI.";
+"PDF password" = "Mot de passe PDF";
 "PDF password (if needed)" = "Mot de passe du PDF (si nécessaire)";
 "PDF preview background could not be prepared." = "Impossible de préparer l’arrière-plan de l’aperçu PDF.";
 "PDF preview bitmap could not be allocated." = "Impossible d’allouer le bitmap de l’aperçu PDF.";
@@ -1952,6 +1954,7 @@
 "RESIZE IMAGE" = "REDIMENSIONNER L’IMAGE";
 "RESTORE CLIPS" = "RESTAURER LES CLIPS";
 "RESTORE DEFAULTS" = "RÉTABLIR LES RÉGLAGES PAR DÉFAUT";
+"RETURN" = "RETOUR";
 "REVEAL FINISHED FILES IN EXPLORER" = "AFFICHER LES FICHIERS TERMINÉS DANS L’EXPLORATEUR";
 "REVEAL FINISHED FILES IN FINDER" = "AFFICHER LES FICHIERS TERMINÉS DANS LE FINDER";
 "RIGHT" = "DROITE";
@@ -2029,6 +2032,7 @@
 "Restore Clips" = "Restaurer les clips";
 "Restore Defaults" = "Rétablir les réglages par défaut";
 "Restore defaults" = "Rétablir les réglages par défaut";
+"Return" = "Retour";
 "Reveal finished files in Explorer" = "Afficher les fichiers terminés dans l’Explorateur";
 "Reveal finished files in Finder" = "Afficher les fichiers terminés dans le Finder";
 "Right" = "Droite";
@@ -2675,6 +2679,7 @@
 "UNDO AREA" = "ANNULER LA ZONE";
 "UNDO LAST MARK" = "ANNULER LE DERNIER REPÈRE";
 "UNIT" = "UNITÉ";
+"UNLOCK PDF" = "DÉVERROUILLER LE PDF";
 "UNSAFE DOWNLOAD REDIRECT." = "REDIRECTION DE TÉLÉCHARGEMENT NON SÛRE.";
 "UNSAFE UPDATE ENTRY." = "ENTRÉE DE MISE À JOUR NON SÛRE.";
 "UNSUPPORTED AUDIO FORMAT." = "FORMAT AUDIO NON PRIS EN CHARGE.";
@@ -2708,6 +2713,7 @@
 "Undo area" = "Annuler la zone";
 "Undo last mark" = "Annuler le dernier repère";
 "Unit" = "Unité";
+"Unlock PDF" = "Déverrouiller le PDF";
 "Unsafe download redirect." = "Redirection de téléchargement non sûre.";
 "Unsafe update entry." = "Entrée de mise à jour non sûre.";
 "Unsupported audio format." = "Format audio non pris en charge.";
