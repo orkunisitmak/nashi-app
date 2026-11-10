@@ -18,6 +18,13 @@ function character(value = {}) {
   const allowed = ["bold", "italic", "fontSize", "fontName", "fontColor", "backgroundColor", "underline", "strikethru", "superscript", "tracking", "baselineShift", "language"];
   return Object.fromEntries(allowed.filter(key => value[key] !== undefined).map(key => [key,value[key]]));
 }
+// The DOCX reader models subscript as superscript -1; Pages stores the
+// unsigned TSWP SuperscriptType, where subscript is 2 (-1 aborts the write).
+function writeCharacter(value) {
+  const result = character(value);
+  if (result.superscript === -1) result.superscript = 2;
+  return result;
+}
 function paragraphStyle(value = {}) {
   const allowed = ["alignment", "spaceBefore", "spaceAfter", "firstLineIndent", "leftIndent", "rightIndent", "lineSpacing", "keepLinesTogether", "keepWithNext", "pageBreakBefore", "widowControl"];
   return Object.fromEntries(allowed.filter(key => value[key] !== undefined).map(key => [key,value[key]]));
@@ -45,7 +52,7 @@ export function write(json) {
     const text = runs.map(run => run.type === "image" ? "" : (run.text ?? "").replaceAll("\n", "\u2028")).join("");
     const style = document.stylesheet.createParagraphStyle({
       name: `Converted paragraph ${++ordinal}`, basedOn: baseId,
-      character: {fontName: "Helvetica", fontSize: 12, ...character(block.character)}, paragraph: paragraphStyle(block.paragraph)
+      character: {fontName: "Helvetica", fontSize: 12, ...writeCharacter(block.character)}, paragraph: paragraphStyle(block.paragraph)
     });
     const index = document.appendParagraph(text, style);
     let offset = document.paragraphs()[index]?.start ?? start;
@@ -58,7 +65,7 @@ export function write(json) {
         offset++;
       } else {
         const length = (run.text ?? "").length;
-        if (length && run.character && Object.keys(run.character).length) document.applyCharacterFormatting(offset, offset + length, character(run.character));
+        if (length && run.character && Object.keys(run.character).length) document.applyCharacterFormatting(offset, offset + length, writeCharacter(run.character));
         if (length && run.link) document.insertLink(offset, offset + length, run.link);
         offset += length;
       }
