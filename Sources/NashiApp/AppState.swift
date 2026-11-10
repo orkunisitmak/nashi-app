@@ -67,10 +67,11 @@ struct JobRecord:Codable,Identifiable {
         let record:JobRecord?
         init(from decoder:Decoder) throws { record=try? JobRecord(from:decoder) }
     }
-    // Library entry removal: removes a single history entry by ID.
-    // - Aborts if a job is in progress (working == true).
-    // - Only calls saveHistory() when an entry was actually removed.
-    // - Restores selection to the first remaining history entry (or clears it) when the removed entry was selected.
+    /// Removes a single Library history entry by its identifier.
+    /// - Parameter id: The UUID of the history entry to remove.
+    /// - Behavior: Aborts if a job is in progress (`working == true`). Only calls `saveHistory()` when an entry
+    ///   was actually removed. If the removed entry was the currently selected one, selection is restored to
+    ///   the first remaining history entry (or cleared to `nil` when no entries remain).
     func removeHistoryEntry(_ id:UUID) {
         guard !working else { return }
         let previous=history
@@ -81,8 +82,10 @@ struct JobRecord:Codable,Identifiable {
         }
         saveHistory()
     }
-    // Library clear history: permanently removes all history entries after user confirmation.
-    // - Aborts if a job is in progress (working == true).
+
+    /// Permanently removes all Library history entries after user confirmation.
+    /// - Behavior: Aborts if a job is in progress (`working == true`). Clears all history, resets selection,
+    ///   and persists the empty state via `saveHistory()`.
     func clearHistory() {
         guard !working else { return }
         history.removeAll()
