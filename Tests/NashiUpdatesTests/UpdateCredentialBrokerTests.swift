@@ -128,4 +128,20 @@ final class UpdateCredentialBrokerTests: XCTestCase {
         XCTAssertThrowsError(try UpdateCredentialBrokerClient.bundleHash(folder))
     }
 
+    // F702: content inside a directory the seal cannot read must fail closed, not be skipped.
+    func testFrozenBundleHashFailsClosedOnUnreadableDirectory() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("synthetic-broker-seal-\(UUID())")
+        let hidden = folder.appendingPathComponent("Hidden", isDirectory: true)
+        try FileManager.default.createDirectory(at: hidden, withIntermediateDirectories: true)
+        defer {
+            try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: hidden.path)
+            try? FileManager.default.removeItem(at: folder)
+        }
+        try Data("synthetic binary".utf8).write(to: folder.appendingPathComponent("binary"))
+        try Data("unsealed payload".utf8).write(to: hidden.appendingPathComponent("payload"))
+        XCTAssertNoThrow(try UpdateCredentialBrokerClient.bundleHash(folder))
+        try FileManager.default.setAttributes([.posixPermissions: 0o000], ofItemAtPath: hidden.path)
+        XCTAssertThrowsError(try UpdateCredentialBrokerClient.bundleHash(folder)) { XCTAssertEqual($0 as? UpdateCredentialBrokerError, .identity) }
+    }
+
 }
