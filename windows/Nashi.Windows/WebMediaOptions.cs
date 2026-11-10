@@ -28,7 +28,7 @@ public sealed partial class MainWindow
             if(payload.Kind=="instagramPhotos"&&downloadKind.SelectedItem as string is not ("video" or "audio"))
             {
                 if(!tools.Ready)throw new InvalidOperationException("Set up media tools once to inspect Instagram posts.");
-                try{photos=await engine.InspectPhotosAsync(payload.Url,pending.Token);}catch(InstagramVideoPostException){if(input!=link.Text||pending.IsCancellationRequested)return;downloadKind.SelectedItem="video";}
+                try{photos=await engine.InspectPhotosAsync(payload.Url,pending.Token);}catch(InstagramVideoPostException){if(input!=link.Text||pending.IsCancellationRequested)return;if(downloadKind.SelectedItem as string is not ("video" or "audio"))downloadKind.SelectedItem="video";}
                 if(input!=link.Text||pending.IsCancellationRequested)return;
             }
             if(photos is not null)

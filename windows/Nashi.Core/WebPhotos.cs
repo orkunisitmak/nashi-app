@@ -33,6 +33,12 @@ public static class WebPhotos
         var entries=collection.EnumerateArray().ToArray();if(entries.Length==0||entries.Length>50)throw new InvalidDataException("Choose one Instagram post with up to 50 items.");
         var items=Enumerable.Range(1,entries.Length).Where(n=>IsVideo(entries[n-1])).ToArray();return items.Length>0?items:throw new InvalidDataException("This post has no videos. Choose photos to download it.");
     }
+    /// The metadata of a post's first video item, or of the post itself when it is a single item.
+    public static string InstagramVideoEntry(string json)
+    {
+        var items=InstagramVideoItems(json);if(items is null)return json;
+        using var doc=JsonDocument.Parse(json);return doc.RootElement.GetProperty("entries")[items[0]-1].GetRawText();
+    }
     private static bool IsVideo(JsonElement entry)=>entry.ValueKind==JsonValueKind.Object&&(entry.TryGetProperty("duration",out var duration)&&duration.ValueKind==JsonValueKind.Number&&duration.TryGetDouble(out var seconds)&&seconds>0||entry.TryGetProperty("formats",out var formats)&&formats.ValueKind==JsonValueKind.Array&&formats.EnumerateArray().Any(f=>f.ValueKind==JsonValueKind.Object&&f.TryGetProperty("url",out _)));
     public static async Task<string> DownloadImageAsync(string url,string directory,IProgress<OperationProgress>? progress,CancellationToken token,string name="Image")
     {
