@@ -10,6 +10,7 @@ if [[ -f "$nashi_selected_update_config" ]] && plutil -type PublicRepository "$n
 if [[ "$nashi_signing_mode" != ad-hoc && "$nashi_public_build" == false ]]; then python3 scripts/build-credential-broker.py; fi
 # Release binaries do not embed the builder's home-directory/source paths.
 swift build -c "$configuration" --product Nashi -Xswiftc -file-prefix-map -Xswiftc "$PWD=/nashi" -Xswiftc -file-compilation-dir -Xswiftc /nashi
+swift build -c "$configuration" --product nashi-cli -Xswiftc -file-prefix-map -Xswiftc "$PWD=/nashi" -Xswiftc -file-compilation-dir -Xswiftc /nashi
 binary_dir=$(swift build -c "$configuration" --show-bin-path)
 application=${NASHI_APP_OUTPUT:-"$PWD/build/Nashi.app"}
 sparkle_root="$PWD/.build/artifacts/sparkle/Sparkle"
@@ -22,7 +23,11 @@ if [[ -f "$application/Contents/Info.plist" ]]; then
 fi
 mkdir -p "$application/Contents/MacOS" "$application/Contents/Resources/Tools"
 cp "$binary_dir/Nashi" "$application/Contents/MacOS/Nashi"
-if [[ "$configuration" == release ]]; then /usr/bin/strip -S "$application/Contents/MacOS/Nashi"; fi
+cp "$binary_dir/nashi-cli" "$application/Contents/MacOS/nashi-cli"
+if [[ "$configuration" == release ]]; then
+  /usr/bin/strip -S "$application/Contents/MacOS/Nashi"
+  /usr/bin/strip -S "$application/Contents/MacOS/nashi-cli"
+fi
 cp Resources/Info.plist "$application/Contents/Info.plist"
 python3 scripts/generate-localizations.py
 ditto Resources/Localizations "$application/Contents/Resources"
@@ -82,6 +87,8 @@ codesign "${nashi_signing_flags[@]}" "$application/Contents/Resources/Tools/ffpr
 codesign "${nashi_signing_flags[@]}" "$application/Contents/Resources/Tools/yt-dlp"
 codesign "${nashi_signing_flags[@]}" --entitlements Configuration/Deno.entitlements "$application/Contents/Resources/Tools/deno"
 fi
+# The CLI is a separate Mach-O inside the bundle; sign it before sealing the app.
+codesign "${nashi_signing_flags[@]}" "$application/Contents/MacOS/nashi-cli"
 codesign "${nashi_signing_flags[@]}" "$application"
 codesign --verify --deep --strict "$application"
 nashi_verify_signing_identity "$application"
