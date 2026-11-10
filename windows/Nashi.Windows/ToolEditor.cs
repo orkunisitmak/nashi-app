@@ -141,7 +141,7 @@ public sealed partial class ToolEditor:Window
         var box=new TextBox{Text=TimeString(value)};
         System.Windows.Automation.AutomationProperties.SetAutomationId(box,name);
         box.LostKeyboardFocus+=(_,_)=>{try{SyncTimeline();}catch(ArgumentException){}};
-        fields.Add(name,box);defaults.Add(name,value);
+        fields.Add(name,box);defaults.Add(name,TimeString(value));
         row.Children.Add(box);
         row.Children.Add(MainWindow.Button("Set Here",()=>{
             box.Text=TimeString(player.Position.TotalSeconds);
