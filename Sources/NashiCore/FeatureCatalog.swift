@@ -203,24 +203,15 @@ public enum FeatureCatalog {
         "gz": [.extractArchive],
         "rar": [.extractArchive],
     ]
-    /// Normalises a file extension to Nashi's canonical format key (e.g. "jpeg" → "jpg", "tif" → "tiff").
-    /// - Parameter url: The file URL whose extension should be normalised.
-    /// - Returns: The canonical extension key used by the conversion catalogue.
     public static func normalizedExtension(_ url: URL) -> String {
         let ext = url.pathExtension.lowercased()
         return ["jpeg":"jpg", "tif":"tiff", "heif":"heic", "aif":"aiff", "markdown":"md", "htm":"html", "gzip":"gz", "tgz":"gz"].filter { _ in true }[ext] ?? ext
     }
-    /// Returns the output formats supported for all given input files (intersection of their conversion rows).
-    /// - Parameter inputs: The input file URLs to find shared output formats for.
-    /// - Returns: An array of output format identifiers, empty if none are shared or any input is an ordinary folder.
     public static func formats(for inputs: [URL]) -> [String] {
         guard let first=inputs.first else { return [] }
         guard inputs.allSatisfy({ !isOrdinaryFolder($0) }) else { return [] }
         return (conversionMatrix[normalizedExtension(first)] ?? []).filter { format in inputs.allSatisfy { (conversionMatrix[normalizedExtension($0)] ?? []).contains(format) } }
     }
-    /// Returns the tools supported for all given input files.
-    /// - Parameter inputs: The input file URLs to find shared tools for.
-    /// - Returns: An array of ToolKind values supported by every input, empty if none are shared or any input is an ordinary folder.
     public static func tools(for inputs: [URL]) -> [ToolKind] {
         guard let first=inputs.first else { return [] }
         guard inputs.allSatisfy({ !isOrdinaryFolder($0) }) else { return [] }
