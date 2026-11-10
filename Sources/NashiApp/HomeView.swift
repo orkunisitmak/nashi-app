@@ -15,6 +15,7 @@ struct HomeView:View {
     @State private var historySearch=""
     @State private var allHistory=false
     @State private var toolsReady=ExternalToolSetup.status.ready
+    @State private var showClearHistoryConfirmation=false
     private var formats:[String] { FeatureCatalog.formats(for:state.inputs) }
     private var tools:[ToolKind] { FeatureCatalog.tools(for:state.inputs) }
     private var recent:[JobRecord] {
@@ -95,9 +96,18 @@ struct HomeView:View {
                         Text("Your Library").font(.system(size:30,weight:.bold,design:.rounded))
                         Spacer()
                         if !state.history.isEmpty && !state.working {
-                            Button(action:state.clearHistory) {Image(systemName:"trash").font(.system(size:14,weight:.medium))}
-                                .buttonStyle(NashiButtonStyle(.quiet,compact:true))
-                                .help("Clear Library").accessibilityLabel("Clear all Library entries")
+                            Button(action: {state.showClearHistoryConfirmation = true}) {
+                                Image(systemName:"trash").font(.system(size:14,weight:.medium))
+                            }
+                            .buttonStyle(NashiButtonStyle(.quiet,compact:true))
+                            .help("Clear Library")
+                            .alert("Clear Library", isPresented: $state.showClearHistoryConfirmation) {
+                                Button("Cancel", role: .cancel) { }
+                                Button("Clear All", role: .destructive) { state.clearHistory() }
+                            } message: {
+                                Text("This will permanently remove all library entries. This action cannot be undone.")
+                            }
+                            .accessibilityLabel("Clear all Library entries")
                         }
                     }
                     Text("Freshly made, pasted, and ready for another round.").font(.callout).foregroundStyle(.secondary)
