@@ -18,7 +18,7 @@ public sealed record ImageOptions(int? Width=null,int? Height=null,int Rotation=
 }
 public static partial class ImageEngine
 {
-    public static readonly string[] Formats=["png","jpg","webp","heic","avif","bmp","gif","tiff","pdf"];
+    public static readonly string[] Formats=["png","jpg","webp","heic","avif","bmp","gif","tiff","ico","pdf"];
     public static BitmapSource Load(string file)
     {
         if(FeatureCatalog.Extension(file) is "webp" or "heic" or "avif" or "svg")return FromPng(PhotoCodec.Png(file));
@@ -127,6 +127,7 @@ public static partial class ImageEngine
         image=BitmapSource.Create(converted.PixelWidth,converted.PixelHeight,96,96,PixelFormats.Bgra32,null,pixels,stride);image.Freeze();
         // Hand the raw pixels to Magick: an intermediate WPF PNG of a 48 MP photo took 15-19 s alone.
         if(format is "webp" or "heic" or "avif"){PhotoCodec.EncodePixels(pixels,image.PixelWidth,image.PixelHeight,output,format,quality,encoderPath,token);return;}
+        if(format=="ico"){SaveIco(image,output,token);return;}
         if(format=="pdf")
         {
             using var png=new MemoryStream();var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(image));encoder.Save(png);png.Position=0;
@@ -137,4 +138,42 @@ public static partial class ImageEngine
         // New frames omit source metadata deliberately; originals stay unchanged.
         target.Frames.Add(BitmapFrame.Create(image,null,null,null));using var file=new FileStream(output,FileMode.CreateNew);target.Save(file);
     }
+    /// Writes a multi-size ICO file (16, 24, 32, 48, 64, 128, 256 px) with 32-bit alpha PNG frames.
+    /// Non-square source images are centred on a transparent canvas; aspect ratio is preserved.
+    private static void SaveIco(BitmapSource image,string output,CancellationToken token=default)
+    {
+        var sizes=new[]{16,24,32,48,64,128,256};using var ms=new MemoryStream();using var bw=new BinaryWriter(ms);
+        // ICONDIR header
+        bw.Write((ushort)0);bw.Write((ushort)1);bw.Write((ushort)sizes.Length);
+        var offsets=new long[sizes.Length];var dirs=new byte[sizes.Length][];
+        for(var i=0;i<sizes.Length;i++)
+        {
+            token.ThrowIfCancellationRequested();var size=sizes[i];var frame=CenterOnTransparent(image,size,size);
+            var png=PngBytes(frame);dirs[i]=png;
+        }
+        var offset=6L+sizes.Length*16L;
+        for(var i=0;i<sizes.Length;i++)
+        {
+            var size=sizes[i];var png=dirs[i];
+            var w=size==256?(byte)0:(byte)size;var h=size==256?(byte)0:(byte)size;
+            bw.Write(w);bw.Write(h);bw.Write((byte)0);bw.Write((byte)0);bw.Write((ushort)1);bw.Write((ushort)32);bw.Write((uint)png.Length);bw.Write((uint)offset);offset+=png.Length;
+        }
+        foreach(var png in dirs)bw.Write(png);bw.Flush();using var file=new FileStream(output,FileMode.CreateNew);ms.Position=0;ms.CopyTo(file);
+    }
+    /// Centres <paramref name="source"/> on a transparent canvas of <paramref name="width"/>×<paramref name="height"/>,
+    /// preserving aspect ratio with no cropping or stretching.
+    private static BitmapSource CenterOnTransparent(BitmapSource source,int width,int height)
+    {
+        var scale=Math.Min((double)width/source.PixelWidth,(double)height/source.PixelHeight);
+        var dw=Math.Max(1,(int)Math.Round(source.PixelWidth*scale));var dh=Math.Max(1,(int)Math.Round(source.PixelHeight*scale));
+        var scaled=new TransformedBitmap(source,new ScaleTransform(scale,scale));
+        var visual=new DrawingVisual();using(var context=visual.RenderOpen()){context.DrawImage(scaled,new Rect((width-dw)/2d,(height-dh)/2d,dw,dh));}
+        var rt=new RenderTargetBitmap(width,height,96,96,PixelFormats.Pbgra32);rt.Render(visual);rt.Freeze();return rt;
+    }
+    /// Returns <paramref name="source"/> encoded as PNG bytes.
+    private static byte[] PngBytes(BitmapSource source)
+    {
+        using var ms=new MemoryStream();var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(source));encoder.Save(ms);return ms.ToArray();
+    }
+}
 }
