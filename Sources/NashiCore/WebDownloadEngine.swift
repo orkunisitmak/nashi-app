@@ -27,10 +27,14 @@ public enum WebDownloadEngine {
         let value=text.trimmingCharacters(in:.whitespacesAndNewlines)
         guard value.utf8.count<=16_384,!value.unicodeScalars.contains(where:{CharacterSet.whitespacesAndNewlines.contains($0) || CharacterSet.controlCharacters.contains($0)}),
               let url=URL(string:value),let scheme=url.scheme?.lowercased(),["http","https"].contains(scheme),
-              let host=url.host,!host.isEmpty,url.user==nil,url.password==nil else {
+              let host=url.host,!host.isEmpty,url.user==nil,url.password==nil,!isPrivateIp(host) else {
             throw NashiError.invalidInput("Paste one complete http:// or https:// media link.")
         }
         return url
+    }
+    private static func isPrivateIp(_ host:String)->Bool {
+        let parts=host.split(separator:".").compactMap{Int($0)};guard parts.count==4 else { return false }
+        return parts[0]==10||(parts[0]==172&&parts[1]>=16&&parts[1]<=31)||(parts[0]==192&&parts[1]==168)||(parts[0]==169&&parts[1]==254)
     }
     public static func inspect(_ url:URL,token:CancellationToken = .init()) async throws -> WebMediaInfo {
         let url=try link(url.absoluteString);try token.check()
