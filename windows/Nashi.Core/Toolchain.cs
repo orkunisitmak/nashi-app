@@ -102,12 +102,12 @@ public sealed class Toolchain(string directory,string? searchPath=null)
     }
     private sealed record Package(string Name,string Url,string Sha256,string[] Files);
 }
-/// Verifies and downloads media tool packages from upstream with checksum validation,
-/// size limits, retry logic, and idle-timeout stall protection.
 public static class VerifiedDownload
 {
-    public static Task FetchAsync(Uri uri,string output,long maximum,Action<double>? progress,CancellationToken token)=>FetchCore(uri,output,maximum,progress,token,null,TimeSpan.FromSeconds(60));
-    public static Task FetchAnyAsync(IReadOnlyList<Uri> uris,string output,long maximum,Action<double>? progress,CancellationToken token,Func<string,bool>? validator=null)=>FetchAnyCore(uris,output,maximum,progress,token,null,TimeSpan.FromSeconds(60),validator);
+    // A first-run FFmpeg download can wait well over a minute for its first bytes behind slow mirrors or proxies.
+    internal static readonly TimeSpan DefaultIdle=TimeSpan.FromSeconds(120);
+    public static Task FetchAsync(Uri uri,string output,long maximum,Action<double>? progress,CancellationToken token)=>FetchCore(uri,output,maximum,progress,token,null,DefaultIdle);
+    public static Task FetchAnyAsync(IReadOnlyList<Uri> uris,string output,long maximum,Action<double>? progress,CancellationToken token,Func<string,bool>? validator=null)=>FetchAnyCore(uris,output,maximum,progress,token,null,DefaultIdle,validator);
     internal static Task FetchForTest(Uri uri,string output,long maximum,Action<double>? progress,CancellationToken token,HttpMessageHandler handler,TimeSpan idle)=>FetchCore(uri,output,maximum,progress,token,handler,idle);
     internal static Task FetchAnyForTest(IReadOnlyList<Uri> uris,string output,long maximum,Action<double>? progress,CancellationToken token,HttpMessageHandler handler,TimeSpan idle,Func<string,bool>? validator=null)=>FetchAnyCore(uris,output,maximum,progress,token,handler,idle,validator);
     private static async Task FetchAnyCore(IReadOnlyList<Uri> uris,string output,long maximum,Action<double>? progress,CancellationToken token,HttpMessageHandler? handler,TimeSpan idle,Func<string,bool>? validator=null)
