@@ -416,7 +416,13 @@ struct ToolEditor:View {
                 LText("Area \(index+1)");TextField("Start",value:Binding(get:{options.videoRedactions[index].start},set:{options.videoRedactions[index].start=$0}),format:.number)
                 TextField("End",value:Binding(get:{options.videoRedactions[index].end ?? duration},set:{options.videoRedactions[index].end=$0}),format:.number)
             } } }
-            Button("Undo Area") { if !options.redactions.isEmpty { options.redactions.removeLast() };if tool == .redactVideo,!options.videoRedactions.isEmpty { options.videoRedactions.removeLast() } }
+            HStack(spacing:8) {
+                Button("Undo Area") { if !options.redactions.isEmpty { options.redactions.removeLast() };if tool == .redactVideo,!options.videoRedactions.isEmpty { options.videoRedactions.removeLast() } }
+                if !options.redactions.isEmpty {
+                    Button("Rotate Left") { rotateRedaction(-90) }
+                    Button("Rotate Right") { rotateRedaction(90) }
+                }
+            }
         }
     }
     var trimControls:some View {
@@ -695,6 +701,27 @@ struct ToolEditor:View {
             let regions=try await Task.detached { try ImageEngine.recognizedRegions(input,faces:faces,text:!faces) }.value
             try checkGeneration(generation,token:token);options.redactions += regions.map(\.rect)
         } catch { if generation==editorGeneration,!token.isCancelled { previewError=error.localizedDescription } } }
+    }
+    
+    func rotateRedaction(_ degrees:Int) {
+        guard !options.redactions.isEmpty else { return }
+        let count=options.redactions.count
+        let last = count - 1
+        var r = options.redactions[last]
+        let cx = r.x + r.width/2
+        let cy = r.y + r.height/2
+        let normalized = ((degrees % 360) + 360) % 360
+        if normalized == 90 || normalized == 270 {
+            let newW = r.height
+            let newH = r.width
+            let newX = cx - newW/2
+            let newY = cy - newH/2
+            r = EditRect(x:newX,y:newY,width:newW,height:newH)
+            options.redactions[last] = r
+            if tool == .redactVideo, options.videoRedactions.indices.contains(last) {
+                options.videoRedactions[last].rect = r
+            }
+        }
     }
     var previewKey:Data { let encoder=JSONEncoder();encoder.outputFormatting = .sortedKeys;var data=(try? encoder.encode(options)) ?? Data();data.append(contentsOf:inputs.map(\.path).joined(separator:"\0").utf8);return data }
     func renderPreview() async {
