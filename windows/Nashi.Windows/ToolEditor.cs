@@ -103,16 +103,19 @@ public sealed partial class ToolEditor:Window
     private static string Number(double n)=>n.ToString("0.###",CultureInfo.CurrentCulture);
     /// Formats seconds as MM:SS.mmm for trim start/end fields.
     private static string TimeString(double n)=>TimeSpan.FromSeconds(n).ToString("mm\\:ss\\.fff",CultureInfo.InvariantCulture);
-    /// Parses "MM:SS.mmm" or plain seconds into seconds.
+    /// Parses "MM:SS.mmm" or plain seconds into seconds. Returns 0 for invalid/non-finite input.
     private static double ParseTime(string text){
         text=text.Trim();
         if(text.Contains(":")){
             var parts=text.Split(':');
             if(parts.Length==2&&double.TryParse(parts[0],NumberStyles.Float,CultureInfo.InvariantCulture,out var minutes)&&double.TryParse(parts[1],NumberStyles.Float,CultureInfo.InvariantCulture,out var seconds)){
-                return minutes*60+seconds;
+                var result=minutes*60+seconds;
+                return double.IsFinite(result)?result:0;
             }
         }
-        return double.TryParse(text,NumberStyles.Float,CultureInfo.CurrentCulture,out var v)?v:(double.TryParse(text,NumberStyles.Float,CultureInfo.InvariantCulture,out v)?v:0);
+        if(double.TryParse(text,NumberStyles.Float,CultureInfo.CurrentCulture,out var v)&&double.IsFinite(v))return v;
+        if(double.TryParse(text,NumberStyles.Float,CultureInfo.InvariantCulture,out v)&&double.IsFinite(v))return v;
+        return 0;
     }
     // Fields show milliseconds, so the default End can round up to half a millisecond
     // past ffprobe's duration. MediaEngine allows the same slack; it gets the clamped End.
@@ -168,7 +171,10 @@ public sealed partial class ToolEditor:Window
     private double Value(string key,double fallback=0)
     {
         if(!fields.TryGetValue(key,out var box))return fallback;
-        if(key is "Start" or "End")return ParseTime(box.Text);
+        if(key is "Start" or "End"){
+            var result=ParseTime(box.Text);
+            return double.IsFinite(result)?result:fallback;
+        }
         if(!double.TryParse(box.Text,NumberStyles.Float,CultureInfo.CurrentCulture,out var value)&&!double.TryParse(box.Text,NumberStyles.Float,CultureInfo.InvariantCulture,out value)||!double.IsFinite(value))throw new ArgumentException("Enter a valid number for "+key+".");return value;
     }
     private void BeginDraw(object sender,MouseButtonEventArgs e)
