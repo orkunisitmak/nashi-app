@@ -2,6 +2,9 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 namespace Nashi.Core;
 public sealed record WebPhoto(int Id,string Url,int Width=0,int Height=0);
+/// A /p/ link is also how Instagram shares a saved or grid reel, so a "photo post" can hold only videos.
+/// Callers switch such a post to video or audio instead of asking for its /reel/ link.
+public sealed class InstagramVideoPostException():Exception("This post is a video. Choose video or audio to download it.");
 public static class WebPhotos
 {
     public static WebPhoto[] Instagram(string json)
@@ -20,7 +23,7 @@ public static class WebPhotos
             }
             if(variants.Count==0)throw new InvalidDataException("A photo is unavailable. Try a fresh public post link.");photos.Add(variants.OrderBy(v=>v.Uncropped).ThenBy(v=>v.Unscaled).ThenBy(v=>v.Area).ThenBy(v=>v.Position).Last().Photo);
         }
-        if(photos.Count==0)throw new InvalidDataException("This post contains videos. Use its Reel link to download video.");return photos.ToArray();
+        if(photos.Count==0)throw new InstagramVideoPostException();return photos.ToArray();
     }
     public static async Task<string> DownloadImageAsync(string url,string directory,IProgress<OperationProgress>? progress,CancellationToken token,string name="Image")
     {

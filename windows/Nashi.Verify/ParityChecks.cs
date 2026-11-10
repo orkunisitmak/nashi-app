@@ -204,6 +204,8 @@ internal static class ParityChecks
         var partialPhotos=WebPhotos.Instagram("{\"entries\":[{\"duration\":null,\"thumbnails\":[null,{\"url\":42},{\"url\":\"https://cdninstagram.com/synthetic-photo.jpg\",\"width\":900,\"height\":600}]}]}");
         check(partialPhotos.Length==1&&partialPhotos[0].Width==900&&partialPhotos[0].Height==600,
             "Malformed Instagram thumbnail variants hid a valid public image.");
+        // Saved and grid reels are shared as /p/ links; a post with only videos must be offered as video, not fail as a photo post.
+        try{WebPhotos.Instagram("{\"entries\":[{\"duration\":5,\"formats\":[{\"url\":\"https://scontent.cdninstagram.com/video.mp4\"}]}]}");check(false,"A video-only Instagram post was read as photos");}catch(InstagramVideoPostException){check(true,"Instagram video-only post detection");}
         // YouTube's hover preview is an animated thumbnail under /an_webp/; like on the Mac, it stands for its video.
         check(WebMediaPayload.Parse("https://i.ytimg.com/an_webp/mXS5W7_kdzk/mqdefault_6s.webp?du=3000&sqp=synthetic") is {Kind:"youtube",Url:"https://www.youtube.com/watch?v=mXS5W7_kdzk"},"YouTube hover preview was downloaded as an image instead of its video");
         // Embeds often use YouTube's older thumbnail hosts; the Mac maps img.youtube.com and ytimg.com to the video too.

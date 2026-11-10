@@ -851,6 +851,7 @@
 "DOWNLOAD OFFICE TOOLS" = "OFFICE ARAÇLARINI İNDİR";
 "DOWNLOAD PHOTOS" = "FOTOĞRAFLARI İNDİR";
 "DOWNLOAD PHOTOS…" = "FOTOĞRAFLARI İNDİR…";
+"DOWNLOAD POST…" = "GÖNDERİYİ İNDİR…";
 "DOWNLOAD THE MISSING TOOLS TO ENABLE ALL CONVERSIONS, PREVIEWS AND WEB DOWNLOADS. TOOLS ALREADY FOUND ON YOUR COMPUTER ARE KEPT." = "TÜM DÖNÜŞTÜRMELERİ, ÖNİZLEMELERİ VE WEB İNDİRMELERİNİ AÇMAK İÇİN EKSİK ARAÇLARI İNDİR. BİLGİSAYARINDA BULUNAN ARAÇLAR KORUNUR.";
 "DOWNLOAD THUMBNAIL" = "KÜÇÜK RESMİ İNDİR";
 "DOWNLOAD THUMBNAIL…" = "KÜÇÜK RESMİ İNDİR…";
@@ -936,6 +937,7 @@
 "Download office tools" = "Office araçlarını indir";
 "Download photos" = "Fotoğrafları indir";
 "Download photos…" = "Fotoğrafları indir…";
+"Download post…" = "Gönderiyi indir…";
 "Download the missing tools to enable all conversions, previews and web downloads. Tools already found on your computer are kept." = "Tüm dönüştürmeleri, önizlemeleri ve web indirmelerini açmak için eksik araçları indir. Bilgisayarında bulunan araçlar korunur.";
 "Download thumbnail" = "Küçük resmi indir";
 "Download thumbnail…" = "Küçük resmi indir…";
@@ -1270,8 +1272,8 @@
 "INPUT AND OUTPUT FORMAT." = "GİRDİ VE ÇIKTI BİÇİMİ.";
 "INPUT FORMAT" = "GİRDİ BİÇİMİ";
 "INPUT-ONLY FORMAT." = "YALNIZCA GİRDİ BİÇİMİ.";
-"INSTAGRAM PHOTO POSTS OPEN A PHOTO SELECTION. FOR VIDEOS, USE THE SHARE LINK; FOR OTHER PHOTOS, DRAG THE IMAGE OR USE COPY IMAGE ADDRESS. PUBLIC MEDIA ONLY; LOGIN-REQUIRED AND PROTECTED ITEMS MAY BE UNAVAILABLE." = "INSTAGRAM FOTOĞRAF GÖNDERİLERİNDE FOTOĞRAF SEÇİMİ AÇILIR. VİDEOLAR İÇİN PAYLAŞIM BAĞLANTISINI KULLAN; DİĞER FOTOĞRAFLARI SÜRÜKLE VEYA GÖRSEL ADRESİNİ KOPYALA. YALNIZCA HERKESE AÇIK MEDYA DESTEKLENİR; GİRİŞ GEREKTİREN VEYA KORUMALI İÇERİKLER KULLANILAMAYABİLİR.";
-"INSTAGRAM PHOTO POSTS OPEN A PHOTO SELECTION. REEL LINKS OFFER VIDEO AND AUDIO. PUBLIC DOWNLOADABLE MEDIA ONLY." = "INSTAGRAM FOTOĞRAF GÖNDERİLERİNDE FOTOĞRAF SEÇİMİ AÇILIR. REELS BAĞLANTILARINDA VİDEO VE SES SEÇENEKLERİ SUNULUR. YALNIZCA HERKESE AÇIK, İNDİRİLEBİLİR MEDYA DESTEKLENİR.";
+"INSTAGRAM POSTS OPEN A PHOTO SELECTION, OR VIDEO AND AUDIO WHEN THE POST IS A REEL. PUBLIC DOWNLOADABLE MEDIA ONLY." = "INSTAGRAM GÖNDERİLERİNDE FOTOĞRAF SEÇİMİ AÇILIR; GÖNDERİ BİR REELS VİDEOSUYSA VİDEO VE SES SEÇENEKLERİ SUNULUR. YALNIZCA HERKESE AÇIK, İNDİRİLEBİLİR MEDYA DESTEKLENİR.";
+"INSTAGRAM POSTS OPEN A PHOTO SELECTION, OR VIDEO WHEN THE POST IS A REEL. FOR OTHER PHOTOS, DRAG THE IMAGE OR USE COPY IMAGE ADDRESS. PUBLIC MEDIA ONLY; LOGIN-REQUIRED AND PROTECTED ITEMS MAY BE UNAVAILABLE." = "INSTAGRAM GÖNDERİLERİNDE FOTOĞRAF SEÇİMİ AÇILIR; GÖNDERİ BİR REELS VİDEOSUYSA VİDEO İNDİRİLİR. DİĞER FOTOĞRAFLAR İÇİN GÖRSELİ SÜRÜKLE YA DA GÖRSEL ADRESİNİ KOPYALA'YI KULLAN. YALNIZCA HERKESE AÇIK MEDYA; GİRİŞ GEREKTİREN VE KORUNAN ÖĞELER İNDİRİLEMEYEBİLİR.";
 "INSTALL AN OCR LANGUAGE IN WINDOWS LANGUAGE SETTINGS TO DETECT TEXT." = "METİN ALGILAMAK İÇİN WINDOWS DİL AYARLARINDAN BİR OCR DİLİ YÜKLE.";
 "INSTALL AN OCR LANGUAGE IN WINDOWS LANGUAGE SETTINGS TO RECOGNIZE SCANNED PDF TEXT." = "TARANMIŞ PDF METNİNİ TANIMAK İÇİN WINDOWS DİL AYARLARINDAN BİR OCR DİLİ YÜKLE.";
 "INVALID EPUB CHAPTER PATH." = "EPUB BÖLÜM YOLU GEÇERSİZ.";
@@ -1302,8 +1304,8 @@
 "Input-only format." = "Yalnızca girdi biçimi.";
 "Inspecting %@…" = "%@ inceleniyor…";
 "Inspecting %lld…" = "%lld inceleniyor…";
-"Instagram photo posts open a photo selection. For videos, use the share link; for other photos, drag the image or use Copy Image Address. Public media only; login-required and protected items may be unavailable." = "Instagram fotoğraf gönderilerinde fotoğraf seçimi açılır. Videolar için paylaşım bağlantısını kullan; diğer fotoğrafları sürükle veya görsel adresini kopyala. Yalnızca herkese açık medya desteklenir; giriş gerektiren veya korumalı içerikler kullanılamayabilir.";
-"Instagram photo posts open a photo selection. Reel links offer video and audio. Public downloadable media only." = "Instagram fotoğraf gönderilerinde fotoğraf seçimi açılır. Reels bağlantılarında video ve ses seçenekleri sunulur. Yalnızca herkese açık, indirilebilir medya desteklenir.";
+"Instagram posts open a photo selection, or video and audio when the post is a reel. Public downloadable media only." = "Instagram gönderilerinde fotoğraf seçimi açılır; gönderi bir Reels videosuysa video ve ses seçenekleri sunulur. Yalnızca herkese açık, indirilebilir medya desteklenir.";
+"Instagram posts open a photo selection, or video when the post is a reel. For other photos, drag the image or use Copy Image Address. Public media only; login-required and protected items may be unavailable." = "Instagram gönderilerinde fotoğraf seçimi açılır; gönderi bir Reels videosuysa video indirilir. Diğer fotoğraflar için görseli sürükle ya da Görsel Adresini Kopyala'yı kullan. Yalnızca herkese açık medya; giriş gerektiren ve korunan öğeler indirilemeyebilir.";
 "Install an OCR language in Windows Language settings to detect text." = "Metin algılamak için Windows dil ayarlarından bir OCR dili yükle.";
 "Install an OCR language in Windows Language settings to recognize scanned PDF text." = "Taranmış PDF metnini tanımak için Windows dil ayarlarından bir OCR dili yükle.";
 "Invalid EPUB chapter path." = "EPUB bölüm yolu geçersiz.";
@@ -2456,8 +2458,7 @@
 "THIS PDF IS PASSWORD PROTECTED. ENTER ITS PASSWORD." = "BU PDF PAROLAYLA KORUNUYOR. PAROLASINI GİR.";
 "THIS PDF PAGE COULD NOT BE READ." = "BU PDF SAYFASI OKUNAMADI.";
 "THIS PDF REQUIRES A VALID PASSWORD." = "BU PDF İÇİN GEÇERLİ BİR PAROLA GEREKİYOR.";
-"THIS POST CONTAINS VIDEOS, NOT PHOTOS. USE ITS REEL LINK TO DOWNLOAD VIDEO." = "BU GÖNDERİDE FOTOĞRAF DEĞİL, VİDEO VAR. VİDEOYU İNDİRMEK İÇİN GÖNDERİNİN REEL BAĞLANTISINI KULLAN.";
-"THIS POST CONTAINS VIDEOS. USE ITS REEL LINK TO DOWNLOAD VIDEO." = "BU GÖNDERİDE VİDEO VAR. VİDEOYU İNDİRMEK İÇİN REEL BAĞLANTISINI KULLAN.";
+"THIS POST IS A VIDEO. CHOOSE VIDEO OR AUDIO TO DOWNLOAD IT." = "BU GÖNDERİ BİR VİDEO. İNDİRMEK İÇİN VİDEO YA DA SES SEÇ.";
 "THIS REPOSITORY IS PRIVATE" = "BU DEPO GİZLİ";
 "THIS RTFD ATTACHMENT SYNTAX COULD NOT BE PRESERVED." = "BU RTFD EKİNİN YAPISI KORUNAMADI.";
 "THIS SIZE CANNOT BE REACHED. CHOOSE A LARGER TARGET OR SMALLER DIMENSIONS." = "BU BOYUTA İNİLEMİYOR. DAHA BÜYÜK BİR HEDEF VEYA DAHA KÜÇÜK BOYUTLAR SEÇ.";
@@ -2633,8 +2634,7 @@
 "This link requires a login or is restricted. Try a public share link; Nashi does not read your browser sessions." = "Bu bağlantı giriş gerektiriyor veya erişimi kısıtlı. Herkese açık bir paylaşım bağlantısı dene; Nashi tarayıcı oturumlarını okumaz.";
 "This media is protected and cannot be downloaded here." = "Bu medya korumalı ve burada indirilemez.";
 "This output format has no adjustable conversion defaults." = "Bu çıktı biçiminin ayarlanabilir dönüştürme tercihi yok.";
-"This post contains videos, not photos. Use its Reel link to download video." = "Bu gönderide fotoğraf değil, video var. Videoyu indirmek için gönderinin Reel bağlantısını kullan.";
-"This post contains videos. Use its Reel link to download video." = "Bu gönderide video var. Videoyu indirmek için Reel bağlantısını kullan.";
+"This post is a video. Choose video or audio to download it." = "Bu gönderi bir video. İndirmek için video ya da ses seç.";
 "This repository is private" = "Bu depo gizli";
 "This size cannot be reached. Choose a larger target or smaller dimensions." = "Bu boyuta inilemiyor. Daha büyük bir hedef veya daha küçük boyutlar seç.";
 "This source uses more than 32-bit integer audio. Choose an output bit depth in settings." = "Bu kaynak 32 bitten yüksek tam sayı ses kullanıyor. Ayarlardan bir çıkış bit derinliği seç.";

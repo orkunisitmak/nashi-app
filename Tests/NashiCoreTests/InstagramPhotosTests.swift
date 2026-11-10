@@ -12,9 +12,10 @@ final class InstagramPhotosTests:XCTestCase {
         ["formats":[["url":"https://scontent.cdninstagram.com/video.mp4"]],
          "thumbnails":[["url":"https://scontent.cdninstagram.com/video-cover.jpg","width":1080,"height":1920]]]
     }
-    private func parse(_ value:[String:Any]) throws -> WebMediaInfo {
+    private func parseOptional(_ value:[String:Any]) throws -> WebMediaInfo? {
         try InstagramPhotos.parse(JSONSerialization.data(withJSONObject:value),url:post)
     }
+    private func parse(_ value:[String:Any]) throws -> WebMediaInfo { try XCTUnwrap(parseOptional(value)) }
     func testMixedCarouselKeepsPhotosInOrderWithoutVideoCovers() throws {
         let info=try parse(["entries":[photo("first"),video,photo("third")]])
         XCTAssertEqual(info.kind,.image);XCTAssertEqual(info.modes,[.original])
@@ -35,8 +36,10 @@ final class InstagramPhotosTests:XCTestCase {
         let info=try parse(root)
         XCTAssertEqual(URLComponents(url:info.photos[0].url,resolvingAgainstBaseURL:false)?.queryItems?.first?.value,"dst-jpg_e35_tt6")
     }
-    func testVideoOnlyPostCannotBeDownloadedAsPhotoCovers() throws {
-        XCTAssertThrowsError(try parse(["entries":[video,video]]))
+    func testVideoOnlyPostIsLeftForVideoInspectionNotPhotoCovers() throws {
+        // Saved reels open as /p/ links; their covers must not become a photo album.
+        XCTAssertNil(try parseOptional(["entries":[video,video]]))
+        XCTAssertNil(try parseOptional(video))
     }
     func testMissingOrUnsafePhotoDoesNotSilentlyReturnPartialGallery() throws {
         for url in ["file:///etc/passwd","https://fbcdn.net.evil.example/a.jpg","https://user:secret@scontent.cdninstagram.com/a.jpg"] {

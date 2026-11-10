@@ -36,9 +36,10 @@ struct WheelItem {
             let media=WebMediaDragPayload.parse(urls:inputs.map(\.absoluteString))
             let video=media?.videoURL != nil
             let photos=media?.isInstagramPhotoPost == true
-            items=[WheelItem(title:photos ? "Download photos…":video ? "Download video…":media?.imageURL != nil ? "Download image…":"Download…",symbol:photos ? "photo.on.rectangle":video ? "play.rectangle":"arrow.down.circle",webAction:.download)]
+            items=[WheelItem(title:photos ? "Download post…":video ? "Download video…":media?.imageURL != nil ? "Download image…":"Download…",symbol:photos ? "photo.on.rectangle":video ? "play.rectangle":"arrow.down.circle",webAction:.download)]
             if video,media?.imageURL != nil { items.append(WheelItem(title:"Download thumbnail…",symbol:"photo",webAction:.thumbnail)) }
-            if !photos,(video || media?.imageURL == nil) { items.append(WheelItem(title:"Audio MP3…",symbol:"waveform",webAction:.audio)) }
+            // A /p/ post can be a saved reel, so it offers audio too; photo posts fall back to photos.
+            if photos || video || media?.imageURL == nil { items.append(WheelItem(title:"Audio MP3…",symbol:"waveform",webAction:.audio)) }
             items += [WheelItem(title:"Copy link",symbol:"link",webAction:.copy),WheelItem(title:"Open link",symbol:"safari",webAction:.open)]
         } else { switch mode {
         case .convert: items=FeatureCatalog.formats(for:inputs).map{WheelItem(title:$0 == "gz" ? "GZIP":$0.uppercased(),operation:.convert($0))}

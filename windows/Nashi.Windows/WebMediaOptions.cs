@@ -13,7 +13,7 @@ public sealed partial class MainWindow
         var buttons=new WrapPanel();buttons.Children.Add(Button("Find media",async()=>await InspectWebLinkAsync()));buttons.Children.Add(Button("Paste link",()=>{try{link.Text=Clipboard.GetText();}catch(Exception e)when(ClipboardImport.IsClipboardError(e)){webSummary.Text="Clipboard is busy. Try Paste again.";}}));webContent.Children.Add(buttons);webContent.Children.Add(webSummary);
         var quality=new StackPanel();quality.Children.Add(Text("Video quality",12,"Muted"));quality.Children.Add(webQuality);webContent.Children.Add(quality);downloadKind.SelectionChanged+=(_,_)=>quality.Visibility=downloadKind.SelectedItem as string=="video"?Visibility.Visible:Visibility.Collapsed;webContent.Children.Add(photoChoices);
         var destination=new DockPanel{Margin=new(0,14,0,4)};var location=Text(preferences.Value.DownloadFolder,12,"Muted");var change=Button("Change…",()=>{var picker=new OpenFolderDialog{Title=L10n.Text("Save downloaded media to…")};if(picker.ShowDialog(webWindow??this)==true){preferences.Save(preferences.Value with{DownloadFolder=picker.FolderName});location.Text=picker.FolderName;}});DockPanel.SetDock(change,Dock.Right);destination.Children.Add(change);destination.Children.Add(location);webContent.Children.Add(Card(destination));
-        webContent.Children.Add(Text("Instagram photo posts open a photo selection. Reel links offer video and audio. Public downloadable media only.",11,"Muted"));
+        webContent.Children.Add(Text("Instagram posts open a photo selection, or video and audio when the post is a reel. Public downloadable media only.",11,"Muted"));
         link.TextChanged+=(_,_)=>{inspection?.Cancel();inspectedLink=null;photoChoices.Children.Clear();selectedWebPhotos.Clear();var payload=WebMediaPayload.Parse(link.Text);if(payload is not null&&payload.Kind!=webPayloadKind){webPayloadKind=payload.Kind;SetDownloadKind(payload);}L10n.SetText(webSummary,"Choose Find media to inspect this link.");};
     }
     private async Task InspectWebLinkAsync()
@@ -23,9 +23,16 @@ public sealed partial class MainWindow
         try
         {
             var engine=new WebDownload(tools);
-            if(payload.Kind=="instagramPhotos")
+            // A /p/ link can be a saved or grid reel: when it holds only videos, offer it as one.
+            WebPhoto[]? photos=null;
+            if(payload.Kind=="instagramPhotos"&&downloadKind.SelectedItem as string is not ("video" or "audio"))
             {
-                if(!tools.Ready)throw new InvalidOperationException("Set up media tools once to inspect Instagram posts.");var photos=await engine.InspectPhotosAsync(payload.Url,pending.Token);if(input!=link.Text||pending.IsCancellationRequested)return;
+                if(!tools.Ready)throw new InvalidOperationException("Set up media tools once to inspect Instagram posts.");
+                try{photos=await engine.InspectPhotosAsync(payload.Url,pending.Token);}catch(InstagramVideoPostException){downloadKind.SelectedItem="video";}
+                if(input!=link.Text||pending.IsCancellationRequested)return;
+            }
+            if(photos is not null)
+            {
                 webSummary.Text=$"{photos.Length} photos · full-frame images · saved in post order";var row=new WrapPanel();row.Children.Add(Button("All",()=>{foreach(var box in photoChoices.Children.OfType<CheckBox>())box.IsChecked=true;}));row.Children.Add(Button("None",()=>{foreach(var box in photoChoices.Children.OfType<CheckBox>())box.IsChecked=false;}));photoChoices.Children.Add(row);
                 foreach(var photo in photos){selectedWebPhotos.Add(photo.Id);var box=new CheckBox{Content=$"Photo {photo.Id}  ·  {photo.Width} × {photo.Height}",IsChecked=true,Margin=new(4,9,4,9)};box.Checked+=(_,_)=>selectedWebPhotos.Add(photo.Id);box.Unchecked+=(_,_)=>selectedWebPhotos.Remove(photo.Id);photoChoices.Children.Add(box);}
             }

@@ -40,7 +40,12 @@ public enum WebDownloadEngine {
             let args=try baseArguments(photoPost:true)+["--ignore-no-formats-error","--skip-download","--dump-single-json","--no-progress","--",url.absoluteString]
             let data=try await Task.detached { try WebDownloadProcess.run(Dependencies.executable("yt-dlp"),args,token:token,timeout:100) }.value
             try token.check();try Task.checkCancellation()
-            return try InstagramPhotos.parse(data,url:url)
+            if let photos=try InstagramPhotos.parse(data,url:url) { return photos }
+            // A video-only /p/ post is a reel: read it as one video, not as a playlist of covers.
+            let videoArgs=try baseArguments()+["--skip-download","--dump-single-json","--no-progress","--",url.absoluteString]
+            let video=try await Task.detached { try WebDownloadProcess.run(Dependencies.executable("yt-dlp"),videoArgs,token:token,timeout:100) }.value
+            try token.check();try Task.checkCancellation()
+            return try parseMetadata(video,url:url)
         }
         if let cover=try await YouTubeThumbnail.resolve(url,token:token,fetch:{ candidate in
             var request=URLRequest(url:candidate);request.timeoutInterval=12
