@@ -31,6 +31,8 @@ jobs:
         run: node scripts/test-pdf-parser-limits.cjs
       - name: Check media connection restrictions
         run: node --test scripts/test-web-media-proxy.mjs
+      - name: Check media subprocess restrictions
+        run: python3 -B scripts/test-yt-dlp-media-policy.py
   mac-source:
     runs-on: macos-15
     timeout-minutes: 20

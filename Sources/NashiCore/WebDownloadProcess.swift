@@ -13,7 +13,13 @@ enum WebDownloadProcess {
             throw NashiError.missingDependency("the bundled media connection filter")
         }
         let deno=try Dependencies.executable("deno")
-        let supervisor=["run","--no-config","--cached-only","--no-prompt","--allow-net","--allow-run=\(executable.path)",script.path,executable.path]
+        let ffmpeg=try Dependencies.executable("ffmpeg"),ffprobe=try Dependencies.executable("ffprobe")
+        let scratch=try OutputFiles.temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at:scratch) }
+        let policy=script.deletingLastPathComponent().appendingPathComponent("yt-dlp-policy")
+        let supervisor=["run","--no-config","--cached-only","--no-prompt","--allow-net","--allow-run=\(executable.path)",
+                        "--allow-read=\(policy.path)","--allow-write=\(scratch.path)",
+                        script.path,executable.path,ffmpeg.path,ffprobe.path,deno.path,scratch.path]
         return try run(deno,supervisor+arguments,token:token,timeout:timeout,progress:progress)
     }
 

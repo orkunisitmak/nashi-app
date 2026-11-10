@@ -20,13 +20,25 @@ public sealed partial class WebDownload(Toolchain tools)
     }
     internal string FfmpegLocation=>Path.GetDirectoryName(tools.Executable("ffmpeg"))!;
     /// <summary>Runs metadata and media extraction through the bundled per-request network policy.</summary>
-    private Task<ProcessResult> RunExtractorAsync(IEnumerable<string> args,CancellationToken token,Action<string>? onLine=null)
+    private async Task<ProcessResult> RunExtractorAsync(IEnumerable<string> args,CancellationToken token,Action<string>? onLine=null)
     {
         var downloader=tools.Executable("yt-dlp");
         var script=Path.Combine(AppContext.BaseDirectory,"WebMediaProxy.mjs");
         if(!File.Exists(script))throw new FileNotFoundException("The bundled media connection filter is missing.");
-        return ProcessRunner.RunAsync(tools.Executable("deno"),
-            ["run","--no-config","--cached-only","--no-prompt","--allow-net","--allow-run="+downloader,script,downloader,..args],token,onLine);
+        var deno=tools.Executable("deno");
+        var policy=Path.Combine(AppContext.BaseDirectory,"yt-dlp-policy");
+        var scratch=Directory.CreateTempSubdirectory("Nashi-media-policy-").FullName;
+        try
+        {
+            return await ProcessRunner.RunAsync(deno,
+                ["run","--no-config","--cached-only","--no-prompt","--allow-net","--allow-run="+downloader,
+                    "--allow-read="+policy,"--allow-write="+scratch,
+                    script,downloader,tools.Executable("ffmpeg"),tools.Executable("ffprobe"),deno,scratch,..args],token,onLine);
+        }
+        finally
+        {
+            try{Directory.Delete(scratch,true);}catch(IOException){}catch(UnauthorizedAccessException){}
+        }
     }
 
     /// <summary>Stages a media download and publishes its completed files as a single operation.</summary>

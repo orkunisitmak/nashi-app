@@ -1,5 +1,6 @@
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
+import { fileURLToPath } from "node:url";
 
 /** Limit outbound media sockets to globally routed unicast addresses. */
 export function isPublicIP(address) {
@@ -142,8 +143,25 @@ export async function handleConnection(client, password, connect, resolve = look
 
 /** Run one downloader with an authenticated, per-run loopback proxy and local-only FFmpeg inputs. */
 async function runDownloader() {
-  const [executable, ...args] = Deno.args;
-  if (!executable) throw new Error("The media downloader is missing.");
+  const [executable, ffmpeg, ffprobe, deno, scratch, ...args] = Deno.args;
+  const separator = args.indexOf("--");
+  if (!executable || !ffmpeg || !ffprobe || !deno || !scratch || separator < 0 || separator !== args.length - 2) {
+    throw new Error("The media downloader configuration is incomplete.");
+  }
+  const options = args.slice(0, separator);
+  const windowsStage = options.indexOf("-P");
+  const staging = windowsStage >= 0 ? options[windowsStage + 1]
+    : options.find((arg, index) => options[index - 1] === "--paths" && arg.startsWith("home:"))?.slice(5);
+  // yt-dlp loads plugins from a child of the supplied directory. Copy just our
+  // policy into scratch so Python cannot add bytecode to the signed app bundle.
+  const pluginDirectory = `${scratch}/plugins`;
+  const modulePath = "yt_dlp_plugins/postprocessor";
+  const policyPath = `${pluginDirectory}/nashi/${modulePath}`;
+  await Deno.mkdir(policyPath, { recursive: true });
+  for (const module of ["nashi_media_policy.py", "_nashi_media_network.py"]) {
+    const source = fileURLToPath(new URL(`./yt-dlp-policy/${modulePath}/${module}`, import.meta.url));
+    await Deno.copyFile(source, `${policyPath}/${module}`);
+  }
   const password = crypto.randomUUID();
   const listener = Deno.listen({ hostname: "127.0.0.1", port: 0 });
   const clients = new Set();
@@ -156,13 +174,19 @@ async function runDownloader() {
     }
   })();
   const proxy = `socks5h://nashi:${password}@127.0.0.1:${listener.addr.port}`;
-  const localInput = "ffmpeg_i:-protocol_whitelist file,pipe,crypto,data";
   try {
     const child = new Deno.Command(executable, {
-      args: ["--ignore-config", "--no-plugin-dirs", "--no-remote-components", "--no-update",
+      args: ["--ignore-config", "--no-remote-components", "--no-update", ...options,
+        "--no-plugin-dirs", "--plugin-dirs", pluginDirectory,
+        "--use-postprocessor", "NashiMediaPolicy:when=pre_process",
         "--proxy", proxy, "--geo-verification-proxy", proxy, "--downloader", "native",
-        "--downloader-args", localInput, "--postprocessor-args", localInput, ...args],
-      stdin: "null", stdout: "inherit", stderr: "inherit",
+        "--ffmpeg-location", ffmpeg, "--", args[separator + 1]],
+      env: {
+        NO_PROXY: "", no_proxy: "", PYTHONDONTWRITEBYTECODE: "1",
+        NASHI_MEDIA_PROXY: proxy, NASHI_MEDIA_FFMPEG: ffmpeg, NASHI_MEDIA_FFPROBE: ffprobe,
+        NASHI_MEDIA_DENO: deno, NASHI_MEDIA_STAGING: staging ?? "",
+      },
+      cwd: scratch, stdin: "null", stdout: "inherit", stderr: "inherit",
     }).spawn();
     return (await child.status).code;
   } finally {

@@ -13,6 +13,8 @@ Media tools enable video/audio conversion, media previews, less common image enc
 - [yt-dlp 2026.08.19](https://github.com/yt-dlp/yt-dlp/releases/tag/2026.08.19), GPLv3+ standalone combination. [Sources and complete third-party licenses](https://github.com/yt-dlp/yt-dlp/tree/2026.08.19).
 - [Deno 2.9.7](https://github.com/denoland/deno/releases/tag/v2.9.7), MIT and included dependency licenses. [Sources](https://github.com/denoland/deno/tree/v2.9.7).
 
+Web extraction uses the pinned yt-dlp release with Nashi's bundled policy. Requests use a per-download local proxy that checks each destination before connecting. FFmpeg and ffprobe launched by the extractor can only process supported formats from the job's staging directory. Sites that need another external downloader or FFmpeg network input may be unavailable.
+
 Exact URLs, limits and hashes: [`ExternalToolSetup.swift`](../Sources/NashiCore/ExternalToolSetup.swift). Other bundled library notices: [`Resources/THIRD-PARTY-NOTICES.txt`](../Resources/THIRD-PARTY-NOTICES.txt). ExifTool includes its complete Perl source; Sparkle includes its full license.
 
 ## Windows x64 preview
