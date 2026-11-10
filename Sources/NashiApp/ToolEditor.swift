@@ -126,7 +126,6 @@ struct ToolEditor:View {
                         Text(verbatim:sideBySide ? L10n.text("MAKE IT YOURS"):inputs.count>1 ? L10n.uppercase("\(inputs.count) files"):input?.lastPathComponent ?? "").font(.system(size:10,weight:.bold,design:.rounded)).tracking(0.8).foregroundStyle(.secondary).lineLimit(2)
                         if isLoading { ProgressView("Preparing your file…").font(.caption) }
                         controls.disabled(isLoading || !readyToApply)
-                        if tool == .organizePDF,pdfEditor.pages.isEmpty { pdfPasswordEntry }
                         if let previewError { HStack { LText(previewError).font(.callout).foregroundStyle(.orange);Spacer();Button { self.previewError=nil } label:{Image(systemName:"xmark")}.accessibilityLabel("Dismiss preview error") } }
                     }.padding(24).frame(maxWidth:sideBySide ? .infinity:720,alignment:.leading)
                 }.frame(width:sideBySide ? 380:nil).frame(maxWidth:sideBySide ? nil:.infinity,maxHeight:.infinity).uiAuditProbe("editor.options")
@@ -154,7 +153,7 @@ struct ToolEditor:View {
             .onChange(of:previewKey) { _ in if processedPlayback { playOriginal(play:false) } }
             .background(WindowIdentityReader { ownerWindowID=$0 })
             .background(EditorKeyboardShortcuts(enabled:!isLoading && readyToApply && !state.working,onCommand:handleShortcut))
-            .onReceive(NotificationCenter.default.publisher(for:NSWindow.willCloseNotification)) { notification in if let window=notification.object as? NSWindow,ownerWindowID==ObjectIdentifier(window) { disposeMedia();options.password="" } }
+            .onReceive(NotificationCenter.default.publisher(for:NSWindow.willCloseNotification)) { notification in if let window=notification.object as? NSWindow,ownerWindowID==ObjectIdentifier(window) { disposeMedia() } }
             .onReceive(NotificationCenter.default.publisher(for:.AVPlayerItemDidPlayToEndTime).receive(on:DispatchQueue.main)) { notification in if let item=notification.object as? AVPlayerItem,item === player?.currentItem { playerReachedEnd=true } }
             .onChange(of:width) {
                 if $0>0,tool == .editImage { options.width=$0 }
@@ -423,37 +422,14 @@ struct ToolEditor:View {
     var trimControls:some View {
         VStack(spacing:14) { timeRangeFields;if tool == .trimAudio { Toggle("Remove silence from beginning and end",isOn:$options.trimSilence);if options.trimSilence { slider("Silence threshold",value:$options.silenceThresholdDb,range:-80 ... -10,unit:"dB") } };LText("Selected duration: \(timeLabel(max(0,(options.end ?? duration)-options.start)))").font(.caption).foregroundStyle(.secondary) }
     }
-    /// Parses "MM:SS.mmm" or plain seconds into seconds.
-    func parseTime(_ text:String)->Double {
-        let cleaned=text.trimmingCharacters(in:.whitespacesAndNewlines)
-        guard !cleaned.isEmpty else { return 0 }
-        if cleaned.contains(":") {
-            let parts=cleaned.components(separatedBy:":")
-            if parts.count==2,let minutes=Double(parts[0]),let seconds=Double(parts[1]) {
-                return minutes*60+seconds
-            }
-        }
-        return Double(cleaned) ?? 0
-    }
-    
     var timeRangeFields:some View {
         HStack(spacing:8) {
             Text("Start")
-            TextField("Start time",text:Binding(
-                get:{timeLabel(options.start)},
-                set:{options.start=parseTime($0)}
-            }))
-            .textFieldStyle(.roundedBorder)
-            .onSubmit{seek(options.start)}
+            TextField("Seconds",value:$options.start,format:.number.precision(.fractionLength(3)))
             Button("Set Start Here"){options.start=playhead;seek(options.start)}
             
             Text("End")
-            TextField("End time",text:Binding(
-                get:{timeLabel(options.end ?? duration)},
-                set:{options.end=parseTime($0)}
-            }))
-            .textFieldStyle(.roundedBorder)
-            .onSubmit{seek(options.end ?? duration)}
+            TextField("Seconds",value:Binding(get:{options.end ?? duration},set:{options.end=$0}),format:.number.precision(.fractionLength(3)))
             Button("Set End Here"){options.end=playhead;seek(options.end ?? duration)}
         }
     }
@@ -505,21 +481,6 @@ struct ToolEditor:View {
                 Button("Move Right") { pdfEditor.moveSelected(by:1) }.disabled(!pdfEditor.canMoveRight)
             }
             Toggle("Make all pages the same width",isOn:$options.pdfUniformWidth)
-        }
-    }
-
-    /// Password entry for locked PDFs — placed outside the disabled controls area
-    /// so it remains accessible even when editing controls are disabled after a
-    /// failed open attempt. Users can enter a password and tap Unlock PDF to retry,
-    /// or Return to clear the entry.
-    var pdfPasswordEntry:some View {
-        VStack(alignment:.leading,spacing:8) {
-            SecureField("PDF password",text:$options.password)
-            HStack(spacing:8) {
-                Button("Unlock PDF") { Task { await load() } }.disabled(options.password.isEmpty)
-                Button("Return") { options.password="";previewError=nil }
-            }
-            if let previewError { LText(previewError).font(.caption).foregroundStyle(.orange) }
         }
     }
     var metadataControls:some View {
@@ -663,7 +624,7 @@ struct ToolEditor:View {
                 else { loaded=try await Task.detached { try MediaEngine.readMetadata(input,token:token) }.value }
                 try checkGeneration(generation,token:token);metadata=loaded;originalMetadata=loaded
             }
-            if tool == .organizePDF { pdfEditor.reset(document:try PDFEngine.open(input,password:options.password));previewError=nil }
+            if tool == .organizePDF { pdfEditor.reset(document:try PDFEngine.open(input)) }
             if tool == .frameImage { options.imageFrame = .init() }
             if tool == .createCollage { options.collage = .init() }
             if tool == .audioToVideo { width=1920;height=1080;options.backgroundColor="#000000" }
@@ -683,7 +644,6 @@ struct ToolEditor:View {
         metadata=[:];originalMetadata=[:];metadataSearch="";metadataRemoveAll=false;addingMetadataField=false;newMetadataKey="{XMP-dc}.Title";newMetadataValue="";qrResults=[]
         annotationKind = .arrow;selectingAnnotations=false;annotationText="Text";annotationColor = .red;annotationStroke=3;annotationFont=24;annotationFontFamily="system"
         targetEnabled=false;targetMode="MB";targetValue=1;preset="Balanced";compressionSize="original"
-        options.password=""
         if tool == .compress {
             let image=category == .image
             preset=(image ? FormatPreferences.shared.imageCompressionStrength:FormatPreferences.shared.videoCompressionStrength)=="strong" ? "Strong":"Balanced"
