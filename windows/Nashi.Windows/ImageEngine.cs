@@ -170,9 +170,5 @@ public static partial class ImageEngine
         var visual=new DrawingVisual();using(var context=visual.RenderOpen()){context.DrawImage(scaled,new Rect((width-dw)/2d,(height-dh)/2d,dw,dh));}
         var rt=new RenderTargetBitmap(width,height,96,96,PixelFormats.Pbgra32);rt.Render(visual);rt.Freeze();return rt;
     }
-    /// Returns <paramref name="source"/> encoded as PNG bytes.
-    private static byte[] PngBytes(BitmapSource source)
-    {
-        using var ms=new MemoryStream();var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(source));encoder.Save(ms);return ms.ToArray();
     }
 }
