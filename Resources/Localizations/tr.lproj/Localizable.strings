@@ -489,7 +489,10 @@
 "CHOOSE ZIP, TAR OR GZIP." = "ZIP, TAR VEYA GZIP SEÇ.";
 "CLARITY" = "NETLİK";
 "CLEAR" = "TEMİZLE";
+"CLEAR ALL" = "TÜMÜNÜ TEMİZLE";
 "CLEAR FLOAT" = "YÜZEN PENCEREYİ TEMİZLE";
+"CLEAR HISTORY" = "GEÇMİŞİ TEMİZLE";
+"CLEAR LIBRARY" = "KİTAPLIĞI TEMİZLE";
 "CLEAR SELECTION" = "SEÇİMİ TEMİZLE";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "PANO MEŞGUL. TEKRAR DENE.";
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "PANO MEŞGUL. YENİDEN YAPIŞTIRMAYI DENE.";
@@ -554,6 +557,7 @@
 "COULD NOT ORIENT IMAGE." = "GÖRSELİN YÖNÜ DÜZELTİLEMEDİ.";
 "COULD NOT READ THIS PDF." = "BU PDF OKUNAMADI.";
 "COULD NOT RENDER THE REDACTION." = "SANSÜR UYGULANAMADI.";
+"COULD NOT SAVE LIBRARY CHANGES. YOUR ENTRIES ARE INTACT." = "KİTAPLIK DEĞİŞİKLİKLERİ KAYDEDİLEMEDİ. KAYITLARINIZIN TAMAMI KORUNDU.";
 "COULDN’T CHECK FOR UPDATES" = "GÜNCELLEMELER DENETLENEMEDİ";
 "COULDN’T FINISH" = "İŞLEM TAMAMLANAMADI";
 "COULDN’T OPEN THIS TOOL" = "BU ARAÇ AÇILAMADI";
@@ -689,8 +693,11 @@
 "Choose your home folder or a folder where you save files." = "Ana klasörünü veya dosyalarını kaydettiğin bir klasörü seç.";
 "Clarity" = "Netlik";
 "Clear" = "Temizle";
+"Clear All" = "Tümünü Temizle";
 "Clear Float" = "Yüzen Pencereyi Temizle";
+"Clear Library" = "Kitaplığı Temizle";
 "Clear Selection" = "Seçimi Temizle";
+"Clear history" = "Geçmişi Temizle";
 "Clip %@" = "Klip %@";
 "Clip %lld" = "Klip %lld";
 "Clipboard is busy. Try Paste again." = "Pano meşgul. Yeniden yapıştırmayı dene.";
@@ -783,6 +790,7 @@
 "Could not render PDF page %@." = "PDF'nin %@. sayfası işlenemedi.";
 "Could not render PDF page %lld." = "PDF'nin %lld. sayfası işlenemedi.";
 "Could not render the redaction." = "Sansür uygulanamadı.";
+"Could not save Library changes. Your entries are intact." = "Kitaplık değişiklikleri kaydedilemedi. Kayıtlarınızın tamamı korundu.";
 "Couldn’t check for updates" = "Güncellemeler denetlenemedi";
 "Couldn’t finish" = "İşlem tamamlanamadı";
 "Couldn’t open this tool" = "Bu araç açılamadı";
@@ -1374,6 +1382,7 @@
 "LET’S MAKE SOMETHING OF IT." = "HADİ YENİ BİR ŞEY YAPALIM.";
 "LET’S TRY THAT AGAIN." = "BİR DAHA DENEYELİM.";
 "LIBRARY" = "KİTAPLIK";
+"LIBRARY CLEARED." = "KİTAPLIK TEMİZLENDİ.";
 "LIBRARY IS TOO LARGE." = "KİTAPLIK ÇOK BÜYÜK.";
 "LIBREOFFICE 26.8.1 ENABLES OFFICE DOCUMENT CONVERSIONS. A 285 MB DOWNLOAD; ABOUT 1 GB INSTALLED. MPL 2.0 AND ITS INCLUDED THIRD-PARTY LICENSES." = "LIBREOFFICE 26.8.1, OFFICE BELGELERİNİ DÖNÜŞTÜRMEYİ SAĞLAR. İNDİRME 285 MB; KURULUM YAKLAŞIK 1 GB. MPL 2.0 VE İÇERDİĞİ ÜÇÜNCÜ TARAF LİSANSLARI GEÇERLİDİR.";
 "LIBREOFFICE 26.8.1 ENABLES OFFICE DOCUMENT CONVERSIONS. APPROXIMATELY 360 MB TO DOWNLOAD. MPL 2.0 AND ITS INCLUDED THIRD-PARTY LICENSES." = "LIBREOFFICE 26.8.1, OFFICE BELGELERİNİ DÖNÜŞTÜRMEYİ SAĞLAR. İNDİRME YAKLAŞIK 360 MB. MPL 2.0 VE İÇERDİĞİ ÜÇÜNCÜ TARAF LİSANSLARI GEÇERLİDİR.";
@@ -1406,6 +1415,7 @@
 "Let’s make something of it." = "Hadi yeni bir şey yapalım.";
 "Let’s try that again." = "Bir daha deneyelim.";
 "Library" = "Kitaplık";
+"Library cleared." = "Kitaplık temizlendi.";
 "Library is too large." = "Kitaplık çok büyük.";
 "LibreOffice 26.8.1 enables Office document conversions. A 285 MB download; about 1 GB installed. MPL 2.0 and its included third-party licenses." = "LibreOffice 26.8.1, Office belgelerini dönüştürmeyi sağlar. İndirme 285 MB; kurulum yaklaşık 1 GB. MPL 2.0 ve içerdiği üçüncü taraf lisansları geçerlidir.";
 "LibreOffice 26.8.1 enables Office document conversions. Approximately 360 MB to download. MPL 2.0 and its included third-party licenses." = "LibreOffice 26.8.1, Office belgelerini dönüştürmeyi sağlar. İndirme yaklaşık 360 MB. MPL 2.0 ve içerdiği üçüncü taraf lisansları geçerlidir.";
@@ -1755,6 +1765,7 @@
 "PDF preview bitmap could not be allocated." = "PDF önizlemesi için bellek ayrılamadı.";
 "PDF → OFFICE LAYOUT" = "PDF → OFFICE DÜZENİ";
 "PDF → Office layout" = "PDF → Office düzeni";
+"PERMANENTLY REMOVE ENTRIES FROM YOUR LIBRARY." = "KİTAPLIKTAN KAYITLARI KALICI OLARAK KALDIRIR.";
 "PHOTOS" = "FOTOĞRAFLAR";
 "PICK A FOLDER YOU WORK IN. FRESH COPIES ARE SAVED BESIDE THE ORIGINALS BY DEFAULT." = "ÇALIŞTIĞIN BİR KLASÖRÜ SEÇ. YENİ KOPYALAR VARSAYILAN OLARAK ORİJİNALLERİN YANINA KAYDEDİLİR.";
 "PIN" = "SABİTLE";
@@ -1825,6 +1836,7 @@
 "Pasted image" = "Yapıştırılan görsel";
 "Pasted text" = "Yapıştırılan metin";
 "Pause" = "Duraklat";
+"Permanently remove entries from your Library." = "Kitaplıktan kayıtları kalıcı olarak kaldırır.";
 "Photo %@" = "Fotoğraf %@";
 "Photo %@ of %@…" = "Fotoğraf %@/%@…";
 "Photo %@ of %lld…" = "Fotoğraf %@/%lld…";
@@ -1931,11 +1943,13 @@
 "RELEASE TO PLACE · ESC CANCELS" = "YERLEŞTİRMEK İÇİN BIRAK · ESC İPTAL EDER";
 "REMOVE" = "KALDIR";
 "REMOVE ALL" = "TÜMÜNÜ KALDIR";
+"REMOVE ALL LIBRARY ENTRIES? THIS CANNOT BE UNDONE." = "TÜM KİTAPLIK KAYITLARINI SİLMEK İSTEDİĞİNİZE EMİN MİSİNİZ? BU İŞLEM GERİ ALINAMAZ.";
 "REMOVE ALL METADATA" = "TÜM META VERİLERİ KALDIR";
 "REMOVE AUDIO" = "SESİ KALDIR";
 "REMOVE BACKGROUND" = "ARKA PLANI KALDIR";
 "REMOVE CLIPS (NUMBERS; SEPARATED BY SEMICOLONS)" = "ÇIKARILACAK KLİPLER (NUMARA; NOKTALI VİRGÜLLE AYIR)";
 "REMOVE FROM FLOAT" = "YÜZEN PENCEREDEN KALDIR";
+"REMOVE FROM LIBRARY" = "KİTAPLIKTAN KALDIR";
 "REMOVE FROM SELECTION" = "SEÇİMDEN KALDIR";
 "REMOVE IMAGE" = "GÖRSELİ KALDIR";
 "REMOVE METADATA" = "META VERİLERİ KALDIR";
@@ -1943,6 +1957,7 @@
 "REMOVE SELECTED RANGE" = "SEÇİLİ ARALIĞI KALDIR";
 "REMOVE SILENCE AT THE BEGINNING AND END" = "BAŞLANGIÇ VE SONDAKİ SESSİZLİĞİ KALDIR";
 "REMOVE SILENCE FROM BEGINNING AND END" = "BAŞLANGIÇ VE SONDAKİ SESSİZLİĞİ KALDIR";
+"REMOVED FROM LIBRARY." = "KİTAPLIKTAN KALDIRILDI.";
 "RENDERED PAGES EXCEED 512 MB. CHOOSE A LOWER DPI OR SPLIT THE PDF FIRST." = "OLUŞTURULAN SAYFALAR 512 MB'I AŞIYOR. DAHA DÜŞÜK BİR DPI SEÇ VEYA ÖNCE PDF'Yİ BÖL.";
 "REPLACE SELECTED AUDIO WITH" = "SEÇİLİ SESİ ŞUNUNLA DEĞİŞTİR";
 "REPORT SAVED." = "RAPOR KAYDEDİLDİ.";
@@ -2000,22 +2015,27 @@
 "Release to place · Esc cancels" = "Yerleştirmek için bırak · Esc iptal eder";
 "Remove" = "Kaldır";
 "Remove %@" = "%@ öğesini kaldır";
+"Remove %@ from Library" = "%@ Kitaplıktan Kaldır";
 "Remove %@ from selection" = "%@ öğesini seçimden kaldır";
 "Remove %lld" = "%lld öğesini kaldır";
+"Remove %lld from Library" = "%lld Kitaplıktan Kaldır";
 "Remove %lld from selection" = "%lld öğesini seçimden kaldır";
 "Remove All" = "Tümünü Kaldır";
 "Remove Audio" = "Sesi Kaldır";
 "Remove Background" = "Arka Planı Kaldır";
 "Remove Image" = "Görseli Kaldır";
 "Remove Metadata" = "Meta Verileri Kaldır";
+"Remove all Library entries? This cannot be undone." = "Tüm kitaplık kayıtlarını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.";
 "Remove all metadata" = "Tüm meta verileri kaldır";
 "Remove clips (numbers; separated by semicolons)" = "Çıkarılacak klipler (numara; noktalı virgülle ayır)";
 "Remove from Float" = "Yüzen Pencereden Kaldır";
+"Remove from Library" = "Kitaplıktan Kaldır";
 "Remove from selection" = "Seçimden kaldır";
 "Remove selected area" = "Seçili alanı kaldır";
 "Remove selected range" = "Seçili aralığı kaldır";
 "Remove silence at the beginning and end" = "Başlangıç ve sondaki sessizliği kaldır";
 "Remove silence from beginning and end" = "Başlangıç ve sondaki sessizliği kaldır";
+"Removed from Library." = "Kitaplıktan kaldırıldı.";
 "Rendered pages exceed 512 MB. Choose a lower DPI or split the PDF first." = "Oluşturulan sayfalar 512 MB'ı aşıyor. Daha düşük bir DPI seç veya önce PDF'yi böl.";
 "Rendering page %@" = "Sayfa %@ işleniyor";
 "Rendering page %lld" = "Sayfa %lld işleniyor";
@@ -2465,6 +2485,7 @@
 "THIS TEXT CLIPPING CONTAINS NO SUPPORTED TEXT RESOURCE." = "BU METİN KIRPINTISINDA DESTEKLENEN BİR METİN KAYNAĞI YOK.";
 "THIS TEXT IS TOO LARGE TO PASTE. CHOOSE A TEXT FILE INSTEAD." = "BU METİN YAPIŞTIRMAK İÇİN ÇOK BÜYÜK. BUNUN YERİNE BİR METİN DOSYASI SEÇ.";
 "THIS TEXT IS TOO LARGE TO PREVIEW. USE OPEN TO READ THE COMPLETE FILE." = "BU METİN ÖNİZLEME İÇİN ÇOK BÜYÜK. DOSYANIN TAMAMINI OKUMAK İÇİN AÇ'I KULLAN.";
+"THIS WILL PERMANENTLY REMOVE ALL LIBRARY ENTRIES. THIS ACTION CANNOT BE UNDONE." = "BU İŞLEM TÜM KİTAPLIK KAYITLARINI KALICI OLARAK SİLECEKTİR. BU İŞLEM GERİ ALINAMAZ.";
 "THIS WINDOW COULD NOT BE ARRANGED. THE APP MAY RESTRICT RESIZING." = "BU PENCERE DÜZENLENEMEDİ. UYGULAMA YENİDEN BOYUTLANDIRMAYI KISITLIYOR OLABİLİR.";
 "THIS WINDOWS CODEC CANNOT PLAY DIRECTLY. SET UP MEDIA TOOLS TO CREATE A LOCAL PREVIEW." = "BU WINDOWS CODEC'İ DOĞRUDAN OYNATILAMIYOR. YEREL ÖNİZLEME OLUŞTURMAK İÇİN MEDYA ARAÇLARINI KUR.";
 "THIS WORD DOCUMENT CONTAINS AN INVALID OR OVERSIZED TABLE CELL SPAN. IT COULD NOT BE CONVERTED TO PAGES." = "BU WORD BELGESİNDE GEÇERSİZ VEYA ÇOK GENİŞ BİR TABLO HÜCRESİ BİRLEŞTİRMESİ VAR. PAGES BİÇİMİNE DÖNÜŞTÜRÜLEMEDİ.";
@@ -2641,6 +2662,7 @@
 "This text clipping contains no supported text resource." = "Bu metin kırpıntısında desteklenen bir metin kaynağı yok.";
 "This text is too large to paste. Choose a text file instead." = "Bu metin yapıştırmak için çok büyük. Bunun yerine bir metin dosyası seç.";
 "This text is too large to preview. Use Open to read the complete file." = "Bu metin önizleme için çok büyük. Dosyanın tamamını okumak için Aç'ı kullan.";
+"This will permanently remove all library entries. This action cannot be undone." = "Bu işlem tüm kitaplık kayıtlarını kalıcı olarak silecektir. Bu işlem geri alınamaz.";
 "This window could not be arranged. The app may restrict resizing." = "Bu pencere düzenlenemedi. Uygulama yeniden boyutlandırmayı kısıtlıyor olabilir.";
 "Those files are no longer available." = "Bu dosyalara artık ulaşılamıyor.";
 "Thumbnail" = "Küçük resim";

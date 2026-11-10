@@ -489,7 +489,10 @@
 "CHOOSE ZIP, TAR OR GZIP." = "CHOOSE ZIP, TAR OR GZIP.";
 "CLARITY" = "CLARITY";
 "CLEAR" = "CLEAR";
+"CLEAR ALL" = "CLEAR ALL";
 "CLEAR FLOAT" = "CLEAR FLOAT";
+"CLEAR HISTORY" = "CLEAR HISTORY";
+"CLEAR LIBRARY" = "CLEAR LIBRARY";
 "CLEAR SELECTION" = "CLEAR SELECTION";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "CLIPBOARD IS BUSY. TRY AGAIN.";
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "CLIPBOARD IS BUSY. TRY PASTE AGAIN.";
@@ -554,6 +557,7 @@
 "COULD NOT ORIENT IMAGE." = "COULD NOT ORIENT IMAGE.";
 "COULD NOT READ THIS PDF." = "COULD NOT READ THIS PDF.";
 "COULD NOT RENDER THE REDACTION." = "COULD NOT RENDER THE REDACTION.";
+"COULD NOT SAVE LIBRARY CHANGES. YOUR ENTRIES ARE INTACT." = "COULD NOT SAVE LIBRARY CHANGES. YOUR ENTRIES ARE INTACT.";
 "COULDN’T CHECK FOR UPDATES" = "COULDN’T CHECK FOR UPDATES";
 "COULDN’T FINISH" = "COULDN’T FINISH";
 "COULDN’T OPEN THIS TOOL" = "COULDN’T OPEN THIS TOOL";
@@ -689,8 +693,11 @@
 "Choose your home folder or a folder where you save files." = "Choose your home folder or a folder where you save files.";
 "Clarity" = "Clarity";
 "Clear" = "Clear";
+"Clear All" = "Clear All";
 "Clear Float" = "Clear Float";
+"Clear Library" = "Clear Library";
 "Clear Selection" = "Clear Selection";
+"Clear history" = "Clear history";
 "Clip %@" = "Clip %@";
 "Clip %lld" = "Clip %lld";
 "Clipboard is busy. Try Paste again." = "Clipboard is busy. Try Paste again.";
@@ -783,6 +790,7 @@
 "Could not render PDF page %@." = "Could not render PDF page %@.";
 "Could not render PDF page %lld." = "Could not render PDF page %lld.";
 "Could not render the redaction." = "Could not render the redaction.";
+"Could not save Library changes. Your entries are intact." = "Could not save Library changes. Your entries are intact.";
 "Couldn’t check for updates" = "Couldn’t check for updates";
 "Couldn’t finish" = "Couldn’t finish";
 "Couldn’t open this tool" = "Couldn’t open this tool";
@@ -1374,6 +1382,7 @@
 "LET’S MAKE SOMETHING OF IT." = "LET’S MAKE SOMETHING OF IT.";
 "LET’S TRY THAT AGAIN." = "LET’S TRY THAT AGAIN.";
 "LIBRARY" = "LIBRARY";
+"LIBRARY CLEARED." = "LIBRARY CLEARED.";
 "LIBRARY IS TOO LARGE." = "LIBRARY IS TOO LARGE.";
 "LIBREOFFICE 26.8.1 ENABLES OFFICE DOCUMENT CONVERSIONS. A 285 MB DOWNLOAD; ABOUT 1 GB INSTALLED. MPL 2.0 AND ITS INCLUDED THIRD-PARTY LICENSES." = "LIBREOFFICE 26.8.1 ENABLES OFFICE DOCUMENT CONVERSIONS. A 285 MB DOWNLOAD; ABOUT 1 GB INSTALLED. MPL 2.0 AND ITS INCLUDED THIRD-PARTY LICENSES.";
 "LIBREOFFICE 26.8.1 ENABLES OFFICE DOCUMENT CONVERSIONS. APPROXIMATELY 360 MB TO DOWNLOAD. MPL 2.0 AND ITS INCLUDED THIRD-PARTY LICENSES." = "LIBREOFFICE 26.8.1 ENABLES OFFICE DOCUMENT CONVERSIONS. APPROXIMATELY 360 MB TO DOWNLOAD. MPL 2.0 AND ITS INCLUDED THIRD-PARTY LICENSES.";
@@ -1406,6 +1415,7 @@
 "Let’s make something of it." = "Let’s make something of it.";
 "Let’s try that again." = "Let’s try that again.";
 "Library" = "Library";
+"Library cleared." = "Library cleared.";
 "Library is too large." = "Library is too large.";
 "LibreOffice 26.8.1 enables Office document conversions. A 285 MB download; about 1 GB installed. MPL 2.0 and its included third-party licenses." = "LibreOffice 26.8.1 enables Office document conversions. A 285 MB download; about 1 GB installed. MPL 2.0 and its included third-party licenses.";
 "LibreOffice 26.8.1 enables Office document conversions. Approximately 360 MB to download. MPL 2.0 and its included third-party licenses." = "LibreOffice 26.8.1 enables Office document conversions. Approximately 360 MB to download. MPL 2.0 and its included third-party licenses.";
@@ -1755,6 +1765,7 @@
 "PDF preview bitmap could not be allocated." = "PDF preview bitmap could not be allocated.";
 "PDF → OFFICE LAYOUT" = "PDF → OFFICE LAYOUT";
 "PDF → Office layout" = "PDF → Office layout";
+"PERMANENTLY REMOVE ENTRIES FROM YOUR LIBRARY." = "PERMANENTLY REMOVE ENTRIES FROM YOUR LIBRARY.";
 "PHOTOS" = "PHOTOS";
 "PICK A FOLDER YOU WORK IN. FRESH COPIES ARE SAVED BESIDE THE ORIGINALS BY DEFAULT." = "PICK A FOLDER YOU WORK IN. FRESH COPIES ARE SAVED BESIDE THE ORIGINALS BY DEFAULT.";
 "PIN" = "PIN";
@@ -1825,6 +1836,7 @@
 "Pasted image" = "Pasted image";
 "Pasted text" = "Pasted text";
 "Pause" = "Pause";
+"Permanently remove entries from your Library." = "Permanently remove entries from your Library.";
 "Photo %@" = "Photo %@";
 "Photo %@ of %@…" = "Photo %@ of %@…";
 "Photo %@ of %lld…" = "Photo %@ of %lld…";
@@ -1931,11 +1943,13 @@
 "RELEASE TO PLACE · ESC CANCELS" = "RELEASE TO PLACE · ESC CANCELS";
 "REMOVE" = "REMOVE";
 "REMOVE ALL" = "REMOVE ALL";
+"REMOVE ALL LIBRARY ENTRIES? THIS CANNOT BE UNDONE." = "REMOVE ALL LIBRARY ENTRIES? THIS CANNOT BE UNDONE.";
 "REMOVE ALL METADATA" = "REMOVE ALL METADATA";
 "REMOVE AUDIO" = "REMOVE AUDIO";
 "REMOVE BACKGROUND" = "REMOVE BACKGROUND";
 "REMOVE CLIPS (NUMBERS; SEPARATED BY SEMICOLONS)" = "REMOVE CLIPS (NUMBERS; SEPARATED BY SEMICOLONS)";
 "REMOVE FROM FLOAT" = "REMOVE FROM FLOAT";
+"REMOVE FROM LIBRARY" = "REMOVE FROM LIBRARY";
 "REMOVE FROM SELECTION" = "REMOVE FROM SELECTION";
 "REMOVE IMAGE" = "REMOVE IMAGE";
 "REMOVE METADATA" = "REMOVE METADATA";
@@ -1943,6 +1957,7 @@
 "REMOVE SELECTED RANGE" = "REMOVE SELECTED RANGE";
 "REMOVE SILENCE AT THE BEGINNING AND END" = "REMOVE SILENCE AT THE BEGINNING AND END";
 "REMOVE SILENCE FROM BEGINNING AND END" = "REMOVE SILENCE FROM BEGINNING AND END";
+"REMOVED FROM LIBRARY." = "REMOVED FROM LIBRARY.";
 "RENDERED PAGES EXCEED 512 MB. CHOOSE A LOWER DPI OR SPLIT THE PDF FIRST." = "RENDERED PAGES EXCEED 512 MB. CHOOSE A LOWER DPI OR SPLIT THE PDF FIRST.";
 "REPLACE SELECTED AUDIO WITH" = "REPLACE SELECTED AUDIO WITH";
 "REPORT SAVED." = "REPORT SAVED.";
@@ -2000,22 +2015,27 @@
 "Release to place · Esc cancels" = "Release to place · Esc cancels";
 "Remove" = "Remove";
 "Remove %@" = "Remove %@";
+"Remove %@ from Library" = "Remove %@ from Library";
 "Remove %@ from selection" = "Remove %@ from selection";
 "Remove %lld" = "Remove %lld";
+"Remove %lld from Library" = "Remove %lld from Library";
 "Remove %lld from selection" = "Remove %lld from selection";
 "Remove All" = "Remove All";
 "Remove Audio" = "Remove Audio";
 "Remove Background" = "Remove Background";
 "Remove Image" = "Remove Image";
 "Remove Metadata" = "Remove Metadata";
+"Remove all Library entries? This cannot be undone." = "Remove all Library entries? This cannot be undone.";
 "Remove all metadata" = "Remove all metadata";
 "Remove clips (numbers; separated by semicolons)" = "Remove clips (numbers; separated by semicolons)";
 "Remove from Float" = "Remove from Float";
+"Remove from Library" = "Remove from Library";
 "Remove from selection" = "Remove from selection";
 "Remove selected area" = "Remove selected area";
 "Remove selected range" = "Remove selected range";
 "Remove silence at the beginning and end" = "Remove silence at the beginning and end";
 "Remove silence from beginning and end" = "Remove silence from beginning and end";
+"Removed from Library." = "Removed from Library.";
 "Rendered pages exceed 512 MB. Choose a lower DPI or split the PDF first." = "Rendered pages exceed 512 MB. Choose a lower DPI or split the PDF first.";
 "Rendering page %@" = "Rendering page %@";
 "Rendering page %lld" = "Rendering page %lld";
@@ -2465,6 +2485,7 @@
 "THIS TEXT CLIPPING CONTAINS NO SUPPORTED TEXT RESOURCE." = "THIS TEXT CLIPPING CONTAINS NO SUPPORTED TEXT RESOURCE.";
 "THIS TEXT IS TOO LARGE TO PASTE. CHOOSE A TEXT FILE INSTEAD." = "THIS TEXT IS TOO LARGE TO PASTE. CHOOSE A TEXT FILE INSTEAD.";
 "THIS TEXT IS TOO LARGE TO PREVIEW. USE OPEN TO READ THE COMPLETE FILE." = "THIS TEXT IS TOO LARGE TO PREVIEW. USE OPEN TO READ THE COMPLETE FILE.";
+"THIS WILL PERMANENTLY REMOVE ALL LIBRARY ENTRIES. THIS ACTION CANNOT BE UNDONE." = "THIS WILL PERMANENTLY REMOVE ALL LIBRARY ENTRIES. THIS ACTION CANNOT BE UNDONE.";
 "THIS WINDOW COULD NOT BE ARRANGED. THE APP MAY RESTRICT RESIZING." = "THIS WINDOW COULD NOT BE ARRANGED. THE APP MAY RESTRICT RESIZING.";
 "THIS WINDOWS CODEC CANNOT PLAY DIRECTLY. SET UP MEDIA TOOLS TO CREATE A LOCAL PREVIEW." = "THIS WINDOWS CODEC CANNOT PLAY DIRECTLY. SET UP MEDIA TOOLS TO CREATE A LOCAL PREVIEW.";
 "THIS WORD DOCUMENT CONTAINS AN INVALID OR OVERSIZED TABLE CELL SPAN. IT COULD NOT BE CONVERTED TO PAGES." = "THIS WORD DOCUMENT CONTAINS AN INVALID OR OVERSIZED TABLE CELL SPAN. IT COULD NOT BE CONVERTED TO PAGES.";
@@ -2641,6 +2662,7 @@
 "This text clipping contains no supported text resource." = "This text clipping contains no supported text resource.";
 "This text is too large to paste. Choose a text file instead." = "This text is too large to paste. Choose a text file instead.";
 "This text is too large to preview. Use Open to read the complete file." = "This text is too large to preview. Use Open to read the complete file.";
+"This will permanently remove all library entries. This action cannot be undone." = "This will permanently remove all library entries. This action cannot be undone.";
 "This window could not be arranged. The app may restrict resizing." = "This window could not be arranged. The app may restrict resizing.";
 "Those files are no longer available." = "Those files are no longer available.";
 "Thumbnail" = "Thumbnail";
