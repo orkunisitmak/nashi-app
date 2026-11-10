@@ -138,8 +138,7 @@ public static partial class ImageEngine
         // New frames omit source metadata deliberately; originals stay unchanged.
         target.Frames.Add(BitmapFrame.Create(image,null,null,null));using var file=new FileStream(output,FileMode.CreateNew);target.Save(file);
     }
-    /// Writes a multi-size ICO file (16, 24, 32, 48, 64, 128, 256 px) with 32-bit alpha PNG frames.
-    /// Non-square source images are centred on a transparent canvas; aspect ratio is preserved.
+    // Multi-size ICO (16-256 px), each size a 32-bit PNG; non-square images are centred on a transparent square.
     private static void SaveIco(BitmapSource image,string output,CancellationToken token=default)
     {
         var sizes=new[]{16,24,32,48,64,128,256};using var ms=new MemoryStream();using var bw=new BinaryWriter(ms);
@@ -160,8 +159,6 @@ public static partial class ImageEngine
         }
         foreach(var png in dirs)bw.Write(png);bw.Flush();using var file=new FileStream(output,FileMode.CreateNew);ms.Position=0;ms.CopyTo(file);
     }
-    /// Centres <paramref name="source"/> on a transparent canvas of <paramref name="width"/>×<paramref name="height"/>,
-    /// preserving aspect ratio with no cropping or stretching.
     private static BitmapSource CenterOnTransparent(BitmapSource source,int width,int height)
     {
         var scale=Math.Min((double)width/source.PixelWidth,(double)height/source.PixelHeight);

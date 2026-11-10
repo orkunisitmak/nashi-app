@@ -53,7 +53,7 @@ public enum ImageEngine {
         var complete=false;defer { if !complete { try? FileManager.default.removeItem(at:output) } }
         let metadata = options.preserveMetadata ? CGImageSourceCreateWithURL(input as CFURL,nil).map { imageProperties($0,input:input) as CFDictionary } : nil
         try write(image,to:output,quality:options.quality,metadata:metadata,token:token)
-        if options.preserveMetadata { try ImageMetadataEngine.copyMetadata(from:input,to:output,token:token) }
+        if options.preserveMetadata && format != "ico" { try ImageMetadataEngine.copyMetadata(from:input,to:output,token:token) }
         complete=true
         return [output]
     }
@@ -62,6 +62,7 @@ public enum ImageEngine {
         // Both encoder paths take the same 0.01...1 range; FFmpeg's Int conversion traps on huge values.
         let quality=max(0.01,min(1,quality))
         let ext=url.pathExtension.lowercased()
+        if ext == "ico" { try writeICO(image,to:url); return }
         let type: String
         switch ext {
         case "jpg","jpeg": type="public.jpeg"
@@ -91,6 +92,36 @@ public enum ImageEngine {
             args += [url.path]
             try ProcessRunner.run(Dependencies.executable("ffmpeg"),args,token:token)
         }
+    }
+
+    /// One ICO with 16-256 px frames, each a 32-bit PNG; a non-square image is centred on a transparent square.
+    static func writeICO(_ image: CGImage, to url: URL) throws {
+        let sizes=[16,24,32,48,64,128,256]
+        var frames:[Data]=[]
+        for size in sizes {
+            guard let context=CGContext(data:nil,width:size,height:size,bitsPerComponent:8,bytesPerRow:0,space:CGColorSpaceCreateDeviceRGB(),bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue) else { throw NashiError.failed("Could not write \(url.lastPathComponent)") }
+            let scale=min(Double(size)/Double(image.width),Double(size)/Double(image.height))
+            let width=max(1,Double(image.width)*scale),height=max(1,Double(image.height)*scale)
+            context.interpolationQuality = .high
+            context.draw(image,in:CGRect(x:(Double(size)-width)/2,y:(Double(size)-height)/2,width:width,height:height))
+            let data=NSMutableData()
+            guard let frame=context.makeImage(),let destination=CGImageDestinationCreateWithData(data as CFMutableData,"public.png" as CFString,1,nil) else { throw NashiError.failed("Could not write \(url.lastPathComponent)") }
+            CGImageDestinationAddImage(destination,frame,nil)
+            guard CGImageDestinationFinalize(destination) else { throw NashiError.failed("Could not write \(url.lastPathComponent)") }
+            frames.append(data as Data)
+        }
+        func le16(_ value:Int)->[UInt8] { [UInt8(value&255),UInt8((value>>8)&255)] }
+        func le32(_ value:Int)->[UInt8] { [UInt8(value&255),UInt8((value>>8)&255),UInt8((value>>16)&255),UInt8((value>>24)&255)] }
+        var bytes:[UInt8]=le16(0)+le16(1)+le16(sizes.count)
+        var offset=6+16*sizes.count
+        for (index,size) in sizes.enumerated() {
+            let dimension=UInt8(size==256 ? 0:size)
+            bytes += [dimension,dimension,0,0]+le16(1)+le16(32)+le32(frames[index].count)+le32(offset)
+            offset += frames[index].count
+        }
+        var output=Data(bytes)
+        for frame in frames { output.append(frame) }
+        try output.write(to:url,options:.atomic)
     }
 
     public static func tool(_ kind: ToolKind, inputs: [URL], options: OperationOptions, token: CancellationToken) throws -> [URL] {
