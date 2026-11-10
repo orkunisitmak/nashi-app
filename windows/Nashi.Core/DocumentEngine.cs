@@ -76,6 +76,10 @@ public static partial class DocumentEngine
     private static void RequireRebuildable(PdfDocument source,string tool)
     {
         if(tool=="compress")return;var catalog=source.Internals.Catalog.Elements;
+        // A signature covers the original bytes, so no page copy can keep it valid. Name it, with
+        // macOS's wording (PDFInterop.js), instead of the generic form message below. Signature
+        // dictionaries may sit outside the form registry, so every object is checked, as there.
+        if(tool!="removeMetadata"&&Signed(source))throw new InvalidDataException("This PDF contains digital signatures. This page operation cannot safely preserve that feature. No copy was exported.");
         var widgets=source.Pages.Cast<PdfPage>().Any(p=>p.Elements.GetArray("/Annots") is {} annotations&&annotations.Elements.Any(e=>(e is PdfSharp.Pdf.Advanced.PdfReference reference?reference.Value:e) is PdfDictionary annotation&&annotation.Elements.GetName("/Subtype")=="/Widget"));
         var attachments=catalog.GetDictionary("/Names")?.Elements.ContainsKey("/EmbeddedFiles")==true||catalog.ContainsKey("/AF")||catalog.ContainsKey("/Collection");
         // Some generators write an empty /AcroForm; only fields (or an XFA form) are lost.
@@ -83,6 +87,7 @@ public static partial class DocumentEngine
         if(!fields&&!widgets&&!attachments)return;
         throw new InvalidDataException(tool=="removeMetadata"?"This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported.":"This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported.");
     }
+    private static bool Signed(PdfDocument source)=>source.Internals.GetAllObjects().Any(o=>o is PdfDictionary d&&(d.Elements.ContainsKey("/ByteRange")||d.Elements.GetName("/FT")=="/Sig"||d.Elements.GetName("/Type")=="/Sig"));
     // Remove All drops each review annotation's author and dates, as on macOS, whatever its type (Caret, Squiggly, Polygon…); the note
     // text stays. A widget's /T is its field name, not an author, and forms are refused before this anyway.
     private static void ClearAnnotationMetadata(PdfDocument pdf)
