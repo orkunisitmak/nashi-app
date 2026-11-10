@@ -9,24 +9,29 @@ const macBundle = resolve(root, "Resources/PDFLib.js");
 const webBundle = resolve(root, "docs/assets/vendor/pdf-lib.min.js");
 const { PDFDocument } = require(macBundle);
 
-function fixture(type, fields, contents = Buffer.alloc(0)) {
+/** Wrap attacker-controlled stream declarations in a synthetic one-page PDF. */
+function fixture(type, fields, contents = Buffer.alloc(0), streamCount = 1) {
     const parts = [
         Buffer.from("%PDF-1.5\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
             + "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n"
-            + "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>\nendobj\n"
-            + `4 0 obj\n<< /Type /${type} ${fields} /Length ${contents.length} >>\nstream\n`),
-        contents,
-        Buffer.from("\nendstream\nendobj\ntrailer\n<< /Size 5 /Root 1 0 R >>\n%%EOF\n"),
+            + "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>\nendobj\n"),
     ];
+    for (let index = 0; index < streamCount; index++) {
+        parts.push(Buffer.from(`${4 + index} 0 obj\n<< /Type /${type} ${fields} /Length ${contents.length} >>\nstream\n`),
+            contents, Buffer.from("\nendstream\nendobj\n"));
+    }
+    parts.push(Buffer.from("trailer\n<< /Size 101 /Root 1 0 R >>\n%%EOF\n"));
     return Buffer.concat(parts);
 }
 
-function compressedObjectStream(size) {
+/** Reuse one small compressed payload to exercise allocation across PDF streams. */
+function compressedObjectStream(size, streamCount = 1) {
     const contents = Buffer.alloc(size, 32);
-    contents.write("5 0 << /Audit true >>");
-    return fixture("ObjStm", "/N 1 /First 4 /Filter /FlateDecode", deflateSync(contents));
+    contents.write("100 0 << /Audit true >>");
+    return fixture("ObjStm", "/N 1 /First 6 /Filter /FlateDecode", deflateSync(contents), streamCount);
 }
 
+/** Check ordinary page editing and the resource limits shared by both runtimes. */
 async function main() {
     const normalize = path => readFileSync(path, "utf8").replaceAll("\r\n", "\n");
     assert.ok(normalize(macBundle) === normalize(webBundle), "The Mac and web PDF parser bundles differ.");
@@ -51,6 +56,12 @@ async function main() {
 
     const ordinaryStream = compressedObjectStream(8 * 1024 * 1024);
     assert.equal((await PDFDocument.load(ordinaryStream)).getPageCount(), 1);
+    const totalDecoded = compressedObjectStream(64 * 1024 * 1024, 5);
+    await assert.rejects(PDFDocument.load(totalDecoded),
+        /PDF resource limit exceeded: decoded streams are too large in total/);
+    const filterChain = Array(17).fill("/FlateDecode").join(" ");
+    await assert.rejects(PDFDocument.load(fixture("ObjStm", `/N 0 /First 0 /Filter [${filterChain}]`)),
+        /PDF resource limit exceeded: too many stream filters/);
 
     const excessiveEntries = fixture("XRef", "/Root 1 0 R /Size 2147483647 /W [0 0 0]");
     await assert.rejects(PDFDocument.load(excessiveEntries), /PDF resource limit exceeded: too many PDF entries/);

@@ -26,6 +26,7 @@ final class WebDownloadTests:XCTestCase {
         XCTAssertEqual(WebDownloadEngine.cleanFilename("clip.exe",mime:"video/mp4"),"clip.mp4")
         XCTAssertEqual(WebDownloadEngine.cleanFilename("notes.ts",mime:"text/plain"),"notes")
     }
+    /// Checks that dropping an unknown suffix cannot expose an unsafe inner extension.
     func testFilenameFallbackKeepsOnlySafeExtensions() {
         XCTAssertEqual(WebDownloadEngine.cleanFilename("report.html.tmp", mime: "video/x-nashi-unknown"), "report_html")
         XCTAssertEqual(WebDownloadEngine.cleanFilename("clip.command.backup", mime: "application/octet-stream"), "clip_command")
@@ -119,6 +120,7 @@ final class WebDownloadTests:XCTestCase {
         XCTAssertFalse(message.contains("secret"));XCTAssertFalse(message.contains("https://"))
     }
     // F1920: the size fit replaced a reported file outside staging before record rejected it.
+    /// Ensures a downloader-reported path cannot replace a file outside the staging folder.
     func testSizeFitNeverReplacesAReportedFileOutsideStaging() async throws {
         let fm=FileManager.default,root=fm.temporaryDirectory.appendingPathComponent("nashi-web-confine-\(UUID().uuidString)",isDirectory:true)
         try fm.createDirectory(at:root,withIntermediateDirectories:true)
@@ -140,16 +142,16 @@ final class WebDownloadTests:XCTestCase {
             try Data("H1080 original".utf8).write(to:outside)
             try Data("printf H1080 > \"$stage/a.mp4\"\necho NASHI_FILE:\\\"$stage/a.mp4\\\"\necho NASHI_FILE:\\\"\(report)\\\"\n".utf8).write(to:plan)
             let destination=root.appendingPathComponent("Downloads \(index)",isDirectory:true)
-            do { _=try await WebDownloadEngine.download(info,mode:.video,maximumHeight:720,destination:destination,checkAddress:{ _ in }) { _,_ in };XCTFail("outside path accepted: \(report)") } catch {}
+            do { _=try await WebDownloadEngine.download(info,mode:.video,maximumHeight:720,destination:destination,checkAddress:{ _ in },runExtractor:WebDownloadProcess.run) { _,_ in };XCTFail("outside path accepted: \(report)") } catch {}
             XCTAssertEqual(try String(contentsOf:outside,encoding:.utf8),"H1080 original",report)
             XCTAssertEqual(try fm.contentsOfDirectory(atPath:destination.path),[],report)
         }
         // Control: a staged file over the limit is still fitted and published.
         try Data("printf H1080 > \"$stage/a.mp4\"\necho NASHI_FILE:\\\"$stage/a.mp4\\\"\n".utf8).write(to:plan)
-        let files=try await WebDownloadEngine.download(info,mode:.video,maximumHeight:720,destination:root.appendingPathComponent("Downloads",isDirectory:true),checkAddress:{ _ in }) { _,_ in }
+        let files=try await WebDownloadEngine.download(info,mode:.video,maximumHeight:720,destination:root.appendingPathComponent("Downloads",isDirectory:true),checkAddress:{ _ in },runExtractor:WebDownloadProcess.run) { _,_ in }
         XCTAssertEqual(files.map(\.lastPathComponent),["a.mp4"]);XCTAssertEqual(try String(contentsOf:files[0],encoding:.utf8),"H480")
     }
-    // F3510: presigned storage links are signed for GET only and some servers refuse HEAD; the photo went to yt-dlp.
+    /// Verifies the GET fallback for signed photo links that do not accept HEAD.
     func testDirectImageWhoseServerRefusesHEADStaysAPhoto() async throws {
         let fm=FileManager.default,root=try OutputFiles.temporaryDirectory();addTeardownBlock { try? FileManager.default.removeItem(at:root) }
         let argv=root.appendingPathComponent("yt-dlp.argv")
@@ -181,13 +183,14 @@ final class WebDownloadTests:XCTestCase {
         }
     }
 
+    /// Rejects private address literals and blocks redirects before they reach the target.
     func testWebMediaRejectsLocalAddressesAndRedirectsBeforeFetching() async throws {
         for host in ["localhost.", "127.1", "192.168.1.1", "169.254.1.1", "[::1]", "[::ffff:127.0.0.1]", "[fc00::1]"] {
             let url=try XCTUnwrap(URL(string:"http://\(host)/photo.png"))
             do {
                 try await PublicMediaAddress.requirePublic(url)
                 XCTFail("Accepted nonpublic host \(host)")
-            } catch {}
+            } catch NashiError.invalidInput(_) {}
         }
         let target=try LoopbackServer { _ in Data() }
         defer { target.stop() }
@@ -204,6 +207,35 @@ final class WebDownloadTests:XCTestCase {
         } catch {}
         XCTAssertEqual(initial.methods,["HEAD"])
         XCTAssertTrue(target.methods.isEmpty)
+    }
+
+    /// Distinguishes a failed DNS lookup from rejection of a resolved private address.
+    func testWebMediaReportsDNSLookupFailure() async throws {
+        let url = try XCTUnwrap(URL(string: "https://nashi-address-test.invalid/photo.png"))
+        do {
+            try await PublicMediaAddress.requirePublic(url)
+            XCTFail("Accepted an unresolvable hostname")
+        } catch NashiError.failed(let message) {
+            XCTAssertTrue(message.contains("Check your connection"), message)
+        }
+    }
+
+    /// Keeps the address-check failure when a redirect is blocked and prevents GET fallback.
+    func testWebMediaPreservesRedirectResolutionError() async throws {
+        let initial = try LoopbackServer { _ in
+            Data("HTTP/1.1 302 Found\r\nLocation: https://nashi-address-test.invalid/photo.png\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".utf8)
+        }
+        defer { initial.stop() }
+        let url = try XCTUnwrap(URL(string: "http://127.0.0.1:\(initial.port)/redirect.png"))
+        do {
+            _ = try await WebDownloadEngine.inspect(url, checkAddress: { candidate in
+                if candidate != url { throw NashiError.failed("Fixture DNS lookup failed.") }
+            })
+            XCTFail("Followed a redirect after its address check failed")
+        } catch NashiError.failed(let message) {
+            XCTAssertEqual(message, "Fixture DNS lookup failed.")
+        }
+        XCTAssertEqual(initial.methods, ["HEAD"])
     }
 }
 

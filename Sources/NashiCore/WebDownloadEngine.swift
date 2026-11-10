@@ -32,10 +32,13 @@ public enum WebDownloadEngine {
         }
         return url
     }
+    /// Inspects a public media URL before the user chooses a download format.
     public static func inspect(_ url:URL,token:CancellationToken = .init()) async throws -> WebMediaInfo {
         try await inspect(url,token:token,checkAddress:PublicMediaAddress.requirePublic)
     }
-    static func inspect(_ url:URL,token:CancellationToken = .init(),checkAddress:@escaping PublicMediaAddress.Check) async throws -> WebMediaInfo {
+    /// Applies the address policy during metadata requests and redirects.
+    static func inspect(_ url:URL,token:CancellationToken = .init(),checkAddress:@escaping PublicMediaAddress.Check,
+                        runExtractor:@escaping WebDownloadProcess.Extractor = WebDownloadProcess.runPublic) async throws -> WebMediaInfo {
         let url=try link(url.absoluteString);try token.check()
         try await checkAddress(url)
         let redirects=PublicMediaRedirects(checkAddress:checkAddress)
@@ -43,7 +46,7 @@ public enum WebDownloadEngine {
         defer { session.invalidateAndCancel() }
         if WebMediaDragPayload.isInstagramPhotoPost(url) {
             let args=try baseArguments(photoPost:true)+["--ignore-no-formats-error","--skip-download","--dump-single-json","--no-progress","--",url.absoluteString]
-            let data=try await Task.detached { try WebDownloadProcess.run(Dependencies.executable("yt-dlp"),args,token:token,timeout:100) }.value
+            let data=try await Task.detached { try runExtractor(Dependencies.executable("yt-dlp"),args,token,100,nil) }.value
             try token.check();try Task.checkCancellation()
             return try InstagramPhotos.parse(data,url:url)
         }
@@ -77,7 +80,7 @@ public enum WebDownloadEngine {
         }
         try Task.checkCancellation();try token.check()
         let args=try baseArguments()+["--skip-download","--dump-single-json","--no-progress","--",url.absoluteString]
-        let data=try await Task.detached { try WebDownloadProcess.run(Dependencies.executable("yt-dlp"),args,token:token,timeout:100) }.value
+        let data=try await Task.detached { try runExtractor(Dependencies.executable("yt-dlp"),args,token,100,nil) }.value
         try Task.checkCancellation();try token.check()
         return try parseMetadata(data,url:url)
     }
@@ -98,13 +101,16 @@ public enum WebDownloadEngine {
         return WebMediaInfo(url:url,title:String((item["title"] as? String ?? "Web media").prefix(300)),kind:video ? .video:.audio,site:item["extractor_key"] as? String ?? url.host ?? "Web",duration:duration,heights:heights,direct:false,filename:nil,byteCount:nil)
     }
 
+    /// Saves media from the public web into the chosen local folder.
     public static func download(_ info:WebMediaInfo,mode:WebDownloadMode,maximumHeight:Int?,destination:URL,selectedPhotos:Set<Int>? = nil,
                                 token:CancellationToken = .init(),progress:@escaping ProgressHandler) async throws -> [URL] {
         try await download(info,mode:mode,maximumHeight:maximumHeight,destination:destination,selectedPhotos:selectedPhotos,
                            token:token,checkAddress:PublicMediaAddress.requirePublic,progress:progress)
     }
+    /// Validates source addresses and stages downloads before publishing them.
     static func download(_ info:WebMediaInfo,mode:WebDownloadMode,maximumHeight:Int?,destination:URL,selectedPhotos:Set<Int>? = nil,
-                         token:CancellationToken = .init(),checkAddress:@escaping PublicMediaAddress.Check,progress:@escaping ProgressHandler) async throws -> [URL] {
+                         token:CancellationToken = .init(),checkAddress:@escaping PublicMediaAddress.Check,
+                         runExtractor:@escaping WebDownloadProcess.Extractor = WebDownloadProcess.runPublic,progress:@escaping ProgressHandler) async throws -> [URL] {
         let url=try link(info.url.absoluteString)
         guard destination.isFileURL,info.modes.contains(mode) else { throw NashiError.invalidInput("Choose an available media type and a local destination folder.") }
         if let maximumHeight { guard (2...16_384).contains(maximumHeight) else { throw NashiError.invalidInput("Choose a valid video quality.") } }
@@ -119,7 +125,7 @@ public enum WebDownloadEngine {
         } else {
             try await checkAddress(url)
             let arguments=try downloadArguments(info,mode:mode,maximumHeight:maximumHeight,directory:area.directory)
-            let data=try await Task.detached { try WebDownloadProcess.run(Dependencies.executable("yt-dlp"),arguments,token:token,timeout:21_600,progress:progress) }.value
+            let data=try await Task.detached { try runExtractor(Dependencies.executable("yt-dlp"),arguments,token,21_600,progress) }.value
             results=String(decoding:data,as:UTF8.self).split(separator:"\n").compactMap { line in
                 guard line.hasPrefix("NASHI_FILE:"),let encoded=String(line.dropFirst("NASHI_FILE:".count)).data(using:.utf8),
                       let path=(try? JSONSerialization.jsonObject(with:encoded,options:.fragmentsAllowed)) as? String else { return nil }
@@ -186,6 +192,7 @@ public enum WebDownloadEngine {
         return args+["--",info.url.absoluteString]
     }
 
+    /// Streams a bounded media file to staging and verifies that it can be decoded.
     static func downloadDirect(_ info:WebMediaInfo,mode:WebDownloadMode,directory:URL,token:CancellationToken,
                                checkAddress:@escaping PublicMediaAddress.Check = PublicMediaAddress.requirePublic,
                                        progress:@escaping ProgressHandler) async throws -> [URL] {
@@ -242,6 +249,7 @@ public enum WebDownloadEngine {
         if ["mp3","m4a","wav","flac","ogg","opus","aac","aiff"].contains(ext) { return .audio }
         return nil
     }
+    /// Produces a local filename with either a recognized media extension or no extension.
     public static func cleanFilename(_ proposed:String,mime:String?)->String {
         var name=(proposed as NSString).lastPathComponent
         name=String(name.unicodeScalars.filter{!CharacterSet.controlCharacters.contains($0) && !CharacterSet(charactersIn:"/:\\").contains($0)})
@@ -250,6 +258,7 @@ public enum WebDownloadEngine {
         let preferred=mime.flatMap{UTType(mimeType:$0)?.preferredFilenameExtension}
         let allowed=["jpg","jpeg","png","webp","heic","heif","avif","bmp","tif","tiff","svg","gif","mp4","mov","webm","mkv","m4v","mp3","m4a","wav","flac","ogg","opus","aac","aiff"]
         let mediaMIME=["image/","audio/","video/"].contains{mime?.lowercased().hasPrefix($0)==true}
+        /// Recognizes media extensions before preserving them in a downloaded filename.
         func hasMediaExtension(_ filename: String) -> Bool {
             let ext = (filename as NSString).pathExtension.lowercased()
             guard !ext.isEmpty else { return false }
@@ -304,6 +313,7 @@ public enum WebDownloadEngine {
         return String(selected.joined(separator:"\n").prefix(1_500))
     }
 
+    /// Applies redirect checks, reports progress and enforces the transfer size limit.
     private final class TransferDelegate:PublicMediaRedirects,URLSessionDownloadDelegate,@unchecked Sendable {
         let token:CancellationToken,maximumBytes:Int64,progress:ProgressHandler
         init(token:CancellationToken,maximumBytes:Int64,checkAddress:@escaping PublicMediaAddress.Check,progress:@escaping ProgressHandler) {

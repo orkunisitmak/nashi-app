@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+# Hash the LF-normalized upstream bundle so CRLF checkouts verify identically.
 UPSTREAM_SHA256 = "0f9a5cad07941f0826586c94e089d89b918c46e5c17cf2d5a3c6f666e3bc694f"
 OUTPUTS = ("Resources/PDFLib.js", "docs/assets/vendor/pdf-lib.min.js")
 
@@ -112,6 +113,7 @@ case 4: {
 
 
 def main(upstream):
+    """Verify the pinned input and reproduce both parser bundles from the same patch."""
     source = Path(upstream).read_bytes().replace(b"\r\n", b"\n")
     if hashlib.sha256(source).hexdigest() != UPSTREAM_SHA256:
         raise SystemExit("Expected the unmodified pdf-lib 1.17.1 dist/pdf-lib.min.js bundle.")

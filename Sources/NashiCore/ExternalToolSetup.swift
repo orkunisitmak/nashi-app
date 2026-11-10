@@ -25,6 +25,7 @@ public enum ExternalToolSetup {
     public static var status:ToolSetupStatus { ToolSetupStatus { try? Dependencies.executable($0) } }
     public static var mediaReady:Bool { status.mediaReady }
     public static var officeReady:Bool { status.officeReady }
+    /// Verifies each pinned download before unpacking and publishes the tools as a complete set.
     public static func installMedia(token:CancellationToken,progress:@escaping @Sendable (Double?,String)->Void) async throws {
         try token.check();try Task.checkCancellation()
         if mediaReady { progress(1,"Media tools are ready.");return }

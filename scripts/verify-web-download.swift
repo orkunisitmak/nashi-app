@@ -9,6 +9,7 @@ private final class DownloadProgressEvents:@unchecked Sendable {
 }
 
 @main struct VerifyWebDownload {
+    /// Exercises downloads against a single loopback fixture, including export and cancellation.
     static func main() async throws {
         let root=URL(fileURLWithPath:CommandLine.arguments.count>1 ? CommandLine.arguments[1]:"build/web-download-050",isDirectory:true)
         let base=CommandLine.arguments.count>2 ? CommandLine.arguments[2]:"http://127.0.0.1:18749"
@@ -33,11 +34,11 @@ private final class DownloadProgressEvents:@unchecked Sendable {
         let audio=try await WebDownloadEngine.download(video,mode:.audioMP3,maximumHeight:nil,destination:destination,checkAddress:checkAddress,progress:{_,_ in})
         let media=try MediaEngine.inspect(audio[0])
         check(audio[0].pathExtension=="mp3" && media.duration>2.8 && media.duration<3.2,"MP3 conversion failed")
-        let page=try await WebDownloadEngine.inspect(URL(string:base+"/index.html")!,checkAddress:checkAddress)
+        let page=try await WebDownloadEngine.inspect(URL(string:base+"/index.html")!,checkAddress:checkAddress,runExtractor:WebDownloadProcess.run)
         check(!page.direct && page.kind == .video,"HTML extraction failed")
-        let site=try await WebDownloadEngine.download(page,mode:.video,maximumHeight:720,destination:destination,checkAddress:checkAddress,progress:{_,_ in})
+        let site=try await WebDownloadEngine.download(page,mode:.video,maximumHeight:720,destination:destination,checkAddress:checkAddress,runExtractor:WebDownloadProcess.run,progress:{_,_ in})
         check(try MediaEngine.inspect(site[0]).duration>2.8,"Extracted download failed")
-        let capped=try await WebDownloadEngine.download(page,mode:.video,maximumHeight:120,destination:destination,checkAddress:checkAddress,progress:{_,_ in})
+        let capped=try await WebDownloadEngine.download(page,mode:.video,maximumHeight:120,destination:destination,checkAddress:checkAddress,runExtractor:WebDownloadProcess.run,progress:{_,_ in})
         let cappedMedia=try MediaEngine.inspect(capped[0])
         check(cappedMedia.video?.height==120,"Unknown source dimensions bypassed the height limit")
         check(cappedMedia.hasAudio && cappedMedia.duration>2.8,"Resizing lost audio or duration")

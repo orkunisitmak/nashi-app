@@ -12,6 +12,14 @@ internal static class ParityChecks
         check(OfficeDocuments.SanitizedHtml(htmlWithExternalImages)==htmlWithoutExternalImages,
             "HTML sanitization kept an external resource or removed an embedded image");
 
+        const string proseAndMarkupExamples = """<title><img src=example.png></title><p>Set src=logo.png and background=blue before saving.</p><!-- <img src=example.png> -->""";
+        const string imageWithQuotedExample = """<img title='Use src="logo.png", or <img src=example.png>' SRC=file:///C:/example.png alt="background=blue">""";
+        const string imageWithoutSource = """<img title='Use src="logo.png", or <img src=example.png>' alt="background=blue">""";
+        check(OfficeDocuments.SanitizedHtml(proseAndMarkupExamples+imageWithQuotedExample)==proseAndMarkupExamples+imageWithoutSource,
+            "HTML resource filtering changed text or an unrelated quoted attribute");
+        check(OfficeDocuments.SanitizedHtml("<!-- missing terminator ><img src=example.png>")=="<!-- missing terminator ><img>",
+            "An unterminated comment hid an external resource from HTML filtering");
+
         var characterDefaults=Path.Combine(root,"Character style defaults.docx");using(var archive=ZipFile.Open(characterDefaults,ZipArchiveMode.Create))
         {
             void Part(string name,string text){using var writer=new StreamWriter(archive.CreateEntry(name).Open(),new UTF8Encoding(false));writer.Write(text);}

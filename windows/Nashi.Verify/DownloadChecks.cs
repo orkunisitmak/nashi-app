@@ -12,6 +12,7 @@ internal static class DownloadChecks
         public override async ValueTask<int> ReadAsync(Memory<byte> buffer,CancellationToken token=default){await Task.Delay(Timeout.Infinite,token);return 0;}
         public override int Read(byte[] buffer,int offset,int count)=>throw new NotSupportedException();public override void Flush(){}public override long Seek(long offset,SeekOrigin origin)=>throw new NotSupportedException();public override void SetLength(long length)=>throw new NotSupportedException();public override void Write(byte[] buffer,int offset,int count)=>throw new NotSupportedException();
     }
+    /// <summary>Exercise destination validation and download failure handling without a live network.</summary>
     public static async Task Run(Action<bool,string> check,string root)
     {
         foreach (var host in new[] {"localhost.", "private.local.", "127.1", "100.64.0.1", "169.254.1.1", "192.168.0.1", "[::1]", "[::ffff:127.0.0.1]", "[fc00::1]"})

@@ -12,5 +12,6 @@
   <ItemGroup><EmbeddedResource Include="../../Resources/FeatureCatalog.json" LogicalName="Nashi.FeatureCatalog.json" /></ItemGroup>
   <ItemGroup><EmbeddedResource Include="../../Sources/NashiCore/Resources/Turkish.json" LogicalName="Nashi.Turkish.json" /></ItemGroup>
   <ItemGroup><EmbeddedResource Include="../../Sources/NashiCore/Resources/LatinWords.json" LogicalName="Nashi.LatinWords.json" /></ItemGroup>
+  <ItemGroup><Content Include="../../Sources/NashiCore/Resources/WebMediaProxy.mjs" Link="WebMediaProxy.mjs" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" /></ItemGroup>
   <ItemGroup><InternalsVisibleTo Include="Nashi.Verify" /></ItemGroup>
 </Project>

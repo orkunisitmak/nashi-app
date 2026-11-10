@@ -38,6 +38,7 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
         }
         finally{if(Directory.Exists(job))Directory.Delete(job,true);}
     }
+    /// <summary>Builds a locale-aware CSV or TSV import filter that reads formulas as text.</summary>
     internal static string DelimitedInputFilter(string input,string extension)
     {
         var (delimiter,language)=DelimitedLayout(input,extension);
@@ -180,11 +181,68 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
         if(png.Length<24||!png.AsSpan(0,8).SequenceEqual(new byte[]{0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A}))return null;
         var width=System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(png.AsSpan(16));var height=System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(png.AsSpan(20));return width>0&&height>0?(width,height):null;
     }
+    private const string HtmlAttributePattern = """[ \t\r\n\f]*(?<name>[^ \t\r\n\f=/>]+)(?:[ \t\r\n\f]*=[ \t\r\n\f]*(?:"(?<value>[^"]*)"|'(?<value>[^']*)'|(?<value>[^ \t\r\n\f"'>][^ \t\r\n\f>]*))?)?""";
+    private static readonly TimeSpan HtmlFilterTimeout = TimeSpan.FromSeconds(2);
+    private static readonly Regex HtmlAttributes = new(HtmlAttributePattern, RegexOptions.NonBacktracking, HtmlFilterTimeout);
+    private static readonly Regex HtmlMarkup = new(
+        $"""<!--.*?-->|<![^>]*>|<\?[^>]*>|<(?<closing>/)?(?<element>[A-Za-z][^ \t\r\n\f/>]*)(?<attributes>(?:{HtmlAttributePattern}|[ \t\r\n\f]*/)*[ \t\r\n\f]*)>""",
+        RegexOptions.Singleline | RegexOptions.NonBacktracking, HtmlFilterTimeout);
+
+    /// <summary>Filters HTML resource references before conversion while retaining inline images.</summary>
     public static string SanitizedHtml(string html)
     {
-        html=Regex.Replace(html,@"<(script|iframe|object|embed)\b[^>]*>[\s\S]*?</\1\s*>","",RegexOptions.IgnoreCase,TimeSpan.FromSeconds(2));
-        html=Regex.Replace(html,@"<link\b[^>]*>|<base\b[^>]*>","",RegexOptions.IgnoreCase,TimeSpan.FromSeconds(2));
-        html=Regex.Replace(html,"""\s(?:src|background)\s*=\s*(?:"(?!data:)[^"]*"|'(?!data:)[^']*'|(?!data:)[^\s"'<>`]+)""","",RegexOptions.IgnoreCase,TimeSpan.FromSeconds(2));
-        return Regex.Replace(html,@"url\s*\([^)]*\)","none",RegexOptions.IgnoreCase,TimeSpan.FromSeconds(2));
+        html = Regex.Replace(html, @"<(script|iframe|object|embed)\b[^>]*>[\s\S]*?</\1\s*>", "", RegexOptions.IgnoreCase, HtmlFilterTimeout);
+        html = Regex.Replace(html, @"<link\b[^>]*>|<base\b[^>]*>", "", RegexOptions.IgnoreCase, HtmlFilterTimeout);
+        html = RemoveExternalHtmlAttributes(html);
+        return Regex.Replace(html, @"url\s*\([^)]*\)", "none", RegexOptions.IgnoreCase, HtmlFilterTimeout);
+    }
+
+    /// <summary>Removes external src and background attributes from opening tags.</summary>
+    private static string RemoveExternalHtmlAttributes(string html)
+    {
+        StringBuilder? result = null;
+        var written = 0;
+        var offset = 0;
+        while (offset < html.Length && HtmlMarkup.Match(html, offset) is { Success: true } tag)
+        {
+            offset = tag.Index + tag.Length;
+            var element = tag.Groups["element"];
+            if (!element.Success || tag.Groups["closing"].Success) continue;
+
+            var attributes = tag.Groups["attributes"];
+            var filtered = HtmlAttributes.Replace(attributes.Value, attribute =>
+            {
+                var name = attribute.Groups["name"].ValueSpan;
+                var value = attribute.Groups["value"];
+                return value.Success && !value.ValueSpan.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+                    && (name.Equals("src", StringComparison.OrdinalIgnoreCase) || name.Equals("background", StringComparison.OrdinalIgnoreCase))
+                    ? "" : attribute.Value;
+            });
+            if (filtered.Length != attributes.Length)
+            {
+                (result ??= new StringBuilder()).Append(html, written, attributes.Index - written).Append(filtered);
+                written = attributes.Index + attributes.Length;
+            }
+
+            // Writer treats the contents of these elements as text, even when they look like tags.
+            var elementName = element.Value.ToLowerInvariant();
+            if (elementName is "title" or "noembed" && !tag.ValueSpan.EndsWith("/>", StringComparison.Ordinal))
+                offset = FindHtmlTextEnd(html, elementName, offset);
+        }
+
+        return result is null ? html : result.Append(html, written, html.Length - written).ToString();
+    }
+
+    private static int FindHtmlTextEnd(string html, string element, int offset)
+    {
+        var closingTag = "</" + element;
+        for (var index = html.IndexOf(closingTag, offset, StringComparison.OrdinalIgnoreCase); index >= 0;
+            index = html.IndexOf(closingTag, index + closingTag.Length, StringComparison.OrdinalIgnoreCase))
+        {
+            var afterName = index + closingTag.Length;
+            if (afterName == html.Length || html[afterName] is '>' or '/' or ' ' or '\t' or '\n' or '\r' or '\f')
+                return index;
+        }
+        return offset;
     }
 }

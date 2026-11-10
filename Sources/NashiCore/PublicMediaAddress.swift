@@ -4,6 +4,7 @@ import Foundation
 enum PublicMediaAddress {
     typealias Check = @Sendable (URL) async throws -> Void
 
+    /// Rejects local hostnames and hostnames with any nonpublic address.
     static func requirePublic(_ url: URL) async throws {
         guard let host = url.host else { throw invalidAddress }
         let name = host.trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
@@ -14,17 +15,21 @@ enum PublicMediaAddress {
         }
         let publicOnly = await Task.detached(priority: .utility) { resolvesPublicly(name) }.value
         try Task.checkCancellation()
+        guard let publicOnly else {
+            throw NashiError.failed("The server address could not be resolved. Check your connection and try again.")
+        }
         guard publicOnly else { throw invalidAddress }
     }
 
     static var invalidAddress: NashiError { .invalidInput("Paste one complete http:// or https:// media link.") }
 
-    private static func resolvesPublicly(_ host: String) -> Bool {
+    /// Returns nil when the resolver cannot supply any addresses.
+    private static func resolvesPublicly(_ host: String) -> Bool? {
         var hints = addrinfo()
         hints.ai_family = AF_UNSPEC
         hints.ai_socktype = SOCK_STREAM
         var result: UnsafeMutablePointer<addrinfo>?
-        guard getaddrinfo(host, nil, &hints, &result) == 0, let first = result else { return false }
+        guard getaddrinfo(host, nil, &hints, &result) == 0, let first = result else { return nil }
         defer { freeaddrinfo(first) }
         var current: UnsafeMutablePointer<addrinfo>? = first
         while let item = current {
@@ -44,6 +49,7 @@ enum PublicMediaAddress {
         return true
     }
 
+    /// Rejects reserved and private IPv4 ranges using bytes in network order.
     private static func isPublicIPv4(_ bytes: UnsafeRawBufferPointer) -> Bool {
         let first = bytes[0], second = bytes[1], third = bytes[2]
         return !(first == 0 || first == 10 || first == 127 || first >= 224
@@ -55,6 +61,7 @@ enum PublicMediaAddress {
             || first == 203 && second == 0 && third == 113)
     }
 
+    /// Accepts global unicast IPv6 and checks mapped IPv4 addresses by their IPv4 range.
     private static func isPublicIPv6(_ bytes: UnsafeRawBufferPointer) -> Bool {
         if bytes.prefix(10).allSatisfy({ $0 == 0 }), bytes[10] == 0xff, bytes[11] == 0xff {
             return isPublicIPv4(UnsafeRawBufferPointer(rebasing: bytes[12..<16]))
@@ -66,27 +73,31 @@ enum PublicMediaAddress {
     }
 }
 
+/// Enforces the address policy before URLSession follows a redirect.
 class PublicMediaRedirects: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
     let checkAddress: PublicMediaAddress.Check
     private let lock = NSLock()
-    private var blocked = false
+    private var redirectError: Error?
 
     init(checkAddress: @escaping PublicMediaAddress.Check) {
         self.checkAddress = checkAddress
     }
 
+    /// Surfaces the redirect failure even when URLSession returns the redirect response.
     func requireAllowedRedirects() throws {
         lock.lock()
         defer { lock.unlock() }
-        if blocked { throw PublicMediaAddress.invalidAddress }
+        if let redirectError { throw redirectError }
     }
 
-    private func blockRedirect() {
+    /// Keeps the first reason a request could not follow a redirect.
+    private func blockRedirect(_ error: Error) {
         lock.lock()
-        blocked = true
-        lock.unlock()
+        defer { lock.unlock() }
+        if redirectError == nil { redirectError = error }
     }
 
+    /// Allows only validated HTTP(S) destinations and prevents HTTPS downgrades.
     func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
                     newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
         Task {
@@ -98,7 +109,7 @@ class PublicMediaRedirects: NSObject, URLSessionTaskDelegate, @unchecked Sendabl
                 try await checkAddress(checked)
                 completionHandler(request)
             } catch {
-                blockRedirect()
+                blockRedirect(error)
                 completionHandler(nil)
             }
         }

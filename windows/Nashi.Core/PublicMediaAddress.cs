@@ -5,6 +5,7 @@ namespace Nashi.Core;
 
 internal static class PublicMediaAddress
 {
+    /// <summary>Checks literals and local hostname suffixes before DNS resolution.</summary>
     internal static bool IsPublicHost(string host)
     {
         host = host.TrimEnd('.').Trim('[', ']');
@@ -14,6 +15,7 @@ internal static class PublicMediaAddress
             && !host.EndsWith(".home.arpa", StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Accepts globally routed unicast and checks mapped IPv6 addresses as IPv4.</summary>
     internal static bool IsPublic(IPAddress address)
     {
         if (address.IsIPv4MappedToIPv6) address = address.MapToIPv4();
@@ -38,6 +40,7 @@ internal static class PublicMediaAddress
             && !(bytes[0] == 0x3f && bytes[1] == 0xff && (bytes[2] & 0xf0) == 0);
     }
 
+    /// <summary>Refuses a DNS answer containing any nonpublic address.</summary>
     internal static async Task<IPAddress[]> ResolveAsync(string host, CancellationToken token)
     {
         if (!IsPublicHost(host)) throw new ArgumentException("Choose a public web address.");
@@ -47,6 +50,7 @@ internal static class PublicMediaAddress
         return addresses;
     }
 
+    /// <summary>Connects to the checked numeric addresses without a second DNS lookup.</summary>
     internal static async ValueTask<Stream> ConnectAsync(SocketsHttpConnectionContext context, CancellationToken token)
     {
         var endpoint = context.DnsEndPoint;

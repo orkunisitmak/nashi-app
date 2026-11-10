@@ -24,8 +24,11 @@ public static class ArchiveEngine
         var stem=Path.GetFileNameWithoutExtension(input);
         return FeatureCatalog.Extension(input)=="gz"&&Path.GetExtension(stem).Equals(".tar",StringComparison.OrdinalIgnoreCase)?Path.GetFileNameWithoutExtension(stem):stem;
     }
+    /// <summary>Publish extracted files after applying the source archive's Windows origin mark.</summary>
     public static IReadOnlyList<string> Extract(string input,string destination,string? password=null,IProgress<OperationProgress>? progress=null,CancellationToken token=default)
         =>Extract(input,destination,password,progress,token,out _);
+
+    /// <summary>Extract into staging and return the source zone for archive conversions.</summary>
     private static IReadOnlyList<string> Extract(string input,string destination,string? password,IProgress<OperationProgress>? progress,CancellationToken token,out string? zone)
     {
         input=Path.GetFullPath(input);
@@ -68,6 +71,8 @@ public static class ArchiveEngine
         catch(Exception error)when(error is not OperationCanceledException){return false;}
     }
     private const string PasswordNeeded="This archive is protected. Enter its password.",WrongPassword="The password is incorrect, or the archive is damaged.";
+
+    /// <summary>Validate archive members and mark each file before publishing the extracted folder.</summary>
     private static IReadOnlyList<string> ExtractEntries(string sourcePath,string folder,ExportTransaction tx,string? password,IProgress<OperationProgress>? progress,CancellationToken token,string? zone)
     {
         using var archive=ArchiveFactory.OpenArchive(sourcePath,new ReaderOptions{Password=password,ArchiveEncoding=new ArchiveEncoding{CustomDecoder=DecodeName}});var entries=archive.Entries.ToArray();
@@ -96,6 +101,8 @@ public static class ArchiveEngine
     }
 
     private const string ZoneStream=":Zone.Identifier";
+
+    /// <summary>Read the Internet or Restricted Sites zone without copying other origin metadata.</summary>
     private static string? ReadInternetZone(string archive)
     {
         if(!OperatingSystem.IsWindows())return null;
@@ -122,6 +129,7 @@ public static class ArchiveEngine
         return null;
     }
 
+    /// <summary>Mark a staged output without following reparse points or publishing an unmarked file.</summary>
     private static void PreserveInternetZone(string output,string stagingDirectory,string? zone)
     {
         if(zone is null)return;
@@ -143,11 +151,13 @@ public static class ArchiveEngine
         }
     }
 
+    /// <summary>Recognize filesystem errors that mean a named data stream cannot be opened.</summary>
     private static bool StreamsUnsupported(IOException error)=>error.HResult is
         unchecked((int)0x80070001) or // ERROR_INVALID_FUNCTION
         unchecked((int)0x80070032) or // ERROR_NOT_SUPPORTED
         unchecked((int)0x8007007B);   // ERROR_INVALID_NAME
 
+    /// <summary>Repackage validated contents and transfer the source archive's Windows origin mark.</summary>
     public static IReadOnlyList<string> Convert(string input,string format,string destination,string? password=null,IProgress<OperationProgress>? progress=null,CancellationToken token=default)
     {
         if(format is not ("zip" or "tar" or "gz"))throw new ArgumentException("Choose ZIP, TAR or GZIP.");

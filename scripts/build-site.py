@@ -32,6 +32,7 @@ demo_catalog['presentation']={'wheelTitles':wheel_titles,'editorTitles':editor_t
 (R/'docs/assets/demo/catalog.json').write_text(json.dumps(demo_catalog,ensure_ascii=False,separators=(',',':')))
 play_revision=hashlib.sha256(b''.join((R/p).read_bytes() for p in ['docs/assets/playground.js','docs/assets/playground.css','docs/assets/wheel-geometry.mjs','docs/assets/format-search.mjs','docs/assets/download-preview.mjs','docs/assets/library-limit.mjs','docs/assets/file-selection.mjs','docs/assets/reset-state.mjs','docs/assets/demo/catalog.json','docs/assets/demo/wheel-selection.wav'])).hexdigest()[:12]
 media_revision=hashlib.sha256((R/'docs/assets/showcase/nashi-demo.mp4').read_bytes()).hexdigest()[:12]
+# Change the PDF script URL when the parser changes and keep it stable across checkouts.
 pdf_revision=hashlib.sha256((R/'docs/assets/vendor/pdf-lib.min.js').read_bytes().replace(b'\r\n',b'\n')).hexdigest()[:12]
 features=[
 ('compress','Compress','Sıkıştır','Image, video, audio and PDF compression. Choose quality, reduction percentage or target size where supported. An unreachable target returns an explanation rather than silently losing features.','Görsel, video, ses ve PDF sıkıştırma. Desteklenen türlerde kalite, küçültme oranı veya hedef boyut seçilir; ulaşılamayan hedefler açıklanır.'),

@@ -12,6 +12,7 @@ enum ArchiveCodec {
         var maximumEntries=100_000
         var maximumBytes:Int64=20*1024*1024*1024
     }
+    /// Extracts entries within the staging root and propagates the source quarantine when provided.
     static func extract(_ input: URL, into root: URL, password: String = "", token: CancellationToken, limits:ExtractionLimits=ExtractionLimits(), quarantine: Data? = nil) throws {
         let a = try api.get()
         guard let reader = a.readNew() else { throw NashiError.failed("Could not initialize the archive reader.") }
@@ -35,10 +36,10 @@ enum ArchiveCodec {
         try a.check(input.path.withCString { a.readOpen(reader, $0, 128 * 1024) }, handle: reader)
         let fm = FileManager.default
         var markedDirectories = Set<String>()
+        /// Marks each newly encountered parent, including implicit application bundle directories.
         func createDirectory(_ directory: URL) throws {
             try fm.createDirectory(at: directory, withIntermediateDirectories: true)
             guard let quarantine else { return }
-            // Implicit parent directories can be application bundles too.
             var item = directory.standardizedFileURL
             while markedDirectories.insert(item.path).inserted {
                 try applyQuarantine(quarantine, to: item)
@@ -164,6 +165,7 @@ enum ArchiveCodec {
         }
     }
 
+    /// Reads the archive's original macOS quarantine marker from the file it resolves to.
     static func quarantineAttribute(of file: URL) throws -> Data? {
         var bytes = Data(count: 4096)
         let size = bytes.withUnsafeMutableBytes { buffer in
@@ -177,6 +179,7 @@ enum ArchiveCodec {
         return size > 0 ? Data(bytes.prefix(size)) : nil
     }
 
+    /// Restores the marker on a staged item without following a symbolic link.
     static func applyQuarantine(_ bytes: Data, to file: URL) throws {
         let status = bytes.withUnsafeBytes { buffer in
             setxattr(file.path, quarantineAttributeName, buffer.baseAddress, buffer.count, 0, XATTR_NOFOLLOW)

@@ -3,6 +3,7 @@ using Nashi.Core;
 
 internal static class ArchiveSecurityChecks
 {
+    /// <summary>Check origin marking on nested files, plain GZIP output and both archive writers.</summary>
     internal static void Run(string root, Action<bool, string> check)
     {
         if (!OperatingSystem.IsWindows()) return;
@@ -26,7 +27,10 @@ internal static class ArchiveSecurityChecks
 
         var converted = ArchiveEngine.Convert(zipPath, "tar", root)[0];
         check(File.ReadAllText(converted + zoneStream) == internet,
-            "Archive conversion lost the Internet zone");
+            "TAR conversion lost the Internet zone");
+        var convertedZip = ArchiveEngine.Convert(zipPath, "zip", root)[0];
+        check(File.ReadAllText(convertedZip + zoneStream) == internet,
+            "ZIP conversion lost the Internet zone");
 
         var gzipPath = Path.Combine(root, "Restricted example.txt.gz");
         using (var raw = File.Create(gzipPath))

@@ -3,9 +3,12 @@ namespace Nashi.Core;
 public sealed record WebMediaInfo(string Title,string Site,double? Duration,int[] Heights,bool AudioOnly);
 public sealed partial class WebDownload
 {
+    /// <summary>Reads formats and duration through the same network policy as a full download.</summary>
     public async Task<WebMediaInfo> InspectAsync(string input,CancellationToken token=default)
     {
-        var uri=Validate(WebMediaPayload.Parse(input)?.Url??input);var result=await ProcessRunner.RunAsync(tools.Executable("yt-dlp"),["--ignore-config","--no-playlist","--no-cache-dir","--skip-download","--dump-single-json","--no-progress","--js-runtimes","deno:"+tools.Executable("deno"),"--",uri.AbsoluteUri],token);return ParseInfo(result.Output,uri.Host);
+        var uri=Validate(WebMediaPayload.Parse(input)?.Url??input);
+        var result=await RunExtractorAsync(["--no-playlist","--no-cache-dir","--skip-download","--dump-single-json","--no-progress","--no-js-runtimes","--js-runtimes","deno:"+tools.Executable("deno"),"--",uri.AbsoluteUri],token);
+        return ParseInfo(result.Output,uri.Host);
     }
     public static WebMediaInfo ParseInfo(string json,string site)
     {

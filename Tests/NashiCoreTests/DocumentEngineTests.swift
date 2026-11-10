@@ -123,6 +123,7 @@ final class DocumentEngineTests: XCTestCase {
         XCTAssertEqual(try DocumentText.read(folder.appendingPathComponent("Single.txt")), "one gzip stream\n")
     }
 
+    /// Checks that quarantined inputs mark both implicit bundle directories and repacked archives.
     func testArchiveExtractionAndConversionKeepQuarantine() throws {
         let source = root.appendingPathComponent("Downloaded.tar")
         let item = "Example.app/Contents/MacOS/Example"
@@ -140,6 +141,7 @@ final class DocumentEngineTests: XCTestCase {
         XCTAssertEqual(try ArchiveCodec.quarantineAttribute(of: convert(source, "zip")), quarantine)
     }
 
+    /// Checks that spreadsheet imports preserve expressions as text through a format round trip.
     func testCSVAndTSVFormulaTextStaysLiteral() throws {
         for (ext, separator) in [("csv", ","), ("tsv", "\t")] {
             let input = try file("Formula.\(ext)", "Name\(separator)Value\nTotal\(separator)=1+1\n")

@@ -22,6 +22,7 @@ public static class WebPhotos
         }
         if(photos.Count==0)throw new InvalidDataException("This post contains videos. Use its Reel link to download video.");return photos.ToArray();
     }
+    /// <summary>Downloads a size-limited image and applies the public address policy to every redirect.</summary>
     public static async Task<string> DownloadImageAsync(string url,string directory,IProgress<OperationProgress>? progress,CancellationToken token,string name="Image")
     {
         var uri=WebDownload.Validate(url);

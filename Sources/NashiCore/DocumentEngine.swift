@@ -112,6 +112,7 @@ public enum DocumentEngine {
         return try publish(converted, to: output, token: token)
     }
 
+    /// Publishes the staged contents of an archive with its download quarantine preserved.
     public static func extractArchive(_ input: URL, options: OperationOptions, token: CancellationToken) throws -> [URL] {
         let parent = options.outputDirectory ?? input.deletingLastPathComponent()
         try FileManager.default.createDirectory(at: parent, withIntermediateDirectories: true)
@@ -127,6 +128,7 @@ public enum DocumentEngine {
         return [output]
     }
 
+    /// Repackages an archive while retaining its quarantine for subsequent extraction.
     private static func convertArchive(_ input: URL, to format: String, options: OperationOptions, token: CancellationToken) throws -> [URL] {
         guard ["zip", "tar", "gz"].contains(format) else { throw NashiError.unsupported("Archives can be converted to ZIP, TAR, or GZIP.") }
         let quarantine = try ArchiveCodec.quarantineAttribute(of: input)
@@ -148,7 +150,8 @@ public enum DocumentEngine {
     }
 
     /// Each invocation owns an isolated LibreOffice profile. Headless conversion
-    /// therefore cannot reuse or alter a user's open LibreOffice documents.
+    /// therefore cannot reuse or alter a user's open LibreOffice documents. CSV and TSV
+    /// formula expressions are imported as text.
     static func office(_ input: URL, to format: String, in directory: URL, token: CancellationToken) throws -> URL {
         try token.check()
         let filter = try officeFilter(format, category: FileCategory.detect(input))
