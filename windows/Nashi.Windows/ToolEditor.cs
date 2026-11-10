@@ -68,7 +68,7 @@ public sealed partial class ToolEditor:Window
             var formats=outputFormats?.ToHashSet()??(media is not null?(media.Video is null?MediaEngine.AudioFormats:MediaEngine.VideoFormats.Concat(MediaEngine.AudioFormats).ToHashSet()):ImageEngine.Formats.ToHashSet());
             options.Children.Add(L10n.Label(new TextBlock{Text="Output format",FontWeight=FontWeights.SemiBold}));format.ItemsSource=formats.Order().ToArray();format.SelectedIndex=0;options.Children.Add(format);
         }
-        if(tool is "trimVideo" or "trimAudio" or "redactAudio"){TextField("Start",TimeString(0));TextField("End",TimeString(duration));}
+        if(tool is "trimVideo" or "trimAudio" or "redactAudio"){TimeField("Start",0);TimeField("End",duration);}
         if(tool=="resize"){Field("Width",bitmap?.PixelWidth??1280);Field("Height",bitmap?.PixelHeight??720);}
         if(tool=="compress")Field("Quality (%)",80);
         if(tool=="changeVideoSpeed"){Field("Speed",1);fields["Speed"].TextChanged+=(_,_)=>{try{player.SpeedRatio=Math.Clamp(Value("Speed",1),.05,32);}catch(ArgumentException){}};}
@@ -143,7 +143,7 @@ public sealed partial class ToolEditor:Window
         var box=new TextBox{Text=TimeString(value)};
         System.Windows.Automation.AutomationProperties.SetAutomationId(box,name);
         box.LostKeyboardFocus+=(_,_)=>{try{SyncTimeline();}catch(ArgumentException){}};
-        fields.Add(name,box);defaults.Add(name,TimeString(value));
+        fields.Add(name,box);defaults.Add(name,Number(value)); // Store plain number for Reset; display uses TimeString
         options.Children.Add(box);
         options.Children.Add(MainWindow.Button("Set Here",()=>{
             box.Text=TimeString(player.Position.TotalSeconds);
