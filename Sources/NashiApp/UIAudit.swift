@@ -5,7 +5,7 @@ import NashiCore
 import NashiUpdates
 
 struct UIAuditOptions {
-    static let scenes=["home.empty","home.selected","library","settings.general","settings.formats","settings.updates","wheel.pdf-multiple","editor.crop-image","editor.annotate-image","editor.frame-image"]
+    static let scenes=["home.empty","home.selected","home.calculator","library","settings.general","settings.formats","settings.updates","wheel.pdf-multiple","editor.crop-image","editor.annotate-image","editor.frame-image"]
     var output:URL
     var scenes=Self.scenes
     var appearances=["light","dark"]
@@ -133,6 +133,10 @@ struct UIAuditError:LocalizedError { let message:String;init(_ message:String){s
         let view:AnyView,size:NSSize
         switch scene {
         case "home.empty","home.selected","library":view=AnyView(HomeView(state:state,updater:updater));size=NSSize(width:700,height:580)
+        case "home.calculator":
+            // Fixed rates keep this scene offline and deterministic.
+            let rates=CurrencyRates(base:"USD",rates:["USD":1,"TRY":34.25],updated:Date())
+            view=AnyView(HomeView(state:state,updater:updater,calculator:CalculatorModel(rates:rates,query:"1 USD to TRY")));size=NSSize(width:700,height:780)
         case "settings.general","settings.formats","settings.updates":
             let section:SettingsSection=scene=="settings.formats" ? .formats:scene=="settings.updates" ? .updates:.general
             view=AnyView(SettingsView(updater:updater,initialSection:section));size=NSSize(width:790,height:590)
