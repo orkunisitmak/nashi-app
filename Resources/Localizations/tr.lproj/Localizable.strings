@@ -485,6 +485,7 @@
 "CHOOSE VIDEO, AUDIO, THUMBNAIL OR IMAGES." = "VİDEO, SES, KÜÇÜK RESİM VEYA GÖRSEL SEÇ.";
 "CHOOSE VISUALIZATION IMAGE…" = "GÖRSELLEŞTİRME GÖRSELİ SEÇ…";
 "CHOOSE WHAT YOUR FILE SHARES." = "DOSYANIN NE PAYLAŞTIĞINI SEN SEÇ.";
+"CHOOSE WHICH ITEMS APPEAR ON EACH DRAG WHEEL. HIDDEN ITEMS ARE LEFT OUT; THE REMAINING SLICES SHARE THE WHEEL EVENLY." = "HER SÜRÜKLEME ÇARKINDA HANGİ ÖĞELERİN GÖRÜNECEĞİNİ SEÇİN. GİZLENEN ÖĞELER ÇIKARILIR; KALANLAR ÇARKI EŞİT PAYLAŞIR.";
 "CHOOSE YOUR HOME FOLDER OR A FOLDER WHERE YOU SAVE FILES." = "ANA KLASÖRÜNÜ VEYA DOSYALARINI KAYDETTİĞİN BİR KLASÖRÜ SEÇ.";
 "CHOOSE ZIP, TAR OR GZIP." = "ZIP, TAR VEYA GZIP SEÇ.";
 "CLARITY" = "NETLİK";
@@ -686,6 +687,7 @@
 "Choose video, audio, thumbnail or images." = "Video, ses, küçük resim veya görsel seç.";
 "Choose visualization image…" = "Görselleştirme görseli seç…";
 "Choose what your file shares." = "Dosyanın ne paylaştığını sen seç.";
+"Choose which items appear on each drag wheel. Hidden items are left out; the remaining slices share the wheel evenly." = "Her sürükleme çarkında hangi öğelerin görüneceğini seçin. Gizlenen öğeler çıkarılır; kalanlar çarkı eşit paylaşır.";
 "Choose your home folder or a folder where you save files." = "Ana klasörünü veya dosyalarını kaydettiğin bir klasörü seç.";
 "Clarity" = "Netlik";
 "Clear" = "Temizle";
@@ -2785,7 +2787,9 @@
 "WELCOME TO NASHI" = "NASHI'YE HOŞ GELDİN";
 "WELCOME…" = "HOŞ GELDİN…";
 "WHEEL FINISH" = "ÇARK GÖRÜNÜMÜ";
+"WHEEL ITEMS" = "ÇARK ÖĞELERİ";
 "WHEEL SIZE" = "ÇARK BOYUTU";
+"WHEELS" = "ÇARKLAR";
 "WHITES" = "BEYAZLAR";
 "WIDTH" = "GENİŞLİK";
 "WINDOW" = "PENCERE";
@@ -2801,7 +2805,9 @@
 "Welcome to Nashi" = "Nashi'ye Hoş Geldin";
 "Welcome…" = "Hoş Geldin…";
 "Wheel finish" = "Çark görünümü";
+"Wheel items" = "Çark öğeleri";
 "Wheel size" = "Çark boyutu";
+"Wheels" = "Çarklar";
 "Whites" = "Beyazlar";
 "Width" = "Genişlik";
 "Window" = "Pencere";

@@ -485,6 +485,7 @@
 "CHOOSE VIDEO, AUDIO, THUMBNAIL OR IMAGES." = "CHOISISSEZ UNE VIDÉO, UN AUDIO, UNE MINIATURE OU DES IMAGES.";
 "CHOOSE VISUALIZATION IMAGE…" = "CHOISIR L’IMAGE DE VISUALISATION…";
 "CHOOSE WHAT YOUR FILE SHARES." = "CHOISISSEZ CE QUE VOTRE FICHIER PARTAGE.";
+"CHOOSE WHICH ITEMS APPEAR ON EACH DRAG WHEEL. HIDDEN ITEMS ARE LEFT OUT; THE REMAINING SLICES SHARE THE WHEEL EVENLY." = "CHOISISSEZ LES ÉLÉMENTS AFFICHÉS SUR CHAQUE ROUE DE GLISSER-DÉPOSER. LES ÉLÉMENTS MASQUÉS SONT RETIRÉS; LES AUTRES SE PARTAGENT LA ROUE À PARTS ÉGALES.";
 "CHOOSE YOUR HOME FOLDER OR A FOLDER WHERE YOU SAVE FILES." = "CHOISISSEZ VOTRE DOSSIER DE DÉPART OU UN DOSSIER OÙ VOUS ENREGISTREZ VOS FICHIERS.";
 "CHOOSE ZIP, TAR OR GZIP." = "CHOISISSEZ ZIP, TAR OU GZIP.";
 "CLARITY" = "CLARTÉ";
@@ -686,6 +687,7 @@
 "Choose video, audio, thumbnail or images." = "Choisissez une vidéo, un audio, une miniature ou des images.";
 "Choose visualization image…" = "Choisir l’image de visualisation…";
 "Choose what your file shares." = "Choisissez ce que votre fichier partage.";
+"Choose which items appear on each drag wheel. Hidden items are left out; the remaining slices share the wheel evenly." = "Choisissez les éléments affichés sur chaque roue de glisser-déposer. Les éléments masqués sont retirés; les autres se partagent la roue à parts égales.";
 "Choose your home folder or a folder where you save files." = "Choisissez votre dossier de départ ou un dossier où vous enregistrez vos fichiers.";
 "Clarity" = "Clarté";
 "Clear" = "Effacer";
@@ -2785,7 +2787,9 @@
 "WELCOME TO NASHI" = "BIENVENUE DANS NASHI";
 "WELCOME…" = "BIENVENUE…";
 "WHEEL FINISH" = "FINITION DE LA ROUE";
+"WHEEL ITEMS" = "ÉLÉMENTS DE LA ROUE";
 "WHEEL SIZE" = "TAILLE DE LA ROUE";
+"WHEELS" = "ROUES";
 "WHITES" = "BLANCS";
 "WIDTH" = "LARGEUR";
 "WINDOW" = "FENÊTRE";
@@ -2801,7 +2805,9 @@
 "Welcome to Nashi" = "Bienvenue dans Nashi";
 "Welcome…" = "Bienvenue…";
 "Wheel finish" = "Finition de la roue";
+"Wheel items" = "Éléments de la roue";
 "Wheel size" = "Taille de la roue";
+"Wheels" = "Roues";
 "Whites" = "Blancs";
 "Width" = "Largeur";
 "Window" = "Fenêtre";

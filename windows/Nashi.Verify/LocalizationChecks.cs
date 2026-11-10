@@ -26,6 +26,13 @@ internal static class LocalizationChecks
         check(loaded.Language=="tr"&&!loaded.Feedback&&loaded.ToolsModifier=="Ctrl+Alt","Language persistence changed other preferences");
         var hw=store.Value with{HiddenWheelItems=new Dictionary<string,string[]> { ["convert"]=new[]{"webp"}, ["tools"]=new[]{"compress"}, ["actions"]=new[]{"terminal"} }};store.Save(hw);var loadedHw=new PreferencesStore(directory).Value;
         check(loadedHw.HiddenWheelItems["convert"].SequenceEqual(new[]{"webp"})&&loadedHw.HiddenWheelItems["tools"].SequenceEqual(new[]{"compress"})&&loadedHw.HiddenWheelItems["actions"].SequenceEqual(new[]{"terminal"}),"Hidden wheel items persistence failed");
+        try{store.Save(store.Value with{HiddenWheelItems=new Dictionary<string,string[]>{["actions"]=Preferences.WheelActionIds}});check(false,"Hiding every Actions wheel item was accepted");}
+        catch(ArgumentException){check(new PreferencesStore(directory).Value.HiddenWheelItems["actions"].SequenceEqual(new[]{"terminal"}),"A rejected wheel preference changed the saved file");}
+        foreach(var bad in new[]{"{\"HiddenWheelItems\":null}","{\"HiddenWheelItems\":{\"convert\":null}}","{\"HiddenWheelItems\":{\"tools\":[null]}}","{\"HiddenWheelItems\":{\"actions\":[\"share\",\"float\",\"copy\",\"move\",\"copyPath\",\"terminal\"]}}"})
+        {
+            var folder=Path.Combine(root,"Bad wheel preferences "+Math.Abs(bad.GetHashCode()));Directory.CreateDirectory(folder);File.WriteAllText(Path.Combine(folder,"preferences.json"),bad);
+            var recovered=new PreferencesStore(folder);check(recovered.RecoveryNotice is not null&&recovered.Value.HiddenWheelItems.Count==0,"Invalid hidden wheel items were not recovered: "+bad);
+        }
         var old=Path.Combine(root,"Legacy language preferences");Directory.CreateDirectory(old);File.WriteAllText(Path.Combine(old,"preferences.json"),"{\"Feedback\":false}");var legacy=new PreferencesStore(old);
         check(legacy.Value.Language=="en"&&!legacy.Value.Feedback,"Legacy preference migration changed other values");
         check(AppLocalization.Normalize("fr")=="en"&&AppLocalization.Text("Home","en")=="Home","Unsupported language or English fallback failed");

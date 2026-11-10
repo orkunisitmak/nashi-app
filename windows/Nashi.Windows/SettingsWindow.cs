@@ -14,6 +14,32 @@ public sealed partial class SettingsWindow:Window
         this.appearanceStore=appearanceStore;L10n.Choices(sections);
         this.store=store;this.changed=changed;Owner=owner;Theme.Attach(this);Title="Make it yours · Nashi";Width=850;Height=680;MinWidth=740;MinHeight=500;WindowStartupLocation=WindowStartupLocation.CenterOwner;var root=new DockPanel();Content=root;DockPanel.SetDock(sections,Dock.Left);root.Children.Add(sections);root.Children.Add(new ScrollViewer{Content=page,VerticalScrollBarVisibility=ScrollBarVisibility.Auto});sections.SelectionChanged+=(_,_)=>ShowSection(update);ShowSection(update);PreviewKeyDown+=(_,e)=>{if(e.Key==System.Windows.Input.Key.Escape){Close();e.Handled=true;}};
     }
+    private void WheelItems()
+    {
+        Heading("Wheel items","Choose which items appear on each drag wheel. Hidden items are left out; the remaining slices share the wheel evenly.");
+        var sample=new[]{Path.Combine(Path.GetTempPath(),"sample.jpg")};
+        var wheels=new[]{("convert","Convert",FeatureCatalog.Formats(sample).Select(f=>(Id:f,Name:f.ToUpperInvariant()))),
+            ("tools","Tools",FeatureCatalog.Tools(sample).Select(t=>(Id:t,Name:FeatureCatalog.ToolNames[t]))),
+            ("actions","File actions",GlobalDropWheel.ActionChoices.Select(a=>(Id:a.Id,Name:a.Title)))};
+        foreach(var (wheel,title,items) in wheels)
+        {
+            page.Children.Add(L10n.Label(new TextBlock{Text=title,FontSize=16,FontWeight=FontWeights.SemiBold,Margin=new(4,16,4,8)}));
+            foreach(var (id,name) in items)
+            {
+                var box=L10n.Content(new CheckBox{Content=name,IsChecked=!HiddenIds(wheel).Contains(id),Margin=new(8,4,8,4)});
+                box.Click+=(_,_)=>
+                {
+                    // Read the stored lists again: a click on another box has changed them since this page opened.
+                    var hidden=HiddenIds(wheel).Where(other=>other!=id).ToList();if(box.IsChecked!=true)hidden.Add(id);
+                    // The Actions wheel always keeps one item; Convert and Tools may be emptied.
+                    if(wheel=="actions"&&Preferences.WheelActionIds.All(hidden.Contains)){box.IsChecked=true;return;}
+                    Save(store.Value with{HiddenWheelItems=new Dictionary<string,string[]>(store.Value.HiddenWheelItems){[wheel]=hidden.ToArray()}});
+                };
+                page.Children.Add(box);
+            }
+        }
+    }
+    private string[] HiddenIds(string wheel)=>store.Value.HiddenWheelItems.GetValueOrDefault(wheel)??[];
     private void Save(Preferences value){try{store.Save(value);changed();}catch(Exception error)when(error is IOException or ArgumentException or UnauthorizedAccessException){MessageBox.Show(this,L10n.Text(error.Message),L10n.Text("Settings could not be saved"));}}
     private void Heading(string title,string hint){page.Children.Add(L10n.Label(new TextBlock{Text=title,FontSize=28,FontWeight=FontWeights.Bold}));page.Children.Add(L10n.Label(new TextBlock{Text=hint,TextWrapping=TextWrapping.Wrap,Margin=new(0,8,0,20),Foreground=Theme.Brush("Muted")}));}
     private void Toggle(string title,bool value,Action<bool> save){var box=L10n.Content(new CheckBox{Content=title,IsChecked=value,Margin=new(4,12,4,12)});box.Checked+=(_,_)=>save(true);box.Unchecked+=(_,_)=>save(false);page.Children.Add(box);}
@@ -37,7 +63,7 @@ public sealed partial class SettingsWindow:Window
             case "Formats":
                 FormatDefaults();break;
             case "Compatibility":Heading("Everything has a next form.","The same conversion and tool catalog as macOS.");foreach(var pair in FeatureCatalog.Conversions.OrderBy(p=>p.Key))page.Children.Add(new TextBlock{Text=pair.Key.ToUpperInvariant()+"  →  "+string.Join(", ",pair.Value.Select(v=>v.ToUpperInvariant())),TextWrapping=TextWrapping.Wrap,Margin=new(4,8,4,8)});break;
-            case "Wheels":Heading("Wheel items","Choose which items appear on each drag wheel. Hidden items are left out; the remaining slices share the wheel evenly.");var actionItems=new[]{"share","float","copy","move","copyPath","terminal"};foreach(var (wheel,items,label) in new[]{(wheel:"convert",items:FeatureCatalog.Formats(new[]{Path.Combine(Path.GetTempPath(),"sample.jpg")}),label:"Convert"),(wheel:"tools",items:FeatureCatalog.Tools(new[]{Path.Combine(Path.GetTempPath(),"sample.jpg")}),label:"Tools"),(wheel:"actions",items:actionItems,label:"File actions")}){page.Children.Add(L10n.Label(new TextBlock{Text=label,FontSize=16,FontWeight=FontWeights.SemiBold,Margin=new(4,16,4,8)}));foreach(var item in items){var isHidden=(store.Value.HiddenWheelItems.GetValueOrDefault(wheel,Array.Empty<string>())??Array.Empty<string>()).Contains(item);var box=new CheckBox{Content=item.ToUpperInvariant(),IsChecked=!isHidden,Margin=new(8,4,8,4)};bool lastAction=wheel=="actions"&&actionItems.Length==1;box.Checked+=(_,_)=>{var h=new Dictionary<string,string[]>(store.Value.HiddenWheelItems){[wheel]=(store.Value.HiddenWheelItems.GetValueOrDefault(wheel,Array.Empty<string>())??Array.Empty<string>()).Where(id=>id!=item).ToArray()};Save(store.Value with{HiddenWheelItems=h});};box.Unchecked+=(_,_)=>{var h=new Dictionary<string,string[]>(store.Value.HiddenWheelItems){[wheel]=(store.Value.HiddenWheelItems.GetValueOrDefault(wheel,Array.Empty<string>())??Array.Empty<string>()).Append(item).Distinct().ToArray()};Save(store.Value with{HiddenWheelItems=h});};if(lastAction)box.IsEnabled=false;page.Children.Add(box);}}break;
+            case "Wheels":WheelItems();break;
             case "Folders":Heading("A place for fresh files.","Originals remain safe. Choose where new copies should land.");Pick("Save new copies",["beside","ask","folder"],store.Value.OutputMode,v=>Save(store.Value with{OutputMode=v}));page.Children.Add(MainWindow.Button("Choose output folder…",()=>{var picker=new OpenFolderDialog{Title="Save new copies here"};if(picker.ShowDialog(this)==true){Save(store.Value with{OutputFolder=picker.FolderName,OutputMode="folder"});ShowSection(update);}}));page.Children.Add(new TextBlock{Text=store.Value.OutputFolder,TextWrapping=TextWrapping.Wrap});page.Children.Add(MainWindow.Button("Choose downloads folder…",()=>{var picker=new OpenFolderDialog{Title="Save downloaded media here"};if(picker.ShowDialog(this)==true){Save(store.Value with{DownloadFolder=picker.FolderName});ShowSection(update);}}));page.Children.Add(new TextBlock{Text=store.Value.DownloadFolder,TextWrapping=TextWrapping.Wrap});break;
             case "Updates":Heading("Fresh things, on their way.","Updates are downloaded from the public Nashi repository and verified before installation. No GitHub account or token is required.");Toggle("Check for updates automatically",store.Value.AutomaticUpdateChecks,v=>Save(store.Value with{AutomaticUpdateChecks=v}));page.Children.Add(MainWindow.Button("Check for updates",async()=>await update()));break;
             default:Heading("Nashi", "A little pear. A lot of possibility.");page.Children.Add(L10n.Label(new TextBlock{Text="Local by design · MIT source\nVersion "+UpdateInstaller.Current,Margin=new(4,12,4,12)}));page.Children.Add(MainWindow.Button("Source & third-party notices",()=>MainWindow.OpenUrl("https://github.com/orkunisitmak/nashi-app")));break;
