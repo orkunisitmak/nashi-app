@@ -142,6 +142,13 @@ public enum MediaEngine {
         return [output]
     }
 
+    /// Album art is an attached picture stream, not a tag; keep it where the container stores JPEG/PNG art.
+    private static func albumArtArguments(_ info: MediaInfo, ext: String, options: OperationOptions, input: Int = 0) -> [String]? {
+        guard options.preserveMetadata, ["mp3", "m4a", "flac"].contains(ext),
+              let artwork = info.streams.first(where: { $0.isAttachedPicture && ["mjpeg", "png"].contains($0.codec) }) else { return nil }
+        return ["-map", "\(input):\(artwork.index)", "-c:v", "copy"]
+    }
+
     public static func convert(_ input: URL, to format: String, options: OperationOptions, token: CancellationToken, progress: @escaping ProgressHandler = {_,_ in}) throws -> [URL] {
         let info = try inspect(input, token: token)
         let ext = format.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "."))
@@ -152,9 +159,7 @@ public enum MediaEngine {
         var arguments = ["-i", input.path]
         if audioFormats.contains(ext) {
             try requireAudio(info)
-            // Album art is an attached picture stream, not a tag; keep it where the container stores JPEG/PNG art.
-            let artwork = options.preserveMetadata && ["mp3", "m4a", "flac"].contains(ext) ? info.streams.first { $0.isAttachedPicture && ["mjpeg", "png"].contains($0.codec) } : nil
-            arguments += ["-map", "0:a:0"] + (artwork.map { ["-map", "0:\($0.index)", "-c:v", "copy"] } ?? ["-vn"]) + audioEncoding(ext, quality: options.quality, bitrate: options.audioBitrate * 1000, source: info.audio, pcmCodec: try pcmCodec(for: ext, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset)
+            arguments += ["-map", "0:a:0"] + (albumArtArguments(info, ext: ext, options: options) ?? ["-vn"]) + audioEncoding(ext, quality: options.quality, bitrate: options.audioBitrate * 1000, source: info.audio, pcmCodec: try pcmCodec(for: ext, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset)
         } else {
             try requireVideo(info)
             arguments += ["-map", "0:v:0"]
@@ -163,7 +168,11 @@ public enum MediaEngine {
                 let scale = try scalingFilter(options, padToEven: false)
                 // GIF viewers ignore a pixel aspect, so non-square pixels are resized to their displayed shape.
                 let first = (["fps=\(options.gifFrameRate)"] + (scale.map { [$0] } ?? []) + ["scale=w='min(\(options.gifMaxWidth),iw)':h=-2:force_original_aspect_ratio=decrease:reset_sar=1"]).joined(separator: ",")
-                arguments += ["-filter_complex", "[0:v:0]\(first),split[p0][p1];[p0]palettegen=stats_mode=diff[pal];[p1][pal]paletteuse=dither=sierra2_4a", "-an", "-loop", "0"]
+                // Fast skips error diffusion; Maximum uses fewer colors and rewrites only the changed rectangle of each frame.
+                let palette = options.compressionPreset == "fast" ? (generate: "palettegen=stats_mode=diff", apply: "paletteuse=dither=bayer:bayer_scale=5")
+                    : options.compressionPreset == "maximum" ? (generate: "palettegen=max_colors=128:stats_mode=diff", apply: "paletteuse=dither=sierra2_4a:diff_mode=rectangle")
+                    : (generate: "palettegen=stats_mode=diff", apply: "paletteuse=dither=sierra2_4a")
+                arguments += ["-filter_complex", "[0:v:0]\(first),split[p0][p1];[p0]\(palette.generate)[pal];[p1][pal]\(palette.apply)", "-an", "-loop", "0"]
                 // Complex filters map their final output automatically.
                 arguments.removeSubrange(2..<4)
             } else {
@@ -262,7 +271,7 @@ public enum MediaEngine {
         }
         let ext = audioExtension(input)
         let out = try outputURL(input, ext: ext, suffix: " Normalized", options: options)
-        try render(["-i", input.path, "-map", "0:a:0", "-af", filter, "-ar", String(info.audio?.sampleRate ?? 48000)] + audioEncoding(ext, quality: options.quality, source: info.audio, pcmCodec: try pcmCodec(for: ext, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset), to: out, token: token, duration: info.duration, progress: { value,label in progress(OperationProgress.map(value, from: 0.45, to: 1),label) })
+        try render(["-i", input.path, "-map", "0:a:0"] + (albumArtArguments(info, ext: ext, options: options) ?? []) + ["-af", filter, "-ar", String(info.audio?.sampleRate ?? 48000)] + audioEncoding(ext, quality: options.quality, source: info.audio, pcmCodec: try pcmCodec(for: ext, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset), to: out, token: token, duration: info.duration, progress: { value,label in progress(OperationProgress.map(value, from: 0.45, to: 1),label) })
         return [out]
     }
 
@@ -273,9 +282,11 @@ public enum MediaEngine {
         let out = try outputURL(input, ext: ext, suffix: suffix, options: options)
         let range = ["-ss", decimal(interval.0), "-t", decimal(interval.1 - interval.0)]
         // Output -ss/-t cut after -af, so silence removal would scan the whole file; read only the selection instead.
-        var arguments = audio && options.trimSilence ? range + ["-i", input.path] : ["-i", input.path] + range
+        // An output-side -ss drops the attached cover packet, so a cover comes from a second, unseeked input.
+        let cover = audio ? albumArtArguments(info, ext: ext, options: options, input: 1) : nil
+        var arguments = audio && (options.trimSilence || cover != nil) ? range + ["-i", input.path] + (cover == nil ? [] : ["-i", input.path]) : ["-i", input.path] + range
         if audio {
-            arguments += ["-map", "0:a:0", "-vn"]
+            arguments += ["-map", "0:a:0"] + (cover ?? ["-vn"])
             if options.trimSilence { arguments += ["-af", "silenceremove=start_periods=1:start_duration=0.02:start_threshold=\(decimal(options.silenceThresholdDb))dB,areverse,silenceremove=start_periods=1:start_duration=0.02:start_threshold=\(decimal(options.silenceThresholdDb))dB,areverse"] }
             arguments += audioEncoding(ext, quality: options.quality, source: info.audio, pcmCodec: try pcmCodec(for: ext, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset)
         } else { arguments += ["-map", "0:v:0", "-map", "0:a:0?"] + videoEncoding(ext, quality: options.quality, sourceAudio: info.audio) }
@@ -480,7 +491,7 @@ public enum MediaEngine {
         try requireAudio(info)
         let filter = try channelFilter(info: info, options: options)
         let ext = audioExtension(input), out = try outputURL(input, ext: audioExtension(input), suffix: options.channels == 1 ? " Mono" : " Stereo", options: options)
-        try render(["-i", input.path, "-map", "0:a:0", "-af", filter, "-ac", String(options.channels)] + audioEncoding(ext, quality: options.quality, source: info.audio, channels: options.channels, pcmCodec: try pcmCodec(for: ext, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset), to: out, token: token, duration: info.duration, progress: progress)
+        try render(["-i", input.path, "-map", "0:a:0"] + (albumArtArguments(info, ext: ext, options: options) ?? []) + ["-af", filter, "-ac", String(options.channels)] + audioEncoding(ext, quality: options.quality, source: info.audio, channels: options.channels, pcmCodec: try pcmCodec(for: ext, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset), to: out, token: token, duration: info.duration, progress: progress)
         return [out]
     }
 
@@ -537,7 +548,7 @@ public enum MediaEngine {
         let out = try outputURL(input, ext: audioExtension(input), suffix: mode == "mute" || mode == "silence" ? " Redacted" : " Bleeped", options: options)
         let replacement = mode == "mute" || mode == "silence" ? "0" : "0.18*sin(2*PI*1000*t)"
         let expressions = (0..<(info.audio?.channels ?? 2)).map { "if(\(expression),\(replacement),val(\($0)))" }.joined(separator: "|")
-        var arguments = ["-i", input.path, "-map", "0:a:0", "-af", "aeval=exprs='\(expressions)':c=same"]
+        var arguments = ["-i", input.path, "-map", "0:a:0"] + (albumArtArguments(info, ext: out.pathExtension.lowercased(), options: options) ?? []) + ["-af", "aeval=exprs='\(expressions)':c=same"]
         arguments += ["-ac", String(info.audio?.channels ?? 2), "-ar", String(info.audio?.sampleRate ?? 48000)] + audioEncoding(out.pathExtension, quality: options.quality, source: info.audio, pcmCodec: try pcmCodec(for: out.pathExtension, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset)
         try render(arguments, to: out, token: token, duration: info.duration, progress: progress)
         return [out]
