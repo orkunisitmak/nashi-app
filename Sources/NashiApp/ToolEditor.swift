@@ -154,7 +154,7 @@ struct ToolEditor:View {
             .onChange(of:previewKey) { _ in if processedPlayback { playOriginal(play:false) } }
             .background(WindowIdentityReader { ownerWindowID=$0 })
             .background(EditorKeyboardShortcuts(enabled:!isLoading && readyToApply && !state.working,onCommand:handleShortcut))
-            .onReceive(NotificationCenter.default.publisher(for:NSWindow.willCloseNotification)) { notification in if let window=notification.object as? NSWindow,ownerWindowID==ObjectIdentifier(window) { disposeMedia() } }
+            .onReceive(NotificationCenter.default.publisher(for:NSWindow.willCloseNotification)) { notification in if let window=notification.object as? NSWindow,ownerWindowID==ObjectIdentifier(window) { disposeMedia();options.password="" } }
             .onReceive(NotificationCenter.default.publisher(for:.AVPlayerItemDidPlayToEndTime).receive(on:DispatchQueue.main)) { notification in if let item=notification.object as? AVPlayerItem,item === player?.currentItem { playerReachedEnd=true } }
             .onChange(of:width) {
                 if $0>0,tool == .editImage { options.width=$0 }
@@ -638,7 +638,7 @@ struct ToolEditor:View {
                 else { loaded=try await Task.detached { try MediaEngine.readMetadata(input,token:token) }.value }
                 try checkGeneration(generation,token:token);metadata=loaded;originalMetadata=loaded
             }
-            if tool == .organizePDF { pdfEditor.reset(document:try PDFEngine.open(input,password:options.password)) }
+            if tool == .organizePDF { pdfEditor.reset(document:try PDFEngine.open(input,password:options.password));previewError=nil }
             if tool == .frameImage { options.imageFrame = .init() }
             if tool == .createCollage { options.collage = .init() }
             if tool == .audioToVideo { width=1920;height=1080;options.backgroundColor="#000000" }
