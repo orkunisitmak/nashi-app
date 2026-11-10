@@ -2458,6 +2458,7 @@
 "THIS PDF IS PASSWORD PROTECTED. ENTER ITS PASSWORD." = "THIS PDF IS PASSWORD PROTECTED. ENTER ITS PASSWORD.";
 "THIS PDF PAGE COULD NOT BE READ." = "THIS PDF PAGE COULD NOT BE READ.";
 "THIS PDF REQUIRES A VALID PASSWORD." = "THIS PDF REQUIRES A VALID PASSWORD.";
+"THIS POST HAS NO VIDEOS. CHOOSE PHOTOS TO DOWNLOAD IT." = "THIS POST HAS NO VIDEOS. CHOOSE PHOTOS TO DOWNLOAD IT.";
 "THIS POST IS A VIDEO. CHOOSE VIDEO OR AUDIO TO DOWNLOAD IT." = "THIS POST IS A VIDEO. CHOOSE VIDEO OR AUDIO TO DOWNLOAD IT.";
 "THIS REPOSITORY IS PRIVATE" = "THIS REPOSITORY IS PRIVATE";
 "THIS RTFD ATTACHMENT SYNTAX COULD NOT BE PRESERVED." = "THIS RTFD ATTACHMENT SYNTAX COULD NOT BE PRESERVED.";
@@ -2634,6 +2635,7 @@
 "This link requires a login or is restricted. Try a public share link; Nashi does not read your browser sessions." = "This link requires a login or is restricted. Try a public share link; Nashi does not read your browser sessions.";
 "This media is protected and cannot be downloaded here." = "This media is protected and cannot be downloaded here.";
 "This output format has no adjustable conversion defaults." = "This output format has no adjustable conversion defaults.";
+"This post has no videos. Choose photos to download it." = "This post has no videos. Choose photos to download it.";
 "This post is a video. Choose video or audio to download it." = "This post is a video. Choose video or audio to download it.";
 "This repository is private" = "This repository is private";
 "This size cannot be reached. Choose a larger target or smaller dimensions." = "This size cannot be reached. Choose a larger target or smaller dimensions.";

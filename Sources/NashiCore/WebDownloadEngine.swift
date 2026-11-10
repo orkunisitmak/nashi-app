@@ -159,7 +159,7 @@ public enum WebDownloadEngine {
     static func downloadArguments(_ info:WebMediaInfo,mode:WebDownloadMode,maximumHeight:Int?,directory:URL) throws -> [String] {
         // A /p/ post can hold several videos; download each of them instead of silently keeping the first.
         let post=WebMediaDragPayload.isInstagramPhotoPost(info.url)
-        var args=try baseArguments(photoPost:post)+(post ? ["--ignore-no-formats-error"]:[])+["--no-simulate","--no-overwrites","--windows-filenames","--trim-filenames","180",
+        var args=try baseArguments(photoPost:post)+["--no-simulate","--no-overwrites","--windows-filenames","--trim-filenames","180",
              "--downloader","native","--newline","--progress","--progress-template","download:NASHI_PROGRESS:%(progress._percent_str)s",
              "--print","before_dl:NASHI_STAGE:Preparing media…","--print","post_process:NASHI_STAGE:Finishing media…",
              // yt-dlp tests formats in a temporary file under its home path, which defaults to the

@@ -2458,6 +2458,7 @@
 "THIS PDF IS PASSWORD PROTECTED. ENTER ITS PASSWORD." = "CE PDF EST PROTÉGÉ PAR UN MOT DE PASSE. SAISISSEZ SON MOT DE PASSE.";
 "THIS PDF PAGE COULD NOT BE READ." = "CETTE PAGE PDF N’A PAS PU ÊTRE LUE.";
 "THIS PDF REQUIRES A VALID PASSWORD." = "CE PDF NÉCESSITE UN MOT DE PASSE VALIDE.";
+"THIS POST HAS NO VIDEOS. CHOOSE PHOTOS TO DOWNLOAD IT." = "CETTE PUBLICATION NE CONTIENT PAS DE VIDÉO. CHOISISSEZ LES PHOTOS POUR LA TÉLÉCHARGER.";
 "THIS POST IS A VIDEO. CHOOSE VIDEO OR AUDIO TO DOWNLOAD IT." = "CETTE PUBLICATION EST UNE VIDÉO. CHOISISSEZ VIDÉO OU AUDIO POUR LA TÉLÉCHARGER.";
 "THIS REPOSITORY IS PRIVATE" = "CE DÉPÔT EST PRIVÉ";
 "THIS RTFD ATTACHMENT SYNTAX COULD NOT BE PRESERVED." = "CETTE SYNTAXE DE PIÈCE JOINTE RTFD N’A PAS PU ÊTRE PRÉSERVÉE.";
@@ -2634,6 +2635,7 @@
 "This link requires a login or is restricted. Try a public share link; Nashi does not read your browser sessions." = "Ce lien nécessite une connexion ou est restreint. Essayez un lien de partage public ; Nashi ne lit pas vos sessions de navigateur.";
 "This media is protected and cannot be downloaded here." = "Ce média est protégé et ne peut pas être téléchargé ici.";
 "This output format has no adjustable conversion defaults." = "Ce format de sortie n’a pas de réglages de conversion modifiables.";
+"This post has no videos. Choose photos to download it." = "Cette publication ne contient pas de vidéo. Choisissez les photos pour la télécharger.";
 "This post is a video. Choose video or audio to download it." = "Cette publication est une vidéo. Choisissez vidéo ou audio pour la télécharger.";
 "This repository is private" = "Ce dépôt est privé";
 "This size cannot be reached. Choose a larger target or smaller dimensions." = "Cette taille est impossible à atteindre. Choisissez une cible plus grande ou des dimensions plus petites.";

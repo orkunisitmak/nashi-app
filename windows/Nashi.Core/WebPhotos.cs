@@ -12,7 +12,7 @@ public static class WebPhotos
         using var doc=JsonDocument.Parse(json);var root=doc.RootElement;var entries=root.TryGetProperty("entries",out var collection)&&collection.ValueKind==JsonValueKind.Array?collection.EnumerateArray().ToArray():[root];if(entries.Length==0||entries.Length>50)throw new InvalidDataException("Choose one Instagram post with up to 50 items.");var photos=new List<WebPhoto>();
         for(var n=0;n<entries.Length;n++)
         {
-            var entry=entries[n];if(entry.TryGetProperty("duration",out var duration)&&duration.ValueKind==JsonValueKind.Number&&duration.TryGetDouble(out var seconds)&&seconds>0)continue;if(entry.TryGetProperty("formats",out var formats)&&formats.ValueKind==JsonValueKind.Array&&formats.EnumerateArray().Any(f=>f.ValueKind==JsonValueKind.Object&&f.TryGetProperty("url",out _)))continue;
+            var entry=entries[n];if(IsVideo(entry))continue;
             if(!entry.TryGetProperty("thumbnails",out var thumbs)||thumbs.ValueKind!=JsonValueKind.Array)throw new InvalidDataException("A photo is unavailable. Try a fresh public post link.");
             var variants=new List<(WebPhoto Photo,int Uncropped,int Unscaled,int Area,int Position)>();var i=0;
             foreach(var thumbnail in thumbs.EnumerateArray())
@@ -25,6 +25,15 @@ public static class WebPhotos
         }
         if(photos.Count==0)throw new InstagramVideoPostException();return photos.ToArray();
     }
+    /// The 1-based playlist items of a post's videos, so video and audio downloads skip its photos;
+    /// null when the link is a single item rather than a carousel.
+    public static int[]? InstagramVideoItems(string json)
+    {
+        using var doc=JsonDocument.Parse(json);var root=doc.RootElement;if(!root.TryGetProperty("entries",out var collection)||collection.ValueKind!=JsonValueKind.Array)return null;
+        var entries=collection.EnumerateArray().ToArray();if(entries.Length==0||entries.Length>50)throw new InvalidDataException("Choose one Instagram post with up to 50 items.");
+        var items=Enumerable.Range(1,entries.Length).Where(n=>IsVideo(entries[n-1])).ToArray();return items.Length>0?items:throw new InvalidDataException("This post has no videos. Choose photos to download it.");
+    }
+    private static bool IsVideo(JsonElement entry)=>entry.ValueKind==JsonValueKind.Object&&(entry.TryGetProperty("duration",out var duration)&&duration.ValueKind==JsonValueKind.Number&&duration.TryGetDouble(out var seconds)&&seconds>0||entry.TryGetProperty("formats",out var formats)&&formats.ValueKind==JsonValueKind.Array&&formats.EnumerateArray().Any(f=>f.ValueKind==JsonValueKind.Object&&f.TryGetProperty("url",out _)));
     public static async Task<string> DownloadImageAsync(string url,string directory,IProgress<OperationProgress>? progress,CancellationToken token,string name="Image")
     {
         var uri=WebDownload.Validate(url);using var handler=new HttpClientHandler{AllowAutoRedirect=false};using var client=new HttpClient(handler){Timeout=TimeSpan.FromMinutes(10)};client.DefaultRequestHeaders.UserAgent.ParseAdd("Nashi");

@@ -2458,6 +2458,7 @@
 "THIS PDF IS PASSWORD PROTECTED. ENTER ITS PASSWORD." = "BU PDF PAROLAYLA KORUNUYOR. PAROLASINI GİR.";
 "THIS PDF PAGE COULD NOT BE READ." = "BU PDF SAYFASI OKUNAMADI.";
 "THIS PDF REQUIRES A VALID PASSWORD." = "BU PDF İÇİN GEÇERLİ BİR PAROLA GEREKİYOR.";
+"THIS POST HAS NO VIDEOS. CHOOSE PHOTOS TO DOWNLOAD IT." = "BU GÖNDERİDE VİDEO YOK. İNDİRMEK İÇİN FOTOĞRAFLARI SEÇ.";
 "THIS POST IS A VIDEO. CHOOSE VIDEO OR AUDIO TO DOWNLOAD IT." = "BU GÖNDERİ BİR VİDEO. İNDİRMEK İÇİN VİDEO YA DA SES SEÇ.";
 "THIS REPOSITORY IS PRIVATE" = "BU DEPO GİZLİ";
 "THIS RTFD ATTACHMENT SYNTAX COULD NOT BE PRESERVED." = "BU RTFD EKİNİN YAPISI KORUNAMADI.";
@@ -2634,6 +2635,7 @@
 "This link requires a login or is restricted. Try a public share link; Nashi does not read your browser sessions." = "Bu bağlantı giriş gerektiriyor veya erişimi kısıtlı. Herkese açık bir paylaşım bağlantısı dene; Nashi tarayıcı oturumlarını okumaz.";
 "This media is protected and cannot be downloaded here." = "Bu medya korumalı ve burada indirilemez.";
 "This output format has no adjustable conversion defaults." = "Bu çıktı biçiminin ayarlanabilir dönüştürme tercihi yok.";
+"This post has no videos. Choose photos to download it." = "Bu gönderide video yok. İndirmek için fotoğrafları seç.";
 "This post is a video. Choose video or audio to download it." = "Bu gönderi bir video. İndirmek için video ya da ses seç.";
 "This repository is private" = "Bu depo gizli";
 "This size cannot be reached. Choose a larger target or smaller dimensions." = "Bu boyuta inilemiyor. Daha büyük bir hedef veya daha küçük boyutlar seç.";
