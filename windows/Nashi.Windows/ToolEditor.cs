@@ -129,11 +129,11 @@ public sealed partial class ToolEditor:Window
     {
         options.Children.Add(L10n.Label(new TextBlock{Text=name,Margin=new(4,12,4,0)}));
         var box=new TextBox{Text=value};System.Windows.Automation.AutomationProperties.SetAutomationId(box,name);
-        if(name is "Start" or "End")box.LostKeyboardFocus+=(_,e)=>{try{SyncTimeline();if((tool is "trimAudio" or "trimVideo")&&e.NewFocus is not System.Windows.Controls.Primitives.ButtonBase)Seek(Value(name,name=="Start"?0:duration));}catch(ArgumentException){}};
+        if(name is "Start" or "End")box.LostKeyboardFocus+=(_,e)=>{try{SyncTimeline();if((tool is "trimAudio" or "trimVideo")&&e.NewFocus is not Button{Tag:true})Seek(Value(name,name=="Start"?0:duration));}catch(ArgumentException){}};
         fields.Add(name,box);defaults.Add(name,value);
         if((name is "Start" or "End")&&(tool is "trimAudio" or "trimVideo"))
         {
-            var setHere=MainWindow.Button(name=="Start"?"Set Start Here":"Set End Here",()=>SetRangeEndpoint(name=="Start"));setHere.Margin=new(8,0,0,0);
+            var setHere=MainWindow.Button(name=="Start"?"Set Start Here":"Set End Here",()=>SetRangeEndpoint(name=="Start"));setHere.Tag=true;setHere.Margin=new(8,0,0,0);
             var row=new DockPanel();DockPanel.SetDock(setHere,Dock.Right);row.Children.Add(setHere);row.Children.Add(box);options.Children.Add(row);
         }
         else options.Children.Add(box);
