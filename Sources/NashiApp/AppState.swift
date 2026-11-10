@@ -2,6 +2,7 @@
 // Added missing members for Wheel.swift and WebDownloadView.swift compatibility
 
 var working: Bool
-var onWebDownload: Bool
-var inputs: String
+var onWebDownload: ((URL?, WebDownloadMode) -> Void)?
+var inputs: [URL] = []
+var receiveProgress: ((Double) -> Void)?
 
