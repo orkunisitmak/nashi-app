@@ -126,6 +126,7 @@ struct ToolEditor:View {
                         Text(verbatim:sideBySide ? L10n.text("MAKE IT YOURS"):inputs.count>1 ? L10n.uppercase("\(inputs.count) files"):input?.lastPathComponent ?? "").font(.system(size:10,weight:.bold,design:.rounded)).tracking(0.8).foregroundStyle(.secondary).lineLimit(2)
                         if isLoading { ProgressView("Preparing your file…").font(.caption) }
                         controls.disabled(isLoading || !readyToApply)
+                        if tool == .organizePDF,pdfEditor.pages.isEmpty { pdfPasswordEntry }
                         if let previewError { HStack { LText(previewError).font(.callout).foregroundStyle(.orange);Spacer();Button { self.previewError=nil } label:{Image(systemName:"xmark")}.accessibilityLabel("Dismiss preview error") } }
                     }.padding(24).frame(maxWidth:sideBySide ? .infinity:720,alignment:.leading)
                 }.frame(width:sideBySide ? 380:nil).frame(maxWidth:sideBySide ? nil:.infinity,maxHeight:.infinity).uiAuditProbe("editor.options")
@@ -478,17 +479,22 @@ struct ToolEditor:View {
                 Button("Move Left") { pdfEditor.moveSelected(by:-1) }.disabled(!pdfEditor.canMoveLeft)
                 Button("Move Right") { pdfEditor.moveSelected(by:1) }.disabled(!pdfEditor.canMoveRight)
             }
-            if pdfEditor.pages.isEmpty {
-                VStack(alignment:.leading,spacing:8) {
-                    SecureField("PDF password",text:$options.password)
-                    HStack(spacing:8) {
-                        Button("Unlock PDF") { Task { await load() } }.disabled(options.password.isEmpty)
-                        Button("Return") { options.password="";previewError=nil }
-                    }
-                    if let previewError { Text(previewError).font(.caption).foregroundStyle(.orange) }
-                }
-            }
             Toggle("Make all pages the same width",isOn:$options.pdfUniformWidth)
+        }
+    }
+
+    /// Password entry for locked PDFs — placed outside the disabled controls area
+    /// so it remains accessible even when editing controls are disabled after a
+    /// failed open attempt. Users can enter a password and tap Unlock PDF to retry,
+    /// or Return to clear the entry.
+    var pdfPasswordEntry:some View {
+        VStack(alignment:.leading,spacing:8) {
+            SecureField("PDF password",text:$options.password)
+            HStack(spacing:8) {
+                Button("Unlock PDF") { Task { await load() } }.disabled(options.password.isEmpty)
+                Button("Return") { options.password="";previewError=nil }
+            }
+            if let previewError { Text(previewError).font(.caption).foregroundStyle(.orange) }
         }
     }
     var metadataControls:some View {
@@ -767,6 +773,7 @@ struct ToolEditor:View {
         }
 
         options.redactions[last] = rotated
+        previewError = nil
         if tool == .redactVideo, options.videoRedactions.indices.contains(last) {
             options.videoRedactions[last].rect = rotated
         }
