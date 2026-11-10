@@ -1338,6 +1338,7 @@
   "Your clipboard is empty.": "Votre presse-papiers est vide.",
   "Zip regular files and folders without links (10,000 item limit).": "Compressez en ZIP des fichiers et dossiers ordinaires, sans liens (limite de 10 000 éléments).",
   "Office did not finish converting this document within 5 minutes. Try again, or cancel and choose another format.": "Office n’a pas terminé la conversion de ce document en 5 minutes. Réessayez, ou annulez et choisissez un autre format.",
+  "This PDF contains digital signatures. This page operation cannot safely preserve that feature. No copy was exported.": "Ce PDF contient des signatures numériques. Cette opération sur les pages ne peut pas conserver cette fonctionnalité en toute sécurité. Aucune copie n’a été exportée.",
   "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported.": "Ce PDF contient des champs de formulaire ou des pièces jointes que la fusion, la division ou la réorganisation des pages ne peut pas conserver. Aucune copie n’a été exportée.",
   "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported.": "Ce PDF contient des champs de formulaire ou des pièces jointes que le nettoyage des métadonnées ne peut pas conserver. Aucune copie n’a été exportée.",
   "Pasted image": "Image collée",
