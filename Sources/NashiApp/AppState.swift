@@ -212,7 +212,7 @@ struct JobRecord:Codable,Identifiable {
     }
     func reportSuccess(_ notice:SuccessNotice) { error=nil;onSuccess?(notice) }
     func recordWebDownload(_ files:[URL],site:String) {
-        history.insert(JobRecord(title:"Download ┬À \(site)",inputs:files.map(\.path),outputs:files.map(\.path)),at:0)
+        history.insert(JobRecord(title:"Download · \(site)",inputs:files.map(\.path),outputs:files.map(\.path)),at:0)
         history=Array(history.prefix(50))
         if let data=try? JSONEncoder().encode(history) { historyDefaults.set(data,forKey:"history") }
         reportSuccess(.filesReady(files))
