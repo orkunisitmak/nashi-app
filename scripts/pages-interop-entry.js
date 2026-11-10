@@ -75,6 +75,9 @@ export function write(json) {
     appendParagraph({runs: []});
     const pos = document.bodyText.length - 1;
     const table = document.insertInlineTable(Math.max(0,pos), {withContent: false, name: `Table ${ordinal}`});
+    // The seed table's first row has its own tinted cell style. Word shading
+    // arrives per cell in the model, so drop that row before sizing the table.
+    if (table.rowCount > 1 && table.cellStyleId(0,0) !== table.cellStyleId(1,0)) table.deleteRows(0,1);
     if (table.rowCount < rowCount) table.insertRows(table.rowCount, rowCount - table.rowCount);
     if (table.rowCount > rowCount) table.deleteRows(rowCount, table.rowCount - rowCount);
     if (table.columnCount < columnCount) table.insertColumns(table.columnCount, columnCount - table.columnCount);
