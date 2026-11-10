@@ -1742,6 +1742,7 @@
 "PDF OUTPUT LAYOUT" = "PDF ÇIKTI DÜZENİ";
 "PDF PAGE EXCEEDS 100 MP." = "PDF SAYFASI 100 MP'Yİ AŞIYOR.";
 "PDF PAGE IS TOO LARGE TO RENDER AT THIS DPI." = "PDF SAYFASI BU DPI DEĞERİNDE İŞLENEMEYECEK KADAR BÜYÜK.";
+"PDF PASSWORD" = "PDF ŞİFRESİ";
 "PDF PASSWORD (IF NEEDED)" = "PDF PAROLASI (GEREKİYORSA)";
 "PDF PREVIEW BACKGROUND COULD NOT BE PREPARED." = "PDF ÖNİZLEME ARKA PLANI HAZIRLANAMADI.";
 "PDF PREVIEW BITMAP COULD NOT BE ALLOCATED." = "PDF ÖNİZLEMESİ İÇİN BELLEK AYRILAMADI.";
@@ -1750,6 +1751,7 @@
 "PDF output layout" = "PDF çıktı düzeni";
 "PDF page exceeds 100 MP." = "PDF sayfası 100 MP'yi aşıyor.";
 "PDF page is too large to render at this DPI." = "PDF sayfası bu DPI değerinde işlenemeyecek kadar büyük.";
+"PDF password" = "PDF şifresi";
 "PDF password (if needed)" = "PDF parolası (gerekiyorsa)";
 "PDF preview background could not be prepared." = "PDF önizleme arka planı hazırlanamadı.";
 "PDF preview bitmap could not be allocated." = "PDF önizlemesi için bellek ayrılamadı.";
@@ -1951,6 +1953,7 @@
 "RESIZE IMAGE" = "GÖRSELİ BOYUTLANDIR";
 "RESTORE CLIPS" = "KLİPLERİ GERİ GETİR";
 "RESTORE DEFAULTS" = "VARSAYILANLARA DÖN";
+"RETURN" = "GERİ";
 "REVEAL FINISHED FILES IN EXPLORER" = "TAMAMLANAN DOSYALARI DOSYA GEZGİNİ'NDE GÖSTER";
 "REVEAL FINISHED FILES IN FINDER" = "TAMAMLANAN DOSYALARI FINDER'DA GÖSTER";
 "RIGHT" = "SAĞ";
@@ -2027,6 +2030,7 @@
 "Restore Clips" = "Klipleri Geri Getir";
 "Restore Defaults" = "Varsayılanlara Dön";
 "Restore defaults" = "Varsayılanlara dön";
+"Return" = "Geri";
 "Reveal finished files in Explorer" = "Tamamlanan dosyaları Dosya Gezgini'nde göster";
 "Reveal finished files in Finder" = "Tamamlanan dosyaları Finder'da göster";
 "Right" = "Sağ";
@@ -2673,6 +2677,7 @@
 "UNDO AREA" = "ALANI GERİ AL";
 "UNDO LAST MARK" = "SON İŞARETİ GERİ AL";
 "UNIT" = "BİRİM";
+"UNLOCK PDF" = "PDF KİLİDİNİ AÇ";
 "UNSAFE DOWNLOAD REDIRECT." = "GÜVENLİ OLMAYAN İNDİRME YÖNLENDİRMESİ.";
 "UNSAFE UPDATE ENTRY." = "GÜNCELLEMEDE GÜVENLİ OLMAYAN BİR ÖĞE VAR.";
 "UNSUPPORTED AUDIO FORMAT." = "DESTEKLENMEYEN SES BİÇİMİ.";
@@ -2706,6 +2711,7 @@
 "Undo area" = "Alanı geri al";
 "Undo last mark" = "Son işareti geri al";
 "Unit" = "Birim";
+"Unlock PDF" = "PDF kilidini aç";
 "Unsafe download redirect." = "Güvenli olmayan indirme yönlendirmesi.";
 "Unsafe update entry." = "Güncellemede güvenli olmayan bir öğe var.";
 "Unsupported audio format." = "Desteklenmeyen ses biçimi.";
