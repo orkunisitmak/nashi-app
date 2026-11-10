@@ -751,7 +751,7 @@ struct ToolEditor:View {
         guard checkRect.x >= 0, checkRect.y >= 0,
               checkRect.x + checkRect.width <= bounds.width,
               checkRect.y + checkRect.height <= bounds.height else {
-            previewError = "Redaksiyon alanı görüntü sınırlarının dışına çıkıyor. Döndürülmedi."
+            previewError = "Redaction area exceeds image bounds. Not rotated."
             return
         }
 
