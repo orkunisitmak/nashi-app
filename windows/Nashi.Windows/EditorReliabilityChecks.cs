@@ -33,14 +33,19 @@ internal static class EditorReliabilityChecks
                 Exception? failure=null;try{play.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));}catch(Exception error){failure=error;}
                 check(failure is null&&!editor.Playing,"Invalid range playback escaped the editor: "+end+" "+failure?.Message);
             }
+            var playToggle=Children(editor).OfType<Button>().Single(b=>b.Content as string=="▶ / Ⅱ");
+            editor.SeekForTest(0);editor.FieldForTest("End").Focus();editor.FieldForTest("End").Text="00:02.500";playToggle.Focus();DesktopInput.Pump();
+            check(Math.Abs(editor.PreviewSeconds-2.5)<.05,"Focusing Play after editing an endpoint did not seek to the edited time");
+            playToggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));check(editor.Playing,"Play did not start after editing an endpoint");
+            playToggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));check(!editor.Playing,"Play/Pause did not pause after the edited endpoint was previewed");
             editor.FieldForTest("Start").Text="00:01.250";editor.FieldForTest("End").Text="00:04.500";
             check(editor.AcceptForTest()&&Math.Abs(editor.MediaOptions.Start-1.25)<.001&&Math.Abs(editor.MediaOptions.End!.Value-4.5)<.001,"Trim fields did not accept mm:ss.fff");
             editor.FieldForTest("End").Focus();editor.FieldForTest("End").Text="00:03.750";editor.Timeline.Focus();DesktopInput.Pump();
             check(Math.Abs(editor.PreviewSeconds-3.75)<.05,"Typing a trim endpoint did not update the preview");
             editor.SeekForTest(2.5);editor.FieldForTest("Start").Focus();editor.FieldForTest("Start").Text="00:01.250";
-            Children(editor).OfType<Button>().Single(b=>b.Content as string=="Set Start Here").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-            check(editor.FieldForTest("Start").Text=="00:02.500"&&Math.Abs(editor.PreviewSeconds-2.5)<.05,"Set Start Here did not preserve the playhead frame");
-            editor.SeekForTest(4.25);Children(editor).OfType<Button>().Single(b=>b.Content as string=="Set End Here").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            var setStart=Children(editor).OfType<Button>().Single(b=>b.Content as string=="Set Start Here");setStart.Focus();DesktopInput.Pump();setStart.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            check(editor.FieldForTest("Start").Text=="00:02.500"&&Math.Abs(editor.PreviewSeconds-2.5)<.05,"Set Start Here did not preserve the playhead frame: start="+editor.FieldForTest("Start").Text+"; preview="+editor.PreviewSeconds);
+            editor.SeekForTest(4.25);var setEnd=Children(editor).OfType<Button>().Single(b=>b.Content as string=="Set End Here");setEnd.Focus();DesktopInput.Pump();setEnd.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             check(editor.FieldForTest("End").Text=="00:04.250"&&Math.Abs(editor.PreviewSeconds-4.25)<.05,"Set End Here did not preserve the playhead frame");
             editor.FieldForTest("Start").Text="0";editor.FieldForTest("End").Text="2";editor.SeekForTest(0);DesktopInput.Pump(300);play.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             check(editor.Playing,"Valid range playback did not start after correcting invalid input");
