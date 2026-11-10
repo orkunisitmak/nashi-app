@@ -26,7 +26,7 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
             var spreadsheet=new[]{"csv","tsv","xls","xlsx","ods"}.Contains(ext);var slides=new[]{"ppt","pptx"}.Contains(ext);
             var filter=format switch{"docx"=>"docx:Office Open XML Text","pptx"=>"pptx:Impress MS PowerPoint 2007 XML","xlsx"=>"xlsx:Calc MS Excel 2007 XML","pdf"=>"pdf:"+(spreadsheet?"calc_pdf_Export":slides?"impress_pdf_Export":"writer_pdf_Export"),"txt"=>"txt:Text (encoded):UTF8,LF","csv"=>"csv:Text - txt - csv (StarCalc):44,34,76,1,,0,false,true,true,false,false,0","tsv"=>"csv:Text - txt - csv (StarCalc):9,34,76,1,,0,false,true,true,false,false,0","html"=>"html:HTML (StarWriter)","md"=>"md:Markdown","epub"=>"epub:EPUB",_=>format};
             var args=new List<string>{"-env:UserInstallation="+new Uri(profile+Path.DirectorySeparatorChar).AbsoluteUri,"--headless","--nologo","--nodefault","--nolockcheck","--nofirststartwizard","--norestore"};
-            if(ext is "csv" or "tsv"){var (delimiter,language)=DelimitedLayout(input,ext);args.Add("--infilter=Text - txt - csv (StarCalc):"+delimiter+",34,76,1,,"+language+",true,true");}else if(ext=="txt")args.Add("--infilter=Text (encoded):UTF8,LF");else if(ext=="md")args.Add("--infilter=Markdown");
+            if(ext is "csv" or "tsv")args.Add(DelimitedInputFilter(input,ext));else if(ext=="txt")args.Add("--infilter=Text (encoded):UTF8,LF");else if(ext=="md")args.Add("--infilter=Markdown");
             if(ext=="html"&&format is "xlsx" or "ods" or "csv" or "tsv")args.Add("--infilter=HTML (StarCalc)");
             if(ext=="pdf"&&format=="pptx")args.Add("--infilter=impress_pdf_import");
             args.AddRange(["--convert-to",filter,"--outdir",rendered,Path.GetFullPath(input)]);
@@ -38,6 +38,13 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
         }
         finally{if(Directory.Exists(job))Directory.Delete(job,true);}
     }
+    internal static string DelimitedInputFilter(string input,string extension)
+    {
+        var (delimiter,language)=DelimitedLayout(input,extension);
+        // LibreOffice evaluates formulas when CSV import option 13 is omitted.
+        return "--infilter=Text - txt - csv (StarCalc):"+delimiter+",34,76,1,,"+language+",true,true,,,,,false";
+    }
+
     // Excel saves semicolon-separated "CSV" where the comma is the decimal mark (Turkish,
     // German…). Read those with the user's locale so 1,5 stays a number, not text.
     // Semicolons are the delimiter only when every record has the same number of them and
@@ -177,7 +184,7 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
     {
         html=Regex.Replace(html,@"<(script|iframe|object|embed)\b[^>]*>[\s\S]*?</\1\s*>","",RegexOptions.IgnoreCase,TimeSpan.FromSeconds(2));
         html=Regex.Replace(html,@"<link\b[^>]*>|<base\b[^>]*>","",RegexOptions.IgnoreCase,TimeSpan.FromSeconds(2));
-        html=Regex.Replace(html,"\\s(?:src|background)\\s*=\\s*([\"'])(?!data:)[^\"']*\\1","",RegexOptions.IgnoreCase,TimeSpan.FromSeconds(2));
+        html=Regex.Replace(html,"""\s(?:src|background)\s*=\s*(?:"(?!data:)[^"]*"|'(?!data:)[^']*'|(?!data:)[^\s"'<>`]+)""","",RegexOptions.IgnoreCase,TimeSpan.FromSeconds(2));
         return Regex.Replace(html,@"url\s*\([^)]*\)","none",RegexOptions.IgnoreCase,TimeSpan.FromSeconds(2));
     }
 }

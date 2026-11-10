@@ -33,8 +33,13 @@ public enum WebDownloadEngine {
         return url
     }
     public static func inspect(_ url:URL,token:CancellationToken = .init()) async throws -> WebMediaInfo {
+        try await inspect(url,token:token,checkAddress:PublicMediaAddress.requirePublic)
+    }
+    static func inspect(_ url:URL,token:CancellationToken = .init(),checkAddress:@escaping PublicMediaAddress.Check) async throws -> WebMediaInfo {
         let url=try link(url.absoluteString);try token.check()
-        let session=URLSession(configuration:.ephemeral)
+        try await checkAddress(url)
+        let redirects=PublicMediaRedirects(checkAddress:checkAddress)
+        let session=URLSession(configuration:.ephemeral,delegate:redirects,delegateQueue:nil)
         defer { session.invalidateAndCancel() }
         if WebMediaDragPayload.isInstagramPhotoPost(url) {
             let args=try baseArguments(photoPost:true)+["--ignore-no-formats-error","--skip-download","--dump-single-json","--no-progress","--",url.absoluteString]
@@ -42,23 +47,28 @@ public enum WebDownloadEngine {
             try token.check();try Task.checkCancellation()
             return try InstagramPhotos.parse(data,url:url)
         }
-        if let cover=try await YouTubeThumbnail.resolve(url,token:token,fetch:{ candidate in
+        let cover=try await YouTubeThumbnail.resolve(url,token:token,fetch:{ candidate in
+            try await checkAddress(candidate)
             var request=URLRequest(url:candidate);request.timeoutInterval=12
             let (data,response)=try await session.data(for:request)
             guard let response=response as? HTTPURLResponse,(200...299).contains(response.statusCode),
                   response.mimeType?.lowercased().hasPrefix("image/")==true else { return nil }
             return data
-        }) {
+        })
+        try redirects.requireAllowedRedirects()
+        if let cover {
             return WebMediaInfo(url:cover.url,title:"YouTube thumbnail",kind:.image,site:"YouTube",duration:nil,heights:[],direct:true,
                                 filename:cover.url.lastPathComponent,byteCount:Int64(cover.byteCount),imageWidth:cover.width,imageHeight:cover.height)
         }
         var request=URLRequest(url:url);request.httpMethod="HEAD";request.timeoutInterval=15
         var head=try? await session.data(for:request).1
+        try redirects.requireAllowedRedirects()
         // Signed storage links (S3, R2, GCS) are only valid for GET, and some servers refuse HEAD.
         // Read only the headers of a GET then; the body is not downloaded here.
         if let http=head as? HTTPURLResponse,!(200...299).contains(http.statusCode) {
             request.httpMethod="GET"
             if let (bytes,response)=try? await session.bytes(for:request) { bytes.task.cancel();head=response }
+            try redirects.requireAllowedRedirects()
         }
         if let response=head,let http=response as? HTTPURLResponse,(200...299).contains(http.statusCode),
            let kind=directKind(mime:response.mimeType,extension:url.pathExtension) {
@@ -90,7 +100,12 @@ public enum WebDownloadEngine {
 
     public static func download(_ info:WebMediaInfo,mode:WebDownloadMode,maximumHeight:Int?,destination:URL,selectedPhotos:Set<Int>? = nil,
                                 token:CancellationToken = .init(),progress:@escaping ProgressHandler) async throws -> [URL] {
-        _=try link(info.url.absoluteString)
+        try await download(info,mode:mode,maximumHeight:maximumHeight,destination:destination,selectedPhotos:selectedPhotos,
+                           token:token,checkAddress:PublicMediaAddress.requirePublic,progress:progress)
+    }
+    static func download(_ info:WebMediaInfo,mode:WebDownloadMode,maximumHeight:Int?,destination:URL,selectedPhotos:Set<Int>? = nil,
+                         token:CancellationToken = .init(),checkAddress:@escaping PublicMediaAddress.Check,progress:@escaping ProgressHandler) async throws -> [URL] {
+        let url=try link(info.url.absoluteString)
         guard destination.isFileURL,info.modes.contains(mode) else { throw NashiError.invalidInput("Choose an available media type and a local destination folder.") }
         if let maximumHeight { guard (2...16_384).contains(maximumHeight) else { throw NashiError.invalidInput("Choose a valid video quality.") } }
         try token.check();try Task.checkCancellation()
@@ -100,8 +115,9 @@ public enum WebDownloadEngine {
         if !info.photos.isEmpty {
             results=try await InstagramPhotos.download(info,selected:selectedPhotos,directory:area.directory,token:token,progress:progress)
         } else if info.direct {
-            results=try await downloadDirect(info,mode:mode,directory:area.directory,token:token,progress:progress)
+            results=try await downloadDirect(info,mode:mode,directory:area.directory,token:token,checkAddress:checkAddress,progress:progress)
         } else {
+            try await checkAddress(url)
             let arguments=try downloadArguments(info,mode:mode,maximumHeight:maximumHeight,directory:area.directory)
             let data=try await Task.detached { try WebDownloadProcess.run(Dependencies.executable("yt-dlp"),arguments,token:token,timeout:21_600,progress:progress) }.value
             results=String(decoding:data,as:UTF8.self).split(separator:"\n").compactMap { line in
@@ -171,8 +187,10 @@ public enum WebDownloadEngine {
     }
 
     static func downloadDirect(_ info:WebMediaInfo,mode:WebDownloadMode,directory:URL,token:CancellationToken,
+                               checkAddress:@escaping PublicMediaAddress.Check = PublicMediaAddress.requirePublic,
                                        progress:@escaping ProgressHandler) async throws -> [URL] {
-        let delegate=TransferDelegate(token:token,maximumBytes:20*1024*1024*1024,progress:progress)
+        try await checkAddress(link(info.url.absoluteString))
+        let delegate=TransferDelegate(token:token,maximumBytes:20*1024*1024*1024,checkAddress:checkAddress,progress:progress)
         let configuration=URLSessionConfiguration.ephemeral;configuration.timeoutIntervalForRequest=45;configuration.timeoutIntervalForResource=21_600
         let session=URLSession(configuration:configuration,delegate:delegate,delegateQueue:nil)
         let watchdog=Task.detached {
@@ -189,6 +207,7 @@ public enum WebDownloadEngine {
             try await delegate.download(info.url,session:session)
         } onCancel:{ delegate.cancel() }
         defer { try? FileManager.default.removeItem(at:temporary) }
+        try delegate.requireAllowedRedirects()
         try token.check();try Task.checkCancellation()
         guard let http=response as? HTTPURLResponse,(200...299).contains(http.statusCode),
               directKind(mime:response.mimeType,extension:info.url.pathExtension) != nil else { throw NashiError.failed("The link no longer returns a media file. Copy its current media or share link and try again.") }
@@ -197,7 +216,12 @@ public enum WebDownloadEngine {
         try FileManager.default.moveItem(at:temporary,to:raw)
         try OutputFiles.validate([raw])
         if info.kind == .image { _=try ImageEngine.load(raw) }
-        else { _=try await Task.detached { try MediaEngine.inspect(raw,token:token) }.value }
+        else {
+            let media = try await Task.detached { try MediaEngine.inspect(raw, token: token) }.value
+            guard media.hasAudio || media.hasVideo else {
+                throw NashiError.invalidInput("The downloaded file has no readable audio or video track.")
+            }
+        }
         if mode == .audioMP3,raw.pathExtension.lowercased() != "mp3" {
             var options=OperationOptions();options.outputDirectory=directory
             return try await Task.detached { try ConversionEngine.run(.init(inputs:[raw],operation:.convert("mp3"),options:options),token:token,progress:{ value,_ in progress(value,"Converting downloaded audio…") }) }.value
@@ -223,15 +247,21 @@ public enum WebDownloadEngine {
         name=String(name.unicodeScalars.filter{!CharacterSet.controlCharacters.contains($0) && !CharacterSet(charactersIn:"/:\\").contains($0)})
         while name.hasPrefix(".") { name.removeFirst() }
         if name.isEmpty { name="Downloaded media" }
-        let ext=(name as NSString).pathExtension.lowercased()
         let preferred=mime.flatMap{UTType(mimeType:$0)?.preferredFilenameExtension}
         let allowed=["jpg","jpeg","png","webp","heic","heif","avif","bmp","tif","tiff","svg","gif","mp4","mov","webm","mkv","m4v","mp3","m4a","wav","flac","ogg","opus","aac","aiff"]
         let mediaMIME=["image/","audio/","video/"].contains{mime?.lowercased().hasPrefix($0)==true}
-        let mediaExtension=mediaMIME && !ext.isEmpty && UTType(filenameExtension:ext).map{$0.conforms(to:.audiovisualContent) || $0.conforms(to:.image)}==true
-        let knownMedia=[FileCategory.image,.video,.audio].contains(FileCategory.detect(URL(fileURLWithPath:name)))
-        if !allowed.contains(ext) && !mediaExtension && !knownMedia {
-            let basename=(name as NSString).deletingPathExtension
-            name=preferred.flatMap{allowed.contains($0) ? basename+"."+$0:nil} ?? basename
+        func hasMediaExtension(_ filename: String) -> Bool {
+            let ext = (filename as NSString).pathExtension.lowercased()
+            guard !ext.isEmpty else { return false }
+            if allowed.contains(ext) || [FileCategory.image, .video, .audio].contains(FileCategory.detect(URL(fileURLWithPath: filename))) { return true }
+            guard mediaMIME, let type = UTType(filenameExtension: ext) else { return false }
+            return type.conforms(to: .audiovisualContent) || type.conforms(to: .image)
+        }
+        if !hasMediaExtension(name) {
+            let basename = (name as NSString).deletingPathExtension
+            if let preferred, allowed.contains(preferred) { name = basename + "." + preferred }
+            else if hasMediaExtension(basename) { name = basename }
+            else { name = basename.replacingOccurrences(of: ".", with: "_") }
         }
         let finalExtension=(name as NSString).pathExtension
         let suffix=finalExtension.isEmpty ? "":"."+finalExtension
@@ -274,9 +304,12 @@ public enum WebDownloadEngine {
         return String(selected.joined(separator:"\n").prefix(1_500))
     }
 
-    private final class TransferDelegate:NSObject,URLSessionDownloadDelegate,@unchecked Sendable {
+    private final class TransferDelegate:PublicMediaRedirects,URLSessionDownloadDelegate,@unchecked Sendable {
         let token:CancellationToken,maximumBytes:Int64,progress:ProgressHandler
-        init(token:CancellationToken,maximumBytes:Int64,progress:@escaping ProgressHandler) { self.token=token;self.maximumBytes=maximumBytes;self.progress=progress }
+        init(token:CancellationToken,maximumBytes:Int64,checkAddress:@escaping PublicMediaAddress.Check,progress:@escaping ProgressHandler) {
+            self.token=token;self.maximumBytes=maximumBytes;self.progress=progress
+            super.init(checkAddress:checkAddress)
+        }
         private let transferLock=NSLock()
         private var cancelled=false
         private var task:URLSessionDownloadTask?
@@ -327,9 +360,6 @@ public enum WebDownloadEngine {
             }
             let fraction=totalBytesExpectedToWrite>0 ? min(1,Double(totalBytesWritten)/Double(totalBytesExpectedToWrite)):0
             progress(totalBytesExpectedToWrite>0 ? fraction:OperationProgress.indeterminate,"Downloading · \(ByteCountFormatter.string(fromByteCount:totalBytesWritten,countStyle:.file))")
-        }
-        func urlSession(_ session:URLSession,task:URLSessionTask,willPerformHTTPRedirection response:HTTPURLResponse,newRequest request:URLRequest,completionHandler:@escaping(URLRequest?)->Void) {
-            completionHandler(request.url.flatMap{try? WebDownloadEngine.link($0.absoluteString)} == nil ? nil:request)
         }
     }
 }

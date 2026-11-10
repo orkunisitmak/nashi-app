@@ -120,7 +120,8 @@ public enum DocumentEngine {
         let work = try OutputFiles.temporaryDirectory()
         defer { try? FileManager.default.removeItem(at: work) }
         let extracted = work.appendingPathComponent(name, isDirectory: true)
-        try ArchiveCodec.extract(input, into: extracted, password: options.password, token: token)
+        let quarantine = try ArchiveCodec.quarantineAttribute(of: input)
+        try ArchiveCodec.extract(input, into: extracted, password: options.password, token: token, quarantine: quarantine)
         try token.check()
         try FileManager.default.moveItem(at: extracted, to: output)
         return [output]
@@ -128,6 +129,7 @@ public enum DocumentEngine {
 
     private static func convertArchive(_ input: URL, to format: String, options: OperationOptions, token: CancellationToken) throws -> [URL] {
         guard ["zip", "tar", "gz"].contains(format) else { throw NashiError.unsupported("Archives can be converted to ZIP, TAR, or GZIP.") }
+        let quarantine = try ArchiveCodec.quarantineAttribute(of: input)
         let work = try OutputFiles.temporaryDirectory()
         defer { try? FileManager.default.removeItem(at: work) }
         let extracted = work.appendingPathComponent("Contents", isDirectory: true)
@@ -135,6 +137,7 @@ public enum DocumentEngine {
         let archive = work.appendingPathComponent("Archive").appendingPathExtension(format)
         let level = options.compressionPreset == "fast" ? 0 : options.compressionPreset == "maximum" ? 9 : 6
         try ArchiveCodec.create(from: extracted, at: archive, format: format, compressionLevel: level, token: token)
+        if let quarantine { try ArchiveCodec.applyQuarantine(quarantine, to: archive) }
         return try publish(archive, to: destination(archiveNamed(input), format: format, options: options), token: token)
     }
 
@@ -170,7 +173,8 @@ public enum DocumentEngine {
         }
         if ["csv", "tsv"].contains(sourceFormat) {
             let delimiter = sourceFormat == "tsv" ? 9 : 44
-            arguments.append("--infilter=Text - txt - csv (StarCalc):\(delimiter),34,76,1,,1033,true,true")
+            // An omitted option 13 makes LibreOffice evaluate imported formulas.
+            arguments.append("--infilter=Text - txt - csv (StarCalc):\(delimiter),34,76,1,,1033,true,true,,,,,false")
         } else if sourceFormat == "txt" {
             arguments.append("--infilter=Text (encoded):UTF8,LF")
         } else if sourceFormat == "md" {

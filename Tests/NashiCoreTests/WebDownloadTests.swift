@@ -26,6 +26,12 @@ final class WebDownloadTests:XCTestCase {
         XCTAssertEqual(WebDownloadEngine.cleanFilename("clip.exe",mime:"video/mp4"),"clip.mp4")
         XCTAssertEqual(WebDownloadEngine.cleanFilename("notes.ts",mime:"text/plain"),"notes")
     }
+    func testFilenameFallbackKeepsOnlySafeExtensions() {
+        XCTAssertEqual(WebDownloadEngine.cleanFilename("report.html.tmp", mime: "video/x-nashi-unknown"), "report_html")
+        XCTAssertEqual(WebDownloadEngine.cleanFilename("clip.command.backup", mime: "application/octet-stream"), "clip_command")
+        XCTAssertEqual(WebDownloadEngine.cleanFilename("clip.mov.backup", mime: "application/octet-stream"), "clip.mov")
+        XCTAssertEqual(WebDownloadEngine.cleanFilename("report.html.tmp", mime: "video/mp4"), "report.html.mp4")
+    }
     func testMetadataModesQualityAndDuration() throws {
         let json=Data(#"{"title":"A test","duration":12.5,"extractor_key":"YouTube","formats":[{"height":1080,"vcodec":"avc1"},{"height":720},{"height":1080},{"height":-1},{"height":999999}]}"#.utf8)
         let info=try WebDownloadEngine.parseMetadata(json,url:URL(string:"https://example.org/watch")!)
@@ -134,13 +140,13 @@ final class WebDownloadTests:XCTestCase {
             try Data("H1080 original".utf8).write(to:outside)
             try Data("printf H1080 > \"$stage/a.mp4\"\necho NASHI_FILE:\\\"$stage/a.mp4\\\"\necho NASHI_FILE:\\\"\(report)\\\"\n".utf8).write(to:plan)
             let destination=root.appendingPathComponent("Downloads \(index)",isDirectory:true)
-            do { _=try await WebDownloadEngine.download(info,mode:.video,maximumHeight:720,destination:destination) { _,_ in };XCTFail("outside path accepted: \(report)") } catch {}
+            do { _=try await WebDownloadEngine.download(info,mode:.video,maximumHeight:720,destination:destination,checkAddress:{ _ in }) { _,_ in };XCTFail("outside path accepted: \(report)") } catch {}
             XCTAssertEqual(try String(contentsOf:outside,encoding:.utf8),"H1080 original",report)
             XCTAssertEqual(try fm.contentsOfDirectory(atPath:destination.path),[],report)
         }
         // Control: a staged file over the limit is still fitted and published.
         try Data("printf H1080 > \"$stage/a.mp4\"\necho NASHI_FILE:\\\"$stage/a.mp4\\\"\n".utf8).write(to:plan)
-        let files=try await WebDownloadEngine.download(info,mode:.video,maximumHeight:720,destination:root.appendingPathComponent("Downloads",isDirectory:true)) { _,_ in }
+        let files=try await WebDownloadEngine.download(info,mode:.video,maximumHeight:720,destination:root.appendingPathComponent("Downloads",isDirectory:true),checkAddress:{ _ in }) { _,_ in }
         XCTAssertEqual(files.map(\.lastPathComponent),["a.mp4"]);XCTAssertEqual(try String(contentsOf:files[0],encoding:.utf8),"H480")
     }
     // F3510: presigned storage links are signed for GET only and some servers refuse HEAD; the photo went to yt-dlp.
@@ -161,14 +167,43 @@ final class WebDownloadTests:XCTestCase {
                 return Data("HTTP/1.1 \(ok ? 200:head) X\r\nContent-Type: \(ok ? "image/png":"application/xml")\r\nContent-Length: \(png.count)\r\nConnection: close\r\n\r\n".utf8)+(method=="GET" ? png:Data())
             }
             defer { server.stop() }
-            guard let info=try? await WebDownloadEngine.inspect(URL(string:"http://127.0.0.1:\(server.port)/photo.png?X-Amz-Signature=abc")!) else {
+            let url=URL(string:"http://127.0.0.1:\(server.port)/photo.png?X-Amz-Signature=abc")!
+            let fixtureCheck:PublicMediaAddress.Check={ candidate in
+                guard candidate == url else { throw PublicMediaAddress.invalidAddress }
+            }
+            guard let info=try? await WebDownloadEngine.inspect(url,checkAddress:fixtureCheck) else {
                 XCTFail("HEAD \(head): the photo link was handed to yt-dlp (\(server.methods))");continue
             }
             XCTAssertEqual(info.kind,.image,"HEAD \(head)");XCTAssertTrue(info.direct,"HEAD \(head)");XCTAssertFalse(fm.fileExists(atPath:argv.path),"HEAD \(head)")
             XCTAssertEqual(server.methods,head==200 ? ["HEAD"]:["HEAD","GET"])
-            let files=try await WebDownloadEngine.download(info,mode:.original,maximumHeight:nil,destination:root.appendingPathComponent("Downloads \(head)")) { _,_ in }
+            let files=try await WebDownloadEngine.download(info,mode:.original,maximumHeight:nil,destination:root.appendingPathComponent("Downloads \(head)"),checkAddress:fixtureCheck) { _,_ in }
             XCTAssertEqual(files.map(\.lastPathComponent),["photo.png"]);XCTAssertEqual(try Data(contentsOf:files[0]),png)
         }
+    }
+
+    func testWebMediaRejectsLocalAddressesAndRedirectsBeforeFetching() async throws {
+        for host in ["localhost.", "127.1", "192.168.1.1", "169.254.1.1", "[::1]", "[::ffff:127.0.0.1]", "[fc00::1]"] {
+            let url=try XCTUnwrap(URL(string:"http://\(host)/photo.png"))
+            do {
+                try await PublicMediaAddress.requirePublic(url)
+                XCTFail("Accepted nonpublic host \(host)")
+            } catch {}
+        }
+        let target=try LoopbackServer { _ in Data() }
+        defer { target.stop() }
+        let initial=try LoopbackServer { _ in
+            Data("HTTP/1.1 302 Found\r\nLocation: http://127.0.0.1:\(target.port)/photo.png\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".utf8)
+        }
+        defer { initial.stop() }
+        let url=try XCTUnwrap(URL(string:"http://127.0.0.1:\(initial.port)/redirect.png"))
+        do {
+            _ = try await WebDownloadEngine.inspect(url,checkAddress:{ candidate in
+                if candidate != url { try await PublicMediaAddress.requirePublic(candidate) }
+            })
+            XCTFail("Followed a nonpublic media redirect")
+        } catch {}
+        XCTAssertEqual(initial.methods,["HEAD"])
+        XCTAssertTrue(target.methods.isEmpty)
     }
 }
 

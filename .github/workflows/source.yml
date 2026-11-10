@@ -27,6 +27,8 @@ jobs:
         run: python3 scripts/audit-public-tree.py
       - name: Scan full public history for secrets
         run: python3 scripts/scan-secrets.py
+      - name: Check PDF parser resource limits
+        run: node scripts/test-pdf-parser-limits.cjs
   mac-source:
     runs-on: macos-15
     timeout-minutes: 20
@@ -49,9 +51,9 @@ jobs:
           retention-days: 7
           if-no-files-found: warn
       - name: Archive link boundary and extraction regressions
-        run: swift test --filter 'ArchiveLinkBoundaryTests|ArchiveResourceLimitsTests|DocumentEngineTests/testArchive|DocumentEngineTests/testZIPTARGZIPRoundTripsNestedFilesAndUnicodeWithoutOverwritingOriginals|DocumentEngineTests/testStoredRARAndOrdinaryGZIPAreReadable|DocumentEngineTests/testCancellationProducesNoPublishedDocumentOrExtractedFolder'
+        run: swift test --filter 'ArchiveLinkBoundaryTests|ArchiveResourceLimitsTests|DocumentEngineTests/testArchive|DocumentEngineTests/testZIPTARGZIPRoundTripsNestedFilesAndUnicodeWithoutOverwritingOriginals|DocumentEngineTests/testStoredRARAndOrdinaryGZIPAreReadable|DocumentEngineTests/testCancellationProducesNoPublishedDocumentOrExtractedFolder|DocumentEngineTests/testCSVAndTSVFormulaTextStaysLiteral'
       - name: Update trust, web photo and window placement and setup regressions
-        run: swift test --filter 'NashiUpdatesTests|WebMediaDragPayloadTests|InstagramPhotosTests|YouTubeThumbnailTests|WindowPlacementTests|AppLocalizationTests|ToolSetupTests'
+        run: swift test --filter 'NashiUpdatesTests|WebMediaDragPayloadTests|WebDownloadTests|InstagramPhotosTests|YouTubeThumbnailTests|WindowPlacementTests|AppLocalizationTests|ToolSetupTests'
       - name: HTML to PDF layout, offline isolation and cancellation
         run: swift test --filter HTMLToPDFTests
       - name: Install FFmpeg for redaction regressions

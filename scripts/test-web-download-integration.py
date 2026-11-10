@@ -30,7 +30,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 server=http.server.ThreadingHTTPServer(('127.0.0.1',0),partial(Handler,directory=str(SERVER)))
 worker=threading.Thread(target=server.serve_forever,daemon=True);worker.start()
 try:
- run(['swift','build','-c','release','--product','Nashi'])
+ run(['swift','build','-c','release','--product','Nashi','-Xswiftc','-enable-testing'])
  binary_dir=Path(subprocess.check_output(['swift','build','-c','release','--show-bin-path'],cwd=ROOT,text=True).strip())
  binary=OUTPUT/'verify-web-download'
  run(['swiftc','-parse-as-library','-I',binary_dir,binary_dir/'NashiCore.o',ROOT/'scripts/verify-web-download.swift','-o',binary])
