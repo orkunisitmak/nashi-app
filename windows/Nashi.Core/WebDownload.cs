@@ -31,7 +31,7 @@ public sealed partial class WebDownload(Toolchain tools)
         }
         var args=new List<string>{"--ignore-config","--no-part","--no-overwrites","--no-cache-dir","--restrict-filenames","--no-mtime","--progress","--newline","--progress-template","download:NASHI:%(progress.downloaded_bytes)s:%(progress.total_bytes,progress.total_bytes_estimate)s","--print","after_move:filepath","--ffmpeg-location",FfmpegLocation,"--js-runtimes","deno:"+tools.Executable("deno"),"-P",tx.StagingDirectory,"-o","%(title).160B [%(id)s].%(ext)s"};
         // A /p/ post can be a saved reel or a carousel mixing photos and videos: download only its video items.
-        if(payload?.Kind=="instagramPhotos"){var items=WebPhotos.InstagramVideoItems((await PostMetadataAsync(uri.AbsoluteUri,token)).Output);args.InsertRange(1,items is null?["--no-playlist"]:["--yes-playlist","--playlist-items",string.Join(',',items)]);}else args.Insert(1,"--no-playlist");
+        if(payload?.Kind=="instagramPhotos"){progress?.Report(new(null,"Resolving media…"));var items=WebPhotos.InstagramVideoItems((await PostMetadataAsync(uri.AbsoluteUri,token)).Output);args.InsertRange(1,items is null?["--no-playlist"]:["--yes-playlist","--playlist-items",string.Join(',',items)]);}else args.Insert(1,"--no-playlist");
         if(kind=="audio")args.AddRange(["-x","--audio-format","mp3"]);else if(kind=="thumbnail")args.AddRange(["--skip-download","--write-thumbnail","--convert-thumbnails","jpg"]);else args.AddRange(["-f",maximumHeight is {} height?$"bv*[height<={height}]+ba/b[height<={height}]/bv*+ba/b":"bv*+ba/b","--merge-output-format","mp4"]);
         args.AddRange(["--",uri.AbsoluteUri]);
         progress?.Report(new(null,"Resolving media…"));

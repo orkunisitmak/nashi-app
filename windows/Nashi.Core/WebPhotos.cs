@@ -26,10 +26,11 @@ public static class WebPhotos
         if(photos.Count==0)throw new InstagramVideoPostException();return photos.ToArray();
     }
     /// The 1-based playlist items of a post's videos, so video and audio downloads skip its photos;
-    /// null when the link is a single item rather than a carousel.
+    /// null when the link is a single video rather than a carousel. A post without videos is refused.
     public static int[]? InstagramVideoItems(string json)
     {
-        using var doc=JsonDocument.Parse(json);var root=doc.RootElement;if(!root.TryGetProperty("entries",out var collection)||collection.ValueKind!=JsonValueKind.Array)return null;
+        using var doc=JsonDocument.Parse(json);var root=doc.RootElement;
+        if(!root.TryGetProperty("entries",out var collection)||collection.ValueKind!=JsonValueKind.Array)return IsVideo(root)?null:throw new InvalidDataException("This post has no videos. Choose photos to download it.");
         var entries=collection.EnumerateArray().ToArray();if(entries.Length==0||entries.Length>50)throw new InvalidDataException("Choose one Instagram post with up to 50 items.");
         var items=Enumerable.Range(1,entries.Length).Where(n=>IsVideo(entries[n-1])).ToArray();return items.Length>0?items:throw new InvalidDataException("This post has no videos. Choose photos to download it.");
     }
