@@ -14,7 +14,7 @@ public sealed partial class MainWindow
         var quality=new StackPanel();quality.Children.Add(Text("Video quality",12,"Muted"));quality.Children.Add(webQuality);webContent.Children.Add(quality);downloadKind.SelectionChanged+=(_,_)=>quality.Visibility=downloadKind.SelectedItem as string=="video"?Visibility.Visible:Visibility.Collapsed;webContent.Children.Add(photoChoices);
         var destination=new DockPanel{Margin=new(0,14,0,4)};var location=Text(preferences.Value.DownloadFolder,12,"Muted");var change=Button("Change…",()=>{var picker=new OpenFolderDialog{Title=L10n.Text("Save downloaded media to…")};if(picker.ShowDialog(webWindow??this)==true){preferences.Save(preferences.Value with{DownloadFolder=picker.FolderName});location.Text=picker.FolderName;}});DockPanel.SetDock(change,Dock.Right);destination.Children.Add(change);destination.Children.Add(location);webContent.Children.Add(Card(destination));
         webContent.Children.Add(Text("Instagram posts open a photo selection, or video and audio when the post is a reel. Public downloadable media only.",11,"Muted"));
-        link.TextChanged+=(_,_)=>{inspection?.Cancel();inspectedLink=null;photoChoices.Children.Clear();selectedWebPhotos.Clear();var payload=WebMediaPayload.Parse(link.Text);if(payload is not null&&payload.Kind!=webPayloadKind){webPayloadKind=payload.Kind;SetDownloadKind(payload);}L10n.SetText(webSummary,"Choose Find media to inspect this link.");};
+        link.TextChanged+=(_,_)=>{inspection?.Cancel();inspectedLink=null;photoChoices.Children.Clear();selectedWebPhotos.Clear();var payload=WebMediaPayload.Parse(link.Text);if(payload is not null&&(payload.Kind!=webPayloadKind||payload.Kind=="instagramPhotos")){webPayloadKind=payload.Kind;SetDownloadKind(payload);}L10n.SetText(webSummary,"Choose Find media to inspect this link.");};
     }
     private async Task InspectWebLinkAsync()
     {
@@ -28,7 +28,7 @@ public sealed partial class MainWindow
             if(payload.Kind=="instagramPhotos"&&downloadKind.SelectedItem as string is not ("video" or "audio"))
             {
                 if(!tools.Ready)throw new InvalidOperationException("Set up media tools once to inspect Instagram posts.");
-                try{photos=await engine.InspectPhotosAsync(payload.Url,pending.Token);}catch(InstagramVideoPostException){downloadKind.SelectedItem="video";}
+                try{photos=await engine.InspectPhotosAsync(payload.Url,pending.Token);}catch(InstagramVideoPostException){if(input!=link.Text||pending.IsCancellationRequested)return;downloadKind.SelectedItem="video";}
                 if(input!=link.Text||pending.IsCancellationRequested)return;
             }
             if(photos is not null)

@@ -61,6 +61,18 @@ final class InstagramPhotosTests:XCTestCase {
             XCTAssertFalse(FileManager.default.fileExists(atPath:destination.path))
         }
     }
+    func testOptInSavedReelPostInspectsAndDownloadsAsVideo() async throws {
+        guard let text=ProcessInfo.processInfo.environment["NASHI_TEST_INSTAGRAM_REEL_POST"] else { throw XCTSkip("Live public Instagram check is opt-in") }
+        let info=try await WebDownloadEngine.inspect(try WebDownloadEngine.link(text))
+        XCTAssertTrue(info.photos.isEmpty);XCTAssertEqual(info.kind,.video);XCTAssertEqual(info.modes,[.video,.audioMP3])
+        for mode:WebDownloadMode in [.video,.audioMP3] {
+            let destination=FileManager.default.temporaryDirectory.appendingPathComponent("Nashi-Instagram-Reel-\(UUID().uuidString)")
+            defer{try? FileManager.default.removeItem(at:destination)}
+            let files=try await WebDownloadEngine.download(info,mode:mode,maximumHeight:nil,destination:destination,progress:{_,_ in})
+            XCTAssertFalse(files.isEmpty)
+            XCTAssertEqual(Set(files.map{$0.pathExtension.lowercased()}),[mode == .video ? "mp4":"mp3"])
+        }
+    }
     func testOptInRealCarouselDownloadsEveryPhotoInOrder() async throws {
         guard let text=ProcessInfo.processInfo.environment["NASHI_TEST_INSTAGRAM_PHOTOS"] else { throw XCTSkip("Live public Instagram check is opt-in") }
         let info=try await WebDownloadEngine.inspect(try WebDownloadEngine.link(text))
