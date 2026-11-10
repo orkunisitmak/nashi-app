@@ -622,6 +622,16 @@ private final class GitHubBridgeConnection: GitHubArchiveSink, @unchecked Sendab
                 }
             }
             lock.unlock()
+            watchForDisconnect()
+        }
+    }
+
+    /// The request is complete, so EOF or an error now means the consumer left:
+    /// cancel the upstream download instead of waiting for it to finish.
+    private func watchForDisconnect() {
+        connection.receive(minimumIncompleteLength: 1, maximumLength: 8192) { [weak self] _, _, complete, error in
+            guard let self else { return }
+            if complete || error != nil { self.cancel() } else { self.watchForDisconnect() }
         }
     }
 
