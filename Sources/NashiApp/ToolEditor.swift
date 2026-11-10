@@ -423,8 +423,39 @@ struct ToolEditor:View {
     var trimControls:some View {
         VStack(spacing:14) { timeRangeFields;if tool == .trimAudio { Toggle("Remove silence from beginning and end",isOn:$options.trimSilence);if options.trimSilence { slider("Silence threshold",value:$options.silenceThresholdDb,range:-80 ... -10,unit:"dB") } };LText("Selected duration: \(timeLabel(max(0,(options.end ?? duration)-options.start)))").font(.caption).foregroundStyle(.secondary) }
     }
+    /// Parses "MM:SS.mmm" or plain seconds into seconds.
+    func parseTime(_ text:String)->Double {
+        let cleaned=text.trimmingCharacters(in:.whitespacesAndNewlines)
+        guard !cleaned.isEmpty else { return 0 }
+        if cleaned.contains(":") {
+            let parts=cleaned.components(separatedBy:":")
+            if parts.count==2,let minutes=Double(parts[0]),let seconds=Double(parts[1]) {
+                return minutes*60+seconds
+            }
+        }
+        return Double(cleaned) ?? 0
+    }
+    
     var timeRangeFields:some View {
-        HStack { Text("Start");TextField("Seconds",value:$options.start,format:.number.precision(.fractionLength(3)));Text("End");TextField("Seconds",value:Binding(get:{options.end ?? duration},set:{options.end=$0}),format:.number.precision(.fractionLength(3))) }.textFieldStyle(.roundedBorder)
+        HStack(spacing:8) {
+            Text("Start")
+            TextField("Start time",text:Binding(
+                get:{timeLabel(options.start)},
+                set:{options.start=parseTime($0)}
+            }))
+            .textFieldStyle(.roundedBorder)
+            .onSubmit{seek(options.start)}
+            Button("Set Start Here"){options.start=playhead;seek(options.start)}
+            
+            Text("End")
+            TextField("End time",text:Binding(
+                get:{timeLabel(options.end ?? duration)},
+                set:{options.end=parseTime($0)}
+            }))
+            .textFieldStyle(.roundedBorder)
+            .onSubmit{seek(options.end ?? duration)}
+            Button("Set End Here"){options.end=playhead;seek(options.end ?? duration)}
+        }
     }
     var splitIntervals:[TimeRange] {
         let points=[0]+options.splitPoints.filter{$0>0 && $0<duration}.sorted()+[duration]
