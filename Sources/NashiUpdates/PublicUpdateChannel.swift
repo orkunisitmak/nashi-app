@@ -7,7 +7,10 @@ public struct PublicUpdateChannel:Equatable {
     public init?(info:[String:Any]) {
         guard let slug=info["NashiPublicUpdateRepository"] as? String,
               let repository=try? GitHubRepository(slug),
-              info["SUFeedURL"] as? String == repository.websiteURL.appendingPathComponent("releases/latest/download/appcast.xml").absoluteString else { return nil }
+              let feed=info["SUFeedURL"] as? String,
+              // The slug is lowercased; the bundled feed keeps the configured owner/name spelling.
+              feed == repository.websiteURL.appendingPathComponent("releases/latest/download/appcast.xml").absoluteString ||
+              feed == "https://github.com/\(slug)/releases/latest/download/appcast.xml" else { return nil }
         self.repository=repository
     }
 
