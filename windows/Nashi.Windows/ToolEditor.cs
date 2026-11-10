@@ -140,17 +140,15 @@ public sealed partial class ToolEditor:Window
     /// Start/End fields with "Set Here" buttons that capture the current playhead position.
     private void TimeField(string name,double value){
         options.Children.Add(L10n.Label(new TextBlock{Text=name,Margin=new(4,12,4,0)}));
-        var row=new StackPanel{Orientation=Orientation.Horizontal};
         var box=new TextBox{Text=TimeString(value)};
         System.Windows.Automation.AutomationProperties.SetAutomationId(box,name);
         box.LostKeyboardFocus+=(_,_)=>{try{SyncTimeline();}catch(ArgumentException){}};
         fields.Add(name,box);defaults.Add(name,TimeString(value));
-        row.Children.Add(box);
-        row.Children.Add(MainWindow.Button("Set Here",()=>{
+        options.Children.Add(box);
+        options.Children.Add(MainWindow.Button("Set Here",()=>{
             box.Text=TimeString(player.Position.TotalSeconds);
             try{SyncTimeline();}catch(ArgumentException){}
         }));
-        options.Children.Add(row);
     }
     private Action? resetCompression,resetPhotoView,resetPreviewZoom,applyExportProfile;
     private void Reset()
