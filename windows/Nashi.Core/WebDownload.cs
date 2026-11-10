@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Net;
-using System.Net.Sockets;
 using System.Text.Json;
 namespace Nashi.Core;
 public sealed partial class WebDownload(Toolchain tools)
@@ -15,21 +14,27 @@ public sealed partial class WebDownload(Toolchain tools)
         if(parts.Length!=3||!double.TryParse(parts[1],NumberStyles.Float,CultureInfo.InvariantCulture,out var current)||!double.TryParse(parts[2],NumberStyles.Float,CultureInfo.InvariantCulture,out var total)||!double.IsFinite(current)||!double.IsFinite(total)||total<=0)return null;
         return Math.Clamp(current/total,0,.98);
     }
-    /// Validates a web download URL: must be absolute http(s), no credentials, not loopback, not .local, not a private/link-local IP.
-    /// - Parameter input: The URL string to validate.
-    /// - Returns: The validated Uri.
-    /// - Throws ArgumentException if the URL is not a public http(s) link.
     public static Uri Validate(string input)
     {
-        if(!Uri.TryCreate(input,UriKind.Absolute,out var url)||url.Scheme is not ("http" or "https")||!string.IsNullOrEmpty(url.UserInfo)||url.IsLoopback||url.Host.EndsWith(".local",StringComparison.OrdinalIgnoreCase)||IsPrivateIp(url.Host))throw new ArgumentException("Paste a public http(s) media or page link.");return url;
+        if(!Uri.TryCreate(input,UriKind.Absolute,out var url)||url.Scheme is not ("http" or "https")||!string.IsNullOrEmpty(url.UserInfo)||url.IsLoopback||url.Host.EndsWith(".local",StringComparison.OrdinalIgnoreCase)||IsNonPublicAddress(url.Host))throw new ArgumentException("Paste a public http(s) media or page link.");return url;
     }
-    /// Checks whether an IP address string is private or link-local (RFC 1918, RFC 5737, RFC 3927, RFC 6598, etc.).
-    /// - Parameter host: The IP address string to check.
-    /// - Returns: true if the address is private/link-local and should be blocked.
-    private static bool IsPrivateIp(string host)
+    // Only literal addresses are checked here. A name is resolved later by the downloader, which also follows redirects.
+    internal static bool IsNonPublicAddress(string host)
     {
-        if(!IPAddress.TryParse(host,out var ip))return false;if(ip.AddressFamily==System.Net.Sockets.AddressFamily.InterNetworkV6&&ip.IsIPv4MappedToIPv6)ip=ip.MapToIPv4();var b=ip.GetAddressBytes();return b.Length==4&&(b[0]==0||b[0]==10||(b[0]==100&&b[1]>=64&&b[1]<=127)||(b[0]==172&&b[1]>=16&&b[1]<=31)||(b[0]==192&&b[1]==168)||(b[0]==169&&b[1]==254)||(b[0]==192&&b[1]==0&&b[2]==2)||(b[0]==198&&b[1]==51&&b[2]==100)||(b[0]==203&&b[1]==0&&b[2]==113));
+        if(!IPAddress.TryParse(host.Trim('[',']'),out var ip))return false;
+        if(ip.IsIPv4MappedToIPv6)ip=ip.MapToIPv4();
+        var b=ip.GetAddressBytes();
+        if(b.Length==16)
+        {
+            // 64:ff9b::/96 (NAT64) carries an IPv4 address in its last four bytes.
+            if(b[0]==0x00&&b[1]==0x64&&b[2]==0xff&&b[3]==0x9b&&b[4..12].All(x=>x==0))return IsNonPublicV4(b[12],b[13],b[14]);
+            return ip.Equals(IPAddress.IPv6Any)||ip.IsIPv6LinkLocal||ip.IsIPv6SiteLocal||ip.IsIPv6UniqueLocal||ip.IsIPv6Multicast;
+        }
+        return IsNonPublicV4(b[0],b[1],b[2]);
     }
+    private static bool IsNonPublicV4(byte a,byte b,byte c)=>
+        a==0||a==10||a>=224||(a==100&&b is >=64 and <=127)||(a==169&&b==254)||(a==172&&b is >=16 and <=31)||(a==192&&b==168)||
+        (a==192&&b==0&&c is 0 or 2)||(a==198&&b is 18 or 19)||(a==198&&b==51&&c==100)||(a==203&&b==0&&c==113);
     internal string FfmpegLocation=>Path.GetDirectoryName(tools.Executable("ffmpeg"))!;
     public async Task<IReadOnlyList<string>> DownloadAsync(string input,string kind,string destination,IProgress<OperationProgress>? progress=null,CancellationToken token=default,int? maximumHeight=null,IReadOnlySet<int>? selectedPhotos=null)
     {
