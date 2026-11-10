@@ -96,12 +96,12 @@ struct HomeView:View {
                         Text("Your Library").font(.system(size:30,weight:.bold,design:.rounded))
                         Spacer()
                         if !state.history.isEmpty && !state.working {
-                            Button(action: {state.showClearHistoryConfirmation = true}) {
+                            Button(action: {showClearHistoryConfirmation = true}) {
                                 Image(systemName:"trash").font(.system(size:14,weight:.medium))
                             }
                             .buttonStyle(NashiButtonStyle(.quiet,compact:true))
                             .help("Clear Library")
-                            .alert("Clear Library", isPresented: $state.showClearHistoryConfirmation) {
+                            .alert("Clear Library", isPresented: $showClearHistoryConfirmation) {
                                 Button("Cancel", role: .cancel) { }
                                 Button("Clear All", role: .destructive) { state.clearHistory() }
                             } message: {

@@ -47,18 +47,19 @@ public final class AppState: ObservableObject {
     }
     
     // JobRecord struct
-    public struct JobRecord: Identifiable, Sendable {
-        public let id = UUID()
+    public struct JobRecord: Codable, Identifiable, Sendable {
+        public let id: UUID
         public let title: String
-        public let outputs: [URL]
+        public let outputs: [String]
         public let mode: WheelMode
-        public let created: Date
+        public let date: Date
         
         public init(title: String, outputs: [URL], mode: WheelMode) {
+            self.id = UUID()
             self.title = title
-            self.outputs = outputs
+            self.outputs = outputs.map(\.path)
             self.mode = mode
-            self.created = Date()
+            self.date = Date()
         }
     }
     
@@ -77,21 +78,19 @@ public final class AppState: ObservableObject {
     }
     
     public func removeHistoryEntry(_ id: UUID) {
-        if let index = history.firstIndex(where: { $0.id == id }) {
-            history.remove(at: index)
-            // If the removed entry was selected, select the first remaining entry or clear selection
-            if selectedHistoryID == id {
-                if !history.isEmpty {
-                    selectedHistoryID = history[0].id
-                } else {
-                    selectedHistoryID = nil
-                }
-            }
+        guard !working else { return }
+        let previous = history
+        history.removeAll { $0.id == id }
+        guard history.count != previous.count else { return }
+        // If the removed entry was selected, select the first remaining entry or clear selection
+        if selectedHistoryID == id {
+            selectedHistoryID = history.first?.id
         }
         saveHistory()
     }
     
     public func clearHistory() {
+        guard !working else { return }
         history.removeAll()
         selectedHistoryID = nil
         saveHistory()
