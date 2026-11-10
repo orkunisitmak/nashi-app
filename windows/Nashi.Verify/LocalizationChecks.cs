@@ -24,6 +24,9 @@ internal static class LocalizationChecks
         var directory=Path.Combine(root,"Localization preferences");var store=new PreferencesStore(directory);check(store.Value.Language=="en","Existing users changed language without choosing");
         store.Save(store.Value with{Language="tr",Feedback=false,ToolsModifier="Ctrl+Alt"});var loaded=new PreferencesStore(directory).Value;
         check(loaded.Language=="tr"&&!loaded.Feedback&&loaded.ToolsModifier=="Ctrl+Alt","Language persistence changed other preferences");
+        var hw=store.Value with{HiddenWheelItems=new Dictionary<string,string[]> { ["convert"]=new[]{"webp"}, ["tools"]=new[]{"compress"}, ["actions"]=new[]{"terminal"} }};store.Save(hw);var loadedHw=new PreferencesStore(directory).Value;
+        check(loadedHw.HiddenWheelItems["convert"].SequenceEqual(new[]{"webp"})&&loadedHw.HiddenWheelItems["tools"].SequenceEqual(new[]{"compress"})&&loadedHw.HiddenWheelItems["actions"].SequenceEqual(new[]{"terminal"}),"Hidden wheel items persistence failed");
+        var bad=store.Value with{HiddenWheelItems=new Dictionary<string,string[]> { ["convert"]=null }};try{store.Save(bad);check(false,"Null HiddenWheelItems value accepted");}catch(ArgumentException){check(true,"Null HiddenWheelItems value rejected");}
         var old=Path.Combine(root,"Legacy language preferences");Directory.CreateDirectory(old);File.WriteAllText(Path.Combine(old,"preferences.json"),"{\"Feedback\":false}");var legacy=new PreferencesStore(old);
         check(legacy.Value.Language=="en"&&!legacy.Value.Feedback,"Legacy preference migration changed other values");
         check(AppLocalization.Normalize("fr")=="en"&&AppLocalization.Text("Home","en")=="Home","Unsupported language or English fallback failed");
