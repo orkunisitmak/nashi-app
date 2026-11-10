@@ -189,7 +189,7 @@ struct HomeView:View {
                     .buttonStyle(.plain).disabled(formats.isEmpty || state.working)
                 Button { HomeActionMenu.show(tools.map{tool in (tool.title,{state.select(.tool(tool))})}) } label:{HomeActionTile(title:"Fine-tune",subtitle:tools.isEmpty ? "No tools for this selection":"Edit, compress, and more",symbol:"slider.horizontal.3",color:NashiPalette.forest)}
                     .buttonStyle(.plain).disabled(tools.isEmpty || state.working)
-                Button { HomeActionMenu.show(FileAction.allCases.map{action in (action.title,{state.perform(action)})}) } label:{HomeActionTile(title:"Move & share",subtitle:"Send it on its way",symbol:"paperplane",color:Color(red:0.34,green:0.47,blue:0.67))}
+                Button { HomeActionMenu.show(NashiCore.FileAction.allCases.map{action in (action.title,{state.perform(action)})}) } label:{HomeActionTile(title:"Move & share",subtitle:"Send it on its way",symbol:"paperplane",color:Color(red:0.34,green:0.47,blue:0.67))}
                     .buttonStyle(.plain).disabled(state.working)
             }
             if !formats.isEmpty {

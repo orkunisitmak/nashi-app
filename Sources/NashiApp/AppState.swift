@@ -150,7 +150,7 @@ struct JobRecord:Codable,Identifiable {
     func stopProgressUpdates() { acceptsProgress=false }
     func finishJob() { stopProgressUpdates();working=false }
 
-    func perform(_ action:FileAction,urls:[URL]?=nil) {
+    func perform(_ action:NashiCore.FileAction,urls:[URL]?=nil) {
         let urls=urls ?? inputs
         guard !urls.isEmpty else { return }
         // Not a tool job: its error must not show in the editor of the last one.
