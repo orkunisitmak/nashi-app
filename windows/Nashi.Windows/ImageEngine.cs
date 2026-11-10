@@ -176,4 +176,3 @@ public static partial class ImageEngine
         using var ms=new MemoryStream();var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(source));encoder.Save(ms);return ms.ToArray();
     }
 }
-}
