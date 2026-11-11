@@ -994,6 +994,7 @@
 "ENABLE NASHI DRAG SHORTCUTS" = "ACTIVER LES RACCOURCIS DE GLISSER-DÉPOSER DE NASHI";
 "ENCODED PIXELS, COLOR PROFILE AND DISPLAY ORIENTATION ARE PRESERVED." = "LES PIXELS ENCODÉS, LE PROFIL COLORIMÉTRIQUE ET L’ORIENTATION D’AFFICHAGE SONT CONSERVÉS.";
 "END" = "FIN";
+"END TIME" = "HEURE DE FIN";
 "ENTER A FINITE NUMBER." = "SAISISSEZ UN NOMBRE FINI.";
 "ENTER A POSITIVE, FINITE TARGET SIZE." = "SAISISSEZ UNE TAILLE CIBLE POSITIVE ET FINIE.";
 "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%." = "SAISISSEZ UNE RÉDUCTION SUPÉRIEURE À 0 % ET INFÉRIEURE À 100 %.";
@@ -1024,6 +1025,7 @@
 "Enable Nashi drag shortcuts" = "Activer les raccourcis de glisser-déposer de Nashi";
 "Encoded pixels, color profile and display orientation are preserved." = "Les pixels encodés, le profil colorimétrique et l’orientation d’affichage sont conservés.";
 "End" = "Fin";
+"End time" = "Heure de fin";
 "Enter a finite number." = "Saisissez un nombre fini.";
 "Enter a positive, finite target size." = "Saisissez une taille cible positive et finie.";
 "Enter a reduction greater than 0% and less than 100%." = "Saisissez une réduction supérieure à 0 % et inférieure à 100 %.";
@@ -2106,6 +2108,8 @@
 "SEND IT ON ITS WAY" = "DÉPLACEZ, COPIEZ, PARTAGEZ";
 "SERIF" = "EMPATTEMENT";
 "SET" = "DÉFINIR";
+"SET END HERE" = "DÉFINIR COMME FIN ICI";
+"SET START HERE" = "DÉFINIR COMME DÉBUT ICI";
 "SET UP MEDIA TOOLS" = "CONFIGURER LES OUTILS MULTIMÉDIAS";
 "SET UP MEDIA TOOLS FOR THIS CODEC, OR USE OPEN TO PREVIEW IN ITS DEFAULT APP." = "CONFIGUREZ LES OUTILS MULTIMÉDIAS POUR CE CODEC, OU UTILISEZ OUVRIR POUR L’APERÇU DANS L’APP PAR DÉFAUT.";
 "SET UP MEDIA TOOLS ONCE TO ENABLE HEIC ENCODING ON WINDOWS." = "CONFIGUREZ UNE FOIS LES OUTILS MULTIMÉDIAS POUR ACTIVER L’ENCODAGE HEIC SOUS WINDOWS.";
@@ -2180,6 +2184,7 @@
 "START" = "DÉBUT";
 "START HERE" = "COMMENCEZ ICI";
 "START MUST BE BEFORE END, WITHIN THE MEDIA DURATION." = "LE DÉBUT DOIT PRÉCÉDER LA FIN, DANS LA DURÉE DU MÉDIA.";
+"START TIME" = "HEURE DE DÉBUT";
 "STARTING DOWNLOAD…" = "DÉMARRAGE DU TÉLÉCHARGEMENT…";
 "STEREO" = "STÉRÉO";
 "STILL IMAGE" = "IMAGE FIXE";
@@ -2273,6 +2278,8 @@
 "Send it on its way" = "Déplacez, copiez, partagez";
 "Serif" = "Empattement";
 "Set" = "Définir";
+"Set End Here" = "Définir comme fin ici";
+"Set Start Here" = "Définir comme début ici";
 "Set up Nashi tools" = "Configurer les outils de Nashi";
 "Set up media tools" = "Configurer les outils multimédias";
 "Set up media tools for this codec, or use Open to preview in its default app." = "Configurez les outils multimédias pour ce codec, ou utilisez Ouvrir pour l’aperçu dans l’app par défaut.";
@@ -2349,6 +2356,7 @@
 "Staging cannot be a symbolic link." = "Le dossier intermédiaire ne peut pas être un lien symbolique.";
 "Start" = "Début";
 "Start must be before End, within the media duration." = "Le début doit précéder la fin, dans la durée du média.";
+"Start time" = "Heure de début";
 "Starting download…" = "Démarrage du téléchargement…";
 "Stereo" = "Stéréo";
 "Still image" = "Image fixe";

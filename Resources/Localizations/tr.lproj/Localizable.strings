@@ -994,6 +994,7 @@
 "ENABLE NASHI DRAG SHORTCUTS" = "NASHI SÜRÜKLEME KISAYOLLARINI ETKİNLEŞTİR";
 "ENCODED PIXELS, COLOR PROFILE AND DISPLAY ORIENTATION ARE PRESERVED." = "KODLANMIŞ PİKSELLER, RENK PROFİLİ VE GÖRÜNTÜ YÖNÜ KORUNUR.";
 "END" = "BİTİŞ";
+"END TIME" = "BİTİŞ SAATİ";
 "ENTER A FINITE NUMBER." = "GEÇERLİ BİR SAYI GİR.";
 "ENTER A POSITIVE, FINITE TARGET SIZE." = "POZİTİF VE GEÇERLİ BİR HEDEF BOYUT GİR.";
 "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%." = "%0'DAN BÜYÜK VE %100'DEN KÜÇÜK BİR KÜÇÜLTME GİR.";
@@ -1024,6 +1025,7 @@
 "Enable Nashi drag shortcuts" = "Nashi sürükleme kısayollarını etkinleştir";
 "Encoded pixels, color profile and display orientation are preserved." = "Kodlanmış pikseller, renk profili ve görüntü yönü korunur.";
 "End" = "Bitiş";
+"End time" = "Bitiş saati";
 "Enter a finite number." = "Geçerli bir sayı gir.";
 "Enter a positive, finite target size." = "Pozitif ve geçerli bir hedef boyut gir.";
 "Enter a reduction greater than 0% and less than 100%." = "%0'dan büyük ve %100'den küçük bir küçültme gir.";
@@ -2106,6 +2108,8 @@
 "SEND IT ON ITS WAY" = "TAŞI, KOPYALA, PAYLAŞ";
 "SERIF" = "SERİF";
 "SET" = "AYARLA";
+"SET END HERE" = "BİTİŞİNİ BURAYA AYARLA";
+"SET START HERE" = "BAŞLANGICI BURAYA AYARLA";
 "SET UP MEDIA TOOLS" = "MEDYA ARAÇLARINI KUR";
 "SET UP MEDIA TOOLS FOR THIS CODEC, OR USE OPEN TO PREVIEW IN ITS DEFAULT APP." = "BU CODEC İÇİN MEDYA ARAÇLARINI KUR VEYA AÇ İLE VARSAYILAN UYGULAMADA ÖNİZLE.";
 "SET UP MEDIA TOOLS ONCE TO ENABLE HEIC ENCODING ON WINDOWS." = "WINDOWS'TA HEIC OLARAK KAYDETMEK İÇİN BİR KEZ MEDYA ARAÇLARINI KUR.";
@@ -2180,6 +2184,7 @@
 "START" = "BAŞLANGIÇ";
 "START HERE" = "BURADAN BAŞLA";
 "START MUST BE BEFORE END, WITHIN THE MEDIA DURATION." = "BAŞLANGIÇ, BİTİŞ'TEN ÖNCE VE MEDYA SÜRESİ İÇİNDE OLMALI.";
+"START TIME" = "BAŞLANGIÇ SAATİ";
 "STARTING DOWNLOAD…" = "İNDİRME BAŞLIYOR…";
 "STEREO" = "STEREO";
 "STILL IMAGE" = "SABİT GÖRSEL";
@@ -2273,6 +2278,8 @@
 "Send it on its way" = "Taşı, kopyala, paylaş";
 "Serif" = "Serif";
 "Set" = "Ayarla";
+"Set End Here" = "Bitişini Buraya Ayarla";
+"Set Start Here" = "Başlangıcı Buraya Ayarla";
 "Set up Nashi tools" = "Nashi araçlarını kur";
 "Set up media tools" = "Medya araçlarını kur";
 "Set up media tools for this codec, or use Open to preview in its default app." = "Bu codec için medya araçlarını kur veya Aç ile varsayılan uygulamada önizle.";
@@ -2349,6 +2356,7 @@
 "Staging cannot be a symbolic link." = "Geçici klasör sembolik bağlantı olamaz.";
 "Start" = "Başlangıç";
 "Start must be before End, within the media duration." = "Başlangıç, Bitiş'ten önce ve medya süresi içinde olmalı.";
+"Start time" = "Başlangıç saati";
 "Starting download…" = "İndirme başlıyor…";
 "Stereo" = "Stereo";
 "Still image" = "Sabit görsel";

@@ -457,7 +457,7 @@ struct ToolEditor:View {
 
     var timeRangeFields: some View {
         HStack(spacing: 8) {
-            Text(LText("Start time"))
+            LText("Start time")
             TextField("Start time", text: $startTimeText)
                 .textFieldStyle(.roundedBorder)
                 .onSubmit {
@@ -473,7 +473,7 @@ struct ToolEditor:View {
                 startTimeText = timeString(options.start)
             }
 
-            Text(LText("End time"))
+            LText("End time")
             TextField("End time", text: $endTimeText)
                 .textFieldStyle(.roundedBorder)
                 .onSubmit {
