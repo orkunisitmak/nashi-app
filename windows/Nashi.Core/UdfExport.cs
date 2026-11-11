@@ -22,7 +22,7 @@ public sealed partial class OfficeDocuments
         private const string Styles="<styles><style name=\"default\" description=\"Geçerli\" family=\"Dialog\" size=\"12\" bold=\"false\" italic=\"false\" foreground=\"-13421773\" FONT_ATTRIBUTE_KEY=\"javax.swing.plaf.FontUIResource[family=Dialog,name=Dialog,style=plain,size=12]\" /><style name=\"hvl-default\" family=\"Times New Roman\" size=\"12\" description=\"Gövde\" /></styles>";
         // The page number settings of a footer UYAP wrote. UYAP draws the page number itself (see PageCount), so a header or footer line
         // holding Word's PAGE field becomes these settings, with the line's own label, the separator before a page count, and its place.
-        private string PageNumbers=>" pageNumber-spec=\"BSP32_"+(PageAtBottom|pagePlace|(pageSeparator is null?0:PageCount)).ToString(CultureInfo.InvariantCulture)+"\" pageNumber-color=\"-16777216\" pageNumber-fontFace=\"Arial\" pageNumber-fontSize=\"11\" pageNumber-fontBold=\"false\" pageNumber-fontItalic=\"false\" pageNumber-foreStr=\""+SecurityElement.Escape(XmlSafe(pageLabel))+"\" pageNumber-seperator=\""+SecurityElement.Escape(XmlSafe(pageSeparator??""))+"\"";
+        private string PageNumbers=>" pageNumber-spec=\"BSP32_"+(PageAtBottom|pagePlace|(pageSeparator is null?0:PageCount)).ToString(CultureInfo.InvariantCulture)+"\""+(pageStart is {} first?" pageNumber-pageStartNumStr=\""+first.ToString(CultureInfo.InvariantCulture)+"\"":"")+" pageNumber-color=\"-16777216\" pageNumber-fontFace=\"Arial\" pageNumber-fontSize=\"11\" pageNumber-fontBold=\"false\" pageNumber-fontItalic=\"false\" pageNumber-foreStr=\""+SecurityElement.Escape(XmlSafe(pageLabel))+"\" pageNumber-seperator=\""+SecurityElement.Escape(XmlSafe(pageSeparator??""))+"\"";
         private readonly record struct Segment(char Kind,string Text,Dictionary<string,string>? Format,byte[]? Image=null,double Width=0,double Height=0);
         private readonly ZipArchive zip;private readonly CancellationToken token;private readonly Dictionary<string,XElement> styles=new(StringComparer.Ordinal);private readonly XElement? defaults,numbering;private readonly string? normal;private readonly string majorFont,minorFont;
         private readonly Dictionary<string,(Dictionary<string,string> C,Dictionary<string,string> P)> resolved=new(StringComparer.Ordinal);
@@ -31,7 +31,7 @@ public sealed partial class OfficeDocuments
         // Footnotes and endnotes in the order the body refers to them, the mark being written for a note's own text, and the Base64
         // the pictures add to content.xml, which is counted as it grows (one picture can be drawn many times).
         private readonly List<(string Kind,string Id,string Mark)> notes=[];private string? noteMark;private bool inNotes;private int footnotes,endnotes;private long limit=long.MaxValue,pictureText;
-        private Dictionary<string,string> relations;private bool furniture,footing,pageNumbers,pageFromFooter;private string? simpleCount,pageSeparator;private int cells,pagePlace=PageAtRight;private string pageLabel="";private double defaultTab=36,textWidth=453.5;
+        private Dictionary<string,string> relations;private bool furniture,footing,pageNumbers,pageFromFooter;private string? simpleCount,pageSeparator;private int cells,pagePlace=PageAtRight;private int? pageStart;private string pageLabel="";private double defaultTab=36,textWidth=453.5;
         public UdfExport(ZipArchive zip,CancellationToken token)
         {
             this.zip=zip;this.token=token;var styleXml=zip.GetEntry("word/styles.xml") is not null?Xml(zip,"word/styles.xml").Root:null;defaults=Child(styleXml,"docDefaults");
@@ -95,6 +95,8 @@ public sealed partial class OfficeDocuments
         {
             limit=contentLimit;
             var body=Child(Xml(zip,"word/document.xml").Root,"body")??throw new InvalidDataException("The document has no editable body.");var section=Child(body,"sectPr");var elements=new StringBuilder();
+            // Word's "start at" page number is UYAP's pageStartNumStr, in the range UDF -> DOCX reads back.
+            if(Num(Child(section,"pgNumType"),"start") is >=0 and <100000 and var start)pageStart=(int)start;
             var size=Child(section,"pgSz");var margins=Child(section,"pgMar");textWidth=Math.Max(72,((Num(size,"w")??11906)-(Num(margins,"left")??1418)-(Num(margins,"right")??1418))/20);
             // UYAP keeps the header's text first and the footer's last.
             // Word's "different first page" with an empty first header or footer is UYAP's header or footer starting on page 2, as on a

@@ -219,6 +219,16 @@ internal static class UdfChecks
         }
         var stopsUdf=OfficeDocuments.ReadUdf(Udf(stops)).Element("elements")!;var tabSet=stopsUdf.Element("paragraph")?.Attribute("TabSet")?.Value??"";
         check(tabSet.StartsWith("144.0:4:0,216.0:5:0",StringComparison.Ordinal)&&stopsUdf.Element("footer")?.Attribute("startPage")?.Value=="2","Decimal or bar tab stops, or a footer starting on page 2, were lost: "+tabSet+" "+stopsUdf.Element("footer")?.Attribute("startPage"));
+        // Word's "start at" page number reaches UYAP's pageStartNumStr and comes back to Word.
+        var fifth=Path.Combine(root,"Numbering from five.docx");
+        using(var zip=ZipFile.Open(fifth,ZipArchiveMode.Create))
+        {
+            Entry(zip,"word/document.xml","<w:document "+w+"><w:body><w:p><w:r><w:t>Metin</w:t></w:r></w:p><w:sectPr><w:footerReference w:type=\"default\" r:id=\"rFooter\"/><w:pgNumType w:start=\"5\"/></w:sectPr></w:body></w:document>");
+            Entry(zip,"word/_rels/document.xml.rels","<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rFooter\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer\" Target=\"footer1.xml\"/></Relationships>");
+            Entry(zip,"word/footer1.xml","<w:ftr "+w+"><w:p>"+Plain("Sayfa ")+Field(" PAGE ","5")+"</w:p></w:ftr>");
+        }
+        var fifthUdf=Udf(fifth);var fifthBack=Path.Combine(root,"Numbering from five again.docx");OfficeDocuments.UdfToDocx(fifthUdf,fifthBack);
+        check(Setting(fifthUdf,"pageStartNumStr")=="5"&&Part(fifthBack,"word/document.xml").Contains("<w:pgNumType w:start=\"5\"/>",StringComparison.Ordinal),"Word's starting page number was lost in a UDF round trip: "+Setting(fifthUdf,"pageStartNumStr"));
         // A field's instruction ends at its first separate. Instruction text after it must not turn a footer field into a page number,
         // nor be read again at every later separate (40,000 of them, each after more instruction text, took about 16 s before).
         // A field inside another field's instruction, complex or simple, is neither a page number nor text, a PAGE field without a
