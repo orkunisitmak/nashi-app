@@ -230,19 +230,21 @@ internal static class UdfChecks
         var fifthUdf=Udf(fifth);var fifthBack=Path.Combine(root,"Numbering from five again.docx");OfficeDocuments.UdfToDocx(fifthUdf,fifthBack);
         check(Setting(fifthUdf,"pageStartNumStr")=="5"&&Part(fifthBack,"word/document.xml").Contains("<w:pgNumType w:start=\"5\"/>",StringComparison.Ordinal),"Word's starting page number was lost in a UDF round trip: "+Setting(fifthUdf,"pageStartNumStr"));
         // UYAP numbers the document once, from its first page, so only the first section's start counts.
-        string Sections(string name,string firstSection)
+        string Sections(string name,string firstSection,string textBox="")
         {
             var path=Path.Combine(root,name+".docx");
             using(var zip=ZipFile.Open(path,ZipArchiveMode.Create))
             {
-                Entry(zip,"word/document.xml","<w:document "+w+"><w:body><w:p><w:pPr><w:sectPr>"+firstSection+"</w:sectPr></w:pPr><w:r><w:t>Bir</w:t></w:r></w:p><w:p><w:r><w:t>İki</w:t></w:r></w:p><w:sectPr><w:footerReference w:type=\"default\" r:id=\"rFooter\"/><w:pgNumType w:start=\"5\"/></w:sectPr></w:body></w:document>");
+                Entry(zip,"word/document.xml","<w:document "+w+"><w:body>"+textBox+"<w:p><w:pPr><w:sectPr>"+firstSection+"</w:sectPr></w:pPr><w:r><w:t>Bir</w:t></w:r></w:p><w:p><w:r><w:t>İki</w:t></w:r></w:p><w:sectPr><w:footerReference w:type=\"default\" r:id=\"rFooter\"/><w:pgNumType w:start=\"5\"/></w:sectPr></w:body></w:document>");
                 Entry(zip,"word/_rels/document.xml.rels","<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rFooter\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer\" Target=\"footer1.xml\"/></Relationships>");
                 Entry(zip,"word/footer1.xml","<w:ftr "+w+"><w:p>"+Plain("Sayfa ")+Field(" PAGE ","1")+"</w:p></w:ftr>");
             }
             return Udf(path);
         }
         var laterRestart=Sections("Later section restarts at five","");var firstStart=Sections("First section starts at three","<w:pgNumType w:start=\"3\"/>");
-        check(Setting(laterRestart,"pageStartNumStr") is null&&Setting(firstStart,"pageStartNumStr")=="3","A later section's starting page number numbered the whole UDF: "+Setting(laterRestart,"pageStartNumStr")+", "+Setting(firstStart,"pageStartNumStr"));
+        // A text box's paragraph ends no section, so its sectPr does not count.
+        var boxed=Sections("Section settings in a text box","","<w:p><w:r><w:pict><w:txbxContent><w:p><w:pPr><w:sectPr><w:pgNumType w:start=\"7\"/></w:sectPr></w:pPr></w:p></w:txbxContent></w:pict></w:r></w:p>");
+        check(Setting(laterRestart,"pageStartNumStr") is null&&Setting(firstStart,"pageStartNumStr")=="3"&&Setting(boxed,"pageStartNumStr") is null,"A later section's or a text box's starting page number numbered the whole UDF: "+Setting(laterRestart,"pageStartNumStr")+", "+Setting(firstStart,"pageStartNumStr")+", "+Setting(boxed,"pageStartNumStr"));
         // A field's instruction ends at its first separate. Instruction text after it must not turn a footer field into a page number,
         // nor be read again at every later separate (40,000 of them, each after more instruction text, took about 16 s before).
         // A field inside another field's instruction, complex or simple, is neither a page number nor text, a PAGE field without a

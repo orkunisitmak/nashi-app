@@ -96,8 +96,9 @@ public sealed partial class OfficeDocuments
             limit=contentLimit;
             var body=Child(Xml(zip,"word/document.xml").Root,"body")??throw new InvalidDataException("The document has no editable body.");var section=Child(body,"sectPr");var elements=new StringBuilder();
             // Word's "start at" page number is UYAP's pageStartNumStr, in the range UDF -> DOCX reads back. UYAP numbers the document once,
-            // from its first page, so only the first section's start counts (a paragraph's sectPr ends a section; the body's is the last).
-            var opening=body.Descendants().FirstOrDefault(e=>e.Name.LocalName=="sectPr")??section;
+            // from its first page, so only the first section's start counts (a body paragraph's sectPr ends a section; the body's is the
+            // last). A paragraph inside a text box ends no section.
+            var opening=Blocks(body).Where(e=>e.Name.LocalName=="p").Select(e=>Child(Child(e,"pPr"),"sectPr")).FirstOrDefault(e=>e is not null)??section;
             if(Num(Child(opening,"pgNumType"),"start") is >=0 and <100000 and var start)pageStart=(int)start;
             var size=Child(section,"pgSz");var margins=Child(section,"pgMar");textWidth=Math.Max(72,((Num(size,"w")??11906)-(Num(margins,"left")??1418)-(Num(margins,"right")??1418))/20);
             // UYAP keeps the header's text first and the footer's last.
