@@ -9,12 +9,13 @@ public sealed partial class OfficeDocuments
 {
     /// Writes a DOCX as a UYAP document laid out as UYAP and udf-cli write one (see UdfImport.cs). List numbers are written
     /// as the text Word shows, so a petition's "1." and "a)" stay what they were whatever numbering UYAP would apply.
-    public static void DocxToUdf(string input,string output)=>DocxToUdf(input,output,ContentLimit);
+    /// A cancelled token stops the conversion between blocks and pictures and before the file is created (see UdfToDocx).
+    public static void DocxToUdf(string input,string output,CancellationToken token=default)=>DocxToUdf(input,output,ContentLimit,token);
     // The limit is a parameter so Nashi.Verify can reach the refusal without writing 256 MB.
-    internal static void DocxToUdf(string input,string output,long contentLimit)
+    internal static void DocxToUdf(string input,string output,long contentLimit,CancellationToken token=default)
     {
         using var zip=ZipFile.OpenRead(input);if(zip.Entries.Count>10000||zip.Entries.Sum(e=>e.Length)>512_000_000||zip.Entries.GroupBy(e=>e.FullName,StringComparer.OrdinalIgnoreCase).Any(g=>g.Count()>1))throw new InvalidDataException("The document package is too large or contains duplicate entries.");
-        new UdfExport(zip).Write(output,contentLimit);
+        new UdfExport(zip,token).Write(output,contentLimit);
     }
     private sealed class UdfExport
     {
@@ -23,14 +24,14 @@ public sealed partial class OfficeDocuments
         // holding Word's PAGE field becomes these settings, with the line's own label, the separator before a page count, and its place.
         private string PageNumbers=>" pageNumber-spec=\"BSP32_"+(PageAtBottom|pagePlace|(pageSeparator is null?0:PageCount)).ToString(CultureInfo.InvariantCulture)+"\" pageNumber-color=\"-16777216\" pageNumber-fontFace=\"Arial\" pageNumber-fontSize=\"11\" pageNumber-fontBold=\"false\" pageNumber-fontItalic=\"false\" pageNumber-foreStr=\""+SecurityElement.Escape(XmlSafe(pageLabel))+"\" pageNumber-seperator=\""+SecurityElement.Escape(XmlSafe(pageSeparator??""))+"\"";
         private readonly record struct Segment(char Kind,string Text,Dictionary<string,string>? Format,byte[]? Image=null,double Width=0,double Height=0);
-        private readonly ZipArchive zip;private readonly Dictionary<string,XElement> styles=new(StringComparer.Ordinal);private readonly XElement? defaults,numbering;private readonly string? normal;private readonly string majorFont,minorFont;
+        private readonly ZipArchive zip;private readonly CancellationToken token;private readonly Dictionary<string,XElement> styles=new(StringComparer.Ordinal);private readonly XElement? defaults,numbering;private readonly string? normal;private readonly string majorFont,minorFont;
         private readonly Dictionary<string,(Dictionary<string,string> C,Dictionary<string,string> P)> resolved=new(StringComparer.Ordinal);
         private readonly Dictionary<string,int[]> counters=new(StringComparer.Ordinal);private readonly HashSet<string> restarted=new(StringComparer.Ordinal);
         private readonly Stack<(StringBuilder Instruction,bool Result,string? Page)> fields=new();private int instructions;private readonly StringBuilder text=new();
         private Dictionary<string,string> relations;private bool furniture,footing,pageNumbers,pageFromFooter;private string? simpleCount,pageSeparator;private int cells,pagePlace=PageAtRight;private string pageLabel="";private double defaultTab=36,textWidth=453.5;
-        public UdfExport(ZipArchive zip)
+        public UdfExport(ZipArchive zip,CancellationToken token)
         {
-            this.zip=zip;var styleXml=zip.GetEntry("word/styles.xml") is not null?Xml(zip,"word/styles.xml").Root:null;defaults=Child(styleXml,"docDefaults");
+            this.zip=zip;this.token=token;var styleXml=zip.GetEntry("word/styles.xml") is not null?Xml(zip,"word/styles.xml").Root:null;defaults=Child(styleXml,"docDefaults");
             foreach(var style in styleXml?.Elements().Where(e=>e.Name.LocalName=="style")??[])if(Attr(style,"styleId") is {} id)styles[id]=style;
             normal=Attr(styles.Values.LastOrDefault(e=>(Attr(e,"type")??"paragraph")=="paragraph"&&Attr(e,"default") is "1" or "true" or "on"),"styleId");
             numbering=zip.GetEntry("word/numbering.xml") is not null?Xml(zip,"word/numbering.xml").Root:null;
@@ -114,7 +115,7 @@ public sealed partial class OfficeDocuments
             // The bytes are counted as they will be written (UTF-8, no BOM) before anything is created.
             var encoder=Encoding.UTF8.GetEncoder();long bytes=0;foreach(var chunk in xml.GetChunks())bytes+=encoder.GetByteCount(chunk.Span,false);bytes+=encoder.GetByteCount([],true);
             if(bytes>contentLimit)throw new InvalidDataException("This UDF document is too large.");
-            using var archive=ZipFile.Open(output,ZipArchiveMode.Create);using var writer=new StreamWriter(archive.CreateEntry("content.xml",CompressionLevel.Optimal).Open(),new UTF8Encoding(false));writer.Write(xml);
+            token.ThrowIfCancellationRequested();using var archive=ZipFile.Open(output,ZipArchiveMode.Create);using var writer=new StreamWriter(archive.CreateEntry("content.xml",CompressionLevel.Optimal).Open(),new UTF8Encoding(false));writer.Write(xml);
         }
         private (XElement Root,Dictionary<string,string> Relations)? Furniture(XElement? section,string reference,string? type=null)
         {
@@ -129,7 +130,7 @@ public sealed partial class OfficeDocuments
         private void Content(XElement container,StringBuilder xml,int depth)
         {
             if(depth>32)throw new InvalidDataException("This document nests its content too deeply to convert.");
-            foreach(var element in Blocks(container))if(element.Name.LocalName=="p")Paragraph(element,xml);else if(element.Name.LocalName=="tbl")Table(element,xml,depth);
+            foreach(var element in Blocks(container)){token.ThrowIfCancellationRequested();if(element.Name.LocalName=="p")Paragraph(element,xml);else if(element.Name.LocalName=="tbl")Table(element,xml,depth);}
         }
         private void Paragraph(XElement element,StringBuilder xml)
         {
@@ -248,7 +249,7 @@ public sealed partial class OfficeDocuments
         private void Picture(XElement element,List<Segment> runs)
         {
             var id=element.Descendants().Select(e=>Attr(e,"embed")??(e.Name.LocalName=="imagedata"?Attr(e,"id"):null)).FirstOrDefault(v=>v is not null);
-            if(id is null||!relations.TryGetValue(id,out var part)||zip.GetEntry(part) is not {} entry||entry.Length>PictureLimit)return;
+            token.ThrowIfCancellationRequested();if(id is null||!relations.TryGetValue(id,out var part)||zip.GetEntry(part) is not {} entry||entry.Length>PictureLimit)return;
             byte[] data;using(var source=entry.Open())using(var bytes=new MemoryStream()){var buffer=new byte[81920];int count;while((count=source.Read(buffer))>0){if(bytes.Length+count>PictureLimit)return;bytes.Write(buffer,0,count);}data=bytes.ToArray();}
             if(PictureFormat(data) is not {} format)return;
             // The size is read before a conversion, which may scale the pixels down.

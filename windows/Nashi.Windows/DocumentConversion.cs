@@ -27,10 +27,10 @@ public sealed class DocumentConversion(OfficeRuntime runtime,Toolchain tools)
             if(ext is "txt" or "md" or "csv" or "tsv"){var normalized=Path.Combine(work,Path.GetFileName(input));await LegacyTextCodec.ToUtf8Async(input,normalized,token);source=normalized;}
             if(ext=="epub")source=EpubToHtml(input,work,token);
             // UDF opens as DOCX without Office; Office takes that DOCX to every other format. The UDF converters are synchronous, so they
-            // run off the calling (UI) thread, and a cancel that arrives meanwhile discards the result with the rest of the export.
+            // run off the calling (UI) thread and watch the token themselves: a cancel stops the conversion and the export leaves nothing.
             if(ext=="udf")
             {
-                var opened=Path.Combine(work,Path.GetFileNameWithoutExtension(input)+".docx");await Task.Run(()=>OfficeDocuments.UdfToDocx(input,opened),token);token.ThrowIfCancellationRequested();source=opened;
+                var opened=Path.Combine(work,Path.GetFileNameWithoutExtension(input)+".docx");await Task.Run(()=>OfficeDocuments.UdfToDocx(input,opened,token),token);token.ThrowIfCancellationRequested();source=opened;
                 if(format=="docx"){var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileName(source));File.Move(source,output);outputs.Add(output);continue;}
             }
             if(ext=="pdf"&&format is "txt" or "md")
@@ -58,7 +58,7 @@ public sealed class DocumentConversion(OfficeRuntime runtime,Toolchain tools)
             if(format=="udf")
             {
                 var docx=ext=="docx"?input:await Require(engine).OfficeAsync(source,"docx",work,token);var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+".udf");
-                await Task.Run(()=>OfficeDocuments.DocxToUdf(docx,output),token);token.ThrowIfCancellationRequested();outputs.Add(output);progress?.Report(new((i+1d)/inputs.Count*.98,"Saving document…"));continue;
+                await Task.Run(()=>OfficeDocuments.DocxToUdf(docx,output,token),token);token.ThrowIfCancellationRequested();outputs.Add(output);progress?.Report(new((i+1d)/inputs.Count*.98,"Saving document…"));continue;
             }
             var converted=await Require(engine).OfficeAsync(source,format,work,token);var target=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+"."+format);File.Move(converted,target);outputs.Add(target);progress?.Report(new((i+1d)/inputs.Count*.98,"Saving document…"));
         }

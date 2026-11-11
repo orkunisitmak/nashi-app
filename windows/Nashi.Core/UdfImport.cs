@@ -12,18 +12,20 @@ namespace Nashi.Core;
 // Office converts every other format and DOCX itself needs no Office tools.
 public sealed partial class OfficeDocuments
 {
-    public static void UdfToDocx(string input,string output)=>new UdfImport(ReadUdf(input)).Write(output);
-    internal static XElement ReadUdf(string input)
+    // The converters are synchronous and run off the UI thread; a cancelled token stops them between reads, blocks and pictures,
+    // and before anything is written, so a cancelled export ends within one paragraph and leaves no output behind.
+    public static void UdfToDocx(string input,string output,CancellationToken token=default)=>new UdfImport(ReadUdf(input,token),token).Write(output);
+    internal static XElement ReadUdf(string input,CancellationToken token=default)
     {
         using var zip=ZipFile.OpenRead(input);if(zip.Entries.Count>1000)throw new InvalidDataException("This UDF document is too large.");
         var entry=zip.GetEntry("content.xml")??throw new InvalidDataException("This is not a UYAP document: content.xml is missing.");
         if(entry.Length>ContentLimit)throw new InvalidDataException("This UDF document is too large.");
-        using var memory=new MemoryStream();using(var stream=entry.Open()){var buffer=new byte[81920];int count;while((count=stream.Read(buffer))>0){if(memory.Length+count>ContentLimit)throw new InvalidDataException("This UDF document is too large.");memory.Write(buffer,0,count);}}
+        using var memory=new MemoryStream();using(var stream=entry.Open()){var buffer=new byte[81920];int count;while((count=stream.Read(buffer))>0){token.ThrowIfCancellationRequested();if(memory.Length+count>ContentLimit)throw new InvalidDataException("This UDF document is too large.");memory.Write(buffer,0,count);}}
         // The editor writes UTF-8; content that is not valid UTF-8 comes from older exports in the Turkish code page.
         var data=memory.ToArray();string xml;try{xml=XmlText(data);}catch(XmlException){Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);xml=Encoding.GetEncoding(1254).GetString(data);}
         var settings=new XmlReaderSettings{DtdProcessing=DtdProcessing.Ignore,XmlResolver=null,MaxCharactersInDocument=ContentLimit};
-        using(var scan=XmlReader.Create(new StringReader(xml),settings))while(scan.Read())if(scan.Depth>256)throw new InvalidDataException("This document nests its content too deeply to convert.");
-        using var reader=XmlReader.Create(new StringReader(xml),settings);var root=XDocument.Load(reader).Root;
+        using(var scan=XmlReader.Create(new StringReader(xml),settings))for(var nodes=0;scan.Read();nodes++){if(scan.Depth>256)throw new InvalidDataException("This document nests its content too deeply to convert.");if((nodes&4095)==0)token.ThrowIfCancellationRequested();}
+        token.ThrowIfCancellationRequested();using var reader=XmlReader.Create(new StringReader(xml),settings);var root=XDocument.Load(reader).Root;
         return root is not null&&root.Name.LocalName=="template"?root:throw new InvalidDataException("This is not a UYAP document: content.xml has no template.");
     }
     /// Characters XML 1.0 cannot hold (control characters, unpaired surrogates) are left out; offsets are counted after this.
@@ -62,10 +64,10 @@ public sealed partial class OfficeDocuments
         private sealed class Part(string name,string? color){public string Name=name;public string? Color=color;public List<string> Relations=[];}
         private readonly XElement template;private readonly string text;private readonly Dictionary<string,XElement> styles=new(StringComparer.Ordinal);private readonly XElement? page;
         private readonly List<(string Name,byte[] Data)> media=[];private readonly Dictionary<string,int> lists=new(StringComparer.Ordinal);
-        private readonly double width;private readonly string webId;private int pictures;private bool pageBreak;private XElement? header,footer;
-        public UdfImport(XElement template)
+        private readonly double width;private readonly string webId;private readonly CancellationToken token;private int pictures;private bool pageBreak;private XElement? header,footer;
+        public UdfImport(XElement template,CancellationToken token)
         {
-            this.template=template;text=template.Element("content")?.Value??"";page=template.Element("properties")?.Element("pageFormat");
+            this.template=template;this.token=token;text=template.Element("content")?.Value??"";page=template.Element("properties")?.Element("pageFormat");
             webId=string.Join(' ',(template.Element("webID")?.Attribute("id")?.Value??"").Split((char[]?)null,StringSplitOptions.RemoveEmptyEntries));
             foreach(var style in template.Element("styles")?.Elements("style")??[])if(style.Attribute("name")?.Value is {} name)styles[name]=style;
             width=Math.Max(72,PageSize().Width-Margin("leftMargin",42.52)-Margin("rightMargin",28.35));
@@ -104,7 +106,7 @@ public sealed partial class OfficeDocuments
             xml.Append("<w:pgSz w:w=\"").Append(Twips(pageWidth)).Append("\" w:h=\"").Append(Twips(pageHeight)).Append('"').Append(Landscape?" w:orient=\"landscape\"":"").Append("/><w:pgMar w:top=\"").Append(Twips(Margin("topMargin",14.17))).Append("\" w:right=\"").Append(Twips(Margin("rightMargin",28.35))).Append("\" w:bottom=\"").Append(Twips(Margin("bottomMargin",14.17))).Append("\" w:left=\"").Append(Twips(Margin("leftMargin",42.52))).Append("\" w:header=\"").Append(Twips(Margin("headerFOffset",20))).Append("\" w:footer=\"").Append(Twips(Margin("footerFOffset",20))).Append("\" w:gutter=\"0\"/>");
             if(Number(footer?.Attribute("pageNumber-pageStartNumStr")?.Value) is {} first&&first is >=0 and <100000&&footer?.Attribute("pageNumber-spec") is not null)xml.Append("<w:pgNumType w:start=\"").Append((int)first).Append("\"/>");
             if(titlePage)xml.Append("<w:titlePg/>");xml.Append("</w:sectPr></w:body></w:document>");
-            using var zip=ZipFile.Open(output,ZipArchiveMode.Create);
+            token.ThrowIfCancellationRequested();using var zip=ZipFile.Open(output,ZipArchiveMode.Create);
             void Entry(string name,string content){using var writer=new StreamWriter(zip.CreateEntry(name,CompressionLevel.Optimal).Open(),new UTF8Encoding(false));writer.Write(content);}
             string Relations(IEnumerable<string> relations)=>"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"+string.Concat(relations)+"</Relationships>";
             var types=new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/><Default Extension=\"xml\" ContentType=\"application/xml\"/>");
@@ -127,7 +129,7 @@ public sealed partial class OfficeDocuments
             if(depth>32)throw new InvalidDataException("This document nests its content too deeply to convert.");
             foreach(var element in container.Elements())switch(element.Name.LocalName)
             {
-                case "paragraph":Paragraph(element,xml,part);break;
+                case "paragraph":token.ThrowIfCancellationRequested();Paragraph(element,xml,part);break;
                 case "table":Table(element,xml,depth,part);break;
                 // udf-cli and UYAP wrap the paragraph after a page break; that paragraph only holds the break's placeholder.
                 case "page-break":if(part.Name=="document"&&depth==0)pageBreak=true;break;
@@ -222,7 +224,7 @@ public sealed partial class OfficeDocuments
         }
         private void Image(XElement image,StringBuilder xml,Part part)
         {
-            byte[] data;try{data=Convert.FromBase64String(image.Attribute("imageData")?.Value??"");}catch(FormatException){return;}
+            token.ThrowIfCancellationRequested();byte[] data;try{data=Convert.FromBase64String(image.Attribute("imageData")?.Value??"");}catch(FormatException){return;}
             if(data.Length>PictureLimit||ImageExtension(data) is not {} extension)return;
             // Sizes are pixels at 96 DPI, as udf-cli and the UDF toolkit write them; an image never grows past the text width.
             var w=Number(image.Attribute("width")?.Value);var h=Number(image.Attribute("height")?.Value);

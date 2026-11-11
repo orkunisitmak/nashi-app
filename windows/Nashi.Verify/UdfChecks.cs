@@ -17,6 +17,7 @@ internal static class UdfChecks
         check(Throws(()=>OfficeDocuments.UdfToDocx(other,Path.Combine(root,"Other.docx"))),"An XML package that is not a UYAP template was converted");
     }
     private static bool Throws(Action action){try{action();return false;}catch(InvalidDataException){return true;}}
+    private static bool Cancels(Action action){try{action();return false;}catch(OperationCanceledException){return true;}}
     // A Word header or footer's page number paragraph, as its alignment, then its texts and {fields} in order.
     private static string Drawn(string part)
     {
@@ -153,6 +154,13 @@ internal static class UdfChecks
         static long ContentBytes(string package){using var zip=ZipFile.OpenRead(package);return zip.GetEntry("content.xml")!.Length;}
         var written=ContentBytes(udf);var fits=Path.Combine(root,"Dilekçe at the limit.udf");var refused=Path.Combine(root,"Dilekçe over the limit.udf");OfficeDocuments.DocxToUdf(docx,fits,written);
         check(written>xml.Length&&ContentBytes(fits)==written&&Throws(()=>OfficeDocuments.DocxToUdf(docx,refused,written-1))&&!File.Exists(refused),"DOCX -> UDF wrote a content.xml larger than UDF -> DOCX reads, or refused one that fits");
+        // Both converters watch the export's token themselves, so a cancel stops the work instead of only discarding its result, and
+        // nothing is written.
+        using(var cancelled=new CancellationTokenSource())
+        {
+            cancelled.Cancel();var stoppedUdf=Path.Combine(root,"Cancelled.udf");var stoppedDocx=Path.Combine(root,"Cancelled.docx");
+            check(Cancels(()=>OfficeDocuments.DocxToUdf(docx,stoppedUdf,cancelled.Token))&&!File.Exists(stoppedUdf)&&Cancels(()=>OfficeDocuments.UdfToDocx(udf,stoppedDocx,cancelled.Token))&&!File.Exists(stoppedDocx),"A cancelled UDF conversion kept running or left a file behind");
+        }
         // A field's instruction ends at its first separate. Instruction text after it must not turn a footer field into a page number,
         // nor be read again at every later separate (40,000 of them, each after more instruction text, took about 16 s before).
         // A field inside another field's instruction, complex or simple, is neither a page number nor text, a PAGE field without a
