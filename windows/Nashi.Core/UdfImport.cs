@@ -64,7 +64,7 @@ public sealed partial class OfficeDocuments
         private sealed class Part(string name,string? color){public string Name=name;public string? Color=color;public List<string> Relations=[];}
         private readonly XElement template;private readonly string text;private readonly Dictionary<string,XElement> styles=new(StringComparer.Ordinal);private readonly XElement? page;
         private readonly List<(string Name,byte[] Data)> media=[];private readonly Dictionary<string,int> lists=new(StringComparer.Ordinal);
-        private readonly double width;private readonly string webId;private readonly CancellationToken token;private int pictures;private bool pageBreak;private XElement? header,footer;
+        private readonly double width;private readonly string webId;private readonly CancellationToken token;private int pictures,pageBreaks;private long copied;private XElement? header,footer;
         public UdfImport(XElement template,CancellationToken token)
         {
             this.template=template;this.token=token;text=template.Element("content")?.Value??"";page=template.Element("properties")?.Element("pageFormat");
@@ -91,7 +91,7 @@ public sealed partial class OfficeDocuments
         private string? Value(XElement leaf,XElement paragraph,string name)=>Value(leaf,name)??Value(paragraph,name);
         public void Write(string output)
         {
-            var document=new Part("document",null);var body=new StringBuilder();if(template.Element("elements") is {} elements)Content(elements,body,0,document);
+            var document=new Part("document",null);var body=new StringBuilder();if(template.Element("elements") is {} elements)Content(elements,body,0,document);Breaks(body,0);
             if(body.Length==0||EndsWithTable(body))body.Append("<w:p/>");
             // A document UYAP serves carries its access code (webID), which UYAP prints under every page.
             if(webId.Length>0)footer??=new XElement("footer");
@@ -123,6 +123,9 @@ public sealed partial class OfficeDocuments
             foreach(var part in parts){Entry("word/"+part.File,part.Xml);if(part.Part.Relations.Count>0)Entry("word/_rels/"+part.File+".rels",Relations(part.Part.Relations));}
             foreach(var (name,data) in media){using var stream=zip.CreateEntry("word/media/"+name,CompressionLevel.NoCompression).Open();stream.Write(data);}
         }
+        // Page breaks wait for the paragraph or table after them. Each starts a page, so breaks in a row leave empty pages, and the
+        // last kept ones start the next block's own page.
+        private void Breaks(StringBuilder xml,int keep){for(;pageBreaks>keep;pageBreaks--)xml.Append("<w:p><w:pPr><w:pageBreakBefore/></w:pPr></w:p>");}
         private static bool EndsWithTable(StringBuilder xml)=>xml.Length>=8&&xml.ToString(xml.Length-8,8)=="</w:tbl>";
         private void Content(XElement container,StringBuilder xml,int depth,Part part)
         {
@@ -132,7 +135,7 @@ public sealed partial class OfficeDocuments
                 case "paragraph":token.ThrowIfCancellationRequested();Paragraph(element,xml,part);break;
                 case "table":Table(element,xml,depth,part);break;
                 // udf-cli and UYAP wrap the paragraph after a page break; that paragraph only holds the break's placeholder.
-                case "page-break":if(part.Name=="document"&&depth==0)pageBreak=true;break;
+                case "page-break":if(part.Name=="document"&&depth==0)pageBreaks++;break;
                 case "header" when depth==0:header??=element;break;
                 case "footer" when depth==0:footer??=element;break;
                 default:if(element.Elements().Any())Content(element,xml,depth+1,part);break;
@@ -175,12 +178,16 @@ public sealed partial class OfficeDocuments
             {
                 if(leaf.Name.LocalName=="image"){leaves.Add((leaf,""));continue;}
                 if(!int.TryParse(leaf.Attribute("startOffset")?.Value,NumberStyles.None,CultureInfo.InvariantCulture,out var start)||!int.TryParse(leaf.Attribute("length")?.Value,NumberStyles.AllowLeadingSign,CultureInfo.InvariantCulture,out var length)||length<=0||start>=text.Length)continue;
-                leaves.Add((leaf,text.Substring(start,Math.Min(length,text.Length-start))));
+                // Leaves split the text between them, so together they copy it about once; leaves pointing at the same range again and
+                // again would copy far more than content.xml holds.
+                var take=Math.Min(length,text.Length-start);copied+=take;if(copied>2L*text.Length+1_000_000)throw new InvalidDataException("This UDF document is too large.");
+                leaves.Add((leaf,text.Substring(start,take)));
             }
             for(var i=leaves.Count-1;i>=0;i--)if(leaves[i].Leaf.Name.LocalName!="image"){if(leaves[i].Text.EndsWith('\n'))leaves[i]=(leaves[i].Leaf,leaves[i].Text[..^1]);break;}
             // Images take one U+FFFC each, and an empty paragraph holds a zero-width space so that it has a range at all.
             for(var i=0;i<leaves.Count;i++)leaves[i]=(leaves[i].Leaf,leaves[i].Text.Replace("\uFFFC",""));if(leaves.All(l=>l.Leaf.Name.LocalName!="image"&&l.Text.Trim('\u200B').Length==0))leaves.Clear();
-            xml.Append("<w:p><w:pPr>");if(pageBreak&&part.Name=="document"){xml.Append("<w:pageBreakBefore/>");pageBreak=false;}
+            var broken=pageBreaks>0&&part.Name=="document";if(broken){Breaks(xml,1);pageBreaks=0;}
+            xml.Append("<w:p><w:pPr>");if(broken)xml.Append("<w:pageBreakBefore/>");
             var numbered=Value(paragraph,"Numbered")=="true";
             if(numbered||Value(paragraph,"Bulleted")=="true"){var level=Math.Clamp((int)(Number(Value(paragraph,"ListLevel"))??1),1,9);xml.Append("<w:numPr><w:ilvl w:val=\"").Append(level-1).Append("\"/><w:numId w:val=\"").Append(List((numbered?Value(paragraph,"NumberType")??"NUMBER_TYPE_NUMBER_DOT":Value(paragraph,"BulletType")??"BULLET_TYPE_ELLIPSE")+"\u0000"+(Value(paragraph,"ListId")??""))).Append("\"/></w:numPr>");}
             var left=Number(Value(paragraph,"LeftIndent"));var tabs=Tabs(Value(paragraph,"TabSet"),left??0);if(tabs.Length>0)xml.Append("<w:tabs>").Append(tabs).Append("</w:tabs>");
@@ -229,7 +236,9 @@ public sealed partial class OfficeDocuments
             // Sizes are pixels at 96 DPI, as udf-cli and the UDF toolkit write them; an image never grows past the text width.
             var w=Number(image.Attribute("width")?.Value);var h=Number(image.Attribute("height")?.Value);
             if(w is not >0||h is not >0){try{var size=PhotoCodec.Size(data,PictureFormat(data)!.Value);w=size.Width;h=size.Height;}catch(Exception error)when(error is ImageMagick.MagickException or ArgumentException){return;}if(w is not >0||h is not >0)return;}
-            var scale=Math.Min(1,width*96/72/w.Value);var cx=(long)(w.Value*scale*9525);var cy=(long)(h.Value*scale*9525);
+            // It never grows past the text height either, which also keeps absurd sizes (1 by 1e300) to a valid drawing.
+            var tall=Math.Max(72,PageSize().Height-Margin("topMargin",14.17)-Margin("bottomMargin",14.17));
+            var scale=Math.Min(1,Math.Min(width*96/72/w.Value,tall*96/72/h.Value));var cx=Math.Max(1,(long)(w.Value*scale*9525));var cy=Math.Max(1,(long)(h.Value*scale*9525));
             pictures++;var id="rIdImage"+pictures;var name="image"+pictures+"."+extension;media.Add((name,data));part.Relations.Add("<Relationship Id=\""+id+"\" Type=\""+Relationship+"image\" Target=\"media/"+name+"\"/>");
             xml.Append("<w:r><w:drawing><wp:inline distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\"><wp:extent cx=\"").Append(cx).Append("\" cy=\"").Append(cy).Append("\"/><wp:docPr id=\"").Append(pictures).Append("\" name=\"Picture ").Append(pictures)
                 .Append("\"/><a:graphic><a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:pic><pic:nvPicPr><pic:cNvPr id=\"").Append(pictures).Append("\" name=\"").Append(name).Append("\"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed=\"").Append(id)
@@ -243,7 +252,7 @@ public sealed partial class OfficeDocuments
             // columnSpans are relative widths; the table fills the text width as in UYAP.
             var spans=(table.Attribute("columnSpans")?.Value??"").Split(',',StringSplitOptions.TrimEntries).Select(Number).ToArray();
             var widths=spans.Length==columns&&spans.All(s=>s>0)?spans.Select(s=>s!.Value/spans.Sum(v=>v!.Value)*width).ToArray():Enumerable.Repeat(width/columns,columns).ToArray();
-            if(pageBreak&&part.Name=="document"){xml.Append("<w:p><w:pPr><w:pageBreakBefore/></w:pPr></w:p>");pageBreak=false;}
+            if(part.Name=="document")Breaks(xml,0);
             var border=table.Attribute("border")?.Value=="borderNone"?"w:val=\"nil\"":"w:val=\"single\" w:sz=\"4\" w:space=\"0\" w:color=\"000000\"";
             xml.Append("<w:tbl><w:tblPr><w:tblW w:w=\"").Append(Twips(widths.Sum())).Append("\" w:type=\"dxa\"/><w:tblBorders>");foreach(var side in new[]{"top","left","bottom","right","insideH","insideV"})xml.Append("<w:").Append(side).Append(' ').Append(border).Append("/>");
             xml.Append("</w:tblBorders><w:tblLayout w:type=\"fixed\"/><w:tblCellMar><w:left w:w=\"57\" w:type=\"dxa\"/><w:right w:w=\"57\" w:type=\"dxa\"/></w:tblCellMar></w:tblPr><w:tblGrid>");foreach(var w in widths)xml.Append("<w:gridCol w:w=\"").Append(Twips(w)).Append("\"/>");xml.Append("</w:tblGrid>");

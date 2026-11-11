@@ -28,6 +28,9 @@ public sealed partial class OfficeDocuments
         private readonly Dictionary<string,(Dictionary<string,string> C,Dictionary<string,string> P)> resolved=new(StringComparer.Ordinal);
         private readonly Dictionary<string,int[]> counters=new(StringComparer.Ordinal);private readonly HashSet<string> restarted=new(StringComparer.Ordinal);
         private readonly Stack<(StringBuilder Instruction,bool Result,string? Page)> fields=new();private int instructions;private readonly StringBuilder text=new();
+        // Footnotes and endnotes in the order the body refers to them, the mark being written for a note's own text, and the Base64
+        // the pictures add to content.xml, which is counted as it grows (one picture can be drawn many times).
+        private readonly List<(string Kind,string Id,string Mark)> notes=[];private string? noteMark;private bool inNotes;private int footnotes,endnotes;private long limit=long.MaxValue,pictureText;
         private Dictionary<string,string> relations;private bool furniture,footing,pageNumbers,pageFromFooter;private string? simpleCount,pageSeparator;private int cells,pagePlace=PageAtRight;private string pageLabel="";private double defaultTab=36,textWidth=453.5;
         public UdfExport(ZipArchive zip,CancellationToken token)
         {
@@ -90,6 +93,7 @@ public sealed partial class OfficeDocuments
         private void RunStyle(string? id,Dictionary<string,string> into,int depth=0){if(depth>=16||id is null||!styles.TryGetValue(id,out var style))return;RunStyle(Attr(Child(style,"basedOn"),"val"),into,depth+1);CharacterInto(Child(style,"rPr"),into);}
         public void Write(string output,long contentLimit)
         {
+            limit=contentLimit;
             var body=Child(Xml(zip,"word/document.xml").Root,"body")??throw new InvalidDataException("The document has no editable body.");var section=Child(body,"sectPr");var elements=new StringBuilder();
             var size=Child(section,"pgSz");var margins=Child(section,"pgMar");textWidth=Math.Max(72,((Num(size,"w")??11906)-(Num(margins,"left")??1418)-(Num(margins,"right")??1418))/20);
             // UYAP keeps the header's text first and the footer's last.
@@ -101,6 +105,8 @@ public sealed partial class OfficeDocuments
             }
             if(Furniture(section,"headerReference") is {} header){elements.Append(LaterPages()?"<header startPage=\"2\">":"<header>");Part(header,elements,false);elements.Append("</header>\n");}
             var bodyStart=text.Length;Content(body,elements,0);if(text.Length==bodyStart)Emit(elements,new(StringComparer.Ordinal),[],new(StringComparer.Ordinal),"");
+            // UYAP has no footnotes or endnotes, so their text follows the body under a short rule, each note after its mark.
+            if(notes.Count>0)Notes(elements);
             // UYAP draws page numbers only from the footer's settings, so a page number found in the header alone gets an empty footer.
             var footer=Furniture(section,"footerReference");var footerElements=new StringBuilder();
             if(footer is {} part)Part(part,footerElements,true);else if(pageNumbers)Emit(footerElements,new(StringComparer.Ordinal),[],new(StringComparer.Ordinal),"");
@@ -126,6 +132,33 @@ public sealed partial class OfficeDocuments
         private void Part((XElement Root,Dictionary<string,string> Relations) part,StringBuilder xml,bool footer)
         {
             var body=relations;relations=part.Relations;furniture=true;footing=footer;fields.Clear();instructions=0;try{Content(part.Root,xml,1);}finally{relations=body;furniture=footing=false;fields.Clear();instructions=0;}
+        }
+        private static Dictionary<string,string> Raised(Dictionary<string,string> format)=>new(format,StringComparer.Ordinal){["superscript"]="true",["subscript"]="false"};
+        // The notes part (word/footnotes.xml or word/endnotes.xml as Word names them) is found through the document's relationships.
+        private (XElement Root,Dictionary<string,string> Relations)? NotesPart(string kind)
+        {
+            const string rels="word/_rels/document.xml.rels";if(zip.GetEntry(rels) is null)return null;
+            var target=Xml(zip,rels).Root?.Elements().FirstOrDefault(r=>Attr(r,"Type")?.EndsWith("/"+kind+"s",StringComparison.Ordinal)==true&&Attr(r,"TargetMode")!="External");
+            if(Attr(target,"Target") is not {} path||Local("word",path) is not {} part||zip.GetEntry(part) is null)return null;return(Xml(zip,part).Root!,Relations(part));
+        }
+        private void Notes(StringBuilder xml)
+        {
+            Emit(xml,new(StringComparer.Ordinal),[new('t',"__________",new(StringComparer.Ordinal))],new(StringComparer.Ordinal),"");
+            // A field the body left open must not swallow the notes, as in a header or footer part.
+            var body=relations;inNotes=true;fields.Clear();instructions=0;
+            try
+            {
+                foreach(var kind in new[]{"footnote","endnote"})
+                {
+                    if(notes.All(n=>n.Kind!=kind)||NotesPart(kind) is not {} part)continue;relations=part.Relations;
+                    foreach(var (_,id,mark) in notes.Where(n=>n.Kind==kind))
+                    {
+                        if(part.Root.Elements().FirstOrDefault(e=>e.Name.LocalName==kind&&Attr(e,"id")==id) is not {} note)continue;
+                        noteMark=mark;try{Content(note,xml,1);}finally{noteMark=null;}
+                    }
+                }
+            }
+            finally{relations=body;inNotes=false;fields.Clear();instructions=0;}
         }
         private void Content(XElement container,StringBuilder xml,int depth)
         {
@@ -240,6 +273,12 @@ public sealed partial class OfficeDocuments
                     case "br":runs.Add(new(Attr(child,"type")=="page"?'p':'n',"",format));break;
                     case "cr":runs.Add(new('n',"",format));break;
                     case "noBreakHyphen":runs.Add(new('t',"\u2011",format));break;
+                    // A note's reference keeps its number (footnotes 1, 2, ..., endnotes i, ii, ... as Word numbers them by default) and the note
+                    // itself is written after the body; inside a note, its own mark comes where Word draws it.
+                    case "footnoteReference" or "endnoteReference" when !inNotes&&Attr(child,"id") is {} note:
+                        var kind=name=="footnoteReference"?"footnote":"endnote";var mark=kind=="footnote"?(++footnotes).ToString(CultureInfo.InvariantCulture):Roman(++endnotes).ToLowerInvariant();
+                        notes.Add((kind,note,mark));runs.Add(new('t',mark,Raised(format)));break;
+                    case "footnoteRef" or "endnoteRef" when noteMark is not null:runs.Add(new('t',noteMark,Raised(format)));break;
                     case "drawing" or "pict" or "object":Picture(child,runs);break;
                 }
             }
@@ -284,7 +323,7 @@ public sealed partial class OfficeDocuments
             void Flush(){if(pending.Length==0)return;xml.Append("<content").Append(pendingAttributes).Append(" startOffset=\"").Append(text.Length).Append("\" length=\"").Append(pending.Length).Append("\" />");text.Append(pending);pending.Clear();}
             foreach(var run in runs)
             {
-                if(run.Kind=='i'){Flush();xml.Append("<image imageData=\"").Append(Convert.ToBase64String(run.Image!)).Append("\" startOffset=\"").Append(text.Length).Append("\" length=\"1\" width=\"").Append(run.Width.ToString("0.0",CultureInfo.InvariantCulture)).Append("\" height=\"").Append(run.Height.ToString("0.0",CultureInfo.InvariantCulture)).Append("\" />");text.Append('\uFFFC');continue;}
+                if(run.Kind=='i'){pictureText+=(run.Image!.Length+2L)/3*4;if(pictureText>limit)throw new InvalidDataException("This UDF document is too large.");Flush();xml.Append("<image imageData=\"").Append(Convert.ToBase64String(run.Image!)).Append("\" startOffset=\"").Append(text.Length).Append("\" length=\"1\" width=\"").Append(run.Width.ToString("0.0",CultureInfo.InvariantCulture)).Append("\" height=\"").Append(run.Height.ToString("0.0",CultureInfo.InvariantCulture)).Append("\" />");text.Append('\uFFFC');continue;}
                 var attributes=RunAttributes(run.Format!);
                 if(run.Kind=='\t'){Flush();xml.Append("<tab").Append(attributes).Append(" startOffset=\"").Append(text.Length).Append("\" length=\"1\" />");text.Append('\t');continue;}
                 // Word splits runs freely; neighbours with the same formatting become one UYAP run. XML normalizes "\r", which would move every later offset.

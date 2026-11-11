@@ -18,6 +18,7 @@ internal static class UdfChecks
     }
     private static bool Throws(Action action){try{action();return false;}catch(InvalidDataException){return true;}}
     private static bool Cancels(Action action){try{action();return false;}catch(OperationCanceledException){return true;}}
+    private static string? Refusal(Action action){try{action();return null;}catch(InvalidDataException error){return error.Message;}}
     // A Word header or footer's page number paragraph, as its alignment, then its texts and {fields} in order.
     private static string Drawn(string part)
     {
@@ -92,6 +93,27 @@ internal static class UdfChecks
             (Numbers("Page number at the left"," pageNumber-spec=\"BSP32_24\" pageNumber-seperator=\"/\""),"left:{PAGE}"),
             (Numbers("Unreadable spec"," pageNumber-spec=\"BSP32_x\" pageNumber-seperator=\"-\""),"right:{PAGE}|-|{NUMPAGES}")};
         check(drawn.All(d=>d.Item1==d.Item2),"A UDF page number did not come back as UYAP draws it: "+string.Join(", ",drawn.Where(d=>d.Item1!=d.Item2).Select(d=>d.Item1)));
+        string Built(string name,string words,string elements)
+        {
+            var path=Path.Combine(root,name+".udf");
+            using(var zip=ZipFile.Open(path,ZipArchiveMode.Create))Entry(zip,"content.xml","<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<template format_id=\"1.8\">\n<content><![CDATA["+words+"]]></content><properties><pageFormat mediaSizeName=\"1\" /></properties>\n<elements resolver=\"hvl-default\">\n"+elements+"</elements>\n<styles><style name=\"hvl-default\" family=\"Times New Roman\" size=\"12\" /></styles>\n</template>");
+            return path;
+        }
+        string Opened(string udf){var path=Path.ChangeExtension(udf,".docx");OfficeDocuments.UdfToDocx(udf,path);return Part(path,"word/document.xml");}
+        static string Leaves(params (int Start,int Length)[] ranges)=>"<paragraph>"+string.Concat(ranges.Select(r=>"<content startOffset=\""+r.Start+"\" length=\""+r.Length+"\" />"))+"</paragraph>";
+        static int Count(string xml,string part)=>(xml.Length-xml.Replace(part,"").Length)/part.Length;
+        // Page breaks in a row each start a page, so the empty page between them stays, before a paragraph, a table or the end.
+        var twice=Opened(Built("Two page breaks","A\n\u200B\n\u200B\nB\n",Leaves((0,2))+"<page-break>"+Leaves((2,2))+"</page-break><page-break>"+Leaves((4,2))+"</page-break>"+Leaves((6,2))));
+        var tableAfter=Opened(Built("Two page breaks before a table","A\n\u200B\n\u200B\nB\n",Leaves((0,2))+"<page-break>"+Leaves((2,2))+"</page-break><page-break>"+Leaves((4,2))+"</page-break><table columnCount=\"1\"><row><cell>"+Leaves((6,2))+"</cell></row></table>"));
+        var atEnd=Opened(Built("Page break at the end","A\n\u200B\n",Leaves((0,2))+"<page-break>"+Leaves((2,2))+"</page-break>"));
+        check(Count(twice,"<w:pageBreakBefore/>")==2&&Count(tableAfter,"<w:pageBreakBefore/>")==2&&Count(atEnd,"<w:pageBreakBefore/>")==1,"Page breaks in a row lost their empty page: "+Count(twice,"<w:pageBreakBefore/>")+", "+Count(tableAfter,"<w:pageBreakBefore/>")+", "+Count(atEnd,"<w:pageBreakBefore/>"));
+        // A picture of absurd size (1 by 1e300) still becomes a valid drawing, at most as tall as the text.
+        var tallest=Opened(Built("Absurd picture size","\uFFFC\n","<paragraph><image imageData=\""+Png+"\" startOffset=\"0\" length=\"1\" width=\"1.0\" height=\"1e300\" /><content startOffset=\"1\" length=\"1\" /></paragraph>"));
+        var extent=System.Text.RegularExpressions.Regex.Match(tallest,"<wp:extent cx=\"(-?[0-9]+)\" cy=\"(-?[0-9]+)\"/>");
+        check(extent.Success&&long.Parse(extent.Groups[1].Value)>0&&long.Parse(extent.Groups[2].Value) is >0 and <=10692000,"A picture of absurd size became an invalid drawing: "+extent.Value);
+        // Leaves that point at the same text again and again are refused before they copy far more text than content.xml holds.
+        var repeated=Built("Repeated leaves",new string('x',10_000)+"\n",Leaves(Enumerable.Repeat((0,10_001),3_000).ToArray()));
+        check(Throws(()=>OfficeDocuments.UdfToDocx(repeated,Path.Combine(root,"Repeated leaves.docx"))),"Leaves repeating one range copied the text thousands of times");
         using(var model=JsonDocument.Parse(JsonSerializer.Serialize(OfficeDocuments.ReadDocx(docx))))
         {
             var words=string.Concat(model.RootElement.GetProperty("blocks").EnumerateArray().Where(b=>b.GetProperty("type").GetString()=="paragraph").Select(b=>string.Concat(b.GetProperty("runs").EnumerateArray().Select(r=>r.TryGetProperty("text",out var t)?t.GetString():"/"))+"|"));
@@ -161,6 +183,29 @@ internal static class UdfChecks
             cancelled.Cancel();var stoppedUdf=Path.Combine(root,"Cancelled.udf");var stoppedDocx=Path.Combine(root,"Cancelled.docx");
             check(Cancels(()=>OfficeDocuments.DocxToUdf(docx,stoppedUdf,cancelled.Token))&&!File.Exists(stoppedUdf)&&Cancels(()=>OfficeDocuments.UdfToDocx(udf,stoppedDocx,cancelled.Token))&&!File.Exists(stoppedDocx),"A cancelled UDF conversion kept running or left a file behind");
         }
+        // Footnotes and endnotes keep their text: the reference keeps its raised number, and each note follows the body under a rule.
+        var noted=Path.Combine(root,"Notes.docx");
+        using(var zip=ZipFile.Open(noted,ZipArchiveMode.Create))
+        {
+            Entry(zip,"word/document.xml","<w:document "+w+"><w:body><w:p><w:r><w:t>Metin</w:t></w:r><w:r><w:footnoteReference w:id=\"1\"/></w:r><w:r><w:t xml:space=\"preserve\"> devam</w:t></w:r><w:r><w:endnoteReference w:id=\"2\"/></w:r></w:p></w:body></w:document>");
+            Entry(zip,"word/_rels/document.xml.rels","<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rFoot\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/footnotes\" Target=\"footnotes.xml\"/><Relationship Id=\"rEnd\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/endnotes\" Target=\"endnotes.xml\"/></Relationships>");
+            Entry(zip,"word/footnotes.xml","<w:footnotes "+w+"><w:footnote w:type=\"separator\" w:id=\"-1\"><w:p><w:r><w:separator/></w:r></w:p></w:footnote><w:footnote w:id=\"1\"><w:p><w:r><w:footnoteRef/></w:r><w:r><w:t xml:space=\"preserve\"> Yargıtay 3. HD, 2020/1</w:t></w:r></w:p></w:footnote></w:footnotes>");
+            Entry(zip,"word/endnotes.xml","<w:endnotes "+w+"><w:endnote w:id=\"2\"><w:p><w:r><w:endnoteRef/></w:r><w:r><w:t xml:space=\"preserve\"> Son not</w:t></w:r></w:p></w:endnote></w:endnotes>");
+        }
+        var notedUdf=Udf(noted);
+        check(Validate(check,notedUdf)=="Metin1 devami\n__________\n1 Yargıtay 3. HD, 2020/1\ni Son not\n"&&Part(notedUdf,"content.xml").Contains("superscript=\"true\"",StringComparison.Ordinal),"Footnote or endnote text was lost in UDF: "+Validate(check,notedUdf));
+        // One picture drawn many times grows content.xml by its Base64 each time, so the size limit is applied as pictures are added: the
+        // conversion stops there, before the document's later content (here a table nested too deeply, which would refuse it otherwise).
+        var drawnAgain=Path.Combine(root,"One picture drawn again.docx");
+        var nest=string.Concat(Enumerable.Repeat("<w:tbl><w:tr><w:tc>",40))+"<w:p/>"+string.Concat(Enumerable.Repeat("</w:tc></w:tr></w:tbl>",40));
+        using(var zip=ZipFile.Open(drawnAgain,ZipArchiveMode.Create))
+        {
+            Entry(zip,"word/document.xml","<w:document "+w+"><w:body><w:p>"+string.Concat(Enumerable.Repeat(Drawing("rImage"),40))+"</w:p>"+nest+"<w:p/></w:body></w:document>");
+            Entry(zip,"word/_rels/document.xml.rels","<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rImage\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/image\" Target=\"media/image1.png\"/></Relationships>");
+            using var image=zip.CreateEntry("word/media/image1.png").Open();image.Write(Convert.FromBase64String(Png));
+        }
+        var refusal=Refusal(()=>OfficeDocuments.DocxToUdf(drawnAgain,Path.Combine(root,"One picture drawn again.udf"),500));
+        check(refusal=="This UDF document is too large."&&!File.Exists(Path.Combine(root,"One picture drawn again.udf")),"A picture drawn many times was not held to the size limit as it was added: "+refusal);
         // A field's instruction ends at its first separate. Instruction text after it must not turn a footer field into a page number,
         // nor be read again at every later separate (40,000 of them, each after more instruction text, took about 16 s before).
         // A field inside another field's instruction, complex or simple, is neither a page number nor text, a PAGE field without a
