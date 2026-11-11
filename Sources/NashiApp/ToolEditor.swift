@@ -424,18 +424,20 @@ struct ToolEditor:View {
     }
 
     /// Parses "MM:SS.mmm" or plain seconds into seconds.
-    /// - Parameter text: Time string in "MM:SS.mmm" format or plain seconds.
-    /// - Returns: Time in seconds, or 0 if parsing fails.
-    func parseTime(_ text: String) -> Double {
+    /// - Parameter text: Time string to parse.
+    /// - Returns: Time in seconds, or nil if input is empty, non-numeric, or non-finite/negative.
+    func parseTime(_ text: String) -> Double? {
         let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !cleaned.isEmpty else { return 0 }
+        guard !cleaned.isEmpty else { return nil }
         if cleaned.contains(":") {
             let parts = cleaned.components(separatedBy: ":")
             if parts.count == 2, let minutes = Double(parts[0]), let seconds = Double(parts[1]) {
-                return minutes * 60 + seconds
+                let result = minutes * 60 + seconds
+                return result.isFinite && result >= 0 ? result : nil
             }
         }
-        return Double(cleaned) ?? 0
+        guard let value = Double(cleaned), value.isFinite, value >= 0 else { return nil }
+        return value
     }
 
     /// Formats seconds as "MM:SS.mmm" for display in time fields.
@@ -450,25 +452,42 @@ struct ToolEditor:View {
         return String(format: "%02d:%02d.%03d", minutes, seconds, ms)
     }
 
+    @State private var startTimeText: String = ""
+    @State private var endTimeText: String = ""
+
     var timeRangeFields: some View {
         HStack(spacing: 8) {
-            Text("Start")
-            TextField("Start time", text: Binding(
-                get: { timeString(options.start) },
-                set: { options.start = parseTime($0) }
-            ))
-            .textFieldStyle(.roundedBorder)
-            .onSubmit { seek(options.start) }
-            Button("Set Start Here") { options.start = playhead; seek(options.start) }
+            Text(LText("Start time"))
+            TextField("Start time", text: $startTimeText)
+                .textFieldStyle(.roundedBorder)
+                .onSubmit {
+                    if let value = parseTime(startTimeText) {
+                        options.start = value
+                        seek(options.start)
+                    }
+                    startTimeText = timeString(options.start)
+                }
+            Button(LText("Set Start Here")) {
+                options.start = min(max(playhead, 0), duration)
+                seek(options.start)
+                startTimeText = timeString(options.start)
+            }
 
-            Text("End")
-            TextField("End time", text: Binding(
-                get: { timeString(options.end ?? duration) },
-                set: { options.end = parseTime($0) }
-            ))
-            .textFieldStyle(.roundedBorder)
-            .onSubmit { seek(options.end ?? duration) }
-            Button("Set End Here") { options.end = playhead; seek(options.end ?? duration) }
+            Text(LText("End time"))
+            TextField("End time", text: $endTimeText)
+                .textFieldStyle(.roundedBorder)
+                .onSubmit {
+                    if let value = parseTime(endTimeText) {
+                        options.end = value
+                        seek(options.end ?? duration)
+                    }
+                    endTimeText = timeString(options.end ?? duration)
+                }
+            Button(LText("Set End Here")) {
+                options.end = min(max(playhead, 0), duration)
+                seek(options.end ?? duration)
+                endTimeText = timeString(options.end ?? duration)
+            }
         }
     }
     var splitIntervals:[TimeRange] {
