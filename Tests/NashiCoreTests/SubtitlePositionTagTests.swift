@@ -61,4 +61,23 @@ final class SubtitlePositionTagTests: XCTestCase {
         XCTAssertEqual(try SubtitleCodec.convert(input, to: "vtt", token: .init()), "WEBVTT\n\n00:00:01.000 --> 00:00:03.000\nHello\n")
         XCTAssertEqual(try SubtitleCodec.convert(input, to: "txt", token: .init()), "Hello\n")
     }
+
+    /// 100,000 tag-only lines in a cue convert to VTT and TXT without the old quadratic slowdown.
+    func testVeryLongRunsOfPositionTagLinesConvertQuickly() throws {
+        let root = try OutputFiles.temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let input = root.appendingPathComponent("Movie.srt")
+        let tagLines = String(repeating: "{\\an8}\n", count: 100_000)
+        try "1\n00:00:01,000 --> 00:00:03,000\nHello\n\(tagLines)World\n\(tagLines)".write(to: input, atomically: true, encoding: .utf8)
+
+        let started = Date()
+        XCTAssertEqual(try SubtitleCodec.convert(input, to: "vtt", token: .init()), "WEBVTT\n\n00:00:01.000 --> 00:00:03.000\nHello\nWorld\n")
+        XCTAssertEqual(try SubtitleCodec.convert(input, to: "txt", token: .init()), "Hello\nWorld\n")
+        XCTAssertLessThan(Date().timeIntervalSince(started), 5)
+    }
+
+    /// Removing tag lines keeps the `\r\n` breaks of the lines around them.
+    func testPositionTagLinesKeepTheWindowsLineBreaksOfTheLinesAroundThem() {
+        XCTAssertEqual(SubtitleCodec.withoutPositionTags("Hello\r\n {\\an8}\r\nWorld\r\n{\\an2}"), "Hello\r\nWorld")
+    }
 }
