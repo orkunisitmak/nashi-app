@@ -46,7 +46,12 @@ public static class AtomicFile
                 .FirstOrDefault(candidate => File.Exists(candidate) && IsValidJson(candidate, validate, maxBytes));
             if (orphan is null) return;
             if (!File.Exists(full)) File.Move(orphan, full);
-            else if (File.GetLastWriteTimeUtc(orphan) > File.GetLastWriteTimeUtc(full)) File.Move(orphan, full, true);
+            else if (File.GetLastWriteTimeUtc(orphan) > File.GetLastWriteTimeUtc(full))
+            {
+                if (!IsValidJson(full, validate, maxBytes))
+                    File.Copy(full, full + ".recovered-" + Guid.NewGuid().ToString("N"));
+                File.Move(orphan, full, true);
+            }
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.Security.SecurityException)
         {
