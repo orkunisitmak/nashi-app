@@ -20,6 +20,30 @@ internal static class ParityChecks
             check(runs[0].GetProperty("character").GetProperty("italic").GetBoolean()&&runs[2].GetProperty("character").GetProperty("backgroundColor").GetProperty("b").GetDouble()==0,"Character style inheritance or direct highlighting was lost");
         }
         check(FeatureCatalog.Conversions.Count-FeatureCatalog.WindowsOnlyFormats.Length==46&&FeatureCatalog.ToolNames.Count==27,"Mac/Windows catalog count diverged");
+        if (OperatingSystem.IsWindows())
+        {
+            var reserved = Path.Combine(root, "Reserved output names"); Directory.CreateDirectory(reserved);
+            var con = SafePaths.Unique(reserved, "CON.txt");
+            var aux = SafePaths.Unique(reserved, "AUX.jpg");
+            check(Path.GetFileName(con) == "CON 2.txt" && Path.GetFileName(aux) == "AUX 2.jpg",
+                "Windows reserved device names were offered as output files.");
+            File.WriteAllText(con, "synthetic"); File.WriteAllText(aux, "synthetic");
+            check(SafePaths.Unique(reserved, "CON.txt") == Path.Combine(reserved, "CON 3.txt"),
+                "Reserved output name fallback overwrote a previous export.");
+            var multiCon = SafePaths.Unique(reserved, "CON.tar.gz");
+            var multiAux = SafePaths.Unique(reserved, "AUX.backup.jpg");
+            check(Path.GetFileName(multiCon) == "CON 2.tar.gz" &&
+                  Path.GetFileName(multiAux) == "AUX 2.backup.jpg",
+                "Multi-dot reserved output names did not escape the DOS device prefix.");
+            File.WriteAllText(multiCon, "synthetic"); File.WriteAllText(multiAux, "synthetic");
+            check(File.Exists(multiCon) && File.Exists(multiAux) &&
+                  SafePaths.Unique(reserved, "CON.tar.gz") == Path.Combine(reserved, "CON 3.tar.gz"),
+                "Multi-dot reserved output names could not be written or numbered again.");
+            var ordinary = SafePaths.Unique(reserved, "report.final.txt");
+            File.WriteAllText(ordinary, "synthetic");
+            check(SafePaths.Unique(reserved, "report.final.txt") == Path.Combine(reserved, "report.final 2.txt"),
+                "Safe non-device multi-dot output numbering changed.");
+        }
         check(FeatureCatalog.Formats(["a.htm","b.html"]).SequenceEqual(new[]{"pdf"})&&FeatureCatalog.Tools(["a.html"]).Length==0,"HTML inputs lost their PDF route");
         check(FeatureCatalog.Formats(["a.jpeg","b.png"]).Contains("webp"),"Mixed image conversion intersection failed");
         check(!FeatureCatalog.Formats(["a.png","b.mp4"]).Any(),"Unrelated inputs offered an invalid format");
@@ -75,6 +99,27 @@ internal static class ParityChecks
         OfficeDocuments.PdfArea? asked=null;var mixedHtml=OfficeDocuments.PdfHtml(mixedPdf,"",(_,area)=>{asked=area;return area is null?null:[4,5,6];},out var mixedPages);
         check(mixedPages.SequenceEqual(new[]{1})&&asked is {Left:72,Width:200,Height:100} found&&Math.Abs(found.Top-(842-600))<.5&&mixedHtml.Contains("Caption")&&mixedHtml.Contains("data:image/png;base64,BAUG"),"An image PdfPig cannot decode vanished from a page with text: "+asked);
         var large=new byte[20_000_001];check(OfficeDocuments.PdfHtml(mixedPdf,"",(_,area)=>area is null?null:large,out _).Contains(Convert.ToBase64String(large)),"A large render of an image area was dropped although whole-page renders keep it");
+        // Office's HTML import takes a picture's height from its pixels whatever height:auto says, which stretched a square
+        // 60 pt logo to 60 × 137 pt. Pictures carry both sizes as the PDF shows them, scaled into the page's column.
+        check(mixedHtml.Contains("style=\"width:200pt;height:100pt\"")&&OfficeDocuments.PictureStyle(60,60)=="width:60pt;height:60pt"&&OfficeDocuments.PictureStyle(1020,700)=="width:510pt;height:350pt"&&OfficeDocuments.PictureStyle(100,1470)=="width:50pt;height:735pt"&&OfficeDocuments.PictureStyle(0,100)=="max-width:100%;height:auto","A PDF picture lost its proportions or overflowed the page in Office");
+        // PdfPig keeps a turned picture's pixels unturned and measures it along its own sides. A 2 × 1 picture turned a quarter covers
+        // 100 × 200 pt: the render of that area shows it as the page does, and without a render it stays 200 × 100 rather than stretched.
+        string ImagePdf(string name,string placement,Action<PdfSharp.Pdf.PdfDocument>? edit=null)=>Pdf(name,"q "+placement+" cm /Im1 Do Q",edit,(pdf,resources)=>{var image=new PdfSharp.Pdf.PdfDictionary(pdf);image.Elements.SetName("/Type","/XObject");image.Elements.SetName("/Subtype","/Image");image.Elements.SetInteger("/Width",2);image.Elements.SetInteger("/Height",1);image.Elements.SetName("/ColorSpace","/DeviceRGB");image.Elements.SetInteger("/BitsPerComponent",8);image.CreateStream([255,0,0,0,0,255]);pdf.Internals.AddObject(image);var objects=new PdfSharp.Pdf.PdfDictionary(pdf);objects.Elements.SetReference("/Im1",image);resources.Elements["/XObject"]=objects;});
+        var turnedPdf=ImagePdf("Turned image.pdf","0 200 -100 0 372 400");
+        OfficeDocuments.PdfArea? turnedArea=null;var turnedHtml=OfficeDocuments.PdfHtml(turnedPdf,"",(_,area)=>{turnedArea=area;return area is null?null:[7,8,9];},out var turnedPages);
+        check(turnedPages.SequenceEqual(new[]{1})&&turnedArea is {} turned&&Math.Abs(turned.Left-272)<.5&&Math.Abs(turned.Top-242)<.5&&Math.Abs(turned.Width-100)<.5&&Math.Abs(turned.Height-200)<.5&&turnedHtml.Contains("style=\"width:100pt;height:200pt\" src=\"data:image/png;base64,BwgJ\"")&&OfficeDocuments.PdfHtml(turnedPdf,"",null,out _).Contains("style=\"width:200pt;height:100pt\""),"A turned PDF picture came out stretched or unturned in Office: "+turnedArea);
+        // Past the page's top-left corner only the part on the page is rendered, at that part's size.
+        OfficeDocuments.PdfArea? edgeArea=null;var edgeHtml=OfficeDocuments.PdfHtml(ImagePdf("Turned image at the edge.pdf","0 200 -100 0 50 700"),"",(_,area)=>{edgeArea=area;return area is null?null:[7,8,9];},out _);
+        check(edgeArea is {} edge&&Math.Abs(edge.Left)<.5&&Math.Abs(edge.Top)<.5&&Math.Abs(edge.Width-50)<.5&&Math.Abs(edge.Height-142)<.5&&edgeHtml.Contains("style=\"width:50pt;height:142pt\""),"A PDF picture past the page edge was rendered with what lies beside it: "+edgeArea);
+        // A picture with no part on the page is left out and asks for no render, turned or not. PdfPig places pictures on the page as
+        // shown, so this holds on a page turned a quarter and outside a crop box that starts away from the origin, too.
+        void Turn(PdfSharp.Pdf.PdfDocument pdf)=>pdf.Pages[0].Elements["/Rotate"]=new PdfSharp.Pdf.PdfInteger(90);
+        void Crop(PdfSharp.Pdf.PdfDocument pdf)=>pdf.Pages[0].Elements["/CropBox"]=new PdfSharp.Pdf.PdfArray(pdf,new PdfSharp.Pdf.PdfInteger(50),new PdfSharp.Pdf.PdfInteger(50),new PdfSharp.Pdf.PdfInteger(595),new PdfSharp.Pdf.PdfInteger(842));
+        var offAreas=new List<OfficeDocuments.PdfArea>();string[] offHtml=[OfficeDocuments.PdfHtml(ImagePdf("Turned image off the page.pdf","0 200 -100 0 -50 500"),"",(_,area)=>{if(area is {} a)offAreas.Add(a);return area is null?null:[7,8,9];},out _),OfficeDocuments.PdfHtml(ImagePdf("Image off a turned page.pdf","200 0 0 100 -300 500",Turn),"",null,out _),OfficeDocuments.PdfHtml(ImagePdf("Image outside the crop box.pdf","50 0 0 25 10 10",Crop),"",null,out _)];
+        check(offAreas.Count==0&&offHtml.All(converted=>!converted.Contains("<img"))&&OfficeDocuments.PdfHtml(ImagePdf("Image on a turned page.pdf","200 0 0 100 72 500",Turn),"",null,out _).Contains("<img")&&OfficeDocuments.PdfHtml(ImagePdf("Image inside the crop box.pdf","200 0 0 100 72 500",Crop),"",null,out _).Contains("<img"),"A PDF picture off the page came out in Office, or one on the page was left out: "+offAreas.Count);
+        // A whole-page render takes its proportions from the render, so a page shown turned comes out landscape.
+        byte[] landscape=[0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,0,0,0,13,(byte)'I',(byte)'H',(byte)'D',(byte)'R',0,0,0,2,0,0,0,1,8,2,0,0,0];
+        check(OfficeDocuments.PngSize(landscape)==(2,1)&&OfficeDocuments.PngSize([1,2,3]) is null&&OfficeDocuments.PdfHtml(vectorPdf,"",(_,area)=>area is null?landscape:null,out _).Contains("style=\"width:510pt;height:255pt\""),"A whole-page render lost the proportions of the rendered page");
         PdfSharp.Pdf.PdfDictionary Form(PdfSharp.Pdf.PdfDocument pdf,bool field){var form=new PdfSharp.Pdf.PdfDictionary(pdf);var fields=new PdfSharp.Pdf.PdfArray(pdf);if(field){var item=new PdfSharp.Pdf.PdfDictionary(pdf);item.Elements.SetString("/T","Name");pdf.Internals.AddObject(item);fields.Elements.Add(item.Reference!);}form.Elements["/Fields"]=fields;pdf.Internals.AddObject(form);return form;}
         var formPdf=Pdf("Form.pdf","BT /F1 24 Tf 72 700 Td (Form) Tj ET",pdf=>pdf.Internals.Catalog.Elements.SetReference("/AcroForm",Form(pdf,true)));
         var emptyFormPdf=Pdf("Empty form.pdf","BT /F1 24 Tf 72 700 Td (No fields) Tj ET",pdf=>pdf.Internals.Catalog.Elements.SetReference("/AcroForm",Form(pdf,false)));
@@ -265,6 +310,17 @@ internal static class ParityChecks
             var cellTextRow=cellTextModel.RootElement.GetProperty("blocks")[0].GetProperty("rows")[0];
             check(cellTextRow[0].GetProperty("text").GetString()=="Name\tValue\nSecond line\nBefore\nIn 1\tDeep\nIn 2\nAfter"&&cellTextRow[1].GetProperty("text").GetString()=="555\u20110100\ncell"&&cellTextModel.RootElement.GetProperty("header").GetString()=="Company\tLtd\nConfidential","Pages interchange dropped tabs, line breaks, paragraphs or nested tables from Word table cells or headers");
         }
+        // Repeating sections and custom XML wrap rows and cells (w:sdt and w:customXml around w:tr or w:tc), also in a nested table.
+        {
+            string Cell(string text)=>"<w:tc><w:p><w:r><w:t>"+text+"</w:t></w:r></w:p></w:tc>";string Sdt(string content)=>"<w:sdt><w:sdtPr><w:tag w:val=\"t\"/></w:sdtPr><w:sdtContent>"+content+"</w:sdtContent></w:sdt>";string Custom(string content)=>"<w:customXml w:element=\"item\">"+content+"</w:customXml>";
+            var inner="<w:tbl>"+Sdt("<w:tr>"+Cell("x")+Sdt(Cell("y"))+"</w:tr>")+"</w:tbl>";
+            var body="<w:tbl><w:tr>"+Cell("A1")+Sdt(Cell("B1"))+"</w:tr>"+Sdt("<w:tr>"+Cell("A2")+Custom(Cell("B2"))+"</w:tr>")+Custom("<w:tr>"+Cell("A3")+Cell("B3")+"</w:tr>")
+                +"<w:tr><w:tc><w:tcPr><w:vMerge w:val=\"restart\"/></w:tcPr><w:p><w:r><w:t>Before</w:t></w:r></w:p>"+inner+"</w:tc>"+Cell("B4")+"</w:tr>"+Sdt("<w:tr><w:tc><w:tcPr><w:vMerge/></w:tcPr><w:p/></w:tc>"+Cell("B5")+"</w:tr>")+"</w:tbl><w:p/>";
+            using var wrappedModel=System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(OfficeDocuments.ReadDocx(Nested("Wrapped rows.docx",body))));var table=wrappedModel.RootElement.GetProperty("blocks")[0];
+            var rows=string.Join("|",table.GetProperty("rows").EnumerateArray().Select(r=>string.Join(",",r.EnumerateArray().Select(c=>c.GetProperty("text").GetString()))));
+            var merges=string.Join(";",table.GetProperty("merges").EnumerateArray().Select(m=>$"{m.GetProperty("row")},{m.GetProperty("column")},{m.GetProperty("rowCount")}x{m.GetProperty("columnCount")}"));
+            check(rows=="A1,B1|A2,B2|A3,B3|Before\nx\ty,B4|,B5"&&merges=="3,0,2x1",$"Pages interchange dropped Word table rows or cells inside content controls or custom XML: {rows.Replace("\n","\\n").Replace("\t","\\t")} merges {merges}");
+        }
         check(TooDeep(Nested("Deep body.docx",Deep(150,"<w:sdt><w:sdtContent>","</w:sdtContent></w:sdt>","<w:p/>")))&&TooDeep(Nested("Deep cell.docx","<w:tbl><w:tr><w:tc>"+Deep(300,"<w:customXml>","</w:customXml>","<w:p/>")+"</w:tc></w:tr></w:tbl>"))&&TooDeep(Nested("Deep paragraph.docx","<w:p>"+Deep(300,"<w:smartTag>","</w:smartTag>")+"</w:p>"))&&TooDeep(Nested("Deep run.docx","<w:p>"+deepText+"</w:p>"))&&TooDeep(Nested("Deep header.docx","<w:p/>","<w:p>"+deepText+"</w:p>")),"Pages interchange accepted content nested deeper than it can safely read");
         check(TooDeep(Nested("Stack bomb.docx","<w:p><w:r><w:t>"+Deep(50_000,"<w:x>","</w:x>","Deep text")+"</w:t></w:r></w:p>")),"Pages interchange did not reject a deeply nested document before overflowing the stack");
         // Word table merges as the Mac reads them: a vertical merge stops at a wider, missing or narrower cell, a spanning restart keeps its width,
@@ -312,6 +368,9 @@ internal static class ParityChecks
         foreach(var packedCues in new[]{"1\n00:00:01,000 --> 00:00:02,000\nHello\n2\n00:00:03,000 --> 00:00:04,000\nWorld\n","1\r\n00:00:01,000 --> 00:00:02,000\r\nHello\r\n2\r\n00:00:03,000 --> 00:00:04,000\r\nWorld\r\n","WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nHello\n00:00:03.000 --> 00:00:04.000\nWorld\n"})
             check(SubtitleCodec.Parse(packedCues).Select(c=>c.Text).SequenceEqual(new[]{"Hello","World"})&&SubtitleCodec.Convert(packedCues,"txt")=="Hello\n\nWorld\n","Subtitle cues without a blank line between them were merged into one cue");
         check(SubtitleCodec.Parse("1\n00:00:01,000 --> 00:00:02,000\nA --> B\n1999\n\n2\n00:00:03,000 --> 00:00:04,000\nSecond\n").Select(c=>c.Text).SequenceEqual(new[]{"A --> B\n1999","Second"})&&SubtitleCodec.Parse("1\n00:00:01,000 --> 00:00:02,000\n2\n00:00:03,000 --> 00:00:04,000\nWorld\n").Select(c=>c.Text).SequenceEqual(new[]{"","World"}),"Subtitle text that only looks like a cue number or timing was dropped, or an empty packed cue kept the next cue's number");
+        // WebVTT needs cues in start-time order; editors write them in any order. Cues that start together keep their file order (as fixed on macOS).
+        var shuffledCues="1\n00:00:05,000 --> 00:00:06,000\nThird\n\n2\n00:00:01,000 --> 00:00:09,000\nFirst\n\n3\n00:00:01,000 --> 00:00:02,000 align:start\nSecond\n";
+        check(SubtitleCodec.Convert(shuffledCues,"vtt")=="WEBVTT\n\n00:00:01.000 --> 00:00:09.000\nFirst\n\n00:00:01.000 --> 00:00:02.000 align:start\nSecond\n\n00:00:05.000 --> 00:00:06.000\nThird\n"&&SubtitleCodec.Convert(shuffledCues,"srt").StartsWith("1\n00:00:01,000 --> 00:00:09,000\nFirst\n\n2\n00:00:01,000 --> 00:00:02,000\nSecond\n\n3\n00:00:05,000",StringComparison.Ordinal)&&SubtitleCodec.Convert(shuffledCues,"txt")=="First\n\nSecond\n\nThird\n","Subtitle cues were not written in start-time order");
         var input=Path.Combine(root,"Archive source.txt");File.WriteAllText(input,"Türkçe 🍐 retained");var zip=DocumentEngine.Zip([input],root);
         foreach(var format in new[]{"tar","gz","zip"})
         {

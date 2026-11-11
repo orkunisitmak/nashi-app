@@ -49,7 +49,7 @@ public sealed partial class OfficeDocuments
         Visit(element);return output.ToString();
     }
     // A Pages cell cannot hold a table, so a nested table keeps its text as lines of tab-separated cells (up to 32 levels deep).
-    private static string CellText(XElement cell,int depth=0)=>string.Join("\n",Blocks(cell).Select(child=>child.Name.LocalName=="p"?PlainText(child):child.Name.LocalName=="tbl"&&depth<32?string.Join("\n",child.Elements().Where(r=>r.Name.LocalName=="tr").Select(r=>string.Join("\t",r.Elements().Where(c=>c.Name.LocalName=="tc").Select(c=>CellText(c,depth+1))))):null).OfType<string>());
+    private static string CellText(XElement cell,int depth=0)=>string.Join("\n",Blocks(cell).Select(child=>child.Name.LocalName=="p"?PlainText(child):child.Name.LocalName=="tbl"&&depth<32?string.Join("\n",Blocks(child).Where(r=>r.Name.LocalName=="tr").Select(r=>string.Join("\t",Blocks(r).Where(c=>c.Name.LocalName=="tc").Select(c=>CellText(c,depth+1))))):null).OfType<string>());
     public static object ReadDocx(string path)
     {
         using var zip=ZipFile.OpenRead(path);if(zip.Entries.Count>10000||zip.Entries.Sum(e=>e.Length)>512_000_000||zip.Entries.GroupBy(e=>e.FullName,StringComparer.OrdinalIgnoreCase).Any(g=>g.Count()>1))throw new InvalidDataException("The document package is too large or contains duplicate entries.");
@@ -95,11 +95,12 @@ public sealed partial class OfficeDocuments
                 var rows=new List<List<object>>();var merges=new List<Dictionary<string,int>>();var vertical=new Dictionary<int,(int Row,int Span)>();var rowIndex=0;
                 // As on the Mac, a vertical merge only survives rows that continue it in the same grid column with the same width,
                 // w:gridBefore leaves leading grid columns empty, and a legacy w:hMerge continuation joins the restart cell to its left.
-                foreach(var row in element.Elements().Where(e=>e.Name.LocalName=="tr"))
+                // Repeating sections and custom XML can wrap rows and cells (w:sdt, w:customXml).
+                foreach(var row in Blocks(element).Where(e=>e.Name.LocalName=="tr"))
                 {
                     var cells=new List<object>();var column=0;var continued=new Dictionary<int,(int Row,int Span)>();int? anchor=null;
                     if(int.TryParse(Attr(Child(Child(row,"trPr"),"gridBefore"),"val"),NumberStyles.AllowLeadingSign,CultureInfo.InvariantCulture,out var skipped)&&skipped>0){if(skipped>1024)throw new InvalidDataException("A table cell span is invalid or exceeds 1,024 columns.");column=skipped;for(var n=0;n<skipped;n++)cells.Add(new{text=""});}
-                    foreach(var cell in row.Elements().Where(e=>e.Name.LocalName=="tc"))
+                    foreach(var cell in Blocks(row).Where(e=>e.Name.LocalName=="tc"))
                     {
                         var props=Child(cell,"tcPr");var raw=Num(Child(props,"gridSpan"),"val");var span=raw is null?1:checked((int)raw.Value);if(span is <1 or >1024||column>1024-span)throw new InvalidDataException("A table cell span is invalid or exceeds 1,024 columns.");var text=CellText(cell);cells.Add(new{text});for(var n=1;n<span;n++)cells.Add(new{text=""});
                         var vm=Child(props,"vMerge");var hm=vm is null?Child(props,"hMerge"):null;var extends=false;var joins=false;

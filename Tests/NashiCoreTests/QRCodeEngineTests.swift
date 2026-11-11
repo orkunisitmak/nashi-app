@@ -27,6 +27,26 @@ final class QRCodeEngineTests:XCTestCase {
         XCTAssertEqual(try JSONDecoder().decode(QRCodeScanReport.self,from:Data(contentsOf:output)).results.count,3)
         XCTAssertEqual(try Data(contentsOf:image),original)
     }
+    /// The code drawn with `modules` on a fully transparent background, saved as PNG.
+    private func transparentFixture(_ directory:URL,_ payload:String,modules:CGColor) throws -> URL {
+        let filter=CIFilter(name:"CIQRCodeGenerator")!;filter.setValue(Data(payload.utf8),forKey:"inputMessage");filter.setValue("M",forKey:"inputCorrectionLevel")
+        let code=try XCTUnwrap(filter.outputImage).transformed(by:CGAffineTransform(scaleX:10,y:10))
+        let solid=code.applyingFilter("CIColorInvert").applyingFilter("CIMaskToAlpha")
+        let tinted=solid.applyingFilter("CIColorMatrix",parameters:["inputRVector":CIVector(x:0,y:0,z:0,w:0),"inputGVector":CIVector(x:0,y:0,z:0,w:0),"inputBVector":CIVector(x:0,y:0,z:0,w:0),"inputBiasVector":CIVector(x:CIColor(cgColor:modules).red,y:CIColor(cgColor:modules).green,z:CIColor(cgColor:modules).blue,w:0)])
+        let canvas=tinted.composited(over:CIImage(color:CIColor(red:0,green:0,blue:0,alpha:0)).cropped(to:code.extent.insetBy(dx:-40,dy:-40)))
+        let image=try XCTUnwrap(CIContext().createCGImage(canvas,from:canvas.extent,format:.RGBA8,colorSpace:CGColorSpace(name:CGColorSpace.sRGB)))
+        let url=directory.appendingPathComponent("transparent.png");try ImageEngine.write(image,to:url);return url
+    }
+    func testCodeWithTransparentBackgroundIsRead() throws {
+        let directory=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:directory) }
+        let image=try transparentFixture(directory,"Transparent code",modules:CGColor(red:0,green:0,blue:0,alpha:1))
+        XCTAssertEqual(try QRCodeEngine.scan([image]).results.map(\.text),["Transparent code"])
+    }
+    func testWhiteModulesOnTransparentBackgroundAreStillRead() throws {
+        let directory=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:directory) }
+        let image=try transparentFixture(directory,"Light code",modules:CGColor(red:1,green:1,blue:1,alpha:1))
+        XCTAssertEqual(try QRCodeEngine.scan([image]).results.map(\.text),["Light code"])
+    }
     func testPerFileErrorsEmptyResultsAndCancellationAreExplicit() throws {
         let directory=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:directory) }
         let image=try fixture(directory,"Readable code")

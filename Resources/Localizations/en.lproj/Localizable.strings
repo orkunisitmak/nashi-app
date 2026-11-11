@@ -558,6 +558,7 @@
 "COULDN’T FINISH" = "COULDN’T FINISH";
 "COULDN’T OPEN THIS TOOL" = "COULDN’T OPEN THIS TOOL";
 "COVER STYLE" = "COVER STYLE";
+"CREATE A FINE-GRAINED TOKEN ON GITHUB" = "CREATE A FINE-GRAINED TOKEN ON GITHUB";
 "CREATE A NEW FLOAT" = "CREATE A NEW FLOAT";
 "CREATE COLLAGE" = "CREATE COLLAGE";
 "CREATE PDF" = "CREATE PDF";
@@ -789,6 +790,7 @@
 "Create Collage" = "Create Collage";
 "Create PDF" = "Create PDF";
 "Create a New Float" = "Create a New Float";
+"Create a fine-grained token on GitHub" = "Create a fine-grained token on GitHub";
 "Create a new Float" = "Create a new Float";
 "Create visualization" = "Create visualization";
 "Created" = "Created";
@@ -2396,6 +2398,7 @@
 "THE IMAGE ORDER MUST INCLUDE EVERY IMAGE ONCE." = "THE IMAGE ORDER MUST INCLUDE EVERY IMAGE ONCE.";
 "THE MEDIA SERVER REDIRECTED TO AN INSECURE URL." = "THE MEDIA SERVER REDIRECTED TO AN INSECURE URL.";
 "THE OPERATION WAS CANCELLED." = "THE OPERATION WAS CANCELLED.";
+"THE PASSWORD IS INCORRECT, OR THE ARCHIVE IS DAMAGED." = "THE PASSWORD IS INCORRECT, OR THE ARCHIVE IS DAMAGED.";
 "THE PDF CONTAINS NO PAGES." = "THE PDF CONTAINS NO PAGES.";
 "THE PDF PAGE IS TOO LARGE TO RENDER AT THIS RESOLUTION." = "THE PDF PAGE IS TOO LARGE TO RENDER AT THIS RESOLUTION.";
 "THE POST DID NOT RETURN READABLE PHOTO DETAILS." = "THE POST DID NOT RETURN READABLE PHOTO DETAILS.";
@@ -2425,6 +2428,7 @@
 "THE UPSTREAM SERVER DID NOT RETURN A SUCCESSFUL HTTPS DOWNLOAD." = "THE UPSTREAM SERVER DID NOT RETURN A SUCCESSFUL HTTPS DOWNLOAD.";
 "THE VIDEO HAS NO READABLE DIMENSIONS." = "THE VIDEO HAS NO READABLE DIMENSIONS.";
 "THESE FILES HAVE MOVED OR WERE DELETED." = "THESE FILES HAVE MOVED OR WERE DELETED.";
+"THIS ARCHIVE IS PROTECTED. ENTER ITS PASSWORD." = "THIS ARCHIVE IS PROTECTED. ENTER ITS PASSWORD.";
 "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE." = "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE.";
 "THIS DOCUMENT NESTS ITS CONTENT TOO DEEPLY TO CONVERT." = "THIS DOCUMENT NESTS ITS CONTENT TOO DEEPLY TO CONVERT.";
 "THIS FILE HAS MOVED OR WAS DELETED." = "THIS FILE HAS MOVED OR WAS DELETED.";
@@ -2564,6 +2568,7 @@
 "The metadata field %@ could not be removed." = "The metadata field %@ could not be removed.";
 "The metadata field %lld could not be removed." = "The metadata field %lld could not be removed.";
 "The operation was cancelled." = "The operation was cancelled.";
+"The password is incorrect, or the archive is damaged." = "The password is incorrect, or the archive is damaged.";
 "The post did not return readable photo details." = "The post did not return readable photo details.";
 "The processing tool could not start." = "The processing tool could not start.";
 "The requested PDF size could not be reached." = "The requested PDF size could not be reached.";
@@ -2609,6 +2614,7 @@
 "This Word document contains duplicate relationship identifiers. It could not be converted to Pages." = "This Word document contains duplicate relationship identifiers. It could not be converted to Pages.";
 "This Word document contains duplicate style identifiers. It could not be converted to Pages." = "This Word document contains duplicate style identifiers. It could not be converted to Pages.";
 "This Word document has no editable body." = "This Word document has no editable body.";
+"This archive is protected. Enter its password." = "This archive is protected. Enter its password.";
 "This conversion is not available for %@." = "This conversion is not available for %@.";
 "This conversion is not available for %lld." = "This conversion is not available for %lld.";
 "This crop applies to every selected image and must fit inside each one." = "This crop applies to every selected image and must fit inside each one.";
