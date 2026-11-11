@@ -467,7 +467,7 @@ struct ToolEditor:View {
                     }
                     startTimeText = timeString(options.start)
                 }
-            Button(LText("Set Start Here")) {
+            Button("Set Start Here") {
                 options.start = min(max(playhead, 0), duration)
                 seek(options.start)
                 startTimeText = timeString(options.start)
@@ -483,7 +483,7 @@ struct ToolEditor:View {
                     }
                     endTimeText = timeString(options.end ?? duration)
                 }
-            Button(LText("Set End Here")) {
+            Button("Set End Here") {
                 options.end = min(max(playhead, 0), duration)
                 seek(options.end ?? duration)
                 endTimeText = timeString(options.end ?? duration)
