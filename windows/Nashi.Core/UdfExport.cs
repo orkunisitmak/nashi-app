@@ -95,8 +95,10 @@ public sealed partial class OfficeDocuments
         {
             limit=contentLimit;
             var body=Child(Xml(zip,"word/document.xml").Root,"body")??throw new InvalidDataException("The document has no editable body.");var section=Child(body,"sectPr");var elements=new StringBuilder();
-            // Word's "start at" page number is UYAP's pageStartNumStr, in the range UDF -> DOCX reads back.
-            if(Num(Child(section,"pgNumType"),"start") is >=0 and <100000 and var start)pageStart=(int)start;
+            // Word's "start at" page number is UYAP's pageStartNumStr, in the range UDF -> DOCX reads back. UYAP numbers the document once,
+            // from its first page, so only the first section's start counts (a paragraph's sectPr ends a section; the body's is the last).
+            var opening=body.Descendants().FirstOrDefault(e=>e.Name.LocalName=="sectPr")??section;
+            if(Num(Child(opening,"pgNumType"),"start") is >=0 and <100000 and var start)pageStart=(int)start;
             var size=Child(section,"pgSz");var margins=Child(section,"pgMar");textWidth=Math.Max(72,((Num(size,"w")??11906)-(Num(margins,"left")??1418)-(Num(margins,"right")??1418))/20);
             // UYAP keeps the header's text first and the footer's last.
             // Word's "different first page" with an empty first header or footer is UYAP's header or footer starting on page 2, as on a
