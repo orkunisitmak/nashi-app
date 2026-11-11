@@ -77,7 +77,9 @@ public sealed partial class OfficeDocuments
         private static string? Rgb(string? argb)=>int.TryParse(argb,NumberStyles.AllowLeadingSign,CultureInfo.InvariantCulture,out var n)?(n&0xFFFFFF).ToString("X6",CultureInfo.InvariantCulture):null;
         private static string Escaped(string value)=>SecurityElement.Escape(XmlSafe(value));
         // Java's logical fonts have no file of their own; these are what they show on Windows.
-        private static string? Font(string? family)=>family switch{null or ""=>null,"Dialog" or "SansSerif"=>"Arial","Serif"=>"Times New Roman","Monospaced" or "DialogInput"=>"Courier New",_=>family};
+        // A font name is written into every run that uses it, so one longer than any real font's (Word allows 31 characters) is ignored
+        // rather than copied thousands of times.
+        private static string? Font(string? family)=>family switch{null or ""=>null,{Length:>128}=>null,"Dialog" or "SansSerif"=>"Arial","Serif"=>"Times New Roman","Monospaced" or "DialogInput"=>"Courier New",_=>family};
         private double Margin(string name,double fallback)=>Number(page?.Attribute(name)?.Value) is {} margin&&margin is >=0 and <1000?margin:fallback;
         // UYAP writes A4 (mediaSizeName 1) and Java's orientations, where only 1 is portrait.
         private bool Landscape=>page?.Attribute("paperOrientation")?.Value is {} orientation&&orientation!="1";

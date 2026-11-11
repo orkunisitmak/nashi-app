@@ -63,7 +63,7 @@ public sealed partial class OfficeDocuments
         {
             if(properties is null)return;foreach(var (name,key) in new[]{("b","bold"),("i","italic"),("strike","strikethrough"),("vanish","#hidden")})if(Child(properties,name) is {} p)d[key]=On(p)?"true":"false";
             if(Child(properties,"dstrike") is {} doubled&&On(doubled))d["strikethrough"]="true";if(Num(Child(properties,"sz"),"val") is {} size)d["size"]=Points(size/2);
-            var fonts=Child(properties,"rFonts");var font=(Attr(fonts,"asciiTheme")??Attr(fonts,"hAnsiTheme")) is {} theme?theme.StartsWith("major",StringComparison.Ordinal)?majorFont:minorFont:Attr(fonts,"ascii")??Attr(fonts,"hAnsi");if(font is {Length:>0})d["family"]=font;
+            var fonts=Child(properties,"rFonts");var font=(Attr(fonts,"asciiTheme")??Attr(fonts,"hAnsiTheme")) is {} theme?theme.StartsWith("major",StringComparison.Ordinal)?majorFont:minorFont:Attr(fonts,"ascii")??Attr(fonts,"hAnsi");if(font is {Length:>0 and <=128})d["family"]=font;
             if(Attr(Child(properties,"color"),"val") is {} color){if(Argb(color) is {} argb)d["foreground"]=argb;else d.Remove("foreground");}
             if(Child(properties,"u") is {} u)d["underline"]=Attr(u,"val") is "none" or "0"?"false":"true";
             if(Attr(Child(properties,"vertAlign"),"val") is {} align){d["superscript"]=align=="superscript"?"true":"false";d["subscript"]=align=="subscript"?"true":"false";}
@@ -81,7 +81,7 @@ public sealed partial class OfficeDocuments
             if(Child(properties,"numPr") is {} list){if(Attr(Child(list,"numId"),"val") is {} id)d["#numId"]=id;if(Attr(Child(list,"ilvl"),"val") is {} level)d["#ilvl"]=level;}
             if(Child(properties,"pageBreakBefore") is {} pageBreak)d["#pageBreakBefore"]=On(pageBreak)?"true":"false";
             foreach(var tab in Child(properties,"tabs")?.Elements().Where(e=>e.Name.LocalName=="tab")??[])if(Num(tab,"pos") is {} position)
-                d["#tab:"+((int)position).ToString(CultureInfo.InvariantCulture)]=Attr(tab,"val") is null or "clear"?"clear":(Attr(tab,"val") switch{"right" or "end"=>"1","center"=>"2",_=>"0"})+":"+(Attr(tab,"leader") switch{"dot" or "middleDot"=>"1","hyphen"=>"2","underscore"=>"3","heavy"=>"4",_=>"0"});
+                d["#tab:"+((int)position).ToString(CultureInfo.InvariantCulture)]=Attr(tab,"val") is null or "clear"?"clear":(Attr(tab,"val") switch{"right" or "end"=>"1","center"=>"2","decimal"=>"4","bar"=>"5",_=>"0"})+":"+(Attr(tab,"leader") switch{"dot" or "middleDot"=>"1","hyphen"=>"2","underscore"=>"3","heavy"=>"4",_=>"0"});
         }
         private (Dictionary<string,string> C,Dictionary<string,string> P) Style(string? id,int depth=0)
         {
@@ -97,20 +97,21 @@ public sealed partial class OfficeDocuments
             var body=Child(Xml(zip,"word/document.xml").Root,"body")??throw new InvalidDataException("The document has no editable body.");var section=Child(body,"sectPr");var elements=new StringBuilder();
             var size=Child(section,"pgSz");var margins=Child(section,"pgMar");textWidth=Math.Max(72,((Num(size,"w")??11906)-(Num(margins,"left")??1418)-(Num(margins,"right")??1418))/20);
             // UYAP keeps the header's text first and the footer's last.
-            // Word's "different first page" with an empty first header is UYAP's header starting on page 2, as on a court's tensip zaptı.
-            bool LaterPages()
+            // Word's "different first page" with an empty first header or footer is UYAP's header or footer starting on page 2, as on a
+            // court's tensip zaptı.
+            bool LaterPages(string reference)
             {
-                if(Child(section,"titlePg") is not {} title||!On(title))return false;if(Furniture(section,"headerReference","first") is not {} first)return true;
+                if(Child(section,"titlePg") is not {} title||!On(title))return false;if(Furniture(section,reference,"first") is not {} first)return true;
                 return PlainText(first.Root).Trim().Length==0&&!first.Root.Descendants().Any(e=>e.Name.LocalName is "drawing" or "pict");
             }
-            if(Furniture(section,"headerReference") is {} header){elements.Append(LaterPages()?"<header startPage=\"2\">":"<header>");Part(header,elements,false);elements.Append("</header>\n");}
+            if(Furniture(section,"headerReference") is {} header){elements.Append(LaterPages("headerReference")?"<header startPage=\"2\">":"<header>");Part(header,elements,false);elements.Append("</header>\n");}
             var bodyStart=text.Length;Content(body,elements,0);if(text.Length==bodyStart)Emit(elements,new(StringComparer.Ordinal),[],new(StringComparer.Ordinal),"");
             // UYAP has no footnotes or endnotes, so their text follows the body under a short rule, each note after its mark.
             if(notes.Count>0)Notes(elements);
             // UYAP draws page numbers only from the footer's settings, so a page number found in the header alone gets an empty footer.
             var footer=Furniture(section,"footerReference");var footerElements=new StringBuilder();
             if(footer is {} part)Part(part,footerElements,true);else if(pageNumbers)Emit(footerElements,new(StringComparer.Ordinal),[],new(StringComparer.Ordinal),"");
-            if(footer is not null||pageNumbers)elements.Append("<footer").Append(pageNumbers?PageNumbers:"").Append('>').Append(footerElements).Append("</footer>\n");
+            if(footer is not null||pageNumbers)elements.Append("<footer").Append(footer is not null&&LaterPages("footerReference")?" startPage=\"2\"":"").Append(pageNumbers?PageNumbers:"").Append('>').Append(footerElements).Append("</footer>\n");
             string Margin(string name,double fallback)=>Points(Math.Abs(Num(margins,name) is {} twips?twips/20:fallback));
             var xml=new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<template format_id=\"1.8\">\n<content><![CDATA[").Append(text.ToString().Replace("]]>","]]]]><![CDATA[>")).Append("]]></content>");
             // UYAP pages are A4; Java's orientation 2 (reverse landscape) is landscape however the value is read.

@@ -93,10 +93,10 @@ internal static class UdfChecks
             (Numbers("Page number at the left"," pageNumber-spec=\"BSP32_24\" pageNumber-seperator=\"/\""),"left:{PAGE}"),
             (Numbers("Unreadable spec"," pageNumber-spec=\"BSP32_x\" pageNumber-seperator=\"-\""),"right:{PAGE}|-|{NUMPAGES}")};
         check(drawn.All(d=>d.Item1==d.Item2),"A UDF page number did not come back as UYAP draws it: "+string.Join(", ",drawn.Where(d=>d.Item1!=d.Item2).Select(d=>d.Item1)));
-        string Built(string name,string words,string elements)
+        string Built(string name,string words,string elements,string styles="")
         {
             var path=Path.Combine(root,name+".udf");
-            using(var zip=ZipFile.Open(path,ZipArchiveMode.Create))Entry(zip,"content.xml","<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<template format_id=\"1.8\">\n<content><![CDATA["+words+"]]></content><properties><pageFormat mediaSizeName=\"1\" /></properties>\n<elements resolver=\"hvl-default\">\n"+elements+"</elements>\n<styles><style name=\"hvl-default\" family=\"Times New Roman\" size=\"12\" /></styles>\n</template>");
+            using(var zip=ZipFile.Open(path,ZipArchiveMode.Create))Entry(zip,"content.xml","<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<template format_id=\"1.8\">\n<content><![CDATA["+words+"]]></content><properties><pageFormat mediaSizeName=\"1\" /></properties>\n<elements resolver=\"hvl-default\">\n"+elements+"</elements>\n<styles><style name=\"hvl-default\" family=\"Times New Roman\" size=\"12\" />"+styles+"</styles>\n</template>");
             return path;
         }
         string Opened(string udf){var path=Path.ChangeExtension(udf,".docx");OfficeDocuments.UdfToDocx(udf,path);return Part(path,"word/document.xml");}
@@ -114,6 +114,9 @@ internal static class UdfChecks
         // Leaves that point at the same text again and again are refused before they copy far more text than content.xml holds.
         var repeated=Built("Repeated leaves",new string('x',10_000)+"\n",Leaves(Enumerable.Repeat((0,10_001),3_000).ToArray()));
         check(Throws(()=>OfficeDocuments.UdfToDocx(repeated,Path.Combine(root,"Repeated leaves.docx"))),"Leaves repeating one range copied the text thousands of times");
+        // A style's font name is written into every run that uses it, so a name longer than any real font's is not copied at all.
+        var longFont=Opened(Built("Long font name",new string('x',500)+"\n","<paragraph>"+string.Concat(Enumerable.Range(0,500).Select(i=>"<content resolver=\"long\" startOffset=\""+i+"\" length=\""+(i==499?2:1)+"\" />"))+"</paragraph>","<style name=\"long\" family=\""+new string('F',100_000)+"\" />"));
+        check(longFont.Length<1_000_000&&Count(longFont,"<w:t xml:space=\"preserve\">x</w:t>")==500,"A long font name was copied into every run: "+longFont.Length+" characters");
         using(var model=JsonDocument.Parse(JsonSerializer.Serialize(OfficeDocuments.ReadDocx(docx))))
         {
             var words=string.Concat(model.RootElement.GetProperty("blocks").EnumerateArray().Where(b=>b.GetProperty("type").GetString()=="paragraph").Select(b=>string.Concat(b.GetProperty("runs").EnumerateArray().Select(r=>r.TryGetProperty("text",out var t)?t.GetString():"/"))+"|"));
@@ -206,6 +209,16 @@ internal static class UdfChecks
         }
         var refusal=Refusal(()=>OfficeDocuments.DocxToUdf(drawnAgain,Path.Combine(root,"One picture drawn again.udf"),500));
         check(refusal=="This UDF document is too large."&&!File.Exists(Path.Combine(root,"One picture drawn again.udf")),"A picture drawn many times was not held to the size limit as it was added: "+refusal);
+        // Decimal and bar tab stops keep their alignment (Swing's 4 and 5), and a footer left empty on the first page starts on page 2.
+        var stops=Path.Combine(root,"Decimal tabs and a later footer.docx");
+        using(var zip=ZipFile.Open(stops,ZipArchiveMode.Create))
+        {
+            Entry(zip,"word/document.xml","<w:document "+w+"><w:body><w:p><w:pPr><w:tabs><w:tab w:val=\"decimal\" w:pos=\"2880\"/><w:tab w:val=\"bar\" w:pos=\"4320\"/></w:tabs></w:pPr><w:r><w:t>Tutar</w:t><w:tab/><w:t>1.250,00</w:t></w:r></w:p><w:sectPr><w:footerReference w:type=\"default\" r:id=\"rFooter\"/><w:footerReference w:type=\"first\" r:id=\"rFirst\"/><w:titlePg/></w:sectPr></w:body></w:document>");
+            Entry(zip,"word/_rels/document.xml.rels","<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rFooter\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer\" Target=\"footer1.xml\"/><Relationship Id=\"rFirst\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer\" Target=\"footer2.xml\"/></Relationships>");
+            Entry(zip,"word/footer1.xml","<w:ftr "+w+"><w:p><w:r><w:t>Dosya No: 2026/1</w:t></w:r></w:p></w:ftr>");Entry(zip,"word/footer2.xml","<w:ftr "+w+"><w:p/></w:ftr>");
+        }
+        var stopsUdf=OfficeDocuments.ReadUdf(Udf(stops)).Element("elements")!;var tabSet=stopsUdf.Element("paragraph")?.Attribute("TabSet")?.Value??"";
+        check(tabSet.StartsWith("144.0:4:0,216.0:5:0",StringComparison.Ordinal)&&stopsUdf.Element("footer")?.Attribute("startPage")?.Value=="2","Decimal or bar tab stops, or a footer starting on page 2, were lost: "+tabSet+" "+stopsUdf.Element("footer")?.Attribute("startPage"));
         // A field's instruction ends at its first separate. Instruction text after it must not turn a footer field into a page number,
         // nor be read again at every later separate (40,000 of them, each after more instruction text, took about 16 s before).
         // A field inside another field's instruction, complex or simple, is neither a page number nor text, a PAGE field without a
