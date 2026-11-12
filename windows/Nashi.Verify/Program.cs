@@ -85,6 +85,8 @@ try
     var zip=DocumentEngine.Zip([Path.Combine(root,"Output.txt")],root);
     var extracted=DocumentEngine.Unzip(zip,root);
     Check(File.ReadAllText(Path.Combine(extracted[0],"Output.txt"))=="keep","ZIP contents changed");
+    // Check origin marking on the native Windows filesystem separately from archive contents.
+    ArchiveSecurityChecks.Run(root,Check);
     var unsafeZip=Path.Combine(root,"Traversal.zip");
     using(var malicious=System.IO.Compression.ZipFile.Open(unsafeZip,System.IO.Compression.ZipArchiveMode.Create)){using var entry=malicious.CreateEntry("../outside.txt").Open();entry.WriteByte(1);}
     try{DocumentEngine.Unzip(unsafeZip,root);throw new Exception("Traversal archive succeeded");}catch(InvalidDataException){checks++;}

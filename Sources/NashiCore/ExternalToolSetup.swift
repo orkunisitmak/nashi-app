@@ -25,6 +25,7 @@ public enum ExternalToolSetup {
     public static var status:ToolSetupStatus { ToolSetupStatus { try? Dependencies.executable($0) } }
     public static var mediaReady:Bool { status.mediaReady }
     public static var officeReady:Bool { status.officeReady }
+    /// Verifies each pinned download before unpacking and publishes the tools as a complete set.
     public static func installMedia(token:CancellationToken,progress:@escaping @Sendable (Double?,String)->Void) async throws {
         try token.check();try Task.checkCancellation()
         if mediaReady { progress(1,"Media tools are ready.");return }
@@ -32,27 +33,27 @@ public enum ExternalToolSetup {
         let stage=root.appendingPathComponent(".media-\(UUID().uuidString)",isDirectory:true)
         try fm.createDirectory(at:stage,withIntermediateDirectories:false)
         defer { try? fm.removeItem(at:stage) }
-        let packages:[(String,String,String,String?)] = [
-            ("ffmpeg","https://www.osxexperts.net/ffmpeg9arm.zip","591260c945d0eef150e3bf82b0ef988bd36a9cecc18ff05d6679617159f0a95e","binary"),
-            ("ffprobe","https://www.osxexperts.net/ffprobe9arm.zip","e11c17e8200b3ee4c4c186d245e2b4053f01d56957336c1817fca0b997469106","binary"),
-            ("yt-dlp","https://github.com/yt-dlp/yt-dlp/releases/download/2026.08.19/yt-dlp_macos","0f192b7ec147ab6288885d6351d9ab67367640029b4377576ef46dd79cf7b202",nil),
-            ("deno","https://github.com/denoland/deno/releases/download/v2.9.7/deno-aarch64-apple-darwin.zip","5cd46d6268f6f78f5d88bdc7159d20bd44cdaa4b3303474839f87ec6fe7ae25c","archive")
+        let packages: [(name: String, address: String, downloadDigest: String, unpack: Bool, binaryDigest: String?)] = [
+            ("ffmpeg", "https://www.osxexperts.net/ffmpeg9arm.zip", "d0c06c5c68ce48af3143b262f7a9118a7c9f67de1e237fcc24ffb14df9c67af9", true, "591260c945d0eef150e3bf82b0ef988bd36a9cecc18ff05d6679617159f0a95e"),
+            ("ffprobe", "https://www.osxexperts.net/ffprobe9arm.zip", "0c94fbdd8917022f28115eca512196cf4648732bc9e5db9ec8896c7e519d02aa", true, "e11c17e8200b3ee4c4c186d245e2b4053f01d56957336c1817fca0b997469106"),
+            ("yt-dlp", "https://github.com/yt-dlp/yt-dlp/releases/download/2026.08.19/yt-dlp_macos", "0f192b7ec147ab6288885d6351d9ab67367640029b4377576ef46dd79cf7b202", false, nil),
+            ("deno", "https://github.com/denoland/deno/releases/download/v2.9.7/deno-aarch64-apple-darwin.zip", "5cd46d6268f6f78f5d88bdc7159d20bd44cdaa4b3303474839f87ec6fe7ae25c", true, nil)
         ]
         for (index,package) in packages.enumerated() {
             try token.check();try Task.checkCancellation()
             let archive=stage.appendingPathComponent("download-\(index)")
-            try await CheckedToolDownload.fetch(URL(string:package.1)!,to:archive,maximum:400*1024*1024) { fraction in
-                progress(fraction.map{(Double(index)+$0)/Double(packages.count)},"Downloading \(package.0)…")
+            try await CheckedToolDownload.fetch(URL(string:package.address)!,to:archive,maximum:400*1024*1024) { fraction in
+                progress(fraction.map{(Double(index)+$0)/Double(packages.count)},"Downloading \(package.name)…")
             }
-            if package.3 != "binary" { try verify(archive,digest:package.2) }
-            let output=stage.appendingPathComponent(package.0)
-            if package.3 != nil {
+            try verify(archive, digest: package.downloadDigest)
+            let output=stage.appendingPathComponent(package.name)
+            if package.unpack {
                 let unpack=stage.appendingPathComponent("unpack-\(index)",isDirectory:true)
                 try ArchiveCodec.extract(archive,into:unpack,token:token)
-                let candidate=unpack.appendingPathComponent(package.0)
+                let candidate=unpack.appendingPathComponent(package.name)
                 let values=try candidate.resourceValues(forKeys:[.isRegularFileKey,.isSymbolicLinkKey])
-                guard values.isRegularFile == true,values.isSymbolicLink != true else { throw NashiError.failed("Upstream package has no regular \(package.0) executable.") }
-                if package.3 == "binary" { try verify(candidate,digest:package.2) }
+                guard values.isRegularFile == true,values.isSymbolicLink != true else { throw NashiError.failed("Upstream package has no regular \(package.name) executable.") }
+                if let digest = package.binaryDigest { try verify(candidate, digest: digest) }
                 try fm.moveItem(at:candidate,to:output);try fm.removeItem(at:unpack)
             } else { try fm.moveItem(at:archive,to:output) }
             try fm.setAttributes([.posixPermissions:0o755],ofItemAtPath:output.path)

@@ -7,6 +7,19 @@ internal static class ParityChecks
 {
     public static void Run(Action<bool,string> check,string root)
     {
+        const string htmlWithExternalImages = """<body background = https://example.com/background.png><img SRC=file:///C:/example.png><img src='https://example.com/photo.png'><img src="data:image/png;base64,AQID"><img src=data:image/png;base64,AA==></body>""";
+        const string htmlWithoutExternalImages = """<body><img><img><img src="data:image/png;base64,AQID"><img src=data:image/png;base64,AA==></body>""";
+        check(OfficeDocuments.SanitizedHtml(htmlWithExternalImages)==htmlWithoutExternalImages,
+            "HTML sanitization kept an external resource or removed an embedded image");
+
+        const string proseAndMarkupExamples = """<title><img src=example.png></title><p>Set src=logo.png and background=blue before saving.</p><!-- <img src=example.png> -->""";
+        const string imageWithQuotedExample = """<img title='Use src="logo.png", or <img src=example.png>' SRC=file:///C:/example.png alt="background=blue">""";
+        const string imageWithoutSource = """<img title='Use src="logo.png", or <img src=example.png>' alt="background=blue">""";
+        check(OfficeDocuments.SanitizedHtml(proseAndMarkupExamples+imageWithQuotedExample)==proseAndMarkupExamples+imageWithoutSource,
+            "HTML resource filtering changed text or an unrelated quoted attribute");
+        check(OfficeDocuments.SanitizedHtml("<!-- missing terminator ><img src=example.png>")=="<!-- missing terminator ><img>",
+            "An unterminated comment hid an external resource from HTML filtering");
+
         var characterDefaults=Path.Combine(root,"Character style defaults.docx");using(var archive=ZipFile.Open(characterDefaults,ZipArchiveMode.Create))
         {
             void Part(string name,string text){using var writer=new StreamWriter(archive.CreateEntry(name).Open(),new UTF8Encoding(false));writer.Write(text);}
@@ -228,6 +241,9 @@ internal static class ParityChecks
             var excel=Path.Combine(root,"Excel.csv");File.WriteAllText(excel,"\"Ad;Soyad\";Tutar\nAyşe;1,5\n");var plain=Path.Combine(root,"Plain.csv");File.WriteAllText(plain,"\"a;b\",c,d\n");
             var notes=Path.Combine(root,"Notes.csv");File.WriteAllText(notes,"name,notes;detail;status\nAda,a;b;c\n");
             check(OfficeDocuments.DelimitedLayout(excel,"csv")==(59,1055)&&OfficeDocuments.DelimitedLayout(plain,"csv")==(44,1033)&&OfficeDocuments.DelimitedLayout(notes,"csv")==(44,1033),"Semicolon CSV from Turkish Excel was read as comma-separated English, or a comma CSV with semicolons in it as semicolon-separated");
+            check(OfficeDocuments.DelimitedInputFilter(excel,"csv").EndsWith(":59,34,76,1,,1055,true,true,,,,,false",StringComparison.Ordinal)&&
+                OfficeDocuments.DelimitedInputFilter(excel,"tsv").EndsWith(":9,34,76,1,,1033,true,true,,,,,false",StringComparison.Ordinal),
+                "CSV and TSV import must opt out of evaluating formulas");
             var streamed=Path.Combine(root,"Streamed.csv");var normalized=Path.Combine(root,"Streamed UTF-8.csv");const string table="Ad;Şehir\nAyşe;İzmir\n";
             foreach(var bytes in new[]{Encoding.GetEncoding(1254).GetBytes(table),Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(table)).ToArray(),Encoding.Unicode.GetPreamble().Concat(Encoding.Unicode.GetBytes(table)).ToArray(),new UTF32Encoding(true,true).GetPreamble().Concat(new UTF32Encoding(true,false).GetBytes(table)).ToArray()})
             {File.WriteAllBytes(streamed,bytes);LegacyTextCodec.ToUtf8Async(streamed,normalized).GetAwaiter().GetResult();check(LegacyTextCodec.Decode(bytes)==table&&File.ReadAllText(normalized)==table&&File.ReadAllBytes(normalized).Length==Encoding.UTF8.GetByteCount(table),"Streamed text normalization did not match Decode");}

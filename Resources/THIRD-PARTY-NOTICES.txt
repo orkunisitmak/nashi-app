@@ -25,6 +25,8 @@ PDF page editing runs locally inside macOS JavaScriptCore.
 https://github.com/Hopding/pdf-lib/tree/v1.17.1
 The pinned browser bundle and dependency notices are in PDFLib.js and
 licenses/pdf-lib.txt in the application bundle.
+Nashi applies parser resource limits to the upstream bundle with
+scripts/patch-pdf-lib.py in the source repository.
 
 Reference screenshots and product descriptions belong to their respective owners;
 they are analysis evidence and are not bundled into the recreated application.

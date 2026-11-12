@@ -5,13 +5,15 @@ import Darwin
 /// created staging directory; links are deferred until regular files are done.
 enum ArchiveCodec {
     private static let api = ArchiveAPI()
+    private static let quarantineAttributeName = "com.apple.quarantine"
     private struct DeferredLink { let destination: URL; let target: String; let hard: Bool }
 
     struct ExtractionLimits {
         var maximumEntries=100_000
         var maximumBytes:Int64=20*1024*1024*1024
     }
-    static func extract(_ input: URL, into root: URL, password: String = "", token: CancellationToken, limits:ExtractionLimits=ExtractionLimits()) throws {
+    /// Extracts entries within the staging root and propagates the source quarantine when provided.
+    static func extract(_ input: URL, into root: URL, password: String = "", token: CancellationToken, limits:ExtractionLimits=ExtractionLimits(), quarantine: Data? = nil) throws {
         let a = try api.get()
         guard let reader = a.readNew() else { throw NashiError.failed("Could not initialize the archive reader.") }
         defer { _ = a.readFree(reader) }
@@ -33,7 +35,19 @@ enum ArchiveCodec {
         if !password.isEmpty { try a.check(password.withCString { a.readPassphrase(reader, $0) }, handle: reader) }
         try a.check(input.path.withCString { a.readOpen(reader, $0, 128 * 1024) }, handle: reader)
         let fm = FileManager.default
-        try fm.createDirectory(at: root, withIntermediateDirectories: true)
+        var markedDirectories = Set<String>()
+        /// Marks each newly encountered parent, including implicit application bundle directories.
+        func createDirectory(_ directory: URL) throws {
+            try fm.createDirectory(at: directory, withIntermediateDirectories: true)
+            guard let quarantine else { return }
+            var item = directory.standardizedFileURL
+            while markedDirectories.insert(item.path).inserted {
+                try applyQuarantine(quarantine, to: item)
+                if item.path == root.standardizedFileURL.path { break }
+                item.deleteLastPathComponent()
+            }
+        }
+        try createDirectory(root)
         var links: [DeferredLink] = []
         var entries = 0
         var expandedBytes:Int64=0
@@ -75,13 +89,13 @@ enum ArchiveCodec {
             }
             let kind = a.entryFiletype(entry) & 0o170000
             if kind == 0o040000 {
-                try fm.createDirectory(at: destination, withIntermediateDirectories: true)
+                try createDirectory(destination)
                 continue
             }
             guard kind == 0o100000 || kind == 0 else {
                 throw NashiError.invalidInput("The archive contains an unsupported special file: \(name)")
             }
-            try fm.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try createDirectory(destination.deletingLastPathComponent())
             guard !fm.fileExists(atPath: destination.path) else {
                 throw NashiError.invalidInput("The archive contains duplicate file paths: \(name)")
             }
@@ -99,6 +113,7 @@ enum ArchiveCodec {
                 }
                 try file.close()
             } catch { try? file.close(); throw error }
+            if let quarantine { try applyQuarantine(quarantine, to: destination) }
             let mode = a.entryPerm(entry) & 0o777
             if mode != 0 { try? fm.setAttributes([.posixPermissions: NSNumber(value: mode)], ofItemAtPath: destination.path) }
             let mtime = a.entryMtime(entry)
@@ -113,6 +128,7 @@ enum ArchiveCodec {
                 guard destination.standardizedFileURL != root.standardizedFileURL else { return }
                 try validateDestination(destination, root: root)
                 guard fm.createFile(atPath: destination.path, contents: nil) else { throw NashiError.failed("Could not create \(destination.lastPathComponent).") }
+                if let quarantine { try applyQuarantine(quarantine, to: destination) }
             }
             return
         }
@@ -129,7 +145,7 @@ enum ArchiveCodec {
             let size=(attributes[.size] as? NSNumber)?.int64Value ?? 0
             guard size<=limits.maximumBytes-expandedBytes else {throw NashiError.invalidInput("The archive expands beyond the 20 GB safety limit.")}
             expandedBytes+=size
-            try fm.createDirectory(at: link.destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try createDirectory(link.destination.deletingLastPathComponent())
             try fm.linkItem(at: target, to: link.destination)
         }
         for link in links.filter({ !$0.hard }) {
@@ -138,7 +154,7 @@ enum ArchiveCodec {
             // exists now, before creating directories or the link itself.
             try validateDestination(link.destination, root: root)
             try validateSymbolicTarget(link.target, at: link.destination, root: root)
-            try fm.createDirectory(at: link.destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try createDirectory(link.destination.deletingLastPathComponent())
             try fm.createSymbolicLink(atPath: link.destination.path, withDestinationPath: link.target)
         }
         // A chain of individually relative links must also stay inside the root.
@@ -147,6 +163,28 @@ enum ArchiveCodec {
                 throw NashiError.invalidInput("An archive link points outside the extraction folder.")
             }
         }
+    }
+
+    /// Reads the archive's original macOS quarantine marker from the file it resolves to.
+    static func quarantineAttribute(of file: URL) throws -> Data? {
+        var bytes = Data(count: 4096)
+        let size = bytes.withUnsafeMutableBytes { buffer in
+            getxattr(file.path, quarantineAttributeName, buffer.baseAddress, buffer.count, 0, 0)
+        }
+        if size < 0 {
+            let code = errno
+            if code == ENOATTR || code == ENOTSUP { return nil }
+            throw POSIXError(POSIXErrorCode(rawValue: code) ?? .EIO)
+        }
+        return size > 0 ? Data(bytes.prefix(size)) : nil
+    }
+
+    /// Restores the marker on a staged item without following a symbolic link.
+    static func applyQuarantine(_ bytes: Data, to file: URL) throws {
+        let status = bytes.withUnsafeBytes { buffer in
+            setxattr(file.path, quarantineAttributeName, buffer.baseAddress, buffer.count, 0, XATTR_NOFOLLOW)
+        }
+        guard status == 0 else { throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO) }
     }
 
     static func create(from root: URL, at output: URL, format: String, compressionLevel: Int = 6, token: CancellationToken) throws {

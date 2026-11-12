@@ -8,6 +8,8 @@ The shared catalog contains 27 tools and 46 input formats. It includes photo edi
 
 Library and preferences live in `%LOCALAPPDATA%/Nashi`, outside the portable application folder. Library keeps the last 50 successful exports and clipboard imports. Text imports use UTF-8 and image imports use lossless PNG. No clipboard monitoring runs in the background. Signed public update staging verifies the manifest, archive hash, version and trusted signature before restart.
 
+Use an NTFS destination when extracting or converting archives marked as coming from the internet. Nashi preserves the Windows security mark on the output and stops the operation on FAT or exFAT, which cannot store that mark.
+
 While dragging in Explorer or another application, **Ctrl** opens tools, **Shift** conversion and **Alt** file actions. Settings can change the three chords. **Ctrl+Shift+D** opens a copied public media link. The app can remain in the system tray.
 
 **Ctrl+O** chooses files; **Ctrl+V** imports files/text/images/links outside text fields; **Ctrl+1/2** switches Home/Library; **Ctrl+F** searches; **Ctrl+U** checks updates. **Ctrl+Space** opens the selected files' wheel; choose **Convert** to select an output format. Arrows/Tab choose an item, Enter opens it and Escape closes it. In the Home file list, **Delete** removes the selected entries from Nashi without deleting the original files.

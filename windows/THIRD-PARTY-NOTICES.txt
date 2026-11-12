@@ -16,7 +16,7 @@ user chooses setup; their licenses and source references are shown by setup.
 
 Additional Windows interoperability libraries:
 - PDFium 155.0.8044.0 via bblanchon.PDFium.Win32 155.0.8044: CPU PDF preview/rendering; Apache-2.0 packaging, PDFium BSD-style and bundled dependency notices. Matching binary provenance and complete licenses: licenses/PDFium-THIRD-PARTY-NOTICES.txt. No JavaScript platform or external link actions are enabled by Nashi's read-only form preview.
-- Magick.NET 15.0.0 and Magick.NET.Core: Apache-2.0, https://github.com/dlemstra/Magick.NET. Full native dependency licenses are in licenses/Magick.NET-THIRD-PARTY-NOTICES.txt.
+- Magick.NET 15.1.0 and Magick.NET.Core: Apache-2.0, https://github.com/dlemstra/Magick.NET. Full native dependency licenses are in licenses/Magick.NET-THIRD-PARTY-NOTICES.txt.
 - ZXing.Net 0.16.11: Apache-2.0, Michael Jahn and contributors, https://github.com/micjahn/ZXing.Net.
 - SharpCompress 0.50.5: MIT, Adam Hathcock and contributors, https://github.com/adamhathcock/sharpcompress.
 - PdfPig 0.1.16: Apache-2.0, Eliot Jones and contributors, https://github.com/UglyToad/PdfPig.

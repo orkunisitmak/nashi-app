@@ -4,6 +4,26 @@ import Darwin
 /// Web extraction runs in its own process group so Cancel also stops ffmpeg.
 /// All arguments are argv entries; no shell or user configuration is involved.
 enum WebDownloadProcess {
+    typealias Extractor = @Sendable (URL, [String], CancellationToken, TimeInterval, ProgressHandler?) throws -> Data
+
+    /// Runs yt-dlp behind the bundled connection policy without changing its output or cancellation handling.
+    static func runPublic(_ executable:URL,_ arguments:[String],token:CancellationToken,
+                          timeout:TimeInterval,progress:ProgressHandler?=nil) throws -> Data {
+        guard let script=Bundle.module.url(forResource:"WebMediaProxy",withExtension:"mjs",subdirectory:"Resources") else {
+            throw NashiError.missingDependency("the bundled media connection filter")
+        }
+        let deno=try Dependencies.executable("deno")
+        let ffmpeg=try Dependencies.executable("ffmpeg"),ffprobe=try Dependencies.executable("ffprobe")
+        let scratch=try OutputFiles.temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at:scratch) }
+        let policy=script.deletingLastPathComponent().appendingPathComponent("yt-dlp-policy")
+        let supervisor=["run","--no-config","--cached-only","--no-prompt","--allow-net","--allow-run=\(executable.path)",
+                        "--allow-read=\(policy.path)","--allow-write=\(scratch.path)",
+                        script.path,executable.path,ffmpeg.path,ffprobe.path,deno.path,scratch.path]
+        return try run(deno,supervisor+arguments,token:token,timeout:timeout,progress:progress)
+    }
+
+    /// Captures bounded output and cancels the entire download process group together.
     static func run(_ executable:URL,_ arguments:[String],token:CancellationToken,
                     timeout:TimeInterval,progress:ProgressHandler?=nil) throws -> Data {
         try token.check()

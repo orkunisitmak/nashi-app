@@ -13,11 +13,35 @@ public sealed partial class WebDownload(Toolchain tools)
         if(parts.Length!=3||!double.TryParse(parts[1],NumberStyles.Float,CultureInfo.InvariantCulture,out var current)||!double.TryParse(parts[2],NumberStyles.Float,CultureInfo.InvariantCulture,out var total)||!double.IsFinite(current)||!double.IsFinite(total)||total<=0)return null;
         return Math.Clamp(current/total,0,.98);
     }
+    /// <summary>Accepts HTTP(S) media URLs and refuses obvious nonpublic addresses before doing network work.</summary>
     public static Uri Validate(string input)
     {
-        if(!Uri.TryCreate(input,UriKind.Absolute,out var url)||url.Scheme is not ("http" or "https")||!string.IsNullOrEmpty(url.UserInfo)||url.IsLoopback||url.Host.EndsWith(".local",StringComparison.OrdinalIgnoreCase))throw new ArgumentException("Paste a public http(s) media or page link.");return url;
+        if(!Uri.TryCreate(input,UriKind.Absolute,out var url)||url.Scheme is not ("http" or "https")||!string.IsNullOrEmpty(url.UserInfo)||!PublicMediaAddress.IsPublicHost(url.IdnHost))throw new ArgumentException("Paste a public http(s) media or page link.");return url;
     }
     internal string FfmpegLocation=>Path.GetDirectoryName(tools.Executable("ffmpeg"))!;
+    /// <summary>Runs metadata and media extraction through the bundled per-request network policy.</summary>
+    private async Task<ProcessResult> RunExtractorAsync(IEnumerable<string> args,CancellationToken token,Action<string>? onLine=null)
+    {
+        var downloader=tools.Executable("yt-dlp");
+        var script=Path.Combine(AppContext.BaseDirectory,"WebMediaProxy.mjs");
+        if(!File.Exists(script))throw new FileNotFoundException("The bundled media connection filter is missing.");
+        var deno=tools.Executable("deno");
+        var policy=Path.Combine(AppContext.BaseDirectory,"yt-dlp-policy");
+        var scratch=Directory.CreateTempSubdirectory("Nashi-media-policy-").FullName;
+        try
+        {
+            return await ProcessRunner.RunAsync(deno,
+                ["run","--no-config","--cached-only","--no-prompt","--allow-net","--allow-run="+downloader,
+                    "--allow-read="+policy,"--allow-write="+scratch,
+                    script,downloader,tools.Executable("ffmpeg"),tools.Executable("ffprobe"),deno,scratch,..args],token,onLine);
+        }
+        finally
+        {
+            try{Directory.Delete(scratch,true);}catch(IOException){}catch(UnauthorizedAccessException){}
+        }
+    }
+
+    /// <summary>Stages a media download and publishes its completed files as a single operation.</summary>
     public async Task<IReadOnlyList<string>> DownloadAsync(string input,string kind,string destination,IProgress<OperationProgress>? progress=null,CancellationToken token=default,int? maximumHeight=null,IReadOnlySet<int>? selectedPhotos=null)
     {
         if(maximumHeight is <2 or >16384)throw new ArgumentException("Choose a supported maximum video height.");
@@ -29,11 +53,11 @@ public sealed partial class WebDownload(Toolchain tools)
         {
             var photos=await InspectPhotosAsync(uri.AbsoluteUri,token);if(selectedPhotos is not null){if(selectedPhotos.Count==0||selectedPhotos.Any(id=>!photos.Any(p=>p.Id==id)))throw new ArgumentException("Select at least one available photo.");photos=photos.Where(p=>selectedPhotos.Contains(p.Id)).ToArray();}var outputs=new List<string>();var n=0;foreach(var photo in photos){var local=new ProgressScope(progress,n++,photos.Length);outputs.Add(await WebPhotos.DownloadImageAsync(photo.Url,tx.StagingDirectory,local,token,"Instagram "+uri.Segments.Last().Trim('/')+" "+photo.Id.ToString("00")));}return tx.Publish(outputs,token);
         }
-        var args=new List<string>{"--ignore-config","--no-playlist","--no-part","--no-overwrites","--no-cache-dir","--restrict-filenames","--no-mtime","--progress","--newline","--progress-template","download:NASHI:%(progress.downloaded_bytes)s:%(progress.total_bytes,progress.total_bytes_estimate)s","--print","after_move:filepath","--ffmpeg-location",FfmpegLocation,"--js-runtimes","deno:"+tools.Executable("deno"),"-P",tx.StagingDirectory,"-o","%(title).160B [%(id)s].%(ext)s"};
+        var args=new List<string>{"--no-playlist","--no-part","--no-overwrites","--no-cache-dir","--restrict-filenames","--no-mtime","--progress","--newline","--progress-template","download:NASHI:%(progress.downloaded_bytes)s:%(progress.total_bytes,progress.total_bytes_estimate)s","--print","after_move:filepath","--ffmpeg-location",FfmpegLocation,"--no-js-runtimes","--js-runtimes","deno:"+tools.Executable("deno"),"-P",tx.StagingDirectory,"-o","%(title).160B [%(id)s].%(ext)s"};
         if(kind=="audio")args.AddRange(["-x","--audio-format","mp3"]);else if(kind=="thumbnail")args.AddRange(["--skip-download","--write-thumbnail","--convert-thumbnails","jpg"]);else args.AddRange(["-f",maximumHeight is {} height?$"bv*[height<={height}]+ba/b[height<={height}]/bv*+ba/b":"bv*+ba/b","--merge-output-format","mp4"]);
         args.AddRange(["--",uri.AbsoluteUri]);
         progress?.Report(new(null,"Resolving media…"));
-        await ProcessRunner.RunAsync(tools.Executable("yt-dlp"),args,token,line=>
+        await RunExtractorAsync(args,token,line=>
         {
             if(ProgressFraction(line) is {} fraction)progress?.Report(new(fraction,"Downloading media…"));
         });
@@ -45,9 +69,11 @@ public sealed partial class WebDownload(Toolchain tools)
         }
         progress?.Report(new(.99,"Saving files…"));return tx.Publish(files,token);
     }
+    /// <summary>Lists images in a public Instagram carousel without downloading its media.</summary>
     public async Task<WebPhoto[]> InspectPhotosAsync(string input,CancellationToken token=default)
     {
-        var uri=Validate(input);if(WebMediaPayload.Parse(input)?.Kind!="instagramPhotos")throw new ArgumentException("Choose an Instagram photo post link.");var result=await ProcessRunner.RunAsync(tools.Executable("yt-dlp"),["--ignore-config","--no-cache-dir","--yes-playlist","--playlist-end","51","--ignore-no-formats-error","--skip-download","--dump-single-json","--no-progress","--",uri.AbsoluteUri],token);return WebPhotos.Instagram(result.Output);
+        var uri=Validate(input);if(WebMediaPayload.Parse(input)?.Kind!="instagramPhotos")throw new ArgumentException("Choose an Instagram photo post link.");
+        var result=await RunExtractorAsync(["--no-cache-dir","--yes-playlist","--playlist-end","51","--ignore-no-formats-error","--skip-download","--dump-single-json","--no-progress","--",uri.AbsoluteUri],token);return WebPhotos.Instagram(result.Output);
     }
     private sealed class ProgressScope(IProgress<OperationProgress>? progress,int index,int total):IProgress<OperationProgress>{public void Report(OperationProgress value)=>progress?.Report(value with{Fraction=value.Fraction is {} n?(index+n)/total*.98:null,Label=$"Photo {index+1} of {total}…"});}
 }

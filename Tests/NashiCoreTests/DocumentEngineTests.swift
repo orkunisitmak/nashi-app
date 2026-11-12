@@ -4,6 +4,7 @@ import AppKit
 import PDFKit
 import CoreText
 import CryptoKit
+import Darwin
 @testable import NashiCore
 
 final class DocumentEngineTests: XCTestCase {
@@ -120,6 +121,34 @@ final class DocumentEngineTests: XCTestCase {
         try gzip.output.write(to: gz)
         let folder = try XCTUnwrap(DocumentEngine.extractArchive(gz, options: .init(), token: .init()).first)
         XCTAssertEqual(try DocumentText.read(folder.appendingPathComponent("Single.txt")), "one gzip stream\n")
+    }
+
+    /// Checks that quarantined inputs mark both implicit bundle directories and repacked archives.
+    func testArchiveExtractionAndConversionKeepQuarantine() throws {
+        let source = root.appendingPathComponent("Downloaded.tar")
+        let item = "Example.app/Contents/MacOS/Example"
+        try Self.tar(name: item, payload: Data("Quarantine fixture".utf8)).write(to: source)
+        let quarantine = Data("0081;65000000;NashiTests;".utf8)
+        let status = quarantine.withUnsafeBytes { buffer in
+            setxattr(source.path, "com.apple.quarantine", buffer.baseAddress, buffer.count, 0, 0)
+        }
+        XCTAssertEqual(status, 0)
+
+        let folder = try XCTUnwrap(ConversionEngine.run(.init(inputs: [source], operation: .tool(.extractArchive))).first)
+        for file in [folder, folder.appendingPathComponent("Example.app"), folder.appendingPathComponent(item)] {
+            XCTAssertEqual(try ArchiveCodec.quarantineAttribute(of: file), quarantine)
+        }
+        XCTAssertEqual(try ArchiveCodec.quarantineAttribute(of: convert(source, "zip")), quarantine)
+    }
+
+    /// Checks that spreadsheet imports preserve expressions as text through a format round trip.
+    func testCSVAndTSVFormulaTextStaysLiteral() throws {
+        for (ext, separator) in [("csv", ","), ("tsv", "\t")] {
+            let input = try file("Formula.\(ext)", "Name\(separator)Value\nTotal\(separator)=1+1\n")
+            let spreadsheet = try convert(input, "xlsx")
+            let csv = try convert(spreadsheet, "csv")
+            XCTAssertTrue(try DocumentText.read(csv).contains("=1+1"), ext)
+        }
     }
 
     func testArchiveRejectsTraversalAbsolutePathsEscapingLinksAndInvalidContainers() throws {
