@@ -61,12 +61,12 @@ public sealed class RangeTimeline:FrameworkElement
     }
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
     {
-        Focus();var x=e.GetPosition(this).X;laneWidth=Math.Max(1,ActualWidth-24);var a=12+laneWidth*Start/Duration;var b=12+laneWidth*End/Duration;
-        moveRange=x>a+14&&x<b-14;startHandle=Math.Abs(x-a)<=Math.Abs(x-b);originalStart=Start;originalEnd=End;originX=x;dragging=CaptureMouse();e.Handled=true;
+        Focus();var x=(DesktopInput.SimulatedLocalPosition??e.GetPosition(this)).X;laneWidth=Math.Max(1,ActualWidth-24);var a=12+laneWidth*Start/Duration;var b=12+laneWidth*End/Duration;
+        moveRange=x>a+14&&x<b-14;startHandle=Math.Abs(x-a)<=Math.Abs(x-b);originalStart=Start;originalEnd=End;originX=x;dragging=CaptureMouse()||!DesktopInput.NativeInputAvailable;e.Handled=true;
     }
     protected override void OnMouseMove(MouseEventArgs e)
     {
-        if(!dragging)return;var delta=(e.GetPosition(this).X-originX)/laneWidth*Duration;var oldStart=Start;var oldEnd=End;
+        if(!dragging)return;var delta=((DesktopInput.SimulatedLocalPosition??e.GetPosition(this)).X-originX)/laneWidth*Duration;var oldStart=Start;var oldEnd=End;
         if(moveRange){var length=originalEnd-originalStart;Start=Math.Clamp(originalStart+delta,0,Duration-length);End=Start+length;}else if(startHandle)Start=Math.Clamp(originalStart+delta,0,originalEnd-.05);else End=Math.Clamp(originalEnd+delta,originalStart+.05,Duration);
         InvalidateVisual();NotifyAccessibility(oldStart,oldEnd,Duration);Changed?.Invoke(Start,End);e.Handled=true;
     }
