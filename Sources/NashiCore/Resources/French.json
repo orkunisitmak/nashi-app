@@ -1436,5 +1436,17 @@
   "YouTube thumbnail · best available full-size image": "Miniature YouTube · meilleure image en taille réelle disponible",
   "No tools for this file type": "Aucun outil pour ce type de fichier",
   "Details": "Détails",
-  "Copy details": "Copier les détails"
+  "Copy details": "Copier les détails",
+  "Clear history": "Effacer l’historique",
+  "Clear Library": "Effacer la bibliothèque",
+  "Clear All": "Tout effacer",
+  "Clear all Library entries": "Effacer toutes les entrées de la bibliothèque",
+  "Remove from Library": "Retirer de la bibliothèque",
+  "Remove {0} from Library": "Retirer {0} de la bibliothèque",
+  "This will permanently remove all library entries. This action cannot be undone.": "Cette action supprimera définitivement toutes les entrées de la bibliothèque. Elle est irréversible.",
+  "Permanently remove entries from your Library.": "Retirer définitivement les entrées de votre bibliothèque.",
+  "Library cleared.": "Bibliothèque effacée.",
+  "Removed from Library.": "Retiré de la bibliothèque.",
+  "Remove all Library entries? This cannot be undone.": "Retirer toutes les entrées de la bibliothèque ? Cette action est irréversible.",
+  "Could not save Library changes. Your entries are intact.": "Les modifications de la bibliothèque n’ont pas pu être enregistrées. Vos entrées sont intactes."
 }

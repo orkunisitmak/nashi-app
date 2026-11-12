@@ -1447,5 +1447,6 @@
   "Library cleared.": "Kitaplık temizlendi.",
   "Removed from Library.": "Kitaplıktan kaldırıldı.",
   "Remove all Library entries? This cannot be undone.": "Tüm kitaplık kayıtlarını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.",
-  "Could not save Library changes. Your entries are intact.": "Kitaplık değişiklikleri kaydedilemedi. Kayıtlarınızın tamamı korundu."
+  "Could not save Library changes. Your entries are intact.": "Kitaplık değişiklikleri kaydedilemedi. Kayıtlarınızın tamamı korundu.",
+  "Clear all Library entries": "Kitaplıktaki tüm kayıtları temizle"
 }

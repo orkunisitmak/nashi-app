@@ -186,6 +186,8 @@ public sealed partial class MainWindow:Window
     private void RenderLibrary()
     {
         libraryCards.Clear();libraryRows.Children.Clear();recentRows.Children.Clear();var filtered=SearchLibrary(search.Text).ToArray();
+        // A removed or cleared entry must not stay highlighted; a hidden-but-present entry keeps its selection.
+        if(!library.Entries.Any(entry=>entry.Id==selectedLibraryId))selectedLibraryId=filtered.FirstOrDefault()?.Id;
         if(filtered.Length==0)libraryRows.Children.Add(Card(Text(library.Entries.Count==0?"Nothing here yet. Paste something or make your first fresh copy.":"No matches. Try a file name or tool.",14,"Muted")));
         foreach(var entry in filtered)libraryRows.Children.Add(LibraryRow(entry));
         recentCount.Text=library.Entries.Count.ToString();foreach(var entry in SearchLibrary(recentSearch.Text).Take(3))recentRows.Children.Add(LibraryRow(entry,true));

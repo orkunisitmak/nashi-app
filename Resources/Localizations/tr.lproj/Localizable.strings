@@ -490,6 +490,7 @@
 "CLARITY" = "NETLİK";
 "CLEAR" = "TEMİZLE";
 "CLEAR ALL" = "TÜMÜNÜ TEMİZLE";
+"CLEAR ALL LIBRARY ENTRIES" = "KİTAPLIKTAKİ TÜM KAYITLARI TEMİZLE";
 "CLEAR FLOAT" = "YÜZEN PENCEREYİ TEMİZLE";
 "CLEAR HISTORY" = "GEÇMİŞİ TEMİZLE";
 "CLEAR LIBRARY" = "KİTAPLIĞI TEMİZLE";
@@ -697,6 +698,7 @@
 "Clear Float" = "Yüzen Pencereyi Temizle";
 "Clear Library" = "Kitaplığı Temizle";
 "Clear Selection" = "Seçimi Temizle";
+"Clear all Library entries" = "Kitaplıktaki tüm kayıtları temizle";
 "Clear history" = "Geçmişi Temizle";
 "Clip %@" = "Klip %@";
 "Clip %lld" = "Klip %lld";

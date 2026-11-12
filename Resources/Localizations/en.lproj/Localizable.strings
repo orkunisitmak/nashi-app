@@ -490,6 +490,7 @@
 "CLARITY" = "CLARITY";
 "CLEAR" = "CLEAR";
 "CLEAR ALL" = "CLEAR ALL";
+"CLEAR ALL LIBRARY ENTRIES" = "CLEAR ALL LIBRARY ENTRIES";
 "CLEAR FLOAT" = "CLEAR FLOAT";
 "CLEAR HISTORY" = "CLEAR HISTORY";
 "CLEAR LIBRARY" = "CLEAR LIBRARY";
@@ -697,6 +698,7 @@
 "Clear Float" = "Clear Float";
 "Clear Library" = "Clear Library";
 "Clear Selection" = "Clear Selection";
+"Clear all Library entries" = "Clear all Library entries";
 "Clear history" = "Clear history";
 "Clip %@" = "Clip %@";
 "Clip %lld" = "Clip %lld";
