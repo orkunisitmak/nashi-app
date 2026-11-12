@@ -4,6 +4,7 @@
 "%@  Convert" = "%@  Dönüştür";
 "%@  File actions" = "%@  Dosya işlemleri";
 "%@  Tools" = "%@  Araçlar";
+"%@ (Not installed)" = "%@ (Kurulu değil)";
 "%@ QR code found." = "%@ QR kodu bulundu.";
 "%@ QR codes found." = "%@ QR kodu bulundu.";
 "%@ annotations" = "%@ işaretleme";
@@ -33,6 +34,7 @@
 "%lld  Convert" = "%lld  Dönüştür";
 "%lld  File actions" = "%lld  Dosya işlemleri";
 "%lld  Tools" = "%lld  Araçlar";
+"%lld (Not installed)" = "%lld (Kurulu değil)";
 "%lld QR code found." = "%lld QR kodu bulundu.";
 "%lld QR codes found." = "%lld QR kodu bulundu.";
 "%lld annotations" = "%lld işaretleme";
