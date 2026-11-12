@@ -14,7 +14,13 @@ public static class FeatureCatalog
     public static bool IsVideo(string path)=>new[]{"mp4","mov","mkv","webm","avi","wmv","m4v","gif"}.Contains(Extension(path));
     public static bool IsAudio(string path)=>new[]{"mp3","m4a","wav","flac","ogg","opus","aiff","wma","aac"}.Contains(Extension(path));
     public static bool IsArchive(string path)=>new[]{"zip","tar","gz","rar"}.Contains(Extension(path));
-    public static string[] Formats(IReadOnlyList<string> inputs)=>Intersect(inputs,Data.ConversionMatrix);
+    public static string[] Formats(IReadOnlyList<string> inputs)
+    {
+        // Windows: Turkish e-invoices (UBL-TR XML) print through their embedded view. XML is not a shared
+        // catalog input, so this is recognised by content, like the QR reader's GIF case below.
+        if(inputs.Count>0&&inputs.All(EInvoice.IsInvoice))return ["html","pdf"];
+        return Intersect(inputs,Data.ConversionMatrix);
+    }
     public static string[] Tools(IReadOnlyList<string> inputs)
     {
         var result=Intersect(inputs,inputs.Count>1?Data.MultipleTools:Data.SingleTools).ToList();
