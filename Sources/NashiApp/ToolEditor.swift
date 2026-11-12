@@ -455,39 +455,77 @@ struct ToolEditor:View {
     @State private var startTimeText: String = ""
     @State private var endTimeText: String = ""
 
+    /// Identifies which trim time field currently has keyboard focus.
+    private enum TimeField: Hashable { case start, end }
+    @FocusState private var focusedTimeField: TimeField?
+
+    /// Applies the typed Start time when it stays inside the range; otherwise restores the current value.
+    func commitStartTime() {
+        let end = options.end ?? duration
+        if let value = parseTime(startTimeText), value >= 0,
+           duration <= 0 || (value <= duration && value < end) {
+            if value != options.start { options.start = value; seek(value) }
+        }
+        startTimeText = timeString(options.start)
+    }
+
+    /// Applies the typed End time when it stays after Start and inside the file; otherwise restores the current value.
+    func commitEndTime() {
+        if let value = parseTime(endTimeText), value > options.start,
+           duration <= 0 || value <= duration + 0.001 {
+            let clamped = duration > 0 ? min(value, duration) : value
+            if clamped != options.end { options.end = clamped; seek(clamped) }
+        }
+        endTimeText = timeString(options.end ?? duration)
+    }
+
+    /// Moves Start to the playhead with the same limits as the I/O shortcuts.
+    func markStartAtPlayhead() {
+        let start = min(max(playhead, 0), max(0, duration - 0.01))
+        options.start = start
+        if (options.end ?? duration) <= start { options.end = duration }
+        seek(start)
+        syncTimeFields()
+    }
+
+    /// Moves End to the playhead with the same limits as the I/O shortcuts.
+    func markEndAtPlayhead() {
+        let end = min(max(playhead, 0.01), duration)
+        options.end = end
+        if options.start >= end { options.start = 0 }
+        seek(options.end ?? duration)
+        syncTimeFields()
+    }
+
+    /// Fills both time fields from the selected range, using the file duration for an open End.
+    func syncTimeFields() {
+        startTimeText = timeString(options.start)
+        endTimeText = timeString(options.end ?? duration)
+    }
+
     var timeRangeFields: some View {
         HStack(spacing: 8) {
             LText("Start time")
             TextField("Start time", text: $startTimeText)
                 .textFieldStyle(.roundedBorder)
-                .onSubmit {
-                    if let value = parseTime(startTimeText) {
-                        options.start = value
-                        seek(options.start)
-                    }
-                    startTimeText = timeString(options.start)
-                }
-            Button("Set Start Here") {
-                options.start = min(max(playhead, 0), duration)
-                seek(options.start)
-                startTimeText = timeString(options.start)
-            }
+                .focused($focusedTimeField, equals: .start)
+                .onSubmit { commitStartTime() }
+            Button("Set Start Here") { markStartAtPlayhead() }
 
             LText("End time")
             TextField("End time", text: $endTimeText)
                 .textFieldStyle(.roundedBorder)
-                .onSubmit {
-                    if let value = parseTime(endTimeText) {
-                        options.end = value
-                        seek(options.end ?? duration)
-                    }
-                    endTimeText = timeString(options.end ?? duration)
-                }
-            Button("Set End Here") {
-                options.end = min(max(playhead, 0), duration)
-                seek(options.end ?? duration)
-                endTimeText = timeString(options.end ?? duration)
-            }
+                .focused($focusedTimeField, equals: .end)
+                .onSubmit { commitEndTime() }
+            Button("Set End Here") { markEndAtPlayhead() }
+        }
+        .onAppear { syncTimeFields() }
+        .onChange(of: options.start) { _ in startTimeText = timeString(options.start) }
+        .onChange(of: options.end) { _ in endTimeText = timeString(options.end ?? duration) }
+        .onChange(of: duration) { _ in syncTimeFields() }
+        .onChange(of: focusedTimeField) { field in
+            if field != .start { commitStartTime() }
+            if field != .end { commitEndTime() }
         }
     }
     var splitIntervals:[TimeRange] {
