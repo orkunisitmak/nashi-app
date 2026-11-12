@@ -24,7 +24,7 @@ public static class WebPhotos
     }
     public static async Task<string> DownloadImageAsync(string url,string directory,IProgress<OperationProgress>? progress,CancellationToken token,string name="Image")
     {
-        var uri=WebDownload.Validate(url);using var handler=new HttpClientHandler{AllowAutoRedirect=false};using var client=new HttpClient(handler){Timeout=TimeSpan.FromMinutes(10)};client.DefaultRequestHeaders.UserAgent.ParseAdd("Nashi");
+        var uri=WebDownload.Validate(url);using var handler=WebDownload.PublicOnlyHandler();using var client=new HttpClient(handler){Timeout=TimeSpan.FromMinutes(10)};client.DefaultRequestHeaders.UserAgent.ParseAdd("Nashi");
         HttpResponseMessage? response=null;try
         {
             for(var n=0;n<6;n++){response=await client.GetAsync(uri,HttpCompletionOption.ResponseHeadersRead,token);if((int)response.StatusCode is >=300 and <400&&response.Headers.Location is {} location){var next=location.IsAbsoluteUri?location:new Uri(uri,location);WebDownload.Validate(next.AbsoluteUri);if(uri.Scheme=="https"&&next.Scheme!="https")throw new InvalidDataException("The media server redirected to an insecure URL.");response.Dispose();response=null;uri=next;continue;}break;}
