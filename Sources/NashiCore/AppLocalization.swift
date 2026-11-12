@@ -7,9 +7,15 @@ public enum AppLocalization {
     public static func matches(_ source:String,query:String,language:String)->Bool {
         let locale=Locale(identifier:normalizedLanguage(language))
         // Pasted queries keep stray spaces; a blank query filters nothing, like an empty one.
-        let needle=query.trimmingCharacters(in:.whitespacesAndNewlines)
+        let needle=query.trimmingCharacters(in:.whitespacesAndNewlines).precomposedStringWithCanonicalMapping
         guard !needle.isEmpty else { return true }
-        return [source,text(source,language:language)].contains { $0.range(of:needle,options:[.caseInsensitive,.diacriticInsensitive],locale:locale) != nil }
+        // File URLs return decomposed names (İ = I + U+0307), and Turkish İ/i only pair
+        // under the locale's own lowercasing, so compare composed text both ways.
+        return [source,text(source,language:language)].contains { value in
+            let haystack=value.precomposedStringWithCanonicalMapping
+            return haystack.range(of:needle,options:[.caseInsensitive,.diacriticInsensitive],locale:locale) != nil
+                || haystack.lowercased(with:locale).range(of:needle.lowercased(with:locale),options:[.diacriticInsensitive],locale:locale) != nil
+        }
     }
     private static func loadCatalog(_ name:String) -> [String:String] {
         guard let url = Bundle.module.url(forResource: name, withExtension: "json", subdirectory: "Resources"),
