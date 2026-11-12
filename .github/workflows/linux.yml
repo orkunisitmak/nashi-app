@@ -54,7 +54,8 @@ jobs:
           $n formats "$f/Photo.png"
           $n convert --to webp "$f/Photo.png" --out "$o" | grep -q 'Photo.webp'
           $n tool createPDF "$f/Photo.png" "$f/Second.jpg" --out "$o" | grep -q '.pdf'
-          ! $n convert --to mp3 "$f/Photo.png"
+          # A conversion the file can't make is a usage error (2), not a crash.
+          rc=0; $n convert --to mp3 "$f/Photo.png" || rc=$?; [ "$rc" -eq 2 ]
       - name: Headless UI screenshots and tool flows
         env:
           XDG_DATA_HOME: '${{ runner.temp }}/nashi-ui-data'

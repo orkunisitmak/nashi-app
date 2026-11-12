@@ -25,7 +25,7 @@ public static class Cli
             Console.WriteLine("Tools:      "+string.Join(", ",FeatureCatalog.Tools(inputs)));return 0;
         }
         var destination=output is null?Path.GetDirectoryName(inputs[0])!:Path.GetFullPath(output.StartsWith('~')?AppPaths.Home+output[1..]:output);
-        var library=new LibraryStore();var preferences=new PreferencesStore(library.DirectoryPath);var tools=SelfTest.Tools();
+        var library=new LibraryStore(AppPaths.Data);var preferences=new PreferencesStore(library.DirectoryPath);var tools=SelfTest.Tools();
         using var cancellation=new CancellationTokenSource();Console.CancelKeyPress+=(_,e)=>{e.Cancel=true;cancellation.Cancel();};
         var progress=new Progress<OperationProgress>(p=>{if(!Console.IsErrorRedirected)Console.Error.Write($"\r\x1b[2K{(p.Fraction is {} f?$"{f*100,3:0}%  ":"")}{p.Label}");});
         try
@@ -49,7 +49,8 @@ public static class Cli
             foreach(var path in outputs)Console.WriteLine(path);return 0;
         }
         catch(OperationCanceledException){Console.Error.WriteLine("\nCancelled. Originals kept.");return 1;}
-        catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or InvalidOperationException or UnauthorizedAccessException or FileNotFoundException)
+        // MagickException covers damaged or truncated images; it derives from none of the others.
+        catch(Exception error)when(error is IOException or InvalidDataException or ArgumentException or InvalidOperationException or UnauthorizedAccessException or FileNotFoundException or ImageMagick.MagickException)
         {Console.Error.WriteLine("\n"+error.Message);return 1;}
     }
     internal static async Task<IReadOnlyList<string>> ConvertAsync(IReadOnlyList<string> inputs,string format,string destination,PreferencesStore preferences,Toolchain tools,IProgress<OperationProgress> progress,CancellationToken token)

@@ -12,9 +12,11 @@ using Nashi.Linux.UI;
 var output=Path.GetFullPath(args.Length>0?args[0]:"snapshots");var fixtures=args.Length>1?Path.GetFullPath(args[1]):null;Directory.CreateDirectory(output);
 // Library, settings, pasted files and the autostart entry all live under these: a test run must never
 // write over the person's own (it once did, when the variables were left to the caller).
-Environment.SetEnvironmentVariable("XDG_DATA_HOME",Path.Combine(output,"home","data"));Environment.SetEnvironmentVariable("XDG_CONFIG_HOME",Path.Combine(output,"home","config"));
-if(Directory.Exists(Path.Combine(output,"home")))Directory.Delete(Path.Combine(output,"home"),true);
-if(!AppPaths.Data.StartsWith(output,StringComparison.Ordinal)){Console.Error.WriteLine("Refusing to run: app data would go to "+AppPaths.Data);return 2;}
+// The check comes before anything is deleted, and only the folder it checked is cleared.
+var testHome=Path.Combine(output,"home");
+Environment.SetEnvironmentVariable("XDG_DATA_HOME",Path.Combine(testHome,"data"));Environment.SetEnvironmentVariable("XDG_CONFIG_HOME",Path.Combine(testHome,"config"));
+if(!AppPaths.Data.StartsWith(testHome+Path.DirectorySeparatorChar,StringComparison.Ordinal)){Console.Error.WriteLine("Refusing to run: app data would go to "+AppPaths.Data);return 2;}
+if(Directory.Exists(testHome))Directory.Delete(testHome,true);
 // Never touch the desktop's real global shortcuts from a test run.
 Environment.SetEnvironmentVariable("NASHI_NO_GLOBAL_SHORTCUTS","1");
 // Continuations after await must come back to the UI thread, as in the real app.
@@ -197,6 +199,11 @@ bool WheelOpen(Window w)=>w.GetVisualDescendants().OfType<WheelOverlay>().Any(o=
         var rename=new RenameWindow([a,b]);var clash=!rename.Try("Same");var ok=rename.Try("Trip {n}");var done=RenameWindow.Apply(rename.Plan);
         Expect($"Rename catches clashes and renames ({string.Join(", ",done.Select(Path.GetFileName))})",clash&&ok&&File.Exists(Path.Combine(folder,"Trip 01.png"))&&File.Exists(Path.Combine(folder,"Trip 02.png"))&&!File.Exists(a));
         rename.Close();
+        // A name taken after the preview: the rename fails and both files keep their original names.
+        var c=Path.Combine(folder,"A.png");var d=Path.Combine(folder,"B.png");File.Copy(Fixtures("Photo.png")[0],c);File.Copy(Fixtures("Photo.png")[0],d);
+        var late=new RenameWindow([c,d]);late.Try("Late {n}");File.WriteAllText(Path.Combine(folder,"Late 02.png"),"taken");
+        var failed=false;try{RenameWindow.Apply(late.Plan);}catch(IOException){failed=true;}late.Close();
+        Expect("A failed rename puts every file back under its own name",failed&&File.Exists(c)&&File.Exists(d)&&!Directory.GetFiles(folder,".nashi-rename-*").Any()&&!File.Exists(Path.Combine(folder,"Late 01.png")));
     }
     // Set as Wallpaper: offered for one image where the desktop supports it; the copy is converted when
     // the format is unusual and only the last five are kept. (The wallpaper itself is not changed here.)
@@ -206,6 +213,28 @@ bool WheelOpen(Window w)=>w.GetVisualDescendants().OfType<WheelOverlay>().Any(o=
         var copies=Enumerable.Range(0,6).Select(_=>Wallpaper.Prepare(Fixtures("Photo.png")[0])).ToList();var converted=Wallpaper.Prepare(tiff);
         var kept=Directory.GetFiles(Wallpaper.Folder).Length;
         Expect($"Wallpaper copies ({(offered?"offered":"not offered: no plasma-apply-wallpaperimage or GNOME")}, {kept} kept, {Path.GetExtension(converted)})",(offered||!Wallpaper.Supported)&&converted.EndsWith(".png")&&File.Exists(converted)&&kept==5&&Path.GetDirectoryName(converted)==Wallpaper.Folder);
+    }
+    // Single instance without XDG_RUNTIME_DIR: a folder in the temp dir is used only when it is private.
+    {
+        var runtime=Environment.GetEnvironmentVariable("XDG_RUNTIME_DIR");var tmp=Environment.GetEnvironmentVariable("TMPDIR");
+        // A short folder: a Unix socket path must stay under 108 bytes.
+        var temp=Directory.CreateTempSubdirectory("nashi-test-").FullName;
+        Environment.SetEnvironmentVariable("XDG_RUNTIME_DIR",null);Environment.SetEnvironmentVariable("TMPDIR",temp);
+        var folder=Path.Combine(Path.GetTempPath(),"nashi-"+Environment.UserName);
+        try
+        {
+            Directory.CreateDirectory(folder);File.SetUnixFileMode(folder,UnixFileMode.UserRead|UnixFileMode.UserWrite|UnixFileMode.UserExecute|UnixFileMode.OtherRead|UnixFileMode.OtherExecute);
+            SingleInstance.Listen();var refused=!File.Exists(Path.Combine(folder,"nashi.sock"))&&!SingleInstance.HandOff([]);SingleInstance.Stop();
+            Directory.Delete(folder,true);
+            SingleInstance.Listen();var made=File.GetUnixFileMode(folder);var works=File.Exists(Path.Combine(folder,"nashi.sock"))&&SingleInstance.HandOff([]);SingleInstance.Stop();
+            Expect($"The fallback socket folder is used only when private ({made})",refused&&works&&made==(UnixFileMode.UserRead|UnixFileMode.UserWrite|UnixFileMode.UserExecute));
+        }
+        finally{Environment.SetEnvironmentVariable("XDG_RUNTIME_DIR",runtime);Environment.SetEnvironmentVariable("TMPDIR",tmp);Directory.Delete(temp,true);}
+    }
+    // PDF thumbnails render (PDFium refused the 24 DPI they used, so PDFs showed a badge).
+    {
+        var pdfThumb=Thumbnails.GetAsync(Directory.GetFiles(Path.GetDirectoryName(fixtures!)!,"Images.pdf",SearchOption.AllDirectories)[0],160).GetAwaiter().GetResult();
+        Expect($"A PDF gets a page thumbnail ({pdfThumb?.PixelSize})",pdfThumb is not null);
     }
     // The last tool comes back first on the Tools wheel as "Again".
     w.LastChoice=new ToolChoice("convert:jpg","Convert to JPG","↗");

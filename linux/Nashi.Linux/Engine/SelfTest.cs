@@ -49,7 +49,7 @@ public static class SelfTest
         await Check("Read QR code from PDF",async()=>{var pdf=One(ImageEngine.Apply("convert",[qr],output,new(),"pdf"))[0];var page=(await LinuxPdf.RenderAsync(pdf,144))[0];using var image=Magick.FromPng(page);var values=ImageEngine.DecodeQr(image);return values.Length==1?values[0]:throw new InvalidDataException("QR not decoded.");});
 
         var zip=Path.Combine(fixtures,"Bundle.zip");
-        await Check("Zip and extract archive",()=>Task.Run(()=>{var made=DocumentEngine.Zip([photo,second],fixtures);File.Move(made,zip);var extracted=One(ArchiveEngine.Extract(zip,output))[0];return Path.GetFileName(extracted)+" · "+Directory.GetFiles(extracted,"*",SearchOption.AllDirectories).Length+" files";}));
+        await Check("Zip and extract archive",()=>Task.Run(()=>{var made=DocumentEngine.Zip([photo,second],fixtures);/* a second run into the same folder replaces the first run's archive */File.Move(made,zip,true);var extracted=One(ArchiveEngine.Extract(zip,output))[0];return Path.GetFileName(extracted)+" · "+Directory.GetFiles(extracted,"*",SearchOption.AllDirectories).Length+" files";}));
 
         var office=new LinuxOffice().Executable;var text=Path.Combine(fixtures,"Notes.txt");await File.WriteAllTextAsync(text,"Nashi Linux\nÇalışıyor: ğüşiöç\n");
         string? officePdf=null;

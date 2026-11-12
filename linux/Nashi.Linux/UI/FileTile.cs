@@ -36,7 +36,13 @@ public static class Thumbnails
             {
                 Magick.Ensure();using var image=ext=="gif"?new MagickImage(path,new MagickReadSettings{FrameCount=1}):PhotoCodec.Read(path);image.Thumbnail((uint)size,(uint)size);png=image.ToByteArray(MagickFormat.Png);
             }
-            else if(ext=="pdf")png=await LinuxPdf.RenderFirstAsync(path,24);
+            else if(ext=="pdf")
+            {
+                // PDFium accepts 36–600 DPI (24 was refused, so PDFs showed a badge). Enough DPI for the asked size
+                // on an A4/Letter page, then scaled down to it.
+                var rendered=await LinuxPdf.RenderFirstAsync(path,Math.Clamp((int)Math.Ceiling(size/8.27),36,200));
+                using var page=new MagickImage(rendered);page.Thumbnail((uint)size,(uint)size);png=page.ToByteArray(MagickFormat.Png);
+            }
             else if(FeatureCatalog.IsVideo(path)&&Ffmpeg is {} ffmpeg)
             {
                 var frame=System.IO.Path.Combine(System.IO.Path.GetTempPath(),"nashi-thumb-"+Guid.NewGuid().ToString("N")+".png");

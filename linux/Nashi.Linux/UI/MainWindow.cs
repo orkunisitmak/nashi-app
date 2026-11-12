@@ -34,7 +34,7 @@ public sealed partial class MainWindow:Window
 
     public MainWindow(string[] arguments)
     {
-        library=new LibraryStore();preferences=new PreferencesStore(library.DirectoryPath);
+        library=new LibraryStore(AppPaths.Data);preferences=new PreferencesStore(library.DirectoryPath);
         L10n.Language=preferences.Value.Language;App.ApplyAppearance(library.Appearance);ApplyFeel();
         Title="Nashi";Width=900;Height=820;MinWidth=640;MinHeight=560;WindowStartupLocation=WindowStartupLocation.CenterScreen;
         try{Icon=new WindowIcon(Ui.Asset("Icon"));}catch(FileNotFoundException){}

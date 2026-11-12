@@ -47,12 +47,24 @@ public sealed class RenameWindow:Window
         problem.Text=error is null?"":L10n.T(error);Plan=plan.Where(p=>p.Item1!=p.Item2).ToList();return error is null;
     }
     /// Renames in two steps (through temporary names) so swapping names inside the batch works.
+    /// If a step fails (a name taken since the preview, a read-only folder), every move made so far is
+    /// undone before the error goes up, so no file is left under a hidden temporary name.
     public static IReadOnlyList<string> Apply(IReadOnlyList<(string From,string To)> plan)
     {
-        var staged=new List<(string Temp,string To)>();
-        foreach(var (from,to) in plan){var temp=Path.Combine(Path.GetDirectoryName(from)!,".nashi-rename-"+Guid.NewGuid().ToString("N"));Move(from,temp);staged.Add((temp,to));}
-        foreach(var (temp,to) in staged)Move(temp,to);
+        var staged=new List<(string From,string Temp,string To)>();var placed=0;
+        try
+        {
+            foreach(var (from,to) in plan){var temp=Path.Combine(Path.GetDirectoryName(from)!,".nashi-rename-"+Guid.NewGuid().ToString("N"));Move(from,temp);staged.Add((from,temp,to));}
+            for(;placed<staged.Count;placed++)Move(staged[placed].Temp,staged[placed].To);
+        }
+        catch(Exception error)when(error is IOException or UnauthorizedAccessException)
+        {
+            for(var i=placed-1;i>=0;i--)Undo(staged[i].To,staged[i].Temp);
+            for(var i=staged.Count-1;i>=0;i--)Undo(staged[i].Temp,staged[i].From);
+            throw;
+        }
         return staged.Select(s=>s.To).ToList();
     }
+    private static void Undo(string from,string to){try{Move(from,to);}catch(Exception error)when(error is IOException or UnauthorizedAccessException){}}
     private static void Move(string from,string to){if(Directory.Exists(from))Directory.Move(from,to);else File.Move(from,to,false);}
 }

@@ -6,7 +6,8 @@ namespace Nashi.Linux;
 public sealed class Notifications:IDisposable
 {
     private const string Service="org.freedesktop.Notifications",Path="/org/freedesktop/Notifications";
-    private readonly DBusConnection connection;private readonly Dictionary<uint,Action<string>> handlers=[];
+    // Written from the caller of ShowAsync, read from the D-Bus thread; an entry goes when its notification is used or closed.
+    private readonly DBusConnection connection;private readonly System.Collections.Concurrent.ConcurrentDictionary<uint,Action<string>> handlers=new();
     private Notifications(DBusConnection connection)=>this.connection=connection;
     public static async Task<Notifications?> TryCreateAsync()
     {
@@ -18,7 +19,11 @@ public sealed class Notifications:IDisposable
             var notifications=new Notifications(connection);
             await connection.AddMatchAsync(new MatchRule{Type=MessageType.Signal,Interface=Service,Member="ActionInvoked"},
                 (Message m,object? _)=>{var r=m.GetBodyReader();return(r.ReadUInt32(),r.ReadString());},
-                (Notification<(uint Id,string Action)> note)=>{if(note.HasValue&&notifications.handlers.TryGetValue(note.Value.Id,out var handler))Avalonia.Threading.Dispatcher.UIThread.Post(()=>handler(note.Value.Action));},
+                (Notification<(uint Id,string Action)> note)=>{if(note.HasValue&&notifications.handlers.TryRemove(note.Value.Id,out var handler))Avalonia.Threading.Dispatcher.UIThread.Post(()=>handler(note.Value.Action));},
+                false,ObserverFlags.None,null);
+            await connection.AddMatchAsync(new MatchRule{Type=MessageType.Signal,Interface=Service,Member="NotificationClosed"},
+                (Message m,object? _)=>m.GetBodyReader().ReadUInt32(),
+                (Notification<uint> note)=>{if(note.HasValue)notifications.handlers.TryRemove(note.Value,out _);},
                 false,ObserverFlags.None,null);
             return notifications;
         }

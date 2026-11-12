@@ -35,9 +35,10 @@ Windows screenshot: native UI test capture from the released 0.7.5 code, verifie
 From a release archive (no .NET needed):
 
 ```sh
-sha256sum -c Nashi-Linux-x64.tar.gz.sha256
-tar -xzf Nashi-Linux-x64.tar.gz
-Nashi/install.sh                 # current user; use: sudo Nashi/install.sh --system for everyone
+# Stops at the first failure, so a damaged or altered archive is never unpacked or run.
+sha256sum -c Nashi-Linux-x64.tar.gz.sha256 &&
+  tar -xzf Nashi-Linux-x64.tar.gz &&
+  Nashi/install.sh               # current user; use: sudo Nashi/install.sh --system for everyone
 ```
 
 From source (needs the [.NET 10 SDK](https://dotnet.microsoft.com/download)):

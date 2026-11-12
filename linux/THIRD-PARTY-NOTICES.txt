@@ -7,7 +7,7 @@ also bundles PDFsharp, PdfPig, Magick.NET, ZXing.Net, SharpCompress, BouncyCastl
 System.Security.Cryptography.Pkcs; their notices are listed in the Windows notices file
 (windows/THIRD-PARTY-NOTICES.txt) and apply unchanged.
 
-Avalonia UI 11.3 (Avalonia, Avalonia.Desktop, Avalonia.Themes.Fluent, Avalonia.Fonts.Inter)
+Avalonia UI 12.1 (Avalonia, Avalonia.Desktop, Avalonia.Themes.Fluent, Avalonia.Fonts.Inter)
   MIT License · Copyright (c) AvaloniaUI OÜ and contributors
   https://github.com/AvaloniaUI/Avalonia
 
@@ -23,6 +23,10 @@ PDFium binaries (bblanchon.PDFium.Linux 155.0.8044)
   PDFium: BSD-3-Clause / Apache-2.0 · Copyright The PDFium Authors
   Packaging: MIT License · Copyright (c) Benoit Blanchon
   https://github.com/bblanchon/pdfium-binaries
+
+Tmds.DBus.Protocol 0.94 (global shortcuts, notifications and Dolphin's selection over D-Bus)
+  MIT License · Copyright (c) Tom Deseyn and contributors
+  https://github.com/tmds/Tmds.DBus
 
 Tools Nashi can download on first launch (FFmpeg, yt-dlp, Deno, ExifTool) are fetched from
 their upstream releases with pinned SHA-256 hashes and keep their own licenses; see

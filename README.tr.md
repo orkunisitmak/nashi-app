@@ -33,9 +33,10 @@ Windows görüntüsü, [PR #1](https://github.com/orkunisitmak/nashi-app/pull/1)
 Yayın arşivinden (.NET gerekmez):
 
 ```sh
-sha256sum -c Nashi-Linux-x64.tar.gz.sha256
-tar -xzf Nashi-Linux-x64.tar.gz
-Nashi/install.sh                 # yalnızca senin kullanıcın için; herkes için: sudo Nashi/install.sh --system
+# İlk hatada durur; bozuk ya da değiştirilmiş bir arşiv hiç açılmaz ve çalıştırılmaz.
+sha256sum -c Nashi-Linux-x64.tar.gz.sha256 &&
+  tar -xzf Nashi-Linux-x64.tar.gz &&
+  Nashi/install.sh               # yalnızca senin kullanıcın için; herkes için: sudo Nashi/install.sh --system
 ```
 
 Kaynak koddan ([.NET 10 SDK](https://dotnet.microsoft.com/download) gerekir):

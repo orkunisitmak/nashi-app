@@ -19,7 +19,9 @@ if [ "$here" != "$app" ]; then
   mkdir -p "$(dirname "$app")"
   stage="$app.new.$$"; rm -rf "$stage"; cp -a "$here" "$stage"
   [ -d "$app" ] && mv "$app" "$app.old.$$"
-  mv "$stage" "$app"; rm -rf "$app.old.$$"
+  # If the new folder can't take its place, the previous install goes back where it was.
+  mv "$stage" "$app" || { [ -d "$app.old.$$" ] && mv "$app.old.$$" "$app"; rm -rf "$stage"; exit 1; }
+  rm -rf "$app.old.$$"
 fi
 mkdir -p "$bin" "$applications"
 ln -sf "$app/nashi" "$bin/nashi"

@@ -51,6 +51,7 @@
  "Core image and PDF tools work now. Media, downloads and office conversions need:": "Temel görsel ve PDF araçları şimdi çalışıyor. Medya, indirme ve ofis dönüşümleri için gerekenler:",
  "Core image and PDF tools work right away. The helpers below unlock media, downloads and office documents.": "Temel görsel ve PDF araçları hemen çalışır. Aşağıdaki yardımcılar medya, indirme ve ofis belgelerini açar.",
  "Corners stay free for the desktop's own corner actions. Needs Wayland with layer-shell (KDE Plasma, Sway, Hyprland).": "Köşeler masaüstünün kendi köşe hareketleri için boş kalır. Layer-shell destekli Wayland gerekir (KDE Plasma, Sway, Hyprland).",
+ "Couldn't check whether another app uses these keys.": "Bu tuşları başka bir uygulamanın kullanıp kullanmadığı denetlenemedi.",
  "Ctrl+O  Choose  ·  Ctrl+V  Paste  ·  Ctrl+Space  Wheel  ·  Ctrl+2  Library": "Ctrl+O  Seç  ·  Ctrl+V  Yapıştır  ·  Ctrl+Space  Çark  ·  Ctrl+2  Kitaplık",
  "Delete removes the selected entries from Nashi without deleting the original files.": "Delete, seçili girdileri orijinal dosyaları silmeden Nashi'den kaldırır.",
  "Document, slide and spreadsheet conversions use LibreOffice from your distribution. Install it, then try again:": "Belge, slayt ve tablo dönüşümleri dağıtımındaki LibreOffice'i kullanır. Kur ve tekrar dene:",

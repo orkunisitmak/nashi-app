@@ -30,6 +30,10 @@ public sealed class GestureWindow:Window
     // the short wait covers moving onto the wheel or across to another monitor's layer.
     private readonly DispatcherTimer gone=new(){Interval=TimeSpan.FromMilliseconds(500)};
     private readonly DispatcherTimer idle=new(){Interval=TimeSpan.FromSeconds(9)};private readonly DispatcherTimer nudge=new(){Interval=TimeSpan.FromSeconds(2.5)};
+    private readonly DispatcherTimer noteClose=new(){Interval=TimeSpan.FromSeconds(2.2)};
+    // Every timer stops with the window: a late tick from a closed layer would otherwise close (closeAll)
+    // or hide the overlay of the next gesture.
+    private bool closed;
     public PetalWheel Wheel=>wheel;
     /// The monitor this layer covers, in X pixels.
     internal PixelRect Area{get;}
@@ -62,7 +66,9 @@ public sealed class GestureWindow:Window
         canvas.AddHandler(DragDrop.DragEnterEvent,OnDrag);canvas.AddHandler(DragDrop.DragOverEvent,OnDrag);canvas.AddHandler(DragDrop.DropEvent,OnDrop);
         canvas.PointerPressed+=(_,e)=>{if(!clickMode||e.Source==canvas)closeAll();};
         KeyDown+=(_,e)=>{if(e.Key==Key.Escape)closeAll();else if(clickMode&&e.Key==Key.Enter)wheel.Choose();};
-        idle.Tick+=(_,_)=>{idle.Stop();if(origin is null&&!clickMode)closeAll();};
+        Closed+=(_,_)=>{closed=true;foreach(var timer in new[]{idle,nudge,gone,dwell,tabDwell,noteClose})timer.Stop();};
+        noteClose.Tick+=(_,_)=>{noteClose.Stop();if(!closed)closeAll();};
+        idle.Tick+=(_,_)=>{idle.Stop();if(!closed&&origin is null&&!clickMode)closeAll();};
         gone.Tick+=(_,_)=>LeaveNow();
         canvas.AddHandler(DragDrop.DragLeaveEvent,(_,_)=>DragLeft());
         // The hot edge opens a wheel of the three wheels; resting on one for a moment opens it.
@@ -70,7 +76,7 @@ public sealed class GestureWindow:Window
         // Some sessions don't pass a drag from Wayland apps to this layer (KWin's XWayland bridge can get
         // stuck until the next login). Say so, and offer the copy-and-shortcut route that always works.
         // No drag after 2.5 s: drop the native overlay so clicks reach this layer again (a click closes it).
-        nudge.Tick+=(_,_)=>{nudge.Stop();if(origin is null&&!clickMode){main.HideNativeOverlay();var paste=settings.Shortcuts.GetValueOrDefault("clipboard","");SetHint(L10n.T("The drag didn't reach Nashi.")+"\n"+L10n.T("Drop the files, press Ctrl+C on them, then")+" "+(paste.Length>0?paste:"Ctrl+V")+".");}};
+        nudge.Tick+=(_,_)=>{nudge.Stop();if(!closed&&origin is null&&!clickMode){main.HideNativeOverlay();var paste=settings.Shortcuts.GetValueOrDefault("clipboard","");SetHint(L10n.T("The drag didn't reach Nashi.")+"\n"+L10n.T("Drop the files, press Ctrl+C on them, then")+" "+(paste.Length>0?paste:"Ctrl+V")+".");}};
         Opened+=(_,_)=>
         {
             Log($"layer opened on {screen.Bounds} mode={startMode}");
@@ -107,7 +113,7 @@ public sealed class GestureWindow:Window
     internal void ShowNote(string text,PixelPoint? at)
     {
         idle.Stop();nudge.Stop();SetHint(text,at is {} p?this.PointToClient(p)-new Point(0,WheelSize/2+30):null);
-        var close=new DispatcherTimer{Interval=TimeSpan.FromSeconds(2.2)};close.Tick+=(_,_)=>{close.Stop();closeAll();};close.Start();
+        noteClose.Start();
     }
     private bool Fits(string id)=>files is null||main.ChoicesFor(files,id).Count>0;
     private void HideHint()=>hint.IsVisible=false;
@@ -166,11 +172,13 @@ public sealed class GestureWindow:Window
     /// The drag went off the layer (Wayland leave, or an X11 drag leave).
     internal void DragLeft(){if(!clickMode&&origin is not null)gone.Start();}
     internal bool LeavePending=>gone.IsEnabled;
-    internal void LeaveNow(){gone.Stop();if(!clickMode){Log("drag left the layer, closing");closeAll();}}
+    /// A drag reached another monitor's layer: this one stops waiting for it.
+    internal void Quiet(){idle.Stop();nudge.Stop();}
+    internal void LeaveNow(){gone.Stop();if(!closed&&!clickMode){Log("drag left the layer, closing");closeAll();}}
     private void Track(Point point)
     {
         idle.Stop();nudge.Stop();gone.Stop();
-        if(origin is null){origin=point;ShowWheel(startMode);return;}
+        if(origin is null){origin=point;main.DragArrived();ShowWheel(startMode);return;}
         if(wheel.IsVisible)wheel.Selected=wheel.HitTest(point-WheelOrigin);
         // Over a tab of the switcher: rest a moment to open that wheel.
         var over=switcher.IsVisible?tabs.FirstOrDefault(t=>t.Value.IsVisible&&Contains(t.Value,point)).Key:null;

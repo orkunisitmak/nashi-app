@@ -55,7 +55,10 @@ public sealed class SettingsWindow:Window
             box.Changed+=async combo=>
             {
                 var other=boxes.FirstOrDefault(b=>b.Key!=id&&b.Value.Combo==combo&&combo.Length>0).Key;
-                var owner=other is null&&combo.Length>0?await main.ShortcutOwnerAsync(combo):null;
+                // An async void handler: a D-Bus failure here must not take the app down, only skip the clash check.
+                string? owner=null;
+                try{owner=other is null&&combo.Length>0?await main.ShortcutOwnerAsync(combo):null;}
+                catch(Exception error)when(error is Tmds.DBus.Protocol.DBusExceptionBase or IOException or InvalidOperationException or ObjectDisposedException){note.Text=L10n.T("Couldn't check whether another app uses these keys.");note.IsVisible=true;return;}
                 note.Text=other is not null?L10n.T("Nashi already uses these keys for")+" "+L10n.T(LinuxSettings.Actions.First(a=>a.Id==other).Title):owner is not null?L10n.T("Already used by")+" "+owner:"";note.IsVisible=note.Text.Length>0;
             };
             var reset=Ui.Button("↺",()=>box.Set(fallback),"chip",tip:"Default: "+fallback);var clear=Ui.Button("✕",()=>box.Set(""),"chip",tip:"No shortcut");
@@ -109,9 +112,8 @@ public sealed class SettingsWindow:Window
         {
             try
             {
+                // Everything is checked first; nothing is written until all of it is valid.
                 var mode=Ui.Value(output);if(mode=="folder"&&!Directory.Exists(folder.Text))throw new ArgumentException("Choose an existing output folder.");
-                main.preferences.Save(p with{Language=Ui.Value(language),OutputMode=mode,OutputFolder=folder.Text??"",DownloadFolder=downloads.Text??AppPaths.Downloads,RevealFinished=reveal.IsChecked==true,FloatBehavior=Ui.Value(floating),WheelScale=wheelSize.Value/100,Animations=animations.IsChecked==true,Feedback=feedback.IsChecked==true});main.ApplyFeel();
-                main.library.SetAppearance(Ui.Value(appearance));
                 var combos=boxes.ToDictionary(b=>b.Key,b=>b.Value.Combo);
                 var duplicate=combos.Where(c=>c.Value.Length>0).GroupBy(c=>c.Value).FirstOrDefault(g=>g.Count()>1);if(duplicate is not null)throw new ArgumentException(L10n.T("Two Nashi actions use the same keys:")+" "+duplicate.Key);
                 var watches=ruleRows.Select(r=>r()).OfType<FolderRule>().ToList();
@@ -120,6 +122,8 @@ public sealed class SettingsWindow:Window
                     if(!Directory.Exists(w.Folder))throw new ArgumentException(L10n.T("Choose an existing watched folder:")+" "+w.Folder);
                     if(w.Extensions.Length==0||w.Format.Length==0||w.Extensions.Any(e=>!FeatureCatalog.Formats(["x."+e]).Contains(w.Format)))throw new ArgumentException(L10n.T("Choose extensions that can become")+" "+w.Format.ToUpperInvariant());
                 }
+                main.preferences.Save(p with{Language=Ui.Value(language),OutputMode=mode,OutputFolder=folder.Text??"",DownloadFolder=downloads.Text??AppPaths.Downloads,RevealFinished=reveal.IsChecked==true,FloatBehavior=Ui.Value(floating),WheelScale=wheelSize.Value/100,Animations=animations.IsChecked==true,Feedback=feedback.IsChecked==true});main.ApplyFeel();
+                main.library.SetAppearance(Ui.Value(appearance));
                 var next=linux with{Watches=watches,GlobalShortcuts=enabled.IsChecked==true,Shortcuts=combos,FirstWheel=Ui.Value(firstWheel),Theme=theme,RunInBackground=background.IsChecked==true,GestureQuickRun=quickRun.IsChecked==true,HotEdge=Ui.Value(hotEdge),StartAtLogin=login.IsChecked==true};
                 main.SaveLinuxSettings(next);App.SetBackground(main,next.RunInBackground);saved=true;Close(true);
             }

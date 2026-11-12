@@ -159,6 +159,8 @@ public sealed partial class MainWindow
     /// Wayland gives logical pixels; XWayland windows use them as is unless KWin scales XWayland apps.
     private static readonly double XScale=LinuxShell.XwaylandScale();
     private static PixelPoint XPixels(double x,double y)=>new((int)Math.Round(x*XScale),(int)Math.Round(y*XScale));
+    /// The drag reached one layer: the others (other monitors) stop their no-drag timers.
+    internal void DragArrived(){foreach(var layer in gestures)layer.Quiet();}
     internal void CloseGestures(){wayland?.Hide();nativeLayer=null;foreach(var layer in gestures.ToList())layer.Close();gestures.Clear();}
     /// Files copied in a file manager (Ctrl+C) get a wheel to click, without dragging.
     private async Task ClipboardWheelAsync()

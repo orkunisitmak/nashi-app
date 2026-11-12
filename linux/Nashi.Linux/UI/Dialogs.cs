@@ -11,11 +11,15 @@ public static class Dialogs
 {
     public static Window? Main=>(Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
     private static Window Shell(string title,double width=460)=>new(){Title=L10n.T(title)+" · Nashi",Width=width,SizeToContent=SizeToContent.Height,CanResize=false,WindowStartupLocation=WindowStartupLocation.CenterOwner,ShowInTaskbar=false};
+    // A dialog shown without a visible owner (Nashi in the tray) is not modal, and Avalonia hands the
+    // Close(result) value only to ShowDialog; the buttons record it here so both paths return it.
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Window,object> results=new();
+    private static void Finish(Window dialog,object result){results.AddOrUpdate(dialog,result);dialog.Close(result);}
     private static async Task<T?> Show<T>(Window? owner,Window dialog)
     {
         owner??=Main;
         if(owner is {IsVisible:true})return await dialog.ShowDialog<T>(owner);
-        var done=new TaskCompletionSource<T?>();dialog.Closed+=(_,_)=>done.TrySetResult(default);dialog.Show();return await done.Task;
+        var done=new TaskCompletionSource<T?>();dialog.Closed+=(_,_)=>done.TrySetResult(results.TryGetValue(dialog,out var result)&&result is T value?value:default);dialog.Show();return await done.Task;
     }
     public static Task Message(Window? owner,string title,string text)
     {
@@ -25,7 +29,7 @@ public static class Dialogs
     }
     public static async Task<bool> Confirm(Window? owner,string title,string text,string accept="Continue")
     {
-        var dialog=Shell(title);var yes=Ui.Primary(accept,()=>dialog.Close(true));yes.IsDefault=true;var no=Ui.Button("Cancel",()=>dialog.Close(false));no.IsCancel=true;
+        var dialog=Shell(title);var yes=Ui.Primary(accept,()=>Finish(dialog,true));yes.IsDefault=true;var no=Ui.Button("Cancel",()=>Finish(dialog,false));no.IsCancel=true;
         dialog.Content=new StackPanel{Margin=new(24),Spacing=10,Children={Ui.Title(title,20),Ui.Text(text,13),Ui.Row(0,yes,no)}};
         return await Show<bool>(owner,dialog);
     }
@@ -68,7 +72,7 @@ public static class Dialogs
     public static async Task<int?> Pick(Window? owner,string title,string text,string[] options)
     {
         var dialog=Shell(title);var list=new ListBox{ItemsSource=options,SelectedIndex=0,MaxHeight=240};
-        var ok=Ui.Primary("Continue",()=>dialog.Close(true));ok.IsDefault=true;var no=Ui.Button("Cancel",()=>dialog.Close(false));no.IsCancel=true;
+        var ok=Ui.Primary("Continue",()=>Finish(dialog,true));ok.IsDefault=true;var no=Ui.Button("Cancel",()=>Finish(dialog,false));no.IsCancel=true;
         dialog.Content=new StackPanel{Margin=new(24),Spacing=10,Children={Ui.Title(title,20),Ui.Text(text,13),list,Ui.Row(0,ok,no)}};
         return await Show<bool>(owner,dialog)?list.SelectedIndex:null;
     }
