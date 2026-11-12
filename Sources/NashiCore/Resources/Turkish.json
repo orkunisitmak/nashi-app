@@ -1331,6 +1331,7 @@
   "Too many image redirects.": "Görsel çok fazla kez yönlendirildi.",
   "Too many update files.": "Güncellemede çok fazla dosya var.",
   "Turn off uniform width to preserve this PDF’s form fields, attachments, links or navigation.": "Bu PDF'nin form alanlarını, eklerini, bağlantılarını veya gezinmesini korumak için eşit genişliği kapat.",
+  "This PDF contains digital signatures. This page operation cannot safely preserve that feature. No copy was exported.": "Bu PDF'de dijital imza var. Bu sayfa işlemi bu özelliği güvenle koruyamaz. Kopya dışa aktarılmadı.",
   "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported.": "Bu PDF'de birleştirme, bölme veya sayfaları yeniden sıralama sırasında korunamayan form alanları ya da ekler var. Kopya dışa aktarılmadı.",
   "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported.": "Bu PDF'de meta veri temizliği sırasında korunamayan form alanları ya da ekler var. Kopya dışa aktarılmadı.",
   "Unsafe download redirect.": "Güvenli olmayan indirme yönlendirmesi.",
