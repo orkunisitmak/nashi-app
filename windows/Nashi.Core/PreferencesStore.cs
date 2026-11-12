@@ -13,6 +13,15 @@ public sealed record Preferences
     public Dictionary<string,OutputProfile> Formats{get;init;}=[];public Dictionary<string,string[]> HiddenWheelItems{get;init;}=[];
     public static readonly string[] WheelActionIds=["share","float","copy","move","copyPath","terminal"];
 }
+/// Names the modifier chord held during a drag and maps it to the wheel it opens.
+public static class DragChord
+{
+    /// The held chord as "Ctrl", "Ctrl+Shift", "Ctrl+Shift+Alt"... in the order Settings uses; empty when no modifier is held.
+    public static string Name(bool ctrl,bool shift,bool alt)=>string.Join('+',new[]{ctrl?"Ctrl":null,shift?"Shift":null,alt?"Alt":null}.OfType<string>());
+    /// The wheel a held chord opens, or null. Only the exact chord chosen in Settings opens a wheel, so Ctrl+Shift
+    /// never falls back to the Ctrl wheel while Tools is set to Ctrl.
+    public static string? Wheel(string chord,Preferences p)=>chord==p.ToolsModifier?"tools":chord==p.ConvertModifier?"convert":chord==p.ActionsModifier?"actions":null;
+}
 public sealed class PreferencesStore
 {
     private readonly string file;public Preferences Value{get;private set;}=new();public string? RecoveryNotice{get;private set;}

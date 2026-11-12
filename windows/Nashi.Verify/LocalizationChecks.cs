@@ -33,6 +33,12 @@ internal static class LocalizationChecks
             var folder=Path.Combine(root,"Bad wheel preferences "+Math.Abs(bad.GetHashCode()));Directory.CreateDirectory(folder);File.WriteAllText(Path.Combine(folder,"preferences.json"),bad);
             var recovered=new PreferencesStore(folder);check(recovered.RecoveryNotice is not null&&recovered.Value.HiddenWheelItems.Count==0,"Invalid hidden wheel items were not recovered: "+bad);
         }
+        var chords=new Preferences();
+        check(DragChord.Name(false,false,false)==""&&DragChord.Name(true,false,false)=="Ctrl"&&DragChord.Name(true,true,false)=="Ctrl+Shift"&&DragChord.Name(true,true,true)=="Ctrl+Shift+Alt","Drag chord names changed");
+        check(DragChord.Wheel("Ctrl",chords)=="tools"&&DragChord.Wheel("Shift",chords)=="convert"&&DragChord.Wheel("Alt",chords)=="actions","Default drag chords open the wrong wheel");
+        check(DragChord.Wheel("",chords) is null&&DragChord.Wheel("Ctrl+Shift",chords) is null&&DragChord.Wheel("Ctrl+Alt",chords) is null&&DragChord.Wheel("Ctrl+Shift+Alt",chords) is null,"An unassigned drag chord opened a wheel");
+        var custom=chords with{ToolsModifier="Ctrl+Shift",ConvertModifier="Ctrl+Alt",ActionsModifier="Shift+Alt"};
+        check(DragChord.Wheel("Ctrl+Shift",custom)=="tools"&&DragChord.Wheel("Ctrl+Alt",custom)=="convert"&&DragChord.Wheel("Shift+Alt",custom)=="actions"&&DragChord.Wheel("Ctrl",custom) is null,"Custom drag chords open the wrong wheel");
         var old=Path.Combine(root,"Legacy language preferences");Directory.CreateDirectory(old);File.WriteAllText(Path.Combine(old,"preferences.json"),"{\"Feedback\":false}");var legacy=new PreferencesStore(old);
         check(legacy.Value.Language=="en"&&!legacy.Value.Feedback,"Legacy preference migration changed other values");
         check(AppLocalization.Normalize("fr")=="en"&&AppLocalization.Text("Home","en")=="Home","Unsupported language or English fallback failed");
