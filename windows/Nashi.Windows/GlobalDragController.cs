@@ -12,6 +12,10 @@ namespace Nashi.Windows;
 /// Reads only the three configured modifiers and primary mouse button. It never
 /// records keystrokes or polls the clipboard. Actual files/links arrive through
 /// OLE drag/drop after the user chooses a wheel segment.
+/// A low-level mouse hook (MouseButtonHook) wakes the 40 ms check when a button goes down, and the check
+/// stops again once nothing is held and no wheel is open. A 500 ms idle check keeps the link shortcut in
+/// sync with preferences and starts the fast check if a held button was not reported. If the hook cannot
+/// be installed, the controller keeps polling continuously as before.
 public sealed class GlobalDragController:IDisposable
 {
     [StructLayout(LayoutKind.Sequential)]internal struct NativePoint{public int X,Y;}
@@ -28,6 +32,7 @@ public sealed class GlobalDragController:IDisposable
     private static bool InMoveSize(){var info=new GuiThreadInfo{Size=Marshal.SizeOf<GuiThreadInfo>()};return GetGUIThreadInfo(0,ref info)&&(info.Flags&0x2)!=0;}
     [DllImport("oleacc.dll")]private static extern int AccessibleObjectFromPoint(NativePoint point,[MarshalAs(UnmanagedType.Interface)]out object accessible,[MarshalAs(UnmanagedType.Struct)]out object child);
     private readonly Window owner;private readonly PreferencesStore preferences;private readonly Action<string,IDataObject,string?> dropped;private readonly Action link;private readonly System.Windows.Threading.DispatcherTimer timer;
+    private readonly System.Windows.Threading.DispatcherTimer idle;private readonly MouseButtonHook? buttons;private bool disposed;private int graceTicks;private int hookWakes;private NativePoint pressPoint;private bool hasPress;
     private NativePoint start;private bool down,opened;private Task<string?>? hint;private GlobalDropWheel? wheel;private HwndSource? source;private IntPtr handle;private bool? shortcutEnabled;
     internal GlobalDropWheel? ActiveWheel=>wheel;
     public bool LinkShortcutRegistered{get;private set;}
@@ -35,8 +40,23 @@ public sealed class GlobalDragController:IDisposable
     public GlobalDragController(Window owner,PreferencesStore preferences,Action<string,IDataObject,string?> dropped,Action link)
     {
         this.owner=owner;this.preferences=preferences;this.dropped=dropped;this.link=link;timer=new(){Interval=TimeSpan.FromMilliseconds(40)};timer.Tick+=(_,_)=>Poll();
-        if(new WindowInteropHelper(owner).Handle!=IntPtr.Zero)Register();else owner.SourceInitialized+=(_,_)=>Register();timer.Start();
+        idle=new(){Interval=TimeSpan.FromMilliseconds(500)};idle.Tick+=(_,_)=>IdleCheck();
+        if(new WindowInteropHelper(owner).Handle!=IntPtr.Zero)Register();else owner.SourceInitialized+=(_,_)=>Register();
+        var dispatcher=owner.Dispatcher;buttons=MouseButtonHook.TryStart((x,y,pressed)=>{Interlocked.Increment(ref hookWakes);var at=new NativePoint{X=x,Y=y};dispatcher.BeginInvoke(new Action(()=>WakeFromHook(at,pressed)));});timer.Start();if(buttons is not null)idle.Start();
     }
+    /// True when the controller sleeps between drags instead of polling continuously.
+    internal bool UsesMouseHook=>buttons is not null;
+    internal bool FastCheckRunning=>timer.IsEnabled;
+    /// Button events the hook reported; lets the smoke test tell a hook wake from the 500 ms idle check.
+    internal int HookWakes=>Volatile.Read(ref hookWakes);
+    // The hook reports a press slightly before Windows updates the state PrimaryMouseButton reads, so keep checking for a few ticks.
+    // The hook fires before Windows updates the button state, so the first Poll may not see the press yet. Keep the
+    // position Windows recorded with the press event itself until Poll uses it or a release arrives, so a move before
+    // the dispatcher or the first 40 ms tick runs still counts toward 10 px, however late the UI thread is.
+    private void WakeFromHook(NativePoint at,bool pressed){if(disposed)return;if(!pressed)hasPress=false;else if(!down){pressPoint=at;hasPress=true;}Wake();}
+    private void Wake(){if(disposed)return;graceTicks=3;if(!timer.IsEnabled)timer.Start();Poll();}
+    // Safety net: keeps the link shortcut in sync and starts the fast check if the hook missed a held button.
+    private void IdleCheck(){if(disposed)return;UpdateShortcut();if(!timer.IsEnabled&&PrimaryMouseButton.IsPressed)Wake();}
     private void Register(){handle=new WindowInteropHelper(owner).Handle;source=HwndSource.FromHwnd(handle);source.AddHook(Hook);UpdateShortcut();}
     private void UpdateShortcut(){if(handle==IntPtr.Zero)return;var enabled=preferences.Value.Enabled;if(shortcutEnabled==enabled)return;shortcutEnabled=enabled;if(LinkShortcutRegistered)UnregisterHotKey(handle,7701);LinkShortcutRegistered=enabled&&RegisterHotKey(handle,7701,0x4000|0x2|0x4,0x44);}
     private IntPtr Hook(IntPtr window,int message,IntPtr w,IntPtr l,ref bool handled){if(message==0x0312&&w.ToInt32()==7701){if(preferences.Value.Enabled&&OwnerAvailable)link();handled=true;}return IntPtr.Zero;}
@@ -44,9 +64,15 @@ public sealed class GlobalDragController:IDisposable
     private string Chord(){var parts=new List<string>();if(Held(0x11))parts.Add("Ctrl");if(Held(0x10))parts.Add("Shift");if(Held(0x12))parts.Add("Alt");return string.Join('+',parts);}
     private void Poll()
     {
+        PollOnce();
+        // With the hook installed, stop polling once nothing is held and no wheel is open.
+        if(graceTicks>0)graceTicks--;else if(buttons is not null&&!down&&wheel is null)timer.Stop();
+    }
+    private void PollOnce()
+    {
         UpdateShortcut();if(!preferences.Value.Enabled||!OwnerAvailable){wheel?.Close();wheel=null;down=false;opened=false;hint=null;return;}var held=PrimaryMouseButton.IsPressed;GetCursorPos(out var point);
         if(!held){if(down){down=false;opened=false;hint=null;if(wheel is {IsVisible:true}){var old=wheel;var dismiss=new System.Windows.Threading.DispatcherTimer{Interval=TimeSpan.FromMilliseconds(150)};dismiss.Tick+=(_,_)=>{dismiss.Stop();if(old.IsVisible)old.Close();};dismiss.Start();}wheel=null;}return;}
-        if(!down){down=true;start=point;opened=false;hint=null;return;}if(opened||Math.Abs(point.X-start.X)+Math.Abs(point.Y-start.Y)<10)return;
+        if(!down){down=true;start=hasPress?pressPoint:point;hasPress=false;opened=false;hint=null;return;}if(opened||Math.Abs(point.X-start.X)+Math.Abs(point.Y-start.Y)<10)return;
         hint??=Task.Run(()=>LinkAt(start));var chord=Chord();var p=preferences.Value;var kind=chord==p.ToolsModifier?"tools":chord==p.ConvertModifier?"convert":chord==p.ActionsModifier?"actions":null;if(kind is null)return;opened=true;if(InMoveSize())return;
         var sourceHint=hint;wheel=new GlobalDropWheel(kind,p.WheelScale,(data,id)=>dropped(id,data,sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null),()=>sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null,()=>sourceHint?.IsCompleted!=false);wheel.Show();DesktopGeometry.PlaceWheel(wheel,point.X,point.Y,WheelPresentation.Diameter*p.WheelScale);
     }
@@ -65,7 +91,7 @@ public sealed class GlobalDragController:IDisposable
             }
         }catch(ElementNotAvailableException){}catch(InvalidOperationException){}catch(COMException){}catch(System.Reflection.TargetInvocationException){}catch(MissingMethodException){}return null;
     }
-    public void Dispose(){timer.Stop();wheel?.Close();if(handle!=IntPtr.Zero)UnregisterHotKey(handle,7701);source?.RemoveHook(Hook);}
+    public void Dispose(){disposed=true;timer.Stop();idle.Stop();buttons?.Dispose();wheel?.Close();if(handle!=IntPtr.Zero)UnregisterHotKey(handle,7701);source?.RemoveHook(Hook);}
 }
 
 internal sealed class GlobalDropWheel:Window

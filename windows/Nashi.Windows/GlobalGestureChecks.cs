@@ -86,6 +86,13 @@ internal static class GlobalGestureChecks
             var probe=new GlobalDropWheel("actions",1,(_,_)=>{},()=>null,()=>true);probe.Show();DesktopInput.Pump(80);
             try{check(!probe.PassingThrough,"A new hidden wheel was click-through before any drag reached it");probe.PassThrough();check(probe.PassingThrough&&!probe.Revealed&&probe.IsVisible,"Hidden wheel did not become click-through for a drag it cannot use");check(Task.Run(()=>probe.State).Result.EndsWith("passThrough=True"),"Wheel state was not readable off the UI thread after pass-through");}
             finally{probe.Close();}
+            check(controller.UsesMouseHook,"Global drag detection installed its mouse button hook");DesktopInput.Pump(400);check(!controller.FastCheckRunning,"Global drag detection stopped polling while no button is held");
+            phase="mouse hook wake";
+            // Once asleep, a press must wake the check through the hook, well before the 500 ms idle fallback could.
+            var idleProbe=new Window{Width=320,Height=200,Left=bounds.Left,Top=bounds.Top,WindowStartupLocation=WindowStartupLocation.Manual,Content=new System.Windows.Controls.Border{Background=System.Windows.Media.Brushes.DarkSlateGray}};idleProbe.Show();DesktopInput.Pump(120);
+            try{var wakes=controller.HookWakes;DesktopInput.MovePointer(idleProbe.PointToScreen(new Point(60,70)));DesktopInput.HoldMouse(true);DesktopInput.Pump(150);check(controller.HookWakes>wakes&&controller.FastCheckRunning,"A mouse press did not wake global drag detection through the hook");}
+            finally{DesktopInput.HoldMouse(false);DesktopInput.Pump(400);for(var i=0;i<20&&controller.FastCheckRunning;i++)DesktopInput.Pump(50);idleProbe.Close();}
+            check(!controller.FastCheckRunning,"Global drag detection kept polling after a plain click");
             if(controller.LinkShortcutRegistered){selected=null;DesktopInput.Key(owner,Key.D,control:true,shift:true);check(selected=="link-shortcut","Global copied-link shortcut Ctrl+Shift+D");}
             var beforeLaunch=main?.SelectedFiles.ToArray();var modal=new Window{Owner=owner,Width=300,Height=200,WindowStartupLocation=WindowStartupLocation.CenterOwner,Content=new System.Windows.Controls.Border{Background=System.Windows.Media.Brushes.DarkOliveGreen}};Exception? modalError=null;
             modal.Dispatcher.BeginInvoke(()=>
