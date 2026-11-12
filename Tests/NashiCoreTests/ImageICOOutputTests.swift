@@ -7,6 +7,7 @@ final class ImageICOOutputTests:XCTestCase {
         let directory=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:directory) }
         let svg=directory.appendingPathComponent("wide.svg")
         try "<svg xmlns='http://www.w3.org/2000/svg' width='64' height='32' viewBox='0 0 64 32'><rect width='64' height='32' fill='red'/></svg>".write(to:svg,atomically:true,encoding:.utf8)
+        let original=try Data(contentsOf:svg)
         var options=OperationOptions();options.outputDirectory=directory
         let output=try XCTUnwrap(ImageEngine.convert(svg,to:"ico",options:options,token:CancellationToken()).first)
         XCTAssertEqual(output.pathExtension,"ico")
@@ -32,5 +33,24 @@ final class ImageICOOutputTests:XCTestCase {
             XCTAssertGreaterThan(pixels[(size/2)*stride+size/2*4+3],200,"\(size) px: the centre is opaque")
         }
         XCTAssertEqual(previousEnd,bytes.count)
+        XCTAssertEqual(try Data(contentsOf:svg),original,"Converting to ICO changed the source SVG.")
+    }
+
+    /// The progress callback for the second file runs after the first ICO is staged, so the
+    /// cancel is deterministic and exercises removal of an already written ICO.
+    func testCancellingBetweenICOFilesLeavesOnlyTheSource() throws {
+        let directory=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:directory) }
+        let svg=directory.appendingPathComponent("wide.svg")
+        let source="<svg xmlns='http://www.w3.org/2000/svg' width='64' height='32' viewBox='0 0 64 32'><rect width='64' height='32' fill='red'/></svg>"
+        try source.write(to:svg,atomically:true,encoding:.utf8)
+        var options=OperationOptions();options.outputDirectory=directory
+        let token=CancellationToken()
+        XCTAssertThrowsError(try ConversionEngine.run(.init(inputs:[svg,svg],operation:.convert("ico"),options:options),token:token,progress:{ amount,_ in
+            if amount>0&&amount<1 { token.cancel() }
+        })) { error in
+            guard case NashiError.cancelled=error else { return XCTFail("Expected cancellation, received \(error)") }
+        }
+        XCTAssertEqual(try String(contentsOf:svg,encoding:.utf8),source,"The original SVG changed.")
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath:directory.path),["wide.svg"],"A cancelled ICO was left behind.")
     }
 }

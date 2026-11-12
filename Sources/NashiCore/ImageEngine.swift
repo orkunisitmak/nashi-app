@@ -53,6 +53,8 @@ public enum ImageEngine {
         var complete=false;defer { if !complete { try? FileManager.default.removeItem(at:output) } }
         let metadata = options.preserveMetadata ? CGImageSourceCreateWithURL(input as CFURL,nil).map { imageProperties($0,input:input) as CFDictionary } : nil
         try write(image,to:output,quality:options.quality,metadata:metadata,token:token)
+        // ICO has no metadata pass to notice a cancel, so check again and let the defer remove the output.
+        if output.pathExtension.lowercased() == "ico" { try token.check() }
         if options.preserveMetadata && format != "ico" { try ImageMetadataEngine.copyMetadata(from:input,to:output,token:token) }
         complete=true
         return [output]
@@ -62,7 +64,7 @@ public enum ImageEngine {
         // Both encoder paths take the same 0.01...1 range; FFmpeg's Int conversion traps on huge values.
         let quality=max(0.01,min(1,quality))
         let ext=url.pathExtension.lowercased()
-        if ext == "ico" { try writeICO(image,to:url); return }
+        if ext == "ico" { try writeICO(image,to:url,token:token); return }
         let type: String
         switch ext {
         case "jpg","jpeg": type="public.jpeg"
@@ -95,10 +97,11 @@ public enum ImageEngine {
     }
 
     /// One ICO with 16-256 px frames, each a 32-bit PNG; a non-square image is centred on a transparent square.
-    static func writeICO(_ image: CGImage, to url: URL) throws {
+    static func writeICO(_ image: CGImage, to url: URL, token: CancellationToken = .init()) throws {
         let sizes=[16,24,32,48,64,128,256]
         var frames:[Data]=[]
         for size in sizes {
+            try token.check()
             guard let context=CGContext(data:nil,width:size,height:size,bitsPerComponent:8,bytesPerRow:0,space:CGColorSpaceCreateDeviceRGB(),bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue) else { throw NashiError.failed("Could not write \(url.lastPathComponent)") }
             let scale=min(Double(size)/Double(image.width),Double(size)/Double(image.height))
             let width=max(1,Double(image.width)*scale),height=max(1,Double(image.height)*scale)
@@ -121,6 +124,7 @@ public enum ImageEngine {
         }
         var output=Data(bytes)
         for frame in frames { output.append(frame) }
+        try token.check()
         try output.write(to:url,options:.atomic)
     }
 
