@@ -19,6 +19,10 @@ jobs:
         run: |
           dotnet restore windows/Nashi.Windows --locked-mode
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet restore windows/Nashi.Cli --locked-mode
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build windows/Nashi.Cli -c Release --no-restore
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           dotnet publish windows/Nashi.Windows -c Release --no-restore -o build/windows/Nashi
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           dotnet run --project windows/Nashi.Verify -c Release
