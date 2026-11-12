@@ -108,7 +108,9 @@ internal sealed class GlobalDropWheel:Window
         // again instead of advancing to DragOver. Keep the visual tree stable
         // until the payload actually changes, and select on entry as well.
         // A file this mode has no tool for (an .ico, for example) still shows the wheel, with a message, so it does not look broken.
-        var unsupported=files.Length>0&&files.All(p=>!Directory.Exists(p)||FeatureCatalog.Extension(p) is "pages" or "rtfd")&&updated.Count==0;
+        // Choices hidden in Settings are not unsupported files: with nothing left to offer the wheel
+        // must pass the drag to the app below instead of showing an empty "No tools" wheel (#768).
+        var unsupported=files.Length>0&&files.All(p=>!Directory.Exists(p)||FeatureCatalog.Extension(p) is "pages" or "rtfd")&&!supportedByPayload;
         if(!updated.SequenceEqual(choices)||unsupported!=noTools){choices=updated;noTools=unsupported;Build(choices);}
         var p=e.GetPosition(canvas);var distance=(p-new Point(270,270)).Length;
         if(distance<108||distance>250||choices.Count==0){selection="";Highlight(-1);}
@@ -127,14 +129,14 @@ internal sealed class GlobalDropWheel:Window
         // the element under the start point (for example the NVIDIA App overlay) never hides dragged files.
         if(files.Length>0&&dataLink is null)
         {
-            if(mode=="convert")return FeatureCatalog.Formats(files).Select(f=>new ToolChoice("convert:"+f,f.ToUpperInvariant(),"↗")).Where(t=>!IsHidden(t.Id)).ToArray();
-            if(mode=="actions")return ActionChoices.Where(t=>!IsHidden(t.Id)).ToArray();
-            return FeatureCatalog.Tools(files).Select(t=>new ToolChoice(t,FeatureCatalog.ToolNames[t],MainWindow.ToolSymbol(t))).Where(t=>!IsHidden(t.Id)).ToArray();
+            if(mode=="convert"){var formats=FeatureCatalog.Formats(files);supportedByPayload=formats.Length>0;return formats.Select(f=>new ToolChoice("convert:"+f,f.ToUpperInvariant(),"↗")).Where(t=>!IsHidden(t.Id)).ToArray();}
+            if(mode=="actions"){supportedByPayload=ActionChoices.Length>0;return ActionChoices.Where(t=>!IsHidden(t.Id)).ToArray();}
+            var tools=FeatureCatalog.Tools(files);supportedByPayload=tools.Length>0;return tools.Select(t=>new ToolChoice(t,FeatureCatalog.ToolNames[t],MainWindow.ToolSymbol(t))).Where(t=>!IsHidden(t.Id)).ToArray();
         }
-        if(web is null)return [];return web.Kind switch{"youtube"=>[new("download:video","Download Video","↓"),new("download:thumbnail","Download Thumbnail","▣"),new("download:audio","Download Audio","♫")],"instagramPhotos"=>[new("download:photos","Download Images","▣")],"instagramReel"=>[new("download:video","Download Video","↓"),new("download:audio","Download Audio","♫")],"image"=>[new("download:image","Download Image","↓")],_=>[new("download:video","Download Video","↓"),new("download:audio","Download Audio","♫") ]};
+        if(web is null){supportedByPayload=false;return [];}supportedByPayload=true;return web.Kind switch{"youtube"=>[new("download:video","Download Video","↓"),new("download:thumbnail","Download Thumbnail","▣"),new("download:audio","Download Audio","♫")],"instagramPhotos"=>[new("download:photos","Download Images","▣")],"instagramReel"=>[new("download:video","Download Video","↓"),new("download:audio","Download Audio","♫")],"image"=>[new("download:image","Download Image","↓")],_=>[new("download:video","Download Video","↓"),new("download:audio","Download Audio","♫") ]};
     }
     private void Highlight(int index){var paths=canvas.Children.OfType<System.Windows.Shapes.Path>().ToArray();for(var n=0;n<paths.Length;n++){paths[n].Fill=Theme.Brush(n==index?"Sage":"Inset");paths[n].Stroke=Theme.Brush(n==index?"Gold":"Line");}}
-    private bool noTools;
+    private bool noTools,supportedByPayload;
     private void Build(IReadOnlyList<ToolChoice> tools)
     {
         canvas.Children.Clear();canvas.Children.Add(new Ellipse{Width=540,Height=540,Fill=WheelPresentation.Backdrop});var count=tools.Count;
