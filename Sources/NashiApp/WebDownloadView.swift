@@ -1,5 +1,3 @@
-// Swift compile errors fix for macOS build  
-// Reduced WebDownloadView body type-checking complexity
 import AppKit
 import SwiftUI
 import NashiCore

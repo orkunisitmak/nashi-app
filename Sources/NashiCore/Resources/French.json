@@ -1439,5 +1439,9 @@
   "YouTube thumbnail · best available full-size image": "Miniature YouTube · meilleure image en taille réelle disponible",
   "No tools for this file type": "Aucun outil pour ce type de fichier",
   "Details": "Détails",
-  "Copy details": "Copier les détails"
+  "Copy details": "Copier les détails",
+  "Clear Library": "Effacer la bibliothèque",
+  "Clear all Library entries": "Effacer toutes les entrées de la bibliothèque",
+  "Remove from Library": "Retirer de la bibliothèque",
+  "Remove {0} from Library": "Retirer {0} de la bibliothèque"
 }

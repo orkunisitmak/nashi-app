@@ -489,7 +489,9 @@
 "CHOOSE ZIP, TAR OR GZIP." = "CHOISISSEZ ZIP, TAR OU GZIP.";
 "CLARITY" = "CLARTÉ";
 "CLEAR" = "EFFACER";
+"CLEAR ALL LIBRARY ENTRIES" = "EFFACER TOUTES LES ENTRÉES DE LA BIBLIOTHÈQUE";
 "CLEAR FLOAT" = "VIDER LE FLOAT";
+"CLEAR LIBRARY" = "EFFACER LA BIBLIOTHÈQUE";
 "CLEAR SELECTION" = "EFFACER LA SÉLECTION";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "LE PRESSE-PAPIERS EST OCCUPÉ. RÉESSAYEZ.";
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "LE PRESSE-PAPIERS EST OCCUPÉ. RÉESSAYEZ DE COLLER.";
@@ -690,7 +692,9 @@
 "Clarity" = "Clarté";
 "Clear" = "Effacer";
 "Clear Float" = "Vider le Float";
+"Clear Library" = "Effacer la bibliothèque";
 "Clear Selection" = "Effacer la sélection";
+"Clear all Library entries" = "Effacer toutes les entrées de la bibliothèque";
 "Clip %@" = "Clip %@";
 "Clip %lld" = "Clip %lld";
 "Clipboard is busy. Try Paste again." = "Le presse-papiers est occupé. Réessayez de coller.";
@@ -1938,6 +1942,7 @@
 "REMOVE BACKGROUND" = "SUPPRIMER L’ARRIÈRE-PLAN";
 "REMOVE CLIPS (NUMBERS; SEPARATED BY SEMICOLONS)" = "SUPPRIMER DES CLIPS (NUMÉROS ; SÉPARÉS PAR DES POINTS-VIRGULES)";
 "REMOVE FROM FLOAT" = "RETIRER DE FLOAT";
+"REMOVE FROM LIBRARY" = "RETIRER DE LA BIBLIOTHÈQUE";
 "REMOVE FROM SELECTION" = "RETIRER DE LA SÉLECTION";
 "REMOVE IMAGE" = "RETIRER L’IMAGE";
 "REMOVE METADATA" = "SUPPRIMER LES MÉTADONNÉES";
@@ -2003,8 +2008,10 @@
 "Release to place · Esc cancels" = "Relâchez pour placer · Échap annule";
 "Remove" = "Retirer";
 "Remove %@" = "Retirer %@";
+"Remove %@ from Library" = "Retirer %@ de la bibliothèque";
 "Remove %@ from selection" = "Retirer %@ de la sélection";
 "Remove %lld" = "Retirer %lld";
+"Remove %lld from Library" = "Retirer %lld de la bibliothèque";
 "Remove %lld from selection" = "Retirer %lld de la sélection";
 "Remove All" = "Tout supprimer";
 "Remove Audio" = "Supprimer l’audio";
@@ -2014,6 +2021,7 @@
 "Remove all metadata" = "Supprimer toutes les métadonnées";
 "Remove clips (numbers; separated by semicolons)" = "Supprimer des clips (numéros ; séparés par des points-virgules)";
 "Remove from Float" = "Retirer de Float";
+"Remove from Library" = "Retirer de la bibliothèque";
 "Remove from selection" = "Retirer de la sélection";
 "Remove selected area" = "Retirer la zone sélectionnée";
 "Remove selected range" = "Retirer la plage sélectionnée";

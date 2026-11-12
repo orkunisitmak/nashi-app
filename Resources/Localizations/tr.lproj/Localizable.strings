@@ -489,7 +489,9 @@
 "CHOOSE ZIP, TAR OR GZIP." = "ZIP, TAR VEYA GZIP SEÇ.";
 "CLARITY" = "NETLİK";
 "CLEAR" = "TEMİZLE";
+"CLEAR ALL LIBRARY ENTRIES" = "KİTAPLIKTAKİ TÜM KAYITLARI TEMİZLE";
 "CLEAR FLOAT" = "YÜZEN PENCEREYİ TEMİZLE";
+"CLEAR LIBRARY" = "KİTAPLIĞI TEMİZLE";
 "CLEAR SELECTION" = "SEÇİMİ TEMİZLE";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "PANO MEŞGUL. TEKRAR DENE.";
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "PANO MEŞGUL. YENİDEN YAPIŞTIRMAYI DENE.";
@@ -690,7 +692,9 @@
 "Clarity" = "Netlik";
 "Clear" = "Temizle";
 "Clear Float" = "Yüzen Pencereyi Temizle";
+"Clear Library" = "Kitaplığı Temizle";
 "Clear Selection" = "Seçimi Temizle";
+"Clear all Library entries" = "Kitaplıktaki tüm kayıtları temizle";
 "Clip %@" = "Klip %@";
 "Clip %lld" = "Klip %lld";
 "Clipboard is busy. Try Paste again." = "Pano meşgul. Yeniden yapıştırmayı dene.";
@@ -1938,6 +1942,7 @@
 "REMOVE BACKGROUND" = "ARKA PLANI KALDIR";
 "REMOVE CLIPS (NUMBERS; SEPARATED BY SEMICOLONS)" = "ÇIKARILACAK KLİPLER (NUMARA; NOKTALI VİRGÜLLE AYIR)";
 "REMOVE FROM FLOAT" = "YÜZEN PENCEREDEN KALDIR";
+"REMOVE FROM LIBRARY" = "KİTAPLIKTAN KALDIR";
 "REMOVE FROM SELECTION" = "SEÇİMDEN KALDIR";
 "REMOVE IMAGE" = "GÖRSELİ KALDIR";
 "REMOVE METADATA" = "META VERİLERİ KALDIR";
@@ -2003,8 +2008,10 @@
 "Release to place · Esc cancels" = "Yerleştirmek için bırak · Esc iptal eder";
 "Remove" = "Kaldır";
 "Remove %@" = "%@ öğesini kaldır";
+"Remove %@ from Library" = "%@ Kitaplıktan Kaldır";
 "Remove %@ from selection" = "%@ öğesini seçimden kaldır";
 "Remove %lld" = "%lld öğesini kaldır";
+"Remove %lld from Library" = "%lld Kitaplıktan Kaldır";
 "Remove %lld from selection" = "%lld öğesini seçimden kaldır";
 "Remove All" = "Tümünü Kaldır";
 "Remove Audio" = "Sesi Kaldır";
@@ -2014,6 +2021,7 @@
 "Remove all metadata" = "Tüm meta verileri kaldır";
 "Remove clips (numbers; separated by semicolons)" = "Çıkarılacak klipler (numara; noktalı virgülle ayır)";
 "Remove from Float" = "Yüzen Pencereden Kaldır";
+"Remove from Library" = "Kitaplıktan Kaldır";
 "Remove from selection" = "Seçimden kaldır";
 "Remove selected area" = "Seçili alanı kaldır";
 "Remove selected range" = "Seçili aralığı kaldır";

@@ -489,7 +489,9 @@
 "CHOOSE ZIP, TAR OR GZIP." = "CHOOSE ZIP, TAR OR GZIP.";
 "CLARITY" = "CLARITY";
 "CLEAR" = "CLEAR";
+"CLEAR ALL LIBRARY ENTRIES" = "CLEAR ALL LIBRARY ENTRIES";
 "CLEAR FLOAT" = "CLEAR FLOAT";
+"CLEAR LIBRARY" = "CLEAR LIBRARY";
 "CLEAR SELECTION" = "CLEAR SELECTION";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "CLIPBOARD IS BUSY. TRY AGAIN.";
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "CLIPBOARD IS BUSY. TRY PASTE AGAIN.";
@@ -690,7 +692,9 @@
 "Clarity" = "Clarity";
 "Clear" = "Clear";
 "Clear Float" = "Clear Float";
+"Clear Library" = "Clear Library";
 "Clear Selection" = "Clear Selection";
+"Clear all Library entries" = "Clear all Library entries";
 "Clip %@" = "Clip %@";
 "Clip %lld" = "Clip %lld";
 "Clipboard is busy. Try Paste again." = "Clipboard is busy. Try Paste again.";
@@ -1938,6 +1942,7 @@
 "REMOVE BACKGROUND" = "REMOVE BACKGROUND";
 "REMOVE CLIPS (NUMBERS; SEPARATED BY SEMICOLONS)" = "REMOVE CLIPS (NUMBERS; SEPARATED BY SEMICOLONS)";
 "REMOVE FROM FLOAT" = "REMOVE FROM FLOAT";
+"REMOVE FROM LIBRARY" = "REMOVE FROM LIBRARY";
 "REMOVE FROM SELECTION" = "REMOVE FROM SELECTION";
 "REMOVE IMAGE" = "REMOVE IMAGE";
 "REMOVE METADATA" = "REMOVE METADATA";
@@ -2003,8 +2008,10 @@
 "Release to place · Esc cancels" = "Release to place · Esc cancels";
 "Remove" = "Remove";
 "Remove %@" = "Remove %@";
+"Remove %@ from Library" = "Remove %@ from Library";
 "Remove %@ from selection" = "Remove %@ from selection";
 "Remove %lld" = "Remove %lld";
+"Remove %lld from Library" = "Remove %lld from Library";
 "Remove %lld from selection" = "Remove %lld from selection";
 "Remove All" = "Remove All";
 "Remove Audio" = "Remove Audio";
@@ -2014,6 +2021,7 @@
 "Remove all metadata" = "Remove all metadata";
 "Remove clips (numbers; separated by semicolons)" = "Remove clips (numbers; separated by semicolons)";
 "Remove from Float" = "Remove from Float";
+"Remove from Library" = "Remove from Library";
 "Remove from selection" = "Remove from selection";
 "Remove selected area" = "Remove selected area";
 "Remove selected range" = "Remove selected range";

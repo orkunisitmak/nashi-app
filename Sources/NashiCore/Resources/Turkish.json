@@ -1439,5 +1439,9 @@
   "YouTube thumbnail · best available full-size image": "YouTube küçük resmi · en iyi tam boyutlu görsel",
   "No tools for this file type": "Bu dosya türü için araç yok",
   "Details": "Ayrıntılar",
-  "Copy details": "Ayrıntıları kopyala"
+  "Copy details": "Ayrıntıları kopyala",
+  "Clear Library": "Kitaplığı Temizle",
+  "Clear all Library entries": "Kitaplıktaki tüm kayıtları temizle",
+  "Remove from Library": "Kitaplıktan Kaldır",
+  "Remove {0} from Library": "{0} Kitaplıktan Kaldır"
 }
