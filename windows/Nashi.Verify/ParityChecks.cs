@@ -127,6 +127,32 @@ internal static class ParityChecks
         var attachmentPdf=Pdf("Attachment.pdf","BT /F1 24 Tf 72 700 Td (Files) Tj ET",pdf=>{var names=new PdfSharp.Pdf.PdfDictionary(pdf);names.Elements["/EmbeddedFiles"]=new PdfSharp.Pdf.PdfDictionary(pdf);Catalog(pdf,"/Names",names);});
         var taggedPdf=Pdf("Tagged.pdf","BT /F1 24 Tf 72 700 Td (Tags) Tj ET",pdf=>Catalog(pdf,"/StructTreeRoot",new PdfSharp.Pdf.PdfDictionary(pdf)));
         bool Refused(Func<IReadOnlyList<string>> run){try{run();return false;}catch(InvalidDataException error){return error.Message.EndsWith("No copy was exported.",StringComparison.Ordinal);}}
+        // A signed PDF is refused by name, as on macOS: a signature field with its value, and a certification signature reached only through /Perms.
+        PdfSharp.Pdf.PdfDictionary Signature(PdfSharp.Pdf.PdfDocument pdf,bool indirect=true,bool typed=true){var signature=new PdfSharp.Pdf.PdfDictionary(pdf);if(typed)signature.Elements.SetName("/Type","/Sig");signature.Elements["/ByteRange"]=new PdfSharp.Pdf.PdfArray(pdf,new PdfSharp.Pdf.PdfInteger(0),new PdfSharp.Pdf.PdfInteger(10),new PdfSharp.Pdf.PdfInteger(20),new PdfSharp.Pdf.PdfInteger(30));if(indirect)pdf.Internals.AddObject(signature);return signature;}
+        var signedPdf=Pdf("Signed.pdf","BT /F1 24 Tf 72 700 Td (Signed) Tj ET",pdf=>{var form=Form(pdf,true);var field=(PdfSharp.Pdf.PdfDictionary)((PdfSharp.Pdf.Advanced.PdfReference)form.Elements.GetArray("/Fields")!.Elements[0]).Value;field.Elements.SetName("/FT","/Sig");field.Elements.SetReference("/V",Signature(pdf));pdf.Internals.Catalog.Elements.SetReference("/AcroForm",form);});
+        var certifiedPdf=Pdf("Certified.pdf","BT /F1 24 Tf 72 700 Td (Certified) Tj ET",pdf=>{var perms=new PdfSharp.Pdf.PdfDictionary(pdf);perms.Elements.SetReference("/DocMDP",Signature(pdf));Catalog(pdf,"/Perms",perms);});
+        // The same certification signature written in place inside /Perms rather than as its own object.
+        var directCertifiedPdf=Pdf("Certified in place.pdf","BT /F1 24 Tf 72 700 Td (Certified) Tj ET",pdf=>{var perms=new PdfSharp.Pdf.PdfDictionary(pdf);perms.Elements["/DocMDP"]=Signature(pdf,false);Catalog(pdf,"/Perms",perms);});
+        // /Type is optional in a signature dictionary; /ByteRange alone must be enough.
+        var untypedCertifiedPdf=Pdf("Certified untyped.pdf","BT /F1 24 Tf 72 700 Td (Certified) Tj ET",pdf=>{var perms=new PdfSharp.Pdf.PdfDictionary(pdf);perms.Elements.SetReference("/DocMDP",Signature(pdf,typed:false));Catalog(pdf,"/Perms",perms);});
+        // A signature field nobody has signed yet is a form field, not a signature.
+        var unsignedFieldPdf=Pdf("Unsigned field.pdf","BT /F1 24 Tf 72 700 Td (Sign here) Tj ET",pdf=>{var form=Form(pdf,true);((PdfSharp.Pdf.PdfDictionary)((PdfSharp.Pdf.Advanced.PdfReference)form.Elements.GetArray("/Fields")!.Elements[0]).Value).Elements.SetName("/FT","/Sig");pdf.Internals.Catalog.Elements.SetReference("/AcroForm",form);});
+        // An incremental update that removed a signature leaves its dictionary in the file, unreachable from the catalog.
+        var unsignedLaterPdf=Path.Combine(root,"Signature removed later.pdf");
+        {
+            var original=File.ReadAllBytes(textPdf);var text=Encoding.Latin1.GetString(original);
+            var root0=System.Text.RegularExpressions.Regex.Match(text,@"/Root\s+(\d+\s+\d+)\s+R").Groups[1].Value;var size=int.Parse(System.Text.RegularExpressions.Regex.Matches(text,@"/Size\s+(\d+)").Last().Groups[1].Value);
+            var previous=System.Text.RegularExpressions.Regex.Matches(text,@"startxref\s+(\d+)").Last().Groups[1].Value;
+            var objectAt=original.Length;var update=$"\n{size} 0 obj\n<< /Type /Sig /ByteRange [0 10 20 30] >>\nendobj\n";var xrefAt=objectAt+update.Length;
+            update+=$"xref\n{size} 1\n{(objectAt+1).ToString("D10")} 00000 n \ntrailer\n<< /Size {size+1} /Root {root0} R /Prev {previous} >>\nstartxref\n{xrefAt}\n%%EOF\n";
+            File.WriteAllBytes(unsignedLaterPdf,[..original,..Encoding.Latin1.GetBytes(update)]);
+        }
+        const string signedMessage="This PDF contains digital signatures. This page operation cannot safely preserve that feature. No copy was exported.";
+        bool RefusedSigned(Func<IReadOnlyList<string>> run){try{run();return false;}catch(InvalidDataException error){return error.Message==signedMessage;}}
+        check(Refused(()=>DocumentEngine.Pdf("mergePDFs",[textPdf,unsignedFieldPdf],root))&&!RefusedSigned(()=>DocumentEngine.Pdf("mergePDFs",[textPdf,unsignedFieldPdf],root)),"An unsigned signature field was not refused as a form field");
+        check(DocumentEngine.Pdf("mergePDFs",[textPdf,unsignedLaterPdf],root).Count==1&&DocumentEngine.Pdf("splitPDF",[unsignedLaterPdf],root).Count==1,"A signature an incremental update left unreachable still refused the PDF");
+        check(new[]{signedPdf,certifiedPdf,directCertifiedPdf,untypedCertifiedPdf}.All(pdf=>RefusedSigned(()=>DocumentEngine.Pdf("mergePDFs",[textPdf,pdf],root))&&RefusedSigned(()=>DocumentEngine.Pdf("splitPDF",[pdf],root))&&RefusedSigned(()=>DocumentEngine.Pdf("organizePDF",[pdf],root,[1]))),"A signed PDF was not refused by name when merging, splitting or reordering pages");
+        check(Refused(()=>DocumentEngine.Pdf("removeMetadata",[signedPdf],root))&&!RefusedSigned(()=>DocumentEngine.Pdf("mergePDFs",[textPdf,formPdf],root))&&AppLocalization.Text(signedMessage,"tr")!=signedMessage,"The signature refusal changed metadata cleanup or unsigned forms, or has no Turkish copy");
         check(new[]{formPdf,attachmentPdf}.All(pdf=>Refused(()=>DocumentEngine.Pdf("splitPDF",[pdf],root))&&Refused(()=>DocumentEngine.Pdf("organizePDF",[pdf],root,[1]))&&Refused(()=>DocumentEngine.Pdf("removeMetadata",[pdf],root))&&Refused(()=>DocumentEngine.Pdf("mergePDFs",[textPdf,pdf],root))),"Rebuilding a PDF silently dropped its form fields or attachments");
         check(DocumentEngine.Pdf("splitPDF",[taggedPdf],root).Count==1&&DocumentEngine.Pdf("mergePDFs",[textPdf,vectorPdf],root).Count==1&&DocumentEngine.Pdf("removeMetadata",[taggedPdf],root).Count==1,"Tagged PDFs without forms or attachments were refused");
         var outlinePdf=Pdf("Outline.pdf","BT /F1 24 Tf 72 700 Td (Chapter 1) Tj ET",pdf=>{var page=pdf.AddPage();page.Size=PdfSharp.PageSize.A4;pdf.Outlines.Add("Bölüm 2",page).Top=500;pdf.Info.Title="Private title";});
