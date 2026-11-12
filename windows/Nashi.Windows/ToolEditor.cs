@@ -11,7 +11,7 @@ namespace Nashi.Windows;
 public sealed partial class ToolEditor:Window
 {
     public MediaOptions MediaOptions{get;private set;}=new();public ImageOptions ImageOptions{get;private set;}=new();public string Format{get;private set;}="png";public int[] Pages{get;private set;}=[];
-    private readonly string tool;private readonly BitmapSource? bitmap;private readonly Dictionary<string,TextBox> fields=[];private readonly Dictionary<string,string> defaults=[];
+    private readonly string tool;private readonly BitmapSource? bitmap;private readonly Dictionary<string,TextBox> fields=[];private readonly Dictionary<string,string> defaults=[];private readonly Dictionary<string,double> timeValues=[];
     private readonly ComboBox format=new();private readonly ComboBox drawingTool=new(){ItemsSource=new[]{"Marker","Rectangle"},SelectedIndex=0};
     private readonly Canvas drawing=new(){Background=Brushes.Transparent,Focusable=true};private Rectangle? selection,activeRectangle;private Polyline? activeStroke;private Point origin;private bool dragging;
     private readonly MediaElement player=new(){LoadedBehavior=MediaState.Manual,UnloadedBehavior=MediaState.Close,Stretch=Stretch.Uniform,Height=260};private bool playing;
@@ -52,7 +52,7 @@ public sealed partial class ToolEditor:Window
             player.ScrubbingEnabled=true;player.Loaded+=(_,_)=>{player.Play();player.Pause();};player.MediaFailed+=async(_,_)=>await CreatePreviewProxy();
             if(tool is "trimVideo" or "trimAudio" or "redactAudio")
             {
-                timeline.Set(duration,0,duration);previewStack.Children.Add(timeline);timeline.Changed+=(a,b)=>{var prevStart=ParseTime(fields["Start"].Text);fields["Start"].Text=TimeString(a);fields["End"].Text=TimeString(b);Seek(Math.Abs(a-prevStart)>.0001?a:b);};
+                timeline.Set(duration,0,duration);previewStack.Children.Add(timeline);timeline.Changed+=(a,b)=>{var prevStart=timeValues.GetValueOrDefault("Start");SetTimeText("Start",a);SetTimeText("End",b);Seek(Math.Abs(a-prevStart)>.0001?a:b);};
             }
             var controls=new StackPanel{Orientation=Orientation.Horizontal};var play=MainWindow.Button("▶ / Ⅱ",TogglePlayback);controls.Children.Add(MainWindow.Button("−1s",()=>Seek(player.Position.TotalSeconds-1)));controls.Children.Add(play);controls.Children.Add(MainWindow.Button("+1s",()=>Seek(player.Position.TotalSeconds+1)));previewStack.Children.Add(controls);previewStack.Children.Add(time);
             if((media.Video is null&&tool is "normalizeAudio" or "audioChannels" or "redactAudio")||tool is "redactVideo" or "splitVideo" or "audioToVideo")
@@ -101,21 +101,30 @@ public sealed partial class ToolEditor:Window
         PreviewKeyDown+=OnKey;Closed+=(_,_)=>{clock.Stop();player.Close();previewLifetime.Cancel();DeletePreviewFiles();};
     }
     private static string Number(double n)=>n.ToString("0.###",CultureInfo.CurrentCulture);
-    /// Formats seconds as MM:SS.mmm for trim start/end fields.
-    private static string TimeString(double n)=>TimeSpan.FromSeconds(n).ToString("mm\\:ss\\.fff",CultureInfo.InvariantCulture);
-    /// Parses "MM:SS.mmm" or plain seconds into seconds. Returns 0 for invalid/non-finite input.
-    private static double ParseTime(string text){
-        text=text.Trim();
-        if(text.Contains(":")){
-            var parts=text.Split(':');
-            if(parts.Length==2&&double.TryParse(parts[0],NumberStyles.Float,CultureInfo.InvariantCulture,out var minutes)&&double.TryParse(parts[1],NumberStyles.Float,CultureInfo.InvariantCulture,out var seconds)){
-                var result=minutes*60+seconds;
-                return double.IsFinite(result)?result:0;
-            }
+    /// Formats seconds as HH:MM:SS.mmm, or MM:SS.mmm below an hour, for trim start/end fields.
+    private static string TimeString(double n){
+        if(!double.IsFinite(n)||n<0)n=0;
+        var span=TimeSpan.FromSeconds(n);
+        return span.TotalHours>=1
+            ?$"{(long)span.TotalHours:00}:{span.Minutes:00}:{span.Seconds:00}.{span.Milliseconds:000}"
+            :$"{span.Minutes:00}:{span.Seconds:00}.{span.Milliseconds:000}";
+    }
+    /// Parses "HH:MM:SS.mmm", "MM:SS.mmm" or plain seconds into seconds. Returns null for negative,
+    /// malformed or out-of-range input so a bad value cannot silently turn into zero.
+    private static double? ParseTime(string text){
+        text=text.Trim();var parts=text.Split(':');
+        if(parts.Length is 2 or 3){
+            var values=new double[parts.Length];
+            for(var i=0;i<parts.Length;i++)
+                if(!double.TryParse(parts[i],NumberStyles.Float,CultureInfo.InvariantCulture,out values[i])||!double.IsFinite(values[i])||values[i]<0)return null;
+            // Minutes and seconds are clock components; only the last one may carry a fraction.
+            if(parts.Length==3&&(values[0]%1!=0||values[1]>=60||values[2]>=60))return null;
+            if(parts.Length==2&&values[1]>=60)return null;
+            return parts.Length==3?values[0]*3600+values[1]*60+values[2]:values[0]*60+values[1];
         }
-        if(double.TryParse(text,NumberStyles.Float,CultureInfo.CurrentCulture,out var v)&&double.IsFinite(v))return v;
-        if(double.TryParse(text,NumberStyles.Float,CultureInfo.InvariantCulture,out v)&&double.IsFinite(v))return v;
-        return 0;
+        if(double.TryParse(text,NumberStyles.Float,CultureInfo.CurrentCulture,out var v)&&double.IsFinite(v)&&v>=0)return v;
+        if(double.TryParse(text,NumberStyles.Float,CultureInfo.InvariantCulture,out v)&&double.IsFinite(v)&&v>=0)return v;
+        return null;
     }
     // Fields show milliseconds, so the default End can round up to half a millisecond
     // past ffprobe's duration. MediaEngine allows the same slack; it gets the clamped End.
@@ -132,22 +141,42 @@ public sealed partial class ToolEditor:Window
     {
         if(media is not {Duration:<=0}||!player.NaturalDuration.HasTimeSpan)return;
         duration=player.NaturalDuration.TimeSpan.TotalSeconds;scrubber.Maximum=duration;
-        if(fields.TryGetValue("End",out var end)&&end.Text==defaults["End"])end.Text=defaults["End"]=TimeString(duration);
+        if(fields.TryGetValue("End",out var end)&&end.Text==defaults["End"]){defaults["End"]=TimeString(duration);SetTimeText("End",duration);}
         try{SyncTimeline();}catch(ArgumentException){}
     }
     private void Field(string name,double value)=>TextField(name,Number(value));
-    private void TextField(string name,string value){options.Children.Add(L10n.Label(new TextBlock{Text=name,Margin=new(4,12,4,0)}));var box=new TextBox{Text=value};System.Windows.Automation.AutomationProperties.SetAutomationId(box,name);if(name is "Start" or "End")box.LostKeyboardFocus+=(_,_)=>{try{SyncTimeline();}catch(ArgumentException){}};fields.Add(name,box);defaults.Add(name,value);options.Children.Add(box);}
+    private void TextField(string name,string value){options.Children.Add(L10n.Label(new TextBlock{Text=name,Margin=new(4,12,4,0)}));var box=new TextBox{Text=value};System.Windows.Automation.AutomationProperties.SetAutomationId(box,name);fields.Add(name,box);defaults.Add(name,value);options.Children.Add(box);}
+    /// Writes a time into Start/End and remembers it for the next validation.
+    private void SetTimeText(string name,double seconds){timeValues[name]=seconds;if(fields.TryGetValue(name,out var box))box.Text=TimeString(seconds);}
+    /// Applies a typed Start/End value, keeping the previous value when the range or order is invalid.
+    private void CommitTimeField(string name){
+        var box=fields[name];var value=ParseTime(box.Text);var was=timeValues.GetValueOrDefault(name);
+        var start=name=="Start"?0:timeValues.GetValueOrDefault("Start");
+        var end=name=="Start"?timeValues.GetValueOrDefault("End",duration):duration;
+        var valid=value is {} v&&v>=0&&(name=="Start"
+            ?v<end
+            :v>start&&(duration<=0||v<=duration+RangeSlack));
+        if(!valid){box.Text=TimeString(was);time.Text=L10n.Text(name=="Start"?"Choose a Start time before End and inside the file.":"Choose an End time after Start and inside the file.");return;}
+        SetTimeText(name,value!.Value);
+        try{SyncTimeline();}catch(ArgumentException){box.Text=TimeString(was);return;}
+        Seek(value.Value);
+    }
     /// Start/End fields with "Set Here" buttons that capture the current playhead position.
     private void TimeField(string name,double value){
         options.Children.Add(L10n.Label(new TextBlock{Text=name,Margin=new(4,12,4,0)}));
         var box=new TextBox{Text=TimeString(value)};
         System.Windows.Automation.AutomationProperties.SetAutomationId(box,name);
-        box.LostKeyboardFocus+=(_,_)=>{try{SyncTimeline();}catch(ArgumentException){}};
-        fields.Add(name,box);defaults.Add(name,Number(value)); // Store plain number for Reset; display uses TimeString
+        box.LostKeyboardFocus+=(_,_)=>CommitTimeField(name);
+        fields.Add(name,box);timeValues.Add(name,value);defaults.Add(name,TimeString(value));
         options.Children.Add(box);
         options.Children.Add(MainWindow.Button("Set Here",()=>{
-            box.Text=TimeString(player.Position.TotalSeconds);
-            try{SyncTimeline();}catch(ArgumentException){}
+            var position=Math.Clamp(player.Position.TotalSeconds,0,Math.Max(duration,0));
+            // Keep the range ordered: a Start at or after End resets End, and the reverse resets Start.
+            if(name=="Start"&&timeValues.GetValueOrDefault("End",duration)<=position)SetTimeText("End",Math.Max(duration,position));
+            if(name=="End"&&timeValues.GetValueOrDefault("Start")>=position)SetTimeText("Start",0);
+            SetTimeText(name,position);
+            try{SyncTimeline();}catch(ArgumentException){return;}
+            Seek(position);
         }));
     }
     private Action? resetCompression,resetPhotoView,resetPreviewZoom,applyExportProfile;
@@ -157,6 +186,7 @@ public sealed partial class ToolEditor:Window
         if(media is not null){if(processedPlayback)PlayOriginalPreview();player.Pause();playing=false;Seek(0);}
         resetCompression?.Invoke();resetPhotoView?.Invoke();resetPreviewZoom?.Invoke();
         foreach(var pair in defaults)fields[pair.Key].Text=pair.Value;
+        foreach(var name in new[]{"Start","End"})if(fields.ContainsKey(name)&&ParseTime(defaults[name]) is {} restored)timeValues[name]=restored;
         foreach(var choice in new[]{drawingTool,backdrop,collageLayout,redactionStyle,visualization,redactMode,bleepMode,sampleDepth,documentLayout,epubLayout,aspectRatio})choice.SelectedIndex=0;
         flipHorizontal.IsChecked=flipVertical.IsChecked=trimSilence.IsChecked=joinClips.IsChecked=false;fitCollage.IsChecked=preserveMetadata.IsChecked=true;
         backgroundImage=visualImage=null;annotationImage=null;archivePassword.Clear();
@@ -170,8 +200,7 @@ public sealed partial class ToolEditor:Window
     {
         if(!fields.TryGetValue(key,out var box))return fallback;
         if(key is "Start" or "End"){
-            var result=ParseTime(box.Text);
-            return double.IsFinite(result)?result:fallback;
+            return ParseTime(box.Text)??fallback;
         }
         if(!double.TryParse(box.Text,NumberStyles.Float,CultureInfo.CurrentCulture,out var value)&&!double.TryParse(box.Text,NumberStyles.Float,CultureInfo.InvariantCulture,out value)||!double.IsFinite(value))throw new ArgumentException("Enter a valid number for "+key+".");return value;
     }
@@ -221,7 +250,7 @@ public sealed partial class ToolEditor:Window
             dragging=false;cropGesture=null;activeStroke=null;activeRectangle=null;annotationShape=null;drawing.ReleaseMouseCapture();e.Handled=true;
         }
     }
-    private void Seek(double seconds){playingRange=false;player.Position=TimeSpan.FromSeconds(Math.Clamp(seconds,0,duration));time.Text=$"{player.Position:mm\\:ss\\.fff} / {TimeSpan.FromSeconds(duration):mm\\:ss\\.fff}";}
+    private void Seek(double seconds){playingRange=false;player.Position=TimeSpan.FromSeconds(Math.Clamp(seconds,0,duration));time.Text=$"{TimeString(player.Position.TotalSeconds)} / {TimeString(duration)}";}
     private void TogglePlayback(){playingRange=false;if(playing){player.Pause();playing=false;}else{if(player.Position.TotalSeconds>=duration-.001)Seek(0);player.Play();playing=true;}}
     private void OnKey(object sender,KeyEventArgs e)
     {
@@ -233,7 +262,7 @@ public sealed partial class ToolEditor:Window
         if(media is null||modifiers is not (ModifierKeys.None or ModifierKeys.Shift)||Keyboard.FocusedElement is System.Windows.Controls.Primitives.ButtonBase or System.Windows.Controls.Primitives.RangeBase)return;
         try
         {
-            switch(e.Key){case Key.Space:if(modifiers.HasFlag(ModifierKeys.Shift)){PlayRange();break;}TogglePlayback();break;case Key.Left:Seek(player.Position.TotalSeconds-(modifiers.HasFlag(ModifierKeys.Shift)?FineSeekStep:1));break;case Key.Right:Seek(player.Position.TotalSeconds+(modifiers.HasFlag(ModifierKeys.Shift)?FineSeekStep:1));break;case Key.I:if(fields.TryGetValue("Start",out var start)&&player.Position.TotalSeconds<Value("End",duration))start.Text=Number(player.Position.TotalSeconds);SyncTimeline();break;case Key.O:if(fields.TryGetValue("End",out var end)&&player.Position.TotalSeconds>Value("Start"))end.Text=Number(player.Position.TotalSeconds);SyncTimeline();break;default:return;}
+            switch(e.Key){case Key.Space:if(modifiers.HasFlag(ModifierKeys.Shift)){PlayRange();break;}TogglePlayback();break;case Key.Left:Seek(player.Position.TotalSeconds-(modifiers.HasFlag(ModifierKeys.Shift)?FineSeekStep:1));break;case Key.Right:Seek(player.Position.TotalSeconds+(modifiers.HasFlag(ModifierKeys.Shift)?FineSeekStep:1));break;case Key.I:if(fields.ContainsKey("Start")&&player.Position.TotalSeconds<Value("End",duration)){SetTimeText("Start",player.Position.TotalSeconds);SyncTimeline();}break;case Key.O:if(fields.ContainsKey("End")&&player.Position.TotalSeconds>Value("Start")){SetTimeText("End",player.Position.TotalSeconds);SyncTimeline();}break;default:return;}
         }
         catch(ArgumentException error){time.Text=error.Message;}
         e.Handled=true;
