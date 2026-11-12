@@ -558,6 +558,7 @@
 "COULDN’T FINISH" = "İŞLEM TAMAMLANAMADI";
 "COULDN’T OPEN THIS TOOL" = "BU ARAÇ AÇILAMADI";
 "COVER STYLE" = "KAPLAMA STİLİ";
+"CREATE A FINE-GRAINED TOKEN ON GITHUB" = "GITHUB’DA İNCE AYARLI TOKEN OLUŞTUR";
 "CREATE A NEW FLOAT" = "YENİ YÜZEN PENCERE OLUŞTUR";
 "CREATE COLLAGE" = "KOLAJ OLUŞTUR";
 "CREATE PDF" = "PDF OLUŞTUR";
@@ -789,6 +790,7 @@
 "Create Collage" = "Kolaj Oluştur";
 "Create PDF" = "PDF Oluştur";
 "Create a New Float" = "Yeni Yüzen Pencere Oluştur";
+"Create a fine-grained token on GitHub" = "GitHub’da ince ayarlı token oluştur";
 "Create a new Float" = "Yeni yüzen pencere oluştur";
 "Create visualization" = "Görselleştirme oluştur";
 "Created" = "Oluşturulma";
@@ -2396,6 +2398,7 @@
 "THE IMAGE ORDER MUST INCLUDE EVERY IMAGE ONCE." = "GÖRSEL SIRASINDA HER GÖRSEL BİR KEZ YER ALMALI.";
 "THE MEDIA SERVER REDIRECTED TO AN INSECURE URL." = "MEDYA SUNUCUSU GÜVENLİ OLMAYAN BİR ADRESE YÖNLENDİRDİ.";
 "THE OPERATION WAS CANCELLED." = "İŞLEM İPTAL EDİLDİ.";
+"THE PASSWORD IS INCORRECT, OR THE ARCHIVE IS DAMAGED." = "PAROLA YANLIŞ YA DA ARŞİV BOZUK.";
 "THE PDF CONTAINS NO PAGES." = "PDF'DE SAYFA YOK.";
 "THE PDF PAGE IS TOO LARGE TO RENDER AT THIS RESOLUTION." = "PDF SAYFASI BU ÇÖZÜNÜRLÜKTE İŞLENEMEYECEK KADAR BÜYÜK.";
 "THE POST DID NOT RETURN READABLE PHOTO DETAILS." = "GÖNDERİ OKUNABİLİR FOTOĞRAF BİLGİSİ DÖNDÜRMEDİ.";
@@ -2425,6 +2428,7 @@
 "THE UPSTREAM SERVER DID NOT RETURN A SUCCESSFUL HTTPS DOWNLOAD." = "KAYNAK SUNUCU BAŞARILI BİR HTTPS İNDİRMESİ DÖNDÜRMEDİ.";
 "THE VIDEO HAS NO READABLE DIMENSIONS." = "VİDEONUN BOYUTLARI OKUNAMIYOR.";
 "THESE FILES HAVE MOVED OR WERE DELETED." = "BU DOSYALAR TAŞINMIŞ VEYA SİLİNMİŞ.";
+"THIS ARCHIVE IS PROTECTED. ENTER ITS PASSWORD." = "BU ARŞİV PAROLA KORUMALI. PAROLASINI GİR.";
 "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE." = "BU KIRPMA, SEÇİLEN TÜM GÖRSELLERE UYGULANIR VE HER GÖRSELİN SINIRLARINA SIĞMALIDIR.";
 "THIS DOCUMENT NESTS ITS CONTENT TOO DEEPLY TO CONVERT." = "BU BELGENİN İÇERİĞİ DÖNÜŞTÜRÜLEMEYECEK KADAR İÇ İÇE.";
 "THIS FILE HAS MOVED OR WAS DELETED." = "BU DOSYA TAŞINMIŞ VEYA SİLİNMİŞ.";
@@ -2446,6 +2450,7 @@
 "THIS MEDIA IS PROTECTED AND CANNOT BE DOWNLOADED HERE." = "BU MEDYA KORUMALI VE BURADA İNDİRİLEMEZ.";
 "THIS OUTPUT FORMAT HAS NO ADJUSTABLE CONVERSION DEFAULTS." = "BU ÇIKTI BİÇİMİNİN AYARLANABİLİR DÖNÜŞTÜRME TERCİHİ YOK.";
 "THIS PAGES FILE IS TOO LARGE OR IS NOT A REGULAR DOCUMENT FILE." = "BU PAGES DOSYASI ÇOK BÜYÜK YA DA NORMAL BİR BELGE DOSYASI DEĞİL.";
+"THIS PDF CONTAINS DIGITAL SIGNATURES. THIS PAGE OPERATION CANNOT SAFELY PRESERVE THAT FEATURE. NO COPY WAS EXPORTED." = "BU PDF'DE DİJİTAL İMZA VAR. BU SAYFA İŞLEMİ BU ÖZELLİĞİ GÜVENLE KORUYAMAZ. KOPYA DIŞA AKTARILMADI.";
 "THIS PDF CONTAINS NO PAGES." = "BU PDF'DE SAYFA YOK.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT MERGING, SPLITTING OR REORDERING PAGES CANNOT KEEP. NO COPY WAS EXPORTED." = "BU PDF'DE BİRLEŞTİRME, BÖLME VEYA SAYFALARI YENİDEN SIRALAMA SIRASINDA KORUNAMAYAN FORM ALANLARI YA DA EKLER VAR. KOPYA DIŞA AKTARILMADI.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT METADATA CLEANUP CANNOT KEEP. NO COPY WAS EXPORTED." = "BU PDF'DE META VERİ TEMİZLİĞİ SIRASINDA KORUNAMAYAN FORM ALANLARI YA DA EKLER VAR. KOPYA DIŞA AKTARILMADI.";
@@ -2561,6 +2566,7 @@
 "The metadata field %@ could not be removed." = "%@ meta veri alanı kaldırılamadı.";
 "The metadata field %lld could not be removed." = "%lld meta veri alanı kaldırılamadı.";
 "The operation was cancelled." = "İşlem iptal edildi.";
+"The password is incorrect, or the archive is damaged." = "Parola yanlış ya da arşiv bozuk.";
 "The post did not return readable photo details." = "Gönderi okunabilir fotoğraf bilgisi döndürmedi.";
 "The processing tool could not start." = "İşleme aracı başlatılamadı.";
 "The requested PDF size could not be reached." = "İstenen PDF boyutuna inilemedi.";
@@ -2590,6 +2596,7 @@
 "The upstream server did not return a successful HTTPS download." = "Kaynak sunucu başarılı bir HTTPS indirmesi döndürmedi.";
 "The video has no readable dimensions." = "Videonun boyutları okunamıyor.";
 "These files have moved or were deleted." = "Bu dosyalar taşınmış veya silinmiş.";
+"This PDF contains digital signatures. This page operation cannot safely preserve that feature. No copy was exported." = "Bu PDF'de dijital imza var. Bu sayfa işlemi bu özelliği güvenle koruyamaz. Kopya dışa aktarılmadı.";
 "This PDF contains no pages." = "Bu PDF'de sayfa yok.";
 "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported." = "Bu PDF'de birleştirme, bölme veya sayfaları yeniden sıralama sırasında korunamayan form alanları ya da ekler var. Kopya dışa aktarılmadı.";
 "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported." = "Bu PDF'de meta veri temizliği sırasında korunamayan form alanları ya da ekler var. Kopya dışa aktarılmadı.";
@@ -2605,6 +2612,7 @@
 "This Word document contains duplicate relationship identifiers. It could not be converted to Pages." = "Bu Word belgesinde yinelenen ilişki kimlikleri var. Pages biçimine dönüştürülemedi.";
 "This Word document contains duplicate style identifiers. It could not be converted to Pages." = "Bu Word belgesinde yinelenen stil kimlikleri var. Pages biçimine dönüştürülemedi.";
 "This Word document has no editable body." = "Bu Word belgesinde düzenlenebilir bir içerik yok.";
+"This archive is protected. Enter its password." = "Bu arşiv parola korumalı. Parolasını gir.";
 "This conversion is not available for %@." = "%@ için bu dönüştürme kullanılamıyor.";
 "This conversion is not available for %lld." = "%lld için bu dönüştürme kullanılamıyor.";
 "This crop applies to every selected image and must fit inside each one." = "Bu kırpma, seçilen tüm görsellere uygulanır ve her görselin sınırlarına sığmalıdır.";

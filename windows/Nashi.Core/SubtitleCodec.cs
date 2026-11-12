@@ -39,7 +39,8 @@ public static partial class SubtitleCodec
     });
     public static string Convert(string source,string format)
     {
-        var cues=Parse(source);if(format is "srt" or "txt")cues=[..cues.Select(c=>c with{Text=HtmlNumbers(c.Text)})];return format switch
+        // WebVTT requires cues in start-time order; the stable sort keeps the file order of cues that start together (as on macOS).
+        var cues=Parse(source).OrderBy(c=>c.Start).ToArray();if(format is "srt" or "txt")cues=[..cues.Select(c=>c with{Text=HtmlNumbers(c.Text)})];return format switch
         {
             "vtt"=>"WEBVTT\n\n"+string.Join("\n\n",cues.Select(c=>$"{Stamp(c.Start,true)} --> {Stamp(c.End,true)}{(c.Settings.Length>0?" "+c.Settings:"")}\n{c.Text}"))+"\n",
             "srt"=>string.Join("\n\n",cues.Select((c,i)=>$"{i+1}\n{Stamp(c.Start,false)} --> {Stamp(c.End,false)}\n{WebUtility.HtmlDecode(VttOnlyTags().Replace(c.Text,""))}"))+"\n",
