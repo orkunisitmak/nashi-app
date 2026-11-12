@@ -39,6 +39,9 @@ public static partial class ImageEngine
         var angle=orientation switch{3=>180,5 or 8=>270,6 or 7=>90,_=>0};
         if(angle!=0)transforms.Children.Add(new RotateTransform(angle));
         if(transforms.Children.Count>0)image=new TransformedBitmap(image,transforms);
+        // Color profile and rotation are worked out once, here; left lazy, every crop, preview and copy would redo them on the whole picture.
+        // Above 40 MP that copy would hold hundreds of MB, so those pictures stay lazy.
+        if(!ReferenceEquals(image,frame)&&(long)image.PixelWidth*image.PixelHeight<=40_000_000)image=new CachedBitmap(image,BitmapCreateOptions.None,BitmapCacheOption.OnLoad);
         image.Freeze();return image;
     }
 
@@ -70,7 +73,7 @@ public static partial class ImageEngine
                 case "rotate":image=Rotate(image,options.Rotation);break;
                 case "flip":image=new TransformedBitmap(image,new ScaleTransform(options.Horizontal?-1:1,options.Horizontal?1:-1));break;
                 case "editImage":
-                    image=FromPng(PhotoCodec.Adjust(PngBytes(image),options.Adjustments));
+                    image=Adjusted(image,options.Adjustments);
                     image=TransformPhoto(image,options);break;
                 case "frameImage":image=Frame(image,options.Frame);ext="png";break;
                 // Like macOS, keep the source format: redacted pixels are replaced before encoding, and a
@@ -88,6 +91,14 @@ public static partial class ImageEngine
     }
     // Flip, turn, then size, as on macOS: Width/Height describe the finished image,
     // so Rotate Left/Right swapping the fields keeps the photo's proportions.
+    // The adjustments run straight on the picture's pixels (no PNG round trip).
+    private static BitmapSource Adjusted(BitmapSource image,PhotoAdjustments adjustments)
+    {
+        // Untouched dials change nothing, so a rotate or resize skips the pass over every pixel.
+        if(adjustments==new PhotoAdjustments()){var plain=new FormatConvertedBitmap(image,PixelFormats.Bgra32,null,0);plain.Freeze();return plain;}
+        var straight=new FormatConvertedBitmap(image,PixelFormats.Bgra32,null,0);int w=straight.PixelWidth,h=straight.PixelHeight;var pixels=new byte[w*h*4];straight.CopyPixels(pixels,w*4,0);
+        var adjusted=BitmapSource.Create(w,h,96,96,PixelFormats.Bgra32,null,PhotoCodec.AdjustPixels(pixels,w,h,adjustments),w*4);adjusted.Freeze();return adjusted;
+    }
     internal static BitmapSource TransformPhoto(BitmapSource image,ImageOptions options)
     {
         if(options.FlipHorizontal||options.FlipVertical)image=new TransformedBitmap(image,new ScaleTransform(options.FlipHorizontal?-1:1,options.FlipVertical?-1:1));

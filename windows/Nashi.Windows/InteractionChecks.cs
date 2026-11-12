@@ -16,7 +16,7 @@ internal static class InteractionChecks
         {var child=VisualTreeHelper.GetChild(root,i);yield return child;foreach(var nested in Children(child))yield return nested;}
     }
     private static Button? Caption(WheelWindow wheel,string title)=>Children(wheel).OfType<Button>()
-        .FirstOrDefault(button=>Children(button).OfType<TextBlock>().Any(text=>text.Text==L10n.Uppercase(title)));
+        .FirstOrDefault(button=>Children(button).OfType<TextBlock>().Any(text=>text.Text==L10n.Text(title)));
     private static void ControlKey(Window window,Key key)
     {
         window.Activate();DesktopInput.Pump();DesktopInput.Hold(Key.LeftCtrl,true);
@@ -89,7 +89,7 @@ internal static class InteractionChecks
                     if(pdf is not null)
                     {
                         string? selectedFormat=null;var timer=new DispatcherTimer{Interval=TimeSpan.FromMilliseconds(50)};
-                        timer.Tick+=(_,_)=>{var editor=Application.Current.Windows.OfType<ToolEditor>().FirstOrDefault();if(editor is null)return;selectedFormat=Children(editor).OfType<ComboBox>().FirstOrDefault(box=>box.Items.Contains("pdf"))?.SelectedItem as string;timer.Stop();DesktopInput.Click(Children(editor).OfType<Button>().Single(button=>button.Content is string title&&title.StartsWith("Save new copy",StringComparison.Ordinal)));};
+                        timer.Tick+=(_,_)=>{var editor=Application.Current.Windows.OfType<ToolEditor>().FirstOrDefault();if(editor is null)return;selectedFormat=Children(editor).OfType<ComboBox>().FirstOrDefault(box=>box.Items.Contains("pdf"))?.SelectedItem as string;timer.Stop();DesktopInput.Click(Children(editor).OfType<Button>().Single(button=>button.Content is string title&&title.StartsWith("Save Copy",StringComparison.Ordinal)));};
                         timer.Start();DesktopInput.Click(pdf);timer.Stop();
                         Verify(selectedFormat=="pdf","Selecting PDF did not open the conversion editor with PDF selected");
                         var until=DateTime.UtcNow.AddSeconds(15);while(library.Entries.Count==0&&DateTime.UtcNow<until)DesktopInput.Pump(50);
@@ -106,7 +106,7 @@ internal static class InteractionChecks
             Verify(shortcuts.Contains("Ctrl+Space / Enter  Araçları ve dönüştürmeleri aç",StringComparison.Ordinal)&&shortcuts.Contains("Delete  Seçili dosyaları Nashi listesinden kaldır",StringComparison.Ordinal),"Turkish shortcut help lost the conversion or selected-file removal guidance");
             var turkishWheel=Application.Current.Windows.OfType<WheelWindow>().FirstOrDefault(candidate=>candidate.Owner==window);
             var turkishConvert=turkishWheel is null?null:Caption(turkishWheel,"Convert");
-            Verify(turkishConvert is not null&&Children(turkishConvert).OfType<TextBlock>().Any(text=>text.Text=="DÖNÜŞTÜR"),"Turkish wheel did not show the localized conversion choice");
+            Verify(turkishConvert is not null&&Children(turkishConvert).OfType<TextBlock>().Any(text=>text.Text=="Dönüştür"),"Turkish wheel did not show the localized conversion choice");
             if(turkishConvert is not null)
             {
                 DesktopInput.Click(turkishConvert);var formats=Application.Current.Windows.OfType<WheelWindow>().FirstOrDefault(candidate=>candidate.Owner==window);

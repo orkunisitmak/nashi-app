@@ -17,7 +17,7 @@ public sealed partial class MainWindow
     {
         globalDrag=new(this,preferences,OnGlobalDrop,OpenCopiedLink);
         try{tray=new(this,ShowMain,TrayMenu);}catch(InvalidOperationException error){L10n.SetText(status,error.Message);}
-        Closing+=(_,e)=>{if(!e.Cancel&&tray is not null&&preferences.Value.KeepInTray&&!quitting){e.Cancel=true;Hide();}};
+        Closing+=(_,e)=>{if(!e.Cancel&&tray is not null&&preferences.Value.KeepInTray&&!quitting){e.Cancel=true;Hide();}};IsVisibleChanged+=(_,e)=>{if(e.NewValue is false)Memory.Release(anyway:true);};
         // Without a tray icon (Explorer not ready at sign-in), a hidden Nashi could not be reached.
         Closed+=(_,_)=>{launchTimer?.Stop();tray?.Dispose();};if(tray is not null&&Environment.GetCommandLineArgs().Contains("--background"))Hide();
     }

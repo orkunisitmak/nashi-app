@@ -111,7 +111,7 @@ internal sealed class WindowManagement:IDisposable
         {
             preview=new Window{Title="Nashi Placement Preview",WindowStyle=WindowStyle.None,AllowsTransparency=true,
                 Background=Brushes.Transparent,ResizeMode=ResizeMode.NoResize,ShowInTaskbar=false,ShowActivated=false,Topmost=true,Focusable=false};
-            preview.Content=new Border{Background=new SolidColorBrush(Color.FromArgb(35,225,189,99)),BorderBrush=Theme.Brush("Gold"),BorderThickness=new(2),CornerRadius=new(14),Margin=new(4)};
+            var target=Theme.Brush("Coral").Clone();target.Opacity=.14;preview.Content=new Border{Background=target,BorderBrush=Theme.Brush("Coral"),BorderThickness=new(2),CornerRadius=new(14),Margin=new(4)};
             PassThrough(preview);
         }
         if(!preview.IsVisible)preview.Show();Position(preview,frame);

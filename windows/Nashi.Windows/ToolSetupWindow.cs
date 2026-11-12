@@ -11,8 +11,8 @@ public sealed class ToolSetupWindow : Window
     private readonly Func<ToolGroup, IProgress<OperationProgress>, CancellationToken, Task> install;
     private readonly Action<bool> workingChanged;
     private readonly StackPanel groups = new();
-    private readonly TextBlock status = Label("Download the missing tools to enable all conversions, previews and web downloads. Tools already found on your computer are kept.");
-    private readonly ProgressBar progress = new() { Minimum = 0, Maximum = 1, Height = 6, Visibility = Visibility.Collapsed, Margin = new(0, 12, 0, 12) };
+    private readonly TextBlock status = Label("Download the missing tools to enable all conversions, previews and web downloads. Tools already found on your computer are kept.", 12, "Muted");
+    private readonly ProgressBar progress = new() { Minimum = 0, Maximum = 1, Visibility = Visibility.Collapsed, Margin = new(0, 8, 0, 4) };
     private readonly Button next, cancel;
     private CancellationTokenSource? cancellation;
     internal bool Working { get; private set; }
@@ -29,44 +29,53 @@ public sealed class ToolSetupWindow : Window
         Owner = owner; Theme.Attach(this); Title = "Set up Nashi tools"; Width = 646; Height = 690; MinWidth = 590; MinHeight = 560; WindowStartupLocation = WindowStartupLocation.CenterOwner;
         L10n.Bind(this,TitleProperty,"Set up Nashi tools");
         var root = new DockPanel(); Content = root;
-        var footer = new StackPanel { Margin = new(24) }; DockPanel.SetDock(footer, Dock.Bottom); root.Children.Add(footer);
-        footer.Children.Add(status); footer.Children.Add(progress);
-        var actions = new DockPanel { Margin = new(0, 14, 0, 0) }; footer.Children.Add(actions);
-        next = MainWindow.Primary("Download missing tools", async () => { if (Status.Ready) Close(); else await StartSetupAsync(); }); next.IsDefault = true;
+        var footer = new StackPanel { Margin = new(24, 4, 24, 20) }; DockPanel.SetDock(footer, Dock.Bottom); root.Children.Add(footer);
+        var actions = new DockPanel { Margin = new(0, 12, 0, 0) }; footer.Children.Add(actions);
+        next = MainWindow.Primary("Download missing tools", async () => { if (Status.Ready) Close(); else await StartSetupAsync(); }); next.IsDefault = true; next.Margin = new(0);
         AutomationProperties.SetAutomationId(next, "SetupContinue"); DockPanel.SetDock(next, Dock.Right); actions.Children.Add(next);
-        cancel = MainWindow.Button("Cancel setup", () => cancellation?.Cancel()); AutomationProperties.SetAutomationId(cancel, "SetupCancel"); actions.Children.Add(cancel);
-        var content = new StackPanel { Margin = new(28) }; root.Children.Add(new ScrollViewer { Content = content, VerticalScrollBarVisibility = ScrollBarVisibility.Auto });
-        content.Children.Add(Label("FIRST-TIME SETUP", 11)); content.Children.Add(Label("A few tools. More possibilities.", 28));
-        content.Children.Add(Label("One download per tool group. No account or GitHub token.", 14)); content.Children.Add(groups);
-        content.Children.Add(MainWindow.Button("Upstream versions, licenses and source links", () => MainWindow.OpenUrl("https://github.com/orkunisitmak/nashi-app/blob/main/docs/dependencies.md")));
+        var later = MainWindow.Button("Later", Close); later.Style = Ui.Style("Plain"); later.Margin = new(0, 0, 8, 0); DockPanel.SetDock(later, Dock.Right); actions.Children.Add(later);
+        cancel = MainWindow.Button("Cancel setup", () => cancellation?.Cancel()); cancel.Margin = new(0); cancel.HorizontalAlignment = HorizontalAlignment.Left; AutomationProperties.SetAutomationId(cancel, "SetupCancel"); actions.Children.Add(cancel);
+        var content = new StackPanel { Margin = new(24, 10, 24, 8) }; root.Children.Add(new ScrollViewer { Content = content, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled });
+        // The app icon beside a plain title and what the download is for.
+        var hero = new DockPanel { Margin = new(2, 0, 2, 18) }; var icon = new Image { Source = System.Windows.Media.Imaging.BitmapFrame.Create(new Uri("pack://application:,,,/Assets/NashiIcon.png")), Width = 60, Height = 60, Margin = new(0, 0, 16, 0), VerticalAlignment = VerticalAlignment.Top }; DockPanel.SetDock(icon, Dock.Left); hero.Children.Add(icon);
+        var intro = new StackPanel(); intro.Children.Add(Label("Set Up Tools", 24)); intro.Children.Add(Label("Some conversions use free, open-source tools. Download them once. Tools already on your computer are kept.", 13, "Muted")); hero.Children.Add(intro);
+        content.Children.Add(hero); var box = new Border { Child = groups, CornerRadius = new(16), Padding = new(16, 2, 16, 2), BorderThickness = new(1) }; box.SetResourceReference(Border.BackgroundProperty, "Well"); box.SetResourceReference(Border.BorderBrushProperty, "Line"); content.Children.Add(box);
+        var licenses = MainWindow.Button("Versions and Licenses", () => MainWindow.OpenUrl("https://github.com/orkunisitmak/nashi-app/blob/main/docs/dependencies.md")); licenses.Style = Ui.Style("Plain"); licenses.FontSize = 12; licenses.MinHeight = 26; licenses.Margin = new(0); licenses.VerticalAlignment = VerticalAlignment.Center;
+        var state = new DockPanel { Margin = new(4, 16, 4, 0) }; DockPanel.SetDock(licenses, Dock.Right); state.Children.Add(licenses); state.Children.Add(status); content.Children.Add(state); content.Children.Add(progress);
         Closing += (_, e) => { if (Working) { e.Cancel = true; cancellation?.Cancel(); } };
         Activated += (_, _) => { if (!Working) Refresh(); };
         PreviewKeyDown += (_, e) => { if (e.Key == Key.Escape) { if (Working) cancellation?.Cancel(); else Close(); e.Handled = true; } };
         Refresh();
     }
-    private static TextBlock Label(string text, double size = 13) => L10n.Label(new TextBlock { Text = text, FontSize = size, FontWeight = size >= 18 ? FontWeights.SemiBold : FontWeights.Normal, TextWrapping = TextWrapping.Wrap, Margin = new(0, 6, 0, 8) });
+    private static TextBlock Label(string text, double size = 13, string brush = "Ink")
+    {
+        var label = Ui.Text(text, size, brush, size >= 20 ? FontWeights.Bold : FontWeights.Normal); label.Margin = new(0, 0, 0, size >= 20 ? 5 : 0); return label;
+    }
     private void Refresh()
     {
         var ready = Status; groups.Children.Clear();
-        Group("Media tools", "FFmpeg, ffprobe, yt-dlp and Deno enable media conversion, previews and web downloads. Approximately 180 MB. FFmpeg and yt-dlp use GPL licenses; Deno uses MIT.", ready.MediaReady, ToolGroup.Media);
-        Group("Office tools", "LibreOffice 26.8.1 enables Office document conversions. Approximately 360 MB to download. MPL 2.0 and its included third-party licenses.", ready.OfficeReady, ToolGroup.Office);
+        Group("Media tools", "FFmpeg, ffprobe, yt-dlp and Deno · about 180 MB", "wave", ready.MediaReady, ToolGroup.Media);
+        Group("Office tools", "LibreOffice 26.8.1 · about 360 MB", "doc", ready.OfficeReady, ToolGroup.Office);
         L10n.Bind(next, ContentControl.ContentProperty, ready.Ready ? "Continue to Nashi" : "Download missing tools"); next.IsEnabled = !Working;
         cancel.Visibility = Working ? Visibility.Visible : Visibility.Collapsed; progress.Visibility = Working ? Visibility.Visible : Visibility.Collapsed;
         if (ready.Ready && !Working) L10n.SetText(status, "Ready. You can go back to your files.");
         else if(previouslyReady&&!Working)L10n.SetText(status,"Download the missing tools to enable all conversions, previews and web downloads. Tools already found on your computer are kept.");
         previouslyReady=ready.Ready;
     }
-    private void Group(string title, string detail, bool ready, ToolGroup group)
+    // One row per tool group: icon, name and size, then its state or a download button.
+    private void Group(string title, string detail, string glyph, bool ready, ToolGroup group)
     {
-        var row = new StackPanel { Margin = new(14) }; row.Children.Add(Label(title, 18)); row.Children.Add(Label(detail));
-        if (ready) row.Children.Add(Label("Already available on your computer"));
+        if (groups.Children.Count > 0) { var line = new Border { Height = 1 }; line.SetResourceReference(Border.BackgroundProperty, "Line"); groups.Children.Add(line); }
+        var row = new DockPanel { MinHeight = 58, Margin = new(0, 9, 0, 9) }; var icon = Ui.TileIcon(glyph); icon.Margin = new(0, 0, 12, 0); DockPanel.SetDock(icon, Dock.Left); row.Children.Add(icon);
+        FrameworkElement state;
+        if (ready) { var done = new StackPanel { Orientation = Orientation.Horizontal }; done.Children.Add(Icons.Make("check", 13, "Muted")); var text = Label("Already available on your computer", 12, "Muted"); text.Margin = new(6, 0, 0, 0); done.Children.Add(text); state = done; }
         else
         {
             var download = MainWindow.Button(group == ToolGroup.Media ? "Download media tools" : "Download office tools", async () => await StartSetupAsync(group));
-            download.IsEnabled = !Working; AutomationProperties.SetAutomationId(download, group == ToolGroup.Media ? "SetupMedia" : "SetupOffice"); row.Children.Add(download);
+            download.IsEnabled = !Working; download.MinHeight = 28; download.FontSize = 12; download.Margin = new(0); Ui.SetIcon(download, "download", 14); AutomationProperties.SetAutomationId(download, group == ToolGroup.Media ? "SetupMedia" : "SetupOffice"); state = download;
         }
-        var card = new Border { Child = row, CornerRadius = new(16), BorderThickness = new(1), Margin = new(0, 12, 0, 8) };
-        card.SetResourceReference(Border.BackgroundProperty, "Surface"); card.SetResourceReference(Border.BorderBrushProperty, "Line"); groups.Children.Add(card);
+        state.VerticalAlignment = VerticalAlignment.Center; state.Margin = new(12, 0, 0, 0); DockPanel.SetDock(state, Dock.Right); row.Children.Add(state);
+        var meta = new StackPanel { VerticalAlignment = VerticalAlignment.Center }; var name = Label(title, 13); name.FontWeight = FontWeights.SemiBold; meta.Children.Add(name); var sub = Label(detail, 11.5, "Muted"); sub.Margin = new(0, 2, 0, 0); meta.Children.Add(sub); row.Children.Add(meta); groups.Children.Add(row);
     }
     internal async Task StartSetupAsync(ToolGroup? selected = null)
     {

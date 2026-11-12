@@ -45,10 +45,17 @@ public sealed class GlobalDragController:IDisposable
     private void Poll()
     {
         UpdateShortcut();if(!preferences.Value.Enabled||!OwnerAvailable){wheel?.Close();wheel=null;down=false;opened=false;hint=null;return;}var held=PrimaryMouseButton.IsPressed;GetCursorPos(out var point);
-        if(!held){if(down){down=false;opened=false;hint=null;if(wheel is {IsVisible:true}){var old=wheel;var dismiss=new System.Windows.Threading.DispatcherTimer{Interval=TimeSpan.FromMilliseconds(150)};dismiss.Tick+=(_,_)=>{dismiss.Stop();if(old.IsVisible)old.Close();};dismiss.Start();}wheel=null;}return;}
-        if(!down){down=true;start=point;opened=false;hint=null;return;}if(opened||Math.Abs(point.X-start.X)+Math.Abs(point.Y-start.Y)<10)return;
-        hint??=Task.Run(()=>LinkAt(start));var chord=Chord();var p=preferences.Value;var kind=chord==p.ToolsModifier?"tools":chord==p.ConvertModifier?"convert":chord==p.ActionsModifier?"actions":null;if(kind is null)return;opened=true;if(InMoveSize())return;
-        var sourceHint=hint;wheel=new GlobalDropWheel(kind,p.WheelScale,(data,id)=>dropped(id,data,sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null),()=>sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null,()=>sourceHint?.IsCompleted!=false);wheel.Show();DesktopGeometry.PlaceWheel(wheel,point.X,point.Y,WheelPresentation.Diameter*p.WheelScale);
+        if(!held){if(down){down=false;opened=false;hint=null;if(wheel is {IsVisible:true}){var old=wheel;var dismiss=new System.Windows.Threading.DispatcherTimer{Interval=TimeSpan.FromMilliseconds(150)};dismiss.Tick+=(_,_)=>{dismiss.Stop();if(old.IsVisible)old.Dismiss();};dismiss.Start();}wheel=null;}return;}
+        if(!down){down=true;start=point;opened=false;hint=null;return;}
+        // While the drag goes on, another modifier turns the open wheel into its wheel (Ctrl for tools, then Alt for actions…).
+        if(opened){if(wheel is {IsVisible:true}&&Kind(Chord()) is {} next&&next!=wheel.Mode)wheel.Retarget(next);return;}
+        if(Math.Abs(point.X-start.X)+Math.Abs(point.Y-start.Y)<10)return;
+        hint??=Task.Run(()=>LinkAt(start));var p=preferences.Value;var kind=Kind(Chord());if(kind is null)return;opened=true;if(InMoveSize())return;
+        var sourceHint=hint;wheel=new GlobalDropWheel(kind,p.WheelScale,(data,id)=>dropped(id,data,sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null),()=>sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null,()=>sourceHint?.IsCompleted!=false);wheel.Show();DesktopGeometry.PlaceWheel(wheel,point.X,point.Y,WheelPresentation.Diameter*p.WheelScale);wheel.Frost();
+    }
+    private string? Kind(string chord)
+    {
+        var p=preferences.Value;return chord==p.ToolsModifier?"tools":chord==p.ConvertModifier?"convert":chord==p.ActionsModifier?"actions":null;
     }
     private static string? LinkAt(NativePoint point)
     {
@@ -75,7 +82,6 @@ internal sealed class GlobalDropWheel:Window
     // link reaches it. Plain mouse drags with a modifier (text selection, scrollbars) and OLE
     // drags of other data, such as selected text or a Premiere clip, never show it.
     // Fully transparent layered pixels ignore hit tests, so keep a tiny non-zero opacity.
-    private const double HiddenOpacity=.02;
     internal bool Revealed{get;private set;}
     // A hidden wheel is still the OLE target under the pointer and refuses drags it has nothing
     // for, so the app below never gets them (#768). Once a drag brings no file or link, and the
@@ -88,31 +94,49 @@ internal sealed class GlobalDropWheel:Window
     private volatile bool passThrough;internal bool PassingThrough{get{var handle=new WindowInteropHelper(this).Handle;return handle!=IntPtr.Zero&&(WindowManagement.Native.GetWindowLongPtr(handle,-20).ToInt64()&0x20)!=0;}}
     internal void PassThrough(){var handle=new WindowInteropHelper(this).Handle;if(handle==IntPtr.Zero||PassingThrough)return;_=WindowManagement.Native.SetWindowLongPtr(handle,-20,new nint(WindowManagement.Native.GetWindowLongPtr(handle,-20).ToInt64()|0x20));passThrough=PassingThrough;}
     private void Settle(bool settled){if(choices.Count>0||noTools)Reveal();else if(PassesThrough(Revealed,choices.Count,noTools,settled))PassThrough();}
-    private void Reveal(){if(Revealed)return;Revealed=true;foreach(var label in canvas.Children.OfType<Border>())label.Visibility=Visibility.Visible;WheelPresentation.Animate(this,HiddenOpacity);if(Opacity<1&&!HasAnimatedProperties)Opacity=1;}
-    private readonly string mode;private readonly Action<IDataObject,string> chosen;private readonly Func<string?> hint;private readonly Func<bool> hintSettled;private readonly Canvas canvas=new(){Width=540,Height=540,Background=Brushes.Transparent,AllowDrop=true};private string selection="";private IReadOnlyList<ToolChoice> choices=[];private string[] draggedFiles=[],resolvedFiles=[];
+    // Hidden, the wheel is only a nearly invisible disc that still catches the drag; revealed, the glass arrives.
+    private void Reveal()
+    {
+        if(Revealed)return;Revealed=true;canvas.Opacity=1;face.Enter();Feedback.Opened();
+    }
+    // Under the wheel as it opens: what is really there (Explorer, the desktop), for the glass to frost.
+    internal async void Frost(){if(WheelPresentation.Clear)Lens.SetSupply(this,await Lens.UnderAsync(this));}
+    internal string Mode=>mode;
+    internal void Retarget(string next)
+    {
+        mode=next;Title="Nashi · "+mode;selection="";var updated=Choices(lastFiles,lastLink,lastWeb);choices=updated;Build(choices);if(Revealed){face.Enter();Feedback.Opened();}
+    }
+    // Leaving: with a choice its chip lifts away; without one the wheel folds into its hub. Then the window goes.
+    private bool leaving,closed;
+    internal void Dismiss(){if(leaving)return;leaving=true;if(!Revealed||!IsVisible){Close();return;}face.Leave(false,Finish);}
+    private void Finish(){if(!closed)Close();}
+    private string[] lastFiles=[];private WebMediaPayload? lastLink,lastWeb;private WheelFace face=null!;
+    private string mode;private readonly Action<IDataObject,string> chosen;private readonly Func<string?> hint;private readonly Func<bool> hintSettled;private readonly Canvas canvas=new(){Width=540,Height=540,Background=Brushes.Transparent,AllowDrop=true};private string selection="";private IReadOnlyList<ToolChoice> choices=[];private string[] draggedFiles=[],resolvedFiles=[];
     public GlobalDropWheel(string mode,double scale,Action<IDataObject,string> chosen,Func<string?> hint,Func<bool> hintSettled)
     {
-        this.mode=mode;this.chosen=chosen;this.hint=hint;this.hintSettled=hintSettled;Title="Nashi · "+mode;Width=Height=WheelPresentation.Diameter*scale;WindowStyle=WindowStyle.None;AllowsTransparency=true;Background=Brushes.Transparent;ResizeMode=ResizeMode.NoResize;ShowInTaskbar=false;ShowActivated=false;Topmost=true;AllowDrop=true;Content=new Viewbox{Child=canvas};Build([]);Opacity=HiddenOpacity;
+        this.mode=mode;this.chosen=chosen;this.hint=hint;this.hintSettled=hintSettled;Title="Nashi · "+mode;Width=Height=WheelPresentation.Diameter*scale;WindowStyle=WindowStyle.None;AllowsTransparency=true;Background=Brushes.Transparent;ResizeMode=ResizeMode.NoResize;ShowInTaskbar=false;ShowActivated=false;Topmost=true;AllowDrop=true;canvas.Opacity=0;
+        var catcher=new Ellipse{Width=540,Height=540,Fill=new SolidColorBrush(Color.FromArgb(3,0,0,0))};Content=new Viewbox{Child=new Grid{Children={catcher,canvas}}};Build([]);
         // Reveal only once the payload offers choices. On entry the pointer sits in the center,
         // so e.Effects is still None even for a valid file drag.
         DragEnter+=(_,e)=>{entered++;var settled=hintSettled();Track(e);Settle(settled);};
         DragOver+=(_,e)=>{over++;var settled=hintSettled();Track(e);Settle(settled);};
-        Drop+=(_,e)=>{dropCount++;Track(e);var id=selection;Close();if(id.Length>0)chosen(e.Data,id);e.Handled=true;};PreviewKeyDown+=(_,e)=>{if(e.Key==Key.Escape){Close();e.Handled=true;}};
+        Drop+=(_,e)=>{dropCount++;Track(e);var id=selection;leaving=true;if(id.Length>0)chosen(e.Data,id);if(Revealed)face.Leave(id.Length>0,Finish);else Close();e.Handled=true;};Closed+=(_,_)=>closed=true;PreviewKeyDown+=(_,e)=>{if(e.Key==Key.Escape){Dismiss();e.Handled=true;}};
     }
     private void Track(DragEventArgs e)
     {
+        if(leaving){e.Effects=DragDropEffects.None;e.Handled=true;return;}
         // DragOver fires on every pointer move, so shortcuts are only resolved when the dragged files change.
         var dragged=e.Data.GetData(DataFormats.FileDrop) as string[]??[];if(!dragged.SequenceEqual(draggedFiles)){draggedFiles=dragged;resolvedFiles=ShellShortcut.Resolve(dragged);}
-        var files=resolvedFiles;var updated=Choices(files,DragPayload.Parse(e.Data),Payload(e.Data));
+        var files=resolvedFiles;var link=DragPayload.Parse(e.Data);var web=Payload(e.Data);lastFiles=files;lastLink=link;lastWeb=web;var updated=Choices(files,link,web);
         // Replacing the hit-test target during DragEnter causes OLE to enter
         // again instead of advancing to DragOver. Keep the visual tree stable
         // until the payload actually changes, and select on entry as well.
         // A file this mode has no tool for (an .ico, for example) still shows the wheel, with a message, so it does not look broken.
         var unsupported=files.Length>0&&files.All(p=>!Directory.Exists(p)||FeatureCatalog.Extension(p) is "pages" or "rtfd")&&updated.Count==0;
         if(!updated.SequenceEqual(choices)||unsupported!=noTools){choices=updated;noTools=unsupported;Build(choices);}
-        var p=e.GetPosition(canvas);var distance=(p-new Point(270,270)).Length;
-        if(distance<108||distance>250||choices.Count==0){selection="";Highlight(-1);}
-        else{var angle=(Math.Atan2(p.Y-270,p.X-270)*180/Math.PI-WheelPresentation.StartAngle(choices.Count)+360+180d/choices.Count)%360;var index=(int)(angle/(360d/choices.Count));var id=choices[index].Id;if(id!=selection){selection=id;Feedback.Play();}Highlight(index);}
+        var p=e.GetPosition(canvas);face.Aim(p);var distance=(p-new Point(WheelFace.Middle,WheelFace.Middle)).Length;
+        if(distance<WheelFace.Inner||distance>WheelFace.Outer||choices.Count==0){selection="";face.Hot(-1);}
+        else{var angle=(Math.Atan2(p.Y-WheelFace.Middle,p.X-WheelFace.Middle)*180/Math.PI-WheelPresentation.StartAngle(choices.Count)+360+180d/choices.Count)%360;var index=(int)(angle/(360d/choices.Count));var id=choices[index].Id;if(id!=selection){selection=id;Feedback.Hover(index);}face.Hot(index);}
         e.Effects=selection.Length>0?DragDropEffects.Copy:DragDropEffects.None;e.Handled=true;
     }
     private WebMediaPayload? Payload(IDataObject data)=>DragPayload.Parse(data,hint());
@@ -128,16 +152,10 @@ internal sealed class GlobalDropWheel:Window
         }
         if(web is null)return [];return web.Kind switch{"youtube"=>[new("download:video","Download Video","↓"),new("download:thumbnail","Download Thumbnail","▣"),new("download:audio","Download Audio","♫")],"instagramPhotos"=>[new("download:photos","Download Images","▣")],"instagramReel"=>[new("download:video","Download Video","↓"),new("download:audio","Download Audio","♫")],"image"=>[new("download:image","Download Image","↓")],_=>[new("download:video","Download Video","↓"),new("download:audio","Download Audio","♫") ]};
     }
-    private void Highlight(int index){var paths=canvas.Children.OfType<System.Windows.Shapes.Path>().ToArray();for(var n=0;n<paths.Length;n++){paths[n].Fill=Theme.Brush(n==index?"Sage":"Inset");paths[n].Stroke=Theme.Brush(n==index?"Gold":"Line");}}
     private bool noTools;
     private void Build(IReadOnlyList<ToolChoice> tools)
     {
-        canvas.Children.Clear();canvas.Children.Add(new Ellipse{Width=540,Height=540,Fill=WheelPresentation.Backdrop});var count=tools.Count;
-        for(var i=0;i<count;i++)
-        {
-            var angle=(WheelPresentation.StartAngle(count)+360d*i/count)*Math.PI/180;var half=(180d/count-1)*Math.PI/180;Point P(double r,double a)=>new(270+r*Math.Cos(a),270+r*Math.Sin(a));var a=angle-half;var b=angle+half;var geometry=new StreamGeometry();using(var g=geometry.Open()){g.BeginFigure(P(108,a),true,true);g.LineTo(P(250,a),true,false);g.ArcTo(P(250,b),new(250,250),0,b-a>Math.PI,SweepDirection.Clockwise,true,false);g.LineTo(P(108,b),true,false);g.ArcTo(P(108,a),new(108,108),0,b-a>Math.PI,SweepDirection.Counterclockwise,true,false);}canvas.Children.Add(new System.Windows.Shapes.Path{Data=geometry,Fill=Theme.Brush("Inset"),Stroke=Theme.Brush("Line")});
-            var (stack,location)=WheelPresentation.Caption(tools[i],geometry,angle,half,count);var label=new Border{Child=stack,Width=stack.DesiredSize.Width,Height=stack.DesiredSize.Height,IsHitTestVisible=false};Canvas.SetLeft(label,location.X-label.Width/2);Canvas.SetTop(label,location.Y-label.Height/2);canvas.Children.Add(label);
-        }
-        var center=new Border{Width=180,Height=180,IsHitTestVisible=false,Visibility=Revealed?Visibility.Visible:Visibility.Hidden,Child=L10n.Label(new TextBlock{Text=count==0?(noTools?"No tools for this file type":"Keep dragging\nDrop a file or link"):mode=="convert"?"Convert":mode=="actions"?"File actions":"Tools",TextWrapping=TextWrapping.Wrap,TextAlignment=TextAlignment.Center,VerticalAlignment=VerticalAlignment.Center,FontSize=20,FontWeight=FontWeights.SemiBold,Foreground=Theme.Brush("Ink")} )};Canvas.SetLeft(center,180);Canvas.SetTop(center,180);canvas.Children.Add(center);
+        var count=tools.Count;face=new WheelFace(tools,count==0?(noTools?"No tools for this file type":"Keep dragging"):mode=="convert"?"Convert":mode=="actions"?"File actions":"Tools",count==0?(noTools?"":"Drop a file or link"):"Release to choose",buttons:false);
+        canvas.Children.Clear();canvas.Children.Add(face.Canvas);
     }
 }
