@@ -5,6 +5,7 @@ public sealed record Preferences
 {
     public string Language{get;init;}="en";
     public bool AutomaticUpdateChecks{get;init;}=true;
+    public bool AskBeforeDownload{get;init;}=true;
     public bool Enabled{get;init;}=true;public bool Feedback{get;init;}=true;public bool Animations{get;init;}=true;public bool KeepInTray{get;init;}=true;public bool RevealFinished{get;init;}
     public bool ToolsPromptSeen{get;init;}
     public double WheelScale{get;init;}=1;public string WheelFinish{get;init;}="glass";public string FloatBehavior{get;init;}="createNew";

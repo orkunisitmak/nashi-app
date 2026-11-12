@@ -59,7 +59,7 @@ public sealed partial class MainWindow:Window
         home.Children.Add(workArea);
         var drop=new Grid();drop.ColumnDefinitions.Add(new(){Width=new(1,GridUnitType.Star)});drop.ColumnDefinitions.Add(new(){Width=new(166)});
         var dropText=new StackPanel();drop.Children.Add(dropText);dropText.Children.Add(selectionPill);selection.Margin=new(0,12,0,8);dropText.Children.Add(selection);dropText.Children.Add(fileDescription);
-        var picks=new WrapPanel{Margin=new(0,14,0,8)};chooseFilesButton=Primary("Choose files",Choose);picks.Children.Add(chooseFilesButton);openWheelButton=Primary("Open wheel",ShowWheel);picks.Children.Add(Button("Paste",PasteClipboard));picks.Children.Add(openWheelButton);dropText.Children.Add(picks);
+        var picks=new WrapPanel{Margin=new(0,14,0,8)};chooseFilesButton=Primary("Choose files",Choose);picks.Children.Add(chooseFilesButton);openWheelButton=Primary("Open wheel",ShowWheel);picks.Children.Add(Button("Paste",PasteClipboard));picks.Children.Add(openWheelButton);picks.Children.Add(Button("Screenshot & text",()=>OpenScreenshot()));dropText.Children.Add(picks);
         Grid.SetColumn(garden,1);drop.Children.Add(garden);
         var dropStack=new StackPanel();dropStack.Children.Add(drop);list.ItemsSource=files;list.SelectionMode=SelectionMode.Extended;
         BuildFileChips();var clear=Button("Clear",()=>{files.Clear();Refresh();});DockPanel.SetDock(clear,Dock.Right);manage.Children.Add(clear);manage.Children.Add(list);dropStack.Children.Add(manage);
@@ -68,7 +68,7 @@ public sealed partial class MainWindow:Window
         var web=new StackPanel();web.Children.Add(Text("Download a link",17));web.Children.Add(Text("Video, audio, or an image. Straight into your tools.",12,"Muted"));
         var download=new DockPanel{Margin=new(0,12,0,0)};var save=Primary("Download ↗",async()=>await DownloadAsync());DockPanel.SetDock(save,Dock.Right);download.Children.Add(save);DockPanel.SetDock(downloadKind,Dock.Right);download.Children.Add(downloadKind);download.Children.Add(link);web.Children.Add(download);
         web.Children.Add(Text("Ctrl+Shift+D  Use a copied link  ·  Public, downloadable media",11,"Muted"));webContent.Margin=new(24);webContent.Children.Add(Text("Download from the web",27));webContent.Children.Add(Text("A link. A file. Yours to work with.",14,"Muted"));var webCard=Card(web);webCard.Margin=new(0,20,0,0);webContent.Children.Add(webCard);BuildWebOptions();
-        var webHeader=new DockPanel();var shortcut=Text("Ctrl+Shift+D",12,"Muted");DockPanel.SetDock(shortcut,Dock.Right);webHeader.Children.Add(shortcut);var arrow=Text("↓",28,"Gold");arrow.Margin=new(0,0,14,0);DockPanel.SetDock(arrow,Dock.Left);webHeader.Children.Add(arrow);var caption=new StackPanel();caption.SetValue(TextBlock.TextAlignmentProperty,TextAlignment.Left);caption.Children.Add(Text("Download a link",15));caption.Children.Add(Text("Video, audio, or an image. Straight into your tools.",12,"Muted"));webHeader.Children.Add(caption);var webButton=Button("",OpenDownload);webButton.Content=webHeader;webButton.SetResourceReference(StyleProperty,"CardButton");workArea.Children.Add(webButton);workArea.Children.Add(actions);
+        var webHeader=new DockPanel();var shortcut=Text("Ctrl+Shift+D",12,"Muted");DockPanel.SetDock(shortcut,Dock.Right);webHeader.Children.Add(shortcut);var arrow=Text("↓",28,"Gold");arrow.Margin=new(0,0,14,0);DockPanel.SetDock(arrow,Dock.Left);webHeader.Children.Add(arrow);var caption=new StackPanel();caption.SetValue(TextBlock.TextAlignmentProperty,TextAlignment.Left);caption.Children.Add(Text("Open copied link",15));caption.Children.Add(Text("Ctrl-drag a media link, or copy it and send it here.",12,"Muted"));webHeader.Children.Add(caption);var webButton=Button("",OpenCopiedLink);AutomationProperties.SetAutomationId(webButton,"OpenCopiedMediaLink");AutomationProperties.SetName(webButton,L10n.Text("Open copied link"));webButton.Content=webHeader;webButton.SetResourceReference(StyleProperty,"CardButton");workArea.Children.Add(webButton);workArea.Children.Add(actions);
         var recentHeading=new DockPanel{Margin=new(0,24,0,10)};var all=Button("See all  ↗",()=>ShowLibrary(true));DockPanel.SetDock(all,Dock.Right);recentHeading.Children.Add(all);recentSearch.TextChanged+=(_,_)=>RenderLibrary();DockPanel.SetDock(recentSearch,Dock.Right);recentHeading.Children.Add(recentSearch);var recentTitle=new StackPanel{Orientation=Orientation.Horizontal,VerticalAlignment=VerticalAlignment.Center};recentTitle.Children.Add(Text("Freshly made",19));recentCount.Margin=new(10,0,0,0);recentTitle.Children.Add(recentCount);recentHeading.Children.Add(recentTitle);home.Children.Add(recentHeading);var recentCard=Card(recentRows);recentCard.Padding=new(7);home.Children.Add(recentCard);
         var footer=new WrapPanel{Margin=new(0,8,0,0)};var mediaBtn=Button("Set up media tools",async()=>await SetupAsync());mediaBtn.Padding=new(12,7,12,7);mediaBtn.FontSize=12;footer.Children.Add(mediaBtn);var officeBtn=Button("Set up office tools",async()=>await SetupOfficeAsync());officeBtn.Padding=new(12,7,12,7);officeBtn.FontSize=12;footer.Children.Add(officeBtn);var shortcutsBtn=Button("Features & shortcuts",ShowShortcuts);shortcutsBtn.Padding=new(12,7,12,7);shortcutsBtn.FontSize=12;footer.Children.Add(shortcutsBtn);home.Children.Add(new Expander{Header="Tools & shortcuts",Content=footer,Margin=new(4,8,4,0)});
         libraryPage.Children.Add(Text("Your Library",30));libraryPage.Children.Add(Text("Freshly made, pasted, and ready for another round.",14,"Muted"));
@@ -105,7 +105,7 @@ public sealed partial class MainWindow:Window
         e.Handled=true;
     }
     private IEnumerable<LibraryEntry> SearchLibrary(string query)=>library.Search(query,L10n.Language);
-    private static TextBlock Text(string value,double size,string? color=null,bool localize=true)
+    internal static TextBlock Text(string value,double size,string? color=null,bool localize=true)
     {
         var text=new TextBlock{Text=value,FontSize=size,TextWrapping=TextWrapping.Wrap,VerticalAlignment=VerticalAlignment.Center,FontWeight=size>=17?FontWeights.SemiBold:FontWeights.Normal};if(color is not null)text.SetResourceReference(TextBlock.ForegroundProperty,color);return localize?L10n.Label(text):text;
     }
@@ -155,6 +155,7 @@ public sealed partial class MainWindow:Window
         if(modifiers==ModifierKeys.Control&&key==Key.O){Choose();return true;}
         if(modifiers==ModifierKeys.Control&&key==Key.U){_ = CheckUpdatesAsync(true);return true;}
         if(LibraryVisible&&key==Key.Down&&modifiers==ModifierKeys.None&&ReferenceEquals(focus,search)){SelectLibrary(1);return true;}
+        if(modifiers==(ModifierKeys.Control|ModifierKeys.Alt)&&key==Key.S){OpenScreenshot(true);return true;}
         if(ClipboardImport.IsEditing(focus))return false;
         if(!LibraryVisible&&modifiers==ModifierKeys.None&&key==Key.Delete&&list.IsKeyboardFocusWithin)
         {
@@ -194,8 +195,8 @@ public sealed partial class MainWindow:Window
         dialog.Closing+=(_,e)=>{if(busy){e.Cancel=true;L10n.SetText(status,"Finish or cancel the current operation first.");}};
         dialog.Closed+=(_,_)=>{inspection?.Cancel();if(dialog.Content is ScrollViewer scroll)scroll.Content=null;dialog.Content=null;webWindow=null;};dialog.PreviewKeyDown+=(_,e)=>{if(e.Key==Key.Escape&&!busy){dialog.Close();e.Handled=true;}};dialog.Show();link.Focus();
     }
-    private void SetBusy(bool value){busy=value;updateButton.IsEnabled=!value&&!checking;workArea.IsEnabled=!value;webContent.IsEnabled=!value;L10n.Bind(toolsSetupButton,ContentControl.ContentProperty,tools.Ready&&officeRuntime.Executable is not null?"Tools ready":"Finish setup");RenderLibrary();}
-    internal const string ShortcutHelp="Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools and conversions\nDelete  Remove selected files from Nashi\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved.";
+    private void SetBusy(bool value){busy=value;updateButton.IsEnabled=!value&&!checking;workArea.IsEnabled=!value;webContent.IsEnabled=!value;linkDownloadWindow?.SetBusy(value);L10n.Bind(toolsSetupButton,ContentControl.ContentProperty,tools.Ready&&officeRuntime.Executable is not null?"Tools ready":"Finish setup");RenderLibrary();}
+    internal const string ShortcutHelp="Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools and conversions\nDelete  Remove selected files from Nashi\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+drag  Download a media link\nCtrl+Shift+D  Use a copied download link\nCtrl+Alt+S  Capture screen and copy text\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved.";
     private void ShowShortcuts()=>MessageBox.Show(this,L10n.Text(ShortcutHelp),L10n.Text("Nashi · Features & shortcuts"));
     private sealed class FileNameConverter:System.Windows.Data.IValueConverter
     {
@@ -281,10 +282,11 @@ public sealed partial class MainWindow:Window
         catch(Exception error){MessageBox.Show(this,L10n.Text(error.Message),L10n.Text("Couldn’t open this tool"),MessageBoxButton.OK,MessageBoxImage.Information);}
         finally{if(temporary is not null&&File.Exists(temporary))File.Delete(temporary);SetBusy(false);}
     }
-    private async Task RunAsync(Func<string,IProgress<OperationProgress>,CancellationToken,Task<IReadOnlyList<string>>> work,string label="Fresh copy")
+    private async Task RunAsync(Func<string,IProgress<OperationProgress>,CancellationToken,Task<IReadOnlyList<string>>> work,string label="Fresh copy",string? destinationFolder=null)
     {
         if(busy)return;var owner=webWindow?.IsActive==true?webWindow:this;string destination;
-        if(label=="Move"||preferences.Value.OutputMode=="ask"||(files.Count==0&&owner==this)){var folder=new OpenFolderDialog{Title=L10n.Text("Save new files to…"),InitialDirectory=Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)};if(folder.ShowDialog(owner)!=true)return;destination=folder.FolderName;}
+        if(destinationFolder is not null)destination=destinationFolder;
+        else if(label=="Move"||preferences.Value.OutputMode=="ask"||(files.Count==0&&owner==this)){var folder=new OpenFolderDialog{Title=L10n.Text("Save new files to…"),InitialDirectory=Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)};if(folder.ShowDialog(owner)!=true)return;destination=folder.FolderName;}
         else destination=owner==webWindow?preferences.Value.DownloadFolder:preferences.Value.OutputMode=="folder"&&!string.IsNullOrWhiteSpace(preferences.Value.OutputFolder)?preferences.Value.OutputFolder:Path.GetDirectoryName(files[0])!;
         SetBusy(true);using var cancellation=new CancellationTokenSource();var toast=new ToastWindow(owner,cancellation.Cancel);toast.Show();
         try{var outputs=await work(destination,new Progress<OperationProgress>(toast.Update),cancellation.Token);toast.Complete(outputs);Record(label,outputs);L10n.SetText(status,$"Saved {outputs.Count} new {(outputs.Count==1?"file":"files")}. Originals kept.");if(preferences.Value.RevealFinished&&outputs.Count>0)Reveal(outputs[0]);}
@@ -297,13 +299,24 @@ public sealed partial class MainWindow:Window
         var completion=new TaskCompletionSource<IReadOnlyList<string>>(TaskCreationOptions.RunContinuationsAsynchronously);
         var thread=new Thread(()=>{try{completion.SetResult(work());}catch(Exception error){completion.SetException(error);}}){IsBackground=true};thread.SetApartmentState(ApartmentState.STA);thread.Start();return completion.Task;
     }
-    private async Task DownloadAsync()
+    private async Task DownloadAsync(string? destinationFolder=null)
     {
         if(busy)return;
         var payload=WebMediaPayload.Parse(link.Text);var kind=downloadKind.SelectedItem as string??"video";
         if(!tools.Ready&&kind!="image"&&payload?.Kind!="image"&&!(kind=="thumbnail"&&payload?.Kind=="youtube")){MessageBox.Show(webWindow??this,L10n.Text("Choose Set up media tools once to enable web downloads."),L10n.Text("Media setup"));return;}
         if(kind=="photos"&&inspectedLink!=link.Text){await InspectWebLinkAsync();return;}
-        try{var url=WebDownload.Validate(payload?.Url??link.Text).AbsoluteUri;await RunAsync((destination,p,t)=>new WebDownload(tools).DownloadAsync(url,kind,destination,p,t,webQuality.SelectedIndex==1?1080:webQuality.SelectedIndex==2?720:null,kind=="photos"?new HashSet<int>(selectedWebPhotos):null),"Download "+kind);}catch(Exception error){MessageBox.Show(webWindow??this,L10n.Text(error.Message),L10n.Text("Check your link"));}
+        try
+        {
+            var uri=WebDownload.Validate(payload?.Url??link.Text);var engine=new WebDownload(tools);string? fileName=null;destinationFolder??=preferences.Value.DownloadFolder;
+            if(preferences.Value.AskBeforeDownload)
+            {
+                var suggestion=kind=="photos"?"Instagram "+uri.Segments.Last().Trim('/'):payload?.Kind=="image"?Path.GetFileNameWithoutExtension(Uri.UnescapeDataString(uri.LocalPath)):L10n.Text("Web media");
+                var dialog=new DownloadSaveWindow(webWindow?.IsActive==true?webWindow:this,destinationFolder,suggestion,kind!="photos"&&payload?.Kind!="image"?async token=>(await engine.InspectAsync(uri.AbsoluteUri,token)).Title:null);
+                if(dialog.ShowDialog()!=true)return;destinationFolder=dialog.DirectoryPath;fileName=dialog.FileName;
+            }
+            await RunAsync((destination,p,t)=>engine.DownloadAsync(uri.AbsoluteUri,kind,destination,p,t,webQuality.SelectedIndex==1?1080:webQuality.SelectedIndex==2?720:null,kind=="photos"?new HashSet<int>(selectedWebPhotos):null,fileName),"Download "+kind,destinationFolder);
+        }
+        catch(Exception error){MessageBox.Show(webWindow??this,L10n.Text(error.Message),L10n.Text("Check your link"));}
     }
     private async Task SetupAsync()
     {

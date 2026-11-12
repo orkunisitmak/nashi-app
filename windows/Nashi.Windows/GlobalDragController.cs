@@ -9,9 +9,9 @@ using System.Windows.Shapes;
 using Nashi.Core;
 namespace Nashi.Windows;
 
-/// Reads only the three configured modifiers and primary mouse button. It never
-/// records keystrokes or polls the clipboard. Actual files/links arrive through
-/// OLE drag/drop after the user chooses a wheel segment.
+/// Reads the configured modifiers, primary mouse button, and Escape during an active
+/// reel gesture. It never records keystrokes or polls the clipboard. Files/links use
+/// OLE drop; a verified browser reel can also finish a pointer-only drag.
 public sealed class GlobalDragController:IDisposable
 {
     [StructLayout(LayoutKind.Sequential)]internal struct NativePoint{public int X,Y;}
@@ -27,53 +27,71 @@ public sealed class GlobalDragController:IDisposable
     /// Those drags belong to window management and never carry files.
     private static bool InMoveSize(){var info=new GuiThreadInfo{Size=Marshal.SizeOf<GuiThreadInfo>()};return GetGUIThreadInfo(0,ref info)&&(info.Flags&0x2)!=0;}
     [DllImport("oleacc.dll")]private static extern int AccessibleObjectFromPoint(NativePoint point,[MarshalAs(UnmanagedType.Interface)]out object accessible,[MarshalAs(UnmanagedType.Struct)]out object child);
-    private readonly Window owner;private readonly PreferencesStore preferences;private readonly Action<string,IDataObject,string?> dropped;private readonly Action link;private readonly System.Windows.Threading.DispatcherTimer timer;
-    private NativePoint start;private bool down,opened;private Task<string?>? hint;private GlobalDropWheel? wheel;private HwndSource? source;private IntPtr handle;private bool? shortcutEnabled;
+    private readonly Window owner;private readonly PreferencesStore preferences;private readonly Action<string,IDataObject,string?> dropped;private readonly Action link;private readonly Action? capture;private readonly System.Windows.Threading.DispatcherTimer timer;
+    private sealed record SourceLink(string Url,bool PointerReel);
+    private NativePoint start;private bool down,opened,delayHint;private Task<SourceLink?>? hint;private long hintStarted;private GlobalDropWheel? wheel;private HwndSource? source;private IntPtr handle;private bool? shortcutEnabled;
     internal GlobalDropWheel? ActiveWheel=>wheel;
     public bool LinkShortcutRegistered{get;private set;}
+    public bool ScreenShortcutRegistered{get;private set;}
     private bool OwnerAvailable=>DesktopGeometry.IsInteractive(owner);
-    public GlobalDragController(Window owner,PreferencesStore preferences,Action<string,IDataObject,string?> dropped,Action link)
+    public GlobalDragController(Window owner,PreferencesStore preferences,Action<string,IDataObject,string?> dropped,Action link,Action? capture=null)
     {
-        this.owner=owner;this.preferences=preferences;this.dropped=dropped;this.link=link;timer=new(){Interval=TimeSpan.FromMilliseconds(40)};timer.Tick+=(_,_)=>Poll();
+        this.owner=owner;this.preferences=preferences;this.dropped=dropped;this.link=link;this.capture=capture;timer=new(){Interval=TimeSpan.FromMilliseconds(40)};timer.Tick+=(_,_)=>Poll();
         if(new WindowInteropHelper(owner).Handle!=IntPtr.Zero)Register();else owner.SourceInitialized+=(_,_)=>Register();timer.Start();
     }
-    private void Register(){handle=new WindowInteropHelper(owner).Handle;source=HwndSource.FromHwnd(handle);source.AddHook(Hook);UpdateShortcut();}
+    private void Register(){handle=new WindowInteropHelper(owner).Handle;source=HwndSource.FromHwnd(handle);source.AddHook(Hook);UpdateShortcut();ScreenShortcutRegistered=capture is not null&&RegisterHotKey(handle,7702,0x4000|0x2|0x1,0x53);}
     private void UpdateShortcut(){if(handle==IntPtr.Zero)return;var enabled=preferences.Value.Enabled;if(shortcutEnabled==enabled)return;shortcutEnabled=enabled;if(LinkShortcutRegistered)UnregisterHotKey(handle,7701);LinkShortcutRegistered=enabled&&RegisterHotKey(handle,7701,0x4000|0x2|0x4,0x44);}
-    private IntPtr Hook(IntPtr window,int message,IntPtr w,IntPtr l,ref bool handled){if(message==0x0312&&w.ToInt32()==7701){if(preferences.Value.Enabled&&OwnerAvailable)link();handled=true;}return IntPtr.Zero;}
+    private IntPtr Hook(IntPtr window,int message,IntPtr w,IntPtr l,ref bool handled){if(message==0x0312&&w.ToInt32()==7701){if(preferences.Value.Enabled&&OwnerAvailable)link();handled=true;}else if(message==0x0312&&w.ToInt32()==7702){if(OwnerAvailable)capture?.Invoke();handled=true;}return IntPtr.Zero;}
     private static bool Held(int key)=>(GetAsyncKeyState(key)&0x8000)!=0;
     private string Chord(){var parts=new List<string>();if(Held(0x11))parts.Add("Ctrl");if(Held(0x10))parts.Add("Shift");if(Held(0x12))parts.Add("Alt");return string.Join('+',parts);}
     private void Poll()
     {
         UpdateShortcut();if(!preferences.Value.Enabled||!OwnerAvailable){wheel?.Close();wheel=null;down=false;opened=false;hint=null;return;}var held=PrimaryMouseButton.IsPressed;GetCursorPos(out var point);
-        if(!held){if(down){down=false;opened=false;hint=null;if(wheel is {IsVisible:true}){var old=wheel;var dismiss=new System.Windows.Threading.DispatcherTimer{Interval=TimeSpan.FromMilliseconds(150)};dismiss.Tick+=(_,_)=>{dismiss.Stop();if(old.IsVisible)old.Close();};dismiss.Start();}wheel=null;}return;}
-        if(!down){down=true;start=point;opened=false;hint=null;return;}if(opened||Math.Abs(point.X-start.X)+Math.Abs(point.Y-start.Y)<10)return;
-        hint??=Task.Run(()=>LinkAt(start));var chord=Chord();var p=preferences.Value;var kind=chord==p.ToolsModifier?"tools":chord==p.ConvertModifier?"convert":chord==p.ActionsModifier?"actions":null;if(kind is null)return;opened=true;if(InMoveSize())return;
-        var sourceHint=hint;wheel=new GlobalDropWheel(kind,p.WheelScale,(data,id)=>dropped(id,data,sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null),()=>sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null,()=>sourceHint?.IsCompleted!=false);wheel.Show();DesktopGeometry.PlaceWheel(wheel,point.X,point.Y,WheelPresentation.Diameter*p.WheelScale);
+        if(!held){if(down){down=false;opened=false;hint=null;if(wheel?.CompletePointer(point.X,point.Y)==true){wheel=null;return;}if(wheel is {IsVisible:true}){var old=wheel;var dismiss=new System.Windows.Threading.DispatcherTimer{Interval=TimeSpan.FromMilliseconds(150)};dismiss.Tick+=(_,_)=>{dismiss.Stop();if(old.IsVisible)old.Close();};dismiss.Start();}wheel=null;}return;}
+        if(!down){down=true;start=point;opened=false;hint=null;return;}
+        if(opened)
+        {
+            if(wheel is {IsVisible:true}&&hint?.IsCompletedSuccessfully==true&&hint.Result is {PointerReel:true} sourceLink)
+            {
+                if(Held(0x1B)){wheel.Close();wheel=null;return;}
+                wheel.TrackPointer(point.X,point.Y,sourceLink.Url);
+            }
+            return;
+        }
+        if(Math.Abs(point.X-start.X)+Math.Abs(point.Y-start.Y)<10)return;
+        var chord=Chord();var p=preferences.Value;var kind=chord==p.ToolsModifier?"tools":chord==p.ConvertModifier?"convert":chord==p.ActionsModifier?"actions":null;if(kind is null)return;
+        if(hint is null){var origin=start;hint=Task.Run(()=>LinkAt(origin));hintStarted=Environment.TickCount64;delayHint=BrowserLinkHint.IsBrowserWindow(GetForegroundWindow());}
+        // Resolve a browser origin before covering it, for at most 200 ms; file drags retain their immediate wheel.
+        if(delayHint&&!hint.IsCompleted&&Environment.TickCount64-hintStarted<200)return;
+        opened=true;if(InMoveSize())return;
+        var sourceHint=hint;wheel=new GlobalDropWheel(kind,p.WheelScale,(data,id)=>dropped(id,data,sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result?.Url:null),()=>sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result?.Url:null,()=>sourceHint?.IsCompleted!=false);wheel.Show();DesktopGeometry.PlaceWheel(wheel,point.X,point.Y,WheelPresentation.Diameter*p.WheelScale);
     }
-    private static string? LinkAt(NativePoint point)
+    private static SourceLink? LinkAt(NativePoint point)
     {
+        string? fallback=null;
         try
         {
-            var element=AutomationElement.FromPoint(new Point(point.X,point.Y));for(var n=0;n<7&&element is not null;n++,element=TreeWalker.ControlViewWalker.GetParent(element))
+            var origin=AutomationElement.FromPoint(new Point(point.X,point.Y));var element=origin;for(var n=0;n<7&&element is not null;n++,element=TreeWalker.ControlViewWalker.GetParent(element))
             {
                 if(element.Current.IsPassword||element.Current.ControlType==ControlType.Edit)return null;
-                if(element.TryGetCurrentPattern(ValuePattern.Pattern,out var value)&&WebMediaPayload.Parse(((ValuePattern)value).Current.Value) is {} result)return result.Url;
+                if(element.TryGetCurrentPattern(ValuePattern.Pattern,out var value)&&WebMediaPayload.Parse(((ValuePattern)value).Current.Value) is {} result){if(result.Kind!="image")return new(result.Url,BrowserLinkHint.PointerReel(origin,result.Url));fallback??=result.Url;}
             }
             if(AccessibleObjectFromPoint(point,out var accessible,out var child)>=0)
             {
-                try{for(var n=0;n<4;n++){var value=accessible.GetType().InvokeMember("accValue",System.Reflection.BindingFlags.GetProperty,null,accessible,[child])?.ToString();if(WebMediaPayload.Parse(value) is {} link)return link.Url;var parent=accessible.GetType().InvokeMember("accParent",System.Reflection.BindingFlags.GetProperty,null,accessible,null);if(parent is null)break;Marshal.FinalReleaseComObject(accessible);accessible=parent;child=0;}}finally{if(Marshal.IsComObject(accessible))Marshal.FinalReleaseComObject(accessible);}
+                try{for(var n=0;n<4;n++){var value=accessible.GetType().InvokeMember("accValue",System.Reflection.BindingFlags.GetProperty,null,accessible,[child])?.ToString();if(WebMediaPayload.Parse(value) is {} link){if(link.Kind!="image")return new(link.Url,BrowserLinkHint.PointerReel(origin,link.Url));fallback??=link.Url;}var parent=accessible.GetType().InvokeMember("accParent",System.Reflection.BindingFlags.GetProperty,null,accessible,null);if(parent is null)break;Marshal.FinalReleaseComObject(accessible);accessible=parent;child=0;}}finally{if(Marshal.IsComObject(accessible))Marshal.FinalReleaseComObject(accessible);}
             }
-        }catch(ElementNotAvailableException){}catch(InvalidOperationException){}catch(COMException){}catch(System.Reflection.TargetInvocationException){}catch(MissingMethodException){}return null;
+            var address=BrowserLinkHint.Read(origin);return address is not null?new(address,BrowserLinkHint.PointerReel(origin,address)):fallback is not null?new(fallback,false):null;
+        }catch(ElementNotAvailableException){}catch(InvalidOperationException){}catch(COMException){}catch(System.Reflection.TargetInvocationException){}catch(MissingMethodException){}return fallback is not null?new(fallback,false):null;
     }
-    public void Dispose(){timer.Stop();wheel?.Close();if(handle!=IntPtr.Zero)UnregisterHotKey(handle,7701);source?.RemoveHook(Hook);}
+    public void Dispose(){timer.Stop();wheel?.Close();if(handle!=IntPtr.Zero){UnregisterHotKey(handle,7701);UnregisterHotKey(handle,7702);}source?.RemoveHook(Hook);}
 }
 
 internal sealed class GlobalDropWheel:Window
 {
+    internal bool PointerGesture{get;private set;}private string? pointerUrl;
     internal string State=>$"entered={entered}, over={over}, dropped={dropCount}, choices={choices.Count}, selection={selection}, revealed={Revealed}, passThrough={passThrough}";private int entered,over,dropCount;
-    // The wheel opens almost transparent and only appears once an OLE drag carrying a file or
-    // link reaches it. Plain mouse drags with a modifier (text selection, scrollbars) and OLE
-    // drags of other data, such as selected text or a Premiere clip, never show it.
+    // Reveal for a file/link OLE payload or a verified browser reel pointer gesture.
+    // Plain modifier drags in other apps, text fields and comment text keep their normal behavior.
     // Fully transparent layered pixels ignore hit tests, so keep a tiny non-zero opacity.
     private const double HiddenOpacity=.02;
     internal bool Revealed{get;private set;}
@@ -110,10 +128,24 @@ internal sealed class GlobalDropWheel:Window
         // A file this mode has no tool for (an .ico, for example) still shows the wheel, with a message, so it does not look broken.
         var unsupported=files.Length>0&&files.All(p=>!Directory.Exists(p)||FeatureCatalog.Extension(p) is "pages" or "rtfd")&&updated.Count==0;
         if(!updated.SequenceEqual(choices)||unsupported!=noTools){choices=updated;noTools=unsupported;Build(choices);}
-        var p=e.GetPosition(canvas);var distance=(p-new Point(270,270)).Length;
+        SelectPoint(e.GetPosition(canvas));
+        e.Effects=selection.Length>0?DragDropEffects.Copy:DragDropEffects.None;e.Handled=true;
+    }
+    private void SelectPoint(Point p)
+    {
+        var distance=(p-new Point(270,270)).Length;
         if(distance<108||distance>250||choices.Count==0){selection="";Highlight(-1);}
         else{var angle=(Math.Atan2(p.Y-270,p.X-270)*180/Math.PI-WheelPresentation.StartAngle(choices.Count)+360+180d/choices.Count)%360;var index=(int)(angle/(360d/choices.Count));var id=choices[index].Id;if(id!=selection){selection=id;Feedback.Play();}Highlight(index);}
-        e.Effects=selection.Length>0?DragDropEffects.Copy:DragDropEffects.None;e.Handled=true;
+    }
+    internal void TrackPointer(int x,int y,string url)
+    {
+        if(!IsVisible||entered>0||passThrough||WebMediaPayload.Parse(url) is not {Kind:"instagramReel"} web)return;
+        PointerGesture=true;pointerUrl=web.Url;var updated=Choices([],null,web);if(!updated.SequenceEqual(choices)){choices=updated;Build(choices);}SelectPoint(canvas.PointFromScreen(new(x,y)));Reveal();
+    }
+    internal bool CompletePointer(int x,int y)
+    {
+        if(!IsVisible||!PointerGesture||entered>0||pointerUrl is null)return false;SelectPoint(canvas.PointFromScreen(new(x,y)));if(selection.Length==0)return false;
+        PointerGesture=false;var id=selection;var data=new DataObject(DataFormats.UnicodeText,pointerUrl);Close();chosen(data,id);return true;
     }
     private WebMediaPayload? Payload(IDataObject data)=>DragPayload.Parse(data,hint());
     private IReadOnlyList<ToolChoice> Choices(string[] files,WebMediaPayload? dataLink,WebMediaPayload? web)
@@ -126,7 +158,7 @@ internal sealed class GlobalDropWheel:Window
             if(mode=="actions")return [new("share","Share","◉"),new("float","Float","▣"),new("copy","Copy","▱"),new("move","Move","↗"),new("copyPath","Copy Path","↪"),new("terminal","Terminal",">_")];
             return FeatureCatalog.Tools(files).Select(t=>new ToolChoice(t,FeatureCatalog.ToolNames[t],MainWindow.ToolSymbol(t))).ToArray();
         }
-        if(web is null)return [];return web.Kind switch{"youtube"=>[new("download:video","Download Video","↓"),new("download:thumbnail","Download Thumbnail","▣"),new("download:audio","Download Audio","♫")],"instagramPhotos"=>[new("download:photos","Download Images","▣")],"instagramReel"=>[new("download:video","Download Video","↓"),new("download:audio","Download Audio","♫")],"image"=>[new("download:image","Download Image","↓")],_=>[new("download:video","Download Video","↓"),new("download:audio","Download Audio","♫") ]};
+        return web is null?[]:DragPayload.DownloadChoices(web);
     }
     private void Highlight(int index){var paths=canvas.Children.OfType<System.Windows.Shapes.Path>().ToArray();for(var n=0;n<paths.Length;n++){paths[n].Fill=Theme.Brush(n==index?"Sage":"Inset");paths[n].Stroke=Theme.Brush(n==index?"Gold":"Line");}}
     private bool noTools;
@@ -138,6 +170,6 @@ internal sealed class GlobalDropWheel:Window
             var angle=(WheelPresentation.StartAngle(count)+360d*i/count)*Math.PI/180;var half=(180d/count-1)*Math.PI/180;Point P(double r,double a)=>new(270+r*Math.Cos(a),270+r*Math.Sin(a));var a=angle-half;var b=angle+half;var geometry=new StreamGeometry();using(var g=geometry.Open()){g.BeginFigure(P(108,a),true,true);g.LineTo(P(250,a),true,false);g.ArcTo(P(250,b),new(250,250),0,b-a>Math.PI,SweepDirection.Clockwise,true,false);g.LineTo(P(108,b),true,false);g.ArcTo(P(108,a),new(108,108),0,b-a>Math.PI,SweepDirection.Counterclockwise,true,false);}canvas.Children.Add(new System.Windows.Shapes.Path{Data=geometry,Fill=Theme.Brush("Inset"),Stroke=Theme.Brush("Line")});
             var (stack,location)=WheelPresentation.Caption(tools[i],geometry,angle,half,count);var label=new Border{Child=stack,Width=stack.DesiredSize.Width,Height=stack.DesiredSize.Height,IsHitTestVisible=false};Canvas.SetLeft(label,location.X-label.Width/2);Canvas.SetTop(label,location.Y-label.Height/2);canvas.Children.Add(label);
         }
-        var center=new Border{Width=180,Height=180,IsHitTestVisible=false,Visibility=Revealed?Visibility.Visible:Visibility.Hidden,Child=L10n.Label(new TextBlock{Text=count==0?(noTools?"No tools for this file type":"Keep dragging\nDrop a file or link"):mode=="convert"?"Convert":mode=="actions"?"File actions":"Tools",TextWrapping=TextWrapping.Wrap,TextAlignment=TextAlignment.Center,VerticalAlignment=VerticalAlignment.Center,FontSize=20,FontWeight=FontWeights.SemiBold,Foreground=Theme.Brush("Ink")} )};Canvas.SetLeft(center,180);Canvas.SetTop(center,180);canvas.Children.Add(center);
+        var center=new Border{Width=180,Height=180,IsHitTestVisible=false,Visibility=Revealed?Visibility.Visible:Visibility.Hidden,Child=L10n.Label(new TextBlock{Text=count==0?(noTools?"No tools for this file type":"Keep dragging\nDrop a file or link"):tools.Any(tool=>tool.Id.StartsWith("download:",StringComparison.Ordinal))?"Download":mode=="convert"?"Convert":mode=="actions"?"File actions":"Tools",TextWrapping=TextWrapping.Wrap,TextAlignment=TextAlignment.Center,VerticalAlignment=VerticalAlignment.Center,FontSize=20,FontWeight=FontWeights.SemiBold,Foreground=Theme.Brush("Ink")} )};Canvas.SetLeft(center,180);Canvas.SetTop(center,180);canvas.Children.Add(center);
     }
 }

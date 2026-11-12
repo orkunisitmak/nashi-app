@@ -24,6 +24,7 @@ internal static class InteractionChecks
     }
     internal static void Run(string root,Action<bool,string> check)
     {
+        WebDropChecks.Run(root,check);
         var results=new List<(bool Passed,string Message)>();void Verify(bool passed,string message)=>results.Add((passed,message));
         var directory=Path.Combine(root,"interaction-fixture-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(directory);
         var visual=new DrawingVisual();using(var drawing=visual.RenderOpen())drawing.DrawRectangle(Brushes.Gold,null,new Rect(0,0,40,30));
@@ -122,5 +123,6 @@ internal static class InteractionChecks
             window.Close();L10n.Language=language;Feedback.Enabled=feedback;
         }
         foreach(var result in results)check(result.Passed,result.Message);
+        DownloadSaveChecks.Run(root,check);
     }
 }

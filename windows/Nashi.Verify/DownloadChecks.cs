@@ -14,6 +14,7 @@ internal static class DownloadChecks
     }
     public static async Task Run(Action<bool,string> check,string root)
     {
+        DownloadNamingChecks.Run(check,root);
         var culture=System.Globalization.CultureInfo.CurrentCulture;
         try
         {
