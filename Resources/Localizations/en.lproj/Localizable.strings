@@ -489,6 +489,7 @@
 "CHOOSE ZIP, TAR OR GZIP." = "CHOOSE ZIP, TAR OR GZIP.";
 "CLARITY" = "CLARITY";
 "CLEAR" = "CLEAR";
+"CLEAR ALL LIBRARY ENTRIES" = "CLEAR ALL LIBRARY ENTRIES";
 "CLEAR FLOAT" = "CLEAR FLOAT";
 "CLEAR SELECTION" = "CLEAR SELECTION";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "CLIPBOARD IS BUSY. TRY AGAIN.";
@@ -691,6 +692,7 @@
 "Clear" = "Clear";
 "Clear Float" = "Clear Float";
 "Clear Selection" = "Clear Selection";
+"Clear all Library entries" = "Clear all Library entries";
 "Clip %@" = "Clip %@";
 "Clip %lld" = "Clip %lld";
 "Clipboard is busy. Try Paste again." = "Clipboard is busy. Try Paste again.";
@@ -2005,8 +2007,10 @@
 "Release to place · Esc cancels" = "Release to place · Esc cancels";
 "Remove" = "Remove";
 "Remove %@" = "Remove %@";
+"Remove %@ from Library" = "Remove %@ from Library";
 "Remove %@ from selection" = "Remove %@ from selection";
 "Remove %lld" = "Remove %lld";
+"Remove %lld from Library" = "Remove %lld from Library";
 "Remove %lld from selection" = "Remove %lld from selection";
 "Remove All" = "Remove All";
 "Remove Audio" = "Remove Audio";

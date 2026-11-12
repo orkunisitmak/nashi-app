@@ -152,13 +152,14 @@ public sealed partial class ToolEditor:Window
     private void CommitTimeField(string name){
         var box=fields[name];var value=ParseTime(box.Text);var was=timeValues.GetValueOrDefault(name);
         var start=name=="Start"?0:timeValues.GetValueOrDefault("Start");
-        var end=name=="Start"?timeValues.GetValueOrDefault("End",duration):duration;
+        var rawEnd=timeValues.GetValueOrDefault("End",duration);
+        var end=name=="Start"&&duration>0?Math.Min(rawEnd,duration):rawEnd;
         var valid=value is {} v&&v>=0&&(name=="Start"
-            ?v<end
-            :v>start&&(duration<=0||v<=duration+RangeSlack));
-        if(!valid){box.Text=TimeString(was);time.Text=L10n.Text(name=="Start"?"Choose a Start time before End and inside the file.":"Choose an End time after Start and inside the file.");return;}
+            ?end-v>=MinRange-1e-9
+            :v-start>=MinRange-1e-9&&(duration<=0||v<=duration+RangeSlack));
+        if(!valid){box.Text=TimeString(was);time.Text=L10n.Text(name=="Start"?"Choose a Start time at least 0.05 s before End and inside the file.":"Choose an End time at least 0.05 s after Start and inside the file.");return;}
         SetTimeText(name,value!.Value);
-        try{SyncTimeline();}catch(ArgumentException){box.Text=TimeString(was);return;}
+        try{SyncTimeline();}catch(ArgumentException){SetTimeText(name,was);return;}
         Seek(value.Value);
     }
     /// Start/End fields with "Set Here" buttons that capture the current playhead position.
@@ -170,11 +171,21 @@ public sealed partial class ToolEditor:Window
         fields.Add(name,box);timeValues.Add(name,value);defaults.Add(name,TimeString(value));
         options.Children.Add(box);
         options.Children.Add(MainWindow.Button("Set Here",()=>{
-            var position=Math.Clamp(player.Position.TotalSeconds,0,Math.Max(duration,0));
-            // Keep the range ordered: a Start at or after End resets End, and the reverse resets Start.
-            if(name=="Start"&&timeValues.GetValueOrDefault("End",duration)<=position)SetTimeText("End",Math.Max(duration,position));
-            if(name=="End"&&timeValues.GetValueOrDefault("Start")>=position)SetTimeText("Start",0);
-            SetTimeText(name,position);
+            var length=Math.Max(duration,0);
+            var position=Math.Clamp(player.Position.TotalSeconds,0,length);
+            // Keep at least MinRange between the ends; MediaEditorOptions rejects anything shorter.
+            if(name=="Start"){
+                var end=Math.Clamp(timeValues.GetValueOrDefault("End",length),0,length);
+                position=Math.Clamp(position,0,Math.Max(0,end-MinRange));
+                SetTimeText("Start",position);
+                if(timeValues.GetValueOrDefault("End",length)<position+MinRange)SetTimeText("End",Math.Min(length,position+MinRange));
+            }
+            else{
+                var start=Math.Clamp(timeValues.GetValueOrDefault("Start"),0,length);
+                position=Math.Clamp(position,Math.Min(length,start+MinRange),length);
+                SetTimeText("End",position);
+                if(timeValues.GetValueOrDefault("Start")>position-MinRange)SetTimeText("Start",Math.Max(0,position-MinRange));
+            }
             try{SyncTimeline();}catch(ArgumentException){return;}
             Seek(position);
         }));
@@ -200,7 +211,9 @@ public sealed partial class ToolEditor:Window
     {
         if(!fields.TryGetValue(key,out var box))return fallback;
         if(key is "Start" or "End"){
-            return ParseTime(box.Text)??fallback;
+            // Invalid text must not silently become the default range: that would start
+            // playback or save a full-length trim the user never typed.
+            return ParseTime(box.Text)??throw new ArgumentException("Enter a valid time for "+key+".");
         }
         if(!double.TryParse(box.Text,NumberStyles.Float,CultureInfo.CurrentCulture,out var value)&&!double.TryParse(box.Text,NumberStyles.Float,CultureInfo.InvariantCulture,out value)||!double.IsFinite(value))throw new ArgumentException("Enter a valid number for "+key+".");return value;
     }

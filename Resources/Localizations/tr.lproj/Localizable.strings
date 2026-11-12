@@ -489,6 +489,7 @@
 "CHOOSE ZIP, TAR OR GZIP." = "ZIP, TAR VEYA GZIP SEÇ.";
 "CLARITY" = "NETLİK";
 "CLEAR" = "TEMİZLE";
+"CLEAR ALL LIBRARY ENTRIES" = "KİTAPLIKTAKİ TÜM KAYITLARI TEMİZLE";
 "CLEAR FLOAT" = "YÜZEN PENCEREYİ TEMİZLE";
 "CLEAR SELECTION" = "SEÇİMİ TEMİZLE";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "PANO MEŞGUL. TEKRAR DENE.";
@@ -691,6 +692,7 @@
 "Clear" = "Temizle";
 "Clear Float" = "Yüzen Pencereyi Temizle";
 "Clear Selection" = "Seçimi Temizle";
+"Clear all Library entries" = "Kitaplıktaki tüm kayıtları temizle";
 "Clip %@" = "Klip %@";
 "Clip %lld" = "Klip %lld";
 "Clipboard is busy. Try Paste again." = "Pano meşgul. Yeniden yapıştırmayı dene.";
@@ -2005,8 +2007,10 @@
 "Release to place · Esc cancels" = "Yerleştirmek için bırak · Esc iptal eder";
 "Remove" = "Kaldır";
 "Remove %@" = "%@ öğesini kaldır";
+"Remove %@ from Library" = "%@ Kitaplıktan Kaldır";
 "Remove %@ from selection" = "%@ öğesini seçimden kaldır";
 "Remove %lld" = "%lld öğesini kaldır";
+"Remove %lld from Library" = "%lld Kitaplıktan Kaldır";
 "Remove %lld from selection" = "%lld öğesini seçimden kaldır";
 "Remove All" = "Tümünü Kaldır";
 "Remove Audio" = "Sesi Kaldır";
