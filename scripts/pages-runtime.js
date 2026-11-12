@@ -16,8 +16,11 @@ if (typeof globalThis.TextDecoder !== "function") {
       if (!/^utf-?8$/i.test(label)) throw new Error("Only UTF-8 text is supported.");
     }
     decode(bytes = new Uint8Array()) {
+      const view = bytes instanceof ArrayBuffer ? new Uint8Array(bytes)
+        : ArrayBuffer.isView(bytes) ? new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength) : null;
+      if (!view) throw new TypeError("TextDecoder requires a buffer or buffer view.");
       let binary = "";
-      for (let i = 0; i < bytes.length; i += 8192) binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+      for (let i = 0; i < view.length; i += 8192) binary += String.fromCharCode(...view.subarray(i, i + 8192));
       return _nashiUTF8Decode(btoa(binary));
     }
   };
