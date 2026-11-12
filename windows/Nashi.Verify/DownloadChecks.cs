@@ -12,6 +12,17 @@ internal static class DownloadChecks
         public override async ValueTask<int> ReadAsync(Memory<byte> buffer,CancellationToken token=default){await Task.Delay(Timeout.Infinite,token);return 0;}
         public override int Read(byte[] buffer,int offset,int count)=>throw new NotSupportedException();public override void Flush(){}public override long Seek(long offset,SeekOrigin origin)=>throw new NotSupportedException();public override void SetLength(long length)=>throw new NotSupportedException();public override void Write(byte[] buffer,int offset,int count)=>throw new NotSupportedException();
     }
+    // A stream that pauses briefly between reads, simulating a download that stalls
+    // but resumes well within the 120-second production idle timeout.
+    private sealed class SlowStream:Stream
+    {
+        private readonly byte[] data;private int offset;
+        public SlowStream(byte[] data){this.data=data;}
+        public override bool CanRead=>true;public override bool CanWrite=>false;public override bool CanSeek=>false;
+        public override long Length=>data.Length;public override long Position{get=>offset;set=>throw new NotSupportedException();}
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer,CancellationToken token=default){await Task.Delay(100,token);var count=System.Math.Min(buffer.Length,data.Length-offset);if(count>0){data.AsSpan(offset,count).CopyTo(buffer.Span);offset+=count;}return count;}
+        public override int Read(byte[] buffer,int offset,int count)=>throw new NotSupportedException();public override void Flush(){}public override long Seek(long offset,SeekOrigin origin)=>throw new NotSupportedException();public override void SetLength(long length)=>throw new NotSupportedException();public override void Write(byte[] buffer,int offset,int count)=>throw new NotSupportedException();
+    }
     public static async Task Run(Action<bool,string> check,string root)
     {
         var culture=System.Globalization.CultureInfo.CurrentCulture;
@@ -51,5 +62,9 @@ internal static class DownloadChecks
         {try{WebDownload.Validate(blocked);check(false,"Non-public address accepted: "+blocked);}catch(ArgumentException){check(true,"");}}
         foreach(var allowed in new[]{"https://example.org/a","http://8.8.8.8/a","http://100.63.255.255/a","http://100.128.0.1/a","http://172.15.0.1/a","http://172.32.0.1/a","http://192.169.0.1/a","http://198.17.0.1/a","http://198.20.0.1/a","http://223.255.255.255/a","http://[2001:4860:4860::8888]/a","http://[::ffff:8.8.8.8]/a","https://10.0.0.1.example.org/a"})
             check(WebDownload.Validate(allowed).AbsoluteUri.Length>0,"Public address rejected: "+allowed);
+        // The production idle timeout is 120 seconds; a download that stalls briefly and resumes must still finish.
+        check(VerifiedDownload.DefaultIdle==TimeSpan.FromSeconds(120),"Tool download idle timeout is not 120 seconds");
+        var slowBytes=new byte[]{10,11,12};using var slowHandler=new Handler((request,n)=>Response(request,new StreamContent(new SlowStream(slowBytes))));await VerifiedDownload.FetchForTest(uri,output,10,null,CancellationToken.None,slowHandler,VerifiedDownload.DefaultIdle);check(File.ReadAllBytes(output).SequenceEqual(slowBytes)&&!File.Exists(output+".part"),"Download with brief stall under 120s idle timeout failed");File.Delete(output);
+        using var slowAnyHandler=new Handler((request,n)=>Response(request,new StreamContent(new SlowStream(slowBytes))));await VerifiedDownload.FetchAnyForTest(new[]{uri},output,10,null,CancellationToken.None,slowAnyHandler,VerifiedDownload.DefaultIdle);check(File.ReadAllBytes(output).SequenceEqual(slowBytes)&&!File.Exists(output+".part"),"Any-download with brief stall under 120s idle timeout failed");File.Delete(output);
     }
 }
