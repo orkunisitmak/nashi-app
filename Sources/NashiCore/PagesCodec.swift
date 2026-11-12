@@ -187,7 +187,19 @@ private enum PagesDOCXReader {
         let defaultParagraph = paragraph(defaults?.first("pPrDefault")?.first("pPr"))
         let relationships = try relationMap(package.appendingPathComponent("word/_rels/document.xml.rels"))
         let reader = Reader(package: package, relationships: relationships, styles: styles, defaultCharacter: defaultCharacter, defaultParagraph: defaultParagraph, token: token)
-        var model: [String: Any] = ["blocks": try blockElements(body).flatMap { try reader.blocks($0) }]
+        // A paragraph-level sectPr ends a section; unless the break is
+        // continuous (or a column break) the next section starts a new page.
+        var blocks: [[String: Any]] = [], sectionStartsPage = false
+        for element in blockElements(body) {
+            for var block in try reader.blocks(element) {
+                // A table has no paragraph properties to carry the break.
+                if sectionStartsPage, block["type"] as? String == "paragraph" { block["paragraph"] = (block["paragraph"] as? [String:Any] ?? [:]).merging(["pageBreakBefore":true]) { _,new in new } }
+                sectionStartsPage = false
+                blocks.append(block)
+            }
+            if element.local == "p", let section = element.first("pPr")?.first("sectPr") { sectionStartsPage = ["nextPage","oddPage","evenPage"].contains(section.first("type")?.attr("val") ?? "nextPage") }
+        }
+        var model: [String: Any] = ["blocks": blocks]
         if let section = body.first("sectPr") {
             var page: [String: Any] = [:]
             if let size = section.first("pgSz") { if let w = size.number("w") { page["pageWidth"] = w / 20 }; if let h = size.number("h") { page["pageHeight"] = h / 20 } }
