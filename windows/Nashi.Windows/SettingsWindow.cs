@@ -30,17 +30,18 @@ public sealed partial class SettingsWindow:Window
                 box.Click+=(_,_)=>
                 {
                     // Read the stored lists again: a click on another box has changed them since this page opened.
+                    var wasHidden=HiddenIds(wheel).Contains(id);
                     var hidden=HiddenIds(wheel).Where(other=>other!=id).ToList();if(box.IsChecked!=true)hidden.Add(id);
                     // The Actions wheel always keeps one item; Convert and Tools may be emptied.
                     if(wheel=="actions"&&Preferences.WheelActionIds.All(hidden.Contains)){box.IsChecked=true;return;}
-                    Save(store.Value with{HiddenWheelItems=new Dictionary<string,string[]>(store.Value.HiddenWheelItems){[wheel]=hidden.ToArray()}});
+                    if(!Save(store.Value with{HiddenWheelItems=new Dictionary<string,string[]>(store.Value.HiddenWheelItems){[wheel]=hidden.ToArray()}}))box.IsChecked=!wasHidden;
                 };
                 page.Children.Add(box);
             }
         }
     }
     private string[] HiddenIds(string wheel)=>store.Value.HiddenWheelItems.GetValueOrDefault(wheel)??[];
-    private void Save(Preferences value){try{store.Save(value);changed();}catch(Exception error)when(error is IOException or ArgumentException or UnauthorizedAccessException){MessageBox.Show(this,L10n.Text(error.Message),L10n.Text("Settings could not be saved"));}}
+    private bool Save(Preferences value){try{store.Save(value);changed();return true;}catch(Exception error)when(error is IOException or ArgumentException or UnauthorizedAccessException){MessageBox.Show(this,L10n.Text(error.Message),L10n.Text("Settings could not be saved"));return false;}}
     private void Heading(string title,string hint){page.Children.Add(L10n.Label(new TextBlock{Text=title,FontSize=28,FontWeight=FontWeights.Bold}));page.Children.Add(L10n.Label(new TextBlock{Text=hint,TextWrapping=TextWrapping.Wrap,Margin=new(0,8,0,20),Foreground=Theme.Brush("Muted")}));}
     private void Toggle(string title,bool value,Action<bool> save){var box=L10n.Content(new CheckBox{Content=title,IsChecked=value,Margin=new(4,12,4,12)});box.Checked+=(_,_)=>save(true);box.Unchecked+=(_,_)=>save(false);page.Children.Add(box);}
     private void Pick(string title,string[] values,string value,Action<string> save){page.Children.Add(L10n.Label(new TextBlock{Text=title,Margin=new(4,12,4,0)}));var combo=new ComboBox{ItemsSource=values,SelectedItem=value};combo.SelectionChanged+=(_,_)=>{if(combo.SelectedItem is string selected)save(selected);};page.Children.Add(combo);}
