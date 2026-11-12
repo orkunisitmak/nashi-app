@@ -2470,6 +2470,7 @@
 "THIS MEDIA IS PROTECTED AND CANNOT BE DOWNLOADED HERE." = "THIS MEDIA IS PROTECTED AND CANNOT BE DOWNLOADED HERE.";
 "THIS OUTPUT FORMAT HAS NO ADJUSTABLE CONVERSION DEFAULTS." = "THIS OUTPUT FORMAT HAS NO ADJUSTABLE CONVERSION DEFAULTS.";
 "THIS PAGES FILE IS TOO LARGE OR IS NOT A REGULAR DOCUMENT FILE." = "THIS PAGES FILE IS TOO LARGE OR IS NOT A REGULAR DOCUMENT FILE.";
+"THIS PDF CONTAINS DIGITAL SIGNATURES. THIS PAGE OPERATION CANNOT SAFELY PRESERVE THAT FEATURE. NO COPY WAS EXPORTED." = "THIS PDF CONTAINS DIGITAL SIGNATURES. THIS PAGE OPERATION CANNOT SAFELY PRESERVE THAT FEATURE. NO COPY WAS EXPORTED.";
 "THIS PDF CONTAINS NO PAGES." = "THIS PDF CONTAINS NO PAGES.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT MERGING, SPLITTING OR REORDERING PAGES CANNOT KEEP. NO COPY WAS EXPORTED." = "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT MERGING, SPLITTING OR REORDERING PAGES CANNOT KEEP. NO COPY WAS EXPORTED.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT METADATA CLEANUP CANNOT KEEP. NO COPY WAS EXPORTED." = "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT METADATA CLEANUP CANNOT KEEP. NO COPY WAS EXPORTED.";
@@ -2616,6 +2617,7 @@
 "The upstream server did not return a successful HTTPS download." = "The upstream server did not return a successful HTTPS download.";
 "The video has no readable dimensions." = "The video has no readable dimensions.";
 "These files have moved or were deleted." = "These files have moved or were deleted.";
+"This PDF contains digital signatures. This page operation cannot safely preserve that feature. No copy was exported." = "This PDF contains digital signatures. This page operation cannot safely preserve that feature. No copy was exported.";
 "This PDF contains no pages." = "This PDF contains no pages.";
 "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported." = "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported.";
 "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported." = "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported.";
