@@ -21,5 +21,8 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="bblanchon.PDFium.Win32" Version="155.0.8044" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4314.35" />
   </ItemGroup>
+  <!-- Package API documentation is not shipped with the app. -->
+  <PropertyGroup><CopyDocumentationFilesFromPackages>false</CopyDocumentationFilesFromPackages><PublishReferencesDocumentationFiles>false</PublishReferencesDocumentationFiles></PropertyGroup>
 </Project>

@@ -8,6 +8,12 @@
         "resolved": "155.0.8044",
         "contentHash": "TBqSYojufnh6IvzIZmsWrNwuHXMtk47AYxQPcUzVVSE971dz/dyQkdal6Z4CpFEstTE6n387NU98XYGVZCcKWA=="
       },
+      "Microsoft.Web.WebView2": {
+        "type": "Direct",
+        "requested": "[1.0.4314.35, )",
+        "resolved": "1.0.4314.35",
+        "contentHash": "x5MFf2W03xueU1mMNvivXfHSsQ+ODo7vJ36qw/dLtU5Gs+8d7+7N7zzmNNDoT3ffosmcvZNBtUnlzyiDUuBkSQ=="
+      },
       "BouncyCastle.Cryptography": {
         "type": "Transitive",
         "resolved": "2.7.0",
@@ -86,6 +92,12 @@
         "requested": "[155.0.8044, )",
         "resolved": "155.0.8044",
         "contentHash": "TBqSYojufnh6IvzIZmsWrNwuHXMtk47AYxQPcUzVVSE971dz/dyQkdal6Z4CpFEstTE6n387NU98XYGVZCcKWA=="
+      },
+      "Microsoft.Web.WebView2": {
+        "type": "Direct",
+        "requested": "[1.0.4314.35, )",
+        "resolved": "1.0.4314.35",
+        "contentHash": "x5MFf2W03xueU1mMNvivXfHSsQ+ODo7vJ36qw/dLtU5Gs+8d7+7N7zzmNNDoT3ffosmcvZNBtUnlzyiDUuBkSQ=="
       },
       "Magick.NET-Q8-AnyCPU": {
         "type": "Transitive",
