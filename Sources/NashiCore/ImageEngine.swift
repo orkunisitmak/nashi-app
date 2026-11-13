@@ -586,29 +586,44 @@ public enum ImageEngine {
         // Attempts are encoded privately; a failed or cancelled pass leaves no partial output.
         let temporary=output.deletingLastPathComponent().appendingPathComponent(".nashi-\(UUID().uuidString)").appendingPathExtension(output.pathExtension)
         defer { try? FileManager.default.removeItem(at:temporary) }
-        var quality=max(0.01,min(1,options.quality)),scale=1.0
-        let start=image
-        for iteration in 0..<24 {
+        let quality=max(0.01,min(1,options.quality)),lossy=ext.lowercased() != "png"
+        // Every attempt that fits is kept, so the chosen one is used as measured instead of being re-encoded.
+        var fitting:[String:URL]=[:]
+        defer { for url in fitting.values { try? FileManager.default.removeItem(at:url) } }
+        func encode(_ percent:Int,_ scale:Double) throws->Int64 {
             try token.check();try? FileManager.default.removeItem(at:temporary)
-            try write(image,to:temporary,quality:quality)
+            // Round both sides from the same image and keep the shorter side at least one pixel,
+            // so tiny scale steps do not distort the aspect ratio.
+            let fit=max(scale,1/Double(min(image.width,image.height)))
+            let frame=scale<1 ? try resized(image,width:max(1,Int((Double(image.width)*fit).rounded())),height:max(1,Int((Double(image.height)*fit).rounded()))):image
+            try write(frame,to:temporary,quality:Double(percent)/100,token:token)
             // The same URL is replaced on each pass; resourceValues can retain its first size.
             let size=((try FileManager.default.attributesOfItem(atPath:temporary.path))[.size] as? NSNumber)?.int64Value ?? 0
-            if target == nil || size <= target! {
-                if image.width==originalWidth,image.height==originalHeight { try OutputFiles.retainSmallerOriginal(input,output:temporary,target:target) }
-                try FileManager.default.moveItem(at:temporary,to:output)
-                return [output]
+            if let target,size<=target {
+                let kept=temporary.deletingPathExtension().appendingPathExtension("\(fitting.count).\(temporary.pathExtension)")
+                try? FileManager.default.removeItem(at:kept);try FileManager.default.copyItem(at:temporary,to:kept);fitting["\(percent)@\(scale)"]=kept
             }
-            if quality>0.15 && !["png"].contains(ext.lowercased()) { quality *= 0.72 }
-            else {
-                // Scale both sides from the starting image so rounding does not compound, and stop
-                // once the shorter side is one pixel: shrinking only the longer side would distort it.
-                scale=max(scale*0.8,1/Double(min(start.width,start.height)))
-                let width=max(1,Int((Double(start.width)*scale).rounded())),height=max(1,Int((Double(start.height)*scale).rounded()))
-                guard width<image.width || height<image.height else { throw NashiError.failed("The requested file size could not be reached. Choose a larger target.") }
-                image=try resized(start,width:width,height:height)
-            }
-            if iteration == 23 { throw NashiError.failed("The requested file size could not be reached. Choose a larger target.") }
+            return size
         }
+        let start=Int((quality*100).rounded())
+        // Skipping the search is safe only when retainSmallerOriginal can fall back to the
+        // untouched source; resized or re-encoded outputs must be measured against the target.
+        let keepsOriginal=image.width==originalWidth && image.height==originalHeight && input.pathExtension.lowercased()==ext.lowercased()
+        let outcome=try target.map { try TargetSizeSearch.run(originalBytes:keepsOriginal ? inputSize:.max,targetBytes:$0,startQuality:start,lossy:lossy,allowResize:true,token:token,encode:encode) }
+        if let outcome,outcome.status == .bestEffortAboveTarget {
+            throw NashiError.failed("The requested file size could not be reached. Choose a larger target.")
+        }
+        let best=outcome?.best
+        if let best {
+            if let kept=fitting.removeValue(forKey:"\(best.quality)@\(best.scale)") {
+                try? FileManager.default.removeItem(at:temporary);try FileManager.default.moveItem(at:kept,to:temporary)
+            } else if try encode(best.quality,best.scale) > (target ?? .max) {
+                // Fallback only: a fitting candidate is always kept above.
+                throw NashiError.failed("The requested file size could not be reached. Choose a larger target.")
+            }
+        } else { _=try encode(start,1) }
+        if (best?.scale ?? 1)==1,image.width==originalWidth,image.height==originalHeight { try OutputFiles.retainSmallerOriginal(input,output:temporary,target:target) }
+        try FileManager.default.moveItem(at:temporary,to:output)
         return [output]
     }
 
