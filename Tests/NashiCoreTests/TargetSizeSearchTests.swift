@@ -87,8 +87,8 @@ final class TargetSizeSearchTests: XCTestCase {
         let probe=try XCTUnwrap(ImageEngine.compress(input,options:probeOptions,token:.init()).first)
         let probeSize=Int64(try Data(contentsOf:probe).count)
         XCTAssertLessThan(probeSize,bytes,"Compressed probe must be smaller than the source")
-        // Set target to the measured minimum: smaller than input, achievable by construction.
-        let target=max(probeSize,1)
+        // Set target below the probe size to force downscaling, but keep it achievable.
+        let target=max(Int64(Double(probeSize) * 0.5),1)
         var options=OperationOptions();options.outputDirectory=folder;options.targetBytes=target;options.preferQuality=false
         let compressed=try XCTUnwrap(ImageEngine.compress(input,options:options,token:.init()).first)
         let result=try ImageEngine.load(compressed)
@@ -113,7 +113,7 @@ final class TargetSizeSearchTests: XCTestCase {
         let probe=try XCTUnwrap(ImageEngine.compress(input,options:probeOptions,token:.init()).first)
         let probeSize=Int64(try Data(contentsOf:probe).count)
         XCTAssertLessThan(probeSize,bytes,"Compressed probe must be smaller than the source")
-        let target=max(probeSize,1)
+        let target=max(Int64(Double(probeSize) * 0.5),1)
         var options=OperationOptions();options.outputDirectory=folder;options.targetBytes=target;options.preferQuality=false
         let compressed=try XCTUnwrap(ImageEngine.compress(input,options:options,token:.init()).first)
         let result=try ImageEngine.load(compressed)
