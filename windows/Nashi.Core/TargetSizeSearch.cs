@@ -5,7 +5,7 @@ public enum TargetSizeStatus { Achieved, AlreadyUnderTarget, BestEffortAboveTarg
 /// <summary>One measured encode: quality 1-100, scale of the longest edge, and the real encoded size.</summary>
 public sealed record TargetSizeCandidate(int Quality,double Scale,long Bytes);
 
-public sealed record TargetSizeOutcome(TargetSizeStatus Status,TargetSizeCandidate? Best,TargetSizeCandidate? Smallest,int Attempts);
+public sealed record TargetSizeOutcome(TargetSizeStatus Status,TargetSizeCandidate? Best,int Attempts);
 
 /// <summary>
 /// Finds the highest-quality encode that fits a byte limit by measuring real outputs.
@@ -17,7 +17,7 @@ public static class TargetSizeSearch
 {
     /// Below this JPEG/WebP/HEIC quality block artifacts dominate; resizing preserves more detail.
     public const int QualityFloor=30;
-    /// Longest-edge scale steps tried after quality alone cannot fit (Size priority).
+    /// Longest-edge scale steps tried after quality alone cannot fit.
     public static readonly double[] Scales=[1,.85,.7,.55,.4,.3,.2,.12,.08,.05];
     /// One probe at the start quality plus at most 7 bisection probes over 1-99.
     public const int ProbesPerScale=8;
@@ -27,31 +27,26 @@ public static class TargetSizeSearch
     public static TargetSizeOutcome Run(long originalBytes,long targetBytes,int startQuality,bool lossy,bool allowResize,Func<int,double,long> encode,CancellationToken token=default)
     {
         if(targetBytes<=0)throw new ArgumentException("Choose a positive target size.");
-        if(originalBytes<=targetBytes)return new(TargetSizeStatus.AlreadyUnderTarget,null,null,0);
-        var attempts=0;TargetSizeCandidate? smallest=null;
+        if(originalBytes<=targetBytes)return new(TargetSizeStatus.AlreadyUnderTarget,null,0);
+        var attempts=0;
         TargetSizeCandidate Probe(int quality,double scale)
         {
-            token.ThrowIfCancellationRequested();attempts++;var candidate=new TargetSizeCandidate(quality,scale,encode(quality,scale));
-            if(smallest is null||candidate.Bytes<smallest.Bytes)smallest=candidate;return candidate;
+            token.ThrowIfCancellationRequested();attempts++;return new TargetSizeCandidate(quality,scale,encode(quality,scale));
         }
         var top=Math.Clamp(startQuality,1,100);var floor=Math.Min(QualityFloor,top);
         foreach(var scale in allowResize?Scales:Scales[..1])
         {
             if(attempts>=MaxAttempts)break;
-            if(!lossy){var whole=Probe(top,scale);if(whole.Bytes<=targetBytes)return new(TargetSizeStatus.Achieved,whole,smallest,attempts);continue;}
-            var best=default(TargetSizeCandidate);var first=Probe(top,scale);if(first.Bytes<=targetBytes)return new(TargetSizeStatus.Achieved,first,smallest,attempts);
+            if(!lossy){var whole=Probe(top,scale);if(whole.Bytes<=targetBytes)return new(TargetSizeStatus.Achieved,whole,attempts);continue;}
+            var best=default(TargetSizeCandidate);var first=Probe(top,scale);if(first.Bytes<=targetBytes)return new(TargetSizeStatus.Achieved,first,attempts);
             var low=floor;var high=top-1;
             while(low<=high&&attempts<MaxAttempts)
             {
                 var middle=low+(high-low+1)/2;var candidate=Probe(middle,scale);
                 if(candidate.Bytes<=targetBytes){if(best is null||candidate.Quality>best.Quality)best=candidate;low=middle+1;}else high=middle-1;
             }
-            if(best is not null)return new(TargetSizeStatus.Achieved,best,smallest,attempts);
+            if(best is not null)return new(TargetSizeStatus.Achieved,best,attempts);
         }
-        return new(TargetSizeStatus.BestEffortAboveTarget,null,smallest,attempts);
+        return new(TargetSizeStatus.BestEffortAboveTarget,null,attempts);
     }
-
-    /// Plain description of the chosen settings, e.g. "quality 72 · 85% size".
-    public static string Describe(TargetSizeCandidate candidate,bool lossy)=>
-        string.Join(" · ",new[]{lossy?$"quality {candidate.Quality}":null,candidate.Scale<1?$"{Math.Round(candidate.Scale*100)}% size":null}.Where(s=>s is not null))is {Length:>0} text?text:"original settings";
 }

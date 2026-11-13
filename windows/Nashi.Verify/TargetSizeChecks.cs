@@ -13,9 +13,9 @@ internal static class TargetSizeChecks
         var bumpy=TargetSizeSearch.Run(200000,30000,95,true,true,(q,s)=>q==50?20000:Smooth(q,s)+(q%7==0?15000:0));
         check(bumpy.Status==TargetSizeStatus.Achieved&&bumpy.Best!.Bytes<=30000,"Non-monotonic size curve returned an oversized candidate");
         var resized=TargetSizeSearch.Run(200000,9000,90,true,true,Smooth);
-        check(resized.Status==TargetSizeStatus.Achieved&&resized.Best!.Scale<1&&resized.Best.Quality>=TargetSizeSearch.QualityFloor,"Size priority did not resize before dropping below the quality floor");
+        check(resized.Status==TargetSizeStatus.Achieved&&resized.Best!.Scale<1&&resized.Best.Quality>=TargetSizeSearch.QualityFloor,"The search did not resize before dropping below the quality floor");
         var quality=TargetSizeSearch.Run(200000,5000,90,true,false,Smooth);
-        check(quality.Status==TargetSizeStatus.BestEffortAboveTarget&&quality.Best is null&&quality.Smallest!.Bytes>5000,"An unreachable target was reported as achieved");
+        check(quality.Status==TargetSizeStatus.BestEffortAboveTarget&&quality.Best is null&&quality.Attempts>0,"An unreachable target was reported as achieved");
         var lossless=TargetSizeSearch.Run(200000,60000,100,false,true,(q,s)=>(long)(200000*s*s));
         check(lossless.Status==TargetSizeStatus.Achieved&&lossless.Best!.Quality==100&&lossless.Best.Bytes<=60000,"Lossless search changed quality or missed a reachable size");
         check(TargetSizeSearch.Run(1000,1000,80,true,true,(_,_)=>throw new Exception("encoded")).Status==TargetSizeStatus.AlreadyUnderTarget,"A file already under target was re-encoded");
@@ -26,6 +26,5 @@ internal static class TargetSizeChecks
         try{TargetSizeSearch.Run(200000,0,90,true,true,Smooth);check(false,"A zero target was accepted");}catch(ArgumentException){check(true,"");}
         using var cancel=new CancellationTokenSource();var probes=0;
         try{TargetSizeSearch.Run(200000,10,90,true,true,(q,s)=>{if(++probes==3)cancel.Cancel();return Smooth(q,s);},cancel.Token);check(false,"Cancellation was ignored");}catch(OperationCanceledException){check(probes==3,"Search encoded after cancellation");}
-        check(TargetSizeSearch.Describe(new(72,.85,1),true)=="quality 72 · 85% size"&&TargetSizeSearch.Describe(new(100,1,1),false)=="original settings","Chosen settings description changed");
     }
 }

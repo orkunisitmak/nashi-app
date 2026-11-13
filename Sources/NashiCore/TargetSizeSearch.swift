@@ -6,7 +6,7 @@ public enum TargetSizeStatus: Equatable, Sendable { case achieved, alreadyUnderT
 public struct TargetSizeCandidate: Equatable, Sendable { public let quality:Int,scale:Double,bytes:Int64 }
 
 public struct TargetSizeOutcome: Equatable, Sendable {
-    public let status:TargetSizeStatus,best:TargetSizeCandidate?,smallest:TargetSizeCandidate?,attempts:Int
+    public let status:TargetSizeStatus,best:TargetSizeCandidate?,attempts:Int
 }
 
 /// Finds the highest-quality encode that fits a byte limit by measuring real outputs.
@@ -25,35 +25,28 @@ public enum TargetSizeSearch {
 
     public static func run(originalBytes:Int64,targetBytes:Int64,startQuality:Int,lossy:Bool,allowResize:Bool,token:CancellationToken = .init(),encode:(Int,Double) throws->Int64) throws->TargetSizeOutcome {
         guard targetBytes>0 else { throw NashiError.invalidInput("Choose a positive target file size.") }
-        if originalBytes<=targetBytes { return .init(status:.alreadyUnderTarget,best:nil,smallest:nil,attempts:0) }
-        var attempts=0,smallest:TargetSizeCandidate?
+        if originalBytes<=targetBytes { return .init(status:.alreadyUnderTarget,best:nil,attempts:0) }
+        var attempts=0
         func probe(_ quality:Int,_ scale:Double) throws->TargetSizeCandidate {
             try token.check();attempts+=1
-            let candidate=TargetSizeCandidate(quality:quality,scale:scale,bytes:try encode(quality,scale))
-            if smallest == nil || candidate.bytes<smallest!.bytes { smallest=candidate };return candidate
+            return TargetSizeCandidate(quality:quality,scale:scale,bytes:try encode(quality,scale))
         }
         let top=max(1,min(100,startQuality)),floor=min(qualityFloor,top)
         for scale in allowResize ? scales : [1] {
             if attempts>=maxAttempts { break }
             if !lossy {
                 let whole=try probe(top,scale)
-                if whole.bytes<=targetBytes { return .init(status:.achieved,best:whole,smallest:smallest,attempts:attempts) };continue
+                if whole.bytes<=targetBytes { return .init(status:.achieved,best:whole,attempts:attempts) };continue
             }
             let first=try probe(top,scale)
-            if first.bytes<=targetBytes { return .init(status:.achieved,best:first,smallest:smallest,attempts:attempts) }
+            if first.bytes<=targetBytes { return .init(status:.achieved,best:first,attempts:attempts) }
             var best:TargetSizeCandidate?,low=floor,high=top-1
             while low<=high && attempts<maxAttempts {
                 let middle=low+(high-low+1)/2,candidate=try probe(middle,scale)
                 if candidate.bytes<=targetBytes { if best == nil || candidate.quality>best!.quality { best=candidate };low=middle+1 } else { high=middle-1 }
             }
-            if let best { return .init(status:.achieved,best:best,smallest:smallest,attempts:attempts) }
+            if let best { return .init(status:.achieved,best:best,attempts:attempts) }
         }
-        return .init(status:.bestEffortAboveTarget,best:nil,smallest:smallest,attempts:attempts)
-    }
-
-    /// Plain description of the chosen settings, e.g. "quality 72 · 85% size".
-    public static func describe(_ candidate:TargetSizeCandidate,lossy:Bool)->String {
-        let parts=[lossy ? "quality \(candidate.quality)":nil,candidate.scale<1 ? "\(Int((candidate.scale*100).rounded()))% size":nil].compactMap{$0}
-        return parts.isEmpty ? "original settings":parts.joined(separator:" · ")
+        return .init(status:.bestEffortAboveTarget,best:nil,attempts:attempts)
     }
 }
