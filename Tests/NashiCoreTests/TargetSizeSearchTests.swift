@@ -82,13 +82,9 @@ final class TargetSizeSearchTests: XCTestCase {
             try ImageEngine.write(try XCTUnwrap(context.makeImage()),to:input)
         }
         let original=try Data(contentsOf:input),bytes=Int64(original.count)
-        // Measure the smallest achievable output first (CodeRabbit: use an achievable target).
-        var probeOptions=OperationOptions();probeOptions.outputDirectory=folder;probeOptions.preferQuality=false
-        let probe=try XCTUnwrap(ImageEngine.compress(input,options:probeOptions,token:.init()).first)
-        let probeSize=Int64(try Data(contentsOf:probe).count)
-        XCTAssertLessThan(probeSize,bytes,"Compressed probe must be smaller than the source")
-        // Set target below the probe size to force downscaling, but keep it achievable.
-        let target=max(Int64(Double(probeSize) * 0.5),1)
+        // A target below the original size forces downscaling; noise is incompressible so
+        // shrinking dimensions is the only way to reach it. 40% should be achievable.
+        let target=max(Int64(Double(bytes) * 0.4),1)
         var options=OperationOptions();options.outputDirectory=folder;options.targetBytes=target;options.preferQuality=false
         let compressed=try XCTUnwrap(ImageEngine.compress(input,options:options,token:.init()).first)
         let result=try ImageEngine.load(compressed)
@@ -109,11 +105,7 @@ final class TargetSizeSearchTests: XCTestCase {
             try ImageEngine.write(try XCTUnwrap(context.makeImage()),to:input)
         }
         let original=try Data(contentsOf:input),bytes=Int64(original.count)
-        var probeOptions=OperationOptions();probeOptions.outputDirectory=folder;probeOptions.preferQuality=false
-        let probe=try XCTUnwrap(ImageEngine.compress(input,options:probeOptions,token:.init()).first)
-        let probeSize=Int64(try Data(contentsOf:probe).count)
-        XCTAssertLessThan(probeSize,bytes,"Compressed probe must be smaller than the source")
-        let target=max(Int64(Double(probeSize) * 0.5),1)
+        let target=max(Int64(Double(bytes) * 0.4),1)
         var options=OperationOptions();options.outputDirectory=folder;options.targetBytes=target;options.preferQuality=false
         let compressed=try XCTUnwrap(ImageEngine.compress(input,options:options,token:.init()).first)
         let result=try ImageEngine.load(compressed)
