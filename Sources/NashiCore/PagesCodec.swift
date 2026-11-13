@@ -217,9 +217,11 @@ private enum PagesDOCXReader {
                 let properties = element.first("pPr")
                 let base = resolved(properties?.first("pStyle")?.attr("val"))
                 var runs: [[String:Any]] = []
-                // Open complex fields (fldChar begin ... end); a HYPERLINK
-                // field links its result runs once its instruction is complete.
-                var fields: [(instruction: String, link: String?)] = []
+                // Open complex fields (fldChar begin ... end). A field's instruction
+                // ends at its first separate, where a HYPERLINK field resolves its
+                // link once; each entry carries the innermost link in effect, so a
+                // run reads it in constant time however deeply fields nest.
+                var fields: [(instruction: String, link: String?, result: Bool)] = []
                 func visit(_ item: XMLElement, link: String? = nil) throws {
                     try token.check()
                     if item.local == "r" {
@@ -228,14 +230,19 @@ private enum PagesDOCXReader {
                         for child in item.elements(nil) {
                             if child.local == "fldChar" {
                                 switch child.attr("fldCharType") {
-                                case "begin": fields.append(("", nil))
-                                case "separate": if !fields.isEmpty { fields[fields.count-1].link = hyperlinkField(fields[fields.count-1].instruction) }
+                                case "begin": fields.append(("", fields.last?.link, false))
+                                case "separate":
+                                    if fields.last?.result == false {
+                                        let index = fields.count - 1
+                                        fields[index].link = hyperlinkField(fields[index].instruction) ?? fields[index].link
+                                        fields[index].result = true
+                                    }
                                 case "end": _ = fields.popLast()
                                 default: break
                                 }
                             }
-                            else if child.local == "instrText", !fields.isEmpty { fields[fields.count-1].instruction += text(child) }
-                            else if child.local == "t" { var run: [String:Any] = ["text":text(child),"character":formatting];if let link = link ?? fields.last(where: { $0.link != nil })?.link {run["link"]=link};runs.append(run) }
+                            else if child.local == "instrText", fields.last?.result == false { fields[fields.count-1].instruction += text(child) }
+                            else if child.local == "t" { var run: [String:Any] = ["text":text(child),"character":formatting];if let link = link ?? fields.last?.link {run["link"]=link};runs.append(run) }
                             else if child.local == "tab" { runs.append(["text":"\t","character":formatting]) }
                             else if child.local == "noBreakHyphen" { runs.append(["text":"\u{2011}","character":formatting]) }
                             else if child.local == "br", child.attr("type") == "page" { runs.append(["type":"pageBreak"]) }
@@ -262,7 +269,9 @@ private enum PagesDOCXReader {
                 // A compact OOXML cell can otherwise request billions of empty
                 // cells, or overflow the column index with a negative span.
                 let maximumColumns = 1024
-                for (rowIndex,row) in element.elements("tr").enumerated() {
+                // Repeating sections and custom XML can wrap rows and cells (w:sdt, w:customXml).
+                let tableRows = blockElements(element).filter { $0.local == "tr" }
+                for (rowIndex,row) in tableRows.enumerated() {
                     var cells: [[String:Any]] = [], column = 0
                     // A vertical merge only survives rows that continue it in
                     // the same grid column; a wider or missing cell ends it.
@@ -277,7 +286,7 @@ private enum PagesDOCXReader {
                         column = skipped
                     }
                     var horizontalAnchor: Int?
-                    for cell in row.elements("tc") {
+                    for cell in blockElements(row) where cell.local == "tc" {
                         let properties = cell.first("tcPr")
                         let span: Int
                         if let gridSpan = properties?.first("gridSpan") {
@@ -328,7 +337,7 @@ private enum PagesDOCXReader {
                     rows.append(cells)
                 }
                 let widths = element.first("tblGrid")?.elements("gridCol").map { ($0.number("w") ?? 2400) / 20 } ?? []
-                return ["type":"table","rows":rows,"merges":merges,"columnWidths":widths,"headerRows":element.elements("tr").prefix(while: { row in row.first("trPr")?.first("tblHeader").map { !["0","false","off"].contains($0.attr("val") ?? "1") } ?? false }).count]
+                return ["type":"table","rows":rows,"merges":merges,"columnWidths":widths,"headerRows":tableRows.prefix(while: { row in row.first("trPr")?.first("tblHeader").map { !["0","false","off"].contains($0.attr("val") ?? "1") } ?? false }).count]
             }
             if ["sdt","sdtContent"].contains(element.local) {
                 // Block-level content controls are unwrapped by the caller's
@@ -396,7 +405,8 @@ private enum PagesDOCXReader {
         blockElements(cell).compactMap { child -> String? in
             if child.local == "p" { return plainText(child) }
             guard child.local == "tbl", depth < 32 else { return nil }
-            return child.elements("tr").map { $0.elements("tc").map { cellText($0, depth: depth + 1) }.joined(separator: "\t") }.joined(separator: "\n")
+            let rows = blockElements(child).filter { $0.local == "tr" }
+            return rows.map { row in blockElements(row).filter { $0.local == "tc" }.map { cellText($0, depth: depth + 1) }.joined(separator: "\t") }.joined(separator: "\n")
         }.joined(separator: "\n")
     }
     /// The external target of a `HYPERLINK "url" [\o "tip"] [\l "bookmark"]`
