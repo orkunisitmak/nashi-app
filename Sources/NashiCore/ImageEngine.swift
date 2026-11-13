@@ -596,7 +596,7 @@ public enum ImageEngine {
             // so tiny scale steps do not distort the aspect ratio.
             let fit=max(scale,1/Double(min(image.width,image.height)))
             let frame=scale<1 ? try resized(image,width:max(1,Int((Double(image.width)*fit).rounded())),height:max(1,Int((Double(image.height)*fit).rounded()))):image
-            try write(frame,to:temporary,quality:Double(percent)/100)
+            try write(frame,to:temporary,quality:Double(percent)/100,token:token)
             // The same URL is replaced on each pass; resourceValues can retain its first size.
             let size=((try FileManager.default.attributesOfItem(atPath:temporary.path))[.size] as? NSNumber)?.int64Value ?? 0
             if let target,size<=target {
