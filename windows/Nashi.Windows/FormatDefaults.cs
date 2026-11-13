@@ -21,7 +21,7 @@ public sealed partial class SettingsWindow
             if(name is "png" or "jpg" or "epub")Number("dpi","PDF rendering DPI",profile.Dpi);
             if(name is "docx" or "pages")Choice("layout","PDF layout",["editable","preserve"],profile.Layout);
             if(name=="epub")Choice("epub","EPUB layout",["reflowable","fixed"],profile.EpubLayout);
-            var metadata=L10n.Content(new CheckBox{Content="Preserve metadata",IsChecked=profile.PreserveMetadata,Margin=new(4,12,4,12)});if(video||audio||image&&name!="bmp")panel.Children.Add(metadata);
+            var metadata=L10n.Content(new CheckBox{Content="Preserve metadata",IsChecked=profile.PreserveMetadata,Margin=new(4,12,4,12)});if(video||audio||image&&name is not ("bmp" or "ico"))panel.Children.Add(metadata);
             if(fields.Count+choices.Count==0&&metadata.Parent is null)panel.Children.Add(L10n.Label(new TextBlock{Text="This format uses its original document structure. No export defaults are needed.",TextWrapping=TextWrapping.Wrap,Margin=new(4,18,4,18)}));
             double Value(string key,double fallback)=>fields.TryGetValue(key,out var field)?NumericInput.ParseFinite(field.Text):fallback;
             string Picked(string key,string fallback)=>choices.TryGetValue(key,out var field)?(string)field.SelectedItem:fallback;

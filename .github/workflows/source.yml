@@ -57,4 +57,4 @@ jobs:
       - name: Install FFmpeg for redaction regressions
         run: brew install ffmpeg
       - name: Redaction coverage and image opacity regressions
-        run: swift test --filter 'SolidRedactionCoverageTests|ImageRedactionBoundsRegressionTests|ImageColorOpacityRegressionTests|MediaEngineTests/testVideoRedactionStylesAndTemporalBounds'
+        run: swift test --filter 'SolidRedactionCoverageTests|ImageRedactionBoundsRegressionTests|ImageColorOpacityRegressionTests|ImageICOOutputTests|MediaEngineTests/testVideoRedactionStylesAndTemporalBounds'
