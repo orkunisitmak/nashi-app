@@ -82,7 +82,7 @@ codesign "${nashi_signing_flags[@]}" "$application/Contents/Resources/Tools/ffpr
 codesign "${nashi_signing_flags[@]}" "$application/Contents/Resources/Tools/yt-dlp"
 codesign "${nashi_signing_flags[@]}" --entitlements Configuration/Deno.entitlements "$application/Contents/Resources/Tools/deno"
 fi
-codesign "${nashi_signing_flags[@]}" "$application"
+codesign "${nashi_signing_flags[@]}" --entitlements Configuration/Nashi.entitlements "$application"
 codesign --verify --deep --strict "$application"
 nashi_verify_signing_identity "$application"
 if [[ "$nashi_signing_mode" != ad-hoc && "$nashi_public_build" == false ]]; then python3 scripts/build-credential-broker.py --verify-app "$application"; fi

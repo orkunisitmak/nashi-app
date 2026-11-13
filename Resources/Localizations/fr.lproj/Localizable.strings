@@ -828,6 +828,7 @@
 "DISMISS PREVIEW ERROR" = "FERMER L’ERREUR D’APERÇU";
 "DOCUMENT XML IS TOO LARGE." = "LE XML DU DOCUMENT EST TROP VOLUMINEUX.";
 "DOCUMENTS" = "DOCUMENTS";
+"DON'T SHOW THIS AGAIN" = "NE PLUS AFFICHER";
 "DONE" = "TERMINÉ";
 "DOWNLOAD" = "TÉLÉCHARGER";
 "DOWNLOAD A LINK" = "TÉLÉCHARGER UN LIEN";
@@ -909,6 +910,7 @@
 "Dismiss preview error" = "Fermer l’erreur d’aperçu";
 "Document XML is too large." = "Le XML du document est trop volumineux.";
 "Documents" = "Documents";
+"Don't show this again" = "Ne plus afficher";
 "Done" = "Terminé";
 "Download" = "Télécharger";
 "Download Audio" = "Télécharger l’audio";
@@ -1080,6 +1082,7 @@
 "FIND A RECENT FILE" = "RECHERCHER UN FICHIER RÉCENT";
 "FIND IN LIBRARY…" = "RECHERCHER DANS LA BIBLIOTHÈQUE…";
 "FIND MEDIA" = "RECHERCHER LE MÉDIA";
+"FINDER WILL RESTART" = "LE FINDER VA REDÉMARRER";
 "FINDING THE MEDIA…" = "RECHERCHE DU MÉDIA…";
 "FINE-GRAINED ACCESS TOKEN" = "JETON D’ACCÈS À GRANULARITÉ FINE";
 "FINE-TUNE" = "RÉGLAGES FINS";
@@ -1157,6 +1160,7 @@
 "Find a recent file" = "Rechercher un fichier récent";
 "Find in Library…" = "Rechercher dans la bibliothèque…";
 "Find media" = "Rechercher le média";
+"Finder will restart" = "Le Finder va redémarrer";
 "Finding the media…" = "Recherche du média…";
 "Fine-grained access token" = "Jeton d’accès à granularité fine";
 "Fine-tune" = "Réglages fins";
@@ -2133,11 +2137,14 @@
 "SHARPNESS" = "NETTETÉ";
 "SHIFT LOCKS THE RATIO · RETURN CROPS\nDRAG INSIDE TO MOVE; DRAG A HANDLE TO RESIZE." = "MAJ VERROUILLE LES PROPORTIONS · RETOUR RECADRE\nFAITES GLISSER À L’INTÉRIEUR POUR DÉPLACER ; FAITES GLISSER UNE POIGNÉE POUR REDIMENSIONNER.";
 "SHIFT TO CONVERT" = "MAJ POUR CONVERTIR";
+"SHOW HIDDEN FILES" = "AFFICHER LES FICHIERS CACHÉS";
+"SHOW HIDDEN FILES TOGGLE IN THE MENU BAR" = "AFFICHER L’OPTION DES FICHIERS CACHÉS DANS LA BARRE DES MENUS";
 "SHOW IN EXPLORER" = "AFFICHER DANS L’EXPLORATEUR";
 "SHOW IN FINDER" = "AFFICHER DANS LE FINDER";
 "SHOW LESS" = "AFFICHER MOINS";
 "SHOW NASHI IN FINDER" = "AFFICHER NASHI DANS LE FINDER";
 "SHOW ORIGINAL" = "AFFICHER L’ORIGINAL";
+"SHOWING OR HIDING HIDDEN FILES RESTARTS FINDER. FILE TRANSFERS IN PROGRESS WILL BE INTERRUPTED." = "AFFICHER OU MASQUER LES FICHIERS CACHÉS REDÉMARRE LE FINDER. LES TRANSFERTS DE FICHIERS EN COURS SERONT INTERROMPUS.";
 "SILENCE THRESHOLD" = "SEUIL DE SILENCE";
 "SKIP TOUR" = "PASSER LA VISITE";
 "SLIDES" = "DIAPOSITIVES";
@@ -2302,12 +2309,15 @@
 "Shift to convert" = "Maj pour convertir";
 "Show %@ in Finder" = "Afficher %@ dans le Finder";
 "Show %lld in Finder" = "Afficher %lld dans le Finder";
+"Show Hidden Files" = "Afficher les fichiers cachés";
 "Show Nashi in Finder" = "Afficher Nashi dans le Finder";
 "Show Original" = "Afficher l’original";
+"Show hidden files toggle in the menu bar" = "Afficher l’option des fichiers cachés dans la barre des menus";
 "Show in Explorer" = "Afficher dans l’Explorateur";
 "Show in Finder" = "Afficher dans le Finder";
 "Show less" = "Afficher moins";
 "Show original" = "Afficher l’original";
+"Showing or hiding hidden files restarts Finder. File transfers in progress will be interrupted." = "Afficher ou masquer les fichiers cachés redémarre le Finder. Les transferts de fichiers en cours seront interrompus.";
 "Silence threshold" = "Seuil de silence";
 "Skip tour" = "Passer la visite";
 "Slides" = "Diapositives";
