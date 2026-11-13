@@ -40,7 +40,12 @@ public enum WebDownloadEngine {
             let args=try baseArguments(photoPost:true)+["--ignore-no-formats-error","--skip-download","--dump-single-json","--no-progress","--",url.absoluteString]
             let data=try await Task.detached { try WebDownloadProcess.run(Dependencies.executable("yt-dlp"),args,token:token,timeout:100) }.value
             try token.check();try Task.checkCancellation()
-            return try InstagramPhotos.parse(data,url:url)
+            if let photos=try InstagramPhotos.parse(data,url:url) { return photos }
+            // A video-only /p/ post is a saved reel, or a carousel of videos: read it as video, not as covers.
+            let videoArgs=try baseArguments(photoPost:true)+["--skip-download","--dump-single-json","--no-progress","--",url.absoluteString]
+            let video=try await Task.detached { try WebDownloadProcess.run(Dependencies.executable("yt-dlp"),videoArgs,token:token,timeout:100) }.value
+            try token.check();try Task.checkCancellation()
+            return try parseMetadata(video,url:url)
         }
         if let cover=try await YouTubeThumbnail.resolve(url,token:token,fetch:{ candidate in
             var request=URLRequest(url:candidate);request.timeoutInterval=12
@@ -152,7 +157,9 @@ public enum WebDownloadEngine {
         (photoPost ? ["--yes-playlist","--playlist-end","51"]:["--no-playlist","--playlist-items","1"])
     }
     static func downloadArguments(_ info:WebMediaInfo,mode:WebDownloadMode,maximumHeight:Int?,directory:URL) throws -> [String] {
-        var args=try baseArguments()+["--no-simulate","--no-overwrites","--windows-filenames","--trim-filenames","180",
+        // A /p/ post can hold several videos; download each of them instead of silently keeping the first.
+        let post=WebMediaDragPayload.isInstagramPhotoPost(info.url)
+        var args=try baseArguments(photoPost:post)+["--no-simulate","--no-overwrites","--windows-filenames","--trim-filenames","180",
              "--downloader","native","--newline","--progress","--progress-template","download:NASHI_PROGRESS:%(progress._percent_str)s",
              "--print","before_dl:NASHI_STAGE:Preparing media…","--print","post_process:NASHI_STAGE:Finishing media…",
              // yt-dlp tests formats in a temporary file under its home path, which defaults to the

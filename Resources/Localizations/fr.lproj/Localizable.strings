@@ -851,6 +851,7 @@
 "DOWNLOAD OFFICE TOOLS" = "TÉLÉCHARGER LES OUTILS BUREAUTIQUES";
 "DOWNLOAD PHOTOS" = "TÉLÉCHARGER LES PHOTOS";
 "DOWNLOAD PHOTOS…" = "TÉLÉCHARGER LES PHOTOS…";
+"DOWNLOAD POST…" = "TÉLÉCHARGER LA PUBLICATION…";
 "DOWNLOAD THE MISSING TOOLS TO ENABLE ALL CONVERSIONS, PREVIEWS AND WEB DOWNLOADS. TOOLS ALREADY FOUND ON YOUR COMPUTER ARE KEPT." = "TÉLÉCHARGEZ LES OUTILS MANQUANTS POUR ACTIVER TOUTES LES CONVERSIONS, LES APERÇUS ET LES TÉLÉCHARGEMENTS WEB. LES OUTILS DÉJÀ PRÉSENTS SUR VOTRE ORDINATEUR SONT CONSERVÉS.";
 "DOWNLOAD THUMBNAIL" = "TÉLÉCHARGER LA MINIATURE";
 "DOWNLOAD THUMBNAIL…" = "TÉLÉCHARGER LA MINIATURE…";
@@ -936,6 +937,7 @@
 "Download office tools" = "Télécharger les outils bureautiques";
 "Download photos" = "Télécharger les photos";
 "Download photos…" = "Télécharger les photos…";
+"Download post…" = "Télécharger la publication…";
 "Download the missing tools to enable all conversions, previews and web downloads. Tools already found on your computer are kept." = "Téléchargez les outils manquants pour activer toutes les conversions, les aperçus et les téléchargements web. Les outils déjà présents sur votre ordinateur sont conservés.";
 "Download thumbnail" = "Télécharger la miniature";
 "Download thumbnail…" = "Télécharger la miniature…";
@@ -1270,8 +1272,8 @@
 "INPUT AND OUTPUT FORMAT." = "FORMAT D’ENTRÉE ET DE SORTIE.";
 "INPUT FORMAT" = "FORMAT D’ENTRÉE";
 "INPUT-ONLY FORMAT." = "FORMAT D’ENTRÉE UNIQUEMENT.";
-"INSTAGRAM PHOTO POSTS OPEN A PHOTO SELECTION. FOR VIDEOS, USE THE SHARE LINK; FOR OTHER PHOTOS, DRAG THE IMAGE OR USE COPY IMAGE ADDRESS. PUBLIC MEDIA ONLY; LOGIN-REQUIRED AND PROTECTED ITEMS MAY BE UNAVAILABLE." = "LES PUBLICATIONS DE PHOTOS INSTAGRAM OUVRENT UNE SÉLECTION DE PHOTOS. POUR LES VIDÉOS, UTILISEZ LE LIEN DE PARTAGE ; POUR LES AUTRES PHOTOS, FAITES GLISSER L’IMAGE OU UTILISEZ COPIER L’ADRESSE DE L’IMAGE. MÉDIAS PUBLICS UNIQUEMENT ; LES ÉLÉMENTS PROTÉGÉS OU NÉCESSITANT UNE CONNEXION PEUVENT ÊTRE INDISPONIBLES.";
-"INSTAGRAM PHOTO POSTS OPEN A PHOTO SELECTION. REEL LINKS OFFER VIDEO AND AUDIO. PUBLIC DOWNLOADABLE MEDIA ONLY." = "LES PUBLICATIONS DE PHOTOS INSTAGRAM OUVRENT UNE SÉLECTION DE PHOTOS. LES LIENS DE REELS PROPOSENT LA VIDÉO ET L’AUDIO. MÉDIAS PUBLICS TÉLÉCHARGEABLES UNIQUEMENT.";
+"INSTAGRAM POSTS OPEN A PHOTO SELECTION, OR VIDEO AND AUDIO WHEN THE POST IS A REEL. PUBLIC DOWNLOADABLE MEDIA ONLY." = "LES PUBLICATIONS INSTAGRAM OUVRENT UNE SÉLECTION DE PHOTOS, OU LA VIDÉO ET L'AUDIO LORSQUE LA PUBLICATION EST UN REEL. MÉDIAS PUBLICS TÉLÉCHARGEABLES UNIQUEMENT.";
+"INSTAGRAM POSTS OPEN A PHOTO SELECTION, OR VIDEO WHEN THE POST IS A REEL. FOR OTHER PHOTOS, DRAG THE IMAGE OR USE COPY IMAGE ADDRESS. PUBLIC MEDIA ONLY; LOGIN-REQUIRED AND PROTECTED ITEMS MAY BE UNAVAILABLE." = "LES PUBLICATIONS INSTAGRAM OUVRENT UNE SÉLECTION DE PHOTOS, OU LA VIDÉO LORSQUE LA PUBLICATION EST UN REEL. POUR LES AUTRES PHOTOS, FAITES GLISSER L'IMAGE OU UTILISEZ COPIER L'ADRESSE DE L'IMAGE. MÉDIAS PUBLICS UNIQUEMENT ; LES ÉLÉMENTS PROTÉGÉS OU NÉCESSITANT UNE CONNEXION PEUVENT ÊTRE INDISPONIBLES.";
 "INSTALL AN OCR LANGUAGE IN WINDOWS LANGUAGE SETTINGS TO DETECT TEXT." = "INSTALLEZ UNE LANGUE OCR DANS LES RÉGLAGES DE LANGUE DE WINDOWS POUR DÉTECTER LE TEXTE.";
 "INSTALL AN OCR LANGUAGE IN WINDOWS LANGUAGE SETTINGS TO RECOGNIZE SCANNED PDF TEXT." = "INSTALLEZ UNE LANGUE OCR DANS LES RÉGLAGES DE LANGUE DE WINDOWS POUR RECONNAÎTRE LE TEXTE DES PDF NUMÉRISÉS.";
 "INVALID EPUB CHAPTER PATH." = "CHEMIN DE CHAPITRE EPUB INVALIDE.";
@@ -1302,8 +1304,8 @@
 "Input-only format." = "Format d’entrée uniquement.";
 "Inspecting %@…" = "Analyse de %@…";
 "Inspecting %lld…" = "Analyse de %lld…";
-"Instagram photo posts open a photo selection. For videos, use the share link; for other photos, drag the image or use Copy Image Address. Public media only; login-required and protected items may be unavailable." = "Les publications de photos Instagram ouvrent une sélection de photos. Pour les vidéos, utilisez le lien de partage ; pour les autres photos, faites glisser l’image ou utilisez Copier l’adresse de l’image. Médias publics uniquement ; les éléments protégés ou nécessitant une connexion peuvent être indisponibles.";
-"Instagram photo posts open a photo selection. Reel links offer video and audio. Public downloadable media only." = "Les publications de photos Instagram ouvrent une sélection de photos. Les liens de Reels proposent la vidéo et l’audio. Médias publics téléchargeables uniquement.";
+"Instagram posts open a photo selection, or video and audio when the post is a reel. Public downloadable media only." = "Les publications Instagram ouvrent une sélection de photos, ou la vidéo et l'audio lorsque la publication est un Reel. Médias publics téléchargeables uniquement.";
+"Instagram posts open a photo selection, or video when the post is a reel. For other photos, drag the image or use Copy Image Address. Public media only; login-required and protected items may be unavailable." = "Les publications Instagram ouvrent une sélection de photos, ou la vidéo lorsque la publication est un Reel. Pour les autres photos, faites glisser l'image ou utilisez Copier l'adresse de l'image. Médias publics uniquement ; les éléments protégés ou nécessitant une connexion peuvent être indisponibles.";
 "Install an OCR language in Windows Language settings to detect text." = "Installez une langue OCR dans les réglages de langue de Windows pour détecter le texte.";
 "Install an OCR language in Windows Language settings to recognize scanned PDF text." = "Installez une langue OCR dans les réglages de langue de Windows pour reconnaître le texte des PDF numérisés.";
 "Invalid EPUB chapter path." = "Chemin de chapitre EPUB invalide.";
@@ -2457,8 +2459,8 @@
 "THIS PDF IS PASSWORD PROTECTED. ENTER ITS PASSWORD." = "CE PDF EST PROTÉGÉ PAR UN MOT DE PASSE. SAISISSEZ SON MOT DE PASSE.";
 "THIS PDF PAGE COULD NOT BE READ." = "CETTE PAGE PDF N’A PAS PU ÊTRE LUE.";
 "THIS PDF REQUIRES A VALID PASSWORD." = "CE PDF NÉCESSITE UN MOT DE PASSE VALIDE.";
-"THIS POST CONTAINS VIDEOS, NOT PHOTOS. USE ITS REEL LINK TO DOWNLOAD VIDEO." = "CETTE PUBLICATION CONTIENT DES VIDÉOS, PAS DES PHOTOS. UTILISEZ SON LIEN REEL POUR TÉLÉCHARGER LA VIDÉO.";
-"THIS POST CONTAINS VIDEOS. USE ITS REEL LINK TO DOWNLOAD VIDEO." = "CETTE PUBLICATION CONTIENT DES VIDÉOS. UTILISEZ SON LIEN REEL POUR TÉLÉCHARGER LA VIDÉO.";
+"THIS POST HAS NO VIDEOS. CHOOSE PHOTOS TO DOWNLOAD IT." = "CETTE PUBLICATION NE CONTIENT PAS DE VIDÉO. CHOISISSEZ LES PHOTOS POUR LA TÉLÉCHARGER.";
+"THIS POST IS A VIDEO. CHOOSE VIDEO OR AUDIO TO DOWNLOAD IT." = "CETTE PUBLICATION EST UNE VIDÉO. CHOISISSEZ VIDÉO OU AUDIO POUR LA TÉLÉCHARGER.";
 "THIS REPOSITORY IS PRIVATE" = "CE DÉPÔT EST PRIVÉ";
 "THIS RTFD ATTACHMENT SYNTAX COULD NOT BE PRESERVED." = "CETTE SYNTAXE DE PIÈCE JOINTE RTFD N’A PAS PU ÊTRE PRÉSERVÉE.";
 "THIS SIZE CANNOT BE REACHED. CHOOSE A LARGER TARGET OR SMALLER DIMENSIONS." = "CETTE TAILLE EST IMPOSSIBLE À ATTEINDRE. CHOISISSEZ UNE CIBLE PLUS GRANDE OU DES DIMENSIONS PLUS PETITES.";
@@ -2635,8 +2637,8 @@
 "This link requires a login or is restricted. Try a public share link; Nashi does not read your browser sessions." = "Ce lien nécessite une connexion ou est restreint. Essayez un lien de partage public ; Nashi ne lit pas vos sessions de navigateur.";
 "This media is protected and cannot be downloaded here." = "Ce média est protégé et ne peut pas être téléchargé ici.";
 "This output format has no adjustable conversion defaults." = "Ce format de sortie n’a pas de réglages de conversion modifiables.";
-"This post contains videos, not photos. Use its Reel link to download video." = "Cette publication contient des vidéos, pas des photos. Utilisez son lien Reel pour télécharger la vidéo.";
-"This post contains videos. Use its Reel link to download video." = "Cette publication contient des vidéos. Utilisez son lien Reel pour télécharger la vidéo.";
+"This post has no videos. Choose photos to download it." = "Cette publication ne contient pas de vidéo. Choisissez les photos pour la télécharger.";
+"This post is a video. Choose video or audio to download it." = "Cette publication est une vidéo. Choisissez vidéo ou audio pour la télécharger.";
 "This repository is private" = "Ce dépôt est privé";
 "This size cannot be reached. Choose a larger target or smaller dimensions." = "Cette taille est impossible à atteindre. Choisissez une cible plus grande ou des dimensions plus petites.";
 "This source uses more than 32-bit integer audio. Choose an output bit depth in settings." = "Cette source utilise un audio entier de plus de 32 bits. Choisissez une profondeur de bits de sortie dans les réglages.";

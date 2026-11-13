@@ -851,6 +851,7 @@
 "DOWNLOAD OFFICE TOOLS" = "DOWNLOAD OFFICE TOOLS";
 "DOWNLOAD PHOTOS" = "DOWNLOAD PHOTOS";
 "DOWNLOAD PHOTOS…" = "DOWNLOAD PHOTOS…";
+"DOWNLOAD POST…" = "DOWNLOAD POST…";
 "DOWNLOAD THE MISSING TOOLS TO ENABLE ALL CONVERSIONS, PREVIEWS AND WEB DOWNLOADS. TOOLS ALREADY FOUND ON YOUR COMPUTER ARE KEPT." = "DOWNLOAD THE MISSING TOOLS TO ENABLE ALL CONVERSIONS, PREVIEWS AND WEB DOWNLOADS. TOOLS ALREADY FOUND ON YOUR COMPUTER ARE KEPT.";
 "DOWNLOAD THUMBNAIL" = "DOWNLOAD THUMBNAIL";
 "DOWNLOAD THUMBNAIL…" = "DOWNLOAD THUMBNAIL…";
@@ -936,6 +937,7 @@
 "Download office tools" = "Download office tools";
 "Download photos" = "Download photos";
 "Download photos…" = "Download photos…";
+"Download post…" = "Download post…";
 "Download the missing tools to enable all conversions, previews and web downloads. Tools already found on your computer are kept." = "Download the missing tools to enable all conversions, previews and web downloads. Tools already found on your computer are kept.";
 "Download thumbnail" = "Download thumbnail";
 "Download thumbnail…" = "Download thumbnail…";
@@ -1270,8 +1272,8 @@
 "INPUT AND OUTPUT FORMAT." = "INPUT AND OUTPUT FORMAT.";
 "INPUT FORMAT" = "INPUT FORMAT";
 "INPUT-ONLY FORMAT." = "INPUT-ONLY FORMAT.";
-"INSTAGRAM PHOTO POSTS OPEN A PHOTO SELECTION. FOR VIDEOS, USE THE SHARE LINK; FOR OTHER PHOTOS, DRAG THE IMAGE OR USE COPY IMAGE ADDRESS. PUBLIC MEDIA ONLY; LOGIN-REQUIRED AND PROTECTED ITEMS MAY BE UNAVAILABLE." = "INSTAGRAM PHOTO POSTS OPEN A PHOTO SELECTION. FOR VIDEOS, USE THE SHARE LINK; FOR OTHER PHOTOS, DRAG THE IMAGE OR USE COPY IMAGE ADDRESS. PUBLIC MEDIA ONLY; LOGIN-REQUIRED AND PROTECTED ITEMS MAY BE UNAVAILABLE.";
-"INSTAGRAM PHOTO POSTS OPEN A PHOTO SELECTION. REEL LINKS OFFER VIDEO AND AUDIO. PUBLIC DOWNLOADABLE MEDIA ONLY." = "INSTAGRAM PHOTO POSTS OPEN A PHOTO SELECTION. REEL LINKS OFFER VIDEO AND AUDIO. PUBLIC DOWNLOADABLE MEDIA ONLY.";
+"INSTAGRAM POSTS OPEN A PHOTO SELECTION, OR VIDEO AND AUDIO WHEN THE POST IS A REEL. PUBLIC DOWNLOADABLE MEDIA ONLY." = "INSTAGRAM POSTS OPEN A PHOTO SELECTION, OR VIDEO AND AUDIO WHEN THE POST IS A REEL. PUBLIC DOWNLOADABLE MEDIA ONLY.";
+"INSTAGRAM POSTS OPEN A PHOTO SELECTION, OR VIDEO WHEN THE POST IS A REEL. FOR OTHER PHOTOS, DRAG THE IMAGE OR USE COPY IMAGE ADDRESS. PUBLIC MEDIA ONLY; LOGIN-REQUIRED AND PROTECTED ITEMS MAY BE UNAVAILABLE." = "INSTAGRAM POSTS OPEN A PHOTO SELECTION, OR VIDEO WHEN THE POST IS A REEL. FOR OTHER PHOTOS, DRAG THE IMAGE OR USE COPY IMAGE ADDRESS. PUBLIC MEDIA ONLY; LOGIN-REQUIRED AND PROTECTED ITEMS MAY BE UNAVAILABLE.";
 "INSTALL AN OCR LANGUAGE IN WINDOWS LANGUAGE SETTINGS TO DETECT TEXT." = "INSTALL AN OCR LANGUAGE IN WINDOWS LANGUAGE SETTINGS TO DETECT TEXT.";
 "INSTALL AN OCR LANGUAGE IN WINDOWS LANGUAGE SETTINGS TO RECOGNIZE SCANNED PDF TEXT." = "INSTALL AN OCR LANGUAGE IN WINDOWS LANGUAGE SETTINGS TO RECOGNIZE SCANNED PDF TEXT.";
 "INVALID EPUB CHAPTER PATH." = "INVALID EPUB CHAPTER PATH.";
@@ -1302,8 +1304,8 @@
 "Input-only format." = "Input-only format.";
 "Inspecting %@…" = "Inspecting %@…";
 "Inspecting %lld…" = "Inspecting %lld…";
-"Instagram photo posts open a photo selection. For videos, use the share link; for other photos, drag the image or use Copy Image Address. Public media only; login-required and protected items may be unavailable." = "Instagram photo posts open a photo selection. For videos, use the share link; for other photos, drag the image or use Copy Image Address. Public media only; login-required and protected items may be unavailable.";
-"Instagram photo posts open a photo selection. Reel links offer video and audio. Public downloadable media only." = "Instagram photo posts open a photo selection. Reel links offer video and audio. Public downloadable media only.";
+"Instagram posts open a photo selection, or video and audio when the post is a reel. Public downloadable media only." = "Instagram posts open a photo selection, or video and audio when the post is a reel. Public downloadable media only.";
+"Instagram posts open a photo selection, or video when the post is a reel. For other photos, drag the image or use Copy Image Address. Public media only; login-required and protected items may be unavailable." = "Instagram posts open a photo selection, or video when the post is a reel. For other photos, drag the image or use Copy Image Address. Public media only; login-required and protected items may be unavailable.";
 "Install an OCR language in Windows Language settings to detect text." = "Install an OCR language in Windows Language settings to detect text.";
 "Install an OCR language in Windows Language settings to recognize scanned PDF text." = "Install an OCR language in Windows Language settings to recognize scanned PDF text.";
 "Invalid EPUB chapter path." = "Invalid EPUB chapter path.";
@@ -2457,8 +2459,8 @@
 "THIS PDF IS PASSWORD PROTECTED. ENTER ITS PASSWORD." = "THIS PDF IS PASSWORD PROTECTED. ENTER ITS PASSWORD.";
 "THIS PDF PAGE COULD NOT BE READ." = "THIS PDF PAGE COULD NOT BE READ.";
 "THIS PDF REQUIRES A VALID PASSWORD." = "THIS PDF REQUIRES A VALID PASSWORD.";
-"THIS POST CONTAINS VIDEOS, NOT PHOTOS. USE ITS REEL LINK TO DOWNLOAD VIDEO." = "THIS POST CONTAINS VIDEOS, NOT PHOTOS. USE ITS REEL LINK TO DOWNLOAD VIDEO.";
-"THIS POST CONTAINS VIDEOS. USE ITS REEL LINK TO DOWNLOAD VIDEO." = "THIS POST CONTAINS VIDEOS. USE ITS REEL LINK TO DOWNLOAD VIDEO.";
+"THIS POST HAS NO VIDEOS. CHOOSE PHOTOS TO DOWNLOAD IT." = "THIS POST HAS NO VIDEOS. CHOOSE PHOTOS TO DOWNLOAD IT.";
+"THIS POST IS A VIDEO. CHOOSE VIDEO OR AUDIO TO DOWNLOAD IT." = "THIS POST IS A VIDEO. CHOOSE VIDEO OR AUDIO TO DOWNLOAD IT.";
 "THIS REPOSITORY IS PRIVATE" = "THIS REPOSITORY IS PRIVATE";
 "THIS RTFD ATTACHMENT SYNTAX COULD NOT BE PRESERVED." = "THIS RTFD ATTACHMENT SYNTAX COULD NOT BE PRESERVED.";
 "THIS SIZE CANNOT BE REACHED. CHOOSE A LARGER TARGET OR SMALLER DIMENSIONS." = "THIS SIZE CANNOT BE REACHED. CHOOSE A LARGER TARGET OR SMALLER DIMENSIONS.";
@@ -2635,8 +2637,8 @@
 "This link requires a login or is restricted. Try a public share link; Nashi does not read your browser sessions." = "This link requires a login or is restricted. Try a public share link; Nashi does not read your browser sessions.";
 "This media is protected and cannot be downloaded here." = "This media is protected and cannot be downloaded here.";
 "This output format has no adjustable conversion defaults." = "This output format has no adjustable conversion defaults.";
-"This post contains videos, not photos. Use its Reel link to download video." = "This post contains videos, not photos. Use its Reel link to download video.";
-"This post contains videos. Use its Reel link to download video." = "This post contains videos. Use its Reel link to download video.";
+"This post has no videos. Choose photos to download it." = "This post has no videos. Choose photos to download it.";
+"This post is a video. Choose video or audio to download it." = "This post is a video. Choose video or audio to download it.";
 "This repository is private" = "This repository is private";
 "This size cannot be reached. Choose a larger target or smaller dimensions." = "This size cannot be reached. Choose a larger target or smaller dimensions.";
 "This source uses more than 32-bit integer audio. Choose an output bit depth in settings." = "This source uses more than 32-bit integer audio. Choose an output bit depth in settings.";

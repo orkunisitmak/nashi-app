@@ -36,8 +36,9 @@ struct WheelItem {
             let media=WebMediaDragPayload.parse(urls:inputs.map(\.absoluteString))
             let video=media?.videoURL != nil
             let photos=media?.isInstagramPhotoPost == true
-            items=[WheelItem(title:photos ? "Download photos…":video ? "Download video…":media?.imageURL != nil ? "Download image…":"Download…",symbol:photos ? "photo.on.rectangle":video ? "play.rectangle":"arrow.down.circle",webAction:.download)]
+            items=[WheelItem(title:photos ? "Download post…":video ? "Download video…":media?.imageURL != nil ? "Download image…":"Download…",symbol:photos ? "photo.on.rectangle":video ? "play.rectangle":"arrow.down.circle",webAction:.download)]
             if video,media?.imageURL != nil { items.append(WheelItem(title:"Download thumbnail…",symbol:"photo",webAction:.thumbnail)) }
+            // A /p/ post may mix photos and videos, so audio is chosen after inspection, where a reel offers it.
             if !photos,(video || media?.imageURL == nil) { items.append(WheelItem(title:"Audio MP3…",symbol:"waveform",webAction:.audio)) }
             items += [WheelItem(title:"Copy link",symbol:"link",webAction:.copy),WheelItem(title:"Open link",symbol:"safari",webAction:.open)]
         } else { switch mode {

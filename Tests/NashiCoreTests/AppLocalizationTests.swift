@@ -81,7 +81,7 @@ final class AppLocalizationTests:XCTestCase {
     }
     /// Literals from Wheel.swift: the web-link petals and the empty-wheel centre (with the configured shortcut symbols).
     func testWheelWebPetalsAndEmptyWheelAreTranslated() {
-        let petals=["Download photos…","Download video…","Download image…","Download…","Download thumbnail…","Audio MP3…","Copy link"]
+        let petals=["Download post…","Download photos…","Download video…","Download image…","Download…","Download thumbnail…","Audio MP3…","Copy link"]
         for language in ["tr","fr"] {
             for source in petals { XCTAssertNotEqual(AppLocalization.text(source,language:language),source,"\(language): \(source)") }
         }

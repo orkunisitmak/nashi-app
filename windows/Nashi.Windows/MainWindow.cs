@@ -302,7 +302,7 @@ public sealed partial class MainWindow:Window
         if(busy)return;
         var payload=WebMediaPayload.Parse(link.Text);var kind=downloadKind.SelectedItem as string??"video";
         if(!tools.Ready&&kind!="image"&&payload?.Kind!="image"&&!(kind=="thumbnail"&&payload?.Kind=="youtube")){MessageBox.Show(webWindow??this,L10n.Text("Choose Set up media tools once to enable web downloads."),L10n.Text("Media setup"));return;}
-        if(kind=="photos"&&inspectedLink!=link.Text){await InspectWebLinkAsync();return;}
+        if(kind=="photos"&&(inspectedLink!=link.Text||!photoChoices.Children.OfType<CheckBox>().Any())){await InspectWebLinkAsync();return;}
         try{var url=WebDownload.Validate(payload?.Url??link.Text).AbsoluteUri;await RunAsync((destination,p,t)=>new WebDownload(tools).DownloadAsync(url,kind,destination,p,t,webQuality.SelectedIndex==1?1080:webQuality.SelectedIndex==2?720:null,kind=="photos"?new HashSet<int>(selectedWebPhotos):null),"Download "+kind);}catch(Exception error){MessageBox.Show(webWindow??this,L10n.Text(error.Message),L10n.Text("Check your link"));}
     }
     private async Task SetupAsync()

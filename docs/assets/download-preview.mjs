@@ -38,7 +38,8 @@ export function classifyMediaPreviewURL(value) {
 export function mediaPreviewOptions(value) {
   switch (classifyMediaPreviewURL(value)) {
     case 'instagram-video': return [['Video', 'Video'], ['Audio', 'Ses']];
-    case 'instagram-photos': return [['Carousel photos', 'Carousel görselleri']];
+    // A /p/ link can also be a saved or grid reel, so it offers video and audio too.
+    case 'instagram-photos': return [['Carousel photos', 'Carousel görselleri'], ['Video', 'Video'], ['Audio', 'Ses']];
     case 'youtube': return [['Video', 'Video'], ['Audio', 'Ses'], ['Thumbnail', 'Thumbnail']];
     case 'image': return [['Image', 'Görsel']];
     case 'media': return [['Media file', 'Medya dosyası']];
