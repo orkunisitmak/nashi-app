@@ -22,6 +22,7 @@ final class TargetSizeSearchTests: XCTestCase {
     func testResizesBeforeDroppingBelowQualityFloorAndReportsUnreachable() throws {
         let resized=try XCTUnwrap(TargetSizeSearch.run(originalBytes:200000,targetBytes:9000,startQuality:90,lossy:true,allowResize:true,encode:smooth).best)
         XCTAssertLessThan(resized.scale,1);XCTAssertGreaterThanOrEqual(resized.quality,TargetSizeSearch.qualityFloor)
+        // Without resizing the search reports the target as unreachable (the floor always applies).
         let quality=try TargetSizeSearch.run(originalBytes:200000,targetBytes:5000,startQuality:90,lossy:true,allowResize:false,encode:smooth)
         XCTAssertEqual(quality.status,.bestEffortAboveTarget);XCTAssertNil(quality.best);XCTAssertGreaterThan(quality.attempts,0)
     }
@@ -66,6 +67,73 @@ final class TargetSizeSearchTests: XCTestCase {
         options.targetBytes=target
         let compressed=try XCTUnwrap(ImageEngine.compress(input,options:options,token:.init()).first)
         XCTAssertLessThanOrEqual(Int64(try Data(contentsOf:compressed).count),target)
+        XCTAssertEqual(try Data(contentsOf:input),original)
+    }
+
+    func testOnePixelWideImageShrinksLongEdge() throws {
+        let folder=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:folder) }
+        let input=folder.appendingPathComponent("thin.png")
+        var pixels=[UInt8](repeating:255,count:1*12*4)
+        try pixels.withUnsafeMutableBytes { buffer in
+            let context=try XCTUnwrap(CGContext(data:buffer.baseAddress,width:1,height:12,bitsPerComponent:8,bytesPerRow:4,space:CGColorSpace(name:CGColorSpace.sRGB)!,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue))
+            try ImageEngine.write(try XCTUnwrap(context.makeImage()),to:input)
+        }
+        let original=try Data(contentsOf:input),bytes=Int64(original.count)
+        var options=OperationOptions();options.outputDirectory=folder;options.targetBytes=bytes/4;options.preferQuality=false
+        let compressed=try XCTUnwrap(ImageEngine.compress(input,options:options,token:.init()).first)
+        let result=try ImageEngine.load(compressed)
+        XCTAssertEqual(result.width,1,"1-pixel-wide image must keep its short edge at one pixel")
+        XCTAssertLessThan(result.height,12,"Long edge of a 1-pixel-wide image must shrink")
+        XCTAssertLessThanOrEqual(Int64(try Data(contentsOf:compressed).count),bytes/4)
+    }
+
+    func testOnePixelTallImageShrinksLongEdge() throws {
+        let folder=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:folder) }
+        let input=folder.appendingPathComponent("flat.png")
+        var pixels=[UInt8](repeating:255,count:12*1*4)
+        try pixels.withUnsafeMutableBytes { buffer in
+            let context=try XCTUnwrap(CGContext(data:buffer.baseAddress,width:12,height:1,bitsPerComponent:8,bytesPerRow:48,space:CGColorSpace(name:CGColorSpace.sRGB)!,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue))
+            try ImageEngine.write(try XCTUnwrap(context.makeImage()),to:input)
+        }
+        let original=try Data(contentsOf:input),bytes=Int64(original.count)
+        var options=OperationOptions();options.outputDirectory=folder;options.targetBytes=bytes/4;options.preferQuality=false
+        let compressed=try XCTUnwrap(ImageEngine.compress(input,options:options,token:.init()).first)
+        let result=try ImageEngine.load(compressed)
+        XCTAssertEqual(result.height,1,"1-pixel-tall image must keep its short edge at one pixel")
+        XCTAssertLessThan(result.width,12,"Long edge of a 1-pixel-tall image must shrink")
+        XCTAssertLessThanOrEqual(Int64(try Data(contentsOf:compressed).count),bytes/4)
+    }
+
+    /// Seeded noise PNG: lossless and hard to compress, so a small target needs fewer pixels.
+    private func noisePNG(_ width:Int,_ height:Int,in folder:URL) throws -> URL {
+        let url=folder.appendingPathComponent("noise-\(width)x\(height).png")
+        var seed:UInt64=7,pixels=[UInt8](repeating:255,count:width*height*4)
+        for index in pixels.indices where index%4 != 3 { seed=seed &* 6364136223846793005 &+ 1442695040888963407;pixels[index]=UInt8(truncatingIfNeeded:seed>>56) }
+        try pixels.withUnsafeMutableBytes { buffer in
+            let context=try XCTUnwrap(CGContext(data:buffer.baseAddress,width:width,height:height,bitsPerComponent:8,bytesPerRow:width*4,space:CGColorSpace(name:CGColorSpace.sRGB)!,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue))
+            try ImageEngine.write(try XCTUnwrap(context.makeImage()),to:url)
+        }
+        return url
+    }
+
+    func testQualityPriorityKeepsDimensionsOrRefusesWithoutOutput() throws {
+        let folder=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:folder) }
+        let input=try noisePNG(256,192,in:folder),original=try Data(contentsOf:input),bytes=Int64(original.count)
+        var options=OperationOptions();options.outputDirectory=folder;options.targetBytes=bytes/4;options.preferQuality=true
+        // A lossless image four times too large cannot fit without fewer pixels.
+        XCTAssertThrowsError(try ImageEngine.compress(input,options:options,token:.init())) { error in
+            XCTAssertTrue("\(error)".contains("without lowering the resolution"),"\(error)")
+        }
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath:folder.path),[input.lastPathComponent])
+        // Size priority reaches the same target by resizing.
+        options.preferQuality=false
+        let resized=try XCTUnwrap(ImageEngine.compress(input,options:options,token:.init()).first)
+        XCTAssertLessThanOrEqual(Int64(try Data(contentsOf:resized).count),bytes/4)
+        XCTAssertLessThan(try ImageEngine.load(resized).width,256)
+        // A reachable target under Quality priority keeps the dimensions.
+        options.preferQuality=true;options.targetBytes=bytes*2
+        let kept=try XCTUnwrap(ImageEngine.compress(input,options:options,token:.init()).first),image=try ImageEngine.load(kept)
+        XCTAssertEqual(image.width,256);XCTAssertEqual(image.height,192)
         XCTAssertEqual(try Data(contentsOf:input),original)
     }
 
