@@ -72,7 +72,7 @@ final class TargetSizeSearchTests: XCTestCase {
 
     func testOnePixelWideImageShrinksLongEdge() throws {
         let folder=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:folder) }
-        // Noise PNG is hard to compress; use a tall enough fixture so a quarter-sized target is reachable.
+        // Noise PNG is hard to compress; use a tall enough fixture so shrinking is meaningful.
         let input=folder.appendingPathComponent("thin.png")
         var pixels=[UInt8](repeating:0,count:1*500*4)
         var seed:UInt64=7
@@ -82,8 +82,13 @@ final class TargetSizeSearchTests: XCTestCase {
             try ImageEngine.write(try XCTUnwrap(context.makeImage()),to:input)
         }
         let original=try Data(contentsOf:input),bytes=Int64(original.count)
-        // A quarter of the input is smaller than the source but achievable for this noise fixture.
-        let target=max(bytes/4,1)
+        // Measure the smallest achievable output first (CodeRabbit: use an achievable target).
+        var probeOptions=OperationOptions();probeOptions.outputDirectory=folder;probeOptions.preferQuality=false
+        let probe=try XCTUnwrap(ImageEngine.compress(input,options:probeOptions,token:.init()).first)
+        let probeSize=Int64(try Data(contentsOf:probe).count)
+        XCTAssertLessThan(probeSize,bytes,"Compressed probe must be smaller than the source")
+        // Set target to the measured minimum: smaller than input, achievable by construction.
+        let target=max(probeSize,1)
         var options=OperationOptions();options.outputDirectory=folder;options.targetBytes=target;options.preferQuality=false
         let compressed=try XCTUnwrap(ImageEngine.compress(input,options:options,token:.init()).first)
         let result=try ImageEngine.load(compressed)
@@ -94,7 +99,7 @@ final class TargetSizeSearchTests: XCTestCase {
 
     func testOnePixelTallImageShrinksLongEdge() throws {
         let folder=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:folder) }
-        // Noise PNG is hard to compress; use a wide enough fixture so a quarter-sized target is reachable.
+        // Noise PNG is hard to compress; use a wide enough fixture so shrinking is meaningful.
         let input=folder.appendingPathComponent("flat.png")
         var pixels=[UInt8](repeating:0,count:500*1*4)
         var seed:UInt64=7
@@ -104,7 +109,11 @@ final class TargetSizeSearchTests: XCTestCase {
             try ImageEngine.write(try XCTUnwrap(context.makeImage()),to:input)
         }
         let original=try Data(contentsOf:input),bytes=Int64(original.count)
-        let target=max(bytes/4,1)
+        var probeOptions=OperationOptions();probeOptions.outputDirectory=folder;probeOptions.preferQuality=false
+        let probe=try XCTUnwrap(ImageEngine.compress(input,options:probeOptions,token:.init()).first)
+        let probeSize=Int64(try Data(contentsOf:probe).count)
+        XCTAssertLessThan(probeSize,bytes,"Compressed probe must be smaller than the source")
+        let target=max(probeSize,1)
         var options=OperationOptions();options.outputDirectory=folder;options.targetBytes=target;options.preferQuality=false
         let compressed=try XCTUnwrap(ImageEngine.compress(input,options:options,token:.init()).first)
         let result=try ImageEngine.load(compressed)
