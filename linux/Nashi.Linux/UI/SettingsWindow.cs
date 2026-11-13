@@ -1,0 +1,183 @@
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Layout;
+using Avalonia.Media;
+using Nashi.Core;
+namespace Nashi.Linux.UI;
+
+/// Settings in three tabs: General, Appearance (live theme preview), and Shortcuts & gestures
+/// (record keys by pressing them, see conflicts with other apps, pick a wheel per direction).
+public sealed class SettingsWindow:Window
+{
+    private readonly MainWindow main;private readonly string originalTheme;private string theme;private bool saved;
+    private readonly Dictionary<string,ShortcutBox> boxes=[];private readonly TextBlock problem=new(){Foreground=Brushes.IndianRed,TextWrapping=TextWrapping.Wrap};
+    public SettingsWindow(MainWindow main)
+    {
+        this.main=main;originalTheme=theme=main.LinuxSettings.Theme;
+        Title=L10n.T("Settings")+" · Nashi";Width=680;Height=720;MinWidth=560;MinHeight=520;WindowStartupLocation=WindowStartupLocation.CenterOwner;ShowInTaskbar=false;
+        var p=main.preferences.Value;var linux=main.LinuxSettings;
+
+        // General
+        var language=Ui.Choice([("en","English"),("tr","Türkçe")],p.Language);
+        var output=Ui.Choice([("beside","Beside the original"),("folder","In a folder"),("ask","Ask every time")],p.OutputMode);var folder=new TextBox{Text=p.OutputFolder,PlaceholderText=L10n.T("Choose a folder")};
+        var downloads=new TextBox{Text=string.IsNullOrWhiteSpace(p.DownloadFolder)||p.DownloadFolder==new Preferences().DownloadFolder&&!Directory.Exists(p.DownloadFolder)?AppPaths.Downloads:p.DownloadFolder};
+        var reveal=new CheckBox{Content=L10n.T("Show new files in the file manager when finished"),IsChecked=p.RevealFinished};
+        var floating=Ui.Choice([("createNew","Open a new Float"),("addToExisting","Add to the open Float")],p.FloatBehavior);
+        var background=new CheckBox{Content=L10n.T("Keep Nashi running in the tray when the window is closed"),IsChecked=linux.RunInBackground};
+        var login=new CheckBox{Content=L10n.T("Start Nashi in the tray when I log in"),IsChecked=linux.StartAtLogin};
+        Control Browse(TextBox box)=>new DockPanel{Children={Ui.Button("Choose…",async()=>{if(await Dialogs.Folder(this,"Choose a folder") is {} chosen)box.Text=chosen;},"chip").Also(b=>{DockPanel.SetDock(b,Dock.Right);b.Margin=new(8,0,0,0);}),box}};
+        var general=Ui.Stack(2,Ui.Field("Language",language),Ui.Field("Save new files",output),Ui.Field("Output folder",Browse(folder)),Ui.Field("Save downloaded media to…",Browse(downloads)),Ui.Field("Float",floating),reveal,
+            Ui.Text("Background",13,"title").Also(t=>t.Margin=new(0,16,0,4)),background,login,
+            Ui.Text("The tray keeps system-wide shortcuts and drag gestures ready while the window is closed.",11,"muted"),
+            Ui.Text(L10n.T("Library and settings:")+" "+main.library.DirectoryPath,11,"muted",false).Also(t=>t.Margin=new(0,14,0,0)));
+
+        // Appearance
+        var appearance=Ui.Choice([("system","System"),("light","Light"),("dark","Dark")],main.library.Appearance);
+        var wheelSize=Ui.Slider(85,140,Math.Round(p.WheelScale*100),5);var animations=new CheckBox{Content=L10n.T("Animations"),IsChecked=p.Animations};var feedback=new CheckBox{Content=L10n.T("Wheel sound"),IsChecked=p.Feedback};
+        appearance.SelectionChanged+=(_,_)=>App.ApplyAppearance(Ui.Value(appearance));
+        var cards=new WrapPanel();
+        foreach(var (id,name,blurb) in new[]{("classic","Classic","The pear palette shared with macOS and Windows."),("glass","Glass","Clear panes; your desktop shows through."),("frosted","Frosted glass","The desktop behind Nashi is blurred, like acrylic."),("brutalist","Brutalist","Square, heavy outlines, hard shadows, loud yellow.")})
+        {
+            var card=ThemeCard(id,name,blurb);card.PointerPressed+=(_,_)=>{theme=id;App.ApplyTheme(id);foreach(var c in cards.Children.OfType<Border>())c.Classes.Set("chosen",(string?)c.Tag==id);};
+            card.Classes.Set("chosen",id==theme);cards.Children.Add(card);
+        }
+        var look=Ui.Stack(2,Ui.Field("Appearance",appearance),Ui.Field("Wheel size",Ui.Labeled(wheelSize,v=>$"{v:0}%")),Ui.Row(16,animations,feedback),Ui.Text("Theme",13,"title").Also(t=>t.Margin=new(0,10,0,6)),cards,
+            Ui.Text("Glass and Frosted glass need a compositor (KDE Plasma, GNOME and most desktops have one). Frosted glass uses KDE's blur; elsewhere it looks like Glass.",11,"muted").Also(t=>t.Margin=new(0,8,0,0)));
+
+        // Shortcuts & gestures
+        var enabled=new CheckBox{Content=L10n.T("Use system-wide shortcuts (work in every app, also while dragging)"),IsChecked=linux.GlobalShortcuts};
+        var list=new StackPanel{Spacing=8};
+        foreach(var (id,title,fallback) in LinuxSettings.Actions)
+        {
+            var box=new ShortcutBox(linux.Shortcuts.GetValueOrDefault(id,""),main);boxes[id]=box;
+            var note=new TextBlock{FontSize=11,Foreground=Brushes.IndianRed,TextWrapping=TextWrapping.Wrap,Text=main.ShortcutProblems.GetValueOrDefault(id,""),IsVisible=main.ShortcutProblems.ContainsKey(id)};
+            box.Changed+=async combo=>
+            {
+                var other=boxes.FirstOrDefault(b=>b.Key!=id&&b.Value.Combo==combo&&combo.Length>0).Key;
+                // An async void handler: a D-Bus failure here must not take the app down, only skip the clash check.
+                string? owner=null;
+                try{owner=other is null&&combo.Length>0?await main.ShortcutOwnerAsync(combo):null;}
+                catch(Exception error)when(error is Tmds.DBus.Protocol.DBusExceptionBase or IOException or InvalidOperationException or ObjectDisposedException){note.Text=L10n.T("Couldn't check whether another app uses these keys.");note.IsVisible=true;return;}
+                note.Text=other is not null?L10n.T("Nashi already uses these keys for")+" "+L10n.T(LinuxSettings.Actions.First(a=>a.Id==other).Title):owner is not null?L10n.T("Already used by")+" "+owner:"";note.IsVisible=note.Text.Length>0;
+            };
+            var reset=Ui.Button("↺",()=>box.Set(fallback),"chip",tip:"Default: "+fallback);var clear=Ui.Button("✕",()=>box.Set(""),"chip",tip:"No shortcut");
+            var row=new Grid{ColumnDefinitions=new("*,170,Auto,Auto")};
+            row.Children.Add(Ui.Text(title,13).Also(t=>t.VerticalAlignment=VerticalAlignment.Center));
+            Grid.SetColumn(box,1);row.Children.Add(box);Grid.SetColumn(reset,2);reset.Margin=new(8,0,4,0);row.Children.Add(reset);Grid.SetColumn(clear,3);clear.Margin=new(0);row.Children.Add(clear);
+            list.Children.Add(Ui.Stack(2,row,note));
+        }
+        var firstWheel=Ui.Choice([("tools","Tools"),("convert","Convert"),("actions","File actions")],linux.FirstWheel);
+        var available=main.ShortcutsAvailable||!linux.GlobalShortcuts?null:Ui.Text("System-wide shortcuts need KDE Plasma (kglobalaccel). On other desktops, use Ctrl+Space and drop modifiers inside Nashi.",12,"muted");
+        var hotEdge=Ui.Choice([("off","Off"),("left","Left edge"),("right","Right edge"),("bottom","Bottom edge")],linux.HotEdge);
+        var quickRun=new CheckBox{Content=L10n.T("Conversions and simple tools chosen by gesture run at once with their saved defaults"),IsChecked=linux.GestureQuickRun};
+        var keys=Ui.Stack(4,enabled,available??new Control(),Ui.Text("Click a shortcut, then press the new keys. Esc cancels, Backspace clears. Each needs Meta, Ctrl, Alt or Shift, or can be a function key alone (F8).",11,"muted").Also(t=>t.Margin=new(0,4,0,8)),list,
+            Ui.Text("Gesture wheel",13,"title").Also(t=>t.Margin=new(0,18,0,4)),
+            Ui.Text("While dragging files anywhere, press the gesture shortcut: the wheel opens under the pointer. Press it again for the next wheel (Tools, Convert, File actions), then drop on a slice.",11,"muted").Also(t=>t.Margin=new(0,0,0,8)),Ui.Field("Opens first",firstWheel),quickRun,Ui.Text("Hot edge",13,"title").Also(t=>t.Margin=new(0,18,0,4)),Ui.Field("Drag files to this screen edge to open the wheel, no key needed",hotEdge,"Corners stay free for the desktop's own corner actions. Needs Wayland with layer-shell (KDE Plasma, Sway, Hyprland)."));
+
+        // Automation: watched folders.
+        var rules=new StackPanel{Spacing=10};var ruleRows=new List<Func<FolderRule?>>();
+        void AddRule(FolderRule rule)
+        {
+            var folderBox=new TextBox{Text=rule.Folder};var extensions=new TextBox{Text=string.Join(", ",rule.Extensions),PlaceholderText="heic, heif"};
+            var format=new ComboBox{MinWidth=110};var on=new CheckBox{Content=L10n.T("On"),IsChecked=rule.Enabled};
+            void Formats()
+            {
+                var first=(extensions.Text??"").Split(',',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries).FirstOrDefault()?.TrimStart('.')??"";
+                var options=first.Length==0?[]:FeatureCatalog.Formats(["x."+first]);var keep=format.SelectedItem as string??rule.Format;
+                format.ItemsSource=options;format.SelectedItem=options.Contains(keep)?keep:options.FirstOrDefault();
+            }
+            extensions.TextChanged+=(_,_)=>Formats();Formats();
+            var card=new Border{Classes={"inset"},Padding=new(12)};
+            var remove=Ui.Button("✕",()=>{rules.Children.Remove(card);},"chip",tip:"Remove rule");
+            Func<FolderRule?> read=()=>card.Parent is null?null:new FolderRule(folderBox.Text??"",(extensions.Text??"").Split(',',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries).Select(e=>e.TrimStart('.').ToLowerInvariant()).ToArray(),format.SelectedItem as string??"",on.IsChecked==true);
+            ruleRows.Add(read);
+            var top=new DockPanel();DockPanel.SetDock(remove,Dock.Right);top.Children.Add(remove);top.Children.Add(Browse(folderBox));
+            card.Child=Ui.Stack(8,top,Ui.Wrap(Ui.Field("When new files with these extensions arrive",extensions).Also(f=>f.MinWidth=260),new Control{Width=12},Ui.Field("Convert them to",format),new Control{Width=12},on.Also(c=>c.VerticalAlignment=VerticalAlignment.Center)));
+            rules.Children.Add(card);
+        }
+        foreach(var rule in linux.Watches)AddRule(rule);
+        var automation=Ui.Stack(6,Ui.Text("Watched folders",13,"title"),
+            Ui.Text("While Nashi runs (also in the tray), new files that land in these folders are converted beside the original with your saved export defaults. Originals are never changed, partial downloads are skipped, and each result goes to Library with a notification.",11,"muted"),
+            rules,Ui.Button("Add a watched folder",()=>AddRule(new FolderRule(AppPaths.Downloads,["heic","heif"],"jpg")),"chip"),
+            Ui.Text("Example: photos from a phone sync into Downloads as HEIC and appear as JPG next to them.",11,"muted"));
+        var tabs=new TabControl{Items=
+        {
+            new TabItem{Header=L10n.T("General"),Content=Scroll(general)},
+            new TabItem{Header=L10n.T("Appearance"),Content=Scroll(look)},
+            new TabItem{Header=L10n.T("Shortcuts & gestures"),Content=Scroll(keys)},
+            new TabItem{Header=L10n.T("Automation"),Content=Scroll(automation)},
+        }};
+        var save=Ui.Primary("Save",()=>
+        {
+            try
+            {
+                // Everything is checked first; nothing is written until all of it is valid.
+                var mode=Ui.Value(output);if(mode=="folder"&&!Directory.Exists(folder.Text))throw new ArgumentException("Choose an existing output folder.");
+                var combos=boxes.ToDictionary(b=>b.Key,b=>b.Value.Combo);
+                var duplicate=combos.Where(c=>c.Value.Length>0).GroupBy(c=>c.Value).FirstOrDefault(g=>g.Count()>1);if(duplicate is not null)throw new ArgumentException(L10n.T("Two Nashi actions use the same keys:")+" "+duplicate.Key);
+                var watches=ruleRows.Select(r=>r()).OfType<FolderRule>().ToList();
+                foreach(var w in watches)
+                {
+                    if(!Directory.Exists(w.Folder))throw new ArgumentException(L10n.T("Choose an existing watched folder:")+" "+w.Folder);
+                    if(w.Extensions.Length==0||w.Format.Length==0||w.Extensions.Any(e=>!FeatureCatalog.Formats(["x."+e]).Contains(w.Format)))throw new ArgumentException(L10n.T("Choose extensions that can become")+" "+w.Format.ToUpperInvariant());
+                }
+                main.preferences.Save(p with{Language=Ui.Value(language),OutputMode=mode,OutputFolder=folder.Text??"",DownloadFolder=downloads.Text??AppPaths.Downloads,RevealFinished=reveal.IsChecked==true,FloatBehavior=Ui.Value(floating),WheelScale=wheelSize.Value/100,Animations=animations.IsChecked==true,Feedback=feedback.IsChecked==true});main.ApplyFeel();
+                main.library.SetAppearance(Ui.Value(appearance));
+                var next=linux with{Watches=watches,GlobalShortcuts=enabled.IsChecked==true,Shortcuts=combos,FirstWheel=Ui.Value(firstWheel),Theme=theme,RunInBackground=background.IsChecked==true,GestureQuickRun=quickRun.IsChecked==true,HotEdge=Ui.Value(hotEdge),StartAtLogin=login.IsChecked==true};
+                main.SaveLinuxSettings(next);App.SetBackground(main,next.RunInBackground);saved=true;Close(true);
+            }
+            catch(Exception error)when(error is ArgumentException or IOException or UnauthorizedAccessException){problem.Text=L10n.T(error.Message);}
+        });
+        save.IsDefault=true;var cancel=Ui.Button("Cancel",()=>Close(false));cancel.IsCancel=true;
+        var footer=Ui.Stack(6,problem,Ui.Row(0,save,cancel));footer.Margin=new(24,8,24,18);DockPanel.SetDock(footer,Dock.Bottom);
+        var header=Ui.Title("Settings",24);header.Margin=new(24,20,24,6);DockPanel.SetDock(header,Dock.Top);
+        tabs.Margin=new(16,0,16,0);
+        Content=new DockPanel{Children={header,footer,tabs}};
+        // Cancel or the close button undoes the live theme and appearance preview.
+        Closed+=(_,_)=>{if(!saved){App.ApplyTheme(originalTheme);App.ApplyAppearance(main.library.Appearance);}};
+    }
+    private static ScrollViewer Scroll(Control content)=>new(){Content=new Border{Padding=new(8,14,8,14),Child=content},HorizontalScrollBarVisibility=Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled};
+    /// A small sample of each theme, drawn with its own colours so it reads before it is applied.
+    private static Border ThemeCard(string id,string name,string blurb)
+    {
+        (string Paper,string Card,string Ink,string Accent,double Radius,double Edge,string EdgeColor) look=id switch
+        {
+            "glass"=>("#8099B4A0","#55FFFFFF","#17261B","#E3B859",12,1,"#B3FFFFFF"),
+            "frosted"=>("#B3D9E2D6","#A6FFFFFF","#17261B","#E3B859",12,1,"#B3FFFFFF"),
+            "brutalist"=>("#F2EEE3","#FFFFFF","#0A0A0A","#FFE14D",0,3,"#0A0A0A"),
+            _=>("#F9F6ED","#FFFEF7","#243B2B","#E3B859",10,1,"#DCDDD1")
+        };
+        var sample=new Border{Background=new SolidColorBrush(Color.Parse(look.Paper)),Height=86,Padding=new(10),CornerRadius=new(look.Radius),Child=new Border
+        {
+            Background=new SolidColorBrush(Color.Parse(look.Card)),BorderBrush=new SolidColorBrush(Color.Parse(look.EdgeColor)),BorderThickness=new(look.Edge),CornerRadius=new(look.Radius),Padding=new(8),
+            BoxShadow=id=="brutalist"?BoxShadows.Parse("4 4 0 0 #0A0A0A"):default,
+            Child=new StackPanel{Spacing=6,Children={new TextBlock{Text="Nashi",FontWeight=FontWeight.Bold,Foreground=new SolidColorBrush(Color.Parse(look.Ink))},new Border{Width=58,Height=16,HorizontalAlignment=HorizontalAlignment.Left,CornerRadius=new(look.Radius/2),Background=new SolidColorBrush(Color.Parse(look.Accent)),BorderBrush=new SolidColorBrush(Color.Parse(look.Ink)),BorderThickness=new(id=="brutalist"?2:0)}}}
+        }};
+        if(id is "glass" or "frosted")sample.Background=new LinearGradientBrush{StartPoint=new RelativePoint(0,0,RelativeUnit.Relative),EndPoint=new RelativePoint(1,1,RelativeUnit.Relative),GradientStops={new GradientStop(Color.Parse("#6D8FD6"),0),new GradientStop(Color.Parse(id=="frosted"?"#C9A0DC":"#E3B859"),1)}};
+        return new Border{Tag=id,Classes={"card","theme-card"},Width=148,Margin=new(0,0,10,10),Padding=new(8),Cursor=new Cursor(StandardCursorType.Hand),Child=Ui.Stack(6,sample,Ui.Text(name,13,"title"),Ui.Text(blurb,11,"muted"))};
+    }
+}
+
+/// Records a key combination by pressing it. Esc cancels, Backspace or Delete clears.
+public sealed class ShortcutBox:Button
+{
+    public string Combo{get;private set;}
+    public event Action<string>? Changed;
+    private bool recording;
+    public ShortcutBox(string combo,MainWindow main)
+    {
+        Combo=combo;HorizontalAlignment=HorizontalAlignment.Stretch;HorizontalContentAlignment=HorizontalAlignment.Center;Margin=new(0);Show();
+        Click+=(_,_)=>{recording=true;Content=L10n.T("Press keys…");Classes.Add("primary");Focus();};
+        LostFocus+=(_,_)=>{if(recording){recording=false;Show();}};
+        AddHandler(KeyDownEvent,(_,e)=>
+        {
+            if(!recording)return;e.Handled=true;
+            if(e.Key==Key.Escape){recording=false;Show();return;}
+            if(e.Key is Key.Back or Key.Delete&&e.KeyModifiers==KeyModifiers.None){recording=false;Set("");return;}
+            if(KeyCombo.FromAvalonia(e.Key,e.KeyModifiers) is {} combo){recording=false;Set(combo);}
+        },Avalonia.Interactivity.RoutingStrategies.Tunnel);
+    }
+    public void Set(string combo){Combo=combo;Show();Changed?.Invoke(combo);}
+    private void Show(){Classes.Remove("primary");Content=Combo.Length==0?L10n.T("None"):Combo.Replace("+"," + ");FontFamily=Combo.Length==0?FontFamily.Default:new FontFamily("monospace");}
+}

@@ -26,6 +26,29 @@ Windows görüntüsü, [PR #1](https://github.com/orkunisitmak/nashi-app/pull/1)
 
 - **[macOS ZIP · Apple Silicon, macOS 13+](https://github.com/orkunisitmak/nashi-app/releases/latest/download/Nashi-macOS-arm64.zip):** ZIP’i aç, Nashi.app’i Uygulamalar klasörüne taşı ve aç. macOS kataloğu 27 araç, 46 girdi formatı ve 276 dönüşüm yolu içerir.
 - **[Windows x64 ZIP · yerel önizleme](https://github.com/orkunisitmak/nashi-app/releases/latest/download/Nashi-Windows-x64.zip):** ZIP’in tamamını kendine ait, yazılabilir bir klasöre çıkar ve Nashi.exe’yi aç. Ayrıca .NET kurmak gerekmez. Güncelleme için klasörün bütünlüğünü koru. [Windows özellikleri ve farkları](windows/README.md).
+- **Linux x64 (`Nashi-Linux-x64.tar.gz`):** arşivi çıkar ve `Nashi/install.sh` dosyasını çalıştır ya da `Nashi/nashi` dosyasını doğrudan aç. Ayrıca .NET kurman gerekmez. GNOME, KDE Plasma, Xfce ve diğer masaüstlerinde X11 ve Wayland üzerinde çalışır. LibreOffice ve Tesseract dağıtımından gelir. [Linux kurulumu, ayarlar ve farklar](linux/README.md). KDE Plasma’da dosyaları sol ekran kenarına sürükleyerek (tuşsuz) ya da sürüklerken `Meta+Space`’e basarak çarkı her yerde açabilirsin.
+
+### Linux’a kurulum
+
+Yayın arşivinden (.NET gerekmez):
+
+```sh
+# İlk hatada durur; bozuk ya da değiştirilmiş bir arşiv hiç açılmaz ve çalıştırılmaz.
+sha256sum -c Nashi-Linux-x64.tar.gz.sha256 &&
+  tar -xzf Nashi-Linux-x64.tar.gz &&
+  Nashi/install.sh               # yalnızca senin kullanıcın için; herkes için: sudo Nashi/install.sh --system
+```
+
+Kaynak koddan ([.NET 10 SDK](https://dotnet.microsoft.com/download) gerekir):
+
+```sh
+git clone https://github.com/orkunisitmak/nashi-app.git
+cd nashi-app
+scripts/build-linux.sh
+build/linux/Nashi/install.sh
+```
+
+Kurulumdan sonra Nashi uygulama menüsünde ve **Birlikte Aç** listesinde görünür, terminalde de `nashi` komutuyla açılır. Ofis ve OCR yardımcıları dağıtımından gelir. Debian/Ubuntu için örnek: `sudo apt install libreoffice tesseract-ocr tesseract-ocr-tur`. **Kurulumu tamamla** ekranı Fedora, Arch ve openSUSE için doğru komutu gösterir. Kaldırmak için `~/.local/share/nashi-app/uninstall.sh` komutunu çalıştır; Kitaplık ve ayarların silinmez.
 
 İlk açılışta **Kurulumu tamamla → Eksik araçları indir** akışı Medya ve Office araçlarını sırayla kurar. Bilgisayarında bulunan araçlar yeniden indirilmez; iptal veya hata sonrasında yalnızca eksik gruplarla devam edilir. **Araçlar hazır** durumu iki grup da kullanılabilir olduğunda gösterilir. İndirmeler doğrudan upstream’den gelir; hash’leri kurulumdan önce doğrulanır. Temel yerel görsel/PDF işlemleri hemen çalışır. [Sürümler, hash’ler ve lisanslar](docs/dependencies.md).
 
@@ -39,4 +62,4 @@ Desteklenen medya editörlerinde **Space** oynat/duraklat, **sağ/sol ok** bir s
 
 Dönüştürme ve düzenleme yerelde çalışır. Web indirmeleri seçtiğin siteye bağlanır. Analytics, bulut hesabı veya tarayıcı çerezi aktarma yok. Public güncellemeler GitHub hesabı/token istemez. macOS feed ve arşiv imzasını, Windows arşiv imzasını ve sürümünü doğrular. İşler tamamlanmadan veya iptal edilmeden güncelleme için uygulama kapanmaz. Windows eski uygulama klasörünü geri alınabilir yedek olarak tutar.
 
-Kaynak kod [MIT](LICENSE) lisanslıdır; üçüncü taraf bileşenlerin kendi lisansları geçerlidir. [macOS build adımları](README.md#build) · [Windows build adımları](windows/README.md).
+Kaynak kod [MIT](LICENSE) lisanslıdır; üçüncü taraf bileşenlerin kendi lisansları geçerlidir. [macOS build adımları](README.md#build) · [Windows build adımları](windows/README.md) · [Linux build adımları](linux/README.md#build-and-verify).

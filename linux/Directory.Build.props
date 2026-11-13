@@ -1,0 +1,4 @@
+<Project>
+  <!-- Share the version, analyzers and build hygiene with the Windows projects. -->
+  <Import Project="../windows/Directory.Build.props" />
+</Project>

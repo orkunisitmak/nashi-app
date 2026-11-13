@@ -1,0 +1,178 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Nashi.Linux.App"
+             RequestedThemeVariant="Default">
+  <!-- The same palette as macOS and Windows (windows/Nashi.Windows/Theme.cs). -->
+  <!-- Colours and shapes come from the selected theme in Themes/ (Classic, Glass, Frosted, Brutalist). -->
+  <Application.Styles>
+    <FluentTheme/>
+    <Style Selector="Window">
+      <Setter Property="Background" Value="{DynamicResource Paper}"/>
+      <Setter Property="Foreground" Value="{DynamicResource Ink}"/>
+    </Style>
+    <Style Selector="TextBlock.muted"><Setter Property="Foreground" Value="{DynamicResource Muted}"/></Style>
+    <Style Selector="TextBlock.gold"><Setter Property="Foreground" Value="{DynamicResource GoldText}"/></Style>
+    <Style Selector="TextBlock.title"><Setter Property="FontWeight" Value="Bold"/></Style>
+    <Style Selector="Border.card">
+      <Setter Property="Background" Value="{DynamicResource Surface}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="18"/>
+      <Setter Property="Padding" Value="22"/>
+    </Style>
+    <!-- Gesture switcher: one tab per wheel under the gesture wheel, the open one filled with gold. -->
+    <Style Selector="Border.gesture-switch">
+      <Setter Property="Background" Value="{DynamicResource Surface}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="999"/>
+      <Setter Property="Padding" Value="4"/>
+      <Setter Property="BoxShadow" Value="0 6 24 0 #33000000"/>
+    </Style>
+    <Style Selector="Border.gesture-tab">
+      <Setter Property="CornerRadius" Value="999"/>
+      <Setter Property="Padding" Value="14,7"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    <Style Selector="Border.gesture-tab TextBlock">
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
+    </Style>
+    <Style Selector="Border.gesture-tab:pointerover"><Setter Property="Background" Value="{DynamicResource Inset}"/></Style>
+    <Style Selector="Border.gesture-tab.active"><Setter Property="Background" Value="{DynamicResource Gold}"/></Style>
+    <Style Selector="Border.gesture-tab.active TextBlock"><Setter Property="Foreground" Value="{DynamicResource GoldInk}"/></Style>
+    <Style Selector="TextBlock.keyhint">
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
+    </Style>
+    <Style Selector="Border.inset">
+      <Setter Property="Background" Value="{DynamicResource Inset}"/>
+      <Setter Property="CornerRadius" Value="12"/>
+      <Setter Property="Padding" Value="10"/>
+    </Style>
+    <Style Selector="Border.pill">
+      <Setter Property="Background" Value="{DynamicResource Sage}"/>
+      <Setter Property="CornerRadius" Value="999"/>
+      <Setter Property="Padding" Value="10,3"/>
+      <Setter Property="HorizontalAlignment" Value="Left"/>
+    </Style>
+    <Style Selector="Border.disc">
+      <Setter Property="CornerRadius" Value="999"/>
+      <Setter Property="Padding" Value="0"/>
+    </Style>
+    <Style Selector="Border.warn">
+      <Setter Property="Background" Value="{DynamicResource Sand}"/>
+    </Style>
+    <Style Selector="Border.pill TextBlock">
+      <Setter Property="TextWrapping" Value="NoWrap"/>
+    </Style>
+    <Style Selector="Border.theme-card">
+      <Setter Property="BorderThickness" Value="2"/>
+      <Setter Property="BorderBrush" Value="Transparent"/>
+    </Style>
+    <Style Selector="Border.theme-card.chosen">
+      <Setter Property="BorderBrush" Value="{DynamicResource GoldText}"/>
+    </Style>
+    <Style Selector="Border.tile">
+      <Setter Property="Background" Value="{DynamicResource Inset}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="14"/>
+    </Style>
+    <Style Selector="Border.tile:pointerover">
+      <Setter Property="BorderBrush" Value="{DynamicResource GoldText}"/>
+    </Style>
+    <Style Selector="Border.tile-frame">
+      <Setter Property="Background" Value="{DynamicResource Surface}"/>
+    </Style>
+    <Style Selector="Button.tile-remove">
+      <Setter Property="Width" Value="24"/>
+      <Setter Property="Height" Value="24"/>
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="CornerRadius" Value="999"/>
+      <Setter Property="HorizontalContentAlignment" Value="Center"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="Background" Value="{DynamicResource Surface}"/>
+    </Style>
+    <Style Selector="Rectangle.dashed">
+      <Setter Property="Stroke" Value="{DynamicResource GoldText}"/>
+      <Setter Property="Opacity" Value=".55"/>
+    </Style>
+    <Style Selector="Border.card.drop Rectangle.dashed">
+      <Setter Property="Opacity" Value="1"/>
+      <Setter Property="StrokeThickness" Value="3"/>
+    </Style>
+    <Style Selector="TabItem">
+      <Setter Property="FontSize" Value="16"/>
+    </Style>
+    <Style Selector="Border.drop">
+      <Setter Property="BorderBrush" Value="{DynamicResource GoldText}"/>
+      <Setter Property="BorderThickness" Value="2"/>
+    </Style>
+    <Style Selector="Button">
+      <Setter Property="CornerRadius" Value="10"/>
+      <Setter Property="Padding" Value="14,8"/>
+      <Setter Property="Margin" Value="0,0,8,8"/>
+      <Setter Property="Background" Value="{DynamicResource Inset}"/>
+      <Setter Property="Foreground" Value="{DynamicResource Ink}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+    </Style>
+    <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource Sage}"/>
+      <Setter Property="Foreground" Value="{DynamicResource Ink}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
+    </Style>
+    <Style Selector="Button.primary">
+      <Setter Property="Background" Value="{DynamicResource Gold}"/>
+      <Setter Property="Foreground" Value="{DynamicResource GoldInk}"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    <Style Selector="Button.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource GoldHover}"/>
+      <Setter Property="Foreground" Value="{DynamicResource GoldInk}"/>
+    </Style>
+    <Style Selector="Button.chip">
+      <Setter Property="CornerRadius" Value="999"/>
+      <Setter Property="Padding" Value="12,6"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Margin" Value="0,0,6,6"/>
+    </Style>
+    <Style Selector="Button.quiet">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Padding" Value="10,6"/>
+      <Setter Property="FontSize" Value="12"/>
+    </Style>
+    <Style Selector="Button.active">
+      <Setter Property="Background" Value="{DynamicResource Sand}"/>
+    </Style>
+    <Style Selector="Button.wheel">
+      <Setter Property="CornerRadius" Value="999"/>
+      <Setter Property="Background" Value="{DynamicResource Surface}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Line}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="Margin" Value="0"/>
+      <Setter Property="HorizontalContentAlignment" Value="Center"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Button.wheel:focus /template/ ContentPresenter#PART_ContentPresenter, Button.wheel.selected /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource Gold}"/>
+      <Setter Property="Foreground" Value="{DynamicResource GoldInk}"/>
+    </Style>
+    <Style Selector="TextBox, ComboBox, NumericUpDown">
+      <Setter Property="CornerRadius" Value="10"/>
+    </Style>
+    <Style Selector="ListBox">
+      <Setter Property="Background" Value="Transparent"/>
+    </Style>
+    <Style Selector="ProgressBar">
+      <Setter Property="Foreground" Value="{DynamicResource Gold}"/>
+    </Style>
+  </Application.Styles>
+</Application>

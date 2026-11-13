@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>Nashi.Linux</RootNamespace>
+    <!-- The native Wayland drop target talks to libwayland-client directly. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>nashi</AssemblyName>
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <PublishSingleFile>false</PublishSingleFile>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <ApplicationIcon />
+    <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../windows/Nashi.Core/Nashi.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup><InternalsVisibleTo Include="Nashi.Linux.Snapshots" /></ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.5" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.5" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.5" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.5" />
+    <PackageReference Include="bblanchon.PDFium.Linux" Version="155.0.8044" />
+    <!-- Already shipped with Avalonia.FreeDesktop; referenced directly for KDE global shortcuts. -->
+    <PackageReference Include="Tmds.DBus.Protocol" Version="0.94.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources/Turkish.Linux.json" LogicalName="Nashi.Turkish.Linux.json" />
+    <EmbeddedResource Include="../../Resources/Brand/NashiIcon.png" LogicalName="Nashi.Icon.png" />
+    <EmbeddedResource Include="../../Resources/Brand/NashiMark.png" LogicalName="Nashi.Mark.png" />
+    <EmbeddedResource Include="../../Resources/Brand/NashiMarkHappy.png" LogicalName="Nashi.MarkHappy.png" />
+    <Content Include="../../Resources/PagesInterop.js" Link="PagesInterop.js" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../scripts/pages-windows.js" Link="pages-windows.js" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../Resources/Sounds/WheelSelection.wav" Link="WheelSelection.wav" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../packaging/nashi.desktop" Link="packaging/nashi.desktop" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../packaging/install.sh" Link="install.sh" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../packaging/uninstall.sh" Link="uninstall.sh" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../README.md" Link="README.md" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../Resources/Brand/NashiIcon.png" Link="packaging/nashi.png" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

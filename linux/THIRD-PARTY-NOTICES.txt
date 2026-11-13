@@ -1,0 +1,34 @@
+Nashi for Linux — third-party notices
+=====================================
+
+Nashi's original source is MIT licensed (see LICENSE). The Linux build bundles the
+following components, which keep their own licenses. The shared engine (Nashi.Core)
+also bundles PDFsharp, PdfPig, Magick.NET, ZXing.Net, SharpCompress, BouncyCastle and
+System.Security.Cryptography.Pkcs; their notices are listed in the Windows notices file
+(windows/THIRD-PARTY-NOTICES.txt) and apply unchanged.
+
+Avalonia UI 12.1 (Avalonia, Avalonia.Desktop, Avalonia.Themes.Fluent, Avalonia.Fonts.Inter)
+  MIT License · Copyright (c) AvaloniaUI OÜ and contributors
+  https://github.com/AvaloniaUI/Avalonia
+
+Inter typeface (bundled by Avalonia.Fonts.Inter)
+  SIL Open Font License 1.1 · Copyright (c) The Inter Project Authors
+  https://github.com/rsms/inter
+
+SkiaSharp and HarfBuzzSharp (Avalonia's rendering and text shaping)
+  MIT License · Copyright (c) Microsoft Corporation / .NET Foundation
+  https://github.com/mono/SkiaSharp
+
+PDFium binaries (bblanchon.PDFium.Linux 155.0.8044)
+  PDFium: BSD-3-Clause / Apache-2.0 · Copyright The PDFium Authors
+  Packaging: MIT License · Copyright (c) Benoit Blanchon
+  https://github.com/bblanchon/pdfium-binaries
+
+Tmds.DBus.Protocol 0.94 (global shortcuts, notifications and Dolphin's selection over D-Bus)
+  MIT License · Copyright (c) Tom Deseyn and contributors
+  https://github.com/tmds/Tmds.DBus
+
+Tools Nashi can download on first launch (FFmpeg, yt-dlp, Deno, ExifTool) are fetched from
+their upstream releases with pinned SHA-256 hashes and keep their own licenses; see
+docs/dependencies.md. LibreOffice and Tesseract OCR are used from the system's packages
+when installed and are not redistributed by Nashi.
