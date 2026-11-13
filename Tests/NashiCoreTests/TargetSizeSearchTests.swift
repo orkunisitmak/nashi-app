@@ -70,6 +70,40 @@ final class TargetSizeSearchTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf:input),original)
     }
 
+    func testOnePixelWideImageShrinksLongEdge() throws {
+        let folder=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:folder) }
+        let input=folder.appendingPathComponent("thin.png")
+        var pixels=[UInt8](repeating:255,count:1*12*4)
+        try pixels.withUnsafeMutableBytes { buffer in
+            let context=try XCTUnwrap(CGContext(data:buffer.baseAddress,width:1,height:12,bitsPerComponent:8,bytesPerRow:4,space:CGColorSpace(name:CGColorSpace.sRGB)!,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue))
+            try ImageEngine.write(try XCTUnwrap(context.makeImage()),to:input)
+        }
+        let original=try Data(contentsOf:input),bytes=Int64(original.count)
+        var options=OperationOptions();options.outputDirectory=folder;options.targetBytes=bytes/4;options.preferQuality=false
+        let compressed=try XCTUnwrap(ImageEngine.compress(input,options:options,token:.init()).first)
+        let result=try ImageEngine.load(compressed)
+        XCTAssertEqual(result.width,1,"1-pixel-wide image must keep its short edge at one pixel")
+        XCTAssertLessThan(result.height,12,"Long edge of a 1-pixel-wide image must shrink")
+        XCTAssertLessThanOrEqual(Int64(try Data(contentsOf:compressed).count),bytes/4)
+    }
+
+    func testOnePixelTallImageShrinksLongEdge() throws {
+        let folder=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:folder) }
+        let input=folder.appendingPathComponent("flat.png")
+        var pixels=[UInt8](repeating:255,count:12*1*4)
+        try pixels.withUnsafeMutableBytes { buffer in
+            let context=try XCTUnwrap(CGContext(data:buffer.baseAddress,width:12,height:1,bitsPerComponent:8,bytesPerRow:48,space:CGColorSpace(name:CGColorSpace.sRGB)!,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue))
+            try ImageEngine.write(try XCTUnwrap(context.makeImage()),to:input)
+        }
+        let original=try Data(contentsOf:input),bytes=Int64(original.count)
+        var options=OperationOptions();options.outputDirectory=folder;options.targetBytes=bytes/4;options.preferQuality=false
+        let compressed=try XCTUnwrap(ImageEngine.compress(input,options:options,token:.init()).first)
+        let result=try ImageEngine.load(compressed)
+        XCTAssertEqual(result.height,1,"1-pixel-tall image must keep its short edge at one pixel")
+        XCTAssertLessThan(result.width,12,"Long edge of a 1-pixel-tall image must shrink")
+        XCTAssertLessThanOrEqual(Int64(try Data(contentsOf:compressed).count),bytes/4)
+    }
+
     /// Seeded noise PNG: lossless and hard to compress, so a small target needs fewer pixels.
     private func noisePNG(_ width:Int,_ height:Int,in folder:URL) throws -> URL {
         let url=folder.appendingPathComponent("noise-\(width)x\(height).png")

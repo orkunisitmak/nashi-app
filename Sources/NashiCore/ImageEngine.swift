@@ -592,10 +592,11 @@ public enum ImageEngine {
         defer { for url in fitting.values { try? FileManager.default.removeItem(at:url) } }
         func encode(_ percent:Int,_ scale:Double) throws->Int64 {
             try token.check();try? FileManager.default.removeItem(at:temporary)
-            // Round both sides from the same image and keep the shorter side at least one pixel,
-            // so tiny scale steps do not distort the aspect ratio.
-            let fit=max(scale,1/Double(min(image.width,image.height)))
-            let frame=scale<1 ? try resized(image,width:max(1,Int((Double(image.width)*fit).rounded())),height:max(1,Int((Double(image.height)*fit).rounded()))):image
+            // Calculate each side directly from scale and clamp to at least one pixel.
+            // Do not raise scale to 1 based on the shortest side: a 1-pixel-wide image
+            // must still let the long edge shrink.
+            let width=max(1,Int((Double(image.width)*scale).rounded())),height=max(1,Int((Double(image.height)*scale).rounded()))
+            let frame=scale<1 ? try resized(image,width:width,height:height):image
             try write(frame,to:temporary,quality:Double(percent)/100,token:token)
             // The same URL is replaced on each pass; resourceValues can retain its first size.
             let size=((try FileManager.default.attributesOfItem(atPath:temporary.path))[.size] as? NSNumber)?.int64Value ?? 0
@@ -624,7 +625,8 @@ public enum ImageEngine {
             }
         } else { _=try encode(start,1) }
         if (best?.scale ?? 1)==1,image.width==originalWidth,image.height==originalHeight { try OutputFiles.retainSmallerOriginal(input,output:temporary,target:target) }
-        try FileManager.default.moveItem(at:temporary,to:output)
+        // Do not publish output after cancellation: the defer cleanup removes the temporary.
+        try token.check();try FileManager.default.moveItem(at:temporary,to:output)
         return [output]
     }
 
