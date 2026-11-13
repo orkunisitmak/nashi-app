@@ -7,6 +7,7 @@
       "tiff",
       "avif",
       "bmp",
+      "svg",
       "pdf"
     ],
     "png": [
@@ -16,6 +17,7 @@
       "tiff",
       "avif",
       "bmp",
+      "svg",
       "pdf"
     ],
     "webp": [
@@ -25,6 +27,7 @@
       "tiff",
       "avif",
       "bmp",
+      "svg",
       "pdf"
     ],
     "heic": [
@@ -34,6 +37,7 @@
       "tiff",
       "avif",
       "bmp",
+      "svg",
       "pdf"
     ],
     "tiff": [
@@ -43,6 +47,7 @@
       "heic",
       "avif",
       "bmp",
+      "svg",
       "pdf"
     ],
     "svg": [
@@ -62,6 +67,7 @@
       "heic",
       "tiff",
       "bmp",
+      "svg",
       "pdf"
     ],
     "bmp": [
@@ -71,6 +77,7 @@
       "heic",
       "tiff",
       "avif",
+      "svg",
       "pdf"
     ],
     "mp3": [

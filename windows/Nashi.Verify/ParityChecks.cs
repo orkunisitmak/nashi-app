@@ -417,6 +417,12 @@ internal static class ParityChecks
         var svg=Path.Combine(root,"Static.svg");File.WriteAllText(svg,"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"96\" height=\"64\"><rect width=\"96\" height=\"64\" fill=\"#E5BC59\"/></svg>");
         var png=PhotoCodec.Png(svg);using(var image=new MagickImage(png))check(image.Width==96&&image.Height==64,"SVG native rasterization failed");
         var external=Path.Combine(root,"External.svg");File.WriteAllText(external,"<svg xmlns=\"http://www.w3.org/2000/svg\"><image href=\"file:///private/example.png\"/></svg>");try{PhotoCodec.Png(external);throw new Exception("External SVG resource accepted");}catch(InvalidDataException){check(true,"SVG resource isolation");}
+        {
+            // 20x10 white: black 6x6 square with a 2x2 hole and a transparent corner that must stay white. 254 dpi -> 2x1 mm.
+            var bgra=new byte[20*10*4];for(var y=0;y<10;y++)for(var x=0;x<20;x++){var i=(y*20+x)*4;var ink=x>=2&&x<8&&y>=2&&y<8&&!(x>=4&&x<6&&y>=4&&y<6);var clear=x>=18&&y<2;bgra[i]=bgra[i+1]=bgra[i+2]=(byte)(ink||clear?0:255);bgra[i+3]=(byte)(clear?0:255);}
+            var traced=VectorTrace.Svg(bgra,20,10,254);var d=traced.Split(" d=\"")[1].Split('"')[0];
+            check(traced.Contains("width=\"2mm\" height=\"1mm\" viewBox=\"0 0 20 10\"")&&d.Count(c=>c=='M')==2&&new[]{"2 2","8 2","8 8","2 8","4 4","6 4","6 6","4 6"}.All(d.Contains),"SVG vector trace failed: "+d);
+        }
         foreach(var format in new[]{"png","jpg","webp","heic","avif","tiff","bmp"})
         {if(format=="heic"&&Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG") is null)continue;var output=Path.Combine(root,"Image codec."+format);PhotoCodec.EncodePng(png,output,format,encoder:Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG"));using var decoded=PhotoCodec.Read(output);check(decoded.Width==96&&decoded.Height==64,"Image codec round trip failed: "+format);}
         // Raw BGRA pixels (WPF's Bgra32) must keep channel order and alpha without an intermediate PNG.

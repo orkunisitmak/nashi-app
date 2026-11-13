@@ -48,6 +48,7 @@ public enum ImageEngine {
     public static func convert(_ input: URL, to format: String, options: OperationOptions, token: CancellationToken) throws -> [URL] {
         try token.check()
         if format == "pdf" { return try PDFEngine.create(inputs:[input],options:options,token:token) }
+        if format == "svg" { return try ImageVectorizer.convert(input,options:options,token:token) }
         let image = try load(input)
         let output=OutputFiles.unique(for:input,extension:format,directory:options.outputDirectory)
         var complete=false;defer { if !complete { try? FileManager.default.removeItem(at:output) } }
