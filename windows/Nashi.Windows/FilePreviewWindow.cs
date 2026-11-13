@@ -9,7 +9,7 @@ namespace Nashi.Windows;
 internal sealed class FilePreviewWindow:Window
 {
     private readonly string[] paths;private int index;
-    private readonly Toolchain tools;private readonly OfficeRuntime office;private readonly string temporary=Path.Combine(Path.GetTempPath(),"Nashi-quick-preview-"+Guid.NewGuid().ToString("N"));private CancellationTokenSource lifetime=new();
+    private readonly Toolchain tools;private readonly OfficeRuntime office;private string? temporary;private CancellationTokenSource lifetime=new();
     private readonly ContentControl content=new();private readonly TextBlock caption=new(){TextTrimming=TextTrimming.CharacterEllipsis,VerticalAlignment=VerticalAlignment.Center};
     private MediaElement? player;private bool playing;private readonly Slider scrub=new(){Minimum=0,Maximum=1,MinWidth=140};
     private PdfRasterDocument? pdfDocument;
@@ -39,7 +39,12 @@ internal sealed class FilePreviewWindow:Window
     internal void Navigate(int delta){if(paths.Length<2)return;index=(index+delta+paths.Length)%paths.Length;_ = Load();}
     private void CloseMedia(){player?.Stop();player?.Close();player=null;playing=false;transport.Visibility=Visibility.Collapsed;timer.Stop();}
     private void Toggle(){if(player is null)return;if(playing)player.Pause();else player.Play();playing=!playing;}
-    private async Task Cleanup(){for(var n=0;n<10;n++){try{if(Directory.Exists(temporary))Directory.Delete(temporary,true);return;}catch(IOException){await Task.Delay(250);}catch(UnauthorizedAccessException){return;}}}
+    private string Temporary()
+    {
+        temporary ??= AtomicFile.CreateTemporaryDirectory("Nashi-quick-preview-");
+        return temporary;
+    }
+    private async Task Cleanup(){var path=temporary;if(path is null)return;for(var n=0;n<10;n++){try{if(Directory.Exists(path))Directory.Delete(path,true);return;}catch(IOException){await Task.Delay(250);}catch(UnauthorizedAccessException){return;}}}
     private async Task Load()
     {
         lifetime.Cancel();lifetime.Dispose();lifetime=new();var token=lifetime.Token;CloseMedia();pdfDocument?.Dispose();pdfDocument=null;content.Content=L10n.Label(new TextBlock{Text="Preparing preview…",Margin=new(20)});
@@ -51,7 +56,7 @@ internal sealed class FilePreviewWindow:Window
             if(new[]{"docx","doc","rtf","rtfd","pages","xlsx","xls","ods","pptx","ppt","odp","epub"}.Contains(FeatureCatalog.Extension(path)))
             {
                 if(office.Executable is null){content.Content=L10n.Label(new TextBlock{Text="Set up office tools in Nashi to preview this document here, or use Open.",TextWrapping=TextWrapping.Wrap});return;}
-                Directory.CreateDirectory(temporary);path=(await new DocumentConversion(office,tools).ConvertAsync([path],"pdf",temporary,new(),null,token))[0];token.ThrowIfCancellationRequested();
+                var temporaryDirectory=Temporary();Directory.CreateDirectory(temporaryDirectory);path=(await new DocumentConversion(office,tools).ConvertAsync([path],"pdf",temporaryDirectory,new(),null,token))[0];token.ThrowIfCancellationRequested();
             }
             if(FeatureCatalog.IsImage(path))content.Content=new Image{Source=ImageEngine.Load(path),Stretch=Stretch.Uniform};
             else if(FeatureCatalog.Extension(path)=="pdf")
@@ -66,7 +71,7 @@ internal sealed class FilePreviewWindow:Window
             {
                 player=new MediaElement{Source=new Uri(path),LoadedBehavior=MediaState.Manual,UnloadedBehavior=MediaState.Close,Stretch=Stretch.Uniform};var current=player;content.Content=player;transport.Visibility=Visibility.Visible;
                 current.MediaOpened+=(_,_)=>{if(current!=player)return;scrub.Maximum=current.NaturalDuration.HasTimeSpan?Math.Max(.001,current.NaturalDuration.TimeSpan.TotalSeconds):1;};current.MediaEnded+=(_,_)=>{if(current==player){current.Pause();playing=false;}};
-                var triedProxy=false;current.MediaFailed+=async(_,e)=>{if(current!=player)return;if(!triedProxy&&tools.Ready){triedProxy=true;try{Directory.CreateDirectory(temporary);var proxy=Path.Combine(temporary,Guid.NewGuid().ToString("N")+(FeatureCatalog.IsAudio(path)?".wav":".mp4"));var args=new List<string>{"-v","error","-nostdin","-i",path};if(FeatureCatalog.IsAudio(path))args.AddRange(["-vn","-c:a","pcm_s16le"]);else args.AddRange(["-vf","scale=w='min(1280,iw)':h=-2","-c:v","libx264","-preset","veryfast","-crf","25","-pix_fmt","yuv420p","-c:a","aac","-movflags","+faststart"]);args.Add(proxy);await ProcessRunner.RunAsync(tools.Executable("ffmpeg"),args,token);if(!token.IsCancellationRequested&&current==player){current.Source=new Uri(proxy);current.Play();current.Pause();}return;}catch(OperationCanceledException){return;}catch(Exception){}}if(!token.IsCancellationRequested&&current==player){CloseMedia();content.Content=L10n.Label(new TextBlock{Text="Set up media tools for this codec, or use Open to preview in its default app.",TextWrapping=TextWrapping.Wrap});}};current.Play();current.Pause();timer.Start();
+                var triedProxy=false;current.MediaFailed+=async(_,e)=>{if(current!=player)return;if(!triedProxy&&tools.Ready){triedProxy=true;try{var previewDirectory=Temporary();Directory.CreateDirectory(previewDirectory);var proxy=Path.Combine(previewDirectory,Guid.NewGuid().ToString("N")+(FeatureCatalog.IsAudio(path)?".wav":".mp4"));var args=new List<string>{"-v","error","-nostdin","-i",path};if(FeatureCatalog.IsAudio(path))args.AddRange(["-vn","-c:a","pcm_s16le"]);else args.AddRange(["-vf","scale=w='min(1280,iw)':h=-2","-c:v","libx264","-preset","veryfast","-crf","25","-pix_fmt","yuv420p","-c:a","aac","-movflags","+faststart"]);args.Add(proxy);await ProcessRunner.RunAsync(tools.Executable("ffmpeg"),args,token);if(!token.IsCancellationRequested&&current==player){current.Source=new Uri(proxy);current.Play();current.Pause();}return;}catch(OperationCanceledException){return;}catch(Exception){}}if(!token.IsCancellationRequested&&current==player){CloseMedia();content.Content=L10n.Label(new TextBlock{Text="Set up media tools for this codec, or use Open to preview in its default app.",TextWrapping=TextWrapping.Wrap});}};current.Play();current.Pause();timer.Start();
             }
             else if(new[]{"txt","md","csv","tsv","srt","vtt","json","html","xml","log"}.Contains(FeatureCatalog.Extension(path)))
             {
