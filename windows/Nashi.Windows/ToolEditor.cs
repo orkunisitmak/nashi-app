@@ -141,7 +141,7 @@ public sealed partial class ToolEditor:Window
     {
         if(media is not {Duration:<=0}||!player.NaturalDuration.HasTimeSpan)return;
         duration=player.NaturalDuration.TimeSpan.TotalSeconds;scrubber.Maximum=duration;
-        if(fields.TryGetValue("End",out var end)&&end.Text==defaults["End"]){defaults["End"]=TimeString(duration);SetTimeText("End",duration);}
+        if(fields.TryGetValue("End",out var end)&&end.Text==defaults["End"])end.Text=defaults["End"]=Number(duration);
         try{SyncTimeline();}catch(ArgumentException){}
     }
     private void Field(string name,double value)=>TextField(name,Number(value));
@@ -165,10 +165,10 @@ public sealed partial class ToolEditor:Window
     /// Start/End fields with "Set Here" buttons that capture the current playhead position.
     private void TimeField(string name,double value){
         options.Children.Add(L10n.Label(new TextBlock{Text=name,Margin=new(4,12,4,0)}));
-        var box=new TextBox{Text=TimeString(value)};
+        var box=new TextBox{Text=Number(value)};
         System.Windows.Automation.AutomationProperties.SetAutomationId(box,name);
         box.LostKeyboardFocus+=(_,_)=>CommitTimeField(name);
-        fields.Add(name,box);timeValues.Add(name,value);defaults.Add(name,TimeString(value));
+        fields.Add(name,box);timeValues.Add(name,value);defaults.Add(name,Number(value));
         options.Children.Add(box);
         options.Children.Add(MainWindow.Button("Set Here",()=>{
             var length=Math.Max(duration,0);
