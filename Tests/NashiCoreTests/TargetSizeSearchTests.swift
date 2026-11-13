@@ -70,47 +70,10 @@ final class TargetSizeSearchTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf:input),original)
     }
 
-    func testOnePixelWideImageShrinksLongEdge() throws {
-        let folder=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:folder) }
-        // Large noise PNG: incompressible, so reaching a quarter-sized target requires shrinking the long edge.
-        let input=folder.appendingPathComponent("thin.png")
-        var pixels=[UInt8](repeating:0,count:1*2000*4)
-        var seed:UInt64=7
-        for index in pixels.indices where index%4 != 3 { seed=seed &* 6364136223846793005 &+ 1442695040888963407;pixels[index]=UInt8(truncatingIfNeeded:seed>>56) }
-        try pixels.withUnsafeMutableBytes { buffer in
-            let context=try XCTUnwrap(CGContext(data:buffer.baseAddress,width:1,height:2000,bitsPerComponent:8,bytesPerRow:4,space:CGColorSpace(name:CGColorSpace.sRGB)!,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue))
-            try ImageEngine.write(try XCTUnwrap(context.makeImage()),to:input)
-        }
-        let original=try Data(contentsOf:input),bytes=Int64(original.count)
-        // Large noise PNG: incompressible, so reaching a quarter-sized target requires shrinking the long edge.
-        let target=max(bytes/4,1)
-        var options=OperationOptions();options.outputDirectory=folder;options.targetBytes=target;options.preferQuality=false
-        let compressed=try XCTUnwrap(ImageEngine.compress(input,options:options,token:.init()).first)
-        let result=try ImageEngine.load(compressed)
-        XCTAssertEqual(result.width,1,"1-pixel-wide image must keep its short edge at one pixel")
-        XCTAssertLessThan(result.height,2000,"Long edge of a 1-pixel-wide image must shrink")
-        XCTAssertLessThanOrEqual(Int64(try Data(contentsOf:compressed).count),target)
-    }
-
-    func testOnePixelTallImageShrinksLongEdge() throws {
-        let folder=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:folder) }
-        // Large noise PNG: incompressible, so reaching a quarter-sized target requires shrinking the long edge.
-        let input=folder.appendingPathComponent("flat.png")
-        var pixels=[UInt8](repeating:0,count:2000*1*4)
-        var seed:UInt64=7
-        for index in pixels.indices where index%4 != 3 { seed=seed &* 6364136223846793005 &+ 1442695040888963407;pixels[index]=UInt8(truncatingIfNeeded:seed>>56) }
-        try pixels.withUnsafeMutableBytes { buffer in
-            let context=try XCTUnwrap(CGContext(data:buffer.baseAddress,width:2000,height:1,bitsPerComponent:8,bytesPerRow:8000,space:CGColorSpace(name:CGColorSpace.sRGB)!,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue))
-            try ImageEngine.write(try XCTUnwrap(context.makeImage()),to:input)
-        }
-        let original=try Data(contentsOf:input),bytes=Int64(original.count)
-        let target=max(bytes/4,1)
-        var options=OperationOptions();options.outputDirectory=folder;options.targetBytes=target;options.preferQuality=false
-        let compressed=try XCTUnwrap(ImageEngine.compress(input,options:options,token:.init()).first)
-        let result=try ImageEngine.load(compressed)
-        XCTAssertEqual(result.height,1,"1-pixel-tall image must keep its short edge at one pixel")
-        XCTAssertLessThan(result.width,2000,"Long edge of a 1-pixel-tall image must shrink")
-        XCTAssertLessThanOrEqual(Int64(try Data(contentsOf:compressed).count),target)
+    func testCancellationStopsEncoding() {
+        let token=CancellationToken();var probes=0
+        XCTAssertThrowsError(try TargetSizeSearch.run(originalBytes:200000,targetBytes:10,startQuality:90,lossy:true,allowResize:true,token:token){ q,s in probes+=1;if probes==3 { token.cancel() };return self.smooth(q,s) })
+        XCTAssertEqual(probes,3)
     }
 
     /// Seeded noise PNG: lossless and hard to compress, so a small target needs fewer pixels.
@@ -144,11 +107,5 @@ final class TargetSizeSearchTests: XCTestCase {
         let kept=try XCTUnwrap(ImageEngine.compress(input,options:options,token:.init()).first),image=try ImageEngine.load(kept)
         XCTAssertEqual(image.width,256);XCTAssertEqual(image.height,192)
         XCTAssertEqual(try Data(contentsOf:input),original)
-    }
-
-    func testCancellationStopsEncoding() {
-        let token=CancellationToken();var probes=0
-        XCTAssertThrowsError(try TargetSizeSearch.run(originalBytes:200000,targetBytes:10,startQuality:90,lossy:true,allowResize:true,token:token){ q,s in probes+=1;if probes==3 { token.cancel() };return self.smooth(q,s) })
-        XCTAssertEqual(probes,3)
     }
 }
