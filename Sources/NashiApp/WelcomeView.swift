@@ -48,6 +48,7 @@ struct WelcomeView:View {
             .overlay(RoundedRectangle(cornerRadius:28).strokeBorder(NashiPalette.border))
             .tint(.nashi).nashiAnimation(value:page)
             .onAppear { folderAllowed = !FolderAccessPreferences.grants().isEmpty;readLaunchStatus() }
+            .onReceive(NotificationCenter.default.publisher(for:NSApplication.didBecomeActiveNotification)) { _ in readLaunchStatus() }
             .onChange(of:page) { if $0==5 { readLaunchStatus() } }
     }
     @ViewBuilder private var detail:some View {
@@ -69,7 +70,7 @@ struct WelcomeView:View {
             Toggle("Ready when you log in",isOn:Binding(get:{launchAtLogin},set:updateLaunch)).toggleStyle(.switch).font(.system(size:12)).disabled(launchUnavailable)
             if launchNeedsApproval { Button("Open Login Items") { SMAppService.openSystemSettingsLoginItems() }.buttonStyle(NashiButtonStyle(.secondary,compact:true)) }
             if launchUnavailable { Text("Launch at login is unavailable for this copy.").font(.caption).foregroundStyle(.secondary) }
-            if let launchError { Text(launchError).font(.caption).foregroundStyle(.orange).lineLimit(2) }
+            if let launchError { LText(launchError).font(.caption).foregroundStyle(.orange).lineLimit(2) }
         }
     }
     private var converterItems: [WheelItem] {
@@ -115,17 +116,18 @@ struct WelcomeView:View {
         }
     }
 
+    /// Refreshes the launch-at-login toggle state from the current system and LaunchAgent status.
     private func readLaunchStatus() {
-        let status = SMAppService.mainApp.status
-        launchAtLogin = status == .enabled || status == .requiresApproval
-        launchNeedsApproval = status == .requiresApproval
-        launchUnavailable = status == .notFound
+        let status = LaunchAtLogin.status()
+        launchAtLogin = status.isEnabled
+        launchNeedsApproval = status.needsApproval
+        launchUnavailable = status.isUnavailable
     }
 
+    /// Applies a new launch-at-login preference and records any registration error.
     private func updateLaunch(_ value: Bool) {
         do {
-            if value { try SMAppService.mainApp.register() }
-            else { try SMAppService.mainApp.unregister() }
+            try LaunchAtLogin.setEnabled(value)
             launchError = nil
         } catch {
             launchError = error.localizedDescription
