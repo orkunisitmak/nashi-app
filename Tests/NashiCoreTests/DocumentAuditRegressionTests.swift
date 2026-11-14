@@ -29,6 +29,28 @@ final class DocumentAuditRegressionTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: input), source)
     }
 
+    func testLegacyCSVAndTSVReachOfficeImportAsUTF8() throws {
+        // A stand-in soffice copies the file it is handed, so no LibreOffice is needed.
+        let tool = root.appendingPathComponent("fake-soffice")
+        try "#!/bin/sh\nfor a in \"$@\"; do [ \"$prev\" = --outdir ] && out=$a; prev=$a; done\nname=$(basename \"$a\"); cp \"$a\" \"$out/${name%.*}.xlsx\"\n".write(to: tool, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: tool.path)
+        let previous = ProcessInfo.processInfo.environment["NASHI_SOFFICE"]
+        setenv("NASHI_SOFFICE", tool.path, 1)
+        defer { if let previous { setenv("NASHI_SOFFICE", previous, 1) } else { unsetenv("NASHI_SOFFICE") } }
+        let csv = "Name,City\nZoë,Köln\n\"Café, bar\",Málaga\n", tsv = "Name\tCity\nZoë\tKöln\n"
+        let inputs: [(String, Data, String)] = [
+            ("Legacy.csv", try XCTUnwrap(csv.data(using: .windowsCP1252)), csv),
+            ("Unicode.tsv", Data([0xff, 0xfe]) + (try XCTUnwrap(tsv.data(using: .utf16LittleEndian))), tsv),
+            ("Plain.csv", Data(csv.utf8), csv)
+        ]
+        for (name, data, text) in inputs {
+            let input = try fixture(name, data: data)
+            let output = try XCTUnwrap(DocumentEngine.convert(input, to: "xlsx", options: .init(), token: .init()).first)
+            XCTAssertEqual(String(data: try Data(contentsOf: output), encoding: .utf8), text, name)
+            XCTAssertEqual(try Data(contentsOf: input), data, name)
+        }
+    }
+
     func testCP1252SubtitlesKeepTimedCuesAndAccentedText() throws {
         let text = "1\r\n00:00:01,250 --> 00:00:02,500\r\nCafé — résumé.\r\n\r\n"
         let input = try fixture("Legacy.srt", data: XCTUnwrap(text.data(using: .windowsCP1252)))
