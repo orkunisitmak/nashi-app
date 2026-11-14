@@ -24,6 +24,15 @@ internal static class LocalizationChecks
         var directory=Path.Combine(root,"Localization preferences");var store=new PreferencesStore(directory);check(store.Value.Language=="en","Existing users changed language without choosing");
         store.Save(store.Value with{Language="tr",Feedback=false,ToolsModifier="Ctrl+Alt"});var loaded=new PreferencesStore(directory).Value;
         check(loaded.Language=="tr"&&!loaded.Feedback&&loaded.ToolsModifier=="Ctrl+Alt","Language persistence changed other preferences");
+        var hw=store.Value with{HiddenWheelItems=new Dictionary<string,string[]> { ["convert"]=new[]{"webp"}, ["tools"]=new[]{"compress"}, ["actions"]=new[]{"terminal"} }};store.Save(hw);var loadedHw=new PreferencesStore(directory).Value;
+        check(loadedHw.HiddenWheelItems["convert"].SequenceEqual(new[]{"webp"})&&loadedHw.HiddenWheelItems["tools"].SequenceEqual(new[]{"compress"})&&loadedHw.HiddenWheelItems["actions"].SequenceEqual(new[]{"terminal"}),"Hidden wheel items persistence failed");
+        try{store.Save(store.Value with{HiddenWheelItems=new Dictionary<string,string[]>{["actions"]=Preferences.WheelActionIds}});check(false,"Hiding every Actions wheel item was accepted");}
+        catch(ArgumentException){check(new PreferencesStore(directory).Value.HiddenWheelItems["actions"].SequenceEqual(new[]{"terminal"}),"A rejected wheel preference changed the saved file");}
+        foreach(var bad in new[]{"{\"HiddenWheelItems\":null}","{\"HiddenWheelItems\":{\"convert\":null}}","{\"HiddenWheelItems\":{\"tools\":[null]}}","{\"HiddenWheelItems\":{\"actions\":[\"share\",\"float\",\"copy\",\"move\",\"copyPath\",\"terminal\"]}}"})
+        {
+            var folder=Path.Combine(root,"Bad wheel preferences "+Math.Abs(bad.GetHashCode()));Directory.CreateDirectory(folder);File.WriteAllText(Path.Combine(folder,"preferences.json"),bad);
+            var recovered=new PreferencesStore(folder);check(recovered.RecoveryNotice is not null&&recovered.Value.HiddenWheelItems.Count==0,"Invalid hidden wheel items were not recovered: "+bad);
+        }
         var chords=new Preferences();
         check(DragChord.Name(false,false,false)==""&&DragChord.Name(true,false,false)=="Ctrl"&&DragChord.Name(true,true,false)=="Ctrl+Shift"&&DragChord.Name(true,true,true)=="Ctrl+Shift+Alt","Drag chord names changed");
         check(DragChord.Wheel("Ctrl",chords)=="tools"&&DragChord.Wheel("Shift",chords)=="convert"&&DragChord.Wheel("Alt",chords)=="actions","Default drag chords open the wrong wheel");

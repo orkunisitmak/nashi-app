@@ -485,6 +485,7 @@
 "CHOOSE VIDEO, AUDIO, THUMBNAIL OR IMAGES." = "CHOOSE VIDEO, AUDIO, THUMBNAIL OR IMAGES.";
 "CHOOSE VISUALIZATION IMAGE…" = "CHOOSE VISUALIZATION IMAGE…";
 "CHOOSE WHAT YOUR FILE SHARES." = "CHOOSE WHAT YOUR FILE SHARES.";
+"CHOOSE WHICH ITEMS APPEAR ON EACH DRAG WHEEL. HIDDEN ITEMS ARE LEFT OUT; THE REMAINING SLICES SHARE THE WHEEL EVENLY." = "CHOOSE WHICH ITEMS APPEAR ON EACH DRAG WHEEL. HIDDEN ITEMS ARE LEFT OUT; THE REMAINING SLICES SHARE THE WHEEL EVENLY.";
 "CHOOSE YOUR HOME FOLDER OR A FOLDER WHERE YOU SAVE FILES." = "CHOOSE YOUR HOME FOLDER OR A FOLDER WHERE YOU SAVE FILES.";
 "CHOOSE ZIP, TAR OR GZIP." = "CHOOSE ZIP, TAR OR GZIP.";
 "CLARITY" = "CLARITY";
@@ -686,6 +687,7 @@
 "Choose video, audio, thumbnail or images." = "Choose video, audio, thumbnail or images.";
 "Choose visualization image…" = "Choose visualization image…";
 "Choose what your file shares." = "Choose what your file shares.";
+"Choose which items appear on each drag wheel. Hidden items are left out; the remaining slices share the wheel evenly." = "Choose which items appear on each drag wheel. Hidden items are left out; the remaining slices share the wheel evenly.";
 "Choose your home folder or a folder where you save files." = "Choose your home folder or a folder where you save files.";
 "Clarity" = "Clarity";
 "Clear" = "Clear";
@@ -2787,7 +2789,9 @@
 "WELCOME TO NASHI" = "WELCOME TO NASHI";
 "WELCOME…" = "WELCOME…";
 "WHEEL FINISH" = "WHEEL FINISH";
+"WHEEL ITEMS" = "WHEEL ITEMS";
 "WHEEL SIZE" = "WHEEL SIZE";
+"WHEELS" = "WHEELS";
 "WHITES" = "WHITES";
 "WIDTH" = "WIDTH";
 "WINDOW" = "WINDOW";
@@ -2803,7 +2807,9 @@
 "Welcome to Nashi" = "Welcome to Nashi";
 "Welcome…" = "Welcome…";
 "Wheel finish" = "Wheel finish";
+"Wheel items" = "Wheel items";
 "Wheel size" = "Wheel size";
+"Wheels" = "Wheels";
 "Whites" = "Whites";
 "Width" = "Width";
 "Window" = "Window";

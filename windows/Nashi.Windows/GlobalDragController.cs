@@ -48,7 +48,7 @@ public sealed class GlobalDragController:IDisposable
         if(!held){if(down){down=false;opened=false;hint=null;if(wheel is {IsVisible:true}){var old=wheel;var dismiss=new System.Windows.Threading.DispatcherTimer{Interval=TimeSpan.FromMilliseconds(150)};dismiss.Tick+=(_,_)=>{dismiss.Stop();if(old.IsVisible)old.Close();};dismiss.Start();}wheel=null;}return;}
         if(!down){down=true;start=point;opened=false;hint=null;return;}if(opened||Math.Abs(point.X-start.X)+Math.Abs(point.Y-start.Y)<10)return;
         hint??=Task.Run(()=>LinkAt(start));var chord=Chord();var p=preferences.Value;var kind=DragChord.Wheel(chord,p);if(kind is null)return;opened=true;if(InMoveSize())return;
-        var sourceHint=hint;wheel=new GlobalDropWheel(kind,p.WheelScale,(data,id)=>dropped(id,data,sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null),()=>sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null,()=>sourceHint?.IsCompleted!=false);wheel.Show();DesktopGeometry.PlaceWheel(wheel,point.X,point.Y,WheelPresentation.Diameter*p.WheelScale);
+        var sourceHint=hint;wheel=new GlobalDropWheel(kind,p.WheelScale,(data,id)=>dropped(id,data,sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null),()=>sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null,()=>sourceHint?.IsCompleted!=false,p.HiddenWheelItems);wheel.Show();DesktopGeometry.PlaceWheel(wheel,point.X,point.Y,WheelPresentation.Diameter*p.WheelScale);
     }
     private static string? LinkAt(NativePoint point)
     {
@@ -89,10 +89,10 @@ internal sealed class GlobalDropWheel:Window
     internal void PassThrough(){var handle=new WindowInteropHelper(this).Handle;if(handle==IntPtr.Zero||PassingThrough)return;_=WindowManagement.Native.SetWindowLongPtr(handle,-20,new nint(WindowManagement.Native.GetWindowLongPtr(handle,-20).ToInt64()|0x20));passThrough=PassingThrough;}
     private void Settle(bool settled){if(choices.Count>0||noTools)Reveal();else if(PassesThrough(Revealed,choices.Count,noTools,settled))PassThrough();}
     private void Reveal(){if(Revealed)return;Revealed=true;foreach(var label in canvas.Children.OfType<Border>())label.Visibility=Visibility.Visible;WheelPresentation.Animate(this,HiddenOpacity);if(Opacity<1&&!HasAnimatedProperties)Opacity=1;}
-    private readonly string mode;private readonly Action<IDataObject,string> chosen;private readonly Func<string?> hint;private readonly Func<bool> hintSettled;private readonly Canvas canvas=new(){Width=540,Height=540,Background=Brushes.Transparent,AllowDrop=true};private string selection="";private IReadOnlyList<ToolChoice> choices=[];private string[] draggedFiles=[],resolvedFiles=[];
-    public GlobalDropWheel(string mode,double scale,Action<IDataObject,string> chosen,Func<string?> hint,Func<bool> hintSettled)
+    private readonly string mode;private readonly Action<IDataObject,string> chosen;private readonly Func<string?> hint;private readonly Func<bool> hintSettled;private readonly IReadOnlyDictionary<string,string[]> hiddenItems;private readonly Canvas canvas=new(){Width=540,Height=540,Background=Brushes.Transparent,AllowDrop=true};private string selection="";private IReadOnlyList<ToolChoice> choices=[];private string[] draggedFiles=[],resolvedFiles=[];
+    public GlobalDropWheel(string mode,double scale,Action<IDataObject,string> chosen,Func<string?> hint,Func<bool> hintSettled,IReadOnlyDictionary<string,string[]>? hiddenItems=null)
     {
-        this.mode=mode;this.chosen=chosen;this.hint=hint;this.hintSettled=hintSettled;Title="Nashi · "+mode;Width=Height=WheelPresentation.Diameter*scale;WindowStyle=WindowStyle.None;AllowsTransparency=true;Background=Brushes.Transparent;ResizeMode=ResizeMode.NoResize;ShowInTaskbar=false;ShowActivated=false;Topmost=true;AllowDrop=true;Content=new Viewbox{Child=canvas};Build([]);Opacity=HiddenOpacity;
+        this.mode=mode;this.chosen=chosen;this.hint=hint;this.hintSettled=hintSettled;this.hiddenItems=hiddenItems??new Dictionary<string,string[]>();Title="Nashi · "+mode;Width=Height=WheelPresentation.Diameter*scale;WindowStyle=WindowStyle.None;AllowsTransparency=true;Background=Brushes.Transparent;ResizeMode=ResizeMode.NoResize;ShowInTaskbar=false;ShowActivated=false;Topmost=true;AllowDrop=true;Content=new Viewbox{Child=canvas};Build([]);Opacity=HiddenOpacity;
         // Reveal only once the payload offers choices. On entry the pointer sits in the center,
         // so e.Effects is still None even for a valid file drag.
         DragEnter+=(_,e)=>{entered++;var settled=hintSettled();Track(e);Settle(settled);};
@@ -108,7 +108,9 @@ internal sealed class GlobalDropWheel:Window
         // again instead of advancing to DragOver. Keep the visual tree stable
         // until the payload actually changes, and select on entry as well.
         // A file this mode has no tool for (an .ico, for example) still shows the wheel, with a message, so it does not look broken.
-        var unsupported=files.Length>0&&files.All(p=>!Directory.Exists(p)||FeatureCatalog.Extension(p) is "pages" or "rtfd")&&updated.Count==0;
+        // Choices hidden in Settings are not unsupported files: with nothing left to offer the wheel
+        // must pass the drag to the app below instead of showing an empty "No tools" wheel (#768).
+        var unsupported=files.Length>0&&files.All(p=>!Directory.Exists(p)||FeatureCatalog.Extension(p) is "pages" or "rtfd")&&!supportedByPayload;
         if(!updated.SequenceEqual(choices)||unsupported!=noTools){choices=updated;noTools=unsupported;Build(choices);}
         var p=e.GetPosition(canvas);var distance=(p-new Point(270,270)).Length;
         if(distance<108||distance>250||choices.Count==0){selection="";Highlight(-1);}
@@ -116,20 +118,25 @@ internal sealed class GlobalDropWheel:Window
         e.Effects=selection.Length>0?DragDropEffects.Copy:DragDropEffects.None;e.Handled=true;
     }
     private WebMediaPayload? Payload(IDataObject data)=>DragPayload.Parse(data,hint());
+    internal static readonly ToolChoice[] ActionChoices=[new("share","Share","◉"),new("float","Float","▣"),new("copy","Copy","▱"),new("move","Move","↗"),new("copyPath","Copy Path","↪"),new("terminal","Terminal",">_")];
+    private bool IsHidden(string itemId)
+    {
+        var id=itemId.StartsWith("convert:")?itemId[8..]:itemId;return hiddenItems.GetValueOrDefault(mode,Array.Empty<string>()).Contains(id);
+    }
     private IReadOnlyList<ToolChoice> Choices(string[] files,WebMediaPayload? dataLink,WebMediaPayload? web)
     {
         // A link carried by the drag data itself (a browser drag) still wins, as before. A link only guessed from
         // the element under the start point (for example the NVIDIA App overlay) never hides dragged files.
         if(files.Length>0&&dataLink is null)
         {
-            if(mode=="convert")return FeatureCatalog.Formats(files).Select(f=>new ToolChoice("convert:"+f,f.ToUpperInvariant(),"↗")).ToArray();
-            if(mode=="actions")return [new("share","Share","◉"),new("float","Float","▣"),new("copy","Copy","▱"),new("move","Move","↗"),new("copyPath","Copy Path","↪"),new("terminal","Terminal",">_")];
-            return FeatureCatalog.Tools(files).Select(t=>new ToolChoice(t,FeatureCatalog.ToolNames[t],MainWindow.ToolSymbol(t))).ToArray();
+            if(mode=="convert"){var formats=FeatureCatalog.Formats(files);supportedByPayload=formats.Length>0;return formats.Select(f=>new ToolChoice("convert:"+f,f.ToUpperInvariant(),"↗")).Where(t=>!IsHidden(t.Id)).ToArray();}
+            if(mode=="actions"){supportedByPayload=ActionChoices.Length>0;return ActionChoices.Where(t=>!IsHidden(t.Id)).ToArray();}
+            var tools=FeatureCatalog.Tools(files);supportedByPayload=tools.Length>0;return tools.Select(t=>new ToolChoice(t,FeatureCatalog.ToolNames[t],MainWindow.ToolSymbol(t))).Where(t=>!IsHidden(t.Id)).ToArray();
         }
-        if(web is null)return [];return web.Kind switch{"youtube"=>[new("download:video","Download Video","↓"),new("download:thumbnail","Download Thumbnail","▣"),new("download:audio","Download Audio","♫")],"instagramPhotos"=>[new("download:photos","Download Images","▣")],"instagramReel"=>[new("download:video","Download Video","↓"),new("download:audio","Download Audio","♫")],"image"=>[new("download:image","Download Image","↓")],_=>[new("download:video","Download Video","↓"),new("download:audio","Download Audio","♫") ]};
+        if(web is null){supportedByPayload=false;return [];}supportedByPayload=true;return web.Kind switch{"youtube"=>[new("download:video","Download Video","↓"),new("download:thumbnail","Download Thumbnail","▣"),new("download:audio","Download Audio","♫")],"instagramPhotos"=>[new("download:photos","Download Images","▣")],"instagramReel"=>[new("download:video","Download Video","↓"),new("download:audio","Download Audio","♫")],"image"=>[new("download:image","Download Image","↓")],_=>[new("download:video","Download Video","↓"),new("download:audio","Download Audio","♫") ]};
     }
     private void Highlight(int index){var paths=canvas.Children.OfType<System.Windows.Shapes.Path>().ToArray();for(var n=0;n<paths.Length;n++){paths[n].Fill=Theme.Brush(n==index?"Sage":"Inset");paths[n].Stroke=Theme.Brush(n==index?"Gold":"Line");}}
-    private bool noTools;
+    private bool noTools,supportedByPayload;
     private void Build(IReadOnlyList<ToolChoice> tools)
     {
         canvas.Children.Clear();canvas.Children.Add(new Ellipse{Width=540,Height=540,Fill=WheelPresentation.Backdrop});var count=tools.Count;
