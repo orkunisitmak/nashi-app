@@ -89,7 +89,11 @@ public enum ImageMetadataEngine {
             let tag=try tagName(key)
             if ["GPS:GPSLatitude","GPS:GPSLongitude"].contains(tag),let coordinate=Double(value) {
                 arguments.append("-\(tag)=\(abs(coordinate))")
-                arguments.append("-\(tag)Ref=\(tag.hasSuffix("Latitude") ? (coordinate<0 ? "S":"N"):(coordinate<0 ? "W":"E"))")
+                // The latitude/longitude aliases are signed. The listed GPS fields are
+                // unsigned next to their own reference row, so keep an existing reference.
+                if try coordinate<0 || ["latitude","longitude"].contains(key.lowercased()) || read(input,token:token)[tag+"Ref"]==nil {
+                    arguments.append("-\(tag)Ref=\(tag.hasSuffix("Latitude") ? (coordinate<0 ? "S":"N"):(coordinate<0 ? "W":"E"))")
+                }
             } else { arguments.append("-\(tag)=\(value)") }
         }
         if containerChanges {
