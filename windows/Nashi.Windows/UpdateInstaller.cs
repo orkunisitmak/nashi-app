@@ -35,11 +35,44 @@ internal static class UpdateInstaller
         try{using var old=Process.GetProcessById(request.ProcessId);if(!old.WaitForExit(60000))throw new IOException("Nashi is still running.");}catch(ArgumentException){}
         var backup=target+".backup-"+Guid.NewGuid().ToString("N");
         Directory.Move(target,backup);
+        // The newest backup is kept by version; the move time breaks ties between equal versions.
+        try{Directory.SetLastWriteTimeUtc(backup,DateTime.UtcNow);}catch(Exception error)when(error is IOException or UnauthorizedAccessException){}
         try{Directory.Move(payload,target);}catch{Directory.Move(backup,target);throw;}
         Process.Start(new ProcessStartInfo(Path.Combine(target,"Nashi.exe")){UseShellExecute=true,WorkingDirectory=target})?.Dispose();
-        // Backups remain recoverable; the app never recursively deletes a user's
-        // portable directory merely because an update succeeded.
+        // The previous version remains recoverable. The next launch removes this
+        // staging folder and only backups older than the newest one (see UpdateLeftovers).
         return 0;
+    }
+    /// <summary>Removes staging folders and older backups once the updated app has settled.</summary>
+    public static void CleanLeftoversLater(TimeSpan? delay=null)
+    {
+        var target=Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory);
+        if(App.IsSmokeTest||target==Path.GetPathRoot(target))return;
+        _=Task.Run(async()=>
+        {
+            // The update worker starts this process and exits right after; give it time to release its folder.
+            await Task.Delay(delay??TimeSpan.FromSeconds(20)).ConfigureAwait(false);
+            try{UpdateLeftovers.Clean(target,BackupVersion,InUse);}catch(Exception error)when(error is IOException or UnauthorizedAccessException){/* Retried on the next launch. */}
+        });
+    }
+    internal static Version? BackupVersion(string folder)
+    {
+        var dll=Path.Combine(folder,"Nashi.dll");if(!File.Exists(dll)||!File.Exists(Path.Combine(folder,"Nashi.exe")))return null;
+        return Version.TryParse(FileVersionInfo.GetVersionInfo(dll).FileVersion,out var version)?version:null;
+    }
+    internal static bool InUse(string folder)
+    {
+        var prefix=Path.TrimEndingDirectorySeparator(Path.GetFullPath(folder))+Path.DirectorySeparatorChar;
+        foreach(var process in Process.GetProcessesByName("Nashi"))
+        {
+            using(process)
+            {
+                // A process whose path cannot be read is treated as using the folder.
+                try{if(process.MainModule?.FileName is not {} path||path.StartsWith(prefix,StringComparison.OrdinalIgnoreCase))return true;}
+                catch(Exception error)when(error is System.ComponentModel.Win32Exception or InvalidOperationException){return true;}
+            }
+        }
+        return false;
     }
     private sealed record InstallRequest(int ProcessId,string Target,string Payload,string Stage);
 }
