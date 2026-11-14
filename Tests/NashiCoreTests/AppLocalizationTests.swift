@@ -134,6 +134,14 @@ final class AppLocalizationTests:XCTestCase {
             XCTAssertEqual(AppLocalization.text(source,language:"tr"),source)
         }
     }
+    /// VoiceOver reads the menu bar icon's NSImage.accessibilityDescription, a plain String that NashiArtwork.menuIcon
+    /// looks up through L10n.text while an update is waiting.
+    func testMenuBarUpdateIconDescriptionIsTranslated() {
+        XCTAssertEqual(AppLocalization.text("Nashi update available",language:"tr"),"Nashi güncellemesi hazır")
+        XCTAssertEqual(AppLocalization.text("Nashi update available",language:"fr"),"Mise à jour de Nashi disponible")
+        XCTAssertEqual(AppLocalization.text("Nashi update available",language:"en"),"Nashi update available")
+        XCTAssertEqual(AppLocalization.text("Nashi",language:"tr"),"Nashi")
+    }
     /// Annotate Image: the Highlight tool name (ToolEditor's tool picker) and the parts of the canvas's VoiceOver value
     /// (ImageEditPreview.annotationCanvasValue), which is a String and is looked up part by part.
     func testAnnotationToolAndCanvasValueAreTranslated() {
