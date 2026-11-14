@@ -82,6 +82,7 @@ struct ToolEditor:View {
     @State private var equalClips=2
     @State private var qrResults:[String]=[]
     @State private var pdfEditor=PDFPageEditorState()
+    @StateObject private var pdfUnlock=PDFUnlockModel()
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
 
@@ -125,6 +126,7 @@ struct ToolEditor:View {
                     VStack(alignment:.leading,spacing:18) {
                         Text(verbatim:sideBySide ? L10n.text("MAKE IT YOURS"):inputs.count>1 ? L10n.uppercase("\(inputs.count) files"):input?.lastPathComponent ?? "").font(.system(size:10,weight:.bold,design:.rounded)).tracking(0.8).foregroundStyle(.secondary).lineLimit(2)
                         if isLoading { ProgressView("Preparing your file…").font(.caption) }
+                        if tool == .organizePDF,pdfUnlock.needsPassword { PDFUnlockView(model:pdfUnlock,busy:isLoading || state.working) { loadRevision=UUID() } }
                         controls.disabled(isLoading || !readyToApply)
                         if let previewError { HStack { LText(previewError).font(.callout).foregroundStyle(.orange);Spacer();Button { self.previewError=nil } label:{Image(systemName:"xmark")}.accessibilityLabel("Dismiss preview error") } }
                     }.padding(24).frame(maxWidth:sideBySide ? .infinity:720,alignment:.leading)
@@ -163,7 +165,7 @@ struct ToolEditor:View {
             }
             .onChange(of:options.splitPoints) { _ in options.discardedClips=[];selectedSplitClip=nil }
             .onDeleteCommand { discardSelectedClip() }
-            .onDisappear { disposeMedia() }
+            .onDisappear { disposeMedia();pdfUnlock.reset();options.password="" }
     }
     var toolHint:String {
         switch tool {
@@ -616,7 +618,7 @@ struct ToolEditor:View {
                 else { loaded=try await Task.detached { try MediaEngine.readMetadata(input,token:token) }.value }
                 try checkGeneration(generation,token:token);metadata=loaded;originalMetadata=loaded
             }
-            if tool == .organizePDF { pdfEditor.reset(document:try PDFEngine.open(input)) }
+            if tool == .organizePDF { pdfEditor.reset(document:try pdfUnlock.open(input));options.password=pdfUnlock.password;previewError=nil }
             if tool == .frameImage { options.imageFrame = .init() }
             if tool == .createCollage { options.collage = .init() }
             if tool == .audioToVideo { width=1920;height=1080;options.backgroundColor="#000000" }
@@ -629,7 +631,7 @@ struct ToolEditor:View {
     func reset() {
         disposeMedia();previewToken=CancellationToken();visualizationToken=CancellationToken()
         isLoading=true;readyToApply=false;inputs=originalInputs;options=OperationOptions()
-        pdfEditor.reset();selectedSplitClip=nil;aspect="Free";cropInteracting=false;equalClips=2
+        pdfEditor.reset();pdfUnlock.reset();selectedSplitClip=nil;aspect="Free";cropInteracting=false;equalClips=2
         width=0;height=0;image=nil;baseImage=nil;imageSize=CGSize(width:100,height:100);pixelAspect=1;previewSize=nil;previewZoom=1;showOriginal=false
         duration=0;frameRate=30;playhead=0;playerReachedEnd=false;playingRange=false;processedPlayback=false;processedDuration=nil
         waveform=[];leftWaveform=[];rightWaveform=[];processedWaveform=nil;playbackURL=nil;visualizationReady=false;processedPreviewBusy=false;visualizationBusy=false;previewError=nil

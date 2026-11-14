@@ -1742,6 +1742,7 @@
 "PDF OUTPUT LAYOUT" = "MISE EN PAGE DE SORTIE PDF";
 "PDF PAGE EXCEEDS 100 MP." = "LA PAGE PDF DÉPASSE 100 MPX.";
 "PDF PAGE IS TOO LARGE TO RENDER AT THIS DPI." = "LA PAGE PDF EST TROP GRANDE POUR ÊTRE RENDUE À CE DPI.";
+"PDF PASSWORD" = "MOT DE PASSE PDF";
 "PDF PASSWORD (IF NEEDED)" = "MOT DE PASSE DU PDF (SI NÉCESSAIRE)";
 "PDF PREVIEW BACKGROUND COULD NOT BE PREPARED." = "IMPOSSIBLE DE PRÉPARER L’ARRIÈRE-PLAN DE L’APERÇU PDF.";
 "PDF PREVIEW BITMAP COULD NOT BE ALLOCATED." = "IMPOSSIBLE D’ALLOUER LE BITMAP DE L’APERÇU PDF.";
@@ -1750,6 +1751,7 @@
 "PDF output layout" = "Mise en page de sortie PDF";
 "PDF page exceeds 100 MP." = "La page PDF dépasse 100 Mpx.";
 "PDF page is too large to render at this DPI." = "La page PDF est trop grande pour être rendue à ce DPI.";
+"PDF password" = "Mot de passe PDF";
 "PDF password (if needed)" = "Mot de passe du PDF (si nécessaire)";
 "PDF preview background could not be prepared." = "Impossible de préparer l’arrière-plan de l’aperçu PDF.";
 "PDF preview bitmap could not be allocated." = "Impossible d’allouer le bitmap de l’aperçu PDF.";
@@ -2675,6 +2677,7 @@
 "UNDO AREA" = "ANNULER LA ZONE";
 "UNDO LAST MARK" = "ANNULER LE DERNIER REPÈRE";
 "UNIT" = "UNITÉ";
+"UNLOCK PDF" = "DÉVERROUILLER LE PDF";
 "UNSAFE DOWNLOAD REDIRECT." = "REDIRECTION DE TÉLÉCHARGEMENT NON SÛRE.";
 "UNSAFE UPDATE ENTRY." = "ENTRÉE DE MISE À JOUR NON SÛRE.";
 "UNSUPPORTED AUDIO FORMAT." = "FORMAT AUDIO NON PRIS EN CHARGE.";
@@ -2708,6 +2711,7 @@
 "Undo area" = "Annuler la zone";
 "Undo last mark" = "Annuler le dernier repère";
 "Unit" = "Unité";
+"Unlock PDF" = "Déverrouiller le PDF";
 "Unsafe download redirect." = "Redirection de téléchargement non sûre.";
 "Unsafe update entry." = "Entrée de mise à jour non sûre.";
 "Unsupported audio format." = "Format audio non pris en charge.";
