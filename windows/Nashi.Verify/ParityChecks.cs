@@ -19,7 +19,7 @@ internal static class ParityChecks
             foreach(var index in new[]{0,1}){var character=runs[index].GetProperty("character");var color=character.GetProperty("backgroundColor");check(color.GetProperty("r").GetDouble()==0&&color.GetProperty("g").GetDouble()==1&&color.GetProperty("b").GetDouble()==1&&character.GetProperty("fontSize").GetDouble()==22,"A character style reapplied document defaults over paragraph formatting");}
             check(runs[0].GetProperty("character").GetProperty("italic").GetBoolean()&&runs[2].GetProperty("character").GetProperty("backgroundColor").GetProperty("b").GetDouble()==0,"Character style inheritance or direct highlighting was lost");
         }
-        check(FeatureCatalog.Conversions.Count==46&&FeatureCatalog.ToolNames.Count==27,"Mac/Windows catalog count diverged");
+        check(FeatureCatalog.Conversions.Count-FeatureCatalog.WindowsOnlyFormats.Length==46&&FeatureCatalog.ToolNames.Count==27,"Mac/Windows catalog count diverged");
         if (OperatingSystem.IsWindows())
         {
             var reserved = Path.Combine(root, "Reserved output names"); Directory.CreateDirectory(reserved);
