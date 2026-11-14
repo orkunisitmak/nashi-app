@@ -422,8 +422,111 @@ struct ToolEditor:View {
     var trimControls:some View {
         VStack(spacing:14) { timeRangeFields;if tool == .trimAudio { Toggle("Remove silence from beginning and end",isOn:$options.trimSilence);if options.trimSilence { slider("Silence threshold",value:$options.silenceThresholdDb,range:-80 ... -10,unit:"dB") } };LText("Selected duration: \(timeLabel(max(0,(options.end ?? duration)-options.start)))").font(.caption).foregroundStyle(.secondary) }
     }
-    var timeRangeFields:some View {
-        HStack { Text("Start");TextField("Seconds",value:$options.start,format:.number.precision(.fractionLength(3)));Text("End");TextField("Seconds",value:Binding(get:{options.end ?? duration},set:{options.end=$0}),format:.number.precision(.fractionLength(3))) }.textFieldStyle(.roundedBorder)
+
+    /// Parses "MM:SS.mmm" or plain seconds into seconds.
+    /// - Parameter text: Time string to parse.
+    /// - Returns: Time in seconds, or nil if input is empty, non-numeric, or non-finite/negative.
+    func parseTime(_ text: String) -> Double? {
+        let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleaned.isEmpty else { return nil }
+        if cleaned.contains(":") {
+            let parts = cleaned.components(separatedBy: ":")
+            if parts.count == 2, let minutes = Double(parts[0]), let seconds = Double(parts[1]) {
+                let result = minutes * 60 + seconds
+                return result.isFinite && result >= 0 ? result : nil
+            }
+        }
+        guard let value = Double(cleaned), value.isFinite, value >= 0 else { return nil }
+        return value
+    }
+
+    /// Formats seconds as "MM:SS.mmm" for display in time fields.
+    /// - Parameter time: Time in seconds.
+    /// - Returns: Formatted time string.
+    func timeString(_ time: Double) -> String {
+        guard time.isFinite, time >= 0 else { return "00:00.000" }
+        let totalMs = Int(time * 1000)
+        let minutes = totalMs / 60000
+        let seconds = (totalMs % 60000) / 1000
+        let ms = totalMs % 1000
+        return String(format: "%02d:%02d.%03d", minutes, seconds, ms)
+    }
+
+    @State private var startTimeText: String = ""
+    @State private var endTimeText: String = ""
+
+    /// Identifies which trim time field currently has keyboard focus.
+    private enum TimeField: Hashable { case start, end }
+    @FocusState private var focusedTimeField: TimeField?
+
+    /// Applies the typed Start time when it stays inside the range; otherwise restores the current value.
+    func commitStartTime() {
+        let end = options.end ?? duration
+        if let value = parseTime(startTimeText), value >= 0,
+           duration <= 0 || (value <= duration && value < end) {
+            if value != options.start { options.start = value; seek(value) }
+        }
+        startTimeText = timeString(options.start)
+    }
+
+    /// Applies the typed End time when it stays after Start and inside the file; otherwise restores the current value.
+    func commitEndTime() {
+        if let value = parseTime(endTimeText), value > options.start,
+           duration <= 0 || value <= duration + 0.001 {
+            let clamped = duration > 0 ? min(value, duration) : value
+            if clamped != options.end { options.end = clamped; seek(clamped) }
+        }
+        endTimeText = timeString(options.end ?? duration)
+    }
+
+    /// Moves Start to the playhead with the same limits as the I/O shortcuts.
+    func markStartAtPlayhead() {
+        let start = min(max(playhead, 0), max(0, duration - 0.01))
+        options.start = start
+        if (options.end ?? duration) <= start { options.end = duration }
+        seek(start)
+        syncTimeFields()
+    }
+
+    /// Moves End to the playhead with the same limits as the I/O shortcuts.
+    func markEndAtPlayhead() {
+        let end = min(max(playhead, 0.01), duration)
+        options.end = end
+        if options.start >= end { options.start = 0 }
+        seek(options.end ?? duration)
+        syncTimeFields()
+    }
+
+    /// Fills both time fields from the selected range, using the file duration for an open End.
+    func syncTimeFields() {
+        startTimeText = timeString(options.start)
+        endTimeText = timeString(options.end ?? duration)
+    }
+
+    var timeRangeFields: some View {
+        HStack(spacing: 8) {
+            LText("Start time")
+            TextField("Start time", text: $startTimeText)
+                .textFieldStyle(.roundedBorder)
+                .focused($focusedTimeField, equals: .start)
+                .onSubmit { commitStartTime() }
+            Button("Set Start Here") { markStartAtPlayhead() }
+
+            LText("End time")
+            TextField("End time", text: $endTimeText)
+                .textFieldStyle(.roundedBorder)
+                .focused($focusedTimeField, equals: .end)
+                .onSubmit { commitEndTime() }
+            Button("Set End Here") { markEndAtPlayhead() }
+        }
+        .onAppear { syncTimeFields() }
+        .onChange(of: options.start) { _ in startTimeText = timeString(options.start) }
+        .onChange(of: options.end) { _ in endTimeText = timeString(options.end ?? duration) }
+        .onChange(of: duration) { _ in syncTimeFields() }
+        .onChange(of: focusedTimeField) { field in
+            if field != .start { commitStartTime() }
+            if field != .end { commitEndTime() }
+        }
     }
     var splitIntervals:[TimeRange] {
         let points=[0]+options.splitPoints.filter{$0>0 && $0<duration}.sorted()+[duration]

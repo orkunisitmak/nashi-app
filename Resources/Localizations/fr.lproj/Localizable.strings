@@ -489,6 +489,7 @@
 "CHOOSE ZIP, TAR OR GZIP." = "CHOISISSEZ ZIP, TAR OU GZIP.";
 "CLARITY" = "CLARTÉ";
 "CLEAR" = "EFFACER";
+"CLEAR ALL LIBRARY ENTRIES" = "CLEAR ALL LIBRARY ENTRIES";
 "CLEAR FLOAT" = "VIDER LE FLOAT";
 "CLEAR SELECTION" = "EFFACER LA SÉLECTION";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "LE PRESSE-PAPIERS EST OCCUPÉ. RÉESSAYEZ.";
@@ -691,6 +692,7 @@
 "Clear" = "Effacer";
 "Clear Float" = "Vider le Float";
 "Clear Selection" = "Effacer la sélection";
+"Clear all Library entries" = "Clear all Library entries";
 "Clip %@" = "Clip %@";
 "Clip %lld" = "Clip %lld";
 "Clipboard is busy. Try Paste again." = "Le presse-papiers est occupé. Réessayez de coller.";
@@ -994,6 +996,7 @@
 "ENABLE NASHI DRAG SHORTCUTS" = "ACTIVER LES RACCOURCIS DE GLISSER-DÉPOSER DE NASHI";
 "ENCODED PIXELS, COLOR PROFILE AND DISPLAY ORIENTATION ARE PRESERVED." = "LES PIXELS ENCODÉS, LE PROFIL COLORIMÉTRIQUE ET L’ORIENTATION D’AFFICHAGE SONT CONSERVÉS.";
 "END" = "FIN";
+"END TIME" = "HEURE DE FIN";
 "ENTER A FINITE NUMBER." = "SAISISSEZ UN NOMBRE FINI.";
 "ENTER A POSITIVE, FINITE TARGET SIZE." = "SAISISSEZ UNE TAILLE CIBLE POSITIVE ET FINIE.";
 "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%." = "SAISISSEZ UNE RÉDUCTION SUPÉRIEURE À 0 % ET INFÉRIEURE À 100 %.";
@@ -1024,6 +1027,7 @@
 "Enable Nashi drag shortcuts" = "Activer les raccourcis de glisser-déposer de Nashi";
 "Encoded pixels, color profile and display orientation are preserved." = "Les pixels encodés, le profil colorimétrique et l’orientation d’affichage sont conservés.";
 "End" = "Fin";
+"End time" = "Heure de fin";
 "Enter a finite number." = "Saisissez un nombre fini.";
 "Enter a positive, finite target size." = "Saisissez une taille cible positive et finie.";
 "Enter a reduction greater than 0% and less than 100%." = "Saisissez une réduction supérieure à 0 % et inférieure à 100 %.";
@@ -1740,16 +1744,18 @@
 "PDF FORM APPEARANCES COULD NOT BE PREPARED." = "IMPOSSIBLE DE PRÉPARER L’APPARENCE DES FORMULAIRES PDF.";
 "PDF LAYOUT" = "MISE EN PAGE DU PDF";
 "PDF OUTPUT LAYOUT" = "MISE EN PAGE DE SORTIE PDF";
-"PDF PAGE EXCEEDS 100 MP." = "LA PAGE PDF DÉPASSE 100 MPX.";
+"PDF PAGE EXCEEDS 100 MP." = "LA PAGE PDF DÉPASSE 100 MPX.";
 "PDF PAGE IS TOO LARGE TO RENDER AT THIS DPI." = "LA PAGE PDF EST TROP GRANDE POUR ÊTRE RENDUE À CE DPI.";
+"PDF PASSWORD" = "MOT DE PASSE PDF";
 "PDF PASSWORD (IF NEEDED)" = "MOT DE PASSE DU PDF (SI NÉCESSAIRE)";
 "PDF PREVIEW BACKGROUND COULD NOT BE PREPARED." = "IMPOSSIBLE DE PRÉPARER L’ARRIÈRE-PLAN DE L’APERÇU PDF.";
 "PDF PREVIEW BITMAP COULD NOT BE ALLOCATED." = "IMPOSSIBLE D’ALLOUER LE BITMAP DE L’APERÇU PDF.";
 "PDF form appearances could not be prepared." = "Impossible de préparer l’apparence des formulaires PDF.";
 "PDF layout" = "Mise en page du PDF";
 "PDF output layout" = "Mise en page de sortie PDF";
-"PDF page exceeds 100 MP." = "La page PDF dépasse 100 Mpx.";
+"PDF page exceeds 100 MP." = "La page PDF dépasse 100 Mpx.";
 "PDF page is too large to render at this DPI." = "La page PDF est trop grande pour être rendue à ce DPI.";
+"PDF password" = "Mot de passe PDF";
 "PDF password (if needed)" = "Mot de passe du PDF (si nécessaire)";
 "PDF preview background could not be prepared." = "Impossible de préparer l’arrière-plan de l’aperçu PDF.";
 "PDF preview bitmap could not be allocated." = "Impossible d’allouer le bitmap de l’aperçu PDF.";
@@ -1951,6 +1957,7 @@
 "RESIZE IMAGE" = "REDIMENSIONNER L’IMAGE";
 "RESTORE CLIPS" = "RESTAURER LES CLIPS";
 "RESTORE DEFAULTS" = "RÉTABLIR LES RÉGLAGES PAR DÉFAUT";
+"RETURN" = "RETOUR";
 "REVEAL FINISHED FILES IN EXPLORER" = "AFFICHER LES FICHIERS TERMINÉS DANS L’EXPLORATEUR";
 "REVEAL FINISHED FILES IN FINDER" = "AFFICHER LES FICHIERS TERMINÉS DANS LE FINDER";
 "RIGHT" = "DROITE";
@@ -2000,8 +2007,10 @@
 "Release to place · Esc cancels" = "Relâchez pour placer · Échap annule";
 "Remove" = "Retirer";
 "Remove %@" = "Retirer %@";
+"Remove %@ from Library" = "Remove %@ from Library";
 "Remove %@ from selection" = "Retirer %@ de la sélection";
 "Remove %lld" = "Retirer %lld";
+"Remove %lld from Library" = "Remove %lld from Library";
 "Remove %lld from selection" = "Retirer %lld de la sélection";
 "Remove All" = "Tout supprimer";
 "Remove Audio" = "Supprimer l’audio";
@@ -2027,6 +2036,7 @@
 "Restore Clips" = "Restaurer les clips";
 "Restore Defaults" = "Rétablir les réglages par défaut";
 "Restore defaults" = "Rétablir les réglages par défaut";
+"Return" = "Retour";
 "Reveal finished files in Explorer" = "Afficher les fichiers terminés dans l’Explorateur";
 "Reveal finished files in Finder" = "Afficher les fichiers terminés dans le Finder";
 "Right" = "Droite";
@@ -2102,6 +2112,8 @@
 "SEND IT ON ITS WAY" = "DÉPLACEZ, COPIEZ, PARTAGEZ";
 "SERIF" = "EMPATTEMENT";
 "SET" = "DÉFINIR";
+"SET END HERE" = "DÉFINIR COMME FIN ICI";
+"SET START HERE" = "DÉFINIR COMME DÉBUT ICI";
 "SET UP MEDIA TOOLS" = "CONFIGURER LES OUTILS MULTIMÉDIAS";
 "SET UP MEDIA TOOLS FOR THIS CODEC, OR USE OPEN TO PREVIEW IN ITS DEFAULT APP." = "CONFIGUREZ LES OUTILS MULTIMÉDIAS POUR CE CODEC, OU UTILISEZ OUVRIR POUR L’APERÇU DANS L’APP PAR DÉFAUT.";
 "SET UP MEDIA TOOLS ONCE TO ENABLE HEIC ENCODING ON WINDOWS." = "CONFIGUREZ UNE FOIS LES OUTILS MULTIMÉDIAS POUR ACTIVER L’ENCODAGE HEIC SOUS WINDOWS.";
@@ -2176,6 +2188,7 @@
 "START" = "DÉBUT";
 "START HERE" = "COMMENCEZ ICI";
 "START MUST BE BEFORE END, WITHIN THE MEDIA DURATION." = "LE DÉBUT DOIT PRÉCÉDER LA FIN, DANS LA DURÉE DU MÉDIA.";
+"START TIME" = "HEURE DE DÉBUT";
 "STARTING DOWNLOAD…" = "DÉMARRAGE DU TÉLÉCHARGEMENT…";
 "STEREO" = "STÉRÉO";
 "STILL IMAGE" = "IMAGE FIXE";
@@ -2269,6 +2282,8 @@
 "Send it on its way" = "Déplacez, copiez, partagez";
 "Serif" = "Empattement";
 "Set" = "Définir";
+"Set End Here" = "Définir comme fin ici";
+"Set Start Here" = "Définir comme début ici";
 "Set up Nashi tools" = "Configurer les outils de Nashi";
 "Set up media tools" = "Configurer les outils multimédias";
 "Set up media tools for this codec, or use Open to preview in its default app." = "Configurez les outils multimédias pour ce codec, ou utilisez Ouvrir pour l’aperçu dans l’app par défaut.";
@@ -2345,6 +2360,7 @@
 "Staging cannot be a symbolic link." = "Le dossier intermédiaire ne peut pas être un lien symbolique.";
 "Start" = "Début";
 "Start must be before End, within the media duration." = "Le début doit précéder la fin, dans la durée du média.";
+"Start time" = "Heure de début";
 "Starting download…" = "Démarrage du téléchargement…";
 "Stereo" = "Stéréo";
 "Still image" = "Image fixe";
@@ -2675,6 +2691,7 @@
 "UNDO AREA" = "ANNULER LA ZONE";
 "UNDO LAST MARK" = "ANNULER LE DERNIER REPÈRE";
 "UNIT" = "UNITÉ";
+"UNLOCK PDF" = "DÉVERROUILLER LE PDF";
 "UNSAFE DOWNLOAD REDIRECT." = "REDIRECTION DE TÉLÉCHARGEMENT NON SÛRE.";
 "UNSAFE UPDATE ENTRY." = "ENTRÉE DE MISE À JOUR NON SÛRE.";
 "UNSUPPORTED AUDIO FORMAT." = "FORMAT AUDIO NON PRIS EN CHARGE.";
@@ -2708,6 +2725,7 @@
 "Undo area" = "Annuler la zone";
 "Undo last mark" = "Annuler le dernier repère";
 "Unit" = "Unité";
+"Unlock PDF" = "Déverrouiller le PDF";
 "Unsafe download redirect." = "Redirection de téléchargement non sûre.";
 "Unsafe update entry." = "Entrée de mise à jour non sûre.";
 "Unsupported audio format." = "Format audio non pris en charge.";

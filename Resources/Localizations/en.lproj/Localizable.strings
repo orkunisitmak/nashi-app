@@ -489,6 +489,7 @@
 "CHOOSE ZIP, TAR OR GZIP." = "CHOOSE ZIP, TAR OR GZIP.";
 "CLARITY" = "CLARITY";
 "CLEAR" = "CLEAR";
+"CLEAR ALL LIBRARY ENTRIES" = "CLEAR ALL LIBRARY ENTRIES";
 "CLEAR FLOAT" = "CLEAR FLOAT";
 "CLEAR SELECTION" = "CLEAR SELECTION";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "CLIPBOARD IS BUSY. TRY AGAIN.";
@@ -691,6 +692,7 @@
 "Clear" = "Clear";
 "Clear Float" = "Clear Float";
 "Clear Selection" = "Clear Selection";
+"Clear all Library entries" = "Clear all Library entries";
 "Clip %@" = "Clip %@";
 "Clip %lld" = "Clip %lld";
 "Clipboard is busy. Try Paste again." = "Clipboard is busy. Try Paste again.";
@@ -994,6 +996,7 @@
 "ENABLE NASHI DRAG SHORTCUTS" = "ENABLE NASHI DRAG SHORTCUTS";
 "ENCODED PIXELS, COLOR PROFILE AND DISPLAY ORIENTATION ARE PRESERVED." = "ENCODED PIXELS, COLOR PROFILE AND DISPLAY ORIENTATION ARE PRESERVED.";
 "END" = "END";
+"END TIME" = "END TIME";
 "ENTER A FINITE NUMBER." = "ENTER A FINITE NUMBER.";
 "ENTER A POSITIVE, FINITE TARGET SIZE." = "ENTER A POSITIVE, FINITE TARGET SIZE.";
 "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%." = "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%.";
@@ -1024,6 +1027,7 @@
 "Enable Nashi drag shortcuts" = "Enable Nashi drag shortcuts";
 "Encoded pixels, color profile and display orientation are preserved." = "Encoded pixels, color profile and display orientation are preserved.";
 "End" = "End";
+"End time" = "End time";
 "Enter a finite number." = "Enter a finite number.";
 "Enter a positive, finite target size." = "Enter a positive, finite target size.";
 "Enter a reduction greater than 0% and less than 100%." = "Enter a reduction greater than 0% and less than 100%.";
@@ -1742,6 +1746,7 @@
 "PDF OUTPUT LAYOUT" = "PDF OUTPUT LAYOUT";
 "PDF PAGE EXCEEDS 100 MP." = "PDF PAGE EXCEEDS 100 MP.";
 "PDF PAGE IS TOO LARGE TO RENDER AT THIS DPI." = "PDF PAGE IS TOO LARGE TO RENDER AT THIS DPI.";
+"PDF PASSWORD" = "PDF PASSWORD";
 "PDF PASSWORD (IF NEEDED)" = "PDF PASSWORD (IF NEEDED)";
 "PDF PREVIEW BACKGROUND COULD NOT BE PREPARED." = "PDF PREVIEW BACKGROUND COULD NOT BE PREPARED.";
 "PDF PREVIEW BITMAP COULD NOT BE ALLOCATED." = "PDF PREVIEW BITMAP COULD NOT BE ALLOCATED.";
@@ -1750,6 +1755,7 @@
 "PDF output layout" = "PDF output layout";
 "PDF page exceeds 100 MP." = "PDF page exceeds 100 MP.";
 "PDF page is too large to render at this DPI." = "PDF page is too large to render at this DPI.";
+"PDF password" = "PDF password";
 "PDF password (if needed)" = "PDF password (if needed)";
 "PDF preview background could not be prepared." = "PDF preview background could not be prepared.";
 "PDF preview bitmap could not be allocated." = "PDF preview bitmap could not be allocated.";
@@ -1951,6 +1957,7 @@
 "RESIZE IMAGE" = "RESIZE IMAGE";
 "RESTORE CLIPS" = "RESTORE CLIPS";
 "RESTORE DEFAULTS" = "RESTORE DEFAULTS";
+"RETURN" = "RETURN";
 "REVEAL FINISHED FILES IN EXPLORER" = "REVEAL FINISHED FILES IN EXPLORER";
 "REVEAL FINISHED FILES IN FINDER" = "REVEAL FINISHED FILES IN FINDER";
 "RIGHT" = "RIGHT";
@@ -2000,8 +2007,10 @@
 "Release to place · Esc cancels" = "Release to place · Esc cancels";
 "Remove" = "Remove";
 "Remove %@" = "Remove %@";
+"Remove %@ from Library" = "Remove %@ from Library";
 "Remove %@ from selection" = "Remove %@ from selection";
 "Remove %lld" = "Remove %lld";
+"Remove %lld from Library" = "Remove %lld from Library";
 "Remove %lld from selection" = "Remove %lld from selection";
 "Remove All" = "Remove All";
 "Remove Audio" = "Remove Audio";
@@ -2027,6 +2036,7 @@
 "Restore Clips" = "Restore Clips";
 "Restore Defaults" = "Restore Defaults";
 "Restore defaults" = "Restore defaults";
+"Return" = "Return";
 "Reveal finished files in Explorer" = "Reveal finished files in Explorer";
 "Reveal finished files in Finder" = "Reveal finished files in Finder";
 "Right" = "Right";
@@ -2102,6 +2112,8 @@
 "SEND IT ON ITS WAY" = "SEND IT ON ITS WAY";
 "SERIF" = "SERIF";
 "SET" = "SET";
+"SET END HERE" = "SET END HERE";
+"SET START HERE" = "SET START HERE";
 "SET UP MEDIA TOOLS" = "SET UP MEDIA TOOLS";
 "SET UP MEDIA TOOLS FOR THIS CODEC, OR USE OPEN TO PREVIEW IN ITS DEFAULT APP." = "SET UP MEDIA TOOLS FOR THIS CODEC, OR USE OPEN TO PREVIEW IN ITS DEFAULT APP.";
 "SET UP MEDIA TOOLS ONCE TO ENABLE HEIC ENCODING ON WINDOWS." = "SET UP MEDIA TOOLS ONCE TO ENABLE HEIC ENCODING ON WINDOWS.";
@@ -2176,6 +2188,7 @@
 "START" = "START";
 "START HERE" = "START HERE";
 "START MUST BE BEFORE END, WITHIN THE MEDIA DURATION." = "START MUST BE BEFORE END, WITHIN THE MEDIA DURATION.";
+"START TIME" = "START TIME";
 "STARTING DOWNLOAD…" = "STARTING DOWNLOAD…";
 "STEREO" = "STEREO";
 "STILL IMAGE" = "STILL IMAGE";
@@ -2269,6 +2282,8 @@
 "Send it on its way" = "Send it on its way";
 "Serif" = "Serif";
 "Set" = "Set";
+"Set End Here" = "Set End Here";
+"Set Start Here" = "Set Start Here";
 "Set up Nashi tools" = "Set up Nashi tools";
 "Set up media tools" = "Set up media tools";
 "Set up media tools for this codec, or use Open to preview in its default app." = "Set up media tools for this codec, or use Open to preview in its default app.";
@@ -2345,6 +2360,7 @@
 "Staging cannot be a symbolic link." = "Staging cannot be a symbolic link.";
 "Start" = "Start";
 "Start must be before End, within the media duration." = "Start must be before End, within the media duration.";
+"Start time" = "Start time";
 "Starting download…" = "Starting download…";
 "Stereo" = "Stereo";
 "Still image" = "Still image";
@@ -2675,6 +2691,7 @@
 "UNDO AREA" = "UNDO AREA";
 "UNDO LAST MARK" = "UNDO LAST MARK";
 "UNIT" = "UNIT";
+"UNLOCK PDF" = "UNLOCK PDF";
 "UNSAFE DOWNLOAD REDIRECT." = "UNSAFE DOWNLOAD REDIRECT.";
 "UNSAFE UPDATE ENTRY." = "UNSAFE UPDATE ENTRY.";
 "UNSUPPORTED AUDIO FORMAT." = "UNSUPPORTED AUDIO FORMAT.";
@@ -2708,6 +2725,7 @@
 "Undo area" = "Undo area";
 "Undo last mark" = "Undo last mark";
 "Unit" = "Unit";
+"Unlock PDF" = "Unlock PDF";
 "Unsafe download redirect." = "Unsafe download redirect.";
 "Unsafe update entry." = "Unsafe update entry.";
 "Unsupported audio format." = "Unsupported audio format.";

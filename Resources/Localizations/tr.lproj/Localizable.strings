@@ -489,6 +489,7 @@
 "CHOOSE ZIP, TAR OR GZIP." = "ZIP, TAR VEYA GZIP SEÇ.";
 "CLARITY" = "NETLİK";
 "CLEAR" = "TEMİZLE";
+"CLEAR ALL LIBRARY ENTRIES" = "KİTAPLIKTAKİ TÜM KAYITLARI TEMİZLE";
 "CLEAR FLOAT" = "YÜZEN PENCEREYİ TEMİZLE";
 "CLEAR SELECTION" = "SEÇİMİ TEMİZLE";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "PANO MEŞGUL. TEKRAR DENE.";
@@ -691,6 +692,7 @@
 "Clear" = "Temizle";
 "Clear Float" = "Yüzen Pencereyi Temizle";
 "Clear Selection" = "Seçimi Temizle";
+"Clear all Library entries" = "Kitaplıktaki tüm kayıtları temizle";
 "Clip %@" = "Klip %@";
 "Clip %lld" = "Klip %lld";
 "Clipboard is busy. Try Paste again." = "Pano meşgul. Yeniden yapıştırmayı dene.";
@@ -994,6 +996,7 @@
 "ENABLE NASHI DRAG SHORTCUTS" = "NASHI SÜRÜKLEME KISAYOLLARINI ETKİNLEŞTİR";
 "ENCODED PIXELS, COLOR PROFILE AND DISPLAY ORIENTATION ARE PRESERVED." = "KODLANMIŞ PİKSELLER, RENK PROFİLİ VE GÖRÜNTÜ YÖNÜ KORUNUR.";
 "END" = "BİTİŞ";
+"END TIME" = "BİTİŞ SAATİ";
 "ENTER A FINITE NUMBER." = "GEÇERLİ BİR SAYI GİR.";
 "ENTER A POSITIVE, FINITE TARGET SIZE." = "POZİTİF VE GEÇERLİ BİR HEDEF BOYUT GİR.";
 "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%." = "%0'DAN BÜYÜK VE %100'DEN KÜÇÜK BİR KÜÇÜLTME GİR.";
@@ -1024,6 +1027,7 @@
 "Enable Nashi drag shortcuts" = "Nashi sürükleme kısayollarını etkinleştir";
 "Encoded pixels, color profile and display orientation are preserved." = "Kodlanmış pikseller, renk profili ve görüntü yönü korunur.";
 "End" = "Bitiş";
+"End time" = "Bitiş saati";
 "Enter a finite number." = "Geçerli bir sayı gir.";
 "Enter a positive, finite target size." = "Pozitif ve geçerli bir hedef boyut gir.";
 "Enter a reduction greater than 0% and less than 100%." = "%0'dan büyük ve %100'den küçük bir küçültme gir.";
@@ -1742,6 +1746,7 @@
 "PDF OUTPUT LAYOUT" = "PDF ÇIKTI DÜZENİ";
 "PDF PAGE EXCEEDS 100 MP." = "PDF SAYFASI 100 MP'Yİ AŞIYOR.";
 "PDF PAGE IS TOO LARGE TO RENDER AT THIS DPI." = "PDF SAYFASI BU DPI DEĞERİNDE İŞLENEMEYECEK KADAR BÜYÜK.";
+"PDF PASSWORD" = "PDF ŞİFRESİ";
 "PDF PASSWORD (IF NEEDED)" = "PDF PAROLASI (GEREKİYORSA)";
 "PDF PREVIEW BACKGROUND COULD NOT BE PREPARED." = "PDF ÖNİZLEME ARKA PLANI HAZIRLANAMADI.";
 "PDF PREVIEW BITMAP COULD NOT BE ALLOCATED." = "PDF ÖNİZLEMESİ İÇİN BELLEK AYRILAMADI.";
@@ -1750,6 +1755,7 @@
 "PDF output layout" = "PDF çıktı düzeni";
 "PDF page exceeds 100 MP." = "PDF sayfası 100 MP'yi aşıyor.";
 "PDF page is too large to render at this DPI." = "PDF sayfası bu DPI değerinde işlenemeyecek kadar büyük.";
+"PDF password" = "PDF şifresi";
 "PDF password (if needed)" = "PDF parolası (gerekiyorsa)";
 "PDF preview background could not be prepared." = "PDF önizleme arka planı hazırlanamadı.";
 "PDF preview bitmap could not be allocated." = "PDF önizlemesi için bellek ayrılamadı.";
@@ -1951,6 +1957,7 @@
 "RESIZE IMAGE" = "GÖRSELİ BOYUTLANDIR";
 "RESTORE CLIPS" = "KLİPLERİ GERİ GETİR";
 "RESTORE DEFAULTS" = "VARSAYILANLARA DÖN";
+"RETURN" = "GERİ";
 "REVEAL FINISHED FILES IN EXPLORER" = "TAMAMLANAN DOSYALARI DOSYA GEZGİNİ'NDE GÖSTER";
 "REVEAL FINISHED FILES IN FINDER" = "TAMAMLANAN DOSYALARI FINDER'DA GÖSTER";
 "RIGHT" = "SAĞ";
@@ -2000,8 +2007,10 @@
 "Release to place · Esc cancels" = "Yerleştirmek için bırak · Esc iptal eder";
 "Remove" = "Kaldır";
 "Remove %@" = "%@ öğesini kaldır";
+"Remove %@ from Library" = "%@ Kitaplıktan Kaldır";
 "Remove %@ from selection" = "%@ öğesini seçimden kaldır";
 "Remove %lld" = "%lld öğesini kaldır";
+"Remove %lld from Library" = "%lld Kitaplıktan Kaldır";
 "Remove %lld from selection" = "%lld öğesini seçimden kaldır";
 "Remove All" = "Tümünü Kaldır";
 "Remove Audio" = "Sesi Kaldır";
@@ -2027,6 +2036,7 @@
 "Restore Clips" = "Klipleri Geri Getir";
 "Restore Defaults" = "Varsayılanlara Dön";
 "Restore defaults" = "Varsayılanlara dön";
+"Return" = "Geri";
 "Reveal finished files in Explorer" = "Tamamlanan dosyaları Dosya Gezgini'nde göster";
 "Reveal finished files in Finder" = "Tamamlanan dosyaları Finder'da göster";
 "Right" = "Sağ";
@@ -2102,6 +2112,8 @@
 "SEND IT ON ITS WAY" = "TAŞI, KOPYALA, PAYLAŞ";
 "SERIF" = "SERİF";
 "SET" = "AYARLA";
+"SET END HERE" = "BİTİŞİNİ BURAYA AYARLA";
+"SET START HERE" = "BAŞLANGICI BURAYA AYARLA";
 "SET UP MEDIA TOOLS" = "MEDYA ARAÇLARINI KUR";
 "SET UP MEDIA TOOLS FOR THIS CODEC, OR USE OPEN TO PREVIEW IN ITS DEFAULT APP." = "BU CODEC İÇİN MEDYA ARAÇLARINI KUR VEYA AÇ İLE VARSAYILAN UYGULAMADA ÖNİZLE.";
 "SET UP MEDIA TOOLS ONCE TO ENABLE HEIC ENCODING ON WINDOWS." = "WINDOWS'TA HEIC OLARAK KAYDETMEK İÇİN BİR KEZ MEDYA ARAÇLARINI KUR.";
@@ -2176,6 +2188,7 @@
 "START" = "BAŞLANGIÇ";
 "START HERE" = "BURADAN BAŞLA";
 "START MUST BE BEFORE END, WITHIN THE MEDIA DURATION." = "BAŞLANGIÇ, BİTİŞ'TEN ÖNCE VE MEDYA SÜRESİ İÇİNDE OLMALI.";
+"START TIME" = "BAŞLANGIÇ SAATİ";
 "STARTING DOWNLOAD…" = "İNDİRME BAŞLIYOR…";
 "STEREO" = "STEREO";
 "STILL IMAGE" = "SABİT GÖRSEL";
@@ -2269,6 +2282,8 @@
 "Send it on its way" = "Taşı, kopyala, paylaş";
 "Serif" = "Serif";
 "Set" = "Ayarla";
+"Set End Here" = "Bitişini Buraya Ayarla";
+"Set Start Here" = "Başlangıcı Buraya Ayarla";
 "Set up Nashi tools" = "Nashi araçlarını kur";
 "Set up media tools" = "Medya araçlarını kur";
 "Set up media tools for this codec, or use Open to preview in its default app." = "Bu codec için medya araçlarını kur veya Aç ile varsayılan uygulamada önizle.";
@@ -2345,6 +2360,7 @@
 "Staging cannot be a symbolic link." = "Geçici klasör sembolik bağlantı olamaz.";
 "Start" = "Başlangıç";
 "Start must be before End, within the media duration." = "Başlangıç, Bitiş'ten önce ve medya süresi içinde olmalı.";
+"Start time" = "Başlangıç saati";
 "Starting download…" = "İndirme başlıyor…";
 "Stereo" = "Stereo";
 "Still image" = "Sabit görsel";
@@ -2675,6 +2691,7 @@
 "UNDO AREA" = "ALANI GERİ AL";
 "UNDO LAST MARK" = "SON İŞARETİ GERİ AL";
 "UNIT" = "BİRİM";
+"UNLOCK PDF" = "PDF KİLİDİNİ AÇ";
 "UNSAFE DOWNLOAD REDIRECT." = "GÜVENLİ OLMAYAN İNDİRME YÖNLENDİRMESİ.";
 "UNSAFE UPDATE ENTRY." = "GÜNCELLEMEDE GÜVENLİ OLMAYAN BİR ÖĞE VAR.";
 "UNSUPPORTED AUDIO FORMAT." = "DESTEKLENMEYEN SES BİÇİMİ.";
@@ -2708,6 +2725,7 @@
 "Undo area" = "Alanı geri al";
 "Undo last mark" = "Son işareti geri al";
 "Unit" = "Birim";
+"Unlock PDF" = "PDF kilidini aç";
 "Unsafe download redirect." = "Güvenli olmayan indirme yönlendirmesi.";
 "Unsafe update entry." = "Güncellemede güvenli olmayan bir öğe var.";
 "Unsupported audio format." = "Desteklenmeyen ses biçimi.";
