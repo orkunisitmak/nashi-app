@@ -89,6 +89,14 @@ final class AppLocalizationTests:XCTestCase {
         XCTAssertEqual(AppLocalization.text("No formats\n⌘ Tools\n⌃ Actions",language:"tr"),"Biçim yok\n⌘ Araçlar\n⌃ İşlemler")
         XCTAssertEqual(AppLocalization.text("No file tools\n⇧ Convert\n⌃ Actions",language:"fr"),"Aucun outil de fichier\n⇧ Convertir\n⌃ Actions")
     }
+    /// The crop canvas's VoiceOver value (ImageEditPreview.swift) is a String built in English, so it is looked up here.
+    func testCropCanvasVoiceOverValueIsTranslated() {
+        XCTAssertEqual(AppLocalization.text("No crop selected",language:"tr"),"Kırpma alanı seçilmedi")
+        XCTAssertEqual(AppLocalization.text("No crop selected",language:"fr"),"Aucune zone de recadrage sélectionnée")
+        XCTAssertEqual(AppLocalization.text("X 10, Y 20, width 30, height 40",language:"tr"),"X 10, Y 20, genişlik 30, yükseklik 40")
+        XCTAssertEqual(AppLocalization.text("X 0, Y 0, width 1920, height 1080",language:"fr"),"X 0, Y 0, largeur 1920, hauteur 1080")
+        XCTAssertEqual(AppLocalization.text("X 10, Y 20, width 30, height 40",language:"en"),"X 10, Y 20, width 30, height 40")
+    }
     func testFrenchSelectedCountIsSingularForZeroAndOne() {
         // French uses the singular for 0 and 1 ("1 sélectionné"); Turkish never inflects after a number.
         XCTAssertEqual(AppLocalization.text("1 selected",language:"fr"),"1 sélectionné")
@@ -126,6 +134,27 @@ final class AppLocalizationTests:XCTestCase {
             XCTAssertEqual(AppLocalization.text(source,language:"tr"),source)
         }
     }
+    /// Annotate Image: the Highlight tool name (ToolEditor's tool picker) and the parts of the canvas's VoiceOver value
+    /// (ImageEditPreview.annotationCanvasValue), which is a String and is looked up part by part.
+    func testAnnotationToolAndCanvasValueAreTranslated() {
+        XCTAssertEqual(AppLocalization.text("Highlight",language:"tr"),"Vurgu")
+        XCTAssertEqual(AppLocalization.text("Highlight",language:"fr"),"Surlignage")
+        XCTAssertEqual(AppLocalization.text("0 annotations",language:"fr"),"0 annotation")
+        XCTAssertEqual(AppLocalization.text("1 annotation",language:"fr"),"1 annotation")
+        XCTAssertEqual(AppLocalization.text("3 annotations",language:"fr"),"3 annotations")
+        XCTAssertEqual(AppLocalization.text("3 annotations",language:"tr"),"3 işaretleme")
+        XCTAssertEqual(AppLocalization.text("selected 2",language:"tr"),"2. işaretleme seçili")
+        XCTAssertEqual(AppLocalization.text("selected 2",language:"fr"),"annotation 2 sélectionnée")
+        XCTAssertEqual(AppLocalization.text("3 annotations",language:"en"),"3 annotations")
+    }
+    /// Choose Files… (⌘O) opens an NSOpenPanel whose prompt is a plain String, so AppDelegate looks the button title up
+    /// through L10n.text; the title-case key needs its own entry next to the menu item's "Choose Files…".
+    func testChooseFilesPanelButtonIsTranslated() {
+        XCTAssertEqual(AppLocalization.text("Choose Files",language:"tr"),"Dosya Seç")
+        XCTAssertEqual(AppLocalization.text("Choose Files",language:"fr"),"Choisir des fichiers")
+        XCTAssertEqual(AppLocalization.text("Choose Files…",language:"tr"),"Dosya Seç…")
+        XCTAssertEqual(AppLocalization.text("Choose Files",language:"en"),"Choose Files")
+    }
     /// A batch reports "File <i> of <n> · <status>". Both the prefix and the status are translated; a status without a
     /// translation stays as it is.
     func testBatchStatusTranslatesPrefixAndStatus() throws {
@@ -146,5 +175,40 @@ final class AppLocalizationTests:XCTestCase {
         for source in ["Profile 1 of 2 · Split PDF","File one of 2 · Split PDF","report.pdf: File 1 of 2 · Split PDF"] {
             XCTAssertEqual(AppLocalization.text(source,language:"tr"),source)
         }
+    }
+    /// The NSAlert shown when Window management cannot arrange a window takes plain Strings, so AppDelegate looks up
+    /// its title, the WindowManagement notice and the button through L10n.text; each needs a catalog entry.
+    func testWindowArrangementAlertIsTranslated() {
+        let expected=[
+            "Window arrangement":("Pencere düzeni","Disposition des fenêtres"),
+            "This window could not be arranged. The app may restrict resizing.":("Bu pencere düzenlenemedi. Uygulama yeniden boyutlandırmayı kısıtlıyor olabilir.","Cette fenêtre n’a pas pu être disposée. L’app limite peut-être le redimensionnement."),
+            "OK":("Tamam","OK"),
+        ]
+        for (source,(tr,fr)) in expected {
+            XCTAssertEqual(AppLocalization.text(source,language:"tr"),tr)
+            XCTAssertEqual(AppLocalization.text(source,language:"fr"),fr)
+            XCTAssertEqual(AppLocalization.text(source,language:"en"),source)
+        }
+        XCTAssertEqual(AppLocalization.catalog(for:"fr")["OK"],"OK")
+    }
+    /// UpdateConnectionView shows its save/remove confirmation through LText, so each sentence needs a catalog entry.
+    func testUpdateConnectionConfirmationsAreTranslated() {
+        let expected=[
+            "Connection saved. Future checks use it automatically.":("Bağlantı kaydedildi. Sonraki kontroller bunu otomatik olarak kullanacak.","Connexion enregistrée. Les prochaines vérifications l’utiliseront automatiquement."),
+            "Connection saved. This build still needs its release signing configuration.":("Bağlantı kaydedildi. Bu derlemenin hâlâ sürüm imzalama yapılandırmasına ihtiyacı var.","Connexion enregistrée. Cette version a encore besoin de sa configuration de signature des mises à jour."),
+            "Connection removed and its saved token deleted.":("Bağlantı kaldırıldı ve kayıtlı tokenı silindi.","Connexion supprimée et son jeton enregistré effacé."),
+        ]
+        for (source,(tr,fr)) in expected {
+            XCTAssertEqual(AppLocalization.text(source,language:"tr"),tr)
+            XCTAssertEqual(AppLocalization.text(source,language:"fr"),fr)
+            XCTAssertEqual(AppLocalization.text(source,language:"en"),source)
+        }
+    }
+    /// The token setup Link in UpdateConnectionView is a plain literal, so it resolves through the generated tables.
+    func testUpdateTokenLinkIsTranslated() {
+        let source="Create a fine-grained token on GitHub"
+        XCTAssertEqual(AppLocalization.text(source,language:"tr"),"GitHub’da ince ayarlı token oluştur")
+        XCTAssertEqual(AppLocalization.text(source,language:"fr"),"Créer un jeton à portée précise sur GitHub")
+        XCTAssertEqual(AppLocalization.text(source,language:"en"),source)
     }
 }

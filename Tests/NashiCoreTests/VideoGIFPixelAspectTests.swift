@@ -4,12 +4,12 @@ import XCTest
 /// Records the Video to GIF filter graph through the NASHI_FFMPEG/NASHI_FFPROBE seam
 /// for a canned 720 x 480 DVD/DV video whose pixels are 32:27 wide (shown at 16:9).
 final class VideoGIFPixelAspectTests: XCTestCase {
-    private func graph(gifMaxWidth: Int) throws -> String? {
+    private func graph(gifMaxWidth: Int, width: Int = 720, height: Int = 480) throws -> String? {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("nashi-video-gif-sar-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         addTeardownBlock { try? FileManager.default.removeItem(at: root) }
         let log = root.appendingPathComponent("argv.log"), probe = root.appendingPathComponent("probe.json")
-        try Data(#"{"format":{"duration":"4"},"streams":[{"index":0,"codec_type":"video","codec_name":"h264","width":720,"height":480,"sample_aspect_ratio":"32:27","duration":"4","avg_frame_rate":"25/1"}]}"#.utf8).write(to: probe)
+        try Data(#"{"format":{"duration":"4"},"streams":[{"index":0,"codec_type":"video","codec_name":"h264","width":\#(width),"height":\#(height),"sample_aspect_ratio":"32:27","duration":"4","avg_frame_rate":"25/1"}]}"#.utf8).write(to: probe)
         let ffprobe = root.appendingPathComponent("ffprobe"), ffmpeg = root.appendingPathComponent("ffmpeg")
         try Data("#!/bin/sh\ncat '\(probe.path)'\n".utf8).write(to: ffprobe)
         try Data("#!/bin/sh\nfor a in \"$@\"; do printf '%s\\n' \"$a\" >> '\(log.path)'; done\nfor last; do :; done\nprintf x > \"$last\"\n".utf8).write(to: ffmpeg)
@@ -29,7 +29,12 @@ final class VideoGIFPixelAspectTests: XCTestCase {
     // GIF viewers ignore the pixel aspect, so the frames must be square before the palette is built.
     func testGIFFramesAreResizedToSquarePixels() throws {
         for width in [480, 960] {
-            XCTAssertEqual(try graph(gifMaxWidth: width), "[0:v:0]fps=15,pad=ceil(iw/2)*2:ceil(ih/2)*2,scale=w='min(\(width),iw)':h=-2:force_original_aspect_ratio=decrease:reset_sar=1,split[p0][p1];[p0]palettegen=stats_mode=diff[pal];[p1][pal]paletteuse=dither=sierra2_4a")
+            XCTAssertEqual(try graph(gifMaxWidth: width), "[0:v:0]fps=15,scale=w='min(\(width),iw)':h=-2:force_original_aspect_ratio=decrease:reset_sar=1,split[p0][p1];[p0]palettegen=stats_mode=diff[pal];[p1][pal]paletteuse=dither=sierra2_4a")
         }
+    }
+
+    // GIF has no even-size rule, so an odd-sized video must not get a padded black column and row.
+    func testOddSizedVideoGIFHasNoPaddedEdge() throws {
+        XCTAssertEqual(try graph(gifMaxWidth: 960, width: 641, height: 361), "[0:v:0]fps=15,scale=w='min(960,iw)':h=-2:force_original_aspect_ratio=decrease:reset_sar=1,split[p0][p1];[p0]palettegen=stats_mode=diff[pal];[p1][pal]paletteuse=dither=sierra2_4a")
     }
 }

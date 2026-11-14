@@ -12,7 +12,8 @@ public static partial class DocumentEngine
         if(tool=="mergePDFs")
         {
             if(inputs.Count<2)throw new ArgumentException("Choose at least two PDFs.");
-            using var merged=new PdfDocument();
+            // The merged PDF keeps the first document's properties, read before its pages are copied.
+            using var merged=new PdfDocument();using(var first=PdfReader.Open(inputs[0],password,PdfDocumentOpenMode.Import))KeepInfo(first,merged);
             foreach(var file in inputs){token.ThrowIfCancellationRequested();using var source=PdfReader.Open(file,password,PdfDocumentOpenMode.Import);RequireRebuildable(source,tool);foreach(var page in source.Pages)merged.AddPage(page);}
             var output=SafePaths.Unique(tx.StagingDirectory,"Merged.pdf");merged.Save(output);outputs.Add(output);
         }
@@ -25,7 +26,7 @@ public static partial class DocumentEngine
                 var selected=pages??PageRange(pageRanges,source.PageCount);if(selected.Length==0||selected.Any(p=>p<1||p>source.PageCount))throw new ArgumentException("Choose valid PDF pages.");
                 for(var i=0;i<selected.Length;i+=pagesPerFile)
                 {
-                    token.ThrowIfCancellationRequested();using var part=new PdfDocument();foreach(var page in selected.Skip(i).Take(pagesPerFile))part.AddPage(source.Pages[page-1]);
+                    token.ThrowIfCancellationRequested();using var part=new PdfDocument();KeepInfo(source,part);foreach(var page in selected.Skip(i).Take(pagesPerFile))part.AddPage(source.Pages[page-1]);
                     var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+$" Page {i+1}.pdf");part.Save(output);outputs.Add(output);
                 }
             }
@@ -33,8 +34,8 @@ public static partial class DocumentEngine
             {
                 if(pages is null||pages.Length==0||pages.Any(p=>p<1||p>source.PageCount))throw new ArgumentException("Enter page numbers within this PDF, in the desired order.");
                 if(uniformWidth&&(source.Internals.Catalog.Elements.ContainsKey("/Names")||source.Internals.Catalog.Elements.ContainsKey("/Outlines")||source.Pages.Cast<PdfPage>().Any(p=>p.Elements.ContainsKey("/Annots"))))throw new ArgumentException("Turn off uniform width to preserve this PDF’s form fields, attachments, links or navigation.");
-                using var result=new PdfDocument();for(var n=0;n<pages.Length;n++){var page=pages[n];var added=result.AddPage(source.Pages[page-1]);added.Rotate=(added.Rotate+(pageRotations is not null?pageRotations[n]:rotations?.GetValueOrDefault(page)??0))%360;}
-                var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+" Organized.pdf");result.Save(output);if(uniformWidth&&tool=="organizePDF")UniformWidths(output,token);outputs.Add(output);
+                using var result=new PdfDocument();KeepInfo(source,result);for(var n=0;n<pages.Length;n++){var page=pages[n];var added=result.AddPage(source.Pages[page-1]);added.Rotate=(added.Rotate+(pageRotations is not null?pageRotations[n]:rotations?.GetValueOrDefault(page)??0))%360;}
+                var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+" Organized.pdf");result.Save(output);if(uniformWidth&&tool=="organizePDF"){UniformWidths(output,token);KeepInfo(source,output);}outputs.Add(output);
             }
             else if(tool=="compress")
             {
@@ -47,12 +48,23 @@ public static partial class DocumentEngine
             }
             else if(tool=="removeMetadata")
             {
-                using var result=new PdfDocument();var copies=new Dictionary<PdfPage,PdfPage>();foreach(var page in source.Pages)copies[page]=result.AddPage(page);CopyOutlines(source,result,copies);CopyPageLabels(source,result);result.Options.CompressContentStreams=true;result.Info.Title="";result.Info.Author="";result.Info.Subject="";result.Info.Keywords="";
+                using var result=new PdfDocument();var copies=new Dictionary<PdfPage,PdfPage>();foreach(var page in source.Pages)copies[page]=result.AddPage(page);CopyOutlines(source,result,copies);CopyPageLabels(source,result);ClearAnnotationMetadata(result);result.Options.CompressContentStreams=true;result.Info.Title="";result.Info.Author="";result.Info.Subject="";result.Info.Keywords="";
                 var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+(tool=="compress"?" Compressed.pdf":" Metadata.pdf"));result.Save(output);outputs.Add(output);
             }
             else throw new ArgumentException("Unknown PDF tool.");
         }
         return tx.Publish(outputs,token);
+    }
+    // Page edits keep the first document's properties, as on macOS and as Compress does; only metadata cleanup clears them.
+    // Empty ones are left out, so a PDF without a title is saved exactly as before.
+    private static void KeepInfo(PdfDocument source,PdfDocument result)
+    {
+        var info=source.Info;if(info.Title.Length>0)result.Info.Title=info.Title;if(info.Author.Length>0)result.Info.Author=info.Author;if(info.Subject.Length>0)result.Info.Subject=info.Subject;
+        if(info.Keywords.Length>0)result.Info.Keywords=info.Keywords;if(info.Creator.Length>0)result.Info.Creator=info.Creator;
+    }
+    private static void KeepInfo(PdfDocument source,string file)
+    {
+        using var memory=new MemoryStream(File.ReadAllBytes(file));using var redrawn=PdfReader.Open(memory,PdfDocumentOpenMode.Modify);KeepInfo(source,redrawn);redrawn.Save(file);
     }
     /// Whether the PDF was encrypted (a user or owner password); every /Encrypt dictionary names its /Filter.
     public static bool Protected(PdfDocument pdf)=>pdf.SecurityHandler.Elements.ContainsKey("/Filter");
@@ -64,12 +76,41 @@ public static partial class DocumentEngine
     private static void RequireRebuildable(PdfDocument source,string tool)
     {
         if(tool=="compress")return;var catalog=source.Internals.Catalog.Elements;
+        // A signature covers the original bytes, so no page copy can keep it valid. Name it, with
+        // macOS's wording (PDFInterop.js), instead of the generic form message below. Signature
+        // dictionaries may sit outside the form registry (a /Perms /DocMDP certification), so the whole
+        // document is searched.
+        if(tool!="removeMetadata"&&Signed(source))throw new InvalidDataException("This PDF contains digital signatures. This page operation cannot safely preserve that feature. No copy was exported.");
         var widgets=source.Pages.Cast<PdfPage>().Any(p=>p.Elements.GetArray("/Annots") is {} annotations&&annotations.Elements.Any(e=>(e is PdfSharp.Pdf.Advanced.PdfReference reference?reference.Value:e) is PdfDictionary annotation&&annotation.Elements.GetName("/Subtype")=="/Widget"));
         var attachments=catalog.GetDictionary("/Names")?.Elements.ContainsKey("/EmbeddedFiles")==true||catalog.ContainsKey("/AF")||catalog.ContainsKey("/Collection");
         // Some generators write an empty /AcroForm; only fields (or an XFA form) are lost.
         var form=catalog.GetDictionary("/AcroForm");var fields=form is not null&&(form.Elements.GetArray("/Fields") is {Elements.Count:>0}||form.Elements.ContainsKey("/XFA"));
         if(!fields&&!widgets&&!attachments)return;
         throw new InvalidDataException(tool=="removeMetadata"?"This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported.":"This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported.");
+    }
+    // Walks what the catalog reaches, following references and the dictionaries and arrays written in
+    // place: a signature that an incremental update removed can stay in the file, unreachable, and
+    // must not count. A signature dictionary has /ByteRange (and usually /Type /Sig). An empty
+    // signature field (/FT /Sig without a /V value) is not a signature; it gets the form message.
+    private static bool Signed(PdfDocument source)
+    {
+        var seen=new HashSet<PdfItem>(ReferenceEqualityComparer.Instance);var pending=new Stack<PdfItem>();pending.Push(source.Internals.Catalog);
+        while(pending.TryPop(out var item))
+        {
+            if(item is PdfSharp.Pdf.Advanced.PdfReference reference){if(reference.Value is {} target)pending.Push(target);continue;}
+            if(item is not (PdfDictionary or PdfArray)||!seen.Add(item))continue;
+            if(item is PdfDictionary d){if(d.Elements.ContainsKey("/ByteRange")||d.Elements.GetName("/Type")=="/Sig")return true;foreach(var value in d.Elements.Values)if(value is not null)pending.Push(value);}
+            else foreach(var value in ((PdfArray)item).Elements)pending.Push(value);
+        }
+        return false;
+    }
+    // Remove All drops each review annotation's author and dates, as on macOS, whatever its type (Caret, Squiggly, Polygon…); the note
+    // text stays. A widget's /T is its field name, not an author, and forms are refused before this anyway.
+    private static void ClearAnnotationMetadata(PdfDocument pdf)
+    {
+        foreach(var page in pdf.Pages)if(page.Elements.GetArray("/Annots") is {} annotations)foreach(var item in annotations.Elements)
+            if((item is PdfSharp.Pdf.Advanced.PdfReference reference?reference.Value:item) is PdfDictionary annotation&&annotation.Elements.GetName("/Subtype")!="/Widget")
+                foreach(var key in new[]{"/T","/M","/CreationDate"})annotation.Elements.Remove(key);
     }
     private static void CopyOutlines(PdfDocument source,PdfDocument result,Dictionary<PdfPage,PdfPage> copies)
     {

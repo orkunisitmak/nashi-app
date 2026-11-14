@@ -203,7 +203,8 @@ struct ToolEditor:View {
         switch tool {
         case .cropImage,.cropVideo:
             guard !cropInteracting,let crop=options.crop else { return false }
-            return crop.x>=0 && crop.y>=0 && crop.width>=1 && crop.height>=1 && crop.x+crop.width<=imageSize.width && crop.y+crop.height<=imageSize.height
+            let minSide=tool == .cropVideo ? MediaEngine.minimumVideoCropSide:1
+            return crop.x>=0 && crop.y>=0 && crop.width>=minSide && crop.height>=minSide && crop.x+crop.width<=imageSize.width && crop.y+crop.height<=imageSize.height
         case .removeMetadata where isGIFMetadata:return metadataRemoveAll
         case .splitVideo:return (!options.splitPoints.isEmpty || options.equalClips != nil) && options.discardedClips.count<splitIntervals.count
         case .videoSnapshots:return !options.snapshotTimes.isEmpty
@@ -654,8 +655,11 @@ struct ToolEditor:View {
         if width>0 { applied.width=width };if height>0 { applied.height=height }
         if [.cropImage,.cropVideo].contains(tool),var crop=applied.crop { crop.width=Double(width);crop.height=Double(height);applied.crop=crop }
         if tool == .cropImage { applied.width=nil;applied.height=nil }
-        // The size fields hold the first file's dimensions; keeping originals must not resize the other files to them.
-        if tool == .compress,category != .image || compressionSize == "original" { applied.width=nil;applied.height=nil }
+        // The size fields hold the first file's dimensions; only Custom sends them. Presets scale each file from its own size.
+        if tool == .compress,category != .image || compressionSize != "custom" { applied.width=nil;applied.height=nil }
+        if tool == .compress,category == .image {
+            if let edge=["large":2560,"medium":1920,"small":1280][compressionSize] { applied.imageMaxEdge=edge } else if let percent=Double(compressionSize) { applied.imageScale=percent/100 }
+        }
         if tool == .compress {
             applied.quality=preset=="Balanced" ? 0.8:0.45
             if targetEnabled {
