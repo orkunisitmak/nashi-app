@@ -36,6 +36,18 @@ internal static class DownloadChecks
             check(WebDownload.ProgressFraction("NASHI:12:NA") is null&&WebDownload.ProgressFraction("NASHI:1:0") is null&&WebDownload.ProgressFraction("[download] 5%") is null&&WebDownload.ProgressFraction("NASHI:NaN:1048576.0") is null&&WebDownload.ProgressFraction("NASHI:5:NaN") is null&&WebDownload.ProgressFraction("NASHI:5:Infinity") is null,"Unusable yt-dlp progress lines must be ignored");
         }
         finally{System.Globalization.CultureInfo.CurrentCulture=culture;}
+        var toolDirectory=Path.Combine(root,"Web download tools");Directory.CreateDirectory(toolDirectory);var suffix=OperatingSystem.IsWindows()?".exe":"";
+        foreach(var name in new[]{"ffmpeg","ffprobe","yt-dlp","deno"}){var path=Path.Combine(toolDirectory,name+suffix);File.WriteAllText(path,"fixture");ToolInstallation.MakeExecutable(path);}File.WriteAllText(Path.Combine(toolDirectory,Toolchain.ToolsetMarkerName),Toolchain.ToolsetVersion);
+        string executable="";string[] arguments=[];var expectedName="Canozan - düşman benim [4vrscEdUU-w].mp3";
+        Task<ProcessResult> Capture(string path,IEnumerable<string> values,CancellationToken token,Action<string>? outputLine)
+        {
+            token.ThrowIfCancellationRequested();executable=path;arguments=[..values];var destination=arguments[Array.IndexOf(arguments,"-P")+1];var output=Path.Combine(destination,expectedName);File.WriteAllText(output,"fixture");return Task.FromResult(new ProcessResult(output+Environment.NewLine,""));
+        }
+        var downloadDirectory=Path.Combine(root,"Web download output");var downloaded=await new WebDownload(new Toolchain(toolDirectory,""),Capture).DownloadAsync("https://www.youtube.com/watch?v=4vrscEdUU-w","audio",downloadDirectory);
+        var template=Array.IndexOf(arguments,"-o");check(Path.GetFileNameWithoutExtension(executable)=="yt-dlp"&&arguments.Contains("--windows-filenames")&&template>=0&&template+1<arguments.Length&&arguments[template+1]=="%(title).160B [%(id)s].%(ext)s"&&Path.GetFileName(downloaded.Single())==expectedName&&File.ReadAllText(downloaded.Single())=="fixture","Web download path must preserve Unicode titles and source IDs in filenames");
+        Directory.Delete(downloadDirectory,true);Directory.Delete(toolDirectory,true);
+        check(WebDownload.YoutubeFailure(new("https://www.youtube.com/watch?v=fixture"),"ERROR: HTTP Error 403: Forbidden")?.Contains("PO token",StringComparison.Ordinal)==true,"YouTube 403 failures must explain current-tool and access requirements");
+        check(WebDownload.YoutubeFailure(new("https://example.com/video"),"ERROR: HTTP Error 403: Forbidden") is null&&WebDownload.YoutubeFailure(new("https://youtu.be/fixture"),"WARNING: SABR streaming was requested\nERROR: Postprocessing failed: No space left on device") is null&&WebDownload.YoutubeFailure(new("https://youtu.be/fixture"),"unrelated failure") is null,"Unrelated yt-dlp failures must preserve their original diagnostics");
         // Like the Mac: servers also send image/jpg, image/pjpeg or upper-case types for JPEG photos.
         try
         {
@@ -62,5 +74,18 @@ internal static class DownloadChecks
         check(VerifiedDownload.DefaultIdle==TimeSpan.FromSeconds(120),"Tool download idle timeout is not 120 seconds");
         var slowBytes=new byte[]{10,11,12};using var slowHandler=new Handler((request,n)=>Response(request,new StreamContent(new SlowStream(slowBytes))));await VerifiedDownload.FetchForTest(uri,output,10,null,CancellationToken.None,slowHandler,VerifiedDownload.DefaultIdle);check(File.ReadAllBytes(output).SequenceEqual(slowBytes)&&!File.Exists(output+".part"),"Download with brief stall under 120s idle timeout failed");File.Delete(output);
         using var slowAnyHandler=new Handler((request,n)=>Response(request,new StreamContent(new SlowStream(slowBytes))));await VerifiedDownload.FetchAnyForTest(new[]{uri},output,10,null,CancellationToken.None,slowAnyHandler,VerifiedDownload.DefaultIdle);check(File.ReadAllBytes(output).SequenceEqual(slowBytes)&&!File.Exists(output+".part"),"Any-download with brief stall under 120s idle timeout failed");File.Delete(output);
+    }
+    public static async Task RunLiveWindowsDownload(Action<bool,string> check,string root,Toolchain tools)
+    {
+        if(!OperatingSystem.IsWindows())throw new PlatformNotSupportedException("The live web download check requires Windows.");
+        const string url="https://www.youtube.com/watch?v=4vrscEdUU-w";const string expected="Canozan - düşman benim [4vrscEdUU-w].mp3";
+        var output=Path.Combine(root,"Live web download");Directory.CreateDirectory(output);using var timeout=new CancellationTokenSource(TimeSpan.FromMinutes(3));
+        try
+        {
+            IReadOnlyList<string> downloaded;try{downloaded=await new WebDownload(tools).DownloadAsync(url,"audio",output,token:timeout.Token);}catch(OperationCanceledException)when(timeout.IsCancellationRequested){throw new TimeoutException("The live Windows web download did not finish within three minutes.");}
+            check(downloaded.Count==1&&Path.GetFileName(downloaded[0])==expected&&new FileInfo(downloaded[0]).Length>0,"Live Windows download did not preserve the Unicode title and source video ID");
+            var media=await new MediaEngine(tools.Executable("ffmpeg"),tools.Executable("ffprobe")).InspectAsync(downloaded[0],timeout.Token);check(media.HasAudio&&media.Duration>0,"Live Windows download did not produce a readable audio file");
+        }
+        finally{if(Directory.Exists(output))Directory.Delete(output,true);}
     }
 }

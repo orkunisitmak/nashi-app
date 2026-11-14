@@ -18,6 +18,13 @@ try
     var languageRoot=Path.Combine(root,"Language checks");Directory.CreateDirectory(languageRoot);
     try{LocalizationChecks.Run(Check,languageRoot);}finally{Directory.Delete(languageRoot,true);}
     await DownloadChecks.Run(Check,root);
+    if(Environment.GetEnvironmentVariable("NASHI_VERIFY_LIVE_DOWNLOAD")=="1")
+    {
+        if(!OperatingSystem.IsWindows())throw new PlatformNotSupportedException("NASHI_VERIFY_LIVE_DOWNLOAD requires Windows.");
+        var toolPath=Environment.GetEnvironmentVariable("NASHI_VERIFY_TOOLS_DIRECTORY")??throw new Exception("Set NASHI_VERIFY_TOOLS_DIRECTORY to run the live web download check.");
+        var liveTools=new Toolchain(toolPath,Environment.GetEnvironmentVariable("PATH"));if(!liveTools.Ready)throw new FileNotFoundException("Install the verified media tools before running the live web download check.");
+        await DownloadChecks.RunLiveWindowsDownload(Check,root,liveTools);
+    }
     ToolSetupChecks.Run(Check,root);
     var parityRoot=Path.Combine(root,"Parity");Directory.CreateDirectory(parityRoot);try{ParityChecks.Run(Check,parityRoot);}finally{Directory.Delete(parityRoot,true);}
     Check(FeatureCatalog.IsVideo("Clip.m4v")&&FeatureCatalog.IsAudio("Clip.aac"),"Media preview classification differs from Mac aliases");

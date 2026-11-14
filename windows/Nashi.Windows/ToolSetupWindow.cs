@@ -11,7 +11,7 @@ public sealed class ToolSetupWindow : Window
     private readonly Func<ToolGroup, IProgress<OperationProgress>, CancellationToken, Task> install;
     private readonly Action<bool> workingChanged;
     private readonly StackPanel groups = new();
-    private readonly TextBlock status = Label("Download the missing tools to enable all conversions, previews and web downloads. Tools already found on your computer are kept.");
+    private readonly TextBlock status = Label("Download or refresh the verified tools for conversions, previews and web downloads. Tools managed on your PATH are kept.");
     private readonly ProgressBar progress = new() { Minimum = 0, Maximum = 1, Height = 6, Visibility = Visibility.Collapsed, Margin = new(0, 12, 0, 12) };
     private readonly Button next, cancel;
     private CancellationTokenSource? cancellation;
@@ -32,7 +32,7 @@ public sealed class ToolSetupWindow : Window
         var footer = new StackPanel { Margin = new(24) }; DockPanel.SetDock(footer, Dock.Bottom); root.Children.Add(footer);
         footer.Children.Add(status); footer.Children.Add(progress);
         var actions = new DockPanel { Margin = new(0, 14, 0, 0) }; footer.Children.Add(actions);
-        next = MainWindow.Primary("Download missing tools", async () => { if (Status.Ready) Close(); else await StartSetupAsync(); }); next.IsDefault = true;
+        next = MainWindow.Primary("Download or update tools", async () => { if (Status.Ready) Close(); else await StartSetupAsync(); }); next.IsDefault = true;
         AutomationProperties.SetAutomationId(next, "SetupContinue"); DockPanel.SetDock(next, Dock.Right); actions.Children.Add(next);
         cancel = MainWindow.Button("Cancel setup", () => cancellation?.Cancel()); AutomationProperties.SetAutomationId(cancel, "SetupCancel"); actions.Children.Add(cancel);
         var content = new StackPanel { Margin = new(28) }; root.Children.Add(new ScrollViewer { Content = content, VerticalScrollBarVisibility = ScrollBarVisibility.Auto });
@@ -50,10 +50,10 @@ public sealed class ToolSetupWindow : Window
         var ready = Status; groups.Children.Clear();
         Group("Media tools", "FFmpeg, ffprobe, yt-dlp and Deno enable media conversion, previews and web downloads. Approximately 180 MB. FFmpeg and yt-dlp use GPL licenses; Deno uses MIT.", ready.MediaReady, ToolGroup.Media);
         Group("Office tools", "LibreOffice 26.8.1 enables Office document conversions. Approximately 360 MB to download. MPL 2.0 and its included third-party licenses.", ready.OfficeReady, ToolGroup.Office);
-        L10n.Bind(next, ContentControl.ContentProperty, ready.Ready ? "Continue to Nashi" : "Download missing tools"); next.IsEnabled = !Working;
+        L10n.Bind(next, ContentControl.ContentProperty, ready.Ready ? "Continue to Nashi" : "Download or update tools"); next.IsEnabled = !Working;
         cancel.Visibility = Working ? Visibility.Visible : Visibility.Collapsed; progress.Visibility = Working ? Visibility.Visible : Visibility.Collapsed;
         if (ready.Ready && !Working) L10n.SetText(status, "Ready. You can go back to your files.");
-        else if(previouslyReady&&!Working)L10n.SetText(status,"Download the missing tools to enable all conversions, previews and web downloads. Tools already found on your computer are kept.");
+        else if(previouslyReady&&!Working)L10n.SetText(status,"Download or refresh the verified tools for conversions, previews and web downloads. Tools managed on your PATH are kept.");
         previouslyReady=ready.Ready;
     }
     private void Group(string title, string detail, bool ready, ToolGroup group)

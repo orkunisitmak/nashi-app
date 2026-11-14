@@ -5,7 +5,7 @@ public sealed partial class WebDownload
 {
     public async Task<WebMediaInfo> InspectAsync(string input,CancellationToken token=default)
     {
-        var uri=Validate(WebMediaPayload.Parse(input)?.Url??input);var result=await ProcessRunner.RunAsync(tools.Executable("yt-dlp"),["--ignore-config","--no-playlist","--no-cache-dir","--skip-download","--dump-single-json","--no-progress","--js-runtimes","deno:"+tools.Executable("deno"),"--",uri.AbsoluteUri],token);return ParseInfo(result.Output,uri.Host);
+        var uri=Validate(WebMediaPayload.Parse(input)?.Url??input);var result=await RunYtDlpAsync(uri,[..YtDlpBaseArguments(),"--no-playlist","--no-cache-dir","--skip-download","--dump-single-json","--no-progress","--",uri.AbsoluteUri],token);return ParseInfo(result.Output,uri.Host);
     }
     public static WebMediaInfo ParseInfo(string json,string site)
     {
