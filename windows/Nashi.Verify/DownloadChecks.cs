@@ -36,6 +36,27 @@ internal static class DownloadChecks
             check(WebDownload.ProgressFraction("NASHI:12:NA") is null&&WebDownload.ProgressFraction("NASHI:1:0") is null&&WebDownload.ProgressFraction("[download] 5%") is null&&WebDownload.ProgressFraction("NASHI:NaN:1048576.0") is null&&WebDownload.ProgressFraction("NASHI:5:NaN") is null&&WebDownload.ProgressFraction("NASHI:5:Infinity") is null,"Unusable yt-dlp progress lines must be ignored");
         }
         finally{System.Globalization.CultureInfo.CurrentCulture=culture;}
+        // YouTube rejects old yt-dlp releases, so web downloads require at least the pinned one.
+        check(Toolchain.CompareVersions("2026.07.04",Toolchain.PinnedYtDlpVersion)<0&&Toolchain.CompareVersions(Toolchain.PinnedYtDlpVersion,Toolchain.PinnedYtDlpVersion)==0&&Toolchain.CompareVersions("2026.10.26.232113","2026.10.26")>0&&Toolchain.CompareVersions("2027.01.02","2026.12.31")>0,"yt-dlp release dates compared out of order");
+        check(WebDownload.MayNeedNewerExtractor("WARNING: Your yt-dlp version (2026.07.04) is older than 90 days!\nERROR: unable to download video data: HTTP Error 403: Forbidden")&&!WebDownload.MayNeedNewerExtractor("ERROR: Unsupported URL: https://example.com/"),"An outdated-extractor failure was not recognized");
+        check(WebDownload.FriendlyError("ERROR: unable to download video data: HTTP Error 403: Forbidden")=="The site did not allow this download. The link may have expired or need a login."&&WebDownload.FriendlyError("ERROR: Sign in to confirm you're not a bot")=="This link requires a login or is restricted. Try a public share link; Nashi does not read your browser sessions.","yt-dlp failures were summarized differently from the Mac");
+        var details=WebDownload.Details("[youtube] abc: Downloading webpage\nNASHI:1:2\nERROR: unable to download https://rr1.googlevideo.com/videoplayback?sig=secret: HTTP Error 403");
+        check(details.StartsWith("ERROR:",StringComparison.Ordinal)&&!details.Contains("sig=secret",StringComparison.Ordinal)&&!details.Contains("NASHI:",StringComparison.Ordinal),"yt-dlp details kept signed links or progress lines");
+        // HTML printing serves only regular files inside the page's folder.
+        var htmlRoot=Path.Combine(root,"Html printing");var site=Path.Combine(htmlRoot,"Html site");Directory.CreateDirectory(Path.Combine(site,"assets"));File.WriteAllText(Path.Combine(site,"assets","style.css"),"p{color:#123}");File.WriteAllText(Path.Combine(htmlRoot,"Outside.txt"),"private");
+        try
+        {
+            check(HtmlPdf.Resolve(site,"/assets/style.css?v=1")==Path.GetFullPath(Path.Combine(site,"assets","style.css"))&&HtmlPdf.Resolve(site,"/../Outside.txt") is null&&HtmlPdf.Resolve(site,"/%2e%2e/Outside.txt") is null&&HtmlPdf.Resolve(site,"/assets") is null&&HtmlPdf.Resolve(site,"/C:/Windows/win.ini") is null&&HtmlPdf.Resolve(site,"assets/style.css") is null,"HTML printing served a file outside the page's folder");
+            if(HtmlPdf.Browser() is {} browser)
+            {
+                // Like the Mac WebKit print: scripts run (an e-invoice QR is drawn by script) and remote resources are blocked without hanging.
+                var page=Path.Combine(site,"Invoice.html");File.WriteAllText(page,"<!doctype html><html><head><meta charset=\"utf-8\"><link rel=\"stylesheet\" href=\"assets/style.css\"></head><body><p>Fatura çğış</p><canvas id=\"qr\" width=\"120\" height=\"120\"></canvas><img src=\"https://example.invalid/remote.png\"><script>document.getElementById('qr').getContext('2d').fillRect(10,10,100,100);document.body.insertAdjacentHTML('beforeend','<p>Script ran</p>');</script></body></html>");
+                var printed=Path.Combine(htmlRoot,"Invoice.pdf");await HtmlPdf.PrintAsync(browser,page,printed,CancellationToken.None);
+                using var pdf=UglyToad.PdfPig.PdfDocument.Open(printed);var text=string.Concat(pdf.GetPages().Select(p=>p.Text));
+                check(text.Contains("Script ran",StringComparison.Ordinal)&&text.Contains("Fatura",StringComparison.Ordinal),"The browser print did not run page scripts");
+            }
+        }
+        finally{Directory.Delete(htmlRoot,true);}
         // Like the Mac: servers also send image/jpg, image/pjpeg or upper-case types for JPEG photos.
         try
         {

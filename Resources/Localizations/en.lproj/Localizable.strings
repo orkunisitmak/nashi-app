@@ -1876,6 +1876,8 @@
 "Preview uses the first 12 seconds. Export includes the full recording." = "Preview uses the first 12 seconds. Export includes the full recording.";
 "Previous frame" = "Previous frame";
 "Previous page" = "Previous page";
+"Printing %@…" = "Printing %@…";
+"Printing %lld…" = "Printing %lld…";
 "Private repository · Token saved in Keychain" = "Private repository · Token saved in Keychain";
 "Processed preview unavailable for this Windows codec." = "Processed preview unavailable for this Windows codec.";
 "Processed preview · export uses the original file." = "Processed preview · export uses the original file.";
@@ -2694,6 +2696,7 @@
 "UPDATES ARE SIGNED AND VERIFIED BEFORE INSTALLATION. CHANGING REPOSITORIES KEEPS THE SAME TRUSTED SIGNING KEY. YOUR SETTINGS AND FILES STAY WITH YOU." = "UPDATES ARE SIGNED AND VERIFIED BEFORE INSTALLATION. CHANGING REPOSITORIES KEEPS THE SAME TRUSTED SIGNING KEY. YOUR SETTINGS AND FILES STAY WITH YOU.";
 "UPDATES ARE VERIFIED BEFORE INSTALLATION. YOUR SETTINGS AND RECENT HISTORY STAY WITH YOU." = "UPDATES ARE VERIFIED BEFORE INSTALLATION. YOUR SETTINGS AND RECENT HISTORY STAY WITH YOU.";
 "UPDATE…" = "UPDATE…";
+"UPDATING THE WEB DOWNLOADER…" = "UPDATING THE WEB DOWNLOADER…";
 "UPSTREAM DOWNLOAD CHECKSUM MISMATCH. NOTHING WAS INSTALLED." = "UPSTREAM DOWNLOAD CHECKSUM MISMATCH. NOTHING WAS INSTALLED.";
 "UPSTREAM VERSIONS, LICENSES AND SOURCE LINKS" = "UPSTREAM VERSIONS, LICENSES AND SOURCE LINKS";
 "USE A REGULAR WRITABLE FOLDER FOR PORTABLE UPDATES." = "USE A REGULAR WRITABLE FOLDER FOR PORTABLE UPDATES.";
@@ -2731,6 +2734,7 @@
 "Updates are signed and verified before installation. Changing repositories keeps the same trusted signing key. Your settings and files stay with you." = "Updates are signed and verified before installation. Changing repositories keeps the same trusted signing key. Your settings and files stay with you.";
 "Updates are verified before installation. Your settings and recent history stay with you." = "Updates are verified before installation. Your settings and recent history stay with you.";
 "Update…" = "Update…";
+"Updating the web downloader…" = "Updating the web downloader…";
 "Upgraded from Tangerine? macOS may still show the previous name. Choose this Nashi app when adding it to %@." = "Upgraded from Tangerine? macOS may still show the previous name. Choose this Nashi app when adding it to %@.";
 "Upgraded from Tangerine? macOS may still show the previous name. Choose this Nashi app when adding it to %lld." = "Upgraded from Tangerine? macOS may still show the previous name. Choose this Nashi app when adding it to %lld.";
 "Upstream download checksum mismatch. Nothing was installed." = "Upstream download checksum mismatch. Nothing was installed.";

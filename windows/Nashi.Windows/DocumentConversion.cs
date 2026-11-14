@@ -26,6 +26,14 @@ public sealed class DocumentConversion(OfficeRuntime runtime,Toolchain tools)
             if(ext=="textclipping")source=await MaterializeClipping(input,work,token);
             if(ext is "txt" or "md" or "csv" or "tsv"){var normalized=Path.Combine(work,Path.GetFileName(input));await LegacyTextCodec.ToUtf8Async(input,normalized,token);source=normalized;}
             if(ext=="epub")source=EpubToHtml(input,work,token);
+            // Like the Mac, print HTML with a browser engine so page scripts (for example e-invoice QR codes) render.
+            // Without Edge or Chrome, or if printing fails, the sanitized office conversion below still runs.
+            if(ext=="html"&&format=="pdf"&&HtmlPdf.Browser() is {} browser)
+            {
+                var printed=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+".pdf");
+                try{progress?.Report(new(null,"Printing "+Path.GetFileName(input)+"…"));await HtmlPdf.PrintAsync(browser,input,printed,token);outputs.Add(printed);progress?.Report(new((i+1d)/inputs.Count*.98,"Saving document…"));continue;}
+                catch(Exception error)when(!token.IsCancellationRequested&&error is IOException or InvalidDataException or TimeoutException or System.ComponentModel.Win32Exception){if(File.Exists(printed))File.Delete(printed);}
+            }
             if(ext=="pdf"&&format is "txt" or "md")
             {var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+"."+format);await File.WriteAllTextAsync(output,await PdfDocumentMedia.Text(input,options.Password,token),new UTF8Encoding(false),token);outputs.Add(output);continue;}
             if(ext=="pdf"&&format=="pptx")source=await PdfDocumentMedia.Slides(input,work,options.Dpi,options.Password,token);
