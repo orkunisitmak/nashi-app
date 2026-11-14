@@ -71,4 +71,33 @@ final class ImageAuditRegressionTests: XCTestCase {
             XCTAssertEqual(actual, expected.map(UInt8.init))
         }
     }
+
+    /// Display P3 red lies outside sRGB; an sRGB canvas would clip it to P3 [234, 51, 35].
+    func testImageToolsKeepDisplayP3ColorsInsteadOfClippingToSRGB() throws {
+        let p3 = try XCTUnwrap(CGColorSpace(name: CGColorSpace.displayP3))
+        let source = try XCTUnwrap(CGContext(data: nil, width: 40, height: 40, bitsPerComponent: 8, bytesPerRow: 0,
+                                             space: p3, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+        source.setFillColor(try XCTUnwrap(CGColor(colorSpace: p3, components: [1, 0, 0, 1])))
+        source.fill(CGRect(x: 0, y: 0, width: 40, height: 40))
+        let input = try XCTUnwrap(source.makeImage())
+        var options = OperationOptions()
+        options.redactions = [EditRect(x: 0, y: 0, width: 2, height: 2)]; options.redactionMode = "black"
+        var mark = ImageAnnotation(kind: .rectangle, rect: EditRect(x: 0, y: 0, width: 3, height: 3)); mark.color = "#000000"
+        options.imageAnnotations = [mark]
+        var frame = ImageFrameOptions(); frame.padding = 2; frame.shadowRadius = 0; frame.cornerRadius = 0
+        options.imageFrame = frame
+        var rotated = options; rotated.rotation = 90
+        for (name, output) in [("edit", try ImageEngine.editedImage(input, options: rotated)),
+                               ("resize", try ImageEngine.resized(input, width: 30, height: 30)),
+                               ("redact", try ImageEngine.redactedImage(input, options: options)),
+                               ("annotate", try ImageEngine.annotatedImage(input, options: options)),
+                               ("frame", try ImageEngine.framedImage(input, options: options))] {
+            XCTAssertEqual(output.colorSpace?.name, CGColorSpace.displayP3, name)
+            var rgba = [UInt8](repeating: 0, count: 4)
+            let context = try XCTUnwrap(CGContext(data: &rgba, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 4,
+                                                  space: p3, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+            context.draw(output, in: CGRect(x: -(output.width / 2), y: -(output.height / 2), width: output.width, height: output.height))
+            XCTAssertEqual(rgba, [255, 0, 0, 255], name)
+        }
+    }
 }
