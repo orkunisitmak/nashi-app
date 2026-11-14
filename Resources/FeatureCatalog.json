@@ -73,6 +73,16 @@
       "avif",
       "pdf"
     ],
+    "dng": [
+      "jpg",
+      "png",
+      "webp",
+      "heic",
+      "tiff",
+      "avif",
+      "bmp",
+      "pdf"
+    ],
     "mp3": [
       "m4a",
       "wav",
@@ -418,6 +428,7 @@
     "svg": [],
     "avif": [],
     "bmp": [],
+    "dng": [],
     "mp3": [
       "compress",
       "removeMetadata",
@@ -576,6 +587,10 @@
     ],
     "avif": [],
     "bmp": [],
+    "dng": [
+      "createPDF",
+      "createCollage"
+    ],
     "mp3": [
       "compress",
       "removeMetadata",
