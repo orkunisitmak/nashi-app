@@ -423,7 +423,11 @@ struct ToolEditor:View {
         VStack(spacing:14) { timeRangeFields;if tool == .trimAudio { Toggle("Remove silence from beginning and end",isOn:$options.trimSilence);if options.trimSilence { slider("Silence threshold",value:$options.silenceThresholdDb,range:-80 ... -10,unit:"dB") } };LText("Selected duration: \(timeLabel(max(0,(options.end ?? duration)-options.start)))").font(.caption).foregroundStyle(.secondary) }
     }
     var timeRangeFields:some View {
-        HStack { Text("Start");TextField("Seconds",value:$options.start,format:.number.precision(.fractionLength(3)));Text("End");TextField("Seconds",value:Binding(get:{options.end ?? duration},set:{options.end=$0}),format:.number.precision(.fractionLength(3))) }.textFieldStyle(.roundedBorder)
+        VStack(spacing:8) {
+            HStack { Text("Start");TextField("mm:ss.000",value:Binding(get:{options.start},set:{setTrimRange(TimeRange(start:min(max(0,$0),duration),end:options.end ?? duration))}),format:MediaTimecodeFormat());Text("End");TextField("mm:ss.000",value:Binding(get:{options.end ?? duration},set:{setTrimRange(TimeRange(start:options.start,end:min(max(0,$0),duration)))}),format:MediaTimecodeFormat()) }.textFieldStyle(.roundedBorder)
+            // Mark at the playhead without remembering the I/O shortcuts.
+            HStack { Button("Set Start Here",action:markStart).help("Set start at playhead (I)");Button("Set End Here",action:markEnd).help("Set end at playhead (O)") }.disabled(player == nil || processedPlayback)
+        }
     }
     var splitIntervals:[TimeRange] {
         let points=[0]+options.splitPoints.filter{$0>0 && $0<duration}.sorted()+[duration]
@@ -558,7 +562,7 @@ struct ToolEditor:View {
     @ViewBuilder var mediaTimeline:some View {
         if duration>0 {
             if tool == .trimVideo || tool == .trimAudio {
-                MediaTimeRangeLane(duration:duration,current:playhead,ranges:[TimeRange(start:options.start,end:options.end ?? duration)],label:"Trim",source:playbackURL ?? input,thumbnails:tool == .trimVideo,onSeek:seek,onChange:{_,range in options.start=range.start;options.end=range.end})
+                MediaTimeRangeLane(duration:duration,current:playhead,ranges:[TimeRange(start:options.start,end:options.end ?? duration)],label:"Trim",source:playbackURL ?? input,thumbnails:tool == .trimVideo,onSeek:seek,onChange:{_,range in setTrimRange(range)})
             } else if tool == .redactAudio {
                 Text("Drag a range to move it; drag its edges to resize. Drag empty space to add.").font(.caption).foregroundStyle(.secondary)
                 MediaTimeRangeLane(duration:duration,current:playhead,ranges:options.audioRedactions,label:options.audioMode == "mute" ? "Mute":"Bleep",onSeek:seek,onChange:{i,r in options.audioRedactions[i]=r},onAdd:{options.audioRedactions.append($0)})
@@ -742,6 +746,25 @@ struct ToolEditor:View {
         let extra=(tool == .trimAudio || tool == .trimVideo) ? " · I/O set range · ⇧Space play range":tool == .splitVideo ? " · M add split":tool == .videoSnapshots ? " · M add frame":""
         return "Space play/pause · ←/→ 1s · \(fine)\(extra)"
     }
+    /// Show the frame at the edge being changed, so the out point is as visible as the in point.
+    /// Moving the whole range (both edges) keeps the playhead where it is.
+    func setTrimRange(_ range:TimeRange) {
+        let startMoved=range.start != options.start,endMoved=range.end != (options.end ?? duration)
+        options.start=range.start;options.end=range.end
+        guard player != nil,!processedPlayback,startMoved != endMoved else { return }
+        if isPlaying { player?.pause() }
+        seek(startMoved ? range.start:range.end)
+    }
+    /// Sets the trim start at the playhead (button and I); an end at or before it resets to the full duration.
+    func markStart() {
+        options.start=min(playhead,max(0,duration-0.01))
+        if (options.end ?? duration)<=options.start { options.end=duration }
+    }
+    /// Sets the trim end at the playhead (button and O); a start at or after it resets to zero.
+    func markEnd() {
+        options.end=min(duration,max(0.01,playhead))
+        if options.start>=(options.end ?? duration) { options.start=0 }
+    }
     var canAddSplitPoint:Bool { !processedPlayback && playhead>=0.05 && duration-playhead>=0.05 && !options.splitPoints.contains{abs($0-playhead)<0.05} }
     func addSplitPoint() {
         guard canAddSplitPoint else { return }
@@ -762,12 +785,10 @@ struct ToolEditor:View {
             guard tool == .trimAudio || tool == .trimVideo else { return false };playSelectedRange()
         case .markIn:
             guard tool == .trimAudio || tool == .trimVideo else { return false }
-            options.start=min(playhead,max(0,duration-0.01))
-            if (options.end ?? duration)<=options.start { options.end=duration }
+            markStart()
         case .markOut:
             guard tool == .trimAudio || tool == .trimVideo else { return false }
-            options.end=min(duration,max(0.01,playhead))
-            if options.start>=(options.end ?? duration) { options.start=0 }
+            markEnd()
         case .addMarker:
             guard !processedPlayback else { return false }
             if tool == .splitVideo { addSplitPoint() }
@@ -954,6 +975,22 @@ struct AudioWaveformView:View {
                 let a=max(0,min(duration,value.startLocation.x/geometry.size.width*duration)),b=max(0,min(duration,value.location.x/geometry.size.width*duration))
                 if rangeEnabled { dragging=TimeRange(start:min(a,b),end:max(a,b)) } else { onSeek(b) }
             }.onEnded { value in if let range=dragging,range.end-range.start>0.01 { onRange(range.start,range.end) } else { onSeek(max(0,min(duration,value.location.x/geometry.size.width*duration))) };dragging=nil })
+        }
+    }
+}
+
+/// Start/end fields show and accept "mm:ss.000" while still taking plain seconds.
+struct MediaTimecodeFormat:ParseableFormatStyle {
+    /// Shows seconds as "mm:ss.000", or "h:mm:ss.000" from one hour.
+    func format(_ value:Double)->String { MediaTimecode.format(value) }
+    /// Reads typed timecodes and plain seconds.
+    var parseStrategy:Strategy { Strategy() }
+    /// Rejects malformed input so the field keeps its previous value.
+    struct Strategy:ParseStrategy {
+        /// Returns seconds, or throws when the text is not a valid time.
+        func parse(_ value:String) throws->Double {
+            guard let seconds=MediaTimecode.parse(value) else { throw CocoaError(.formatting) }
+            return seconds
         }
     }
 }
