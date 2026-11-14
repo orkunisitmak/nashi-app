@@ -23,12 +23,19 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           dotnet run --project windows/Nashi.Verify -c Release
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Package and verify portable archive
+        shell: pwsh
+        run: |
+          Compress-Archive -Path build/windows/Nashi/* -DestinationPath build/Nashi-Windows-x64.zip
+          python scripts/verify-windows-package.py build/windows/Nashi build/Nashi-Windows-x64.zip
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Expand-Archive -Path build/Nashi-Windows-x64.zip -DestinationPath build/windows-packaged
       - name: Native keyboard clipboard Library crop trim and appearance
         shell: pwsh
         env:
           NASHI_SMOKE_DIRECTORY: '${{ github.workspace }}\build\windows-smoke'
         run: |
-          $start = [Diagnostics.ProcessStartInfo]::new((Resolve-Path build/windows/Nashi/Nashi.exe))
+          $start = [Diagnostics.ProcessStartInfo]::new((Resolve-Path build/windows-packaged/Nashi.exe))
           $start.UseShellExecute = $false
           $start.ArgumentList.Add('--smoke-test')
           $process = [Diagnostics.Process]::Start($start)
@@ -39,12 +46,18 @@ jobs:
             throw 'Native desktop test failed'
           }
           Get-Content build/windows-smoke/smoke.json
-          Compress-Archive -Path build/windows/Nashi/* -DestinationPath build/Nashi-Windows-x64.zip
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: windows-portable-verified
+          path: |
+            build/Nashi-Windows-x64.zip
+            build/Nashi-Windows-x64.zip.sha256
+          retention-days: 7
+          if-no-files-found: error
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         if: always()
         with:
           name: windows-desktop-proof
           path: |
-            build/Nashi-Windows-x64.zip
             build/windows-smoke
           retention-days: 7
