@@ -122,7 +122,7 @@ enum NashiApplication {
 
     func applicationDidFinishLaunching(_ notification:Notification) {
         NashiAppearance.apply()
-        UserDefaults.standard.register(defaults:["enabled":true,"reveal":true,"sound":true,"convertKey":"shift","toolsKey":"command","actionsKey":"control","wheelScale":1.0,"windowManagementEnabled":true])
+        UserDefaults.standard.register(defaults:["enabled":true,"reveal":true,"sound":true,"convertKey":"shift","toolsKey":"command","actionsKey":"control","projectsKey":"fn","wheelScale":1.0,"windowManagementEnabled":true])
         let mainMenu=NSMenu();let appMenu=NSMenu()
         appMenu.addItem(withTitle:"Home",action:#selector(showHome),keyEquivalent:"1")
         appMenu.addItem(withTitle:"Library",action:#selector(showLibrary),keyEquivalent:"2")

@@ -81,11 +81,11 @@ def main():
 
     invoke(["--ui-audit", output / "gallery"])
     gallery = json.loads((output / "gallery/manifest.json").read_text())
-    assert gallery["passed"] and len(gallery["captures"]) == 40
+    assert gallery["passed"] and len(gallery["captures"]) == 48
     assert len(gallery["validatorChecks"]) >= 18
     expected = {(s, a, l) for s in ["home.empty", "home.selected", "library",
         "settings.general", "settings.formats", "settings.updates", "wheel.pdf-multiple",
-        "editor.crop-image", "editor.annotate-image", "editor.frame-image"]
+        "wheel.projects-node", "wheel.projects-flutter", "editor.crop-image", "editor.annotate-image", "editor.frame-image"]
         for a in ["light", "dark"] for l in ["en", "tr"]}
     assert {(c["scene"], c["appearance"], c["language"]) for c in gallery["captures"]} == expected
     for capture in gallery["captures"]:
@@ -98,7 +98,7 @@ def main():
     invoke(["--file-artwork-smoke", output / "artwork"])
     artwork = json.loads((output / "artwork/file-artwork.json").read_text())
     assert artwork["passed"] >= 11 and artwork["asyncProviderCalls"] == 1
-    print(f"PASS: 40 native UI captures; {len(gallery['validatorChecks'])} audit guardrails; "
+    print(f"PASS: 48 native UI captures; {len(gallery['validatorChecks'])} audit guardrails; "
           f"{len(ranges['checks'])} range checks; {artwork['passed']} artwork checks; parser/output safety")
 
 

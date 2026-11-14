@@ -872,6 +872,7 @@
 "DRAG EITHER EDGE TO RESIZE THE RANGE, OR DRAG ITS MIDDLE TO MOVE IT." = "ARALIĞI BOYUTLANDIRMAK İÇİN KENARLARINDAN BİRİNİ, TAŞIMAK İÇİN ORTASINI SÜRÜKLE.";
 "DRAG INSIDE TO MOVE. DRAG NEAR A CORNER TO RESIZE. DRAG OUTSIDE TO START A NEW SELECTION." = "TAŞIMAK İÇİN ALANIN İÇİNİ, BOYUTLANDIRMAK İÇİN KÖŞEYİ SÜRÜKLE. YENİ SEÇİM İÇİN ALANIN DIŞINDA SÜRÜKLE.";
 "DRAG ON THE PREVIEW TO ADD AN AREA. EACH AREA IS SAVED INTO THE NEW COPY." = "ALAN EKLEMEK İÇİN ÖNİZLEMEDE SÜRÜKLE. HER ALAN YENİ KOPYAYA İŞLENİR.";
+"DRAG ONE PROJECT FOLDER WITH THE PROJECTS WHEEL TO OPEN IT IN VS CODE, START CLAUDE CODE OR RUN IT. IF FN ALSO OPENS EMOJI OR SWITCHES INPUT, SET SYSTEM SETTINGS › KEYBOARD › PRESS 🌐 KEY TO DO NOTHING." = "PROJE ÇARKIYLA TEK BİR PROJE KLASÖRÜ SÜRÜKLEYEREK ONU VS CODE'DA AÇABİLİR, CLAUDE CODE'U BAŞLATABİLİR YA DA ÇALIŞTIRABİLİRSİN. FN TUŞU EMOJİ DE AÇIYOR VEYA DİL DEĞİŞTİRİYORSA SİSTEM AYARLARI › KLAVYE › 🌐 TUŞUNA BASINCA SEÇENEĞİNİ HİÇBİR ŞEY YAPMA YAP.";
 "DRAG SHORTCUTS" = "SÜRÜKLEME KISAYOLLARI";
 "DRAG THE STACK TO CARRY ALL FILES. DRAG THE PAPERCLIP TO MOVE FLOAT." = "TÜM DOSYALARI TAŞIMAK İÇİN YIĞINI, FLOAT’IN YERİNİ DEĞİŞTİRMEK İÇİN ATACI SÜRÜKLEYİN.";
 "DRAG TO DRAW WITH THE SELECTED TOOL. USE SELECT / MOVE TO EDIT AN EXISTING ANNOTATION." = "SEÇİLİ ARAÇLA ÇİZMEK İÇİN SÜRÜKLE. BİR İŞARETİ DÜZENLEMEK İÇİN SEÇ / TAŞI'YI KULLAN.";
@@ -965,6 +966,7 @@
 "Drag either edge to resize the range, or drag its middle to move it." = "Aralığı boyutlandırmak için kenarlarından birini, taşımak için ortasını sürükle.";
 "Drag inside to move. Drag near a corner to resize. Drag outside to start a new selection." = "Taşımak için alanın içini, boyutlandırmak için köşeyi sürükle. Yeni seçim için alanın dışında sürükle.";
 "Drag on the preview to add an area. Each area is saved into the new copy." = "Alan eklemek için önizlemede sürükle. Her alan yeni kopyaya işlenir.";
+"Drag one project folder with the projects wheel to open it in VS Code, start Claude Code or run it. If fn also opens emoji or switches input, set System Settings › Keyboard › Press 🌐 key to Do Nothing." = "Proje çarkıyla tek bir proje klasörü sürükleyerek onu VS Code'da açabilir, Claude Code'u başlatabilir ya da çalıştırabilirsin. fn tuşu emoji de açıyor veya dil değiştiriyorsa Sistem Ayarları › Klavye › 🌐 tuşuna basınca seçeneğini Hiçbir Şey Yapma yap.";
 "Drag shortcuts" = "Sürükleme kısayolları";
 "Drag the stack to carry all files. Drag the paperclip to move Float." = "Tüm dosyaları taşımak için yığını, Float’ın yerini değiştirmek için atacı sürükleyin.";
 "Drag to draw with the selected tool. Use Select / Move to edit an existing annotation." = "Seçili araçla çizmek için sürükle. Bir işareti düzenlemek için Seç / Taşı'yı kullan.";
@@ -1523,6 +1525,7 @@
 "NASHI CONVERT WHEEL" = "NASHI DÖNÜŞTÜRME ÇARKI";
 "NASHI IS ALREADY RUNNING BUT IS STILL STARTING. OPEN IT FROM THE SYSTEM TRAY OR TRY AGAIN IN A MOMENT." = "NASHI ZATEN ÇALIŞIYOR AMA HÂLÂ AÇILIYOR. SİSTEM TEPSİSİNDEN AÇ VEYA BİRAZDAN TEKRAR DENE.";
 "NASHI IS STILL RUNNING." = "NASHI HÂLÂ ÇALIŞIYOR.";
+"NASHI PROJECTS WHEEL" = "NASHI PROJE ÇARKI";
 "NASHI SAVES RESULTS BESIDE THE ORIGINALS. ALLOW A FOLDER ONCE TO INCLUDE EVERY FOLDER INSIDE IT." = "NASHI SONUÇLARI ORİJİNALLERİN YANINA KAYDEDER. BİR KLASÖRE VERİLEN İZİN, İÇİNDEKİ KLASÖRLERİ DE KAPSAR.";
 "NASHI SETTINGS" = "NASHI AYARLARI";
 "NASHI TOOLS WHEEL" = "NASHI DOSYA ARAÇLARI ÇARKI";
@@ -1547,6 +1550,7 @@
 "NO MEDIA OUTPUT WAS PRODUCED." = "MEDYA ÇIKTISI OLUŞMADI.";
 "NO OUTPUT FORMATS" = "ÇIKTI BİÇİMİ YOK";
 "NO OUTPUT WAS PRODUCED." = "ÇIKTI OLUŞMADI.";
+"NO PROJECT HERE\nDRAG ONE FOLDER" = "PROJE YOK\nTEK BİR KLASÖR SÜRÜKLE";
 "NO PUBLIC DOWNLOADABLE MEDIA FOUND. SOME SITES REQUIRE SIGN-IN OR DO NOT EXPOSE DOWNLOADABLE MEDIA." = "HERKESE AÇIK, İNDİRİLEBİLİR MEDYA BULUNAMADI. BAZI SİTELER GİRİŞ GEREKTİRİR VEYA MEDYAYI İNDİRMEYE AÇMAZ.";
 "NO QR CODES FOUND. TRY A LARGER OR SHARPER IMAGE." = "QR KODU BULUNAMADI. DAHA BÜYÜK VEYA DAHA NET BİR GÖRSEL DENE.";
 "NO QR CODES THIS TIME." = "QR KODU BULUNAMADI.";
@@ -1580,6 +1584,7 @@
 "Nashi convert wheel" = "Nashi dönüştürme çarkı";
 "Nashi is already running but is still starting. Open it from the system tray or try again in a moment." = "Nashi zaten çalışıyor ama hâlâ açılıyor. Sistem tepsisinden aç veya birazdan tekrar dene.";
 "Nashi is still running." = "Nashi hâlâ çalışıyor.";
+"Nashi projects wheel" = "Nashi proje çarkı";
 "Nashi saves results beside the originals. Allow a folder once to include every folder inside it." = "Nashi sonuçları orijinallerin yanına kaydeder. Bir klasöre verilen izin, içindeki klasörleri de kapsar.";
 "Nashi tools wheel" = "Nashi dosya araçları çarkı";
 "Nashi update" = "Nashi güncellemesi";
@@ -1615,6 +1620,7 @@
 "No media output was produced." = "Medya çıktısı oluşmadı.";
 "No output formats" = "Çıktı biçimi yok";
 "No output was produced." = "Çıktı oluşmadı.";
+"No project here\nDrag one folder" = "Proje yok\nTek bir klasör sürükle";
 "No public downloadable media found. Some sites require sign-in or do not expose downloadable media." = "Herkese açık, indirilebilir medya bulunamadı. Bazı siteler giriş gerektirir veya medyayı indirmeye açmaz.";
 "No readable text was found in this text clipping." = "Bu metin kırpıntısında okunabilir metin bulunamadı.";
 "No text could be extracted or recognized in this PDF." = "Bu PDF'den metin çıkarılamadı veya tanınamadı.";
@@ -1799,6 +1805,8 @@
 "PROCESSED PREVIEW. CHOOSE ORIGINAL TO EDIT AREAS." = "İŞLENMİŞ ÖNİZLEME. ALANLARI DÜZENLEMEK İÇİN ORİJİNAL'İ SEÇ.";
 "PROCESSING MEDIA…" = "MEDYA İŞLENİYOR…";
 "PROCESSING…" = "İŞLENİYOR…";
+"PROJECTS" = "PROJELER";
+"PROJECTS WHEEL" = "PROJE ÇARKI";
 "PROTECTED MEDIA CANNOT BE DOWNLOADED." = "KORUMALI MEDYA İNDİRİLEMEZ.";
 "PUBLIC REPOSITORY · NO TOKEN NEEDED" = "HERKESE AÇIK DEPO · TOKEN GEREKMEZ";
 "PUBLIC UPDATES WORK WITHOUT A TOKEN." = "HERKESE AÇIK GÜNCELLEMELER İÇİN TOKEN GEREKMEZ.";
@@ -1882,6 +1890,8 @@
 "Processed preview. Choose Original to edit areas." = "İşlenmiş önizleme. Alanları düzenlemek için Orijinal'i seç.";
 "Processing media…" = "Medya işleniyor…";
 "Processing…" = "İşleniyor…";
+"Projects" = "Projeler";
+"Projects wheel" = "Proje çarkı";
 "Protected media cannot be downloaded." = "Korumalı medya indirilemez.";
 "Public repository · No token needed" = "Herkese açık depo · Token gerekmez";
 "Public updates work without a token." = "Herkese açık güncellemeler için token gerekmez.";
