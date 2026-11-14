@@ -10,6 +10,10 @@ internal static class ToolSetupChecks
         var directory=Path.Combine(root,"Setup checks");Directory.CreateDirectory(directory);
         try
         {
+            var offer=Path.Combine(directory,"offer preferences");var unseen=new PreferencesStore(offer);check(!unseen.Value.ToolsPromptSeen,"A clean profile must offer tool setup once");
+            unseen.Save(unseen.Value with{ToolsPromptSeen=true});check(new PreferencesStore(offer).Value.ToolsPromptSeen,"The first-run setup offer must not return after a restart");
+            var legacyOffer=Path.Combine(directory,"legacy offer preferences");Directory.CreateDirectory(legacyOffer);File.WriteAllText(Path.Combine(legacyOffer,"preferences.json"),"{\"Feedback\":false}");var legacy=new PreferencesStore(legacyOffer);
+            check(legacy.RecoveryNotice is null&&!legacy.Value.ToolsPromptSeen&&!legacy.Value.Feedback,"Settings saved before the setup offer was remembered must still load");
             var target=Path.Combine(directory,"tools");var stage=Path.Combine(directory,"stage");Directory.CreateDirectory(target);File.WriteAllText(Path.Combine(target,"partial"),"keep");Directory.CreateDirectory(stage);
             bool Complete(string path)=>ToolInstallation.UsableFile(Path.Combine(path,"ready"));
             try{ToolInstallation.Publish(stage,target,Complete);throw new Exception("Incomplete download published");}catch(InvalidDataException){check(File.ReadAllText(Path.Combine(target,"partial"))=="keep","Incomplete download damaged installed tools");}

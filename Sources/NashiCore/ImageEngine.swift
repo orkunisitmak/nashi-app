@@ -9,6 +9,15 @@ import Vision
 public enum ImageEngine {
     private static let imageColorSpace = CGColorSpace(name: CGColorSpace.sRGB)!
     private static let imageContext = CIContext(options: [.cacheIntermediates: false])
+    private static func rasterize(_ image:NSImage) throws -> CGImage? {
+        guard image.size.width.isFinite,image.size.height.isFinite,image.size.width<=32000,image.size.height<=32000,image.size.width*image.size.height<=100_000_000 else { throw NashiError.invalidInput("This image is too large to convert.") }
+        let width=Int(image.size.width.rounded()),height=Int(image.size.height.rounded())
+        guard width>0,height>0,let rep=NSBitmapImageRep(bitmapDataPlanes:nil,pixelsWide:width,pixelsHigh:height,bitsPerSample:8,samplesPerPixel:4,hasAlpha:true,isPlanar:false,colorSpaceName:.deviceRGB,bytesPerRow:0,bitsPerPixel:0),let context=NSGraphicsContext(bitmapImageRep:rep) else { return nil }
+        NSGraphicsContext.saveGraphicsState();defer { NSGraphicsContext.restoreGraphicsState() }
+        NSGraphicsContext.current=context
+        image.draw(in:NSRect(x:0,y:0,width:width,height:height))
+        return rep.cgImage
+    }
     public static func load(_ url: URL) throws -> CGImage {
         if let source = CGImageSourceCreateWithURL(url as CFURL, nil) {
             // The thumbnail transform also applies the pixel aspect ratio implied by unequal
@@ -23,7 +32,11 @@ public enum ImageEngine {
                 return result
             }
         }
-        if let image = NSImage(contentsOf: url), let cg = image.cgImage(forProposedRect:nil,context:nil,hints:nil) { return cg }
+        if let image = NSImage(contentsOf: url) {
+            // A vector image drawn without a context takes the display's scale, so size it from its own width and height.
+            if image.representations.allSatisfy({ !($0 is NSBitmapImageRep) }), let cg = try rasterize(image) { return cg }
+            if let cg = image.cgImage(forProposedRect:nil,context:nil,hints:nil) { return cg }
+        }
         // FFmpeg handles additional decoders (including animated inputs' first frame).
         let temp = try OutputFiles.temporaryDirectory(); defer { try? FileManager.default.removeItem(at:temp) }
         let png = temp.appendingPathComponent("decoded.png")
@@ -113,8 +126,8 @@ public enum ImageEngine {
                 case .frameImage: image=try frame(image,options:options); suffix=" - Framed"
                 default: throw NashiError.unsupported("\(kind.title) is not an image operation.")
                 }
-                let output=OutputFiles.unique(for:input,extension:kind == .annotateImage ? "png" : ext,suffix:suffix,directory:options.outputDirectory)
-                try write(image,to:output,quality:options.quality)
+                let output=OutputFiles.unique(for:input,extension:ext,suffix:suffix,directory:options.outputDirectory)
+                do { try write(image,to:output,quality:options.quality,token:token) } catch { try? FileManager.default.removeItem(at:output); throw error }
                 outputs.append(output)
             } catch NashiError.invalidInput(let message) where kind == .cropImage || kind == .redactImage {
                 throw NashiError.invalidInput("\(input.lastPathComponent): \(message)")
@@ -172,6 +185,12 @@ public enum ImageEngine {
         return try resized(image, width: width, height: height)
     }
 
+    /// Core Image works in linear light, so contrast would pivot around linear 0.5 (sRGB 188) and darken the photo.
+    /// Running the filter on sRGB-encoded values keeps mid-gray in place, as the Windows editor does.
+    private static func colorControls(_ image: CIImage, parameters: [String: Any]) -> CIImage {
+        image.applyingFilter("CILinearToSRGBToneCurve").applyingFilter("CIColorControls", parameters: parameters).applyingFilter("CISRGBToneCurveToLinear")
+    }
+
     private static func edit(_ image: CGImage, options: OperationOptions) throws -> CGImage {
         let a = options.imageAdjustments
         let values = [a.exposure,a.brightness,a.contrast,a.highlights,a.shadows,a.whites,a.blacks,a.gamma,a.temperature,a.tint,a.saturation,a.vibrance,a.hue,a.clarity,a.texture,a.fade,a.blur,a.sharpen,a.dehaze,a.grain,a.noiseReduction,a.vignette,options.brightness,options.contrast,options.saturation]
@@ -185,7 +204,7 @@ public enum ImageEngine {
             // Positive values warm and add magenta, matching the Windows editor.
             ci = ci.applyingFilter("CITemperatureAndTint", parameters: ["inputNeutral": CIVector(x:6500,y:0), "inputTargetNeutral": CIVector(x:6500 - max(-1,min(1,a.temperature)) * 3000, y:-max(-1,min(1,a.tint)) * 100)])
         }
-        ci=ci.applyingFilter("CIColorControls",parameters:[kCIInputBrightnessKey:options.brightness+a.brightness,kCIInputContrastKey:max(0,options.contrast*a.contrast),kCIInputSaturationKey:max(0,options.saturation*a.saturation)])
+        ci=colorControls(ci,parameters:[kCIInputBrightnessKey:options.brightness+a.brightness,kCIInputContrastKey:max(0,options.contrast*a.contrast),kCIInputSaturationKey:max(0,options.saturation*a.saturation)])
         if a.highlights != 0 || a.shadows != 0 || a.whites != 0 || a.blacks != 0 {
             // Five monotonic luminance anchors let the four tonal ranges vary independently.
             let xs: [Double] = [0,0.25,0.5,0.75,1]
@@ -198,10 +217,11 @@ public enum ImageEngine {
             for index in xs.indices { parameters["inputPoint\(index)"] = CIVector(x:xs[index],y:ys[index]) }
             ci = ci.applyingFilter("CIToneCurve",parameters:parameters)
         }
-        if a.gamma != 1 { ci = ci.applyingFilter("CIGammaAdjust",parameters:["inputPower":max(0.1,min(5,a.gamma))]) }
+        // CIGammaAdjust computes in^power, so use 1/gamma to brighten above 1, as the Windows editor does.
+        if a.gamma != 1 { ci = ci.applyingFilter("CIGammaAdjust",parameters:["inputPower":1 / max(0.1,min(5,a.gamma))]) }
         if a.vibrance != 0 { ci = ci.applyingFilter("CIVibrance",parameters:["inputAmount":max(-1,min(1,a.vibrance))]) }
         if a.hue != 0 { ci = ci.applyingFilter("CIHueAdjust",parameters:["inputAngle":a.hue * .pi / 180]) }
-        if a.dehaze != 0 { ci = ci.applyingFilter("CIColorControls",parameters:[kCIInputContrastKey:1 + max(-1,min(1,a.dehaze))*0.65,kCIInputBrightnessKey:-a.dehaze*0.045,kCIInputSaturationKey:1+a.dehaze*0.12]) }
+        if a.dehaze != 0 { ci = colorControls(ci,parameters:[kCIInputContrastKey:1 + max(-1,min(1,a.dehaze))*0.65,kCIInputBrightnessKey:-a.dehaze*0.045,kCIInputSaturationKey:1+a.dehaze*0.12]) }
         if a.clarity > 0 { ci = ci.applyingFilter("CIUnsharpMask",parameters:[kCIInputRadiusKey:4,kCIInputIntensityKey:min(1,a.clarity)*1.5]) }
         if a.clarity < 0 { ci = ci.clampedToExtent().applyingFilter("CIGaussianBlur",parameters:[kCIInputRadiusKey:min(1,-a.clarity)*3]).cropped(to:bounds) }
         if a.sharpen > 0 { ci = ci.applyingFilter("CISharpenLuminance",parameters:[kCIInputSharpnessKey:min(2,a.sharpen)]) }
@@ -468,7 +488,8 @@ public enum ImageEngine {
         let availableWidth=max(1,width-padding*2),availableHeight=max(1,height-padding*2)
         let scale=min(1,min(Double(availableWidth)/Double(image.width),Double(availableHeight)/Double(image.height)))*settings.imageScale
         let imageWidth=Double(image.width)*scale,imageHeight=Double(image.height)*scale
-        let x=(Double(width)-imageWidth)*max(0,min(1,settings.position.x)),top=(Double(height)-imageHeight)*max(0,min(1,settings.position.y))
+        // Whole-pixel origin: half a pixel off the grid resamples, and blurs, every pixel of the image.
+        let x=((Double(width)-imageWidth)*max(0,min(1,settings.position.x))).rounded(),top=((Double(height)-imageHeight)*max(0,min(1,settings.position.y))).rounded()
         let r=CGRect(x:x,y:Double(height)-top-imageHeight,width:imageWidth,height:imageHeight)
         let radius=max(0,min(settings.cornerRadius,min(r.width,r.height)/2)),path=CGPath(roundedRect:r,cornerWidth:radius,cornerHeight:radius,transform:nil)
         // Cast the shadow from the clipped image itself. Filling the shape with black
@@ -548,12 +569,19 @@ public enum ImageEngine {
         var image=try load(input)
         let originalWidth=image.width,originalHeight=image.height
         image=try resizeUsingOptions(image,options:options)
+        if options.width == nil,options.height == nil {
+            var factor=1.0
+            if let scale=options.imageScale { guard scale.isFinite,scale>0 else { throw NashiError.invalidInput("Image scale must be greater than 0.") };factor=scale }
+            if let edge=options.imageMaxEdge { guard edge>0,edge<=32000 else { throw NashiError.invalidInput("Image dimensions must be between 1 and 32,000 pixels.") };factor=min(factor,Double(edge)/Double(max(image.width,image.height))) }
+            factor=min(1,factor)
+            if factor<1 { image=try resized(image,width:max(1,Int(Double(image.width)*factor)),height:max(1,Int(Double(image.height)*factor))) }
+        }
         // A symlink's own size is a few bytes; a percentage applies to the image it points to.
         let inputSize=Int64((try input.resolvingSymlinksInPath().resourceValues(forKeys:[.fileSizeKey])).fileSize ?? 0)
         if let percent=options.percentage { guard percent.isFinite,percent>0,percent<100 else { throw NashiError.invalidInput("Percentage reduction must be greater than 0 and less than 100.") } }
         let target=options.targetBytes ?? options.percentage.map { Int64(Double(inputSize)*(1-$0/100)) }
         if let target { guard target>0 else { throw NashiError.invalidInput("Choose a positive target file size.") } }
-        let ext=["jpg","jpeg","heic","webp","avif","png"].contains(input.pathExtension.lowercased()) ? input.pathExtension : "jpg"
+        let ext=["jpg","jpeg","heic","heif","webp","avif","png"].contains(input.pathExtension.lowercased()) ? input.pathExtension : "jpg"
         let output=OutputFiles.unique(for:input,extension:ext,suffix:" - Compressed",directory:options.outputDirectory)
         // Attempts are encoded privately; a failed or cancelled pass leaves no partial output.
         let temporary=output.deletingLastPathComponent().appendingPathComponent(".nashi-\(UUID().uuidString)").appendingPathExtension(output.pathExtension)

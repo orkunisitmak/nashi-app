@@ -13,4 +13,7 @@ final class PDFPageRangeSpacingTests:XCTestCase {
         XCTAssertThrowsError(try PDFEngine.pageOrder("1 - 6",count:5))
         XCTAssertThrowsError(try PDFEngine.pageOrder(" - ",count:5))
     }
+    func testOpenEndedRangesAreRejected() {
+        for ranges in ["3-","-3","2-3-"] { XCTAssertThrowsError(try PDFEngine.pageOrder(ranges,count:5),ranges) }
+    }
 }
