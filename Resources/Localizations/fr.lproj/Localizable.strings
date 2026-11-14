@@ -997,6 +997,7 @@
 "ENTER A FINITE NUMBER." = "SAISISSEZ UN NOMBRE FINI.";
 "ENTER A POSITIVE, FINITE TARGET SIZE." = "SAISISSEZ UNE TAILLE CIBLE POSITIVE ET FINIE.";
 "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%." = "SAISISSEZ UNE RÉDUCTION SUPÉRIEURE À 0 % ET INFÉRIEURE À 100 %.";
+"ENTER A VALID TIMECODE OR SECONDS." = "SAISISSEZ UN CODE TEMPOREL VALIDE OU UNE DURÉE EN SECONDES.";
 "ENTER PAGE NUMBERS WITHIN THIS PDF, IN THE DESIRED ORDER." = "SAISISSEZ DES NUMÉROS DE PAGE DE CE PDF, DANS L’ORDRE SOUHAITÉ.";
 "EPUB LAYOUT" = "MISE EN PAGE EPUB";
 "EPUB layout" = "Mise en page EPUB";
@@ -1031,6 +1032,7 @@
 "Enter a target of at least one byte and less than %lld bytes." = "Saisissez une cible d’au moins un octet et inférieure à %lld octets.";
 "Enter a valid number for %@." = "Saisissez un nombre valide pour %@.";
 "Enter a valid number for %lld." = "Saisissez un nombre valide pour %lld.";
+"Enter a valid timecode or seconds." = "Saisissez un code temporel valide ou une durée en secondes.";
 "Enter page numbers within this PDF, in the desired order." = "Saisissez des numéros de page de ce PDF, dans l’ordre souhaité.";
 "Equal clips: %@" = "Clips égaux : %@";
 "Equal clips: %lld" = "Clips égaux : %lld";
@@ -2102,6 +2104,8 @@
 "SEND IT ON ITS WAY" = "DÉPLACEZ, COPIEZ, PARTAGEZ";
 "SERIF" = "EMPATTEMENT";
 "SET" = "DÉFINIR";
+"SET END HERE" = "DÉFINIR LA FIN ICI";
+"SET START HERE" = "DÉFINIR LE DÉBUT ICI";
 "SET UP MEDIA TOOLS" = "CONFIGURER LES OUTILS MULTIMÉDIAS";
 "SET UP MEDIA TOOLS FOR THIS CODEC, OR USE OPEN TO PREVIEW IN ITS DEFAULT APP." = "CONFIGUREZ LES OUTILS MULTIMÉDIAS POUR CE CODEC, OU UTILISEZ OUVRIR POUR L’APERÇU DANS L’APP PAR DÉFAUT.";
 "SET UP MEDIA TOOLS ONCE TO ENABLE HEIC ENCODING ON WINDOWS." = "CONFIGUREZ UNE FOIS LES OUTILS MULTIMÉDIAS POUR ACTIVER L’ENCODAGE HEIC SOUS WINDOWS.";
@@ -2269,6 +2273,8 @@
 "Send it on its way" = "Déplacez, copiez, partagez";
 "Serif" = "Empattement";
 "Set" = "Définir";
+"Set End Here" = "Définir la fin ici";
+"Set Start Here" = "Définir le début ici";
 "Set up Nashi tools" = "Configurer les outils de Nashi";
 "Set up media tools" = "Configurer les outils multimédias";
 "Set up media tools for this codec, or use Open to preview in its default app." = "Configurez les outils multimédias pour ce codec, ou utilisez Ouvrir pour l’aperçu dans l’app par défaut.";
