@@ -1224,7 +1224,10 @@
   "Office checksum mismatch. Nothing was installed.": "Somme de contrôle Office incorrecte. Rien n’a été installé.",
   "One or more media settings are outside their supported range.": "Un ou plusieurs réglages multimédias sont en dehors de leur plage prise en charge.",
   "PDF form appearances could not be prepared.": "Impossible de préparer l’apparence des formulaires PDF.",
-  "PDF page exceeds 100 MP.": "La page PDF dépasse 100 Mpx.",
+  "PDF page exceeds 100 MP.": "La page PDF dépasse 100 Mpx.",
+  "PDF password": "Mot de passe PDF",
+  "Return": "Retour",
+  "Unlock PDF": "Déverrouiller le PDF",
   "The PDF page is too large to render at this resolution.": "La page PDF est trop grande pour être rendue à cette résolution.",
   "A PDF page could not be read.": "Une page PDF n’a pas pu être lue.",
   "PDF preview background could not be prepared.": "Impossible de préparer l’arrière-plan de l’aperçu PDF.",
@@ -1436,5 +1439,9 @@
   "YouTube thumbnail · best available full-size image": "Miniature YouTube · meilleure image en taille réelle disponible",
   "No tools for this file type": "Aucun outil pour ce type de fichier",
   "Details": "Détails",
-  "Copy details": "Copier les détails"
+  "Copy details": "Copier les détails",
+  "Clear Library": "Effacer la bibliothèque",
+  "Clear all Library entries": "Effacer toutes les entrées de la bibliothèque",
+  "Remove from Library": "Retirer de la bibliothèque",
+  "Remove {0} from Library": "Retirer {0} de la bibliothèque"
 }

@@ -489,7 +489,9 @@
 "CHOOSE ZIP, TAR OR GZIP." = "CHOOSE ZIP, TAR OR GZIP.";
 "CLARITY" = "CLARITY";
 "CLEAR" = "CLEAR";
+"CLEAR ALL LIBRARY ENTRIES" = "CLEAR ALL LIBRARY ENTRIES";
 "CLEAR FLOAT" = "CLEAR FLOAT";
+"CLEAR LIBRARY" = "CLEAR LIBRARY";
 "CLEAR SELECTION" = "CLEAR SELECTION";
 "CLIPBOARD IS BUSY. TRY AGAIN." = "CLIPBOARD IS BUSY. TRY AGAIN.";
 "CLIPBOARD IS BUSY. TRY PASTE AGAIN." = "CLIPBOARD IS BUSY. TRY PASTE AGAIN.";
@@ -690,7 +692,9 @@
 "Clarity" = "Clarity";
 "Clear" = "Clear";
 "Clear Float" = "Clear Float";
+"Clear Library" = "Clear Library";
 "Clear Selection" = "Clear Selection";
+"Clear all Library entries" = "Clear all Library entries";
 "Clip %@" = "Clip %@";
 "Clip %lld" = "Clip %lld";
 "Clipboard is busy. Try Paste again." = "Clipboard is busy. Try Paste again.";
@@ -1742,6 +1746,7 @@
 "PDF OUTPUT LAYOUT" = "PDF OUTPUT LAYOUT";
 "PDF PAGE EXCEEDS 100 MP." = "PDF PAGE EXCEEDS 100 MP.";
 "PDF PAGE IS TOO LARGE TO RENDER AT THIS DPI." = "PDF PAGE IS TOO LARGE TO RENDER AT THIS DPI.";
+"PDF PASSWORD" = "PDF PASSWORD";
 "PDF PASSWORD (IF NEEDED)" = "PDF PASSWORD (IF NEEDED)";
 "PDF PREVIEW BACKGROUND COULD NOT BE PREPARED." = "PDF PREVIEW BACKGROUND COULD NOT BE PREPARED.";
 "PDF PREVIEW BITMAP COULD NOT BE ALLOCATED." = "PDF PREVIEW BITMAP COULD NOT BE ALLOCATED.";
@@ -1750,6 +1755,7 @@
 "PDF output layout" = "PDF output layout";
 "PDF page exceeds 100 MP." = "PDF page exceeds 100 MP.";
 "PDF page is too large to render at this DPI." = "PDF page is too large to render at this DPI.";
+"PDF password" = "PDF password";
 "PDF password (if needed)" = "PDF password (if needed)";
 "PDF preview background could not be prepared." = "PDF preview background could not be prepared.";
 "PDF preview bitmap could not be allocated." = "PDF preview bitmap could not be allocated.";
@@ -1936,6 +1942,7 @@
 "REMOVE BACKGROUND" = "REMOVE BACKGROUND";
 "REMOVE CLIPS (NUMBERS; SEPARATED BY SEMICOLONS)" = "REMOVE CLIPS (NUMBERS; SEPARATED BY SEMICOLONS)";
 "REMOVE FROM FLOAT" = "REMOVE FROM FLOAT";
+"REMOVE FROM LIBRARY" = "REMOVE FROM LIBRARY";
 "REMOVE FROM SELECTION" = "REMOVE FROM SELECTION";
 "REMOVE IMAGE" = "REMOVE IMAGE";
 "REMOVE METADATA" = "REMOVE METADATA";
@@ -1951,6 +1958,7 @@
 "RESIZE IMAGE" = "RESIZE IMAGE";
 "RESTORE CLIPS" = "RESTORE CLIPS";
 "RESTORE DEFAULTS" = "RESTORE DEFAULTS";
+"RETURN" = "RETURN";
 "REVEAL FINISHED FILES IN EXPLORER" = "REVEAL FINISHED FILES IN EXPLORER";
 "REVEAL FINISHED FILES IN FINDER" = "REVEAL FINISHED FILES IN FINDER";
 "RIGHT" = "RIGHT";
@@ -2000,8 +2008,10 @@
 "Release to place · Esc cancels" = "Release to place · Esc cancels";
 "Remove" = "Remove";
 "Remove %@" = "Remove %@";
+"Remove %@ from Library" = "Remove %@ from Library";
 "Remove %@ from selection" = "Remove %@ from selection";
 "Remove %lld" = "Remove %lld";
+"Remove %lld from Library" = "Remove %lld from Library";
 "Remove %lld from selection" = "Remove %lld from selection";
 "Remove All" = "Remove All";
 "Remove Audio" = "Remove Audio";
@@ -2011,6 +2021,7 @@
 "Remove all metadata" = "Remove all metadata";
 "Remove clips (numbers; separated by semicolons)" = "Remove clips (numbers; separated by semicolons)";
 "Remove from Float" = "Remove from Float";
+"Remove from Library" = "Remove from Library";
 "Remove from selection" = "Remove from selection";
 "Remove selected area" = "Remove selected area";
 "Remove selected range" = "Remove selected range";
@@ -2027,6 +2038,7 @@
 "Restore Clips" = "Restore Clips";
 "Restore Defaults" = "Restore Defaults";
 "Restore defaults" = "Restore defaults";
+"Return" = "Return";
 "Reveal finished files in Explorer" = "Reveal finished files in Explorer";
 "Reveal finished files in Finder" = "Reveal finished files in Finder";
 "Right" = "Right";
@@ -2675,6 +2687,7 @@
 "UNDO AREA" = "UNDO AREA";
 "UNDO LAST MARK" = "UNDO LAST MARK";
 "UNIT" = "UNIT";
+"UNLOCK PDF" = "UNLOCK PDF";
 "UNSAFE DOWNLOAD REDIRECT." = "UNSAFE DOWNLOAD REDIRECT.";
 "UNSAFE UPDATE ENTRY." = "UNSAFE UPDATE ENTRY.";
 "UNSUPPORTED AUDIO FORMAT." = "UNSUPPORTED AUDIO FORMAT.";
@@ -2708,6 +2721,7 @@
 "Undo area" = "Undo area";
 "Undo last mark" = "Undo last mark";
 "Unit" = "Unit";
+"Unlock PDF" = "Unlock PDF";
 "Unsafe download redirect." = "Unsafe download redirect.";
 "Unsafe update entry." = "Unsafe update entry.";
 "Unsupported audio format." = "Unsupported audio format.";

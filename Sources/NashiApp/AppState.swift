@@ -1,4 +1,4 @@
-import AppKit
+﻿import AppKit
 import SwiftUI
 import NashiCore
 
@@ -29,8 +29,16 @@ struct JobRecord:Codable,Identifiable {
     @Published var libraryFocusRequest=0
     let filePreview=FilePreview()
     var filteredHistory:[JobRecord] {history.filter{libraryQuery.isEmpty || AppLocalization.matches(([$0.title,AppLocalization.text($0.title,language:historyDefaults.string(forKey:"appLanguage") ?? "en")]+$0.outputs.map{URL(fileURLWithPath:$0).lastPathComponent}).joined(separator:" "),query:libraryQuery,language:historyDefaults.string(forKey:"appLanguage") ?? "en")}}
+    /// Previews a Library history item by opening its output files in Finder.
+    /// - Parameter job: The history record whose output files should be previewed.
     func preview(_ job:JobRecord) {filePreview.show(job.outputs.map{URL(fileURLWithPath:$0)}.filter{FileManager.default.fileExists(atPath:$0.path)})}
+
+    /// Navigates the Library selection up or down by the given direction.
+    /// - Parameter direction: The number of positions to move (positive for down, negative for up).
     func navigateLibrary(_ direction:Int) {let rows=filteredHistory;guard !rows.isEmpty else{return};let old=rows.firstIndex{$0.id==selectedHistoryID};selectedHistoryID=rows[min(rows.count-1,max(0,(old ?? (direction>0 ? -1:1))+direction))].id}
+
+    /// Pastes content from the clipboard into the app, adding files to inputs or triggering a web download.
+    /// - Parameter pasteboard: The NSPasteboard to read from (defaults to the general pasteboard).
     func pasteContent(_ pasteboard:NSPasteboard = .general) {
         guard !working else{return}
         activeTool=nil;activeInputs=[]
@@ -67,10 +75,42 @@ struct JobRecord:Codable,Identifiable {
         let record:JobRecord?
         init(from decoder:Decoder) throws { record=try? JobRecord(from:decoder) }
     }
+    /// Removes a single Library history entry by its identifier.
+    /// - Parameter id: The UUID of the history entry to remove.
+    /// - Behavior: Aborts if a job is in progress (`working == true`). Only calls `saveHistory()` when an entry
+    ///   was actually removed. If the removed entry was the currently selected one, selection is restored to
+    ///   the first remaining history entry (or cleared to `nil` when no entries remain).
+    func removeHistoryEntry(_ id:UUID) {
+        guard !working else { return }
+        let previous=history
+        history.removeAll{$0.id==id}
+        guard history.count != previous.count else { return }
+        if selectedHistoryID==id {
+            selectedHistoryID=filteredHistory.first?.id
+        }
+        saveHistory()
+    }
+
+    /// Permanently removes all Library history entries after user confirmation.
+    /// - Behavior: Aborts if a job is in progress (`working == true`). Clears all history, resets selection,
+    ///   and persists the empty state via `saveHistory()`.
+    func clearHistory() {
+        guard !working else { return }
+        history.removeAll()
+        selectedHistoryID=nil
+        saveHistory()
+    }
+    /// Retains a tool window so it is tracked and cleaned up when closed.
+    /// - Parameter window: The NSWindow to retain and observe for close events.
     func retainToolWindow(_ window:NSWindow) {
         toolWindows.append(window);let id=ObjectIdentifier(window)
         windowObservers[id]=NotificationCenter.default.addObserver(forName:NSWindow.willCloseNotification,object:window,queue:.main) { [weak self] _ in Task { @MainActor in guard let self else { return };self.toolWindows.removeAll{ObjectIdentifier($0)==id};if let token=self.windowObservers.removeValue(forKey:id) { NotificationCenter.default.removeObserver(token) } } }
     }
+    /// Selects an operation to perform, showing the appropriate tool editor or starting conversion.
+    /// - Parameters:
+    ///   - operation: The NashiCore.Operation to perform.
+    ///   - options: Optional operation-specific settings.
+    ///   - immediate: If true, skips the tool editor and executes immediately.
     func select(_ operation:NashiCore.Operation,options:NashiCore.OperationOptions? = nil,immediate:Bool=false) {
         var settings=options ?? OperationOptions()
         if options == nil,case .convert(let format)=operation { settings=FormatPreferences.shared.options(for:format) }
@@ -81,6 +121,11 @@ struct JobRecord:Codable,Identifiable {
         }
         execute(operation,options:settings)
     }
+    /// Executes a conversion operation with the given options and inputs.
+    /// - Parameters:
+    ///   - operation: The NashiCore.Operation to execute.
+    ///   - options: Optional operation-specific settings (defaults to empty OperationOptions).
+    ///   - inputs: Optional input URLs (defaults to current state.inputs).
     func execute(_ operation:NashiCore.Operation,options:NashiCore.OperationOptions = .init(),inputs:[URL]?=nil) {
         guard !working else { return }
         let selected=inputs ?? self.inputs
@@ -110,12 +155,19 @@ struct JobRecord:Codable,Identifiable {
             } catch { stopProgressUpdates();if !cancel.isCancelled { self.error=error.localizedDescription } }
         }
     }
+    /// Begins a new job with the given label, resetting progress and state.
+    /// - Parameter label: The human-readable label for the current job.
     func beginJob(_ label:String) {
         token=CancellationToken();acceptsProgress=true
         error=nil;outputs=[];progress=0;progressIsDeterminate=false;progressLabel=label
         activeTool=nil;activeInputs=[];working=true
         onJobStarted?()
     }
+    /// Receives progress updates for the current job from a background task.
+    /// - Parameters:
+    ///   - value: The progress value (0.0 to 1.0, or negative for indeterminate).
+    ///   - label: The human-readable progress label.
+    ///   - token: The CancellationToken to check for cancellation.
     func receiveProgress(_ value:Double,label:String,token:CancellationToken) {
         guard working,acceptsProgress,self.token === token,!token.isCancelled else { return }
         progressIsDeterminate=value.isFinite && value>=0
@@ -125,7 +177,11 @@ struct JobRecord:Codable,Identifiable {
     func stopProgressUpdates() { acceptsProgress=false }
     func finishJob() { stopProgressUpdates();working=false }
 
-    func perform(_ action:FileAction,urls:[URL]?=nil) {
+    /// Performs a file action (copy, move, AirDrop, etc.) on the given URLs.
+    /// - Parameters:
+    ///   - action: The NashiCore.FileAction to perform.
+    ///   - urls: Optional URLs to act on (defaults to current state.inputs).
+    func perform(_ action:NashiCore.FileAction,urls:[URL]?=nil) {
         let urls=urls ?? inputs
         guard !urls.isEmpty else { return }
         // Not a tool job: its error must not show in the editor of the last one.
@@ -185,12 +241,29 @@ struct JobRecord:Codable,Identifiable {
             floatShelves.append(shelf);shelf.showWindow(nil);reportSuccess(.action("Added to Float.",files:urls))
         }
     }
+    /// Reports a successful operation result and clears any existing error.
+    /// - Parameter notice: The SuccessNotice describing what succeeded.
     func reportSuccess(_ notice:SuccessNotice) { error=nil;onSuccess?(notice) }
+    /// Records a completed web download in Library history.
+    /// - Parameters:
+    ///   - files: The downloaded file URLs.
+    ///   - site: The source site name for the download title.
     func recordWebDownload(_ files:[URL],site:String) {
         history.insert(JobRecord(title:"Download · \(site)",inputs:files.map(\.path),outputs:files.map(\.path)),at:0)
         history=Array(history.prefix(50))
         if let data=try? JSONEncoder().encode(history) { historyDefaults.set(data,forKey:"history") }
         reportSuccess(.filesReady(files))
+    }
+    private func saveHistory() {
+        do {
+            let data = try JSONEncoder().encode(history)
+            historyDefaults.set(data,forKey:"history")
+        } catch {
+            print("Failed to save history: \(error)")
+        }
+    }
+    private func loadHistory() {
+        if let data=historyDefaults.data(forKey:"history"),let items=try? JSONDecoder().decode([StoredJobRecord].self,from:data) { history=items.compactMap(\.record) }
     }
 }
 
