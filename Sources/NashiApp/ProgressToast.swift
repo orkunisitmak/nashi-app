@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import Combine
+import NashiCore
 
 /// The same chrome-free card hosts every local conversion/tool and web job.
 @MainActor final class ProgressToastController {
@@ -42,6 +43,7 @@ private final class ProgressToastPanel:NSPanel {
 
 struct JobProgressBar:View {
     @ObservedObject var state:AppState
+    @AppStorage("appLanguage") private var language="en"
     var body:some View {
         if state.progressIsDeterminate {
             GeometryReader { proxy in
@@ -56,7 +58,7 @@ struct JobProgressBar:View {
             // The native indeterminate indicator respects Reduce Motion and never
             // invents a percentage for an opaque PDFKit/Office/archive operation.
             ProgressView().progressViewStyle(.linear).frame(height:5)
-                .accessibilityLabel("In progress").accessibilityValue(state.progressLabel)
+                .accessibilityLabel("In progress").accessibilityValue(AppLocalization.text(state.progressLabel,language:language))
         }
     }
 }
