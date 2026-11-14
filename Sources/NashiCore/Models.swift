@@ -111,6 +111,8 @@ public struct OperationOptions: Codable, Sendable {
     public var imageScale: Double? = nil
     /// Compress: shrink each image so its longest edge is at most this many pixels.
     public var imageMaxEdge: Int? = nil
+    /// Compress: keep the image's dimensions; a target that needs a smaller image fails instead of resizing.
+    public var preferQuality: Bool = false
     public var width: Int? = nil
     public var height: Int? = nil
     public var crop: EditRect? = nil

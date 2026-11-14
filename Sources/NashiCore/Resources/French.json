@@ -1436,5 +1436,10 @@
   "YouTube thumbnail · best available full-size image": "Miniature YouTube · meilleure image en taille réelle disponible",
   "No tools for this file type": "Aucun outil pour ce type de fichier",
   "Details": "Détails",
-  "Copy details": "Copier les détails"
+  "Copy details": "Copier les détails",
+  "Priority": "Priorité",
+  "Size": "Taille",
+  "Size may lower the resolution.": "La priorité Taille peut réduire la résolution.",
+  "Quality keeps the resolution.": "La priorité Qualité conserve la résolution.",
+  "This size can't be reached without lowering the resolution. Choose a larger target or Size priority.": "Impossible d’atteindre cette taille sans réduire la résolution. Choisissez une cible plus grande ou la priorité Taille."
 }
