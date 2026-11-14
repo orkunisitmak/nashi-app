@@ -31,6 +31,12 @@ internal static class PreviewLaunchSmoke
             var previewTools=PreviewLaunch.CreateMediaToolchain(isolated);
             check(!previewTools.Ready,
                 "Visual preview must not reuse unrelated media executables found on PATH");
+            // Guard the actual installer entry point; no network or real update is needed.
+            Exception? updateFailure=null;
+            try { UpdateInstaller.StageAsync(null!,null!,CancellationToken.None).GetAwaiter().GetResult(); }
+            catch(Exception error) { updateFailure=error; }
+            check(updateFailure is InvalidOperationException{Message:"Updates are disabled in Fluent Preview."},
+                "Visual preview must refuse staging any official app update before touching files");
         }
         finally
         {
