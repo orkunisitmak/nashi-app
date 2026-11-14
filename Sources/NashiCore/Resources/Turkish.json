@@ -199,6 +199,8 @@
   "Cancel download": "İndirmeyi iptal et",
   "Cancel": "İptal",
   "Download cancelled. No partial files were kept.": "İndirme iptal edildi. Yarım kalan dosyalar silindi.",
+  "Downloads work with public web addresses only. Private, local and link-local hosts are blocked.": "İndirmeler yalnızca herkese açık web adresleriyle çalışır. Özel, yerel ve bağlantı yerel sunucular engellenir.",
+  "That web address could not be looked up. Check the link and your connection, then try again.": "Bu web adresi çözümlenemedi. Bağlantıyı ve internet bağlantını kontrol edip tekrar dene.",
   "Paste one complete http:// or https:// media link.": "Bir http:// veya https:// medya bağlantısının tamamını yapıştır.",
   "This link requires a login or is restricted. Try a public share link; Nashi does not read your browser sessions.": "Bu bağlantı giriş gerektiriyor veya erişimi kısıtlı. Herkese açık bir paylaşım bağlantısı dene; Nashi tarayıcı oturumlarını okumaz.",
   "This media is protected and cannot be downloaded here.": "Bu medya korumalı ve burada indirilemez.",

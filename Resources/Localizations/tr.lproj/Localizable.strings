@@ -860,6 +860,7 @@
 "DOWNLOADING LIBREOFFICE 26.8.1…" = "LIBREOFFICE 26.8.1 İNDİRİLİYOR…";
 "DOWNLOADING MEDIA…" = "MEDYA İNDİRİLİYOR…";
 "DOWNLOADING…" = "İNDİRİLİYOR…";
+"DOWNLOADS WORK WITH PUBLIC WEB ADDRESSES ONLY. PRIVATE, LOCAL AND LINK-LOCAL HOSTS ARE BLOCKED." = "İNDİRMELER YALNIZCA HERKESE AÇIK WEB ADRESLERİYLE ÇALIŞIR. ÖZEL, YEREL VE BAĞLANTI YEREL SUNUCULAR ENGELLENİR.";
 "DOWNLOAD…" = "İNDİR…";
 "DRAG A CROP INSIDE THE IMAGE." = "KIRPMA ALANINI GÖRSELİN İÇİNDE SÜRÜKLE.";
 "DRAG A FILE IN FINDER, TAP SHIFT, AND DROP ONTO ITS NEXT FORMAT." = "FINDER'DA BİR DOSYAYI SÜRÜKLERKEN SHIFT'E BAS VE YENİ BİÇİMİNİN ÜZERİNE BIRAK.";
@@ -953,6 +954,7 @@
 "Downloading · %@" = "İndiriliyor · %@";
 "Downloading · %lld" = "İndiriliyor · %lld";
 "Downloading…" = "İndiriliyor…";
+"Downloads work with public web addresses only. Private, local and link-local hosts are blocked." = "İndirmeler yalnızca herkese açık web adresleriyle çalışır. Özel, yerel ve bağlantı yerel sunucular engellenir.";
 "Download…" = "İndir…";
 "Drag a crop inside the image." = "Kırpma alanını görselin içinde sürükle.";
 "Drag a file in Finder, tap Shift, and drop onto its next format." = "Finder'da bir dosyayı sürüklerken Shift'e bas ve yeni biçiminin üzerine bırak.";
@@ -2372,6 +2374,7 @@
 "TEXTURE" = "DOKU";
 "THAT PDF SIZE CANNOT BE REACHED WHILE KEEPING SELECTABLE TEXT, LINKS AND ANNOTATIONS. CHOOSE A LARGER TARGET." = "SEÇİLEBİLİR METİN, BAĞLANTILAR VE NOTLAR KORUNARAK BU PDF BOYUTUNA İNİLEMİYOR. DAHA BÜYÜK BİR HEDEF SEÇ.";
 "THAT PDF SIZE CANNOT BE REACHED WHILE KEEPING SELECTABLE TEXT, LINKS, AND ANNOTATIONS. CHOOSE A LARGER TARGET." = "SEÇİLEBİLİR METİN, BAĞLANTILAR VE NOTLAR KORUNARAK BU PDF BOYUTUNA İNİLEMİYOR. DAHA BÜYÜK BİR HEDEF SEÇ.";
+"THAT WEB ADDRESS COULD NOT BE LOOKED UP. CHECK THE LINK AND YOUR CONNECTION, THEN TRY AGAIN." = "BU WEB ADRESİ ÇÖZÜMLENEMEDİ. BAĞLANTIYI VE İNTERNET BAĞLANTINI KONTROL EDİP TEKRAR DENE.";
 "THE ARCHIVE CONTAINS A PATH OUTSIDE ITS EXTRACTION FOLDER." = "ARŞİVDE, AÇILACAĞI KLASÖRÜN DIŞINA ÇIKAN BİR YOL VAR.";
 "THE ARCHIVE CONTAINS AN ABSOLUTE PATH." = "ARŞİVDE MUTLAK BİR YOL VAR.";
 "THE ARCHIVE CONTAINS AN UNNAMED ENTRY." = "ARŞİVDE ADI OLMAYAN BİR ÖĞE VAR.";
@@ -2516,6 +2519,7 @@
 "Texture" = "Doku";
 "That PDF size cannot be reached while keeping selectable text, links and annotations. Choose a larger target." = "Seçilebilir metin, bağlantılar ve notlar korunarak bu PDF boyutuna inilemiyor. Daha büyük bir hedef seç.";
 "That PDF size cannot be reached while keeping selectable text, links, and annotations. Choose a larger target." = "Seçilebilir metin, bağlantılar ve notlar korunarak bu PDF boyutuna inilemiyor. Daha büyük bir hedef seç.";
+"That web address could not be looked up. Check the link and your connection, then try again." = "Bu web adresi çözümlenemedi. Bağlantıyı ve internet bağlantını kontrol edip tekrar dene.";
 "The EPUB contains XML entity declarations, which are not supported." = "EPUB dosyası, desteklenmeyen XML varlık bildirimleri içeriyor.";
 "The EPUB contains no readable chapters." = "EPUB dosyasında okunabilir bölüm yok.";
 "The EPUB has no package document." = "EPUB dosyasında paket belgesi yok.";

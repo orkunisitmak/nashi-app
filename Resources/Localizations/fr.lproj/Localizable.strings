@@ -860,6 +860,7 @@
 "DOWNLOADING LIBREOFFICE 26.8.1…" = "TÉLÉCHARGEMENT DE LIBREOFFICE 26.8.1…";
 "DOWNLOADING MEDIA…" = "TÉLÉCHARGEMENT DU MÉDIA…";
 "DOWNLOADING…" = "TÉLÉCHARGEMENT…";
+"DOWNLOADS WORK WITH PUBLIC WEB ADDRESSES ONLY. PRIVATE, LOCAL AND LINK-LOCAL HOSTS ARE BLOCKED." = "LES TÉLÉCHARGEMENTS NE FONCTIONNENT QU'AVEC DES ADRESSES WEB PUBLIQUES. LES HÔTES PRIVÉS, LOCAUX ET DE LIEN LOCAL SONT BLOQUÉS.";
 "DOWNLOAD…" = "TÉLÉCHARGER…";
 "DRAG A CROP INSIDE THE IMAGE." = "FAITES GLISSER UN RECADRAGE À L’INTÉRIEUR DE L’IMAGE.";
 "DRAG A FILE IN FINDER, TAP SHIFT, AND DROP ONTO ITS NEXT FORMAT." = "FAITES GLISSER UN FICHIER DANS LE FINDER, APPUYEZ SUR MAJ ET DÉPOSEZ-LE SUR SON NOUVEAU FORMAT.";
@@ -953,6 +954,7 @@
 "Downloading · %@" = "Téléchargement · %@";
 "Downloading · %lld" = "Téléchargement · %lld";
 "Downloading…" = "Téléchargement…";
+"Downloads work with public web addresses only. Private, local and link-local hosts are blocked." = "Les téléchargements ne fonctionnent qu'avec des adresses web publiques. Les hôtes privés, locaux et de lien local sont bloqués.";
 "Download…" = "Télécharger…";
 "Drag a crop inside the image." = "Faites glisser un recadrage à l’intérieur de l’image.";
 "Drag a file in Finder, tap Shift, and drop onto its next format." = "Faites glisser un fichier dans le Finder, appuyez sur Maj et déposez-le sur son nouveau format.";
@@ -2372,6 +2374,7 @@
 "TEXTURE" = "TEXTURE";
 "THAT PDF SIZE CANNOT BE REACHED WHILE KEEPING SELECTABLE TEXT, LINKS AND ANNOTATIONS. CHOOSE A LARGER TARGET." = "CETTE TAILLE DE PDF EST IMPOSSIBLE À ATTEINDRE EN CONSERVANT LE TEXTE SÉLECTIONNABLE, LES LIENS ET LES ANNOTATIONS. CHOISISSEZ UNE CIBLE PLUS GRANDE.";
 "THAT PDF SIZE CANNOT BE REACHED WHILE KEEPING SELECTABLE TEXT, LINKS, AND ANNOTATIONS. CHOOSE A LARGER TARGET." = "CETTE TAILLE DE PDF EST IMPOSSIBLE À ATTEINDRE EN CONSERVANT LE TEXTE SÉLECTIONNABLE, LES LIENS ET LES ANNOTATIONS. CHOISISSEZ UNE CIBLE PLUS GRANDE.";
+"THAT WEB ADDRESS COULD NOT BE LOOKED UP. CHECK THE LINK AND YOUR CONNECTION, THEN TRY AGAIN." = "CETTE ADRESSE WEB N'A PAS PU ÊTRE RÉSOLUE. VÉRIFIEZ LE LIEN ET VOTRE CONNEXION, PUIS RÉESSAYEZ.";
 "THE ARCHIVE CONTAINS A PATH OUTSIDE ITS EXTRACTION FOLDER." = "L’ARCHIVE CONTIENT UN CHEMIN SITUÉ HORS DE SON DOSSIER D’EXTRACTION.";
 "THE ARCHIVE CONTAINS AN ABSOLUTE PATH." = "L’ARCHIVE CONTIENT UN CHEMIN ABSOLU.";
 "THE ARCHIVE CONTAINS AN UNNAMED ENTRY." = "L’ARCHIVE CONTIENT UNE ENTRÉE SANS NOM.";
@@ -2516,6 +2519,7 @@
 "Texture" = "Texture";
 "That PDF size cannot be reached while keeping selectable text, links and annotations. Choose a larger target." = "Cette taille de PDF est impossible à atteindre en conservant le texte sélectionnable, les liens et les annotations. Choisissez une cible plus grande.";
 "That PDF size cannot be reached while keeping selectable text, links, and annotations. Choose a larger target." = "Cette taille de PDF est impossible à atteindre en conservant le texte sélectionnable, les liens et les annotations. Choisissez une cible plus grande.";
+"That web address could not be looked up. Check the link and your connection, then try again." = "Cette adresse web n'a pas pu être résolue. Vérifiez le lien et votre connexion, puis réessayez.";
 "The EPUB contains XML entity declarations, which are not supported." = "L’EPUB contient des déclarations d’entités XML, qui ne sont pas prises en charge.";
 "The EPUB contains no readable chapters." = "L’EPUB ne contient aucun chapitre lisible.";
 "The EPUB has no package document." = "L’EPUB ne contient pas de document de paquetage.";
