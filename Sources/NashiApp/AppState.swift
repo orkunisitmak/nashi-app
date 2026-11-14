@@ -88,6 +88,9 @@ struct JobRecord:Codable,Identifiable {
         let cancel=token
         activeInputs=selected;if case .tool(let tool)=operation { activeTool=tool } else { activeTool=nil }
         var options=options;options.revealInFinder=UserDefaults.standard.bool(forKey:"reveal")
+        // A folder chosen in Settings sends every new file there. Tools that pick
+        // their own destination still win.
+        if options.outputDirectory == nil,let folder=OutputPreferences.folder { options.outputDirectory=folder }
         let request=ConversionRequest(inputs:selected,operation:operation,options:options)
         Task { [self] in
             // A deferred update may restart the app as soon as working becomes false.

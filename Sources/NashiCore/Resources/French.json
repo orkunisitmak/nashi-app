@@ -484,7 +484,7 @@
   "Choose your home folder or a folder where you save files.": "Choisissez votre dossier de départ ou un dossier où vous enregistrez vos fichiers.",
   "No folders allowed yet.": "Aucun dossier autorisé pour l’instant.",
   "Remove All": "Tout supprimer",
-  "Nashi saves results beside the originals. Allow a folder once to include every folder inside it.": "Nashi enregistre les résultats à côté des originaux. Autorisez un dossier une seule fois pour inclure tous les dossiers qu’il contient.",
+  "Nashi saves results beside the originals unless Settings › General names another folder. Allow a folder once to include every folder inside it.": "Nashi enregistre les résultats à côté des originaux, sauf si Réglages › Général indique un autre dossier. Autorisez un dossier une fois pour inclure tous ses sous-dossiers.",
   "Save new copies": "Enregistrer les nouvelles copies",
   "Beside original files": "À côté des fichiers d’origine",
   "Ask each time": "Demander à chaque fois",
@@ -1436,5 +1436,15 @@
   "YouTube thumbnail · best available full-size image": "Miniature YouTube · meilleure image en taille réelle disponible",
   "No tools for this file type": "Aucun outil pour ce type de fichier",
   "Details": "Détails",
-  "Copy details": "Copier les détails"
+  "Copy details": "Copier les détails",
+  "Save copies": "Enregistrer les copies",
+  "Beside the original": "À côté de l'original",
+  "In a folder": "Dans un dossier",
+  "Change Folder…": "Changer de dossier…",
+  "Save Copies To": "Enregistrer les copies dans",
+  "Save Here": "Enregistrer ici",
+  "New files are written here instead of beside the originals.": "Les nouveaux fichiers sont écrits ici au lieu d'être placés à côté des originaux.",
+  "The chosen folder is unavailable right now. Results go beside the originals and return to this folder when it is available again.": "Le dossier choisi est indisponible pour le moment. Les résultats sont placés à côté des originaux et reviennent ici dès que le dossier est de nouveau disponible.",
+  "The folder could not be saved. Choose another folder.": "Le dossier n'a pas pu être enregistré. Choisissez un autre dossier.",
+  "Results go beside the original file unless you choose a folder.": "Les résultats sont placés à côté du fichier d'origine, sauf si vous choisissez un dossier."
 }

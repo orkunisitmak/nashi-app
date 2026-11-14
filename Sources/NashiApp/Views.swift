@@ -91,6 +91,7 @@ struct SettingsView:View {
                     HStack { Text("Language");Spacer();Picker("Language",selection:$appLanguage) { Text(verbatim:"English").tag("en");Text(verbatim:"Türkçe").tag("tr");Text(verbatim:"Français").tag("fr") }.labelsHidden().frame(width:230).accessibilityIdentifier("AppLanguage") }
                     HStack { Text("Appearance");Spacer();Picker("Appearance",selection:$appAppearance) { Text("System").tag("system");Text("Light").tag("light");Text("Dark").tag("dark") }.labelsHidden().pickerStyle(.segmented).frame(width:230) }
                     HStack { Text("Wheel finish");Spacer();Picker("Wheel finish",selection:$fanTheme) { Text("Glass").tag("glass");Text("Solid").tag("metallic") }.labelsHidden().pickerStyle(.segmented).frame(width:230) }
+                    OutputFolderRow()
                     Divider()
                     Toggle("Launch at login",isOn:Binding(get:{launch},set:updateLaunch)).disabled(launchUnavailable)
                     if launchNeedsApproval { HStack { Text("Allow Nashi in macOS Login Items.").font(.caption).foregroundStyle(.secondary);Spacer();Button("Open Login Items") { SMAppService.openSystemSettingsLoginItems() } } }
@@ -252,7 +253,7 @@ private struct FolderSettingsView:View {
     var body:some View {
         VStack(alignment:.leading,spacing:18) {
             Text("Folders").font(.title2.weight(.semibold))
-            Text("Nashi saves results beside the originals. Allow a folder once to include every folder inside it.").foregroundStyle(.secondary)
+            Text("Nashi saves results beside the originals unless Settings › General names another folder. Allow a folder once to include every folder inside it.").foregroundStyle(.secondary)
             if folders.isEmpty { VStack(spacing:9) { Image(systemName:"folder.badge.questionmark").font(.system(size:40)).foregroundStyle(.secondary);Text("No folders allowed yet.").foregroundStyle(.secondary) }.frame(maxWidth:.infinity,maxHeight:.infinity) }
             else { List { ForEach(folders) { grant in HStack {
                 Image(systemName:"folder").foregroundStyle(Color.nashi)
