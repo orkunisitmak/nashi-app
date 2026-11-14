@@ -27,10 +27,46 @@ public enum WebDownloadEngine {
         let value=text.trimmingCharacters(in:.whitespacesAndNewlines)
         guard value.utf8.count<=16_384,!value.unicodeScalars.contains(where:{CharacterSet.whitespacesAndNewlines.contains($0) || CharacterSet.controlCharacters.contains($0)}),
               let url=URL(string:value),let scheme=url.scheme?.lowercased(),["http","https"].contains(scheme),
-              let host=url.host,!host.isEmpty,url.user==nil,url.password==nil else {
+              let host=url.host,!host.isEmpty,url.user==nil,url.password==nil,!isNonPublicAddress(host) else {
             throw NashiError.invalidInput("Paste one complete http:// or https:// media link.")
         }
         return url
+    }
+    /// True for a literal private, link-local, shared, reserved or multicast address, or a `.local` name.
+    /// Loopback stays allowed, as before: the tests and local tools use it. Names are resolved later by the downloader.
+    static func isNonPublicAddress(_ host:String)->Bool {
+        var text=host.lowercased()
+        if text.hasPrefix("[")&&text.hasSuffix("]") { text=String(text.dropFirst().dropLast()) }
+        if text.hasSuffix(".local") { return true }
+        var v4=in_addr()
+        if inet_aton(text,&v4) != 0 {
+            let ip=UInt32(bigEndian:v4.s_addr)
+            return nonPublicIPv4([UInt8(ip>>24),UInt8((ip>>16)&255),UInt8((ip>>8)&255),UInt8(ip&255)])
+        }
+        var v6=in6_addr()
+        if inet_pton(AF_INET6,text,&v6)==1 {
+            let b=withUnsafeBytes(of:v6){Array($0)}
+            if b.count != 16 { return false }
+            let high=b[0..<10].allSatisfy{$0==0}
+            if high&&b[10]==255&&b[11]==255 { return nonPublicIPv4(Array(b[12..<16])) }
+            // 64:ff9b::/96 (NAT64) carries an IPv4 address in its last four bytes.
+            if b[0]==0&&b[1]==0x64&&b[2]==0xff&&b[3]==0x9b&&b[4..<12].allSatisfy({$0==0}) { return nonPublicIPv4(Array(b[12..<16])) }
+            if b.allSatisfy({$0==0}) { return true }
+            return (b[0] == 0xfe && (b[1] & 0xc0) == 0x80) || (b[0] == 0xfe && (b[1] & 0xc0) == 0xc0) || (b[0] & 0xfe) == 0xfc || b[0] == 0xff
+        }
+        return false
+    }
+    private static func nonPublicIPv4(_ b:[UInt8])->Bool {
+        let (a,x,y)=(b[0],b[1],b[2])
+        if a == 0 || a == 10 || a >= 224 { return true }
+        if a == 100 && x >= 64 && x <= 127 { return true }
+        if a == 169 && x == 254 { return true }
+        if a == 172 && x >= 16 && x <= 31 { return true }
+        if a == 192 && x == 168 { return true }
+        if a == 192 && x == 0 && (y == 0 || y == 2) { return true }
+        if a == 198 && (x == 18 || x == 19) { return true }
+        if a == 198 && x == 51 && y == 100 { return true }
+        return a == 203 && x == 0 && y == 113
     }
     public static func inspect(_ url:URL,token:CancellationToken = .init()) async throws -> WebMediaInfo {
         let url=try link(url.absoluteString);try token.check()

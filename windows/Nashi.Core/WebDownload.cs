@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using System.Text.Json;
 namespace Nashi.Core;
 public sealed partial class WebDownload(Toolchain tools)
@@ -15,8 +16,25 @@ public sealed partial class WebDownload(Toolchain tools)
     }
     public static Uri Validate(string input)
     {
-        if(!Uri.TryCreate(input,UriKind.Absolute,out var url)||url.Scheme is not ("http" or "https")||!string.IsNullOrEmpty(url.UserInfo)||url.IsLoopback||url.Host.EndsWith(".local",StringComparison.OrdinalIgnoreCase))throw new ArgumentException("Paste a public http(s) media or page link.");return url;
+        if(!Uri.TryCreate(input,UriKind.Absolute,out var url)||url.Scheme is not ("http" or "https")||!string.IsNullOrEmpty(url.UserInfo)||url.IsLoopback||url.Host.EndsWith(".local",StringComparison.OrdinalIgnoreCase)||IsNonPublicAddress(url.Host))throw new ArgumentException("Paste a public http(s) media or page link.");return url;
     }
+    // Only literal addresses are checked here. A name is resolved later by the downloader, which also follows redirects.
+    internal static bool IsNonPublicAddress(string host)
+    {
+        if(!IPAddress.TryParse(host.Trim('[',']'),out var ip))return false;
+        if(ip.IsIPv4MappedToIPv6)ip=ip.MapToIPv4();
+        var b=ip.GetAddressBytes();
+        if(b.Length==16)
+        {
+            // 64:ff9b::/96 (NAT64) carries an IPv4 address in its last four bytes.
+            if(b[0]==0x00&&b[1]==0x64&&b[2]==0xff&&b[3]==0x9b&&b[4..12].All(x=>x==0))return IsNonPublicV4(b[12],b[13],b[14]);
+            return ip.Equals(IPAddress.IPv6Any)||ip.IsIPv6LinkLocal||ip.IsIPv6SiteLocal||ip.IsIPv6UniqueLocal||ip.IsIPv6Multicast;
+        }
+        return IsNonPublicV4(b[0],b[1],b[2]);
+    }
+    private static bool IsNonPublicV4(byte a,byte b,byte c)=>
+        a==0||a==10||a>=224||(a==100&&b is >=64 and <=127)||(a==169&&b==254)||(a==172&&b is >=16 and <=31)||(a==192&&b==168)||
+        (a==192&&b==0&&c is 0 or 2)||(a==198&&b is 18 or 19)||(a==198&&b==51&&c==100)||(a==203&&b==0&&c==113);
     internal string FfmpegLocation=>Path.GetDirectoryName(tools.Executable("ffmpeg"))!;
     public async Task<IReadOnlyList<string>> DownloadAsync(string input,string kind,string destination,IProgress<OperationProgress>? progress=null,CancellationToken token=default,int? maximumHeight=null,IReadOnlySet<int>? selectedPhotos=null)
     {

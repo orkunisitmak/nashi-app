@@ -2,6 +2,14 @@ import XCTest
 @testable import NashiCore
 
 final class WebDownloadTests:XCTestCase {
+    func testLinkRejectsNonPublicAddresses() throws {
+        for value in ["http://169.254.169.254/latest/meta-data/","http://10.0.0.1/a","http://172.16.0.1/a","http://172.31.255.255/a","http://192.168.1.1/a","http://100.64.0.1/a","http://0.0.0.0/a","http://192.0.2.1/a","http://198.18.0.1/a","http://198.51.100.1/a","http://203.0.113.1/a","http://224.0.0.1/a","http://255.255.255.255/a","http://2852039166/a","http://[fe80::1]/a","http://[fc00::1]/a","http://[fd12:3456::1]/a","http://[fec0::1]/a","http://[ff02::1]/a","http://[::]/a","http://[::ffff:10.0.0.1]/a","http://[::ffff:169.254.169.254]/a","http://[64:ff9b::a00:1]/a","http://printer.local/a"] {
+            XCTAssertThrowsError(try WebDownloadEngine.link(value),value)
+        }
+        for value in ["https://example.org/a","http://8.8.8.8/a","http://100.63.255.255/a","http://100.128.0.1/a","http://172.15.0.1/a","http://172.32.0.1/a","http://192.169.0.1/a","http://198.17.0.1/a","http://198.20.0.1/a","http://223.255.255.255/a","http://[2001:4860:4860::8888]/a","http://[::ffff:8.8.8.8]/a","https://10.0.0.1.example.org/a"] {
+            XCTAssertNoThrow(try WebDownloadEngine.link(value),value)
+        }
+    }
     func testOnlySinglePublicWebAddressSyntax() throws {
         for value in ["file:///tmp/a.mp4","javascript:alert(1)","blob:https://example.org/id","https://u:p@example.org/a","https://a.org/a https://b.org/b","https://a.org/a\nb","https://a.org/\tb",""] { XCTAssertThrowsError(try WebDownloadEngine.link(value),value) }
         XCTAssertEqual(try WebDownloadEngine.link("  https://example.org/a?q=a%20b  ").host,"example.org")
