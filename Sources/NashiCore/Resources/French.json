@@ -1199,6 +1199,7 @@
   "Select an area to redact, or detect faces or text.": "Sélectionnez une zone à caviarder, ou détectez les visages ou le texte.",
   "Redaction coordinates must be finite for the {0} × {1} pixel image.": "Les coordonnées de caviardage doivent être des nombres finis pour l’image de {0} × {1} pixels.",
   "Every redaction area must have positive dimensions and fit completely inside the {0} × {1} pixel image. Adjust the areas for this image and try again.": "Chaque zone caviardée doit avoir des dimensions positives et tenir entièrement dans l’image de {0} × {1} pixels. Ajustez les zones pour cette image, puis réessayez.",
+  "Redaction area exceeds image bounds. Not rotated.": "La zone de caviardage dépasse les limites de l’image. Non tournée.",
   "Keep split points at least 0.05 seconds apart.": "Espacez les points de coupure d’au moins 0,05 seconde.",
   "Library is too large.": "La bibliothèque est trop volumineuse.",
   "Metadata tools are not ready.": "Les outils de métadonnées ne sont pas prêts.",

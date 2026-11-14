@@ -416,7 +416,13 @@ struct ToolEditor:View {
                 LText("Area \(index+1)");TextField("Start",value:Binding(get:{options.videoRedactions[index].start},set:{options.videoRedactions[index].start=$0}),format:.number)
                 TextField("End",value:Binding(get:{options.videoRedactions[index].end ?? duration},set:{options.videoRedactions[index].end=$0}),format:.number)
             } } }
-            Button("Undo Area") { if !options.redactions.isEmpty { options.redactions.removeLast() };if tool == .redactVideo,!options.videoRedactions.isEmpty { options.videoRedactions.removeLast() } }
+            HStack(spacing:8) {
+                Button("Undo Area") { if !options.redactions.isEmpty { options.redactions.removeLast() };if tool == .redactVideo,!options.videoRedactions.isEmpty { options.videoRedactions.removeLast() } }
+                if !options.redactions.isEmpty {
+                    Button("Rotate Left") { rotateRedaction(-90) }
+                    Button("Rotate Right") { rotateRedaction(90) }
+                }
+            }
         }
     }
     var trimControls:some View {
@@ -695,6 +701,64 @@ struct ToolEditor:View {
             let regions=try await Task.detached { try ImageEngine.recognizedRegions(input,faces:faces,text:!faces) }.value
             try checkGeneration(generation,token:token);options.redactions += regions.map(\.rect)
         } catch { if generation==editorGeneration,!token.isCancelled { previewError=error.localizedDescription } } }
+    }
+    
+    /// Rotates the last redaction rectangle by 90 degrees around its center.
+    ///
+    /// For video redactions with non-square pixels, the rectangle is rotated in
+    /// display coordinates (scaled by `pixelAspect`) so it appears correct to the
+    /// user, then converted back to stored pixel coordinates. For image tools
+    /// (square pixels), rotation happens directly in stored coordinates.
+    ///
+    /// The rotated rectangle is validated against the image bounds before saving.
+    /// If the rotated rect would fall outside the image, the existing rect is kept
+    /// and an error is shown to the user.
+    ///
+    /// - Parameter degrees: Rotation angle in degrees. Only ±90° (normalized to 90° or 270°) is applied.
+    func rotateRedaction(_ degrees:Int) {
+        guard !options.redactions.isEmpty else { return }
+        let last = options.redactions.count - 1
+        let normalized = ((degrees % 360) + 360) % 360
+        guard normalized == 90 || normalized == 270 else { return }
+
+        var r = options.redactions[last]
+
+        // For video with non-square pixels, rotate in display coordinates so the
+        // visual result matches what the user sees on the stretched preview.
+        let working = (tool == .redactVideo && pixelAspect != 1) ? shown(r) : r
+
+        let cx = working.x + working.width/2
+        let cy = working.y + working.height/2
+        let newW = working.height
+        let newH = working.width
+        let newX = cx - newW/2
+        let newY = cy - newH/2
+
+        var rotated = EditRect(x:newX,y:newY,width:newW,height:newH)
+
+        // Convert back to stored coordinates for video.
+        if tool == .redactVideo && pixelAspect != 1 {
+            rotated = stored(rotated)
+        }
+
+        // Bounds check: the rotated rect must fit within the image/video frame.
+        // Check in display coordinates for video, stored coordinates for images.
+        let checkRect = (tool == .redactVideo && pixelAspect != 1) ? shown(rotated) : rotated
+        let bounds = (tool == .redactVideo && pixelAspect != 1)
+            ? CGSize(width:imageSize.width*pixelAspect, height:imageSize.height)
+            : imageSize
+
+        guard checkRect.x >= 0, checkRect.y >= 0,
+              checkRect.x + checkRect.width <= bounds.width,
+              checkRect.y + checkRect.height <= bounds.height else {
+            previewError = "Redaction area exceeds image bounds. Not rotated."
+            return
+        }
+
+        options.redactions[last] = rotated
+        if tool == .redactVideo, options.videoRedactions.indices.contains(last) {
+            options.videoRedactions[last].rect = rotated
+        }
     }
     var previewKey:Data { let encoder=JSONEncoder();encoder.outputFormatting = .sortedKeys;var data=(try? encoder.encode(options)) ?? Data();data.append(contentsOf:inputs.map(\.path).joined(separator:"\0").utf8);return data }
     func renderPreview() async {

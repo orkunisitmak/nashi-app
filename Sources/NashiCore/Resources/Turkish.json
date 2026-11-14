@@ -1200,6 +1200,7 @@
   "Select an area to redact, or detect faces or text.": "Sansürlenecek bir alan seç ya da yüzleri veya metni algıla.",
   "Redaction coordinates must be finite for the {0} × {1} pixel image.": "Sansür koordinatları {0} × {1} piksellik görsel için sonlu sayılar olmalı.",
   "Every redaction area must have positive dimensions and fit completely inside the {0} × {1} pixel image. Adjust the areas for this image and try again.": "Her sansür alanının boyutları sıfırdan büyük olmalı ve alan {0} × {1} piksellik görselin tamamen içinde kalmalı. Alanları bu görsele göre ayarla ve yeniden dene.",
+  "Redaction area exceeds image bounds. Not rotated.": "Sansür alanı görüntü sınırlarının dışına çıkıyor. Döndürülmedi.",
   "Keep split points at least 0.05 seconds apart.": "Bölme noktaları arasında en az 0,05 saniye bırak.",
   "Library is too large.": "Kitaplık çok büyük.",
   "Metadata tools are not ready.": "Meta veri araçları hazır değil.",

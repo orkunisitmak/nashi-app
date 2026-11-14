@@ -1922,6 +1922,7 @@
 "REDACT IMAGE" = "GÖRSELİ SANSÜRLE";
 "REDACT PHOTO" = "FOTOĞRAFI SANSÜRLE";
 "REDACT VIDEO" = "VİDEOYU SANSÜRLE";
+"REDACTION AREA EXCEEDS IMAGE BOUNDS. NOT ROTATED." = "SANSÜR ALANI GÖRÜNTÜ SINIRLARININ DIŞINA ÇIKIYOR. DÖNDÜRÜLMEDİ.";
 "REDO" = "YİNELE";
 "REDUCE PADDING OR SPACING TO FIT THE IMAGES." = "GÖRSELLERİN SIĞMASI İÇİN KENAR BOŞLUĞUNU VEYA ARALIĞI AZALT.";
 "REDUCE SPACING TO FIT THE FEATURED LAYOUT." = "ÖNE ÇIKAN DÜZENE SIĞMASI İÇİN ARALIĞI AZALT.";
@@ -1987,6 +1988,7 @@
 "Redact Image" = "Görseli Sansürle";
 "Redact Photo" = "Fotoğrafı Sansürle";
 "Redact Video" = "Videoyu Sansürle";
+"Redaction area exceeds image bounds. Not rotated." = "Sansür alanı görüntü sınırlarının dışına çıkıyor. Döndürülmedi.";
 "Redaction coordinates must be finite for the %@ × %@ pixel image." = "Sansür koordinatları %@ × %@ piksellik görsel için sonlu sayılar olmalı.";
 "Redaction coordinates must be finite for the %@ × %lld pixel image." = "Sansür koordinatları %@ × %lld piksellik görsel için sonlu sayılar olmalı.";
 "Redaction coordinates must be finite for the %lld × %@ pixel image." = "Sansür koordinatları %lld × %@ piksellik görsel için sonlu sayılar olmalı.";

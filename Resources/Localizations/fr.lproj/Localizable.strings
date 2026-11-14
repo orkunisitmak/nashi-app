@@ -1922,6 +1922,7 @@
 "REDACT IMAGE" = "CAVIARDER L’IMAGE";
 "REDACT PHOTO" = "CAVIARDER LA PHOTO";
 "REDACT VIDEO" = "CAVIARDER LA VIDÉO";
+"REDACTION AREA EXCEEDS IMAGE BOUNDS. NOT ROTATED." = "LA ZONE DE CAVIARDAGE DÉPASSE LES LIMITES DE L’IMAGE. NON TOURNÉE.";
 "REDO" = "RÉTABLIR";
 "REDUCE PADDING OR SPACING TO FIT THE IMAGES." = "RÉDUISEZ LES MARGES OU L’ESPACEMENT POUR QUE LES IMAGES TIENNENT.";
 "REDUCE SPACING TO FIT THE FEATURED LAYOUT." = "RÉDUISEZ L’ESPACEMENT POUR QUE LA MISE EN PAGE EN VEDETTE TIENNE.";
@@ -1987,6 +1988,7 @@
 "Redact Image" = "Caviarder l’image";
 "Redact Photo" = "Caviarder la photo";
 "Redact Video" = "Caviarder la vidéo";
+"Redaction area exceeds image bounds. Not rotated." = "La zone de caviardage dépasse les limites de l’image. Non tournée.";
 "Redaction coordinates must be finite for the %@ × %@ pixel image." = "Les coordonnées de caviardage doivent être des nombres finis pour l’image de %@ × %@ pixels.";
 "Redaction coordinates must be finite for the %@ × %lld pixel image." = "Les coordonnées de caviardage doivent être des nombres finis pour l’image de %@ × %lld pixels.";
 "Redaction coordinates must be finite for the %lld × %@ pixel image." = "Les coordonnées de caviardage doivent être des nombres finis pour l’image de %lld × %@ pixels.";
