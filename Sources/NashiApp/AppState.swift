@@ -186,6 +186,11 @@ struct JobRecord:Codable,Identifiable {
         }
     }
     func reportSuccess(_ notice:SuccessNotice) { error=nil;onSuccess?(notice) }
+    func recordQRCode(_ file:URL) {
+        history.insert(JobRecord(title:"Create QR Code",inputs:[],outputs:[file.path]),at:0);history=Array(history.prefix(50))
+        if let data=try? JSONEncoder().encode(history) { historyDefaults.set(data,forKey:"history") }
+        reportSuccess(.filesReady([file]))
+    }
     func recordWebDownload(_ files:[URL],site:String) {
         history.insert(JobRecord(title:"Download · \(site)",inputs:files.map(\.path),outputs:files.map(\.path)),at:0)
         history=Array(history.prefix(50))
