@@ -6,6 +6,11 @@ Nashi, [Tangerine](https://tangerineformac.com/) uygulamasının sürükle ve ç
 
 [Etkileşimli web demosunu dene](https://orkunisitmak.github.io/nashi-app/tr/#playground): örnek dosyaları sürükle, wheel ve kısayolları kullan, 27 aracı keşfet. Desteklenen görsel/PDF/ses çıktıları gerçektir; masaüstüne özel işlemler önizleme olarak işaretlenir.
 
+Masaüstü ana ekranındaki **Görsel paketini dışa aktar** ile görsellerden tek işlemde
+farklı format ve boyutlarda çıktılar oluşturabilirsin. Paketleri adlandırıp kaydet,
+çıktı yollarını önizle ve ayrı alt klasörlere aktar.
+[Görsel paketleri rehberi](docs/IMAGE-EXPORT-PACKAGES.md).
+
 ## Nashi’yi iş başında gör
 
 [![Nashi gerçek ekran kaydı: Finder sürükleme, wheel, dönüştürme, crop ve video trim](docs/assets/showcase/nashi-demo.gif?v=50e9219b2083)](https://orkunisitmak.github.io/nashi-app/tr/#demo)

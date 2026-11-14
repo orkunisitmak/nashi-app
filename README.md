@@ -8,6 +8,10 @@ Nashi is an independent, open-source file conversion and editing app inspired by
 
 Try the [interactive browser playground](https://orkunisitmak.github.io/nashi-app/#playground): drag sample files, use the wheel and shortcuts, and explore all 27 tools. Supported image/PDF/audio exports are real; desktop-only operations are labeled previews.
 
+On native Home, **Export image package** creates several image formats and sizes
+in one job. Save named packages, preview output paths and export into separate
+subfolders. [Image export packages](docs/IMAGE-EXPORT-PACKAGES.md).
+
 ## See Nashi in action
 
 [![Nashi real screen recording: Finder drag, conversion wheel, crop and video trim](docs/assets/showcase/nashi-demo.gif?v=50e9219b2083)](https://orkunisitmak.github.io/nashi-app/#demo)

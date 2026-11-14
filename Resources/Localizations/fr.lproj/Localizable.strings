@@ -16,6 +16,8 @@
 "%@ is enabled" = "%@ est activé";
 "%@ is not installed." = "%@ n’est pas installé.";
 "%@ items" = "%@ éléments";
+"%@ more outputs" = "%@ sorties supplémentaires";
+"%@ output files" = "%@ fichiers de sortie";
 "%@ photos" = "%@ photos";
 "%@ ready to paste." = "%@ prêts à coller.";
 "%@ selected" = "%@ sélectionnés";
@@ -45,6 +47,8 @@
 "%lld is enabled" = "%lld est activé";
 "%lld is not installed." = "%lld n’est pas installé.";
 "%lld items" = "%lld éléments";
+"%lld more outputs" = "%lld sorties supplémentaires";
+"%lld output files" = "%lld fichiers de sortie";
 "%lld photos" = "%lld photos";
 "%lld ready to paste." = "%lld prêts à coller.";
 "%lld selected" = "%lld sélectionnés";
@@ -62,17 +66,20 @@
 "0 ANNOTATIONS" = "0 ANNOTATION";
 "0 AREAS SELECTED" = "0 ZONE SÉLECTIONNÉE";
 "0 FOUND" = "0 TROUVÉ";
+"0 KEEPS THE ORIGINAL SIZE." = "0 CONSERVE LA TAILLE D’ORIGINE.";
 "0 SELECTED" = "0 SÉLECTIONNÉ";
 "0 SPLIT POINTS" = "0 POINT DE COUPURE";
 "0 annotations" = "0 annotation";
 "0 areas selected" = "0 zone sélectionnée";
 "0 found" = "0 trouvé";
+"0 keeps the original size." = "0 conserve la taille d’origine.";
 "0 selected" = "0 sélectionné";
 "0 split points" = "0 point de coupure";
 "1 ANNOTATION" = "1 ANNOTATION";
 "1 AREA SELECTED" = "1 ZONE SÉLECTIONNÉE";
 "1 FOUND" = "1 TROUVÉ";
 "1 ITEM" = "1 ÉLÉMENT";
+"1 OUTPUT FILE" = "1 FICHIER DE SORTIE";
 "1 PHOTO" = "1 PHOTO";
 "1 READY TO PASTE." = "1 PRÊT À COLLER.";
 "1 SELECTED" = "1 SÉLECTIONNÉ";
@@ -83,6 +90,7 @@
 "1 area selected" = "1 zone sélectionnée";
 "1 found" = "1 trouvé";
 "1 item" = "1 élément";
+"1 output file" = "1 fichier de sortie";
 "1 photo" = "1 photo";
 "1 ready to paste." = "1 prêt à coller.";
 "1 selected" = "1 sélectionné";
@@ -122,6 +130,7 @@
 "A LITTLE LESS FILE FUSS. A LITTLE MORE FLOW.\nCONVERT, EDIT, AND ORGANIZE — RIGHT ON YOUR MAC." = "MOINS DE TRACAS AVEC VOS FICHIERS. PLUS DE FLUIDITÉ.\nCONVERTISSEZ, MODIFIEZ ET ORGANISEZ, DIRECTEMENT SUR VOTRE MAC.";
 "A LITTLE PEAR. A LOT OF POSSIBILITY." = "UNE PETITE POIRE. PLEIN DE POSSIBILITÉS.";
 "A NEW FORM.\nIN A TAP." = "UNE NOUVELLE FORME.\nEN UN GESTE.";
+"A NEW PACKAGE FOLDER KEEPS EXISTING FILES SAFE. ITS NAME GETS A NUMBER IF NEEDED." = "UN NOUVEAU DOSSIER CONSERVE LES FICHIERS EXISTANTS. UN NUMÉRO EST AJOUTÉ AU NOM SI NÉCESSAIRE.";
 "A PAGE RANGE IS OUTSIDE THE PDF." = "UNE PLAGE DE PAGES DÉPASSE LE PDF.";
 "A PDF PAGE COULD NOT BE READ." = "UNE PAGE PDF N’A PAS PU ÊTRE LUE.";
 "A PDF page could not be read." = "Une page PDF n’a pas pu être lue.";
@@ -151,6 +160,7 @@
 "A little less file fuss. A little more flow.\nConvert, edit, and organize — right on your Mac." = "Moins de tracas avec vos fichiers. Plus de fluidité.\nConvertissez, modifiez et organisez, directement sur votre Mac.";
 "A little pear. A lot of possibility." = "Une petite poire. Plein de possibilités.";
 "A new form.\nIn a tap." = "Une nouvelle forme.\nEn un geste.";
+"A new package folder keeps existing files safe. Its name gets a number if needed." = "Un nouveau dossier conserve les fichiers existants. Un numéro est ajouté au nom si nécessaire.";
 "A page range is outside the PDF." = "Une plage de pages dépasse le PDF.";
 "A perfect landing spot" = "Un point de chute idéal";
 "A photo in this post is unavailable. Try a fresh public post link." = "Une photo de cette publication est indisponible. Essayez un nouveau lien de publication publique.";
@@ -167,6 +177,7 @@
 "ACTIONS" = "ACTIONS";
 "ADD" = "AJOUTER";
 "ADD A BLEEP OR SILENCE RANGE." = "AJOUTEZ UNE PLAGE DE BIP OU DE SILENCE.";
+"ADD BETWEEN 1 AND 12 OUTPUTS TO THE PACKAGE." = "AJOUTEZ ENTRE 1 ET 12 SORTIES AU LOT.";
 "ADD BG" = "AJOUTER UN FOND";
 "ADD FIELD" = "AJOUTER UN CHAMP";
 "ADD FILES" = "AJOUTER DES FICHIERS";
@@ -176,6 +187,7 @@
 "ADD FRAME AT PLAYHEAD (M)" = "AJOUTER L’IMAGE À LA TÊTE DE LECTURE (M)";
 "ADD METADATA FIELD" = "AJOUTER UN CHAMP DE MÉTADONNÉES";
 "ADD OR CHANGE FILES" = "MODIFIER LA SÉLECTION";
+"ADD OUTPUT" = "AJOUTER UNE SORTIE";
 "ADD REDACTION" = "AJOUTER UN CAVIARDAGE";
 "ADD SELECTED RANGE" = "AJOUTER LA PLAGE SÉLECTIONNÉE";
 "ADD SPLIT" = "AJOUTER UNE COUPURE";
@@ -259,9 +271,11 @@
 "Add Redaction" = "Ajouter un caviardage";
 "Add Split" = "Ajouter une coupure";
 "Add a bleep or silence range." = "Ajoutez une plage de bip ou de silence.";
+"Add between 1 and 12 outputs to the package." = "Ajoutez entre 1 et 12 sorties au lot.";
 "Add files" = "Ajouter des fichiers";
 "Add frame at playhead (M)" = "Ajouter l’image à la tête de lecture (M)";
 "Add or change files" = "Modifier la sélection";
+"Add output" = "Ajouter une sortie";
 "Add selected range" = "Ajouter la plage sélectionnée";
 "Add split at playhead (M)" = "Ajouter une coupure à la tête de lecture (M)";
 "Add to Float" = "Ajouter au Float";
@@ -442,6 +456,7 @@
 "CHOOSE AN IMAGE." = "CHOISISSEZ UNE IMAGE.";
 "CHOOSE AN INPUT FORMAT TO SEE ITS AVAILABLE OUTPUTS." = "CHOISISSEZ UN FORMAT D’ENTRÉE POUR VOIR LES SORTIES DISPONIBLES.";
 "CHOOSE AN INSTAGRAM PHOTO POST LINK." = "CHOISISSEZ UN LIEN DE PUBLICATION DE PHOTOS INSTAGRAM.";
+"CHOOSE AN OUTPUT FOLDER FOR THE PACKAGE." = "CHOISISSEZ UN DOSSIER DE SORTIE POUR LE LOT.";
 "CHOOSE ANNOTATION IMAGE…" = "CHOISIR L’IMAGE D’ANNOTATION…";
 "CHOOSE AT LEAST ONE FRAME." = "CHOISISSEZ AU MOINS UNE IMAGE.";
 "CHOOSE AT LEAST TWO PDFS." = "CHOISISSEZ AU MOINS DEUX PDF.";
@@ -449,9 +464,11 @@
 "CHOOSE AT MOST 10,000 CLIPS." = "CHOISISSEZ 10 000 CLIPS AU MAXIMUM.";
 "CHOOSE BACKGROUND IMAGE…" = "CHOISIR L’IMAGE D’ARRIÈRE-PLAN…";
 "CHOOSE BETWEEN 1 AND 1,000 PAGES PER FILE." = "CHOISISSEZ ENTRE 1 ET 1 000 PAGES PAR FICHIER.";
+"CHOOSE BETWEEN 1 AND 1000 STILL IMAGES FOR THE PACKAGE." = "CHOISISSEZ ENTRE 1 ET 1000 IMAGES FIXES POUR LE LOT.";
 "CHOOSE DIMENSIONS BETWEEN 1 AND 30,000 PIXELS (100 MP LIMIT)." = "CHOISISSEZ DES DIMENSIONS COMPRISES ENTRE 1 ET 30 000 PIXELS (LIMITE DE 100 MPX).";
 "CHOOSE DISTINCT DRAG SHORTCUTS AND VALID OUTPUT SETTINGS." = "CHOISISSEZ DES RACCOURCIS DE GLISSER-DÉPOSER DISTINCTS ET DES RÉGLAGES DE SORTIE VALIDES.";
 "CHOOSE DOWNLOADS FOLDER…" = "CHOISIR LE DOSSIER DE TÉLÉCHARGEMENTS…";
+"CHOOSE EXISTING IMAGE FILES FOR THE PACKAGE." = "CHOISISSEZ DES FICHIERS IMAGE EXISTANTS POUR LE LOT.";
 "CHOOSE FEWER FILES TO OPEN." = "CHOISISSEZ MOINS DE FICHIERS À OUVRIR.";
 "CHOOSE FILES" = "CHOISIR DES FICHIERS";
 "CHOOSE FILES AND A SUPPORTED MEDIA FORMAT." = "CHOISISSEZ DES FICHIERS ET UN FORMAT MULTIMÉDIA PRIS EN CHARGE.";
@@ -552,6 +569,7 @@
 "COULD NOT DECODE THE AUDIO WAVEFORM." = "IMPOSSIBLE DE DÉCODER LA FORME D’ONDE AUDIO.";
 "COULD NOT INSPECT MEDIA INFORMATION." = "IMPOSSIBLE D’ANALYSER LES INFORMATIONS DU MÉDIA.";
 "COULD NOT ORIENT IMAGE." = "IMPOSSIBLE D’ORIENTER L’IMAGE.";
+"COULD NOT PREPARE THE PACKAGE IMAGE." = "IMPOSSIBLE DE PRÉPARER L’IMAGE DU LOT.";
 "COULD NOT READ THIS PDF." = "IMPOSSIBLE DE LIRE CE PDF.";
 "COULD NOT RENDER THE REDACTION." = "IMPOSSIBLE D’APPLIQUER LE CAVIARDAGE.";
 "COULDN’T CHECK FOR UPDATES" = "IMPOSSIBLE DE RECHERCHER LES MISES À JOUR";
@@ -651,6 +669,7 @@
 "Choose an image or PDF." = "Choisissez une image ou un PDF.";
 "Choose an image." = "Choisissez une image.";
 "Choose an input format to see its available outputs." = "Choisissez un format d’entrée pour voir les sorties disponibles.";
+"Choose an output folder for the package." = "Choisissez un dossier de sortie pour le lot.";
 "Choose annotation image…" = "Choisir l’image d’annotation…";
 "Choose at least one frame." = "Choisissez au moins une image.";
 "Choose at least two PDFs." = "Choisissez au moins deux PDF.";
@@ -658,9 +677,11 @@
 "Choose at most 10,000 clips." = "Choisissez 10 000 clips au maximum.";
 "Choose background image…" = "Choisir l’image d’arrière-plan…";
 "Choose between 1 and 1,000 pages per file." = "Choisissez entre 1 et 1 000 pages par fichier.";
+"Choose between 1 and 1000 still images for the package." = "Choisissez entre 1 et 1000 images fixes pour le lot.";
 "Choose dimensions between 1 and 30,000 pixels (100 MP limit)." = "Choisissez des dimensions comprises entre 1 et 30 000 pixels (limite de 100 Mpx).";
 "Choose distinct drag shortcuts and valid output settings." = "Choisissez des raccourcis de glisser-déposer distincts et des réglages de sortie valides.";
 "Choose downloads folder…" = "Choisir le dossier de téléchargements…";
+"Choose existing image files for the package." = "Choisissez des fichiers image existants pour le lot.";
 "Choose fewer files to open." = "Choisissez moins de fichiers à ouvrir.";
 "Choose files" = "Choisir des fichiers";
 "Choose files and a supported media format." = "Choisissez des fichiers et un format multimédia pris en charge.";
@@ -779,6 +800,7 @@
 "Could not open %@." = "Impossible d’ouvrir %@.";
 "Could not open %lld." = "Impossible d’ouvrir %lld.";
 "Could not orient image." = "Impossible d’orienter l’image.";
+"Could not prepare the package image." = "Impossible de préparer l’image du lot.";
 "Could not read this PDF." = "Impossible de lire ce PDF.";
 "Could not render PDF page %@." = "Impossible de rendre la page %@ du PDF.";
 "Could not render PDF page %lld." = "Impossible de rendre la page %lld du PDF.";
@@ -814,6 +836,7 @@
 "DEHAZE" = "CORRECTION DE LA BRUME";
 "DELETE" = "SUPPRIMER";
 "DELETE CLIP" = "SUPPRIMER LE CLIP";
+"DELETE SAVED PACKAGE" = "SUPPRIMER LE LOT ENREGISTRÉ";
 "DETACH" = "DÉTACHER";
 "DETAIL" = "DÉTAIL";
 "DETAILS" = "DÉTAILS";
@@ -893,6 +916,7 @@
 "Dehaze" = "Correction de la brume";
 "Delete" = "Supprimer";
 "Delete Clip" = "Supprimer le clip";
+"Delete saved package" = "Supprimer le lot enregistré";
 "Detach" = "Détacher";
 "Detail" = "Détail";
 "Details" = "Détails";
@@ -979,6 +1003,7 @@
 "Drop it like it’s… a file." = "Déposez-le comme si c’était… un fichier.";
 "Drop something good." = "Déposez quelque chose de bien.";
 "Duplicate" = "Dupliquer";
+"EACH OUTPUT GETS ITS OWN SUBFOLDER. SIZE LIMITS KEEP THE ASPECT RATIO AND NEVER ENLARGE IMAGES." = "CHAQUE SORTIE A SON SOUS-DOSSIER. LES LIMITES CONSERVENT LES PROPORTIONS SANS AGRANDIR LES IMAGES.";
 "EDIT" = "ÉDITION";
 "EDIT FIELDS OR REMOVE METADATA. ENCODED AUDIO AND VIDEO STAY UNTOUCHED." = "MODIFIEZ LES CHAMPS OU SUPPRIMEZ LES MÉTADONNÉES. L’AUDIO ET LA VIDÉO ENCODÉS RESTENT INCHANGÉS.";
 "EDIT FIELDS OR REMOVE METADATA. ENCODED IMAGE PIXELS STAY UNTOUCHED." = "MODIFIEZ LES CHAMPS OU SUPPRIMEZ LES MÉTADONNÉES. LES PIXELS ENCODÉS DE L’IMAGE RESTENT INCHANGÉS.";
@@ -1002,13 +1027,18 @@
 "EPUB layout" = "Mise en page EPUB";
 "ESC TO CLOSE" = "ÉCHAP POUR FERMER";
 "EVERYTHING HAS A NEXT FORM." = "TOUT A UNE PROCHAINE FORME.";
+"EXAMPLE PACKAGE" = "EXEMPLE DE LOT";
 "EXPAND FLOAT" = "DÉVELOPPER FLOAT";
 "EXPANDED UPDATE IS TOO LARGE." = "LA MISE À JOUR DÉCOMPRESSÉE EST TROP VOLUMINEUSE.";
 "EXPORT CLIPS" = "EXPORTER LES CLIPS";
+"EXPORT HERE" = "EXPORTER ICI";
+"EXPORT IMAGE PACKAGE" = "EXPORTER UN LOT D’IMAGES";
 "EXPORT ONE VIDEO" = "EXPORTER UNE SEULE VIDÉO";
+"EXPORT PACKAGE…" = "EXPORTER LE LOT…";
 "EXPOSURE" = "EXPOSITION";
 "EXTRACT ARCHIVE" = "EXTRAIRE L’ARCHIVE";
 "EXTRACT NASHI INTO ITS OWN WRITABLE FOLDER FIRST." = "EXTRAYEZ D’ABORD NASHI DANS SON PROPRE DOSSIER ACCESSIBLE EN ÉCRITURE.";
+"Each output gets its own subfolder. Size limits keep the aspect ratio and never enlarge images." = "Chaque sortie a son sous-dossier. Les limites conservent les proportions sans agrandir les images.";
 "Edit" = "Édition";
 "Edit Image" = "Modifier l’image";
 "Edit Photo" = "Modifier la photo";
@@ -1040,11 +1070,15 @@
 "Every redaction area must have positive dimensions and fit completely inside the %lld × %@ pixel image. Adjust the areas for this image and try again." = "Chaque zone caviardée doit avoir des dimensions positives et tenir entièrement dans l’image de %lld × %@ pixels. Ajustez les zones pour cette image, puis réessayez.";
 "Every redaction area must have positive dimensions and fit completely inside the %lld × %lld pixel image. Adjust the areas for this image and try again." = "Chaque zone caviardée doit avoir des dimensions positives et tenir entièrement dans l’image de %lld × %lld pixels. Ajustez les zones pour cette image, puis réessayez.";
 "Everything has a next form." = "Tout a une prochaine forme.";
+"Example package" = "Exemple de lot";
 "Expand Float" = "Développer Float";
 "Expanded update is too large." = "La mise à jour décompressée est trop volumineuse.";
+"Export Here" = "Exporter ici";
 "Export One Video" = "Exporter une seule vidéo";
 "Export clips" = "Exporter les clips";
+"Export image package" = "Exporter un lot d’images";
 "Export one video" = "Exporter une seule vidéo";
+"Export package…" = "Exporter le lot…";
 "Exposure" = "Exposition";
 "Extract Archive" = "Extraire l’archive";
 "Extract Nashi into its own writable folder first." = "Extrayez d’abord Nashi dans son propre dossier accessible en écriture.";
@@ -1109,6 +1143,7 @@
 "FOLDERS" = "DOSSIERS";
 "FONT" = "POLICE";
 "FONT SIZE" = "TAILLE DE LA POLICE";
+"FORMAT" = "FORMAT";
 "FORMAT COMPATIBILITY" = "COMPATIBILITÉ DES FORMATS";
 "FORMAT PREFERENCES" = "PRÉFÉRENCES DE FORMAT";
 "FORMATS" = "FORMATS";
@@ -1191,6 +1226,7 @@
 "Folders" = "Dossiers";
 "Font" = "Police";
 "Font size" = "Taille de la police";
+"Format" = "Format";
 "Format Compatibility" = "Compatibilité des formats";
 "Format preferences" = "Préférences de format";
 "Formats" = "Formats";
@@ -1219,6 +1255,7 @@
 "GITHUB RELEASE CONNECTION" = "CONNEXION AUX VERSIONS GITHUB";
 "GITHUB REPOSITORY" = "DÉPÔT GITHUB";
 "GITHUB TOKEN" = "JETON GITHUB";
+"GIVE EACH OUTPUT A DIFFERENT SUBFOLDER NAME." = "DONNEZ UN NOM DE SOUS-DOSSIER DIFFÉRENT À CHAQUE SORTIE.";
 "GIVE IT A LITTLE BREATHING ROOM." = "LAISSEZ-LUI UN PEU D’AIR.";
 "GLASS" = "VERRE";
 "GRADIENT" = "DÉGRADÉ";
@@ -1234,6 +1271,7 @@
 "GitHub release connection" = "Connexion aux versions GitHub";
 "GitHub repository" = "Dépôt GitHub";
 "GitHub token" = "Jeton GitHub";
+"Give each output a different subfolder name." = "Donnez un nom de sous-dossier différent à chaque sortie.";
 "Give it a little breathing room." = "Laissez-lui un peu d’air.";
 "Glass" = "Verre";
 "Gradient" = "Dégradé";
@@ -1385,6 +1423,7 @@
 "LITTLE TWEAKS.\nBIG DIFFERENCE." = "DE PETITES RETOUCHES.\nUNE GRANDE DIFFÉRENCE.";
 "LITTLE TWEAKS. A WHOLE NEW LOOK." = "DE PETITES RETOUCHES. UN TOUT NOUVEAU LOOK.";
 "LOCAL BY DESIGN" = "LOCAL PAR CONCEPTION";
+"LONGEST EDGE (PX)" = "CÔTÉ LE PLUS LONG (PX)";
 "LOOKING FOR LITTLE SQUARES…" = "À LA RECHERCHE DE PETITS CARRÉS…";
 "LOUDNESS RANGE" = "PLAGE DE VOLUME SONORE";
 "Landscape" = "Paysage";
@@ -1419,6 +1458,7 @@
 "Local by design" = "Local par conception";
 "Local by design · MIT source\nVersion %@" = "Local par conception · Source MIT\nVersion %@";
 "Local by design · MIT source\nVersion %lld" = "Local par conception · Source MIT\nVersion %lld";
+"Longest edge (px)" = "Côté le plus long (px)";
 "Looking for little squares…" = "À la recherche de petits carrés…";
 "Loudness range" = "Plage de volume sonore";
 "MACOS COULD NOT OPEN THE GENERATED MEDIA PREVIEW." = "MACOS N’A PAS PU OUVRIR L’APERÇU MULTIMÉDIA GÉNÉRÉ.";
@@ -1718,6 +1758,9 @@
 "Output" = "Sortie";
 "Output format" = "Format de sortie";
 "Output-only format." = "Format de sortie uniquement.";
+"PACKAGE NAME" = "NOM DU LOT";
+"PACKAGE OUTPUTS MUST BE PNG, JPG OR WEBP." = "LES SORTIES DU LOT DOIVENT ÊTRE EN PNG, JPG OU WEBP.";
+"PACKAGE SAVED." = "LOT ENREGISTRÉ.";
 "PADDING" = "MARGE INTÉRIEURE";
 "PAGE NUMBERS" = "NUMÉROS DE PAGE";
 "PAGE RANGES" = "PLAGES DE PAGES";
@@ -1775,6 +1818,7 @@
 "PREPARING A LOCAL PREVIEW…" = "PRÉPARATION D’UN APERÇU LOCAL…";
 "PREPARING MEDIA…" = "PRÉPARATION DU MÉDIA…";
 "PREPARING MOVE…" = "PRÉPARATION DU DÉPLACEMENT…";
+"PREPARING PACKAGE OUTPUTS…" = "PRÉPARATION DES SORTIES DU LOT…";
 "PREPARING PREVIEW…" = "PRÉPARATION DE L’APERÇU…";
 "PREPARING PROCESSED PREVIEW…" = "PRÉPARATION DE L’APERÇU TRAITÉ…";
 "PREPARING VISUALIZATION…" = "PRÉPARATION DE LA VISUALISATION…";
@@ -1802,6 +1846,9 @@
 "PROTECTED MEDIA CANNOT BE DOWNLOADED." = "LES MÉDIAS PROTÉGÉS NE PEUVENT PAS ÊTRE TÉLÉCHARGÉS.";
 "PUBLIC REPOSITORY · NO TOKEN NEEDED" = "DÉPÔT PUBLIC · AUCUN JETON NÉCESSAIRE";
 "PUBLIC UPDATES WORK WITHOUT A TOKEN." = "LES MISES À JOUR PUBLIQUES FONCTIONNENT SANS JETON.";
+"Package name" = "Nom du lot";
+"Package outputs must be PNG, JPG or WebP." = "Les sorties du lot doivent être en PNG, JPG ou WebP.";
+"Package saved." = "Lot enregistré.";
 "Padding" = "Marge intérieure";
 "Page %@" = "Page %@";
 "Page %lld" = "Page %lld";
@@ -1854,6 +1901,7 @@
 "Preparing a local preview…" = "Préparation d’un aperçu local…";
 "Preparing media…" = "Préparation du média…";
 "Preparing move…" = "Préparation du déplacement…";
+"Preparing package outputs…" = "Préparation des sorties du lot…";
 "Preparing preview…" = "Préparation de l’aperçu…";
 "Preparing processed preview…" = "Préparation de l’aperçu traité…";
 "Preparing visualization…" = "Préparation de la visualisation…";
@@ -1939,6 +1987,7 @@
 "REMOVE FROM SELECTION" = "RETIRER DE LA SÉLECTION";
 "REMOVE IMAGE" = "RETIRER L’IMAGE";
 "REMOVE METADATA" = "SUPPRIMER LES MÉTADONNÉES";
+"REMOVE OUTPUT" = "RETIRER LA SORTIE";
 "REMOVE SELECTED AREA" = "RETIRER LA ZONE SÉLECTIONNÉE";
 "REMOVE SELECTED RANGE" = "RETIRER LA PLAGE SÉLECTIONNÉE";
 "REMOVE SILENCE AT THE BEGINNING AND END" = "SUPPRIMER LE SILENCE AU DÉBUT ET À LA FIN";
@@ -2012,6 +2061,7 @@
 "Remove clips (numbers; separated by semicolons)" = "Supprimer des clips (numéros ; séparés par des points-virgules)";
 "Remove from Float" = "Retirer de Float";
 "Remove from selection" = "Retirer de la sélection";
+"Remove output" = "Retirer la sortie";
 "Remove selected area" = "Retirer la zone sélectionnée";
 "Remove selected range" = "Retirer la plage sélectionnée";
 "Remove silence at the beginning and end" = "Supprimer le silence au début et à la fin";
@@ -2069,6 +2119,7 @@
 "SAVE NEW FILES TO…" = "ENREGISTRER LES NOUVEAUX FICHIERS DANS…";
 "SAVE ORGANIZED COPY ↗" = "ENREGISTRER LA COPIE ORGANISÉE ↗";
 "SAVE ORGANIZED PDF" = "ENREGISTRER LE PDF ORGANISÉ";
+"SAVE PACKAGE" = "ENREGISTRER LE LOT";
 "SAVE REDACTED COPY" = "ENREGISTRER LA COPIE CAVIARDÉE";
 "SAVE REPORT…" = "ENREGISTRER LE RAPPORT…";
 "SAVE SPEED COPY" = "ENREGISTRER LA COPIE À VITESSE MODIFIÉE";
@@ -2078,6 +2129,8 @@
 "SAVE WITH BACKGROUND" = "ENREGISTRER AVEC L’ARRIÈRE-PLAN";
 "SAVED 1 NEW FILE. ORIGINALS KEPT." = "1 NOUVEAU FICHIER ENREGISTRÉ. ORIGINAUX CONSERVÉS.";
 "SAVED IN POST ORDER IN A NEW INSTAGRAM FOLDER." = "ENREGISTRÉES DANS L’ORDRE DE LA PUBLICATION, DANS UN NOUVEAU DOSSIER INSTAGRAM.";
+"SAVED PACKAGE REMOVED." = "LOT ENREGISTRÉ SUPPRIMÉ.";
+"SAVED PACKAGES" = "LOTS ENREGISTRÉS";
 "SAVED TOKEN · LEAVE BLANK TO KEEP IT" = "JETON ENREGISTRÉ · LAISSEZ VIDE POUR LE CONSERVER";
 "SAVING COLLAGE…" = "ENREGISTREMENT DU COLLAGE…";
 "SAVING DOCUMENT…" = "ENREGISTREMENT DU DOCUMENT…";
@@ -2122,6 +2175,7 @@
 "SETUP CANCELLED." = "CONFIGURATION ANNULÉE.";
 "SETUP CANCELLED. EXISTING TOOLS WERE KEPT." = "CONFIGURATION ANNULÉE. LES OUTILS EXISTANTS ONT ÉTÉ CONSERVÉS.";
 "SETUP COULDN’T FINISH" = "LA CONFIGURATION N’A PAS PU SE TERMINER";
+"SEVERAL FORMATS AND SIZES, IN ONE EXPORT." = "PLUSIEURS FORMATS ET TAILLES EN UNE SEULE EXPORTATION.";
 "SHADOW" = "OMBRE";
 "SHADOW OPACITY" = "OPACITÉ DE L’OMBRE";
 "SHADOW RADIUS" = "RAYON DE L’OMBRE";
@@ -2152,6 +2206,7 @@
 "SOUND FEEDBACK" = "RETOUR SONORE";
 "SOUND FOLLOWS YOUR MAC’S VOLUME. HAPTICS NEED A COMPATIBLE FORCE TOUCH TRACKPAD." = "LE SON SUIT LE VOLUME DE VOTRE MAC. LE RETOUR HAPTIQUE NÉCESSITE UN TRACKPAD FORCE TOUCH COMPATIBLE.";
 "SOURCE & THIRD-PARTY NOTICES" = "MENTIONS SUR LES SOURCES ET LES COMPOSANTS TIERS";
+"SOURCE METADATA IS OMITTED. JPG USES A WHITE BACKGROUND FOR TRANSPARENT AREAS." = "LES MÉTADONNÉES SOURCE SONT OMISES. LES ZONES TRANSPARENTES DEVIENNENT BLANCHES EN JPG.";
 "SPACE PLAY/PAUSE · ←/→ 1S · SHIFT+←/→ 1 FRAME (VIDEO), 0.1S (AUDIO) · I/O SET RANGE · ENTER SAVE" = "ESPACE LECTURE/PAUSE · ←/→ 1 S · MAJ+←/→ 1 IMAGE (VIDÉO), 0,1 S (AUDIO) · I/O DÉFINIR LA PLAGE · ENTRÉE ENREGISTRER";
 "SPACE PLAY/PAUSE · ←/→ 1S · ⇧←/→ 0.1S" = "ESPACE LECTURE/PAUSE · ←/→ 1 S · ⇧←/→ 0,1 S";
 "SPACE PLAY/PAUSE · ←/→ 1S · ⇧←/→ 0.1S · I/O SET RANGE · ⇧SPACE PLAY RANGE" = "ESPACE LECTURE/PAUSE · ←/→ 1 S · ⇧←/→ 0,1 S · I/O DÉFINIR LA PLAGE · ⇧ESPACE LIRE LA PLAGE";
@@ -2183,6 +2238,7 @@
 "STROKE WIDTH" = "ÉPAISSEUR DU TRAIT";
 "STRONG" = "FORTE";
 "STYLE" = "STYLE";
+"SUBFOLDER" = "SOUS-DOSSIER";
 "SUBTITLES" = "SOUS-TITRES";
 "SUBTLE ANIMATIONS" = "ANIMATIONS DISCRÈTES";
 "SVG EXTERNAL RESOURCES ARE NOT LOADED. EMBED THE RASTER IMAGE FIRST." = "LES RESSOURCES EXTERNES DU SVG NE SONT PAS CHARGÉES. INTÉGREZ D’ABORD L’IMAGE MATRICIELLE.";
@@ -2220,6 +2276,7 @@
 "Save new files to…" = "Enregistrer les nouveaux fichiers dans…";
 "Save organized PDF" = "Enregistrer le PDF organisé";
 "Save organized copy ↗" = "Enregistrer la copie organisée ↗";
+"Save package" = "Enregistrer le lot";
 "Save redacted copy" = "Enregistrer la copie caviardée";
 "Save report…" = "Enregistrer le rapport…";
 "Save speed copy" = "Enregistrer la copie à vitesse modifiée";
@@ -2231,6 +2288,8 @@
 "Saved %lld new files. Originals kept." = "%lld nouveaux fichiers enregistrés. Originaux conservés.";
 "Saved 1 new file. Originals kept." = "1 nouveau fichier enregistré. Originaux conservés.";
 "Saved in post order in a new Instagram folder." = "Enregistrées dans l’ordre de la publication, dans un nouveau dossier Instagram.";
+"Saved package removed." = "Lot enregistré supprimé.";
+"Saved packages" = "Lots enregistrés";
 "Saved size: %@" = "Taille enregistrée : %@";
 "Saved size: %lld" = "Taille enregistrée : %lld";
 "Saved to %@" = "Enregistré dans %@";
@@ -2289,6 +2348,7 @@
 "Setup cancelled." = "Configuration annulée.";
 "Setup cancelled. Existing tools were kept." = "Configuration annulée. Les outils existants ont été conservés.";
 "Setup couldn’t finish" = "La configuration n’a pas pu se terminer";
+"Several formats and sizes, in one export." = "Plusieurs formats et tailles en une seule exportation.";
 "Shadow" = "Ombre";
 "Shadow opacity" = "Opacité de l’ombre";
 "Shadow radius" = "Rayon de l’ombre";
@@ -2322,6 +2382,7 @@
 "Sound feedback" = "Retour sonore";
 "Sound follows your Mac’s volume. Haptics need a compatible Force Touch trackpad." = "Le son suit le volume de votre Mac. Le retour haptique nécessite un trackpad Force Touch compatible.";
 "Source & third-party notices" = "Mentions sur les sources et les composants tiers";
+"Source metadata is omitted. JPG uses a white background for transparent areas." = "Les métadonnées source sont omises. Les zones transparentes deviennent blanches en JPG.";
 "Space play/pause · ←/→ 1s · Shift+←/→ 1 frame (video), 0.1s (audio) · I/O set range · Enter save" = "Espace lecture/pause · ←/→ 1 s · Maj+←/→ 1 image (vidéo), 0,1 s (audio) · I/O définir la plage · Entrée enregistrer";
 "Space play/pause · ←/→ 1s · ⇧←/→ 0.1s" = "Espace lecture/pause · ←/→ 1 s · ⇧←/→ 0,1 s";
 "Space play/pause · ←/→ 1s · ⇧←/→ 0.1s · I/O set range · ⇧Space play range" = "Espace lecture/pause · ←/→ 1 s · ⇧←/→ 0,1 s · I/O définir la plage · ⇧Espace lire la plage";
@@ -2352,6 +2413,7 @@
 "Stroke width" = "Épaisseur du trait";
 "Strong" = "Forte";
 "Style" = "Style";
+"Subfolder" = "Sous-dossier";
 "Subtitles" = "Sous-titres";
 "Subtle animations" = "Animations discrètes";
 "System" = "Système";
@@ -2696,12 +2758,15 @@
 "UPDATE…" = "METTRE À JOUR…";
 "UPSTREAM DOWNLOAD CHECKSUM MISMATCH. NOTHING WAS INSTALLED." = "SOMME DE CONTRÔLE DU TÉLÉCHARGEMENT AMONT INCORRECTE. RIEN N’A ÉTÉ INSTALLÉ.";
 "UPSTREAM VERSIONS, LICENSES AND SOURCE LINKS" = "VERSIONS AMONT, LICENCES ET LIENS VERS LES SOURCES";
+"USE A LONGEST EDGE FROM 1 TO 16384 PIXELS, OR 0 FOR ORIGINAL SIZE." = "CHOISISSEZ UN CÔTÉ DE 1 À 16384 PIXELS, OU 0 POUR LA TAILLE D’ORIGINE.";
 "USE A REGULAR WRITABLE FOLDER FOR PORTABLE UPDATES." = "UTILISEZ UN DOSSIER ORDINAIRE ACCESSIBLE EN ÉCRITURE POUR LES MISES À JOUR PORTABLES.";
+"USE A SHORT PACKAGE NAME WITHOUT PATHS OR RESERVED NAMES." = "UTILISEZ UN NOM DE LOT COURT, SANS CHEMIN NI NOM RÉSERVÉ.";
 "USE A STATIC SVG WITHOUT EMBEDDED SCRIPTS OR HTML." = "UTILISEZ UN SVG STATIQUE SANS SCRIPTS NI HTML INTÉGRÉS.";
 "USE IN NASHI" = "UTILISER DANS NASHI";
 "USE ONCE IF MACOS NEEDS PERMISSION FOR YOUR SAVED UPDATE CONNECTION." = "À UTILISER UNE FOIS SI MACOS DEMANDE UNE AUTORISATION POUR VOTRE CONNEXION DE MISE À JOUR ENREGISTRÉE.";
 "USE ONE INSTAGRAM PHOTO POST WITH UP TO 50 ITEMS." = "UTILISEZ UNE SEULE PUBLICATION DE PHOTOS INSTAGRAM CONTENANT JUSQU’À 50 ÉLÉMENTS.";
 "USE OPEN TO PREVIEW THIS DOCUMENT IN ITS DEFAULT APP." = "UTILISEZ OUVRIR POUR AFFICHER CE DOCUMENT DANS L’APP PAR DÉFAUT.";
+"USE SHORT SUBFOLDER NAMES WITHOUT PATHS OR RESERVED NAMES." = "UTILISEZ DES NOMS DE SOUS-DOSSIERS COURTS, SANS CHEMIN NI NOM RÉSERVÉ.";
 "USE THESE FILES AGAIN" = "RÉUTILISER CES FICHIERS";
 "Undo" = "Annuler";
 "Undo Area" = "Annuler la zone";
@@ -2740,11 +2805,14 @@
 "Use %@ again" = "Réutiliser %@";
 "Use %lld again" = "Réutiliser %lld";
 "Use Open to preview this document in its default app." = "Utilisez Ouvrir pour afficher ce document dans l’app par défaut.";
+"Use a longest edge from 1 to 16384 pixels, or 0 for original size." = "Choisissez un côté de 1 à 16384 pixels, ou 0 pour la taille d’origine.";
 "Use a regular writable folder for portable updates." = "Utilisez un dossier ordinaire accessible en écriture pour les mises à jour portables.";
+"Use a short package name without paths or reserved names." = "Utilisez un nom de lot court, sans chemin ni nom réservé.";
 "Use a static SVG without embedded scripts or HTML." = "Utilisez un SVG statique sans scripts ni HTML intégrés.";
 "Use in Nashi" = "Utiliser dans Nashi";
 "Use once if macOS needs permission for your saved update connection." = "À utiliser une fois si macOS demande une autorisation pour votre connexion de mise à jour enregistrée.";
 "Use one Instagram photo post with up to 50 items." = "Utilisez une seule publication de photos Instagram contenant jusqu’à 50 éléments.";
+"Use short subfolder names without paths or reserved names." = "Utilisez des noms de sous-dossiers courts, sans chemin ni nom réservé.";
 "Use these files again" = "Réutiliser ces fichiers";
 "VALUE" = "VALEUR";
 "VERIFYING AND PREPARING OFFICE TOOLS…" = "VÉRIFICATION ET PRÉPARATION DES OUTILS BUREAUTIQUES…";
@@ -2830,6 +2898,7 @@
 "X %lld, Y %lld, width %lld, height %@" = "X %lld, Y %lld, largeur %lld, hauteur %@";
 "X %lld, Y %lld, width %lld, height %lld" = "X %lld, Y %lld, largeur %lld, hauteur %lld";
 "YOU CAN ALSO CHOOSE FILES FROM THE MAIN WINDOW." = "VOUS POUVEZ AUSSI CHOISIR DES FICHIERS DEPUIS LA FENÊTRE PRINCIPALE.";
+"YOU CAN SAVE UP TO 50 EXPORT PACKAGES." = "VOUS POUVEZ ENREGISTRER JUSQU’À 50 LOTS D’EXPORTATION.";
 "YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL." = "VOUS CHOISISSEZ QUAND TÉLÉCHARGER ET INSTALLER.";
 "YOU HAVE THE LATEST PUBLISHED WINDOWS VERSION." = "VOUS DISPOSEZ DE LA DERNIÈRE VERSION PUBLIÉE POUR WINDOWS.";
 "YOUR CLIPBOARD IS EMPTY." = "VOTRE PRESSE-PAPIERS EST VIDE.";
@@ -2850,6 +2919,7 @@
 "YOUTUBE THUMBNAIL · BEST AVAILABLE FULL-SIZE IMAGE" = "MINIATURE YOUTUBE · MEILLEURE IMAGE EN TAILLE RÉELLE DISPONIBLE";
 "YOU’RE ALL SET.\nMAKE SOMETHING GOOD." = "TOUT EST PRÊT.\nCRÉEZ QUELQUE CHOSE DE BIEN.";
 "You can also choose files from the main window." = "Vous pouvez aussi choisir des fichiers depuis la fenêtre principale.";
+"You can save up to 50 export packages." = "Vous pouvez enregistrer jusqu’à 50 lots d’exportation.";
 "You choose when to download and install." = "Vous choisissez quand télécharger et installer.";
 "You have the latest published Windows version." = "Vous disposez de la dernière version publiée pour Windows.";
 "YouTube thumbnail · best available full-size image" = "Miniature YouTube · meilleure image en taille réelle disponible";
