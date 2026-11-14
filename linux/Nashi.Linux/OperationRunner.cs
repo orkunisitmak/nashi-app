@@ -1,0 +1,273 @@
+using System.Text;
+using Nashi.Core;
+
+namespace Nashi.Linux;
+
+/// A tool the choice needs was not found: ffmpeg and ffprobe for media, LibreOffice for Office work, Deno for Pages,
+/// ExifTool for Metadata.
+public sealed class MissingToolsException(string message = MissingToolsException.Media) : Exception(message)
+{
+    public const string Media = "Media tools are needed for this. Install ffmpeg, or set up media tools first.";
+    public const string Office = "LibreOffice is needed for this. Install it, then try again.";
+    public const string Pages = "Pages documents need Deno. Download the missing tools in setup.";
+    public const string Metadata = "Metadata tools are needed for this. Download the missing tools in setup.";
+}
+
+/// Turns a wheel choice plus selected files into output files, using the shared engine.
+public sealed class OperationRunner(Toolchain tools)
+{
+    /// The export defaults for a format (Settings' format defaults, or the command line's --options): image quality
+    /// and the media quality and bitrate of conversions. Null keeps Nashi's built-in defaults.
+    public Func<string, OutputProfile>? Profile { get; set; }
+
+    int ImageQuality(string format) => Profile is { } profile ? (int)Math.Round(profile(format).Quality * 100) : 85;
+
+    MediaOptions MediaFor(string format)
+    {
+        if (Profile is not { } profile) return new();
+        var value = profile(format);
+        return new MediaOptions { Quality = value.Quality, AudioBitrate = value.AudioBitrate, SampleDepth = value.SampleDepth,
+            GifFrameRate = value.GifFrameRate, GifWidth = value.GifWidth, PreserveMetadata = value.PreserveMetadata };
+    }
+
+    /// What the last run wants the success card to add (English; translate at display), or null.
+    public string? Note { get; private set; }
+
+    public async Task<IReadOnlyList<string>> RunAsync(string choiceId, IReadOnlyList<string> files, string destination, IProgress<OperationProgress> progress, CancellationToken token)
+    {
+        Note = null;
+        if (choiceId.StartsWith("quick:", StringComparison.Ordinal))
+        {
+            if (!Capabilities.QuickTools(files).Contains(choiceId)) throw new NotSupportedException($"{choiceId} is not available for this selection on Linux.");
+            return await Task.Run(() => Quick(choiceId[6..], files, destination, progress, token), token);
+        }
+        var convert = choiceId.StartsWith("convert:", StringComparison.Ordinal) ? choiceId[8..].ToLowerInvariant() : null;
+        if (convert is not null ? !Capabilities.Formats(files).Contains(convert) : !Capabilities.Tools(files).Contains(choiceId))
+            throw new NotSupportedException($"{choiceId} is not available for this selection on Linux.");
+        token.ThrowIfCancellationRequested();
+
+        if (convert is not null)
+        {
+            var selected = Capabilities.ConversionInputs(files, convert);
+            var outputs = await ConvertAsync(selected, convert, destination, progress, token);
+            if (selected.Count < files.Count)
+                Note = string.Join(" · ", new[] { Note, L10n.F("Converted {0} of {1} files.", selected.Count, files.Count) }.Where(n => n is not null));
+            return outputs;
+        }
+        switch (choiceId)
+        {
+            case "createPDF": return await Task.Run(() => ImageOperations.Convert(files, "pdf", destination, progress, token), token);
+            case "mergePDF": return await Task.Run(() => DocumentEngine.Pdf("mergePDFs", files, destination, token: token), token);
+            case "extractArchive": return await Task.Run(() => Each(files, destination, token, (f, d) => ArchiveEngine.Extract(f, d, null, progress, token)), token);
+            case "compress": return await CompressAsync(files, destination, progress, token, files.Any(f => FeatureCatalog.IsAudio(f) || FeatureCatalog.IsVideo(f)) ? Engine() : null);
+            // muteVideo and normalizeAudio at their defaults; every other tool takes its options from its editor (EditorJob).
+            case "muteVideo" or "normalizeAudio": return await Media(progress, (e, p) => e.ToolAsync(choiceId, files, destination, new MediaOptions(), p, token));
+            default: throw new NotSupportedException($"{choiceId} is not available for this selection on Linux.");
+        }
+    }
+
+    static string Kind(string file) => FeatureCatalog.IsImage(file) ? "image"
+        : FeatureCatalog.IsAudio(file) || FeatureCatalog.IsVideo(file) ? "media"
+        : DocumentOperations.Handles(file) ? "document" : FeatureCatalog.IsArchive(file) ? "archive" : "subtitle";
+
+    async Task<IReadOnlyList<string>> ConvertAsync(IReadOnlyList<string> files, string convert, string destination, IProgress<OperationProgress> progress, CancellationToken token)
+    {
+        if (files.Select(Kind).Distinct().Count() > 1 || files.Any(f => !FeatureCatalog.IsImage(f) && FeatureCatalog.Extension(f) == convert))
+        {
+            // Check every required tool before publishing anything, and roll back the entire mixed batch on error.
+            var changing = files.Where(f => FeatureCatalog.IsImage(f) || FeatureCatalog.Extension(f) != convert).ToArray();
+            if (changing.Any(f => Kind(f) == "media")) Engine();
+            var documents = changing.Where(DocumentOperations.Handles).ToArray();
+            if (documents.Any(f => DocumentOperations.NeedsOffice(f, convert)) && AppPaths.Office() is null) throw new MissingToolsException(MissingToolsException.Office);
+            if (documents.Any(f => DocumentOperations.NeedsDeno(f, convert)) && AppPaths.Deno(tools) is null) throw new MissingToolsException(MissingToolsException.Pages);
+            using var tx = new ExportTransaction(destination);
+            var outputs = new List<string>();
+            string? note = null;
+            for (var i = 0; i < files.Count; i++)
+            {
+                token.ThrowIfCancellationRequested();
+                var file = files[i];
+                if (!FeatureCatalog.IsImage(file) && FeatureCatalog.Extension(file) == convert)
+                {
+                    var copy = SafePaths.Unique(tx.StagingDirectory, Path.GetFileName(file));
+                    File.Copy(file, copy);
+                    outputs.Add(copy);
+                }
+                else
+                {
+                    Note = null;
+                    outputs.AddRange(await ConvertAsync([file], convert, tx.StagingDirectory, new Slice(progress, i, files.Count), token));
+                    note ??= Note;
+                }
+            }
+            Note = note;
+            return tx.Publish(outputs, token);
+        }
+        if (files.All(FeatureCatalog.IsImage))
+        {
+            string? encoder = null;
+            if (convert == "heic")
+                try { encoder = tools.Executable("ffmpeg"); }
+                catch (FileNotFoundException) { throw new MissingToolsException(MissingToolsException.Media); }
+            return await Task.Run(() => ImageOperations.Convert(files, convert, destination, progress, token, ImageQuality(convert), encoder), token);
+        }
+        if (files.All(f => FeatureCatalog.IsAudio(f) || FeatureCatalog.IsVideo(f)))
+            return await Media(progress, (e, p) => convert is "jpg" or "png"
+                ? MediaFrames.ExportAsync(e, files, convert, destination, new MediaOptions(), p, token)
+                : e.ConvertAsync(files, convert, destination, MediaFor(convert), p, token));
+        if (files.All(DocumentOperations.Handles))
+        {
+            var documents = new DocumentOperations(AppPaths.Office(), AppPaths.Deno(tools))
+            { Options = new DocumentOptions(Dpi: Profile?.Invoke(convert).Dpi ?? 144), ImageQuality = Profile is null ? 90 : ImageQuality(convert), OcrLanguages = Settings.Current.OcrLanguage };
+            var outputs = await Task.Run(() => documents.ConvertAsync(files, convert, destination, progress, token), token);
+            Note = documents.Note;
+            return outputs;
+        }
+        if (files.All(FeatureCatalog.IsArchive)) return await Task.Run(() => Each(files, destination, token, (f, d) => ArchiveEngine.Convert(f, convert, d, null, progress, token)), token);
+        return await Task.Run(() => Subtitles(files, convert, destination, token), token);
+    }
+
+    /// The wheel's quick tools: one click, no editor. Rotate, flip and grayscale are Edit Photo's engine ("photo -
+    /// Edited.jpg"); remove background makes a transparent PNG; pack into ZIP makes one Archive.zip of everything.
+    static IReadOnlyList<string> Quick(string tool, IReadOnlyList<string> files, string destination, IProgress<OperationProgress> progress, CancellationToken token) => tool switch
+    {
+        "rotate" => ImageTools.Each(files, destination, " - Edited", (_, image) => ImageTools.Edit(image, new PhotoOptions { Rotation = 90 }), progress, token),
+        "rotateLeft" => ImageTools.Each(files, destination, " - Edited", (_, image) => ImageTools.Edit(image, new PhotoOptions { Rotation = -90 }), progress, token),
+        "flip" => ImageTools.Each(files, destination, " - Edited", (_, image) => ImageTools.Edit(image, new PhotoOptions { FlipHorizontal = true }), progress, token),
+        "flipVertical" => ImageTools.Each(files, destination, " - Edited", (_, image) => ImageTools.Edit(image, new PhotoOptions { FlipVertical = true }), progress, token),
+        "grayscale" => ImageTools.Each(files, destination, " - Edited", (_, image) => ImageTools.Edit(image, new PhotoOptions { Adjustments = new PhotoAdjustments { Saturation = 0 } }), progress, token),
+        "removeBackground" => ImageTools.Each(files, destination, " - No Background", (_, image) =>
+        {
+            var copy = (ImageMagick.MagickImage)image.Clone();
+            BackgroundRemover.Apply(copy, 25, keepEnclosed: false);
+            return copy;
+        }, progress, token, png: true),
+        "zip" => [DocumentEngine.Zip(files, destination, progress, token)],
+        _ => throw new NotSupportedException($"quick:{tool} is not available for this selection on Linux."),
+    };
+
+    /// Runs the choice with each file's outputs beside it: one run per source folder, in the order the folders first
+    /// appear, so files from two folders get their outputs in their own folders. A choice that makes one file out of
+    /// many (Create PDF, Merge PDFs, Create Collage, images to one PDF) writes it beside the first file. `destination` maps a source folder
+    /// to where its outputs go: the folder itself, or one the user picks when it is read-only; null cancels before any
+    /// work and returns null. A failure or cancel in a later folder removes what earlier folders published.
+    /// `job` (an editor's Save) runs instead of the choice's own route.
+    public async Task<IReadOnlyList<string>?> RunBesideSourcesAsync(string choiceId, IReadOnlyList<string> files, Func<string, Task<string?>> destination, IProgress<OperationProgress> progress, CancellationToken token, Editors.EditorJob? job = null)
+    {
+        var total = files.Count;
+        if (choiceId.StartsWith("convert:", StringComparison.Ordinal))
+        {
+            if (!Capabilities.Formats(files).Contains(choiceId[8..])) throw new NotSupportedException($"{choiceId} is not available for this selection on Linux.");
+            files = Capabilities.ConversionInputs(files, choiceId[8..]);
+        }
+        static string Folder(string file) => Path.GetDirectoryName(Path.GetFullPath(file))!;
+        var combines = choiceId is "createPDF" or "mergePDF" or "createCollage" or "joinVideos" or "quick:zip" || (choiceId == "convert:pdf" && files.All(FeatureCatalog.IsImage));
+        IReadOnlyList<IReadOnlyList<string>> groups = combines ? [files] : [.. files.GroupBy(Folder).Select(g => (IReadOnlyList<string>)[.. g])];
+        var targets = new List<string>();
+        foreach (var group in groups)
+        {
+            if (await destination(Folder(group[0])) is not { } target) return null;
+            targets.Add(target);
+        }
+        var outputs = new List<string>();
+        string? note = null;
+        try
+        {
+            for (var n = 0; n < groups.Count; n++)
+            {
+                var slice = groups.Count == 1 ? progress : new Slice(progress, n, groups.Count);
+                if (job is not null) { Note = null; outputs.AddRange(await job(groups[n], targets[n], slice, token)); }
+                else if (choiceId.StartsWith("convert:", StringComparison.Ordinal))
+                {
+                    Note = null;
+                    outputs.AddRange(await ConvertAsync(groups[n], choiceId[8..], targets[n], slice, token));
+                }
+                else outputs.AddRange(await RunAsync(choiceId, groups[n], targets[n], slice, token));
+                note ??= Note;
+            }
+        }
+        catch
+        {
+            foreach (var done in outputs) Remove(done);
+            throw;
+        }
+        Note = files.Count < total
+            ? string.Join(" · ", new[] { note, L10n.F("Converted {0} of {1} files.", files.Count, total) }.Where(n => n is not null)) : note;
+        return outputs;
+    }
+
+    // An output we published: a file, or an extracted folder.
+    static void Remove(string path)
+    {
+        try
+        {
+            if (Directory.Exists(path)) Directory.Delete(path, recursive: true);
+            else File.Delete(path);
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
+    }
+
+    /// One ExportTransaction around many per-file engine calls, so a cancel or failure leaves nothing behind.
+    static IReadOnlyList<string> Each(IReadOnlyList<string> files, string destination, CancellationToken token, Func<string, string, IReadOnlyList<string>> work)
+    {
+        using var tx = new ExportTransaction(destination);
+        var outputs = files.SelectMany(f => { token.ThrowIfCancellationRequested(); return work(f, tx.StagingDirectory); }).ToList();
+        return tx.Publish(outputs, token);
+    }
+
+    static IReadOnlyList<string> Subtitles(IReadOnlyList<string> files, string format, string destination, CancellationToken token)
+    {
+        using var tx = new ExportTransaction(destination);
+        var outputs = new List<string>();
+        foreach (var input in files)
+        {
+            token.ThrowIfCancellationRequested();
+            var path = SafePaths.Unique(tx.StagingDirectory, Path.GetFileNameWithoutExtension(input) + "." + format);
+            File.WriteAllText(path, SubtitleCodec.Convert(LegacyTextCodec.Decode(File.ReadAllBytes(input)), format), new UTF8Encoding(false));
+            outputs.Add(path);
+        }
+        return tx.Publish(outputs, token);
+    }
+
+    /// Compress routes per file kind (the wheel and the Compress editor for mixed, media and PDF selections); each
+    /// group is its own transaction, and a later failure or cancel removes earlier groups' outputs. `engine` is
+    /// required when there is media; the options default to Balanced.
+    public static async Task<IReadOnlyList<string>> CompressAsync(IReadOnlyList<string> files, string destination, IProgress<OperationProgress> progress, CancellationToken token, MediaEngine? engine, CompressOptions? image = null, MediaOptions? media = null, string password = "")
+    {
+        var images = files.Where(FeatureCatalog.IsImage).ToList();
+        var pdfs = files.Where(f => FeatureCatalog.Extension(f) == "pdf").ToList();
+        var clips = files.Where(f => FeatureCatalog.IsAudio(f) || FeatureCatalog.IsVideo(f)).ToList();
+        if (clips.Count > 0 && engine is null) throw new MissingToolsException(); // fail before any group starts
+        var groups = new List<Func<IProgress<OperationProgress>, Task<IReadOnlyList<string>>>>();
+        if (images.Count > 0) groups.Add(p => Task.Run(() => ImageOperations.Compress(images, destination, p, token, image), token));
+        if (pdfs.Count > 0) groups.Add(p => Task.Run(() => DocumentEngine.Pdf("compress", pdfs, destination, token: token, password: password), token));
+        if (clips.Count > 0) groups.Add(p => engine!.ToolAsync("compress", clips, destination, media ?? new MediaOptions(), p, token));
+        var outputs = new List<string>();
+        try
+        {
+            for (var n = 0; n < groups.Count; n++)
+                outputs.AddRange(await groups[n](new Slice(progress, n, groups.Count)));
+        }
+        catch
+        {
+            foreach (var done in outputs) Remove(done);
+            throw;
+        }
+        return outputs;
+    }
+
+    Task<IReadOnlyList<string>> Media(IProgress<OperationProgress> progress, Func<MediaEngine, IProgress<OperationProgress>, Task<IReadOnlyList<string>>> work) =>
+        work(Engine(), progress);
+
+    // ponytail: needs only ffmpeg+ffprobe, not the full Toolchain.Ready set (yt-dlp, deno are for downloads).
+    MediaEngine Engine()
+    {
+        try { return new MediaEngine(tools.Executable("ffmpeg"), tools.Executable("ffprobe")); }
+        catch (FileNotFoundException) { throw new MissingToolsException(); }
+    }
+
+    sealed class Slice(IProgress<OperationProgress> inner, int index, int count) : IProgress<OperationProgress>
+    {
+        public void Report(OperationProgress value) => inner.Report(value with { Fraction = value.Fraction is { } f ? (index + f) / count : null });
+    }
+}

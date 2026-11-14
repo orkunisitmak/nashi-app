@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RuntimeIdentifiers>linux-x64;linux-arm64</RuntimeIdentifiers>
+    <RuntimeIdentifier Condition="'$(NashiLinuxRuntime)' == ''">linux-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(NashiLinuxRuntime)' != ''">$(NashiLinuxRuntime)</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Headless" Version="11.3.22" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Nashi.Linux/Nashi.Linux.csproj" />
+  </ItemGroup>
+</Project>

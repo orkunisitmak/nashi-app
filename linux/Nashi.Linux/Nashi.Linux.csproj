@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <RuntimeIdentifiers>linux-x64;linux-arm64</RuntimeIdentifiers>
+    <RuntimeIdentifier Condition="'$(NashiLinuxRuntime)' == ''">linux-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(NashiLinuxRuntime)' != ''">$(NashiLinuxRuntime)</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <AssemblyName>Nashi</AssemblyName>
+    <RootNamespace>Nashi.Linux</RootNamespace>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.22" />
+    <PackageReference Include="bblanchon.PDFium.Linux" Version="155.0.8044" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Nashi.Linux.Checks" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../windows/Nashi.Core/Nashi.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <AvaloniaResource Include="../../Resources/Brand/NashiMark.png" Link="Assets/NashiMark.png" />
+    <AvaloniaResource Include="../../Resources/Brand/NashiMarkHappy.png" Link="Assets/NashiMarkHappy.png" />
+    <AvaloniaResource Include="../../Resources/Brand/NashiIcon.png" Link="Assets/NashiIcon.png" />
+    <!-- Also a plain resource: the integration installer runs without Avalonia. -->
+    <EmbeddedResource Include="../../Resources/Brand/NashiIcon.png" LogicalName="Nashi.Icon.png" />
+    <EmbeddedResource Include="Turkish.json" LogicalName="Nashi.Linux.Turkish.json" />
+    <!-- A file beside the executable: paplay/aplay play it by path. -->
+    <!-- The Pages bridge Windows runs: Deno executes the same audited bundle as macOS. -->
+    <None Include="../../Resources/PagesInterop.js" Link="PagesInterop.js" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="../../scripts/pages-windows.js" Link="pages-windows.js" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="../../Resources/Sounds/WheelSelection.wav" Link="Sounds/WheelSelection.wav" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
