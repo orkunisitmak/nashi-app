@@ -44,7 +44,7 @@ struct WelcomeView:View {
                 if page>0 { Button("Back") { page-=1 }.buttonStyle(NashiButtonStyle(.quiet)) }
                 Button(action:page==5 ? onDone:next) { Label(page==5 ? (toolsReady ? "Let’s go":"Set up tools"):"Continue",systemImage:"arrow.right") }.buttonStyle(NashiButtonStyle(.primary)).keyboardShortcut(.defaultAction)
             }.padding(.horizontal,32).padding(.bottom,26)
-        }.frame(width:760,height:520).background(NashiPalette.canvas).clipShape(RoundedRectangle(cornerRadius:28,style:.continuous))
+        }.frame(width:760,height:520).background(NashiPalette.canvas).foregroundStyle(NashiPalette.pageInk).clipShape(RoundedRectangle(cornerRadius:28,style:.continuous))
             .overlay(RoundedRectangle(cornerRadius:28).strokeBorder(NashiPalette.border))
             .tint(.nashi).nashiAnimation(value:page)
             .onAppear { folderAllowed = !FolderAccessPreferences.grants().isEmpty;readLaunchStatus() }

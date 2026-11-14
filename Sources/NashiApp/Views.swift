@@ -26,6 +26,7 @@ struct SettingsView:View {
     @State private var launchError:String?
     @AppStorage("reduceAnimations") private var reduceAnimations=false
     @AppStorage("appAppearance") private var appAppearance="system"
+    @AppStorage("appTheme") private var appTheme="nashi"
     @AppStorage("appLanguage") private var appLanguage="en"
     @AppStorage("windowManagementEnabled") private var windowManagementEnabled=true
     @State private var windowAccessibility=AXIsProcessTrusted()
@@ -40,6 +41,10 @@ struct SettingsView:View {
         if !apps.contains(where:{$0.0==terminalApplication}) { apps.append((terminalApplication,"\(terminalApplication) (Not installed)")) }
         return apps
     }
+    private var appearanceSelection:Binding<String> {
+        Binding(get:{appAppearance},set:{ value in appAppearance=value;NashiAppearance.apply(value) })
+    }
+    private var settingsIdentity:String { appTheme+"-"+appAppearance }
     var body:some View {
         HStack(spacing:0) {
             sidebar
@@ -55,7 +60,7 @@ struct SettingsView:View {
                 }
             }
             .frame(maxWidth:.infinity,maxHeight:.infinity).id(section).transition(.opacity)
-        }.frame(minWidth:790,minHeight:590).background(NashiPalette.canvas).tint(.nashi)
+        }.frame(minWidth:790,minHeight:590).background(NashiPalette.canvas).foregroundStyle(NashiPalette.pageInk).tint(.nashi).id(settingsIdentity)
         .buttonStyle(NashiButtonStyle()).toggleStyle(.switch).groupBoxStyle(NashiGroupBoxStyle()).nashiAnimation(value:section)
         .onAppear(perform:readLaunchStatus)
         .onReceive(NotificationCenter.default.publisher(for:.showUpdateSettings)) { _ in section = .updates }
@@ -86,69 +91,113 @@ struct SettingsView:View {
     private var general:some View {
         ScrollView { VStack(alignment:.leading,spacing:20) {
             NashiPageHeading(eyebrow:"General",title:"Your kind of flow.",subtitle:"A few small preferences. A smoother everyday.").padding(.bottom,4)
-            GroupBox {
-                VStack(spacing:16) {
-                    HStack { Text("Language");Spacer();Picker("Language",selection:$appLanguage) { Text(verbatim:"English").tag("en");Text(verbatim:"Türkçe").tag("tr");Text(verbatim:"Français").tag("fr") }.labelsHidden().frame(width:230).accessibilityIdentifier("AppLanguage") }
-                    HStack { Text("Appearance");Spacer();Picker("Appearance",selection:$appAppearance) { Text("System").tag("system");Text("Light").tag("light");Text("Dark").tag("dark") }.labelsHidden().pickerStyle(.segmented).frame(width:230) }
-                    HStack { Text("Wheel finish");Spacer();Picker("Wheel finish",selection:$fanTheme) { Text("Glass").tag("glass");Text("Solid").tag("metallic") }.labelsHidden().pickerStyle(.segmented).frame(width:230) }
-                    Divider()
-                    Toggle("Launch at login",isOn:Binding(get:{launch},set:updateLaunch)).disabled(launchUnavailable)
-                    if launchNeedsApproval { HStack { Text("Allow Nashi in macOS Login Items.").font(.caption).foregroundStyle(.secondary);Spacer();Button("Open Login Items") { SMAppService.openSystemSettingsLoginItems() } } }
-                    if launchUnavailable { Text("Launch at login is unavailable for this copy.").font(.caption).foregroundStyle(.secondary) }
-                    if let launchError { Text(launchError).font(.caption).foregroundStyle(.secondary) }
-                    HStack {
-                        Toggle("Sound and haptic feedback",isOn:$feedback)
-                        Button("Try feedback") { _ = WheelFeedback.shared.testPreview() }
-                            .disabled(!feedback)
-                    }
-                    Text("Sound follows your Mac’s volume. Haptics need a compatible Force Touch trackpad.")
-                        .font(.caption).foregroundStyle(.secondary).frame(maxWidth:.infinity,alignment:.leading)
-                    Toggle("Subtle animations",isOn:Binding(get:{!reduceAnimations},set:{reduceAnimations = !$0}))
-                    if systemReducedMotion { Text("macOS Reduce Motion is on. Nashi keeps motion off.").font(.caption).foregroundStyle(.secondary) }
-                }.padding(10)
-            }
-            GroupBox("Drag shortcuts") {
-                VStack(alignment:.leading,spacing:16) {
-                    ForEach(WheelShortcut.allCases) { wheel in HStack {
-                        LText(wheel.title);Spacer()
-                        Picker(LocalizedStringKey(wheel.title),selection:shortcut(wheel)) { ForEach(ModifierPreferences.available(for:wheel)) { chord in Text("\(chord.symbols)  \(chord.title)").tag(chord.rawValue) } }.labelsHidden().frame(maxWidth:240)
-                    } }
-                    Text("Tap the chosen modifier combination while dragging files.").font(.caption).foregroundStyle(.secondary)
-                }.padding(10)
-            }.id(shortcutsRevision)
-            GroupBox("Window management") {
-                VStack(alignment:.leading,spacing:13) {
-                    Toggle("Arrange windows while dragging",isOn:$windowManagementEnabled)
-                    Text("Drag a window by its title bar or resize border, then tap Shift or Command. Hover over a layout and release the mouse to place it. Escape cancels.")
-                        .font(.caption).foregroundStyle(.secondary)
-                    Text("1/3 left · middle · right   /   1/2 left · right   /   2/3 left · right")
-                        .font(.caption).foregroundStyle(.secondary)
-                    if !windowAccessibility {
-                        HStack {
-                            Text("Allow \(WindowManagementController.permissionName) once to move and resize other apps’ windows.").font(.caption).foregroundStyle(.secondary)
-                            Spacer()
-                            Button("Open permission settings…") { WindowManagementController.requestAccess() }
-                        }
-                        if Bundle.main.bundleIdentifier == "local.tangerine.replica" {
-                            Text("Upgraded from Tangerine? macOS may still show the previous name. Choose this Nashi app when adding it to \(WindowManagementController.permissionName).").font(.caption).foregroundStyle(.secondary)
-                            Button("Show Nashi in Finder") { NSWorkspace.shared.activateFileViewerSelecting([Bundle.main.bundleURL]) }
-                        }
-                    } else { Label("\(WindowManagementController.permissionName) is enabled",systemImage:"checkmark.circle").font(.caption).foregroundStyle(.secondary) }
-                }.padding(10)
-            }
-            .onReceive(Timer.publish(every:2,on:.main,in:.common).autoconnect()) { _ in windowAccessibility=AXIsProcessTrusted() }
-            GroupBox("File actions") {
-                VStack(spacing:16) {
-                    HStack { Text("Float Behaviour");Spacer();Picker("Float behavior",selection:$floatBehavior) { Text("Create a New Float").tag("createNew");Text("Add Files to an Existing Float").tag("addToExisting") }.labelsHidden().frame(maxWidth:240) }
-                    HStack { Text("Terminal app");Spacer();Picker("Terminal app",selection:$terminalApplication) { ForEach(terminalApplications,id:\.0) { app in Text(app.1).tag(app.0) } }.labelsHidden().frame(maxWidth:240) }
-                }.padding(10)
-            }
-            DisclosureGroup("Additional options") { VStack(alignment:.leading,spacing:13) {
-                Toggle("Enable Nashi",isOn:$enabled)
-                Toggle("Reveal finished files in Finder",isOn:$reveal)
-                HStack { Text("Wheel size");Slider(value:$wheelScale,in:0.85...1.4).frame(width:230);Text(Int(wheelScale*100),format:.percent).monospacedDigit().frame(width:40) }
-            }.padding(.top,12) }
+            generalPreferences
+            dragShortcuts
+            windowManagementSettings
+            fileActions
+            additionalOptions
         }.padding(26).frame(maxWidth:680) }.frame(maxWidth:.infinity)
+    }
+    private var generalPreferences:some View {
+        GroupBox {
+            VStack(spacing:16) {
+                HStack { Text("Language");Spacer();languagePicker }
+                HStack { Text("Appearance");Spacer();appearancePicker }
+                HStack { Text("Theme");Spacer();themePicker }
+                HStack { Text("Wheel finish");Spacer();wheelFinishPicker }
+                Divider()
+                Toggle("Launch at login",isOn:Binding(get:{launch},set:updateLaunch)).disabled(launchUnavailable)
+                if launchNeedsApproval { HStack { Text("Allow Nashi in macOS Login Items.").font(.caption).foregroundStyle(.secondary);Spacer();Button("Open Login Items") { SMAppService.openSystemSettingsLoginItems() } } }
+                if launchUnavailable { Text("Launch at login is unavailable for this copy.").font(.caption).foregroundStyle(.secondary) }
+                if let launchError { Text(launchError).font(.caption).foregroundStyle(.secondary) }
+                HStack {
+                    Toggle("Sound and haptic feedback",isOn:$feedback)
+                    Button("Try feedback") { _ = WheelFeedback.shared.testPreview() }
+                        .disabled(!feedback)
+                }
+                Text("Sound follows your Mac’s volume. Haptics need a compatible Force Touch trackpad.")
+                    .font(.caption).foregroundStyle(.secondary).frame(maxWidth:.infinity,alignment:.leading)
+                Toggle("Subtle animations",isOn:Binding(get:{!reduceAnimations},set:{reduceAnimations = !$0}))
+                if systemReducedMotion { Text("macOS Reduce Motion is on. Nashi keeps motion off.").font(.caption).foregroundStyle(.secondary) }
+            }.padding(10)
+        }
+    }
+    private var languagePicker:some View {
+        Picker("Language",selection:$appLanguage) { Text(verbatim:"English").tag("en");Text(verbatim:"Türkçe").tag("tr");Text(verbatim:"Français").tag("fr") }
+            .labelsHidden().frame(width:230).foregroundStyle(.primary).accessibilityIdentifier("AppLanguage")
+    }
+    private var appearancePicker:some View {
+        Picker("Appearance",selection:appearanceSelection) { Text("System").tag("system");Text("Light").tag("light");Text("Dark").tag("dark") }
+            .labelsHidden().pickerStyle(.segmented).frame(width:230)
+    }
+    private var themePicker:some View {
+        Picker("Theme",selection:$appTheme) { ForEach(NashiTheme.allCases,id:\.rawValue) { theme in Text(theme.title).tag(theme.rawValue) } }
+            .labelsHidden().frame(width:230).foregroundStyle(.primary).accessibilityIdentifier("AppTheme")
+    }
+    private var wheelFinishPicker:some View {
+        Picker("Wheel finish",selection:$fanTheme) { Text("Glass").tag("glass");Text("Solid").tag("metallic") }
+            .labelsHidden().pickerStyle(.segmented).frame(width:230)
+    }
+    private var dragShortcuts:some View {
+        GroupBox("Drag shortcuts") {
+            VStack(alignment:.leading,spacing:16) {
+                ForEach(WheelShortcut.allCases) { wheel in dragShortcutRow(wheel) }
+                Text("Tap the chosen modifier combination while dragging files.").font(.caption).foregroundStyle(.secondary)
+            }.padding(10)
+        }.id(shortcutsRevision)
+    }
+    private func dragShortcutRow(_ wheel:WheelShortcut)->some View {
+        HStack {
+            LText(wheel.title);Spacer()
+            Picker(LocalizedStringKey(wheel.title),selection:shortcut(wheel)) { ForEach(ModifierPreferences.available(for:wheel)) { chord in Text("\(chord.symbols)  \(chord.title)").tag(chord.rawValue) } }
+                .labelsHidden().frame(maxWidth:240).foregroundStyle(.primary)
+        }
+    }
+    private var windowManagementSettings:some View {
+        GroupBox("Window management") {
+            VStack(alignment:.leading,spacing:13) {
+                Toggle("Arrange windows while dragging",isOn:$windowManagementEnabled)
+                Text("Drag a window by its title bar or resize border, then tap Shift or Command. Hover over a layout and release the mouse to place it. Escape cancels.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Text("1/3 left · middle · right   /   1/2 left · right   /   2/3 left · right")
+                    .font(.caption).foregroundStyle(.secondary)
+                if !windowAccessibility {
+                    HStack {
+                        Text("Allow \(WindowManagementController.permissionName) once to move and resize other apps’ windows.").font(.caption).foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Open permission settings…") { WindowManagementController.requestAccess() }
+                    }
+                    if Bundle.main.bundleIdentifier == "local.tangerine.replica" {
+                        Text("Upgraded from Tangerine? macOS may still show the previous name. Choose this Nashi app when adding it to \(WindowManagementController.permissionName).").font(.caption).foregroundStyle(.secondary)
+                        Button("Show Nashi in Finder") { NSWorkspace.shared.activateFileViewerSelecting([Bundle.main.bundleURL]) }
+                    }
+                } else { Label("\(WindowManagementController.permissionName) is enabled",systemImage:"checkmark.circle").font(.caption).foregroundStyle(.secondary) }
+            }.padding(10)
+        }
+        .onReceive(Timer.publish(every:2,on:.main,in:.common).autoconnect()) { _ in windowAccessibility=AXIsProcessTrusted() }
+    }
+    private var fileActions:some View {
+        GroupBox("File actions") {
+            VStack(spacing:16) {
+                HStack { Text("Float Behaviour");Spacer();floatBehaviorPicker }
+                HStack { Text("Terminal app");Spacer();terminalPicker }
+            }.padding(10)
+        }
+    }
+    private var floatBehaviorPicker:some View {
+        Picker("Float behavior",selection:$floatBehavior) { Text("Create a New Float").tag("createNew");Text("Add Files to an Existing Float").tag("addToExisting") }
+            .labelsHidden().frame(maxWidth:240).foregroundStyle(.primary)
+    }
+    private var terminalPicker:some View {
+        Picker("Terminal app",selection:$terminalApplication) { ForEach(terminalApplications,id:\.0) { app in Text(app.1).tag(app.0) } }
+            .labelsHidden().frame(maxWidth:240).foregroundStyle(.primary)
+    }
+    private var additionalOptions:some View {
+        DisclosureGroup("Additional options") { VStack(alignment:.leading,spacing:13) {
+            Toggle("Enable Nashi",isOn:$enabled)
+            Toggle("Reveal finished files in Finder",isOn:$reveal)
+            HStack { Text("Wheel size");Slider(value:$wheelScale,in:0.85...1.4).frame(width:230);Text(Int(wheelScale*100),format:.percent).monospacedDigit().frame(width:40) }
+        }.padding(.top,12) }
     }
     private var formats:some View {
         HStack(spacing:0) {

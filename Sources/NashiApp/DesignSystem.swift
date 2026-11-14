@@ -1,26 +1,34 @@
 import AppKit
 import SwiftUI
 
-// One shared visual language, with native light/dark appearance and motion preferences.
+// Shared colors. appTheme selects Nashi or Morphicfolio; appearance still selects light, dark, or system.
+enum NashiTheme:String,CaseIterable {
+    case nashi,morphicfolio
+    var title:String { self == .nashi ? "Nashi":"Morphicfolio" }
+    static var current:NashiTheme { NashiTheme(rawValue:UserDefaults.standard.string(forKey:"appTheme") ?? "nashi") ?? .nashi }
+}
 enum NashiPalette {
-    static func adaptive(_ light:(Double,Double,Double),_ dark:(Double,Double,Double))->NSColor {
+    static func adaptive(_ nashiLight:(Double,Double,Double),_ nashiDark:(Double,Double,Double),_ morphicLight:(Double,Double,Double),_ morphicDark:(Double,Double,Double))->NSColor {
         NSColor(name:nil) { appearance in
-            let rgb=appearance.bestMatch(from:[.darkAqua,.aqua]) == .darkAqua ? dark:light
+            let dark=appearance.bestMatch(from:[.darkAqua,.aqua]) == .darkAqua
+            let rgb=NashiTheme.current == .morphicfolio ? (dark ? morphicDark:morphicLight):(dark ? nashiDark:nashiLight)
             return NSColor(srgbRed:rgb.0,green:rgb.1,blue:rgb.2,alpha:1)
         }
     }
-    static let canvas=Color(nsColor:adaptive((0.976,0.965,0.930),(0.065,0.100,0.079)))
-    static let surface=Color(nsColor:adaptive((1,0.993,0.967),(0.110,0.155,0.122)))
-    static let inset=Color(nsColor:adaptive((0.945,0.930,0.880),(0.082,0.121,0.094)))
-    static let forest=Color(nsColor:adaptive((0.19,0.33,0.23),(0.70,0.82,0.62)))
-    static let sand=Color(nsColor:adaptive((0.965,0.906,0.746),(0.235,0.205,0.130)))
-    static let sage=Color(nsColor:adaptive((0.877,0.921,0.824),(0.140,0.221,0.156)))
+    static let canvas=Color(nsColor:adaptive((0.976,0.965,0.930),(0.065,0.100,0.079),(0.965,0.961,0.949),(0.075,0.071,0.067)))
+    static let surface=Color(nsColor:adaptive((1,0.993,0.967),(0.110,0.155,0.122),(0.992,0.988,0.976),(0.118,0.110,0.102)))
+    static let inset=Color(nsColor:adaptive((0.945,0.930,0.880),(0.082,0.121,0.094),(0.910,0.902,0.878),(0.157,0.149,0.137)))
+    static let slateInk=adaptive((0.145,0.165,0.118),(0.925,0.949,0.906),(0.102,0.094,0.086),(0.945,0.929,0.902))
+    static let pageInk=Color(nsColor:slateInk)
+    static let forest=Color(nsColor:adaptive((0.19,0.33,0.23),(0.70,0.82,0.62),(0.176,0.165,0.149),(0.910,0.886,0.835)))
+    static let sand=Color(nsColor:adaptive((0.965,0.906,0.746),(0.235,0.205,0.130),(0.933,0.910,0.855),(0.227,0.196,0.149)))
+    static let sage=Color(nsColor:adaptive((0.877,0.921,0.824),(0.140,0.221,0.156),(0.910,0.894,0.855),(0.227,0.208,0.176)))
     static let border=Color.primary.opacity(0.075)
-    static let gold=NashiArtwork.gold
-    static let ink=NashiArtwork.ink
-    static let goldInk=Color(nsColor:adaptive((0.44,0.31,0.09),(0.91,0.77,0.46)))
-    static let buttonInk=Color(red:0.17,green:0.21,blue:0.11)
-    static let goldEnd=Color(red:0.96,green:0.82,blue:0.49)
+    static let gold=adaptive((0.89,0.72,0.35),(0.89,0.72,0.35),(0.145,0.133,0.118),(0.910,0.855,0.745))
+    static let ink=adaptive((0.20,0.25,0.14),(0.20,0.25,0.14),(0.965,0.953,0.925),(0.102,0.090,0.075))
+    static let goldInk=Color(nsColor:adaptive((0.44,0.31,0.09),(0.91,0.77,0.46),(0.290,0.255,0.196),(0.910,0.835,0.690)))
+    static let buttonInk=Color(nsColor:adaptive((0.17,0.21,0.11),(0.17,0.21,0.11),(0.965,0.953,0.925),(0.102,0.090,0.075)))
+    static let goldEnd=Color(nsColor:adaptive((0.96,0.82,0.49),(0.96,0.82,0.49),(0.290,0.267,0.235),(0.965,0.925,0.835)))
 }
 extension Color { static let nashi=Color(nsColor:NashiPalette.gold) }
 
