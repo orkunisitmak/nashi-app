@@ -67,6 +67,31 @@ struct JobRecord:Codable,Identifiable {
         let record:JobRecord?
         init(from decoder:Decoder) throws { record=try? JobRecord(from:decoder) }
     }
+    /// Removes a single Library history entry by its identifier.
+    /// - Parameter id: The UUID of the history entry to remove.
+    /// - Behavior: Aborts if a job is in progress (`working == true`). Only calls `saveHistory()` when an entry
+    ///   was actually removed. If the removed entry was the currently selected one, selection is restored to
+    ///   the first remaining history entry (or cleared to `nil` when no entries remain).
+    func removeHistoryEntry(_ id:UUID) {
+        guard !working else { return }
+        let previous=history
+        history.removeAll{$0.id==id}
+        guard history.count != previous.count else { return }
+        if selectedHistoryID==id {
+            selectedHistoryID=filteredHistory.first?.id
+        }
+        saveHistory()
+    }
+
+    /// Permanently removes all Library history entries after user confirmation.
+    /// - Behavior: Aborts if a job is in progress (`working == true`). Clears all history, resets selection,
+    ///   and persists the empty state via `saveHistory()`.
+    func clearHistory() {
+        guard !working else { return }
+        history.removeAll()
+        selectedHistoryID=nil
+        saveHistory()
+    }
     func retainToolWindow(_ window:NSWindow) {
         toolWindows.append(window);let id=ObjectIdentifier(window)
         windowObservers[id]=NotificationCenter.default.addObserver(forName:NSWindow.willCloseNotification,object:window,queue:.main) { [weak self] _ in Task { @MainActor in guard let self else { return };self.toolWindows.removeAll{ObjectIdentifier($0)==id};if let token=self.windowObservers.removeValue(forKey:id) { NotificationCenter.default.removeObserver(token) } } }
@@ -191,6 +216,17 @@ struct JobRecord:Codable,Identifiable {
         history=Array(history.prefix(50))
         if let data=try? JSONEncoder().encode(history) { historyDefaults.set(data,forKey:"history") }
         reportSuccess(.filesReady(files))
+    }
+    private func saveHistory() {
+        do {
+            let data = try JSONEncoder().encode(history)
+            historyDefaults.set(data,forKey:"history")
+        } catch {
+            print("Failed to save history: \(error)")
+        }
+    }
+    private func loadHistory() {
+        if let data=historyDefaults.data(forKey:"history"),let items=try? JSONDecoder().decode([StoredJobRecord].self,from:data) { history=items.compactMap(\.record) }
     }
 }
 

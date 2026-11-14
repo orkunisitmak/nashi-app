@@ -1436,5 +1436,17 @@
   "YouTube thumbnail · best available full-size image": "YouTube küçük resmi · en iyi tam boyutlu görsel",
   "No tools for this file type": "Bu dosya türü için araç yok",
   "Details": "Ayrıntılar",
-  "Copy details": "Ayrıntıları kopyala"
+  "Copy details": "Ayrıntıları kopyala",
+  "Clear history": "Geçmişi Temizle",
+  "Clear Library": "Kitaplığı Temizle",
+  "Clear All": "Tümünü Temizle",
+  "Remove from Library": "Kitaplıktan Kaldır",
+  "Remove {0} from Library": "{0} Kitaplıktan Kaldır",
+  "This will permanently remove all library entries. This action cannot be undone.": "Bu işlem tüm kitaplık kayıtlarını kalıcı olarak silecektir. Bu işlem geri alınamaz.",
+  "Permanently remove entries from your Library.": "Kitaplıktan kayıtları kalıcı olarak kaldırır.",
+  "Library cleared.": "Kitaplık temizlendi.",
+  "Removed from Library.": "Kitaplıktan kaldırıldı.",
+  "Remove all Library entries? This cannot be undone.": "Tüm kitaplık kayıtlarını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.",
+  "Could not save Library changes. Your entries are intact.": "Kitaplık değişiklikleri kaydedilemedi. Kayıtlarınızın tamamı korundu.",
+  "Clear all Library entries": "Kitaplıktaki tüm kayıtları temizle"
 }
