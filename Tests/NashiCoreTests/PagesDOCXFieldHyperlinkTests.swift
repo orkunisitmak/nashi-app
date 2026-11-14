@@ -41,6 +41,33 @@ final class PagesDOCXFieldHyperlinkTests: XCTestCase {
         XCTAssertEqual(runs.first?.link, "https://example.com/site")
     }
 
+    /// A field's instruction ends at its first separate: instruction text after it does not add a link.
+    func testInstructionAfterTheFirstSeparateIsIgnored() throws {
+        let begin = "<w:r><w:fldChar w:fldCharType=\"begin\"/></w:r><w:r><w:instrText xml:space=\"preserve\"> HYPERLINK </w:instrText></w:r>"
+        let separate = "<w:r><w:fldChar w:fldCharType=\"separate\"/></w:r>"
+        let late = "<w:r><w:instrText>\"https://example.com/late\"</w:instrText></w:r>"
+        let field = begin + separate + late + separate + run("Plain") + "<w:r><w:fldChar w:fldCharType=\"end\"/></w:r>"
+        let runs = try convert(name: "Late instruction", body: "<w:p>\(field)</w:p>")
+        XCTAssertEqual(runs.map(\.text), ["Plain"])
+        XCTAssertEqual(runs.first?.link, nil)
+    }
+
+    /// Repeated separate markers, each after more instruction text, must not re-read the instruction every time.
+    func testRepeatedSeparatesResolveTheLinkOnce() throws {
+        var body = "<w:p><w:r><w:fldChar w:fldCharType=\"begin\"/></w:r>"
+        body += "<w:r><w:instrText xml:space=\"preserve\"> HYPERLINK \"https://example.com/first\" " + String(repeating: "x", count: 20_000) + "</w:instrText></w:r>"
+        body += "<w:r><w:fldChar w:fldCharType=\"separate\"/></w:r>"
+        let repeated = "<w:r><w:instrText xml:space=\"preserve\"> \"https://example.com/late\"</w:instrText><w:fldChar w:fldCharType=\"separate\"/></w:r>"
+        body += String(repeating: repeated, count: 20_000)
+        body += run("Linked") + "<w:r><w:fldChar w:fldCharType=\"end\"/></w:r></w:p>"
+        let start = Date()
+        let runs = try convert(name: "Repeated separates", body: body)
+        let elapsed = Date().timeIntervalSince(start)
+        XCTAssertEqual(runs.map(\.text), ["Linked"])
+        XCTAssertEqual(runs.first?.link, "https://example.com/first")
+        XCTAssertLessThan(elapsed, 20, "Converting took \(elapsed) s")
+    }
+
     private func run(_ text: String) -> String { "<w:r><w:t xml:space=\"preserve\">\(text)</w:t></w:r>" }
 
     private func fieldRuns(instruction: String, result: String) -> String {

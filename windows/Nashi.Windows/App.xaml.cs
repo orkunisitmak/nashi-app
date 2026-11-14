@@ -73,6 +73,29 @@ public partial class App:Application
         }
         if(e.Args.Length==2&&e.Args[0]=="--apply-update"){try{Shutdown(UpdateInstaller.Apply(e.Args[1]));}catch(Exception error){UseSavedLanguage();MessageBox.Show(L10n.Text(error.Message),L10n.Text("Nashi update could not finish"));Shutdown(1);}return;}
         if(e.Args.Contains("--verify-update-state")){try{ShutdownMode=ShutdownMode.OnExplicitShutdown;SmokeTests.VerifyUpdateState();Shutdown(0);}catch(Exception error){Console.Error.WriteLine(error);Shutdown(1);}return;}
+        if(e.Args.Contains("--smoke-test-file-actions"))
+        {
+            IsSmokeTest=true;ShutdownMode=ShutdownMode.OnExplicitShutdown;
+            var root=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY")??Path.GetTempPath();
+            var directory=Path.Combine(root,"Nashi-FileActionsSmoke-"+Guid.NewGuid().ToString("N"));
+            try
+            {
+                Directory.CreateDirectory(directory);
+                var assertions=ParitySmokeTests.RunMoveChecks(directory,(passed,reason)=>{if(!passed)throw new Exception(reason);});
+                var report=new{passed=assertions,scenarios=7,status="All MoveAsync scenarios passed"};
+                var json=System.Text.Json.JsonSerializer.Serialize(report,new System.Text.Json.JsonSerializerOptions{WriteIndented=true});
+                File.WriteAllText(Path.Combine(directory,"file-actions.json"),json);
+                Console.WriteLine(json);
+                Shutdown(0);
+            }
+            catch(Exception error)
+            {
+                Console.Error.WriteLine(error);
+                try{Directory.CreateDirectory(directory);File.WriteAllText(Path.Combine(directory,"error.txt"),error.ToString());}catch{}
+                Shutdown(1);
+            }
+            return;
+        }
         if(e.Args.Contains("--smoke-test")){IsSmokeTest=true;try{NativeExceptionTrace.Install();SmokeTests.Run();Shutdown(0);}catch(Exception error){Console.Error.WriteLine(error);var directory=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");if(directory is not null){Directory.CreateDirectory(directory);File.WriteAllText(Path.Combine(directory,"error.txt"),error.ToString());}Shutdown(1);}return;}
         if(e.Args.Length==1&&e.Args[0]=="--install-update"){ShutdownMode=ShutdownMode.OnExplicitShutdown;_ = InstallUpdateAsync();return;}
         instance=new SingleInstance();Exit+=(_,_)=>instance.Dispose();var paths=e.Args.Where(p=>File.Exists(p)||Directory.Exists(p)).ToArray();

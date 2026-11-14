@@ -32,7 +32,8 @@ struct ToolEditor:View {
     @State private var rightWaveform:[Float]=[]
     @State private var mediaPreviewFolder:URL?
     @State private var playbackURL:URL?
-    @State private var previewBusy=false
+    @State private var processedPreviewBusy=false
+    @State private var visualizationBusy=false
     @State private var isLoading=true
     @State private var readyToApply=false
     @State private var loadRevision=UUID()
@@ -48,6 +49,7 @@ struct ToolEditor:View {
     @State private var seeking=false
     @State private var previewError:String?
     @State private var imageSize=CGSize(width:100,height:100)
+    @State private var pixelAspect=1.0
     @State private var duration=0.0
     @State private var frameRate=30.0
     @State private var playhead=0.0
@@ -85,6 +87,7 @@ struct ToolEditor:View {
     @Environment(\.locale) private var locale
 
     var input:URL? { inputs.first }
+    var previewBusy:Bool { processedPreviewBusy || visualizationBusy }
     var category:FileCategory { input.map(FileCategory.detect) ?? .other }
     var isGIFMetadata:Bool { input?.pathExtension.lowercased()=="gif" }
     var usesImageMetadata:Bool { category == .image || isGIFMetadata }
@@ -201,7 +204,8 @@ struct ToolEditor:View {
         switch tool {
         case .cropImage,.cropVideo:
             guard !cropInteracting,let crop=options.crop else { return false }
-            return crop.x>=0 && crop.y>=0 && crop.width>=1 && crop.height>=1 && crop.x+crop.width<=imageSize.width && crop.y+crop.height<=imageSize.height
+            let minSide=tool == .cropVideo ? MediaEngine.minimumVideoCropSide:1
+            return crop.x>=0 && crop.y>=0 && crop.width>=minSide && crop.height>=minSide && crop.x+crop.width<=imageSize.width && crop.y+crop.height<=imageSize.height
         case .removeMetadata where isGIFMetadata:return metadataRemoveAll
         case .splitVideo:return (!options.splitPoints.isEmpty || options.equalClips != nil) && options.discardedClips.count<splitIntervals.count
         case .videoSnapshots:return !options.snapshotTimes.isEmpty
@@ -234,7 +238,7 @@ struct ToolEditor:View {
             slider("Left volume",value:$options.leftVolume,range:0...2,unit:"×");slider("Right volume",value:$options.rightVolume,range:0...2,unit:"×")
             HStack { Button("Preview Left") { previewChannel(0) };Button("Preview Right") { previewChannel(1) };Button("Original") { playOriginal() } }
         case .splitVideo:
-            HStack { Text("\(options.splitPoints.count) split point\(options.splitPoints.count==1 ? "":"s")");Spacer();Button("Add Split",action:addSplitPoint).disabled(!canAddSplitPoint).help("Add split at playhead (M)") }
+            HStack { LText(options.splitPoints.count==1 ? "1 split point":"\(options.splitPoints.count) split points");Spacer();Button("Add Split",action:addSplitPoint).disabled(!canAddSplitPoint).help("Add split at playhead (M)") }
             ForEach(Array(options.splitPoints.enumerated()),id:\.offset) { index,time in HStack { Text(timeLabel(time));Spacer();Button { options.equalClips=nil;options.splitPoints.remove(at:index) } label:{Image(systemName:"xmark.circle")} } }
             HStack { Stepper("Equal clips: \(equalClips)",value:$equalClips,in:2...100);Button("Set") { options.equalClips=equalClips;options.splitPoints=(1..<equalClips).map{duration*Double($0)/Double(equalClips)} } }
             splitEditingControls
@@ -265,7 +269,8 @@ struct ToolEditor:View {
     }
     var compressionControls:some View {
         VStack(alignment:.leading,spacing:18) {
-            if let input,let size=try? input.resourceValues(forKeys:[.fileSizeKey]).fileSize { LText("Original size: \(Int64(size).formatted(.byteCount(style:.file).locale(locale)))").fontWeight(.semibold) }
+            // A symlink's own size is a few bytes; show the size of the file it points to.
+            if let input,let size=try? input.resolvingSymlinksInPath().resourceValues(forKeys:[.fileSizeKey]).fileSize { LText("Original size: \(Int64(size).formatted(.byteCount(style:.file).locale(locale)))").fontWeight(.semibold) }
             Text("Compression preset").font(.headline)
             Picker("Preset",selection:$preset) { Text("Balanced").tag("Balanced");Text("Strong").tag("Strong") }.pickerStyle(.segmented).labelsHidden()
             Text(preset=="Balanced" ? "Smaller files with less quality loss.":"Smaller files with stronger compression.").foregroundStyle(.secondary).font(.callout)
@@ -407,7 +412,7 @@ struct ToolEditor:View {
             Text("Drag on the preview to add an area. Each area is saved into the new copy.").font(.caption).foregroundStyle(.secondary)
             if tool == .redactImage { HStack { Button("Detect Faces") { detectRedactions(faces:true) };Button("Detect Text") { detectRedactions(faces:false) } } }
             if tool == .redactVideo { timeRangeFields }
-            Text("\(options.redactions.count) area\(options.redactions.count==1 ? "":"s") selected")
+            LText(options.redactions.count==1 ? "1 area selected":"\(options.redactions.count) areas selected")
             if tool == .redactVideo { ForEach(Array(options.videoRedactions.enumerated()),id:\.offset) { index,redaction in HStack {
                 LText("Area \(index+1)");TextField("Start",value:Binding(get:{options.videoRedactions[index].start},set:{options.videoRedactions[index].start=$0}),format:.number)
                 TextField("End",value:Binding(get:{options.videoRedactions[index].end ?? duration},set:{options.videoRedactions[index].end=$0}),format:.number)
@@ -506,13 +511,17 @@ struct ToolEditor:View {
             }
         }.frame(height:420).background(Color.black.opacity(0.94)).cornerRadius(20)
     }
+    // The player stretches non-square pixels, so the canvas over it works in displayed
+    // units while crop and redaction areas stay in video pixels.
+    func shown(_ r:EditRect)->EditRect { EditRect(x:r.x*pixelAspect,y:r.y,width:r.width*pixelAspect,height:r.height) }
+    func stored(_ r:EditRect)->EditRect { EditRect(x:r.x/pixelAspect,y:r.y,width:r.width/pixelAspect,height:r.height) }
     var mediaPreview:some View {
         VStack(spacing:10) {
             if let player {
                 ZStack {
                     PlayerView(player:player,onTime:updatePlayhead,onPlayback:{isPlaying=$0},hiddenControls:true)
                         .id(ObjectIdentifier(player)).frame(height:audio && tool != .audioToVideo ? 0:330)
-                    if (tool == .cropVideo || tool == .redactVideo) && !processedPlayback { ImageEditPreview(image:nil,imageSize:imageSize,crop:tool == .cropVideo ? options.crop:nil,redactions:options.redactions,annotations:[],redactionColor:Color(cgColor:ImageEngine.color(options.backgroundColor).copy(alpha:1)!),activeRedactions:tool == .redactVideo ? activeVideoRegions:nil,onMoveRedaction:{i,r in options.redactions[i]=r;if options.videoRedactions.indices.contains(i) { options.videoRedactions[i].rect=r }},onMoveCrop:setCrop,cropEnabled:tool == .cropVideo,cropAspectRatio:cropAspectRatio,onCropInteraction:cropInteraction) { rect in if tool == .cropVideo { setCrop(rect) } else { options.redactions.append(rect);options.videoRedactions.append(VideoRedaction(rect:rect,start:options.start,end:options.end)) } }.frame(height:330) }
+                    if (tool == .cropVideo || tool == .redactVideo) && !processedPlayback { ImageEditPreview(image:nil,imageSize:CGSize(width:imageSize.width*pixelAspect,height:imageSize.height),crop:tool == .cropVideo ? options.crop.map(shown):nil,redactions:options.redactions.map(shown),annotations:[],redactionColor:Color(cgColor:ImageEngine.color(options.backgroundColor).copy(alpha:1)!),activeRedactions:tool == .redactVideo ? activeVideoRegions:nil,onMoveRedaction:{i,r in let r=stored(r);options.redactions[i]=r;if options.videoRedactions.indices.contains(i) { options.videoRedactions[i].rect=r }},onMoveCrop:{ setCrop(stored($0)) },cropEnabled:tool == .cropVideo,cropAspectRatio:cropAspectRatio,onCropInteraction:cropInteraction) { rect in let rect=stored(rect);if tool == .cropVideo { setCrop(rect) } else { options.redactions.append(rect);options.videoRedactions.append(VideoRedaction(rect:rect,start:options.start,end:options.end)) } }.frame(height:330) }
                 }.cornerRadius(10)
             }
             if tool == .audioToVideo {
@@ -540,7 +549,8 @@ struct ToolEditor:View {
     var playbackDuration:Double { if processedPlayback,let processedDuration { return processedDuration };return tool == .audioToVideo && visualizationReady ? min(duration,12):duration }
     var activeVideoRegions:Set<Int> { options.redactionMode == "blur" ? []:Set(options.videoRedactions.enumerated().filter{playhead >= $0.element.start && playhead < ($0.element.end ?? duration)}.map{$0.offset}) }
     var compressionResultText:String {
-        func bytes(_ urls:[URL])->Int64 { urls.reduce(0) { $0+((try? FileManager.default.attributesOfItem(atPath:$1.path)[.size] as? NSNumber)?.int64Value ?? 0) } }
+        // Symlinked inputs count as the files they point to, not as the links.
+        func bytes(_ urls:[URL])->Int64 { urls.reduce(0) { $0+((try? FileManager.default.attributesOfItem(atPath:$1.resolvingSymlinksInPath().path)[.size] as? NSNumber)?.int64Value ?? 0) } }
         let before=bytes(inputs),after=bytes(state.outputs)
         if before==after { return "Already optimized. Original quality retained." }
         let size=after.formatted(.byteCount(style:.file).locale(locale))
@@ -599,7 +609,7 @@ struct ToolEditor:View {
                 let info=try await Task.detached { try MediaEngine.inspect(input,token:token) }.value
                 try checkGeneration(generation,token:token)
                 duration=info.duration;options.end=duration
-                if let v=info.video { imageSize=CGSize(width:v.width ?? 100,height:v.height ?? 100);width=v.width ?? 100;height=v.height ?? 100;frameRate=max(1,v.frameRate ?? 30) }
+                if let v=info.video { imageSize=CGSize(width:v.width ?? 100,height:v.height ?? 100);pixelAspect=v.sampleAspectRatio;width=v.width ?? 100;height=v.height ?? 100;frameRate=max(1,v.frameRate ?? 30) }
                 if category == .video { let generator=AVAssetImageGenerator(asset:AVURLAsset(url:input));generator.appliesPreferredTrackTransform=true;if let cg=try? generator.copyCGImage(at:.zero,actualTime:nil) { image=NSImage(cgImage:cg,size:.zero) } }
                 if audio || video {
                     let prepared=try await withTaskCancellationHandler(operation:{try await MediaPreviewEngine.prepare(input,token:token)},onCancel:{token.cancel()})
@@ -638,9 +648,9 @@ struct ToolEditor:View {
         disposeMedia();previewToken=CancellationToken();visualizationToken=CancellationToken();collagePreviewImages=[:]
         isLoading=true;readyToApply=false;inputs=originalInputs;options=OperationOptions()
         pdfEditor.reset();selectedSplitClip=nil;aspect="Free";cropInteracting=false;equalClips=2
-        width=0;height=0;image=nil;baseImage=nil;imageSize=CGSize(width:100,height:100);previewSize=nil;previewZoom=1;showOriginal=false
+        width=0;height=0;image=nil;baseImage=nil;imageSize=CGSize(width:100,height:100);pixelAspect=1;previewSize=nil;previewZoom=1;showOriginal=false
         duration=0;frameRate=30;playhead=0;playerReachedEnd=false;playingRange=false;processedPlayback=false;processedDuration=nil
-        waveform=[];leftWaveform=[];rightWaveform=[];processedWaveform=nil;playbackURL=nil;visualizationReady=false;previewBusy=false;previewError=nil
+        waveform=[];leftWaveform=[];rightWaveform=[];processedWaveform=nil;playbackURL=nil;visualizationReady=false;processedPreviewBusy=false;visualizationBusy=false;previewError=nil
         metadata=[:];originalMetadata=[:];metadataSearch="";metadataRemoveAll=false;addingMetadataField=false;newMetadataKey="{XMP-dc}.Title";newMetadataValue="";qrResults=[]
         annotationKind = .arrow;selectingAnnotations=false;annotationText="Text";annotationColor = .red;annotationStroke=3;annotationFont=24;annotationFontFamily="system"
         targetEnabled=false;targetMode="MB";targetValue=1;preset="Balanced";compressionSize="original"
@@ -663,6 +673,11 @@ struct ToolEditor:View {
         if width>0 { applied.width=width };if height>0 { applied.height=height }
         if [.cropImage,.cropVideo].contains(tool),var crop=applied.crop { crop.width=Double(width);crop.height=Double(height);applied.crop=crop }
         if tool == .cropImage { applied.width=nil;applied.height=nil }
+        // The size fields hold the first file's dimensions; only Custom sends them. Presets scale each file from its own size.
+        if tool == .compress,category != .image || compressionSize != "custom" { applied.width=nil;applied.height=nil }
+        if tool == .compress,category == .image {
+            if let edge=["large":2560,"medium":1920,"small":1280][compressionSize] { applied.imageMaxEdge=edge } else if let percent=Double(compressionSize) { applied.imageScale=percent/100 }
+        }
         if tool == .compress {
             applied.quality=preset=="Balanced" ? 0.8:0.45
             if targetEnabled {
@@ -831,31 +846,35 @@ struct ToolEditor:View {
     func processedPreview() {
         guard let input,readyToApply,!isLoading else { return };var settings=options;let kind=tool,token=previewToken,generation=editorGeneration,key=previewKey
         if kind == .splitVideo { settings.joinSplitClips=true }
-        previewError=nil;previewBusy=true
+        previewError=nil;processedPreviewBusy=true
         Task { do {
             let preview=try await MediaPreviewEngine.processedPreview(kind,input:input,options:settings,token:token)
             guard generation==editorGeneration,!token.isCancelled else { preview.removeTemporaryFiles();return }
             // A setting changed while the preview was being made: it no longer shows the current settings.
-            guard key==previewKey else { preview.removeTemporaryFiles();previewBusy=false;return }
+            guard key==previewKey else { preview.removeTemporaryFiles();processedPreviewBusy=false;return }
             processedDuration=(try? MediaEngine.inspect(preview.playbackURL).duration)
             player?.pause();if let old=channelPreviewURL { try? FileManager.default.removeItem(at:old.deletingLastPathComponent()) };channelPreviewURL=preview.playbackURL;playerReachedEnd=false;player=AVPlayer(url:preview.playbackURL);processedPlayback=true;player?.play()
             if kind == .normalizeAudio { let url=preview.playbackURL;let peaks=try await Task.detached { try MediaPreviewEngine.waveformPeaks(url,token:token) }.value;try checkGeneration(generation,token:token);if key==previewKey { processedWaveform=peaks } }
         } catch { if generation==editorGeneration,!token.isCancelled { previewError=error.localizedDescription } }
-            if generation==editorGeneration,!token.isCancelled { previewBusy=false }
+            if generation==editorGeneration,!token.isCancelled { processedPreviewBusy=false }
         }
     }
     var visualizationKey:String { tool == .audioToVideo ? "\(input?.path ?? ""):\(options.visualizationStyle):\(options.visualizationImage?.path ?? ""):\(options.backgroundColor):\(width):\(height)":"" }
     func renderVisualization() async {
-        guard tool == .audioToVideo,let input,width>0,height>0 else { return }
-        if options.visualizationStyle == "image",options.visualizationImage == nil { return }
+        guard tool == .audioToVideo else { return }
         visualizationToken.cancel();let token=CancellationToken(),generation=editorGeneration;visualizationToken=token
+        defer { if generation==editorGeneration,visualizationToken === token { visualizationBusy=false } }
+        guard let input,width>0,height>0 else { return }
+        if options.visualizationStyle == "image",options.visualizationImage == nil { return }
         var settings=options;settings.width=width;settings.height=height
         do {
-            try await Task.sleep(nanoseconds:150_000_000);try Task.checkCancellation();previewBusy=true
+            try await Task.sleep(nanoseconds:150_000_000);try Task.checkCancellation()
+            guard generation==editorGeneration,!token.isCancelled else { return }
+            visualizationBusy=true
             let preview=try await withTaskCancellationHandler(operation:{ try await MediaPreviewEngine.visualizationPreview(input,options:settings,token:token) },onCancel:{token.cancel()})
             if Task.isCancelled || token.isCancelled || generation != editorGeneration { preview.removeTemporaryFiles();return }
-            player?.pause();if let old=channelPreviewURL { try? FileManager.default.removeItem(at:old.deletingLastPathComponent()) };channelPreviewURL=preview.playbackURL;playerReachedEnd=false;player=AVPlayer(url:preview.playbackURL);playhead=0;visualizationReady=true;previewBusy=false
-        } catch { if generation==editorGeneration,!Task.isCancelled,!token.isCancelled { previewBusy=false;previewError=error.localizedDescription } }
+            player?.pause();if let old=channelPreviewURL { try? FileManager.default.removeItem(at:old.deletingLastPathComponent()) };channelPreviewURL=preview.playbackURL;playerReachedEnd=false;player=AVPlayer(url:preview.playbackURL);playhead=0;visualizationReady=true
+        } catch { if generation==editorGeneration,!Task.isCancelled,!token.isCancelled { previewError=error.localizedDescription } }
     }
     func disposeMedia() {
         editorGeneration=UUID();readyToApply=false;seekRevision=UUID();seeking=false;isPlaying=false

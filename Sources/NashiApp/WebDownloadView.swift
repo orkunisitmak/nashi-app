@@ -134,7 +134,7 @@ struct WebDownloadView:View {
                                     Button("All") { model.selectPhotos(Set(info.photos.map(\.id))) }
                                     Button("None") { model.selectPhotos([]) }
                                 }
-                                if info.skippedVideoCount>0 { Text("\(info.skippedVideoCount) video items are not included. Only photos will be saved.").font(.caption).foregroundStyle(.secondary) }
+                                if info.skippedVideoCount>0 { LText("\(info.skippedVideoCount) video items are not included. Only photos will be saved.").font(.caption).foregroundStyle(.secondary) }
                                 Text("Saved in post order in a new Instagram folder.").font(.caption).foregroundStyle(.secondary)
                                 ForEach(info.photos) { photo in
                                     Toggle(isOn:Binding(get:{model.selectedPhotos.contains(photo.id)},set:{ selected in

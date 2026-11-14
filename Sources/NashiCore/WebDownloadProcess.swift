@@ -77,7 +77,15 @@ enum WebDownloadProcess {
         func append(_ data:Data,output:Bool) {
             lock.lock()
             if output { if bytes.count+data.count<=8_000_000 { bytes.append(data) } else { tooLarge=true } }
-            else { errors.append(data);if errors.count>16_000 { errors.removeFirst(errors.count-16_000) } }
+            else {
+                errors.append(data)
+                if errors.count>16_000 {
+                    // Keep whole lines: a cut line can be a progress fragment or a link that lost its scheme.
+                    let cut=errors.index(errors.endIndex,offsetBy:-16_000)
+                    let start=errors[errors.index(before:cut)]==10 ? cut:errors[cut...].firstIndex(of:10).map{errors.index(after:$0)} ?? cut
+                    errors.removeSubrange(..<start)
+                }
+            }
             var line=output ? outputLine:errorLine
             line.append(data)
             var updates:[(Double,String)]=[]

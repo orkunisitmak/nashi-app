@@ -143,12 +143,18 @@ enum EPUBCodec {
         let content = xmlCharacters((body?.children ?? []).map(\.xmlString).joined())
         let style = xmlCharacters(try html.nodes(forXPath: "//*[local-name()='style']").map(\.xmlString).joined())
         let escapedTitle = DocumentText.escapeXML(title)
-        let xhtml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\"><head><title>\(escapedTitle)</title>\(style)</head><body>\(content)</body></html>"
+        // LibreOffice writes the document language and direction on <body>. Without them a
+        // reader takes every book for English and lays right-to-left text out left to right.
+        let sources = [body as? XMLElement, html.rootElement()].compactMap { $0 }
+        func attribute(_ name: String) -> String? { sources.lazy.compactMap { $0.attribute(forName: name)?.stringValue?.trimmingCharacters(in: .whitespaces) }.first { !$0.isEmpty } }
+        let language = DocumentText.escapeXML(attribute("lang") ?? attribute("xml:lang") ?? "en")
+        let direction = attribute("dir").map { $0.lowercased() }.flatMap { ["ltr", "rtl", "auto"].contains($0) ? " dir=\"\($0)\"" : nil } ?? ""
+        let xhtml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"\(language)\"\(direction)><head><title>\(escapedTitle)</title>\(style)</head><body>\(content)</body></html>"
         try xhtml.write(to: oebps.appendingPathComponent("book.xhtml"), atomically: true, encoding: .utf8)
         let navigation = "<?xml version=\"1.0\"?><html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\"><head><title>Contents</title></head><body><nav epub:type=\"toc\"><h1>Contents</h1><ol><li><a href=\"book.xhtml\">\(escapedTitle)</a></li></ol></nav></body></html>"
         try navigation.write(to: oebps.appendingPathComponent("nav.xhtml"), atomically: true, encoding: .utf8)
         let date = ISO8601DateFormatter().string(from: Date()).replacingOccurrences(of: #"\.\d+Z$"#, with: "Z", options: .regularExpression)
-        let package = "<?xml version=\"1.0\"?><package xmlns=\"http://www.idpf.org/2007/opf\" version=\"3.0\" unique-identifier=\"id\"><metadata xmlns:dc=\"http://purl.org/dc/elements/1.1/\"><dc:identifier id=\"id\">urn:uuid:\(UUID().uuidString)</dc:identifier><dc:title>\(escapedTitle)</dc:title><dc:language>en</dc:language><meta property=\"dcterms:modified\">\(date)</meta></metadata><manifest><item id=\"book\" href=\"book.xhtml\" media-type=\"application/xhtml+xml\"/><item id=\"nav\" href=\"nav.xhtml\" media-type=\"application/xhtml+xml\" properties=\"nav\"/>\(manifest)</manifest><spine><itemref idref=\"book\"/></spine></package>"
+        let package = "<?xml version=\"1.0\"?><package xmlns=\"http://www.idpf.org/2007/opf\" version=\"3.0\" unique-identifier=\"id\"><metadata xmlns:dc=\"http://purl.org/dc/elements/1.1/\"><dc:identifier id=\"id\">urn:uuid:\(UUID().uuidString)</dc:identifier><dc:title>\(escapedTitle)</dc:title><dc:language>\(language)</dc:language><meta property=\"dcterms:modified\">\(date)</meta></metadata><manifest><item id=\"book\" href=\"book.xhtml\" media-type=\"application/xhtml+xml\"/><item id=\"nav\" href=\"nav.xhtml\" media-type=\"application/xhtml+xml\" properties=\"nav\"/>\(manifest)</manifest><spine><itemref idref=\"book\"/></spine></package>"
         try package.write(to: oebps.appendingPathComponent("content.opf"), atomically: true, encoding: .utf8)
         try ProcessRunner.run(URL(fileURLWithPath: "/usr/bin/zip"), ["-q", "-0", "-X", output.path, "mimetype"], directory: work, token: token)
         try ProcessRunner.run(URL(fileURLWithPath: "/usr/bin/zip"), ["-q", "-r", "-X", output.path, "META-INF", "OEBPS"], directory: work, token: token)

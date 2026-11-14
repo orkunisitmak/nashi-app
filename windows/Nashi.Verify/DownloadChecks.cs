@@ -12,6 +12,17 @@ internal static class DownloadChecks
         public override async ValueTask<int> ReadAsync(Memory<byte> buffer,CancellationToken token=default){await Task.Delay(Timeout.Infinite,token);return 0;}
         public override int Read(byte[] buffer,int offset,int count)=>throw new NotSupportedException();public override void Flush(){}public override long Seek(long offset,SeekOrigin origin)=>throw new NotSupportedException();public override void SetLength(long length)=>throw new NotSupportedException();public override void Write(byte[] buffer,int offset,int count)=>throw new NotSupportedException();
     }
+    // A stream that pauses briefly between reads, simulating a download that stalls
+    // but resumes well within the 120-second production idle timeout.
+    private sealed class SlowStream:Stream
+    {
+        private readonly byte[] data;private int offset;
+        public SlowStream(byte[] data){this.data=data;}
+        public override bool CanRead=>true;public override bool CanWrite=>false;public override bool CanSeek=>false;
+        public override long Length=>data.Length;public override long Position{get=>offset;set=>throw new NotSupportedException();}
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer,CancellationToken token=default){await Task.Delay(100,token);var count=System.Math.Min(buffer.Length,data.Length-offset);if(count>0){data.AsSpan(offset,count).CopyTo(buffer.Span);offset+=count;}return count;}
+        public override int Read(byte[] buffer,int offset,int count)=>throw new NotSupportedException();public override void Flush(){}public override long Seek(long offset,SeekOrigin origin)=>throw new NotSupportedException();public override void SetLength(long length)=>throw new NotSupportedException();public override void Write(byte[] buffer,int offset,int count)=>throw new NotSupportedException();
+    }
     public static async Task Run(Action<bool,string> check,string root)
     {
         var culture=System.Globalization.CultureInfo.CurrentCulture;
@@ -25,6 +36,17 @@ internal static class DownloadChecks
             check(WebDownload.ProgressFraction("NASHI:12:NA") is null&&WebDownload.ProgressFraction("NASHI:1:0") is null&&WebDownload.ProgressFraction("[download] 5%") is null&&WebDownload.ProgressFraction("NASHI:NaN:1048576.0") is null&&WebDownload.ProgressFraction("NASHI:5:NaN") is null&&WebDownload.ProgressFraction("NASHI:5:Infinity") is null,"Unusable yt-dlp progress lines must be ignored");
         }
         finally{System.Globalization.CultureInfo.CurrentCulture=culture;}
+        // Like the Mac: servers also send image/jpg, image/pjpeg or upper-case types for JPEG photos.
+        try
+        {
+            foreach(var name in new[]{"en-US","tr-TR"})
+            {
+                System.Globalization.CultureInfo.CurrentCulture=new(name);
+                check(WebPhotos.ImageExtension("image/pjpeg")=="jpg"&&WebPhotos.ImageExtension("image/jpg")=="jpg"&&WebPhotos.ImageExtension("IMAGE/JPEG")=="jpg",$"A photo served with an alias or upper-case content type was refused under {name}");
+            }
+        }
+        finally{System.Globalization.CultureInfo.CurrentCulture=culture;}
+        check(WebPhotos.ImageExtension("image/png")=="png"&&WebPhotos.ImageExtension("binary/octet-stream") is null&&WebPhotos.ImageExtension("application/octet-stream") is null&&WebPhotos.ImageExtension("text/html") is null,"A non-image response was saved as an image");
         var uri=new Uri("https://download.example/fixture");var output=Path.Combine(root,"Download.bin");var bytes=new byte[]{1,2,3};
         HttpResponseMessage Response(HttpRequestMessage request,HttpContent? content=null)=>new(HttpStatusCode.OK){RequestMessage=request,Content=content??new ByteArrayContent(bytes)};
         using(var handler=new Handler((request,n)=>n==1?throw new HttpRequestException("Transient connection failure"):Response(request))){await VerifiedDownload.FetchForTest(uri,output,10,null,CancellationToken.None,handler,TimeSpan.FromSeconds(1));check(handler.Calls==2&&File.ReadAllBytes(output).SequenceEqual(bytes),"Interrupted download did not retry safely");File.Delete(output);}
@@ -36,5 +58,9 @@ internal static class DownloadChecks
         File.WriteAllText(output,"keep");using(var handler=new Handler((request,n)=>Response(request))){try{await VerifiedDownload.FetchForTest(uri,output,10,null,CancellationToken.None,handler,TimeSpan.FromSeconds(1));throw new Exception("Existing output overwritten");}catch(IOException){check(File.ReadAllText(output)=="keep"&&handler.Calls==1,"Download changed an existing file");}}File.Delete(output);
         var mirrors=new[]{new Uri("https://mirror1.example/pkg"),new Uri("https://mirror2.example/pkg")};using(var handler=new Handler((request,n)=>Response(request,request.RequestUri!.Host=="mirror1.example"?new ByteArrayContent(new byte[]{9,9,9}):new ByteArrayContent(bytes)))){await VerifiedDownload.FetchAnyForTest(mirrors,output,10,null,CancellationToken.None,handler,TimeSpan.FromSeconds(1),data=>File.ReadAllBytes(data).SequenceEqual(bytes));check(handler.Calls==2&&File.ReadAllBytes(output).SequenceEqual(bytes),"Multi-mirror validation fallback did not proceed to secondary mirror");File.Delete(output);}
         using(var handler=new Handler((request,n)=>Response(request))){try{await VerifiedDownload.FetchAnyForTest([new Uri("https://mirror1.example/pkg")],output,10,null,CancellationToken.None,handler,TimeSpan.FromSeconds(1),_=>throw new ApplicationException("Custom validator failure"));throw new Exception("Validator exception swallowed");}catch(ApplicationException){check(!File.Exists(output)&&Directory.GetFiles(root,"*.part").Length==0,"Validator exception left behind a temporary .part file");}}
+        // The production idle timeout is 120 seconds; a download that stalls briefly and resumes must still finish.
+        check(VerifiedDownload.DefaultIdle==TimeSpan.FromSeconds(120),"Tool download idle timeout is not 120 seconds");
+        var slowBytes=new byte[]{10,11,12};using var slowHandler=new Handler((request,n)=>Response(request,new StreamContent(new SlowStream(slowBytes))));await VerifiedDownload.FetchForTest(uri,output,10,null,CancellationToken.None,slowHandler,VerifiedDownload.DefaultIdle);check(File.ReadAllBytes(output).SequenceEqual(slowBytes)&&!File.Exists(output+".part"),"Download with brief stall under 120s idle timeout failed");File.Delete(output);
+        using var slowAnyHandler=new Handler((request,n)=>Response(request,new StreamContent(new SlowStream(slowBytes))));await VerifiedDownload.FetchAnyForTest(new[]{uri},output,10,null,CancellationToken.None,slowAnyHandler,VerifiedDownload.DefaultIdle);check(File.ReadAllBytes(output).SequenceEqual(slowBytes)&&!File.Exists(output+".part"),"Any-download with brief stall under 120s idle timeout failed");File.Delete(output);
     }
 }

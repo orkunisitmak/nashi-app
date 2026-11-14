@@ -23,7 +23,9 @@ class OwnerMergeTests(unittest.TestCase):
     def test_owner_only_and_ready_same_repository(self):
         self.assertTrue(merge.eligible(pull(), SHA))
         for key, value in [("draft", True), ("state", "closed"), ("user", {"id": 1}),
-                           ("base", {"ref": "other"}), ("head", {"sha": SHA, "repo": None}),
+                           ("user", None),
+                           ("base", {"ref": "other"}), ("base", {"ref": "main", "repo": None}),
+                           ("head", {"sha": SHA, "repo": None}),
                            ("head", {"sha": SHA, "repo": {"full_name": "someone/fork"}})]:
             pr = pull();pr[key] = value
             self.assertFalse(merge.eligible(pr, SHA), key)
@@ -37,6 +39,12 @@ class OwnerMergeTests(unittest.TestCase):
                            ("app", {"id": 1}), ("head_sha", "b" * 40)]:
             values = checks();values[0][key] = value
             self.assertFalse(merge.checks_passed(values, SHA), key)
+
+    def test_null_app_on_extra_check_does_not_block_required(self):
+        values = checks()
+        values.append({"name": "stale", "head_sha": SHA, "app": None,
+                       "status": "completed", "conclusion": "success"})
+        self.assertTrue(merge.checks_passed(values, SHA))
 
     def test_merge_sha_guard_and_deployment_dispatch(self):
         class API:

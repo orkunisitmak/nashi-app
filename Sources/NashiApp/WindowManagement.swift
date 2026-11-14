@@ -75,7 +75,7 @@ enum WindowPlacementGlyph {
         if !down {
             if wasDown,let captured=target,let placement=currentPlacement(at:point),
                !captured.intent.cancelled,!freshFile {
-                let screen=screen(at:point)
+                guard let screen=screen(at:point) else { cancel();target=nil;return }
                 cancel();target=nil
                 // Let the originating app finish its native tracking loop before resizing it.
                 placementTask?.cancel()
@@ -108,7 +108,8 @@ enum WindowPlacementGlyph {
         if accepts,wheelPanel?.isVisible != true { show(at:point) }
         guard wheelPanel?.isVisible == true,let wheel,let panel=wheelPanel else { return }
         wheel.updateSelection(wheel.convert(panel.convertPoint(fromScreen:point),from:nil))
-        updatePreview(currentPlacement(at:point),on:screen(at:point))
+        guard let screen=screen(at:point) else { cancel();target=nil;return }
+        updatePreview(currentPlacement(at:point),on:screen)
         captureOwnWheelForQA()
     }
 
@@ -171,8 +172,8 @@ enum WindowPlacementGlyph {
             view.onCancel={ [weak self] in self?.cancel();self?.target?.intent.cancel() }
             effect.addSubview(view);panel.contentView=effect;wheelPanel=panel;wheel=view
         }
-        guard let panel=wheelPanel else { return }
-        let area=screen(at:point).visibleFrame
+        guard let panel=wheelPanel,let screen=screen(at:point) else { cancel();return }
+        let area=screen.visibleFrame
         panel.setFrameOrigin(NSPoint(x:min(max(area.minX+4,point.x-panel.frame.width/2),area.maxX-panel.frame.width-4),
                                      y:min(max(area.minY+4,point.y-panel.frame.height/2),area.maxY-panel.frame.height-4)))
         wheel?.selected=nil;wheel?.needsDisplay=true;wheel?.updateAccessibility()
@@ -203,7 +204,7 @@ enum WindowPlacementGlyph {
     }
 
     private func cancel() { wheelPanel?.orderOut(nil);wheel?.selected=nil;preview?.orderOut(nil);lastPlacement=nil }
-    private func screen(at point:NSPoint)->NSScreen { NSScreen.screens.first(where:{$0.frame.contains(point)}) ?? NSScreen.main ?? NSScreen.screens[0] }
+    private func screen(at point:NSPoint)->NSScreen? { NSScreen.screens.first(where:{$0.frame.contains(point)}) ?? NSScreen.main ?? NSScreen.screens.first }
 
     private func apply(_ placement:WindowPlacement,to window:AXUIElement,pid:pid_t,on screen:NSScreen) async {
         guard AXIsProcessTrusted(),Self.isUsable(window,pid:pid) else { return }

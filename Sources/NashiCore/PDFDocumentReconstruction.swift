@@ -349,6 +349,11 @@ enum PDFPlacedImages {
                 for index in (0..<6).reversed() { guard CGPDFScannerPopNumber(scanner, &values[index]) else { return } }
                 state.transform = CGAffineTransform(a: values[0], b: values[1], c: values[2], d: values[3], tx: values[4], ty: values[5]).concatenating(state.transform)
             }
+            // An inline image (BI ... ID ... EI) fills the unit square like an Image XObject.
+            CGPDFOperatorTableSetCallback(table, "EI") { _, info in
+                guard let info else { return }; let state = Unmanaged<Scanner>.fromOpaque(info).takeUnretainedValue()
+                state.images.append(CGRect(x: 0, y: 0, width: 1, height: 1).applying(state.transform).standardized)
+            }
             CGPDFOperatorTableSetCallback(table, "Do") { scanner, info in
                 guard let info else { return }; let state = Unmanaged<Scanner>.fromOpaque(info).takeUnretainedValue()
                 if state.token.isCancelled { CGPDFScannerStop(scanner); return }
