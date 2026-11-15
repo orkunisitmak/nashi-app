@@ -6,6 +6,7 @@
 "%@  Tools" = "%@  Tools";
 "%@ QR code found." = "%@ QR code found.";
 "%@ QR codes found." = "%@ QR codes found.";
+"%@ annotations" = "%@ annotations";
 "%@ areas selected" = "%@ areas selected";
 "%@ exports" = "%@ exports";
 "%@ files" = "%@ files";
@@ -34,6 +35,7 @@
 "%lld  Tools" = "%lld  Tools";
 "%lld QR code found." = "%lld QR code found.";
 "%lld QR codes found." = "%lld QR codes found.";
+"%lld annotations" = "%lld annotations";
 "%lld areas selected" = "%lld areas selected";
 "%lld exports" = "%lld exports";
 "%lld files" = "%lld files";
@@ -57,14 +59,17 @@
 "%lld · Original stays safe" = "%lld · Original stays safe";
 "%lld, page %@" = "%lld, page %@";
 "%lld, page %lld" = "%lld, page %lld";
+"0 ANNOTATIONS" = "0 ANNOTATIONS";
 "0 AREAS SELECTED" = "0 AREAS SELECTED";
 "0 FOUND" = "0 FOUND";
 "0 SELECTED" = "0 SELECTED";
 "0 SPLIT POINTS" = "0 SPLIT POINTS";
+"0 annotations" = "0 annotations";
 "0 areas selected" = "0 areas selected";
 "0 found" = "0 found";
 "0 selected" = "0 selected";
 "0 split points" = "0 split points";
+"1 ANNOTATION" = "1 ANNOTATION";
 "1 AREA SELECTED" = "1 AREA SELECTED";
 "1 FOUND" = "1 FOUND";
 "1 ITEM" = "1 ITEM";
@@ -74,6 +79,7 @@
 "1 SPLIT POINT" = "1 SPLIT POINT";
 "1 VIDEO ITEMS ARE NOT INCLUDED. ONLY PHOTOS WILL BE SAVED." = "1 VIDEO ITEMS ARE NOT INCLUDED. ONLY PHOTOS WILL BE SAVED.";
 "1 WAY TO CHANGE IT" = "1 WAY TO CHANGE IT";
+"1 annotation" = "1 annotation";
 "1 area selected" = "1 area selected";
 "1 found" = "1 found";
 "1 item" = "1 item";
@@ -167,11 +173,13 @@
 "ADD FILES TO AN EXISTING FLOAT" = "ADD FILES TO AN EXISTING FLOAT";
 "ADD FILES…" = "ADD FILES…";
 "ADD FRAME" = "ADD FRAME";
+"ADD FRAME AT PLAYHEAD (M)" = "ADD FRAME AT PLAYHEAD (M)";
 "ADD METADATA FIELD" = "ADD METADATA FIELD";
 "ADD OR CHANGE FILES" = "ADD OR CHANGE FILES";
 "ADD REDACTION" = "ADD REDACTION";
 "ADD SELECTED RANGE" = "ADD SELECTED RANGE";
 "ADD SPLIT" = "ADD SPLIT";
+"ADD SPLIT AT PLAYHEAD (M)" = "ADD SPLIT AT PLAYHEAD (M)";
 "ADD TO AN EXISTING FLOAT" = "ADD TO AN EXISTING FLOAT";
 "ADD TO FLOAT" = "ADD TO FLOAT";
 "ADDED TO FLOAT." = "ADDED TO FLOAT.";
@@ -204,6 +212,7 @@
 "ANNOTATE PHOTO" = "ANNOTATE PHOTO";
 "ANNOTATE PHOTO · NASHI" = "ANNOTATE PHOTO · NASHI";
 "ANNOTATE · NASHI" = "ANNOTATE · NASHI";
+"ANNOTATION CANVAS" = "ANNOTATION CANVAS";
 "ANNOTATION TEXT" = "ANNOTATION TEXT";
 "ANOTHER TASK IS RUNNING. YOUR LINK IS READY WHEN IT FINISHES." = "ANOTHER TASK IS RUNNING. YOUR LINK IS READY WHEN IT FINISHES.";
 "APPEARANCE" = "APPEARANCE";
@@ -235,6 +244,7 @@
 "AUDIO · MP3" = "AUDIO · MP3";
 "AUTHORIZE SAVED TOKEN…" = "AUTHORIZE SAVED TOKEN…";
 "AUTO" = "AUTO";
+"AVAILABLE AFTER THE CURRENT TASK FINISHES" = "AVAILABLE AFTER THE CURRENT TASK FINISHES";
 "AVAILABLE FILES SELECTED. SOME FILES HAVE MOVED OR WERE DELETED." = "AVAILABLE FILES SELECTED. SOME FILES HAVE MOVED OR WERE DELETED.";
 "About" = "About";
 "Accessibility" = "Accessibility";
@@ -250,8 +260,10 @@
 "Add Split" = "Add Split";
 "Add a bleep or silence range." = "Add a bleep or silence range.";
 "Add files" = "Add files";
+"Add frame at playhead (M)" = "Add frame at playhead (M)";
 "Add or change files" = "Add or change files";
 "Add selected range" = "Add selected range";
+"Add split at playhead (M)" = "Add split at playhead (M)";
 "Add to Float" = "Add to Float";
 "Add to an existing Float" = "Add to an existing Float";
 "Added to Float." = "Added to Float.";
@@ -290,6 +302,7 @@
 "Annotate Photo" = "Annotate Photo";
 "Annotate Photo · Nashi" = "Annotate Photo · Nashi";
 "Annotate · Nashi" = "Annotate · Nashi";
+"Annotation canvas" = "Annotation canvas";
 "Annotation text" = "Annotation text";
 "Another task is running. Your link is ready when it finishes." = "Another task is running. Your link is ready when it finishes.";
 "Appearance" = "Appearance";
@@ -323,6 +336,7 @@
 "Audio · MP3" = "Audio · MP3";
 "Authorize Saved Token…" = "Authorize Saved Token…";
 "Auto" = "Auto";
+"Available after the current task finishes" = "Available after the current task finishes";
 "Available files selected. Some files have moved or were deleted." = "Available files selected. Some files have moved or were deleted.";
 "BACK" = "BACK";
 "BACKGROUND" = "BACKGROUND";
@@ -500,6 +514,9 @@
 "COMPRESSION STRENGTH" = "COMPRESSION STRENGTH";
 "CONNECT A PRIVATE OR PUBLIC UPDATES REPOSITORY." = "CONNECT A PRIVATE OR PUBLIC UPDATES REPOSITORY.";
 "CONNECT YOUR GITHUB RELEASES ONCE. NASHI HANDLES THE NEXT UPDATE CHECKS." = "CONNECT YOUR GITHUB RELEASES ONCE. NASHI HANDLES THE NEXT UPDATE CHECKS.";
+"CONNECTION REMOVED AND ITS SAVED TOKEN DELETED." = "CONNECTION REMOVED AND ITS SAVED TOKEN DELETED.";
+"CONNECTION SAVED. FUTURE CHECKS USE IT AUTOMATICALLY." = "CONNECTION SAVED. FUTURE CHECKS USE IT AUTOMATICALLY.";
+"CONNECTION SAVED. THIS BUILD STILL NEEDS ITS RELEASE SIGNING CONFIGURATION." = "CONNECTION SAVED. THIS BUILD STILL NEEDS ITS RELEASE SIGNING CONFIGURATION.";
 "CONNECT…" = "CONNECT…";
 "CONTINUE" = "CONTINUE";
 "CONTINUE TO NASHI" = "CONTINUE TO NASHI";
@@ -541,6 +558,7 @@
 "COULDN’T FINISH" = "COULDN’T FINISH";
 "COULDN’T OPEN THIS TOOL" = "COULDN’T OPEN THIS TOOL";
 "COVER STYLE" = "COVER STYLE";
+"CREATE A FINE-GRAINED TOKEN ON GITHUB" = "CREATE A FINE-GRAINED TOKEN ON GITHUB";
 "CREATE A NEW FLOAT" = "CREATE A NEW FLOAT";
 "CREATE COLLAGE" = "CREATE COLLAGE";
 "CREATE PDF" = "CREATE PDF";
@@ -552,6 +570,7 @@
 "CROP IMAGE" = "CROP IMAGE";
 "CROP IMAGE · NASHI" = "CROP IMAGE · NASHI";
 "CROP ORIGINS MUST BE NONNEGATIVE AND DIMENSIONS AT LEAST 1 × 1 PIXEL." = "CROP ORIGINS MUST BE NONNEGATIVE AND DIMENSIONS AT LEAST 1 × 1 PIXEL.";
+"CROP SELECTION CANVAS" = "CROP SELECTION CANVAS";
 "CROP VIDEO" = "CROP VIDEO";
 "CTRL+O  CHOOSE FILES\nCTRL+V  PASTE FILES, TEXT, AN IMAGE OR LINK\nCTRL+SPACE / ENTER  OPEN TOOLS\nCTRL+1 / CTRL+2  HOME / LIBRARY\nCTRL+F  FIND IN LIBRARY\nCTRL+SHIFT+D  USE A COPIED DOWNLOAD LINK\nCTRL+U  CHECK FOR UPDATES\n\nWHEEL: ARROWS / TAB TO CHOOSE, ENTER TO OPEN, ESC TO CLOSE\nMEDIA: SPACE PLAY/PAUSE, ←/→ 1 SECOND, SHIFT+←/→ 1/30S, I/O SET RANGE\nCROP: DRAG, SHIFT LOCKS RATIO, ENTER SAVES\nEDITING TEXT: NORMAL PASTE AND ARROW KEYS ARE PRESERVED." = "CTRL+O  CHOOSE FILES\nCTRL+V  PASTE FILES, TEXT, AN IMAGE OR LINK\nCTRL+SPACE / ENTER  OPEN TOOLS\nCTRL+1 / CTRL+2  HOME / LIBRARY\nCTRL+F  FIND IN LIBRARY\nCTRL+SHIFT+D  USE A COPIED DOWNLOAD LINK\nCTRL+U  CHECK FOR UPDATES\n\nWHEEL: ARROWS / TAB TO CHOOSE, ENTER TO OPEN, ESC TO CLOSE\nMEDIA: SPACE PLAY/PAUSE, ←/→ 1 SECOND, SHIFT+←/→ 1/30S, I/O SET RANGE\nCROP: DRAG, SHIFT LOCKS RATIO, ENTER SAVES\nEDITING TEXT: NORMAL PASTE AND ARROW KEYS ARE PRESERVED.";
 "CTRL+O  CHOOSE FILES\nCTRL+V  PASTE FILES, TEXT, AN IMAGE OR LINK\nCTRL+SPACE / ENTER  OPEN TOOLS AND CONVERSIONS\nDELETE  REMOVE SELECTED FILES FROM NASHI\nCTRL+1 / CTRL+2  HOME / LIBRARY\nCTRL+F  FIND IN LIBRARY\nCTRL+SHIFT+D  USE A COPIED DOWNLOAD LINK\nCTRL+U  CHECK FOR UPDATES\n\nWHEEL: ARROWS / TAB TO CHOOSE, ENTER TO OPEN, ESC TO CLOSE\nMEDIA: SPACE PLAY/PAUSE, ←/→ 1 SECOND, SHIFT+←/→ 1/30S, I/O SET RANGE\nCROP: DRAG, SHIFT LOCKS RATIO, ENTER SAVES\nEDITING TEXT: NORMAL PASTE AND ARROW KEYS ARE PRESERVED." = "CTRL+O  CHOOSE FILES\nCTRL+V  PASTE FILES, TEXT, AN IMAGE OR LINK\nCTRL+SPACE / ENTER  OPEN TOOLS AND CONVERSIONS\nDELETE  REMOVE SELECTED FILES FROM NASHI\nCTRL+1 / CTRL+2  HOME / LIBRARY\nCTRL+F  FIND IN LIBRARY\nCTRL+SHIFT+D  USE A COPIED DOWNLOAD LINK\nCTRL+U  CHECK FOR UPDATES\n\nWHEEL: ARROWS / TAB TO CHOOSE, ENTER TO OPEN, ESC TO CLOSE\nMEDIA: SPACE PLAY/PAUSE, ←/→ 1 SECOND, SHIFT+←/→ 1/30S, I/O SET RANGE\nCROP: DRAG, SHIFT LOCKS RATIO, ENTER SAVES\nEDITING TEXT: NORMAL PASTE AND ARROW KEYS ARE PRESERVED.";
@@ -590,6 +609,7 @@
 "Checking the connection…" = "Checking the connection…";
 "Choose 2–100 images for a collage." = "Choose 2–100 images for a collage.";
 "Choose Background Image…" = "Choose Background Image…";
+"Choose Files" = "Choose Files";
 "Choose Files…" = "Choose Files…";
 "Choose Find media to inspect this link." = "Choose Find media to inspect this link.";
 "Choose SRT, VTT or TXT." = "Choose SRT, VTT or TXT.";
@@ -714,6 +734,9 @@
 "Connect your GitHub releases once. Nashi handles the next update checks." = "Connect your GitHub releases once. Nashi handles the next update checks.";
 "Connected to %@" = "Connected to %@";
 "Connected to %lld" = "Connected to %lld";
+"Connection removed and its saved token deleted." = "Connection removed and its saved token deleted.";
+"Connection saved. Future checks use it automatically." = "Connection saved. Future checks use it automatically.";
+"Connection saved. This build still needs its release signing configuration." = "Connection saved. This build still needs its release signing configuration.";
 "Connect…" = "Connect…";
 "Continue" = "Continue";
 "Continue to Nashi" = "Continue to Nashi";
@@ -767,6 +790,7 @@
 "Create Collage" = "Create Collage";
 "Create PDF" = "Create PDF";
 "Create a New Float" = "Create a New Float";
+"Create a fine-grained token on GitHub" = "Create a fine-grained token on GitHub";
 "Create a new Float" = "Create a new Float";
 "Create visualization" = "Create visualization";
 "Created" = "Created";
@@ -777,6 +801,7 @@
 "Crop area" = "Crop area";
 "Crop coordinates must be finite." = "Crop coordinates must be finite.";
 "Crop origins must be nonnegative and dimensions at least 1 × 1 pixel." = "Crop origins must be nonnegative and dimensions at least 1 × 1 pixel.";
+"Crop selection canvas" = "Crop selection canvas";
 "Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved." = "Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved.";
 "Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools and conversions\nDelete  Remove selected files from Nashi\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved." = "Ctrl+O  Choose files\nCtrl+V  Paste files, text, an image or link\nCtrl+Space / Enter  Open tools and conversions\nDelete  Remove selected files from Nashi\nCtrl+1 / Ctrl+2  Home / Library\nCtrl+F  Find in Library\nCtrl+Shift+D  Use a copied download link\nCtrl+U  Check for updates\n\nWheel: arrows / Tab to choose, Enter to open, Esc to close\nMedia: Space play/pause, ←/→ 1 second, Shift+←/→ 1/30s, I/O set range\nCrop: drag, Shift locks ratio, Enter saves\nEditing text: normal paste and arrow keys are preserved.";
 "Ctrl+Shift+D  Use a copied link  ·  Public, downloadable media" = "Ctrl+Shift+D  Use a copied link  ·  Public, downloadable media";
@@ -799,6 +824,8 @@
 "DEVICES" = "DEVICES";
 "DISCONNECT & FORGET TOKEN" = "DISCONNECT & FORGET TOKEN";
 "DISMISS" = "DISMISS";
+"DISMISS ERROR" = "DISMISS ERROR";
+"DISMISS PREVIEW ERROR" = "DISMISS PREVIEW ERROR";
 "DOCUMENT XML IS TOO LARGE." = "DOCUMENT XML IS TOO LARGE.";
 "DOCUMENTS" = "DOCUMENTS";
 "DONE" = "DONE";
@@ -820,6 +847,7 @@
 "DOWNLOAD LINK…" = "DOWNLOAD LINK…";
 "DOWNLOAD MEDIA TOOLS" = "DOWNLOAD MEDIA TOOLS";
 "DOWNLOAD MISSING TOOLS" = "DOWNLOAD MISSING TOOLS";
+"DOWNLOAD MP3" = "DOWNLOAD MP3";
 "DOWNLOAD OFFICE TOOLS" = "DOWNLOAD OFFICE TOOLS";
 "DOWNLOAD PHOTOS" = "DOWNLOAD PHOTOS";
 "DOWNLOAD PHOTOS…" = "DOWNLOAD PHOTOS…";
@@ -848,6 +876,7 @@
 "DRAG THE STACK TO CARRY ALL FILES. DRAG THE PAPERCLIP TO MOVE FLOAT." = "DRAG THE STACK TO CARRY ALL FILES. DRAG THE PAPERCLIP TO MOVE FLOAT.";
 "DRAG TO DRAW WITH THE SELECTED TOOL. USE SELECT / MOVE TO EDIT AN EXISTING ANNOTATION." = "DRAG TO DRAW WITH THE SELECTED TOOL. USE SELECT / MOVE TO EDIT AN EXISTING ANNOTATION.";
 "DRAG TO DRAW. ONE ACTIVE TOOL PER STROKE." = "DRAG TO DRAW. ONE ACTIVE TOOL PER STROKE.";
+"DRAG TO SELECT. DRAG INSIDE TO MOVE. HOLD SHIFT TO LOCK ASPECT RATIO. RETURN SAVES A CROPPED COPY." = "DRAG TO SELECT. DRAG INSIDE TO MOVE. HOLD SHIFT TO LOCK ASPECT RATIO. RETURN SAVES A CROPPED COPY.";
 "DRAW A REGION TO REDACT." = "DRAW A REGION TO REDACT.";
 "DRAW AT LEAST ONE AREA TO REDACT." = "DRAW AT LEAST ONE AREA TO REDACT.";
 "DRAWING TOOL" = "DRAWING TOOL";
@@ -876,6 +905,8 @@
 "Devices" = "Devices";
 "Disconnect & Forget Token" = "Disconnect & Forget Token";
 "Dismiss" = "Dismiss";
+"Dismiss error" = "Dismiss error";
+"Dismiss preview error" = "Dismiss preview error";
 "Document XML is too large." = "Document XML is too large.";
 "Documents" = "Documents";
 "Done" = "Done";
@@ -887,6 +918,7 @@
 "Download Images" = "Download Images";
 "Download LibreOffice 26.8.1 (~360 MB) from The Document Foundation? Its SHA-256 is checked, then the package is extracted into Nashi’s user tools folder. No administrator password or Office subscription is needed. LibreOffice retains its upstream licenses." = "Download LibreOffice 26.8.1 (~360 MB) from The Document Foundation? Its SHA-256 is checked, then the package is extracted into Nashi’s user tools folder. No administrator password or Office subscription is needed. LibreOffice retains its upstream licenses.";
 "Download Link…" = "Download Link…";
+"Download MP3" = "Download MP3";
 "Download Thumbnail" = "Download Thumbnail";
 "Download Video" = "Download Video";
 "Download a link" = "Download a link";
@@ -896,6 +928,7 @@
 "Download ended early." = "Download ended early.";
 "Download exceeded its limit." = "Download exceeded its limit.";
 "Download from the web" = "Download from the web";
+"Download image" = "Download image";
 "Download image…" = "Download image…";
 "Download is larger than the supported limit." = "Download is larger than the supported limit.";
 "Download media tools" = "Download media tools";
@@ -936,6 +969,7 @@
 "Drag the stack to carry all files. Drag the paperclip to move Float." = "Drag the stack to carry all files. Drag the paperclip to move Float.";
 "Drag to draw with the selected tool. Use Select / Move to edit an existing annotation." = "Drag to draw with the selected tool. Use Select / Move to edit an existing annotation.";
 "Drag to draw. One active tool per stroke." = "Drag to draw. One active tool per stroke.";
+"Drag to select. Drag inside to move. Hold Shift to lock aspect ratio. Return saves a cropped copy." = "Drag to select. Drag inside to move. Hold Shift to lock aspect ratio. Return saves a cropped copy.";
 "Draw a region to redact." = "Draw a region to redact.";
 "Draw at least one area to redact." = "Draw at least one area to redact.";
 "Drawing tool" = "Drawing tool";
@@ -1184,6 +1218,7 @@
 "GIF width" = "GIF width";
 "GITHUB RELEASE CONNECTION" = "GITHUB RELEASE CONNECTION";
 "GITHUB REPOSITORY" = "GITHUB REPOSITORY";
+"GITHUB TOKEN" = "GITHUB TOKEN";
 "GIVE IT A LITTLE BREATHING ROOM." = "GIVE IT A LITTLE BREATHING ROOM.";
 "GLASS" = "GLASS";
 "GRADIENT" = "GRADIENT";
@@ -1198,6 +1233,7 @@
 "Get started" = "Get started";
 "GitHub release connection" = "GitHub release connection";
 "GitHub repository" = "GitHub repository";
+"GitHub token" = "GitHub token";
 "Give it a little breathing room." = "Give it a little breathing room.";
 "Glass" = "Glass";
 "Gradient" = "Gradient";
@@ -1207,6 +1243,7 @@
 "HEIGHT" = "HEIGHT";
 "HELLO" = "HELLO";
 "HIGHER QUALITY" = "HIGHER QUALITY";
+"HIGHLIGHT" = "HIGHLIGHT";
 "HIGHLIGHTS" = "HIGHLIGHTS";
 "HOLD A KEY WHILE DRAGGING IN FINDER" = "HOLD A KEY WHILE DRAGGING IN FINDER";
 "HOME" = "HOME";
@@ -1214,6 +1251,7 @@
 "Height" = "Height";
 "Hello" = "Hello";
 "Higher Quality" = "Higher Quality";
+"Highlight" = "Highlight";
 "Highlights" = "Highlights";
 "Hold a key while dragging in Finder" = "Hold a key while dragging in Finder";
 "Home" = "Home";
@@ -1221,6 +1259,7 @@
 "ICONS" = "ICONS";
 "IMAGE" = "IMAGE";
 "IMAGE COMPRESSION" = "IMAGE COMPRESSION";
+"IMAGE EDITING CANVAS" = "IMAGE EDITING CANVAS";
 "IMAGE EXCEEDS 200 MB." = "IMAGE EXCEEDS 200 MB.";
 "IMAGE FIT" = "IMAGE FIT";
 "IMAGE SCALE" = "IMAGE SCALE";
@@ -1250,6 +1289,7 @@
 "Image" = "Image";
 "Image Compression" = "Image Compression";
 "Image compression" = "Image compression";
+"Image editing canvas" = "Image editing canvas";
 "Image exceeds 200 MB." = "Image exceeds 200 MB.";
 "Image fit" = "Image fit";
 "Image scale" = "Image scale";
@@ -1400,6 +1440,7 @@
 "MAXIMUM VIDEO HEIGHT (0 = ORIGINAL)" = "MAXIMUM VIDEO HEIGHT (0 = ORIGINAL)";
 "MAXIMUM WIDTH" = "MAXIMUM WIDTH";
 "MEASURING AUDIO LOUDNESS…" = "MEASURING AUDIO LOUDNESS…";
+"MEDIA LINK" = "MEDIA LINK";
 "MEDIA RANGE TIMELINE" = "MEDIA RANGE TIMELINE";
 "MEDIA SETUP" = "MEDIA SETUP";
 "MEDIA TOOLS" = "MEDIA TOOLS";
@@ -1446,6 +1487,7 @@
 "Maximum video height (0 = original)" = "Maximum video height (0 = original)";
 "Maximum width" = "Maximum width";
 "Measuring audio loudness…" = "Measuring audio loudness…";
+"Media link" = "Media link";
 "Media range timeline" = "Media range timeline";
 "Media setup" = "Media setup";
 "Media tools" = "Media tools";
@@ -1496,12 +1538,14 @@
 "NICE FILES.\nNO FUSS." = "NICE FILES.\nNO FUSS.";
 "NICELY DONE." = "NICELY DONE.";
 "NICELY DONE. 1 FILE IS READY." = "NICELY DONE. 1 FILE IS READY.";
+"NO CROP SELECTED" = "NO CROP SELECTED";
 "NO DOWNLOADABLE MEDIA WAS FOUND. USE THE VIDEO'S SHARE LINK, OR COPY IMAGE ADDRESS FOR A PHOTO." = "NO DOWNLOADABLE MEDIA WAS FOUND. USE THE VIDEO'S SHARE LINK, OR COPY IMAGE ADDRESS FOR A PHOTO.";
 "NO DOWNLOADABLE PUBLIC MEDIA WAS FOUND. LOGIN-REQUIRED AND PROTECTED MEDIA ARE NOT SUPPORTED." = "NO DOWNLOADABLE PUBLIC MEDIA WAS FOUND. LOGIN-REQUIRED AND PROTECTED MEDIA ARE NOT SUPPORTED.";
 "NO FOLDERS ALLOWED YET." = "NO FOLDERS ALLOWED YET.";
 "NO MATCHES. TRY A FILE NAME OR TOOL." = "NO MATCHES. TRY A FILE NAME OR TOOL.";
 "NO MATCHING REGIONS WERE DETECTED. YOU CAN STILL DRAW AREAS BY HAND." = "NO MATCHING REGIONS WERE DETECTED. YOU CAN STILL DRAW AREAS BY HAND.";
 "NO MEDIA OUTPUT WAS PRODUCED." = "NO MEDIA OUTPUT WAS PRODUCED.";
+"NO OUTPUT FORMATS" = "NO OUTPUT FORMATS";
 "NO OUTPUT WAS PRODUCED." = "NO OUTPUT WAS PRODUCED.";
 "NO PUBLIC DOWNLOADABLE MEDIA FOUND. SOME SITES REQUIRE SIGN-IN OR DO NOT EXPOSE DOWNLOADABLE MEDIA." = "NO PUBLIC DOWNLOADABLE MEDIA FOUND. SOME SITES REQUIRE SIGN-IN OR DO NOT EXPOSE DOWNLOADABLE MEDIA.";
 "NO QR CODES FOUND. TRY A LARGER OR SHARPER IMAGE." = "NO QR CODES FOUND. TRY A LARGER OR SHARPER IMAGE.";
@@ -1511,6 +1555,7 @@
 "NO TIMED SUBTITLE CUES WERE FOUND IN THIS FILE." = "NO TIMED SUBTITLE CUES WERE FOUND IN THIS FILE.";
 "NO TIMED SUBTITLE CUES WERE FOUND." = "NO TIMED SUBTITLE CUES WERE FOUND.";
 "NO TOOLS FOR THIS FILE TYPE" = "NO TOOLS FOR THIS FILE TYPE";
+"NO TOOLS FOR THIS SELECTION" = "NO TOOLS FOR THIS SELECTION";
 "NO UNPROTECTED DOWNLOADABLE FORMAT IS AVAILABLE." = "NO UNPROTECTED DOWNLOADABLE FORMAT IS AVAILABLE.";
 "NO UPDATE CHECKS YET" = "NO UPDATE CHECKS YET";
 "NO USABLE YOUTUBE THUMBNAIL WAS FOUND." = "NO USABLE YOUTUBE THUMBNAIL WAS FOUND.";
@@ -1553,6 +1598,7 @@
 "Nicely done. 1 file is ready." = "Nicely done. 1 file is ready.";
 "No QR codes found. Try a larger or sharper image." = "No QR codes found. Try a larger or sharper image.";
 "No QR codes this time." = "No QR codes this time.";
+"No crop selected" = "No crop selected";
 "No downloadable media was found. Use the video's share link, or Copy Image Address for a photo." = "No downloadable media was found. Use the video's share link, or Copy Image Address for a photo.";
 "No downloadable public media was found. Login-required and protected media are not supported." = "No downloadable public media was found. Login-required and protected media are not supported.";
 "No file tools\n%@ Convert\n%@ Actions" = "No file tools\n%@ Convert\n%@ Actions";
@@ -1567,6 +1613,7 @@
 "No matches. Try a file name or tool." = "No matches. Try a file name or tool.";
 "No matching regions were detected. You can still draw areas by hand." = "No matching regions were detected. You can still draw areas by hand.";
 "No media output was produced." = "No media output was produced.";
+"No output formats" = "No output formats";
 "No output was produced." = "No output was produced.";
 "No public downloadable media found. Some sites require sign-in or do not expose downloadable media." = "No public downloadable media found. Some sites require sign-in or do not expose downloadable media.";
 "No readable text was found in this text clipping." = "No readable text was found in this text clipping.";
@@ -1574,6 +1621,7 @@
 "No timed subtitle cues were found in this file." = "No timed subtitle cues were found in this file.";
 "No timed subtitle cues were found." = "No timed subtitle cues were found.";
 "No tools for this file type" = "No tools for this file type";
+"No tools for this selection" = "No tools for this selection";
 "No unprotected downloadable format is available." = "No unprotected downloadable format is available.";
 "No update checks yet" = "No update checks yet";
 "No usable YouTube thumbnail was found." = "No usable YouTube thumbnail was found.";
@@ -1595,6 +1643,7 @@
 "OFFICE TOOLS READY" = "OFFICE TOOLS READY";
 "OFFICE TOOLS READY." = "OFFICE TOOLS READY.";
 "OFFICIAL PUBLIC RELEASES · NO ACCOUNT OR TOKEN NEEDED" = "OFFICIAL PUBLIC RELEASES · NO ACCOUNT OR TOKEN NEEDED";
+"OK" = "OK";
 "ON YOUR MAC" = "ON YOUR MAC";
 "ON YOUR PC" = "ON YOUR PC";
 "ONE DOWNLOAD PER TOOL GROUP. NO ACCOUNT OR GITHUB TOKEN." = "ONE DOWNLOAD PER TOOL GROUP. NO ACCOUNT OR GITHUB TOKEN.";
@@ -1684,6 +1733,7 @@
 "PASTE ONE COMPLETE HTTP:// OR HTTPS:// MEDIA LINK." = "PASTE ONE COMPLETE HTTP:// OR HTTPS:// MEDIA LINK.";
 "PASTE ONE COMPLETE PUBLIC MEDIA LINK." = "PASTE ONE COMPLETE PUBLIC MEDIA LINK.";
 "PASTE YOUR GITHUB TOKEN" = "PASTE YOUR GITHUB TOKEN";
+"PASTED FILES" = "PASTED FILES";
 "PASTED IMAGE" = "PASTED IMAGE";
 "PASTED TEXT" = "PASTED TEXT";
 "PAUSE" = "PAUSE";
@@ -1711,8 +1761,10 @@
 "PIXELATE" = "PIXELATE";
 "PLAY" = "PLAY";
 "PLAY / PAUSE" = "PLAY / PAUSE";
+"PLAY / PAUSE (SPACE)" = "PLAY / PAUSE (SPACE)";
 "PLAY RESULT" = "PLAY RESULT";
 "PLAY SELECTED RANGE" = "PLAY SELECTED RANGE";
+"PLAY SELECTED RANGE (⇧SPACE)" = "PLAY SELECTED RANGE (⇧SPACE)";
 "PLAYBACK / DOCUMENT ORDER" = "PLAYBACK / DOCUMENT ORDER";
 "PLAYBACK SPEED" = "PLAYBACK SPEED";
 "PORTRAIT" = "PORTRAIT";
@@ -1725,6 +1777,7 @@
 "PREPARING MOVE…" = "PREPARING MOVE…";
 "PREPARING PREVIEW…" = "PREPARING PREVIEW…";
 "PREPARING PROCESSED PREVIEW…" = "PREPARING PROCESSED PREVIEW…";
+"PREPARING VISUALIZATION…" = "PREPARING VISUALIZATION…";
 "PREPARING YOUR FILE…" = "PREPARING YOUR FILE…";
 "PREPARING…" = "PREPARING…";
 "PRESERVE METADATA" = "PRESERVE METADATA";
@@ -1768,6 +1821,7 @@
 "Paste one complete http:// or https:// media link." = "Paste one complete http:// or https:// media link.";
 "Paste one complete public media link." = "Paste one complete public media link.";
 "Paste your GitHub token" = "Paste your GitHub token";
+"Pasted files" = "Pasted files";
 "Pasted image" = "Pasted image";
 "Pasted text" = "Pasted text";
 "Pause" = "Pause";
@@ -1782,10 +1836,12 @@
 "Pin" = "Pin";
 "Pixelate" = "Pixelate";
 "Play" = "Play";
+"Play / Pause (Space)" = "Play / Pause (Space)";
 "Play / pause" = "Play / pause";
 "Play Result" = "Play Result";
 "Play Selected Range" = "Play Selected Range";
 "Play selected range" = "Play selected range";
+"Play selected range (⇧Space)" = "Play selected range (⇧Space)";
 "Playback / document order" = "Playback / document order";
 "Playback speed" = "Playback speed";
 "Portrait" = "Portrait";
@@ -1800,12 +1856,15 @@
 "Preparing move…" = "Preparing move…";
 "Preparing preview…" = "Preparing preview…";
 "Preparing processed preview…" = "Preparing processed preview…";
+"Preparing visualization…" = "Preparing visualization…";
 "Preparing your file…" = "Preparing your file…";
 "Preparing…" = "Preparing…";
 "Preserve metadata" = "Preserve metadata";
 "Preserve original pages" = "Preserve original pages";
 "Preset" = "Preset";
 "Preview" = "Preview";
+"Preview %@" = "Preview %@";
+"Preview %lld" = "Preview %lld";
 "Preview Left" = "Preview Left";
 "Preview Processed" = "Preview Processed";
 "Preview Right" = "Preview Right";
@@ -1940,6 +1999,10 @@
 "Reflowable text" = "Reflowable text";
 "Release to place · Esc cancels" = "Release to place · Esc cancels";
 "Remove" = "Remove";
+"Remove %@" = "Remove %@";
+"Remove %@ from selection" = "Remove %@ from selection";
+"Remove %lld" = "Remove %lld";
+"Remove %lld from selection" = "Remove %lld from selection";
 "Remove All" = "Remove All";
 "Remove Audio" = "Remove Audio";
 "Remove Background" = "Remove Background";
@@ -1983,6 +2046,8 @@
 "SAVE" = "SAVE";
 "SAVE 1 FRAME" = "SAVE 1 FRAME";
 "SAVE A COPY" = "SAVE A COPY";
+"SAVE A CROPPED COPY (RETURN OR ⌘S)" = "SAVE A CROPPED COPY (RETURN OR ⌘S)";
+"SAVE A FRESH COPY (⌘S)" = "SAVE A FRESH COPY (⌘S)";
 "SAVE ANNOTATED COPY" = "SAVE ANNOTATED COPY";
 "SAVE AS" = "SAVE AS";
 "SAVE AUDIO COPY" = "SAVE AUDIO COPY";
@@ -2134,6 +2199,8 @@
 "Save Connection" = "Save Connection";
 "Save Downloads Here" = "Save Downloads Here";
 "Save a copy" = "Save a copy";
+"Save a cropped copy (Return or ⌘S)" = "Save a cropped copy (Return or ⌘S)";
+"Save a fresh copy (⌘S)" = "Save a fresh copy (⌘S)";
 "Save annotated copy" = "Save annotated copy";
 "Save as" = "Save as";
 "Save audio copy" = "Save audio copy";
@@ -2233,6 +2300,8 @@
 "Sharpness" = "Sharpness";
 "Shift locks the ratio · Return crops\nDrag inside to move; drag a handle to resize." = "Shift locks the ratio · Return crops\nDrag inside to move; drag a handle to resize.";
 "Shift to convert" = "Shift to convert";
+"Show %@ in Finder" = "Show %@ in Finder";
+"Show %lld in Finder" = "Show %lld in Finder";
 "Show Nashi in Finder" = "Show Nashi in Finder";
 "Show Original" = "Show Original";
 "Show in Explorer" = "Show in Explorer";
@@ -2329,6 +2398,7 @@
 "THE IMAGE ORDER MUST INCLUDE EVERY IMAGE ONCE." = "THE IMAGE ORDER MUST INCLUDE EVERY IMAGE ONCE.";
 "THE MEDIA SERVER REDIRECTED TO AN INSECURE URL." = "THE MEDIA SERVER REDIRECTED TO AN INSECURE URL.";
 "THE OPERATION WAS CANCELLED." = "THE OPERATION WAS CANCELLED.";
+"THE PASSWORD IS INCORRECT, OR THE ARCHIVE IS DAMAGED." = "THE PASSWORD IS INCORRECT, OR THE ARCHIVE IS DAMAGED.";
 "THE PDF CONTAINS NO PAGES." = "THE PDF CONTAINS NO PAGES.";
 "THE PDF PAGE IS TOO LARGE TO RENDER AT THIS RESOLUTION." = "THE PDF PAGE IS TOO LARGE TO RENDER AT THIS RESOLUTION.";
 "THE POST DID NOT RETURN READABLE PHOTO DETAILS." = "THE POST DID NOT RETURN READABLE PHOTO DETAILS.";
@@ -2358,6 +2428,7 @@
 "THE UPSTREAM SERVER DID NOT RETURN A SUCCESSFUL HTTPS DOWNLOAD." = "THE UPSTREAM SERVER DID NOT RETURN A SUCCESSFUL HTTPS DOWNLOAD.";
 "THE VIDEO HAS NO READABLE DIMENSIONS." = "THE VIDEO HAS NO READABLE DIMENSIONS.";
 "THESE FILES HAVE MOVED OR WERE DELETED." = "THESE FILES HAVE MOVED OR WERE DELETED.";
+"THIS ARCHIVE IS PROTECTED. ENTER ITS PASSWORD." = "THIS ARCHIVE IS PROTECTED. ENTER ITS PASSWORD.";
 "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE." = "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE.";
 "THIS DOCUMENT NESTS ITS CONTENT TOO DEEPLY TO CONVERT." = "THIS DOCUMENT NESTS ITS CONTENT TOO DEEPLY TO CONVERT.";
 "THIS FILE HAS MOVED OR WAS DELETED." = "THIS FILE HAS MOVED OR WAS DELETED.";
@@ -2379,6 +2450,7 @@
 "THIS MEDIA IS PROTECTED AND CANNOT BE DOWNLOADED HERE." = "THIS MEDIA IS PROTECTED AND CANNOT BE DOWNLOADED HERE.";
 "THIS OUTPUT FORMAT HAS NO ADJUSTABLE CONVERSION DEFAULTS." = "THIS OUTPUT FORMAT HAS NO ADJUSTABLE CONVERSION DEFAULTS.";
 "THIS PAGES FILE IS TOO LARGE OR IS NOT A REGULAR DOCUMENT FILE." = "THIS PAGES FILE IS TOO LARGE OR IS NOT A REGULAR DOCUMENT FILE.";
+"THIS PDF CONTAINS DIGITAL SIGNATURES. THIS PAGE OPERATION CANNOT SAFELY PRESERVE THAT FEATURE. NO COPY WAS EXPORTED." = "THIS PDF CONTAINS DIGITAL SIGNATURES. THIS PAGE OPERATION CANNOT SAFELY PRESERVE THAT FEATURE. NO COPY WAS EXPORTED.";
 "THIS PDF CONTAINS NO PAGES." = "THIS PDF CONTAINS NO PAGES.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT MERGING, SPLITTING OR REORDERING PAGES CANNOT KEEP. NO COPY WAS EXPORTED." = "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT MERGING, SPLITTING OR REORDERING PAGES CANNOT KEEP. NO COPY WAS EXPORTED.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT METADATA CLEANUP CANNOT KEEP. NO COPY WAS EXPORTED." = "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT METADATA CLEANUP CANNOT KEEP. NO COPY WAS EXPORTED.";
@@ -2494,6 +2566,7 @@
 "The metadata field %@ could not be removed." = "The metadata field %@ could not be removed.";
 "The metadata field %lld could not be removed." = "The metadata field %lld could not be removed.";
 "The operation was cancelled." = "The operation was cancelled.";
+"The password is incorrect, or the archive is damaged." = "The password is incorrect, or the archive is damaged.";
 "The post did not return readable photo details." = "The post did not return readable photo details.";
 "The processing tool could not start." = "The processing tool could not start.";
 "The requested PDF size could not be reached." = "The requested PDF size could not be reached.";
@@ -2523,6 +2596,7 @@
 "The upstream server did not return a successful HTTPS download." = "The upstream server did not return a successful HTTPS download.";
 "The video has no readable dimensions." = "The video has no readable dimensions.";
 "These files have moved or were deleted." = "These files have moved or were deleted.";
+"This PDF contains digital signatures. This page operation cannot safely preserve that feature. No copy was exported." = "This PDF contains digital signatures. This page operation cannot safely preserve that feature. No copy was exported.";
 "This PDF contains no pages." = "This PDF contains no pages.";
 "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported." = "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported.";
 "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported." = "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported.";
@@ -2538,6 +2612,7 @@
 "This Word document contains duplicate relationship identifiers. It could not be converted to Pages." = "This Word document contains duplicate relationship identifiers. It could not be converted to Pages.";
 "This Word document contains duplicate style identifiers. It could not be converted to Pages." = "This Word document contains duplicate style identifiers. It could not be converted to Pages.";
 "This Word document has no editable body." = "This Word document has no editable body.";
+"This archive is protected. Enter its password." = "This archive is protected. Enter its password.";
 "This conversion is not available for %@." = "This conversion is not available for %@.";
 "This conversion is not available for %lld." = "This conversion is not available for %lld.";
 "This crop applies to every selected image and must fit inside each one." = "This crop applies to every selected image and must fit inside each one.";
@@ -2627,6 +2702,7 @@
 "USE ONCE IF MACOS NEEDS PERMISSION FOR YOUR SAVED UPDATE CONNECTION." = "USE ONCE IF MACOS NEEDS PERMISSION FOR YOUR SAVED UPDATE CONNECTION.";
 "USE ONE INSTAGRAM PHOTO POST WITH UP TO 50 ITEMS." = "USE ONE INSTAGRAM PHOTO POST WITH UP TO 50 ITEMS.";
 "USE OPEN TO PREVIEW THIS DOCUMENT IN ITS DEFAULT APP." = "USE OPEN TO PREVIEW THIS DOCUMENT IN ITS DEFAULT APP.";
+"USE THESE FILES AGAIN" = "USE THESE FILES AGAIN";
 "Undo" = "Undo";
 "Undo Area" = "Undo Area";
 "Undo area" = "Undo area";
@@ -2661,12 +2737,15 @@
 "Upstream package has no regular %@ executable." = "Upstream package has no regular %@ executable.";
 "Upstream package has no regular %lld executable." = "Upstream package has no regular %lld executable.";
 "Upstream versions, licenses and source links" = "Upstream versions, licenses and source links";
+"Use %@ again" = "Use %@ again";
+"Use %lld again" = "Use %lld again";
 "Use Open to preview this document in its default app." = "Use Open to preview this document in its default app.";
 "Use a regular writable folder for portable updates." = "Use a regular writable folder for portable updates.";
 "Use a static SVG without embedded scripts or HTML." = "Use a static SVG without embedded scripts or HTML.";
 "Use in Nashi" = "Use in Nashi";
 "Use once if macOS needs permission for your saved update connection." = "Use once if macOS needs permission for your saved update connection.";
 "Use one Instagram photo post with up to 50 items." = "Use one Instagram photo post with up to 50 items.";
+"Use these files again" = "Use these files again";
 "VALUE" = "VALUE";
 "VERIFYING AND PREPARING OFFICE TOOLS…" = "VERIFYING AND PREPARING OFFICE TOOLS…";
 "VERIFYING UPDATE SIGNATURE…" = "VERIFYING UPDATE SIGNATURE…";
@@ -2704,6 +2783,7 @@
 "Visualization dimensions must be between 16 and 8,192 pixels." = "Visualization dimensions must be between 16 and 8,192 pixels.";
 "WAIT FOR THE PROCESSED PREVIEW TO FINISH BEFORE RESETTING." = "WAIT FOR THE PROCESSED PREVIEW TO FINISH BEFORE RESETTING.";
 "WAVEFORM" = "WAVEFORM";
+"WEB MEDIA" = "WEB MEDIA";
 "WELCOME TO NASHI" = "WELCOME TO NASHI";
 "WELCOME…" = "WELCOME…";
 "WHEEL FINISH" = "WHEEL FINISH";
@@ -2719,6 +2799,7 @@
 "WORKING…" = "WORKING…";
 "Wait for the processed preview to finish before resetting." = "Wait for the processed preview to finish before resetting.";
 "Waveform" = "Waveform";
+"Web media" = "Web media";
 "Welcome to Nashi" = "Welcome to Nashi";
 "Welcome…" = "Welcome…";
 "Wheel finish" = "Wheel finish";
@@ -2732,6 +2813,22 @@
 "Windows could not add Nashi to the system tray." = "Windows could not add Nashi to the system tray.";
 "Windows could not create a tray icon." = "Windows could not create a tray icon.";
 "Working…" = "Working…";
+"X %@, Y %@, width %@, height %@" = "X %@, Y %@, width %@, height %@";
+"X %@, Y %@, width %@, height %lld" = "X %@, Y %@, width %@, height %lld";
+"X %@, Y %@, width %lld, height %@" = "X %@, Y %@, width %lld, height %@";
+"X %@, Y %@, width %lld, height %lld" = "X %@, Y %@, width %lld, height %lld";
+"X %@, Y %lld, width %@, height %@" = "X %@, Y %lld, width %@, height %@";
+"X %@, Y %lld, width %@, height %lld" = "X %@, Y %lld, width %@, height %lld";
+"X %@, Y %lld, width %lld, height %@" = "X %@, Y %lld, width %lld, height %@";
+"X %@, Y %lld, width %lld, height %lld" = "X %@, Y %lld, width %lld, height %lld";
+"X %lld, Y %@, width %@, height %@" = "X %lld, Y %@, width %@, height %@";
+"X %lld, Y %@, width %@, height %lld" = "X %lld, Y %@, width %@, height %lld";
+"X %lld, Y %@, width %lld, height %@" = "X %lld, Y %@, width %lld, height %@";
+"X %lld, Y %@, width %lld, height %lld" = "X %lld, Y %@, width %lld, height %lld";
+"X %lld, Y %lld, width %@, height %@" = "X %lld, Y %lld, width %@, height %@";
+"X %lld, Y %lld, width %@, height %lld" = "X %lld, Y %lld, width %@, height %lld";
+"X %lld, Y %lld, width %lld, height %@" = "X %lld, Y %lld, width %lld, height %@";
+"X %lld, Y %lld, width %lld, height %lld" = "X %lld, Y %lld, width %lld, height %lld";
 "YOU CAN ALSO CHOOSE FILES FROM THE MAIN WINDOW." = "YOU CAN ALSO CHOOSE FILES FROM THE MAIN WINDOW.";
 "YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL." = "YOU CHOOSE WHEN TO DOWNLOAD AND INSTALL.";
 "YOU HAVE THE LATEST PUBLISHED WINDOWS VERSION." = "YOU HAVE THE LATEST PUBLISHED WINDOWS VERSION.";
@@ -2779,6 +2876,8 @@
 "macOS Reduce Motion is on. Nashi keeps motion off." = "macOS Reduce Motion is on. Nashi keeps motion off.";
 "macOS could not open the generated media preview." = "macOS could not open the generated media preview.";
 "owner/repository or GitHub URL" = "owner/repository or GitHub URL";
+"selected %@" = "selected %@";
+"selected %lld" = "selected %lld";
 "←/→ FILES · MEDIA: SPACE PLAY/PAUSE, ←/→ 1S, ALT+←/→ FILES · ESC CLOSES" = "←/→ FILES · MEDIA: SPACE PLAY/PAUSE, ←/→ 1S, ALT+←/→ FILES · ESC CLOSES";
 "←/→ FILES · MEDIA: SPACE PLAY/PAUSE, ←/→ 1S, ⌥←/→ FILES · ESC CLOSES" = "←/→ FILES · MEDIA: SPACE PLAY/PAUSE, ←/→ 1S, ⌥←/→ FILES · ESC CLOSES";
 "←/→ files · Media: Space play/pause, ←/→ 1s, Alt+←/→ files · Esc closes" = "←/→ files · Media: Space play/pause, ←/→ 1s, Alt+←/→ files · Esc closes";
@@ -2787,5 +2886,7 @@
 "↑/↓ choose · Space preview · Return use in Nashi" = "↑/↓ choose · Space preview · Return use in Nashi";
 "↶ RESET" = "↶ RESET";
 "↶ Reset" = "↶ Reset";
+"⌘V · PASTE FILES, TEXT, AN IMAGE OR LINK" = "⌘V · PASTE FILES, TEXT, AN IMAGE OR LINK";
+"⌘V · Paste files, text, an image or link" = "⌘V · Paste files, text, an image or link";
 "✦  READY WHEN YOU ARE" = "✦  READY WHEN YOU ARE";
 "✦  START HERE" = "✦  START HERE";

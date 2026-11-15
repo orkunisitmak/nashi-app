@@ -8,10 +8,19 @@ public enum PDFEngine {
         if pdf.isLocked && !pdf.unlock(withPassword:password) { throw NashiError.invalidInput("This PDF is password protected. Enter its password.") }
         guard pdf.pageCount>0 else { throw NashiError.invalidInput("The PDF contains no pages.") };return pdf
     }
+    /// One pixel is one point, unless the file states a square resolution: a 300 DPI A4 scan becomes an A4 page, as in Preview.
+    static func pageSize(of url: URL, pixelWidth: Int, pixelHeight: Int) -> NSSize {
+        let properties = CGImageSourceCreateWithURL(url as CFURL, nil).flatMap { CGImageSourceCopyPropertiesAtIndex($0, 0, nil) } as? [CFString:Any]
+        guard let dpi = properties?[kCGImagePropertyDPIWidth] as? Double, dpi.isFinite, dpi > 0, dpi == properties?[kCGImagePropertyDPIHeight] as? Double else { return NSSize(width:pixelWidth,height:pixelHeight) }
+        let size = NSSize(width:Double(pixelWidth)*72/dpi,height:Double(pixelHeight)*72/dpi)
+        // A stored resolution that gives a page under 3 pt or over Acrobat's 14,400 pt limit is wrong metadata, not a real scan.
+        guard (3...14_400).contains(size.width), (3...14_400).contains(size.height) else { return NSSize(width:pixelWidth,height:pixelHeight) }
+        return size
+    }
     public static func create(inputs: [URL], options: OperationOptions, token: CancellationToken, progress: ProgressHandler = {_,_ in}) throws -> [URL] {
         guard let first=inputs.first else { throw NashiError.invalidInput("Choose images to create a PDF.") }
         let pdf=PDFDocument()
-        for (index,input) in inputs.enumerated() { progress(Double(index)/Double(inputs.count),"Adding image \(index+1) of \(inputs.count)…");try token.check(); let cg=try ImageEngine.load(input); if let page=PDFPage(image:NSImage(cgImage:cg,size:NSSize(width:cg.width,height:cg.height))) { pdf.insert(page,at:pdf.pageCount) } }
+        for (index,input) in inputs.enumerated() { progress(Double(index)/Double(inputs.count),"Adding image \(index+1) of \(inputs.count)…");try token.check(); let cg=try ImageEngine.load(input); if let page=PDFPage(image:NSImage(cgImage:cg,size:pageSize(of:input,pixelWidth:cg.width,pixelHeight:cg.height))) { pdf.insert(page,at:pdf.pageCount) } }
         let output=OutputFiles.unique(for:first,extension:"pdf",directory:options.outputDirectory)
         progress(OperationProgress.indeterminate,"Writing PDF…")
         guard pdf.write(to:output) else { throw NashiError.failed("Could not create PDF.") };return [output]
@@ -24,7 +33,7 @@ public enum PDFEngine {
         do {
             for index in 0..<pdf.pageCount {
                 try token.check();guard let page=pdf.page(at:index) else { throw NashiError.failed("A PDF page could not be read.") }
-                let bounds=PDFOfficeCodec.visualBounds(page),scale=Double(max(36,min(1200,options.dpi)))/72
+                let bounds=PDFOfficeCodec.visualBounds(page),dpi=Double(max(36,min(1200,options.dpi))),scale=dpi/72
                 let scaledWidth=bounds.width*scale,scaledHeight=bounds.height*scale
                 guard scaledWidth.isFinite,scaledHeight.isFinite,scaledWidth>0,scaledHeight>0,scaledWidth<=32000,scaledHeight<=32000 else { throw NashiError.failed("PDF page is too large to render at this DPI.") }
                 let w=max(1,Int(scaledWidth.rounded())),h=max(1,Int(scaledHeight.rounded()))
@@ -35,7 +44,7 @@ public enum PDFEngine {
                 page.draw(with:.cropBox,to:ctx)
                 try token.check()
                 guard let image=ctx.makeImage() else { throw NashiError.failed("A PDF page could not be rendered.") }
-                let output=folder.appendingPathComponent(String(format:"Page %03d.%@",index+1,format));try ImageEngine.write(image,to:output,quality:options.quality);outputs.append(output)
+                let output=folder.appendingPathComponent(String(format:"Page %03d.%@",index+1,format));try ImageEngine.write(image,to:output,quality:options.quality,metadata:[kCGImagePropertyDPIWidth:dpi,kCGImagePropertyDPIHeight:dpi] as CFDictionary);outputs.append(output)
                 progress(Double(index+1)/Double(pdf.pageCount),"Rendered page \(index+1) of \(pdf.pageCount)")
             }
         } catch { try? FileManager.default.removeItem(at:folder);throw error }
@@ -47,7 +56,7 @@ public enum PDFEngine {
         let ranges=ranges.replacingOccurrences(of:#"\s*-\s*"#,with:"-",options:.regularExpression)
         var result:[Int]=[]
         for part in ranges.split(separator:",") {
-            let pieces=part.trimmingCharacters(in:.whitespaces).split(separator:"-")
+            let pieces=part.trimmingCharacters(in:.whitespaces).split(separator:"-",omittingEmptySubsequences:false)
             if pieces.count==1,let n=Int(pieces[0]),n>0,n<=count { result.append(n-1) }
             else if pieces.count==2,let a=Int(pieces[0]),let b=Int(pieces[1]),a>0,b>0,a<=count,b<=count {
                 result += stride(from:a,through:b,by:a<=b ? 1 : -1).map { $0-1 }
@@ -76,7 +85,7 @@ public enum PDFEngine {
                     try token.check()
                     let selection=Array(order[start..<min(start+chunk,order.count)])
                     let bytes=try pageEditedData([input],selections:[selection],password:options.password,token:token)
-                    let output=folder.appendingPathComponent(String(format:"Pages %03d-%03d.pdf",start+1,min(start+chunk,order.count)))
+                    let output=OutputFiles.unique(for:folder.appendingPathComponent(String(format:"Pages %03d-%03d",selection[0]+1,selection[selection.count-1]+1)),extension:"pdf",directory:folder)
                     try bytes.write(to:output,options:.atomic);outputs.append(output)
                     progress(Double(min(start+chunk,order.count))/Double(order.count),"Saved \(min(start+chunk,order.count)) of \(order.count) pages")
                 }
@@ -114,12 +123,13 @@ public enum PDFEngine {
                     var settings:[PDFDocumentWriteOption:Any]=[:]
                     if #available(macOS 13.4,*) { settings=[.saveImagesAsJPEGOption:true,.optimizeImagesForScreenOption:true] }
                     guard pdf.write(to:output,withOptions:settings) else { throw NashiError.failed("Could not compress PDF.") }
+                    // The original may already meet the target even when PDFKit's rewrite is larger.
+                    try OutputFiles.retainSmallerOriginal(input,output:output,target:target)
                     let bytes=Int64(try output.resourceValues(forKeys:[.fileSizeKey]).fileSize ?? 0)
                     if let target,bytes>target {
                         try? FileManager.default.removeItem(at:output)
                         throw NashiError.failed("That PDF size cannot be reached while keeping selectable text, links, and annotations. Choose a larger target.")
                     }
-                    try OutputFiles.retainSmallerOriginal(input,output:output,target:target)
                     outputs.append(output);continue
                 }
                 var dpi=144.0,quality=options.quality
@@ -147,6 +157,8 @@ public enum PDFEngine {
                     let bytes=(try FileManager.default.attributesOfItem(atPath:output.path)[.size] as? NSNumber)?.int64Value ?? 0
                     if target == nil || bytes<=target! { complete=true;break };dpi=max(36,dpi*0.8);quality=max(0.05,quality*0.75)
                 }
+                // The original may already meet a target that no rasterized pass reached.
+                if !complete,let target,original>0,original<=target { try FileManager.default.removeItem(at:output);try FileManager.default.copyItem(at:input.resolvingSymlinksInPath(),to:output);complete=true }
                 guard complete else { try? FileManager.default.removeItem(at:output);throw NashiError.failed("The requested PDF size could not be reached.") }
                 try OutputFiles.retainSmallerOriginal(input,output:output,target:target);outputs.append(output)
             default: throw NashiError.unsupported("Unsupported PDF tool.")
@@ -179,6 +191,8 @@ public enum PDFEngine {
                 result.insert(page,at:result.pageCount)
             }
         }
+        // Keep the title and author, as the object-graph path keeps the first document's Info.
+        result.documentAttributes=documents.first?.documentAttributes
         guard let bytes=result.dataRepresentation() else { throw NashiError.failed("Could not save the unlocked PDF pages.") }
         return bytes
     }
@@ -211,7 +225,8 @@ public enum PDFEngine {
         let pages=(0..<source.pageCount).compactMap{source.page(at:$0)}
         let feature:String?
         if hasKey(catalog,"AcroForm") || pages.contains(where:{$0.annotations.contains(where:{$0.type=="Widget"})}) { feature="form fields" }
-        else if hasKey(names,"EmbeddedFiles") || hasKey(catalog,"AF") || hasKey(catalog,"Collection") || pages.contains(where:{hasKey($0.pageRef?.dictionary,"AF")}) { feature="embedded files" }
+        // A paperclip (FileAttachment) annotation's file is dropped by the page copy too.
+        else if hasKey(names,"EmbeddedFiles") || hasKey(catalog,"AF") || hasKey(catalog,"Collection") || pages.contains(where:{hasKey($0.pageRef?.dictionary,"AF") || $0.annotations.contains(where:{$0.type=="FileAttachment"})}) { feature="embedded files" }
         else if hasKey(catalog,"OCProperties") { feature="optional content layers" }
         else if hasKey(catalog,"StructTreeRoot") { feature="accessibility tags" }
         // Page numbering such as i, ii or A-1 lives in the catalog and is not copied with the pages.
@@ -224,8 +239,9 @@ public enum PDFEngine {
             guard let page=source.page(at:index)?.copy() as? PDFPage else { throw NashiError.failed("A PDF page could not be copied.") }
             for annotation in page.annotations {
                 if clearAnnotationMetadata {
-                    // Widget /T is its field name, not an annotation author.
-                    if annotation.type != "Widget" { annotation.userName=nil }
+                    // Widget /T is its field name, not an annotation author. Setting userName to nil
+                    // leaves /T on Caret, Squiggly, Polygon, PolyLine and Sound annotations.
+                    if annotation.type != "Widget" { annotation.removeValue(forAnnotationKey:.textLabel) }
                     annotation.modificationDate=nil
                     annotation.removeValue(forAnnotationKey:PDFAnnotationKey(rawValue:"/CreationDate"))
                 }
@@ -239,8 +255,12 @@ public enum PDFEngine {
             let mapped=PDFDestination(page:copy,at:original.point);mapped.zoom=original.zoom;return mapped
         }
         for index in 0..<result.pageCount {
-            for annotation in result.page(at:index)?.annotations ?? [] {
-                if let action=annotation.action as? PDFActionGoTo,let mapped=destination(action.destination) { annotation.action=PDFActionGoTo(destination:mapped) }
+            // A copied page loses the page of each link target, so read the target from the source page.
+            let originals=source.page(at:index)?.annotations ?? [],copies=result.page(at:index)?.annotations ?? []
+            guard originals.count==copies.count else { continue }
+            for (original,annotation) in zip(originals,copies) {
+                if let action=original.action as? PDFActionGoTo,let mapped=destination(action.destination) { annotation.action=PDFActionGoTo(destination:mapped) }
+                else if let target=original.destination,let mapped=destination(target) { annotation.action=PDFActionGoTo(destination:mapped) }
             }
         }
         var visited=Set<ObjectIdentifier>()

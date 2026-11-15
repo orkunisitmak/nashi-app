@@ -125,6 +125,10 @@ enum ArchiveCodec {
             guard attributes[.type] as? FileAttributeType == .typeRegular else {
                 throw NashiError.invalidInput("An archive hard link does not point to a regular file.")
             }
+            // Conversion writes each hard link back out as a full copy, so it counts like one.
+            let size=(attributes[.size] as? NSNumber)?.int64Value ?? 0
+            guard size<=limits.maximumBytes-expandedBytes else {throw NashiError.invalidInput("The archive expands beyond the 20 GB safety limit.")}
+            expandedBytes+=size
             try fm.createDirectory(at: link.destination.deletingLastPathComponent(), withIntermediateDirectories: true)
             try fm.linkItem(at: target, to: link.destination)
         }

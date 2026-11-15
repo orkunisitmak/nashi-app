@@ -31,7 +31,8 @@ struct ToolEditor:View {
     @State private var rightWaveform:[Float]=[]
     @State private var mediaPreviewFolder:URL?
     @State private var playbackURL:URL?
-    @State private var previewBusy=false
+    @State private var processedPreviewBusy=false
+    @State private var visualizationBusy=false
     @State private var isLoading=true
     @State private var readyToApply=false
     @State private var loadRevision=UUID()
@@ -85,6 +86,7 @@ struct ToolEditor:View {
     @Environment(\.locale) private var locale
 
     var input:URL? { inputs.first }
+    var previewBusy:Bool { processedPreviewBusy || visualizationBusy }
     var category:FileCategory { input.map(FileCategory.detect) ?? .other }
     var isGIFMetadata:Bool { input?.pathExtension.lowercased()=="gif" }
     var usesImageMetadata:Bool { category == .image || isGIFMetadata }
@@ -201,7 +203,8 @@ struct ToolEditor:View {
         switch tool {
         case .cropImage,.cropVideo:
             guard !cropInteracting,let crop=options.crop else { return false }
-            return crop.x>=0 && crop.y>=0 && crop.width>=1 && crop.height>=1 && crop.x+crop.width<=imageSize.width && crop.y+crop.height<=imageSize.height
+            let minSide=tool == .cropVideo ? MediaEngine.minimumVideoCropSide:1
+            return crop.x>=0 && crop.y>=0 && crop.width>=minSide && crop.height>=minSide && crop.x+crop.width<=imageSize.width && crop.y+crop.height<=imageSize.height
         case .removeMetadata where isGIFMetadata:return metadataRemoveAll
         case .splitVideo:return (!options.splitPoints.isEmpty || options.equalClips != nil) && options.discardedClips.count<splitIntervals.count
         case .videoSnapshots:return !options.snapshotTimes.isEmpty
@@ -629,7 +632,7 @@ struct ToolEditor:View {
         pdfEditor.reset();selectedSplitClip=nil;aspect="Free";cropInteracting=false;equalClips=2
         width=0;height=0;image=nil;baseImage=nil;imageSize=CGSize(width:100,height:100);pixelAspect=1;previewSize=nil;previewZoom=1;showOriginal=false
         duration=0;frameRate=30;playhead=0;playerReachedEnd=false;playingRange=false;processedPlayback=false;processedDuration=nil
-        waveform=[];leftWaveform=[];rightWaveform=[];processedWaveform=nil;playbackURL=nil;visualizationReady=false;previewBusy=false;previewError=nil
+        waveform=[];leftWaveform=[];rightWaveform=[];processedWaveform=nil;playbackURL=nil;visualizationReady=false;processedPreviewBusy=false;visualizationBusy=false;previewError=nil
         metadata=[:];originalMetadata=[:];metadataSearch="";metadataRemoveAll=false;addingMetadataField=false;newMetadataKey="{XMP-dc}.Title";newMetadataValue="";qrResults=[]
         annotationKind = .arrow;selectingAnnotations=false;annotationText="Text";annotationColor = .red;annotationStroke=3;annotationFont=24;annotationFontFamily="system"
         targetEnabled=false;targetMode="MB";targetValue=1;preset="Balanced";compressionSize="original"
@@ -652,8 +655,11 @@ struct ToolEditor:View {
         if width>0 { applied.width=width };if height>0 { applied.height=height }
         if [.cropImage,.cropVideo].contains(tool),var crop=applied.crop { crop.width=Double(width);crop.height=Double(height);applied.crop=crop }
         if tool == .cropImage { applied.width=nil;applied.height=nil }
-        // The size fields hold the first file's dimensions; keeping originals must not resize the other files to them.
-        if tool == .compress,category != .image || compressionSize == "original" { applied.width=nil;applied.height=nil }
+        // The size fields hold the first file's dimensions; only Custom sends them. Presets scale each file from its own size.
+        if tool == .compress,category != .image || compressionSize != "custom" { applied.width=nil;applied.height=nil }
+        if tool == .compress,category == .image {
+            if let edge=["large":2560,"medium":1920,"small":1280][compressionSize] { applied.imageMaxEdge=edge } else if let percent=Double(compressionSize) { applied.imageScale=percent/100 }
+        }
         if tool == .compress {
             applied.quality=preset=="Balanced" ? 0.8:0.45
             if targetEnabled {
@@ -811,31 +817,35 @@ struct ToolEditor:View {
     func processedPreview() {
         guard let input,readyToApply,!isLoading else { return };var settings=options;let kind=tool,token=previewToken,generation=editorGeneration,key=previewKey
         if kind == .splitVideo { settings.joinSplitClips=true }
-        previewError=nil;previewBusy=true
+        previewError=nil;processedPreviewBusy=true
         Task { do {
             let preview=try await MediaPreviewEngine.processedPreview(kind,input:input,options:settings,token:token)
             guard generation==editorGeneration,!token.isCancelled else { preview.removeTemporaryFiles();return }
             // A setting changed while the preview was being made: it no longer shows the current settings.
-            guard key==previewKey else { preview.removeTemporaryFiles();previewBusy=false;return }
+            guard key==previewKey else { preview.removeTemporaryFiles();processedPreviewBusy=false;return }
             processedDuration=(try? MediaEngine.inspect(preview.playbackURL).duration)
             player?.pause();if let old=channelPreviewURL { try? FileManager.default.removeItem(at:old.deletingLastPathComponent()) };channelPreviewURL=preview.playbackURL;playerReachedEnd=false;player=AVPlayer(url:preview.playbackURL);processedPlayback=true;player?.play()
             if kind == .normalizeAudio { let url=preview.playbackURL;let peaks=try await Task.detached { try MediaPreviewEngine.waveformPeaks(url,token:token) }.value;try checkGeneration(generation,token:token);if key==previewKey { processedWaveform=peaks } }
         } catch { if generation==editorGeneration,!token.isCancelled { previewError=error.localizedDescription } }
-            if generation==editorGeneration,!token.isCancelled { previewBusy=false }
+            if generation==editorGeneration,!token.isCancelled { processedPreviewBusy=false }
         }
     }
     var visualizationKey:String { tool == .audioToVideo ? "\(input?.path ?? ""):\(options.visualizationStyle):\(options.visualizationImage?.path ?? ""):\(options.backgroundColor):\(width):\(height)":"" }
     func renderVisualization() async {
-        guard tool == .audioToVideo,let input,width>0,height>0 else { return }
-        if options.visualizationStyle == "image",options.visualizationImage == nil { return }
+        guard tool == .audioToVideo else { return }
         visualizationToken.cancel();let token=CancellationToken(),generation=editorGeneration;visualizationToken=token
+        defer { if generation==editorGeneration,visualizationToken === token { visualizationBusy=false } }
+        guard let input,width>0,height>0 else { return }
+        if options.visualizationStyle == "image",options.visualizationImage == nil { return }
         var settings=options;settings.width=width;settings.height=height
         do {
-            try await Task.sleep(nanoseconds:150_000_000);try Task.checkCancellation();previewBusy=true
+            try await Task.sleep(nanoseconds:150_000_000);try Task.checkCancellation()
+            guard generation==editorGeneration,!token.isCancelled else { return }
+            visualizationBusy=true
             let preview=try await withTaskCancellationHandler(operation:{ try await MediaPreviewEngine.visualizationPreview(input,options:settings,token:token) },onCancel:{token.cancel()})
             if Task.isCancelled || token.isCancelled || generation != editorGeneration { preview.removeTemporaryFiles();return }
-            player?.pause();if let old=channelPreviewURL { try? FileManager.default.removeItem(at:old.deletingLastPathComponent()) };channelPreviewURL=preview.playbackURL;playerReachedEnd=false;player=AVPlayer(url:preview.playbackURL);playhead=0;visualizationReady=true;previewBusy=false
-        } catch { if generation==editorGeneration,!Task.isCancelled,!token.isCancelled { previewBusy=false;previewError=error.localizedDescription } }
+            player?.pause();if let old=channelPreviewURL { try? FileManager.default.removeItem(at:old.deletingLastPathComponent()) };channelPreviewURL=preview.playbackURL;playerReachedEnd=false;player=AVPlayer(url:preview.playbackURL);playhead=0;visualizationReady=true
+        } catch { if generation==editorGeneration,!Task.isCancelled,!token.isCancelled { previewError=error.localizedDescription } }
     }
     func disposeMedia() {
         editorGeneration=UUID();readyToApply=false;seekRevision=UUID();seeking=false;isPlaying=false
