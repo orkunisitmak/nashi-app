@@ -35,7 +35,7 @@ public enum ExternalToolSetup {
         let packages:[(String,String,String,String?)] = [
             ("ffmpeg","https://www.osxexperts.net/ffmpeg9arm.zip","591260c945d0eef150e3bf82b0ef988bd36a9cecc18ff05d6679617159f0a95e","binary"),
             ("ffprobe","https://www.osxexperts.net/ffprobe9arm.zip","e11c17e8200b3ee4c4c186d245e2b4053f01d56957336c1817fca0b997469106","binary"),
-            ("yt-dlp","https://github.com/yt-dlp/yt-dlp/releases/download/2026.08.19/yt-dlp_macos","0f192b7ec147ab6288885d6351d9ab67367640029b4377576ef46dd79cf7b202",nil),
+            ("yt-dlp","https://github.com/yt-dlp/yt-dlp/releases/download/2026.10.26/yt-dlp_macos","0f922c15ccc0b83eefa1c8bc9104e434318c4bf16e408e1ee93b7745a6efe0aa",nil),
             ("deno","https://github.com/denoland/deno/releases/download/v2.9.7/deno-aarch64-apple-darwin.zip","5cd46d6268f6f78f5d88bdc7159d20bd44cdaa4b3303474839f87ec6fe7ae25c","archive")
         ]
         for (index,package) in packages.enumerated() {

@@ -47,13 +47,13 @@ Upstream copyright (c) 2026 Alejandro Buján. MIT License.
 See licenses/Tendedero-MIT.txt. No Tendedero name or icon artwork is included.
 
 Web downloads
-yt-dlp 2026.08.19, contributors: https://github.com/yt-dlp/yt-dlp/tree/2026.08.19
+yt-dlp 2026.10.26, contributors: https://github.com/yt-dlp/yt-dlp/tree/2026.10.26
 The separately downloaded official yt-dlp_macos executable includes Python, yt-dlp-ejs and
 other dependencies. The standalone PyInstaller distribution is GPLv3+ in
 combination. Individual source and dependency licenses are reproduced in
 licenses/web-download/; corresponding official release/source references:
-https://github.com/yt-dlp/yt-dlp/releases/tag/2026.08.19
-https://github.com/yt-dlp/yt-dlp/archive/refs/tags/2026.08.19.tar.gz
+https://github.com/yt-dlp/yt-dlp/releases/tag/2026.10.26
+https://github.com/yt-dlp/yt-dlp/archive/refs/tags/2026.10.26.tar.gz
 The pinned unmodified upstream asset SHA256 and reproducible acquisition are
 in scripts/setup-web-download-tools.py. Packaging only adds our code signature.
 
