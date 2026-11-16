@@ -254,10 +254,25 @@ public enum DocumentEngine {
             }
         }
         
+        return try publishSpreadsheetSheets(populated, original: original, format: format, to: destinationDir, token: token)
+    }
+
+    /// Publishes multiple populated spreadsheet sheets to `destinationDir`, removing any
+    /// already-published outputs if a subsequent sheet fails or is cancelled.
+    static func publishSpreadsheetSheets(
+        _ populated: [(url: URL, sheetName: String)],
+        original: URL,
+        format: String,
+        to destinationDir: URL,
+        token: CancellationToken,
+        beforeSheet: ((Int) -> Void)? = nil
+    ) throws -> [URL] {
+        let fm = FileManager.default
         var results: [URL] = []
         var pendingTarget: URL?
         do {
-            for item in populated {
+            for (index, item) in populated.enumerated() {
+                beforeSheet?(index)
                 try token.check()
                 let target = OutputFiles.unique(for: original, extension: format, suffix: " (\(item.sheetName))", directory: destinationDir)
                 pendingTarget = target

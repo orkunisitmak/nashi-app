@@ -466,6 +466,7 @@ internal static class ParityChecks
         check(hidden&&outcome is OperationCanceledException&&cleanup.ElapsedMilliseconds<300,"Staging cleanup replaced a cancellation with "+outcome?.GetType().Name+", blocked for "+cleanup.ElapsedMilliseconds+" ms, or staging was visible");
         var released=System.Diagnostics.Stopwatch.StartNew();while(Directory.Exists(staging)&&released.Elapsed.TotalSeconds<5)Thread.Sleep(50);
         check(!Directory.Exists(staging),"A staging folder was left behind after its file was released");
+        check(!OfficeDocuments.HasDelimitedContent("", "csv")&&!OfficeDocuments.HasDelimitedContent(",,,\r\n,,,\r\n", "csv")&&!OfficeDocuments.HasDelimitedContent("\t\t\n", "tsv")&&OfficeDocuments.HasDelimitedContent(",a,\n", "csv")&&OfficeDocuments.HasDelimitedContent("\t1\n", "tsv"),"Delimited emptiness check misclassified separator-only or populated sheet");
     }
     private static void StoredRar(string output)
     {

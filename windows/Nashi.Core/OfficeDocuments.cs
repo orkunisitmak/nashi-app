@@ -24,30 +24,52 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
             var original=Path.GetFullPath(input);var ext=FeatureCatalog.Extension(input);
             if(new[]{"docx","doc","pptx","ppt","xlsx","xls","ods","odt","rtf","pdf","epub"}.Contains(ext)){input=Path.Combine(job,"Source."+ext);File.Copy(original,input);}
             var spreadsheet=new[]{"csv","tsv","xls","xlsx","ods"}.Contains(ext);var slides=new[]{"ppt","pptx"}.Contains(ext);
-            var filter=format switch{"docx"=>"docx:Office Open XML Text","pptx"=>"pptx:Impress MS PowerPoint 2007 XML","xlsx"=>"xlsx:Calc MS Excel 2007 XML","pdf"=>"pdf:"+(spreadsheet?"calc_pdf_Export":slides?"impress_pdf_Export":"writer_pdf_Export"),"txt"=>"txt:Text (encoded):UTF8,LF","csv"=>"csv:Text - txt - csv (StarCalc):44,34,76,1,,0,false,true,true,false,false,"+(spreadsheet?"-1":"0"),"tsv"=>"csv:Text - txt - csv (StarCalc):9,34,76,1,,0,false,true,true,false,false,"+(spreadsheet?"-1":"0"),"html"=>"html:HTML (StarWriter)","md"=>"md:Markdown","epub"=>"epub:EPUB",_=>format};
-            var args=new List<string>{"-env:UserInstallation="+new Uri(profile+Path.DirectorySeparatorChar).AbsoluteUri,"--headless","--nologo","--nodefault","--nolockcheck","--nofirststartwizard","--norestore"};
-            if(ext is "csv" or "tsv"){var (delimiter,language)=DelimitedLayout(input,ext);args.Add("--infilter=Text - txt - csv (StarCalc):"+delimiter+",34,76,1,,"+language+",true,true");}else if(ext=="txt")args.Add("--infilter=Text (encoded):UTF8,LF");else if(ext=="md")args.Add("--infilter=Markdown");
-            if(ext=="html"&&format is "xlsx" or "ods" or "csv" or "tsv")args.Add("--infilter=HTML (StarCalc)");
-            if(ext=="pdf"&&format=="pptx")args.Add("--infilter=impress_pdf_import");
-            args.AddRange(["--convert-to",filter,"--outdir",rendered,Path.GetFullPath(input)]);
+            var filter=format switch{"docx"=>"docx:Office Open XML Text","pptx"=>"pptx:Impress MS PowerPoint 2007 XML","xlsx"=>"xlsx:Calc MS Excel 2007 XML","pdf"=>"pdf:"+(spreadsheet?"calc_pdf_Export":slides?"impress_pdf_Export":"writer_pdf_Export"),"txt"=>"txt:Text (encoded):UTF8,LF","csv"=>"csv:Text - txt - csv (StarCalc):44,34,76,1,,0,false,true,true,false,false,0","tsv"=>"csv:Text - txt - csv (StarCalc):9,34,76,1,,0,false,true,true,false,false,0","html"=>"html:HTML (StarWriter)","md"=>"md:Markdown","epub"=>"epub:EPUB",_=>format};
+            List<string> BuildArgs(string activeFilter)
+            {
+                var list=new List<string>{"-env:UserInstallation="+new Uri(profile+Path.DirectorySeparatorChar).AbsoluteUri,"--headless","--nologo","--nodefault","--nolockcheck","--nofirststartwizard","--norestore"};
+                if(ext is "csv" or "tsv"){var (delimiter,language)=DelimitedLayout(input,ext);list.Add("--infilter=Text - txt - csv (StarCalc):"+delimiter+",34,76,1,,"+language+",true,true");}else if(ext=="txt")list.Add("--infilter=Text (encoded):UTF8,LF");else if(ext=="md")list.Add("--infilter=Markdown");
+                if(ext=="html"&&format is "xlsx" or "ods" or "csv" or "tsv")list.Add("--infilter=HTML (StarCalc)");
+                if(ext=="pdf"&&format=="pptx")list.Add("--infilter=impress_pdf_import");
+                list.AddRange(["--convert-to",activeFilter,"--outdir",rendered,Path.GetFullPath(input)]);
+                return list;
+            }
             // A stuck soffice otherwise keeps Nashi busy until the user cancels; stop it after a generous limit.
-            using var limit=CancellationTokenSource.CreateLinkedTokenSource(token);limit.CancelAfter(ConversionTimeout);ProcessResult result;
-            try{result=await ProcessRunner.RunAsync(office,args,limit.Token);}
-            catch(OperationCanceledException)when(!token.IsCancellationRequested){throw new TimeoutException(TimeoutMessage);}
-            string output;
+            using var limit=CancellationTokenSource.CreateLinkedTokenSource(token);limit.CancelAfter(ConversionTimeout);
+            ProcessResult result=default!;
+            var output=Path.Combine(rendered,Path.GetFileNameWithoutExtension(input)+"."+(format=="tsv"?"csv":format));
             if(spreadsheet && format is "csv" or "tsv")
             {
-                var matches=Directory.GetFiles(rendered).Where(f=>Path.GetFileName(f).StartsWith(Path.GetFileNameWithoutExtension(input),StringComparison.OrdinalIgnoreCase)).ToArray();
-                var nonEmpty=matches.Where(f=>new FileInfo(f).Length>1&&!string.IsNullOrWhiteSpace(File.ReadAllText(f))).ToArray();
-                output=nonEmpty.FirstOrDefault()??matches.FirstOrDefault()??Path.Combine(rendered,Path.GetFileNameWithoutExtension(input)+"."+(format=="tsv"?"tsv":"csv"));
+                var delimiter=format=="tsv"?9:44;
+                string? fallback=null;
+                for(var sheet=1;sheet<=256;sheet++)
+                {
+                    if(File.Exists(output))File.Delete(output);
+                    var sheetFilter=$"csv:Text - txt - csv (StarCalc):{delimiter},34,76,1,,0,false,true,true,false,false,{sheet}";
+                    try{result=await ProcessRunner.RunAsync(office,BuildArgs(sheetFilter),limit.Token);}
+                    catch(OperationCanceledException)when(!token.IsCancellationRequested){throw new TimeoutException(TimeoutMessage);}
+                    if(!File.Exists(output))break;
+                    var text=await File.ReadAllTextAsync(output,token);
+                    if(HasDelimitedContent(text,format)){fallback=null;break;}
+                    if(fallback is null){fallback=Path.Combine(job,"fallback.csv");File.Move(output,fallback,true);}
+                    else File.Delete(output);
+                }
+                if(!File.Exists(output) && fallback is not null)File.Move(fallback,output,true);
             }
             else
             {
-                output=Path.Combine(rendered,Path.GetFileNameWithoutExtension(input)+"."+(format=="tsv"?"csv":format));
+                try{result=await ProcessRunner.RunAsync(office,BuildArgs(filter),limit.Token);}
+                catch(OperationCanceledException)when(!token.IsCancellationRequested){throw new TimeoutException(TimeoutMessage);}
             }
             if(!File.Exists(output)||new FileInfo(output).Length==0)throw new IOException("Office could not convert this document to "+format.ToUpperInvariant()+". "+(result.Error+" "+result.Output).Trim());var destination=SafePaths.Unique(outputDirectory,Path.GetFileNameWithoutExtension(original)+"."+(format=="tsv"?"csv":format));File.Move(output,destination);return destination;
         }
         finally{if(Directory.Exists(job))Directory.Delete(job,true);}
+    }
+    internal static bool HasDelimitedContent(string text,string format)
+    {
+        var separator=format=="tsv"?'\t':',';
+        foreach(var ch in text)if(!char.IsWhiteSpace(ch)&&ch!=separator)return true;
+        return false;
     }
     // Excel saves semicolon-separated "CSV" where the comma is the decimal mark (Turkish,
     // German…). Read those with the user's locale so 1,5 stays a number, not text.
