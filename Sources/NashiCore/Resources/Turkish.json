@@ -767,6 +767,7 @@
   "Downloading media…": "Medya indiriliyor…",
   "Updating the web downloader…": "Web indirici güncelleniyor…",
   "Printing {0}…": "{0} yazdırılıyor…",
+  "Fix the times first: use seconds separated by semicolons.": "Önce zamanları düzelt: saniyeleri noktalı virgülle ayır.",
   "Downloading · {0}": "İndiriliyor · {0}",
   "Photo {0} of {1}…": "Fotoğraf {0}/{1}…",
   "File {0} of {1}": "Dosya {0}/{1}",

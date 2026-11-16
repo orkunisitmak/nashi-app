@@ -29,10 +29,16 @@ public sealed partial class ToolEditor
     private void AddMarkAtPlayhead()
     {
         if(media is null||MarkField is not {} key||!fields.TryGetValue(key,out var box))return;
-        var at=Math.Round(Math.Clamp(player.Position.TotalSeconds,0,duration),3);
+        // Millisecond rounding can step past the last frame, which the engine rejects.
+        var at=Math.Min(Math.Round(Math.Clamp(player.Position.TotalSeconds,0,duration),3),Math.Floor(duration*1000)/1000);
         var times=new List<double>();
         // The snapshot field starts at "0" so the tool can save without marking; the first marked frame replaces it.
-        if(!(tool=="videoSnapshots"&&box.Text==defaults[key]))foreach(var token in MarkTokens(box.Text))if(MarkTime(token) is {} value)times.Add(value);
+        if(!(tool=="videoSnapshots"&&box.Text==defaults[key]))foreach(var token in MarkTokens(box.Text))
+        {
+            // A mistyped time is never dropped silently: the field stays as typed until it is fixed.
+            if(MarkTime(token) is not {} value){time.Text=L10n.Text("Fix the times first: use seconds separated by semicolons.");return;}
+            times.Add(value);
+        }
         if(tool=="splitVideo"&&(at<MinRange||duration-at<MinRange||times.Any(t=>Math.Abs(t-at)<MinRange))){time.Text=L10n.Text("Split points must be at least 0.05 seconds apart and from either end.");return;}
         if(times.Any(t=>Math.Abs(t-at)<.001))return;
         times.Add(at);times.Sort();box.Text=string.Join(";",times.Select(Number));
@@ -46,13 +52,15 @@ public sealed partial class ToolEditor
         {
             if(MarkTime(tokens[index]) is not {} seconds)continue;var position=index;
             var chip=new StackPanel{Orientation=Orientation.Horizontal};
-            var jump=new Button{Content=TimeSpan.FromSeconds(Math.Max(0,seconds)).ToString(@"mm\:ss\.fff",CultureInfo.InvariantCulture),Padding=new(8,3,8,3),ToolTip=L10n.Text("Preview position")};jump.Click+=(_,_)=>Seek(seconds);
+            var jump=new Button{Content=MarkLabel(seconds),Padding=new(8,3,8,3),ToolTip=L10n.Text("Preview position")};jump.Click+=(_,_)=>Seek(Math.Clamp(seconds,0,duration));
             var remove=new Button{Content="×",Padding=new(7,3,7,3),Margin=new(2,0,0,0),ToolTip=L10n.Text("Remove")};remove.Click+=(_,_)=>box.Text=string.Join(";",tokens.Where((_,n)=>n!=position));
             chip.Children.Add(jump);chip.Children.Add(remove);
             markChips.Children.Add(new Border{Child=chip,Margin=new(0,0,8,8),CornerRadius=new(8),BorderThickness=new(1),BorderBrush=Theme.Brush("Muted")});
         }
         if(markChips.Children.Count>0)markChips.Children.Insert(0,new TextBlock{Text=L10n.Text("{0} selected").Replace("{0}",markChips.Children.Count.ToString(CultureInfo.CurrentCulture),StringComparison.Ordinal),Foreground=Theme.Brush("Muted"),VerticalAlignment=VerticalAlignment.Center,Margin=new(0,0,10,8)});
     }
+    /// mm:ss.fff, with hours once a mark passes one hour. Values TimeSpan cannot hold are shown as typed.
+    internal static string MarkLabel(double seconds)=>seconds<0||seconds>=360000?seconds.ToString("0.###",CultureInfo.InvariantCulture):TimeSpan.FromSeconds(seconds).ToString(seconds>=3600?@"h\:mm\:ss\.fff":@"mm\:ss\.fff",CultureInfo.InvariantCulture);
     private string MediaShortcutHint=>tool switch
     {
         "splitVideo"=>"Space play/pause · ←/→ 1s · ⇧←/→ 1 frame · M add split",

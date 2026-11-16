@@ -32,7 +32,7 @@ public sealed class DocumentConversion(OfficeRuntime runtime,Toolchain tools)
             {
                 var printed=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+".pdf");
                 try{progress?.Report(new(null,"Printing "+Path.GetFileName(input)+"…"));await HtmlPdf.PrintAsync(browser,input,printed,token);outputs.Add(printed);progress?.Report(new((i+1d)/inputs.Count*.98,"Saving document…"));continue;}
-                catch(Exception error)when(!token.IsCancellationRequested&&error is IOException or InvalidDataException or TimeoutException or System.ComponentModel.Win32Exception){if(File.Exists(printed))File.Delete(printed);}
+                catch(Exception error)when(!token.IsCancellationRequested&&error is IOException or InvalidDataException or TimeoutException or System.ComponentModel.Win32Exception or UnauthorizedAccessException or InvalidOperationException or ArgumentException){if(File.Exists(printed))File.Delete(printed);}
             }
             if(ext=="pdf"&&format is "txt" or "md")
             {var output=SafePaths.Unique(tx.StagingDirectory,Path.GetFileNameWithoutExtension(input)+"."+format);await File.WriteAllTextAsync(output,await PdfDocumentMedia.Text(input,options.Password,token),new UTF8Encoding(false),token);outputs.Add(output);continue;}

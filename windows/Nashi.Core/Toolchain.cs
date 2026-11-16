@@ -74,21 +74,57 @@ public sealed class Toolchain(string directory,string? searchPath=null)
         finally{ytDlpGate.Release();}
     }
     /// Lets Nashi's own yt-dlp move to the newest stable release after a site rejected the pinned one.
-    /// yt-dlp checks the release's SHA2-256SUMS before replacing itself. Copies on PATH are left alone.
+    /// Nashi downloads the release itself instead of running yt-dlp's self-update: the executable is
+    /// checked against that release's official SHA2-256SUMS before it is ever run, must not be older than
+    /// the pinned release, and replaces the old copy atomically. Copies on PATH are left alone.
     public async Task<bool> TryUpdateYtDlpAsync(CancellationToken token=default)
     {
         var own=Path.Combine(DirectoryPath,FileName("yt-dlp"));if(!Usable(own))return false;
+        var asset=Path.GetFileName(new Uri(Packages().Single(p=>p.Files.Any(f=>Path.GetFileNameWithoutExtension(f)=="yt-dlp")).Url).AbsolutePath);
         await ytDlpGate.WaitAsync(token);
+        var stamp=Guid.NewGuid().ToString("N");
+        var sums=Path.Combine(DirectoryPath,"yt-dlp-sums-"+stamp+".txt");
+        var candidate=Path.Combine(DirectoryPath,"yt-dlp-update-"+stamp+Path.GetExtension(own));
         try
         {
-            var before=await YtDlpVersionAsync(own,token);
-            try{await ProcessRunner.RunAsync(own,["--ignore-config","--no-colors","--update-to","stable"],token);}catch(IOException){return false;}
-            foreach(var old in Directory.GetFiles(DirectoryPath,FileName("yt-dlp")+".old*"))try{File.Delete(old);}catch(IOException){}catch(UnauthorizedAccessException){}
-            ytDlpVersions.TryRemove(own,out _);
-            var after=await YtDlpVersionAsync(own,token);
-            return after is not null&&after!=before;
+            await VerifiedDownload.FetchAsync(new(LatestYtDlp+"SHA2-256SUMS"),sums,1024*1024,null,token);
+            var expected=ExpectedSha256(await File.ReadAllLinesAsync(sums,token),asset);
+            if(expected is null||expected==await Sha256Async(own,token))return false;
+            await VerifiedDownload.FetchAsync(new(LatestYtDlp+asset),candidate,512L*1024*1024,null,token);
+            if(await Sha256Async(candidate,token)!=expected)return false;
+            ToolInstallation.MakeExecutable(candidate);
+            var before=await YtDlpVersionAsync(own,token);var after=await YtDlpVersionAsync(candidate,token);
+            if(!IsCurrent(after)||before is not null&&CompareVersions(after!,before)<=0)return false;
+            File.Move(candidate,own,true);ytDlpVersions.TryRemove(own,out _);
+            return true;
         }
-        finally{ytDlpGate.Release();}
+        catch(IOException){return false;}catch(UnauthorizedAccessException){return false;}catch(HttpRequestException){return false;}catch(InvalidDataException){return false;}catch(TimeoutException){return false;}
+        catch(OperationCanceledException)when(!token.IsCancellationRequested){return false;}
+        finally
+        {
+            foreach(var temporary in new[]{sums,candidate})try{if(File.Exists(temporary))File.Delete(temporary);}catch(IOException){}catch(UnauthorizedAccessException){}
+            ytDlpVersions.TryRemove(candidate,out _);
+            ytDlpGate.Release();
+        }
+    }
+    private const string LatestYtDlp="https://github.com/yt-dlp/yt-dlp/releases/latest/download/";
+    /// The checksum for one asset in a yt-dlp SHA2-256SUMS file ("<hex>  <name>" per line), or null.
+    internal static string? ExpectedSha256(IEnumerable<string> lines,string asset)
+    {
+        string? found=null;
+        foreach(var line in lines)
+        {
+            var parts=line.Split((char[]?)null,2,StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries);
+            if(parts.Length!=2||parts[1].TrimStart('*')!=asset)continue;
+            if(found is not null||!System.Text.RegularExpressions.Regex.IsMatch(parts[0],"^[0-9a-fA-F]{64}$"))return null;
+            found=parts[0].ToLowerInvariant();
+        }
+        return found;
+    }
+    private static async Task<string> Sha256Async(string path,CancellationToken token)
+    {
+        await using var stream=File.OpenRead(path);
+        return Convert.ToHexString(await SHA256.HashDataAsync(stream,token)).ToLowerInvariant();
     }
     private static bool IsCurrent(string? version)=>version is not null&&CompareVersions(version,PinnedYtDlpVersion)>=0;
     /// yt-dlp versions are dates such as 2026.10.26, optionally followed by a nightly build number.

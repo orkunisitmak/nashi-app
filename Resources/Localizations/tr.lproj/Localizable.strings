@@ -1094,6 +1094,7 @@
 "FIT" = "SIĞDIR";
 "FIT WHOLE IMAGE" = "GÖRSELİN TAMAMINI SIĞDIR";
 "FITTING VIDEO TO THE SELECTED SIZE…" = "VİDEO SEÇİLEN BOYUTA SIĞDIRILIYOR…";
+"FIX THE TIMES FIRST: USE SECONDS SEPARATED BY SEMICOLONS." = "ÖNCE ZAMANLARI DÜZELT: SANİYELERİ NOKTALI VİRGÜLLE AYIR.";
 "FIXED PAGES" = "SABİT SAYFALAR";
 "FLEXIBLE, REFLOWABLE TEXT" = "ESNEK, YENİDEN AKABİLEN METİN";
 "FLIP" = "ÇEVİR";
@@ -1172,6 +1173,7 @@
 "Fitting image · attempt %@…" = "Görsel sığdırılıyor · deneme %@…";
 "Fitting image · attempt %lld…" = "Görsel sığdırılıyor · deneme %lld…";
 "Fitting video to the selected size…" = "Video seçilen boyuta sığdırılıyor…";
+"Fix the times first: use seconds separated by semicolons." = "Önce zamanları düzelt: saniyeleri noktalı virgülle ayır.";
 "Fixed pages" = "Sabit sayfalar";
 "Flexible, reflowable text" = "Esnek, yeniden akabilen metin";
 "Flip" = "Çevir";

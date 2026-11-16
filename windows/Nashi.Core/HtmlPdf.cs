@@ -68,14 +68,29 @@ public static class HtmlPdf
     }
     private static async Task RespondAsync(NetworkStream stream,string folder,CancellationToken token)
     {
+        // A request line and its headers are small: a client that sends too much, or stalls, is dropped.
+        using var limit=CancellationTokenSource.CreateLinkedTokenSource(token);limit.CancelAfter(TimeSpan.FromSeconds(15));
         using var reader=new StreamReader(stream,Encoding.ASCII,false,1024,leaveOpen:true);
-        var request=await reader.ReadLineAsync(token);if(request is null)return;
-        for(var line=await reader.ReadLineAsync(token);!string.IsNullOrEmpty(line);line=await reader.ReadLineAsync(token)){}
+        var request=await ReadLineAsync(reader,limit.Token);if(request is null)return;
+        for(var count=0;;count++){var line=await ReadLineAsync(reader,limit.Token);if(line is null||count>=100)return;if(line.Length==0)break;}
         var parts=request.Split(' ');
-        var file=parts.Length==3&&parts[0] is "GET" or "HEAD"?Resolve(folder,parts[1]):null;
+        var file=parts.Length==3&&(parts[0] is "GET" or "HEAD")?Resolve(folder,parts[1]):null;
         if(file is null){await WriteAsync(stream,"404 Not Found","text/plain",[],token);return;}
         byte[] body=parts[0]=="HEAD"?[]:await File.ReadAllBytesAsync(file,token);
         await WriteAsync(stream,"200 OK",ContentType(file),body,token);
+    }
+    private const int MaxHeaderLine=8192;
+    /// One CRLF- or LF-terminated line, or null when the connection ends first or the line is too long.
+    private static async Task<string?> ReadLineAsync(StreamReader reader,CancellationToken token)
+    {
+        var line=new StringBuilder();var one=new char[1];
+        while(true)
+        {
+            if(await reader.ReadAsync(one.AsMemory(),token)==0)return null;
+            if(one[0]=='\n')return line.ToString().TrimEnd('\r');
+            if(line.Length>=MaxHeaderLine)return null;
+            line.Append(one[0]);
+        }
     }
     /// A request path maps only to an existing regular file inside the page's folder: no traversal, links or devices.
     internal static string? Resolve(string folder,string target)

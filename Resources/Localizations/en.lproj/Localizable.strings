@@ -1094,6 +1094,7 @@
 "FIT" = "FIT";
 "FIT WHOLE IMAGE" = "FIT WHOLE IMAGE";
 "FITTING VIDEO TO THE SELECTED SIZE…" = "FITTING VIDEO TO THE SELECTED SIZE…";
+"FIX THE TIMES FIRST: USE SECONDS SEPARATED BY SEMICOLONS." = "FIX THE TIMES FIRST: USE SECONDS SEPARATED BY SEMICOLONS.";
 "FIXED PAGES" = "FIXED PAGES";
 "FLEXIBLE, REFLOWABLE TEXT" = "FLEXIBLE, REFLOWABLE TEXT";
 "FLIP" = "FLIP";
@@ -1172,6 +1173,7 @@
 "Fitting image · attempt %@…" = "Fitting image · attempt %@…";
 "Fitting image · attempt %lld…" = "Fitting image · attempt %lld…";
 "Fitting video to the selected size…" = "Fitting video to the selected size…";
+"Fix the times first: use seconds separated by semicolons." = "Fix the times first: use seconds separated by semicolons.";
 "Fixed pages" = "Fixed pages";
 "Flexible, reflowable text" = "Flexible, reflowable text";
 "Flip" = "Flip";

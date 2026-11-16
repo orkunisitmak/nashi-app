@@ -22,6 +22,8 @@ The first foreground launch opens the same two-group setup as macOS. Choose **Do
 - [FFmpeg 9.0.2 full build, gyan.dev](https://github.com/GyanD/codexffmpeg/releases/tag/9.0.2), GPL. gyan.dev is listed by [FFmpeg’s official download page](https://ffmpeg.org/download.html). [Build information and sources](https://www.gyan.dev/ffmpeg/builds/).
 - The same yt-dlp and Deno releases above, using their Windows x64 assets.
 
+Web downloads require at least the pinned yt-dlp. When the yt-dlp in use is older (for example a copy on PATH from winget, scoop or pip that Nashi never updates), Nashi installs its own pinned, hash-verified copy in its tools folder, which then takes priority. If a site still rejects the request, Nashi may replace its own copy once with the newest stable yt-dlp release: this fallback is not pinned. The executable is downloaded over HTTPS from yt-dlp's official GitHub release and must match the SHA-256 listed in that same release's `SHA2-256SUMS` before it is run; it must also report a version at least as new as the pinned one. Copies on PATH are never modified.
+
 Exact URLs and hashes: [`Toolchain.cs`](../windows/Nashi.Core/Toolchain.cs). [Windows availability and shortcuts](../windows/README.md). [Bundled Windows library notices](../windows/THIRD-PARTY-NOTICES.txt). The preview is self-contained and does not require .NET to be installed separately.
 
 We do not change operating-system security settings or request administrator access for this setup. OS publisher trust and Nashi’s pinned update-signature verification are separate: the first public builds are not Apple-notarized or Windows Authenticode signed.
