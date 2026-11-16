@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
@@ -14,8 +15,10 @@ internal static class ParitySmokeTests
         var ci=Environment.GetEnvironmentVariable("GITHUB_ACTIONS")=="true";var path=Environment.GetEnvironmentVariable("NASHI_VERIFY_TOOLS_DIRECTORY")??(ci?Path.Combine(Environment.GetEnvironmentVariable("RUNNER_TEMP")??root,"Nashi-Test-Tools"):Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Nashi","Tools","v1"));var tools=new Toolchain(path);
         if(ci&&!tools.Ready)Task.Run(()=>tools.InstallAsync()).GetAwaiter().GetResult();return tools;
     }
-    private static T Wait<T>(Task<T> task,int seconds=180){var clock=Stopwatch.StartNew();while(!task.IsCompleted){if(clock.Elapsed.TotalSeconds>seconds)throw new TimeoutException("Native parity operation timed out.");DesktopInput.Pump(30);}return task.GetAwaiter().GetResult();}
-    private static void Wait(Task task,int seconds=180)=>Wait(Complete(task),seconds);
+    // The timeout names the awaited call, so a slow runner or a stalled download shows which step it was.
+    private static T Wait<T>(Task<T> task,int seconds=180,[CallerArgumentExpression(nameof(task))]string? step=null){var clock=Stopwatch.StartNew();while(!task.IsCompleted){if(clock.Elapsed.TotalSeconds>seconds)throw new TimeoutException($"Native parity operation timed out after {seconds} s: {Shorten(step)}");DesktopInput.Pump(30);}return task.GetAwaiter().GetResult();}
+    private static string Shorten(string? step){var one=string.Join(' ',(step??"").Split((char[]?)null,StringSplitOptions.RemoveEmptyEntries));return one.Length>160?one[..160]+"...":one;}
+    private static void Wait(Task task,int seconds=180,[CallerArgumentExpression(nameof(task))]string? step=null)=>Wait(Complete(task),seconds,step);
     private static async Task<bool> Complete(Task task){await task;return true;}
     private static IEnumerable<DependencyObject> Children(DependencyObject root){for(var i=0;i<VisualTreeHelper.GetChildrenCount(root);i++){var child=VisualTreeHelper.GetChild(root,i);yield return child;foreach(var nested in Children(child))yield return nested;}}
     private static void Capture(Window window,string root,string name){window.UpdateLayout();var image=new RenderTargetBitmap((int)window.ActualWidth,(int)window.ActualHeight,96,96,PixelFormats.Pbgra32);image.Render(window);ImageEngine.Save(image,Path.Combine(root,name),"png");}

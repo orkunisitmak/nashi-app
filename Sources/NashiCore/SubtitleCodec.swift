@@ -82,10 +82,41 @@ enum SubtitleCodec {
         let hour = value / 3_600_000, min = value / 60_000 % 60, sec = value / 1000 % 60, ms = value % 1000
         return String(format: "%02lld:%02lld:%02lld%@%03lld", hour, min, sec, vtt ? "." : ",", ms)
     }
+    /// SRT files from VLC, mpv and Aegisub move a caption with the SSA-style {\an1} to {\an9} override, which players hide.
+    static func withoutPositionTags(_ text: String) -> String {
+        // One or more tags alone on a line leaves a blank line, which would end a WebVTT cue, so that line goes with it.
+        // A kept line's break is written only once another kept line follows, so tag lines at the end take the break
+        // before them. One pass over the lines keeps very long runs of tag lines from taking quadratic time.
+        let lines = text.unicodeScalars.split(separator: "\n", omittingEmptySubsequences: false)
+        var kept = "", lineBreak = ""
+        for (index, line) in lines.enumerated() {
+            let crlf = index < lines.count - 1 && line.last == "\r"
+            let content = crlf ? line.dropLast() : line
+            guard !isPositionTagLine(content) else { continue }
+            kept += lineBreak
+            kept.unicodeScalars.append(contentsOf: content)
+            lineBreak = crlf ? "\r\n" : "\n"
+        }
+        return kept.replacingOccurrences(of: #"\{\\an[1-9]\}"#, with: "", options: .regularExpression)
+    }
+    private static func isPositionTagLine(_ line: Substring.UnicodeScalarView) -> Bool {
+        var rest = line, sawTag = false
+        while let scalar = rest.first {
+            if scalar == "\t" || scalar.properties.generalCategory == .spaceSeparator {
+                rest.removeFirst()
+            } else if rest.starts(with: "{\\an".unicodeScalars), let digit = rest.dropFirst(4).first, ("1"..."9").contains(digit),
+                      rest.dropFirst(5).first == "}" {
+                rest.removeFirst(6); sawTag = true
+            } else {
+                return false
+            }
+        }
+        return sawTag
+    }
     /// WebVTT reads a bare "<" as the start of a tag and ends a cue at "-->",
     /// so SRT text keeps its markup tags and escapes everything else.
     private static func vttText(_ text: String) -> String {
-        text.replacingOccurrences(of: #"<(?!/?[A-Za-z][^<>]*>)"#, with: "&lt;", options: .regularExpression)
+        withoutPositionTags(text).replacingOccurrences(of: #"<(?!/?[A-Za-z][^<>]*>)"#, with: "&lt;", options: .regularExpression)
             .replacingOccurrences(of: "-->", with: "--&gt;")
     }
     private static func srtText(_ text: String) -> String {
@@ -97,7 +128,7 @@ enum SubtitleCodec {
         return DocumentText.decodeEntities(webVTT, html: true)
     }
     private static func plainText(_ text: String) -> String {
-        let withoutTags = text.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+        let withoutTags = withoutPositionTags(text).replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
         // Direction marks keep right-to-left lines readable in the exported text too.
         return DocumentText.decodeEntities(withoutTags.replacingOccurrences(of: "&lrm;", with: "\u{200E}").replacingOccurrences(of: "&rlm;", with: "\u{200F}"), html: true)
     }

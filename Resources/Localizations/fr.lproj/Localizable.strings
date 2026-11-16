@@ -2452,6 +2452,7 @@
 "THIS MEDIA IS PROTECTED AND CANNOT BE DOWNLOADED HERE." = "CE MÉDIA EST PROTÉGÉ ET NE PEUT PAS ÊTRE TÉLÉCHARGÉ ICI.";
 "THIS OUTPUT FORMAT HAS NO ADJUSTABLE CONVERSION DEFAULTS." = "CE FORMAT DE SORTIE N’A PAS DE RÉGLAGES DE CONVERSION MODIFIABLES.";
 "THIS PAGES FILE IS TOO LARGE OR IS NOT A REGULAR DOCUMENT FILE." = "CE FICHIER PAGES EST TROP VOLUMINEUX OU N’EST PAS UN FICHIER DE DOCUMENT ORDINAIRE.";
+"THIS PDF CONTAINS DIGITAL SIGNATURES. THIS PAGE OPERATION CANNOT SAFELY PRESERVE THAT FEATURE. NO COPY WAS EXPORTED." = "CE PDF CONTIENT DES SIGNATURES NUMÉRIQUES. CETTE OPÉRATION SUR LES PAGES NE PEUT PAS CONSERVER CETTE FONCTIONNALITÉ EN TOUTE SÉCURITÉ. AUCUNE COPIE N’A ÉTÉ EXPORTÉE.";
 "THIS PDF CONTAINS NO PAGES." = "CE PDF NE CONTIENT AUCUNE PAGE.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT MERGING, SPLITTING OR REORDERING PAGES CANNOT KEEP. NO COPY WAS EXPORTED." = "CE PDF CONTIENT DES CHAMPS DE FORMULAIRE OU DES PIÈCES JOINTES QUE LA FUSION, LA DIVISION OU LA RÉORGANISATION DES PAGES NE PEUT PAS CONSERVER. AUCUNE COPIE N’A ÉTÉ EXPORTÉE.";
 "THIS PDF HAS FORM FIELDS OR ATTACHMENTS THAT METADATA CLEANUP CANNOT KEEP. NO COPY WAS EXPORTED." = "CE PDF CONTIENT DES CHAMPS DE FORMULAIRE OU DES PIÈCES JOINTES QUE LE NETTOYAGE DES MÉTADONNÉES NE PEUT PAS CONSERVER. AUCUNE COPIE N’A ÉTÉ EXPORTÉE.";
@@ -2597,6 +2598,7 @@
 "The upstream server did not return a successful HTTPS download." = "Le serveur amont n’a pas fourni de téléchargement HTTPS réussi.";
 "The video has no readable dimensions." = "Les dimensions de la vidéo sont illisibles.";
 "These files have moved or were deleted." = "Ces fichiers ont été déplacés ou supprimés.";
+"This PDF contains digital signatures. This page operation cannot safely preserve that feature. No copy was exported." = "Ce PDF contient des signatures numériques. Cette opération sur les pages ne peut pas conserver cette fonctionnalité en toute sécurité. Aucune copie n’a été exportée.";
 "This PDF contains no pages." = "Ce PDF ne contient aucune page.";
 "This PDF has form fields or attachments that merging, splitting or reordering pages cannot keep. No copy was exported." = "Ce PDF contient des champs de formulaire ou des pièces jointes que la fusion, la division ou la réorganisation des pages ne peut pas conserver. Aucune copie n’a été exportée.";
 "This PDF has form fields or attachments that metadata cleanup cannot keep. No copy was exported." = "Ce PDF contient des champs de formulaire ou des pièces jointes que le nettoyage des métadonnées ne peut pas conserver. Aucune copie n’a été exportée.";
