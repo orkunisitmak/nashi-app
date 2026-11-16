@@ -42,18 +42,20 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
             {
                 var delimiter=format=="tsv"?9:44;
                 string? fallback=null;
+                var reachedLimit=true;
                 for(var sheet=1;sheet<=256;sheet++)
                 {
                     if(File.Exists(output))File.Delete(output);
                     var sheetFilter=$"csv:Text - txt - csv (StarCalc):{delimiter},34,76,1,,0,false,true,true,false,false,{sheet}";
                     try{result=await ProcessRunner.RunAsync(office,BuildArgs(sheetFilter),limit.Token);}
                     catch(OperationCanceledException)when(!token.IsCancellationRequested){throw new TimeoutException(TimeoutMessage);}
-                    if(!File.Exists(output))break;
+                    if(!File.Exists(output)){reachedLimit=false;break;}
                     var text=await File.ReadAllTextAsync(output,token);
-                    if(HasDelimitedContent(text,format)){fallback=null;break;}
+                    if(HasDelimitedContent(text,format)){fallback=null;reachedLimit=false;break;}
                     if(fallback is null){fallback=Path.Combine(job,"fallback.csv");File.Move(output,fallback,true);}
                     else File.Delete(output);
                 }
+                if(reachedLimit)throw new IOException("This workbook has more than 256 leading empty sheets; no populated sheet was found to export to "+format.ToUpperInvariant()+".");
                 if(!File.Exists(output) && fallback is not null)File.Move(fallback,output,true);
             }
             else
