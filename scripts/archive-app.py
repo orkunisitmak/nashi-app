@@ -5,8 +5,10 @@ import os,stat,sys,zipfile
 root=Path(sys.argv[1]).resolve();output=Path(sys.argv[2])
 if root.suffix!='.app' or not (root/'Contents/Info.plist').is_file():sys.exit('Choose a built .app bundle')
 if output.exists():sys.exit('Refusing to replace an existing release archive')
-archive=zipfile.ZipFile(output,'x',compression=zipfile.ZIP_DEFLATED,compresslevel=9)
 try:
+  # Mode 'x' fails without touching a file that appeared since the check above.
+  try:archive=zipfile.ZipFile(output,'x',compression=zipfile.ZIP_DEFLATED,compresslevel=9)
+  except FileExistsError:sys.exit('Refusing to replace an existing release archive')
   with archive:
     for path in [root,*sorted(root.rglob('*'))]:
         if path.name=='.DS_Store':continue
@@ -21,6 +23,10 @@ try:
         info=zipfile.ZipInfo(relative,date_time=(2026,1,1,0,0,0));info.create_system=3;info.external_attr=mode<<16
         if stat.S_ISDIR(mode):info.external_attr|=0x10
         info.compress_type=zipfile.ZIP_DEFLATED;archive.writestr(info,data)
+except SystemExit:raise
 except BaseException:
-    output.unlink(missing_ok=True);raise
+    # Remove the partial archive this run created; a failed cleanup must not hide the cause.
+    try:output.unlink(missing_ok=True)
+    except OSError as error:print('Could not remove the partial release archive:',error,file=sys.stderr)
+    raise
 print('Archived app content without extended attributes:',output.name)

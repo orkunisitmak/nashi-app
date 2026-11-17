@@ -33,9 +33,9 @@ def validate(feed_path, build_number, must_be_newer=False):
     short_version = matching[0].findtext(SPARKLE + "shortVersionString") or ""
     release = f"https://github.com/orkunisitmak/nashi-app/releases/download/v{short_version}-{build_number}/"
     url = enclosure.get("url", "")
-    if not short_version or not url.startswith(release) or "/" in url[len(release):]:
+    archive_name = url[len(release):]
+    if not short_version or not url.startswith(release) or not re.fullmatch(r"[A-Za-z0-9._-]+", archive_name) or archive_name in (".", ".."):
         raise ValueError("The release download must be the official HTTPS GitHub release for this version and build")
-    archive_name = url.rsplit("/", 1)[-1]
     if not (Path(feed_path).parent / archive_name).is_file():
         raise ValueError("The signed release archive is missing")
 

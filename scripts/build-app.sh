@@ -61,18 +61,22 @@ done
 fi
 if [[ -f Tools/ExifTool/exiftool ]]; then
   # Ship only an unmodified extraction of the archive pinned in scripts/setup-exiftool.sh.
-  exiftool_archive=Downloads/exiftool-13.59.tar.gz
-  if [[ ! -f "$exiftool_archive" || "$(shasum -a 256 "$exiftool_archive" | awk '{print $1}')" != e1e2ad6c6fbf568afee5993ef8b2b91ab013d21698c9304e079e633ad82776f5 ]]; then
-    print -u2 "Missing or mismatched $exiftool_archive; run scripts/setup-exiftool.sh"; exit 1
-  fi
+  # The checksum, the comparison and the bundled copy all use one private copy of that archive.
   exiftool_check=$(mktemp -d)
-  tar -xzf "$exiftool_archive" --strip-components=1 -C "$exiftool_check"
-  if ! diff -r "$exiftool_check" Tools/ExifTool >/dev/null; then
-    rm -rf "$exiftool_check"
-    print -u2 "Tools/ExifTool differs from the pinned ExifTool archive; remove it and rerun scripts/setup-exiftool.sh"; exit 1
+  exiftool_fail() { rm -rf "$exiftool_check"; print -u2 "$1"; exit 1 }
+  cp Downloads/exiftool-13.59.tar.gz "$exiftool_check/archive.tar.gz" 2>/dev/null || exiftool_fail "Missing Downloads/exiftool-13.59.tar.gz; run scripts/setup-exiftool.sh"
+  if [[ "$(shasum -a 256 "$exiftool_check/archive.tar.gz" | awk '{print $1}')" != e1e2ad6c6fbf568afee5993ef8b2b91ab013d21698c9304e079e633ad82776f5 ]]; then
+    exiftool_fail "Mismatched Downloads/exiftool-13.59.tar.gz; remove it and rerun scripts/setup-exiftool.sh"
   fi
+  mkdir "$exiftool_check/tree"
+  tar -xzf "$exiftool_check/archive.tar.gz" --strip-components=1 -C "$exiftool_check/tree" || exiftool_fail "Could not extract the pinned ExifTool archive"
+  if ! diff -r "$exiftool_check/tree" Tools/ExifTool >/dev/null; then
+    exiftool_fail "Tools/ExifTool differs from the pinned ExifTool archive; remove it and rerun scripts/setup-exiftool.sh"
+  fi
+  # Bundle the verified extraction, not Tools/ExifTool, which could change after the comparison.
+  rm -rf "$application/Contents/Resources/Tools/ExifTool"
+  ditto "$exiftool_check/tree" "$application/Contents/Resources/Tools/ExifTool" || exiftool_fail "Could not bundle ExifTool"
   rm -rf "$exiftool_check"
-  ditto Tools/ExifTool "$application/Contents/Resources/Tools/ExifTool"
 else
   print -u2 "Missing Tools/ExifTool; run scripts/setup-exiftool.sh"
   exit 1
