@@ -52,9 +52,13 @@ scripts/build-app.sh release
 
 The public app is written to `build/Nashi.app`. Large runtimes are installed through its setup screen. Source builds use an ad-hoc signature unless you provide your own ignored signing profile. Signing private keys are never distributed. [Windows build instructions](windows/README.md).
 
+## Calculator
+
+Type into the calculator on Home and the answer appears as you type: `10+10`, `20% of 50`, `sqrt(16)`, `1 USD` (to your local currency), `1 USD to TRY`, `5 km in mi`, `100 c to f` or `1 GB to MB`. Return copies the answer. Choose the local currency in **Settings → General → Calculator**.
+
 ## Privacy and updates
 
-Conversion/editing run locally. Web downloads contact the selected media site. No analytics, cloud account or browser-cookie import is built in. Official releases update through this public repository without a GitHub account or token. macOS verifies the signed feed and archive; Windows verifies the archive signature and version before replacement. Active operations finish or cancel before the app exits for an update. Portable Windows updates retain the previous folder as a recoverable backup.
+Conversion/editing run locally. Web downloads contact the selected media site. The Home calculator answers math and unit conversions offline; currency conversions download daily exchange rates from [ExchangeRate-API](https://www.exchangerate-api.com) only when you type one, then reuse a local cache. No analytics, cloud account or browser-cookie import is built in. Official releases update through this public repository without a GitHub account or token. macOS verifies the signed feed and archive; Windows verifies the archive signature and version before replacement. Active operations finish or cancel before the app exits for an update. Portable Windows updates retain the previous folder as a recoverable backup.
 
 ## License and acknowledgments
 
