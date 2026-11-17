@@ -15,3 +15,23 @@ While dragging in Explorer or another application, **Ctrl** opens tools, **Shift
 Media editors use **Space** for play/pause, **Left/Right** for one-second seeking, **Shift+Left/Right** for frame steps, **I/O** for range marks and **Shift+Space** to play the selected range. Crop supports drag, Shift ratio lock, selection move/resize, aspect presets and Enter save. Annotation supports Select/Move, Delete and Ctrl+Z. Normal text-field editing is preserved.
 
 `Nashi.Verify` checks the shared engine and security foundation. `Nashi --smoke-test` runs real Windows keyboard, clipboard, OLE drag, Library, editor and export checks and writes diagnostic JSON/PNG artifacts. See [verification details](FEATURE-PARITY.md#commands-and-evidence) before interpreting a CI artifact as a completed test or official release.
+
+## Portable package verification
+
+Windows CI compares every ZIP file (including its contents) with the self-contained
+publish directory, checks the required .NET/WPF runtime and notices, and rejects
+unsafe or Windows case-colliding archive paths. It then extracts the ZIP and runs
+the native smoke tests from that extracted application. `windows-portable-verified`
+is uploaded only after all preceding checks pass; diagnostic artifacts can also
+exist after a failed run and are not proof of a passing package.
+
+To verify a locally built archive:
+
+```sh
+python scripts/verify-windows-package.py build/windows/Nashi build/Nashi-Windows-x64.zip
+```
+
+Successful verification writes `Nashi-Windows-x64.zip.sha256` alongside the ZIP.
+This checksum detects accidental corruption; it is not publisher authentication
+or a replacement for the signed update manifest. Optional media and Office tools
+still require first-use downloads; the portable ZIP is not an offline tool bundle.

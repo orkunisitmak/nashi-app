@@ -1,5 +1,6 @@
 name: Windows preview
 on:
+  workflow_dispatch:
   push:
     branches: [main]
   pull_request:
@@ -28,6 +29,13 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           dotnet publish windows/Nashi.Windows -c Release --no-restore -o build/windows/Nashi
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Package and verify portable archive
+        shell: pwsh
+        run: |
+          Compress-Archive -Path build/windows/Nashi/* -DestinationPath build/Nashi-Windows-x64.zip
+          python scripts/verify-windows-package.py build/windows/Nashi build/Nashi-Windows-x64.zip
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Expand-Archive -Path build/Nashi-Windows-x64.zip -DestinationPath build/windows-packaged
       - name: Install verified media tools and exercise real exports
         shell: pwsh
         env:
@@ -49,7 +57,7 @@ jobs:
           function Invoke-NativeFixture([string] $directory) {
             $env:NASHI_SMOKE_DIRECTORY = $directory
             New-Item -ItemType Directory -Force $directory | Out-Null
-            $start = [System.Diagnostics.ProcessStartInfo]::new((Resolve-Path build/windows/Nashi/Nashi.exe))
+            $start = [System.Diagnostics.ProcessStartInfo]::new((Resolve-Path build/windows-packaged/Nashi.exe))
             $start.UseShellExecute = $false
             $start.ArgumentList.Add('--smoke-test')
             $process = [System.Diagnostics.Process]::Start($start)
@@ -80,7 +88,7 @@ jobs:
             if (!$hasFrames) {
               $env:NASHI_SMOKE_DIRECTORY = Join-Path $proof 'native-debug'
               New-Item -ItemType Directory -Force $env:NASHI_SMOKE_DIRECTORY | Out-Null
-              & build/NativeDebugRunner.exe (Resolve-Path build/windows/Nashi/Nashi.exe) --smoke-test 2>&1 | Tee-Object -FilePath (Join-Path $proof 'native-stack.txt')
+              & build/NativeDebugRunner.exe (Resolve-Path build/windows-packaged/Nashi.exe) --smoke-test 2>&1 | Tee-Object -FilePath (Join-Path $proof 'native-stack.txt')
             }
             Start-Sleep -Seconds 3
             Get-WinEvent -FilterHashtable @{LogName='Application'; Id=1000,1001,1026; StartTime=(Get-Date).AddMinutes(-20)} -ErrorAction SilentlyContinue | Select-Object -First 8 TimeCreated,ProviderName,Id,Message | Format-List | Out-String | Write-Host
@@ -99,7 +107,7 @@ jobs:
           )) {
             $directory = Join-Path '${{ github.workspace }}\build\windows-smoke' $fixture.Name
             New-Item -ItemType Directory -Force $directory | Out-Null
-            $start = [System.Diagnostics.ProcessStartInfo]::new((Resolve-Path build/windows/Nashi/Nashi.exe))
+            $start = [System.Diagnostics.ProcessStartInfo]::new((Resolve-Path build/windows-packaged/Nashi.exe))
             $start.UseShellExecute = $false
             $start.Environment['NASHI_SMOKE_DIRECTORY'] = $directory
             foreach ($argument in $fixture.Arguments) { $start.ArgumentList.Add($argument) }
@@ -113,17 +121,19 @@ jobs:
               Write-Host "$($fixture.Name): exit=$($process.ExitCode); checks=$($report.checks); failures=$($report.failures.Count)"
             } finally { $process.Dispose() }
           }
-      - name: Package portable app
-        shell: pwsh
-        run: |
-          Compress-Archive -Path build/windows/Nashi/* -DestinationPath build/Nashi-Windows-x64.zip
-          Get-FileHash build/Nashi-Windows-x64.zip -Algorithm SHA256
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: windows-portable-verified
+          path: |
+            build/Nashi-Windows-x64.zip
+            build/Nashi-Windows-x64.zip.sha256
+          retention-days: 7
+          if-no-files-found: error
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         if: always()
         with:
           name: windows-preview
           path: |
-            build/Nashi-Windows-x64.zip
             build/windows-smoke
           retention-days: 7
           if-no-files-found: error

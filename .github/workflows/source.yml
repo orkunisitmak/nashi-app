@@ -21,6 +21,8 @@ jobs:
           persist-credentials: false
       - name: Check generated language tables
         run: python3 scripts/generate-localizations.py --check
+      - name: Windows portable package regressions
+        run: python3 scripts/test-windows-package.py
       - name: Owner merge authorization regressions
         run: python3 scripts/test-owner-auto-merge.py
       - name: Public source boundary
