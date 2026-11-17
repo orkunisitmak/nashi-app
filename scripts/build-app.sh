@@ -45,10 +45,33 @@ if [[ "$nashi_public_build" == true ]]; then
 else
 for component in ffmpeg ffprobe yt-dlp deno; do
   if [[ ! -x "Tools/$component" ]]; then print -u2 "Missing Tools/$component; see scripts/setup-tools.sh and scripts/setup-web-download-tools.py"; exit 1; fi
+  # Same pins as scripts/setup-tools.sh and scripts/setup-web-download-tools.py. Deno is
+  # pinned there only by its release archive digest, so its binary cannot be rechecked here.
+  case "$component" in
+    ffmpeg) expected=591260c945d0eef150e3bf82b0ef988bd36a9cecc18ff05d6679617159f0a95e ;;
+    ffprobe) expected=e11c17e8200b3ee4c4c186d245e2b4053f01d56957336c1817fca0b997469106 ;;
+    yt-dlp) expected=0f192b7ec147ab6288885d6351d9ab67367640029b4377576ef46dd79cf7b202 ;;
+    *) expected="" ;;
+  esac
+  if [[ -n "$expected" && "$(shasum -a 256 "Tools/$component" | awk '{print $1}')" != "$expected" ]]; then
+    print -u2 "Checksum mismatch for Tools/$component; refusing to bundle and sign it."; exit 1
+  fi
   cp "Tools/$component" "$application/Contents/Resources/Tools/$component"
 done
 fi
 if [[ -f Tools/ExifTool/exiftool ]]; then
+  # Ship only an unmodified extraction of the archive pinned in scripts/setup-exiftool.sh.
+  exiftool_archive=Downloads/exiftool-13.59.tar.gz
+  if [[ ! -f "$exiftool_archive" || "$(shasum -a 256 "$exiftool_archive" | awk '{print $1}')" != e1e2ad6c6fbf568afee5993ef8b2b91ab013d21698c9304e079e633ad82776f5 ]]; then
+    print -u2 "Missing or mismatched $exiftool_archive; run scripts/setup-exiftool.sh"; exit 1
+  fi
+  exiftool_check=$(mktemp -d)
+  tar -xzf "$exiftool_archive" --strip-components=1 -C "$exiftool_check"
+  if ! diff -r "$exiftool_check" Tools/ExifTool >/dev/null; then
+    rm -rf "$exiftool_check"
+    print -u2 "Tools/ExifTool differs from the pinned ExifTool archive; remove it and rerun scripts/setup-exiftool.sh"; exit 1
+  fi
+  rm -rf "$exiftool_check"
   ditto Tools/ExifTool "$application/Contents/Resources/Tools/ExifTool"
 else
   print -u2 "Missing Tools/ExifTool; run scripts/setup-exiftool.sh"

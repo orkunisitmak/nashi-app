@@ -30,7 +30,12 @@ def validate(feed_path, build_number, must_be_newer=False):
     enclosure = matching[0].find("enclosure")
     if enclosure is None or not enclosure.get(SPARKLE + "edSignature") or int(enclosure.get("length", "0")) <= 0:
         raise ValueError("The release download is missing its Ed25519 signature or length; check that the signing key matches the public key")
-    archive_name = enclosure.get("url", "").rsplit("/", 1)[-1]
+    short_version = matching[0].findtext(SPARKLE + "shortVersionString") or ""
+    release = f"https://github.com/orkunisitmak/nashi-app/releases/download/v{short_version}-{build_number}/"
+    url = enclosure.get("url", "")
+    if not short_version or not url.startswith(release) or "/" in url[len(release):]:
+        raise ValueError("The release download must be the official HTTPS GitHub release for this version and build")
+    archive_name = url.rsplit("/", 1)[-1]
     if not (Path(feed_path).parent / archive_name).is_file():
         raise ValueError("The signed release archive is missing")
 
