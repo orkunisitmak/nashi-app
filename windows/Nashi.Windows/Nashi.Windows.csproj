@@ -5,6 +5,7 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier><SelfContained>true</SelfContained>
     <AssemblyName>Nashi</AssemblyName><RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <PublishSingleFile>false</PublishSingleFile><DebugType>none</DebugType><DebugSymbols>false</DebugSymbols>
+    <DefineConstants Condition="'$(NashiVisualPreview)' == 'true'">$(DefineConstants);NASHI_VISUAL_PREVIEW</DefineConstants>
   </PropertyGroup>
   <ItemGroup><ProjectReference Include="../Nashi.Core/Nashi.Core.csproj" /></ItemGroup>
   <ItemGroup>
@@ -17,6 +18,7 @@
     <Content Include="../../Resources/licenses/cupertino-files/**" Link="licenses/cupertino-files/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../licenses/**" Link="licenses/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../../LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../Resources/FluentIcons/LICENSE" Link="licenses/FluentIcons-LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>

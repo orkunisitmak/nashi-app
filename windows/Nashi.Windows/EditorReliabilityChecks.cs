@@ -13,6 +13,7 @@ internal static class EditorReliabilityChecks
     }
     internal static void Run(string root,Action<bool,string> check)
     {
+        // Only smoke fixtures are reported; no clipboard or user document contents.
         void Trace(string phase)=>File.AppendAllText(Path.Combine(root,"editor-progress.log"),$"{DateTimeOffset.UtcNow:O} {phase}{Environment.NewLine}");
         using var editorWatchdog=new System.Threading.Timer(_=>{File.WriteAllText(Path.Combine(root,"editor-timeout.txt"),"Editor reliability checks exceeded 180 seconds. See editor-progress.log.");DesktopInput.HoldMouse(false);Environment.Exit(1);},null,TimeSpan.FromSeconds(180),System.Threading.Timeout.InfiniteTimeSpan);
         Trace("START audio editor");
@@ -59,10 +60,12 @@ internal static class EditorReliabilityChecks
             }
             finally{convert.Close();}
             var pixels=System.Windows.Media.Imaging.BitmapSource.Create(100,60,96,96,PixelFormats.Bgra32,null,new byte[100*60*4],100*4);pixels.Freeze();
-            Trace("START photo editor");var image=Path.Combine(root,"Reliability.png");ImageEngine.Save(pixels,image,"png");var photo=new ToolEditor(owner,"editImage","Edit Photo",image,preview:pixels);
+            Trace("START photo editor");
+            var image=Path.Combine(root,"Reliability.png");ImageEngine.Save(pixels,image,"png");var photo=new ToolEditor(owner,"editImage","Edit Photo",image,preview:pixels);
             try
             {
-                Trace("photo show and invalid rotation");photo.Show();DesktopInput.Pump();photo.FieldForTest("Degrees").Text="invalid";var rotate=Children(photo).OfType<Button>().Single(b=>b.Content as string=="Rotate Right");
+                Trace("photo show");photo.Show();DesktopInput.Pump();photo.FieldForTest("Degrees").Text="invalid";var rotate=Children(photo).OfType<Button>().Single(b=>b.Content as string=="Rotate Right");
+                Trace("photo invalid rotation click");
                 Exception? failure=null;try{rotate.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));}catch(Exception error){failure=error;}
                 check(failure is null&&photo.FieldForTest("Width").Text=="100","Invalid photo rotation escaped the editor or partially changed dimensions");
                 photo.FieldForTest("Degrees").Text="0";rotate.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
@@ -83,6 +86,7 @@ internal static class EditorReliabilityChecks
                 check(exact.PixelWidth==100&&exact.PixelHeight==30,$"Resizing one image ignored the typed size: {exact.PixelWidth}×{exact.PixelHeight}");
             }
             finally{single.Close();}
+            Trace("START rounded audio trim editor");
             // Default ranges show milliseconds and can round just past ffprobe's duration.
             var rounded=new ToolEditor(owner,"trimAudio","Trim Audio",audio,new MediaInfo(4.9876,new FileInfo(audio).Length,[new MediaStream(0,"audio","pcm_s16le",null,null,false)]));
             try

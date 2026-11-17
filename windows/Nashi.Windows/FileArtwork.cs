@@ -133,7 +133,7 @@ internal static class FileArtwork
     }
     private static ImageSource? NativeIcon(string path,FileArtworkStamp stamp)
     {
-        var flags=0x100u|0x1u; // SHGFI_ICON | SHGFI_SMALLICON
+        var flags=0x100u; // SHGFI_ICON | SHGFI_LARGEICON (32px+ instead of scaling up 16px shell artwork)
         if(!stamp.Exists)flags|=0x10; // name/extension association for missing entries
         _ = SHGetFileInfo(path,stamp.Directory?0x10u:0x80u,out var info,(uint)Marshal.SizeOf<Info>(),flags);
         if(info.Icon==IntPtr.Zero)return null;

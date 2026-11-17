@@ -8,6 +8,7 @@ internal static class UpdateInstaller
     public static Version Current=>Assembly.GetExecutingAssembly().GetName().Version??new(0,7,0);
     public static async Task StageAsync(WindowsUpdate update,IProgress<OperationProgress> progress,CancellationToken token)
     {
+        if(PreviewLaunch.Enabled)throw new InvalidOperationException("Updates are disabled in Fluent Preview.");
         var target=Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory);var parent=Path.GetDirectoryName(target)??throw new IOException("Extract Nashi into its own writable folder first.");
         if(target==Path.GetPathRoot(target)||(File.GetAttributes(target)&FileAttributes.ReparsePoint)!=0)throw new IOException("Use a regular writable folder for portable updates.");
         var stage=Path.Combine(parent,".nashi-update-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(stage);

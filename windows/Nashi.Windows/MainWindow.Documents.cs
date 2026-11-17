@@ -6,8 +6,8 @@ using Nashi.Core;
 namespace Nashi.Windows;
 public sealed partial class MainWindow
 {
-    private readonly OfficeRuntime officeRuntime=new(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Nashi","Tools"));
-    private readonly MetadataService metadataService=new(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Nashi","Tools"));
+    private readonly OfficeRuntime officeRuntime=new(PreviewLaunch.ToolsDirectory);
+    private readonly MetadataService metadataService=new(PreviewLaunch.ToolsDirectory);
     private async Task EditMetadataAsync(string[] selected)
     {
         if(selected.All(p=>FeatureCatalog.IsAudio(p)||FeatureCatalog.IsVideo(p)&&FeatureCatalog.Extension(p)!="gif")){await EditMediaMetadataAsync(selected);return;}

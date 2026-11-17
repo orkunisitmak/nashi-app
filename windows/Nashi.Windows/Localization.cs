@@ -37,6 +37,39 @@ internal static class L10n
         var binding=new MultiBinding{Converter=ChoiceConverter.Shared};binding.Bindings.Add(new Binding());binding.Bindings.Add(new Binding(nameof(LanguageState.Language)){Source=LanguageState.Shared});
         factory.SetBinding(TextBlock.TextProperty,binding);control.ItemTemplate=new DataTemplate{VisualTree=factory};
     }
+    internal static void IconChoices(ItemsControl control)
+    {
+        var row=new FrameworkElementFactory(typeof(StackPanel));
+        row.SetValue(StackPanel.OrientationProperty,Orientation.Horizontal);
+        var glyph=new FrameworkElementFactory(typeof(ContentControl));
+        glyph.SetBinding(ContentControl.ContentProperty,new Binding{Converter=NavigationIconConverter.Shared});
+        glyph.SetValue(FrameworkElement.MarginProperty,new Thickness(0,0,9,0));
+        glyph.SetValue(FrameworkElement.VerticalAlignmentProperty,VerticalAlignment.Center);
+        row.AppendChild(glyph);
+        var caption=new FrameworkElementFactory(typeof(TextBlock));
+        caption.SetValue(FrameworkElement.VerticalAlignmentProperty,VerticalAlignment.Center);
+        var binding=new MultiBinding{Converter=ChoiceConverter.Shared};
+        binding.Bindings.Add(new Binding());
+        binding.Bindings.Add(new Binding(nameof(LanguageState.Language)){Source=LanguageState.Shared});
+        caption.SetBinding(TextBlock.TextProperty,binding);
+        row.AppendChild(caption);
+        control.ItemTemplate=new DataTemplate{VisualTree=row};
+    }
+    private sealed class NavigationIconConverter:IValueConverter
+    {
+        internal static readonly NavigationIconConverter Shared=new();
+        public object Convert(object value,Type type,object parameter,CultureInfo culture)
+        {
+            var id=(value as string) switch
+            {
+                "General"=>"settings","Formats"=>"convert","Compatibility"=>"fileActions",
+                "Folders"=>"reveal","Updates"=>"download","About"=>"info",_=>"settings"
+            };
+            return AppIcons.Icon(id,18);
+        }
+        public object ConvertBack(object value,Type type,object parameter,CultureInfo culture)=>
+            throw new NotSupportedException();
+    }
     private sealed class TextConverter:IValueConverter
     {
         internal static readonly TextConverter Shared=new();

@@ -14,6 +14,8 @@ committed packages.lock.json files and Windows dependency inventory.
 Media tools are downloaded separately from pinned upstream releases after the
 user chooses setup; their licenses and source references are shown by setup.
 
+Fluent UI System Icons (Regular 24), Microsoft Corporation, MIT. Selected SVGs are embedded as WPF geometry; provenance, pinned commit, SHA-256 hashes and full license: Resources/FluentIcons/SOURCE.json and Resources/FluentIcons/LICENSE. https://github.com/microsoft/fluentui-system-icons
+
 Additional Windows interoperability libraries:
 - PDFium 155.0.8044.0 via bblanchon.PDFium.Win32 155.0.8044: CPU PDF preview/rendering; Apache-2.0 packaging, PDFium BSD-style and bundled dependency notices. Matching binary provenance and complete licenses: licenses/PDFium-THIRD-PARTY-NOTICES.txt. No JavaScript platform or external link actions are enabled by Nashi's read-only form preview.
 - Magick.NET 15.0.0 and Magick.NET.Core: Apache-2.0, https://github.com/dlemstra/Magick.NET. Full native dependency licenses are in licenses/Magick.NET-THIRD-PARTY-NOTICES.txt.
