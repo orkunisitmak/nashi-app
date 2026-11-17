@@ -484,6 +484,7 @@
 "CHOOSE VALID PDF PAGES." = "GEÇERLİ PDF SAYFALARI SEÇ.";
 "CHOOSE VIDEO, AUDIO, THUMBNAIL OR IMAGES." = "VİDEO, SES, KÜÇÜK RESİM VEYA GÖRSEL SEÇ.";
 "CHOOSE VISUALIZATION IMAGE…" = "GÖRSELLEŞTİRME GÖRSELİ SEÇ…";
+"CHOOSE WHAT APPEARS WHEN YOU CLICK THE NASHI ICON IN THE MENU BAR. SETTINGS AND QUIT ARE ALWAYS SHOWN." = "MENÜ ÇUBUĞUNDAKİ NASHI SİMGESİNE TIKLAYINCA NELERİN GÖRÜNECEĞİNİ SEÇ. AYARLAR VE ÇIKIŞ HER ZAMAN GÖRÜNÜR.";
 "CHOOSE WHAT YOUR FILE SHARES." = "DOSYANIN NE PAYLAŞTIĞINI SEN SEÇ.";
 "CHOOSE YOUR HOME FOLDER OR A FOLDER WHERE YOU SAVE FILES." = "ANA KLASÖRÜNÜ VEYA DOSYALARINI KAYDETTİĞİN BİR KLASÖRÜ SEÇ.";
 "CHOOSE ZIP, TAR OR GZIP." = "ZIP, TAR VEYA GZIP SEÇ.";
@@ -685,6 +686,7 @@
 "Choose valid image dimensions." = "Geçerli görsel boyutları seç.";
 "Choose video, audio, thumbnail or images." = "Video, ses, küçük resim veya görsel seç.";
 "Choose visualization image…" = "Görselleştirme görseli seç…";
+"Choose what appears when you click the Nashi icon in the menu bar. Settings and Quit are always shown." = "Menü çubuğundaki Nashi simgesine tıklayınca nelerin görüneceğini seç. Ayarlar ve Çıkış her zaman görünür.";
 "Choose what your file shares." = "Dosyanın ne paylaştığını sen seç.";
 "Choose your home folder or a folder where you save files." = "Ana klasörünü veya dosyalarını kaydettiğin bir klasörü seç.";
 "Clarity" = "Netlik";
@@ -1449,6 +1451,7 @@
 "MEDIA TOOLS READY. YOU CAN EDIT, CONVERT AND DOWNLOAD MEDIA." = "MEDYA ARAÇLARI HAZIR. DÜZENLEYEBİLİR, DÖNÜŞTÜREBİLİR VE İNDİREBİLİRSİN.";
 "MEDIUM · 1920 PX" = "ORTA · 1920 PX";
 "MEDIUM · 1920 PX LONGEST EDGE" = "ORTA · UZUN KENAR 1920 PX";
+"MENU BAR" = "MENÜ ÇUBUĞU";
 "MERGE PDFS" = "PDF'LERİ BİRLEŞTİR";
 "METADATA" = "META VERİLER";
 "METADATA TOOLS ARE NOT READY." = "META VERİ ARAÇLARI HAZIR DEĞİL.";
@@ -1496,6 +1499,7 @@
 "Media tools ready. You can edit, convert and download media." = "Medya araçları hazır. Düzenleyebilir, dönüştürebilir ve indirebilirsin.";
 "Medium · 1920 px" = "Orta · 1920 px";
 "Medium · 1920 px longest edge" = "Orta · uzun kenar 1920 px";
+"Menu bar" = "Menü çubuğu";
 "Merge PDFs" = "PDF'leri Birleştir";
 "Metadata" = "Meta Veriler";
 "Metadata tools are not ready." = "Meta veri araçları hazır değil.";

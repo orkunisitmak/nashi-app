@@ -62,6 +62,8 @@
   "Add to an existing Float": "Mevcut yüzen pencereye ekle",
   "Terminal app": "Terminal uygulaması",
   "Additional options": "Diğer seçenekler",
+  "Menu bar": "Menü çubuğu",
+  "Choose what appears when you click the Nashi icon in the menu bar. Settings and Quit are always shown.": "Menü çubuğundaki Nashi simgesine tıklayınca nelerin görüneceğini seç. Ayarlar ve Çıkış her zaman görünür.",
   "Enable Nashi": "Nashi'yi etkinleştir",
   "Enable Nashi drag shortcuts": "Nashi sürükleme kısayollarını etkinleştir",
   "Reveal finished files in Finder": "Tamamlanan dosyaları Finder'da göster",
