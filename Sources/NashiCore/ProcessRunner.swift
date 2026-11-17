@@ -169,6 +169,14 @@ public enum OutputFiles {
             return target
         }
     }
+    /// Where `path` lives after the moves in `moved` (old path to new path). A
+    /// moved folder carries the paths inside it; only whole components match.
+    public static func relocated(_ path:String,moved:[String:String]) -> String {
+        if let target=moved[path] { return target }
+        // A folder and a folder inside it can both be moved: the longest source is the one that carried the file.
+        for (source,target) in moved.sorted(by:{$0.key.count>$1.key.count}) where path.hasPrefix(source+"/") { return target+path.dropFirst(source.count) }
+        return path
+    }
     public static func temporaryDirectory() throws -> URL {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("Nashi-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
