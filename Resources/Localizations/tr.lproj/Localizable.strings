@@ -2427,6 +2427,7 @@
 "THE UPSTREAM DOWNLOAD HAS AN INVALID SIZE." = "İNDİRİLEN ARACIN BOYUTU GEÇERSİZ.";
 "THE UPSTREAM SERVER DID NOT RETURN A SUCCESSFUL HTTPS DOWNLOAD." = "KAYNAK SUNUCU BAŞARILI BİR HTTPS İNDİRMESİ DÖNDÜRMEDİ.";
 "THE VIDEO HAS NO READABLE DIMENSIONS." = "VİDEONUN BOYUTLARI OKUNAMIYOR.";
+"THEME" = "TEMA";
 "THESE FILES HAVE MOVED OR WERE DELETED." = "BU DOSYALAR TAŞINMIŞ VEYA SİLİNMİŞ.";
 "THIS ARCHIVE IS PROTECTED. ENTER ITS PASSWORD." = "BU ARŞİV PAROLA KORUMALI. PAROLASINI GİR.";
 "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE." = "BU KIRPMA, SEÇİLEN TÜM GÖRSELLERE UYGULANIR VE HER GÖRSELİN SINIRLARINA SIĞMALIDIR.";
@@ -2595,6 +2596,7 @@
 "The upstream download has an invalid size." = "İndirilen aracın boyutu geçersiz.";
 "The upstream server did not return a successful HTTPS download." = "Kaynak sunucu başarılı bir HTTPS indirmesi döndürmedi.";
 "The video has no readable dimensions." = "Videonun boyutları okunamıyor.";
+"Theme" = "Tema";
 "These files have moved or were deleted." = "Bu dosyalar taşınmış veya silinmiş.";
 "This PDF contains digital signatures. This page operation cannot safely preserve that feature. No copy was exported." = "Bu PDF'de dijital imza var. Bu sayfa işlemi bu özelliği güvenle koruyamaz. Kopya dışa aktarılmadı.";
 "This PDF contains no pages." = "Bu PDF'de sayfa yok.";

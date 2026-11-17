@@ -2427,6 +2427,7 @@
 "THE UPSTREAM DOWNLOAD HAS AN INVALID SIZE." = "THE UPSTREAM DOWNLOAD HAS AN INVALID SIZE.";
 "THE UPSTREAM SERVER DID NOT RETURN A SUCCESSFUL HTTPS DOWNLOAD." = "THE UPSTREAM SERVER DID NOT RETURN A SUCCESSFUL HTTPS DOWNLOAD.";
 "THE VIDEO HAS NO READABLE DIMENSIONS." = "THE VIDEO HAS NO READABLE DIMENSIONS.";
+"THEME" = "THEME";
 "THESE FILES HAVE MOVED OR WERE DELETED." = "THESE FILES HAVE MOVED OR WERE DELETED.";
 "THIS ARCHIVE IS PROTECTED. ENTER ITS PASSWORD." = "THIS ARCHIVE IS PROTECTED. ENTER ITS PASSWORD.";
 "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE." = "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE.";
@@ -2595,6 +2596,7 @@
 "The upstream download has an invalid size." = "The upstream download has an invalid size.";
 "The upstream server did not return a successful HTTPS download." = "The upstream server did not return a successful HTTPS download.";
 "The video has no readable dimensions." = "The video has no readable dimensions.";
+"Theme" = "Theme";
 "These files have moved or were deleted." = "These files have moved or were deleted.";
 "This PDF contains digital signatures. This page operation cannot safely preserve that feature. No copy was exported." = "This PDF contains digital signatures. This page operation cannot safely preserve that feature. No copy was exported.";
 "This PDF contains no pages." = "This PDF contains no pages.";

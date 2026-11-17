@@ -2427,6 +2427,7 @@
 "THE UPSTREAM DOWNLOAD HAS AN INVALID SIZE." = "LE TÉLÉCHARGEMENT AMONT A UNE TAILLE NON VALIDE.";
 "THE UPSTREAM SERVER DID NOT RETURN A SUCCESSFUL HTTPS DOWNLOAD." = "LE SERVEUR AMONT N’A PAS FOURNI DE TÉLÉCHARGEMENT HTTPS RÉUSSI.";
 "THE VIDEO HAS NO READABLE DIMENSIONS." = "LES DIMENSIONS DE LA VIDÉO SONT ILLISIBLES.";
+"THEME" = "THÈME";
 "THESE FILES HAVE MOVED OR WERE DELETED." = "CES FICHIERS ONT ÉTÉ DÉPLACÉS OU SUPPRIMÉS.";
 "THIS ARCHIVE IS PROTECTED. ENTER ITS PASSWORD." = "CETTE ARCHIVE EST PROTÉGÉE. SAISISSEZ SON MOT DE PASSE.";
 "THIS CROP APPLIES TO EVERY SELECTED IMAGE AND MUST FIT INSIDE EACH ONE." = "CE RECADRAGE S’APPLIQUE À TOUTES LES IMAGES SÉLECTIONNÉES ET DOIT TENIR DANS CHACUNE D’ELLES.";
@@ -2595,6 +2596,7 @@
 "The upstream download has an invalid size." = "Le téléchargement amont a une taille non valide.";
 "The upstream server did not return a successful HTTPS download." = "Le serveur amont n’a pas fourni de téléchargement HTTPS réussi.";
 "The video has no readable dimensions." = "Les dimensions de la vidéo sont illisibles.";
+"Theme" = "Thème";
 "These files have moved or were deleted." = "Ces fichiers ont été déplacés ou supprimés.";
 "This PDF contains digital signatures. This page operation cannot safely preserve that feature. No copy was exported." = "Ce PDF contient des signatures numériques. Cette opération sur les pages ne peut pas conserver cette fonctionnalité en toute sécurité. Aucune copie n’a été exportée.";
 "This PDF contains no pages." = "Ce PDF ne contient aucune page.";
