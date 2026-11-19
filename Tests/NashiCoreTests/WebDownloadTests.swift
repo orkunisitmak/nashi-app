@@ -49,6 +49,34 @@ final class WebDownloadTests:XCTestCase {
         for flag in ["--ignore-config","--no-plugin-dirs","--no-remote-components","--no-playlist","--no-overwrites"] { XCTAssertTrue(args.contains(flag)) }
         XCTAssertEqual(Array(args.suffix(2)),["--",url.absoluteString]);XCTAssertTrue(args.contains(where:{$0.contains("height<=?720")}));XCTAssertFalse(args.contains(where:{$0.contains("cookies")}))
     }
+    func testVideoDownloadPrefersH264AndProgressiveMP4BeforeGenericVideo() throws {
+        let info=try WebDownloadEngine.parseMetadata(Data(#"{"formats":[{"height":1080}]}"#.utf8),url:URL(string:"https://example.org/watch")!)
+        let args=try WebDownloadEngine.downloadArguments(info,mode:.video,maximumHeight:nil,directory:URL(fileURLWithPath:"/tmp/stage"))
+        let format=args[try XCTUnwrap(args.firstIndex(of:"--format"))+1]
+        let selectors=format.split(separator:"/").map(String.init)
+        XCTAssertEqual(Array(selectors.prefix(3)),[
+            "bestvideo[ext=mp4][vcodec^=avc1]+bestaudio[ext=m4a]",
+            "best[ext=mp4][vcodec^=avc1]",
+            "best[ext=mp4][vcodec=unknown]"
+        ])
+        XCTAssertEqual(Array(selectors.dropFirst(3)),[
+            "bestvideo[ext=mp4]+bestaudio[ext=m4a]",
+            "best[ext=mp4]",
+            "bestvideo+bestaudio",
+            "best"
+        ])
+        XCTAssertTrue(args.contains("--merge-output-format"))
+        XCTAssertTrue(args.contains("--remux-video"))
+    }
+    func testVideoDownloadRespectsHeightCapInEveryCodecFallback() throws {
+        let info=try WebDownloadEngine.parseMetadata(Data(#"{"formats":[{"height":1080}]}"#.utf8),url:URL(string:"https://example.org/watch")!)
+        let args=try WebDownloadEngine.downloadArguments(info,mode:.video,maximumHeight:720,directory:URL(fileURLWithPath:"/tmp/stage"))
+        let format=args[try XCTUnwrap(args.firstIndex(of:"--format"))+1]
+        let selectors=format.split(separator:"/").map(String.init)
+        XCTAssertEqual(selectors.count,7)
+        XCTAssertTrue(selectors.allSatisfy{$0.contains("[height<=?720]")})
+        XCTAssertEqual(Array(args.suffix(2)),["--","https://example.org/watch"])
+    }
     func testProcessTimeoutAndCancellation() throws {
         let start=Date()
         XCTAssertThrowsError(try WebDownloadProcess.run(URL(fileURLWithPath:"/bin/sleep"),["30"],token:.init(),timeout:0.1))

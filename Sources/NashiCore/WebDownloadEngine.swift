@@ -164,7 +164,12 @@ public enum WebDownloadEngine {
         case .audioMP3:args += ["--format","bestaudio/best","--extract-audio","--audio-format","mp3","--audio-quality","0"]
         case .video:
             let limit=maximumHeight.map{"[height<=?\($0)]"} ?? ""
-            args += ["--format","bestvideo[ext=mp4]\(limit)+bestaudio[ext=m4a]/best[ext=mp4]\(limit)/bestvideo\(limit)+bestaudio/best\(limit)","--merge-output-format","mp4","--remux-video","mp4"]
+            // MP4 is only a container: yt-dlp may otherwise select VP9/AV1
+            // which QuickTime cannot play. Some Instagram H.264 progressive
+            // formats have unknown codec metadata, so prefer those too.
+            let compatible="bestvideo[ext=mp4][vcodec^=avc1]\(limit)+bestaudio[ext=m4a]/best[ext=mp4][vcodec^=avc1]\(limit)/best[ext=mp4][vcodec=unknown]\(limit)"
+            let fallback="bestvideo[ext=mp4]\(limit)+bestaudio[ext=m4a]/best[ext=mp4]\(limit)/bestvideo\(limit)+bestaudio/best\(limit)"
+            args += ["--format","\(compatible)/\(fallback)","--merge-output-format","mp4","--remux-video","mp4"]
         case .original:args += ["--format","bestaudio/best"]
         }
         return args+["--",info.url.absoluteString]
