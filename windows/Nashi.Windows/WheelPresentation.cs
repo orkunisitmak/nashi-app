@@ -12,7 +12,7 @@ internal static class WheelPresentation
     internal static Brush Backdrop{get{var brush=Theme.Brush("Surface").Clone();brush.Opacity=Preferences.WheelFinish=="glass"?.95:1;return brush;}}
     internal static double LabelRadius(int count,double half)=>count<=2?180:4*Math.Sin(half)*(Math.Pow(250,3)-Math.Pow(108,3))/(6*half*(250*250-108*108));
     // WPF wraps a word wider than its box between letters ("ANNOTAT / E"), so a caption only fits when every word does.
-    internal static bool WordsFit(string text,double font,FontWeight weight,double width)=>text.Split(' ',StringSplitOptions.RemoveEmptyEntries).All(word=>WordWidth(word,font,weight)<=width+.5);
+    internal static bool WordsFit(string text,double font,FontWeight weight,double width)=>text.Split(' ',StringSplitOptions.RemoveEmptyEntries).All(word=>WordWidth(word,font,weight)<=width);
     private static double WordWidth(string word,double font,FontWeight weight){var text=new System.Windows.Controls.TextBlock{Text=word,FontSize=font,FontWeight=weight};text.Measure(new Size(double.PositiveInfinity,double.PositiveInfinity));return text.DesiredSize.Width;}
     internal static (StackPanel Label,Point Center) Caption(ToolChoice choice,Geometry petal,double angle,double half,int count)
     {
@@ -31,8 +31,8 @@ internal static class WheelPresentation
                 if(new[]{r.TopLeft,r.TopRight,r.BottomLeft,r.BottomRight,new Point(r.Left,r.Top+r.Height/2),new Point(r.Right,r.Top+r.Height/2)}.All(petal.FillContains))return(label,center);
             }
         }
-        var narrow=Math.Max(72,Math.Ceiling(title.Split(' ',StringSplitOptions.RemoveEmptyEntries).Select(word=>WordWidth(word,10,FontWeights.Normal)).DefaultIfEmpty(0).Max())+1);
-        var fallback=new StackPanel{Width=narrow};fallback.Children.Add(new System.Windows.Controls.TextBlock{Text=title,FontSize=10,TextAlignment=TextAlignment.Center,TextWrapping=TextWrapping.Wrap,Foreground=Theme.Brush("Ink")});fallback.Measure(new Size(narrow,double.PositiveInfinity));return(fallback,new Point(270+preferred*Math.Cos(angle),270+preferred*Math.Sin(angle)));
+        var small=10d;while(small>7&&!WordsFit(title,small,FontWeights.Normal,72))small-=.5;
+        var fallback=new StackPanel{Width=72};fallback.Children.Add(new System.Windows.Controls.TextBlock{Text=title,FontSize=small,TextAlignment=TextAlignment.Center,TextWrapping=TextWrapping.Wrap,Foreground=Theme.Brush("Ink")});fallback.Measure(new Size(72,double.PositiveInfinity));return(fallback,new Point(270+preferred*Math.Cos(angle),270+preferred*Math.Sin(angle)));
     }
     internal static void Animate(Window window,double from=0){if(Preferences.Animations&&SystemParameters.ClientAreaAnimation)window.BeginAnimation(UIElement.OpacityProperty,new DoubleAnimation(from,1,TimeSpan.FromMilliseconds(140)));}
 }
