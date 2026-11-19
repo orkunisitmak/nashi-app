@@ -5,7 +5,7 @@
 - `mac-trim.png`: a window crop from the actual video trim recording, showing the selected In/Out range and playback controls.
 - `nashi-demo.mp4`: a silent, 94.9-second real screen recording of the Mac 0.7.3 app. It shows a real Finder file drag with Shift, a wheel drop on JPG, image crop selection and Return export, a Command video drag into the Tools wheel, video playback, In/Out handle dragging, selected-range playback and export. Three desktop recordings were edited together; pauses and longer previews were shortened and all retained actions play at normal speed. A neutral desktop backdrop conceals unrelated windows. The app UI is the running app throughout.
 - `nashi-demo.gif`: lightweight highlights cut from that recording for the README. The README links to the full video player for playback controls and captions.
-- `demo-poster.jpg`: video poster. `demo-en.vtt` / `demo-tr.vtt`: English and Turkish captions.
+- `demo-poster.jpg`: near-native-size crop of the conversion wheel at 2.65 seconds in the Nashi recording (`crop=640:360:6:85`). `demo-en.vtt` / `demo-tr.vtt`: English and Turkish captions.
 
 No personal files, account information or reference-app artwork appear in these assets. The app captures contain test filenames and Nashi artwork only. Image metadata was stripped when preparing the public copies.
 

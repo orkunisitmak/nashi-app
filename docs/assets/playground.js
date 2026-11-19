@@ -3,6 +3,20 @@
 (async()=>{
 const root=document.getElementById('playground');if(!root)return;
 const tr=document.documentElement.lang==='tr',L=(en,tt)=>tr?tt:en;
+const platform=navigator.userAgentData?.platform||navigator.platform;
+const windows=/^Win/i.test(platform);
+const mac=/^Mac/i.test(platform)&&navigator.maxTouchPoints<2;
+const download=document.querySelector(`[data-download-platform="${windows?'windows':mac?'mac':''}"]`);
+if(download){
+ const hero=document.getElementById('hero-download');
+ hero.href=download.href;
+ hero.querySelector('span').textContent=download.dataset.heroLabel;
+ document.getElementById('hero-download-platform').textContent='· '+download.parentElement.querySelector('[data-platform-requirements]').textContent;
+ const other=document.getElementById('hero-other-platforms');
+ other.querySelector('a').textContent=windows?L('Get the Mac version','Mac sürümünü al'):L('Get the Windows version','Windows sürümünü al');
+ other.hidden=false;
+ download.classList.replace('secondary','primary');
+}
 const scriptURL=new URL(document.querySelector('script[src*="playground.js"]').src),base=new URL('.',scriptURL),revision=scriptURL.searchParams.get('v')||'';
 const wheelGeometry=await import(new URL('wheel-geometry.mjs?v='+revision,base));
 const {filterFormatRows,foldSearchText}=await import(new URL('format-search.mjs?v='+revision,base));
@@ -13,93 +27,655 @@ const {mediaPreviewOptions}=await import(new URL('download-preview.mjs?v='+revis
 const asset=p=>new URL(p,base).href;
 const $=(s,p=document)=>p.querySelector(s),$$=(s,p=document)=>[...p.querySelectorAll(s)];
 const el=(tag,attrs={},text='')=>{const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else e.setAttribute(k,v);}if(text)e.textContent=text;return e;};
-const icons={previous:'M5 4v16 M19 4 7 12l12 8z',next:'M19 4v16 M5 4l12 8-12 8z',pause:'M8 5v14 M16 5v14',lock:'M6 10h12v10H6z M8 10V7a4 4 0 0 1 8 0v3',image:'M4 4h16v16H4z M4 16l5-5 4 4 3-3 4 5 M8 8h.01',video:'M3 5h13v14H3z M16 10l5-3v10l-5-3',audio:'M9 18V5l11-2v13 M9 7l11-2 M9 18c0 3-6 3-6 0s6-3 6 0 M20 16c0 3-6 3-6 0s6-3 6 0',file:'M5 3h9l5 5v13H5z M14 3v6h5 M8 13h8 M8 17h6',crop:'M7 3v14h14 M3 7h14v14',compress:'M4 4l6 6 M4 10h6V4 M20 20l-6-6 M14 20v-6h6',edit:'M4 6h16 M4 12h16 M4 18h16 M8 3v6 M16 9v6 M10 15v6',annotate:'M4 17l11-11 4 4L8 21H4z M14 7l3-3 4 4-3 3',frame:'M3 3h18v18H3z M7 7h10v10H7z',metadata:'M4 4h10l7 7-10 10L4 14z M9 9h.01',mute:'M4 9h4l5-5v16l-5-5H4z M17 9l5 6 M22 9l-5 6',trim:'M7 7l12 12 M7 17L19 5 M5 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6 M5 15a3 3 0 1 0 0 6 3 3 0 0 0 0-6',split:'M11 4v16 M3 4h18v16H3z',merge:'M4 3h10v14H4z M9 7h10v14H9',speed:'M4 16a9 9 0 1 1 16 0 M12 12l5-5 M12 4v2 M5 9l2 1 M19 9l-2 1',snapshot:'M3 6h5l2-3h4l2 3h5v14H3z M16 13a4 4 0 1 1-8 0 4 4 0 0 1 8 0',redact:'M3 3l18 18 M4 8c-2 2-3 4-3 4s4 7 11 7c2 0 4-1 6-2 M8 5l4-1c7 0 11 8 11 8l-3 4',qr:'M3 8V3h5 M16 3h5v5 M21 16v5h-5 M8 21H3v-5 M7 7h3v3H7z M14 7h3v3h-3z M7 14h3v3H7z M14 14h3v3h-3z',archive:'M4 3h16v18H4z M10 3v3h4v3h-4v3h4v3h-4v3',copy:'M8 8h13v13H8z M16 8V3H3v13h5',float:'M3 6h18v15H3z M3 10h18 M17 3v8 M14 6l3-3 3 3',move:'M3 6h7l2-3h9v17H3z M6 12h11 M13 9l4 3-4 3',path:'M9 15l6-6 M7 11l-3 3a4 4 0 0 0 6 6l3-3 M11 7l3-3a4 4 0 0 1 6 6l-3 3',terminal:'M3 4h18v16H3z M6 8l4 4-4 4 M13 16h5',share:'M12 16V2 M7 7l5-5 5 5 M5 12H3v10h18V12h-2',download:'M12 3v12 M7 10l5 5 5-5 M4 17v4h16v-4',play:'M8 4l13 8-13 8z',library:'M4 3h4v18H4z M10 3h4v18h-4z M17 3l4 17-4 1-4-17',check:'M4 12l5 5L20 6'};
-function icon(name){const s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('viewBox','0 0 24 24');s.setAttribute('fill','none');s.setAttribute('stroke','currentColor');s.setAttribute('stroke-width','1.65');s.setAttribute('stroke-linecap','round');s.setAttribute('stroke-linejoin','round');s.setAttribute('aria-hidden','true');const p=document.createElementNS(s.namespaceURI,'path');p.setAttribute('d',icons[name]||icons.file);s.append(p);return s;}
+const icons={down:'m6 9 6 6 6-6',forward:'m9 6 6 6-6 6',reset:'M4 11a8 8 0 1 1 2.3 6.6 M4 5v6h6',plus:'M12 5v14 M5 12h14',previous:'M5 4v16 M19 4 7 12l12 8z',next:'M19 4v16 M5 4l12 8-12 8z',pause:'M8 5v14 M16 5v14',lock:'M6 10h12v10H6z M8 10V7a4 4 0 0 1 8 0v3',image:'M4 4h16v16H4z M4 16l5-5 4 4 3-3 4 5 M8 8h.01',video:'M3 5h13v14H3z M16 10l5-3v10l-5-3',audio:'M9 18V5l11-2v13 M9 7l11-2 M9 18c0 3-6 3-6 0s6-3 6 0 M20 16c0 3-6 3-6 0s6-3 6 0',file:'M5 3h9l5 5v13H5z M14 3v6h5 M8 13h8 M8 17h6',crop:'M7 3v14h14 M3 7h14v14',compress:'M4 4l6 6 M4 10h6V4 M20 20l-6-6 M14 20v-6h6',edit:'M4 6h16 M4 12h16 M4 18h16 M8 3v6 M16 9v6 M10 15v6',annotate:'M4 17l11-11 4 4L8 21H4z M14 7l3-3 4 4-3 3',frame:'M3 3h18v18H3z M7 7h10v10H7z',metadata:'M4 4h10l7 7-10 10L4 14z M9 9h.01',mute:'M4 9h4l5-5v16l-5-5H4z M17 9l5 6 M22 9l-5 6',trim:'M7 7l12 12 M7 17L19 5 M5 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6 M5 15a3 3 0 1 0 0 6 3 3 0 0 0 0-6',split:'M11 4v16 M3 4h18v16H3z',merge:'M4 3h10v14H4z M9 7h10v14H9',speed:'M4 16a9 9 0 1 1 16 0 M12 12l5-5 M12 4v2 M5 9l2 1 M19 9l-2 1',snapshot:'M3 6h5l2-3h4l2 3h5v14H3z M16 13a4 4 0 1 1-8 0 4 4 0 0 1 8 0',redact:'M3 3l18 18 M4 8c-2 2-3 4-3 4s4 7 11 7c2 0 4-1 6-2 M8 5l4-1c7 0 11 8 11 8l-3 4',qr:'M3 8V3h5 M16 3h5v5 M21 16v5h-5 M8 21H3v-5 M7 7h3v3H7z M14 7h3v3h-3z M7 14h3v3H7z M14 14h3v3h-3z',archive:'M4 3h16v18H4z M10 3v3h4v3h-4v3h4v3h-4v3',copy:'M8 8h13v13H8z M16 8V3H3v13h5',float:'M3 6h18v15H3z M3 10h18 M17 3v8 M14 6l3-3 3 3',move:'M3 6h7l2-3h9v17H3z M6 12h11 M13 9l4 3-4 3',path:'M9 15l6-6 M7 11l-3 3a4 4 0 0 0 6 6l3-3 M11 7l3-3a4 4 0 0 1 6 6l-3 3',terminal:'M3 4h18v16H3z M6 8l4 4-4 4 M13 16h5',share:'M12 16V2 M7 7l5-5 5 5 M5 12H3v10h18V12h-2',download:'M12 3v12 M7 10l5 5 5-5 M4 17v4h16v-4',play:'M8 4l13 8-13 8z',library:'M4 3h4v18H4z M10 3h4v18h-4z M17 3l4 17-4 1-4-17',check:'M4 12l5 5L20 6',keyboard:'M3 6h18v12H3z M6 10h1m2 0h1m2 0h1m2 0h1m2 0h.01 M7 14h10'};
+function icon(name,path=icons[name]||icons.file){const s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('viewBox','0 0 24 24');s.setAttribute('fill','none');s.setAttribute('stroke','currentColor');s.setAttribute('stroke-width','1.65');s.setAttribute('stroke-linecap','round');s.setAttribute('stroke-linejoin','round');s.setAttribute('aria-hidden','true');const p=document.createElementNS(s.namespaceURI,'path');p.setAttribute('d',path);s.append(p);return s;}
 const tools={compress:['Compress','Sıkıştır','compress'],removeMetadata:['Metadata','Metadata','metadata'],editImage:['Edit image','Görsel düzenle','edit'],annotateImage:['Annotate','İşaretle','annotate'],frameImage:['Frame image','Çerçeve ekle','frame'],cropImage:['Crop image','Görsel kırp','crop'],normalizeAudio:['Normalize audio','Ses eşitle','audio'],muteVideo:['Remove audio','Sesi kaldır','mute'],trimVideo:['Trim video','Video kırp','trim'],splitPDF:['Split PDF','PDF böl','split'],organizePDF:['Organize PDF','PDF düzenle','file'],extractArchive:['Extract archive','Arşiv aç','archive'],createPDF:['Images to PDF','Görsellerden PDF','merge'],mergePDF:['Merge PDFs','PDF birleştir','merge'],cropVideo:['Crop video','Video alanını kırp','crop'],changeVideoSpeed:['Change speed','Hızı değiştir','speed'],joinVideos:['Join videos','Videoları birleştir','merge'],videoSnapshots:['Video snapshots','Videodan kare','snapshot'],splitVideo:['Split video','Video böl','split'],audioToVideo:['Audio to video','Sesten video','video'],trimAudio:['Trim audio','Ses kırp','trim'],audioChannels:['Audio channels','Ses kanalları','audio'],createCollage:['Create collage','Kolaj oluştur','image'],redactImage:['Redact image','Görselde gizle','redact'],redactVideo:['Redact video','Videoda gizle','redact'],redactAudio:['Bleep audio','Seste gizle','mute'],readQRCode:['Read QR codes','QR kod oku','qr']};
 const nativeText=text=>tr?(catalog.presentation.translations[text]||text):text;
 const toolTitle=id=>nativeText(catalog.presentation.wheelTitles[id]||tools[id]?.[0]||id);
-const familyExtensions={image:['jpg','png','webp','heic','tiff','svg','avif','bmp','gif'],video:['mp4','mov','mkv','webm','avi','wmv'],audio:['mp3','m4a','wav','flac','ogg','opus','aiff','wma'],pdf:['pdf'],document:['docx','pages','md','rtf','rtfd','textclipping','html','txt'],sheet:['xlsx','xls','ods','csv','tsv'],slides:['ppt','pptx'],epub:['epub'],subtitle:['srt','vtt'],archive:['zip','tar','gz','rar']};
-const groups=[['image','Images','Görseller'],['video','Video','Video'],['audio','Audio','Ses'],['pdf','PDF','PDF'],['document','Documents','Belgeler'],['sheet','Sheets','Tablolar'],['slides','Slides','Sunumlar'],['epub','EPUB','EPUB'],['subtitle','Subtitles','Altyazı'],['archive','Archives','Arşivler']];
-let catalog;try{const res=await fetch(asset('demo/catalog.json?v='+revision));if(!res.ok)throw Error('catalog');catalog=await res.json();}catch{root.textContent=L('The demo could not load. Please reload.','Demo yüklenemedi. Sayfayı yenileyin.');return;}
-const state={group:'image',files:[],selected:[],wheel:null,drag:null,library:[],shelf:[],sound:false,float:{open:false,expanded:false,list:false,selected:[]},editor:null,urls:new Set(),seq:0};
+let catalog;try{const res=await fetch(asset('demo/catalog.json?v='+revision));if(!res.ok)throw Error('catalog');catalog=await res.json();}catch{const loading=$('#playground-content .live-loading');loading.classList.add('load-error');$('p',loading).textContent=L('The demo could not load. Reload to try again.','Demo yüklenemedi. Yeniden denemek için sayfayı yenile.');return;}
+const families=new Map(catalog.fileFamilies.map(family=>[family.id,family]));
+const familyByFormat=new Map(catalog.fileFamilies.flatMap(family=>family.formats.map(format=>[format,family])));
+function fileBadge(family,format){
+ const badge=el('span',{class:'file-sheet','data-family':family.id,'aria-hidden':'true'});
+ badge.append(icon(null,family.glyph),el('span',{},format.toUpperCase()));
+ return badge;
+}
+const state={group:'samples',files:[],selected:[],wheel:null,drag:null,conversion:null,library:[],shelf:[],sound:false,float:{open:false,expanded:false,list:false,selected:[]},editor:null,urls:new Set(),seq:0};
 function objectURL(blob){const url=URL.createObjectURL(blob);state.urls.add(url);return url;}
 function note(en,tt){return L(en,tt);}
-const box=el('div',{class:'live-intro'});box.innerHTML=`<div class="live-title"><h2>${L('Meet your new file gesture.','Yeni dosya hareketinle tanış.')}</h2><span class="live-label">${L('INTERACTIVE PLAYGROUND','ETKİLEŞİMLİ DEMO')}</span></div><div class="desktop"><div class="desktop-toolbar"><span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="desktop-title">Nashi · ${L('Your desktop, a little sweeter','Masaüstüne tatlı bir dokunuş')}</span><button id="demo-library">${L('Library','Kitaplık')} <span id="library-count">0</span></button><button id="demo-appearance" aria-pressed="true"></button><button id="demo-sound" aria-pressed="false">${L('Sound off','Ses kapalı')}</button><button id="demo-reset" aria-label="${L('Reset playground','Demoyu sıfırla')}">↺</button></div><div class="desktop-tabs" role="tablist" aria-label="${L('Demo file type','Demo dosya türü')}"></div><div class="demo-stage" id="demo-stage" role="group" aria-label="${L('Drag demo files here','Demo dosyalarını burada sürükle')}"><span class="stage-tip"></span><span class="stage-watermark" aria-hidden="true">nashi.</span></div><div class="keystrip"><button data-mode="convert" aria-pressed="false"><kbd>⇧</kbd> ${L('Convert','Dönüştür')}</button><button data-mode="tools" aria-pressed="false"><kbd data-key="tools"></kbd> ${L('Tools','Araçlar')}</button><button data-mode="actions" aria-pressed="false"><kbd data-key="actions"></kbd> ${L('Actions','İşlemler')}</button><button id="demo-upload">+ ${L('Your image / PDF','Görselin / PDF’in')}</button></div></div><div class="demo-bottomline"><span>${L('Drag a file, tap a key, then drop on a slice. Or select a file and press Enter.','Dosyayı sürükle, bir tuşa bas ve dilimin üzerine bırak. Ya da dosyayı seçip Enter’a bas.')}<br>${L('Shift-click selects several · Arrow keys choose · Esc cancels · Touch: tap a file, then a mode.','Shift+tık çoklu seçer · Oklar seçer · Esc kapatır · Dokunmatik: dosyaya, ardından bir moda dokun.')}</span><span>${L('A safe demo. No uploads.','Güvenli demo. Yükleme yok.')}<br>${L('Image / PDF exports are real. Other operations preview the desktop app.','Görsel / PDF çıktıları gerçek. Diğer işlemler masaüstü uygulamasını önizler.')}</span></div>`;
-root.replaceChildren(box);const stage=$('#demo-stage'),tabs=$('.desktop-tabs'),tip=$('.stage-tip');
-const windows=/Win/i.test(navigator.userAgentData?.platform||navigator.platform),keyTools=windows?'Control':'Meta',keyActions=windows?'Alt':'Control';
-$('[data-key="tools"]').textContent=windows?'Ctrl':'⌘';$('[data-key="actions"]').textContent=windows?'Alt':'⌃';
-let dark=true;
-function applyAppearance(){document.documentElement.dataset.demoTheme=dark?'dark':'light';for(const [key,values]of Object.entries(catalog.presentation.palette))document.documentElement.style.setProperty('--demo-'+key.toLowerCase(),values[dark?'dark':'light']);$('#demo-appearance').setAttribute('aria-pressed',dark);$('#demo-appearance').textContent=dark?L('Dark','Koyu'):L('Light','Açık');$('#demo-appearance').setAttribute('aria-label',L('Appearance: ','Görünüm: ')+$('#demo-appearance').textContent);}
+const keyTools=windows?'Control':'Meta',keyActions=windows?'Alt':'Control';
+const toolsKey=windows?'Ctrl':'Command',actionsKey=windows?'Alt':'Control';
+const touchFirst=matchMedia('(hover: none)').matches;
+const reducedMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Nashi has no window of its own here: a Finder-like folder on a small desktop,
+// the menu bar item, and the wheel that opens over whatever you are dragging.
+const box=el('div',{class:'desktop'});
+const folderGlyph='M3 7V5h6l2 3h10v11H3z';
+const pearGlyph='M12 7.4c-1.6 0-2.5 1.2-2.5 2.6 0 1.2-.7 1.9-1.6 2.9a5.1 5.1 0 1 0 8.2 0c-.9-1-1.6-1.7-1.6-2.9 0-1.4-.9-2.6-2.5-2.6z M12 7.4V4.8 M12.2 5.4c.8-1.3 2.1-1.8 3.5-1.5-.4 1.4-1.7 2.1-3.5 1.5z';
+const locationRows=[
+ ['desktop',L('Desktop','Masaüstü'),'M3 4h18v13H3z M8 21h8 M12 17v4'],
+ ['documents',L('Documents','Belgeler'),icons.file],
+ ['downloads',L('Downloads','İndirilenler'),icons.download],
+ ['samples',L('Sample files','Örnek dosyalar'),folderGlyph],
+ ['added',L('Added files','Eklenen dosyalar'),icons.plus],
+];
+const locationButton=([key,name,glyph])=>`<button type="button" class="folder-location" data-location="${key}" ${key==='added'?'hidden':''}>${icon(null,glyph).outerHTML}<span>${name}</span></button>`;
+const clock=new Intl.DateTimeFormat(tr?'tr-TR':'en-US',{weekday:'short',hour:'numeric',minute:'2-digit'}).format(new Date());
+// Each key opens one of the three native wheels, exactly like holding it during a drag.
+const wheelKeys=[
+ ['convert','⇧','Shift',L('Formats','Formatlar'),'Shift'],
+ ['tools',windows?'Ctrl':'⌘',windows?'Ctrl':'Command',L('Tools','Araçlar'),keyTools],
+ ['actions',windows?'Alt':'⌃',windows?'Alt':'Control',L('Actions','İşlemler'),keyActions],
+];
+const keycap=([mode,glyph,name,purpose,key])=>`<button type="button" class="keycap" data-mode="${mode}" data-key="${key}" aria-haspopup="menu" aria-expanded="false" aria-label="${purpose} (${name})"><kbd aria-hidden="true">${glyph}</kbd><span aria-hidden="true"><small>${name}</small><strong>${purpose}</strong></span></button>`;
+box.innerHTML=`<div class="scene" id="demo-scene">
+ <div class="menubar">
+  <span class="menubar-menus" aria-hidden="true"><b>Finder</b><span>${L('File','Dosya')}</span><span>${L('Edit','Düzen')}</span><span>${L('View','Görüntü')}</span><span>${L('Go','Git')}</span><span>${L('Window','Pencere')}</span></span>
+  <details class="status-menu" id="nashi-menu">
+   <summary aria-label="${L('Nashi menu','Nashi menüsü')}" title="${L('Nashi menu','Nashi menüsü')}">${icon(null,pearGlyph).outerHTML}</summary>
+   <div class="status-popover" role="group" aria-label="Nashi">
+    <p class="status-title">Nashi</p>
+    <button data-menu="choose">${L('Choose Files…','Dosya Seç…')}</button>
+    <button data-menu="link">${L('Download Link…','Bağlantıdan İndir…')}</button>
+    <button data-menu="recent">${L('Recent Conversions','Son Dönüştürmeler')}</button>
+    <hr>
+    <button id="demo-appearance" class="demo-toggle" aria-pressed="false">${L('Dark appearance','Koyu görünüm')} <span aria-hidden="true"></span></button>
+    <button id="demo-sound" class="demo-toggle" aria-pressed="false">${L('Wheel sound','Çark sesi')} <span aria-hidden="true"></span></button>
+    <hr>
+    <button id="demo-reset"><span>${icon('reset').outerHTML}${L('Reset demo','Demoyu sıfırla')}</span></button>
+   </div>
+  </details>
+  <span class="menubar-clock" aria-hidden="true">${clock}</span>
+ </div>
+ <div class="folder-window">
+  <div class="desktop-toolbar">
+   <span class="window-lights" aria-hidden="true"><i></i><i></i><i></i></span>
+   <div class="folder-history" role="group" aria-label="${L('Folder history','Klasör geçmişi')}">
+    <button id="folder-back" aria-label="${L('Back','Geri')}" title="${L('Back','Geri')}" disabled>${icon(null,'m15 6-6 6 6 6').outerHTML}</button>
+    <button id="folder-forward" aria-label="${L('Forward','İleri')}" title="${L('Forward','İleri')}" disabled>${icon('forward').outerHTML}</button>
+   </div>
+   <span class="desktop-title" id="folder-title">${L('Sample files','Örnek dosyalar')}</span>
+   <div class="folder-views" role="group" aria-label="${L('Folder view','Klasör görünümü')}">
+    <button data-view="icons" aria-pressed="true" aria-label="${L('Icon view','Simge görünümü')}" title="${L('Icon view','Simge görünümü')}">${icon(null,'M4 4h6v6H4z M14 4h6v6h-6z M4 14h6v6H4z M14 14h6v6h-6z').outerHTML}</button>
+    <button data-view="list" aria-pressed="false" aria-label="${L('List view','Liste görünümü')}" title="${L('List view','Liste görünümü')}">${icon(null,'M4 6h.1 M4 12h.1 M4 18h.1 M8 6h12 M8 12h12 M8 18h12').outerHTML}</button>
+   </div>
+   <label class="folder-search">${icon(null,'M10.5 4a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13z M15 15l5 5').outerHTML}<input id="folder-search" type="search" aria-label="${L('Search folder','Klasörde ara')}" placeholder="${L('Search','Ara')}"></label>
+  </div>
+  <div class="folder-interior">
+   <details class="folder-sidebar" open>
+    <summary>${icon(null,folderGlyph).outerHTML}<span>${L('Folders','Klasörler')}</span>${icon('down').outerHTML}</summary>
+    <div role="group" aria-label="${L('Demo folders','Demo klasörleri')}">
+    <p class="sidebar-label">${L('Favorites','Favoriler')}</p>
+    ${locationRows.slice(0,3).map(locationButton).join('')}
+    <p class="sidebar-label">${L('Locations','Konumlar')}</p>
+    ${locationRows.slice(3).map(locationButton).join('')}
+    </div>
+   </details>
+   <div class="demo-stage" id="demo-stage" role="group" aria-labelledby="folder-title">
+    <div class="folder-files"></div>
+    <p id="folder-empty" hidden>${L('No matching files.','Eşleşen dosya yok.')}</p>
+   </div>
+  </div>
+  <div class="folder-status">
+   <span id="folder-count"></span>
+   <span id="import-limits">${L('Files stay in this tab','Dosyalar bu sekmede kalır')}</span>
+  </div>
+ </div>
+ <div class="wheel-hint" id="wheel-hint" hidden></div>
+ <p class="sr-only" role="status" id="conversion-status"></p>
+</div>
+<div class="demo-controls">
+ <div class="demo-utilities" role="group" aria-label="${L('Demo controls','Demo kontrolleri')}">
+  <button id="demo-tour" type="button">${icon('play').outerHTML}<span>${L('Show me','Göster')}</span></button>
+  <details class="demo-disclosure" id="demo-samples">
+   <summary>${icon(null,folderGlyph).outerHTML}<span>${L('Other file types','Diğer dosya türleri')}</span>${icon('down').outerHTML}</summary>
+   <div class="demo-popover">
+    <div class="sample-types" role="group" aria-label="${L('Sample file type','Örnek dosya türü')}"></div>
+    <div class="sample-format-row"><label for="demo-format">${L('Sample input format','Örnek girdi biçimi')}</label><select id="demo-format"></select></div>
+   </div>
+  </details>
+  <button id="demo-upload" title="${L('PNG, JPG, WebP, GIF, BMP or PDF · up to 12 files, 25 MB each','PNG, JPG, WebP, GIF, BMP veya PDF · en fazla 12 dosya, dosya başına 25 MB')}">${icon('plus').outerHTML}<span>${L('Add your file','Dosyanı ekle')}</span></button>
+  <button id="demo-library">${icon('library').outerHTML}<span>${L('Library','Kitaplık')}</span> <span id="library-count">0</span></button>
+  <details class="demo-disclosure" id="demo-shortcuts">
+   <summary>${icon('keyboard').outerHTML}<span>${L('Keyboard','Klavye')}</span>${icon('down').outerHTML}</summary>
+   <ul class="demo-popover">
+    <li>${L('Focus a file and press <kbd>Enter</kbd> or <kbd>Space</kbd> to open the wheel. Use <kbd>1</kbd>–<kbd>9</kbd> clockwise from the top, or use the arrows and <kbd>Enter</kbd>.','Çarkı açmak için dosyaya odaklanıp <kbd>Enter</kbd> ya da <kbd>Boşluk</kbd> tuşuna bas. Üstten saat yönünde <kbd>1</kbd>–<kbd>9</kbd> tuşlarını veya oklarla birlikte <kbd>Enter</kbd>’ı kullan.')}</li>
+    <li>${L('To select several files, <kbd>Shift</kbd>-click or press <kbd>Shift</kbd> + <kbd>Space</kbd>.','Birden çok dosya seçmek için <kbd>Shift</kbd> ile tıkla veya <kbd>Shift</kbd> + <kbd>Boşluk</kbd> tuşlarına bas.')}</li>
+    <li>${L(`While you drag a file, hold <kbd>Shift</kbd> for formats, <kbd>${toolsKey}</kbd> for edit tools or <kbd>${actionsKey}</kbd> for file actions.`,`Dosya sürüklerken formatlar için <kbd>Shift</kbd>, düzenleme araçları için <kbd>${toolsKey}</kbd>, dosya işlemleri için <kbd>${actionsKey}</kbd> tuşunu basılı tut.`)}</li>
+   </ul>
+  </details>
+ </div>
+ <p class="demo-note">${L('Images convert for real, right in this tab. Other formats show what the app would make.','Görseller gerçekten, bu sekmede dönüşür. Diğer formatlarda uygulamanın ne üreteceğini görürsün.')}</p>
+</div>`;
+$('#playground-content').replaceChildren(box);
+// The hero copy and the folder share one desktop. The menu bar spans it, and
+// the try-it step with the three wheel keys closes the copy column.
+const heroStage=root.closest('.hero-stage')||box;
+const tryBlock=$('#try-block')||box;
+const lead=$('#wheel-keys-lead')||el('p',{id:'wheel-keys-lead'});
+if(touchFirst)lead.innerHTML=L('<strong>Tap a file, then tap Formats.</strong>','<strong>Bir dosyaya, sonra Formatlar’a dokun.</strong>');
+const keysHint=el('p',{class:'keys-hint'},touchFirst
+ ?L('Tools and Actions work the same way.','Araçlar ve İşlemler de aynı şekilde çalışır.')
+ :L('No drag needed: click a key instead.','Sürüklemeden de olur: bir tuşa tıkla.'));
+const keyRow=el('div',{class:'keycaps',role:'group','aria-labelledby':'wheel-keys-lead'});
+keyRow.innerHTML=wheelKeys.map(keycap).join('');
+tryBlock.append(keysHint,keyRow);
+if(heroStage!==box)heroStage.prepend($('.menubar',box));
+const scene=$('#demo-scene'),stage=$('#demo-stage'),fileGrid=$('.folder-files',stage),hint=$('#wheel-hint');
+const samples=$('#demo-samples'),formatSelect=$('#demo-format'),nashiMenu=$('#nashi-menu');
+const conversionStatus=$('#conversion-status');
+const keycaps=$$('.keycap',keyRow);
+const folderSearch=$('#folder-search'),folderBack=$('#folder-back'),folderForward=$('#folder-forward');
+$('#demo-upload').setAttribute('aria-describedby','import-limits');
+const sidebar=$('.folder-sidebar',box),narrowFolder=matchMedia('(max-width: 560px)');
+function syncSidebar(){sidebar.open=!narrowFolder.matches;}
+document.addEventListener('pointerdown',e=>{if(narrowFolder.matches&&!sidebar.contains(e.target))sidebar.open=false;});
+syncSidebar();
+narrowFolder.addEventListener('change',syncSidebar);
+function setToggle(button,on){button.setAttribute('aria-pressed',on);$('span',button).textContent=on?L('On','Açık'):L('Off','Kapalı');}
+let dark=false;
+function applyAppearance(){document.documentElement.dataset.demoTheme=dark?'dark':'light';for(const [key,values]of Object.entries(catalog.presentation.palette))document.documentElement.style.setProperty('--demo-'+key.toLowerCase(),values[dark?'dark':'light']);setToggle($('#demo-appearance'),dark);}
 $('#demo-appearance').onclick=()=>{dark=!dark;applyAppearance();};applyAppearance();
-for(const[g,en,tt]of groups){const b=el('button',{role:'tab','aria-selected':g===state.group,'data-group':g},L(en,tt));b.addEventListener('click',()=>setGroup(g));tabs.append(b);}
-const formatRow=el('div',{class:'sample-format-row'}),formatLabel=el('label',{},L('Sample input','Örnek girdi')),formatSelect=el('select',{'aria-label':L('Sample input format','Örnek girdi biçimi')});formatLabel.append(formatSelect);formatRow.append(formatLabel,el('span',{},L('Explore all 46 input formats.','46 girdi biçiminin tamamını keşfet.')));stage.before(formatRow);formatSelect.onchange=()=>{for(const f of state.files){if(f.sample){f.ext=formatSelect.value;f.name=f.name.replace(/\.[^.]+$/,'.'+f.ext);}}closeWheel();renderFiles();};
+for(const disclosure of [...$$('.demo-disclosure',box),nashiMenu]){
+ document.addEventListener('pointerdown',e=>{if(!disclosure.contains(e.target))disclosure.open=false;});
+ disclosure.addEventListener('focusout',e=>{if(e.relatedTarget&&!disclosure.contains(e.relatedTarget))disclosure.open=false;});
+ disclosure.addEventListener('keydown',e=>{
+  e.stopPropagation();
+  if(e.key!=='Escape'||!disclosure.open)return;
+  e.preventDefault();
+  disclosure.open=false;
+  $('summary',disclosure).focus();
+ });
+}
+function closeMenu(){nashiMenu.open=false;}
+for(const item of $$('[data-menu]',nashiMenu))item.onclick=()=>{
+ closeMenu();
+ ({choose:()=>input.click(),link:()=>downloadPreview(),recent:()=>openLibrary()})[item.dataset.menu]();
+};
+const sampleOptions=$('.sample-types',samples),sampleSummary=$('summary',samples);
+for(const family of families.values()){
+ const option=el('button',{'data-demo-choice':family.id});
+ option.append(fileBadge(family,family.formats[0]),el('span',{},family.label[tr?'tr':'en']));
+ option.onclick=()=>{setGroup(family.id);samples.open=false;sampleSummary.focus();};
+ sampleOptions.append(option);
+}
+formatSelect.onchange=()=>{
+ const files=families.has(state.group)?state.files:selection().filter(file=>file.sample);
+ const family=activeSampleFamily();
+ for(const file of files){
+  if(familyByFormat.get(file.ext)!==family)continue;
+  file.ext=formatSelect.value;
+  file.name=file.name.replace(/\.[^.]+$/,'.'+file.ext);
+ }
+ closeWheel();renderFiles();
+};
 const input=el('input',{type:'file',accept:'image/png,image/jpeg,image/webp,image/gif,image/bmp,application/pdf',multiple:'',hidden:''});root.append(input);
 input.addEventListener('change',async()=>{await importFiles([...input.files]);input.value='';});
 $('#demo-upload').onclick=()=>input.click();
-$('#demo-reset').onclick=()=>{closeWheel();state.drag?.ghost?.remove();state.drag=null;if(state.editor)closeEditor();setGroup(state.group);resetDemoHistory(state,URL.revokeObjectURL);$('#library-count').textContent='0';$('.demo-toast')?.remove();clearTimeout(toastTimer);renderShelf();};
-$('#demo-sound').onclick=async()=>{state.sound=!state.sound;$('#demo-sound').setAttribute('aria-pressed',state.sound);$('#demo-sound').textContent=state.sound?L('Sound on','Ses açık'):L('Sound off','Ses kapalı');if(!state.sound){for(const voice of soundVoices)voice?.stop();}if(state.sound){try{audioContext??=new(window.AudioContext||window.webkitAudioContext)();await audioContext.resume();soundBuffer??=await audioContext.decodeAudioData(await(await fetch(asset('demo/wheel-selection.wav?v='+revision))).arrayBuffer());tick();}catch{state.sound=false;$('#demo-sound').setAttribute('aria-pressed','false');$('#demo-sound').textContent=L('Sound unavailable','Ses kullanılamıyor');}}};
+$('#demo-reset').onclick=()=>{
+ closeMenu();$('summary',nashiMenu).focus({preventScroll:true});
+ closeWheel();clearDrag();state.conversion=null;conversionStatus.textContent='';
+ if(state.editor)closeEditor();
+ resetDemoHistory(state,URL.revokeObjectURL);
+ folderFiles.clear();folderHistory.splice(0,folderHistory.length,'samples');folderIndex=0;
+ setGroup('samples',false);
+ $('#library-count').textContent='0';$('.demo-toast')?.remove();clearTimeout(toastTimer);
+};
+const formatSize=new Intl.NumberFormat(tr?'tr-TR':'en',{maximumFractionDigits:1});
+function fileSizeLabel(size){
+ if(size>=1e6)return formatSize.format(size/1e6)+' MB';
+ if(size>=1e3)return formatSize.format(size/1e3)+' KB';
+ return formatSize.format(size)+' B';
+}
+const soundButton=$('#demo-sound');setToggle(soundButton,false);
+soundButton.onclick=async()=>{state.sound=!state.sound;setToggle(soundButton,state.sound);if(!state.sound){for(const voice of soundVoices)voice?.stop();return;}try{audioContext??=new(window.AudioContext||window.webkitAudioContext)();await audioContext.resume();soundBuffer??=await audioContext.decodeAudioData(await(await fetch(asset('demo/wheel-selection.wav?v='+revision))).arrayBuffer());tick();}catch{state.sound=false;setToggle(soundButton,false);toast(L('Sound unavailable','Ses kullanılamıyor'));}};
 let audioContext,soundBuffer,lastTick=-Infinity,soundVoiceIndex=0;const soundVoices=Array(catalog.presentation.feedback.voices).fill(null);
 function tick(){if(!state.sound||!soundBuffer||performance.now()-lastTick<catalog.presentation.feedback.minimumInterval*1000)return;lastTick=performance.now();try{const sound=audioContext.createBufferSource(),gain=audioContext.createGain();const index=soundVoiceIndex;soundVoiceIndex=(index+1)%soundVoices.length;soundVoices[index]?.stop();soundVoices[index]=sound;sound.buffer=soundBuffer;gain.gain.value=catalog.presentation.feedback.volume;sound.connect(gain).connect(audioContext.destination);sound.start();sound.onended=()=>{if(soundVoices[index]===sound)soundVoices[index]=null;sound.disconnect();gain.disconnect();};}catch{}}
-const specs={image:[['orchard.jpg','image'],['weekend.png','image'],['moodboard.png','image']],video:[['weekend.mp4','video'],['morning.mov','video']],audio:[['soft-morning.wav','audio'],['mixtape.mp3','audio']],pdf:[['field-notes.pdf','file'],['ideas.pdf','file']],document:[['a-fresh-start.md','file'],['project.docx','file'],['notes.txt','file']],sheet:[['weekend-budget.csv','file'],['figures.xlsx','file']],slides:[['fresh-ideas.pptx','file']],epub:[['slow-mornings.epub','file']],subtitle:[['a-little-story.srt','file'],['captions.vtt','file']],archive:[['little-project.zip','archive'],['weekend.tar','archive']]};
-function fileModel(name,kind,index=0){return{id:'file-'+(++state.seq),name,ext:name.split('.').pop().toLowerCase(),kind,x:.19+index*.235,y:index%2?.36:.17,url:kind==='image'?asset('demo/'+(index%2?'hills.jpg':'orchard.jpg')):kind==='video'?asset('demo/weekend.mp4'):null,sample:true};}
-function setGroup(g){closeWheel();for(const f of state.files)if(f.user&&f.url&&!state.shelf.some(s=>s.url===f.url)){URL.revokeObjectURL(f.url);state.urls.delete(f.url);}state.group=g;formatSelect.replaceChildren();for(const ext of familyExtensions[g])formatSelect.append(el('option',{value:ext},ext.toUpperCase()));state.files=specs[g].map(([name,kind],i)=>fileModel(name,kind,i));state.selected=[state.files[0].id];formatSelect.value=state.files[0].ext;for(const b of $$('[role=tab]',tabs))b.setAttribute('aria-selected',b.dataset.group===g);renderFiles();}
-function renderFiles(){for(const n of $$('.demo-file',stage))n.remove();const w=stage.clientWidth;state.files.forEach((f,i)=>{const b=el('button',{class:'demo-file','data-file-id':f.id,'aria-pressed':state.selected.includes(f.id),'aria-label':f.name,'aria-haspopup':'menu'});const preview=el('span',{class:'file-preview'});if(f.kind==='image'){const img=el('img',{src:f.url,alt:'',draggable:'false'});preview.append(img);}else{const sheet=el('span',{class:'file-sheet'});sheet.append(icon(f.kind),el('span',{},f.ext.toUpperCase()));preview.append(sheet);}b.append(preview,el('span',{class:'filename'},f.name));b.style.left=Math.max(5,Math.min(w-110,w*f.x-50))+'px';b.style.top=Math.max(30,Math.min(stage.clientHeight-125,f.y*stage.clientHeight))+'px';b.addEventListener('pointerdown',e=>startDrag(e,f));b.addEventListener('click',e=>{if(e.detail===0){selectFile(f,e.shiftKey);}});b.addEventListener('dblclick',()=>{selectFile(f);openWheel('convert');});b.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&!state.wheel){e.preventDefault();e.stopPropagation();selectFile(f,false,true);openWheel('convert');} });stage.append(b);});tip.innerHTML=L('Try it: drag a file and tap <kbd>Shift</kbd>','Dene: bir dosyayı sürükleyip <kbd>Shift</kbd> tuşuna bas');renderShelf();}
-function selectFile(f,multi=false,preserveBatch=false){state.selected=nextFileSelection(state.selected,f.id,{toggle:multi,preserveBatch});for(const b of $$('.demo-file',stage))b.setAttribute('aria-pressed',state.selected.includes(b.dataset.fileId));}
+const specs={
+ image:[['orchard.jpg','image'],['weekend.png','image'],['nashi.png','image']],
+ video:[['weekend.mp4','video'],['morning.mov','video']],
+ audio:[['soft-morning.wav','audio'],['mixtape.mp3','audio']],
+ pdf:[['field-notes.pdf','file'],['ideas.pdf','file']],
+ document:[['project.docx','file'],['notes.pages','file'],['a-fresh-start.md','file']],
+ sheet:[['figures.xlsx','file'],['weekend-budget.csv','file']],
+ slides:[['fresh-ideas.pptx','file']],epub:[['slow-mornings.epub','file']],
+ subtitle:[['a-little-story.srt','file'],['captions.vtt','file']],
+ archive:[['little-project.zip','archive'],['weekend.tar','archive']]
+};
+const sampleImagePaths=['demo/orchard.jpg','demo/hills.jpg','nashi.png'];
+const folderSpecs={
+ desktop:[...specs.image,['trip.mov','video']],
+ documents:[['guide.pdf','file'],['notes.docx','file'],['budget.xlsx','file'],['slides.pptx','file']],
+ downloads:[['memo.wav','audio'],['archive.zip','archive']]
+};
+folderSpecs.samples=[...folderSpecs.desktop,folderSpecs.downloads[0],...folderSpecs.documents,folderSpecs.downloads[1]];
+folderSpecs.added=[];
+const folderFiles=new Map();
+const folderHistory=['samples'];
+let folderIndex=0;
+function fileModel(name,kind,index=0){
+ return {
+  id:'file-'+(++state.seq),name,ext:name.split('.').pop().toLowerCase(),kind,sample:true,
+  url:kind==='image'?asset(sampleImagePaths[index%sampleImagePaths.length]):kind==='video'?asset('demo/weekend.mp4'):null
+ };
+}
+function setGroup(group,remember=true){
+ closeWheel();clearDrag();
+ if(remember&&folderHistory[folderIndex]!==group){
+  folderHistory.splice(folderIndex+1,folderHistory.length,group);
+  folderIndex++;
+ }
+ if(!folderFiles.has(group)||(remember&&families.has(group))){
+  folderFiles.set(group,(folderSpecs[group]||specs[group]).map(([name,kind],i)=>fileModel(name,kind,i)));
+ }
+ state.group=group;
+ state.files=folderFiles.get(group);
+ state.selected=state.files.length?[state.files[0].id]:[];
+ folderSearch.value='';
+ stage.scrollTop=0;
+ const location=locationRows.find(([key])=>key===group);
+ $('#folder-title').textContent=location?.[1]??families.get(group).label[tr?'tr':'en'];
+ for(const button of $$('[data-location]',box)){
+  if(button.dataset.location==='added')button.hidden=!folderFiles.get('added')?.length;
+  if(button.dataset.location===group)button.setAttribute('aria-current','true');
+  else button.removeAttribute('aria-current');
+ }
+ folderBack.disabled=folderIndex===0;
+ folderForward.disabled=folderIndex===folderHistory.length-1;
+ renderFiles();
+}
+for(const button of $$('[data-location]',box))button.onclick=()=>{
+ if(button.dataset.location!==state.group)setGroup(button.dataset.location);
+ if(narrowFolder.matches)sidebar.open=false;
+};
+folderBack.onclick=()=>setGroup(folderHistory[--folderIndex],false);
+folderForward.onclick=()=>setGroup(folderHistory[++folderIndex],false);
+for(const button of $$('[data-view]',box))button.onclick=()=>{
+ stage.classList.toggle('list-view',button.dataset.view==='list');
+ for(const view of $$('[data-view]',box))view.setAttribute('aria-pressed',view===button);
+};
+function activeSampleFamily(){
+ return families.get(state.group)||familyByFormat.get(state.files.find(f=>f.sample&&state.selected.includes(f.id))?.ext);
+}
+function syncSampleFormats(){
+ const family=activeSampleFamily();
+ formatSelect.disabled=!family;
+ if(formatSelect.dataset.family!==(family?.id??'')){
+  formatSelect.dataset.family=family?.id??'';
+  formatSelect.replaceChildren(...(family?.formats??[]).map(ext=>el('option',{value:ext},ext.toUpperCase())));
+ }
+ if(family){
+  const file=state.files.find(f=>f.sample&&state.selected.includes(f.id)&&familyByFormat.get(f.ext)===family)
+   ||state.files.find(f=>f.sample&&familyByFormat.get(f.ext)===family);
+  formatSelect.value=file.ext;
+ }
+ for(const button of $$('[data-demo-choice]',samples))button.setAttribute('aria-pressed',button.dataset.demoChoice===family?.id);
+}
+function fileArtwork(file){
+ if(file.kind==='image')return el('img',{src:file.url,alt:'',draggable:'false','data-thumbnail':file.url===asset('nashi.png')?'app-icon':'photo'});
+ return fileBadge(familyByFormat.get(file.ext),file.ext);
+}
+function renderFolderSearch(){
+ const query=foldSearchText(folderSearch.value.trim());
+ let count=0;
+ for(const button of fileGrid.children){
+  button.hidden=!foldSearchText(button.getAttribute('aria-label')).includes(query);
+  if(!button.hidden)count++;
+ }
+ $('#folder-empty').hidden=count>0;
+ renderFolderCount();
+}
+// Finder's status bar: item count, search matches, or the selection.
+function renderFolderCount(){
+ const total=state.files.length,query=folderSearch.value.trim(),selected=state.selected.length;
+ const visible=fileGrid.querySelectorAll('.demo-file:not([hidden])').length;
+ $('#folder-count').textContent=query
+  ?L(`${visible} of ${total} items`,`${total} öğeden ${visible} tanesi`)
+  :selected?L(`${selected} of ${total} selected`,`${total} öğeden ${selected} tanesi seçili`)
+  :L(`${total} ${total===1?'item':'items'}`,`${total} öğe`);
+}
+folderSearch.oninput=()=>{closeWheel();renderFolderSearch();};
+function renderFiles(){
+ fileGrid.replaceChildren();
+ for(const f of state.files){
+  const b=el('button',{class:'demo-file','data-file-id':f.id,'data-family':familyByFormat.get(f.ext)?.id??'','aria-label':f.name,'aria-haspopup':'menu',title:f.name});
+  const preview=el('span',{class:'file-preview'});
+  preview.append(fileArtwork(f));
+  const check=el('span',{class:'file-selected-mark','aria-hidden':'true'});
+  check.append(icon('check'));
+  preview.append(check);
+  const filename=el('span',{class:'filename'});
+  const dot=f.name.lastIndexOf('.');
+  if(dot>0)filename.append(el('span',{class:'filename-stem'},f.name.slice(0,dot)),document.createTextNode(f.name.slice(dot)));
+  else filename.append(el('span',{class:'filename-stem'},f.name));
+  b.append(preview,filename,el('span',{class:'folder-file-kind','aria-hidden':'true'},f.ext.toUpperCase()));
+  b.addEventListener('pointerdown',e=>startDrag(e,f));
+  b.addEventListener('click',e=>{if(e.detail===0)selectFile(f,e.shiftKey);});
+  b.addEventListener('dblclick',e=>{selectFile(f);openWheel('convert',0,mouseAnchor(e));});
+  b.addEventListener('keydown',e=>{
+   if(state.wheel||!['Enter',' '].includes(e.key))return;
+   e.preventDefault();
+   e.stopPropagation();
+   if(e.key===' '&&e.shiftKey){selectFile(f,true);return;}
+   selectFile(f,false,true);
+   openWheel('convert');
+  });
+  const fresh=pendingFresh.indexOf(f.id);
+  if(fresh>=0){pendingFresh.splice(fresh,1);b.dataset.fresh='';setTimeout(()=>b.removeAttribute('data-fresh'),2600);requestAnimationFrame(()=>{const r=b.getBoundingClientRect(),v=stage.getBoundingClientRect();if(r.bottom>v.bottom||r.top<v.top)stage.scrollTop+=r.top<v.top?r.top-v.top-8:r.bottom-v.bottom+8;});}
+  fileGrid.append(b);
+ }
+ renderFolderSearch();
+ updateSelection();
+ renderShelf();
+}
+function selectFile(f,multi=false,preserveBatch=false){state.selected=nextFileSelection(state.selected,f.id,{toggle:multi,preserveBatch});updateSelection();}
 function selection(){return state.files.filter(f=>state.selected.includes(f.id));}
-function startDrag(e,f){if(e.button!==0)return;closeWheel();if(!e.shiftKey)selectFile(f,false,true);state.drag={id:e.pointerId,x:e.clientX,y:e.clientY,f,shiftSelect:e.shiftKey,moved:false,ghost:null};e.currentTarget.setPointerCapture(e.pointerId);if(windows?e.ctrlKey:e.metaKey)openWheel('tools',e.clientX,e.clientY);else if(windows?e.altKey:e.ctrlKey)openWheel('actions',e.clientX,e.clientY);}
-document.addEventListener('pointermove',e=>{const d=state.drag;if(!d||e.pointerId!==d.id)return;if(Math.hypot(e.clientX-d.x,e.clientY-d.y)>5&&!d.moved){d.moved=true;if(!state.selected.includes(d.f.id)){selectFile(d.f,false,true);}const initialMode=e.shiftKey?'convert':(windows?e.ctrlKey:e.metaKey)?'tools':(windows?e.altKey:e.ctrlKey)?'actions':null;if(initialMode&&!state.wheel)openWheel(initialMode,d.x,d.y);const ghost=el('div',{class:'drag-ghost'});if(d.f.kind==='image')ghost.append(el('img',{src:d.f.url,alt:'',width:'64'}));else{ghost.classList.add('file-sheet');ghost.append(icon(d.f.kind));}document.body.append(ghost);d.ghost=ghost;}if(d.ghost){d.ghost.style.left=(e.clientX-30)+'px';d.ghost.style.top=(e.clientY-30)+'px';}if(state.wheel)highlight(wheelHit(e.clientX,e.clientY));});
-document.addEventListener('pointerup',e=>{const d=state.drag;if(!d||e.pointerId!==d.id)return;d.ghost?.remove();state.drag=null;if(!d.moved)selectFile(d.f,d.shiftSelect,Boolean(state.wheel));const shelf=$('.float-shelf',stage),r=shelf?.getBoundingClientRect();if(d.moved&&r&&e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){closeWheel();pinFiles(selection());return;}if(state.wheel&&d.moved){const choice=state.wheel.visible[state.wheel.index];if(choice)apply(choice);else closeWheel();}else if(d.moved){const f=d.f,r=stage.getBoundingClientRect();f.x=Math.max(.08,Math.min(.90,(e.clientX-r.left)/r.width));f.y=Math.max(.08,Math.min(.65,(e.clientY-r.top-40)/r.height));renderFiles();}});
-document.addEventListener('pointercancel',()=>{state.drag?.ghost?.remove();state.drag=null;closeWheel();});
+function isLiveConversion(files,format){
+ return files.every(f=>f.kind==='image')&&['png','jpg','webp','pdf'].includes(format);
+}
+function updateSelection(){
+ for(const b of $$('.demo-file',stage))b.setAttribute('aria-pressed',state.selected.includes(b.dataset.fileId));
+ renderFolderCount();
+ syncSampleFormats();
+}
+function clearDrag(){state.drag?.ghost?.remove();for(const tile of $$('.demo-file.dragging',stage))tile.classList.remove('dragging');state.drag=null;box.removeAttribute('data-dragging');}
+// While dragging, the wheel opens around the file under the pointer, for mouse and touch alike.
+function dragAnchor(e){return {x:e.clientX,y:e.clientY};}
+// Finder-style drag image: the file's artwork and name, lifted and slightly translucent.
+function dragGhost(files,className='drag-ghost'){
+ const ghost=el('div',{class:className,'aria-hidden':'true'});
+ const art=el('span',{class:'ghost-art'});art.append(fileArtwork(files[0]));
+ if(files.length>1)art.append(el('span',{class:'ghost-count'},String(files.length)));
+ ghost.append(art,el('span',{class:'ghost-name'},files.length>1?files.length+L(' files',' dosya'):files[0].name));
+ return ghost;
+}
+// The individual translate property keeps the over-wheel scale from shifting the image.
+function moveGhost(d,x,y){d.ghost.style.translate=`${x-d.offset.x}px ${y-d.offset.y}px`;}
+function startDrag(e,f){
+ if(e.button!==0)return;
+ closeWheel();
+ if(!e.shiftKey)selectFile(f,false,true);
+ const pointer=dragAnchor(e);
+ const art=e.currentTarget.querySelector('.file-preview').getBoundingClientRect();
+ state.drag={id:e.pointerId,x:e.clientX,y:e.clientY,pointer,f,shiftSelect:e.shiftKey,moved:false,ghost:null,offset:{x:e.clientX-(art.left+art.width/2),y:e.clientY-(art.top+art.height/2)}};
+ e.currentTarget.setPointerCapture(e.pointerId);
+ if(windows?e.ctrlKey:e.metaKey)openWheel('tools',0,pointer);
+ else if(windows?e.altKey:e.ctrlKey)openWheel('actions',0,pointer);
+}
+document.addEventListener('pointermove',e=>{const d=state.drag;if(!d||e.pointerId!==d.id)return;d.pointer=dragAnchor(e);if(Math.hypot(e.clientX-d.x,e.clientY-d.y)>5&&!d.moved){d.moved=true;box.dataset.dragging='';if(!state.selected.includes(d.f.id)){selectFile(d.f,false,true);}const initialMode=e.shiftKey?'convert':(windows?e.ctrlKey:e.metaKey)?'tools':(windows?e.altKey:e.ctrlKey)?'actions':null;if(initialMode&&!state.wheel)openWheel(initialMode,0,d.pointer);const dragged=selection().includes(d.f)?selection():[d.f];d.ghost=dragGhost(dragged);document.body.append(d.ghost);for(const tile of $$('.demo-file',stage))if(dragged.some(f=>f.id===tile.dataset.fileId))tile.classList.add('dragging');}if(d.ghost)moveGhost(d,e.clientX,e.clientY);if(state.wheel)highlight(wheelHit(e.clientX,e.clientY));});
+document.addEventListener('pointerup',e=>{const d=state.drag;if(!d||e.pointerId!==d.id)return;clearDrag();if(!d.moved)selectFile(d.f,d.shiftSelect,Boolean(state.wheel));const shelf=$('.float-shelf',heroStage),r=shelf?.getBoundingClientRect();if(d.moved&&r&&e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){closeWheel();pinFiles(selection());return;}if(state.wheel&&d.moved){const choice=state.wheel.visible[state.wheel.index];if(choice)apply(choice);else closeWheel();}});
+document.addEventListener('pointercancel',e=>{if(state.drag?.id!==e.pointerId)return;clearDrag();closeWheel();});
 function itemsFor(mode){const fs=selection();if(!fs.length)return[];if(mode==='convert')return(catalog.conversionMatrix[fs[0].ext]||[]).filter(ext=>fs.every(f=>(catalog.conversionMatrix[f.ext]||[]).includes(ext))).map(ext=>({id:ext,title:ext.toUpperCase(),icon:null}));if(mode==='tools'){let t=(fs.length>1?catalog.multipleTools:catalog.singleTools)[fs[0].ext]||[];t=t.filter(id=>fs.every(f=>((fs.length>1?catalog.multipleTools:catalog.singleTools)[f.ext]||[]).includes(id)));if(fs.every(f=>['image','file'].includes(f.kind)&&(f.kind==='image'||f.ext==='pdf')))t=[...new Set([...t,'readQRCode'])];return t.map(id=>({id,title:toolTitle(id),icon:tools[id][2]}));}return[['airdrop',windows?'Share':'AirDrop',windows?'Paylaş':'AirDrop','share'],['float','Float','Yüzen Pencere','float'],['copy','Copy','Kopyala','copy'],['move','Move','Taşı','move'],['copyPath','Copy Path','Yolu Kopyala','path'],['terminal','Terminal','Terminal','terminal']].map(([id,en,tt,ic])=>({id,title:L(en,tt),icon:ic}));}
-function closeWheel(){state.wheel?.element.remove();state.wheel=null;for(const b of $$('[data-mode]',root))b.setAttribute('aria-pressed','false');}
+function closeWheel(restoreScroll=false){
+ const wheel=state.wheel;
+ if(!wheel)return;
+ const restoreFocus=wheel.element.contains(document.activeElement)||hint.contains(document.activeElement);
+ state.wheel=null;
+ wheel.element.remove();
+ hint.hidden=true;
+ hint.replaceChildren();
+ box.removeAttribute('data-wheel-open');
+ for(const button of $$('[data-mode],.demo-file[aria-expanded=true]'))button.setAttribute('aria-expanded','false');
+ if(restoreFocus)wheel.returnFocus?.focus({preventScroll:!restoreScroll});
+}
 const measureContext=document.createElement('canvas').getContext('2d'),layoutCache=new Map();
-function measureLabel(text,font){measureContext.font=`600 ${font}px ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;return measureContext.measureText(text);}
+function measureLabel(text,font){measureContext.font=`750 ${font}px ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;return measureContext.measureText(text);}
 function wheelHit(x,y){const w=state.wheel;if(!w)return -1;const r=w.element.getBoundingClientRect(),px=(x-r.left)*320/r.width,py=(y-r.top)*320/r.height;return w.paths.findIndex(path=>measureContext.isPointInPath(path,px,py));}
-function openWheel(mode,x,y,page=0){
- const prev=state.wheel;closeWheel();if(!selection().length)state.selected=[state.files[0]?.id].filter(Boolean);
- const items=itemsFor(mode);if(!items.length){toast(L('Try another wheel','Başka bir çarkı dene'),L('No matching options for this file.','Bu dosya için eşleşen seçenek yok.'));return;}
- const visible=items.slice(page*9,page*9+9),size=Math.min(320,innerWidth-12),sr=stage.getBoundingClientRect();x??=sr.left+sr.width/2;y??=sr.top+sr.height/2;
- const left=Math.max(6,Math.min(innerWidth-size-6,x-size/2)),top=Math.max(7,Math.min(innerHeight-size-32,y-size/2));
- const wheel=el('div',{class:'demo-wheel',role:'menu','aria-label':L('Nashi wheel','Nashi çarkı'),'data-wheel-mode':mode,'data-count':visible.length});Object.assign(wheel.style,{left:left+'px',top:top+'px',width:size+'px',height:size+'px'});
+function mouseAnchor(event){
+ return innerWidth>560&&event.detail>0&&
+  (event.pointerType==='mouse'||(event.type==='dblclick'&&!event.sourceCapabilities?.firesTouchEvents))
+  ?{x:event.clientX,y:event.clientY}:null;
+}
+// The same native wheel artwork serves the real menu and the short guided tour.
+function buildWheel(visible,size,mode,interactive=true){
+ const wheel=el('div',{class:'demo-wheel','data-wheel-mode':mode,'data-count':visible.length});
+ wheel.style.width=wheel.style.height=size+'px';
  const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 320 320');svg.setAttribute('aria-hidden','true');
  const defs=document.createElementNS(ns,'defs'),gradient=document.createElementNS(ns,'linearGradient');gradient.id='wheel-gold';gradient.setAttribute('x2','1');gradient.setAttribute('y2','1');for(const [offset,color]of [['0%','#e3b859'],['100%','#f5d17d']]){const stop=document.createElementNS(ns,'stop');stop.setAttribute('offset',offset);stop.setAttribute('stop-color',color);gradient.append(stop);}defs.append(gradient);svg.append(defs);
  const backdrop=document.createElementNS(ns,'circle');backdrop.setAttribute('cx','160');backdrop.setAttribute('cy','160');backdrop.setAttribute('r','148.8');backdrop.setAttribute('class','wheel-backdrop');svg.append(backdrop);
  const paths=[];
  visible.forEach((it,i)=>{
   const data=wheelGeometry.petal(visible.length,i),hitPath=new Path2D(data);paths.push(hitPath);
-  const path=document.createElementNS(ns,'path');path.setAttribute('d',data);path.setAttribute('class','sector');path.dataset.index=i;path.addEventListener('pointerenter',()=>highlight(i));path.addEventListener('click',()=>apply(it));svg.append(path);
+  const path=document.createElementNS(ns,'path');path.setAttribute('d',data);path.setAttribute('class','sector');path.dataset.index=i;svg.append(path);
   const title=it.title.toLocaleUpperCase(tr?'tr':'en'),cacheKey=[visible.length,i,title,!!it.icon].join('|');let layout=layoutCache.get(cacheKey);
   if(!layout){layout=wheelGeometry.fitLabel(visible.length,i,title,!!it.icon,measureLabel,(x,y)=>measureContext.isPointInPath(hitPath,x,y));layoutCache.set(cacheKey,layout);}
-  const button=el('button',{class:'wheel-option',role:'menuitem','data-index':i,'data-fits':layout.fits,'aria-label':it.title});Object.assign(button.style,{left:layout.x/3.2+'%',top:layout.y/3.2+'%',width:layout.width/3.2+'%',height:layout.height/3.2+'%',fontSize:layout.font*size/320+'px',lineHeight:layout.lineHeight*size/320+'px'});
+  const qualifier=tr?{trimVideo:' (Süre)',cropVideo:' (Kare alanı)'}[it.id]??'':'';
+  const button=el(interactive?'button':'span',{class:'wheel-option','data-index':i,'data-option':it.id,'data-fits':layout.fits});
+  if(interactive){Object.entries({role:'menuitem',tabindex:'-1','aria-label':it.title+qualifier,'aria-keyshortcuts':String(i+1)}).forEach(([k,v])=>button.setAttribute(k,v));}
+  Object.assign(button.style,{left:layout.x/3.2+'%',top:layout.y/3.2+'%',width:layout.width/3.2+'%',height:layout.height/3.2+'%',fontSize:layout.font*size/320+'px',lineHeight:layout.lineHeight*size/320+'px'});
   if(it.icon){const image=icon(it.icon);image.style.width=image.style.height=20*size/320+'px';button.append(image);}
   const text=el('span',{class:'wheel-lines','aria-hidden':'true'});for(const line of layout.lines)text.append(el('span',{},line));button.append(text);
-  button.addEventListener('pointerenter',()=>highlight(i));button.addEventListener('focus',()=>highlight(i));button.addEventListener('click',()=>apply(it));wheel.append(button);
+  if(interactive){
+   path.addEventListener('pointerenter',()=>highlight(i));path.addEventListener('click',()=>apply(it));
+   button.addEventListener('pointerenter',()=>highlight(i));button.addEventListener('focus',()=>highlight(i));button.addEventListener('click',()=>apply(it));
+  }
+  wheel.append(button);
  });
- wheel.prepend(svg);const center=el('div',{class:'wheel-center'});center.style.width=center.style.height=(wheelGeometry.INNER-4)*2/3.2+'%';center.append(el('strong'));wheel.append(center);
- if(items.length>9){const more=el('button',{class:'wheel-page'},L('More options →','Diğer seçenekler →'));more.onclick=()=>openWheel(mode,x,y,(page+1)%Math.ceil(items.length/9));wheel.append(more);}
- document.body.append(wheel);state.wheel={mode,items,visible,index:-1,element:wheel,paths,page,x,y};highlight(prev?.mode===mode?Math.min(prev.index,visible.length-1):-1);
- for(const b of $$('[data-mode]',root))b.setAttribute('aria-pressed',b.dataset.mode===mode);
+ wheel.prepend(svg);
+ const center=el('div',{class:'wheel-center','aria-hidden':'true'});
+ center.style.width=center.style.height=(wheelGeometry.INNER-4)*2/3.2+'%';
+ center.append(el('strong',{},nativeText({convert:'Convert',tools:'Tools',actions:'Actions'}[mode])));
+ wheel.append(center);
+ return {wheel,paths};
 }
-function highlight(index){const w=state.wheel;if(!w)return;if(w.index!==index&&index>=0)tick();w.index=index;for(const p of $$('.sector,.wheel-option',w.element))p.classList.toggle('active',Number(p.dataset.index)===index);$('.wheel-center strong',w.element).textContent=w.visible[index]?.title||nativeText({convert:'Convert',tools:'Tools',actions:'Actions'}[w.mode]);}
-for(const b of $$('[data-mode]',root))b.onclick=()=>openWheel(b.dataset.mode);
-document.addEventListener('pointerdown',e=>{if(state.wheel&&!state.drag&&!state.wheel.element.contains(e.target)&&!e.target.closest('[data-mode]'))closeWheel();});
-document.addEventListener('keydown',e=>{const target=e.target,typing=target.matches('input,textarea,select,[contenteditable=true]');if(state.editor){editorKey(e,typing);return;}if(typing||target.closest('video'))return;const inside=root.contains(document.activeElement)||state.drag||state.wheel;if(!inside)return;let mode;if(e.key==='Shift'&&(state.drag||state.wheel))mode='convert';else if(e.key===keyTools)mode='tools';else if(e.key===keyActions)mode='actions';if(mode){e.preventDefault();openWheel(mode,state.drag?.x,state.drag?.y);return;}if(e.key==='Tab'){closeWheel();return;}if(e.key==='Escape'){closeWheel();state.drag?.ghost?.remove();state.drag=null;return;}if(state.wheel){if(['ArrowRight','ArrowDown','ArrowLeft','ArrowUp','Home','End'].includes(e.key)){e.preventDefault();let i=state.wheel.index;const n=state.wheel.visible.length;if(e.key==='Home')i=0;else if(e.key==='End')i=n-1;else{const forward=['ArrowRight','ArrowDown'].includes(e.key);i=i<0?(forward?0:n-1):(i+(forward?1:-1)+n)%n;}highlight(i);}else if(e.key==='Enter'||e.key===' '){e.preventDefault();const item=state.wheel.visible[state.wheel.index];if(item)apply(item);}}});
-let toastTimer;function toast(title,detail='',download){$('.demo-toast')?.remove();clearTimeout(toastTimer);const t=el('div',{class:'demo-toast',role:'status'});const content=el('span');content.append(el('strong',{},title),el('small',{},detail));t.append(el('span',{class:'check'},'✓'),content);if(download){const a=el('a',{href:download.url,download:download.name},L('Save file ↓','Dosyayı kaydet ↓'));t.append(a);}document.body.append(t);toastTimer=setTimeout(()=>{t.classList.add('leaving');setTimeout(()=>t.remove(),350);},3000);}
-function addResult(name,blob,details=''){const r={id:++state.seq,name,url:blob?objectURL(blob):null,blob,details,time:new Date().toLocaleTimeString(tr?'tr-TR':'en-GB', {hour:'2-digit',minute:'2-digit'}),preview:!blob};$('#library-count').textContent=retainDemoResult(state,r,URL.revokeObjectURL);toast(blob?L('Nicely done. Your file is ready.','Tamamdır. Dosyan hazır.'):L('Preview complete.','Önizleme tamamlandı.'),name+(blob?'':L(' · Demo result',' · Demo sonucu')),blob?r:undefined);return r;}
-async function apply(item){const mode=state.wheel?.mode;closeWheel();if(mode==='convert'){await convert(item.id);return;}if(mode==='actions'){await fileAction(item.id);return;}openEditor(item.id);}
+// Anchor a wheel at the pointer or at the chosen file, keep it on screen, and
+// store it in scene coordinates so it scrolls with the folder.
+function fileAnchor(){
+ const file=$$('.demo-file[aria-pressed=true]:not([hidden])',stage)[0]||$('.demo-file:not([hidden])',stage);
+ const r=(file||stage).getBoundingClientRect();
+ return {x:r.left+r.width/2,y:r.top+Math.min(r.height/2,40)};
+}
+function placeWheel(wheel,size,anchor){
+ const s=scene.getBoundingClientRect();
+ const x=Math.max(6,Math.min(innerWidth-size-6,anchor.x-size/2));
+ const y=Math.max(6,Math.min(innerHeight-size-6,anchor.y-size/2));
+ wheel.style.left=(x-s.left)+'px';
+ wheel.style.top=(y-s.top)+'px';
+ return {x:x-s.left,y:y-s.top};
+}
+function wheelSize(){return Math.round(Math.min(320,innerWidth-24,Math.max(220,innerHeight-110)));}
+function openWheel(mode,page=0,pointer=null){
+ stopTour();
+ if(mode==='convert'&&state.conversion)return;
+ const prev=state.wheel,active=document.activeElement;
+ const returnFocus=prev&&(prev.element.contains(active)||hint.contains(active))?prev.returnFocus:active;
+ closeWheel();
+ if(!selection().length){state.selected=[state.files[0]?.id].filter(Boolean);updateSelection();}
+ const items=itemsFor(mode);
+ if(!items.length){toast(L('Try another wheel','Başka bir çarkı dene'),L('No matching options for this file.','Bu dosya için eşleşen seçenek yok.'));return;}
+ const paginated=items.length>9,visible=items.slice(page*9,page*9+9);
+ const size=wheelSize();
+ const wheelName={convert:L('Output formats','Çıktı formatları'),tools:L('Edit tools','Düzenleme araçları'),actions:L('File actions','Dosya işlemleri')}[mode];
+ const {wheel,paths}=buildWheel(visible,size,mode);
+ Object.entries({role:'menu',tabindex:'-1','aria-label':wheelName,'aria-describedby':'wheel-hint'}).forEach(([k,v])=>wheel.setAttribute(k,v));
+ if(pointer)wheel.dataset.pointerWheel='';
+ const at=placeWheel(wheel,size,pointer??fileAnchor());
+ scene.append(wheel);
+ const keys=visible.length===1?'<kbd>1</kbd>':`<span class="nowrap"><kbd>1</kbd>–<kbd>${visible.length}</kbd></span>`;
+ const text=el('p');
+ text.innerHTML=state.drag?.moved
+  ?L('Drop on an option to choose it.','Seçmek için dosyayı bir seçeneğin üzerine bırak.')
+  :touchFirst?L('Tap an option. Tap outside to close.','Bir seçeneğe dokun. Kapatmak için dışarı dokun.')
+  :L(`Click an option, or press ${keys} clockwise from the top.`,`Bir seçeneğe tıkla ya da üstten saat yönünde ${keys} tuşlarına bas.`);
+ hint.replaceChildren(text);
+ let pageButton;
+ if(paginated){
+  pageButton=el('button',{class:'wheel-page'},L('More options →','Diğer seçenekler →'));
+  pageButton.onclick=()=>openWheel(mode,(page+1)%Math.ceil(items.length/9),pointer);
+  pageButton.onkeydown=e=>{if(['Enter',' '].includes(e.key))e.stopPropagation();};
+  hint.append(pageButton);
+ }
+ hint.hidden=false;
+ const hintWidth=Math.min(scene.clientWidth-16,360);
+ hint.style.width=hintWidth+'px';
+ hint.style.left=Math.max(8,Math.min(scene.clientWidth-hintWidth-8,at.x+size/2-hintWidth/2))+'px';
+ hint.style.top=(at.y+size+10)+'px';
+ state.wheel={mode,visible,index:-1,element:wheel,pageButton,paths,page,returnFocus,pointer};
+ highlight(prev?.mode===mode?Math.min(prev.index,visible.length-1):-1);
+ box.dataset.wheelOpen='';
+ for(const button of $$('[data-mode]'))button.setAttribute('aria-expanded',button.dataset.mode===mode);
+ if(returnFocus?.matches('.demo-file'))returnFocus.setAttribute('aria-expanded','true');
+ if(!state.drag)wheel.focus({preventScroll:true});
+ if(!pointer){
+  const r=wheel.getBoundingClientRect(),bottom=hint.getBoundingClientRect().bottom;
+  if(r.top<0||bottom>innerHeight)scrollBy({top:r.top<0?r.top-12:Math.min(r.top-12,bottom-innerHeight+12),behavior:'instant'});
+ }
+}
+function highlight(index){const w=state.wheel;if(!w)return;if(w.index!==index&&index>=0)tick();w.index=index;paintWheel(w.element,index,w.visible,w.mode);}
+function paintWheel(element,index,visible,mode){for(const p of $$('.sector,.wheel-option',element))p.classList.toggle('active',Number(p.dataset.index)===index);$('.wheel-center strong',element).textContent=visible[index]?.title||nativeText({convert:'Convert',tools:'Tools',actions:'Actions'}[mode]);}
+for(const button of keycaps)button.onclick=e=>{
+ if(state.wheel?.mode===button.dataset.mode){closeWheel();return;}
+ openWheel(button.dataset.mode,0,null);
+};
+// Physical modifier keys light up their on-screen keycaps.
+function pressKey(key,down){for(const cap of keycaps)if(cap.dataset.key===key)cap.classList.toggle('pressed',down);}
+document.addEventListener('keydown',e=>pressKey(e.key,true));
+document.addEventListener('keyup',e=>pressKey(e.key,false));
+window.addEventListener('blur',()=>{for(const cap of keycaps)cap.classList.remove('pressed');});
+// A standalone modifier opens a wheel on release. A modified click needs
+// to reach its file first, so it can use the click position as the wheel anchor.
+let pendingWheelModifier=null;
+const modifierWheel=key=>key===keyTools?'tools':key===keyActions?'actions':null;
+document.addEventListener('pointerdown',e=>{
+ pendingWheelModifier=null;
+ if(state.wheel&&!state.drag&&!hint.contains(e.target)&&!state.wheel.element.contains(e.target)&&!e.target.closest('[data-mode]'))closeWheel();
+});
+window.addEventListener('blur',()=>pendingWheelModifier=null);
+document.addEventListener('keyup',e=>{
+ if(e.key!==pendingWheelModifier)return;
+ pendingWheelModifier=null;
+ if(!state.editor&&root.contains(document.activeElement)){
+  e.preventDefault();
+  openWheel(modifierWheel(e.key));
+ }
+});
+document.addEventListener('keydown',e=>{
+ if(e.key!==pendingWheelModifier)pendingWheelModifier=null;
+ const target=e.target,typing=target.matches('input,textarea,select,[contenteditable=true]');
+ if(state.editor){editorKey(e,typing);return;}
+ if(typing||target.closest('video'))return;
+ if(!root.contains(document.activeElement)&&!state.drag&&!state.wheel)return;
+ const modifier=modifierWheel(e.key);
+ if(modifier&&!state.drag&&!state.wheel){
+  if(!e.repeat)pendingWheelModifier=e.key;
+  return;
+ }
+ const mode=e.key==='Shift'&&(state.drag||state.wheel)?'convert':modifier;
+ if(mode){e.preventDefault();if(mode!==state.wheel?.mode)openWheel(mode,0,state.drag?.pointer??state.wheel?.pointer);return;}
+ if(e.key==='Tab'){
+  const pageButton=state.wheel?.pageButton;
+  if(pageButton&&e.target!==pageButton&&!e.shiftKey){e.preventDefault();pageButton.focus();}
+  else closeWheel();
+  return;
+ }
+ if(e.key==='Escape'){closeWheel(true);clearDrag();return;}
+ if(!state.wheel)return;
+ if(/^[1-9]$/.test(e.key)&&!e.ctrlKey&&!e.metaKey&&!e.altKey){
+  const choice=state.wheel.visible[Number(e.key)-1];
+  if(choice){e.preventDefault();apply(choice);}
+  return;
+ }
+ if(['ArrowRight','ArrowDown','ArrowLeft','ArrowUp','Home','End'].includes(e.key)){
+  e.preventDefault();
+  let i=state.wheel.index;
+  const n=state.wheel.visible.length;
+  if(e.key==='Home')i=0;
+  else if(e.key==='End')i=n-1;
+  else{
+   const forward=['ArrowRight','ArrowDown'].includes(e.key);
+   i=i<0?(forward?0:n-1):(i+(forward?1:-1)+n)%n;
+  }
+  highlight(i);
+  $('.wheel-option[data-index="'+i+'"]',state.wheel.element)?.focus({preventScroll:true});
+ }else if(e.key==='Enter'||e.key===' '){
+  e.preventDefault();
+  const item=state.wheel.visible[state.wheel.index];
+  if(item)apply(item);
+ }
+});
+// Nashi's own completion notice: bottom centre of the screen, three seconds,
+// kept a little longer here while it holds the only Save button.
+let toastTimer;
+function toast(title,detail='',download){
+ $('.demo-toast')?.remove();clearTimeout(toastTimer);
+ const t=el('div',{class:'demo-toast',role:'status'});
+ const content=el('span');
+ const lines=Array.isArray(detail)?detail:[detail];
+ content.append(el('strong',{},title),...lines.filter(Boolean).map(line=>typeof line==='string'?el('small',{},line):line));
+ const check=el('span',{class:'toast-check','aria-hidden':'true'});check.append(icon('check'));
+ t.append(check,content);
+ if(download){const a=el('a',{href:download.url,download:download.name,'aria-label':L('Save ','Kaydet: ')+download.name},L('Save','Kaydet'));a.prepend(icon('download'));t.append(a);}
+ // Inside the desktop while its bottom edge is in view; otherwise at the bottom of the screen.
+ const s=scene.getBoundingClientRect(),onScreen=s.bottom>160&&s.bottom<=innerHeight+8;
+ if(state.editor&&!state.editor.saving)state.editor.dialog.append(t);
+ else if(onScreen)scene.append(t);
+ else{t.classList.add('floating');document.body.append(t);}
+ const leave=()=>{toastTimer=setTimeout(()=>{t.classList.add('leaving');setTimeout(()=>t.remove(),350);},download?6000:3200);};
+ t.addEventListener('pointerenter',()=>clearTimeout(toastTimer));t.addEventListener('focusin',()=>clearTimeout(toastTimer));
+ t.addEventListener('pointerleave',leave);
+ leave();
+}
+// Any other click hands the screen back, so the notice never blocks the next step.
+document.addEventListener('pointerdown',e=>{const t=$('.demo-toast');if(t&&!t.contains(e.target)){clearTimeout(toastTimer);t.remove();}},true);
+function kindOf(blob){const type=blob.type.split('/')[0];return ['image','video','audio'].includes(type)?type:blob.type==='application/zip'?'archive':'file';}
+// Like the desktop app, a fresh copy lands next to the original and never
+// takes an existing name.
+function uniqueName(name,files){
+ const taken=new Set(files.map(f=>f.name));
+ if(!taken.has(name))return name;
+ const dot=name.lastIndexOf('.'),stem=dot>0?name.slice(0,dot):name,ext=dot>0?name.slice(dot):'';
+ for(let n=2;;n++)if(!taken.has(`${stem} ${n}${ext}`))return `${stem} ${n}${ext}`;
+}
+function addResult(name,blob,details='',sourceName='',conversion=null){
+ const time=new Date().toLocaleTimeString(tr?'tr-TR':'en-GB',{hour:'2-digit',minute:'2-digit'});
+ const folder=folderFiles.get(state.group);
+ if(blob&&folder)name=uniqueName(name,folder);
+ const result={id:++state.seq,name,sourceName,url:blob?objectURL(blob):null,blob,details,time,preview:!blob,conversion};
+ $('#library-count').textContent=retainDemoResult(state,result,URL.revokeObjectURL);
+ for(const [key,files]of folderFiles)folderFiles.set(key,files.filter(f=>!f.result||state.urls.has(f.url)));
+ if(blob&&folder){
+  const file={id:'file-'+(++state.seq),name,ext:name.split('.').pop().toLowerCase(),kind:kindOf(blob),url:result.url,blob,sample:false,result:true,fresh:true};
+  folderFiles.get(state.group).push(file);
+  state.files=folderFiles.get(state.group);
+  pendingFresh.push(file.id);
+  queueMicrotask(()=>{renderFiles();folderSearch.value&&renderFolderSearch();});
+ }
+ const detail=el('small');
+ detail.append(el('span',{class:'toast-name'},name));
+ if(blob){
+  const after=fileSizeLabel(blob.size),before=conversion?.sourceSize==null?null:fileSizeLabel(conversion.sourceSize);
+  const line=el('span',{class:'receipt-size'});
+  if(before){
+   line.append(el('span',{class:'sr-only'},L(`Before: ${before}. After: ${after}.`,`Önce: ${before}. Sonra: ${after}.`)),el('span',{'aria-hidden':'true'},before),icon('forward'),el('span',{'aria-hidden':'true'},after));
+  }else line.textContent=after;
+  detail.append(line);
+ }
+ const title=blob?L('Nicely done. 1 file is ready.','Hazır! 1 dosyan hazır.'):L('Preview ready','Önizleme hazır');
+ toast(title,detail,blob?result:undefined);
+ conversionStatus.textContent=title+' '+name;
+ return result;
+}
+const pendingFresh=[];
+async function apply(item){
+ const {mode}=state.wheel;
+ closeWheel();
+ if(mode==='convert'){await convert(item.id);return;}
+ if(mode==='actions'){await fileAction(item.id);return;}
+ openEditor(item.id);
+}
 let floatEnter,floatLeave;
 function pinFiles(files){state.float.open=true;state.shelf=[...new Map([...state.shelf,...files].map(f=>[f.id,f])).values()];renderShelf();}
-function floatExpanded(expanded){state.float.expanded=expanded;const p=$('.float-shelf',stage);if(!p)return;p.classList.toggle('expanded',expanded);$('.float-counter',p).setAttribute('aria-expanded',expanded);for(const b of $$('.float-close,.float-options',p))b.hidden=!expanded;if(state.float.x!==undefined){const target=expanded?(state.float.list?284:156):112;state.float.x=Math.max(0,Math.min(state.float.x,stage.clientWidth-target));state.float.y=Math.max(0,Math.min(state.float.y,expanded?12:stage.clientHeight-136));p.style.left=state.float.x+'px';p.style.top=state.float.y+'px';}p.style.setProperty('--float-width',state.float.list?'284px':'156px');}
+function floatExpanded(expanded){state.float.expanded=expanded;const p=$('.float-shelf',heroStage);if(!p)return;p.classList.toggle('expanded',expanded);$('.float-counter',p).setAttribute('aria-expanded',expanded);for(const b of $$('.float-close,.float-options',p))b.hidden=!expanded;if(state.float.x!==undefined){const target=expanded?(state.float.list?284:156):112;state.float.x=Math.max(0,Math.min(state.float.x,heroStage.clientWidth-target));state.float.y=Math.max(0,Math.min(state.float.y,expanded?12:heroStage.clientHeight-136));p.style.left=state.float.x+'px';p.style.top=state.float.y+'px';}p.style.setProperty('--float-width',state.float.list?'284px':'156px');}
 function floatPreview(file){const d=showDialog(file.name,L('Float preview · your original stays safe','Yüzen Pencere önizlemesi · orijinal dosyan güvende'),file.kind);const p=el('div',{class:'float-preview'});if(file.url&&file.kind==='image')p.append(el('img',{src:file.url,alt:file.name}));else if(file.url&&file.kind==='video')p.append(el('video',{src:file.url,controls:'','aria-label':file.name}));else p.append(icon(file.kind),el('p',{},file.name));d.append(p);}
 function renderShelf(){
- clearTimeout(floatEnter);clearTimeout(floatLeave);$('.float-shelf',stage)?.remove();if(!state.float.open)return;
+ clearTimeout(floatEnter);clearTimeout(floatLeave);$('.float-shelf',heroStage)?.remove();if(!state.float.open)return;
  const p=el('aside',{class:'float-shelf','aria-label':nativeText('Float'),tabindex:'0'});if(state.float.x!==undefined){p.style.left=state.float.x+'px';p.style.top=state.float.y+'px';p.style.right='auto';p.style.bottom='auto';}
  const top=el('div',{class:'float-artwork'}),stack=el('button',{class:'float-stack','aria-label':L('Expand Float','Yüzen Pencereyi aç')});
  const thumb=file=>{const t=el('span',{class:'float-thumbnail'});if(file.kind==='image'&&file.url)t.append(el('img',{src:file.url,alt:'',draggable:'false'}));else t.append(icon(file.kind));return t;};
  if(!state.shelf.length)stack.append(icon('download'));
  state.shelf.slice(-3).forEach((file,i,files)=>{const t=thumb(file);t.style.setProperty('--card-turn',(-7*(files.length-1-i))+'deg');t.style.setProperty('--card-offset',(-3*(files.length-1-i))+'px');stack.append(t);});stack.onclick=()=>floatExpanded(!state.float.expanded);
  const clip=el('button',{class:'float-clip','aria-label':L('Move Float','Yüzen Pencereyi taşı')});clip.innerHTML='<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M76 71 L57 28 C47 6 70 -1 78 19 L94 57 C102 74 87 78 81 63 L66 28"/></svg>';
- clip.onpointerdown=e=>{if(e.button!==0)return;e.stopPropagation();e.preventDefault();clip.setPointerCapture(e.pointerId);const bounds=p.getBoundingClientRect(),sr=stage.getBoundingClientRect(),dx=e.clientX-bounds.left,dy=e.clientY-bounds.top;p.style.right='auto';p.style.bottom='auto';clip.onpointermove=move=>{state.float.x=Math.max(0,Math.min(stage.clientWidth-p.offsetWidth,move.clientX-sr.left-dx));state.float.y=Math.max(0,Math.min(stage.clientHeight-p.offsetHeight,move.clientY-sr.top-dy));p.style.left=state.float.x+'px';p.style.top=state.float.y+'px';};clip.onpointerup=()=>{clip.onpointermove=null;};clip.onpointercancel=clip.onpointerup;};
+ clip.onpointerdown=e=>{if(e.button!==0)return;e.stopPropagation();e.preventDefault();clip.setPointerCapture(e.pointerId);const bounds=p.getBoundingClientRect(),sr=heroStage.getBoundingClientRect(),dx=e.clientX-bounds.left,dy=e.clientY-bounds.top;p.style.right='auto';p.style.bottom='auto';clip.onpointermove=move=>{state.float.x=Math.max(0,Math.min(heroStage.clientWidth-p.offsetWidth,move.clientX-sr.left-dx));state.float.y=Math.max(0,Math.min(heroStage.clientHeight-p.offsetHeight,move.clientY-sr.top-dy));p.style.left=state.float.x+'px';p.style.top=state.float.y+'px';};clip.onpointerup=()=>{clip.onpointermove=null;};clip.onpointercancel=clip.onpointerup;};
  const close=el('button',{class:'float-close','aria-label':L('Close Float','Yüzen Pencereyi kapat')},'×');close.onclick=()=>{state.float.open=false;renderShelf();};const options=el('button',{class:'float-options','aria-label':L('Float options','Yüzen Pencere seçenekleri'),'aria-expanded':'false'},'···');
  const menu=el('div',{class:'float-menu',hidden:''});for(const [title,action]of [[nativeText('Icons'),()=>{state.float.list=false;renderShelf();}],[nativeText('List'),()=>{state.float.list=true;renderShelf();}],[nativeText('Clear'),()=>{state.shelf=[];state.float.selected=[];renderShelf();}]]){const button=el('button',{},title);button.onclick=action;menu.append(button);}options.onclick=()=>{menu.hidden=!menu.hidden;options.setAttribute('aria-expanded',!menu.hidden);floatExpanded(true);};
  top.append(stack,clip,close,options,menu);
@@ -110,34 +686,78 @@ function renderShelf(){
  const footer=el('span',{class:'float-footer'},L('Space to preview','Önizleme için Boşluk'));p.append(top,counter,list,footer);
  p.onpointerenter=()=>{clearTimeout(floatLeave);floatEnter=setTimeout(()=>floatExpanded(true),200);};p.onpointerleave=()=>{clearTimeout(floatEnter);floatLeave=setTimeout(()=>{menu.hidden=true;options.setAttribute('aria-expanded','false');floatExpanded(false);},650);};
  p.onkeydown=e=>{if(e.key==='Tab')return;e.stopPropagation();if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='a'){e.preventDefault();state.float.selected=state.shelf.map(f=>f.id);floatExpanded(true);for(const row of $$('.float-file',p))row.setAttribute('aria-pressed','true');}else if(e.key==='Escape'){e.preventDefault();if(state.float.selected.length){state.float.selected=[];for(const row of $$('.float-file',p))row.setAttribute('aria-pressed','false');}else floatExpanded(false);}else if(e.key===' '){e.preventDefault();const file=state.shelf.find(f=>state.float.selected.includes(f.id))||state.shelf.at(-1);if(file)floatPreview(file);}else if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();state.shelf=state.shelf.filter(f=>!state.float.selected.includes(f.id));state.float.selected=[];renderShelf();}};
- stage.append(p);floatExpanded(state.float.expanded);
+ heroStage.append(p);floatExpanded(state.float.expanded);
 }
 async function fileAction(id){const fs=selection();if(id==='float'){pinFiles(fs);toast(L('A little room for your files.','Dosyaların için küçük bir raf.'),L('Pinned to this demo desktop.','Demo masaüstüne sabitlendi.'));return;}if(id==='copyPath'){const text=fs.map(f=>'/Demo/'+f.name).join('\n');try{await navigator.clipboard.writeText(text);toast(L('Demo paths copied.','Demo yolları kopyalandı.'),text);}catch{openActionPreview(id,text);}return;}openActionPreview(id);}
 function showDialog(title,subtitle,ic='file'){closeWheel();if(state.editor)closeEditor();const d=el('dialog',{class:'demo-dialog','aria-label':title});const header=el('div',{class:'editor-header'}),badge=el('div',{class:'editor-icon'}),heading=el('div');badge.append(icon(ic));heading.append(el('h2',{},title),el('p',{},subtitle));const close=el('button',{class:'close-editor','aria-label':L('Close editor','Editörü kapat')},'×');close.onclick=()=>closeEditor();header.append(close,badge,heading);d.append(header);d.addEventListener('keydown',ev=>{if(ev.target.matches('video,audio')){editorKey(ev,false);if(ev.defaultPrevented)ev.stopPropagation();}},true);d.addEventListener('cancel',e=>{e.preventDefault();closeEditor();});d.addEventListener('click',e=>{if(e.target===d){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)closeEditor();}});document.body.append(d);state.editor={dialog:d,cleanup:[],returnFocus:document.activeElement};d.showModal();document.body.style.overflow='hidden';return d;}
 function closeEditor(){const e=state.editor;if(!e)return;for(const media of $$('video,audio',e.dialog))media.pause();for(const fn of e.cleanup)fn();e.dialog.close();e.dialog.remove();document.body.style.overflow='';state.editor=null;if(e.returnFocus?.isConnected)e.returnFocus.focus({preventScroll:true});}
 function openActionPreview(id,content){const names={airdrop:windows?L('Share','Paylaş'):'AirDrop',copy:L('Copy files','Dosyaları kopyala'),move:L('Move files','Dosyaları taşı'),copyPath:L('Copy path','Yolu kopyala'),terminal:'Terminal'};const d=showDialog(names[id],L('Desktop action preview','Masaüstü işlemi önizlemesi'),id==='airdrop'?'share':id==='copyPath'?'path':id);const pane=el('div',{class:'preview-pane'});pane.append(el('span',{class:'editor-label'},L('Selected files','Seçili dosyalar')),el('pre',{class:'archive-list'},content||selection().map(f=>'▧  '+f.name).join('\n')));const text={airdrop:windows?L('The Windows app opens Windows Share. In the browser, this stays a preview.','Windows uygulaması Windows Paylaş penceresini açar. Tarayıcıda bu adım önizlemedir.'):L('The Mac app opens the native AirDrop recipient picker. In the browser, this stays a preview.','Mac uygulaması yerel AirDrop alıcı listesini açar. Tarayıcıda bu adım önizlemedir.'),copy:L('The desktop app copies files, images and text to the system clipboard. This demo does not replace your clipboard with simulated files.','Masaüstü uygulaması dosya, görsel ve metni sistem panosuna kopyalar. Bu demo sahte dosyaları panoya koymaz.'),move:L('Choose a destination in the app. Moving changes the location of the original files.','Uygulamada hedef klasörü seç. Taşıma, orijinal dosyanın konumunu değiştirir.'),copyPath:L('These paths belong to the demo desktop.','Bu yollar demo masaüstüne aittir.'),terminal:L('The Mac app opens this location in Terminal. A web page cannot launch your shell or access local paths.','Mac uygulaması konumu Terminal’de açar. Web sayfası kabuğunu başlatamaz veya yerel yollarına erişemez.')};pane.append(el('p',{class:'editor-note'},text[id]));if(id==='move'){const lab=el('label',{class:'editor-note'},L('Destination','Hedef'));const sel=el('select',{class:'utility-button'});for(const x of['/Demo/Projects','/Demo/Exports','/Demo/Archive'])sel.append(el('option',{},x));lab.append(sel);pane.append(lab);const b=el('button',{class:'utility-button'},L('Preview move','Taşımayı önizle'));b.onclick=()=>{closeEditor();addResult(selection().map(f=>f.name).join(', '),null,L('Move preview','Taşıma önizlemesi'));};pane.append(b);}d.append(pane);}
 $('#demo-library').onclick=openLibrary;
-function openLibrary(){const d=showDialog(L('Your demo Library','Demo kitaplığın'),L('Real exports and clearly marked app previews. Stored only for this visit.','Gerçek çıktılar ve işaretlenmiş uygulama önizlemeleri. Yalnızca bu ziyaret boyunca saklanır.'),'library');const p=el('div',{class:'library-panel'}),search=el('input',{class:'library-search',type:'search',placeholder:L('Search files…','Dosyalarda ara…'),'aria-label':L('Search Library','Kitaplıkta ara')}),grid=el('div',{class:'library-grid'});const render=()=>{grid.replaceChildren();const rows=state.library.filter(r=>foldSearchText(r.name).includes(foldSearchText(search.value)));if(!rows.length){grid.append(el('p',{class:'library-empty'},L('Fresh files will appear here. Try converting an image.','Yeni dosyalar burada görünecek. Bir görsel dönüştürmeyi dene.')));return;}for(const r of rows){const card=el('article',{class:'library-item'});if(r.blob?.type.startsWith('image/'))card.append(el('img',{src:r.url,alt:r.name}));card.append(el('strong',{},r.name),el('small',{},r.time+' · '+(r.preview?L('App preview','Uygulama önizlemesi'):L('Real file','Gerçek dosya'))));if(r.url)card.append(el('a',{href:r.url,download:r.name},L('Save file ↓','Dosyayı kaydet ↓')));grid.append(card);}};search.oninput=render;p.append(search,grid);d.append(p);render();search.focus();}
-async function importFiles(files){closeWheel();const accepted=files.filter(f=>/^(image\/(png|jpeg|webp|gif|bmp)|application\/pdf)$/.test(f.type));if(!accepted.length){toast(L('Choose an image or a PDF.','Bir görsel ya da PDF seç.'),L('PNG, JPG, WebP, GIF, BMP or PDF','PNG, JPG, WebP, GIF, BMP veya PDF'));return;}if(accepted.some(f=>f.size>25*1024*1024)){toast(L('Please use a smaller demo file.','Daha küçük bir demo dosyası seç.'),L('25 MB per file maximum.','Dosya başına en fazla 25 MB.'));return;}if(state.files.length+accepted.length>12){toast(L('The demo holds up to 12 files.','Demo en fazla 12 dosya tutar.'),L('Reset the playground to make room.','Yer açmak için demoyu sıfırla.'));return;}const fs=accepted.map((file,i)=>({...fileModel(file.name,file.type.startsWith('image/')?'image':'file',i),url:objectURL(file),blob:file,user:true,sample:false,ext:file.type==='image/jpeg'?'jpg':file.type==='application/pdf'?'pdf':file.type.split('/')[1]}));state.files.push(...fs);state.selected=fs.map(f=>f.id);renderFiles();toast(L('Ready. Your files stay in this tab.','Hazır. Dosyaların bu sekmede kalır.'),fs.map(f=>f.name).join(', '));}
-stage.addEventListener('dragover',e=>{if(e.dataTransfer.types.includes('Files')){e.preventDefault();e.dataTransfer.dropEffect='copy';}});stage.addEventListener('drop',e=>{e.preventDefault();if(e.dataTransfer.files.length)importFiles([...e.dataTransfer.files]);});
+function openLibrary(){const d=showDialog(L('Your demo Library','Demo kitaplığın'),L('Real exports and clearly marked app previews. Stored only for this visit.','Gerçek çıktılar ve işaretlenmiş uygulama önizlemeleri. Yalnızca bu ziyaret boyunca saklanır.'),'library');const p=el('div',{class:'library-panel'}),search=el('input',{class:'library-search',type:'search',placeholder:L('Search files…','Dosyalarda ara…'),'aria-label':L('Search Library','Kitaplıkta ara')}),grid=el('div',{class:'library-grid'});const render=()=>{grid.replaceChildren();const rows=state.library.filter(r=>foldSearchText(r.name).includes(foldSearchText(search.value)));if(!rows.length){grid.append(el('p',{class:'library-empty'},L('Fresh files will appear here. Try converting an image.','Yeni dosyalar burada görünecek. Bir görsel dönüştürmeyi dene.')));return;}for(const r of rows){const card=el('article',{class:'library-item'});if(r.blob?.type.startsWith('image/'))card.append(el('img',{src:r.url,alt:r.name}));card.append(el('strong',{},r.name),el('small',{},r.time+' · '+(r.preview?L('App preview','Uygulama önizlemesi'):L('Real file','Gerçek dosya'))));if(r.url){const save=el('a',{href:r.url,download:r.name},L('Save file','Dosyayı kaydet'));save.append(icon('download'));card.append(save);}grid.append(card);}};search.oninput=render;p.append(search,grid);d.append(p);render();search.focus();}
+async function importFiles(files){closeWheel();const accepted=files.filter(f=>/^(image\/(png|jpeg|webp|gif|bmp)|application\/pdf)$/.test(f.type));if(!accepted.length){toast(L('Choose an image or a PDF.','Bir görsel ya da PDF seç.'),L('PNG, JPG, WebP, GIF, BMP or PDF','PNG, JPG, WebP, GIF, BMP veya PDF'));return;}if(accepted.some(f=>f.size>25*1024*1024)){toast(L('Please use a smaller demo file.','Daha küçük bir demo dosyası seç.'),L('25 MB per file maximum.','Dosya başına en fazla 25 MB.'));return;}if((folderFiles.get('added')?.length??0)+accepted.length>12){toast(L('You can add up to 12 files.','En fazla 12 dosya ekleyebilirsin.'),L('Reset the playground to make room.','Yer açmak için demoyu sıfırla.'));return;}const fs=accepted.map((file,i)=>({...fileModel(file.name,file.type.startsWith('image/')?'image':'file',i),url:objectURL(file),blob:file,user:true,sample:false,ext:file.type==='image/jpeg'?'jpg':file.type==='application/pdf'?'pdf':file.type.split('/')[1]}));folderFiles.set('added',[...(folderFiles.get('added')??[]),...fs]);setGroup('added');state.selected=fs.map(f=>f.id);updateSelection();toast(L('Ready. Your files stay in this tab.','Hazır. Dosyaların bu sekmede kalır.'),fs.map(f=>f.name).join(', '));}
+$('.folder-window',box).addEventListener('dragover',e=>{if(e.dataTransfer.types.includes('Files')){e.preventDefault();e.dataTransfer.dropEffect='copy';}});$('.folder-window',box).addEventListener('drop',e=>{e.preventDefault();if(e.dataTransfer.files.length)importFiles([...e.dataTransfer.files]);});
 async function loadImage(f){return new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>{if(i.width*i.height>24000000)reject(Error(L('Please use an image under 24 megapixels.','24 megapikselden küçük bir görsel kullan.')));else resolve(i);};i.onerror=()=>reject(Error(L('This image could not be decoded.','Bu görsel okunamadı.')));i.src=f.url;});}
 function canvasBlob(c,type='image/png',quality=.9){if(type==='image/jpeg'){const flat=document.createElement('canvas');flat.width=c.width;flat.height=c.height;const x=flat.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,flat.width,flat.height);x.drawImage(c,0,0);c=flat;}return new Promise((resolve,reject)=>c.toBlob(b=>b&&b.type===type?resolve(b):reject(Error(L('Your browser does not support this output format.','Tarayıcın bu çıktı biçimini desteklemiyor.'))),type,quality));}
 async function sourceCanvas(f){const image=await loadImage(f);const c=document.createElement('canvas');c.width=image.width;c.height=image.height;c.getContext('2d').drawImage(image,0,0);return c;}
 async function fileBytes(f){if(f.blob)return new Uint8Array(await f.blob.arrayBuffer());if(f.ext==='pdf')return samplePDF(f.name);return new Uint8Array(await(await fetch(f.url)).arrayBuffer());}
 async function samplePDF(name){const doc=await PDFLib.PDFDocument.create();const font=await doc.embedFont(PDFLib.StandardFonts.Helvetica);for(let i=1;i<=3;i++){const p=doc.addPage([420,560]);p.drawRectangle({x:0,y:0,width:420,height:560,color:PDFLib.rgb(.97,.97,.93)});p.drawText('nashi.',{x:36,y:490,size:32,font,color:PDFLib.rgb(.27,.36,.24)});p.drawText(name.replace(/[^a-zA-Z0-9 ._-]/g,''),{x:36,y:440,size:17,font});p.drawText('A little less file fuss.',{x:36,y:390,size:13,font});for(let j=0;j<7;j++)p.drawRectangle({x:36,y:330-j*23,width:j%2?270:325,height:5,color:PDFLib.rgb(.80,.82,.75)});p.drawText(String(i),{x:370,y:30,size:11,font});}return doc.save();}
-async function convert(ext){const fs=selection();if(!fs.length)return;const generation=state.generation??0;const real=fs.every(f=>f.kind==='image')&&['png','jpg','webp','pdf'].includes(ext)||fs.every(f=>['srt','vtt'].includes(f.ext))&&['srt','vtt','txt'].includes(ext)||fs.every(f=>['txt','md'].includes(f.ext))&&['txt','md','html','pdf'].includes(ext)||fs.every(f=>['csv','tsv'].includes(f.ext))&&['csv','tsv'].includes(ext);
- if(!real){openConversionPreview(ext);return;}try{if(ext==='pdf'&&fs.every(f=>f.kind==='image')){const p=await imagesPDF(fs);if(isCurrentDemoGeneration(state,generation))addResult(fs.length>1?'nashi-images.pdf':fs[0].name.replace(/\.[^.]+$/,'.pdf'),new Blob([p],{type:'application/pdf'}));return;}
- for(const f of fs){if(!isCurrentDemoGeneration(state,generation))return;let blob;if(f.kind==='image'){const c=await sourceCanvas(f);blob=await canvasBlob(c,{png:'image/png',jpg:'image/jpeg',webp:'image/webp'}[ext]);}else{const text=sampleText(f);if(['srt','vtt'].includes(f.ext)){const cues=text.trim().split(/\n\s*\n/).map(block=>block.split('\n')).map(lines=>lines.slice(lines.findIndex(line=>line.includes('-->')))).filter(lines=>lines[0].includes('-->')),stamp=(line,mark)=>line.replace(/(\d{2}:\d{2}:\d{2})[.,](\d{3})/g,'$1'+mark+'$2');const out=ext==='txt'?cues.map(lines=>lines.slice(1).join('\n')).join('\n\n')+'\n':ext==='vtt'?'WEBVTT\n\n'+cues.map(lines=>stamp(lines[0],'.')+'\n'+lines.slice(1).join('\n')+'\n').join('\n'):cues.map((lines,i)=>(i+1)+'\n'+stamp(lines[0],',')+'\n'+lines.slice(1).join('\n')+'\n').join('\n');blob=new Blob([out],{type:ext==='vtt'?'text/vtt':'text/plain;charset=utf-8'});}else if(ext==='pdf'){const p=await PDFLib.PDFDocument.create(),page=p.addPage();page.drawText('Nashi — a little less file fuss.'.replace('—','-'),{x:50,y:740,size:17});blob=new Blob([await p.save()],{type:'application/pdf'});}else if(['csv','tsv'].includes(f.ext)){blob=new Blob([text.split('\n').map(line=>line.split(f.ext==='csv'?',':'\t').join(ext==='csv'?',':'\t')).join('\n')],{type:'text/plain;charset=utf-8'});}else{const out=ext==='html'?'<!doctype html><html lang="en"><meta charset="utf-8"><title>Nashi notes</title><body><pre>'+text.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))+'</pre></body></html>':text;blob=new Blob([out],{type:ext==='html'?'text/html;charset=utf-8':'text/plain;charset=utf-8'});}}if(isCurrentDemoGeneration(state,generation))addResult(f.name.replace(/\.[^.]+$/,'.'+ext),blob);}}catch(e){if(isCurrentDemoGeneration(state,generation))toast(L('Could not export this file.','Dosya dışa aktarılamadı.'),e.message);}}
-function sampleText(f){if(f.ext==='srt')return'1\n00:00:00,000 --> 00:00:03,000\nA little less file fuss.\n\n2\n00:00:03,000 --> 00:00:06,000\nA little more room to create.\n';if(f.ext==='vtt')return'WEBVTT\n\n00:00:00.000 --> 00:00:03.000\nA little less file fuss.\n';if(['csv','tsv'].includes(f.ext))return['Item,Quantity,Price','Pears,4,12','Notebooks,2,8'].join('\n').replace(/,/g,f.ext==='tsv'?'\t':',');return'# A fresh start\n\nA little less file fuss.\nA little more room to create.\n\nMake something lovely today.\n';}
-function openConversionPreview(ext){const fs=selection(),d=showDialog(L('Convert to ','Şuna dönüştür: ')+ext.toUpperCase(),L('Desktop conversion preview · no file is created','Masaüstü dönüşümü önizlemesi · dosya oluşturulmaz'),'file');const p=el('div',{class:'preview-pane'});p.append(el('pre',{class:'archive-list'},fs.map(f=>f.name+'  →  '+f.name.replace(/\.[^.]+$/,'.'+ext)).join('\n')),el('p',{class:'editor-note'},L('This format uses the conversion engine in Nashi for Mac or Windows. Here you can explore the same selection flow. For a real browser export, try an image to PNG, JPG, WebP or PDF.','Bu biçim Mac veya Windows’taki Nashi dönüştürme motorunu kullanır. Burada aynı seçim akışını deneyebilirsin. Tarayıcıda gerçek çıktı için görselden PNG, JPG, WebP veya PDF dene.')));const b=el('button',{class:'utility-button'},L('Preview conversion','Dönüşümü önizle'));b.onclick=()=>{closeEditor();for(const f of fs)addResult(f.name.replace(/\.[^.]+$/,'.'+ext),null);};p.append(b);d.append(p);}
+async function inputSize(file){
+ if(file.blob)return file.blob.size;
+ // An alternate sample extension can point to shared artwork in another format.
+ if(!file.url.endsWith('.'+file.ext))return null;
+ try{
+  const response=await fetch(file.url);
+  if(response.ok)return (await response.blob()).size;
+ }catch{}
+ return null;
+}
+async function convert(ext){
+ const files=selection();
+ if(!files.length||state.conversion)return;
+ if(!isLiveConversion(files,ext)){openConversionPreview(ext);return;}
+ const generation=state.generation??0;
+ const conversion=Symbol(ext);
+ state.conversion=conversion;
+ scene.dataset.busy='';
+ const report=(name,blob,sourceName,sourceSize)=>{
+  if(isCurrentDemoGeneration(state,generation)){
+   addResult(name,blob,'',sourceName,{sourceSize});
+  }
+ };
+ try{
+  const targetName=file=>file.name.replace(/\.[^.]+$/,'.'+ext);
+  if(ext==='pdf'){
+   const [pdf,sizes]=await Promise.all([imagesPDF(files),Promise.all(files.map(inputSize))]);
+   const sourceSize=sizes.includes(null)?null:sizes.reduce((sum,size)=>sum+size,0);
+   const name=files.length>1?'nashi-images.pdf':targetName(files[0]);
+   const sourceName=files.length>1?files.length+L(' images',' görsel'):files[0].name;
+   report(name,new Blob([pdf],{type:'application/pdf'}),sourceName,sourceSize);
+   return;
+  }
+  for(const file of files){
+   if(!isCurrentDemoGeneration(state,generation))return;
+   const [canvas,size]=await Promise.all([sourceCanvas(file),inputSize(file)]);
+   const blob=await canvasBlob(canvas,{png:'image/png',jpg:'image/jpeg',webp:'image/webp'}[ext]);
+   report(targetName(file),blob,file.name,size);
+  }
+ }catch(error){
+  if(isCurrentDemoGeneration(state,generation)){
+   conversionStatus.textContent='';
+   toast(L('Could not export this file.','Dosya dışa aktarılamadı.'),error.message);
+  }
+ }finally{
+  if(state.conversion===conversion){state.conversion=null;delete scene.dataset.busy;}
+ }
+}
+function openConversionPreview(ext){const fs=selection(),d=showDialog(L('Convert to ','Şuna dönüştür: ')+ext.toUpperCase(),L('Desktop conversion preview · no file is created','Masaüstü dönüşümü önizlemesi · dosya oluşturulmaz'),'file');const p=el('div',{class:'preview-pane'});p.append(el('pre',{class:'archive-list'},fs.map(f=>f.name+'  →  '+f.name.replace(/\.[^.]+$/,'.'+ext)).join('\n')),el('p',{class:'editor-note'},L('This format uses the conversion engine in Nashi for Mac or Windows. Here you can explore the same selection flow. For a real browser export, try an image to PNG, JPG, WebP or PDF.','Bu biçim Mac veya Windows’taki Nashi dönüştürme motorunu kullanır. Burada aynı seçim akışını deneyebilirsin. Tarayıcıda gerçek çıktı için görselden PNG, JPG, WebP veya PDF dene.')));const b=el('button',{class:'utility-button'},L('Preview conversion','Dönüşümü önizle'));b.onclick=()=>{closeEditor();for(const f of fs)addResult(f.name.replace(/\.[^.]+$/,'.'+ext),null,'',f.name,{});updateSelection();};p.append(b);d.append(p);}
 async function imagesPDF(fs){const p=await PDFLib.PDFDocument.create();for(const f of fs){const c=await sourceCanvas(f),b=await canvasBlob(c),im=await p.embedPng(await b.arrayBuffer()),page=p.addPage([im.width,im.height]);page.drawImage(im,{x:0,y:0,width:im.width,height:im.height});}return p.save();}
 function field(parent,label,key,type='number',value=0,attrs={}){const lab=el('label',{},label),inp=el('input',{type,...attrs});inp.value=value;state.editor.values[key]=value;inp.addEventListener('input',()=>{state.editor.values[key]=type==='checkbox'?inp.checked:type==='number'||type==='range'?Number(inp.value):inp.value;state.editor.refresh?.();});lab.append(inp);parent.append(lab);state.editor.inputs[key]=inp;return inp;}
 function selectField(parent,label,key,choices,value){const lab=el('label',{},label),sel=el('select');for(const[v,n]of choices)sel.append(el('option',{value:v},n));sel.value=value??choices[0][0];state.editor.values[key]=sel.value;sel.onchange=()=>{state.editor.values[key]=sel.value;state.editor.refresh?.();};state.editor.inputs[key]=sel;lab.append(sel);parent.append(lab);return sel;}
 function range(parent,label,key,min,max,value,step=1){const inp=field(parent,label,key,'range',value,{min,max,step});const out=el('output',{},String(value));inp.parentNode.append(out);inp.addEventListener('input',()=>out.textContent=inp.value);return inp;}
 function checkField(parent,label,key,value=false){const lab=el('label',{class:'check-label'}),inp=el('input',{type:'checkbox'});inp.checked=value;state.editor.values[key]=value;state.editor.inputs[key]=inp;inp.onchange=()=>{state.editor.values[key]=inp.checked;state.editor.refresh?.();};lab.append(inp,document.createTextNode(label));parent.append(lab);}
-async function openEditor(id){const fs=selection();if(!fs.length)return;const d=showDialog(nativeText(catalog.presentation.editorTitles[id]),nativeText(catalog.presentation.hints[id]||'Fine-tune it. Save a fresh copy.'),tools[id][2]);const e=state.editor;const pill=el('span',{class:'editor-file-pill'},fs.length>1?fs.length+L(' files',' dosya'):fs[0].ext.toUpperCase());pill.prepend(icon('file'));$('.editor-header',d).append(pill);d.dataset.tool=id;Object.assign(e,{id,files:fs,values:{},inputs:{},drawings:[],crop:null,ready:false});const body=el('div',{class:'editor-body'}),preview=el('div',{class:'preview-pane'}),controls=el('div',{class:'editor-controls'});preview.append(el('span',{class:'editor-label'},L('PREVIEW','ÖNİZLEME')));controls.append(el('span',{class:'editor-label'},L('MAKE IT YOURS','SANA GÖRE OLSUN')));body.append(preview,controls);d.append(body);e.preview=preview;e.controls=controls;e.real=false;const footer=el('div',{class:'editor-footer'}),reset=el('button',{class:'reset-button'},'↺ '+L('Reset','Sıfırla')),info=el('small'),save=el('button',{class:'export-button'},L('Save a fresh copy ↗','Yeni kopyayı kaydet ↗'));reset.onclick=()=>{const id=e.id;closeEditor();openEditor(id);};save.disabled=true;save.onclick=()=>saveEditor();footer.append(reset,info,save);d.append(footer);e.save=save;e.info=info;
+async function openEditor(id){const fs=selection();if(!fs.length)return;const d=showDialog(nativeText(catalog.presentation.editorTitles[id]),nativeText(catalog.presentation.hints[id]||'Fine-tune it. Save a fresh copy.'),tools[id][2]);const e=state.editor;const pill=el('span',{class:'editor-file-pill'},fs.length>1?fs.length+L(' files',' dosya'):fs[0].ext.toUpperCase());pill.prepend(icon('file'));$('.editor-header',d).append(pill);d.dataset.tool=id;Object.assign(e,{id,files:fs,values:{},inputs:{},drawings:[],crop:null,ready:false});const body=el('div',{class:'editor-body'}),preview=el('div',{class:'preview-pane'}),controls=el('div',{class:'editor-controls'});preview.append(el('span',{class:'editor-label'},L('PREVIEW','ÖNİZLEME')));controls.append(el('span',{class:'editor-label'},L('MAKE IT YOURS','SANA GÖRE OLSUN')));body.append(preview,controls);d.append(body);e.preview=preview;e.controls=controls;e.real=false;const footer=el('div',{class:'editor-footer'}),reset=el('button',{class:'reset-button'},'↺ '+L('Reset','Sıfırla')),info=el('small'),save=el('button',{class:'export-button'},L('Preparing preview…','Önizleme hazırlanıyor…'));save.setAttribute('aria-busy','true');reset.onclick=()=>{const id=e.id;closeEditor();openEditor(id);};save.disabled=true;save.onclick=()=>saveEditor();footer.append(reset,info,save);d.append(footer);e.save=save;e.info=info;
  try{const f=fs[0];if(f.kind==='image'&&['compress','removeMetadata','editImage','annotateImage','frameImage','cropImage','createCollage','redactImage','createPDF','readQRCode'].includes(id)){await imageEditor(e);e.real=id!=='readQRCode';}else if(f.ext==='pdf'&&['splitPDF','organizePDF','mergePDF','compress','removeMetadata','readQRCode'].includes(id)){await pdfEditor(e);e.real=['splitPDF','organizePDF','mergePDF'].includes(id);}else if(['video','audio'].includes(f.kind)){await mediaEditor(e);}else genericEditor(e);
- if(state.editor!==e)return;e.ready=true;e.save.disabled=id==='cropImage'&&!e.crop;e.save.textContent=e.real?'↗ '+nativeText(catalog.presentation.primaryTitles[id]||catalog.presentation.wheelTitles[id]||'Save a fresh copy'):'↗ '+L('Preview result','Sonucu önizle');const filename=el('p',{class:'editor-filename'},fs.map(f=>f.name).join(', '));filename.prepend(icon('file'));preview.append(filename);e.info.textContent=e.real?nativeText('Original stays safe'):L('App preview · no media file is created','Uygulama önizlemesi · medya dosyası oluşturulmaz');if(e.real)e.info.prepend(icon('lock'));if(!e.real){controls.append(el('p',{class:'editor-note'},L('This is an interactive preview of the desktop tool. Apply it in Nashi to process your actual media.','Bu, masaüstü aracının etkileşimli önizlemesidir. Gerçek medya dosyanı işlemek için Nashi’de uygula.')));} }catch(err){if(state.editor!==e)return;controls.append(el('p',{class:'editor-dialog-status'},err.message));e.save.disabled=true;}}
+ if(state.editor!==e)return;e.ready=true;e.save.removeAttribute('aria-busy');e.save.disabled=id==='cropImage'&&!e.crop;e.save.replaceChildren(icon(e.real?'download':'forward'),e.real?nativeText(catalog.presentation.primaryTitles[id]||catalog.presentation.wheelTitles[id]||'Save a fresh copy'):L('Preview result','Sonucu önizle'));const filename=el('p',{class:'editor-filename'},fs.map(f=>f.name).join(', '));filename.prepend(icon('file'));preview.append(filename);e.info.textContent=e.real?nativeText('Original stays safe'):L('App preview · no media file is created','Uygulama önizlemesi · medya dosyası oluşturulmaz');if(e.real)e.info.prepend(icon('lock'));if(!e.real){controls.append(el('p',{class:'editor-note'},L('This is an interactive preview of the desktop tool. Apply it in Nashi to process your actual media.','Bu, masaüstü aracının etkileşimli önizlemesidir. Gerçek medya dosyanı işlemek için Nashi’de uygula.')));} }catch(err){if(state.editor!==e)return;controls.append(el('p',{class:'editor-dialog-status',role:'status'},err.message));e.save.removeAttribute('aria-busy');e.save.textContent=L('Export unavailable','Dışa aktarma kullanılamıyor');e.save.disabled=true;}}
 async function imageEditor(e){const {preview,controls,files,id}=e;const image=await loadImage(files[0]);if(state.editor!==e)return;e.image=image;e.images=await Promise.all(files.map(f=>loadImage(f)));if(state.editor!==e)return;const wrap=el('div',{class:'canvas-wrap'}),canvas=el('canvas',{'aria-label':L('Image preview. Drag to select or draw.','Görsel önizlemesi. Seçmek veya çizmek için sürükle.'),tabindex:'0'});canvas.width=image.width;canvas.height=image.height;wrap.append(canvas);preview.append(wrap);e.canvas=canvas;
  if(id==='cropImage'){
   e.crop=null;e.values.ratio='free';
@@ -162,7 +782,7 @@ async function imageEditor(e){const {preview,controls,files,id}=e;const image=aw
  if(id==='removeMetadata'){const list=el('dl',{class:'metadata-list'});for(const[k,v]of[[L('Dimensions','Boyutlar'),image.width+' × '+image.height],[L('File','Dosya'),files[0].name],[L('Export','Çıktı'),'PNG']])list.append(el('dt',{},k),el('dd',{},v));controls.append(list,el('p',{class:'editor-note'},L('Re-encoding the pixels to PNG strips source EXIF metadata. The original file is unchanged.','Pikselleri PNG’ye yeniden kodlamak kaynaktaki EXIF verisini kaldırır. Orijinal dosya korunur.')));}
  if(id==='createPDF'){controls.append(el('p',{class:'editor-note'},L('Each selected image becomes a page in the displayed order.','Her seçili görsel, gösterilen sırayla bir sayfaya dönüşür.')));e.real=true;}
  if(id==='readQRCode'){controls.append(el('p',{class:'editor-note'},files[0].user?L('QR detection is previewed here. Scan your file in the desktop app.','QR algılama burada önizlenir. Dosyanı masaüstü uygulamasında tara.'):L('Demo scan report. This example is illustrative.','Demo tarama raporu. Bu örnek temsilidir.')));e.real=false;}
- e.refresh=()=>{if(state.editor!==e)return;const c=renderImage(e,false);canvas.width=c.width;canvas.height=c.height;canvas.getContext('2d').drawImage(c,0,0);if(e.crop&&id==='cropImage'){const ctx=canvas.getContext('2d'),r=e.crop;ctx.fillStyle='#08150c88';ctx.beginPath();ctx.rect(0,0,c.width,c.height);ctx.rect(r.x*c.width,r.y*c.height,r.w*c.width,r.h*c.height);ctx.fill('evenodd');ctx.strokeStyle='#f5d27a';ctx.lineWidth=Math.max(2,c.width/300);ctx.strokeRect(r.x*c.width,r.y*c.height,r.w*c.width,r.h*c.height);for(const[xx,yy]of[[r.x,r.y],[r.x+r.w,r.y],[r.x,r.y+r.h],[r.x+r.w,r.y+r.h]]){ctx.fillStyle='#f5d27a';ctx.fillRect(xx*c.width-5,yy*c.height-5,10,10);}e.cropStatus.textContent=Math.round(r.w*image.width)+' × '+Math.round(r.h*image.height)+' px';}if(id==='cropImage'){e.save.disabled=!e.crop||!!e.cropInteracting;e.clearCrop.disabled=!e.crop;if(!e.crop)e.cropStatus.textContent='';if(e.inputs.cropW)e.inputs.cropW.value=Math.round((e.crop?.w||1)*image.width);if(e.inputs.cropH)e.inputs.cropH.value=Math.round((e.crop?.h||1)*image.height);}};
+ e.refresh=()=>{if(state.editor!==e)return;const c=renderImage(e,false);canvas.width=c.width;canvas.height=c.height;canvas.getContext('2d').drawImage(c,0,0);if(e.crop&&id==='cropImage'){const ctx=canvas.getContext('2d'),r=e.crop;ctx.fillStyle='#08150c88';ctx.beginPath();ctx.rect(0,0,c.width,c.height);ctx.rect(r.x*c.width,r.y*c.height,r.w*c.width,r.h*c.height);ctx.fill('evenodd');ctx.strokeStyle='#f5d27a';ctx.lineWidth=Math.max(2,c.width/300);ctx.strokeRect(r.x*c.width,r.y*c.height,r.w*c.width,r.h*c.height);for(const[xx,yy]of[[r.x,r.y],[r.x+r.w,r.y],[r.x,r.y+r.h],[r.x+r.w,r.y+r.h]]){ctx.fillStyle='#f5d27a';ctx.fillRect(xx*c.width-5,yy*c.height-5,10,10);}e.cropStatus.textContent=Math.round(r.w*image.width)+' × '+Math.round(r.h*image.height)+' px';}if(id==='cropImage'){e.save.disabled=e.saving||!e.crop||!!e.cropInteracting;e.clearCrop.disabled=!e.crop;if(!e.crop)e.cropStatus.textContent='';if(e.inputs.cropW)e.inputs.cropW.value=Math.round((e.crop?.w||1)*image.width);if(e.inputs.cropH)e.inputs.cropH.value=Math.round((e.crop?.h||1)*image.height);}};
  if(['cropImage','redactImage','annotateImage'].includes(id)){let gesture=null;const pos=ev=>{const r=canvas.getBoundingClientRect();return{x:Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(ev.clientY-r.top)/r.height))};};canvas.onpointerdown=ev=>{ev.preventDefault();canvas.setPointerCapture(ev.pointerId);canvas.focus({preventScroll:true});const p=pos(ev);if(id==='cropImage')e.cropInteracting=true;if(id==='annotateImage'){const mark={tool:e.drawTool,points:[p],color:e.values.color,stroke:e.values.stroke,text:e.values.text};e.drawings.push(mark);gesture={start:p,mark};}else{const r=e.crop,inside=r&&p.x>r.x+.025&&p.x<r.x+r.w-.025&&p.y>r.y+.025&&p.y<r.y+r.h-.025;const corners=r?[[r.x,r.y],[r.x+r.w,r.y],[r.x,r.y+r.h],[r.x+r.w,r.y+r.h]]:[],cr=canvas.getBoundingClientRect(),handle=corners.findIndex(([x,y])=>Math.hypot((p.x-x)*cr.width,(p.y-y)*cr.height)<12);gesture={start:handle>=0?{x:corners[3-handle][0],y:corners[3-handle][1]}:p,old:r?{...r}:null,move:handle<0&&inside};if(handle<0&&!inside)e.crop={x:p.x,y:p.y,w:.001,h:.001};}e.refresh();};canvas.onpointermove=ev=>{if(!gesture)return;const p=pos(ev),s=gesture.start;gesture.moved||=Math.hypot(p.x-s.x,p.y-s.y)>.004;if(gesture.mark){gesture.mark.points.push(p);}else if(gesture.move){const old=gesture.old;e.crop={...old,x:Math.max(0,Math.min(1-old.w,old.x+p.x-s.x)),y:Math.max(0,Math.min(1-old.h,old.y+p.y-s.y))};}else{let dx=p.x-s.x,dy=p.y-s.y;const oldRatio=gesture.old?gesture.old.w*image.width/(gesture.old.h*image.height):1,ratio=Number(e.values.ratio)||(ev.shiftKey?oldRatio:0);if(ratio){const pw=Math.min(Math.abs(dx)*image.width,Math.abs(dy)*image.height*ratio);dx=Math.sign(dx||1)*pw/image.width;dy=Math.sign(dy||1)*pw/ratio/image.height;}e.crop={x:Math.min(s.x,s.x+dx),y:Math.min(s.y,s.y+dy),w:Math.max(.001,Math.abs(dx)),h:Math.max(.001,Math.abs(dy))};}e.refresh();};canvas.onpointerup=()=>{if(id==='cropImage'&&gesture&&!gesture.moved)e.crop=gesture.old;gesture=null;e.cropInteracting=false;e.refresh();};canvas.onpointercancel=()=>{gesture=null;e.cropInteracting=false;e.refresh();};}
  e.refresh();}
 function renderImage(e,exporting){const {image,id,values:v}=e,c=document.createElement('canvas');let w=image.width,h=image.height;if(id==='editImage'){const turned=Number(v.rotation||0)%180!==0,rw=turned?h:w,rh=turned?w:h,target=Math.max(1,Math.min(6000,Math.floor(Math.sqrt(24000000*rw/rh)),Number(v.width)||rw)),fh=Math.max(1,Math.min(Math.round(rh*target/rw),Math.floor(24000000/target)));if(turned){w=fh;h=target;}else{w=target;h=fh;}}const rotation=id==='editImage'?Number(v.rotation||0):0,pad=id==='frameImage'?Number(v.padding):0,quarter=rotation%180!==0;c.width=(quarter?h:w)+pad*2;c.height=(quarter?w:h)+pad*2;let ctx=c.getContext('2d');if(id==='frameImage'){ctx.fillStyle=v.background;ctx.fillRect(0,0,c.width,c.height);const r=Math.min(Number(v.radius),w/2,h/2);if(v.shadow){ctx.save();ctx.shadowColor='#17231855';ctx.shadowBlur=25;ctx.shadowOffsetY=10;ctx.beginPath();ctx.roundRect(pad,pad,w,h,r);ctx.fill();ctx.restore();}ctx.save();ctx.beginPath();ctx.roundRect(pad,pad,w,h,r);ctx.clip();ctx.drawImage(image,pad,pad,w,h);ctx.restore();}else if(id==='createCollage'){const n=e.images.length,cols=v.layout==='column'?1:v.layout==='row'?n:Math.ceil(Math.sqrt(n)),rows=Math.ceil(n/cols),gap=Number(v.gap);c.width=900;c.height=Math.round((900-gap*(cols+1))/cols*.7)*rows+gap*(rows+1);ctx=c.getContext('2d');ctx.fillStyle=v.background;ctx.fillRect(0,0,c.width,c.height);const cell=(900-gap*(cols+1))/cols,ch=(c.height-gap*(rows+1))/rows;e.images.forEach((im,i)=>{const x=gap+(i%cols)*(cell+gap),y=gap+Math.floor(i/cols)*(ch+gap),scale=Math.max(cell/im.width,ch/im.height);ctx.save();ctx.beginPath();ctx.rect(x,y,cell,ch);ctx.clip();ctx.drawImage(im,x+(cell-im.width*scale)/2,y+(ch-im.height*scale)/2,im.width*scale,im.height*scale);ctx.restore();});}else{ctx.save();ctx.translate(c.width/2,c.height/2);ctx.rotate(rotation*Math.PI/180);if(v.flip)ctx.scale(-1,1);if(id==='editImage')ctx.filter=`brightness(${v.brightness}%) contrast(${v.contrast}%) saturate(${v.saturation}%)`;ctx.drawImage(image,-w/2,-h/2,w,h);ctx.restore();}
@@ -201,17 +821,135 @@ async function mediaEditor(e){const {preview,controls,id,files}=e,isVideo=files[
 function genericEditor(e){const {preview,controls,id}=e;preview.append(el('pre',{class:'archive-list'},id==='extractArchive'?'little-project/\n  ├─ notes.md\n  ├─ orchard.jpg\n  └─ assets/\n      └─ logo.png':e.files.map(f=>'▧ '+f.name).join('\n')));if(id==='extractArchive'){selectField(controls,L('Destination','Hedef'),'destination',[['folder',L('New folder beside archive','Arşivin yanında yeni klasör')],['exports','/Demo/Exports']]);checkField(controls,L('Open folder when finished','Bitince klasörü aç'),'reveal',true);}}
 function parsePages(text,count){if(!text.trim())return Array.from({length:count},(_,i)=>i);const indices=[],tokens=text.split(',').filter(t=>t.trim());for(const token of tokens.length?tokens:[text]){const m=token.trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);if(!m)throw Error(L('Use page numbers or ranges, e.g. 1, 3-5.','Sayfa veya aralık gir, örn. 1, 3-5.'));const a=Number(m[1]),b=Number(m[2]||m[1]);if(a<1||b<1||a>count||b>count)throw Error(L('That page range is outside the document.','Sayfa aralığı belgenin dışında.'));for(let i=a;b<a?i>=b:i<=b;i+=b<a?-1:1)indices.push(i-1);}return indices;}
 function audioWav(e){const b=e.audioBuffer,v=e.values,trim=e.id==='trimAudio',start=trim?Math.floor(v.start*b.sampleRate):0,end=trim?Math.min(b.length,Math.floor(v.end*b.sampleRate)):b.length,n=end-start,channels=e.id==='audioChannels'&&v.channels==='mono'?1:2,bytes=new ArrayBuffer(44+n*channels*2),view=new DataView(bytes);const str=(offset,s)=>{for(let i=0;i<s.length;i++)view.setUint8(offset+i,s.charCodeAt(i));};str(0,'RIFF');view.setUint32(4,36+n*channels*2,true);str(8,'WAVE');str(12,'fmt ');view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,channels,true);view.setUint32(24,b.sampleRate,true);view.setUint32(28,b.sampleRate*channels*2,true);view.setUint16(32,channels*2,true);view.setUint16(34,16,true);str(36,'data');view.setUint32(40,n*channels*2,true);for(let i=0;i<n;i++){for(let ch=0;ch<channels;ch++){let sample;if(channels===1&&e.id==='audioChannels'){sample=0;for(let c=0;c<2;c++)sample+=b.getChannelData(Math.min(c,b.numberOfChannels-1))[i+start]*Number(c?v.right:v.left)/200;}else{sample=b.getChannelData(Math.min(ch,b.numberOfChannels-1))[i+start];if(e.id==='audioChannels')sample*=Number(ch?v.right:v.left)/100;}if(e.id==='redactAudio'&&i/b.sampleRate>=v.start&&i/b.sampleRate<=v.end)sample=v.treatment==='bleep'?Math.sin(2*Math.PI*900*i/b.sampleRate)*.12:0;view.setInt16(44+(i*channels+ch)*2,Math.max(-1,Math.min(1,sample))*32767,true);}}return new Blob([bytes],{type:'audio/wav'});}
-async function saveEditor(){const e=state.editor;if(!e?.ready||e.saving||e.save.disabled)return;const generation=state.generation??0;const saveResult=(...args)=>{if(isCurrentDemoGeneration(state,generation))addResult(...args);};e.saving=true;e.save.disabled=true;try{const f=e.files[0],stem=f.name.replace(/\.[^.]+$/,'');if(e.real&&e.image){if(e.id==='createPDF'){saveResult('nashi-images.pdf',new Blob([await imagesPDF(e.files)],{type:'application/pdf'}));}else{const canvas=renderImage(e,true),jpeg=e.id==='compress';saveResult(stem+'-'+e.id+(jpeg?'.jpg':'.png'),await canvasBlob(canvas,jpeg?'image/jpeg':'image/png',Number(e.values.quality||90)/100));}}else if(e.real&&e.pdfs){if(e.id==='splitPDF'){const ranges=e.pdfs.map(pdf=>parsePages(e.values.pages,pdf.getPageCount())),chunk=Math.max(1,Math.floor(Number(e.values.perFile)||1));for(const [n,pdf]of e.pdfs.entries()){const indices=ranges[n],name=e.files[n].name.replace(/\.[^.]+$/,'');for(let i=0;i<indices.length;i+=chunk){const p=await PDFLib.PDFDocument.create(),pages=await p.copyPages(pdf,indices.slice(i,i+chunk));for(const page of pages)p.addPage(page);saveResult(name+'-part-'+(1+i/chunk)+'.pdf',new Blob([await p.save()],{type:'application/pdf'}));}}}else{const p=await PDFLib.PDFDocument.create();if(e.id==='mergePDF'){for(const source of e.pdfs){for(const page of await p.copyPages(source,source.getPageIndices()))p.addPage(page);}}else{for(const item of e.pages){const[page]=await p.copyPages(e.pdfs[0],[item.index]);page.setRotation(PDFLib.degrees((page.getRotation().angle+item.rotation)%360));p.addPage(page);}}saveResult(stem+'-'+e.id+'.pdf',new Blob([await p.save()],{type:'application/pdf'}));}}else if(e.id==='videoSnapshots'&&e.media){const t=Number(e.values.timestamp);if(!Number.isFinite(t)||t<0||t>e.duration)throw Error(L('Choose a timestamp inside the video.','Video içinde bir zaman seç.'));if(Math.abs(e.media.currentTime-t)>.01)await new Promise((resolve,reject)=>{e.media.addEventListener('seeked',resolve,{once:true});e.media.currentTime=t;setTimeout(()=>reject(Error(L('Please try the snapshot again.','Kare çıkarmayı tekrar dene.'))),8000);});const c=document.createElement('canvas');c.width=e.media.videoWidth;c.height=e.media.videoHeight;c.getContext('2d').drawImage(e.media,0,0);saveResult(stem+'-'+t.toFixed(2)+'s.png',await canvasBlob(c));}else if(e.real&&e.audioBuffer){if(e.id==='trimAudio'&&e.values.silence){toast(L('Silence detection needs the desktop app.','Sessizlik algılama masaüstü uygulamasını gerektirir.'),L('Uncheck it to export the selected range here.','Seçili aralığı burada kaydetmek için işareti kaldır.'));return;}saveResult(stem+'-'+e.id+'.wav',audioWav(e));}else{const details=Object.entries(e.values).map(([k,v])=>k+': '+v).join(' · ');saveResult(stem+' · '+toolTitle(e.id),null,details);}if(state.editor===e)closeEditor();}catch(err){if(isCurrentDemoGeneration(state,generation))toast(L('Please check these settings.','Bu ayarları kontrol et.'),err.message);}finally{if(state.editor===e){e.saving=false;e.save.disabled=false;}}}
+async function saveEditor(){const e=state.editor;if(!e?.ready||e.saving||e.save.disabled)return;const generation=state.generation??0;const saveResult=(name,blob,details)=>{if(isCurrentDemoGeneration(state,generation))addResult(name,blob,details,e.files.length===1?e.files[0].name:e.files.length+L(' files',' dosya'));};const label=e.save.textContent;e.saving=true;e.save.disabled=true;e.save.setAttribute('aria-busy','true');e.save.textContent=e.real?L('Exporting…','Dışa aktarılıyor…'):L('Preparing preview…','Önizleme hazırlanıyor…');try{const f=e.files[0],stem=f.name.replace(/\.[^.]+$/,'');if(e.real&&e.image){if(e.id==='createPDF'){saveResult('nashi-images.pdf',new Blob([await imagesPDF(e.files)],{type:'application/pdf'}));}else{const canvas=renderImage(e,true),jpeg=e.id==='compress';saveResult(stem+'-'+e.id+(jpeg?'.jpg':'.png'),await canvasBlob(canvas,jpeg?'image/jpeg':'image/png',Number(e.values.quality||90)/100));}}else if(e.real&&e.pdfs){if(e.id==='splitPDF'){const ranges=e.pdfs.map(pdf=>parsePages(e.values.pages,pdf.getPageCount())),chunk=Math.max(1,Math.floor(Number(e.values.perFile)||1));for(const [n,pdf]of e.pdfs.entries()){const indices=ranges[n],name=e.files[n].name.replace(/\.[^.]+$/,'');for(let i=0;i<indices.length;i+=chunk){const p=await PDFLib.PDFDocument.create(),pages=await p.copyPages(pdf,indices.slice(i,i+chunk));for(const page of pages)p.addPage(page);saveResult(name+'-part-'+(1+i/chunk)+'.pdf',new Blob([await p.save()],{type:'application/pdf'}));}}}else{const p=await PDFLib.PDFDocument.create();if(e.id==='mergePDF'){for(const source of e.pdfs){for(const page of await p.copyPages(source,source.getPageIndices()))p.addPage(page);}}else{for(const item of e.pages){const[page]=await p.copyPages(e.pdfs[0],[item.index]);page.setRotation(PDFLib.degrees((page.getRotation().angle+item.rotation)%360));p.addPage(page);}}saveResult(stem+'-'+e.id+'.pdf',new Blob([await p.save()],{type:'application/pdf'}));}}else if(e.id==='videoSnapshots'&&e.media){const t=Number(e.values.timestamp);if(!Number.isFinite(t)||t<0||t>e.duration)throw Error(L('Choose a timestamp inside the video.','Video içinde bir zaman seç.'));if(Math.abs(e.media.currentTime-t)>.01)await new Promise((resolve,reject)=>{e.media.addEventListener('seeked',resolve,{once:true});e.media.currentTime=t;setTimeout(()=>reject(Error(L('Please try the snapshot again.','Kare çıkarmayı tekrar dene.'))),8000);});const c=document.createElement('canvas');c.width=e.media.videoWidth;c.height=e.media.videoHeight;c.getContext('2d').drawImage(e.media,0,0);saveResult(stem+'-'+t.toFixed(2)+'s.png',await canvasBlob(c));}else if(e.real&&e.audioBuffer){if(e.id==='trimAudio'&&e.values.silence){toast(L('Silence detection needs the desktop app.','Sessizlik algılama masaüstü uygulamasını gerektirir.'),L('Uncheck it to export the selected range here.','Seçili aralığı burada kaydetmek için işareti kaldır.'));return;}saveResult(stem+'-'+e.id+'.wav',audioWav(e));}else{const details=Object.entries(e.values).map(([k,v])=>k+': '+v).join(' · ');saveResult(stem+' · '+toolTitle(e.id),null,details);}if(state.editor===e)closeEditor();}catch(err){if(isCurrentDemoGeneration(state,generation))toast(L('Please check these settings.','Bu ayarları kontrol et.'),err.message);}finally{if(state.editor===e){e.saving=false;e.save.disabled=e.id==='cropImage'&&(!e.crop||e.cropInteracting);e.save.removeAttribute('aria-busy');e.save.textContent=label;}}}
 function editorKey(ev,typing){const e=state.editor;if(!e)return;if(ev.key==='Escape'){ev.preventDefault();closeEditor();return;}if(typing)return;if((ev.metaKey||ev.ctrlKey)&&ev.key.toLowerCase()==='s'){ev.preventDefault();saveEditor();return;}const button=ev.target.closest?.('button,a[href]');if(button&&!button.classList.contains('trim-handle')&&(ev.key==='Enter'||ev.key===' '))return;if(ev.key==='Enter'&&['cropImage','cropVideo'].includes(e.id)){ev.preventDefault();saveEditor();return;}if(!e.media)return;if(ev.key===' '){ev.preventDefault();if(ev.shiftKey&&e.playRange)e.playRange();else e.toggle();}else if(['ArrowLeft','ArrowRight'].includes(ev.key)){ev.preventDefault();e.seek(e.media.currentTime+(ev.key==='ArrowRight'?1:-1)*(ev.shiftKey?(e.files[0].kind==='audio'?.1:1/30):1));}else if(ev.key.toLowerCase()==='i'&&e.setRange){ev.preventDefault();e.setRange('start',e.media.currentTime);}else if(ev.key.toLowerCase()==='o'&&e.setRange){ev.preventDefault();e.setRange('end',e.media.currentTime);}else if(ev.key==='Home'){ev.preventDefault();e.seek(0);}else if(ev.key==='End'){ev.preventDefault();e.seek(e.duration);}else if(ev.key.toLowerCase()==='m')e.addMarker?.();}
-function tryTool(id){const kind=['splitPDF','organizePDF','mergePDF'].includes(id)?'pdf':['normalizeAudio','audioToVideo','trimAudio','audioChannels','redactAudio'].includes(id)?'audio':['muteVideo','trimVideo','cropVideo','changeVideoSpeed','joinVideos','videoSnapshots','splitVideo','redactVideo'].includes(id)?'video':id==='extractArchive'?'archive':'image';setGroup(kind);if(['createPDF','createCollage','mergePDF','joinVideos'].includes(id)){state.selected=state.files.map(f=>f.id);renderFiles();}openEditor(id);}
 const toolGroups={image:['compress','removeMetadata','editImage','annotateImage','frameImage','cropImage','createPDF','createCollage','redactImage','readQRCode'],video:['compress','removeMetadata','muteVideo','trimVideo','cropVideo','changeVideoSpeed','joinVideos','videoSnapshots','splitVideo','redactVideo'],audio:['compress','removeMetadata','normalizeAudio','audioToVideo','trimAudio','audioChannels','redactAudio'],pdf:['compress','removeMetadata','splitPDF','organizePDF','mergePDF','readQRCode'],archive:['extractArchive']};
-const featureSection=$('#features'),featureGrid=$('.tool-grid',featureSection),filterBar=el('div',{class:'feature-filters',role:'group','aria-label':L('Filter tools','Araçları filtrele')});for(const [key,en,tt]of [['all','All tools','Tüm araçlar'],['image','Images','Görseller'],['video','Video','Video'],['audio','Audio','Ses'],['pdf','PDF','PDF'],['archive','Archives','Arşivler']]){const b=el('button',{'aria-pressed':key==='image'},L(en,tt));const filter=()=>{for(const a of $$('article.tool',featureGrid))a.hidden=key!=='all'&&!toolGroups[key].includes($('[data-try-tool]',a).dataset.tryTool);for(const n of $$('button',filterBar))n.setAttribute('aria-pressed',n===b);};b.onclick=filter;filterBar.append(b);if(key==='image')setTimeout(filter,0);}featureGrid.before(filterBar);
-for(const b of $$('[data-try-tool]'))b.addEventListener('click',()=>tryTool(b.dataset.tryTool));
+const featureSection=$('#features'),featureGrid=$('.tool-grid',featureSection),filterBar=el('div',{class:'feature-filters',role:'group','aria-label':L('Filter tools','Araçları filtrele')});for(const [key,en,tt]of [['all','All tools','Tüm araçlar'],['image','Images','Görseller'],['video','Video','Video'],['audio','Audio','Ses'],['pdf','PDF','PDF'],['archive','Archives','Arşivler']]){const b=el('button',{'aria-pressed':key==='image'},L(en,tt));const filter=()=>{for(const a of $$('article.tool',featureGrid))a.hidden=key!=='all'&&!toolGroups[key].includes(a.dataset.tool);for(const n of $$('button',filterBar))n.setAttribute('aria-pressed',n===b);};b.onclick=filter;filterBar.append(b);if(key==='image')setTimeout(filter,0);}featureGrid.before(filterBar);
 for(const b of $$('[data-try-group]'))b.addEventListener('click',()=>{setGroup(b.dataset.tryGroup);root.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});});
-function downloadPreview(){const d=showDialog(L('Download from the web','Web’den indir'),L('A link. A file. Yours to work with.','Bir link. Bir dosya. İşlemek sana kalmış.'),'download'),body=el('div',{class:'editor-controls'});d.append(body);const lab=el('label',{},L('Example link','Örnek bağlantı')),url=el('input',{type:'url',value:'https://www.youtube.com/watch?v=demo','aria-label':L('Media link','Medya bağlantısı')});lab.append(url);body.append(lab);const choices=el('div',{class:'annotation-bar'}),detail=el('p',{class:'editor-note'});const render=()=>{choices.replaceChildren();const val=url.value;const options=mediaPreviewOptions(val).map(([en,tr])=>L(en,tr));for(const o of options){const b=el('button',{'aria-pressed':'false'},o);b.onclick=()=>{for(const x of $$('button',choices))x.setAttribute('aria-pressed',x===b);detail.textContent=L('Selected: ','Seçildi: ')+o;};choices.append(b);}detail.textContent=L('Interactive preview only. The desktop app downloads supported public media. Reels do not offer a thumbnail action; photo posts use a photo picker.','Etkileşimli önizleme. Masaüstü uygulaması desteklenen public medyayı indirir. Reels’te thumbnail çıkmaz; fotoğraf gönderisi görsel seçimi açar.');};url.oninput=render;body.append(choices,detail,el('p',{class:'editor-note'},L('This demo makes no request to the pasted site. DRM and login-required media are not supported.','Demo yapıştırılan siteye istek göndermez. DRM ve giriş gerektiren medya desteklenmez.')));render();}
+function downloadPreview(){const d=showDialog(L('Download from the web','Web’den indir'),L('Preview saving video, audio or an image from a link.','Bağlantıdan video, ses veya görsel kaydetmeyi dene.'),'download'),body=el('div',{class:'editor-controls'});d.append(body);const lab=el('label',{},L('Example link','Örnek bağlantı')),url=el('input',{type:'url',value:'https://www.youtube.com/watch?v=demo','aria-label':L('Media link','Medya bağlantısı')});lab.append(url);body.append(lab);const choices=el('div',{class:'annotation-bar'}),detail=el('p',{class:'editor-note'});const render=()=>{choices.replaceChildren();const val=url.value;const options=mediaPreviewOptions(val).map(([en,tr])=>L(en,tr));for(const o of options){const b=el('button',{'aria-pressed':'false'},o);b.onclick=()=>{for(const x of $$('button',choices))x.setAttribute('aria-pressed',x===b);detail.textContent=L('Selected: ','Seçildi: ')+o;};choices.append(b);}detail.textContent=L('Interactive preview only. The desktop app downloads supported public media. Reels do not offer a thumbnail action; photo posts use a photo picker.','Etkileşimli önizleme. Masaüstü uygulaması desteklenen public medyayı indirir. Reels’te thumbnail çıkmaz; fotoğraf gönderisi görsel seçimi açar.');};url.oninput=render;body.append(choices,detail,el('p',{class:'editor-note'},L('This demo makes no request to the pasted site. DRM and login-required media are not supported.','Demo yapıştırılan siteye istek göndermez. DRM ve giriş gerektiren medya desteklenmez.')));render();}
 $('#try-download')?.addEventListener('click',downloadPreview);
-const search=$('#format-search');if(search){const rows=$$('#format-table tbody tr');search.addEventListener('input',()=>filterFormatRows(rows,search.value));}
-setGroup('image');
-window.addEventListener('resize',()=>{if(state.wheel){const w=state.wheel;openWheel(w.mode,w.x,w.y,w.page);}if(!state.drag)renderFiles();});
+const search=$('#format-search'),formatFamilies=$('#format-families');
+if(search&&formatFamilies){
+ const cards=$$('.format-family',formatFamilies);
+ const rows=$$('.format-chips > li',formatFamilies);
+ const status=$('#format-search-status');
+ const refreshCards=cards.map(card=>{
+  const chips=$('.format-chips',card),peek=$('.format-route-peek',card);
+  function showRoute(event){
+   const hovered=$('summary:hover',chips);
+   const focused=$('summary:focus-visible',chips);
+   const opened=$('details[open] > summary',chips);
+   const active=(event?.type==='pointerover'?hovered||focused:focused||hovered)||opened||$('li:not([hidden]) summary',chips);
+   if(!active)return;
+   peek.replaceChildren(...Array.from(active.nextElementSibling.childNodes,node=>node.cloneNode(true)));
+   card.toggleAttribute('data-peeking',Boolean(hovered||focused));
+  }
+  chips.addEventListener('pointerover',showRoute);
+  chips.addEventListener('pointerout',()=>requestAnimationFrame(showRoute));
+  chips.addEventListener('focusin',showRoute);
+  chips.addEventListener('focusout',()=>requestAnimationFrame(showRoute));
+  chips.addEventListener('toggle',showRoute,true);
+  return ()=>{
+   for(const detail of $$('li[hidden] details[open]',chips))detail.open=false;
+   card.hidden=!$('li:not([hidden])',chips);
+   showRoute();
+  };
+ });
+ search.addEventListener('input',()=>{
+  filterFormatRows(rows,search.value);
+  for(const refresh of refreshCards)refresh();
+  formatFamilies.toggleAttribute('data-filtered',Boolean(search.value.trim()));
+  const count=rows.filter(row=>!row.hidden).length;
+  status.classList.toggle('sr-only',count>0);
+  status.textContent=count?L(`${count} matching formats`,`${count} eşleşen format`):L('No matching formats.','Eşleşen format bulunamadı.');
+ });
+}
+// A short guided gesture, so the folder does not read as a screenshot. Any
+// pointer, key or focus inside the demo hands control straight back.
+let tour=null,tourSeen=false;
+const tourButton=$('#demo-tour');
+function stopTour(){
+ if(!tour)return;
+ const t=tour;tour=null;
+ for(const id of t.timers)clearTimeout(id);
+ for(const animation of t.animations)animation.cancel();
+ t.layer.remove();
+ t.file.classList.remove('tour-lift','dragging');
+ pressKey('Shift',false);
+ scene.removeAttribute('data-touring');
+ tourButton.setAttribute('aria-pressed','false');
+}
+async function runTour(){
+ if(tour||state.wheel||state.editor||state.drag)return;
+ tourSeen=true;
+ const file=[...fileGrid.children].find(b=>!b.hidden&&b.dataset.family==='image')||$('.demo-file:not([hidden])',fileGrid);
+ const model=state.files.find(f=>f.id===file?.dataset.fileId);
+ const items=(catalog.conversionMatrix[model?.ext]||[]).slice(0,9).map(ext=>({id:ext,title:ext.toUpperCase(),icon:null}));
+ if(!items.length)return;
+ const t=tour={timers:[],animations:[],layer:el('div',{class:'tour-layer','aria-hidden':'true'}),file};
+ scene.append(t.layer);scene.dataset.touring='';tourButton.setAttribute('aria-pressed','true');
+ const quick=reducedMotion();
+ const alive=()=>tour===t;
+ const wait=ms=>new Promise(resolve=>t.timers.push(setTimeout(resolve,quick?Math.min(ms,400):ms)));
+ const cursor=el('div',{class:'tour-cursor'});
+ cursor.innerHTML='<svg viewBox="0 0 24 24"><path d="M5 2.5l14.5 9.4-6.4 1.2 3.8 7-2.8 1.5-3.8-7.1L5 19.2z"/></svg>';
+ t.layer.append(cursor);
+ const point=(x,y)=>`translate(${x}px,${y}px)`;
+ const move=(from,to,duration)=>{const a=cursor.animate([{transform:point(from.x,from.y)},{transform:point(to.x,to.y)}],{duration:quick?0:duration,easing:'cubic-bezier(.3,.7,.2,1)',fill:'forwards'});t.animations.push(a);return a.finished.catch(()=>{});};
+ const local=r=>{const s=scene.getBoundingClientRect();return {x:r.left-s.left+r.width/2,y:r.top-s.top+Math.min(r.height/2,40)};};
+ const target=local(file.getBoundingClientRect());
+ const start={x:Math.min(scene.clientWidth-30,target.x+260),y:Math.min(scene.clientHeight-30,target.y+190)};
+ cursor.style.transform=point(start.x,start.y);
+ await wait(120);if(!alive())return;
+ await move(start,target,850);if(!alive())return;
+ file.classList.add('dragging');
+ const ghost=dragGhost([model],'tour-ghost');cursor.prepend(ghost);
+ t.animations.push(ghost.animate([{opacity:0,scale:.9},{opacity:1,scale:1}],{duration:quick?0:160,fill:'forwards'}));
+ const held={x:target.x+18,y:target.y+12};
+ await move(target,held,280);if(!alive())return;
+ pressKey('Shift',true);
+ await wait(260);if(!alive())return;
+ const size=wheelSize(),s=scene.getBoundingClientRect();
+ const {wheel}=buildWheel(items,size,'convert',false);
+ placeWheel(wheel,size,{x:s.left+held.x,y:s.top+held.y});
+ t.layer.prepend(wheel);
+ await wait(520);if(!alive())return;
+ const pick=Math.max(0,items.findIndex(item=>item.id==='png'));
+ const via=(pick+items.length-1)%items.length;
+ const spot=i=>local($(`[data-index="${i}"]`,wheel).getBoundingClientRect());
+ await move(held,spot(via),520);if(!alive())return;
+ paintWheel(wheel,via,items,'convert');
+ await wait(380);if(!alive())return;
+ await move(spot(via),spot(pick),420);if(!alive())return;
+ paintWheel(wheel,pick,items,'convert');
+ await wait(1300);if(!alive())return;
+ t.animations.push(wheel.animate([{opacity:1,scale:1},{opacity:0,scale:.96}],{duration:quick?0:220,fill:'forwards'}));
+ pressKey('Shift',false);
+ t.animations.push(ghost.animate([{opacity:1},{opacity:0}],{duration:quick?0:200,fill:'forwards'}));
+ await wait(300);if(!alive())return;
+ stopTour();
+ if(!quick){keycaps[0].classList.add('nudge');setTimeout(()=>keycaps[0].classList.remove('nudge'),2600);}
+}
+tourButton.setAttribute('aria-pressed','false');
+tourButton.onclick=()=>{if(tour)stopTour();else runTour();};
+const takeOver=e=>{if(e.target.closest?.('#demo-tour')&&(e.type!=='keydown'||['Enter',' '].includes(e.key)))return;tourSeen=true;stopTour();};
+for(const type of ['pointerdown','keydown','focusin'])for(const area of new Set([root,tryBlock]))area.addEventListener(type,takeOver,true);
+if('IntersectionObserver' in window&&!reducedMotion()){
+ let pending;
+ const watch=new IntersectionObserver(([entry])=>{
+  clearTimeout(pending);
+  if(tourSeen){watch.disconnect();return;}
+  if(entry.isIntersecting)pending=setTimeout(()=>{if(!tourSeen){watch.disconnect();runTour();}},1100);
+ },{threshold:.6});
+ watch.observe(scene);
+}
+setGroup('samples',false);
+let lastWidth=innerWidth;
+window.addEventListener('resize',()=>{
+ if(innerWidth===lastWidth)return;
+ lastWidth=innerWidth;stopTour();
+ if(state.wheel){const w=state.wheel;openWheel(w.mode,w.page,null);}
+ floatExpanded(state.float.expanded);
+});
 window.addEventListener('pagehide',()=>{for(const url of state.urls)URL.revokeObjectURL(url);state.editor?.media?.pause();audioContext?.close();});
 })();
