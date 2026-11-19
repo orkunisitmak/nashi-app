@@ -81,6 +81,8 @@ internal static class InteractionChecks
             Verify(wheel is not null,"Ctrl+Space did not open the selected files wheel");
             if(wheel is not null)
             {
+                foreach(var text in Children(wheel).OfType<Button>().SelectMany(button=>Children(button).OfType<TextBlock>()).Where(text=>text.TextWrapping==TextWrapping.Wrap))
+                    Verify(WheelPresentation.WordsFit(text.Text,text.FontSize,text.FontWeight,text.ActualWidth),"Wheel caption splits a word between letters: "+text.Text);
                 var convert=Caption(wheel,"Convert");Verify(convert is not null,"Ctrl+Space wheel has no Convert choice");
                 if(convert is not null)
                 {
