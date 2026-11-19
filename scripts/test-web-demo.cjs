@@ -27,7 +27,8 @@ const ids=['compress','removeMetadata','editImage','annotateImage','frameImage',
   const group=Object.keys(toolSamples).find(key=>toolSamples[key].includes(id))??'image';
   await pickSample(group);
   if(batchTools.has(id)){
-   const files=page.locator('.demo-file');
+   // Batch only the samples; exports saved earlier stay in the folder.
+   const files=page.locator('.demo-file:not([data-result])');
    for(let i=1;i<await files.count();i++)await files.nth(i).click({modifiers:['Shift']});
   }
   await page.locator('[data-mode="tools"]').click();
@@ -234,6 +235,19 @@ const ids=['compress','removeMetadata','editImage','annotateImage','frameImage',
   await page.getByRole('menuitem',{name:'PNG',exact:true}).click();
   await page.getByRole('button',{name:'orchard 2.png',exact:true}).waitFor();
   assert.equal(await page.locator('html').getAttribute('lang'),'en');
+ });
+ await test('A real export stays in its sample folder after switching away and back',async()=>{
+  await pickSample('image');
+  await page.getByRole('button',{name:'Formats (Shift)',exact:true}).click();
+  await page.getByRole('menuitem',{name:'PNG',exact:true}).click();
+  const exported=page.locator('.demo-file[data-result]');
+  await exported.first().waitFor();
+  const name=await exported.first().getAttribute('aria-label');
+  await page.keyboard.press('Escape');
+  await pickSample('pdf');
+  assert.equal(await page.locator('.demo-file[data-result]').count(),0);
+  await pickSample('image');
+  assert.ok(await page.getByRole('button',{name,exact:true}).isVisible(),name+' is still in the folder');
  });
  await test('Show me plays the wheel gesture and any key hands control back',async()=>{
   await page.getByRole('button',{name:'Show me',exact:true}).click();

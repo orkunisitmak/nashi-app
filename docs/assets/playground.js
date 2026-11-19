@@ -266,7 +266,9 @@ function setGroup(group,remember=true){
   folderIndex++;
  }
  if(!folderFiles.has(group)||(remember&&families.has(group))){
-  folderFiles.set(group,(folderSpecs[group]||specs[group]).map(([name,kind],i)=>fileModel(name,kind,i)));
+  // Re-opening a format family refreshes its samples but keeps real exports saved there.
+  const exports=(folderFiles.get(group)??[]).filter(f=>f.result);
+  folderFiles.set(group,[...(folderSpecs[group]||specs[group]).map(([name,kind],i)=>fileModel(name,kind,i)),...exports]);
  }
  state.group=group;
  state.files=folderFiles.get(group);
@@ -339,6 +341,7 @@ function renderFiles(){
  fileGrid.replaceChildren();
  for(const f of state.files){
   const b=el('button',{class:'demo-file','data-file-id':f.id,'data-family':familyByFormat.get(f.ext)?.id??'','aria-label':f.name,'aria-haspopup':'menu',title:f.name});
+  if(f.result)b.dataset.result='';
   const preview=el('span',{class:'file-preview'});
   preview.append(fileArtwork(f));
   const check=el('span',{class:'file-selected-mark','aria-hidden':'true'});
@@ -639,6 +642,12 @@ function addResult(name,blob,details='',sourceName='',conversion=null,group=stat
   if(kept.length===files.length)continue;
   folderFiles.set(key,kept);
   if(key===state.group)changed=true;
+ }
+ const live=f=>!f.result||state.urls.has(f.url);
+ if(!state.shelf.every(live)){
+  state.shelf=state.shelf.filter(live);
+  state.float.selected=state.float.selected.filter(id=>state.shelf.some(f=>f.id===id));
+  renderShelf();
  }
  if(blob&&folder){
   const file={id:'file-'+(++state.seq),name,ext:name.split('.').pop().toLowerCase(),kind:kindOf(blob),url:result.url,blob,sample:false,result:true,fresh:true};
