@@ -9,7 +9,7 @@ namespace Nashi.Windows;
 public sealed record ImageOptions(int? Width=null,int? Height=null,int Rotation=0,Int32Rect? Crop=null,int Quality=85,bool Horizontal=true,BitmapSource? Annotated=null)
 {
     public PhotoAdjustments Adjustments{get;init;}=new();public FrameOptions Frame{get;init;}=new();public CollageOptions Collage{get;init;}=new();
-    public string RedactionStyle{get;init;}="solid";public Rect[] Redactions{get;init;}=[];
+    public string? OutputName{get;init;}public string RedactionStyle{get;init;}="solid";public Rect[] Redactions{get;init;}=[];
     public long? TargetBytes{get;init;}public double? ReductionPercent{get;init;}
     public bool FlipHorizontal{get;init;}public bool FlipVertical{get;init;}
     // Size presets apply to each image's own dimensions rather than the first image's.
@@ -51,7 +51,7 @@ public static partial class ImageEngine
         }
         if(tool=="createPDF")
         {
-            var file=Path.Combine(tx.StagingDirectory,"Images.pdf");using var pdf=new PdfDocument();
+            var file=Path.Combine(tx.StagingDirectory,SafePaths.FileStem(options.OutputName,"Images",".pdf")+".pdf");using var pdf=new PdfDocument();
             foreach(var input in inputs){token.ThrowIfCancellationRequested();var source=Load(input);var f=source.Format;var gray=f==PixelFormats.BlackWhite||f==PixelFormats.Gray2||f==PixelFormats.Gray4||f==PixelFormats.Gray16||f==PixelFormats.Gray32Float;using var png=new MemoryStream(PngBytes(gray||f==PixelFormats.Indexed2||f.BitsPerPixel>32?new FormatConvertedBitmap(source,gray?PixelFormats.Gray8:PixelFormats.Bgra32,null,0):source));using var image=XImage.FromStream(png);var page=pdf.AddPage();page.Width=XUnit.FromPoint(source.PixelWidth*72/96d);page.Height=XUnit.FromPoint(source.PixelHeight*72/96d);using var g=XGraphics.FromPdfPage(page);g.DrawImage(image,0,0,page.Width.Point,page.Height.Point);progress?.Report(new(++completed/(double)inputs.Count*.98,"Adding pages…"));}
             pdf.Save(file);return tx.Publish([file],token);
         }
