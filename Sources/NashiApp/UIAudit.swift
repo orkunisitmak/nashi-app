@@ -5,7 +5,7 @@ import NashiCore
 import NashiUpdates
 
 struct UIAuditOptions {
-    static let scenes=["home.empty","home.selected","library","settings.general","settings.formats","settings.updates","wheel.pdf-multiple","editor.crop-image","editor.annotate-image","editor.frame-image"]
+    static let scenes=["home.empty","home.selected","library","settings.general","settings.formats","settings.updates","wheel.pdf-multiple","wheel.projects-node","wheel.projects-flutter","editor.crop-image","editor.annotate-image","editor.frame-image"]
     var output:URL
     var scenes=Self.scenes
     var appearances=["light","dark"]
@@ -93,6 +93,11 @@ struct UIAuditError:LocalizedError { let message:String;init(_ message:String){s
             let pdf=PDFDocument();for _ in 0..<2 {guard let page=PDFPage(image:NSImage(data:data)!)else{throw UIAuditError("PDF fixture could not be generated")};pdf.insert(page,at:pdf.pageCount)}
             let path=directory.appendingPathComponent("Örnek belge \(number).pdf");guard pdf.write(to:path)else{throw UIAuditError("PDF fixture could not be saved")};fixtures["pdf\(number)"]=path
         }
+        // Project folders are only read for marker files; nothing in them runs.
+        for (name,file,contents) in [("web-app","package.json",#"{"scripts":{"dev":"vite","start":"vite preview"}}"#),("flutter_app","pubspec.yaml","dependencies:\n  flutter:\n    sdk: flutter\n")] {
+            let folder=directory.appendingPathComponent(name,isDirectory:true);try FileManager.default.createDirectory(at:folder,withIntermediateDirectories:true)
+            try contents.write(to:folder.appendingPathComponent(file),atomically:true,encoding:.utf8);fixtures[name]=folder
+        }
         fixtures["image"]=imageURL;fixtures["text"]=textURL;fixtures["missing"]=directory.appendingPathComponent("Missing original.png")
     }
     private func run()async throws {
@@ -139,10 +144,17 @@ struct UIAuditError:LocalizedError { let message:String;init(_ message:String){s
         case "editor.crop-image","editor.annotate-image","editor.frame-image":
             let tool:ToolKind=scene=="editor.crop-image" ? .cropImage:scene=="editor.annotate-image" ? .annotateImage:.frameImage
             view=AnyView(ToolEditor(state:state,tool:tool));size=NSSize(width:900,height:420)
-        case "wheel.pdf-multiple":
-            let wheel=WheelView(frame:NSRect(x:0,y:0,width:320,height:320));let inputs=[fixtures["pdf1"]!,fixtures["pdf2"]!]
-            wheel.mode = .tools;wheel.inputs=inputs
-            wheel.items=FeatureCatalog.tools(for:inputs).map{WheelItem(title:FeatureCatalog.toolNames[$0] ?? $0.title,symbol:FeatureCatalog.toolSymbols[$0],operation:.tool($0))};wheel.centerTitle="Tools"
+        case "wheel.pdf-multiple","wheel.projects-node","wheel.projects-flutter":
+            let wheel=WheelView(frame:NSRect(x:0,y:0,width:320,height:320))
+            if scene=="wheel.pdf-multiple" {
+                let inputs=[fixtures["pdf1"]!,fixtures["pdf2"]!]
+                wheel.mode = .tools;wheel.inputs=inputs
+                wheel.items=FeatureCatalog.tools(for:inputs).map{WheelItem(title:FeatureCatalog.toolNames[$0] ?? $0.title,symbol:FeatureCatalog.toolSymbols[$0],operation:.tool($0))};wheel.centerTitle="Tools"
+            } else {
+                // Every Mac renders the same petals: the editor counts as installed.
+                let inputs=[fixtures[scene=="wheel.projects-node" ? "web-app":"flutter_app"]!]
+                wheel.mode = .projects;wheel.inputs=inputs;wheel.items=WheelController.projectItems(for:inputs) { _ in true }
+            }
             let host=NSWindow(contentRect:NSRect(x:0,y:0,width:320,height:320),styleMask:[.titled,.closable],backing:.buffered,defer:false);host.isReleasedWhenClosed=false;host.title="Nashi UI Audit · "+scene;host.contentView=wheel;host.center();host.makeKeyAndOrderFront(nil);window=host;NSApp.activate(ignoringOtherApps:true)
             wheel.updateAccessibility()
             try await settle(recorder:nil)

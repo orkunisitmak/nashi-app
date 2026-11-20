@@ -3,15 +3,15 @@ import AppKit
 struct ModifierChord: RawRepresentable, Hashable, Identifiable, Sendable {
     let rawValue: UInt
     var id: UInt { rawValue }
-    static let supported: NSEvent.ModifierFlags = [.control,.option,.shift,.command]
-    private static let components: [(NSEvent.ModifierFlags,String,String)] = [(.control,"Control","⌃"),(.option,"Option","⌥"),(.shift,"Shift","⇧"),(.command,"Command","⌘")]
+    static let supported: NSEvent.ModifierFlags = [.control,.option,.shift,.command,.function]
+    private static let components: [(NSEvent.ModifierFlags,String,String)] = [(.control,"Control","⌃"),(.option,"Option","⌥"),(.shift,"Shift","⇧"),(.command,"Command","⌘"),(.function,"Fn","fn")]
     init(rawValue: UInt) { self.rawValue = rawValue & Self.supported.rawValue }
     init(_ flags: NSEvent.ModifierFlags) { self.init(rawValue:flags.rawValue) }
     var flags: NSEvent.ModifierFlags { .init(rawValue:rawValue) }
     var symbols: String { Self.components.filter{flags.contains($0.0)}.map(\.2).joined() }
     var title: String { Self.components.filter{flags.contains($0.0)}.map(\.1).joined(separator:" + ") }
     var isEmpty: Bool { rawValue == 0 }
-    static let all: [ModifierChord] = (1..<16).map { bits in
+    static let all: [ModifierChord] = (1..<(1<<components.count)).map { bits in
         var flags: NSEvent.ModifierFlags = []
         for (index,component) in components.enumerated() where bits & (1<<index) != 0 { flags.insert(component.0) }
         return ModifierChord(flags)
@@ -20,7 +20,7 @@ struct ModifierChord: RawRepresentable, Hashable, Identifiable, Sendable {
         return lc == rc ? lhs.rawValue < rhs.rawValue : lc < rc
     }
     static func legacy(_ name:String)->ModifierChord? {
-        let values:[String:NSEvent.ModifierFlags] = ["control":.control,"option":.option,"shift":.shift,"command":.command]
+        let values:[String:NSEvent.ModifierFlags] = ["control":.control,"option":.option,"shift":.shift,"command":.command,"fn":.function]
         var flags:NSEvent.ModifierFlags=[]
         for part in name.lowercased().split(separator:"+") { guard let value=values[String(part)] else { return nil };flags.insert(value) }
         return flags.isEmpty ? nil:ModifierChord(flags)
@@ -28,12 +28,12 @@ struct ModifierChord: RawRepresentable, Hashable, Identifiable, Sendable {
 }
 
 enum WheelShortcut: String, CaseIterable, Identifiable {
-    case conversions, tools, actions
+    case conversions, tools, actions, projects
     var id: String { rawValue }
-    var title: String { switch self { case .conversions:return "Conversion wheel";case .tools:return "File tools wheel";case .actions:return "File actions wheel" } }
-    var storageKey: String { switch self { case .conversions:return "conversionWheelDragModifierMask";case .tools:return "toolsWheelDragModifierMask";case .actions:return "actionsWheelDragModifierMask" } }
-    var legacyKey: String { switch self { case .conversions:return "convertKey";case .tools:return "toolsKey";case .actions:return "actionsKey" } }
-    var defaultChord: ModifierChord { switch self { case .conversions:return .init(.shift);case .tools:return .init(.command);case .actions:return .init(.control) } }
+    var title: String { switch self { case .conversions:return "Conversion wheel";case .tools:return "File tools wheel";case .actions:return "File actions wheel";case .projects:return "Projects wheel" } }
+    var storageKey: String { switch self { case .conversions:return "conversionWheelDragModifierMask";case .tools:return "toolsWheelDragModifierMask";case .actions:return "actionsWheelDragModifierMask";case .projects:return "projectsWheelDragModifierMask" } }
+    var legacyKey: String { switch self { case .conversions:return "convertKey";case .tools:return "toolsKey";case .actions:return "actionsKey";case .projects:return "projectsKey" } }
+    var defaultChord: ModifierChord { switch self { case .conversions:return .init(.shift);case .tools:return .init(.command);case .actions:return .init(.control);case .projects:return .init(.function) } }
 }
 
 enum ModifierPreferences {

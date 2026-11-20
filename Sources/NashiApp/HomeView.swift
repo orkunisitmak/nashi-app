@@ -10,6 +10,7 @@ struct HomeView:View {
     @AppStorage("convertKey") private var convertKey="shift"
     @AppStorage("toolsKey") private var toolsKey="command"
     @AppStorage("actionsKey") private var actionsKey="control"
+    @AppStorage("projectsKey") private var projectsKey="fn"
     @FocusState private var librarySearchFocused:Bool
     @State private var targeted=false
     @State private var historySearch=""
@@ -143,7 +144,7 @@ struct HomeView:View {
                 }
             }
             HStack(spacing:8) {
-                shortcut(convertKey,"Convert");shortcut(toolsKey,"Tools");shortcut(actionsKey,"Actions")
+                shortcut(convertKey,"Convert");shortcut(toolsKey,"Tools");shortcut(actionsKey,"Actions");shortcut(projectsKey,"Projects")
                 Spacer()
                 Text("Hold a key while dragging in Finder").font(.system(size:10)).foregroundStyle(.secondary)
             }.padding(.top,2)

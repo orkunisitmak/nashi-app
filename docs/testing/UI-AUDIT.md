@@ -36,7 +36,7 @@ Both audit commands accept these optional filters:
 --language en|tr|fr|both
 ```
 
-Unknown scenes/options, empty selections, repeated scenes and invalid themes/languages fail. No filter means the complete matrix: **10 scenes × 2 appearances × 2 languages = 40 captures per platform**.
+Unknown scenes/options, empty selections, repeated scenes and invalid themes/languages fail. No filter means the complete matrix: **10 shared scenes × 2 appearances × 2 languages = 40 captures per platform**, plus the two Mac-only projects wheel scenes (**48 Mac captures**).
 
 | Scene ID | Production surface |
 | --- | --- |
@@ -47,6 +47,8 @@ Unknown scenes/options, empty selections, repeated scenes and invalid themes/lan
 | settings.formats | Format preferences |
 | settings.updates | Update preferences, without checking for an update |
 | wheel.pdf-multiple | Tools offered for two generated PDFs |
+| wheel.projects-node | Projects wheel for a generated Node folder with `dev` and `start` scripts |
+| wheel.projects-flutter | Projects wheel for a generated Flutter folder |
 | editor.crop-image | Image crop at minimum supported editor size |
 | editor.annotate-image | Annotation editor at minimum size |
 | editor.frame-image | Frame editor after its asynchronous preview is ready |
