@@ -1,12 +1,14 @@
 import AppKit
 import SwiftUI
 import PDFKit
+import Vision
 import NashiCore
 import NashiUpdates
 
 struct UIAuditOptions {
     static let scenes=["home.empty","home.selected","library","settings.general","settings.formats","settings.updates","wheel.pdf-multiple","editor.crop-image","editor.annotate-image","editor.frame-image"]
     var output:URL
+    static let supportedScenes=scenes+["qr.creator"]
     var scenes=Self.scenes
     var appearances=["light","dark"]
     var languages=["en","tr"]
@@ -21,7 +23,7 @@ struct UIAuditOptions {
             guard index<arguments.count else{throw UIAuditError("Missing value for "+key)}
             let value=arguments[index];index+=1
             switch key {
-            case "--scenes":scenes=value.split(separator:",").map(String.init);guard !scenes.isEmpty,Set(scenes).count==scenes.count,scenes.allSatisfy(Self.scenes.contains) else{throw UIAuditError("Unknown or repeated audit scene. Supported: "+Self.scenes.joined(separator:","))}
+            case "--scenes":scenes=value.split(separator:",").map(String.init);guard !scenes.isEmpty,Set(scenes).count==scenes.count,scenes.allSatisfy(Self.supportedScenes.contains) else{throw UIAuditError("Unknown or repeated audit scene. Supported: "+Self.scenes.joined(separator:","))}
             case "--appearance":guard ["light","dark","both"].contains(value) else{throw UIAuditError("Appearance must be light, dark or both")};appearances=value=="both" ? ["light","dark"]:[value]
             case "--language":guard AppLocalization.supportedLanguages.contains(value) || value=="both" else{throw UIAuditError("Language must be en, tr, fr or both")};languages=value=="both" ? ["en","tr"]:[value]
             default:throw UIAuditError("Unknown audit argument: "+key)
@@ -132,6 +134,7 @@ struct UIAuditError:LocalizedError { let message:String;init(_ message:String){s
         let isEditor=scene.hasPrefix("editor.")
         let view:AnyView,size:NSSize
         switch scene {
+        case "qr.creator":view=AnyView(QRCodeCreatorView(state:state,initialText:"https://example.com/İstanbul 🍐"));size=NSSize(width:668,height:650)
         case "home.empty","home.selected","library":view=AnyView(HomeView(state:state,updater:updater));size=NSSize(width:700,height:580)
         case "settings.general","settings.formats","settings.updates":
             let section:SettingsSection=scene=="settings.formats" ? .formats:scene=="settings.updates" ? .updates:.general
@@ -156,7 +159,7 @@ struct UIAuditError:LocalizedError { let message:String;init(_ message:String){s
         if isEditor {host=ToolPanel(contentRect:NSRect(origin:.zero,size:size),styleMask:[.borderless,.closable],backing:.buffered,defer:false)}
         else {host=NSWindow(contentRect:NSRect(origin:.zero,size:size),styleMask:[.titled,.closable],backing:.buffered,defer:false)}
         host.isReleasedWhenClosed=false;host.title="Nashi UI Audit · "+scene;host.contentView=NSHostingView(rootView:root);host.center();window=host;host.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true)
-        try await settle(recorder:isEditor ? recorder:nil)
+        try await settle(recorder:isEditor || scene=="qr.creator" ? recorder:nil)
         guard let content=host.contentView else{throw UIAuditError("Scene has no content view")}
         observedPreferences=try await verifyPreferences(scene:scene,appearance:appearance,language:language,defaults:defaults,view:content)
         let issues=recorder.issues(in:content.bounds,editor:isEditor)
@@ -247,6 +250,12 @@ struct UIAuditError:LocalizedError { let message:String;init(_ message:String){s
     private func save(scene:String,appearance:String,language:String,view:NSView,recorder:UIAuditLayout?,issues:[String])throws {
         guard let bitmap=view.bitmapImageRepForCachingDisplay(in:view.bounds) else{throw UIAuditError("Own-view renderer could not allocate a bitmap")}
         view.cacheDisplay(in:view.bounds,to:bitmap)
+        if scene=="qr.creator" {
+            guard let image=bitmap.cgImage else { throw UIAuditError("QR preview capture could not be read") }
+            let request=VNDetectBarcodesRequest();request.symbologies=[.qr]
+            try VNImageRequestHandler(cgImage:image).perform([request])
+            guard request.results?.contains(where:{$0.payloadStringValue=="https://example.com/İstanbul 🍐"}) == true else { throw UIAuditError("Rendered QR preview did not round-trip its text") }
+        }
         let raster=UIAuditRaster.inspect(bitmap)
         var captureIssues=issues
         if !raster.nonBlank {captureIssues.append("The own-view render is blank or contains insufficient visible scene content.")}

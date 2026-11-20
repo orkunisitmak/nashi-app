@@ -92,6 +92,9 @@ def main():
         assert capture["status"] == "captured" and not capture["issues"]
         assert (output / "gallery" / capture["image"]).stat().st_size > 100
 
+    invoke(["--ui-audit", output / "qr-creator", "--scenes", "qr.creator"])
+    qr_gallery = json.loads((output / "qr-creator/manifest.json").read_text())
+    assert qr_gallery["passed"] and len(qr_gallery["captures"]) == 4
     invoke(["--range-accessibility-smoke", output / "range"])
     ranges = json.loads((output / "range/mac-range-accessibility.json").read_text())
     assert ranges["passed"] and len(ranges["checks"]) >= 20
