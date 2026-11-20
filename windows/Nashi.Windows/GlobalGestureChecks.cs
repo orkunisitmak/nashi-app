@@ -41,7 +41,7 @@ internal static class GlobalGestureChecks
         var discoveryLimit=DateTime.UtcNow.AddSeconds(25);while(!discovery.IsCompleted&&DateTime.UtcNow<discoveryLimit)DesktopInput.Pump(30);if(!discovery.IsCompleted){DesktopCapture.Save(Path.Combine(root,"explorer-discovery.png"));throw new TimeoutException("Explorer UI Automation did not respond.");}if(discovery.IsFaulted)DesktopCapture.Save(Path.Combine(root,"explorer-discovery.png"));var fixture=discovery.GetAwaiter().GetResult();var handle=fixture.Handle;var bounds=fixture.Bounds;if(bounds.IsEmpty)throw new Exception("Explorer's source file has no visible bounds.");
         var settings=new PreferencesStore(Path.Combine(root,"Gesture preferences"));string? selected=null;string[]? received=null;
         using var controller=new GlobalDragController(owner,settings,(id,data,hint)=>{selected=id;received=data.GetData(DataFormats.FileDrop) as string[];},()=>selected="link-shortcut");
-        void Drag(Key modifier,string mode,string expected)
+        void Drag(Key modifier,string mode,string expected,string? capture=null)
         {
             phase="dragging "+mode;selected=null;string? state=null;SetForegroundWindow(handle);DesktopInput.Pump(200);var start=new Point(bounds.Left+bounds.Width/2,bounds.Top+bounds.Height/2);
             var driver=Task.Run(()=>
@@ -50,7 +50,7 @@ internal static class GlobalGestureChecks
                 try
                 {
                     DesktopInput.MovePointer(new(start.X+45,start.Y+20));Thread.Sleep(150);DesktopInput.Hold(modifier,true);var wheel=IntPtr.Zero;for(var n=0;n<30&&wheel==IntPtr.Zero;n++){Thread.Sleep(100);wheel=FindWindow(null,"Nashi · "+mode);}if(wheel==IntPtr.Zero||!GetWindowRect(wheel,out var r))throw new Exception("The global "+mode+" wheel did not open during the Explorer drag.");
-                    DesktopInput.MovePointer(new((r.Left+r.Right)/2d,r.Top+(r.Bottom-r.Top)*.18));Thread.Sleep(400);state=controller.ActiveWheel?.State;owner.Dispatcher.BeginInvoke(()=>DesktopCapture.Save(Path.Combine(root,"global-drag-"+mode+".png")));Thread.Sleep(200);
+                    DesktopInput.MovePointer(new((r.Left+r.Right)/2d,r.Top+(r.Bottom-r.Top)*.18));Thread.Sleep(400);state=controller.ActiveWheel?.State;owner.Dispatcher.BeginInvoke(()=>DesktopCapture.Save(Path.Combine(root,capture??"global-drag-"+mode+".png")));Thread.Sleep(200);
                 }
                 finally{DesktopInput.HoldMouse(false);DesktopInput.Hold(modifier,false);}
             });
@@ -59,6 +59,20 @@ internal static class GlobalGestureChecks
         try
         {
             Drag(Key.LeftCtrl,"tools","compress");Drag(Key.LeftAlt,"actions","share");Drag(Key.LeftShift,"convert","convert:"+FeatureCatalog.Formats([file])[0]);
+            var main=owner as MainWindow;
+            // Settings is a separate window, so unlike the modal editors below it must not pause the gesture.
+            if(main is not null)
+            {
+                phase="dragging with Settings open";main.ShowSettings();DesktopInput.Pump();var openSettings=main.OpenSettings;
+                try
+                {
+                    check(openSettings is {IsVisible:true}&&DesktopGeometry.IsInteractive(owner),"Settings opened as a separate window and left the main window enabled");main.ShowSettings();DesktopInput.Pump();check(main.OpenSettings==openSettings,"Opening Settings again reused its window");
+                    Drag(Key.LeftCtrl,"tools","compress","global-drag-tools-settings.png");
+                    if(controller.LinkShortcutRegistered){selected=null;DesktopInput.Key(owner,Key.D,control:true,shift:true);check(selected=="link-shortcut","Global copied-link shortcut Ctrl+Shift+D with Settings open");}
+                }
+                finally{openSettings?.Close();DesktopInput.Pump();}
+                check(main.OpenSettings is null,"Closing Settings released its window");
+            }
             // A mouse drag that carries no files (e.g. Shift+drag text selection) must not show a wheel.
             phase="plain Shift-drag";var plain=new Window{Width=320,Height=200,Left=bounds.Left,Top=bounds.Top,WindowStartupLocation=WindowStartupLocation.Manual,Content=new System.Windows.Controls.Border{Background=System.Windows.Media.Brushes.DarkSlateGray}};plain.Show();plain.Activate();DesktopInput.Pump(200);
             try
@@ -67,13 +81,18 @@ internal static class GlobalGestureChecks
                 check(controller.ActiveWheel is not {Revealed:true},"A plain Shift-drag without files showed the global wheel");
             }
             finally{DesktopInput.HoldMouse(false);DesktopInput.Hold(Key.LeftShift,false);DesktopInput.Pump(250);plain.Close();}
-            if(controller.LinkShortcutRegistered){DesktopInput.Key(owner,Key.D,control:true,shift:true);check(selected=="link-shortcut","Global copied-link shortcut Ctrl+Shift+D");}
-            var main=owner as MainWindow;var beforeLaunch=main?.SelectedFiles.ToArray();var modal=new Window{Owner=owner,Width=300,Height=200,WindowStartupLocation=WindowStartupLocation.CenterOwner,Content=new System.Windows.Controls.Border{Background=System.Windows.Media.Brushes.DarkOliveGreen}};Exception? modalError=null;
+            // An OLE drag the hidden wheel has nothing for (a Premiere clip Alt-drag, #768) must reach the app below.
+            check(GlobalDropWheel.PassesThrough(false,0,false,true)&&!GlobalDropWheel.PassesThrough(false,0,false,false)&&!GlobalDropWheel.PassesThrough(false,2,false,true)&&!GlobalDropWheel.PassesThrough(false,0,true,true)&&!GlobalDropWheel.PassesThrough(true,0,false,true),"Hidden wheel pass-through ignored files, links, the no-tools message or a pending link hint");
+            var probe=new GlobalDropWheel("actions",1,(_,_)=>{},()=>null,()=>true);probe.Show();DesktopInput.Pump(80);
+            try{check(!probe.PassingThrough,"A new hidden wheel was click-through before any drag reached it");probe.PassThrough();check(probe.PassingThrough&&!probe.Revealed&&probe.IsVisible,"Hidden wheel did not become click-through for a drag it cannot use");check(Task.Run(()=>probe.State).Result.EndsWith("passThrough=True"),"Wheel state was not readable off the UI thread after pass-through");}
+            finally{probe.Close();}
+            if(controller.LinkShortcutRegistered){selected=null;DesktopInput.Key(owner,Key.D,control:true,shift:true);check(selected=="link-shortcut","Global copied-link shortcut Ctrl+Shift+D");}
+            var beforeLaunch=main?.SelectedFiles.ToArray();var modal=new Window{Owner=owner,Width=300,Height=200,WindowStartupLocation=WindowStartupLocation.CenterOwner,Content=new System.Windows.Controls.Border{Background=System.Windows.Media.Brushes.DarkOliveGreen}};Exception? modalError=null;
             modal.Dispatcher.BeginInvoke(()=>
             {
                 try
                 {
-                    var p=modal.PointToScreen(new Point(60,70));DesktopInput.MovePointer(p);DesktopInput.HoldMouse(true);DesktopInput.Pump(80);DesktopInput.MovePointer(new(p.X+50,p.Y));DesktopInput.Hold(Key.LeftShift,true);DesktopInput.Pump(220);check(controller.ActiveWheel is null,"Modal Shift-drag did not open a competing global wheel");DesktopInput.HoldMouse(false);DesktopInput.Hold(Key.LeftShift,false);var before=selected;DesktopInput.Key(modal,Key.D,control:true,shift:true);check(selected==before,"Modal editor kept its keyboard focus during the global link shortcut");if(main is not null){main.AcceptLaunch([file]);main.AcceptLaunch([]);check(main.SelectedFiles.SequenceEqual(beforeLaunch!),"Second launch kept the modal editor's original file selection");}
+                    var p=modal.PointToScreen(new Point(60,70));DesktopInput.MovePointer(p);DesktopInput.HoldMouse(true);DesktopInput.Pump(80);DesktopInput.MovePointer(new(p.X+50,p.Y));DesktopInput.Hold(Key.LeftShift,true);DesktopInput.Pump(220);check(controller.ActiveWheel is null,"Modal Shift-drag did not open a competing global wheel");DesktopInput.HoldMouse(false);DesktopInput.Hold(Key.LeftShift,false);var before=selected;DesktopInput.Key(modal,Key.D,control:true,shift:true);check(selected==before,"Modal editor kept its keyboard focus during the global link shortcut");if(main is not null){main.AcceptLaunch([file]);main.AcceptLaunch([]);check(main.SelectedFiles.SequenceEqual(beforeLaunch!),"Second launch kept the modal editor's original file selection");main.ShowSettings();DesktopInput.Pump();check(main.OpenSettings is null,"Settings stayed closed behind the modal editor");}
                 }
                 catch(Exception error){modalError=error;}
                 finally{DesktopInput.HoldMouse(false);DesktopInput.Hold(Key.LeftShift,false);modal.Close();}

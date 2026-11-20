@@ -158,7 +158,7 @@ struct JobRecord:Codable,Identifiable {
                 // Keep Library records pointing at files Nashi itself moved.
                 let movedPaths=Dictionary(moved.map{($0.key.path,$0.value.path)},uniquingKeysWith:{first,_ in first})
                 if !movedPaths.isEmpty {
-                    history=history.map{var record=$0;record.outputs=record.outputs.map{movedPaths[$0] ?? $0};return record}
+                    history=history.map{var record=$0;record.outputs=record.outputs.map{OutputFiles.relocated($0,moved:movedPaths)};return record}
                     if let data=try? JSONEncoder().encode(history) { historyDefaults.set(data,forKey:"history") }
                 }
             }

@@ -76,6 +76,11 @@ enum ArchiveCodec {
             let kind = a.entryFiletype(entry) & 0o170000
             if kind == 0o040000 {
                 try fm.createDirectory(at: destination, withIntermediateDirectories: true)
+                // The owner keeps full access so later entries, conversion and cleanup still work.
+                let mode = a.entryPerm(entry) & 0o777
+                // A folder stored as 000 must not fall back to the default, which other users can list.
+                let stored = mode != 0 || (a.entryPermIsSet.map { $0(entry) != 0 } ?? false)
+                if stored { try? fm.setAttributes([.posixPermissions: NSNumber(value: mode | 0o700)], ofItemAtPath: destination.path) }
                 continue
             }
             guard kind == 0o100000 || kind == 0 else {
@@ -125,6 +130,10 @@ enum ArchiveCodec {
             guard attributes[.type] as? FileAttributeType == .typeRegular else {
                 throw NashiError.invalidInput("An archive hard link does not point to a regular file.")
             }
+            // Conversion writes each hard link back out as a full copy, so it counts like one.
+            let size=(attributes[.size] as? NSNumber)?.int64Value ?? 0
+            guard size<=limits.maximumBytes-expandedBytes else {throw NashiError.invalidInput("The archive expands beyond the 20 GB safety limit.")}
+            expandedBytes+=size
             try fm.createDirectory(at: link.destination.deletingLastPathComponent(), withIntermediateDirectories: true)
             try fm.linkItem(at: target, to: link.destination)
         }
@@ -329,6 +338,8 @@ enum ArchiveCodec {
         var entryHardlink: StringGet { symbol("archive_entry_hardlink_utf8", StringGet.self) }
         var entryFiletype: UIntGet { symbol("archive_entry_filetype", UIntGet.self) }
         var entryPerm: UIntGet { symbol("archive_entry_perm", UIntGet.self) }
+        /// Not confirmed on every libarchive macOS 13+ ships, so a missing symbol is nil instead of a crash.
+        var entryPermIsSet: Call? { dlsym(library, "archive_entry_perm_is_set").map { unsafeBitCast($0, to: Call.self) } }
         var entryMtime: TimeGet { symbol("archive_entry_mtime", TimeGet.self) }
         var writeNew: New { symbol("archive_write_new", New.self) }
         var writeZIP: Call { symbol("archive_write_set_format_zip", Call.self) }

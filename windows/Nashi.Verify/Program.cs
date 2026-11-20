@@ -94,6 +94,17 @@ try
     Check(File.GetLastWriteTime(Path.Combine(ArchiveEngine.Extract(datedZip,root)[0],"Dated.txt"))==dated,"Extracted files lost their modification dates");
     var rarFixtures=AppContext.BaseDirectory;while(!Directory.Exists(Path.Combine(rarFixtures,"Reference","archive-fixtures")))rarFixtures=Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(rarFixtures))??throw new DirectoryNotFoundException("Reference/archive-fixtures");rarFixtures=Path.Combine(rarFixtures,"Reference","archive-fixtures");
     Check(File.GetLastWriteTime(Path.Combine(ArchiveEngine.Extract(Path.Combine(rarFixtures,"test_read_format_rar.rar"),root)[0],"test.txt"))==new DateTime(2011,6,26,14,53,47)&&File.GetLastWriteTimeUtc(Path.Combine(ArchiveEngine.Extract(Path.Combine(rarFixtures,"test_read_format_rar5_stored.rar"),root)[0],"helloworld.txt"))==new DateTime(2018,9,26,4,43,42,DateTimeKind.Utc),"Extracted RAR files lost their modification dates");
+    // An empty password box or a wrong password names the problem, not SharpCompress's "bad password" or "Data Error".
+    foreach(var (encrypted,correct) in new[]{("test_read_format_zip_winzip_aes256.zip","password"),("nashi_encrypted_headers.7z","password"),("Rar.encrypted_filesAndHeader.rar","test"),("Rar5.encrypted_filesAndHeader.rar","test")})
+    {
+        foreach(var (password,message) in new[]{((string?)"","This archive is protected. Enter its password."),(null,"This archive is protected. Enter its password."),("wrong","The password is incorrect, or the archive is damaged.")})
+        {
+            try{ArchiveEngine.Extract(Path.Combine(rarFixtures,encrypted),root,password);throw new Exception(encrypted+" opened without its password");}
+            catch(InvalidDataException error){Check(error.Message==message&&AppLocalization.Text(message,"tr")!=message,encrypted+" reported \""+error.Message+"\" for the password \""+password+"\"");}
+        }
+        Check(Directory.EnumerateFiles(ArchiveEngine.Extract(Path.Combine(rarFixtures,encrypted),root,correct)[0],"*",SearchOption.AllDirectories).Any(),encrypted+" did not open with its password");
+    }
+    Check(!Directory.EnumerateDirectories(root,".nashi-*").Any(),"A refused password left staging files");
     using(var converted=System.IO.Compression.ZipFile.OpenRead(ArchiveEngine.Convert(datedZip,"zip",root)[0]))Check(converted.GetEntry("Dated.txt")!.LastWriteTime.DateTime==dated,"Converted ZIP lost its file dates");
     using(var converted=File.OpenRead(ArchiveEngine.Convert(datedZip,"tar",root)[0]))Check(new System.Formats.Tar.TarReader(converted).GetNextEntry()!.ModificationTime.LocalDateTime==dated,"Converted TAR lost its file dates");
     var fake=Path.Combine(root,"fake.zip");File.WriteAllText(fake,"untrusted");
@@ -127,6 +138,15 @@ if(Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG") is {} encoder && En
             Check(paddedInfo.Video is {Width:98,Height:66}&&paddedInfo.Duration>0,"Odd video dimensions could not convert to "+format);
         }
         Check((await engine.InspectAsync(odd)).Video is {Width:97,Height:65},"Odd-dimension conversion changed the source");
+        // A raw ADTS AAC voice memo has no stored length; FFprobe's bitrate guess for 4 s of tone and 6 s of quiet is about 4.5 s.
+        var memo=Path.Combine(directory,"Voice memo.aac");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","sine=frequency=440:duration=4,apad=whole_dur=10","-c:a","aac","-b:a","128k",memo]);
+        Check(Math.Abs((await engine.InspectAsync(memo)).Duration-10)<.1,"A raw AAC file's duration was taken from FFprobe's bitrate guess");
+        var memoEnd=await engine.InspectAsync((await engine.ToolAsync("trimAudio",[memo],directory,new(){Start=1,End=9}))[0]);
+        Check(Math.Abs(memoEnd.Duration-8)<.1,"Trimming a raw AAC file past FFprobe's bitrate guess failed or lost its end");
+        // ADTS headers with no sample rate FFmpeg accepts: FFprobe still guesses a length, while copying the stream fails.
+        var brokenMemo=Path.Combine(directory,"Broken memo.aac");var junk=new Random(7);
+        File.WriteAllBytes(brokenMemo,Enumerable.Range(0,400).SelectMany(_=>new byte[]{0xff,0xf1,0x50,0x80,0x02,0x1f,0xfc}.Concat(Enumerable.Range(0,9).Select(_=>(byte)junk.Next(256)))).ToArray());
+        Check((await engine.InspectAsync(brokenMemo)).Duration>0,"A raw AAC file FFmpeg cannot measure lost FFprobe's estimate");
         // iPhones store location, make, model and capture date as QuickTime keys, which the MP4 and MOV muxer writes only when asked to.
         var iphone=Path.Combine(directory,"IMG_0001.MOV");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","testsrc2=size=128x72:rate=12:duration=0.5","-c:v","libx264","-movflags","use_metadata_tags","-metadata","com.apple.quicktime.location.ISO6709=+35.6895+139.6917+040.000/","-metadata","com.apple.quicktime.make=Apple","-metadata","com.apple.quicktime.model=iPhone 15","-metadata","com.apple.quicktime.creationdate=2026-10-31T12:00:00+0900",iphone]);Check((await FileTags(iphone)).GetValueOrDefault("com.apple.quicktime.model")=="iPhone 15","iPhone fixture lacks its QuickTime keys");
         foreach(var (iphoneFormat,iphoneKeep) in new[]{("mp4",true),("mov",true),("m4v",true),("mkv",true),("mp4",false),("mov",false)})
@@ -184,12 +204,20 @@ if(Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG") is {} encoder && En
         var clips=await engine.ToolAsync("splitVideo",[source],directory,new(){EqualClips=2});Check(clips.Count==2,"Split count wrong");
         foreach(var clip in clips)Check((await engine.InspectAsync(clip)).Duration<1.25,"Split interval wrong");
         var sourceDuration=(await engine.InspectAsync(source)).Duration;var tail=await engine.ToolAsync("splitVideo",[source],directory,new(){SplitInterval=sourceDuration/2-.01});Check(tail.Count==2,"A sub-0.05 s interval remainder failed the split instead of joining the last clip");
+        // Typed points "1; 1" number the clips [0,1], [1,1] and [1,2]: removing clip 2 dropped [1,2] once the repeat was merged (as fixed on macOS).
+        var repeatSplitFolder=Path.Combine(directory,"Repeated split point");try{await engine.ToolAsync("splitVideo",[source],repeatSplitFolder,new(){SplitPoints=[1,1],DiscardedClips=[1]});throw new Exception("A repeated split point removed a different clip than the one chosen");}catch(ArgumentException){checks++;}
+        Check(!Directory.Exists(repeatSplitFolder)||!Directory.EnumerateFileSystemEntries(repeatSplitFolder).Any(),"A rejected split left files behind");
+        var repeatSplitKept=await engine.ToolAsync("splitVideo",[source],repeatSplitFolder,new(){SplitPoints=[1.5,.5],DiscardedClips=[0]});Check(repeatSplitKept.Select(Path.GetFileName).SequenceEqual(new[]{"Source ' $() Part 2.mp4","Source ' $() Part 3.mp4"}),"Unordered split points removed the wrong clip");
         var joined=await engine.ToolAsync("joinVideos",clips,directory,new());Check((await engine.InspectAsync(joined[0])).Duration>1.8,"Join lost content");
-        // White 16:9 clips: DV stored at 720x480 with 32:27 pixels, then square 640x360. Both fit the 720x480 canvas as 720x405 between black bars;
-        // fitting the stored 3:2 frame and then setting square pixels stretched the DV clip over the whole canvas.
+        // White 16:9 clips: DV stored at 720x480 with 32:27 pixels, then square 640x360. The first clip's displayed width sets an 852x480 canvas
+        // that both fill; the stored 720x480 canvas shrank them to 720x405 between black bars (as fixed on macOS). Fitting the stored 3:2 frame
+        // and then setting square pixels would leave the DV clip between side bars.
         var joinDv=Path.Combine(directory,"Join DV.mp4");var joinPhone=Path.Combine(directory,"Join phone.mp4");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","color=white:s=720x480:r=25:d=1,setsar=32/27","-c:v","libx264","-pix_fmt","yuv420p",joinDv]);await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","color=white:s=640x360:r=25:d=1","-c:v","libx264","-pix_fmt","yuv420p",joinPhone]);
-        var joinedShapes=(await engine.ToolAsync("joinVideos",[joinDv,joinPhone],directory,new()))[0];Check((await ProcessRunner.RunAsync(probe,["-v","error","-select_streams","v:0","-show_entries","stream=width,height,sample_aspect_ratio","-of","csv=p=0",joinedShapes])).Output.Trim()=="720,480,1:1","Joined anamorphic video changed its canvas");
-        foreach(var (joinTime,joinY,joinBar) in new[]{("0.5",10,true),("0.5",240,false),("1.5",10,true),("1.5",240,false)}){var joinPixel=$"{joinedShapes} {joinTime} {joinY}.gray";await ProcessRunner.RunAsync(encoder,["-v","error","-ss",joinTime,"-i",joinedShapes,"-frames:v","1","-vf",$"format=gray,crop=1:1:360:{joinY}","-f","rawvideo",joinPixel]);var joinValue=File.ReadAllBytes(joinPixel)[0];Check(joinBar?joinValue<64:joinValue>192,$"Joined clip at {joinTime} s lost its 16:9 shape (row {joinY} is {joinValue})");}
+        var joinedShapes=(await engine.ToolAsync("joinVideos",[joinDv,joinPhone],directory,new()))[0];Check((await ProcessRunner.RunAsync(probe,["-v","error","-select_streams","v:0","-show_entries","stream=width,height,sample_aspect_ratio","-of","csv=p=0",joinedShapes])).Output.Trim()=="852,480,1:1","A joined anamorphic first clip did not set the canvas at its displayed width");
+        foreach(var (joinTime,joinX,joinY) in new[]{("0.5",8,240),("0.5",426,8),("1.5",8,240),("1.5",426,8)}){var joinPixel=$"{joinedShapes} {joinTime} {joinX} {joinY}.gray";await ProcessRunner.RunAsync(encoder,["-v","error","-ss",joinTime,"-i",joinedShapes,"-frames:v","1","-vf",$"format=gray,crop=1:1:{joinX}:{joinY}","-f","rawvideo",joinPixel]);var joinValue=File.ReadAllBytes(joinPixel)[0];Check(joinValue>192,$"Joined clip at {joinTime} s lost its 16:9 shape (pixel {joinX},{joinY} is {joinValue})");}
+        // A 4:3 DV clip (720x480, 8:9 pixels) first gets a 640x480 canvas instead of side bars in a 3:2 frame.
+        var joinDvNarrow=Path.Combine(directory,"Join DV 4x3.mp4");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","color=white:s=720x480:r=25:d=1,setsar=8/9","-c:v","libx264","-pix_fmt","yuv420p",joinDvNarrow]);
+        Check((await ProcessRunner.RunAsync(probe,["-v","error","-select_streams","v:0","-show_entries","stream=width,height","-of","csv=p=0",(await engine.ToolAsync("joinVideos",[joinDvNarrow,joinPhone],directory,new()))[0]])).Output.Trim()=="640,480","A joined 4:3 DV first clip did not set a 640x480 canvas");
         // Live Matroska recordings carry no duration (inspected as 0); "-t 0" encoded an empty clip, so Join dropped them (as fixed on macOS).
         var liveJoinSilent=Path.Combine(directory,"Live join silent.mkv");var liveJoinVoiced=Path.Combine(directory,"Live join voiced.mkv");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","testsrc2=size=128x72:rate=12:duration=2","-c:v","libx264","-live","1",liveJoinSilent]);await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","testsrc2=size=128x72:rate=12:duration=2","-f","lavfi","-i","sine=duration=2:sample_rate=48000","-c:v","libx264","-c:a","aac","-live","1",liveJoinVoiced]);
         Check((await engine.InspectAsync(liveJoinSilent)).Duration==0&&(await engine.InspectAsync(liveJoinVoiced)).Duration==0,"Live Matroska fixtures reported a duration");
@@ -238,6 +266,11 @@ if(Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG") is {} encoder && En
         var surroundOpus=Path.Combine(directory,"Surround source.opus");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","sine=duration=1:sample_rate=48000","-af","aformat=channel_layouts=5.1","-c:a","libopus",surroundOpus]);
         foreach(var (surroundTool,surroundOptions,layout) in new (string,MediaOptions,string)[]{("trimAudio",new(){Start=.25,End=.75},"6,5.1"),("audioChannels",new(){Channels=2},"2,stereo"),("audioChannels",new(){Channels=1},"1,mono")})
             Check(await AudioLayout((await engine.ToolAsync(surroundTool,[surroundOpus],directory,surroundOptions))[0])==layout,"Surround Opus "+surroundTool+" wrote the wrong channels");
+        // Tone 0-1 s, silence 1-2.5 s, tone 2.5-4 s. Trimming 1-3 s with silence removal keeps only 2.5-3 s; output -ss/-t cut after
+        // the filters, so the silence search ran over the whole file and found none at its start or end (as fixed on macOS).
+        var silenceTrimSource=Path.Combine(directory,"Silence trim source.wav");await ProcessRunner.RunAsync(encoder,["-v","error","-filter_complex","sine=duration=1:sample_rate=48000[silenceTrimA];anullsrc=r=48000:cl=mono,atrim=0:1.5[silenceTrimB];sine=duration=1.5:sample_rate=48000[silenceTrimC];[silenceTrimA][silenceTrimB][silenceTrimC]concat=n=3:v=0:a=1","-c:a","pcm_s16le",silenceTrimSource]);
+        foreach(var (silenceTrimOn,silenceTrimLow,silenceTrimHigh) in new[]{(true,.4,.6),(false,1.95,2.05)})
+        {var silenceTrimmed=(await engine.InspectAsync((await engine.ToolAsync("trimAudio",[silenceTrimSource],directory,new(){Start=1,End=3,TrimSilence=silenceTrimOn}))[0])).Duration;Check(silenceTrimmed>silenceTrimLow&&silenceTrimmed<silenceTrimHigh,FormattableString.Invariant($"Trim Audio 1-3 s (silence removal {silenceTrimOn}) kept {silenceTrimmed} s instead of {(silenceTrimLow+silenceTrimHigh)/2} s"));}
         // Edits re-encode WMV audio as two-channel WMA; copies and muted exports keep or drop it unchanged.
         var surroundWmv=Path.Combine(directory,"Surround source.wmv");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","testsrc2=size=128x72:rate=12:duration=1","-f","lavfi","-i","sine=duration=1:sample_rate=48000","-af","aformat=channel_layouts=5.1(side)","-c:v","wmv2","-c:a","pcm_s16le",surroundWmv]);
         foreach(var (surroundTool,surroundOptions,layout) in new (string,MediaOptions,string)[]{("trimVideo",new(){Start=.25,End=.75},"2,unknown"),("cropVideo",new(){Regions=[new(0,0,64,40)]},"2,unknown"),("changeVideoSpeed",new(){Speed=2},"2,unknown"),("redactVideo",new(){Regions=[new(0,0,32,32)]},"2,unknown"),("removeMetadata",new(),"6,5.1(side)"),("muteVideo",new(),"")})
@@ -283,7 +316,10 @@ if(Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG") is {} encoder && En
         }
         var gif=Path.Combine(directory,"Animated.gif");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","testsrc2=size=128x72:rate=12:duration=1",gif]);var gifWebm=await engine.ConvertAsync([gif],"webm",directory,new());Check((await engine.InspectAsync(gifWebm[0])).Video?.Codec=="vp9","GIF to WebM conversion did not produce a VP9 video");
         // GIF viewers ignore a pixel aspect, so DV (32:27), NTSC 4:3 (8:9) and HDV (4:3) frames are resized to their displayed shape; square pixels keep their size.
-        foreach(var (gifSize,gifSar,gifShape) in new[]{("720x480","32/27","720x406"),("720x480","8/9","720x540"),("1440x1080","4/3","960x540"),("128x72","1","128x72")})
+        // GIF has no even-size rule: odd-sized screen recordings keep every pixel instead of being stretched to an even height (as fixed on macOS).
+        foreach(var (oddGifSize,oddGifShape) in new[]{("641x361","641x361"),("97x65","97x65"),("2001x1001","960x480")})
+        {var oddGifSource=Path.Combine(directory,$"Odd GIF source {oddGifSize}.mkv");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i",$"color=white:size={oddGifSize}:rate=5:duration=0.4","-c:v","ffv1",oddGifSource]);var oddGifShaped=(await engine.InspectAsync((await engine.ConvertAsync([oddGifSource],"gif",directory,new()))[0])).Video;Check($"{oddGifShaped?.Width}x{oddGifShaped?.Height}"==oddGifShape,$"A {oddGifSize} video became a {oddGifShaped?.Width}x{oddGifShaped?.Height} GIF instead of {oddGifShape}");}
+        foreach(var (gifSize,gifSar,gifShape) in new[]{("720x480","32/27","720x405"),("720x480","8/9","720x540"),("1440x1080","4/3","960x540"),("128x72","1","128x72")})
         {var gifSource=Path.Combine(directory,$"GIF source {gifSize} {gifSar.Replace('/',' ')}.mp4");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i",$"testsrc2=size={gifSize}:rate=12:duration=0.5,setsar={gifSar}","-c:v","libx264","-pix_fmt","yuv420p",gifSource]);var gifShaped=(await engine.InspectAsync((await engine.ConvertAsync([gifSource],"gif",directory,new()))[0])).Video;Check($"{gifShaped?.Width}x{gifShaped?.Height}"==gifShape,$"A {gifSize} video with {gifSar} pixels became a {gifShaped?.Width}x{gifShaped?.Height} GIF instead of {gifShape}");}
         var portrait=Path.Combine(directory,"Portrait.mp4");
         await ProcessRunner.RunAsync(encoder,["-v","error","-display_rotation:v:0","90","-i",source,"-map","0","-c","copy",portrait]);
@@ -308,7 +344,35 @@ if(Environment.GetEnvironmentVariable("NASHI_VERIFY_DOWNLOAD_TOOLS")=="1"&&Envir
         var tagged=await metadata.WriteAsync([photo],directory,false,new Dictionary<string,string>{{"EXIF:Artist","Nashi fixture"}});
         Check((await metadata.ReadAsync(tagged[0])).GetValueOrDefault("EXIF:Artist")=="Nashi fixture","ExifTool did not write and read back a tag");
         Check(!(await metadata.ReadAsync(photo)).ContainsKey("EXIF:Artist"),"Metadata editing changed the original");
-        Console.WriteLine(JsonSerializer.Serialize(new{passed=checks,scope="Verified ExifTool download, tag write and read back"}));
+
+        // Regression check: Non-ASCII TMP/TEMP, non-ASCII and Turkish file paths, multiline with bare CR, and leading space
+        var prevTmp = Environment.GetEnvironmentVariable("TMP");
+        var prevTemp = Environment.GetEnvironmentVariable("TEMP");
+        var nonAsciiTemp = Path.Combine(directory, "Geçici Dizin ğüşiöç");
+        Directory.CreateDirectory(nonAsciiTemp);
+        Environment.SetEnvironmentVariable("TMP", nonAsciiTemp);
+        Environment.SetEnvironmentVariable("TEMP", nonAsciiTemp);
+        try
+        {
+            var unicodePhoto=Path.Combine(directory,"Vesikalık fotoğraf ğüşiöç ' $().jpg");File.Copy(photo,unicodePhoto);
+            var multilineComment="Satır 1\r\nSatır 2\nSatır 3\rSatır 4 & 'özel' ğüşiöç";
+            var leadingSpaceArtist=" Örnek Sanatçı";
+            var unicodeTagged=await metadata.WriteAsync([unicodePhoto],directory,false,new Dictionary<string,string>
+            {
+                {"EXIF:Artist",leadingSpaceArtist},
+                {"EXIF:UserComment",multilineComment}
+            });
+            var readBack=await metadata.ReadAsync(unicodeTagged[0]);
+            Check(readBack.GetValueOrDefault("EXIF:Artist")==leadingSpaceArtist,"ExifTool did not preserve leading space or non-ASCII tag and path");
+            Check(readBack.GetValueOrDefault("EXIF:UserComment")==multilineComment,"ExifTool multiline comment mismatch");
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("TMP", prevTmp);
+            Environment.SetEnvironmentVariable("TEMP", prevTemp);
+        }
+
+        Console.WriteLine(JsonSerializer.Serialize(new{passed=checks,scope="Verified ExifTool download, non-ASCII path, multiline and leading space tag write/read back"}));
     }
     finally{Directory.Delete(directory,true);}
 }

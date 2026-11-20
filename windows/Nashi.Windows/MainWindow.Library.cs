@@ -21,9 +21,11 @@ public sealed partial class MainWindow
     }
     private void OfferFirstRunTools()
     {
-        if(toolSetupOffered || busy || tools.Ready && officeRuntime.Executable is not null)return;
-        toolSetupOffered=true;ShowToolSetupMenu();
+        if(toolSetupOffered || preferences.Value.ToolsPromptSeen || busy || tools.Ready && officeRuntime.Executable is not null)return;
+        toolSetupOffered=true;RememberToolsPrompt();ShowToolSetupMenu();
     }
+    // The offer opens by itself once; "Finish setup" and Settings stay available afterwards.
+    private void RememberToolsPrompt(){try{preferences.Save(preferences.Value with{ToolsPromptSeen=true});}catch(Exception error)when(error is IOException or UnauthorizedAccessException or ArgumentException){}}
     private void BuildFileChips()
     {
         list.ItemsSource=files;list.SelectionMode=SelectionMode.Extended;var wrap=new FrameworkElementFactory(typeof(WrapPanel));list.ItemsPanel=new ItemsPanelTemplate(wrap);

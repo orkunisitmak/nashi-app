@@ -113,4 +113,11 @@ final class DocumentAuditRegressionTests: XCTestCase {
         let back = try fixture("Reserved.vtt", data: Data(vtt.utf8))
         XCTAssertTrue(try SubtitleCodec.convert(back, to: "srt", token: .init()).hasSuffix("< y, I <3 you\nNext --> stop\n"))
     }
+
+    func testOutOfOrderSubtitleCuesAreWrittenInStartTimeOrder() throws {
+        let source = "1\n00:00:05,000 --> 00:00:06,000\nThird\n\n2\n00:00:01,000 --> 00:00:09,000\nFirst\n\n3\n00:00:01,000 --> 00:00:02,000\nSecond\n"
+        let input = try fixture("Shuffled.srt", data: Data(source.utf8))
+        XCTAssertEqual(try SubtitleCodec.convert(input, to: "vtt", token: .init()), "WEBVTT\n\n00:00:01.000 --> 00:00:09.000\nFirst\n\n00:00:01.000 --> 00:00:02.000\nSecond\n\n00:00:05.000 --> 00:00:06.000\nThird\n")
+        XCTAssertEqual(try SubtitleCodec.convert(input, to: "txt", token: .init()), "First\n\nSecond\n\nThird\n")
+    }
 }

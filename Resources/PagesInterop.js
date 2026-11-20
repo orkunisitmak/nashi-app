@@ -53,11 +53,19 @@ var NashiPages = (() => {
   if (typeof globalThis.TextDecoder !== "function") {
     globalThis.TextDecoder = class {
       constructor(label = "utf-8") {
-        if (!/^utf-?8$/i.test(label)) throw new Error("Only UTF-8 text is supported.");
+        this.latin1 = /^(latin1|l1|iso-?8859-1|iso_8859-1|ascii|us-ascii|windows-1252|cp1252)$/i.test(String(label).trim());
+        if (!this.latin1 && !/^utf-?8$/i.test(label)) throw new Error("Only UTF-8 text is supported.");
       }
       decode(bytes2 = new Uint8Array()) {
+        const view = bytes2 instanceof ArrayBuffer ? new Uint8Array(bytes2) : ArrayBuffer.isView(bytes2) ? new Uint8Array(bytes2.buffer, bytes2.byteOffset, bytes2.byteLength) : null;
+        if (!view) throw new TypeError("TextDecoder requires a buffer or buffer view.");
         let binary = "";
-        for (let i = 0; i < bytes2.length; i += 8192) binary += String.fromCharCode(...bytes2.subarray(i, i + 8192));
+        if (this.latin1) {
+          const high = "\u20AC\x81\u201A\u0192\u201E\u2026\u2020\u2021\u02C6\u2030\u0160\u2039\u0152\x8D\u017D\x8F\x90\u2018\u2019\u201C\u201D\u2022\u2013\u2014\u02DC\u2122\u0161\u203A\u0153\x9D\u017E\u0178";
+          for (let i = 0; i < view.length; i += 8192) binary += String.fromCharCode(...view.subarray(i, i + 8192));
+          return binary.replace(/[\x80-\x9F]/g, (character2) => high[character2.charCodeAt(0) - 128]);
+        }
+        for (let i = 0; i < view.length; i += 8192) binary += String.fromCharCode(...view.subarray(i, i + 8192));
         return _nashiUTF8Decode(btoa(binary));
       }
     };
@@ -20299,6 +20307,11 @@ ${text}`;
     const allowed = ["bold", "italic", "fontSize", "fontName", "fontColor", "backgroundColor", "underline", "strikethru", "superscript", "tracking", "baselineShift", "language"];
     return Object.fromEntries(allowed.filter((key) => value[key] !== void 0).map((key) => [key, value[key]]));
   }
+  function writeCharacter(value) {
+    const result = character(value);
+    if (result.superscript === -1) result.superscript = 2;
+    return result;
+  }
   function paragraphStyle(value = {}) {
     const allowed = ["alignment", "spaceBefore", "spaceAfter", "firstLineIndent", "leftIndent", "rightIndent", "lineSpacing", "keepLinesTogether", "keepWithNext", "pageBreakBefore", "widowControl"];
     return Object.fromEntries(allowed.filter((key) => value[key] !== void 0).map((key) => [key, value[key]]));
@@ -20307,7 +20320,7 @@ ${text}`;
     check();
     const model = JSON.parse(json);
     if (!Array.isArray(model.blocks)) throw new Error("Missing document content.");
-    const document = model.blocks.some((block) => block.type === "table") ? PagesDocument.load(table_seed_default) : PagesDocument.blank();
+    const document = model.blocks.some((block) => block.type === "table") || model.header || model.footer ? PagesDocument.load(table_seed_default) : PagesDocument.blank();
     document.body.setText("");
     for (const section of document.sections()) {
       section.setHeaderText("");
@@ -20319,6 +20332,8 @@ ${text}`;
     const bodyStyle = document.stylesheet.style("Body") ?? document.stylesheet.style("Normal") ?? document.stylesheet.styles().find((style) => style.type === 2022);
     const baseId = typeof bodyStyle?.id === "bigint" ? bodyStyle.id : void 0;
     let ordinal = 0;
+    const links = [];
+    const tableSource = document.tables().find((table) => table.infoObject !== void 0)?.infoObject?.identifier;
     const appendParagraph = (block) => {
       check();
       const runs = block.runs ?? [{ text: block.text ?? "" }];
@@ -20327,9 +20342,10 @@ ${text}`;
       const style = document.stylesheet.createParagraphStyle({
         name: `Converted paragraph ${++ordinal}`,
         basedOn: baseId,
-        character: { fontName: "Helvetica", fontSize: 12, ...character(block.character) },
+        character: { fontName: "Helvetica", fontSize: 12, ...writeCharacter(block.character) },
         paragraph: paragraphStyle(block.paragraph)
       });
+      if (!text && document.bodyText && !document.bodyText.endsWith("\n")) document.appendParagraph("");
       const index = document.appendParagraph(text, style);
       let offset = document.paragraphs()[index]?.start ?? start;
       for (const run of runs) {
@@ -20341,8 +20357,8 @@ ${text}`;
           offset++;
         } else {
           const length = (run.text ?? "").length;
-          if (length && run.character && Object.keys(run.character).length) document.applyCharacterFormatting(offset, offset + length, character(run.character));
-          if (length && run.link) document.insertLink(offset, offset + length, run.link);
+          if (length && run.character && Object.keys(run.character).length) document.applyCharacterFormatting(offset, offset + length, writeCharacter(run.character));
+          if (length && run.link) links.push([offset, offset + length, run.link]);
           offset += length;
         }
       }
@@ -20358,7 +20374,8 @@ ${text}`;
       if (rowCount * columnCount > 1e5) throw new Error("The table is too large.");
       appendParagraph({ runs: [] });
       const pos = document.bodyText.length - 1;
-      const table = document.insertInlineTable(Math.max(0, pos), { withContent: false, name: `Table ${ordinal}` });
+      const table = document.insertInlineTable(Math.max(0, pos), { withContent: false, name: `Table ${ordinal}`, copyOf: tableSource });
+      if (table.rowCount > 1 && table.cellStyleId(0, 0) !== table.cellStyleId(1, 0)) table.deleteRows(0, 1);
       if (table.rowCount < rowCount) table.insertRows(table.rowCount, rowCount - table.rowCount);
       if (table.rowCount > rowCount) table.deleteRows(rowCount, table.rowCount - rowCount);
       if (table.columnCount < columnCount) table.insertColumns(table.columnCount, columnCount - table.columnCount);
@@ -20375,8 +20392,16 @@ ${text}`;
         if (index < columnCount && width > 0) table.setColumnWidth(index, width);
       });
       else for (let column = 0; column < columnCount; column++) table.setColumnWidth(column, (block.width ?? 480) / columnCount);
-      for (const merge of block.merges ?? []) if (merge.row + merge.rowCount <= rowCount && merge.column + merge.columnCount <= columnCount) table.mergeCells(merge.row, merge.column, merge.rowCount, merge.columnCount);
+      const merged = [];
+      for (const merge of block.merges ?? []) {
+        check();
+        if (!(merge.row + merge.rowCount <= rowCount && merge.column + merge.columnCount <= columnCount)) continue;
+        if (merged.some((other) => merge.row < other.row + other.rowCount && other.row < merge.row + merge.rowCount && merge.column < other.column + other.columnCount && other.column < merge.column + merge.columnCount)) continue;
+        table.mergeCells(merge.row, merge.column, merge.rowCount, merge.columnCount);
+        merged.push(merge);
+      }
     }
+    for (const [start, end, url] of links) document.insertLink(start, end, url);
     check();
     const data = document.save();
     check();
@@ -20396,7 +20421,15 @@ ${text}`;
       if (!raw) return { text: image.accessibilityDescription ?? "" };
       return { type: "image", data: base64(raw), fileName: image.fileName ?? "image.png", width: geometry.width, height: geometry.height, alt: image.accessibilityDescription };
     };
-    const tableBlock = (table) => ({ type: "table", headerRows: table.headerRowCount, merges: table.merges(), columnWidths: Array.from({ length: table.columnCount }, (_, column) => table.columnWidth(column)), rows: Array.from({ length: table.rowCount }, (_, row) => Array.from({ length: table.columnCount }, (_2, column) => ({ text: table.cellText(row, column), formatting: table.cellFormatting(row, column) }))) });
+    const tableBlock = (table) => {
+      const values = /* @__PURE__ */ new Map();
+      for (const cell of table.cells()) {
+        const key = `${cell.row},${cell.column}`;
+        if (!values.has(key)) values.set(key, cell.value);
+      }
+      table.cellValue = (row, column) => values.get(`${row},${column}`);
+      return { type: "table", headerRows: table.headerRowCount, merges: table.merges(), columnWidths: Array.from({ length: table.columnCount }, (_, column) => table.columnWidth(column)), rows: Array.from({ length: table.rowCount }, (_, row) => Array.from({ length: table.columnCount }, (_2, column) => ({ text: table.cellText(row, column), formatting: table.cellFormatting(row, column) }))) };
+    };
     const storageBlocks = (storage) => {
       const result = [];
       const sheetObject = storage.stylesheetId !== void 0 ? document.object(storage.stylesheetId) : void 0;
@@ -20405,7 +20438,9 @@ ${text}`;
       for (const paragraph of storage.paragraphs()) {
         check();
         const style = paragraph.styleId !== void 0 ? stylesheet.style(paragraph.styleId)?.resolved() ?? {} : {};
-        let block = { type: "paragraph", paragraph: style.paragraph ?? {}, character: character(style.character), runs: [] };
+        const pageBreak = [12, 4].includes(storage.text.charCodeAt(paragraph.start - 1));
+        let breakPending = pageBreak;
+        let block = { type: "paragraph", paragraph: pageBreak ? { ...style.paragraph, pageBreakBefore: true } : style.paragraph ?? {}, character: character(style.character), runs: [] };
         const stops = /* @__PURE__ */ new Set([paragraph.start, paragraph.end]);
         for (const run of styleRuns) {
           if (run.start > paragraph.start && run.start < paragraph.end) stops.add(run.start);
@@ -20428,7 +20463,8 @@ ${text}`;
             used.add(id);
             if (images.has(id)) block.runs.push(imageRun(images.get(id)));
             else if (tables.has(id)) {
-              if (block.runs.length) result.push(block);
+              if (block.runs.length || breakPending) result.push(block);
+              breakPending = false;
               result.push(tableBlock(tables.get(id)));
               block = { type: "paragraph", paragraph: style.paragraph ?? {}, character: character(style.character), runs: [] };
             }

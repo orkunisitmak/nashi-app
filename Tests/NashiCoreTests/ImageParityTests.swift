@@ -229,6 +229,22 @@ final class ImageParityTests: XCTestCase {
         XCTAssertThrowsError(try ImageEngine.compress(input,options:options,token:.init()))
     }
 
+    func testCompressKeepsHEIFInputsInHEIFLikeHEIC() throws {
+        let folder=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:folder) }
+        let heic=folder.appendingPathComponent("photo.heic");try ImageEngine.write(canvas(),to:heic,quality:0.9)
+        func type(_ url:URL)->String? { CGImageSourceCreateWithURL(url as CFURL,nil).flatMap { CGImageSourceGetType($0) as String? } }
+        guard type(heic)=="public.heic" else { throw XCTSkip("HEIC encoding is unavailable on this Mac.") }
+        // The catalog offers Compress for .heif as an alias of .heic.
+        let heif=folder.appendingPathComponent("photo.heif");try FileManager.default.copyItem(at:heic,to:heif)
+        XCTAssertTrue(FeatureCatalog.tools(for:[heif]).contains(.compress))
+        var options=OperationOptions();options.outputDirectory=folder.appendingPathComponent("out")
+        for input in [heic,heif] {
+            let output=try XCTUnwrap(ConversionEngine.run(ConversionRequest(inputs:[input],operation:.tool(.compress),options:options)).first)
+            XCTAssertEqual(output.pathExtension,input.pathExtension)
+            XCTAssertTrue(["public.heic","public.heif"].contains(type(output) ?? ""),"\(output.lastPathComponent) is \(type(output) ?? "unreadable")")
+        }
+    }
+
     func testRemovingOrientationMetadataPreservesDisplayedDimensions() throws {
         let folder=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:folder) }
         let input=folder.appendingPathComponent("rotated.jpg")

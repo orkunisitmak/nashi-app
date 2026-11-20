@@ -19,7 +19,9 @@ enum PDFOfficeCodec {
         try token.check()
         let bounds = crop ?? visualBounds(page)
         let scale = CGFloat(max(36, min(600, dpi))) / 72
-        let width = max(1, Int(ceil(bounds.width * scale))), height = max(1, Int(ceil(bounds.height * scale)))
+        // Check the size before Int conversion: a huge or non-finite page box traps there.
+        let w = ceil(bounds.width * scale), h = ceil(bounds.height * scale)
+        let width = w.isFinite && w <= 32000 ? max(1, Int(w)) : .max, height = h.isFinite && h <= 32000 ? max(1, Int(h)) : .max
         guard width <= 32000, height <= 32000, let cgPage = page.pageRef,
               let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else {
             throw NashiError.failed("The PDF page is too large to render at this resolution.")
@@ -156,7 +158,9 @@ enum PDFOfficeCodec {
                     values[column] += (values[column].isEmpty ? "" : " ") + cell.text
                 }
                 table += "<table:table-row>" + values.map { value in
-                    if value.range(of: #"^-?(?:0|[1-9]\d*)(?:\.\d+)?$"#, options: .regularExpression) != nil, Double(value) != nil {
+                    // Only 15 significant digits survive a spreadsheet's binary64
+                    // value; longer digit runs (IDs, account numbers) stay text.
+                    if value.range(of: #"^-?(?:0|[1-9]\d*)(?:\.\d+)?$"#, options: .regularExpression) != nil, value.filter(\.isWholeNumber).count <= 15, Double(value) != nil {
                         return "<table:table-cell office:value-type=\"float\" office:value=\"\(value)\"><text:p>\(value)</text:p></table:table-cell>"
                     }
                     return "<table:table-cell office:value-type=\"string\"><text:p>\(DocumentText.escapeXML(value))</text:p></table:table-cell>"
@@ -175,6 +179,9 @@ enum PDFOfficeCodec {
     private static func positionedCells(_ page: PDFPage, token: CancellationToken) throws -> [TextCell] {
         guard let string = page.string, !string.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return try recognizedCells(page, token: token) }
         let ns = string as NSString
+        // Selections are in unrotated page space; rows and columns are read
+        // from the page as displayed, so map them through the page rotation.
+        let displayed = page.transform(for: .mediaBox)
         var characters: [TextCell] = []
         var index = 0
         while index < ns.length {
@@ -184,7 +191,7 @@ enum PDFOfficeCodec {
             index = NSMaxRange(range)
             if value == "\n" || value == "\r" { continue }
             guard let selection = page.selection(for: range) else { continue }
-            let bounds = selection.bounds(for: page)
+            let bounds = selection.bounds(for: page).applying(displayed).standardized
             guard bounds.width > 0, bounds.height > 0, !bounds.isInfinite, !bounds.isNull else { continue }
             characters.append(.init(text: value, rect: bounds))
         }

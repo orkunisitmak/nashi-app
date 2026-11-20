@@ -259,6 +259,25 @@ final class GitHubUpdateTransportTests: XCTestCase {
         XCTAssertThrowsError(try bridge.archiveURL(for: URL(string: "https://api.github.com/repos/example/nashi/releases/assets/42")!))
     }
 
+    func testConsumerDisconnectCancelsTheInFlightUpstreamRequest() async throws {
+        let started = expectation(description: "Upstream asset lookup started")
+        let stopped = expectation(description: "Upstream asset lookup cancelled")
+        let client = try client { _ in
+            .init(headers: ["Content-Length": "64"], chunks: [], keepOpen: true,
+                  onStart: { started.fulfill() }, onStop: { stopped.fulfill() })
+        }
+        let bridge = GitHubUpdateBridge(client: client, appcast: feed)
+        _ = try await bridge.start(); defer { bridge.stop() }
+        let url = try bridge.archiveURL(for: URL(string: "https://api.github.com/repos/example/nashi/releases/assets/42")!)
+        let session = session()
+        let download = session.dataTask(with: url) { _, _, _ in }
+        download.resume()
+        await fulfillment(of: [started], timeout: 5)
+        // The bridge stays running: only the loopback consumer goes away.
+        download.cancel(); session.invalidateAndCancel()
+        await fulfillment(of: [stopped], timeout: 5)
+    }
+
     func testEarlyArchiveEOFDoesNotReturnATruncatedSuccess() async throws {
         let client = try client { request in
             if request.value(forHTTPHeaderField: "Accept") == "application/vnd.github+json" {
@@ -272,6 +291,29 @@ final class GitHubUpdateTransportTests: XCTestCase {
         let session = session(); defer { session.invalidateAndCancel() }
         do { _ = try await session.data(from: url); XCTFail("The advertised archive length was not received.") }
         catch { /* A closed response before Content-Length is complete must fail the consumer. */ }
+    }
+
+    func testArchiveIsNotCompletedBeforeTheUpstreamBodyEnds() async throws {
+        let client = try client { request in
+            if request.value(forHTTPHeaderField: "Accept") == "application/vnd.github+json" {
+                return .init(body: try self.json(self.asset(1024)))
+            }
+            // Exactly the advertised size, but the body may still grow past it.
+            return .init(headers: ["Content-Length": "1027"], chunks: [Data(repeating: 1, count: 1024)], keepOpen: true)
+        }
+        let bridge = GitHubUpdateBridge(client: client, appcast: feed)
+        _ = try await bridge.start(); defer { bridge.stop() }
+        let url = try bridge.archiveURL(for: URL(string: "https://api.github.com/repos/example/nashi/releases/assets/42")!)
+        let session = session(); defer { session.invalidateAndCancel() }
+        let completed = expectation(description: "Archive completed before the upstream body ended")
+        completed.isInverted = true
+        let failed = expectation(description: "Archive failed when the upstream body never ended")
+        session.dataTask(with: url) { _, _, error in
+            if error == nil { completed.fulfill() } else { failed.fulfill() }
+        }.resume()
+        await fulfillment(of: [completed], timeout: 1)
+        bridge.stop()
+        await fulfillment(of: [failed], timeout: 5)
     }
 }
 
