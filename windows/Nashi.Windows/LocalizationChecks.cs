@@ -35,7 +35,7 @@ internal static class LocalizationChecks
             L10n.Language="en";settings.Show();editor.Show();DesktopInput.Pump();
             editor.FieldForTest("Width").Text="123";
             var language=Children(settings).OfType<ComboBox>().Single(c=>AutomationProperties.GetAutomationId(c)=="AppLanguage");
-            language.Focus();DesktopInput.Key(settings,Key.End);DesktopInput.Pump();
+            language.Focus();DesktopInput.Key(settings,Key.Down);DesktopInput.Pump();   // English → Türkçe (Français follows it)
             check(prefs.Value.Language=="tr"&&new PreferencesStore(Path.Combine(directory,"Language profile")).Value.Language=="tr","Turkish setting did not persist through a real picker selection");
             check(Children(settings).OfType<TextBlock>().Any(t=>t.Text=="Dil"),"Settings language label did not update live");
             check(Children(owner).OfType<Button>().Any(b=>b.Content as string=="Ana Sayfa"),"Open Home buttons did not switch to Turkish");
@@ -45,6 +45,13 @@ internal static class LocalizationChecks
             check(Children(editor).OfType<TextBlock>().Any(t=>t.Text=="Görseli Kırp"),"Open crop editor did not switch language");
             check(editor.FieldForTest("Width").Text=="123","Language switch reset an unsaved editor value");
             check(language.SelectedItem as string=="Türkçe","Language picker did not retain the Turkish autonym");
+            // Next entry in the picker: Français keeps the unsaved editor value and persists, then back to Türkçe for the checks below.
+            language.Focus();DesktopInput.Key(settings,Key.Down);DesktopInput.Pump();
+            check(prefs.Value.Language=="fr"&&new PreferencesStore(Path.Combine(directory,"Language profile")).Value.Language=="fr","French setting did not persist through a real picker selection");
+            check(Children(settings).OfType<TextBlock>().Any(t=>t.Text=="Langue")&&Children(owner).OfType<Button>().Any(b=>b.Content as string=="Accueil"),"Settings and Home did not switch to French");
+            check(editor.FieldForTest("Width").Text=="123"&&language.SelectedItem as string=="Français","French switch reset an unsaved editor value or lost the autonym");
+            language.Focus();DesktopInput.Key(settings,Key.Up);DesktopInput.Pump();
+            check(prefs.Value.Language=="tr","Picker did not return to Turkish");
             var raw=new TextBox{Text="Home\r\nLibrary · Türkçe ıİşğü 🍐"};L10n.Attach(raw);
             check(raw.Text=="Home\r\nLibrary · Türkçe ıİşğü 🍐","Localization modified user text");
             Capture(settings,Path.Combine(directory,"windows-settings-turkish.png"));

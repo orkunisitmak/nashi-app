@@ -10,7 +10,7 @@
     <PackageReference Include="PdfPig" Version="0.1.16" />
   </ItemGroup>
   <ItemGroup><EmbeddedResource Include="../../Resources/FeatureCatalog.json" LogicalName="Nashi.FeatureCatalog.json" /></ItemGroup>
-  <ItemGroup><EmbeddedResource Include="../../Sources/NashiCore/Resources/Turkish.json" LogicalName="Nashi.Turkish.json" /></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="../../Sources/NashiCore/Resources/Turkish.json" LogicalName="Nashi.Turkish.json" /><EmbeddedResource Include="../../Sources/NashiCore/Resources/French.json" LogicalName="Nashi.French.json" /></ItemGroup>
   <ItemGroup><EmbeddedResource Include="../../Sources/NashiCore/Resources/LatinWords.json" LogicalName="Nashi.LatinWords.json" /></ItemGroup>
   <ItemGroup><InternalsVisibleTo Include="Nashi.Verify" /></ItemGroup>
 </Project>

@@ -21,9 +21,9 @@ public sealed partial class SettingsWindow:Window
     private void LanguagePicker()
     {
         page.Children.Add(L10n.Label(new TextBlock{Text="Language",Margin=new(4,12,4,0)}));
-        var language=new ComboBox{ItemsSource=new[]{"English","Türkçe"},SelectedIndex=store.Value.Language=="tr"?1:0};
+        string[] codes=["en","tr","fr"];var language=new ComboBox{ItemsSource=new[]{"English","Türkçe","Français"},SelectedIndex=Math.Max(0,Array.IndexOf(codes,store.Value.Language))};
         System.Windows.Automation.AutomationProperties.SetAutomationId(language,"AppLanguage");
-        language.SelectionChanged+=(_,_)=>Save(store.Value with{Language=language.SelectedIndex==1?"tr":"en"});page.Children.Add(language);
+        language.SelectionChanged+=(_,_)=>Save(store.Value with{Language=codes[Math.Max(0,language.SelectedIndex)]});page.Children.Add(language);
     }
     private void ShowSection(Func<Task> update)
     {
