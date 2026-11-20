@@ -64,4 +64,22 @@ final class OutputFilesMoveTests:XCTestCase {
         XCTAssertThrowsError(try OutputFiles.move(root.appendingPathComponent("Missing.txt"),into:destination))
         XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath:destination.path),[])
     }
+
+    func testRelocatedFollowsAMovedFolderByWholeComponents() {
+        let moved=["/src/Report - Pages":"/dest/Report - Pages 2","/src/Photo.jpg":"/dest/Photo.jpg"]
+        XCTAssertEqual(OutputFiles.relocated("/src/Photo.jpg",moved:moved),"/dest/Photo.jpg")
+        XCTAssertEqual(OutputFiles.relocated("/src/Report - Pages",moved:moved),"/dest/Report - Pages 2")
+        XCTAssertEqual(OutputFiles.relocated("/src/Report - Pages/Sub/1.pdf",moved:moved),"/dest/Report - Pages 2/Sub/1.pdf")
+        XCTAssertEqual(OutputFiles.relocated("/src/Report - Pagesx/1.pdf",moved:moved),"/src/Report - Pagesx/1.pdf")
+        XCTAssertEqual(OutputFiles.relocated("/other/1.pdf",moved:moved),"/other/1.pdf")
+    }
+
+    func testRelocatedPrefersTheInnermostMovedFolder() {
+        // One Move of /src/A/B and /src/A puts them side by side; more sources vary the dictionary's order.
+        var moved=["/src/A":"/dest/A","/src/A/B":"/dest/B","/src/A/B/C":"/dest/C"]
+        for index in 0..<32 { moved["/src/Other \(index)"]="/dest/Other \(index)" }
+        XCTAssertEqual(OutputFiles.relocated("/src/A/B/file.pdf",moved:moved),"/dest/B/file.pdf")
+        XCTAssertEqual(OutputFiles.relocated("/src/A/B/C/file.pdf",moved:moved),"/dest/C/file.pdf")
+        XCTAssertEqual(OutputFiles.relocated("/src/A/file.pdf",moved:moved),"/dest/A/file.pdf")
+    }
 }
