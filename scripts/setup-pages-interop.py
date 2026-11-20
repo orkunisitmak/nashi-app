@@ -29,7 +29,14 @@ def acquire(item):
     data = target.read_bytes() if target.exists() else urllib.request.urlopen(item["url"], timeout=90).read()
     if hashlib.sha256(data).hexdigest() != item["sha256"]:
         raise RuntimeError("Digest mismatch: " + item["name"])
-    target.write_bytes(data)
+    # Replace atomically so an interrupted write never leaves a truncated cache.
+    temporary = target.with_name(target.name + ".download")
+    try:
+        temporary.write_bytes(data)
+        os.replace(temporary, target)
+    except BaseException:
+        temporary.unlink(missing_ok=True)
+        raise
     if "directory" in item:
         destination = WORK / item["directory"]
         destination.mkdir(parents=True, exist_ok=True)

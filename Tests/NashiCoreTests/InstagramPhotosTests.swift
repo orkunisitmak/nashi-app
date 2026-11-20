@@ -54,7 +54,8 @@ final class InstagramPhotosTests:XCTestCase {
                 _=try await WebDownloadEngine.download(info,mode:.original,maximumHeight:nil,destination:destination,selectedPhotos:selection,progress:{_,_ in})
                 XCTFail("An invalid photo selection must not start a download")
             } catch {}
-            XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath:destination.path),[])
+            // Not even the destination folder the failed download created is left.
+            XCTAssertFalse(FileManager.default.fileExists(atPath:destination.path))
         }
     }
     func testOptInRealCarouselDownloadsEveryPhotoInOrder() async throws {

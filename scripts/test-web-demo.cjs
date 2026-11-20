@@ -6,6 +6,22 @@ const fs=require('node:fs/promises');
 const path=require('node:path');
 const base=process.argv[2]||'http://127.0.0.1:8771';
 const output=process.env.NASHI_WEB_TEST_OUTPUT||'build/web-demo-proof';
+const catalog=require('../docs/assets/catalog.json');
+// The wheel pages nine options at a time, so a wide input such as MP4 with 11
+// targets needs the "More options" button before every target is visible.
+const countWheelOptions=async page=>{
+ let total=0;const pages=new Set();
+ for(;;){
+  const labels=await page.locator('.wheel-option').allTextContents(),signature=labels.join('\u0000');
+  if(pages.has(signature))break;
+  pages.add(signature);total+=labels.length;
+  const more=page.locator('.demo-wheel .wheel-page');
+  if(!await more.count())break;
+  await more.click();
+  await page.waitForFunction(previous=>[...document.querySelectorAll('.wheel-option')].map(o=>o.textContent).join('\u0000')!==previous,signature);
+ }
+ return total;
+};
 const ids=['compress','removeMetadata','editImage','annotateImage','frameImage','cropImage','normalizeAudio','muteVideo','trimVideo','splitPDF','organizePDF','extractArchive','createPDF','mergePDF','cropVideo','changeVideoSpeed','joinVideos','videoSnapshots','splitVideo','audioToVideo','trimAudio','audioChannels','createCollage','redactImage','redactVideo','redactAudio','readQRCode'];
 (async()=>{
  await fs.mkdir(output,{recursive:true});
@@ -25,7 +41,7 @@ const ids=['compress','removeMetadata','editImage','annotateImage','frameImage',
   await page.locator('#playground').scrollIntoViewIfNeeded();const r=await page.locator('.demo-file').first().boundingBox();await page.mouse.move(r.x+r.width/2,r.y+40);await page.mouse.down();await page.mouse.move(r.x+r.width/2+10,r.y+45,{steps:5});await page.keyboard.press('Shift');const option=page.getByRole('menuitem',{name:'PNG',exact:true});const p=await option.boundingBox();await page.mouse.move(p.x+p.width/2,p.y+p.height/2,{steps:12});await page.mouse.up();await page.waitForFunction(()=>Number(document.querySelector('#library-count').textContent)>0);assert.equal(await page.locator('.demo-wheel').count(),0);
   await page.locator('#demo-library').click();const link=page.getByRole('link',{name:'Dosyayı kaydet ↓'}).first();const url=await link.getAttribute('href');const header=await page.evaluate(async u=>[...new Uint8Array(await(await fetch(u)).arrayBuffer())].slice(0,8),url);assert.deepEqual(header,[137,80,78,71,13,10,26,10]);await page.locator('.close-editor').click();
  });
- await test('All 46 sample inputs expose all 276 catalog conversion routes',async()=>{let routes=0,inputs=0;for(const g of ['image','video','audio','pdf','document','sheet','slides','epub','subtitle','archive']){await page.locator(`[data-group="${g}"]`).click();for(const ext of await page.locator('.sample-format-row option').evaluateAll(os=>os.map(o=>o.value))){await page.getByLabel('Örnek girdi biçimi').selectOption(ext);await page.locator('[data-mode="convert"]').click();const count=await page.locator('.wheel-option').count();assert.ok(count>0,ext);routes+=count;inputs++;await page.keyboard.press('Escape');}}assert.equal(inputs,46);assert.equal(routes,276);});
+ await test(`All 46 sample inputs expose every catalog conversion route (${Object.values(catalog.conversionMatrix).reduce((total,rows)=>total+rows.length,0)})`,async()=>{let routes=0,inputs=0;for(const g of ['image','video','audio','pdf','document','sheet','slides','epub','subtitle','archive']){await page.locator(`[data-group="${g}"]`).click();for(const ext of await page.locator('.sample-format-row option').evaluateAll(os=>os.map(o=>o.value))){await page.getByLabel('Örnek girdi biçimi').selectOption(ext);await page.locator('[data-mode="convert"]').click();const count=await countWheelOptions(page),expected=catalog.conversionMatrix[ext].length;assert.equal(count,expected,`${ext} shows ${count} options, the catalog lists ${expected}`);assert.ok(count>0,ext);routes+=count;inputs++;await page.keyboard.press('Escape');}}assert.equal(inputs,46);assert.equal(routes,Object.values(catalog.conversionMatrix).reduce((total,rows)=>total+rows.length,0));});
  await test('Multiple PDFs use the batch tool wheel including Merge PDFs',async()=>{await page.locator('[data-group="pdf"]').click();await page.locator('.demo-file').nth(1).click({modifiers:['Shift']});await page.locator('[data-mode="tools"]').click();assert.ok(await page.getByRole('menuitem',{name:"PDF'leri Birleştir",exact:true}).isVisible());const wheel=await page.locator('.demo-wheel').boundingBox(),center=await page.locator('.demo-wheel .wheel-center').boundingBox();assert.ok(Math.abs(center.x+center.width/2-wheel.x-wheel.width/2)<1);assert.ok(Math.abs(center.y+center.height/2-wheel.y-wheel.height/2)<1);assert.ok(!(await page.getByRole('menuitem',{name:"PDF'yi Düzenle",exact:true}).count()));await page.keyboard.press('Escape');});
  await test('Crop drag + Shift exports a square with real pixel dimensions',async()=>{await openTool('cropImage');const canvas=page.locator('dialog canvas'),r=await canvas.boundingBox();await page.mouse.move(r.x+r.width*.04,r.y+r.height*.05);await page.mouse.down();await page.keyboard.down('Shift');await page.mouse.move(r.x+r.width*.35,r.y+r.height*.55,{steps:12});await page.mouse.up();await page.keyboard.up('Shift');const dimensions=await page.locator('.editor-dialog-status').textContent();const nums=dimensions.match(/\d+/g).map(Number);assert.ok(Math.abs(nums[0]-nums[1])<=1,dimensions);await canvas.press('Enter');await page.locator('dialog').waitFor({state:'detached'});await page.locator('#demo-library').click();const u=await page.locator('.library-item a').first().getAttribute('href');const actual=await page.evaluate(async u=>{const b=await createImageBitmap(await(await fetch(u)).blob());return[b.width,b.height];},u);assert.ok(Math.abs(actual[0]-actual[1])<=1,actual);await page.locator('.close-editor').click();});
  await test('Annotation has exactly one active tool and Undo affects the export',async()=>{await openTool('annotateImage');await page.locator('[data-draw-tool="rectangle"]').click();assert.equal(await page.locator('[data-draw-tool][aria-pressed="true"]').count(),1);const r=await page.locator('dialog canvas').boundingBox();await page.mouse.move(r.x+30,r.y+30);await page.mouse.down();await page.mouse.move(r.x+160,r.y+120,{steps:8});await page.mouse.up();const before=await page.locator('dialog canvas').evaluate(c=>c.toDataURL());await page.getByRole('button',{name:'Son çizimi geri al',exact:true}).click();const after=await page.locator('dialog canvas').evaluate(c=>c.toDataURL());assert.notEqual(before,after);await page.locator('.close-editor').click();});
@@ -35,10 +51,114 @@ const ids=['compress','removeMetadata','editImage','annotateImage','frameImage',
  await test('Real audio trim exports WAV with the selected duration',async()=>{await openTool('trimAudio');await page.getByLabel('Başlangıç (saniye)',{exact:true}).fill('2');await page.getByLabel('Bitiş (saniye)',{exact:true}).fill('5');await save();await page.locator('#demo-library').click();const u=await page.locator('.library-item a').first().getAttribute('href');const result=await page.evaluate(async u=>{const v=new DataView(await(await fetch(u)).arrayBuffer());return{header:String.fromCharCode(...new Uint8Array(v.buffer,0,4)),duration:v.getUint32(40,true)/v.getUint32(28,true)};},u);assert.equal(result.header,'RIFF');assert.equal(result.duration,3);await page.locator('.close-editor').click();});
  await test('Input validation rejects an invalid PDF without creating a result',async()=>{await page.locator('input[type=file]').setInputFiles({name:'broken.pdf',mimeType:'application/pdf',buffer:Buffer.from('broken PDF fixture')});await page.locator('[data-mode="tools"]').click();await page.getByRole('menuitem',{name:"PDF'yi Böl",exact:true}).click();await page.waitForFunction(()=>document.querySelector('dialog .editor-dialog-status'));assert.equal(await page.locator('dialog .export-button').isEnabled(),false);await page.locator('.close-editor').click();await page.locator('#demo-reset').click();});
  await test('Instagram Reels omit thumbnails; photo posts offer a carousel',async()=>{await page.locator('#try-download').click();await page.getByLabel('Medya bağlantısı').fill('https://www.instagram.com/reel/example/');assert.equal(await page.locator('dialog .annotation-bar button').count(),2);assert.ok(!(await page.getByRole('button',{name:'Thumbnail',exact:true}).count()));await page.getByLabel('Medya bağlantısı').fill('https://www.instagram.com/p/example/');assert.equal(await page.locator('dialog .annotation-bar button').count(),1);assert.ok(await page.getByRole('button',{name:'Carousel görselleri',exact:true}).isVisible());await page.locator('.close-editor').click();});
- await test('All six file actions open the right preview or shelf',async()=>{await page.locator('[data-group="image"]').click();for(const id of ['airdrop','copy','move','terminal']){await page.locator('[data-mode="actions"]').click();const names={airdrop:'AirDrop',copy:'Kopyala',move:'Taşı',terminal:'Terminal'};await page.getByRole('menuitem',{name:names[id],exact:true}).click();assert.equal(await page.locator('dialog').count(),1);await page.locator('.close-editor').click();}await page.locator('[data-mode="actions"]').click();await page.getByRole('menuitem',{name:'Yüzen Pencere',exact:true}).click();assert.equal(await page.locator('.float-shelf').count(),1);});
+ await test('Web media preview ignores provider names in unrelated URL text',async()=>{
+  await page.locator('#try-download').click();
+  const link=page.getByLabel('Medya bağlantısı');
+  for(const url of [
+    'https://notyoutube.com/watch?v=demo',
+    'https://example.net/?next=https://youtube.com/watch?v=demo',
+    'https://www.instagram.com.evil.example/reel/demo',
+    'javascript:alert("youtube.com")'
+  ]){
+    await link.fill(url);
+    assert.equal(await page.locator('dialog .annotation-bar button').count(),1,url);
+    assert.ok(await page.getByRole('button',{name:'Orijinal medya',exact:true}).isVisible(),url);
+  }
+  await link.fill('https://www.youtube.com/watch?v=demo');
+  assert.equal(await page.locator('dialog .annotation-bar button').count(),3);
+  assert.ok(await page.getByRole('button',{name:'Thumbnail',exact:true}).isVisible());
+  await page.locator('.close-editor').click();
+ });
+ await test('All six file actions open the right preview or shelf',async()=>{await page.locator('[data-group="image"]').click();for(const id of ['airdrop','copy','move','terminal']){await page.locator('[data-mode="actions"]').click();const names={airdrop:/^(AirDrop|Paylaş)$/i,copy:'Kopyala',move:'Taşı',terminal:'Terminal'};await page.getByRole('menuitem',{name:names[id],exact:true}).click();assert.equal(await page.locator('dialog').count(),1);await page.locator('.close-editor').click();}await page.locator('[data-mode="actions"]').click();await page.getByRole('menuitem',{name:'Yüzen Pencere',exact:true}).click();assert.equal(await page.locator('.float-shelf').count(),1);});
  await test('English strings, layout and real image export',async()=>{await page.goto(base+'/');await page.locator('.demo-file').first().waitFor();await page.locator('[data-mode="convert"]').click();await page.getByRole('menuitem',{name:'PNG',exact:true}).click();await page.waitForFunction(()=>Number(document.querySelector('#library-count').textContent)===1);assert.equal(await page.locator('html').getAttribute('lang'),'en');});
  await page.goto(base+'/tr/');await page.locator('.demo-file').first().waitFor();await page.screenshot({path:path.join(output,'desktop-hero.png')});await page.locator('#playground').scrollIntoViewIfNeeded();await page.locator('[data-mode="tools"]').click();await page.screenshot({path:path.join(output,'desktop-wheel.png')});await page.keyboard.press('Escape');
  await test('390px touch viewport fits; tap selects, opens wheel and exports',async()=>{await page.setViewportSize({width:390,height:844});await page.locator('[data-group="image"]').click();assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.locator('.demo-file').nth(1).click();await page.locator('[data-mode="convert"]').click();const r=await page.locator('.demo-wheel').boundingBox();assert.ok(r.x>=0&&r.x+r.width<=390);await page.getByRole('menuitem',{name:'JPG',exact:true}).click();await page.waitForFunction(()=>Number(document.querySelector('#library-count').textContent)>0);await page.screenshot({path:path.join(output,'mobile-playground.png')});await openTool('cropImage');assert.ok(await page.evaluate(()=>document.querySelector('dialog').scrollWidth<=innerWidth));await page.screenshot({path:path.join(output,'mobile-crop.png')});await page.locator('.close-editor').click();});
+ await test('Reset clears Library, Float pins and returns to sample files',async()=>{
+  await page.locator('[data-group="image"]').click();
+  await page.locator('[data-mode="convert"]').click();
+  await page.getByRole('menuitem',{name:'PNG',exact:true}).click();
+  await page.waitForFunction(()=>Number(document.querySelector('#library-count').textContent)>0);
+  await page.locator('[data-mode="actions"]').click();
+  await page.getByRole('menuitem',{name:'Yüzen Pencere',exact:true}).click();
+  assert.equal(await page.locator('.float-shelf').count(),1);
+  await page.locator('#demo-reset').click();
+  assert.equal(await page.locator('#library-count').textContent(),'0');
+  assert.equal(await page.locator('.float-shelf').count(),0);
+  assert.equal(await page.locator('.demo-file').count(),3);
+ });
+ await test('Keyboard and modifier wheel actions preserve multi-selection',async()=>{
+  await page.locator('[data-group="image"]').click();
+  await page.locator('.demo-file').nth(1).click({modifiers:['Shift']});
+  assert.equal(await page.locator('.demo-file[aria-pressed="true"]').count(),2);
+  await page.locator('.demo-file').first().focus();
+  await page.keyboard.press('Enter');
+  assert.equal(await page.locator('.demo-file[aria-pressed="true"]').count(),2);
+  await page.keyboard.press('Escape');
+  await page.locator('.demo-file').first().click({modifiers:['Control']});
+  assert.equal(await page.locator('.demo-file[aria-pressed="true"]').count(),2);
+  await page.keyboard.press('Escape');
+ });
+ await test('Clicking one selected file collapses Shift multi-selection',async()=>{
+  await page.locator('[data-group="image"]').click();
+  await page.locator('.demo-file').nth(1).click({modifiers:['Shift']});
+  assert.equal(await page.locator('.demo-file[aria-pressed="true"]').count(),2);
+  await page.locator('.demo-file').first().click();
+  assert.equal(await page.locator('.demo-file[aria-pressed="true"]').count(),1);
+  assert.equal(await page.locator('.demo-file').first().getAttribute('aria-pressed'),'true');
+ });
+ await test('Keyboard Enter on a file applies the slice chosen with the arrows',async()=>{
+  await page.locator('[data-group="pdf"]').click();
+  await page.locator('.demo-file').first().focus();
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('ArrowRight');
+  assert.equal(await page.locator('.wheel-option.active').getAttribute('data-index'),'0');
+  await page.keyboard.press('Enter');
+  assert.equal(await page.locator('.demo-wheel').count(),0);
+  assert.equal(await page.locator('dialog').count(),1);
+  await page.locator('.close-editor').click();
+  await page.locator('[data-group="image"]').click();
+ });
+ await test('Enter and Space on a focused editor button activate it instead of saving or playing',async()=>{
+  const before=await page.locator('#library-count').textContent();
+  await openTool('cropImage');
+  await page.getByRole('button',{name:'Tümünü Seç',exact:true}).click();
+  await page.getByRole('button',{name:'Seçimi Temizle',exact:true}).press('Enter');
+  assert.equal(await page.locator('dialog').count(),1);
+  assert.ok(await page.locator('dialog .export-button').isDisabled());
+  await page.getByRole('button',{name:'Tümünü Seç',exact:true}).click();
+  await page.locator('.close-editor').press('Enter');
+  await page.locator('dialog').waitFor({state:'detached'});
+  assert.equal(await page.locator('#library-count').textContent(),before);
+  await openTool('trimVideo');
+  await page.locator('.close-editor').press('Space');
+  await page.locator('dialog').waitFor({state:'detached'});
+  assert.equal(await page.locator('#library-count').textContent(),before);
+ });
+ await test('A closed image editor that finishes decoding late leaves the next editor alone',async()=>{
+  await page.locator('[data-group="image"]').click();
+  await page.locator('.demo-file').first().click();
+  // Hold every image decode until the test releases it, so the closed editor finishes last.
+  await page.evaluate(()=>{const Real=window.Image;window.__realImage=Real;window.__heldDecodes=[];window.Image=function(){const image=new Real();let onload=null;Object.defineProperty(image,'onload',{get:()=>onload,set:f=>{onload=f;}});image.addEventListener('load',()=>window.__heldDecodes.push(()=>onload?.()));return image;};});
+  const held=n=>page.waitForFunction(n=>window.__heldDecodes.length>=n,n);
+  const release=i=>page.evaluate(i=>window.__heldDecodes.splice(i,1)[0](),i);
+  try{
+   await page.locator('[data-mode="tools"]').click();await page.getByRole('menuitem',{name:'Arka Plan Ekle',exact:true}).click();
+   await held(1);await release(0);await held(1);
+   await page.locator('.close-editor').click();
+   await page.locator('.demo-file').nth(1).click({modifiers:['Shift']});
+   await page.locator('[data-mode="tools"]').click();await page.getByRole('menuitem',{name:'Kolaj Oluştur',exact:true}).click();
+   await held(2);await release(1);await held(3);await release(1);await release(1);
+   await page.waitForFunction(()=>document.querySelector('dialog .editor-filename'));
+   await release(0);
+   assert.equal(await page.locator('dialog input[type=color]').inputValue(),'#e6dfc8');
+  }finally{await page.evaluate(()=>{window.Image=window.__realImage;});}
+  await save();
+  await page.locator('#demo-library').click();
+  const u=await page.locator('.library-item').filter({hasText:'orchard-createCollage.png'}).first().locator('a').getAttribute('href');
+  const pixel=await page.evaluate(async u=>{const bitmap=await createImageBitmap(await(await fetch(u)).blob()),c=document.createElement('canvas');c.width=bitmap.width;c.height=bitmap.height;const ctx=c.getContext('2d');ctx.drawImage(bitmap,0,0);return[...ctx.getImageData(1,1,1,1).data.slice(0,3)];},u);
+  assert.deepEqual(pixel,[0xe6,0xdf,0xc8],'the collage background must stay the collage editor\'s own colour');
+  await page.locator('.close-editor').click();
+ });
  if(errors.length)failures.push({name:'No browser errors',error:errors.join('\n')});
  const report={url:base,passed:passed.length,checks:passed,failures,consoleErrors:errors};await fs.writeFile(path.join(output,'report.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify({passed:passed.length,failed:failures.length,errors:errors.length}));await browser.close();if(failures.length)process.exitCode=1;
 })().catch(e=>{console.error(e);process.exitCode=1;});

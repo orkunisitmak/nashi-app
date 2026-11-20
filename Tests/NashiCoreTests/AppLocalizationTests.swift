@@ -1,4 +1,6 @@
 import XCTest
+import CoreGraphics
+import PDFKit
 @testable import NashiCore
 
 final class AppLocalizationTests:XCTestCase {
@@ -35,6 +37,13 @@ final class AppLocalizationTests:XCTestCase {
         XCTAssertEqual(AppLocalization.text("Original size: "+path,language:"tr"),"Orijinal boyut: "+path)
         XCTAssertEqual(AppLocalization.text("Nicely done. 12 files are ready.",language:"tr"),"Hazır! 12 dosyan hazır.")
     }
+    func testSearchFindsDecomposedTurkishDottedIFileNames() {
+        // Finder hands over decomposed names: İ arrives as I + U+0307.
+        let name="I\u{307}stanbul.pdf"
+        XCTAssertTrue(AppLocalization.matches(name,query:"istanbul",language:"tr"))
+        XCTAssertTrue(AppLocalization.matches(name,query:" İSTANBUL ",language:"tr"))
+        XCTAssertFalse(AppLocalization.matches(name,query:"ankara",language:"tr"))
+    }
     func testCatalogPlaceholdersMatchWithoutChangingFormatsOrShortcuts() {
         let marker=try! NSRegularExpression(pattern:#"\{[0-9]\}"#)
         func tokens(_ value:String)->[String] { marker.matches(in:value,range:NSRange(value.startIndex...,in:value)).compactMap{Range($0.range,in:value).map{String(value[$0])}}.sorted() }
@@ -69,5 +78,217 @@ final class AppLocalizationTests:XCTestCase {
         XCTAssertEqual(AppLocalization.text("Home.png",language:"fr"),"Home.png")
         XCTAssertTrue(AppLocalization.matches("Crop Image",query:"recadrer",language:"fr"))
         for code in ["png","MP4","Ctrl+Shift","⌘S","00:01.250"] { XCTAssertEqual(AppLocalization.text(code,language:"fr"),code) }
+    }
+    func testQRFoundCountUsesFrenchSingularForZeroAndOne() {
+        XCTAssertEqual(AppLocalization.text("0 found",language:"fr"),"0 trouvé")
+        XCTAssertEqual(AppLocalization.text("1 found",language:"fr"),"1 trouvé")
+        XCTAssertEqual(AppLocalization.text("2 found",language:"fr"),"2 trouvés")
+        XCTAssertEqual(AppLocalization.text("1 found",language:"tr"),"1 bulundu")
+        XCTAssertEqual(AppLocalization.text("12 found",language:"tr"),"12 bulundu")
+    }
+    /// Literals from Wheel.swift: the web-link petals and the empty-wheel centre (with the configured shortcut symbols).
+    func testWheelWebPetalsAndEmptyWheelAreTranslated() {
+        let petals=["Download photos…","Download video…","Download image…","Download…","Download thumbnail…","Audio MP3…","Copy link"]
+        for language in ["tr","fr"] {
+            for source in petals { XCTAssertNotEqual(AppLocalization.text(source,language:language),source,"\(language): \(source)") }
+        }
+        XCTAssertEqual(AppLocalization.uppercased(AppLocalization.text("Download video…",language:"tr"),language:"tr"),"VİDEOYU İNDİR…")
+        XCTAssertEqual(AppLocalization.text("No formats\n⌘ Tools\n⌃ Actions",language:"tr"),"Biçim yok\n⌘ Araçlar\n⌃ İşlemler")
+        XCTAssertEqual(AppLocalization.text("No file tools\n⇧ Convert\n⌃ Actions",language:"fr"),"Aucun outil de fichier\n⇧ Convertir\n⌃ Actions")
+    }
+    /// The crop canvas's VoiceOver value (ImageEditPreview.swift) is a String built in English, so it is looked up here.
+    func testCropCanvasVoiceOverValueIsTranslated() {
+        XCTAssertEqual(AppLocalization.text("No crop selected",language:"tr"),"Kırpma alanı seçilmedi")
+        XCTAssertEqual(AppLocalization.text("No crop selected",language:"fr"),"Aucune zone de recadrage sélectionnée")
+        XCTAssertEqual(AppLocalization.text("X 10, Y 20, width 30, height 40",language:"tr"),"X 10, Y 20, genişlik 30, yükseklik 40")
+        XCTAssertEqual(AppLocalization.text("X 0, Y 0, width 1920, height 1080",language:"fr"),"X 0, Y 0, largeur 1920, hauteur 1080")
+        XCTAssertEqual(AppLocalization.text("X 10, Y 20, width 30, height 40",language:"en"),"X 10, Y 20, width 30, height 40")
+    }
+    func testFrenchSelectedCountIsSingularForZeroAndOne() {
+        // French uses the singular for 0 and 1 ("1 sélectionné"); Turkish never inflects after a number.
+        XCTAssertEqual(AppLocalization.text("1 selected",language:"fr"),"1 sélectionné")
+        XCTAssertEqual(AppLocalization.text("0 selected",language:"fr"),"0 sélectionné")
+        XCTAssertEqual(AppLocalization.text("2 selected",language:"fr"),"2 sélectionnés")
+        XCTAssertEqual(AppLocalization.text("1 selected",language:"tr"),"1 seçili")
+        XCTAssertEqual(AppLocalization.text("1 selected",language:"en"),"1 selected")
+    }
+    /// Crop and redact batches report "<file name>: <message>". The message is translated; the file name, even one
+    /// that contains ": " followed by catalogued copy, stays exactly as it is.
+    func testFilePrefixedBatchErrorsTranslateOnlyTheMessage() throws {
+        let directory=FileManager.default.temporaryDirectory.appendingPathComponent("nashi-l10n-\(UUID().uuidString)",isDirectory:true)
+        try FileManager.default.createDirectory(at:directory,withIntermediateDirectories:true)
+        defer { try? FileManager.default.removeItem(at:directory) }
+        func image(_ width:Int,_ height:Int) -> CGImage {
+            let context=CGContext(data:nil,width:width,height:height,bitsPerComponent:8,bytesPerRow:0,space:CGColorSpace(name:CGColorSpace.sRGB)!,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue)!
+            context.setFillColor(CGColor(red:0.9,green:0.5,blue:0.1,alpha:1));context.fill(CGRect(x:0,y:0,width:width,height:height));return context.makeImage()!
+        }
+        let large=directory.appendingPathComponent("Large.png"),small=directory.appendingPathComponent("Scan.png: Preview unavailable: köşe.png")
+        try ImageEngine.write(image(400,300),to:large);try ImageEngine.write(image(40,25),to:small)
+        var options=OperationOptions();options.crop=EditRect(x:0,y:0,width:200,height:150);options.outputDirectory=directory
+        XCTAssertThrowsError(try ConversionEngine.run(.init(inputs:[large,small],operation:.tool(.cropImage),options:options))) { error in
+            let message=error.localizedDescription,name=small.lastPathComponent
+            XCTAssertEqual(message,name+": The crop rectangle must fit completely inside the 40 × 25 pixel image.")
+            XCTAssertEqual(AppLocalization.text(message,language:"tr"),name+": Kırpma alanı 40 × 25 piksellik görselin tamamen içinde kalmalı.")
+            XCTAssertEqual(AppLocalization.text(message,language:"fr"),name+"\u{00A0}: Le rectangle de recadrage doit tenir entièrement dans l’image de 40 × 25 pixels.")
+            XCTAssertEqual(AppLocalization.text(message,language:"en"),message)
+        }
+        XCTAssertEqual(AppLocalization.text("Report: v2.png: Choose an image.",language:"tr"),"Report: v2.png: Bir görsel seç.")
+        // An untranslated message leaves everything, including copy inside the file name, unchanged.
+        let untranslated="Scan.png: Preview unavailable: köşe.png: Could not resize image."
+        XCTAssertEqual(AppLocalization.text(untranslated,language:"tr"),untranslated)
+        // Without a file extension before ": ", or with more than a catalog message after it, nothing changes.
+        for source in ["Output: Choose an image.","Version 1.2: Choose an image.","photo.png: Choose an image. Again"] {
+            XCTAssertEqual(AppLocalization.text(source,language:"tr"),source)
+        }
+    }
+    /// Annotate Image: the Highlight tool name (ToolEditor's tool picker) and the parts of the canvas's VoiceOver value
+    /// (ImageEditPreview.annotationCanvasValue), which is a String and is looked up part by part.
+    func testAnnotationToolAndCanvasValueAreTranslated() {
+        XCTAssertEqual(AppLocalization.text("Highlight",language:"tr"),"Vurgu")
+        XCTAssertEqual(AppLocalization.text("Highlight",language:"fr"),"Surlignage")
+        XCTAssertEqual(AppLocalization.text("0 annotations",language:"fr"),"0 annotation")
+        XCTAssertEqual(AppLocalization.text("1 annotation",language:"fr"),"1 annotation")
+        XCTAssertEqual(AppLocalization.text("3 annotations",language:"fr"),"3 annotations")
+        XCTAssertEqual(AppLocalization.text("3 annotations",language:"tr"),"3 işaretleme")
+        XCTAssertEqual(AppLocalization.text("selected 2",language:"tr"),"2. işaretleme seçili")
+        XCTAssertEqual(AppLocalization.text("selected 2",language:"fr"),"annotation 2 sélectionnée")
+        XCTAssertEqual(AppLocalization.text("3 annotations",language:"en"),"3 annotations")
+    }
+    /// Choose Files… (⌘O) opens an NSOpenPanel whose prompt is a plain String, so AppDelegate looks the button title up
+    /// through L10n.text; the title-case key needs its own entry next to the menu item's "Choose Files…".
+    func testChooseFilesPanelButtonIsTranslated() {
+        XCTAssertEqual(AppLocalization.text("Choose Files",language:"tr"),"Dosya Seç")
+        XCTAssertEqual(AppLocalization.text("Choose Files",language:"fr"),"Choisir des fichiers")
+        XCTAssertEqual(AppLocalization.text("Choose Files…",language:"tr"),"Dosya Seç…")
+        XCTAssertEqual(AppLocalization.text("Choose Files",language:"en"),"Choose Files")
+    }
+    /// The web download button for an Instagram photo post (WebDownloadView.photoDownloadTitle) uses one key per count
+    /// form, so French reads the singular for 0 and 1 and no English word is left inside.
+    func testPhotoDownloadButtonCountIsTranslated() {
+        XCTAssertEqual(AppLocalization.text("Download 0 photos",language:"fr"),"Télécharger 0 photo")
+        XCTAssertEqual(AppLocalization.text("Download 1 photo",language:"fr"),"Télécharger 1 photo")
+        XCTAssertEqual(AppLocalization.text("Download 3 photos",language:"fr"),"Télécharger 3 photos")
+        XCTAssertEqual(AppLocalization.text("Download 0 photos",language:"tr"),"0 fotoğraf indir")
+        XCTAssertEqual(AppLocalization.text("Download 1 photo",language:"tr"),"1 fotoğraf indir")
+        XCTAssertEqual(AppLocalization.text("Download 12 photos",language:"tr"),"12 fotoğraf indir")
+        XCTAssertEqual(AppLocalization.text("Download 12 photos",language:"en"),"Download 12 photos")
+    }
+    /// VoiceOver labels of the video timeline, the welcome window and the Folders settings page. The welcome page-dot
+    /// label interpolates the page name, which WelcomeView translates before it reaches the "Step %lld of 6: %@" key.
+    func testTimelineWelcomeAndFolderVoiceOverLabelsAreTranslated() {
+        XCTAssertEqual(AppLocalization.text("Frame at 1.25 seconds",language:"tr"),"1.25 saniyedeki kare")
+        XCTAssertEqual(AppLocalization.text("Split at 3.10 seconds",language:"fr"),"Coupure à la seconde 3.10")
+        XCTAssertEqual(AppLocalization.text("Close welcome",language:"fr"),"Fermer l’écran de bienvenue")
+        XCTAssertEqual(AppLocalization.text("Remove folder access",language:"tr"),"Klasör erişimini kaldır")
+        let name=AppLocalization.text("Move & share",language:"fr")
+        XCTAssertEqual(AppLocalization.text("Step 4 of 6: \(name)",language:"fr"),"Étape 4 sur 6\u{00A0}: Déplacer et partager")
+        XCTAssertEqual(AppLocalization.text("Step 1 of 6: \(AppLocalization.text("Hello",language:"tr"))",language:"tr"),"Adım 1/6: Merhaba")
+        XCTAssertEqual(AppLocalization.text("Step 1 of 6: Hello",language:"en"),"Step 1 of 6: Hello")
+    }
+    /// A batch reports "File <i> of <n> · <status>". Both the prefix and the status are translated; a status without a
+    /// translation stays as it is.
+    func testBatchStatusTranslatesPrefixAndStatus() throws {
+        let directory=FileManager.default.temporaryDirectory.appendingPathComponent("nashi-l10n-\(UUID().uuidString)",isDirectory:true)
+        try FileManager.default.createDirectory(at:directory,withIntermediateDirectories:true)
+        defer { try? FileManager.default.removeItem(at:directory) }
+        let inputs=["a.pdf","b.pdf"].map { directory.appendingPathComponent($0) }
+        for input in inputs { let document=PDFDocument();document.insert(PDFPage(),at:0);XCTAssertTrue(document.write(to:input)) }
+        var options=OperationOptions();options.outputDirectory=directory
+        var labels:[String]=[]
+        _=try ConversionEngine.run(.init(inputs:inputs,operation:.tool(.removeMetadata),options:options)) { _,label in labels.append(label) }
+        XCTAssertTrue(labels.contains("File 2 of 2 · Remove Metadata"),"\(labels)")
+        XCTAssertEqual(AppLocalization.text("File 2 of 2 · Remove Metadata",language:"tr"),"Dosya 2/2 · Meta Verileri Kaldır")
+        XCTAssertEqual(AppLocalization.text("File 2 of 2 · Remove Metadata",language:"fr"),"Fichier 2 sur 2 · Supprimer les métadonnées")
+        XCTAssertEqual(AppLocalization.text("File 12 of 30 · Split PDF",language:"tr"),"Dosya 12/30 · PDF'yi Böl")
+        XCTAssertEqual(AppLocalization.text("File 2 of 2 · Remove Metadata",language:"en"),"File 2 of 2 · Remove Metadata")
+        XCTAssertEqual(AppLocalization.text("File 1 of 2 · Notes · v2… köşe.srt",language:"tr"),"Dosya 1/2 · Notes · v2… köşe.srt")
+        for source in ["Profile 1 of 2 · Split PDF","File one of 2 · Split PDF","report.pdf: File 1 of 2 · Split PDF"] {
+            XCTAssertEqual(AppLocalization.text(source,language:"tr"),source)
+        }
+    }
+    /// The NSAlert shown when Window management cannot arrange a window takes plain Strings, so AppDelegate looks up
+    /// its title, the WindowManagement notice and the button through L10n.text; each needs a catalog entry.
+    func testWindowArrangementAlertIsTranslated() {
+        let expected=[
+            "Window arrangement":("Pencere düzeni","Disposition des fenêtres"),
+            "This window could not be arranged. The app may restrict resizing.":("Bu pencere düzenlenemedi. Uygulama yeniden boyutlandırmayı kısıtlıyor olabilir.","Cette fenêtre n’a pas pu être disposée. L’app limite peut-être le redimensionnement."),
+            "OK":("Tamam","OK"),
+        ]
+        for (source,(tr,fr)) in expected {
+            XCTAssertEqual(AppLocalization.text(source,language:"tr"),tr)
+            XCTAssertEqual(AppLocalization.text(source,language:"fr"),fr)
+            XCTAssertEqual(AppLocalization.text(source,language:"en"),source)
+        }
+        XCTAssertEqual(AppLocalization.catalog(for:"fr")["OK"],"OK")
+    }
+    /// UpdateConnectionView shows its save/remove confirmation through LText, so each sentence needs a catalog entry.
+    func testUpdateConnectionConfirmationsAreTranslated() {
+        let expected=[
+            "Connection saved. Future checks use it automatically.":("Bağlantı kaydedildi. Sonraki kontroller bunu otomatik olarak kullanacak.","Connexion enregistrée. Les prochaines vérifications l’utiliseront automatiquement."),
+            "Connection saved. This build still needs its release signing configuration.":("Bağlantı kaydedildi. Bu derlemenin hâlâ sürüm imzalama yapılandırmasına ihtiyacı var.","Connexion enregistrée. Cette version a encore besoin de sa configuration de signature des mises à jour."),
+            "Connection removed and its saved token deleted.":("Bağlantı kaldırıldı ve kayıtlı tokenı silindi.","Connexion supprimée et son jeton enregistré effacé."),
+        ]
+        for (source,(tr,fr)) in expected {
+            XCTAssertEqual(AppLocalization.text(source,language:"tr"),tr)
+            XCTAssertEqual(AppLocalization.text(source,language:"fr"),fr)
+            XCTAssertEqual(AppLocalization.text(source,language:"en"),source)
+        }
+    }
+    /// The token setup Link in UpdateConnectionView is a plain literal, so it resolves through the generated tables.
+    func testUpdateTokenLinkIsTranslated() {
+        let source="Create a fine-grained token on GitHub"
+        XCTAssertEqual(AppLocalization.text(source,language:"tr"),"GitHub’da ince ayarlı token oluştur")
+        XCTAssertEqual(AppLocalization.text(source,language:"fr"),"Créer un jeton à portée précise sur GitHub")
+        XCTAssertEqual(AppLocalization.text(source,language:"en"),source)
+    }
+    /// Remove Metadata shows its refusal through LText, so every feature sentence needs its own catalog entry.
+    func testMetadataCleanupRefusalsAreTranslated() {
+        for feature in ["form fields","embedded files","optional content layers","accessibility tags","custom page labels"] {
+            let source="This PDF contains \(feature). Metadata cleanup cannot safely preserve those features. No copy was exported."
+            XCTAssertNotEqual(AppLocalization.text(source,language:"tr"),source,feature)
+            XCTAssertNotEqual(AppLocalization.text(source,language:"fr"),source,feature)
+            XCTAssertEqual(AppLocalization.text(source,language:"en"),source)
+        }
+        XCTAssertEqual(AppLocalization.text("This PDF contains accessibility tags. Metadata cleanup cannot safely preserve those features. No copy was exported.",language:"tr"),"Bu PDF'de erişilebilirlik etiketleri var. Meta veri temizliği bu özellikleri güvenle koruyamaz. Kopya dışa aktarılmadı.")
+    }
+    /// ToolEditor shows ImageEngine.collage failures through LText, so each sentence needs a catalog entry.
+    func testCollageSizeErrorsAreTranslated() {
+        let expected=[
+            "Collage dimensions must be between 1 and 32,000 pixels.":("Kolaj boyutları 1 ile 32.000 piksel arasında olmalı.","Les dimensions du collage doivent être comprises entre 1 et 32 000 pixels."),
+            "Collage padding leaves no space for images.":("Kenar boşluğu görseller için yer bırakmıyor.","Les marges ne laissent pas de place aux images."),
+            "Reduce collage spacing or increase the canvas.":("Kolaj aralığını azalt veya tuvali büyüt.","Réduisez l’espacement du collage ou agrandissez le canevas."),
+        ]
+        for (source,(tr,fr)) in expected {
+            XCTAssertEqual(AppLocalization.text(source,language:"tr"),tr)
+            XCTAssertEqual(AppLocalization.text(source,language:"fr"),fr)
+            XCTAssertEqual(AppLocalization.text(source,language:"en"),source)
+        }
+    }
+    /// Edit Image and Compress show the size limit through LText, so the sentence needs a catalog entry.
+    func testImageDimensionLimitErrorIsTranslated() {
+        let source="Image dimensions must be between 1 and 32,000 pixels."
+        XCTAssertEqual(AppLocalization.text(source,language:"tr"),"Görsel boyutları 1 ile 32.000 piksel arasında olmalı.")
+        XCTAssertEqual(AppLocalization.text(source,language:"fr"),"Les dimensions de l’image doivent être comprises entre 1 et 32 000 pixels.")
+        XCTAssertEqual(AppLocalization.text(source,language:"en"),source)
+    }
+    /// PDFEngine.open and PDFOfficeCodec.prepare errors reach the user through LText, so each sentence needs a catalog entry.
+    func testPDFOpenAndPasswordErrorsAreTranslated() {
+        let expected=[
+            "This PDF could not be opened.":("Bu PDF açılamadı.","Ce PDF n’a pas pu être ouvert."),
+            "The PDF password is incorrect or missing.":("PDF parolası yanlış ya da eksik.","Le mot de passe du PDF est incorrect ou manquant."),
+        ]
+        for (source,(tr,fr)) in expected {
+            XCTAssertEqual(AppLocalization.text(source,language:"tr"),tr)
+            XCTAssertEqual(AppLocalization.text(source,language:"fr"),fr)
+            XCTAssertEqual(AppLocalization.text(source,language:"en"),source)
+        }
+    }
+    /// SubtitleCodec appends the offending timestamp, so the sentences are looked up through {0} templates.
+    func testSubtitleTimestampErrorsKeepTheTimestamp() {
+        XCTAssertEqual(AppLocalization.text("Invalid subtitle timestamp: 00:01:75,000",language:"tr"),"Altyazı zaman damgası geçersiz: 00:01:75,000")
+        XCTAssertEqual(AppLocalization.text("Invalid subtitle timestamp: 00:01:75,000",language:"fr"),"Horodatage de sous-titre non valide : 00:01:75,000")
+        XCTAssertEqual(AppLocalization.text("This subtitle timestamp is too large to convert: 99:00:00.000",language:"tr"),"Bu altyazı zaman damgası dönüştürülemeyecek kadar büyük: 99:00:00.000")
+        XCTAssertEqual(AppLocalization.text("This subtitle timestamp is too large to convert: 99:00:00.000",language:"fr"),"Cet horodatage de sous-titre est trop grand pour être converti : 99:00:00.000")
+        XCTAssertEqual(AppLocalization.text("Invalid subtitle timestamp: 00:01:75,000",language:"en"),"Invalid subtitle timestamp: 00:01:75,000")
     }
 }

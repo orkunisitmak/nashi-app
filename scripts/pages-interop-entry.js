@@ -18,6 +18,13 @@ function character(value = {}) {
   const allowed = ["bold", "italic", "fontSize", "fontName", "fontColor", "backgroundColor", "underline", "strikethru", "superscript", "tracking", "baselineShift", "language"];
   return Object.fromEntries(allowed.filter(key => value[key] !== undefined).map(key => [key,value[key]]));
 }
+// The DOCX reader models subscript as superscript -1; Pages stores the
+// unsigned TSWP SuperscriptType, where subscript is 2 (-1 aborts the write).
+function writeCharacter(value) {
+  const result = character(value);
+  if (result.superscript === -1) result.superscript = 2;
+  return result;
+}
 function paragraphStyle(value = {}) {
   const allowed = ["alignment", "spaceBefore", "spaceAfter", "firstLineIndent", "leftIndent", "rightIndent", "lineSpacing", "keepLinesTogether", "keepWithNext", "pageBreakBefore", "widowControl"];
   return Object.fromEntries(allowed.filter(key => value[key] !== undefined).map(key => [key,value[key]]));
@@ -27,7 +34,8 @@ export function write(json) {
   check();
   const model = JSON.parse(json);
   if (!Array.isArray(model.blocks)) throw new Error("Missing document content.");
-  const document = model.blocks.some(block => block.type === "table") ? PagesDocument.load(seed) : PagesDocument.blank();
+  // The blank donor has no section master, so headers/footers need the seed too.
+  const document = model.blocks.some(block => block.type === "table") || model.header || model.footer ? PagesDocument.load(seed) : PagesDocument.blank();
   document.body.setText("");
   for (const section of document.sections()) { section.setHeaderText(""); section.setFooterText(""); }
   if (model.pageSetup) document.setPageSetup(model.pageSetup);
@@ -36,6 +44,13 @@ export function write(json) {
   const bodyStyle = document.stylesheet.style("Body") ?? document.stylesheet.style("Normal") ?? document.stylesheet.styles().find(style => style.type === 2022);
   const baseId = typeof bodyStyle?.id === "bigint" ? bodyStyle.id : undefined;
   let ordinal = 0;
+  // A link ending at the current end of the body gets no closing smart-field
+  // entry, so it would swallow every later paragraph. Text is only appended
+  // after recorded offsets, so apply links once the body is complete.
+  const links = [];
+  // Clone every table from the seed's own table; by default the library would
+  // clone the first table in the document, i.e. our previous one with its merges.
+  const tableSource = document.tables().find(table => table.infoObject !== undefined)?.infoObject?.identifier;
   const appendParagraph = block => {
     check();
     const runs = block.runs ?? [{text: block.text ?? ""}];
@@ -45,8 +60,12 @@ export function write(json) {
     const text = runs.map(run => run.type === "image" ? "" : (run.text ?? "").replaceAll("\n", "\u2028")).join("");
     const style = document.stylesheet.createParagraphStyle({
       name: `Converted paragraph ${++ordinal}`, basedOn: baseId,
-      character: {fontName: "Helvetica", fontSize: 12, ...character(block.character)}, paragraph: paragraphStyle(block.paragraph)
+      character: {fontName: "Helvetica", fontSize: 12, ...writeCharacter(block.character)}, paragraph: paragraphStyle(block.paragraph)
     });
+    // After the unterminated first paragraph, appending "" only adds its
+    // terminator and returns index 0, restyling that paragraph. Terminate it
+    // first so the empty paragraph (or table anchor) is a paragraph of its own.
+    if (!text && document.bodyText && !document.bodyText.endsWith("\n")) document.appendParagraph("");
     const index = document.appendParagraph(text, style);
     let offset = document.paragraphs()[index]?.start ?? start;
     for (const run of runs) {
@@ -58,8 +77,8 @@ export function write(json) {
         offset++;
       } else {
         const length = (run.text ?? "").length;
-        if (length && run.character && Object.keys(run.character).length) document.applyCharacterFormatting(offset, offset + length, character(run.character));
-        if (length && run.link) document.insertLink(offset, offset + length, run.link);
+        if (length && run.character && Object.keys(run.character).length) document.applyCharacterFormatting(offset, offset + length, writeCharacter(run.character));
+        if (length && run.link) links.push([offset, offset + length, run.link]);
         offset += length;
       }
     }
@@ -74,7 +93,10 @@ export function write(json) {
     // table. The licensed seed's unused tables remain unanchored and empty.
     appendParagraph({runs: []});
     const pos = document.bodyText.length - 1;
-    const table = document.insertInlineTable(Math.max(0,pos), {withContent: false, name: `Table ${ordinal}`});
+    const table = document.insertInlineTable(Math.max(0,pos), {withContent: false, name: `Table ${ordinal}`, copyOf: tableSource});
+    // The seed table's first row has its own tinted cell style. Word shading
+    // arrives per cell in the model, so drop that row before sizing the table.
+    if (table.rowCount > 1 && table.cellStyleId(0,0) !== table.cellStyleId(1,0)) table.deleteRows(0,1);
     if (table.rowCount < rowCount) table.insertRows(table.rowCount, rowCount - table.rowCount);
     if (table.rowCount > rowCount) table.deleteRows(rowCount, table.rowCount - rowCount);
     if (table.columnCount < columnCount) table.insertColumns(table.columnCount, columnCount - table.columnCount);
@@ -89,8 +111,18 @@ export function write(json) {
     }
     if (block.columnWidths?.length) block.columnWidths.forEach((width,index) => { if (index < columnCount && width > 0) table.setColumnWidth(index,width); });
     else for (let column = 0; column < columnCount; column++) table.setColumnWidth(column,(block.width ?? 480) / columnCount);
-    for (const merge of block.merges ?? []) if (merge.row + merge.rowCount <= rowCount && merge.column + merge.columnCount <= columnCount) table.mergeCells(merge.row,merge.column,merge.rowCount,merge.columnCount);
+    const merged = [];
+    for (const merge of block.merges ?? []) {
+      check();
+      if (!(merge.row + merge.rowCount <= rowCount && merge.column + merge.columnCount <= columnCount)) continue;
+      // A malformed Word table can describe overlapping merges. Keep the first
+      // one instead of failing the whole conversion.
+      if (merged.some(other => merge.row < other.row + other.rowCount && other.row < merge.row + merge.rowCount && merge.column < other.column + other.columnCount && other.column < merge.column + merge.columnCount)) continue;
+      table.mergeCells(merge.row,merge.column,merge.rowCount,merge.columnCount);
+      merged.push(merge);
+    }
   }
+  for (const [start, end, url] of links) document.insertLink(start, end, url);
   check();
   const data = document.save();
   check();
@@ -112,7 +144,14 @@ export function read(data) {
     if (!raw) return {text: image.accessibilityDescription ?? ""};
     return {type: "image", data: base64(raw), fileName: image.fileName ?? "image.png", width: geometry.width, height: geometry.height, alt: image.accessibilityDescription};
   };
-  const tableBlock = table => ({type: "table", headerRows: table.headerRowCount, merges: table.merges(), columnWidths: Array.from({length:table.columnCount},(_,column)=>table.columnWidth(column)), rows: Array.from({length:table.rowCount},(_,row)=>Array.from({length:table.columnCount},(_,column)=>({text: table.cellText(row,column), formatting: table.cellFormatting(row,column)})))});
+  const tableBlock = table => {
+    // cellText -> cellValue decodes every cell of the table on each call;
+    // decode once so reading a table stays linear in its cell count.
+    const values = new Map();
+    for (const cell of table.cells()) { const key = `${cell.row},${cell.column}`; if (!values.has(key)) values.set(key, cell.value); }
+    table.cellValue = (row, column) => values.get(`${row},${column}`);
+    return {type: "table", headerRows: table.headerRowCount, merges: table.merges(), columnWidths: Array.from({length:table.columnCount},(_,column)=>table.columnWidth(column)), rows: Array.from({length:table.rowCount},(_,row)=>Array.from({length:table.columnCount},(_,column)=>({text: table.cellText(row,column), formatting: table.cellFormatting(row,column)})))};
+  };
   const storageBlocks = storage => {
     const result = [];
     const sheetObject = storage.stylesheetId !== undefined ? document.object(storage.stylesheetId) : undefined;
@@ -121,7 +160,11 @@ export function read(data) {
     for (const paragraph of storage.paragraphs()) {
       check();
       const style = paragraph.styleId !== undefined ? stylesheet.style(paragraph.styleId)?.resolved() ?? {} : {};
-      let block = {type: "paragraph", paragraph: style.paragraph ?? {}, character: character(style.character), runs: []};
+      // A page break (U+000C) or section break (U+0004, which starts a new page)
+      // terminates the previous paragraph and is not part of any paragraph text.
+      const pageBreak = [12, 4].includes(storage.text.charCodeAt(paragraph.start - 1));
+      let breakPending = pageBreak;
+      let block = {type: "paragraph", paragraph: pageBreak ? {...style.paragraph, pageBreakBefore: true} : style.paragraph ?? {}, character: character(style.character), runs: []};
       const stops = new Set([paragraph.start,paragraph.end]);
       for (const run of styleRuns) { if (run.start > paragraph.start && run.start < paragraph.end) stops.add(run.start); if (run.end > paragraph.start && run.end < paragraph.end) stops.add(run.end); }
       for (const link of links) { if (link.start > paragraph.start && link.start < paragraph.end) stops.add(link.start); if (link.end > paragraph.start && link.end < paragraph.end) stops.add(link.end); }
@@ -134,7 +177,10 @@ export function read(data) {
           const id = String(attachment.drawableId); used.add(id);
           if (images.has(id)) block.runs.push(imageRun(images.get(id)));
           else if (tables.has(id)) {
-            if (block.runs.length) result.push(block);
+            // A table that opens the paragraph still needs the empty paragraph
+            // in front of it when that paragraph carries the page break.
+            if (block.runs.length || breakPending) result.push(block);
+            breakPending = false;
             result.push(tableBlock(tables.get(id)));
             block = {type:"paragraph",paragraph:style.paragraph ?? {},character:character(style.character),runs:[]};
           }

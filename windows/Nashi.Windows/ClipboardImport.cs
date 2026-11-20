@@ -26,7 +26,7 @@ internal static class ClipboardImport
     {
         if(data.GetDataPresent(DataFormats.FileDrop)&&data.GetData(DataFormats.FileDrop) is string[] paths)
         {
-            var files=paths.Where(p=>File.Exists(p)||Directory.Exists(p)).Select(Path.GetFullPath).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();if(files.Length==0)throw new InvalidOperationException("Those files are no longer available.");
+            var files=ShellShortcut.Resolve(paths).Where(p=>File.Exists(p)||Directory.Exists(p)).Select(Path.GetFullPath).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();if(files.Length==0)throw new InvalidOperationException("Those files are no longer available.");
             return new(files,null,"Pasted files");
         }
         if(data.GetDataPresent(DataFormats.Bitmap)&&data.GetData(DataFormats.Bitmap) is BitmapSource bitmap)

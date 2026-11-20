@@ -68,6 +68,55 @@ final class ExportTransactionTests:XCTestCase {
         }
     }
 
+    func testPublishNeverReplacesANameTakenAfterItWasChosen() throws {
+        let destination=root.appendingPathComponent("Exports",isDirectory:true)
+        func stage(_ transaction:ExportTransaction,_ text:String) throws {
+            let area=try transaction.makeArea(destination:destination)
+            let output=area.directory.appendingPathComponent("Report.txt")
+            try Data(text.utf8).write(to:output);try transaction.record([output],in:area)
+        }
+        // Another writer creates the chosen name just before the move.
+        let foreign=destination.appendingPathComponent("Report.txt")
+        let single=ExportTransaction();defer { single.cleanUp() }
+        try stage(single,"ours")
+        single.willMove={ url in single.willMove=nil;try? Data("another app".utf8).write(to:url) }
+        let ours=try single.publish(token:.init())
+        XCTAssertEqual(ours.map(\.lastPathComponent),["Report 2.txt"])
+        XCTAssertEqual(try Data(contentsOf:foreign),Data("another app".utf8))
+        XCTAssertEqual(try Data(contentsOf:ours[0]),Data("ours".utf8))
+        try FileManager.default.removeItem(at:destination)
+
+        // Two exports pick the same name; the second is held until the first has published.
+        let first=ExportTransaction(),second=ExportTransaction();defer { first.cleanUp();second.cleanUp() }
+        try stage(first,"first");try stage(second,"second")
+        let parked=DispatchSemaphore(value:0),release=DispatchSemaphore(value:0),done=DispatchSemaphore(value:0)
+        second.willMove={ _ in second.willMove=nil;parked.signal();release.wait() }
+        var secondResult:Result<[URL],Error>?
+        Thread.detachNewThread { secondResult=Result { try second.publish(token:.init()) };done.signal() }
+        XCTAssertEqual(parked.wait(timeout:.now()+30),.success)
+        let firstOutputs=try first.publish(token:.init())
+        release.signal();XCTAssertEqual(done.wait(timeout:.now()+30),.success)
+        let secondOutputs=try XCTUnwrap(secondResult).get()
+        XCTAssertEqual(firstOutputs.map(\.lastPathComponent),["Report.txt"])
+        XCTAssertEqual(secondOutputs.map(\.lastPathComponent),["Report 2.txt"])
+        XCTAssertEqual(try Data(contentsOf:firstOutputs[0]),Data("first".utf8))
+        XCTAssertEqual(try Data(contentsOf:secondOutputs[0]),Data("second".utf8))
+    }
+
+    func testSuffixedOutputNamesOfLongSourceNamesStayWithinTheNameLimit() throws {
+        XCTAssertEqual(OutputFiles.unique(for:URL(fileURLWithPath:"/x/Photo.JPG"),extension:"png",suffix:" - Edited",directory:root).lastPathComponent,"Photo - Edited.png")
+        // Legal source names (255 units with their extension) whose suffixed output name would not be.
+        for stem in [String(repeating:"a",count:251),String(repeating:"ş",count:125)] {
+            let source=URL(fileURLWithPath:"/x/\(stem).pdf")
+            for _ in 0..<2 {
+                let output=OutputFiles.unique(for:source,extension:"pdf",suffix:" - Organized",directory:root)
+                XCTAssertLessThanOrEqual(output.lastPathComponent.decomposedStringWithCanonicalMapping.utf16.count,255)
+                XCTAssertTrue(output.lastPathComponent.hasSuffix(" - Organized.pdf") || output.lastPathComponent.hasSuffix(" - Organized 2.pdf"),output.lastPathComponent)
+                XCTAssertNoThrow(try Data("pdf".utf8).write(to:output))
+            }
+        }
+    }
+
     func testOptimizedSymlinkInputsProduceIndependentRegularFilesForCompressionAndMetadataRemoval() throws {
         let source=root.appendingPathComponent("Source.png")
         let context=try XCTUnwrap(CGContext(data:nil,width:8,height:8,bitsPerComponent:8,bytesPerRow:32,space:CGColorSpaceCreateDeviceRGB(),bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue))

@@ -54,6 +54,16 @@ final class WindowPlacementTests: XCTestCase {
         }
     }
 
+    func testRightAnchoredPlacementsEndOnTheExactFractionalUsableEdge() {
+        for (area,scale) in [(CGRect(x:1512,y:40,width:1727.5,height:1090),CGFloat(1)),
+                             (CGRect(x:0,y:24,width:1511.4,height:910),CGFloat(1)),
+                             (CGRect(x:-1920.5,y:-1030,width:1919.75,height:1006),CGFloat(2))] {
+            for placement in [WindowPlacement.rightThird,.rightHalf,.rightTwoThirds] {
+                XCTAssertEqual(placement.frame(in:area,scale:scale).maxX,area.maxX,"\(placement) \(area) @\(scale)x")
+            }
+        }
+    }
+
     func testContentDragsAndFreshFilePayloadNeverActivateWindowWheel() {
         var intent=WindowDragIntent()
         XCTAssertFalse(intent.accepts(pointerDistance:200,frameChanged:false,freshFileDrag:false,requested:true))
