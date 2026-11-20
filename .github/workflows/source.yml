@@ -58,3 +58,5 @@ jobs:
         run: brew install ffmpeg
       - name: Redaction coverage and image opacity regressions
         run: swift test --filter 'SolidRedactionCoverageTests|ImageRedactionBoundsRegressionTests|ImageColorOpacityRegressionTests|MediaEngineTests/testVideoRedactionStylesAndTemporalBounds'
+      - name: Image resource limits, vector and FFmpeg fallback regressions
+        run: swift test --filter 'ImageResourceLimitRegressionTests|ImageSVGDeclaredSizeTests'
