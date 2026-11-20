@@ -37,6 +37,13 @@ final class AppLocalizationTests:XCTestCase {
         XCTAssertEqual(AppLocalization.text("Original size: "+path,language:"tr"),"Orijinal boyut: "+path)
         XCTAssertEqual(AppLocalization.text("Nicely done. 12 files are ready.",language:"tr"),"Hazır! 12 dosyan hazır.")
     }
+    func testSearchFindsDecomposedTurkishDottedIFileNames() {
+        // Finder hands over decomposed names: İ arrives as I + U+0307.
+        let name="I\u{307}stanbul.pdf"
+        XCTAssertTrue(AppLocalization.matches(name,query:"istanbul",language:"tr"))
+        XCTAssertTrue(AppLocalization.matches(name,query:" İSTANBUL ",language:"tr"))
+        XCTAssertFalse(AppLocalization.matches(name,query:"ankara",language:"tr"))
+    }
     func testCatalogPlaceholdersMatchWithoutChangingFormatsOrShortcuts() {
         let marker=try! NSRegularExpression(pattern:#"\{[0-9]\}"#)
         func tokens(_ value:String)->[String] { marker.matches(in:value,range:NSRange(value.startIndex...,in:value)).compactMap{Range($0.range,in:value).map{String(value[$0])}}.sorted() }
