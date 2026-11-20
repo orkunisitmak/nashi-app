@@ -58,7 +58,7 @@ import NashiCore
             "editor.primary":CGRect(x:600,y:350,width:280,height:48),
             "editor.primary.label":CGRect(x:620,y:364,width:240,height:20)
         ]
-        var checks:[String]=[]
+        var checks=try AnnotationKeyboardChecks.run()
         func check(_ condition:Bool,_ message:String)throws {
             guard condition else{throw UIAuditError("Layout validator check failed: "+message)}
             checks.append(message)

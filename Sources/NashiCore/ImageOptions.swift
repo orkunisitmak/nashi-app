@@ -77,7 +77,7 @@ public struct CollageOptions: Codable, Sendable {
 public enum ImageAnnotationKind: String, Codable, CaseIterable, Sendable {
     case text, arrow, line, rectangle, ellipse, freehand, highlight, number, callout, magnifier, image
 }
-public struct ImageAnnotation: Codable, Sendable {
+public struct ImageAnnotation: Codable, Sendable, Equatable {
     public var kind: ImageAnnotationKind
     /// All image-edit coordinates are pixels measured from the image's top left.
     public var rect: EditRect
