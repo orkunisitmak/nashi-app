@@ -56,8 +56,10 @@ var NashiPages = (() => {
         if (!/^utf-?8$/i.test(label)) throw new Error("Only UTF-8 text is supported.");
       }
       decode(bytes2 = new Uint8Array()) {
+        const view = bytes2 instanceof ArrayBuffer ? new Uint8Array(bytes2) : ArrayBuffer.isView(bytes2) ? new Uint8Array(bytes2.buffer, bytes2.byteOffset, bytes2.byteLength) : null;
+        if (!view) throw new TypeError("TextDecoder requires a buffer or buffer view.");
         let binary = "";
-        for (let i = 0; i < bytes2.length; i += 8192) binary += String.fromCharCode(...bytes2.subarray(i, i + 8192));
+        for (let i = 0; i < view.length; i += 8192) binary += String.fromCharCode(...view.subarray(i, i + 8192));
         return _nashiUTF8Decode(btoa(binary));
       }
     };

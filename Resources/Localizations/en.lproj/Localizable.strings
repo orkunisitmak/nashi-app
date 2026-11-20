@@ -485,6 +485,7 @@
 "CHOOSE VALID PDF PAGES." = "CHOOSE VALID PDF PAGES.";
 "CHOOSE VIDEO, AUDIO, THUMBNAIL OR IMAGES." = "CHOOSE VIDEO, AUDIO, THUMBNAIL OR IMAGES.";
 "CHOOSE VISUALIZATION IMAGE…" = "CHOOSE VISUALIZATION IMAGE…";
+"CHOOSE WHAT APPEARS WHEN YOU CLICK THE NASHI ICON IN THE MENU BAR. SETTINGS AND QUIT ARE ALWAYS SHOWN." = "CHOOSE WHAT APPEARS WHEN YOU CLICK THE NASHI ICON IN THE MENU BAR. SETTINGS AND QUIT ARE ALWAYS SHOWN.";
 "CHOOSE WHAT YOUR FILE SHARES." = "CHOOSE WHAT YOUR FILE SHARES.";
 "CHOOSE YOUR HOME FOLDER OR A FOLDER WHERE YOU SAVE FILES." = "CHOOSE YOUR HOME FOLDER OR A FOLDER WHERE YOU SAVE FILES.";
 "CHOOSE ZIP, TAR OR GZIP." = "CHOOSE ZIP, TAR OR GZIP.";
@@ -687,6 +688,7 @@
 "Choose valid image dimensions." = "Choose valid image dimensions.";
 "Choose video, audio, thumbnail or images." = "Choose video, audio, thumbnail or images.";
 "Choose visualization image…" = "Choose visualization image…";
+"Choose what appears when you click the Nashi icon in the menu bar. Settings and Quit are always shown." = "Choose what appears when you click the Nashi icon in the menu bar. Settings and Quit are always shown.";
 "Choose what your file shares." = "Choose what your file shares.";
 "Choose your home folder or a folder where you save files." = "Choose your home folder or a folder where you save files.";
 "Clarity" = "Clarity";
@@ -1455,6 +1457,7 @@
 "MEDIA TOOLS READY. YOU CAN EDIT, CONVERT AND DOWNLOAD MEDIA." = "MEDIA TOOLS READY. YOU CAN EDIT, CONVERT AND DOWNLOAD MEDIA.";
 "MEDIUM · 1920 PX" = "MEDIUM · 1920 PX";
 "MEDIUM · 1920 PX LONGEST EDGE" = "MEDIUM · 1920 PX LONGEST EDGE";
+"MENU BAR" = "MENU BAR";
 "MERGE PDFS" = "MERGE PDFS";
 "METADATA" = "METADATA";
 "METADATA TOOLS ARE NOT READY." = "METADATA TOOLS ARE NOT READY.";
@@ -1502,6 +1505,7 @@
 "Media tools ready. You can edit, convert and download media." = "Media tools ready. You can edit, convert and download media.";
 "Medium · 1920 px" = "Medium · 1920 px";
 "Medium · 1920 px longest edge" = "Medium · 1920 px longest edge";
+"Menu bar" = "Menu bar";
 "Merge PDFs" = "Merge PDFs";
 "Metadata" = "Metadata";
 "Metadata tools are not ready." = "Metadata tools are not ready.";
@@ -2110,6 +2114,10 @@
 "SEND IT ON ITS WAY" = "SEND IT ON ITS WAY";
 "SERIF" = "SERIF";
 "SET" = "SET";
+"SET END AT PLAYHEAD (O)" = "SET END AT PLAYHEAD (O)";
+"SET END HERE" = "SET END HERE";
+"SET START AT PLAYHEAD (I)" = "SET START AT PLAYHEAD (I)";
+"SET START HERE" = "SET START HERE";
 "SET UP MEDIA TOOLS" = "SET UP MEDIA TOOLS";
 "SET UP MEDIA TOOLS FOR THIS CODEC, OR USE OPEN TO PREVIEW IN ITS DEFAULT APP." = "SET UP MEDIA TOOLS FOR THIS CODEC, OR USE OPEN TO PREVIEW IN ITS DEFAULT APP.";
 "SET UP MEDIA TOOLS ONCE TO ENABLE HEIC ENCODING ON WINDOWS." = "SET UP MEDIA TOOLS ONCE TO ENABLE HEIC ENCODING ON WINDOWS.";
@@ -2277,6 +2285,10 @@
 "Send it on its way" = "Send it on its way";
 "Serif" = "Serif";
 "Set" = "Set";
+"Set End Here" = "Set End Here";
+"Set Start Here" = "Set Start Here";
+"Set end at playhead (O)" = "Set end at playhead (O)";
+"Set start at playhead (I)" = "Set start at playhead (I)";
 "Set up Nashi tools" = "Set up Nashi tools";
 "Set up media tools" = "Set up media tools";
 "Set up media tools for this codec, or use Open to preview in its default app." = "Set up media tools for this codec, or use Open to preview in its default app.";
