@@ -26,6 +26,7 @@ internal static class SmokeTests
         var testTools=ParitySmokeTests.Tools(root);
         void Progress(string message)=>File.AppendAllText(Path.Combine(root,"suite-progress.log"),$"{DateTimeOffset.UtcNow:O} {message}{Environment.NewLine}");
         void Check(bool value,string reason){Progress($"{(value?"PASS":"FAIL")} {checks+1}: {reason}");if(!value)throw new Exception(reason);checks++;}
+        Progress("START ResizeChecks");ResizeChecks.Run(root,Check);
         Progress("START TrayIconRecoveryChecks");TrayIconRecoveryChecks.Run(Check);
         Progress("START ShellShortcutChecks");ShellShortcutChecks.Run(root,Check);
         Progress("START EditorReliabilityChecks");EditorReliabilityChecks.Run(root,Check);

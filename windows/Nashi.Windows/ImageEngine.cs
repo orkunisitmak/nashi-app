@@ -12,6 +12,9 @@ public sealed record ImageOptions(int? Width=null,int? Height=null,int Rotation=
     public string RedactionStyle{get;init;}="solid";public Rect[] Redactions{get;init;}=[];
     public long? TargetBytes{get;init;}public double? ReductionPercent{get;init;}
     public bool FlipHorizontal{get;init;}public bool FlipVertical{get;init;}
+    // Resize to a target shape: Fit keeps the whole image inside and fills the margins with Matte
+    // ("blur", "white", "black" or "transparent"); Fill covers the target and crops evenly.
+    public FitMode Fit{get;init;}=FitMode.Stretch;public string Matte{get;init;}="blur";
     // Size presets apply to each image's own dimensions rather than the first image's.
     public double? Scale{get;init;}public int? LongestEdge{get;init;}
     public string? EncoderPath{get;init;}
@@ -42,6 +45,42 @@ public static partial class ImageEngine
         image.Freeze();return image;
     }
 
+    public static readonly string[] Mattes=["blur","white","black","transparent"];
+    /// <summary>The image at exactly width×height, fitted or filled; see <see cref="FitLayout"/>.</summary>
+    internal static BitmapSource Fitted(BitmapSource image,int width,int height,FitMode mode,string matte)
+    {
+        if(width<1||height<1||width>30000||height>30000||(long)width*height>100_000_000)throw new ArgumentException("Choose dimensions between 1 and 30,000 pixels (100 MP limit).");
+        if(!Mattes.Contains(matte))throw new ArgumentException("Unsupported margin fill.");
+        var place=FitLayout.Place(image.PixelWidth,image.PixelHeight,width,height,mode);var canvas=new Rect(0,0,width,height);
+        var visual=new DrawingVisual();RenderOptions.SetBitmapScalingMode(visual,BitmapScalingMode.HighQuality);
+        using(var dc=visual.RenderOpen())
+        {
+            dc.PushClip(new RectangleGeometry(canvas));
+            if(mode==FitMode.Fit)
+            {
+                if(matte=="white")dc.DrawRectangle(Brushes.White,null,canvas);
+                else if(matte=="black")dc.DrawRectangle(Brushes.Black,null,canvas);
+                else if(matte=="blur")
+                {
+                    // A tiny copy enlarged smoothly is a soft blur without an effect pass; slightly darkened
+                    // so the photo stands out. It covers the canvas the way Fill would.
+                    var cover=FitLayout.Place(image.PixelWidth,image.PixelHeight,width,height,FitMode.Fill);
+                    dc.DrawImage(Softened(image),new Rect(cover.X,cover.Y,cover.Width,cover.Height));
+                    dc.DrawRectangle(new SolidColorBrush(Color.FromArgb(46,0,0,0)),null,canvas);
+                }
+            }
+            dc.DrawImage(image,new Rect(place.X,place.Y,place.Width,place.Height));
+        }
+        var target=new RenderTargetBitmap(width,height,96,96,PixelFormats.Pbgra32);target.Render(visual);target.Freeze();return target;
+    }
+    private static BitmapSource Softened(BitmapSource image)
+    {
+        var scale=12d/Math.Max(image.PixelWidth,image.PixelHeight);var tiny=new TransformedBitmap(image,new ScaleTransform(scale,scale));
+        // A second, still small step smooths the enlargement into an even blur.
+        var size=new Size(Math.Max(1,tiny.PixelWidth*6),Math.Max(1,tiny.PixelHeight*6));var visual=new DrawingVisual();RenderOptions.SetBitmapScalingMode(visual,BitmapScalingMode.HighQuality);
+        using(var dc=visual.RenderOpen())dc.DrawImage(tiny,new Rect(size));
+        var soft=new RenderTargetBitmap((int)size.Width,(int)size.Height,96,96,PixelFormats.Pbgra32);soft.Render(visual);soft.Freeze();return soft;
+    }
     public static IReadOnlyList<string> Apply(string tool,IReadOnlyList<string> inputs,string destination,ImageOptions options,string? format=null,CancellationToken token=default,IProgress<OperationProgress>? progress=null)
     {
         using var tx=new ExportTransaction(destination);var outputs=new List<string>();var completed=0;
@@ -61,6 +100,7 @@ public static partial class ImageEngine
             if(!Formats.Contains(ext))ext="png";
             switch(tool)
             {
+                case "resize" when options.Fit!=FitMode.Stretch&&options.Width is {} fitWidth&&options.Height is {} fitHeight:image=Fitted(image,fitWidth,fitHeight,options.Fit,options.Matte);break;
                 case "resize":
                     var width=options.Width??(int)Math.Round(image.PixelWidth*(double)(options.Height??image.PixelHeight)/image.PixelHeight);
                     var height=options.Height??(int)Math.Round(image.PixelHeight*(double)width/image.PixelWidth);

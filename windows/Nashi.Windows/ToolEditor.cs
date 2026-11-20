@@ -69,7 +69,7 @@ public sealed partial class ToolEditor:Window
             options.Children.Add(L10n.Label(new TextBlock{Text="Output format",FontWeight=FontWeights.SemiBold}));format.ItemsSource=formats.Order().ToArray();format.SelectedIndex=0;options.Children.Add(format);
         }
         if(tool is "trimVideo" or "trimAudio" or "redactAudio"){Field("Start",0);Field("End",duration);}
-        if(tool=="resize"){Field("Width",bitmap?.PixelWidth??1280);Field("Height",bitmap?.PixelHeight??720);}
+        if(tool=="resize"){Field("Width",bitmap?.PixelWidth??1280);Field("Height",bitmap?.PixelHeight??720);BuildResizeTemplates();}
         if(tool=="compress")Field("Quality (%)",80);
         if(tool=="changeVideoSpeed"){Field("Speed",1);fields["Speed"].TextChanged+=(_,_)=>{try{player.SpeedRatio=Math.Clamp(Value("Speed",1),.05,32);}catch(ArgumentException){}};}
         if(tool=="splitVideo")Field("Number of clips",2);
@@ -226,6 +226,7 @@ public sealed partial class ToolEditor:Window
             ImageOptions=PhotoSettings(new(Side("Width",w),Side("Height",h),(int)Value("Degrees",tool=="rotate"?90:0),tool=="crop"?new Int32Rect((int)x,(int)y,(int)w,(int)h):null,(int)Value("Quality (%)",85),true,annotated))with{Scale=preset?.Scale,LongestEdge=preset?.LongestEdge};
             MediaOptions=MoreMediaSettings(MediaOptions);
             Format=format.SelectedItem as string??"png";
+            if(tool=="resize")ImageOptions=ImageOptions with{Fit=FitSetting,Matte=MatteSetting};
             if(tool=="splitPDF"&&(!int.TryParse(fields["Pages per file"].Text,NumberStyles.AllowLeadingWhite|NumberStyles.AllowTrailingWhite,CultureInfo.CurrentCulture,out var perFile)||perFile is <1 or >1000))throw new ArgumentException("Choose between 1 and 1,000 pages per file."); // validate while the editor is still open
             if(tool=="organizePDF")Pages=fields["Page numbers"].Text.Split(',',StringSplitOptions.RemoveEmptyEntries).Select(s=>int.Parse(s.Trim(),CultureInfo.InvariantCulture)).ToArray();
             DocumentOptions=new((int)Value("DPI",144),documentLayout.SelectedItem as string??"editable",epubLayout.SelectedItem as string??"reflowable",archivePassword.Password);if(accept)DialogResult=true;return true;
