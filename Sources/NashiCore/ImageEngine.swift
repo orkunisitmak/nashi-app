@@ -69,6 +69,8 @@ public enum ImageEngine {
     }
 
     private static func decodeWithFFmpeg(_ url:URL,maxPixelSize:Int) throws -> CGImage {
+        // Scaling the output does not limit FFmpeg's source frame allocation.
+        try validateFFmpegSourceDimensions(url)
         let temp=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:temp) }
         let png=temp.appendingPathComponent("decoded.png")
         let scale="scale=w='min(\(maxPixelSize),min(iw,sqrt(100000000*iw/ih)))':h='min(\(maxPixelSize),min(ih,sqrt(100000000*ih/iw)))':force_original_aspect_ratio=decrease"
@@ -80,12 +82,25 @@ public enum ImageEngine {
         return image
     }
 
-    private static func validateSourceDimensions(_ source:CGImageSource) throws {
-        guard let properties=CGImageSourceCopyPropertiesAtIndex(source,0,nil) as? [CFString:Any],
-              let width=(properties[kCGImagePropertyPixelWidth] as? NSNumber)?.intValue,
-              let height=(properties[kCGImagePropertyPixelHeight] as? NSNumber)?.intValue else {
+    private static func validateFFmpegSourceDimensions(_ url:URL) throws {
+        let probe=try ProcessRunner.run(Dependencies.executable("ffprobe"),
+            ["-v","error","-select_streams","v:0","-show_entries","stream=width,height","-of","json",url.path])
+        let json=try? JSONSerialization.jsonObject(with:probe.output)
+        guard let data=json as? [String:Any],
+              let stream=(data["streams"] as? [[String:Any]])?.first,
+              let width=(stream["width"] as? NSNumber)?.intValue,
+              let height=(stream["height"] as? NSNumber)?.intValue else {
             throw NashiError.invalidInput("The image dimensions could not be read.")
         }
+        try validateDimensions(width,height:height)
+    }
+
+    private static func validateSourceDimensions(_ source:CGImageSource) throws {
+        // An ImageIO source can exist without a decodable frame (e.g. SVG).
+        // Missing dimensions must leave NSImage/FFmpeg fallback reachable.
+        guard let properties=CGImageSourceCopyPropertiesAtIndex(source,0,nil) as? [CFString:Any],
+              let width=(properties[kCGImagePropertyPixelWidth] as? NSNumber)?.intValue,
+              let height=(properties[kCGImagePropertyPixelHeight] as? NSNumber)?.intValue else { return }
         try validateDimensions(width,height:height)
     }
 

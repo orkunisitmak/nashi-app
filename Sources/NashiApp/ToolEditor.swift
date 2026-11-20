@@ -639,7 +639,7 @@ struct ToolEditor:View {
             if tool == .createCollage { options.collage = .init() }
             if tool == .audioToVideo { width=1920;height=1080;options.backgroundColor="#000000" }
             if tool == .redactVideo || tool == .redactImage { options.backgroundColor="#000000";options.redactionMode="black" }
-            try checkGeneration(generation,token:token);readyToApply=true
+            try checkGeneration(generation,token:token);previewError=nil;readyToApply=true
         } catch {
             if generation==editorGeneration,!token.isCancelled,!Task.isCancelled { previewError=error.localizedDescription }
         }
