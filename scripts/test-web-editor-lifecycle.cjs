@@ -13,7 +13,8 @@ const parseSource = source.slice(source.indexOf('function parsePages('), source.
 const parsePages = runInNewContext(`${parseSource}\nparsePages`, {L: en => en});
 const deferred = () => { let resolve, reject; const promise = new Promise((a, b) => {resolve = a; reject = b;}); return {promise, resolve, reject}; };
 function harness(overrides = {}) {
-  const editor = {id: 'cropImage', ready: true, save: {disabled: false}, real: true, image: {}, files: [{name: 'synthetic.png'}], values: {}};
+  const image = {};
+  const editor = {id: 'cropImage', ready: true, save: {disabled: false}, real: true, image, images: [image], files: [{name: 'synthetic.png'}], values: {}};
   const state = {editor, generation: 0}, results = [], errors = [];
   const context = {state, isCurrentDemoGeneration, Blob, PDFLib: {}, Number, Math, setTimeout,
     renderImage: () => ({}), canvasBlob: async () => new Blob(['image']), imagesPDF: async () => new Uint8Array([1]),
@@ -174,3 +175,38 @@ for (const action of ['close', 'reset']) {
     assert.equal(parts, 4); assert.equal(h.results.length, 0); assert.equal(h.errors.length, 0);
   });
 }
+
+function multipleImages(h) {
+  h.editor.images.push({});
+  h.editor.files.push({name: 'second.png'});
+}
+test('Saving multiple images preserves one result per input, in order', async () => {
+  const h = harness(); multipleImages(h);
+  await h.save();
+  assert.deepEqual(h.results.map(r => r[0]), ['synthetic-cropImage.png', 'second-cropImage.png']);
+  assert.equal(h.errors.length, 0); assert.equal(h.state.editor, null);
+});
+test('Replacing a multi-image editor discards staged images and stops further encodes', async () => {
+  const pending = deferred(), started = deferred(); let encodes = 0;
+  const h = harness({canvasBlob: async () => {
+    if (++encodes === 2) {started.resolve(); return pending.promise;}
+    return new Blob(['image']);
+  }});
+  multipleImages(h); h.editor.images.push({}); h.editor.files.push({name: 'third.png'});
+  const saving = h.save(); await started.promise;
+  const nextEditor = {id: 'next editor', save: {disabled: true}}; h.state.editor = nextEditor;
+  pending.resolve(new Blob(['image'])); await saving;
+  assert.equal(encodes, 2); assert.equal(h.results.length, 0); assert.equal(h.errors.length, 0);
+  assert.equal(h.state.editor, nextEditor); assert.equal(nextEditor.save.disabled, true);
+});
+test('Multi-PDF split preserves upstream repeated page selections', async () => {
+  const copied = [];
+  const h = harness({PDFLib: {PDFDocument: {create: async () => ({
+    copyPages: async (pdf, indices) => {copied.push([pdf.getPageCount(), ...indices]); return indices;},
+    addPage: () => {}, save: async () => new Uint8Array([1]),
+  })}}});
+  Object.assign(h.editor, {id: 'splitPDF', image: null, pdfs: [{getPageCount: () => 3}], values: {pages: '', perFile: 3}});
+  multiplePDFs(h, '2-1,2'); await h.save();
+  assert.deepEqual(copied, [[3, 1, 0, 1], [2, 1, 0, 1]]);
+  assert.deepEqual(h.results.map(r => r[0]), ['synthetic-part-1.pdf', 'second-part-1.pdf']);
+});

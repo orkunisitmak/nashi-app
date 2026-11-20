@@ -82,6 +82,7 @@ struct ToolEditor:View {
     @State private var equalClips=2
     @State private var qrResults:[String]=[]
     @State private var pdfEditor=PDFPageEditorState()
+    @StateObject private var pdfUnlock=PDFUnlockModel()
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
 
@@ -125,6 +126,7 @@ struct ToolEditor:View {
                     VStack(alignment:.leading,spacing:18) {
                         Text(verbatim:sideBySide ? L10n.text("MAKE IT YOURS"):inputs.count>1 ? L10n.uppercase("\(inputs.count) files"):input?.lastPathComponent ?? "").font(.system(size:10,weight:.bold,design:.rounded)).tracking(0.8).foregroundStyle(.secondary).lineLimit(2)
                         if isLoading { ProgressView("Preparing your file…").font(.caption) }
+                        if tool == .organizePDF,pdfUnlock.needsPassword { PDFUnlockView(model:pdfUnlock,busy:isLoading || state.working) { loadRevision=UUID() } }
                         controls.disabled(isLoading || !readyToApply)
                         if let previewError { HStack { LText(previewError).font(.callout).foregroundStyle(.orange);Spacer();Button { self.previewError=nil } label:{Image(systemName:"xmark")}.accessibilityLabel("Dismiss preview error") } }
                     }.padding(24).frame(maxWidth:sideBySide ? .infinity:720,alignment:.leading)
@@ -163,7 +165,7 @@ struct ToolEditor:View {
             }
             .onChange(of:options.splitPoints) { _ in options.discardedClips=[];selectedSplitClip=nil }
             .onDeleteCommand { discardSelectedClip() }
-            .onDisappear { disposeMedia() }
+            .onDisappear { disposeMedia();pdfUnlock.reset();options.password="" }
     }
     var toolHint:String {
         switch tool {
@@ -203,7 +205,8 @@ struct ToolEditor:View {
         switch tool {
         case .cropImage,.cropVideo:
             guard !cropInteracting,let crop=options.crop else { return false }
-            return crop.x>=0 && crop.y>=0 && crop.width>=1 && crop.height>=1 && crop.x+crop.width<=imageSize.width && crop.y+crop.height<=imageSize.height
+            let minSide=tool == .cropVideo ? MediaEngine.minimumVideoCropSide:1
+            return crop.x>=0 && crop.y>=0 && crop.width>=minSide && crop.height>=minSide && crop.x+crop.width<=imageSize.width && crop.y+crop.height<=imageSize.height
         case .removeMetadata where isGIFMetadata:return metadataRemoveAll
         case .splitVideo:return (!options.splitPoints.isEmpty || options.equalClips != nil) && options.discardedClips.count<splitIntervals.count
         case .videoSnapshots:return !options.snapshotTimes.isEmpty
@@ -422,7 +425,11 @@ struct ToolEditor:View {
         VStack(spacing:14) { timeRangeFields;if tool == .trimAudio { Toggle("Remove silence from beginning and end",isOn:$options.trimSilence);if options.trimSilence { slider("Silence threshold",value:$options.silenceThresholdDb,range:-80 ... -10,unit:"dB") } };LText("Selected duration: \(timeLabel(max(0,(options.end ?? duration)-options.start)))").font(.caption).foregroundStyle(.secondary) }
     }
     var timeRangeFields:some View {
-        HStack { Text("Start");TextField("Seconds",value:$options.start,format:.number.precision(.fractionLength(3)));Text("End");TextField("Seconds",value:Binding(get:{options.end ?? duration},set:{options.end=$0}),format:.number.precision(.fractionLength(3))) }.textFieldStyle(.roundedBorder)
+        VStack(spacing:8) {
+            HStack { Text("Start");TextField("mm:ss.000",value:Binding(get:{options.start},set:{setTrimRange(TimeRange(start:min(max(0,$0),duration),end:options.end ?? duration))}),format:MediaTimecodeFormat());Text("End");TextField("mm:ss.000",value:Binding(get:{options.end ?? duration},set:{setTrimRange(TimeRange(start:options.start,end:min(max(0,$0),duration)))}),format:MediaTimecodeFormat()) }.textFieldStyle(.roundedBorder)
+            // Mark at the playhead without remembering the I/O shortcuts.
+            HStack { Button("Set Start Here",action:markStart).help("Set start at playhead (I)");Button("Set End Here",action:markEnd).help("Set end at playhead (O)") }.disabled(player == nil || processedPlayback)
+        }
     }
     var splitIntervals:[TimeRange] {
         let points=[0]+options.splitPoints.filter{$0>0 && $0<duration}.sorted()+[duration]
@@ -557,7 +564,7 @@ struct ToolEditor:View {
     @ViewBuilder var mediaTimeline:some View {
         if duration>0 {
             if tool == .trimVideo || tool == .trimAudio {
-                MediaTimeRangeLane(duration:duration,current:playhead,ranges:[TimeRange(start:options.start,end:options.end ?? duration)],label:"Trim",source:playbackURL ?? input,thumbnails:tool == .trimVideo,onSeek:seek,onChange:{_,range in options.start=range.start;options.end=range.end})
+                MediaTimeRangeLane(duration:duration,current:playhead,ranges:[TimeRange(start:options.start,end:options.end ?? duration)],label:"Trim",source:playbackURL ?? input,thumbnails:tool == .trimVideo,onSeek:seek,onChange:{_,range in setTrimRange(range)})
             } else if tool == .redactAudio {
                 Text("Drag a range to move it; drag its edges to resize. Drag empty space to add.").font(.caption).foregroundStyle(.secondary)
                 MediaTimeRangeLane(duration:duration,current:playhead,ranges:options.audioRedactions,label:options.audioMode == "mute" ? "Mute":"Bleep",onSeek:seek,onChange:{i,r in options.audioRedactions[i]=r},onAdd:{options.audioRedactions.append($0)})
@@ -615,7 +622,7 @@ struct ToolEditor:View {
                 else { loaded=try await Task.detached { try MediaEngine.readMetadata(input,token:token) }.value }
                 try checkGeneration(generation,token:token);metadata=loaded;originalMetadata=loaded
             }
-            if tool == .organizePDF { pdfEditor.reset(document:try PDFEngine.open(input)) }
+            if tool == .organizePDF { pdfEditor.reset(document:try pdfUnlock.open(input));options.password=pdfUnlock.password;previewError=nil }
             if tool == .frameImage { options.imageFrame = .init() }
             if tool == .createCollage { options.collage = .init() }
             if tool == .audioToVideo { width=1920;height=1080;options.backgroundColor="#000000" }
@@ -628,7 +635,7 @@ struct ToolEditor:View {
     func reset() {
         disposeMedia();previewToken=CancellationToken();visualizationToken=CancellationToken()
         isLoading=true;readyToApply=false;inputs=originalInputs;options=OperationOptions()
-        pdfEditor.reset();selectedSplitClip=nil;aspect="Free";cropInteracting=false;equalClips=2
+        pdfEditor.reset();pdfUnlock.reset();selectedSplitClip=nil;aspect="Free";cropInteracting=false;equalClips=2
         width=0;height=0;image=nil;baseImage=nil;imageSize=CGSize(width:100,height:100);pixelAspect=1;previewSize=nil;previewZoom=1;showOriginal=false
         duration=0;frameRate=30;playhead=0;playerReachedEnd=false;playingRange=false;processedPlayback=false;processedDuration=nil
         waveform=[];leftWaveform=[];rightWaveform=[];processedWaveform=nil;playbackURL=nil;visualizationReady=false;processedPreviewBusy=false;visualizationBusy=false;previewError=nil
@@ -654,8 +661,11 @@ struct ToolEditor:View {
         if width>0 { applied.width=width };if height>0 { applied.height=height }
         if [.cropImage,.cropVideo].contains(tool),var crop=applied.crop { crop.width=Double(width);crop.height=Double(height);applied.crop=crop }
         if tool == .cropImage { applied.width=nil;applied.height=nil }
-        // The size fields hold the first file's dimensions; keeping originals must not resize the other files to them.
-        if tool == .compress,category != .image || compressionSize == "original" { applied.width=nil;applied.height=nil }
+        // The size fields hold the first file's dimensions; only Custom sends them. Presets scale each file from its own size.
+        if tool == .compress,category != .image || compressionSize != "custom" { applied.width=nil;applied.height=nil }
+        if tool == .compress,category == .image {
+            if let edge=["large":2560,"medium":1920,"small":1280][compressionSize] { applied.imageMaxEdge=edge } else if let percent=Double(compressionSize) { applied.imageScale=percent/100 }
+        }
         if tool == .compress {
             applied.quality=preset=="Balanced" ? 0.8:0.45
             if targetEnabled {
@@ -738,6 +748,25 @@ struct ToolEditor:View {
         let extra=(tool == .trimAudio || tool == .trimVideo) ? " · I/O set range · ⇧Space play range":tool == .splitVideo ? " · M add split":tool == .videoSnapshots ? " · M add frame":""
         return "Space play/pause · ←/→ 1s · \(fine)\(extra)"
     }
+    /// Show the frame at the edge being changed, so the out point is as visible as the in point.
+    /// Moving the whole range (both edges) keeps the playhead where it is.
+    func setTrimRange(_ range:TimeRange) {
+        let startMoved=range.start != options.start,endMoved=range.end != (options.end ?? duration)
+        options.start=range.start;options.end=range.end
+        guard player != nil,!processedPlayback,startMoved != endMoved else { return }
+        if isPlaying { player?.pause() }
+        seek(startMoved ? range.start:range.end)
+    }
+    /// Sets the trim start at the playhead (button and I); an end at or before it resets to the full duration.
+    func markStart() {
+        options.start=min(playhead,max(0,duration-0.01))
+        if (options.end ?? duration)<=options.start { options.end=duration }
+    }
+    /// Sets the trim end at the playhead (button and O); a start at or after it resets to zero.
+    func markEnd() {
+        options.end=min(duration,max(0.01,playhead))
+        if options.start>=(options.end ?? duration) { options.start=0 }
+    }
     var canAddSplitPoint:Bool { !processedPlayback && playhead>=0.05 && duration-playhead>=0.05 && !options.splitPoints.contains{abs($0-playhead)<0.05} }
     func addSplitPoint() {
         guard canAddSplitPoint else { return }
@@ -758,12 +787,10 @@ struct ToolEditor:View {
             guard tool == .trimAudio || tool == .trimVideo else { return false };playSelectedRange()
         case .markIn:
             guard tool == .trimAudio || tool == .trimVideo else { return false }
-            options.start=min(playhead,max(0,duration-0.01))
-            if (options.end ?? duration)<=options.start { options.end=duration }
+            markStart()
         case .markOut:
             guard tool == .trimAudio || tool == .trimVideo else { return false }
-            options.end=min(duration,max(0.01,playhead))
-            if options.start>=(options.end ?? duration) { options.start=0 }
+            markEnd()
         case .addMarker:
             guard !processedPlayback else { return false }
             if tool == .splitVideo { addSplitPoint() }
@@ -950,6 +977,22 @@ struct AudioWaveformView:View {
                 let a=max(0,min(duration,value.startLocation.x/geometry.size.width*duration)),b=max(0,min(duration,value.location.x/geometry.size.width*duration))
                 if rangeEnabled { dragging=TimeRange(start:min(a,b),end:max(a,b)) } else { onSeek(b) }
             }.onEnded { value in if let range=dragging,range.end-range.start>0.01 { onRange(range.start,range.end) } else { onSeek(max(0,min(duration,value.location.x/geometry.size.width*duration))) };dragging=nil })
+        }
+    }
+}
+
+/// Start/end fields show and accept "mm:ss.000" while still taking plain seconds.
+struct MediaTimecodeFormat:ParseableFormatStyle {
+    /// Shows seconds as "mm:ss.000", or "h:mm:ss.000" from one hour.
+    func format(_ value:Double)->String { MediaTimecode.format(value) }
+    /// Reads typed timecodes and plain seconds.
+    var parseStrategy:Strategy { Strategy() }
+    /// Rejects malformed input so the field keeps its previous value.
+    struct Strategy:ParseStrategy {
+        /// Returns seconds, or throws when the text is not a valid time.
+        func parse(_ value:String) throws->Double {
+            guard let seconds=MediaTimecode.parse(value) else { throw CocoaError(.formatting) }
+            return seconds
         }
     }
 }

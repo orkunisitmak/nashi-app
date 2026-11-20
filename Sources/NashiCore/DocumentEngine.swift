@@ -115,8 +115,8 @@ public enum DocumentEngine {
     public static func extractArchive(_ input: URL, options: OperationOptions, token: CancellationToken) throws -> [URL] {
         let parent = options.outputDirectory ?? input.deletingLastPathComponent()
         try FileManager.default.createDirectory(at: parent, withIntermediateDirectories: true)
-        let name = archiveNamed(input).deletingPathExtension().lastPathComponent + " Extracted"
-        let output = uniqueFolder(name, in: parent)
+        let output = OutputFiles.unique(for: archiveNamed(input), extension: "", suffix: " Extracted", directory: parent)
+        let name = output.lastPathComponent
         let work = try OutputFiles.temporaryDirectory()
         defer { try? FileManager.default.removeItem(at: work) }
         let extracted = work.appendingPathComponent(name, isDirectory: true)
@@ -275,14 +275,6 @@ public enum DocumentEngine {
         let directory = options.outputDirectory ?? input.deletingLastPathComponent()
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         return OutputFiles.unique(for: input, extension: format, directory: directory)
-    }
-    private static func uniqueFolder(_ name: String, in parent: URL) -> URL {
-        var candidate = parent.appendingPathComponent(name, isDirectory: true), index = 2
-        // lstat-based, so a dangling link with this name is not chosen for moveItem.
-        while (try? FileManager.default.attributesOfItem(atPath: candidate.path)) != nil {
-            candidate = parent.appendingPathComponent("\(name) \(index)", isDirectory: true); index += 1
-        }
-        return candidate
     }
     private static func publish(_ source: URL, to output: URL, token: CancellationToken) throws -> [URL] {
         try token.check()

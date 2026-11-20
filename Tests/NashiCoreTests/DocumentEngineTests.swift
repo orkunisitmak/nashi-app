@@ -106,6 +106,50 @@ final class DocumentEngineTests: XCTestCase {
         }
     }
 
+    func testArchiveExtractionAndConversionKeepFolderPermissions() throws {
+        let fm=FileManager.default
+        let source=root.appendingPathComponent("Permission source",isDirectory:true)
+        let privateFolder=source.appendingPathComponent("private",isDirectory:true),locked=source.appendingPathComponent("locked",isDirectory:true)
+        try fm.createDirectory(at:privateFolder,withIntermediateDirectories:true)
+        try fm.createDirectory(at:locked,withIntermediateDirectories:true)
+        try Data("Host x\n".utf8).write(to:privateFolder.appendingPathComponent("config"))
+        try Data("read only\n".utf8).write(to:locked.appendingPathComponent("note.txt"))
+        try fm.setAttributes([.posixPermissions:0o700],ofItemAtPath:privateFolder.path)
+        try fm.setAttributes([.posixPermissions:0o555],ofItemAtPath:locked.path)
+        defer{try? fm.setAttributes([.posixPermissions:0o755],ofItemAtPath:locked.path)}
+        let archive=root.appendingPathComponent("Permissions.tar")
+        _=try ProcessRunner.run(URL(fileURLWithPath:"/usr/bin/tar"),["-cf",archive.path,"-C",source.path,"private","locked"])
+        func mode(_ folder:URL,_ name:String) throws -> Int { (try fm.attributesOfItem(atPath:folder.appendingPathComponent(name).path)[.posixPermissions] as! NSNumber).intValue }
+        let extracted=try XCTUnwrap(DocumentEngine.extractArchive(archive,options:.init(),token:.init()).first)
+        XCTAssertEqual(try mode(extracted,"private"),0o700)
+        // The owner keeps write access, so a read-only folder's files are still written.
+        XCTAssertEqual(try mode(extracted,"locked"),0o755)
+        XCTAssertEqual(try DocumentText.read(extracted.appendingPathComponent("locked/note.txt")),"read only\n")
+        let zip=try convert(archive,"zip")
+        let reopened=root.appendingPathComponent("Reopened",isDirectory:true)
+        try ArchiveCodec.extract(zip,into:reopened,token:.init())
+        XCTAssertEqual(try mode(reopened,"private"),0o700)
+    }
+
+    func testArchiveFolderStoredWithoutAnyPermissionStaysPrivate() throws {
+        let fm=FileManager.default
+        let secret=root.appendingPathComponent("secret.txt")
+        try Data("sealed\n".utf8).write(to:secret)
+        // tar cannot read inside a real 000 folder, so the entries come from an mtree description.
+        let spec=root.appendingPathComponent("Sealed.mtree")
+        try Data("#mtree\nsealed type=dir mode=000\nsealed/secret.txt type=file mode=644 contents=\(secret.path)\n".utf8).write(to:spec)
+        let archive=root.appendingPathComponent("Sealed.tar")
+        _=try ProcessRunner.run(URL(fileURLWithPath:"/usr/bin/tar"),["-cf",archive.path,"@"+spec.path])
+        func mode(_ folder:URL) throws -> Int { (try fm.attributesOfItem(atPath:folder.appendingPathComponent("sealed").path)[.posixPermissions] as! NSNumber).intValue }
+        let extracted=try XCTUnwrap(DocumentEngine.extractArchive(archive,options:.init(),token:.init()).first)
+        // Not the default 0755: the folder's 0644 file would be readable by every local user.
+        XCTAssertEqual(try mode(extracted),0o700)
+        XCTAssertEqual(try DocumentText.read(extracted.appendingPathComponent("sealed/secret.txt")),"sealed\n")
+        let reopened=root.appendingPathComponent("Reopened sealed",isDirectory:true)
+        try ArchiveCodec.extract(try convert(archive,"zip"),into:reopened,token:.init())
+        XCTAssertEqual(try mode(reopened),0o700)
+    }
+
     func testStoredRARAndOrdinaryGZIPAreReadable() throws {
         let rar = root.appendingPathComponent("Stored.rar")
         try Self.storedRAR(name: "hello.txt", payload: Data("RAR round trip\n".utf8)).write(to: rar)
@@ -172,6 +216,19 @@ final class DocumentEngineTests: XCTestCase {
         try ArchiveCodec.create(from: payload, at: archive, format: "zip", token: .init())
         XCTAssertEqual(try DocumentEngine.extractArchive(archive, options: .init(), token: .init()).first?.lastPathComponent, "Bundle Extracted 2")
         XCTAssertEqual(try fm.destinationOfSymbolicLink(atPath: link.path), root.appendingPathComponent("Missing folder").path)
+    }
+
+    func testExtractingAnArchiveNamedAtTheLengthLimitShortensTheFolderName() throws {
+        let payload = root.appendingPathComponent("Payload", isDirectory: true)
+        try FileManager.default.createDirectory(at: payload, withIntermediateDirectories: true)
+        try Data("data\n".utf8).write(to: payload.appendingPathComponent("a.txt"))
+        let archive = root.appendingPathComponent(String(repeating: "a", count: 251) + ".zip")
+        try ArchiveCodec.create(from: payload, at: archive, format: "zip", token: .init())
+        let first = try XCTUnwrap(DocumentEngine.extractArchive(archive, options: .init(), token: .init()).first)
+        let second = try XCTUnwrap(DocumentEngine.extractArchive(archive, options: .init(), token: .init()).first)
+        XCTAssertEqual(first.lastPathComponent, String(repeating: "a", count: 245) + " Extracted")
+        XCTAssertEqual(second.lastPathComponent, String(repeating: "a", count: 243) + " Extracted 2")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: first.appendingPathComponent("a.txt").path))
     }
 
     func testDanglingLinksBesideTheInputKeepTheirNamesAndAreNotReplaced() throws {

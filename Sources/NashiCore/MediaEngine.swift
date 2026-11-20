@@ -51,12 +51,15 @@ public struct AudioLoudness: Sendable, Equatable {
 
 /// Local media operations. Every export creates a new file; source files are never rewritten.
 public enum MediaEngine {
+    /// Smallest width and height, in pixels, a video crop may have.
+    public static let minimumVideoCropSide = 2.0
     public static let audioFormats: Set<String> = ["mp3", "m4a", "wav", "flac", "ogg", "opus", "aiff", "aif", "wma", "aac"]
     public static let videoFormats: Set<String> = ["mp4", "mov", "mkv", "webm", "avi", "wmv", "m4v", "gif"]
 
     public static func inspect(_ input: URL, token: CancellationToken = .init()) throws -> MediaInfo {
         try validateInput(input, token: token)
-        let result = try ProcessRunner.run(Dependencies.executable("ffprobe"), ["-v", "error", "-show_format", "-show_streams", "-show_chapters", "-of", "json", input.path], token: token)
+        // Warnings are read only to learn whether the duration below is a guess.
+        let result = try ProcessRunner.run(Dependencies.executable("ffprobe"), ["-v", "warning", "-show_format", "-show_streams", "-show_chapters", "-of", "json", input.path], token: token)
         guard let root = try JSONSerialization.jsonObject(with: result.output) as? [String: Any] else { throw NashiError.failed("Could not inspect media information.") }
         let format = root["format"] as? [String: Any] ?? [:]
         let streams = (root["streams"] as? [[String: Any]] ?? []).map { item in
@@ -75,10 +78,23 @@ public enum MediaEngine {
         let chapters = (root["chapters"] as? [[String: Any]] ?? []).enumerated().map { index, item in
             MediaChapter(index: index, start: number(item["start_time"]) ?? 0, end: number(item["end_time"]) ?? 0, metadata: tags(item["tags"]))
         }
-        let duration = number(format["duration"]) ?? streams.compactMap(\.duration).max() ?? 0
+        var duration = number(format["duration"]) ?? streams.compactMap(\.duration).max() ?? 0
+        // Raw ADTS AAC and MP3 without a length header store no duration, so ffprobe guesses one from the bitrate.
+        // A recording that goes quiet shortens the guess, and trims, bleeps and visualizations then stopped there.
+        if String(decoding: result.errorOutput, as: UTF8.self).contains("Estimating duration from bitrate"), let measured = try measuredDuration(input, token: token) { duration = measured }
         // A symlink's own size is a few bytes; compression targets come from the media it points to.
         let size = (try input.resolvingSymlinksInPath().resourceValues(forKeys: [.fileSizeKey]).fileSize).map(Int64.init) ?? 0
         return MediaInfo(duration: duration, size: size, format: format["format_name"] as? String ?? input.pathExtension, streams: streams, chapters: chapters, metadata: tags(format["tags"]))
+    }
+
+    /// The end of the last packet, read by copying every stream to the null muxer without decoding.
+    /// Nil when that fails, so the file stays usable with ffprobe's guess; cancellation still throws.
+    private static func measuredDuration(_ input: URL, token: CancellationToken) throws -> Double? {
+        let result: ProcessResult
+        do { result = try ffmpeg(["-i", input.path, "-map", "0", "-c", "copy", "-f", "null", "-"], token: token) }
+        catch { try token.check(); return nil }
+        let ends = result.text.split(separator: "\n").compactMap { $0.hasPrefix("out_time_us=") ? Double($0.dropFirst("out_time_us=".count)) : nil }
+        return ends.last.flatMap { $0.isFinite && $0 > 0 ? $0 / 1_000_000 : nil }
     }
 
     /// Keys are `file:title`, `track[0]:language`, or `chapter[0]:title`.
@@ -126,6 +142,13 @@ public enum MediaEngine {
         return [output]
     }
 
+    /// Album art is an attached picture stream, not a tag; keep it where the container stores JPEG/PNG art.
+    private static func albumArtArguments(_ info: MediaInfo, ext: String, options: OperationOptions, input: Int = 0) -> [String]? {
+        guard options.preserveMetadata, ["mp3", "m4a", "flac"].contains(ext),
+              let artwork = info.streams.first(where: { $0.isAttachedPicture && ["mjpeg", "png"].contains($0.codec) }) else { return nil }
+        return ["-map", "\(input):\(artwork.index)", "-c:v", "copy"]
+    }
+
     public static func convert(_ input: URL, to format: String, options: OperationOptions, token: CancellationToken, progress: @escaping ProgressHandler = {_,_ in}) throws -> [URL] {
         let info = try inspect(input, token: token)
         let ext = format.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "."))
@@ -136,9 +159,7 @@ public enum MediaEngine {
         var arguments = ["-i", input.path]
         if audioFormats.contains(ext) {
             try requireAudio(info)
-            // Album art is an attached picture stream, not a tag; keep it where the container stores JPEG/PNG art.
-            let artwork = options.preserveMetadata && ["mp3", "m4a", "flac"].contains(ext) ? info.streams.first { $0.isAttachedPicture && ["mjpeg", "png"].contains($0.codec) } : nil
-            arguments += ["-map", "0:a:0"] + (artwork.map { ["-map", "0:\($0.index)", "-c:v", "copy"] } ?? ["-vn"]) + audioEncoding(ext, quality: options.quality, bitrate: options.audioBitrate * 1000, source: info.audio, pcmCodec: try pcmCodec(for: ext, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset)
+            arguments += ["-map", "0:a:0"] + (albumArtArguments(info, ext: ext, options: options) ?? ["-vn"]) + audioEncoding(ext, quality: options.quality, bitrate: options.audioBitrate * 1000, source: info.audio, pcmCodec: try pcmCodec(for: ext, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset)
         } else {
             try requireVideo(info)
             arguments += ["-map", "0:v:0"]
@@ -147,7 +168,11 @@ public enum MediaEngine {
                 let scale = try scalingFilter(options, padToEven: false)
                 // GIF viewers ignore a pixel aspect, so non-square pixels are resized to their displayed shape.
                 let first = (["fps=\(options.gifFrameRate)"] + (scale.map { [$0] } ?? []) + ["scale=w='min(\(options.gifMaxWidth),iw)':h=-2:force_original_aspect_ratio=decrease:reset_sar=1"]).joined(separator: ",")
-                arguments += ["-filter_complex", "[0:v:0]\(first),split[p0][p1];[p0]palettegen=stats_mode=diff[pal];[p1][pal]paletteuse=dither=sierra2_4a", "-an", "-loop", "0"]
+                // Fast skips error diffusion; Maximum uses fewer colors and rewrites only the changed rectangle of each frame.
+                let palette = options.compressionPreset == "fast" ? (generate: "palettegen=stats_mode=diff", apply: "paletteuse=dither=bayer:bayer_scale=5")
+                    : options.compressionPreset == "maximum" ? (generate: "palettegen=max_colors=128:stats_mode=diff", apply: "paletteuse=dither=sierra2_4a:diff_mode=rectangle")
+                    : (generate: "palettegen=stats_mode=diff", apply: "paletteuse=dither=sierra2_4a")
+                arguments += ["-filter_complex", "[0:v:0]\(first),split[p0][p1];[p0]\(palette.generate)[pal];[p1][pal]\(palette.apply)", "-an", "-loop", "0"]
                 // Complex filters map their final output automatically.
                 arguments.removeSubrange(2..<4)
             } else {
@@ -246,7 +271,7 @@ public enum MediaEngine {
         }
         let ext = audioExtension(input)
         let out = try outputURL(input, ext: ext, suffix: " Normalized", options: options)
-        try render(["-i", input.path, "-map", "0:a:0", "-af", filter, "-ar", String(info.audio?.sampleRate ?? 48000)] + audioEncoding(ext, quality: options.quality, source: info.audio, pcmCodec: try pcmCodec(for: ext, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset), to: out, token: token, duration: info.duration, progress: { value,label in progress(OperationProgress.map(value, from: 0.45, to: 1),label) })
+        try render(["-i", input.path, "-map", "0:a:0"] + (albumArtArguments(info, ext: ext, options: options) ?? []) + ["-af", filter, "-ar", String(info.audio?.sampleRate ?? 48000)] + audioEncoding(ext, quality: options.quality, source: info.audio, pcmCodec: try pcmCodec(for: ext, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset), to: out, token: token, duration: info.duration, progress: { value,label in progress(OperationProgress.map(value, from: 0.45, to: 1),label) })
         return [out]
     }
 
@@ -257,9 +282,11 @@ public enum MediaEngine {
         let out = try outputURL(input, ext: ext, suffix: suffix, options: options)
         let range = ["-ss", decimal(interval.0), "-t", decimal(interval.1 - interval.0)]
         // Output -ss/-t cut after -af, so silence removal would scan the whole file; read only the selection instead.
-        var arguments = audio && options.trimSilence ? range + ["-i", input.path] : ["-i", input.path] + range
+        // An output-side -ss drops the attached cover packet, so a cover comes from a second, unseeked input.
+        let cover = audio ? albumArtArguments(info, ext: ext, options: options, input: 1) : nil
+        var arguments = audio && (options.trimSilence || cover != nil) ? range + ["-i", input.path] + (cover == nil ? [] : ["-i", input.path]) : ["-i", input.path] + range
         if audio {
-            arguments += ["-map", "0:a:0", "-vn"]
+            arguments += ["-map", "0:a:0"] + (cover ?? ["-vn"])
             if options.trimSilence { arguments += ["-af", "silenceremove=start_periods=1:start_duration=0.02:start_threshold=\(decimal(options.silenceThresholdDb))dB,areverse,silenceremove=start_periods=1:start_duration=0.02:start_threshold=\(decimal(options.silenceThresholdDb))dB,areverse"] }
             arguments += audioEncoding(ext, quality: options.quality, source: info.audio, pcmCodec: try pcmCodec(for: ext, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset)
         } else { arguments += ["-map", "0:v:0", "-map", "0:a:0?"] + videoEncoding(ext, quality: options.quality, sourceAudio: info.audio) }
@@ -371,7 +398,9 @@ public enum MediaEngine {
         var points: [Double]
         if !options.splitPoints.isEmpty {
             guard options.splitPoints.allSatisfy({ $0.isFinite && $0 > 0 && $0 < info.duration }) else { throw NashiError.invalidInput("Split points must fall inside the video.") }
-            points = Array(Set(options.splitPoints)).sorted()
+            // Keep duplicates: discardedClips index the segments of the sorted points, so the
+            // spacing check must reject a repeated point rather than silently renumbering.
+            points = options.splitPoints.sorted()
         } else if let count = options.equalClips {
             guard count >= 2, count <= 10000 else { throw NashiError.invalidInput("Choose between 2 and 10,000 equal clips.") }
             points = (1..<count).map { info.duration * Double($0) / Double(count) }
@@ -462,7 +491,7 @@ public enum MediaEngine {
         try requireAudio(info)
         let filter = try channelFilter(info: info, options: options)
         let ext = audioExtension(input), out = try outputURL(input, ext: audioExtension(input), suffix: options.channels == 1 ? " Mono" : " Stereo", options: options)
-        try render(["-i", input.path, "-map", "0:a:0", "-af", filter, "-ac", String(options.channels)] + audioEncoding(ext, quality: options.quality, source: info.audio, channels: options.channels, pcmCodec: try pcmCodec(for: ext, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset), to: out, token: token, duration: info.duration, progress: progress)
+        try render(["-i", input.path, "-map", "0:a:0"] + (albumArtArguments(info, ext: ext, options: options) ?? []) + ["-af", filter, "-ac", String(options.channels)] + audioEncoding(ext, quality: options.quality, source: info.audio, channels: options.channels, pcmCodec: try pcmCodec(for: ext, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset), to: out, token: token, duration: info.duration, progress: progress)
         return [out]
     }
 
@@ -519,7 +548,7 @@ public enum MediaEngine {
         let out = try outputURL(input, ext: audioExtension(input), suffix: mode == "mute" || mode == "silence" ? " Redacted" : " Bleeped", options: options)
         let replacement = mode == "mute" || mode == "silence" ? "0" : "0.18*sin(2*PI*1000*t)"
         let expressions = (0..<(info.audio?.channels ?? 2)).map { "if(\(expression),\(replacement),val(\($0)))" }.joined(separator: "|")
-        var arguments = ["-i", input.path, "-map", "0:a:0", "-af", "aeval=exprs='\(expressions)':c=same"]
+        var arguments = ["-i", input.path, "-map", "0:a:0"] + (albumArtArguments(info, ext: out.pathExtension.lowercased(), options: options) ?? []) + ["-af", "aeval=exprs='\(expressions)':c=same"]
         arguments += ["-ac", String(info.audio?.channels ?? 2), "-ar", String(info.audio?.sampleRate ?? 48000)] + audioEncoding(out.pathExtension, quality: options.quality, source: info.audio, pcmCodec: try pcmCodec(for: out.pathExtension, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset)
         try render(arguments, to: out, token: token, duration: info.duration, progress: progress)
         return [out]
@@ -745,7 +774,7 @@ public enum MediaEngine {
         return (start, min(finish, duration > 0 ? duration : finish))
     }
     private static func pixelRect(_ rect: EditRect, width: Int, height: Int) throws -> (x: Int, y: Int, w: Int, h: Int) {
-        guard [rect.x, rect.y, rect.width, rect.height].allSatisfy(\.isFinite), rect.x >= 0, rect.y >= 0, rect.width >= 2, rect.height >= 2, rect.x + rect.width <= Double(width) + 0.01, rect.y + rect.height <= Double(height) + 0.01 else { throw NashiError.invalidInput("The selected rectangle must be inside the video and at least 2 × 2 pixels.") }
+        guard [rect.x, rect.y, rect.width, rect.height].allSatisfy(\.isFinite), rect.x >= 0, rect.y >= 0, rect.width >= minimumVideoCropSide, rect.height >= minimumVideoCropSide, rect.x + rect.width <= Double(width) + 0.01, rect.y + rect.height <= Double(height) + 0.01 else { throw NashiError.invalidInput("The selected rectangle must be inside the video and at least 2 × 2 pixels.") }
         return (Int(rect.x), Int(rect.y), Int(rect.width), Int(rect.height))
     }
     private static func redactionPixelRect(_ rect: EditRect, width: Int, height: Int) throws -> (x: Int, y: Int, w: Int, h: Int) {

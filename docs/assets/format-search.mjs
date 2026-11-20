@@ -1,4 +1,4 @@
-export const foldSearchText = text => String(text).trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+export const foldSearchText = text => String(text).trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replaceAll('ı', 'i');
 
 export function filterFormatRows(rows, value) {
   const term = foldSearchText(value);

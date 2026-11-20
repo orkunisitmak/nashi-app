@@ -3,7 +3,8 @@ using System.Text.Json;
 
 namespace Nashi.Core;
 
-public sealed record MediaStream(int Index, string Kind, string Codec, int? Width, int? Height, bool AttachedPicture,int Bits=0,string SampleFormat="",double FrameRate=30,int SampleRate=0,int Channels=0);
+/// SampleAspect is the stored pixel width over height (32:27 for 16:9 DV); 1 when unknown or for a quarter-turned video.
+public sealed record MediaStream(int Index, string Kind, string Codec, int? Width, int? Height, bool AttachedPicture,int Bits=0,string SampleFormat="",double FrameRate=30,int SampleRate=0,int Channels=0,double SampleAspect=1);
 public sealed record MediaInfo(double Duration, long Bytes, IReadOnlyList<MediaStream> Streams)
 {
     public MediaStream? Video => Streams.FirstOrDefault(s => s.Kind == "video" && !s.AttachedPicture);
@@ -67,7 +68,8 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
     public async Task<MediaInfo> InspectAsync(string input, CancellationToken token = default)
     {
         if (!File.Exists(input)) throw new FileNotFoundException("Choose an existing media file.");
-        var result = await ProcessRunner.RunAsync(ffprobe, ["-v", "error", "-show_format", "-show_streams", "-of", "json", Path.GetFullPath(input)], token);
+        // Warnings are read only to learn whether the duration below is a guess.
+        var result = await ProcessRunner.RunAsync(ffprobe, ["-v", "warning", "-show_format", "-show_streams", "-of", "json", Path.GetFullPath(input)], token);
         using var json = JsonDocument.Parse(result.Output); var root = json.RootElement;
         var streams = new List<MediaStream>();
         foreach (var stream in root.GetProperty("streams").EnumerateArray())
@@ -79,15 +81,32 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
             if(rotation==0&&stream.TryGetProperty("tags",out var tags)&&tags.TryGetProperty("rotate",out var tag))double.TryParse(tag.ToString(),CultureInfo.InvariantCulture,out rotation);
             // FFmpeg auto-rotates decoded frames before crop/scale filters. The
             // editor and validation use those same displayed dimensions.
-            if(double.IsFinite(rotation)&&Math.Abs(Math.Abs(rotation)%180-90)<.001)(width,height)=(height,width);
-            streams.Add(new(stream.GetProperty("index").GetInt32(), GetString(stream,"codec_type"), GetString(stream,"codec_name"), width, height, attached,GetInt(stream,"bits_per_raw_sample")??GetInt(stream,"bits_per_sample")??0,GetString(stream,"sample_fmt"),ParseFrameRate(GetString(stream,"avg_frame_rate")),int.TryParse(GetString(stream,"sample_rate"),NumberStyles.Integer,CultureInfo.InvariantCulture,out var sampleRate)&&sampleRate>0?sampleRate:0,GetInt(stream,"channels") is {} channels&&channels is >0 and <=512?channels:0));
+            var turned=double.IsFinite(rotation)&&Math.Abs(Math.Abs(rotation)%180-90)<.001;if(turned)(width,height)=(height,width);
+            streams.Add(new(stream.GetProperty("index").GetInt32(), GetString(stream,"codec_type"), GetString(stream,"codec_name"), width, height, attached,GetInt(stream,"bits_per_raw_sample")??GetInt(stream,"bits_per_sample")??0,GetString(stream,"sample_fmt"),ParseFrameRate(GetString(stream,"avg_frame_rate")),int.TryParse(GetString(stream,"sample_rate"),NumberStyles.Integer,CultureInfo.InvariantCulture,out var sampleRate)&&sampleRate>0?sampleRate:0,GetInt(stream,"channels") is {} channels&&channels is >0 and <=512?channels:0,turned?1:SampleAspect(GetString(stream,"sample_aspect_ratio"))));
         }
         var duration = root.TryGetProperty("format", out var format) && double.TryParse(GetString(format,"duration"), CultureInfo.InvariantCulture, out var seconds) && double.IsFinite(seconds) ? Math.Max(0,seconds) : 0;
+        // Raw ADTS AAC and MP3 without a length header store no duration, so FFprobe guesses one from the bitrate. A voice memo
+        // that goes quiet halves the guess, and trims, redactions and visualizations then stopped there. Measure it instead.
+        if(result.Error.Contains("Estimating duration from bitrate",StringComparison.Ordinal)&&await MeasuredDurationAsync(input,token) is {} measured)duration=measured;
         var oggTags=format.ValueKind==JsonValueKind.Object&&GetString(format,"format_name").Split(',').Contains("ogg")&&root.GetProperty("streams").EnumerateArray().FirstOrDefault(s=>GetString(s,"codec_type")=="audio") is {ValueKind:JsonValueKind.Object} audio&&audio.TryGetProperty("tags",out var audioTags)&&audioTags.ValueKind==JsonValueKind.Object&&audioTags.EnumerateObject().Any();
         var quickTimeKeys=format.ValueKind==JsonValueKind.Object&&format.TryGetProperty("tags",out var formatTags)&&formatTags.ValueKind==JsonValueKind.Object&&formatTags.EnumerateObject().Any(t=>t.Name.StartsWith("com.apple.quicktime.",StringComparison.Ordinal));
         // FileInfo sizes a symbolic link itself; compression targets come from the media it points to (as on macOS).
         var file=new FileInfo(input);
         return new(duration, (file.ResolveLinkTarget(true) as FileInfo??file).Length, streams){OggStreamTags=oggTags,QuickTimeKeys=quickTimeKeys};
+    }
+
+    // The end of the last packet, read by copying every stream to the null muxer without decoding.
+    private async Task<double?> MeasuredDurationAsync(string input,CancellationToken token)
+    {
+        double? end=null;const string prefix="out_time_us=";
+        try
+        {
+            await ProcessRunner.RunAsync(ffmpeg,["-hide_banner","-nostdin","-v","error","-nostats","-progress","pipe:1","-i",Path.GetFullPath(input),"-map","0","-c","copy","-f","null",OperatingSystem.IsWindows()?"NUL":"/dev/null"],token,
+                line=>{if(line.StartsWith(prefix,StringComparison.Ordinal)&&double.TryParse(line[prefix.Length..],NumberStyles.Float,CultureInfo.InvariantCulture,out var microseconds)&&double.IsFinite(microseconds)&&microseconds>0)end=microseconds/1_000_000;});
+        }
+        // A file FFprobe reads but FFmpeg cannot copy keeps FFprobe's guess. Cancellation is checked before the exit code, so it still throws.
+        catch(IOException){return null;}
+        return end;
     }
 
     // The last video packet's time from the container start, read without decoding: the final minute first, then the whole file.
@@ -129,7 +148,8 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
             {
                 RequireVideo(info);
                 // GIF viewers ignore a pixel aspect, so non-square pixels are resized to their displayed shape (as on macOS).
-                if (format == "gif") arguments.AddRange(["-filter_complex",$"[0:v]fps={options.GifFrameRate},scale=w='min({options.GifWidth},iw)':h=-2:reset_sar=1,split[p0][p1];[p0]palettegen[pal];[p1][pal]paletteuse=dither=sierra2_4a","-an","-loop","0"]);
+                // GIF has no even-size rule: h=-2 stretched a 641x361 recording to 641x362, so the height only keeps the shape.
+                if (format == "gif") arguments.AddRange(["-filter_complex",$"[0:v]fps={options.GifFrameRate},scale=w='min({options.GifWidth},iw)':h=-1:reset_sar=1,split[p0][p1];[p0]palettegen[pal];[p1][pal]paletteuse=dither=sierra2_4a","-an","-loop","0"]);
                 else
                 {
                     arguments.AddRange(["-map","0:v:0","-map","0:a:0?"]);
@@ -194,7 +214,8 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
             case "trimVideo":case "trimAudio":
                 if(tool=="trimAudio")RequireAudio(info);else RequireVideo(info);
                 var range=TimeRange(options.Start,options.End,info.Duration);duration=range.End-range.Start;
-                args.AddRange(["-ss",Number(range.Start),"-t",Number(duration.Value)]);
+                // Output -ss/-t cut after -af, so silence removal would search the whole file; read only the selection instead (as on macOS).
+                string[] span=["-ss",Number(range.Start),"-t",Number(duration.Value)];if(tool=="trimAudio"&&options.TrimSilence)args.InsertRange(0,span);else args.AddRange(span);
                 if(tool=="trimAudio")
                 {
                     args.AddRange(["-map","0:a:0","-vn"]);
@@ -354,7 +375,8 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
             if(options.EqualClips is null)points.RemoveAll(p=>info.Duration-p<.05);
         }
         if(points.Any(p=>!double.IsFinite(p)||p<=0||p>=info.Duration))throw new ArgumentException("A split point lies outside the video.");
-        var bounds=new[]{0d}.Concat(points.Distinct().Order()).Append(info.Duration).ToArray();
+        // Keep repeats: removed clips are numbered from the points as typed, so a repeat must fail the spacing check below rather than renumber them.
+        var bounds=new[]{0d}.Concat(points.Order()).Append(info.Duration).ToArray();
         if(bounds.Zip(bounds.Skip(1)).Any(p=>p.Second-p.First<.05))throw new ArgumentException("Keep split points at least 0.05 seconds apart.");
         if(options.DiscardedClips.Any(n=>n<0||n>=bounds.Length-1))throw new ArgumentException("A discarded clip is outside the range.");
         var retained=Enumerable.Range(0,bounds.Length-1).Except(options.DiscardedClips).ToList();if(retained.Count==0)throw new ArgumentException("Keep at least one clip.");
@@ -374,7 +396,9 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
     {
         if(inputs.Count<2)throw new ArgumentException("Choose at least two videos.");
         var infos=new List<MediaInfo>();foreach(var input in inputs){var info=await InspectAsync(input,token);RequireVideo(info);infos.Add(info);}
-        var width=(infos[0].Video!.Width??1280)/2*2;var height=(infos[0].Video!.Height??720)/2*2;var audio=infos.Any(i=>i.HasAudio);
+        // Clips are fitted by their displayed shape, so an anamorphic first clip sets the canvas at its displayed width (as on macOS);
+        // the cap keeps a damaged pixel aspect from asking for an enormous frame.
+        var first=infos[0].Video!;var width=Math.Max(2,(int)(Math.Min(16384,(first.Width??1280)*first.SampleAspect)/2)*2);var height=(first.Height??720)/2*2;var audio=infos.Any(i=>i.HasAudio);
         var work=Path.Combine(directory,"join-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(work);var clips=new List<string>();
         for(var index=0;index<inputs.Count;index++)
         {
@@ -440,6 +464,8 @@ public sealed class MediaEngine(string ffmpeg, string ffprobe)
     private static string Number(double value)=>double.IsFinite(value)?value.ToString("0.########",CultureInfo.InvariantCulture):throw new ArgumentException("Enter a finite number.");
     private static string GetString(JsonElement element,string property)=>element.TryGetProperty(property,out var value)?value.ToString():"";
     private static int? GetInt(JsonElement element,string property)=>element.TryGetProperty(property,out var value)&&int.TryParse(value.ToString(),NumberStyles.Integer,CultureInfo.InvariantCulture,out var number)?number:null;
+    // ffprobe writes "32:27", or "0:1"/"N/A" when the file does not say; anything unusable counts as square.
+    private static double SampleAspect(string text){var parts=text.Split(':');return parts.Length==2&&int.TryParse(parts[0],NumberStyles.None,CultureInfo.InvariantCulture,out var x)&&int.TryParse(parts[1],NumberStyles.None,CultureInfo.InvariantCulture,out var y)&&x>0&&y>0?(double)x/y:1;}
     private static void Validate(MediaOptions o)
     {
         if(o.SampleDepth is not ("matchSource" or "pcm16" or "pcm24" or "pcm32" or "float32")||o.GifFrameRate<1||o.GifFrameRate>60||o.GifWidth<16||o.GifWidth>8192)throw new ArgumentException("Choose supported GIF and audio sample settings.");

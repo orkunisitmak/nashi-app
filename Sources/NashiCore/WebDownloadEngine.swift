@@ -226,9 +226,17 @@ public enum WebDownloadEngine {
         let ext=(name as NSString).pathExtension.lowercased()
         let preferred=mime.flatMap{UTType(mimeType:$0)?.preferredFilenameExtension}
         let allowed=["jpg","jpeg","png","webp","heic","heif","avif","bmp","tif","tiff","svg","gif","mp4","mov","webm","mkv","m4v","mp3","m4a","wav","flac","ogg","opus","aac","aiff"]
-        if !allowed.contains(ext) {
-            let basename=(name as NSString).deletingPathExtension
-            name=preferred.flatMap{allowed.contains($0) ? basename+"."+$0:nil} ?? basename
+        let mediaMIME=["image/","audio/","video/"].contains{mime?.lowercased().hasPrefix($0)==true}
+        let mediaExtension=mediaMIME && !ext.isEmpty && UTType(filenameExtension:ext).map{$0.conforms(to:.audiovisualContent) || $0.conforms(to:.image)}==true
+        let knownMedia:(String)->Bool={[FileCategory.image,.video,.audio].contains(FileCategory.detect(URL(fileURLWithPath:$0)))}
+        if !allowed.contains(ext) && !mediaExtension && !knownMedia(name) {
+            var basename=(name as NSString).deletingPathExtension
+            if let preferred,allowed.contains(preferred) { name=basename+"."+preferred }
+            else {
+                // Without a media MIME type a chained name such as x.html.command must not end in another file type either; dotted titles keep their parts.
+                while case let next=(basename as NSString).pathExtension,!next.isEmpty,!allowed.contains(next.lowercased()),!knownMedia(basename),UTType(filenameExtension:next)?.isDeclared==true { basename=(basename as NSString).deletingPathExtension }
+                name=basename
+            }
         }
         let finalExtension=(name as NSString).pathExtension
         let suffix=finalExtension.isEmpty ? "":"."+finalExtension
