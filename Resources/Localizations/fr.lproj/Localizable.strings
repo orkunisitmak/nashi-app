@@ -15,6 +15,7 @@
 "%@ input" = "Entrée %@";
 "%@ is enabled" = "%@ est activé";
 "%@ is not installed." = "%@ n’est pas installé.";
+"%@ is structural or read-only metadata." = "%@ est une métadonnée structurelle ou en lecture seule.";
 "%@ items" = "%@ éléments";
 "%@ photos" = "%@ photos";
 "%@ ready to paste." = "%@ prêts à coller.";
@@ -44,6 +45,7 @@
 "%lld input" = "Entrée %lld";
 "%lld is enabled" = "%lld est activé";
 "%lld is not installed." = "%lld n’est pas installé.";
+"%lld is structural or read-only metadata." = "%lld est une métadonnée structurelle ou en lecture seule.";
 "%lld items" = "%lld éléments";
 "%lld photos" = "%lld photos";
 "%lld ready to paste." = "%lld prêts à coller.";
@@ -1454,9 +1456,12 @@
 "MENU BAR" = "BARRE DES MENUS";
 "MERGE PDFS" = "FUSIONNER DES PDF";
 "METADATA" = "MÉTADONNÉES";
+"METADATA CHANGES WOULD ALTER ENCODED IMAGE DATA OR ITS APPEARANCE. NO OUTPUT WAS SAVED." = "LES MODIFICATIONS DE MÉTADONNÉES ALTÉRERAIENT LES DONNÉES ENCODÉES DE L’IMAGE OU SON APPARENCE. AUCUN FICHIER N’A ÉTÉ ENREGISTRÉ.";
 "METADATA TOOLS ARE NOT READY." = "LES OUTILS DE MÉTADONNÉES NE SONT PAS PRÊTS.";
 "METADATA TOOLS CHECKSUM MISMATCH." = "SOMME DE CONTRÔLE DES OUTILS DE MÉTADONNÉES INCORRECTE.";
+"METADATA TRANSFER DID NOT PRESERVE THE IMAGE'S DISPLAY ORIENTATION. NO OUTPUT WAS SAVED." = "LE TRANSFERT DES MÉTADONNÉES N’A PAS CONSERVÉ L’ORIENTATION D’AFFICHAGE DE L’IMAGE. AUCUN FICHIER N’A ÉTÉ ENREGISTRÉ.";
 "METADATA · NASHI" = "MÉTADONNÉES · NASHI";
+"METADATA-ONLY EDITING IS UNAVAILABLE FOR THIS IMAGE FORMAT." = "LA MODIFICATION DES SEULES MÉTADONNÉES N’EST PAS DISPONIBLE POUR CE FORMAT D’IMAGE.";
 "MIDDLE THIRD" = "TIERS CENTRAL";
 "MONO" = "MONO";
 "MONOSPACED" = "MONOCHASSE";
@@ -1502,9 +1507,12 @@
 "Menu bar" = "Barre des menus";
 "Merge PDFs" = "Fusionner des PDF";
 "Metadata" = "Métadonnées";
+"Metadata changes would alter encoded image data or its appearance. No output was saved." = "Les modifications de métadonnées altéreraient les données encodées de l’image ou son apparence. Aucun fichier n’a été enregistré.";
 "Metadata tools are not ready." = "Les outils de métadonnées ne sont pas prêts.";
 "Metadata tools checksum mismatch." = "Somme de contrôle des outils de métadonnées incorrecte.";
+"Metadata transfer did not preserve the image's display orientation. No output was saved." = "Le transfert des métadonnées n’a pas conservé l’orientation d’affichage de l’image. Aucun fichier n’a été enregistré.";
 "Metadata · Nashi" = "Métadonnées · Nashi";
+"Metadata-only editing is unavailable for this image format." = "La modification des seules métadonnées n’est pas disponible pour ce format d’image.";
 "Middle third" = "Tiers central";
 "Mono" = "Mono";
 "Monospaced" = "Monochasse";
@@ -2431,6 +2439,7 @@
 "THE SITE DID NOT RETURN READABLE MEDIA DETAILS." = "LE SITE N’A PAS RENVOYÉ D’INFORMATIONS LISIBLES SUR LE MÉDIA.";
 "THE SITE IS LIMITING REQUESTS. WAIT A LITTLE AND TRY AGAIN." = "LE SITE LIMITE LES REQUÊTES. PATIENTEZ UN PEU, PUIS RÉESSAYEZ.";
 "THE SITE RETURNED TOO MUCH METADATA. TRY AN INDIVIDUAL MEDIA LINK." = "LE SITE A RENVOYÉ TROP DE MÉTADONNÉES. ESSAYEZ LE LIEN D’UN SEUL MÉDIA.";
+"THE SOURCE CHANGED DURING THIS OPERATION. NO OUTPUT WAS SAVED." = "LE FICHIER SOURCE A CHANGÉ PENDANT L’OPÉRATION. AUCUN FICHIER N’A ÉTÉ ENREGISTRÉ.";
 "THE START AND END TIMES MUST DESCRIBE A NONEMPTY RANGE INSIDE THE MEDIA." = "LE DÉBUT ET LA FIN DOIVENT DÉLIMITER UNE PLAGE NON VIDE À L’INTÉRIEUR DU MÉDIA.";
 "THE TEXT CLIPPING'S RESOURCE DATA IS DAMAGED." = "LES DONNÉES DE RESSOURCE DU FRAGMENT SONT ENDOMMAGÉES.";
 "THE UPDATE DOES NOT CONTAIN NASHI." = "LA MISE À JOUR NE CONTIENT PAS NASHI.";
@@ -2578,7 +2587,9 @@
 "The local document converter did not produce a %lld file. %lld" = "Le convertisseur de documents local n’a pas produit de fichier %lld. %lld";
 "The media server redirected to an insecure URL." = "Le serveur multimédia a redirigé vers une URL non sécurisée.";
 "The metadata field %@ could not be removed." = "Le champ de métadonnées %@ n’a pas pu être supprimé.";
+"The metadata field %@ was not written. No output was saved." = "Le champ de métadonnées %@ n’a pas été écrit. Aucun fichier n’a été enregistré.";
 "The metadata field %lld could not be removed." = "Le champ de métadonnées %lld n’a pas pu être supprimé.";
+"The metadata field %lld was not written. No output was saved." = "Le champ de métadonnées %lld n’a pas été écrit. Aucun fichier n’a été enregistré.";
 "The operation was cancelled." = "L’opération a été annulée.";
 "The password is incorrect, or the archive is damaged." = "Le mot de passe est incorrect ou l’archive est endommagée.";
 "The post did not return readable photo details." = "La publication n’a pas renvoyé d’informations lisibles sur les photos.";
@@ -2597,6 +2608,7 @@
 "The site did not return readable media details." = "Le site n’a pas renvoyé d’informations lisibles sur le média.";
 "The site is limiting requests. Wait a little and try again." = "Le site limite les requêtes. Patientez un peu, puis réessayez.";
 "The site returned too much metadata. Try an individual media link." = "Le site a renvoyé trop de métadonnées. Essayez le lien d’un seul média.";
+"The source changed during this operation. No output was saved." = "Le fichier source a changé pendant l’opération. Aucun fichier n’a été enregistré.";
 "The start and end times must describe a nonempty range inside the media." = "Le début et la fin doivent délimiter une plage non vide à l’intérieur du média.";
 "The text clipping's resource data is damaged." = "Les données de ressource du fragment sont endommagées.";
 "The text encoding of %@ could not be read." = "L’encodage du texte de %@ n’a pas pu être lu.";

@@ -15,6 +15,7 @@
 "%@ input" = "%@ input";
 "%@ is enabled" = "%@ is enabled";
 "%@ is not installed." = "%@ is not installed.";
+"%@ is structural or read-only metadata." = "%@ is structural or read-only metadata.";
 "%@ items" = "%@ items";
 "%@ photos" = "%@ photos";
 "%@ ready to paste." = "%@ ready to paste.";
@@ -44,6 +45,7 @@
 "%lld input" = "%lld input";
 "%lld is enabled" = "%lld is enabled";
 "%lld is not installed." = "%lld is not installed.";
+"%lld is structural or read-only metadata." = "%lld is structural or read-only metadata.";
 "%lld items" = "%lld items";
 "%lld photos" = "%lld photos";
 "%lld ready to paste." = "%lld ready to paste.";
@@ -1454,9 +1456,12 @@
 "MENU BAR" = "MENU BAR";
 "MERGE PDFS" = "MERGE PDFS";
 "METADATA" = "METADATA";
+"METADATA CHANGES WOULD ALTER ENCODED IMAGE DATA OR ITS APPEARANCE. NO OUTPUT WAS SAVED." = "METADATA CHANGES WOULD ALTER ENCODED IMAGE DATA OR ITS APPEARANCE. NO OUTPUT WAS SAVED.";
 "METADATA TOOLS ARE NOT READY." = "METADATA TOOLS ARE NOT READY.";
 "METADATA TOOLS CHECKSUM MISMATCH." = "METADATA TOOLS CHECKSUM MISMATCH.";
+"METADATA TRANSFER DID NOT PRESERVE THE IMAGE'S DISPLAY ORIENTATION. NO OUTPUT WAS SAVED." = "METADATA TRANSFER DID NOT PRESERVE THE IMAGE'S DISPLAY ORIENTATION. NO OUTPUT WAS SAVED.";
 "METADATA · NASHI" = "METADATA · NASHI";
+"METADATA-ONLY EDITING IS UNAVAILABLE FOR THIS IMAGE FORMAT." = "METADATA-ONLY EDITING IS UNAVAILABLE FOR THIS IMAGE FORMAT.";
 "MIDDLE THIRD" = "MIDDLE THIRD";
 "MONO" = "MONO";
 "MONOSPACED" = "MONOSPACED";
@@ -1502,9 +1507,12 @@
 "Menu bar" = "Menu bar";
 "Merge PDFs" = "Merge PDFs";
 "Metadata" = "Metadata";
+"Metadata changes would alter encoded image data or its appearance. No output was saved." = "Metadata changes would alter encoded image data or its appearance. No output was saved.";
 "Metadata tools are not ready." = "Metadata tools are not ready.";
 "Metadata tools checksum mismatch." = "Metadata tools checksum mismatch.";
+"Metadata transfer did not preserve the image's display orientation. No output was saved." = "Metadata transfer did not preserve the image's display orientation. No output was saved.";
 "Metadata · Nashi" = "Metadata · Nashi";
+"Metadata-only editing is unavailable for this image format." = "Metadata-only editing is unavailable for this image format.";
 "Middle third" = "Middle third";
 "Mono" = "Mono";
 "Monospaced" = "Monospaced";
@@ -2431,6 +2439,7 @@
 "THE SITE DID NOT RETURN READABLE MEDIA DETAILS." = "THE SITE DID NOT RETURN READABLE MEDIA DETAILS.";
 "THE SITE IS LIMITING REQUESTS. WAIT A LITTLE AND TRY AGAIN." = "THE SITE IS LIMITING REQUESTS. WAIT A LITTLE AND TRY AGAIN.";
 "THE SITE RETURNED TOO MUCH METADATA. TRY AN INDIVIDUAL MEDIA LINK." = "THE SITE RETURNED TOO MUCH METADATA. TRY AN INDIVIDUAL MEDIA LINK.";
+"THE SOURCE CHANGED DURING THIS OPERATION. NO OUTPUT WAS SAVED." = "THE SOURCE CHANGED DURING THIS OPERATION. NO OUTPUT WAS SAVED.";
 "THE START AND END TIMES MUST DESCRIBE A NONEMPTY RANGE INSIDE THE MEDIA." = "THE START AND END TIMES MUST DESCRIBE A NONEMPTY RANGE INSIDE THE MEDIA.";
 "THE TEXT CLIPPING'S RESOURCE DATA IS DAMAGED." = "THE TEXT CLIPPING'S RESOURCE DATA IS DAMAGED.";
 "THE UPDATE DOES NOT CONTAIN NASHI." = "THE UPDATE DOES NOT CONTAIN NASHI.";
@@ -2578,7 +2587,9 @@
 "The local document converter did not produce a %lld file. %lld" = "The local document converter did not produce a %lld file. %lld";
 "The media server redirected to an insecure URL." = "The media server redirected to an insecure URL.";
 "The metadata field %@ could not be removed." = "The metadata field %@ could not be removed.";
+"The metadata field %@ was not written. No output was saved." = "The metadata field %@ was not written. No output was saved.";
 "The metadata field %lld could not be removed." = "The metadata field %lld could not be removed.";
+"The metadata field %lld was not written. No output was saved." = "The metadata field %lld was not written. No output was saved.";
 "The operation was cancelled." = "The operation was cancelled.";
 "The password is incorrect, or the archive is damaged." = "The password is incorrect, or the archive is damaged.";
 "The post did not return readable photo details." = "The post did not return readable photo details.";
@@ -2597,6 +2608,7 @@
 "The site did not return readable media details." = "The site did not return readable media details.";
 "The site is limiting requests. Wait a little and try again." = "The site is limiting requests. Wait a little and try again.";
 "The site returned too much metadata. Try an individual media link." = "The site returned too much metadata. Try an individual media link.";
+"The source changed during this operation. No output was saved." = "The source changed during this operation. No output was saved.";
 "The start and end times must describe a nonempty range inside the media." = "The start and end times must describe a nonempty range inside the media.";
 "The text clipping's resource data is damaged." = "The text clipping's resource data is damaged.";
 "The text encoding of %@ could not be read." = "The text encoding of %@ could not be read.";

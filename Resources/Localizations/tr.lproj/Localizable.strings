@@ -15,6 +15,7 @@
 "%@ input" = "%@ girdisi";
 "%@ is enabled" = "%@ izni açık";
 "%@ is not installed." = "%@ kurulu değil.";
+"%@ is structural or read-only metadata." = "%@ yapısal ya da salt okunur bir meta veri.";
 "%@ items" = "%@ öğe";
 "%@ photos" = "%@ fotoğraf";
 "%@ ready to paste." = "%@ kod yapıştırmaya hazır.";
@@ -44,6 +45,7 @@
 "%lld input" = "%lld girdisi";
 "%lld is enabled" = "%lld izni açık";
 "%lld is not installed." = "%lld kurulu değil.";
+"%lld is structural or read-only metadata." = "%lld yapısal ya da salt okunur bir meta veri.";
 "%lld items" = "%lld öğe";
 "%lld photos" = "%lld fotoğraf";
 "%lld ready to paste." = "%lld kod yapıştırmaya hazır.";
@@ -1454,9 +1456,12 @@
 "MENU BAR" = "MENÜ ÇUBUĞU";
 "MERGE PDFS" = "PDF'LERİ BİRLEŞTİR";
 "METADATA" = "META VERİLER";
+"METADATA CHANGES WOULD ALTER ENCODED IMAGE DATA OR ITS APPEARANCE. NO OUTPUT WAS SAVED." = "META VERİ DEĞİŞİKLİKLERİ GÖRSELİN KODLANMIŞ VERİSİNİ YA DA GÖRÜNÜMÜNÜ DEĞİŞTİRİRDİ. ÇIKTI KAYDEDİLMEDİ.";
 "METADATA TOOLS ARE NOT READY." = "META VERİ ARAÇLARI HAZIR DEĞİL.";
 "METADATA TOOLS CHECKSUM MISMATCH." = "META VERİ ARAÇLARININ SAĞLAMA TOPLAMI EŞLEŞMİYOR.";
+"METADATA TRANSFER DID NOT PRESERVE THE IMAGE'S DISPLAY ORIENTATION. NO OUTPUT WAS SAVED." = "META VERİ AKTARIMI GÖRSELİN GÖRÜNTÜ YÖNÜNÜ KORUMADI. ÇIKTI KAYDEDİLMEDİ.";
 "METADATA · NASHI" = "META VERİLER · NASHI";
+"METADATA-ONLY EDITING IS UNAVAILABLE FOR THIS IMAGE FORMAT." = "BU GÖRSEL BİÇİMİNDE YALNIZCA META VERİLER DÜZENLENEMİYOR.";
 "MIDDLE THIRD" = "ORTA ÜÇTE BİR";
 "MONO" = "MONO";
 "MONOSPACED" = "EŞ ARALIKLI";
@@ -1502,9 +1507,12 @@
 "Menu bar" = "Menü çubuğu";
 "Merge PDFs" = "PDF'leri Birleştir";
 "Metadata" = "Meta Veriler";
+"Metadata changes would alter encoded image data or its appearance. No output was saved." = "Meta veri değişiklikleri görselin kodlanmış verisini ya da görünümünü değiştirirdi. Çıktı kaydedilmedi.";
 "Metadata tools are not ready." = "Meta veri araçları hazır değil.";
 "Metadata tools checksum mismatch." = "Meta veri araçlarının sağlama toplamı eşleşmiyor.";
+"Metadata transfer did not preserve the image's display orientation. No output was saved." = "Meta veri aktarımı görselin görüntü yönünü korumadı. Çıktı kaydedilmedi.";
 "Metadata · Nashi" = "Meta Veriler · Nashi";
+"Metadata-only editing is unavailable for this image format." = "Bu görsel biçiminde yalnızca meta veriler düzenlenemiyor.";
 "Middle third" = "Orta üçte bir";
 "Mono" = "Mono";
 "Monospaced" = "Eş aralıklı";
@@ -2431,6 +2439,7 @@
 "THE SITE DID NOT RETURN READABLE MEDIA DETAILS." = "SİTE OKUNABİLİR MEDYA BİLGİSİ DÖNDÜRMEDİ.";
 "THE SITE IS LIMITING REQUESTS. WAIT A LITTLE AND TRY AGAIN." = "SİTE İSTEKLERİ SINIRLIYOR. BİRAZ BEKLEYİP YENİDEN DENE.";
 "THE SITE RETURNED TOO MUCH METADATA. TRY AN INDIVIDUAL MEDIA LINK." = "SİTE ÇOK FAZLA META VERİ DÖNDÜRDÜ. TEK BİR MEDYANIN BAĞLANTISINI DENE.";
+"THE SOURCE CHANGED DURING THIS OPERATION. NO OUTPUT WAS SAVED." = "KAYNAK DOSYA BU İŞLEM SIRASINDA DEĞİŞTİ. ÇIKTI KAYDEDİLMEDİ.";
 "THE START AND END TIMES MUST DESCRIBE A NONEMPTY RANGE INSIDE THE MEDIA." = "BAŞLANGIÇ VE BİTİŞ ZAMANLARI MEDYANIN İÇİNDE BOŞ OLMAYAN BİR ARALIK BELİRTMELİ.";
 "THE TEXT CLIPPING'S RESOURCE DATA IS DAMAGED." = "METİN KIRPINTISININ KAYNAK VERİSİ BOZUK.";
 "THE UPDATE DOES NOT CONTAIN NASHI." = "GÜNCELLEME NASHI'Yİ İÇERMİYOR.";
@@ -2578,7 +2587,9 @@
 "The local document converter did not produce a %lld file. %lld" = "Yerel belge dönüştürücü bir %lld dosyası oluşturmadı. %lld";
 "The media server redirected to an insecure URL." = "Medya sunucusu güvenli olmayan bir adrese yönlendirdi.";
 "The metadata field %@ could not be removed." = "%@ meta veri alanı kaldırılamadı.";
+"The metadata field %@ was not written. No output was saved." = "%@ meta veri alanı yazılamadı. Çıktı kaydedilmedi.";
 "The metadata field %lld could not be removed." = "%lld meta veri alanı kaldırılamadı.";
+"The metadata field %lld was not written. No output was saved." = "%lld meta veri alanı yazılamadı. Çıktı kaydedilmedi.";
 "The operation was cancelled." = "İşlem iptal edildi.";
 "The password is incorrect, or the archive is damaged." = "Parola yanlış ya da arşiv bozuk.";
 "The post did not return readable photo details." = "Gönderi okunabilir fotoğraf bilgisi döndürmedi.";
@@ -2597,6 +2608,7 @@
 "The site did not return readable media details." = "Site okunabilir medya bilgisi döndürmedi.";
 "The site is limiting requests. Wait a little and try again." = "Site istekleri sınırlıyor. Biraz bekleyip yeniden dene.";
 "The site returned too much metadata. Try an individual media link." = "Site çok fazla meta veri döndürdü. Tek bir medyanın bağlantısını dene.";
+"The source changed during this operation. No output was saved." = "Kaynak dosya bu işlem sırasında değişti. Çıktı kaydedilmedi.";
 "The start and end times must describe a nonempty range inside the media." = "Başlangıç ve bitiş zamanları medyanın içinde boş olmayan bir aralık belirtmeli.";
 "The text clipping's resource data is damaged." = "Metin kırpıntısının kaynak verisi bozuk.";
 "The text encoding of %@ could not be read." = "%@ dosyasının metin kodlaması okunamadı.";
