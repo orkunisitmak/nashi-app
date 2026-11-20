@@ -25,7 +25,7 @@ internal static class UpdateInstaller
             var fileName=Path.Combine(stage,"request.json");await File.WriteAllTextAsync(fileName,JsonSerializer.Serialize(request),token);
             token.ThrowIfCancellationRequested();var start=new ProcessStartInfo(Path.Combine(worker,"Nashi.exe")){UseShellExecute=false,WorkingDirectory=worker};start.ArgumentList.Add("--apply-update");start.ArgumentList.Add(fileName);(Process.Start(start)??throw new IOException("Cannot start update installer.")).Dispose();
         }
-        catch{Directory.Delete(stage,true);throw;}
+        catch{try{Directory.Delete(stage,true);}catch(Exception cleanup)when(cleanup is IOException or UnauthorizedAccessException){}throw;}
     }
     public static int Apply(string requestFile)
     {
