@@ -1863,6 +1863,10 @@
 "Portrait · 9:16" = "Portrait · 9:16";
 "Position X" = "Position X";
 "Position Y" = "Position Y";
+"Prepared %@ of %@ files" = "Prepared %@ of %@ files";
+"Prepared %@ of %lld files" = "Prepared %@ of %lld files";
+"Prepared %lld of %@ files" = "Prepared %lld of %@ files";
+"Prepared %lld of %lld files" = "Prepared %lld of %lld files";
 "Preparing %@…" = "Preparing %@…";
 "Preparing %lld…" = "Preparing %lld…";
 "Preparing a local preview…" = "Preparing a local preview…";
@@ -1894,6 +1898,8 @@
 "Processed preview unavailable for this Windows codec." = "Processed preview unavailable for this Windows codec.";
 "Processed preview · export uses the original file." = "Processed preview · export uses the original file.";
 "Processed preview. Choose Original to edit areas." = "Processed preview. Choose Original to edit areas.";
+"Processing %@…" = "Processing %@…";
+"Processing %lld…" = "Processing %lld…";
 "Processing media…" = "Processing media…";
 "Processing…" = "Processing…";
 "Protected media cannot be downloaded." = "Protected media cannot be downloaded.";
@@ -2096,6 +2102,7 @@
 "SAVING COLLAGE…" = "SAVING COLLAGE…";
 "SAVING DOCUMENT…" = "SAVING DOCUMENT…";
 "SAVING IMAGES…" = "SAVING IMAGES…";
+"SAVING YOUR FILES…" = "SAVING YOUR FILES…";
 "SCAN AGAIN" = "SCAN AGAIN";
 "SCAN COMPLETE." = "SCAN COMPLETE.";
 "SEARCH FORMATS" = "SEARCH FORMATS";
@@ -2265,6 +2272,7 @@
 "Saving frame %lld of %@…" = "Saving frame %lld of %@…";
 "Saving frame %lld of %lld…" = "Saving frame %lld of %lld…";
 "Saving images…" = "Saving images…";
+"Saving your files…" = "Saving your files…";
 "Scan again" = "Scan again";
 "Scan complete." = "Scan complete.";
 "Search formats" = "Search formats";
