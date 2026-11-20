@@ -49,6 +49,8 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
                     var sheetFilter=$"csv:Text - txt - csv (StarCalc):{delimiter},34,76,1,,0,false,true,true,false,false,{sheet}";
                     try{result=await ProcessRunner.RunAsync(office,BuildArgs(sheetFilter),limit.Token);}
                     catch(OperationCanceledException)when(!token.IsCancellationRequested){throw new TimeoutException(TimeoutMessage);}
+                    // LibreOffice exits with 0x40c02 ("Please verify input parameters...") once the 1-based sheet index passes the last sheet.
+                    catch(IOException ex)when(sheet>1&&(ex.Message.Contains("0x40c02",StringComparison.OrdinalIgnoreCase)||ex.Message.Contains("Please verify input parameters",StringComparison.OrdinalIgnoreCase))){reachedLimit=false;break;}
                     var produced=Directory.GetFiles(rendered,"*.csv").FirstOrDefault();
                     if(produced is null){reachedLimit=false;break;}
                     var text=await File.ReadAllTextAsync(produced,token);
