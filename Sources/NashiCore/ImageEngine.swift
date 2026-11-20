@@ -50,12 +50,15 @@ public enum ImageEngine {
         if format == "pdf" { return try PDFEngine.create(inputs:[input],options:options,token:token) }
         let image = try load(input)
         let output=OutputFiles.unique(for:input,extension:format,directory:options.outputDirectory)
-        var complete=false;defer { if !complete { try? FileManager.default.removeItem(at:output) } }
+        // Encode in a private folder: failure cleanup then removes only this job's
+        // own file, never one another writer created at the chosen name.
+        let staging=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:staging) }
+        let staged=staging.appendingPathComponent(output.lastPathComponent)
         let metadata = options.preserveMetadata ? CGImageSourceCreateWithURL(input as CFURL,nil).map { imageProperties($0,input:input) as CFDictionary } : nil
-        try write(image,to:output,quality:options.quality,metadata:metadata,token:token)
-        if options.preserveMetadata { try ImageMetadataEngine.copyMetadata(from:input,to:output,token:token) }
-        complete=true
-        return [output]
+        try write(image,to:staged,quality:options.quality,metadata:metadata,token:token)
+        if options.preserveMetadata { try ImageMetadataEngine.copyMetadata(from:input,to:staged,token:token) }
+        try token.check()
+        return [try OutputFiles.move(staged,into:output.deletingLastPathComponent())]
     }
 
     public static func write(_ image: CGImage, to url: URL, quality: Double = 0.8, metadata: CFDictionary? = nil, token: CancellationToken = .init()) throws {
@@ -88,8 +91,12 @@ public enum ImageEngine {
             var args=["-v","error","-i",png.path,"-frames:v","1"]
             if ext == "webp" { args += ["-c:v","libwebp","-quality",String(Int(quality*100))] }
             if ext == "avif" { args += ["-c:v","libaom-av1","-still-picture","1","-cpu-used","6","-crf",String(Int((1-quality)*50)+8)] }
-            args += [url.path]
+            // FFmpeg opens its output with O_TRUNC and follows symlinks. Encode into
+            // the private folder; moveItem never follows a link at the output name.
+            let encoded=temp.appendingPathComponent("encoded").appendingPathExtension(ext)
+            args += [encoded.path]
             try ProcessRunner.run(Dependencies.executable("ffmpeg"),args,token:token)
+            try FileManager.default.moveItem(at:encoded,to:url)
         }
     }
 
