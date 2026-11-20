@@ -53,7 +53,10 @@ jobs:
       - name: Update trust, web photo and window placement and setup regressions
         run: swift test --filter 'NashiUpdatesTests|WebMediaDragPayloadTests|InstagramPhotosTests|YouTubeThumbnailTests|WindowPlacementTests|AppLocalizationTests|ToolSetupTests'
       - name: Web download compatibility and safety regressions
-        run: swift test --filter WebDownloadTests
+        run: |
+          printf '#!/bin/sh\nexit 0\n' > "$RUNNER_TEMP/nashi-test-deno"
+          chmod +x "$RUNNER_TEMP/nashi-test-deno"
+          NASHI_DENO="$RUNNER_TEMP/nashi-test-deno" swift test --filter WebDownloadTests
       - name: HTML to PDF layout, offline isolation and cancellation
         run: swift test --filter HTMLToPDFTests
       - name: Install FFmpeg for redaction regressions

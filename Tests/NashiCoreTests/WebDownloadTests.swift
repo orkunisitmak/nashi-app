@@ -164,7 +164,10 @@ final class WebDownloadTests:XCTestCase {
             let destination=root.appendingPathComponent("Downloads \(index)",isDirectory:true)
             do { _=try await WebDownloadEngine.download(info,mode:.video,maximumHeight:720,destination:destination) { _,_ in };XCTFail("outside path accepted: \(report)") } catch {}
             XCTAssertEqual(try String(contentsOf:outside,encoding:.utf8),"H1080 original",report)
-            XCTAssertEqual(try fm.contentsOfDirectory(atPath:destination.path),[],report)
+            // A rejected request may leave no staging directory at all.
+            if fm.fileExists(atPath:destination.path) {
+                XCTAssertEqual(try fm.contentsOfDirectory(atPath:destination.path),[],report)
+            }
         }
         // Control: a staged file over the limit is still fitted and published.
         try Data("printf H1080 > \"$stage/a.mp4\"\necho NASHI_FILE:\\\"$stage/a.mp4\\\"\n".utf8).write(to:plan)
