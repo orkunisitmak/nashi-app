@@ -244,4 +244,17 @@ final class AppLocalizationTests:XCTestCase {
         }
         XCTAssertEqual(AppLocalization.text("This PDF contains accessibility tags. Metadata cleanup cannot safely preserve those features. No copy was exported.",language:"tr"),"Bu PDF'de erişilebilirlik etiketleri var. Meta veri temizliği bu özellikleri güvenle koruyamaz. Kopya dışa aktarılmadı.")
     }
+    /// ToolEditor shows ImageEngine.collage failures through LText, so each sentence needs a catalog entry.
+    func testCollageSizeErrorsAreTranslated() {
+        let expected=[
+            "Collage dimensions must be between 1 and 32,000 pixels.":("Kolaj boyutları 1 ile 32.000 piksel arasında olmalı.","Les dimensions du collage doivent être comprises entre 1 et 32 000 pixels."),
+            "Collage padding leaves no space for images.":("Kenar boşluğu görseller için yer bırakmıyor.","Les marges ne laissent pas de place aux images."),
+            "Reduce collage spacing or increase the canvas.":("Kolaj aralığını azalt veya tuvali büyüt.","Réduisez l’espacement du collage ou agrandissez le canevas."),
+        ]
+        for (source,(tr,fr)) in expected {
+            XCTAssertEqual(AppLocalization.text(source,language:"tr"),tr)
+            XCTAssertEqual(AppLocalization.text(source,language:"fr"),fr)
+            XCTAssertEqual(AppLocalization.text(source,language:"en"),source)
+        }
+    }
 }
