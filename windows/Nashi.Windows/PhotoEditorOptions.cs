@@ -119,7 +119,7 @@ public sealed partial class ToolEditor
             });
             if(!IsVisible||showingOriginal||generation!=photoGeneration)return;SetPhotoPreview(result);
         }
-        catch(Exception error)when(error is ArgumentException or FormatException or InvalidDataException or ImageMagick.MagickException or IOException or NotSupportedException){ToolTip=error.Message;}finally{previewGate.Release();}
+        catch(Exception error)when(error is ArgumentException or FormatException or InvalidDataException or ImageMagick.MagickException or IOException or NotSupportedException or System.Xml.XmlException){ToolTip=error.Message;}finally{previewGate.Release();}
     }
     private void SetPhotoPreview(BitmapSource result){drawing.Width=result.PixelWidth;drawing.Height=result.PixelHeight;if(drawing.Children[0] is Image image){image.Source=result;image.Width=result.PixelWidth;image.Height=result.PixelHeight;}}
     private async Task DetectPhoto(bool text,bool faces)
