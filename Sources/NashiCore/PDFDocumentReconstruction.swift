@@ -48,11 +48,11 @@ enum PDFDocumentReconstruction {
         var fontSize: CGFloat { cells.map(\.fontSize).max() ?? 12 }
     }
     private enum Block {
-        case paragraph([Row]), table([Row]), image(CGRect)
+        case paragraph([Row]), table([Row]), image(CGRect, source: CGRect)
         var bounds: CGRect {
             switch self {
             case .paragraph(let rows), .table(let rows): return rows.dropFirst().reduce(rows.first?.bounds ?? .zero) { $0.union($1.bounds) }
-            case .image(let rect): return rect
+            case .image(let rect, _): return rect
             }
         }
     }
@@ -141,17 +141,23 @@ enum PDFDocumentReconstruction {
         for index in 0..<pdf.pageCount {
             try token.check()
             guard let page = pdf.page(at: index) else { continue }
-            let box = page.bounds(for: .cropBox)
+            // PDFKit reports glyph and image geometry in unrotated page space.
+            // On a rotated page, rows, reading order and the page size follow
+            // the displayed crop box; unrotated pages keep crop-box coordinates.
+            let rotated = page.rotation % 360 != 0
+            let box = rotated ? PDFOfficeCodec.visualBounds(page) : page.bounds(for: .cropBox)
+            let toVisual = rotated ? page.transform(for: .cropBox) : .identity
             // A fixed half-inch margin consumes most of a small PDF page.
             // Cap the ordinary margin while reserving at least 90% of a small
             // page's narrow dimension for editable content.
             let margin = min(36, min(box.width, box.height) * 0.05)
-            let rows = try textRows(page, token: token)
+            let rows = try textRows(page, toVisual: toVisual, token: token)
             var blocks = textBlocks(rows)
             let nativeText = !(page.string ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            for rect in try PDFPlacedImages.regions(page, token: token) {
+            for source in try PDFPlacedImages.regions(page, token: token) {
+                let rect = source.applying(toVisual).standardized
                 if !nativeText && !rows.isEmpty && rect.width * rect.height > box.width * box.height * 0.8 { continue }
-                blocks.append(.image(rect))
+                blocks.append(.image(rect, source: source))
             }
             blocks.sort { abs($0.bounds.maxY - $1.bounds.maxY) > 2 ? $0.bounds.maxY > $1.bounds.maxY : $0.bounds.minX < $1.bounds.minX }
             pageLayouts += "<style:page-layout style:name=\"PageLayout\(index)\"><style:page-layout-properties fo:page-width=\"\(box.width)pt\" fo:page-height=\"\(box.height)pt\" fo:margin=\"\(margin)pt\"/></style:page-layout>"
@@ -165,8 +171,8 @@ enum PDFDocumentReconstruction {
                 switch block {
                 case .paragraph(let rows): body += writer.paragraph(rows, page: box, margin: margin, gap: gap)
                 case .table(let rows): body += writer.table(rows, page: box, margin: margin, gap: gap)
-                case .image(let rect):
-                    let png = try PDFOfficeCodec.rasterPNG(page, rect: rect, dpi: options.dpi, token: token)
+                case .image(let rect, let source):
+                    let png = try visualPNG(page, source: source, rect: rect, toVisual: toVisual, dpi: options.dpi, token: token)
                     body += writer.image(rect, png: png, page: box, margin: margin, gap: gap)
                 }
                 previousBottom = min(previousBottom, block.bounds.minY)
@@ -184,10 +190,37 @@ enum PDFDocumentReconstruction {
         return output
     }
 
-    private static func textRows(_ page: PDFPage, token: CancellationToken) throws -> [Row] {
+    /// Crops a placed image in unrotated page space and turns it with the
+    /// page, so the raster matches its displayed frame on rotated pages.
+    private static func visualPNG(_ page: PDFPage, source: CGRect, rect: CGRect, toVisual: CGAffineTransform, dpi: Int, token: CancellationToken) throws -> Data {
+        let png = try PDFOfficeCodec.rasterPNG(page, rect: source, dpi: dpi, token: token)
+        guard !toVisual.isIdentity else { return png }
+        guard let image = NSBitmapImageRep(data: png)?.cgImage else { throw NashiError.failed("The PDF page image could not be written.") }
+        let scale = CGFloat(image.width) / max(1, source.width)
+        guard let context = CGContext(data: nil, width: max(1, Int((rect.width * scale).rounded())), height: max(1, Int((rect.height * scale).rounded())), bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else {
+            throw NashiError.failed("The PDF page image could not be written.")
+        }
+        context.scaleBy(x: scale, y: scale)
+        context.translateBy(x: -rect.minX, y: -rect.minY)
+        context.concatenate(toVisual)
+        context.draw(image, in: source)
+        guard let turned = context.makeImage(), let data = NSBitmapImageRep(cgImage: turned).representation(using: .png, properties: [:]) else { throw NashiError.failed("The PDF page image could not be written.") }
+        return data
+    }
+
+    private static func textRows(_ page: PDFPage, toVisual: CGAffineTransform, token: CancellationToken) throws -> [Row] {
         guard let attributed = page.attributedString, attributed.length > 0,
               !attributed.string.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            return try PDFOfficeCodec.recognizedCells(page, token: token).map { Row(cells: [Cell(runs: [.init(text: $0.text, style: TextStyle(size: max(8, Double($0.rect.height) * 0.85)))], bounds: $0.rect)]) }.sorted { $0.bounds.midY > $1.bounds.midY }
+            var cells = try PDFOfficeCodec.recognizedCells(page, token: token)
+            if !toVisual.isIdentity {
+                // OCR reads the displayed (rotated) thumbnail but scales its
+                // normalized boxes by the unrotated crop box; rescale them to
+                // the displayed page.
+                let crop = page.bounds(for: .cropBox), visual = PDFOfficeCodec.visualBounds(page)
+                let sx = visual.width / max(1, crop.width), sy = visual.height / max(1, crop.height)
+                cells = cells.map { .init(text: $0.text, rect: CGRect(x: ($0.rect.minX - crop.minX) * sx, y: ($0.rect.minY - crop.minY) * sy, width: $0.rect.width * sx, height: $0.rect.height * sy)) }
+            }
+            return cells.map { Row(cells: [Cell(runs: [.init(text: $0.text, style: TextStyle(size: max(8, Double($0.rect.height) * 0.85)))], bounds: $0.rect)]) }.sorted { $0.bounds.midY > $1.bounds.midY }
         }
         let ns = attributed.string as NSString
         var glyphs: [Cell] = []
@@ -204,7 +237,7 @@ enum PDFDocumentReconstruction {
             // the normalized string indices and avoid losing a character at
             // every line boundary (also preserving composed Unicode glyphs).
             guard let selection = page.selection(for: range) else { continue }
-            let rect = selection.bounds(for: page)
+            let rect = selection.bounds(for: page).applying(toVisual).standardized
             if rect.isNull || rect.isInfinite || rect.width <= 0 || rect.height <= 0 { continue }
             glyphs.append(Cell(runs: [.init(text: value, style: style(attributes))], bounds: rect))
         }
