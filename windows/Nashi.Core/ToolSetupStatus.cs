@@ -7,6 +7,8 @@ public sealed record ToolSetupStatus(bool MediaReady, bool OfficeReady)
 {
     public bool Ready => MediaReady && OfficeReady;
     public ToolGroup[] Missing => Enum.GetValues<ToolGroup>().Where(g => g == ToolGroup.Media ? !MediaReady : !OfficeReady).ToArray();
+    /// The main window's setup button names the one missing group, so installed media tools never read as "not set up".
+    public string SetupLabel => Ready ? "Tools ready" : MediaReady ? "Set up office tools" : OfficeReady ? "Set up media tools" : "Finish setup";
 }
 
 public static class ToolInstallation

@@ -7,6 +7,8 @@ internal static class ToolSetupChecks
         check(!new ToolSetupStatus(false,false).Ready&&new ToolSetupStatus(false,false).Missing.SequenceEqual(new[]{ToolGroup.Media,ToolGroup.Office}),"Clean profile must offer both tool groups");
         check(new ToolSetupStatus(true,false).Missing.SequenceEqual(new[]{ToolGroup.Office}),"Installed media must survive retrying Office setup");
         check(new ToolSetupStatus(true,true).Ready&&new ToolSetupStatus(true,true).Missing.Length==0,"Existing tools must not be downloaded again");
+        check(new ToolSetupStatus(true,false).SetupLabel=="Set up office tools"&&new ToolSetupStatus(false,true).SetupLabel=="Set up media tools"&&new ToolSetupStatus(false,false).SetupLabel=="Finish setup"&&new ToolSetupStatus(true,true).SetupLabel=="Tools ready","The setup button must name the one missing tool group instead of reading as an unfinished setup");
+        foreach(var label in new[]{(true,false),(false,true),(false,false),(true,true)}.Select(s=>new ToolSetupStatus(s.Item1,s.Item2).SetupLabel))check(AppLocalization.Text(label,"tr")!=label,"Setup button label has no Turkish text: "+label);
         var directory=Path.Combine(root,"Setup checks");Directory.CreateDirectory(directory);
         try
         {
