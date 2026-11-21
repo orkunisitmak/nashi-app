@@ -1487,5 +1487,9 @@
   "Details": "Détails",
   "Copy details": "Copier les détails",
   "PDF password": "Mot de passe PDF",
-  "Unlock PDF": "Déverrouiller le PDF"
+  "Unlock PDF": "Déverrouiller le PDF",
+  "Pause Nashi shortcuts in these applications": "Suspendre les raccourcis Nashi dans ces applications",
+  "Executable names separated by commas, for example: Photoshop, Illustrator. Leave blank to keep shortcuts active everywhere.": "Noms des exécutables séparés par des virgules, par exemple : Photoshop, Illustrator. Laissez vide pour garder les raccourcis actifs partout.",
+  "Choose up to 20 excluded application names.": "Choisissez jusqu'à 20 noms d'applications exclues.",
+  "Excluded application process names": "Noms de processus des applications exclues"
 }
