@@ -104,6 +104,12 @@ public enum ImageMetadataEngine {
         }
         let after=try fingerprint(staged,token:token)
         guard original==after else { throw NashiError.failed("Metadata changes would alter encoded image data or its appearance. No output was saved.") }
+        // ExifTool can exit 0 yet leave a group it could not delete. A clean copy
+        // must not keep location unless the user explicitly added it back.
+        if changes.removeAll,!changes.updates.keys.contains(where:{isLocationTag((try? tagName($0)) ?? "")}) {
+            let remaining=try read(staged,token:token).keys.filter(isLocationTag)
+            guard remaining.isEmpty,!imageIOReportsGPS(staged) else { throw NashiError.failed("Location metadata could not be removed. No output was saved.") }
+        }
         let written=try fields(staged,token:token)
         for (key,value) in changes.updates {
             let expectedKey=displayKey(try tagName(key))
@@ -190,6 +196,15 @@ public enum ImageMetadataEngine {
         return Fingerprint(imageHash:hash,profile:profile,frames:frames)
     }
 
+    private static func isLocationTag(_ tag:String)->Bool {
+        let parts=tag.split(separator:":").map{$0.lowercased()}
+        guard let name=parts.last else { return false }
+        return parts.dropLast().contains("gps") || name.hasPrefix("gps") || ["city","country","countrycode","country-primarylocationname","country-primarylocationcode","province-state","state","sub-location","location","locationcreated","locationshown"].contains(name)
+    }
+    private static func imageIOReportsGPS(_ input:URL)->Bool {
+        guard let source=CGImageSourceCreateWithURL(input as CFURL,nil) else { return true }
+        return (0..<CGImageSourceGetCount(source)).contains { (CGImageSourceCopyPropertiesAtIndex(source,$0,nil) as? [String:Any])?[kCGImagePropertyGPSDictionary as String] != nil }
+    }
     private static func read(_ input:URL,token:CancellationToken) throws -> [String:Any] {
         let result=try run(["-j","-G1","-s","-n","-a",input.path],token:token)
         guard let rows=try JSONSerialization.jsonObject(with:result.output) as? [[String:Any]],let first=rows.first else { throw NashiError.failed("Could not inspect image metadata.") }
