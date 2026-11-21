@@ -48,8 +48,8 @@ jobs:
           path: build/native-ui
           retention-days: 7
           if-no-files-found: warn
-      - name: Archive link boundary and extraction regressions
-        run: swift test --filter 'ArchiveLinkBoundaryTests|ArchiveResourceLimitsTests|DocumentEngineTests/testArchive|DocumentEngineTests/testZIPTARGZIPRoundTripsNestedFilesAndUnicodeWithoutOverwritingOriginals|DocumentEngineTests/testStoredRARAndOrdinaryGZIPAreReadable|DocumentEngineTests/testCancellationProducesNoPublishedDocumentOrExtractedFolder'
+      - name: Archive link boundary, office input and extraction regressions
+        run: swift test --filter 'ArchiveLinkBoundaryTests|ArchiveResourceLimitsTests|OfficeInputSanitizerTests|DocumentEngineTests/testArchive|DocumentEngineTests/testZIPTARGZIPRoundTripsNestedFilesAndUnicodeWithoutOverwritingOriginals|DocumentEngineTests/testStoredRARAndOrdinaryGZIPAreReadable|DocumentEngineTests/testCancellationProducesNoPublishedDocumentOrExtractedFolder'
       - name: Update trust, web photo and window placement and setup regressions
         run: swift test --filter 'NashiUpdatesTests|WebMediaDragPayloadTests|InstagramPhotosTests|YouTubeThumbnailTests|WindowPlacementTests|AppLocalizationTests|ToolSetupTests'
       - name: HTML to PDF layout, offline isolation and cancellation

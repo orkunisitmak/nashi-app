@@ -167,6 +167,13 @@ public enum DocumentEngine {
             let prepared = profile.appendingPathComponent(input.lastPathComponent)
             try embedHTMLImages(input, output: prepared, token: token)
             source = prepared
+        } else if OfficeInputSanitizer.inspects(sourceFormat) {
+            // The converter resolves host-path resource references with its own
+            // file access, and it picks the parser from the content of the
+            // input, so the staged copy is inspected whatever it is named.
+            let prepared = profile.appendingPathComponent(input.lastPathComponent)
+            try OfficeInputSanitizer.sanitize(input, output: prepared, token: token)
+            source = prepared
         }
         if ["csv", "tsv"].contains(sourceFormat) {
             let delimiter = sourceFormat == "tsv" ? 9 : 44
