@@ -21,7 +21,7 @@ public static partial class ImageEngine
     public static readonly string[] Formats=["png","jpg","webp","heic","avif","bmp","gif","tiff","pdf"];
     public static BitmapSource Load(string file)
     {
-        if(FeatureCatalog.Extension(file) is "webp" or "heic" or "avif" or "svg")return FromPng(PhotoCodec.Png(file));
+        if(FeatureCatalog.Extension(file) is "webp" or "heic" or "avif" or "svg" or "dng")return FromPng(PhotoCodec.Png(file));
         using var stream=File.OpenRead(file);var decoder=BitmapDecoder.Create(stream,BitmapCreateOptions.PreservePixelFormat,BitmapCacheOption.OnLoad);var frame=decoder.Frames[0];BitmapSource image=frame;
         if((long)image.PixelWidth*image.PixelHeight>100_000_000)throw new InvalidDataException("This image is too large (100 MP limit).");
         ushort orientation=1;
