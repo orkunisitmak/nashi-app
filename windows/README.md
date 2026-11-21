@@ -14,4 +14,6 @@ While dragging in Explorer or another application, **Ctrl** opens tools, **Shift
 
 Media editors use **Space** for play/pause, **Left/Right** for one-second seeking, **Shift+Left/Right** for frame steps, **I/O** for range marks and **Shift+Space** to play the selected range. Crop supports drag, Shift ratio lock, selection move/resize, aspect presets and Enter save. Annotation supports Select/Move, Delete and Ctrl+Z. Normal text-field editing is preserved.
 
+**Convert › Remove background** turns an image on a plain or near-plain color (product shots, logos, scans) into a transparent PNG, WebP, TIFF or AVIF with a live preview, tolerance and edge softness. Only background connected to the image edges is removed, so the same color inside the subject stays; it runs locally and is not AI subject detection.
+
 `Nashi.Verify` checks the shared engine and security foundation. `Nashi --smoke-test` runs real Windows keyboard, clipboard, OLE drag, Library, editor and export checks and writes diagnostic JSON/PNG artifacts. See [verification details](FEATURE-PARITY.md#commands-and-evidence) before interpreting a CI artifact as a completed test or official release.

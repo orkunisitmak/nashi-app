@@ -27,6 +27,7 @@ internal static class SmokeTests
         void Progress(string message)=>File.AppendAllText(Path.Combine(root,"suite-progress.log"),$"{DateTimeOffset.UtcNow:O} {message}{Environment.NewLine}");
         void Check(bool value,string reason){Progress($"{(value?"PASS":"FAIL")} {checks+1}: {reason}");if(!value)throw new Exception(reason);checks++;}
         Progress("START TrayIconRecoveryChecks");TrayIconRecoveryChecks.Run(Check);
+        Progress("START BackgroundChecks");BackgroundChecks.Run(root,Check);
         Progress("START ShellShortcutChecks");ShellShortcutChecks.Run(root,Check);
         Progress("START EditorReliabilityChecks");EditorReliabilityChecks.Run(root,Check);
         Progress("START InteractionChecks");InteractionChecks.Run(root,Check);
