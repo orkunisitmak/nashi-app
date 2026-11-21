@@ -11,6 +11,13 @@ import NashiCore
         }
         let folder=directory ?? FileManager.default.urls(for:.applicationSupportDirectory,in:.userDomainMask)[0].appendingPathComponent("Nashi/Imports",isDirectory:true)
         func destination(_ ext:String)throws->URL {try FileManager.default.createDirectory(at:folder,withIntermediateDirectories:true);let date=DateFormatter();date.locale=Locale(identifier:"en_US_POSIX");date.dateFormat="yyyy-MM-dd HH-mm-ss";return folder.appendingPathComponent("Clipboard \(date.string(from:Date()))-\(UUID().uuidString.prefix(6)).\(ext)")}
+        // Keep an encoded original so animation, metadata and compression survive the paste.
+        for (type,ext) in [("com.compuserve.gif","gif"),("public.jpeg","jpg"),("public.heic","heic")] {
+            guard let data=pasteboard.data(forType:.init(type)),let source=CGImageSourceCreateWithData(data as CFData,nil),CGImageSourceGetType(source) as String?==type,
+                  let properties=CGImageSourceCopyPropertiesAtIndex(source,0,nil) as? [CFString:Any],let width=properties[kCGImagePropertyPixelWidth] as? Int,let height=properties[kCGImagePropertyPixelHeight] as? Int else { continue }
+            guard width>0,height>0,Int64(width)*Int64(height)<=100_000_000 else { throw ImportError.imageTooLarge }
+            let url=try destination(ext);try data.write(to:url,options:.atomic);return Result(urls:[url],label:"Pasted image")
+        }
         let pasted=NSImage(pasteboard:pasteboard)
         // Reject by declared size before tiffRepresentation decodes the whole bitmap.
         if let pasted,pasted.representations.contains(where:{Int64($0.pixelsWide)*Int64($0.pixelsHigh)>100_000_000}) { throw ImportError.imageTooLarge }
