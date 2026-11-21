@@ -52,6 +52,19 @@ scripts/build-app.sh release
 
 The public app is written to `build/Nashi.app`. Large runtimes are installed through its setup screen. Source builds use an ad-hoc signature unless you provide your own ignored signing profile. Signing private keys are never distributed. [Windows build instructions](windows/README.md).
 
+## Discover file capabilities from the terminal
+
+`nashi-cli` is a separate product of the same package. `swift build --product nashi-cli` writes the executable to `.build/debug/nashi-cli`. Its `capabilities` command lists the conversion destinations and tools Nashi's wheel offers for a format. It takes a format name, not a file, and reads nothing from disk:
+
+```sh
+swift build --product nashi-cli
+.build/debug/nashi-cli capabilities jpg
+.build/debug/nashi-cli capabilities .JPEG
+.build/debug/nashi-cli capabilities png --multiple
+```
+
+The result is JSON with the normalized `format`, `destinations`, `tools` and the `multiple` flag. `--multiple` describes a selection of two or more files of that format, where the available tools differ. An unknown format is an error. `nashi-cli catalog` returns the complete conversion matrix.
+
 ## Privacy and updates
 
 Conversion/editing run locally. Web downloads contact the selected media site. No analytics, cloud account or browser-cookie import is built in. Official releases update through this public repository without a GitHub account or token. macOS verifies the signed feed and archive; Windows verifies the archive signature and version before replacement. Active operations finish or cancel before the app exits for an update. Portable Windows updates retain the previous folder as a recoverable backup.

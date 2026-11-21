@@ -15,6 +15,11 @@ do {
     if args.count==2,args[1]=="catalog" {
         let data=try JSONSerialization.data(withJSONObject:["conversionMatrix":FeatureCatalog.conversionMatrix,"tools":ToolKind.allCases.map(\.rawValue)],options:[.prettyPrinted,.sortedKeys]);print(String(decoding:data,as:UTF8.self));return flushResults()
     }
+    if args.count>=2,args[1]=="capabilities" {
+        guard args.count==3 || (args.count==4 && args[3]=="--multiple") else { throw UsageError("Usage: nashi-cli capabilities FORMAT [--multiple]") }
+        guard let summary=capabilities(format:args[2],multiple:args.count==4) else { throw NashiError.invalidInput("Unknown format. Run nashi-cli catalog for the formats Nashi reads.") }
+        print(String(decoding:try JSONSerialization.data(withJSONObject:summary,options:[.prettyPrinted,.sortedKeys]),as:UTF8.self));return flushResults()
+    }
     if args.count==3,args[1]=="inspect" {
         let input=URL(fileURLWithPath:args[2]),category=FileCategory.detect(input)
         // Categories without a reader would otherwise report a missing path as success.
@@ -110,7 +115,7 @@ do {
         if jsonOutput { print(String(decoding:try JSONSerialization.data(withJSONObject:["algorithm":algorithm.rawValue,"files":files],options:[.sortedKeys]),as:UTF8.self)) }
         return flushResults()
     }
-    guard args.count>=4 else { fputs("Usage: nashi-cli convert FORMAT FILE... [--options JSON] [--json]\n       nashi-cli tool TOOL_ID FILE... [--options JSON] [--json]\n       nashi-cli inspect FILE\n       nashi-cli hash FILE... [--algorithm sha256|sha512|md5] [--json]\n       nashi-cli hash --verify CHECKSUMS [--algorithm sha256|sha512|md5]\n       nashi-cli catalog\n       nashi-cli dependencies\n",stderr);return 64 }
+    guard args.count>=4 else { fputs("Usage: nashi-cli convert FORMAT FILE... [--options JSON] [--json]\n       nashi-cli tool TOOL_ID FILE... [--options JSON] [--json]\n       nashi-cli inspect FILE\n       nashi-cli hash FILE... [--algorithm sha256|sha512|md5] [--json]\n       nashi-cli hash --verify CHECKSUMS [--algorithm sha256|sha512|md5]\n       nashi-cli catalog\n       nashi-cli capabilities FORMAT [--multiple]\n       nashi-cli dependencies\n",stderr);return 64 }
     var options=OperationOptions(), paths=Array(args.dropFirst(3))
     let jsonOutput=paths.contains("--json");paths.removeAll{$0=="--json"}
     if let i=paths.firstIndex(of:"--options"),i+1<paths.count {
@@ -148,6 +153,19 @@ do {
 
     }
 
+    /// The conversion targets and tools the wheel offers for one file of a format, or for several
+    /// with `multiple`. Looked up by name only: no path is built or read. Nil for an unknown format.
+    public static func capabilities(format raw:String,multiple:Bool=false)->[String:Any]? {
+        let format=FeatureCatalog.normalizedExtension(raw.hasPrefix(".") ? String(raw.dropFirst()):raw)
+        guard FeatureCatalog.conversionMatrix[format] != nil else { return nil }
+        let selection=Array(repeating:format,count:multiple ? 2:1)
+        return [
+            "format":format,
+            "multiple":multiple,
+            "destinations":FeatureCatalog.formats(forExtensions:selection),
+            "tools":FeatureCatalog.tools(forExtensions:selection).map(\.rawValue),
+        ]
+    }
     /// The external tools Nashi runs, including the ones its setup downloads.
     static let dependencyNames=["deno","exiftool","ffmpeg","ffprobe","soffice","yt-dlp"]
     /// Maps each tool to its path, or to null when it cannot be found.
