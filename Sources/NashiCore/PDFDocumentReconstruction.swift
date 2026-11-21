@@ -141,14 +141,15 @@ enum PDFDocumentReconstruction {
         for index in 0..<pdf.pageCount {
             try token.check()
             guard let page = pdf.page(at: index) else { continue }
-            let box = page.bounds(for: .cropBox)
+            // OCR rows of a scanned page are in its displayed (rotated) frame.
+            let nativeText = !(page.string ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            let crop = page.bounds(for: .cropBox), box = nativeText ? crop : CGRect(origin: crop.origin, size: PDFOfficeCodec.visualBounds(page).size)
             // A fixed half-inch margin consumes most of a small PDF page.
             // Cap the ordinary margin while reserving at least 90% of a small
             // page's narrow dimension for editable content.
             let margin = min(36, min(box.width, box.height) * 0.05)
             let rows = try textRows(page, token: token)
             var blocks = textBlocks(rows)
-            let nativeText = !(page.string ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             for rect in try PDFPlacedImages.regions(page, token: token) {
                 if !nativeText && !rows.isEmpty && rect.width * rect.height > box.width * box.height * 0.8 { continue }
                 blocks.append(.image(rect))
