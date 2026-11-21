@@ -19,6 +19,8 @@ public struct QRCodeScanReport:Codable,Sendable {
 
 public enum QRCodeEngine {
     public static func supports(_ url:URL)->Bool { FileCategory.detect(url) == .image || FileCategory.detect(url) == .pdf || url.pathExtension.lowercased()=="gif" }
+    /// `isDirectory:false` keeps Foundation from looking the made-up path up on disk.
+    static func supports(pathExtension:String)->Bool { supports(URL(fileURLWithPath:"/file.\(pathExtension)",isDirectory:false)) }
     public static func scan(_ inputs:[URL],password:String?=nil,token:CancellationToken = .init(),progress:ProgressHandler={_,_ in}) throws -> QRCodeScanReport {
         var report=QRCodeScanReport()
         for (index,input) in inputs.enumerated() {
