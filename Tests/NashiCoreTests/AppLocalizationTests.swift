@@ -291,4 +291,10 @@ final class AppLocalizationTests:XCTestCase {
         XCTAssertEqual(AppLocalization.text("This subtitle timestamp is too large to convert: 99:00:00.000",language:"fr"),"Cet horodatage de sous-titre est trop grand pour être converti : 99:00:00.000")
         XCTAssertEqual(AppLocalization.text("Invalid subtitle timestamp: 00:01:75,000",language:"en"),"Invalid subtitle timestamp: 00:01:75,000")
     }
+    /// Settings lists a selected terminal that is no longer installed by its bundle identifier.
+    func testMissingTerminalAppLabelKeepsTheBundleIdentifier() {
+        XCTAssertEqual(AppLocalization.text("dev.warp.Warp-Stable (Not installed)",language:"tr"),"dev.warp.Warp-Stable (Kurulu değil)")
+        XCTAssertEqual(AppLocalization.text("dev.warp.Warp-Stable (Not installed)",language:"fr"),"dev.warp.Warp-Stable (non installé)")
+        XCTAssertEqual(AppLocalization.text("dev.warp.Warp-Stable (Not installed)",language:"en"),"dev.warp.Warp-Stable (Not installed)")
+    }
 }
