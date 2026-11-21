@@ -448,6 +448,73 @@ final class DocumentEngineTests: XCTestCase {
         XCTAssertTrue(try DocumentText.read(convert(fromXLS, "csv")).contains("Şişli, İstanbul"))
     }
 
+    func testSpreadsheetMultiSheetCSVExportFiltersEmptyAndPreservesPopulatedSheets() throws {
+        // 1. Workbook whose first sheet is empty and second sheet has data
+        let emptyFirstFods = """
+        <?xml version="1.0"?><office:document xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" office:version="1.3" office:mimetype="application/vnd.oasis.opendocument.spreadsheet"><office:body><office:spreadsheet><table:table table:name="EmptySheet"></table:table><table:table table:name="PopulatedSheet"><table:table-row><table:table-cell office:value-type="string"><text:p>Second sheet data</text:p></table:table-cell></table:table-row></table:table></office:spreadsheet></office:body></office:document>
+        """
+        let emptyFirstSource = try file("EmptyFirst.fods", emptyFirstFods)
+        let emptyFirstWorkbook = try DocumentEngine.office(emptyFirstSource, to: "xlsx", in: root.appendingPathComponent("EmptyFirstDir", isDirectory: true), token: .init())
+        let emptyFirstOutputs = try DocumentEngine.convert(emptyFirstWorkbook, to: "csv", options: .init(), token: .init())
+        XCTAssertEqual(emptyFirstOutputs.count, 1)
+        let singleContent = try DocumentText.read(emptyFirstOutputs[0])
+        XCTAssertTrue(singleContent.contains("Second sheet data"))
+
+        // 2. Workbook with two populated sheets
+        let twoPopulatedFods = """
+        <?xml version="1.0"?><office:document xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" office:version="1.3" office:mimetype="application/vnd.oasis.opendocument.spreadsheet"><office:body><office:spreadsheet><table:table table:name="SheetAlpha"><table:table-row><table:table-cell office:value-type="string"><text:p>Alpha content</text:p></table:table-cell></table:table-row></table:table><table:table table:name="SheetBeta"><table:table-row><table:table-cell office:value-type="string"><text:p>Beta content</text:p></table:table-cell></table:table-row></table:table></office:spreadsheet></office:body></office:document>
+        """
+        let twoPopulatedSource = try file("TwoPopulated.fods", twoPopulatedFods)
+        let twoPopulatedWorkbook = try DocumentEngine.office(twoPopulatedSource, to: "xlsx", in: root.appendingPathComponent("TwoPopulatedDir", isDirectory: true), token: .init())
+        let twoOutputs = try DocumentEngine.convert(twoPopulatedWorkbook, to: "csv", options: .init(), token: .init())
+        XCTAssertEqual(twoOutputs.count, 2)
+        let contents = try twoOutputs.map { try DocumentText.read($0) }
+        XCTAssertTrue(contents.contains(where: { $0.contains("Alpha content") }))
+        XCTAssertTrue(contents.contains(where: { $0.contains("Beta content") }))
+    }
+
+    func testSpreadsheetMultiSheetExportCancelledMidwayCleansUpPublishedFiles() throws {
+        let staging = root.appendingPathComponent("Staging", isDirectory: true)
+        try FileManager.default.createDirectory(at: staging, withIntermediateDirectories: true)
+        let sheetOne = staging.appendingPathComponent("Workbook-SheetOne.csv")
+        let sheetTwo = staging.appendingPathComponent("Workbook-SheetTwo.csv")
+        try "One\n".write(to: sheetOne, atomically: true, encoding: .utf8)
+        try "Two\n".write(to: sheetTwo, atomically: true, encoding: .utf8)
+
+        let dest = root.appendingPathComponent("Destination", isDirectory: true)
+        try FileManager.default.createDirectory(at: dest, withIntermediateDirectories: true)
+        let preExisting = dest.appendingPathComponent("Existing.csv")
+        try "keep me\n".write(to: preExisting, atomically: true, encoding: .utf8)
+
+        let original = root.appendingPathComponent("Workbook.xlsx")
+        let token = CancellationToken()
+        var thrownError: Error?
+        do {
+            _ = try DocumentEngine.publishSpreadsheetSheets(
+                [(sheetOne, "SheetOne"), (sheetTwo, "SheetTwo")],
+                original: original,
+                format: "csv",
+                to: dest,
+                token: token
+            ) { index in
+                // Cancel after the first sheet has been published to destination.
+                if index == 1 {
+                    XCTAssertTrue(FileManager.default.fileExists(atPath: dest.appendingPathComponent("Workbook (SheetOne).csv").path))
+                    token.cancel()
+                }
+            }
+        } catch {
+            thrownError = error
+        }
+
+        guard case NashiError.cancelled? = thrownError else {
+            return XCTFail("Expected cancellation error, got: \(String(describing: thrownError))")
+        }
+        let files = (try? FileManager.default.contentsOfDirectory(atPath: dest.path))?.sorted() ?? []
+        XCTAssertEqual(files, ["Existing.csv"])
+        XCTAssertEqual(try DocumentText.read(preExisting), "keep me\n")
+    }
+
     func testPDFToEditableTextDOCXXLSXEPUBAndPageBasedPPTX() throws {
         let pdf = try makePDF()
         let txt = try convert(pdf, "txt")
