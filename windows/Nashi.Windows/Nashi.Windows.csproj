@@ -22,4 +22,11 @@
   <ItemGroup>
     <PackageReference Include="bblanchon.PDFium.Win32" Version="155.0.8044" />
   </ItemGroup>
+  <!-- PDFsharp ships these sample/test assemblies in its NuGet package; Nashi does not use them. -->
+  <Target Name="ExcludePdfSharpDevelopmentAssemblies" AfterTargets="ComputeFilesToPublish">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)"
+        Condition="'%(ResolvedFileToPublish.Filename)' == 'PdfSharp.Snippets' Or '%(ResolvedFileToPublish.Filename)' == 'PdfSharp.Quality'" />
+    </ItemGroup>
+  </Target>
 </Project>
