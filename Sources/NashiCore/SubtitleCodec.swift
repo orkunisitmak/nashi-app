@@ -99,6 +99,7 @@ enum SubtitleCodec {
         }
         return kept.replacingOccurrences(of: #"\{\\an[1-9]\}"#, with: "", options: .regularExpression)
     }
+    /// True when the line holds at least one `{\an1}` to `{\an9}` tag and nothing else but spaces and tabs.
     private static func isPositionTagLine(_ line: Substring.UnicodeScalarView) -> Bool {
         var rest = line, sawTag = false
         while let scalar = rest.first {
