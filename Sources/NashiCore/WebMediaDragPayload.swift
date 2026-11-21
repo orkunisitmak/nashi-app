@@ -20,7 +20,8 @@ public struct WebMediaDragPayload:Equatable,Sendable {
         for markup in html.prefix(8) where markup.utf8.count<=131_072 {
             let base=attributes(markup,tag:"base",attribute:"href").compactMap{try? WebDownloadEngine.link(decode($0))}.first ?? bases.first
             func resolve(_ value:String)->URL? {
-                let value=decode(value)
+                // Browsers strip spaces around URL attributes; Foundation would encode them into a relative path.
+                let value=decode(value).trimmingCharacters(in:.whitespacesAndNewlines)
                 guard let url=URL(string:value,relativeTo:base)?.absoluteURL else { return nil }
                 return try? WebDownloadEngine.link(url.absoluteString)
             }
@@ -102,13 +103,16 @@ public struct WebMediaDragPayload:Equatable,Sendable {
         }
     }
     private static func decode(_ text:String)->String {
-        var result=text.replacingOccurrences(of:"&amp;",with:"&").replacingOccurrences(of:"&quot;",with:"\"").replacingOccurrences(of:"&#39;",with:"'").replacingOccurrences(of:"&lt;",with:"<").replacingOccurrences(of:"&gt;",with:">")
-        if let regex=try? NSRegularExpression(pattern:"&#(x[0-9a-fA-F]+|[0-9]+);",options:.caseInsensitive) {
-            for match in regex.matches(in:result,range:NSRange(result.startIndex...,in:result)).reversed() {
-                guard let range=Range(match.range(at:1),in:result),let full=Range(match.range,in:result) else { continue }
-                let code=String(result[range]),hex=code.lowercased().hasPrefix("x")
-                if let value=UInt32(hex ? String(code.dropFirst()):code,radix:hex ? 16:10),let scalar=UnicodeScalar(value) { result.replaceSubrange(full,with:String(scalar)) }
-            }
+        // One pass over the original text, so an escaped entity ("&amp;lt;") stays literal ("&lt;").
+        guard let regex=try? NSRegularExpression(pattern:"&(?:(amp|quot|lt|gt)|#([xX][0-9a-fA-F]+|[0-9]+));") else { return text }
+        let named=["amp":"&","quot":"\"","lt":"<","gt":">"]
+        var result=text
+        for match in regex.matches(in:text,range:NSRange(text.startIndex...,in:text)).reversed() {
+            guard let full=Range(match.range,in:result) else { continue }
+            if let range=Range(match.range(at:1),in:result),let value=named[String(result[range])] { result.replaceSubrange(full,with:value);continue }
+            guard let range=Range(match.range(at:2),in:result) else { continue }
+            let code=String(result[range]),hex=code.lowercased().hasPrefix("x")
+            if let value=UInt32(hex ? String(code.dropFirst()):code,radix:hex ? 16:10),let scalar=UnicodeScalar(value) { result.replaceSubrange(full,with:String(scalar)) }
         }
         return result
     }

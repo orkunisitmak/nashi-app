@@ -14,6 +14,15 @@ final class PublicUpdateChannelTests:XCTestCase {
             var altered=info;altered["SUFeedURL"]=address;XCTAssertNil(PublicUpdateChannel(info:altered))
         }
     }
+    func testMixedCaseRepositoryMatchesItsOwnFeedSpelling() {
+        let mixed:[String:Any]=["NashiPublicUpdateRepository":"OrkunIsitmak/Nashi-App","SUFeedURL":"https://github.com/OrkunIsitmak/Nashi-App/releases/latest/download/appcast.xml"]
+        XCTAssertEqual(PublicUpdateChannel(info:mixed)?.repository.slug,"orkunisitmak/nashi-app")
+        var lowered=mixed;lowered["SUFeedURL"]=info["SUFeedURL"]
+        XCTAssertNotNil(PublicUpdateChannel(info:lowered))
+        for address in ["https://github.com/ORKUNISITMAK/Nashi-App/releases/latest/download/appcast.xml","https://github.com/attacker/Nashi-App/releases/latest/download/appcast.xml"] {
+            var altered=mixed;altered["SUFeedURL"]=address;XCTAssertNil(PublicUpdateChannel(info:altered))
+        }
+    }
     func testNewUsersAndLegacyUsersDoNotTouchCredentials() async {
         for previous in [nil,"orkunisitmak/tangerine","orkunisitmak/nashi","orkunisitmak/nashi-app"] as [String?] {
             let suite="NashiPublicChannelTests.\(UUID())",defaults=UserDefaults(suiteName:suite)!

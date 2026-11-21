@@ -286,7 +286,7 @@ enum PDFDocumentReconstruction {
             // Editable output has a white page, without the source's vector
             // background. Light PDF text must not become invisible on that page.
             if 1.05 / (luminance + 0.05) < 3 { return "#202020" }
-            return String(format: "#%02X%02X%02X", Int(components[0] * 255), Int(components[1] * 255), Int(components[2] * 255))
+            return String(format: "#%02X%02X%02X", Int((components[0] * 255).rounded()), Int((components[1] * 255).rounded()), Int((components[2] * 255).rounded()))
         } ?? "#000000"
         return TextStyle(family: family, size: (Double(font.pointSize) * 10).rounded() / 10, bold: traits.contains(.bold), italic: traits.contains(.italic), underline: (attributes[.underlineStyle] as? NSNumber)?.intValue ?? 0 != 0, color: hex)
     }
@@ -298,8 +298,10 @@ enum PDFDocumentReconstruction {
 enum PDFPlacedImages {
     static func regions(_ page: PDFPage, token: CancellationToken) throws -> [CGRect] {
         guard let cgPage = page.pageRef, let dictionary = cgPage.dictionary else { return [] }
-        var resources: CGPDFDictionaryRef?
-        guard CGPDFDictionaryGetDictionary(dictionary, "Resources", &resources), let resources else { return [] }
+        // A page may inherit /Resources from its page-tree nodes; the bound stops /Parent cycles.
+        var resources: CGPDFDictionaryRef?, node: CGPDFDictionaryRef? = dictionary
+        for _ in 0..<64 where resources == nil { guard let current = node else { break }; node = nil; _ = CGPDFDictionaryGetDictionary(current, "Resources", &resources); _ = CGPDFDictionaryGetDictionary(current, "Parent", &node) }
+        guard let resources else { return [] }
         let content = CGPDFContentStreamCreateWithPage(cgPage)
         defer { CGPDFContentStreamRelease(content) }
         let scanner = Scanner(content: content, resources: resources, transform: .identity, token: token, depth: 0)
@@ -320,11 +322,17 @@ enum PDFPlacedImages {
         let resources: CGPDFDictionaryRef
         let token: CancellationToken
         let depth: Int
+        /// Forms being scanned on this path, and a page-wide cap on form scans: a form
+        /// that draws itself, or a chain of forms each drawn several times, must not
+        /// expand exponentially.
+        let forms: [CGPDFStreamRef]
+        let budget: Budget
+        final class Budget { var forms = 0 }
         var transform: CGAffineTransform
         var stack: [CGAffineTransform] = []
         var images: [CGRect] = []
-        init(content: CGPDFContentStreamRef, resources: CGPDFDictionaryRef, transform: CGAffineTransform, token: CancellationToken, depth: Int) {
-            self.content = content; self.resources = resources; self.transform = transform; self.token = token; self.depth = depth
+        init(content: CGPDFContentStreamRef, resources: CGPDFDictionaryRef, transform: CGAffineTransform, token: CancellationToken, depth: Int, forms: [CGPDFStreamRef] = [], budget: Budget = Budget()) {
+            self.content = content; self.resources = resources; self.transform = transform; self.token = token; self.depth = depth; self.forms = forms; self.budget = budget
         }
         func scan() {
             let table = CGPDFOperatorTableCreate()!
@@ -341,6 +349,11 @@ enum PDFPlacedImages {
                 for index in (0..<6).reversed() { guard CGPDFScannerPopNumber(scanner, &values[index]) else { return } }
                 state.transform = CGAffineTransform(a: values[0], b: values[1], c: values[2], d: values[3], tx: values[4], ty: values[5]).concatenating(state.transform)
             }
+            // An inline image (BI ... ID ... EI) fills the unit square like an Image XObject.
+            CGPDFOperatorTableSetCallback(table, "EI") { _, info in
+                guard let info else { return }; let state = Unmanaged<Scanner>.fromOpaque(info).takeUnretainedValue()
+                state.images.append(CGRect(x: 0, y: 0, width: 1, height: 1).applying(state.transform).standardized)
+            }
             CGPDFOperatorTableSetCallback(table, "Do") { scanner, info in
                 guard let info else { return }; let state = Unmanaged<Scanner>.fromOpaque(info).takeUnretainedValue()
                 if state.token.isCancelled { CGPDFScannerStop(scanner); return }
@@ -354,7 +367,8 @@ enum PDFPlacedImages {
                 guard CGPDFDictionaryGetName(dictionary, "Subtype", &subtype), let subtype else { return }
                 if String(cString: subtype) == "Image" {
                     state.images.append(CGRect(x: 0, y: 0, width: 1, height: 1).applying(state.transform).standardized)
-                } else if String(cString: subtype) == "Form", state.depth < 16 {
+                } else if String(cString: subtype) == "Form", state.depth < 16, !state.forms.contains(stream), state.budget.forms < 10_000 {
+                    state.budget.forms += 1
                     var local: CGPDFDictionaryRef?
                     _ = CGPDFDictionaryGetDictionary(dictionary, "Resources", &local)
                     var matrix = CGAffineTransform.identity, array: CGPDFArrayRef?
@@ -364,7 +378,7 @@ enum PDFPlacedImages {
                     }
                     let childContent = CGPDFContentStreamCreateWithStream(stream, local ?? state.resources, state.content)
                     defer { CGPDFContentStreamRelease(childContent) }
-                    let child = Scanner(content: childContent, resources: local ?? state.resources, transform: matrix.concatenating(state.transform), token: state.token, depth: state.depth + 1)
+                    let child = Scanner(content: childContent, resources: local ?? state.resources, transform: matrix.concatenating(state.transform), token: state.token, depth: state.depth + 1, forms: state.forms + [stream], budget: state.budget)
                     child.scan(); state.images += child.images
                 }
             }

@@ -49,7 +49,9 @@ enum HTMLPDFRenderer {
         nonisolated(unsafe) private var result: Result<Void, Error>?
         private let input: URL, output: URL, folder: URL, page: URL
         private var view: WKWebView?, window: NSWindow?, navigation: WKNavigation?, rules: URL?, printing = false
-        private lazy var info = Job.printInfo(output)
+        // AppKit saves into this file of the job's own, which a cancelled caller cannot remove while printing runs.
+        private let draft = FileManager.default.temporaryDirectory.appendingPathComponent("Nashi-\(UUID().uuidString).pdf")
+        private lazy var info = Job.printInfo(draft)
         // Points available for content once the margins are taken from the paper.
         private var printable: NSSize { NSSize(width: info.paperSize.width - info.leftMargin - info.rightMargin, height: info.paperSize.height - info.topMargin - info.bottomMargin) }
 
@@ -167,7 +169,9 @@ enum HTMLPDFRenderer {
 
         private func printed(success: Bool) {
             printing = false
-            guard success, let data = try? Data(contentsOf: output), let pdf = PDFDocument(data: data), pdf.pageCount > 0 else {
+            // A cancelled or timed-out job publishes nothing; finishing again only cleans up.
+            guard outcome == nil else { return finish(.failure(NashiError.cancelled)) }
+            guard success, let data = try? Data(contentsOf: draft), let pdf = PDFDocument(data: data), pdf.pageCount > 0 else {
                 return finish(.failure(NashiError.failed("WebKit could not print this HTML file to PDF.")))
             }
             // Forced page breaks add pages that the height estimate cannot see.
@@ -178,7 +182,7 @@ enum HTMLPDFRenderer {
                 guard let sheet = pdf.page(at: index) else { continue }
                 for link in sheet.annotations where link.url?.scheme == HTMLPDFRenderer.scheme { sheet.removeAnnotation(link); removed = true }
             }
-            guard !removed || pdf.write(to: output) else { return finish(.failure(NashiError.failed("WebKit could not print this HTML file to PDF."))) }
+            guard removed ? pdf.write(to: output) : (try? FileManager.default.moveItem(at: draft, to: output)) != nil else { return finish(.failure(NashiError.failed("WebKit could not print this HTML file to PDF."))) }
             finish(.success(()))
         }
 
@@ -197,6 +201,7 @@ enum HTMLPDFRenderer {
                 window?.contentView = nil; window?.close()
                 view = nil; window = nil; navigation = nil
                 if let rules { try? FileManager.default.removeItem(at: rules) }
+                try? FileManager.default.removeItem(at: draft)
                 rules = nil
             }
             lock.lock(); if result == nil { result = value }; lock.unlock()

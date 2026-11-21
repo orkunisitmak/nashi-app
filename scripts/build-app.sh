@@ -45,11 +45,38 @@ if [[ "$nashi_public_build" == true ]]; then
 else
 for component in ffmpeg ffprobe yt-dlp deno; do
   if [[ ! -x "Tools/$component" ]]; then print -u2 "Missing Tools/$component; see scripts/setup-tools.sh and scripts/setup-web-download-tools.py"; exit 1; fi
+  # Same pins as scripts/setup-tools.sh and scripts/setup-web-download-tools.py. Deno is
+  # pinned there only by its release archive digest, so its binary cannot be rechecked here.
+  case "$component" in
+    ffmpeg) expected=591260c945d0eef150e3bf82b0ef988bd36a9cecc18ff05d6679617159f0a95e ;;
+    ffprobe) expected=e11c17e8200b3ee4c4c186d245e2b4053f01d56957336c1817fca0b997469106 ;;
+    yt-dlp) expected=0f192b7ec147ab6288885d6351d9ab67367640029b4377576ef46dd79cf7b202 ;;
+    *) expected="" ;;
+  esac
+  if [[ -n "$expected" && "$(shasum -a 256 "Tools/$component" | awk '{print $1}')" != "$expected" ]]; then
+    print -u2 "Checksum mismatch for Tools/$component; refusing to bundle and sign it."; exit 1
+  fi
   cp "Tools/$component" "$application/Contents/Resources/Tools/$component"
 done
 fi
 if [[ -f Tools/ExifTool/exiftool ]]; then
-  ditto Tools/ExifTool "$application/Contents/Resources/Tools/ExifTool"
+  # Ship only an unmodified extraction of the archive pinned in scripts/setup-exiftool.sh.
+  # The checksum, the comparison and the bundled copy all use one private copy of that archive.
+  exiftool_check=$(mktemp -d)
+  exiftool_fail() { rm -rf "$exiftool_check"; print -u2 "$1"; exit 1 }
+  cp Downloads/exiftool-13.59.tar.gz "$exiftool_check/archive.tar.gz" 2>/dev/null || exiftool_fail "Missing Downloads/exiftool-13.59.tar.gz; run scripts/setup-exiftool.sh"
+  if [[ "$(shasum -a 256 "$exiftool_check/archive.tar.gz" | awk '{print $1}')" != e1e2ad6c6fbf568afee5993ef8b2b91ab013d21698c9304e079e633ad82776f5 ]]; then
+    exiftool_fail "Mismatched Downloads/exiftool-13.59.tar.gz; remove it and rerun scripts/setup-exiftool.sh"
+  fi
+  mkdir "$exiftool_check/tree"
+  tar -xzf "$exiftool_check/archive.tar.gz" --strip-components=1 -C "$exiftool_check/tree" || exiftool_fail "Could not extract the pinned ExifTool archive"
+  if ! diff -r "$exiftool_check/tree" Tools/ExifTool >/dev/null; then
+    exiftool_fail "Tools/ExifTool differs from the pinned ExifTool archive; remove it and rerun scripts/setup-exiftool.sh"
+  fi
+  # Bundle the verified extraction, not Tools/ExifTool, which could change after the comparison.
+  rm -rf "$application/Contents/Resources/Tools/ExifTool"
+  ditto "$exiftool_check/tree" "$application/Contents/Resources/Tools/ExifTool" || exiftool_fail "Could not bundle ExifTool"
+  rm -rf "$exiftool_check"
 else
   print -u2 "Missing Tools/ExifTool; run scripts/setup-exiftool.sh"
   exit 1

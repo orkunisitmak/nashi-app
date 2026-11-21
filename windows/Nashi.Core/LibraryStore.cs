@@ -47,7 +47,13 @@ public sealed class LibraryStore
     }
     public void SetAppearance(string appearance)=>Save(state with{Appearance=ValidAppearance(appearance)});
     public void SetWindowManagement(bool enabled)=>Save(state with{WindowManagementEnabled=enabled});
-    public IEnumerable<LibraryEntry> Search(string query)=>state.Entries.Where(e=>string.IsNullOrWhiteSpace(query)||e.Action.Contains(query,StringComparison.OrdinalIgnoreCase)||e.Paths.Any(p=>Path.GetFileName(p).Contains(query,StringComparison.OrdinalIgnoreCase)));
+    // Actions match in English and the app language; file names match the way macOS finds them,
+    // ignoring case and accents in the app language ("izmir" finds "İzmir.png", "cafe" finds "Café.pdf").
+    public IEnumerable<LibraryEntry> Search(string query,string language="en")
+    {
+        query=query.Trim();
+        return state.Entries.Where(e=>query.Length==0||AppLocalization.Matches(e.Action,query,language)||e.Paths.Any(p=>AppLocalization.Contains(Path.GetFileName(p),query,language)));
+    }
     private static string ValidAppearance(string? value)=>value is "light" or "dark"?value:"system";
     private void Save(State next)
     {
