@@ -65,7 +65,8 @@ public enum DocumentEngine {
             source = try TextClippingCodec.materialize(input, in: work)
         } else if ext == "rtfd" {
             source = try RichTextCodec.materializeHTML(input, in: work)
-        } else if ext == "txt" || ext == "md" {
+        } else if ["txt", "md", "csv", "tsv"].contains(ext) {
+            // The office import filters for these formats always read UTF-8.
             let data = try Data(contentsOf: input)
             if String(data: data, encoding: .utf8) == nil || data.contains(0) {
                 source = work.appendingPathComponent(input.lastPathComponent)
