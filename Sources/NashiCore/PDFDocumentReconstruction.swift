@@ -208,6 +208,10 @@ enum PDFDocumentReconstruction {
             if rect.isNull || rect.isInfinite || rect.width <= 0 || rect.height <= 0 { continue }
             glyphs.append(Cell(runs: [.init(text: value, style: style(attributes))], bounds: rect))
         }
+        // Filled form fields and notes are annotations, not page text; place them like text.
+        for cell in PDFOfficeCodec.annotationCells(page) {
+            glyphs.append(Cell(runs: [.init(text: cell.text, style: TextStyle(size: max(8, (Double(cell.rect.height) / 1.25 * 10).rounded() / 10)))], bounds: cell.rect))
+        }
         var groups: [[Cell]] = []
         for glyph in glyphs.sorted(by: { $0.bounds.midY > $1.bounds.midY }) {
             if let row = groups.indices.reversed().first(where: { index in
