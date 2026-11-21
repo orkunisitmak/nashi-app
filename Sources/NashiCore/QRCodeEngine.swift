@@ -31,9 +31,9 @@ public enum QRCodeEngine {
                     for pageIndex in 0..<document.pageCount {
                         try token.check()
                         guard let page=document.page(at:pageIndex) else { continue }
-                        // Read only what viewers show: the CropBox.
-                        let box=page.bounds(for:.cropBox),scale=min(3,4096/max(box.width,box.height))
-                        let thumbnail=page.thumbnail(of:NSSize(width:max(1,box.width*scale),height:max(1,box.height*scale)),for:.cropBox)
+                        // Read only what viewers show: the CropBox, sized as displayed after /Rotate.
+                        let box=page.bounds(for:.cropBox),size=abs(page.rotation)%180==90 ? CGSize(width:box.height,height:box.width):box.size,scale=min(3,4096/max(size.width,size.height))
+                        let thumbnail=page.thumbnail(of:NSSize(width:max(1,size.width*scale),height:max(1,size.height*scale)),for:.cropBox)
                         guard let image=thumbnail.cgImage(forProposedRect:nil,context:nil,hints:nil) else { throw NashiError.failed("Could not render PDF page \(pageIndex+1).") }
                         report.results += try scanImage(image,input:input,page:pageIndex+1,token:token)
                         progress((Double(index)+Double(pageIndex+1)/Double(max(1,document.pageCount)))/Double(max(1,inputs.count)),"\(input.lastPathComponent), page \(pageIndex+1)")
