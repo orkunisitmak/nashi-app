@@ -5,7 +5,10 @@ public sealed partial class WebDownload
 {
     public async Task<WebMediaInfo> InspectAsync(string input,CancellationToken token=default)
     {
-        var uri=Validate(WebMediaPayload.Parse(input)?.Url??input);var result=await ProcessRunner.RunAsync(tools.Executable("yt-dlp"),["--ignore-config","--no-playlist","--no-cache-dir","--skip-download","--dump-single-json","--no-progress","--js-runtimes","deno:"+tools.Executable("deno"),"--",uri.AbsoluteUri],token);return ParseInfo(result.Output,uri.Host);
+        var payload=WebMediaPayload.Parse(input);var uri=Validate(payload?.Url??input);
+        // A /p/ post can start with a photo: describe its first video item, as the download keeps only videos.
+        if(payload?.Kind=="instagramPhotos")return ParseInfo(WebPhotos.InstagramVideoEntry((await PostMetadataAsync(uri.AbsoluteUri,token)).Output),uri.Host);
+        var result=await ProcessRunner.RunAsync(tools.Executable("yt-dlp"),["--ignore-config","--no-playlist","--no-cache-dir","--skip-download","--dump-single-json","--no-progress","--js-runtimes","deno:"+tools.Executable("deno"),"--",uri.AbsoluteUri],token);return ParseInfo(result.Output,uri.Host);
     }
     public static WebMediaInfo ParseInfo(string json,string site)
     {

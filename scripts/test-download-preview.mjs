@@ -95,6 +95,10 @@ test('a direct image link shows an Image option instead of Original media',()=>{
   assert.deepEqual(mediaPreviewOptions('https://youtu.be/demo').map(([en])=>en),['Video','Audio','Thumbnail']);
 });
 
+test('an Instagram /p/ post also offers video and audio, since saved reels open as /p/ links',()=>{
+  assert.deepEqual(mediaPreviewOptions('https://www.instagram.com/p/DekWAGJgQO0/').map(([en])=>en),['Carousel photos','Video','Audio']);
+});
+
 test('invalid or non-HTTP(S) links have only the generic preview',()=>{
   for(const url of [
     'not a URL','', 'javascript:alert("youtube.com")',
