@@ -16,7 +16,11 @@
       "webm",
       "wmv",
       "gif",
-      "mp3"
+      "mp3",
+      "m4a",
+      "wav",
+      "flac",
+      "ogg"
     ],
     "avif" : [
       "jpg",
@@ -128,7 +132,11 @@
       "avi",
       "wmv",
       "gif",
-      "mp3"
+      "mp3",
+      "m4a",
+      "wav",
+      "flac",
+      "ogg"
     ],
     "mov" : [
       "mp4",
@@ -137,7 +145,11 @@
       "avi",
       "wmv",
       "gif",
-      "mp3"
+      "mp3",
+      "m4a",
+      "wav",
+      "flac",
+      "ogg"
     ],
     "mp3" : [
       "m4a",
@@ -155,7 +167,11 @@
       "avi",
       "wmv",
       "gif",
-      "mp3"
+      "mp3",
+      "m4a",
+      "wav",
+      "flac",
+      "ogg"
     ],
     "ods" : [
       "xlsx",
@@ -322,7 +338,11 @@
       "avi",
       "wmv",
       "gif",
-      "mp3"
+      "mp3",
+      "m4a",
+      "wav",
+      "flac",
+      "ogg"
     ],
     "webp" : [
       "jpg",
@@ -349,7 +369,11 @@
       "webm",
       "avi",
       "gif",
-      "mp3"
+      "mp3",
+      "m4a",
+      "wav",
+      "flac",
+      "ogg"
     ],
     "xls" : [
       "xlsx",

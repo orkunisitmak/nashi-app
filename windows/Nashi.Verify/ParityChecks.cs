@@ -397,6 +397,29 @@ internal static class ParityChecks
         // WebVTT needs cues in start-time order; editors write them in any order. Cues that start together keep their file order (as fixed on macOS).
         var shuffledCues="1\n00:00:05,000 --> 00:00:06,000\nThird\n\n2\n00:00:01,000 --> 00:00:09,000\nFirst\n\n3\n00:00:01,000 --> 00:00:02,000 align:start\nSecond\n";
         check(SubtitleCodec.Convert(shuffledCues,"vtt")=="WEBVTT\n\n00:00:01.000 --> 00:00:09.000\nFirst\n\n00:00:01.000 --> 00:00:02.000 align:start\nSecond\n\n00:00:05.000 --> 00:00:06.000\nThird\n"&&SubtitleCodec.Convert(shuffledCues,"srt").StartsWith("1\n00:00:01,000 --> 00:00:09,000\nFirst\n\n2\n00:00:01,000 --> 00:00:02,000\nSecond\n\n3\n00:00:05,000",StringComparison.Ordinal)&&SubtitleCodec.Convert(shuffledCues,"txt")=="First\n\nSecond\n\nThird\n","Subtitle cues were not written in start-time order");
+        // As on the Mac, only real cue tags are markup: text that merely looks like a tag survives WebVTT and plain text export.
+        var looksLikeMarkup="1\n00:00:01,000 --> 00:00:02,000\nI <3 you & him <i>really</i>\n\n2\n00:00:03,000 --> 00:00:04,000\n5 < 6 and 7 > 3\n";
+        var escapedVtt=SubtitleCodec.Convert(looksLikeMarkup,"vtt");
+        check(escapedVtt.Contains("I &lt;3 you &amp; him <i>really</i>")&&escapedVtt.Contains("5 &lt; 6 and 7 > 3"),"SRT to VTT left a bare < or & that WebVTT reads as markup");
+        check(SubtitleCodec.Convert("WEBVTT\n\n00:01.000 --> 00:02.000\nTom &amp; Jerry &lt;3 <c.red>hi</c> <00:01.500>late\n","vtt")=="WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nTom &amp; Jerry &lt;3 <c.red>hi</c> <00:01.500>late\n","VTT to VTT re-escaped entities or cue tags");
+        check(SubtitleCodec.Convert(looksLikeMarkup,"txt")=="I <3 you & him really\n\n5 < 6 and 7 > 3\n","TXT export stripped text that only looks like a tag");
+        var edgeTags="1\n100:00:01,000 --> 100:00:03,000\n<I>Hello</I> <i love you <100:00:02.000>late\n";
+        check(SubtitleCodec.Convert(edgeTags,"vtt").Contains("<i>Hello</i> &lt;i love you <100:00:02.000>late"),"VTT escaping mishandled an uppercase tag, an unterminated tag start or a three-digit hour timestamp");
+        check(SubtitleCodec.Convert(edgeTags,"txt")=="Hello <i love you late\n","TXT export mishandled an uppercase tag, an unterminated tag start or a three-digit hour timestamp");
+        var mathText="1\n00:00:01,000 --> 00:00:02,000\nx <b + 1 and y > 3 <v Ann Lee>hi</v> <c.red.big>ok</c>\n";
+        check(SubtitleCodec.Convert(mathText,"vtt").Contains("x &lt;b + 1 and y > 3 <v Ann Lee>hi</v> <c.red.big>ok</c>"),"VTT escaping treated text after a tag name as an annotation or broke voice/class tags");
+        check(SubtitleCodec.Convert(mathText,"txt")=="x <b + 1 and y > 3 hi ok\n","TXT export removed text that only starts like a tag");
+        var tabbedTags="1\n00:00:01,000 --> 00:00:02,000\n<font\tcolor=\"red\">Hi</font> <v\tAnn>yo</v>\n";
+        check(SubtitleCodec.Convert(tabbedTags,"vtt").Contains("<font\tcolor=\"red\">Hi</font> <v\tAnn>yo</v>")&&SubtitleCodec.Convert(tabbedTags,"txt")=="Hi yo\n","Tab-separated tag attributes were not treated as markup");
+        check(SubtitleCodec.Convert("WEBVTT\n\n00:01.000 --> 00:02.000\n<v\tAnn>Tom</v> <V Bob>Al</V> <c.red>x</c>\n","srt").Contains("Tom Al x"),"SRT export kept a WebVTT-only tag separated by a tab or written in upper case");
+        check(SubtitleCodec.Convert("1\n00:00:01,000 --> 00:00:02,000\nx <c + 1 and y > 3\n<v Ann\nnext line> ok\n","srt").Contains("x <c + 1 and y > 3\n<v Ann\nnext line> ok"),"SRT export removed text that only starts like a WebVTT tag or crossed a line break");
+        check(SubtitleCodec.Convert(looksLikeMarkup,"srt").Contains("5 < 6 and 7 > 3")&&SubtitleCodec.Convert("WEBVTT\n\n00:01.000 --> 00:02.000\n<v Ann>Tom &amp; <b>Jerry</b></v>\n","srt").Contains("Tom & <b>Jerry</b>"),"SRT export changed plain comparison text or SRT formatting tags");
+        // Class-qualified WebVTT tags go for SRT, and <b.x>/<i.x>/<u.x> lose only the class.
+        var classedVtt="WEBVTT\n\n00:01.000 --> 00:02.000\n<c.red>Red</c> <v.loud Ann>Hi</v> <lang.x en>yo</lang> <ruby.a>base<rt.b>top</rt></ruby>\n<b.big>Bold</b> <i.x>it</i> <u.y.z>un</u> <b>plain</b>\n";
+        check(SubtitleCodec.Convert(classedVtt,"srt")=="1\n00:00:01,000 --> 00:00:02,000\nRed Hi yo basetop\n<b>Bold</b> <i>it</i> <u>un</u> <b>plain</b>\n"&&SubtitleCodec.Convert(classedVtt,"txt")=="Red Hi yo basetop\nBold it un plain\n","Class-qualified WebVTT tags leaked into SRT or TXT output");
+        var tagNoise="1\n00:00:01,000 --> 00:00:02,000\n"+new string('<',200_000)+string.Concat(Enumerable.Repeat("<I>",50_000))+string.Concat(Enumerable.Repeat("&a",100_000))+string.Concat(Enumerable.Repeat("<v ",50_000))+"\n";
+        var noiseClock=System.Diagnostics.Stopwatch.StartNew();
+        check(SubtitleCodec.Convert(tagNoise,"vtt").Contains("&lt;<i><i>")&&SubtitleCodec.Convert(tagNoise,"txt").StartsWith("<<<",StringComparison.Ordinal)&&SubtitleCodec.Convert(tagNoise,"srt").Contains("<<<<I>")&&noiseClock.Elapsed<TimeSpan.FromSeconds(5),"Long runs of tag starts and ampersands were mangled or took too long to convert");
         var input=Path.Combine(root,"Archive source.txt");File.WriteAllText(input,"Türkçe 🍐 retained");var zip=DocumentEngine.Zip([input],root);
         foreach(var format in new[]{"tar","gz","zip"})
         {

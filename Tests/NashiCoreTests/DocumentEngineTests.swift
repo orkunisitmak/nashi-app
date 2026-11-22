@@ -11,6 +11,47 @@ final class DocumentEngineTests: XCTestCase {
     override func setUpWithError() throws { root = try OutputFiles.temporaryDirectory() }
     override func tearDownWithError() throws { if let root { try? FileManager.default.removeItem(at: root) } }
 
+    func testSubtitleTextThatOnlyLooksLikeMarkupSurvivesVTTAndTXT() throws {
+        let input = try file("Markup.srt", "1\n00:00:01,000 --> 00:00:02,000\nI <3 you & him <i>really</i>\n\n2\n00:00:03,000 --> 00:00:04,000\n5 < 6 and 7 > 3\n")
+        let vtt = try DocumentText.read(convert(input, "vtt"))
+        XCTAssertTrue(vtt.contains("I &lt;3 you &amp; him <i>really</i>"))
+        XCTAssertTrue(vtt.contains("5 &lt; 6 and 7 > 3"))
+        XCTAssertEqual(try DocumentText.read(convert(input, "txt")), "I <3 you & him really\n\n5 < 6 and 7 > 3\n")
+        let edge = try file("Edge.srt", "1\n100:00:01,000 --> 100:00:03,000\n<I>Hello</I> <i love you <100:00:02.000>late\n")
+        XCTAssertTrue(try DocumentText.read(convert(edge, "vtt")).contains("<i>Hello</i> &lt;i love you <100:00:02.000>late"))
+        XCTAssertEqual(try DocumentText.read(convert(edge, "txt")), "Hello <i love you late\n")
+        let math = try file("Math.srt", "1\n00:00:01,000 --> 00:00:02,000\nx <b + 1 and y > 3 <v Ann Lee>hi</v> <c.red.big>ok</c>\n")
+        XCTAssertTrue(try DocumentText.read(convert(math, "vtt")).contains("x &lt;b + 1 and y > 3 <v Ann Lee>hi</v> <c.red.big>ok</c>"))
+        XCTAssertEqual(try DocumentText.read(convert(math, "txt")), "x <b + 1 and y > 3 hi ok\n")
+        let tabbed = try file("Tabbed.srt", "1\n00:00:01,000 --> 00:00:02,000\n<font\tcolor=\"red\">Hi</font> <v\tAnn>yo</v>\n")
+        XCTAssertTrue(try DocumentText.read(convert(tabbed, "vtt")).contains("<font\tcolor=\"red\">Hi</font> <v\tAnn>yo</v>"))
+        XCTAssertEqual(try DocumentText.read(convert(tabbed, "txt")), "Hi yo\n")
+        let voices = try file("Voices.vtt", "WEBVTT\n\n00:01.000 --> 00:02.000\n<v\tAnn>Tom</v> <V Bob>Al</V> <c.red>x</c>\n")
+        XCTAssertTrue(try DocumentText.read(convert(voices, "srt")).contains("Tom Al x"))
+        let srtLike = try file("SrtLike.srt", "1\n00:00:01,000 --> 00:00:02,000\nx <c + 1 and y > 3\n<v Ann\nnext line> ok\n")
+        XCTAssertTrue(try DocumentText.read(convert(srtLike, "srt")).contains("x <c + 1 and y > 3\n<v Ann\nnext line> ok"))
+        let tagged = try file("Tags.vtt", "WEBVTT\n\n00:01.000 --> 00:02.000\nTom &amp; Jerry &lt;3 <c.red>hi</c> <00:01.500>late\n")
+        XCTAssertEqual(try SubtitleCodec.convert(tagged, to: "vtt", token: .init()), "WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nTom &amp; Jerry &lt;3 <c.red>hi</c> <00:01.500>late\n")
+    }
+
+    func testClassQualifiedWebVTTTagsAreRemovedForSRT() throws {
+        let input = try file("Classes.vtt", "WEBVTT\n\n00:01.000 --> 00:02.000\n<c.red>Red</c> <v.loud Ann>Hi</v> <lang.x en>yo</lang> <ruby.a>base<rt.b>top</rt></ruby>\n<b.big>Bold</b> <i.x>it</i> <u.y.z>un</u> <b>plain</b>\n")
+        XCTAssertEqual(try SubtitleCodec.convert(input, to: "srt", token: .init()), "1\n00:00:01,000 --> 00:00:02,000\nRed Hi yo basetop\n<b>Bold</b> <i>it</i> <u>un</u> <b>plain</b>\n")
+        XCTAssertEqual(try SubtitleCodec.convert(input, to: "txt", token: .init()), "Red Hi yo basetop\nBold it un plain\n")
+    }
+
+    func testLongRunsOfTagStartsAndAmpersandsConvertQuickly() throws {
+        let noise = String(repeating: "<", count: 200_000) + String(repeating: "<I>", count: 50_000) + String(repeating: "&a", count: 100_000) + String(repeating: "<v ", count: 50_000)
+        let input = try file("Noise.srt", "1\n00:00:01,000 --> 00:00:02,000\n\(noise)\n")
+        let started = Date()
+        let vtt = try SubtitleCodec.convert(input, to: "vtt", token: .init())
+        XCTAssertTrue(vtt.hasSuffix(String(repeating: "&lt;v ", count: 50_000) + "\n"))
+        XCTAssertTrue(vtt.contains("&lt;<i><i>"))
+        XCTAssertTrue(try SubtitleCodec.convert(input, to: "txt", token: .init()).hasPrefix("<<<"))
+        XCTAssertTrue(try SubtitleCodec.convert(input, to: "srt", token: .init()).contains("<<<<I>"))
+        XCTAssertLessThan(Date().timeIntervalSince(started), 5)
+    }
+
     func testSubtitleRoundTripKeepsTimingUnicodeAndCueText() throws {
         let input = try file("Captions.srt", "1\n00:00:01,250 --> 00:00:03,875\n<b>Merhaba Şişli</b>\nSecond line\n\n2\n01:02:03,004 --> 01:02:04,999\nA &amp; B\n")
         let vtt = try convert(input, "vtt")
@@ -104,6 +145,50 @@ final class DocumentEngineTests: XCTestCase {
             XCTAssertLessThan(sizes[1],sizes[0]/4,format)
             XCTAssertLessThanOrEqual(sizes[2],sizes[1],format)
         }
+    }
+
+    func testArchiveExtractionAndConversionKeepFolderPermissions() throws {
+        let fm=FileManager.default
+        let source=root.appendingPathComponent("Permission source",isDirectory:true)
+        let privateFolder=source.appendingPathComponent("private",isDirectory:true),locked=source.appendingPathComponent("locked",isDirectory:true)
+        try fm.createDirectory(at:privateFolder,withIntermediateDirectories:true)
+        try fm.createDirectory(at:locked,withIntermediateDirectories:true)
+        try Data("Host x\n".utf8).write(to:privateFolder.appendingPathComponent("config"))
+        try Data("read only\n".utf8).write(to:locked.appendingPathComponent("note.txt"))
+        try fm.setAttributes([.posixPermissions:0o700],ofItemAtPath:privateFolder.path)
+        try fm.setAttributes([.posixPermissions:0o555],ofItemAtPath:locked.path)
+        defer{try? fm.setAttributes([.posixPermissions:0o755],ofItemAtPath:locked.path)}
+        let archive=root.appendingPathComponent("Permissions.tar")
+        _=try ProcessRunner.run(URL(fileURLWithPath:"/usr/bin/tar"),["-cf",archive.path,"-C",source.path,"private","locked"])
+        func mode(_ folder:URL,_ name:String) throws -> Int { (try fm.attributesOfItem(atPath:folder.appendingPathComponent(name).path)[.posixPermissions] as! NSNumber).intValue }
+        let extracted=try XCTUnwrap(DocumentEngine.extractArchive(archive,options:.init(),token:.init()).first)
+        XCTAssertEqual(try mode(extracted,"private"),0o700)
+        // The owner keeps write access, so a read-only folder's files are still written.
+        XCTAssertEqual(try mode(extracted,"locked"),0o755)
+        XCTAssertEqual(try DocumentText.read(extracted.appendingPathComponent("locked/note.txt")),"read only\n")
+        let zip=try convert(archive,"zip")
+        let reopened=root.appendingPathComponent("Reopened",isDirectory:true)
+        try ArchiveCodec.extract(zip,into:reopened,token:.init())
+        XCTAssertEqual(try mode(reopened,"private"),0o700)
+    }
+
+    func testArchiveFolderStoredWithoutAnyPermissionStaysPrivate() throws {
+        let fm=FileManager.default
+        let secret=root.appendingPathComponent("secret.txt")
+        try Data("sealed\n".utf8).write(to:secret)
+        // tar cannot read inside a real 000 folder, so the entries come from an mtree description.
+        let spec=root.appendingPathComponent("Sealed.mtree")
+        try Data("#mtree\nsealed type=dir mode=000\nsealed/secret.txt type=file mode=644 contents=\(secret.path)\n".utf8).write(to:spec)
+        let archive=root.appendingPathComponent("Sealed.tar")
+        _=try ProcessRunner.run(URL(fileURLWithPath:"/usr/bin/tar"),["-cf",archive.path,"@"+spec.path])
+        func mode(_ folder:URL) throws -> Int { (try fm.attributesOfItem(atPath:folder.appendingPathComponent("sealed").path)[.posixPermissions] as! NSNumber).intValue }
+        let extracted=try XCTUnwrap(DocumentEngine.extractArchive(archive,options:.init(),token:.init()).first)
+        // Not the default 0755: the folder's 0644 file would be readable by every local user.
+        XCTAssertEqual(try mode(extracted),0o700)
+        XCTAssertEqual(try DocumentText.read(extracted.appendingPathComponent("sealed/secret.txt")),"sealed\n")
+        let reopened=root.appendingPathComponent("Reopened sealed",isDirectory:true)
+        try ArchiveCodec.extract(try convert(archive,"zip"),into:reopened,token:.init())
+        XCTAssertEqual(try mode(reopened),0o700)
     }
 
     func testStoredRARAndOrdinaryGZIPAreReadable() throws {

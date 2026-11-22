@@ -393,7 +393,10 @@ private final class GitHubHTTPTransfer: NSObject, URLSessionDataDelegate, @unche
 
     private func drain() {
         guard !finished, !writing else { return }
-        guard !pending.isEmpty else {
+        // The last advertised bytes complete the consumer's download, so they wait
+        // for a clean upstream EOF; an oversized or failed body must not look whole.
+        let holdsTail = !upstreamFinished && pending.count == 1 && received == expectedSize
+        guard !pending.isEmpty, !holdsTail else {
             if upstreamFinished {
                 if expectedSize != received { finish(.failure(GitHubUpdateTransportError.invalidResponse)) }
                 else { finish(.success(Data())) }
@@ -622,6 +625,16 @@ private final class GitHubBridgeConnection: GitHubArchiveSink, @unchecked Sendab
                 }
             }
             lock.unlock()
+            watchForDisconnect()
+        }
+    }
+
+    /// The request is complete, so EOF or an error now means the consumer left:
+    /// cancel the upstream download instead of waiting for it to finish.
+    private func watchForDisconnect() {
+        connection.receive(minimumIncompleteLength: 1, maximumLength: 8192) { [weak self] _, _, complete, error in
+            guard let self else { return }
+            if complete || error != nil { self.cancel() } else { self.watchForDisconnect() }
         }
     }
 

@@ -187,7 +187,16 @@ private enum PagesDOCXReader {
         let defaultParagraph = paragraph(defaults?.first("pPrDefault")?.first("pPr"))
         let relationships = try relationMap(package.appendingPathComponent("word/_rels/document.xml.rels"))
         let reader = Reader(package: package, relationships: relationships, styles: styles, defaultCharacter: defaultCharacter, defaultParagraph: defaultParagraph, token: token)
-        var model: [String: Any] = ["blocks": try blockElements(body).flatMap { try reader.blocks($0) }]
+        var blocks = try blockElements(body).flatMap { try reader.blocks($0) }
+        // A page break that ends its Word paragraph leaves nothing to carry it.
+        // Start the next paragraph on the new page instead of keeping an empty
+        // one there, which would push a full-page image onto a third page.
+        for index in blocks.indices.reversed() where blocks[index].removeValue(forKey: "trailingPageBreak") != nil {
+            guard index + 1 < blocks.count, blocks[index + 1]["type"] as? String == "paragraph" else { continue }
+            blocks[index + 1]["paragraph"] = (blocks[index + 1]["paragraph"] as? [String:Any] ?? [:]).merging(["pageBreakBefore":true]) { _,new in new }
+            blocks.remove(at: index)
+        }
+        var model: [String: Any] = ["blocks": blocks]
         if let section = body.first("sectPr") {
             var page: [String: Any] = [:]
             if let size = section.first("pgSz") { if let w = size.number("w") { page["pageWidth"] = w / 20 }; if let h = size.number("h") { page["pageHeight"] = h / 20 } }
@@ -358,6 +367,7 @@ private enum PagesDOCXReader {
                 var part = block
                 part["runs"] = segment
                 if index > 0 { part["paragraph"] = paragraph.merging(["pageBreakBefore":true]) { _,new in new } }
+                if index > 0 && index == segments.count - 1 && segment.isEmpty { part["trailingPageBreak"] = true }
                 return part
             }
         }

@@ -96,14 +96,37 @@ public partial class App:Application
             }
             return;
         }
+        if(e.Args.Contains("--editor-smoke-test"))
+        {
+            IsSmokeTest=true;ShutdownMode=ShutdownMode.OnExplicitShutdown;
+            var directory=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY")??Path.Combine(Path.GetTempPath(),"Nashi-Editor-Smoke");
+            try
+            {
+                Directory.CreateDirectory(directory);var checks=0;
+                if(e.Args.Contains("--photo-only"))
+                {
+                    using var watchdog=new System.Threading.Timer(_=>
+                    {
+                        try{File.WriteAllText(Path.Combine(directory,"photo-timeout.txt"),"Photo preview smoke exceeded 90 seconds.");}catch{}
+                        Environment.Exit(1);
+                    },null,TimeSpan.FromSeconds(90),System.Threading.Timeout.InfiniteTimeSpan);
+                    PhotoPreviewSmoke.Run(directory,(passed,reason)=>{if(!passed)throw new InvalidOperationException(reason);checks++;});
+                }
+                else EditorReliabilityChecks.Run(directory,(passed,reason)=>{if(!passed)throw new InvalidOperationException(reason);checks++;});
+                File.WriteAllText(Path.Combine(directory,"editor-result.json"),System.Text.Json.JsonSerializer.Serialize(new{passed=checks}));
+                Shutdown(0);
+            }
+            catch(Exception error){Console.Error.WriteLine(error);Directory.CreateDirectory(directory);File.WriteAllText(Path.Combine(directory,"error.txt"),error.ToString());Shutdown(1);}
+            return;
+        }
         if(e.Args.Contains("--smoke-test")){IsSmokeTest=true;try{NativeExceptionTrace.Install();SmokeTests.Run();Shutdown(0);}catch(Exception error){Console.Error.WriteLine(error);var directory=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY");if(directory is not null){Directory.CreateDirectory(directory);File.WriteAllText(Path.Combine(directory,"error.txt"),error.ToString());}Shutdown(1);}return;}
         if(e.Args.Length==1&&e.Args[0]=="--install-update"){ShutdownMode=ShutdownMode.OnExplicitShutdown;_ = InstallUpdateAsync();return;}
-        instance=new SingleInstance();Exit+=(_,_)=>instance.Dispose();var paths=e.Args.Where(p=>File.Exists(p)||Directory.Exists(p)).ToArray();
+        instance=new SingleInstance();Exit+=(_,_)=>instance.Dispose();var paths=e.Args.Where(p=>File.Exists(p)||Directory.Exists(p)).Select(Path.GetFullPath).ToArray();
         if(!instance.Primary){ShutdownMode=ShutdownMode.OnExplicitShutdown;_ = ForwardAndExit(paths);return;}
         // Float shelves have no owner. Closing Nashi (not hiding it to the tray) must end the
         // process instead of leaving it behind a shelf with a closed main window.
         var window=new MainWindow(paths,offerToolSetup:!e.Args.Contains("--background"));MainWindow=window;ShutdownMode=ShutdownMode.OnMainWindowClose;instance.Start(incoming=>Dispatcher.BeginInvoke(()=>window.AcceptLaunch(incoming)));window.Show();
-        windowManagement=new WindowManagement(notice:message=>MessageBox.Show(L10n.Text(message),L10n.Text("Window arrangement"),MessageBoxButton.OK,MessageBoxImage.Information),isEnabled:()=>window.WindowManagementEnabled);
+        windowManagement=new WindowManagement(notice:message=>MessageBox.Show(L10n.Text(message),L10n.Text("Window arrangement"),MessageBoxButton.OK,MessageBoxImage.Information),isEnabled:()=>window.WindowManagementEnabled&&!window.ShortcutForegroundExcluded);
     }
     internal static void UseSavedLanguage(Func<string>? readLanguage=null)
     {

@@ -30,6 +30,15 @@ final class PagesDOCXPageBreakTests: XCTestCase {
         XCTAssertTrue(newPage > cover && newPage <= contents, "page break at \(newPage), cover \(cover), contents \(contents)")
     }
 
+    func testPageBreakEndingAParagraphStartsTheNextParagraphOnTheNewPage() throws {
+        let body = "<w:p><w:r><w:t>Cover</w:t><w:br w:type=\"page\"/></w:r></w:p><w:p><w:r><w:t>Contents</w:t></w:r></w:p><w:p><w:r><w:t>End</w:t><w:br w:type=\"page\"/></w:r></w:p>"
+        let paragraphs = try convert(name: "Trailing break", body: body)
+        // No empty paragraph is left between the pages; a break with nothing
+        // after it in the document keeps its own paragraph.
+        XCTAssertEqual(paragraphs.map(\.text), ["Cover", "Contents", "End", ""])
+        XCTAssertEqual(paragraphs.map(\.pageBreakBefore), [false, true, false, true])
+    }
+
     func testLineBreaksAndRenderedPageBreaksStayInTheParagraph() throws {
         let body = "<w:p><w:r><w:t>One</w:t><w:br/><w:t>Two</w:t><w:br w:type=\"textWrapping\"/><w:t>Three</w:t><w:lastRenderedPageBreak/><w:t>Four</w:t></w:r></w:p>"
         let paragraphs = try convert(name: "Line breaks", body: body)

@@ -83,3 +83,27 @@ test('playground Convert Audio Channels Mono mixes both levels like the app', as
   const mono = (l, r) => new DataView(audioWav({id: 'audioChannels', audioBuffer, values: {channels: 'mono', left: l, right: r}}).buf).getInt16(44, true) / 32767;
   for (const [l, r, want] of [[100, 100, 0.8], [0, 100, 0.4], [100, 50, 0.6], [0, 0, 0]]) assert.ok(Math.abs(mono(l, r) - want) < 0.01);
 });
+
+test('playground Edit Image applies Width to the rotated image', () => {
+  const lines = fs.readFileSync(new URL('../docs/assets/playground.js', import.meta.url), 'utf8').split('\n');
+  const start = lines.findIndex(line => line.startsWith('function renderImage('));
+  let end = start;
+  while (!lines[end].includes('return c;}')) end++;
+  const noop = new Proxy(function () {}, {get: () => noop, apply: () => noop, set: () => true});
+  globalThis.document = {createElement: () => ({width: 0, height: 0, getContext: () => noop})};
+  const renderImage = new Function(`${lines.slice(start, end + 1).join('\n')}; return renderImage;`)();
+  const size = (width, rotation) => {
+    const c = renderImage({image: {width: 400, height: 200}, id: 'editImage', values: {width, rotation, brightness: 100, contrast: 100, saturation: 100}}, true);
+    return [c.width, c.height];
+  };
+  assert.deepEqual(size(400, 0), [400, 200]);
+  assert.deepEqual(size(100, 90), [100, 200]);
+  assert.deepEqual(size(100, 270), [100, 200]);
+  assert.deepEqual(size(200, 90), [200, 400]);
+  assert.deepEqual(size(400, 90), [400, 800]);
+  assert.deepEqual(size(400, 180), [400, 200]);
+  const huge = renderImage({image: {width: 4000, height: 40}, id: 'editImage', values: {width: 6000, rotation: 90, brightness: 100, contrast: 100, saturation: 100}}, true);
+  assert.ok(huge.width * huge.height <= 24000000);
+  const rounded = renderImage({image: {width: 19, height: 10}, id: 'editImage', values: {width: 6000, rotation: 90, brightness: 100, contrast: 100, saturation: 100}}, true);
+  assert.ok(rounded.width * rounded.height <= 24000000);
+});

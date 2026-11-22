@@ -18,12 +18,12 @@ public enum FeatureCatalog {
         "opus": ["mp3", "m4a", "wav", "flac", "ogg", "aiff", "wma"],
         "aiff": ["mp3", "m4a", "wav", "flac", "ogg", "opus", "wma"],
         "wma": ["mp3", "m4a", "wav", "flac", "ogg", "opus", "aiff"],
-        "mp4": ["mov", "mkv", "webm", "avi", "wmv", "gif", "mp3"],
-        "mov": ["mp4", "mkv", "webm", "avi", "wmv", "gif", "mp3"],
-        "mkv": ["mp4", "mov", "webm", "avi", "wmv", "gif", "mp3"],
-        "webm": ["mp4", "mov", "mkv", "avi", "wmv", "gif", "mp3"],
-        "avi": ["mp4", "mov", "mkv", "webm", "wmv", "gif", "mp3"],
-        "wmv": ["mp4", "mov", "mkv", "webm", "avi", "gif", "mp3"],
+        "mp4": ["mov", "mkv", "webm", "avi", "wmv", "gif", "mp3", "m4a", "wav", "flac", "ogg"],
+        "mov": ["mp4", "mkv", "webm", "avi", "wmv", "gif", "mp3", "m4a", "wav", "flac", "ogg"],
+        "mkv": ["mp4", "mov", "webm", "avi", "wmv", "gif", "mp3", "m4a", "wav", "flac", "ogg"],
+        "webm": ["mp4", "mov", "mkv", "avi", "wmv", "gif", "mp3", "m4a", "wav", "flac", "ogg"],
+        "avi": ["mp4", "mov", "mkv", "webm", "wmv", "gif", "mp3", "m4a", "wav", "flac", "ogg"],
+        "wmv": ["mp4", "mov", "mkv", "webm", "avi", "gif", "mp3", "m4a", "wav", "flac", "ogg"],
         "gif": ["mp4", "mov", "mkv", "webm", "avi", "wmv"],
         "pdf": ["docx", "pages", "pptx", "xlsx", "jpg", "png", "epub", "txt", "md"],
         "ppt": ["pdf", "jpg", "png"],
@@ -203,22 +203,31 @@ public enum FeatureCatalog {
         "gz": [.extractArchive],
         "rar": [.extractArchive],
     ]
-    public static func normalizedExtension(_ url: URL) -> String {
-        let ext = url.pathExtension.lowercased()
+    public static func normalizedExtension(_ url: URL) -> String { normalizedExtension(url.pathExtension) }
+    public static func normalizedExtension(_ pathExtension: String) -> String {
+        let ext = pathExtension.lowercased()
         return ["jpeg":"jpg", "tif":"tiff", "heif":"heic", "aif":"aiff", "markdown":"md", "htm":"html", "gzip":"gz", "tgz":"gz"].filter { _ in true }[ext] ?? ext
     }
     public static func formats(for inputs: [URL]) -> [String] {
-        guard let first=inputs.first else { return [] }
         guard inputs.allSatisfy({ !isOrdinaryFolder($0) }) else { return [] }
-        return (conversionMatrix[normalizedExtension(first)] ?? []).filter { format in inputs.allSatisfy { (conversionMatrix[normalizedExtension($0)] ?? []).contains(format) } }
+        return formats(forExtensions:inputs.map(normalizedExtension))
     }
     public static func tools(for inputs: [URL]) -> [ToolKind] {
-        guard let first=inputs.first else { return [] }
         guard inputs.allSatisfy({ !isOrdinaryFolder($0) }) else { return [] }
-        let dictionary = inputs.count>1 ? multipleTools : singleTools
-        var tools=(dictionary[normalizedExtension(first)] ?? []).filter { tool in inputs.allSatisfy { (dictionary[normalizedExtension($0)] ?? []).contains(tool) } }
+        return tools(forExtensions:inputs.map(normalizedExtension))
+    }
+    /// The same choices from normalized extensions alone, one per selected file. Nothing is read
+    /// from disk, so the answer cannot depend on what a path happens to name.
+    public static func formats(forExtensions extensions:[String]) -> [String] {
+        guard let first=extensions.first else { return [] }
+        return (conversionMatrix[first] ?? []).filter { format in extensions.allSatisfy { (conversionMatrix[$0] ?? []).contains(format) } }
+    }
+    public static func tools(forExtensions extensions:[String]) -> [ToolKind] {
+        guard let first=extensions.first else { return [] }
+        let dictionary = extensions.count>1 ? multipleTools : singleTools
+        var tools=(dictionary[first] ?? []).filter { tool in extensions.allSatisfy { (dictionary[$0] ?? []).contains(tool) } }
         // The native 2.0.2 bundle declares this additional tool beyond the site's 26.
-        if inputs.allSatisfy(QRCodeEngine.supports) { tools.append(.readQRCode) }
+        if extensions.allSatisfy(QRCodeEngine.supports(pathExtension:)) { tools.append(.readQRCode) }
         return tools
     }
     private static func isOrdinaryFolder(_ url:URL)->Bool { ((try? url.resourceValues(forKeys:[.isDirectoryKey]).isDirectory) ?? false) && !["rtfd","pages"].contains(normalizedExtension(url)) }

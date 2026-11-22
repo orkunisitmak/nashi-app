@@ -32,8 +32,8 @@
   ],
   "bundle": {
     "path": "Resources/PagesInterop.js",
-    "sha256": "2d351615bc5d9a933b31910639f8996b7ceb657716d0c45af1b313dee7ceb801",
-    "bytes": 1013981
+    "sha256": "ff64869444ef865a44f45faa0948bb81ac9d216ff6b2bb6e5f5c13b4826757cb",
+    "bytes": 1016373
   },
   "seed": {
     "sha256": "bbc1f8060c4a5507db03db0d300666ff0334e888dc5004f7554b53500a76f626",
@@ -41,7 +41,7 @@
   },
   "adapter": {
     "path": "scripts/pages-interop-entry.js",
-    "sha256": "b51370134eed50a6e19ac1c6f0515d3c315b15312bbfa77cf3e5d47d6545d45e"
+    "sha256": "719de14a978a9bd69886b1f067791d145ceed7999d6515e765a6ce245003e463"
   },
   "runtime": "macOS JavaScriptCore; no Node process, network or Apple Pages automation",
   "brandMigration": "Nashi: adapter/global callback identifiers renamed; upstream pinned packages, donor source and licenses are unchanged."

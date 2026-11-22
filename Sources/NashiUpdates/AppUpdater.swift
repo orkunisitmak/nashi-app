@@ -39,6 +39,7 @@ import Sparkle
         static let savedToken = "TangerineUpdateGitHubSavedToken"
         static let automaticChecks = "TangerineUpdateGitHubAutomaticChecks"
         static let previousAutomaticChecks = "TangerineUpdatePreviousAutomaticChecks"
+        static let tokenCleanup = "NashiUpdateTokenCleanup"
     }
     public var isConfigured: Bool { controller != nil && configurationError == nil }
     public var canChangeConnection: Bool {
@@ -164,6 +165,7 @@ import Sparkle
         defer { isConnecting = false; refreshActivity() }
         let selected = UpdateBrandMigration.canonical(try GitHubRepository(input))
         let enteredToken = inputToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        await retryTokenCleanup(keeping: selected)
         let token: String?
         if requiresToken {
             token = enteredToken.isEmpty ? try await credentials.loadToken(for: selected, authorizingAccess: true) : try KeychainUpdateCredentialStore.validate(enteredToken)
@@ -172,9 +174,25 @@ import Sparkle
         }
         // Validate before replacing working credentials or persisting the selection.
         try await validateGitHubAccess(selected, token)
-        if let token { try await credentials.storeToken(token, for: selected) }
+        if let token {
+            do { try await credentials.storeToken(token, for: selected) }
+            catch {
+                // A broker that timed out can still finish the write later. Queue a removal
+                // behind it so a repository that was never connected keeps no new token.
+                if selected != repository, !enteredToken.isEmpty { await removeUnconnectedToken(selected) }
+                throw error
+            }
+        }
         else { try await credentials.removeToken(for: selected) }
-        if let previous = repository, previous != selected { try await credentials.removeToken(for: previous) }
+        if let previous = repository, previous != selected {
+            do { try await credentials.removeToken(for: previous) }
+            catch {
+                // The old connection stays configured; do not leave a newly entered
+                // token behind for a repository that was never connected.
+                if token != nil, !enteredToken.isEmpty { await removeUnconnectedToken(selected) }
+                throw error
+            }
+        }
         if repository == nil, let controller {
             defaults.set(controller.updater.automaticallyChecksForUpdates, forKey: Preference.previousAutomaticChecks)
         }
@@ -190,11 +208,28 @@ import Sparkle
         if controller == nil { start() } else { configureScheduling() }
     }
 
+    /// A removal that fails is remembered: the broker may still finish the write later.
+    private func removeUnconnectedToken(_ target: GitHubRepository) async {
+        do { try await credentials.removeToken(for: target) }
+        catch { defaults.set(target.slug, forKey: Preference.tokenCleanup) }
+    }
+
+    /// Retried on the next connection change, so the token of a repository that
+    /// was never connected does not stay behind after a failed cleanup.
+    private func retryTokenCleanup(keeping selected: GitHubRepository? = nil) async {
+        guard let slug = defaults.string(forKey: Preference.tokenCleanup) else { return }
+        if let target = try? GitHubRepository(slug), target != repository, target != selected {
+            guard (try? await credentials.removeToken(for: target)) != nil else { return }
+        }
+        defaults.removeObject(forKey: Preference.tokenCleanup)
+    }
+
     public func disconnectGitHub() async throws {
         guard canChangeConnection else { throw ConnectionError.inProgress }
         isConnecting = true
         refreshActivity()
         defer { isConnecting = false; refreshActivity() }
+        await retryTokenCleanup()
         if let repository { try await credentials.removeToken(for: repository) }
         scheduledCheck?.cancel()
         stopBridge()
@@ -306,14 +341,15 @@ import Sparkle
 
     public func updater(_ updater: SPUUpdater, willDownloadUpdate item: SUAppcastItem, with request: NSMutableURLRequest) {
         guard repository != nil else { return }
+        // Assigning allHTTPHeaderFields merges, so remove Sparkle's headers one by one.
+        request.allHTTPHeaderFields?.keys.forEach { request.setValue(nil, forHTTPHeaderField: $0) }
         do {
             guard let bridge, let url = request.url else { throw ConnectionError.reconnect }
             request.url = try bridge.archiveURL(for: url)
-            request.allHTTPHeaderFields = ["User-Agent": "Nashi updater"]
+            request.setValue("Nashi updater", forHTTPHeaderField: "User-Agent")
         } catch {
             // Fail closed even for Sparkle's resumed/delta download paths.
             request.url = URL(string: "http://127.0.0.1:1/unavailable")!
-            request.allHTTPHeaderFields = [:]
             lastError = error.localizedDescription
         }
     }

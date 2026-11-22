@@ -3,6 +3,46 @@ import AppKit
 @testable import NashiCore
 
 final class CommandLineTests:XCTestCase {
+    func testCapabilitiesDescribeSingleAndMultipleFileActionsWithoutFileAccess() throws {
+        let image=try XCTUnwrap(NashiCommandLine.capabilities(format:".JPEG"))
+        XCTAssertEqual(image["format"] as? String,"jpg")
+        XCTAssertEqual(image["multiple"] as? Bool,false)
+        XCTAssertTrue((image["destinations"] as? [String] ?? []).contains("png"))
+        XCTAssertTrue((image["tools"] as? [String] ?? []).contains(ToolKind.cropImage.rawValue))
+        let batch=try XCTUnwrap(NashiCommandLine.capabilities(format:"png",multiple:true))
+        XCTAssertEqual(batch["multiple"] as? Bool,true)
+        XCTAssertTrue((batch["tools"] as? [String] ?? []).contains(ToolKind.createCollage.rawValue))
+        XCTAssertFalse((batch["tools"] as? [String] ?? []).contains(ToolKind.editImage.rawValue))
+        XCTAssertNil(NashiCommandLine.capabilities(format:"invalid/format"))
+        XCTAssertNil(NashiCommandLine.capabilities(format:"unsupported"))
+        XCTAssertNil(NashiCommandLine.capabilities(format:""))
+    }
+    func testCapabilitiesMatchTheWheelForEveryFormatAndIgnoreTheCurrentDirectory() throws {
+        let files=FileManager.default,root=try OutputFiles.temporaryDirectory(),previous=files.currentDirectoryPath
+        defer{files.changeCurrentDirectoryPath(previous);try? files.removeItem(at:root)}
+        XCTAssertTrue(files.changeCurrentDirectoryPath(root.path))
+        // Folders named like a file of the format: a lookup that stats a made-up path would see these.
+        for name in ["nashi-capabilities.png","file.png","png",".png"] { try files.createDirectory(at:root.appendingPathComponent(name),withIntermediateDirectories:true) }
+        let png=try XCTUnwrap(NashiCommandLine.capabilities(format:"png"))
+        XCTAssertTrue((png["destinations"] as? [String] ?? []).contains("jpg"))
+        XCTAssertTrue((png["tools"] as? [String] ?? []).contains(ToolKind.readQRCode.rawValue))
+        for format in FeatureCatalog.conversionMatrix.keys.sorted() {
+            // A path that does not exist is what the wheel sees for a regular file of that format.
+            let file=URL(fileURLWithPath:"/nonexistent-nashi-test/input.\(format)",isDirectory:false)
+            for multiple in [false,true] {
+                let inputs=multiple ? [file,file]:[file],summary=try XCTUnwrap(NashiCommandLine.capabilities(format:format,multiple:multiple),format)
+                XCTAssertEqual(summary["destinations"] as? [String],FeatureCatalog.formats(for:inputs),format)
+                XCTAssertEqual(summary["tools"] as? [String],FeatureCatalog.tools(for:inputs).map(\.rawValue),format)
+            }
+        }
+    }
+    func testCapabilitiesRejectMalformedCommandsAsUsageAndUnknownFormatsAsFailures() throws {
+        XCTAssertEqual(NashiCommandLine.run(arguments:["nashi-cli","capabilities","png","--multiple"]),0)
+        for arguments in [["capabilities"],["capabilities","png","--many"],["capabilities","png","--multiple","jpg"],["capabilities","--multiple","png"]] {
+            XCTAssertEqual(NashiCommandLine.run(arguments:["nashi-cli"]+arguments),64,arguments.joined(separator:" "))
+        }
+        XCTAssertEqual(NashiCommandLine.run(arguments:["nashi-cli","capabilities","unsupported"]),1)
+    }
     func testDependencyDiscoveryReturnsTheExifToolScriptInsteadOfItsDirectory() throws {
         let script=try Dependencies.executable("exiftool")
         XCTAssertTrue(try script.resourceValues(forKeys:[.isRegularFileKey]).isRegularFile == true)
@@ -120,7 +160,7 @@ final class CommandLineTests:XCTestCase {
         XCTAssertEqual(code,64)
         XCTAssertEqual(try Data(contentsOf:out),Data())
         let usage=try String(contentsOf:err,encoding:.utf8)
-        for word in ["convert FORMAT","tool TOOL_ID","inspect FILE","catalog","dependencies","--options JSON","--json"] { XCTAssertTrue(usage.contains(word),word) }
+        for word in ["convert FORMAT","tool TOOL_ID","inspect FILE","catalog","capabilities FORMAT","dependencies","--options JSON","--json"] { XCTAssertTrue(usage.contains(word),word) }
     }
     func testResultsThatCannotBeWrittenToStandardOutputFailTheRun() throws {
         let root=try OutputFiles.temporaryDirectory();defer{try? FileManager.default.removeItem(at:root)}

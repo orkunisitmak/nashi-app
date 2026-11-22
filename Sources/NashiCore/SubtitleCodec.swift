@@ -113,14 +113,30 @@ enum SubtitleCodec {
         }
         return sawTag
     }
-    /// WebVTT reads a bare "<" as the start of a tag and ends a cue at "-->",
-    /// so SRT text keeps its markup tags and escapes everything else.
+    /// What follows the "<" of a real cue tag or timestamp: b/i/u/c/ruby/rt take classes only, v/lang take an
+    /// annotation and font takes attributes. "5 < 6 and 7 > 3" and "x <b + 1 and y > 3" are text.
+    private static let cueTag = #"/?(?:(?:b|i|u|c|ruby|rt)(?:\.[^<>\s]*)?|(?:v|lang)(?:\.[^<>\s]*)?(?:[ \t\f][^<>\n]*)?|font(?:[ \t\f][^<>\n]*)?)>|\d{2,}:\d{2}(?::\d{2})?\.\d{3}>"#
+    private static let cueTagName = try! NSRegularExpression(pattern: #"<(/?)(b|i|u|c|v|lang|ruby|rt|font)(?=[ \t\f.>])"#, options: .caseInsensitive)
+    /// WebVTT reads a bare "<" as the start of a tag, a bare "&" as the start of a character reference and
+    /// ends a cue at "-->", so only complete cue tags and references are kept and everything else is escaped.
     private static func vttText(_ text: String) -> String {
-        withoutPositionTags(text).replacingOccurrences(of: #"<(?!/?[A-Za-z][^<>]*>)"#, with: "&lt;", options: .regularExpression)
-            .replacingOccurrences(of: "-->", with: "--&gt;")
+        let escaped = withoutPositionTags(text)
+            .replacingOccurrences(of: #"&(?!(?:[A-Za-z][A-Za-z0-9]*|#\d+|#[xX][0-9A-Fa-f]+);)"#, with: "&amp;", options: .regularExpression)
+            .replacingOccurrences(of: "(?i)<(?!" + cueTag + ")", with: "&lt;", options: .regularExpression)
+        // WebVTT tag names are case-sensitive, so <I> from SRT becomes <i>. Every "<" left is a cue tag's.
+        let ns = escaped as NSString
+        var result = "", end = 0
+        for match in cueTagName.matches(in: escaped, range: NSRange(location: 0, length: ns.length)) {
+            result += ns.substring(with: NSRange(location: end, length: match.range.location - end)) + ns.substring(with: match.range).lowercased()
+            end = match.range.upperBound
+        }
+        return (result + ns.substring(from: end)).replacingOccurrences(of: "-->", with: "--&gt;")
     }
     private static func srtText(_ text: String) -> String {
-        let withoutTags = text.replacingOccurrences(of: #"</?(?:c(?:\.[^ >]*)?|v|lang|ruby|rt)(?:\s+[^>]*)?>|<\d{2}:\d{2}[^>]*>"#, with: "", options: .regularExpression)
+        // WebVTT-only tags go, with or without classes; text such as "x <c + 1 and y > 3" stays.
+        let withoutTags = text.replacingOccurrences(of: #"(?i)<(?:/?(?:(?:c|ruby|rt)(?:\.[^<>\s]*)?|(?:v|lang)(?:\.[^<>\s]*)?(?:[ \t\f][^<>\n]*)?)>|\d{2,}:\d{2}(?::\d{2})?\.\d{3}>)"#, with: "", options: .regularExpression)
+            // SRT has no classes, so <b.loud> keeps its formatting as <b>.
+            .replacingOccurrences(of: #"(?i)<(/?[biu])\.[^<>\s]*>"#, with: "<$1>", options: .regularExpression)
         // WebVTT preserves no-break spaces and Unicode direction marks.
         let webVTT = withoutTags.replacingOccurrences(of: "&nbsp;", with: "\u{00A0}")
             .replacingOccurrences(of: "&lrm;", with: "\u{200E}")
@@ -128,7 +144,8 @@ enum SubtitleCodec {
         return DocumentText.decodeEntities(webVTT, html: true)
     }
     private static func plainText(_ text: String) -> String {
-        let withoutTags = withoutPositionTags(text).replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+        // Only real cue tags are markup. "5 < 6 and 7 > 3" is text and must survive export.
+        let withoutTags = withoutPositionTags(text).replacingOccurrences(of: "(?i)<(?:" + cueTag + ")", with: "", options: .regularExpression)
         // Direction marks keep right-to-left lines readable in the exported text too.
         return DocumentText.decodeEntities(withoutTags.replacingOccurrences(of: "&lrm;", with: "\u{200E}").replacingOccurrences(of: "&rlm;", with: "\u{200F}"), html: true)
     }
