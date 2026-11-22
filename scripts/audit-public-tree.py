@@ -12,7 +12,7 @@ for name in filter(None,files):
  if p.suffix.lower() in {'.p12','.pfx','.key','.mobileprovision'}:issues.append((name,'signing/credential material'))
  if name in {'Configuration/Signing.plist','Configuration/CredentialBroker.json'} or name.startswith(('local/','build/','Downloads/','.build/','Reference/native/','Reference/tool-windows/')):issues.append((name,'private/build artifact'))
  s=p.read_bytes().decode('utf-8','replace')
- for label,pattern in [('personal home path','/'+'Users/'+r'[^/\s"\x27]+/'),('private key',r'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----'),('GitHub credential',r'(?:gh[pousr]_[A-Za-z0-9_]{30,}|github_pat_[A-Za-z0-9_]{40,})')]:
+ for label,pattern in [('personal home path','/'+'Users/'+r'[^/\s"\x27]+/'),('private key',r'-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----'),('GitHub credential',r'(?:gh[pousr]_[A-Za-z0-9_]{30,}|github_pat_[A-Za-z0-9_]{40,})')]:
   if re.search(pattern,s):issues.append((name,label))
 if issues:
  for name,reason in issues:print('FAIL',name,reason)

@@ -1,4 +1,5 @@
 import XCTest
+import Sparkle
 @testable import NashiUpdates
 
 final class UpdateConnectionTests: XCTestCase {
@@ -63,6 +64,70 @@ final class UpdateConnectionTests: XCTestCase {
         XCTAssertEqual(store.values, ["example/private": "accepted_fixture"])
     }
 
+    func testFailedOldTokenRemovalDoesNotLeaveNewToken() async throws {
+        final class LockedOldToken: UpdateCredentialStore, @unchecked Sendable {
+            var values: [String: String] = [:]
+            var lockedSlug: String?
+            func token(for repository: GitHubRepository) throws -> String {
+                guard let value = values[repository.slug] else { throw UpdateCredentialError.missing }
+                return value
+            }
+            func save(_ token: String, for repository: GitHubRepository) throws { values[repository.slug] = token }
+            func remove(for repository: GitHubRepository) throws {
+                if repository.slug == lockedSlug { throw UpdateCredentialError.locked }
+                values.removeValue(forKey: repository.slug)
+            }
+        }
+        let suite = "NashiUpdateConnectionTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let store = LockedOldToken()
+        let updater = await MainActor.run { AppUpdater(credentials: store, defaults: defaults, validateAccess: { _, _ in }) }
+        try await updater.connectGitHub(repository: "example/private", token: "accepted_fixture", requiresToken: true)
+        store.lockedSlug = "example/private"
+        do {
+            try await updater.connectGitHub(repository: "example/new", token: "new_fixture", requiresToken: true)
+            XCTFail("A locked old token should stop the switch")
+        } catch { XCTAssertEqual(error as? UpdateCredentialError, .locked) }
+        await MainActor.run {
+            XCTAssertEqual(updater.repository?.slug, "example/private")
+            XCTAssertTrue(updater.hasSavedToken)
+        }
+        XCTAssertEqual(store.values, ["example/private": "accepted_fixture"], "No token may remain for a repository that was not connected")
+    }
+
+    func testFailedTokenCleanupIsRetriedOnTheNextConnectionChange() async throws {
+        final class LockedTokens: UpdateCredentialStore, @unchecked Sendable {
+            var values: [String: String] = [:]
+            var locked: Set<String> = []
+            func token(for repository: GitHubRepository) throws -> String {
+                guard let value = values[repository.slug] else { throw UpdateCredentialError.missing }
+                return value
+            }
+            func save(_ token: String, for repository: GitHubRepository) throws { values[repository.slug] = token }
+            func remove(for repository: GitHubRepository) throws {
+                if locked.contains(repository.slug) { throw UpdateCredentialError.locked }
+                values.removeValue(forKey: repository.slug)
+            }
+        }
+        let suite = "NashiUpdateConnectionTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let store = LockedTokens()
+        let updater = await MainActor.run { AppUpdater(credentials: store, defaults: defaults, validateAccess: { _, _ in }) }
+        try await updater.connectGitHub(repository: "example/private", token: "accepted_fixture", requiresToken: true)
+        store.locked = ["example/private", "example/new"]
+        do {
+            try await updater.connectGitHub(repository: "example/new", token: "new_fixture", requiresToken: true)
+            XCTFail("A locked old token should stop the switch")
+        } catch { XCTAssertEqual(error as? UpdateCredentialError, .locked) }
+        XCTAssertEqual(store.values["example/new"], "new_fixture", "The cleanup could not run yet")
+        store.locked = []
+        try await updater.connectGitHub(repository: "example/private", token: "", requiresToken: true)
+        XCTAssertEqual(store.values, ["example/private": "accepted_fixture"], "The remembered cleanup must remove the unconnected token")
+        XCTAssertNil(defaults.string(forKey: "NashiUpdateTokenCleanup"))
+    }
+
     func testSwitchingToPublicDoesNotReadOrForwardPrivateToken() async throws {
         let suite = "NashiUpdateConnectionTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suite)!
@@ -90,5 +155,24 @@ final class UpdateConnectionTests: XCTestCase {
         } catch { }
         await MainActor.run { updater.setBusy(false) }
         try await updater.disconnectGitHub()
+    }
+
+    func testStaleDownloadAfterSwitchingRepositoriesFailsClosedWithoutHeaders() async throws {
+        let suite = "NashiUpdateConnectionTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let updater = await MainActor.run { AppUpdater(credentials: MemoryCredentials(), defaults: defaults, validateAccess: { _, _ in }) }
+        try await updater.connectGitHub(repository: "example/old", token: "old_fixture", requiresToken: true)
+        try await updater.connectGitHub(repository: "example/new", token: "new_fixture", requiresToken: true)
+        await MainActor.run {
+            let sparkle = SPUUpdater(hostBundle: .main, applicationBundle: .main,
+                                     userDriver: SPUStandardUserDriver(hostBundle: .main, delegate: nil), delegate: nil)
+            let request = NSMutableURLRequest(url: URL(string: "https://api.github.com/repos/example/old/releases/assets/42")!)
+            request.setValue("application/octet-stream", forHTTPHeaderField: "Accept")
+            request.setValue("Bearer header_fixture", forHTTPHeaderField: "Authorization")
+            updater.updater(sparkle, willDownloadUpdate: SUAppcastItem.empty(), with: request)
+            XCTAssertEqual(request.url?.absoluteString, "http://127.0.0.1:1/unavailable")
+            XCTAssertEqual(request.allHTTPHeaderFields ?? [:], [:], "A failed hand-off must not forward any of Sparkle's request headers")
+        }
     }
 }

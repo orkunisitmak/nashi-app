@@ -22,8 +22,9 @@ class ReleaseArchiveLengthTests(unittest.TestCase):
         channel = ET.SubElement(rss, "channel")
         item = ET.SubElement(channel, "item")
         ET.SubElement(item, SPARKLE + "version").text = "13"
+        ET.SubElement(item, SPARKLE + "shortVersionString").text = "0.7"
         ET.SubElement(item, "enclosure", {
-            "url": "https://github.com/orkunisitmak/nashi-app/releases/download/v0.7.13/Nashi-macOS-arm64.zip",
+            "url": "https://github.com/orkunisitmak/nashi-app/releases/download/v0.7-13/Nashi-macOS-arm64.zip",
             SPARKLE + "edSignature": "synthetic-test-signature",
             "length": str(claimed_size),
         })
