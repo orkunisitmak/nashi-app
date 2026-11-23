@@ -36,7 +36,9 @@ public partial class App:Application
                 var timeout=120;var option=Array.IndexOf(e.Args,"--timeout-seconds");
                 if(option>=0&&(option+1>=e.Args.Length||!int.TryParse(e.Args[option+1],out timeout)||timeout is <1 or >120))throw new ArgumentException("Interaction timeout must be between 1 and 120 seconds.");
                 watchdog.Change(TimeSpan.FromSeconds(timeout),Timeout.InfiniteTimeSpan);
-                InteractionChecks.Run(directory,(passed,message)=>{Interlocked.Increment(ref checks);if(!passed)failures.Add(message);});
+                void Check(bool passed,string message){Interlocked.Increment(ref checks);if(!passed)failures.Add(message);}
+                if(e.Args.Contains("--web-drop-only"))WebDownloadDropChecks.Run(directory,Check);
+                else InteractionChecks.Run(directory,Check);
             }
             catch(Exception error){failures.Add(error.ToString());}
             if(Interlocked.CompareExchange(ref finished,1,0)==0){Report(failures);Shutdown(failures.Count==0?0:1);}return;
