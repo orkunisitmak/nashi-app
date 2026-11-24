@@ -96,11 +96,45 @@ public struct WebMediaDragPayload:Equatable,Sendable {
     private static func attributes(_ html:String,tag:String,attribute:String)->[String] {
         // Only extract text attributes; never instantiate an HTML view or fetch
         // subresources from the untrusted drag fragment.
-        let pattern="<"+tag+"\\b[^>]*?\\s"+attribute+"\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s>]+))"
-        guard let regex=try? NSRegularExpression(pattern:pattern,options:[.caseInsensitive,.dotMatchesLineSeparators]) else { return [] }
-        return regex.matches(in:html,range:NSRange(html.startIndex...,in:html)).prefix(32).compactMap { match in
-            (1...3).compactMap{Range(match.range(at:$0),in:html).map{String(html[$0])}}.first
+        // One pass that consumes every tag whole, quoted values included, so text
+        // inside another attribute's value is never read as a tag or an attribute.
+        let bytes=Array(html.utf8),end=bytes.count
+        func space(_ byte:UInt8)->Bool { byte==32 || (9...13).contains(byte) }
+        func text(_ range:Range<Int>)->String { String(decoding:bytes[range],as:UTF8.self) }
+        var values:[String]=[],index=0
+        while index<end,values.count<32 {
+            guard bytes[index]==60,index+1<end,(97...122).contains(bytes[index+1] | 32) else { index += 1;continue }
+            var cursor=index+1
+            while cursor<end,!space(bytes[cursor]),bytes[cursor] != 47,bytes[cursor] != 62 { cursor += 1 }
+            let wanted=text(index+1..<cursor).lowercased()==tag
+            var found=false
+            while cursor<end,bytes[cursor] != 62 {
+                if space(bytes[cursor]) || bytes[cursor]==47 { cursor += 1;continue }
+                let nameStart=cursor
+                while cursor<end,!space(bytes[cursor]),bytes[cursor] != 47,bytes[cursor] != 61,bytes[cursor] != 62 { cursor += 1 }
+                let name=text(nameStart..<cursor).lowercased()
+                var probe=cursor
+                while probe<end,space(bytes[probe]) { probe += 1 }
+                guard probe<end,bytes[probe]==61 else { continue }
+                cursor=probe+1
+                while cursor<end,space(bytes[cursor]) { cursor += 1 }
+                guard cursor<end else { break }
+                let valueStart:Int,valueEnd:Int
+                if bytes[cursor]==34 || bytes[cursor]==39 {
+                    valueStart=cursor+1
+                    // An unterminated quote owns the rest of the fragment; nothing after it is a tag.
+                    guard let close=bytes[valueStart...].firstIndex(of:bytes[cursor]) else { return values }
+                    valueEnd=close;cursor=close+1
+                } else {
+                    valueStart=cursor
+                    while cursor<end,!space(bytes[cursor]),bytes[cursor] != 62 { cursor += 1 }
+                    valueEnd=cursor
+                }
+                if wanted,!found,name==attribute { found=true;values.append(text(valueStart..<valueEnd)) }
+            }
+            index=cursor+1
         }
+        return values
     }
     private static func decode(_ text:String)->String {
         // One pass over the original text, so an escaped entity ("&amp;lt;") stays literal ("&lt;").
