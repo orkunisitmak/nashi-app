@@ -68,6 +68,39 @@ final class ToolSetupTests:XCTestCase {
             XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath:root.path).filter{$0.hasPrefix(".previous-")},[])
         }
     }
+    func testOfficeDownloadPrefersPermanentArchiveThenStable() {
+        XCTAssertEqual(ExternalToolSetup.officeSources.map{$0.host},["downloadarchive.documentfoundation.org","download.documentfoundation.org"])
+        XCTAssertTrue(ExternalToolSetup.officeSources.allSatisfy{$0.scheme == "https" && $0.pathExtension == "dmg" && $0.path.contains("/mac/aarch64/")})
+    }
+    func testDownloadSourcesFallBackInOrderAndStopAtFirstSuccess() async throws {
+        var tried:[Int]=[]
+        try await ExternalToolSetup.firstAvailable([1,2,3],token:CancellationToken()) { source in
+            tried.append(source);if source == 1 { throw NashiError.failed("404") }
+        }
+        XCTAssertEqual(tried,[1,2])
+        tried=[]
+        do {
+            try await ExternalToolSetup.firstAvailable([1,2],token:CancellationToken()) { tried.append($0);throw NashiError.failed("source \($0)") }
+            XCTFail("Every source failed.")
+        } catch { XCTAssertEqual(error.localizedDescription,"source 2") }
+        XCTAssertEqual(tried,[1,2])
+    }
+    func testCancelledDownloadDoesNotTryNextSource() async {
+        for failure:Error in [CancellationError(),URLError(.cancelled),NashiError.cancelled] {
+            var tried:[Int]=[]
+            do {
+                try await ExternalToolSetup.firstAvailable([1,2],token:CancellationToken()) { tried.append($0);throw failure }
+                XCTFail("Cancellation must propagate.")
+            } catch {}
+            XCTAssertEqual(tried,[1])
+        }
+        let token=CancellationToken();var tried:[Int]=[]
+        do {
+            try await ExternalToolSetup.firstAvailable([1,2],token:token) { tried.append($0);token.cancel();throw NashiError.failed("interrupted") }
+            XCTFail("Cancellation must propagate.")
+        } catch { if case NashiError.cancelled=error {} else { XCTFail("\(error)") } }
+        XCTAssertEqual(tried,[1])
+    }
     private func isComplete(_ directory:URL)->Bool { FileManager.default.fileExists(atPath:directory.appendingPathComponent("ready").path) }
     private func completeStage(_ path:URL,_ content:String)throws {
         try FileManager.default.createDirectory(at:path,withIntermediateDirectories:false)

@@ -70,8 +70,11 @@ public enum ExternalToolSetup {
         let stage=root.appendingPathComponent(".office-\(UUID().uuidString)",isDirectory:true)
         try fm.createDirectory(at:stage,withIntermediateDirectories:false);defer { try? fm.removeItem(at:stage) }
         let image=stage.appendingPathComponent("LibreOffice.dmg")
-        try await CheckedToolDownload.fetch(URL(string:"https://download.documentfoundation.org/libreoffice/stable/26.8.1/mac/aarch64/LibreOffice_26.8.1_MacOS_aarch64.dmg")!,to:image,maximum:400*1024*1024) { progress($0.map{$0*0.8},"Downloading LibreOffice 26.8.1…") }
-        try verify(image,digest:"ca074e0b13571efb30a31fc531c5f95e997030637325e5d5de92d67aefdf0dfc")
+        try await firstAvailable(officeSources,token:token) { source in
+            try? fm.removeItem(at:image)
+            try await CheckedToolDownload.fetch(source,to:image,maximum:400*1024*1024) { progress($0.map{$0*0.8},"Downloading LibreOffice 26.8.1…") }
+            try verify(image,digest:"ca074e0b13571efb30a31fc531c5f95e997030637325e5d5de92d67aefdf0dfc")
+        }
         try token.check();try Task.checkCancellation();progress(nil,"Verifying and preparing office tools…")
         let mount=stage.appendingPathComponent("mount",isDirectory:true);try fm.createDirectory(at:mount,withIntermediateDirectories:false)
         try ProcessRunner.run(URL(fileURLWithPath:"/usr/bin/hdiutil"),["attach","-nobrowse","-readonly","-mountpoint",mount.path,image.path],token:token)
@@ -82,6 +85,28 @@ public enum ExternalToolSetup {
         let target=root.appendingPathComponent("office-26.8.1",isDirectory:true)
         try ToolInstallation.publish(content,to:target) { usable($0.appendingPathComponent("LibreOffice.app/Contents/MacOS/soffice")) }
         progress(1,"Office tools are ready.")
+    }
+    /// The Document Foundation removes a release from `stable/` once newer ones
+    /// ship; its archive keeps the same DMG permanently. Both must match the pinned hash.
+    static let officeSources=[
+        URL(string:"https://downloadarchive.documentfoundation.org/libreoffice/old/26.8.1.1/mac/aarch64/LibreOffice_26.8.1.1_MacOS_aarch64.dmg")!,
+        URL(string:"https://download.documentfoundation.org/libreoffice/stable/26.8.1/mac/aarch64/LibreOffice_26.8.1_MacOS_aarch64.dmg")!
+    ]
+    /// Tries each source in order and stops at the first that succeeds. A
+    /// cancellation is never treated as a failed source.
+    static func firstAvailable<Source>(_ sources:[Source],token:CancellationToken,attempt:(Source) async throws->Void) async throws {
+        var last:Error=NashiError.failed("No upstream download source is configured.")
+        for source in sources {
+            try token.check();try Task.checkCancellation()
+            do { try await attempt(source);return }
+            catch {
+                try token.check();try Task.checkCancellation()
+                if error is CancellationError || (error as? URLError)?.code == .cancelled { throw error }
+                if case NashiError.cancelled=error { throw error }
+                last=error
+            }
+        }
+        throw last
     }
     private static func verify(_ file:URL,digest:String) throws {
         let input=try FileHandle(forReadingFrom:file);defer{try? input.close()};var hasher=SHA256()
