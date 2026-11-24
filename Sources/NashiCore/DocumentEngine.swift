@@ -10,9 +10,16 @@ public enum DocumentEngine {
         guard FileManager.default.fileExists(atPath: input.path) else { throw NashiError.invalidInput("The input file does not exist.") }
         let format = normalized(requestedFormat)
         let category = FileCategory.detect(input)
+        // Decode explicit TXT input before creating the destination. Markdown's
+        // relative resources require its original directory; keep that import path.
+        let explicitEncoding = options.textEncoding.flatMap { $0 == "auto" ? nil : $0 }
+        if explicitEncoding != nil, normalized(input.pathExtension) == "md" {
+            throw NashiError.unsupported("Explicit text encoding is supported for subtitles and TXT files only.")
+        }
+        let decodedText = explicitEncoding != nil && normalized(input.pathExtension) == "txt" ? try DocumentText.read(input, encoding: explicitEncoding) : nil
         if category == .archive { return try convertArchive(input, to: format, options: options, token: token) }
         if category == .subtitle {
-            let text = try SubtitleCodec.convert(input, to: format, token: token)
+            let text = try SubtitleCodec.convert(input, to: format, token: token, inputEncoding: options.textEncoding)
             let output = try destination(input, format: format, options: options)
             try token.check()
             try text.write(to: output, atomically: true, encoding: .utf8)
@@ -68,9 +75,9 @@ public enum DocumentEngine {
         } else if ["txt", "md", "csv", "tsv"].contains(ext) {
             // The office import filters for these formats always read UTF-8.
             let data = try Data(contentsOf: input)
-            if String(data: data, encoding: .utf8) == nil || data.contains(0) {
+            if decodedText != nil || String(data: data, encoding: .utf8) == nil || data.contains(0) {
                 source = work.appendingPathComponent(input.lastPathComponent)
-                try DocumentText.read(input).write(to: source, atomically: true, encoding: .utf8)
+                try (decodedText ?? DocumentText.read(input)).write(to: source, atomically: true, encoding: .utf8)
             }
         }
 
