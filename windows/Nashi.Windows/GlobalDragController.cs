@@ -118,9 +118,11 @@ internal sealed class GlobalDropWheel:Window
         // so e.Effects is still None even for a valid file drag.
         DragEnter+=(_,e)=>{entered++;var settled=hintSettled();Track(e);Settle(settled);};
         DragOver+=(_,e)=>{over++;var settled=hintSettled();Track(e);Settle(settled);};
-        Drop+=(_,e)=>{dropCount++;Track(e);var id=selection;Close();if(id.Length>0)chosen(e.Data,id);e.Handled=true;};PreviewKeyDown+=(_,e)=>{if(e.Key==Key.Escape){Close();e.Handled=true;}};
+        Drop+=(_,e)=>{dropCount++;var stale=switched;Track(e);var id=stale?"":selection;Close();if(id.Length>0)chosen(e.Data,id);e.Handled=true;};PreviewKeyDown+=(_,e)=>{if(e.Key==Key.Escape){Close();e.Handled=true;}};
     }
-    internal void SwitchMode(string next){if(mode==next)return;mode=next;Title="Nashi · "+next;}
+    // After a switch the wheel still shows the old mode until the next drag event rebuilds it, so a drop in between must not run the old selection.
+    private bool switched;
+    internal void SwitchMode(string next){if(mode==next)return;mode=next;Title="Nashi · "+next;selection="";Highlight(-1);switched=true;}
     private void Track(DragEventArgs e)
     {
         // DragOver fires on every pointer move, so shortcuts are only resolved when the dragged files change.
@@ -137,7 +139,7 @@ internal sealed class GlobalDropWheel:Window
         var p=e.GetPosition(canvas);var distance=(p-new Point(270,270)).Length;
         if(distance<108||distance>250||choices.Count==0){selection="";Highlight(-1);}
         else{var angle=(Math.Atan2(p.Y-270,p.X-270)*180/Math.PI-WheelPresentation.StartAngle(choices.Count)+360+180d/choices.Count)%360;var index=(int)(angle/(360d/choices.Count));var id=choices[index].Id;if(id!=selection){selection=id;Feedback.Play();}Highlight(index);}
-        e.Effects=selection.Length>0?DragDropEffects.Copy:DragDropEffects.None;e.Handled=true;
+        switched=false;e.Effects=selection.Length>0?DragDropEffects.Copy:DragDropEffects.None;e.Handled=true;
     }
     private WebMediaPayload? Payload(IDataObject data)=>DragPayload.Parse(data,hint());
     private IReadOnlyList<ToolChoice> Choices(string[] files,WebMediaPayload? dataLink,WebMediaPayload? web)
