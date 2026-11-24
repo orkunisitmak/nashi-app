@@ -61,6 +61,7 @@
   "Add Files to an Existing Float": "Ajouter des fichiers à un Float existant",
   "Add to an existing Float": "Ajouter à un Float existant",
   "Terminal app": "Application Terminal",
+  "{0} (Not installed)": "{0} (non installé)",
   "Additional options": "Options supplémentaires",
   "Menu bar": "Barre des menus",
   "Choose what appears when you click the Nashi icon in the menu bar. Settings and Quit are always shown.": "Choisissez ce qui s’affiche lorsque vous cliquez sur l’icône Nashi dans la barre des menus. Réglages et Quitter restent toujours affichés.",
