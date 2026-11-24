@@ -37,6 +37,7 @@ enum ArchiveCodec {
         var links: [DeferredLink] = []
         var entries = 0
         var expandedBytes:Int64=0
+        var directoryDates: [(URL, Int64)] = []
         var buffer = [UInt8](repeating: 0, count: 128 * 1024)
         while true {
             try token.check()
@@ -81,6 +82,8 @@ enum ArchiveCodec {
                 // A folder stored as 000 must not fall back to the default, which other users can list.
                 let stored = mode != 0 || (a.entryPermIsSet.map { $0(entry) != 0 } ?? false)
                 if stored { try? fm.setAttributes([.posixPermissions: NSNumber(value: mode | 0o700)], ofItemAtPath: destination.path) }
+                let mtime = a.entryMtime(entry)
+                if mtime > 0 { directoryDates.append((destination, mtime)) }
                 continue
             }
             guard kind == 0o100000 || kind == 0 else {
@@ -151,6 +154,10 @@ enum ArchiveCodec {
             guard contains(link.destination.resolvingSymlinksInPath(), root: root) else {
                 throw NashiError.invalidInput("An archive link points outside the extraction folder.")
             }
+        }
+        // Directory dates go last: adding entries to a directory changes its date.
+        for (directory, mtime) in directoryDates {
+            try? fm.setAttributes([.modificationDate: Date(timeIntervalSince1970: TimeInterval(mtime))], ofItemAtPath: directory.path)
         }
     }
 
