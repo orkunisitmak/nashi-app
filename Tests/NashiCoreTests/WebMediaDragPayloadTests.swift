@@ -74,4 +74,27 @@ final class WebMediaDragPayloadTests:XCTestCase {
         XCTAssertNil(WebMediaDragPayload.parse(urls:[],html:["<img src='https://example.org/image.jpg'>"+String(repeating:"x",count:131_072)]))
         XCTAssertNil(WebMediaDragPayload.parse(urls:["blob:https://www.youtube.com/id"]))
     }
+    func testTextInsideAnotherAttributeValueIsNotReadAsTheLinkOrImage() throws {
+        let other="aqz-KE-bpKQ",real="https://cdn.example.org/real.png"
+        for quote in ["\"","'"] {
+            let html="<a title=\(quote)x href=https://www.youtube.com/watch?v=\(other) \(quote) href=\(quote)https://www.youtube.com/watch?v=\(id)\(quote)>t</a>"
+            XCTAssertEqual(WebMediaDragPayload.parse(urls:[],html:[html])?.videoURL?.absoluteString,"https://www.youtube.com/watch?v=\(id)",html)
+        }
+        let alt=try XCTUnwrap(WebMediaDragPayload.parse(urls:[],html:["<img alt=\"a > b src=https://evil.example/x.jpg \" src=\"\(real)\">"]))
+        XCTAssertEqual(alt.primaryURL.absoluteString,real)
+        let unquoted=try XCTUnwrap(WebMediaDragPayload.parse(urls:[],html:["<IMG ALT=photo SRC=\(real)>"]))
+        XCTAssertEqual(unquoted.primaryURL.absoluteString,real)
+        XCTAssertNil(WebMediaDragPayload.parse(urls:[],html:["<a title=' href=https://www.youtube.com/watch?v=\(other) '>t</a>"]))
+        XCTAssertNil(WebMediaDragPayload.parse(urls:[],html:["<img alt=\" src=https://evil.example/x.jpg \">"]))
+    }
+    func testTagTextInsideAnEarlierQuotedValueIsNotReadAsATag() throws {
+        let other="aqz-KE-bpKQ",real="https://cdn.example.org/real.png"
+        let image=try XCTUnwrap(WebMediaDragPayload.parse(urls:[],html:["<div title=\"<img src='https://evil.example/x.jpg'>\"><img src='\(real)'></div>"]))
+        XCTAssertEqual(image.primaryURL.absoluteString,real)
+        let link=try XCTUnwrap(WebMediaDragPayload.parse(urls:[],html:["<div title='<a href=\"https://youtu.be/\(other)\">'><a href=\"https://youtu.be/\(id)\">t</a></div>"]))
+        XCTAssertEqual(link.videoURL?.absoluteString,"https://www.youtube.com/watch?v=\(id)")
+        XCTAssertNil(WebMediaDragPayload.parse(urls:[],html:["<div title=\"<img src='https://evil.example/x.jpg'>\">t</div>"]))
+        XCTAssertNil(WebMediaDragPayload.parse(urls:[],html:["<div title='<video src=https://evil.example/x.mp4 >'>t</div>"]))
+        XCTAssertNil(WebMediaDragPayload.parse(urls:[],html:["<div title=\"<img src='https://evil.example/x.jpg'>"]))
+    }
 }
