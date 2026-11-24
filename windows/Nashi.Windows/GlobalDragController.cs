@@ -118,7 +118,7 @@ internal sealed class GlobalDropWheel:Window
         // so e.Effects is still None even for a valid file drag.
         DragEnter+=(_,e)=>{entered++;var settled=hintSettled();Track(e);Settle(settled);};
         DragOver+=(_,e)=>{over++;var settled=hintSettled();Track(e);Settle(settled);};
-        Drop+=(_,e)=>{dropCount++;var stale=switched;Track(e);var id=stale?"":selection;Close();if(id.Length>0)chosen(e.Data,id);e.Handled=true;};PreviewKeyDown+=(_,e)=>{if(e.Key==Key.Escape){Close();e.Handled=true;}};
+        Drop+=(_,e)=>{dropCount++;var stale=switched;Track(e);var id=stale?"":selection;if(stale)e.Effects=DragDropEffects.None;Close();if(id.Length>0)chosen(e.Data,id);e.Handled=true;};PreviewKeyDown+=(_,e)=>{if(e.Key==Key.Escape){Close();e.Handled=true;}};
     }
     // After a switch the wheel still shows the old mode until the next drag event rebuilds it, so a drop in between must not run the old selection.
     private bool switched;
