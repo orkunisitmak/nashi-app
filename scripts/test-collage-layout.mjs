@@ -36,6 +36,21 @@ assert.deepEqual(topLeft.map(mark => mark.text), ['A', 'B']);
 assert.ok(bottomRight[0].x > topLeft[0].x && bottomRight[0].y > topLeft[0].y, 'bottom right is a different corner from top left');
 assert.equal(paintCollage(context(size.width, size.height), [wide, { width: 0, height: 10 }], { layout: 'row', gap: 80, labels: 'numbers' }).length, 1);
 
+function recordingContext(width, height) {
+  const ops = [];
+  return { ops, canvas: { width, height }, fillStyle: '', font: '', textAlign: '', textBaseline: '', save() {}, restore() {}, beginPath() {}, clip() {}, fillRect() {}, drawImage() {}, fill() {}, fillText() {}, rect() { ops.push('rect'); }, arc() { ops.push('arc'); }, roundRect() { ops.push('round'); } };
+}
+const plate = recordingContext(size.width, size.height);
+paintCollage(plate, [wide, wide], { layout: 'row', fit: 'fill', gap: 20, labels: 'letters', labelShape: 'square', labelSize: 100 });
+assert.equal(plate.ops.filter(op => op === 'rect').length, 4, 'each image clips once and then draws a square plate');
+assert.ok(!plate.ops.includes('arc'), 'a square plate does not draw a circle');
+const plain = recordingContext(size.width, size.height);
+paintCollage(plain, [wide, wide], { layout: 'row', fit: 'fill', gap: 20, labels: 'letters', labelShape: 'none' });
+assert.deepEqual(plain.ops, ['rect', 'rect'], 'text only keeps the image clip and leaves the plate off');
+const small = paintCollage(context(size.width, size.height), [wide, wide], { layout: 'row', fit: 'fill', gap: 20, labels: 'numbers', labelSize: 50 });
+const big = paintCollage(context(size.width, size.height), [wide, wide], { layout: 'row', fit: 'fill', gap: 20, labels: 'numbers', labelSize: 200 });
+assert.ok(big[0].d > small[0].d, 'a larger text size grows the plate');
+
 const demo = collageCanvasSize(2, 'row', 2, 20, 900);
 assert.ok(demo.width === 900 && demo.height > 40, 'the demo collage keeps padding around the images');
 console.log('collage layout ok');

@@ -401,7 +401,8 @@ public enum ImageEngine {
     private static func drawCollageMark(_ text:String,on rect:CGRect,context:CGContext,settings:CollageOptions) throws {
         let side=min(rect.width,rect.height),inset=max(4,side*0.045),room=side-inset*2
         guard room>4 else { return }
-        let font=min(max(12,side*0.22),side*0.46),diameter=min(room,min(side*0.9,font*1.45))
+        let factor=min(2.5,max(0.15,settings.labelScale.isFinite ? settings.labelScale : 1))
+        let font=min(max(12,side*0.10),side*0.46)*factor,diameter=min(room,min(side*0.9,font*1.45))
         let left=rect.minX+inset,right=rect.maxX-inset-diameter,bottom=rect.minY+inset,top=rect.maxY-inset-diameter
         let origin:CGPoint
         switch settings.labelAnchor {
@@ -412,7 +413,14 @@ public enum ImageEngine {
         case .topLeft: origin=CGPoint(x:left,y:top)
         }
         let badge=CGRect(x:origin.x,y:origin.y,width:diameter,height:diameter)
-        context.setFillColor(try validatedColor(settings.labelBadge));context.fillEllipse(in:badge)
+        if settings.labelShape != .none {
+            context.setFillColor(try validatedColor(settings.labelBadge))
+            switch settings.labelShape {
+            case .square: context.fill(badge)
+            case .rounded: let radius=diameter*0.28;context.addPath(CGPath(roundedRect:badge,cornerWidth:radius,cornerHeight:radius,transform:nil));context.fillPath()
+            default: context.fillEllipse(in:badge)
+            }
+        }
         drawCenteredText(text,in:badge,context:context,color:try validatedColor(settings.labelColor),fontSize:font*0.62)
     }
 

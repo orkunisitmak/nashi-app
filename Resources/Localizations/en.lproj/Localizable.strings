@@ -505,6 +505,7 @@
 "CHOOSE WHAT YOUR FILE SHARES." = "CHOOSE WHAT YOUR FILE SHARES.";
 "CHOOSE YOUR HOME FOLDER OR A FOLDER WHERE YOU SAVE FILES." = "CHOOSE YOUR HOME FOLDER OR A FOLDER WHERE YOU SAVE FILES.";
 "CHOOSE ZIP, TAR OR GZIP." = "CHOOSE ZIP, TAR OR GZIP.";
+"CIRCLE" = "CIRCLE";
 "CLARITY" = "CLARITY";
 "CLEAR" = "CLEAR";
 "CLEAR FLOAT" = "CLEAR FLOAT";
@@ -712,6 +713,7 @@
 "Choose what appears when you click the Nashi icon in the menu bar. Settings and Quit are always shown." = "Choose what appears when you click the Nashi icon in the menu bar. Settings and Quit are always shown.";
 "Choose what your file shares." = "Choose what your file shares.";
 "Choose your home folder or a folder where you save files." = "Choose your home folder or a folder where you save files.";
+"Circle" = "Circle";
 "Clarity" = "Clarity";
 "Clear" = "Clear";
 "Clear Float" = "Clear Float";
@@ -1413,7 +1415,9 @@
 "Keep them together, or give each one a fresh start." = "Keep them together, or give each one a fresh start.";
 "Keep things\nmoving." = "Keep things\nmoving.";
 "Keeps the look and dimensions of each page. Best for visual layouts." = "Keeps the look and dimensions of each page. Best for visual layouts.";
+"LABEL BACKGROUND" = "LABEL BACKGROUND";
 "LABEL POSITION" = "LABEL POSITION";
+"LABEL SHAPE" = "LABEL SHAPE";
 "LANDSCAPE" = "LANDSCAPE";
 "LANDSCAPE · 16:9" = "LANDSCAPE · 16:9";
 "LANGUAGE" = "LANGUAGE";
@@ -1445,7 +1449,9 @@
 "LOCAL BY DESIGN" = "LOCAL BY DESIGN";
 "LOOKING FOR LITTLE SQUARES…" = "LOOKING FOR LITTLE SQUARES…";
 "LOUDNESS RANGE" = "LOUDNESS RANGE";
+"Label background" = "Label background";
 "Label position" = "Label position";
+"Label shape" = "Label shape";
 "Landscape" = "Landscape";
 "Landscape · 16:9" = "Landscape · 16:9";
 "Language" = "Language";
@@ -2048,6 +2054,7 @@
 "ROTATE RIGHT" = "ROTATE RIGHT";
 "ROTATION" = "ROTATION";
 "ROUNDED" = "ROUNDED";
+"ROUNDED RECTANGLE" = "ROUNDED RECTANGLE";
 "ROW" = "ROW";
 "Read QR Codes" = "Read QR Codes";
 "Read QR Codes · Nashi" = "Read QR Codes · Nashi";
@@ -2130,6 +2137,7 @@
 "Rotate Right" = "Rotate Right";
 "Rotation" = "Rotation";
 "Rounded" = "Rounded";
+"Rounded rectangle" = "Rounded rectangle";
 "Row" = "Row";
 "SAMPLE DEPTH" = "SAMPLE DEPTH";
 "SATURATION" = "SATURATION";
@@ -2477,6 +2485,8 @@
 "TERMINAL APP" = "TERMINAL APP";
 "TEXT" = "TEXT";
 "TEXT ADAPTS TO THE READER’S SCREEN AND FONT SIZE. BEST FOR READING." = "TEXT ADAPTS TO THE READER’S SCREEN AND FONT SIZE. BEST FOR READING.";
+"TEXT COLOR" = "TEXT COLOR";
+"TEXT ONLY" = "TEXT ONLY";
 "TEXT OR CALLOUT" = "TEXT OR CALLOUT";
 "TEXT SIZE" = "TEXT SIZE";
 "TEXTURE" = "TEXTURE";
@@ -2635,6 +2645,8 @@
 "Terminal app" = "Terminal app";
 "Text" = "Text";
 "Text adapts to the reader’s screen and font size. Best for reading." = "Text adapts to the reader’s screen and font size. Best for reading.";
+"Text color" = "Text color";
+"Text only" = "Text only";
 "Text or callout" = "Text or callout";
 "Text size" = "Text size";
 "Texture" = "Texture";

@@ -59,6 +59,7 @@ public enum CollageLayout: String, Codable, CaseIterable, Sendable { case grid, 
 public enum ImageFit: String, Codable, CaseIterable, Sendable { case fit, fill }
 public enum CollageLabelStyle: String, Codable, CaseIterable, Sendable { case none, numbers, letters }
 public enum CollageLabelAnchor: String, Codable, CaseIterable, Sendable { case topLeft, topRight, bottomLeft, bottomRight, center }
+public enum CollageLabelShape: String, Codable, CaseIterable, Sendable { case circle, rounded, square, none }
 public struct CollageOptions: Codable, Sendable {
     public var layout: CollageLayout = .grid
     public var columns: Int = 2
@@ -80,6 +81,9 @@ public struct CollageOptions: Codable, Sendable {
     public var labelStart: Int = 1
     public var labelColor: String = "#FFFFFF"
     public var labelBadge: String = "#1C1C1C"
+    /// 1 keeps the automatic size. The badge grows and shrinks with the text.
+    public var labelScale: Double = 1
+    public var labelShape: CollageLabelShape = .circle
     public init() {}
     public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
@@ -100,6 +104,8 @@ public struct CollageOptions: Codable, Sendable {
         labelStart = try values.decodeIfPresent(Int.self, forKey: .labelStart) ?? labelStart
         labelColor = try values.decodeIfPresent(String.self, forKey: .labelColor) ?? labelColor
         labelBadge = try values.decodeIfPresent(String.self, forKey: .labelBadge) ?? labelBadge
+        labelScale = try values.decodeIfPresent(Double.self, forKey: .labelScale) ?? labelScale
+        labelShape = try values.decodeIfPresent(CollageLabelShape.self, forKey: .labelShape) ?? labelShape
     }
     public func encode(to encoder: Encoder) throws {
         var values = encoder.container(keyedBy: CodingKeys.self)
@@ -120,9 +126,11 @@ public struct CollageOptions: Codable, Sendable {
         try values.encode(labelStart, forKey: .labelStart)
         try values.encode(labelColor, forKey: .labelColor)
         try values.encode(labelBadge, forKey: .labelBadge)
+        try values.encode(labelScale, forKey: .labelScale)
+        try values.encode(labelShape, forKey: .labelShape)
     }
     private enum CodingKeys: String, CodingKey {
-        case layout, columns, width, height, aspectRatio, spacing, outerPadding, cornerRadius, backgroundColor, backgroundImage, imageFit, imageOrder, labels, labelAnchor, labelStart, labelColor, labelBadge
+        case layout, columns, width, height, aspectRatio, spacing, outerPadding, cornerRadius, backgroundColor, backgroundImage, imageFit, imageOrder, labels, labelAnchor, labelStart, labelColor, labelBadge, labelScale, labelShape
     }
 }
 

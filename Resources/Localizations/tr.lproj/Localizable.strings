@@ -505,6 +505,7 @@
 "CHOOSE WHAT YOUR FILE SHARES." = "DOSYANIN NE PAYLAŞTIĞINI SEN SEÇ.";
 "CHOOSE YOUR HOME FOLDER OR A FOLDER WHERE YOU SAVE FILES." = "ANA KLASÖRÜNÜ VEYA DOSYALARINI KAYDETTİĞİN BİR KLASÖRÜ SEÇ.";
 "CHOOSE ZIP, TAR OR GZIP." = "ZIP, TAR VEYA GZIP SEÇ.";
+"CIRCLE" = "DAİRE";
 "CLARITY" = "NETLİK";
 "CLEAR" = "TEMİZLE";
 "CLEAR FLOAT" = "YÜZEN PENCEREYİ TEMİZLE";
@@ -712,6 +713,7 @@
 "Choose what appears when you click the Nashi icon in the menu bar. Settings and Quit are always shown." = "Menü çubuğundaki Nashi simgesine tıklayınca nelerin görüneceğini seç. Ayarlar ve Çıkış her zaman görünür.";
 "Choose what your file shares." = "Dosyanın ne paylaştığını sen seç.";
 "Choose your home folder or a folder where you save files." = "Ana klasörünü veya dosyalarını kaydettiğin bir klasörü seç.";
+"Circle" = "Daire";
 "Clarity" = "Netlik";
 "Clear" = "Temizle";
 "Clear Float" = "Yüzen Pencereyi Temizle";
@@ -1413,7 +1415,9 @@
 "Keep them together, or give each one a fresh start." = "İstersen birlikte işle, istersen tek tek.";
 "Keep things\nmoving." = "Akışını\nkoru.";
 "Keeps the look and dimensions of each page. Best for visual layouts." = "Her sayfanın görünümünü ve boyutlarını korur. Görsel düzenler için en iyisi.";
+"LABEL BACKGROUND" = "ETİKET ARKA PLANI";
 "LABEL POSITION" = "ETİKET KONUMU";
+"LABEL SHAPE" = "ETİKET ŞEKLİ";
 "LANDSCAPE" = "YATAY";
 "LANDSCAPE · 16:9" = "YATAY · 16:9";
 "LANGUAGE" = "DİL";
@@ -1445,7 +1449,9 @@
 "LOCAL BY DESIGN" = "VERİLERİN CİHAZINDA KALIR";
 "LOOKING FOR LITTLE SQUARES…" = "QR KODLARI ARANIYOR…";
 "LOUDNESS RANGE" = "SES DÜZEYİ ARALIĞI";
+"Label background" = "Etiket arka planı";
 "Label position" = "Etiket konumu";
+"Label shape" = "Etiket şekli";
 "Landscape" = "Yatay";
 "Landscape · 16:9" = "Yatay · 16:9";
 "Language" = "Dil";
@@ -2048,6 +2054,7 @@
 "ROTATE RIGHT" = "SAĞA DÖNDÜR";
 "ROTATION" = "DÖNDÜRME";
 "ROUNDED" = "YUVARLAK";
+"ROUNDED RECTANGLE" = "YUVARLATILMIŞ DİKDÖRTGEN";
 "ROW" = "SATIR";
 "Read QR Codes" = "QR Kodlarını Oku";
 "Read QR Codes · Nashi" = "QR Kodlarını Oku · Nashi";
@@ -2130,6 +2137,7 @@
 "Rotate Right" = "Sağa Döndür";
 "Rotation" = "Döndürme";
 "Rounded" = "Yuvarlak";
+"Rounded rectangle" = "Yuvarlatılmış dikdörtgen";
 "Row" = "Satır";
 "SAMPLE DEPTH" = "ÖRNEK DERİNLİĞİ";
 "SATURATION" = "DOYGUNLUK";
@@ -2477,6 +2485,8 @@
 "TERMINAL APP" = "TERMINAL UYGULAMASI";
 "TEXT" = "METİN";
 "TEXT ADAPTS TO THE READER’S SCREEN AND FONT SIZE. BEST FOR READING." = "METİN, OKUYUCUNUN EKRANINA VE YAZI BOYUTUNA UYUM SAĞLAR. OKUMAK İÇİN EN İYİSİ.";
+"TEXT COLOR" = "METİN RENGİ";
+"TEXT ONLY" = "SADECE METİN";
 "TEXT OR CALLOUT" = "METİN VEYA AÇIKLAMA";
 "TEXT SIZE" = "METİN BOYUTU";
 "TEXTURE" = "DOKU";
@@ -2635,6 +2645,8 @@
 "Terminal app" = "Terminal uygulaması";
 "Text" = "Metin";
 "Text adapts to the reader’s screen and font size. Best for reading." = "Metin, okuyucunun ekranına ve yazı boyutuna uyum sağlar. Okumak için en iyisi.";
+"Text color" = "Metin rengi";
+"Text only" = "Sadece metin";
 "Text or callout" = "Metin veya açıklama";
 "Text size" = "Metin boyutu";
 "Texture" = "Doku";

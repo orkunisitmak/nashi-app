@@ -401,8 +401,14 @@ struct ToolEditor:View {
             number("Canvas width",value:collage(\.width))
             Picker("Image fit",selection:collage(\.imageFit)) { Text("Fill cells (crop edges)").tag(ImageFit.fill);Text("Fit whole image").tag(ImageFit.fit) }
             Picker(selection:collage(\.labels)) { LText("None").tag(CollageLabelStyle.none);LText("Numbers").tag(CollageLabelStyle.numbers);LText("Letters").tag(CollageLabelStyle.letters) } label:{ LText("Cell labels") }
-            Picker(selection:collage(\.labelAnchor)) { LText("Top left").tag(CollageLabelAnchor.topLeft);LText("Top right").tag(CollageLabelAnchor.topRight);LText("Bottom left").tag(CollageLabelAnchor.bottomLeft);LText("Bottom right").tag(CollageLabelAnchor.bottomRight);LText("Center").tag(CollageLabelAnchor.center) } label:{ LText("Label position") }
-            number("First label",value:collage(\.labelStart))
+            if (options.collage?.labels ?? .none) != .none {
+                Picker(selection:collage(\.labelAnchor)) { LText("Top left").tag(CollageLabelAnchor.topLeft);LText("Top right").tag(CollageLabelAnchor.topRight);LText("Bottom left").tag(CollageLabelAnchor.bottomLeft);LText("Bottom right").tag(CollageLabelAnchor.bottomRight);LText("Center").tag(CollageLabelAnchor.center) } label:{ LText("Label position") }
+                number("First label",value:collage(\.labelStart))
+                slider("Text size",value:Binding(get:{(options.collage?.labelScale ?? 1)*100},set:{var c=options.collage ?? .init();c.labelScale=$0/100;options.collage=c}),range:15...250,unit:"%",reset:100)
+                Picker(selection:collage(\.labelShape)) { LText("Circle").tag(CollageLabelShape.circle);LText("Rounded rectangle").tag(CollageLabelShape.rounded);LText("Square").tag(CollageLabelShape.square);LText("Text only").tag(CollageLabelShape.none) } label:{ LText("Label shape") }
+                ColorPicker(selection:colorBinding(collage(\.labelColor)),supportsOpacity:false) { LText("Text color") }
+                ColorPicker(selection:colorBinding(collage(\.labelBadge)),supportsOpacity:false) { LText("Label background") }
+            }
             slider("Spacing",value:Binding(get:{Double(options.collage?.spacing ?? 12)},set:{var c=options.collage ?? .init();c.spacing=Int($0.rounded());options.collage=c}),range:0...200,unit:"px",reset:12)
             slider("Outer padding",value:Binding(get:{Double(options.collage?.outerPadding ?? 16)},set:{var c=options.collage ?? .init();c.outerPadding=Int($0.rounded());options.collage=c}),range:0...400,unit:"px",reset:16)
             slider("Corners",value:collage(\.cornerRadius),range:0...100,reset:CollageOptions().cornerRadius)

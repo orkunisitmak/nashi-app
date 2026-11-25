@@ -128,7 +128,7 @@ public sealed partial class ToolEditor:Window
         if(media is not null){if(processedPlayback)PlayOriginalPreview();player.Pause();playing=false;Seek(0);}
         resetCompression?.Invoke();resetPhotoView?.Invoke();resetPreviewZoom?.Invoke();
         foreach(var pair in defaults)fields[pair.Key].Text=pair.Value;
-        foreach(var choice in new[]{drawingTool,backdrop,collageLayout,collageLabels,collageLabelAnchor,redactionStyle,visualization,redactMode,bleepMode,sampleDepth,documentLayout,epubLayout,aspectRatio})choice.SelectedIndex=0;
+        foreach(var choice in new[]{drawingTool,backdrop,collageLayout,collageLabels,collageLabelAnchor,collageLabelShape,redactionStyle,visualization,redactMode,bleepMode,sampleDepth,documentLayout,epubLayout,aspectRatio})choice.SelectedIndex=0;labelSettings.Visibility=Visibility.Collapsed;
         flipHorizontal.IsChecked=flipVertical.IsChecked=trimSilence.IsChecked=joinClips.IsChecked=false;fitCollage.IsChecked=false;preserveMetadata.IsChecked=true;
         backgroundImage=visualImage=null;annotationImage=null;archivePassword.Clear();
         if(inputOrder.Items.Count>0){inputOrder.Items.Clear();foreach(var path in collageInputs)inputOrder.Items.Add(new ListBoxItem{Content=Path.GetFileName(path),Tag=path});OrderedInputs=collageInputs.ToArray();}

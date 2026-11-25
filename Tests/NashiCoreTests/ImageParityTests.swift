@@ -141,6 +141,12 @@ final class ImageParityTests: XCTestCase {
         settings.labels = .numbers;settings.labelStart=2
         let offset=try ImageEngine.collageImage(images,settings:settings)
         XCTAssertGreaterThan(try difference(numbers,offset),0)
+        settings.labelStart=1;settings.labelColor="#FF0000";settings.labelBadge="#FF0000";settings.labelShape = .square
+        let square=try ImageEngine.collageImage(images,settings:settings)
+        XCTAssertEqual(try pixel(square,6,6),[255,0,0])
+        settings.labelShape = .circle;settings.labelScale=2
+        let larger=try ImageEngine.collageImage(images,settings:settings)
+        XCTAssertGreaterThan(try difference(topLeft,larger),0)
     }
 
     func testSolidBlurAndPixelateRedactionsAffectOnlySelectedRegion() throws {

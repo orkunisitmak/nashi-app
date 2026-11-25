@@ -44,12 +44,13 @@ function intersection(x, y, w, h, cx, cy, cw, ch) {
   return { x: left, y: top, w: right - left, h: bottom - top };
 }
 
-function badgeRect(visible, position) {
+function badgeRect(visible, position, scale = 1) {
   const side = Math.min(visible.w, visible.h);
   const inset = Math.max(4, side * 0.045);
   const room = side - inset * 2;
   if (room <= 4) return null;
-  const font = Math.min(Math.max(12, side * 0.22), side * 0.46);
+  const factor = Math.min(2.5, Math.max(0.15, Number(scale) || 1));
+  const font = Math.min(Math.max(12, side * 0.1), side * 0.46) * factor;
   const diameter = Math.min(room, Math.min(side * 0.9, font * 1.45));
   const left = visible.x + inset, right = visible.x + visible.w - inset - diameter;
   const top = visible.y + inset, bottom = visible.y + visible.h - inset - diameter;
@@ -58,7 +59,7 @@ function badgeRect(visible, position) {
   else if (position === 'bottomLeft') { x = left; y = bottom; }
   else if (position === 'bottomRight') { x = right; y = bottom; }
   else if (position === 'center') { x = visible.x + (visible.w - diameter) / 2; y = visible.y + (visible.h - diameter) / 2; }
-  return { x, y, d: diameter };
+  return { x, y, d: diameter, font };
 }
 
 /** Returns the badge rectangles it drew. A broken image cannot abort the preview. */
@@ -86,15 +87,21 @@ export function paintCollage(ctx, images, options = {}) {
         const visible = intersection(x, y, w, h, cell.x, cell.y, cell.w, cell.h);
         const text = collageLabelText(options.labels, i, options.labelStart);
         if (text && visible && visible.w > 2 && visible.h > 2) {
-          const badge = badgeRect(visible, options.labelPosition || 'topLeft');
+          const factor = Math.min(2.5, Math.max(0.15, (Number(options.labelSize) || 100) / 100));
+          const badge = badgeRect(visible, options.labelPosition || 'topLeft', factor);
           if (badge) {
-            marks.push({ index: i, text, x: badge.x, y: badge.y, d: badge.d });
-            ctx.beginPath();
-            ctx.fillStyle = options.labelBadge || '#1C1C1C';
-            ctx.arc(badge.x + badge.d / 2, badge.y + badge.d / 2, badge.d / 2, 0, Math.PI * 2);
-            ctx.fill();
+            marks.push({ index: i, text, x: badge.x, y: badge.y, d: badge.d, shape: options.labelShape || 'circle' });
+            if (options.labelShape !== 'none') {
+              ctx.beginPath();
+              ctx.fillStyle = options.labelBadge || '#1C1C1C';
+              if (options.labelShape === 'square') ctx.rect(badge.x, badge.y, badge.d, badge.d);
+              else if (options.labelShape === 'rounded' && typeof ctx.roundRect === 'function') ctx.roundRect(badge.x, badge.y, badge.d, badge.d, badge.d * 0.28);
+              else if (options.labelShape === 'rounded') ctx.rect(badge.x, badge.y, badge.d, badge.d);
+              else ctx.arc(badge.x + badge.d / 2, badge.y + badge.d / 2, badge.d / 2, 0, Math.PI * 2);
+              ctx.fill();
+            }
             ctx.fillStyle = options.labelColor || '#FFFFFF';
-            ctx.font = `700 ${Math.max(8, badge.d * 0.42)}px sans-serif`;
+            ctx.font = `700 ${Math.max(1, badge.font * 0.62)}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(text, badge.x + badge.d / 2, badge.y + badge.d / 2);

@@ -505,6 +505,7 @@
 "CHOOSE WHAT YOUR FILE SHARES." = "CHOISISSEZ CE QUE VOTRE FICHIER PARTAGE.";
 "CHOOSE YOUR HOME FOLDER OR A FOLDER WHERE YOU SAVE FILES." = "CHOISISSEZ VOTRE DOSSIER DE DÉPART OU UN DOSSIER OÙ VOUS ENREGISTREZ VOS FICHIERS.";
 "CHOOSE ZIP, TAR OR GZIP." = "CHOISISSEZ ZIP, TAR OU GZIP.";
+"CIRCLE" = "CERCLE";
 "CLARITY" = "CLARTÉ";
 "CLEAR" = "EFFACER";
 "CLEAR FLOAT" = "VIDER LE FLOAT";
@@ -712,6 +713,7 @@
 "Choose what appears when you click the Nashi icon in the menu bar. Settings and Quit are always shown." = "Choisissez ce qui s’affiche lorsque vous cliquez sur l’icône Nashi dans la barre des menus. Réglages et Quitter restent toujours affichés.";
 "Choose what your file shares." = "Choisissez ce que votre fichier partage.";
 "Choose your home folder or a folder where you save files." = "Choisissez votre dossier de départ ou un dossier où vous enregistrez vos fichiers.";
+"Circle" = "Cercle";
 "Clarity" = "Clarté";
 "Clear" = "Effacer";
 "Clear Float" = "Vider le Float";
@@ -1413,7 +1415,9 @@
 "Keep them together, or give each one a fresh start." = "Traitez-les ensemble ou un par un.";
 "Keep things\nmoving." = "Gardez le\nrythme.";
 "Keeps the look and dimensions of each page. Best for visual layouts." = "Conserve l’apparence et les dimensions de chaque page. Idéal pour les mises en page visuelles.";
+"LABEL BACKGROUND" = "FOND DE L’ÉTIQUETTE";
 "LABEL POSITION" = "POSITION DU LIBELLÉ";
+"LABEL SHAPE" = "FORME DE L’ÉTIQUETTE";
 "LANDSCAPE" = "PAYSAGE";
 "LANDSCAPE · 16:9" = "PAYSAGE · 16:9";
 "LANGUAGE" = "LANGUE";
@@ -1445,7 +1449,9 @@
 "LOCAL BY DESIGN" = "LOCAL PAR CONCEPTION";
 "LOOKING FOR LITTLE SQUARES…" = "À LA RECHERCHE DE PETITS CARRÉS…";
 "LOUDNESS RANGE" = "PLAGE DE VOLUME SONORE";
+"Label background" = "Fond de l’étiquette";
 "Label position" = "Position du libellé";
+"Label shape" = "Forme de l’étiquette";
 "Landscape" = "Paysage";
 "Landscape · 16:9" = "Paysage · 16:9";
 "Language" = "Langue";
@@ -2048,6 +2054,7 @@
 "ROTATE RIGHT" = "ROTATION À DROITE";
 "ROTATION" = "ROTATION";
 "ROUNDED" = "ARRONDIE";
+"ROUNDED RECTANGLE" = "RECTANGLE ARRONDI";
 "ROW" = "LIGNE";
 "Read QR Codes" = "Lire les codes QR";
 "Read QR Codes · Nashi" = "Lire les codes QR · Nashi";
@@ -2130,6 +2137,7 @@
 "Rotate Right" = "Rotation à droite";
 "Rotation" = "Rotation";
 "Rounded" = "Arrondie";
+"Rounded rectangle" = "Rectangle arrondi";
 "Row" = "Ligne";
 "SAMPLE DEPTH" = "PROFONDEUR D’ÉCHANTILLONNAGE";
 "SATURATION" = "SATURATION";
@@ -2477,6 +2485,8 @@
 "TERMINAL APP" = "APPLICATION TERMINAL";
 "TEXT" = "TEXTE";
 "TEXT ADAPTS TO THE READER’S SCREEN AND FONT SIZE. BEST FOR READING." = "LE TEXTE S’ADAPTE À L’ÉCRAN ET À LA TAILLE DE POLICE DU LECTEUR. IDÉAL POUR LA LECTURE.";
+"TEXT COLOR" = "COULEUR DU TEXTE";
+"TEXT ONLY" = "TEXTE SEUL";
 "TEXT OR CALLOUT" = "TEXTE OU LÉGENDE";
 "TEXT SIZE" = "TAILLE DU TEXTE";
 "TEXTURE" = "TEXTURE";
@@ -2635,6 +2645,8 @@
 "Terminal app" = "Application Terminal";
 "Text" = "Texte";
 "Text adapts to the reader’s screen and font size. Best for reading." = "Le texte s’adapte à l’écran et à la taille de police du lecteur. Idéal pour la lecture.";
+"Text color" = "Couleur du texte";
+"Text only" = "Texte seul";
 "Text or callout" = "Texte ou légende";
 "Text size" = "Taille du texte";
 "Texture" = "Texture";
