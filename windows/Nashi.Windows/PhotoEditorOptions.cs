@@ -106,10 +106,25 @@ public sealed partial class ToolEditor
     private static string LabelKind(string? item)=>(item??"None").ToLowerInvariant() switch{"numbers"=>"numbers","letters"=>"letters",_=>"none"};
     private static string LabelPlace(string? item)=>(item??"Top left") switch{"Top right"=>"topRight","Bottom left"=>"bottomLeft","Bottom right"=>"bottomRight","Center"=>"center",_=>"topLeft"};
     /// A long collage is drawn smaller so the next setting change can replace it. The view keeps the requested canvas size.
-    private static (CollageOptions Options,int LayoutWidth,int LayoutHeight) PreviewCollage(CollageOptions source)
+    private static bool CollageFits(CollageOptions source,int width,int height,int images,int spacing,int padding)
     {
-        var width=Math.Max(1,source.Width);var height=Math.Max(1,source.Height);var longEdge=Math.Max(width,height);if(longEdge<=960)return (source,width,height);
-        var factor=960d/longEdge;return (source with{Width=Math.Max(1,(int)Math.Round(width*factor)),Height=Math.Max(1,(int)Math.Round(height*factor)),Spacing=Math.Max(0,(int)Math.Round(source.Spacing*factor)),Padding=Math.Max(0,(int)Math.Round(source.Padding*factor)),CornerRadius=Math.Max(0,source.CornerRadius*factor)},width,height);
+        var count=Math.Max(1,images);var gap=Math.Max(0,spacing);var pad=Math.Max(0,padding);var innerW=width-pad*2d;var innerH=height-pad*2d;
+        if(innerW<=0||innerH<=0)return false;
+        if(source.Layout=="featured"){var feature=(innerW-gap)*2/3;var otherW=innerW-gap-feature;var otherH=count<=1?innerH:(innerH-gap*(count-2))/Math.Max(1,count-1);return feature>0&&otherW>0&&otherH>0;}
+        var columns=source.Layout=="row"?count:source.Layout=="column"?1:Math.Max(1,Math.Min(count,Math.Max(1,source.Columns)));var rows=(count+columns-1)/columns;
+        return (innerW-gap*(columns-1))/columns>0&&(innerH-gap*(rows-1))/rows>0;
+    }
+    private static (CollageOptions Options,int LayoutWidth,int LayoutHeight) PreviewCollage(CollageOptions source,int images)
+    {
+        var width=Math.Max(1,source.Width);var height=Math.Max(1,source.Height);var longEdge=Math.Max(width,height);
+        if(longEdge<=960||width>32000||height>32000)return (source,width,height);
+        var factor=960d/longEdge;var previewWidth=Math.Max(1,(int)Math.Round(width*factor));var previewHeight=Math.Max(1,(int)Math.Round(height*factor));
+        var spacing=Math.Max(0,(int)Math.Round(Math.Max(0,source.Spacing)*factor));var padding=Math.Max(0,(int)Math.Round(Math.Max(0,source.Padding)*factor));
+        if(CollageFits(source,width,height,images,Math.Max(0,source.Spacing),Math.Max(0,source.Padding))&&!CollageFits(source,previewWidth,previewHeight,images,spacing,padding))
+        {
+            while(!CollageFits(source,previewWidth,previewHeight,images,spacing,padding)&&(spacing>0||padding>0)){if(spacing>0)spacing--;else padding--;}
+        }
+        return (source with{Width=previewWidth,Height=previewHeight,Spacing=spacing,Padding=padding,CornerRadius=Math.Max(0,source.CornerRadius*factor)},width,height);
     }
     private async Task PreviewPhoto()
     {
@@ -124,7 +139,7 @@ public sealed partial class ToolEditor
             var previewSource=bitmap.IsFrozen?bitmap:bitmap.CloneCurrentValue();previewSource.Freeze();
             var untouched=tool=="editImage"&&SizeUntouched;var inputs=collageInputs.ToArray();
             CollageOptions? collagePreview=null;var layoutWidth=0;var layoutHeight=0;
-            if(tool=="createCollage"){var scaled=PreviewCollage(settings.Collage);collagePreview=scaled.Options;layoutWidth=scaled.LayoutWidth;layoutHeight=scaled.LayoutHeight;}
+            if(tool=="createCollage"){var scaled=PreviewCollage(settings.Collage,inputs.Length);collagePreview=scaled.Options;layoutWidth=scaled.LayoutWidth;layoutHeight=scaled.LayoutHeight;}
             var result=await MainWindow.OnStaAsync(()=>
             {
                 PhotoWorkerGateForTest?.Invoke();

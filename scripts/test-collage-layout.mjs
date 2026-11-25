@@ -7,6 +7,11 @@ assert.equal(collageLabelText('letters', 25, 1), 'Z');
 assert.equal(collageLabelText('letters', 26, 1), 'AA');
 assert.deepEqual(Array.from({ length: 10 }, (_, i) => collageLabelText('letters', i, 1)), ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']);
 assert.equal(collageLabelText('numbers', 0, 5), '5');
+assert.equal(collageLabelText('numbers', 0, 1.9), '1');
+assert.equal(collageLabelText('numbers', 1, 1.9), '2');
+const fractional = collageGrid(3, 'grid', 2.5, 900, 600, 0);
+assert.equal(fractional.cols, 2);
+assert.ok(fractional.cells.every(cell => cell.x >= 0 && cell.x + cell.w <= 900.01), 'a fractional column count stays inside the canvas');
 assert.equal(collageLabelText('none', 0, 1), null);
 
 const tight = collageGrid(4, 'grid', 2, 900, 400, 80);

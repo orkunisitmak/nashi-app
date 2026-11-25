@@ -721,7 +721,9 @@ struct ToolEditor:View {
             try await Task.sleep(nanoseconds:120_000_000);try Task.checkCancellation()
             var o=options
             if tool == .redactImage { var r=o.imageRedaction ?? .init();r.style=o.redactionMode=="black" ? .solid:o.redactionMode=="pixelate" ? .pixelate:.blur;r.color=o.backgroundColor;o.imageRedaction=r }
-            let kind=tool,sources=inputs,collage=collagePreviewSettings(o.collage ?? .init())
+            let kind=tool,sources=inputs
+            if kind == .createCollage, let message=collageDimensionError(o.collage ?? .init()) { try checkGeneration(generation,token:token);previewError=message;return }
+            let collage=collagePreviewSettings(o.collage ?? .init(), images:sources.count)
             let cg=try await Task.detached { if kind == .createCollage { return try ImageEngine.collageImage(sources.map{try ImageEngine.load($0)},settings:collage) };return try ImageEngine.preview(baseImage,tool:kind,options:o) }.value
             try checkGeneration(generation,token:token);image=NSImage(cgImage:cg,size:.zero);previewSize=CGSize(width:cg.width,height:cg.height);previewError=nil
         } catch is CancellationError {
@@ -893,19 +895,50 @@ struct ToolEditor:View {
     func collage<T>(_ key:WritableKeyPath<CollageOptions,T>)->Binding<T> { Binding(get:{(options.collage ?? .init())[keyPath:key]},set:{var value=options.collage ?? .init();value[keyPath:key]=$0;options.collage=value}) }
     func canvasPresetIndex(_ ratio:Double)->Int { let presets=[1.0,16.0/9,9.0/16,4.0/5];var best=0;for index in presets.indices where abs(presets[index]-ratio)<abs(presets[best]-ratio) { best=index };return best }
     func canvasPresetRatio(_ index:Int)->Double { [1.0,16.0/9,9.0/16,4.0/5][min(3,max(0,index))] }
+    func collageDimensionError(_ settings:CollageOptions)->String? {
+        let message="Collage dimensions must be between 1 and 32,000 pixels."
+        guard settings.width>=1,settings.width<=32000 else { return message }
+        if let height=settings.height { return height>=1 && height<=32000 ? nil : message }
+        let ratio=settings.aspectRatio>0 && settings.aspectRatio.isFinite ? settings.aspectRatio : 1
+        let calculated=Double(settings.width)/ratio
+        return calculated.isFinite && calculated>=1 && calculated<=32000 ? nil : message
+    }
     /// The editor previews a long collage at 960 pixels on the long edge. Export still uses the full canvas.
-    func collagePreviewSettings(_ settings:CollageOptions)->CollageOptions {
+    func collagePreviewSettings(_ settings:CollageOptions, images:Int)->CollageOptions {
         var scaled=settings
         let ratio=settings.aspectRatio>0 && settings.aspectRatio.isFinite ? settings.aspectRatio : 1
-        let width=max(1,settings.width),height=settings.height ?? max(1,Int((Double(width)/ratio).rounded())),long=max(width,height)
+        let width=settings.width
+        let rawHeight=settings.height.map(Double.init) ?? Double(width)/ratio
+        guard width>=1,width<=32000,rawHeight.isFinite,rawHeight>=1,rawHeight<=32000 else { return settings }
+        let height=max(1,Int(rawHeight.rounded())),long=max(width,height)
         guard long>960 else { return settings }
         let factor=960.0/Double(long)
-        scaled.width=max(1,Int((Double(width)*factor).rounded()))
-        if settings.height != nil { scaled.height=max(1,Int((Double(height)*factor).rounded())) }
-        scaled.spacing=max(0,Int((Double(max(0,settings.spacing))*factor).rounded()))
-        scaled.outerPadding=max(0,Int((Double(max(0,settings.outerPadding))*factor).rounded()))
+        let previewWidth=max(1,Int((Double(width)*factor).rounded()))
+        let previewHeight=settings.height==nil ? max(1,Int((Double(previewWidth)/ratio).rounded())) : max(1,Int((rawHeight*factor).rounded()))
+        scaled.width=previewWidth
+        if settings.height != nil { scaled.height=previewHeight }
+        var spacing=max(0,Int((Double(max(0,settings.spacing))*factor).rounded())),padding=max(0,Int((Double(max(0,settings.outerPadding))*factor).rounded()))
+        if collageFits(width:width,height:height,settings:settings,images:images,spacing:max(0,settings.spacing),padding:max(0,settings.outerPadding)),
+           !collageFits(width:previewWidth,height:previewHeight,settings:settings,images:images,spacing:spacing,padding:padding) {
+            while !collageFits(width:previewWidth,height:previewHeight,settings:settings,images:images,spacing:spacing,padding:padding),spacing>0 || padding>0 {
+                if spacing>0 { spacing-=1 } else { padding-=1 }
+            }
+        }
+        scaled.spacing=spacing
+        scaled.outerPadding=padding
         scaled.cornerRadius=max(0,settings.cornerRadius*factor)
         return scaled
+    }
+    func collageFits(width:Int,height:Int,settings:CollageOptions,images:Int,spacing:Int,padding:Int)->Bool {
+        let count=max(1,images),gap=Double(max(0,spacing)),pad=Double(max(0,padding)),innerW=Double(width)-pad*2,innerH=Double(height)-pad*2
+        guard innerW>0,innerH>0 else { return false }
+        if settings.layout == .featured {
+            let feature=(innerW-gap)*2/3,otherW=innerW-gap-feature,otherH=count<=1 ? innerH : (innerH-gap*Double(count-2))/Double(max(1,count-1))
+            return feature>0 && otherW>0 && otherH>0
+        }
+        let columns=settings.layout == .row ? count : settings.layout == .column ? 1 : max(1,min(count,max(1,settings.columns)))
+        let rows=(count+columns-1)/columns
+        return (innerW-gap*Double(columns-1))/Double(columns)>0 && (innerH-gap*Double(rows-1))/Double(rows)>0
     }
     func relative(_ value:Binding<Double>)->Binding<Double> { Binding(get:{value.wrappedValue-1},set:{value.wrappedValue=$0+1}) }
     func number(_ label:String,value:Binding<Int>)->some View { HStack { LText(label);TextField("",value:value,format:.number).textFieldStyle(.roundedBorder).frame(minWidth:60) } }

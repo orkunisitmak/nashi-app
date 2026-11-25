@@ -2,7 +2,8 @@
 
 export function collageLabelText(style, index, start) {
   if (style !== 'numbers' && style !== 'letters') return null;
-  const n = Math.min(9999, Math.max(1, Number(start) || 1)) + index;
+  const whole = Math.floor(Number(start));
+  const n = Math.min(9999, Math.max(1, Number.isFinite(whole) ? whole : 1)) + index;
   if (n < 1 || n > 9999) return null;
   if (style === 'numbers') return String(n);
   let x = n, text = '';
@@ -14,7 +15,7 @@ export function collageGrid(count, layout, columns, width, height, gap) {
   const n = Math.max(0, count | 0);
   const w = Math.max(1, Number(width) || 1);
   const h = Math.max(1, Number(height) || 1);
-  const cols = layout === 'column' ? 1 : layout === 'row' ? Math.max(1, n) : Math.max(1, Math.min(Math.max(n, 1), Number(columns) || 2));
+  const cols = layout === 'column' ? 1 : layout === 'row' ? Math.max(1, n) : gridColumns(n, columns);
   const rows = Math.max(1, Math.ceil((n || 1) / cols));
   const minCell = 8;
   const requested = Math.max(0, Number(gap) || 0);
@@ -28,13 +29,19 @@ export function collageGrid(count, layout, columns, width, height, gap) {
 
 export function collageCanvasSize(count, layout, columns, gap, width = 900) {
   const n = Math.max(1, count | 0);
-  const cols = layout === 'column' ? 1 : layout === 'row' ? n : Math.max(1, Math.min(n, Number(columns) || 2));
+  const cols = layout === 'column' ? 1 : layout === 'row' ? n : gridColumns(n, columns);
   const rows = Math.ceil(n / cols);
   const minCell = 8;
   const raw = Math.max(0, Number(gap) || 0);
   const gapW = Math.min(raw, Math.max(0, (width - cols * minCell) / (cols + 1)));
   const cell = (width - gapW * (cols + 1)) / cols;
   return { width, height: Math.max(minCell, Math.round(cell * 0.7 * rows + gapW * (rows + 1))) };
+}
+
+function gridColumns(count, columns) {
+  const whole = Math.floor(Number(columns));
+  const chosen = Number.isFinite(whole) && whole >= 1 ? whole : 2;
+  return Math.max(1, Math.min(Math.max(count, 1), chosen));
 }
 
 function intersection(x, y, w, h, cx, cy, cw, ch) {
