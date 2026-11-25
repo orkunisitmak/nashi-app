@@ -376,10 +376,44 @@ public enum ImageEngine {
         context.textPosition=CGPoint(x:rect.midX-width/2,y:rect.midY-(ascent-descent)/2);CTLineDraw(line,context)
     }
 
+    private static func fittedRect(_ image:CGImage,in rect:CGRect,fit:ImageFit)->CGRect {
+        let sx=rect.width/CGFloat(max(1,image.width)),sy=rect.height/CGFloat(max(1,image.height)),scale=fit == .fill ? max(sx,sy) : min(sx,sy)
+        let w=CGFloat(image.width)*scale,h=CGFloat(image.height)*scale
+        return CGRect(x:rect.midX-w/2,y:rect.midY-h/2,width:w,height:h)
+    }
+
     private static func drawFitted(_ image:CGImage,in rect:CGRect,context:CGContext,fit:ImageFit) {
-        let sx=rect.width/CGFloat(image.width),sy=rect.height/CGFloat(image.height),scale=fit == .fill ? max(sx,sy) : min(sx,sy)
-        let target=CGRect(x:rect.midX-CGFloat(image.width)*scale/2,y:rect.midY-CGFloat(image.height)*scale/2,width:CGFloat(image.width)*scale,height:CGFloat(image.height)*scale)
+        let target=fittedRect(image,in:rect,fit:fit)
         context.saveGState();context.clip(to:rect);context.interpolationQuality = .high;context.draw(image,in:target);context.restoreGState()
+    }
+
+    /// 1 is A, 26 is Z, 27 is AA. The first collage image uses `labelStart`.
+    private static func collageMark(_ index:Int,_ settings:CollageOptions)->String? {
+        guard settings.labels != .none else { return nil }
+        let n=min(9999,max(1,settings.labelStart))+index
+        guard (1...9999).contains(n) else { return nil }
+        if settings.labels == .numbers { return String(n) }
+        var x=n,text=""
+        while x>0 { x-=1; text=String(UnicodeScalar(65+x%26)!)+text; x/=26 }
+        return text
+    }
+
+    private static func drawCollageMark(_ text:String,on rect:CGRect,context:CGContext,settings:CollageOptions) throws {
+        let side=min(rect.width,rect.height),inset=max(4,side*0.045),room=side-inset*2
+        guard room>4 else { return }
+        let font=min(max(12,side*0.22),side*0.46),diameter=min(room,min(side*0.9,font*1.45))
+        let left=rect.minX+inset,right=rect.maxX-inset-diameter,bottom=rect.minY+inset,top=rect.maxY-inset-diameter
+        let origin:CGPoint
+        switch settings.labelAnchor {
+        case .topRight: origin=CGPoint(x:right,y:top)
+        case .bottomLeft: origin=CGPoint(x:left,y:bottom)
+        case .bottomRight: origin=CGPoint(x:right,y:bottom)
+        case .center: origin=CGPoint(x:rect.midX-diameter/2,y:rect.midY-diameter/2)
+        case .topLeft: origin=CGPoint(x:left,y:top)
+        }
+        let badge=CGRect(x:origin.x,y:origin.y,width:diameter,height:diameter)
+        context.setFillColor(try validatedColor(settings.labelBadge));context.fillEllipse(in:badge)
+        drawCenteredText(text,in:badge,context:context,color:try validatedColor(settings.labelColor),fontSize:font*0.62)
     }
 
     public static func redactedImage(_ image: CGImage, options: OperationOptions) throws -> CGImage { try redact(image,options:options) }
@@ -565,8 +599,12 @@ public enum ImageEngine {
             guard cellWidth>0,cellHeight>0 else { throw NashiError.invalidInput("Reduce collage spacing or increase the canvas.") }
             for index in images.indices { cells.append(CGRect(x:area.minX+Double(index%columns)*(cellWidth+gap),y:area.maxY-Double(index/columns+1)*cellHeight-Double(index/columns)*gap,width:cellWidth,height:cellHeight)) }
         }
-        for (image,cell) in zip(images,cells) {
-            ctx.saveGState();let radius=max(0,min(settings.cornerRadius,min(cell.width,cell.height)/2));ctx.addPath(CGPath(roundedRect:cell,cornerWidth:radius,cornerHeight:radius,transform:nil));ctx.clip();drawFitted(image,in:cell,context:ctx,fit:settings.imageFit);ctx.restoreGState()
+        for (index,image) in images.enumerated() {
+            let cell=cells[index]
+            ctx.saveGState();let radius=max(0,min(settings.cornerRadius,min(cell.width,cell.height)/2));ctx.addPath(CGPath(roundedRect:cell,cornerWidth:radius,cornerHeight:radius,transform:nil));ctx.clip();drawFitted(image,in:cell,context:ctx,fit:settings.imageFit)
+            let visible=fittedRect(image,in:cell,fit:settings.imageFit).intersection(cell)
+            if visible.width>2,visible.height>2,let mark=collageMark(index,settings) { try drawCollageMark(mark,on:visible,context:ctx,settings:settings) }
+            ctx.restoreGState()
         }
         guard let result=ctx.makeImage() else { throw NashiError.failed("Could not create collage.") };return result
     }

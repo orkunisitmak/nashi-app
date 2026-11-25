@@ -397,10 +397,15 @@ struct ToolEditor:View {
         VStack(alignment:.leading,spacing:14) {
             Picker("Style",selection:collage(\.layout)) { ForEach(CollageLayout.allCases,id:\.self) { LText($0.rawValue.capitalized).tag($0) } }
             Stepper("Columns: \(options.collage?.columns ?? 2)",value:collage(\.columns),in:1...12)
-            Picker("Canvas",selection:collage(\.aspectRatio)) { Text("Square · 1:1").tag(1.0);Text("Landscape · 16:9").tag(16.0/9);Text("Portrait · 9:16").tag(9.0/16);Text("Portrait · 4:5").tag(4.0/5) }
+            Picker("Canvas",selection:Binding(get:{canvasPresetIndex(options.collage?.aspectRatio ?? 1)},set:{var c=options.collage ?? .init();c.aspectRatio=canvasPresetRatio($0);options.collage=c})) { Text("Square · 1:1").tag(0);Text("Landscape · 16:9").tag(1);Text("Portrait · 9:16").tag(2);Text("Portrait · 4:5").tag(3) }
             number("Canvas width",value:collage(\.width))
             Picker("Image fit",selection:collage(\.imageFit)) { Text("Fill cells (crop edges)").tag(ImageFit.fill);Text("Fit whole image").tag(ImageFit.fit) }
-            number("Spacing",value:collage(\.spacing));number("Outer padding",value:collage(\.outerPadding));slider("Corners",value:collage(\.cornerRadius),range:0...100,reset:CollageOptions().cornerRadius)
+            Picker(selection:collage(\.labels)) { LText("None").tag(CollageLabelStyle.none);LText("Numbers").tag(CollageLabelStyle.numbers);LText("Letters").tag(CollageLabelStyle.letters) } label:{ LText("Cell labels") }
+            Picker(selection:collage(\.labelAnchor)) { LText("Top left").tag(CollageLabelAnchor.topLeft);LText("Top right").tag(CollageLabelAnchor.topRight);LText("Bottom left").tag(CollageLabelAnchor.bottomLeft);LText("Bottom right").tag(CollageLabelAnchor.bottomRight);LText("Center").tag(CollageLabelAnchor.center) } label:{ LText("Label position") }
+            number("First label",value:collage(\.labelStart))
+            slider("Spacing",value:Binding(get:{Double(options.collage?.spacing ?? 12)},set:{var c=options.collage ?? .init();c.spacing=Int($0.rounded());options.collage=c}),range:0...200,unit:"px",reset:12)
+            slider("Outer padding",value:Binding(get:{Double(options.collage?.outerPadding ?? 16)},set:{var c=options.collage ?? .init();c.outerPadding=Int($0.rounded());options.collage=c}),range:0...400,unit:"px",reset:16)
+            slider("Corners",value:collage(\.cornerRadius),range:0...100,reset:CollageOptions().cornerRadius)
             ColorPicker("Background",selection:colorBinding(collage(\.backgroundColor),preservingOpacity:true))
             HStack { Button("Background Image…") { let panel=NSOpenPanel();if panel.runModal() == .OK { var c=options.collage ?? .init();c.backgroundImage=panel.url;options.collage=c } };if options.collage?.backgroundImage != nil { Button("Remove Image") { var c=options.collage ?? .init();c.backgroundImage=nil;options.collage=c } } }
             orderControls
@@ -624,7 +629,7 @@ struct ToolEditor:View {
             }
             if tool == .organizePDF { pdfEditor.reset(document:try pdfUnlock.open(input));options.password=pdfUnlock.password;previewError=nil }
             if tool == .frameImage { options.imageFrame = .init() }
-            if tool == .createCollage { options.collage = .init() }
+            if tool == .createCollage { var collage=CollageOptions();collage.imageFit = .fit;options.collage=collage }
             if tool == .audioToVideo { width=1920;height=1080;options.backgroundColor="#000000" }
             if tool == .redactVideo || tool == .redactImage { options.backgroundColor="#000000";options.redactionMode="black" }
             try checkGeneration(generation,token:token);readyToApply=true
@@ -710,10 +715,12 @@ struct ToolEditor:View {
             try await Task.sleep(nanoseconds:120_000_000);try Task.checkCancellation()
             var o=options
             if tool == .redactImage { var r=o.imageRedaction ?? .init();r.style=o.redactionMode=="black" ? .solid:o.redactionMode=="pixelate" ? .pixelate:.blur;r.color=o.backgroundColor;o.imageRedaction=r }
-            let kind=tool,sources=inputs
-            let cg=try await Task.detached { if kind == .createCollage { return try ImageEngine.collageImage(sources.map{try ImageEngine.load($0)},settings:o.collage ?? .init()) };return try ImageEngine.preview(baseImage,tool:kind,options:o) }.value
-            try checkGeneration(generation,token:token);image=NSImage(cgImage:cg,size:.zero);previewSize=CGSize(width:cg.width,height:cg.height)
-        } catch { /* A later edit cancels an obsolete preview; Apply reports export errors. */ }
+            let kind=tool,sources=inputs,collage=collagePreviewSettings(o.collage ?? .init())
+            let cg=try await Task.detached { if kind == .createCollage { return try ImageEngine.collageImage(sources.map{try ImageEngine.load($0)},settings:collage) };return try ImageEngine.preview(baseImage,tool:kind,options:o) }.value
+            try checkGeneration(generation,token:token);image=NSImage(cgImage:cg,size:.zero);previewSize=CGSize(width:cg.width,height:cg.height);previewError=nil
+        } catch is CancellationError {
+        } catch NashiError.cancelled {
+        } catch { if generation==editorGeneration,!token.isCancelled,!Task.isCancelled { previewError=error.localizedDescription } }
     }
     var annotationStyle:ImageAnnotation {
         var a=ImageAnnotation(kind:annotationKind,rect:.init(x:0,y:0,width:0,height:0));a.text=annotationText;a.color=hex(annotationColor);a.number=options.imageAnnotations.count+1;a.strokeWidth=annotationStroke;a.fontSize=annotationFont;a.fontFamily=annotationFontFamily
@@ -878,6 +885,22 @@ struct ToolEditor:View {
     }
     func frame<T>(_ key:WritableKeyPath<ImageFrameOptions,T>)->Binding<T> { Binding(get:{(options.imageFrame ?? .init())[keyPath:key]},set:{var value=options.imageFrame ?? .init();value[keyPath:key]=$0;options.imageFrame=value}) }
     func collage<T>(_ key:WritableKeyPath<CollageOptions,T>)->Binding<T> { Binding(get:{(options.collage ?? .init())[keyPath:key]},set:{var value=options.collage ?? .init();value[keyPath:key]=$0;options.collage=value}) }
+    func canvasPresetIndex(_ ratio:Double)->Int { let presets=[1.0,16.0/9,9.0/16,4.0/5];var best=0;for index in presets.indices where abs(presets[index]-ratio)<abs(presets[best]-ratio) { best=index };return best }
+    func canvasPresetRatio(_ index:Int)->Double { [1.0,16.0/9,9.0/16,4.0/5][min(3,max(0,index))] }
+    /// The editor previews a long collage at 960 pixels on the long edge. Export still uses the full canvas.
+    func collagePreviewSettings(_ settings:CollageOptions)->CollageOptions {
+        var scaled=settings
+        let ratio=settings.aspectRatio>0 && settings.aspectRatio.isFinite ? settings.aspectRatio : 1
+        let width=max(1,settings.width),height=settings.height ?? max(1,Int((Double(width)/ratio).rounded())),long=max(width,height)
+        guard long>960 else { return settings }
+        let factor=960.0/Double(long)
+        scaled.width=max(1,Int((Double(width)*factor).rounded()))
+        if settings.height != nil { scaled.height=max(1,Int((Double(height)*factor).rounded())) }
+        scaled.spacing=max(0,Int((Double(max(0,settings.spacing))*factor).rounded()))
+        scaled.outerPadding=max(0,Int((Double(max(0,settings.outerPadding))*factor).rounded()))
+        scaled.cornerRadius=max(0,settings.cornerRadius*factor)
+        return scaled
+    }
     func relative(_ value:Binding<Double>)->Binding<Double> { Binding(get:{value.wrappedValue-1},set:{value.wrappedValue=$0+1}) }
     func number(_ label:String,value:Binding<Int>)->some View { HStack { LText(label);TextField("",value:value,format:.number).textFieldStyle(.roundedBorder).frame(minWidth:60) } }
     func slider(_ title:String,value:Binding<Double>,range:ClosedRange<Double>,unit:String="",reset:Double?=nil)->some View { HStack { LText(title).font(.callout).frame(width:105,alignment:.leading);Slider(value:value,in:range).tint(.nashi);Text("\(value.wrappedValue,specifier:"%.2f") \(unit)").font(.caption.monospacedDigit()).frame(width:70,alignment:.trailing);Button { value.wrappedValue=reset ?? ["Playback speed":1,"Target loudness":-16,"Loudness range":11,"True peak limit":-1.5,"Left volume":1,"Right volume":1,"Padding":160,"Corners":24,"Shadow":24,"Stroke width":3,"Text size":24,"Silence threshold":-50][title] ?? 0 } label:{Image(systemName:"arrow.counterclockwise").font(.caption)}.buttonStyle(.plain) } }
