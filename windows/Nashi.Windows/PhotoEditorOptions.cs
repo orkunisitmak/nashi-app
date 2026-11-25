@@ -10,12 +10,15 @@ namespace Nashi.Windows;
 public sealed partial class ToolEditor
 {
     private readonly List<Rect> photoRegions=[];
-    private readonly ComboBox backdrop=new(){ItemsSource=new[]{"solid","gradient","image"},SelectedIndex=0},collageLayout=new(){ItemsSource=new[]{"grid","row","column","featured"},SelectedIndex=0},redactionStyle=new(){ItemsSource=new[]{"solid","blur","pixelate"},SelectedIndex=0};
+    private readonly ComboBox backdrop=new(){ItemsSource=new[]{"solid","gradient","image"},SelectedIndex=0},collageLayout=new(){ItemsSource=new[]{"grid","row","column","featured"},SelectedIndex=0},collageLabels=new(){ItemsSource=new[]{"None","Numbers","Letters"},SelectedIndex=0},collageLabelAnchor=new(){ItemsSource=new[]{"Top left","Top right","Bottom left","Bottom right","Center"},SelectedIndex=0},collageLabelShape=new(){ItemsSource=new[]{"Circle","Rounded rectangle","Square","Text only"},SelectedIndex=0},redactionStyle=new(){ItemsSource=new[]{"solid","blur","pixelate"},SelectedIndex=0};
+    private readonly StackPanel labelSettings=new(){Visibility=Visibility.Collapsed};
     private string? backgroundImage;private BitmapSource? annotationImage;private string[] collageInputs=[];private readonly ListBox imageOrder=new(){MaxHeight=140};
     private UIElement? annotationShape,selectedAnnotation;private Vector annotationOffset;private int strokeKind;private Point endPoint;private int markNumber=1;
     private System.Windows.Threading.DispatcherTimer? photoPreview;private bool showingOriginal;private readonly SemaphoreSlim previewGate=new(1,1);private long photoGeneration;
     internal Action? PhotoWorkerGateForTest {get;set;}
-    private readonly CheckBox fitCollage=new(){Content="Fill cells (crop to fit)",IsChecked=true},flipHorizontal=new(){Content="Flip horizontally"},flipVertical=new(){Content="Flip vertically"};
+    private readonly CheckBox fitCollage=new(){Content="Fill cells (crop to fit)",IsChecked=false},flipHorizontal=new(){Content="Flip horizontally"},flipVertical=new(){Content="Flip vertically"};
+    private readonly TextBlock photoStatus=new(){TextWrapping=TextWrapping.Wrap,Margin=new(4,8,4,0),Foreground=new SolidColorBrush(Color.FromRgb(168,62,42))};
+    private bool photoClosed;
     private void BuildPhotoOptions(IReadOnlyList<string> inputs)
     {
         collageInputs=inputs.ToArray();
@@ -36,7 +39,13 @@ public sealed partial class ToolEditor
         if(tool=="createCollage")
         {
             options.Children.Add(L10n.Label(new TextBlock{Text="Layout"}));options.Children.Add(collageLayout);Field("Columns",2);Field("Canvas width",2048);Field("Canvas height",2048);Field("Spacing",12);Field("Padding",16);Field("Corner radius",0);TextField("Background color","#FFFFFF");
+            options.Children.Add(L10n.Label(new TextBlock{Text="Cell labels"}));options.Children.Add(collageLabels);L10n.Choices(collageLabels);
+            labelSettings.Children.Add(L10n.Label(new TextBlock{Text="Label position",Margin=new(4,12,4,0)}));labelSettings.Children.Add(collageLabelAnchor);L10n.Choices(collageLabelAnchor);
+            LabelText("First label","1");LabelText("Text size","100");
+            labelSettings.Children.Add(L10n.Label(new TextBlock{Text="Label shape",Margin=new(4,12,4,0)}));labelSettings.Children.Add(collageLabelShape);L10n.Choices(collageLabelShape);
+            LabelText("Text color","#FFFFFF");LabelText("Label background","#1C1C1C");options.Children.Add(labelSettings);
             for(var n=0;n<inputs.Count;n++)imageOrder.Items.Add(new ListBoxItem{Content=System.IO.Path.GetFileName(inputs[n]),Tag=n});options.Children.Add(imageOrder);options.Children.Add(fitCollage);fitCollage.Click+=(_,_)=>QueuePhotoPreview();
+            previewStack.Children.Add(photoStatus);
             var buttons=new WrapPanel();buttons.Children.Add(MainWindow.Button("Move up",()=>MoveImage(-1)));buttons.Children.Add(MainWindow.Button("Move down",()=>MoveImage(1)));options.Children.Add(buttons);
         }
         if(tool=="redactImage")
@@ -48,7 +57,7 @@ public sealed partial class ToolEditor
         if(tool is "editImage" or "frameImage" or "createCollage")
         {
             photoPreview=new(){Interval=TimeSpan.FromMilliseconds(300)};photoPreview.Tick+=async(_,_)=>{photoPreview.Stop();await PreviewPhoto();};
-            foreach(var box in fields.Values)box.TextChanged+=(_,_)=>QueuePhotoPreview();backdrop.SelectionChanged+=(_,_)=>QueuePhotoPreview();collageLayout.SelectionChanged+=(_,_)=>QueuePhotoPreview();Closed+=(_,_)=>{photoGeneration++;photoPreview.Stop();};
+            foreach(var box in fields.Values)box.TextChanged+=(_,_)=>QueuePhotoPreview();backdrop.SelectionChanged+=(_,_)=>QueuePhotoPreview();collageLayout.SelectionChanged+=(_,_)=>QueuePhotoPreview();collageLabels.SelectionChanged+=(_,_)=>{labelSettings.Visibility=collageLabels.SelectedIndex==0?Visibility.Collapsed:Visibility.Visible;QueuePhotoPreview();};collageLabelAnchor.SelectionChanged+=(_,_)=>QueuePhotoPreview();collageLabelShape.SelectionChanged+=(_,_)=>QueuePhotoPreview();Closed+=(_,_)=>{photoClosed=true;photoGeneration++;photoPreview.Stop();};
             var original=L10n.Content(new CheckBox{Content="Show original",Margin=new(4,14,4,4)});original.Checked+=(_,_)=>{showingOriginal=true;photoPreview.Stop();photoGeneration++;SetPhotoPreview(bitmap!);};original.Unchecked+=(_,_)=>{showingOriginal=false;QueuePhotoPreview();};resetPhotoView=()=>original.IsChecked=false;previewStack.Children.Add(original);Loaded+=(_,_)=>QueuePhotoPreview();
         }
         if(tool=="annotate")options.Children.Add(MainWindow.Button("Choose annotation image…",()=>{var picker=new OpenFileDialog{Filter="Images|*.png;*.jpg;*.webp;*.heic;*.avif;*.bmp"};if(picker.ShowDialog(this)==true)ChooseAnnotationImage(picker.FileName);}));
@@ -76,24 +85,55 @@ public sealed partial class ToolEditor
     }
     private UIElement ZoomablePreview(UIElement visual)
     {
-        var zoom=1d;var result=new StackPanel();var controls=new StackPanel{Orientation=Orientation.Horizontal};var viewbox=new Viewbox{Child=visual,Stretch=Stretch.Uniform,Width=600,Height=420};var scroll=new ScrollViewer{Content=viewbox,Height=420,HorizontalScrollBarVisibility=ScrollBarVisibility.Auto,VerticalScrollBarVisibility=ScrollBarVisibility.Auto};
-        void SetZoom(double value){zoom=Math.Clamp(value,.25,4);var height=Math.Clamp(ActualHeight-360,180,420);scroll.Height=height;viewbox.Width=Math.Max(100,scroll.ViewportWidth)*zoom;viewbox.Height=(scroll.ViewportHeight>0?scroll.ViewportHeight:height)*zoom;}
+        var zoom=1d;var result=new StackPanel();var controls=new StackPanel{Orientation=Orientation.Horizontal};var viewbox=new Viewbox{Child=visual,Stretch=Stretch.Uniform,ClipToBounds=true};var scroll=new ScrollViewer{Content=viewbox,Height=420,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled,VerticalScrollBarVisibility=ScrollBarVisibility.Disabled};
+        void SetZoom(double value){zoom=Math.Clamp(value,.25,4);var height=Math.Clamp(ActualHeight-360,180,420);scroll.Height=height;var fit=zoom<=1.01;scroll.HorizontalScrollBarVisibility=fit?ScrollBarVisibility.Disabled:ScrollBarVisibility.Auto;scroll.VerticalScrollBarVisibility=fit?ScrollBarVisibility.Disabled:ScrollBarVisibility.Auto;var viewportW=scroll.ViewportWidth>1?scroll.ViewportWidth:Math.Max(100,scroll.ActualWidth);var viewportH=scroll.ViewportHeight>1?scroll.ViewportHeight:height;viewbox.Width=Math.Max(100,viewportW)*zoom;viewbox.Height=Math.Max(100,viewportH)*zoom;}
         var percent=L10n.Label(new TextBlock{Text="100%",VerticalAlignment=VerticalAlignment.Center,Foreground=Theme.Brush("Muted"),Margin=new(8,0,8,0)});
         void Apply(double value){SetZoom(value);percent.Text=$"{zoom*100:0}%";}
         resetPreviewZoom=()=>Apply(1);
         controls.Children.Add(MainWindow.Button("−",()=>Apply(zoom/1.25)));controls.Children.Add(MainWindow.Button("Fit",()=>Apply(1)));controls.Children.Add(MainWindow.Button("+",()=>Apply(zoom*1.25)));controls.Children.Add(percent);result.Children.Add(controls);result.Children.Add(scroll);System.Windows.Automation.AutomationProperties.SetAutomationId(scroll,"ImagePreviewViewport");scroll.SizeChanged+=(_,_)=>SetZoom(zoom);scroll.ScrollChanged+=(_,e)=>{if(Math.Abs(e.ViewportWidthChange)>.1||Math.Abs(e.ViewportHeightChange)>.1)SetZoom(zoom);};SizeChanged+=(_,_)=>SetZoom(zoom);return result;
     }
     private void MoveImage(int delta){var index=imageOrder.SelectedIndex;var next=index+delta;if(index<0||next<0||next>=imageOrder.Items.Count)return;var item=imageOrder.Items[index];imageOrder.Items.RemoveAt(index);imageOrder.Items.Insert(next,item);imageOrder.SelectedIndex=next;QueuePhotoPreview();}
-    private void QueuePhotoPreview(){if(photoPreview is null||showingOriginal)return;photoGeneration++;photoPreview.Stop();photoPreview.Start();}
+    private void QueuePhotoPreview(){if(photoPreview is null||showingOriginal||photoClosed)return;photoGeneration++;photoPreview.Stop();photoPreview.Start();}
     private ImageOptions PhotoSettings(ImageOptions original)
     {
         var changes=new Dictionary<string,double>();foreach(var property in typeof(PhotoAdjustments).GetProperties())changes[property.Name]=Value(property.Name,(double)property.GetValue(new PhotoAdjustments())!);
         var adjustments=System.Text.Json.JsonSerializer.Deserialize<PhotoAdjustments>(System.Text.Json.JsonSerializer.Serialize(changes))!;
-        return original with{TargetBytes=Value("Target size (KB; 0 = auto)")>0?(long)(Value("Target size (KB; 0 = auto)")*1024):null,ReductionPercent=Value("Reduction (%; 0 = auto)")>0?Value("Reduction (%; 0 = auto)"):null,FlipHorizontal=flipHorizontal.IsChecked==true,FlipVertical=flipVertical.IsChecked==true,Adjustments=adjustments,Frame=new((int)Value("Padding",80),Value("Corner radius",24),fields.GetValueOrDefault("Background color")?.Text??"#FFFFFF",backdrop.SelectedItem as string??"solid",fields.GetValueOrDefault("Gradient end")?.Text??"#FFD85C",backgroundImage,Value("Background blur"),Value("Shadow radius",24),Value("Shadow opacity",.25),fields.ContainsKey("Canvas width")?(int)Value("Canvas width"):null,fields.ContainsKey("Canvas height")?(int)Value("Canvas height"):null,Value("Image scale",1),Value("Position X",.5),Value("Position Y",.5)),Collage=new(collageLayout.SelectedItem as string??"grid",(int)Value("Columns",2),(int)Value("Canvas width",2048),(int)Value("Canvas height",2048),(int)Value("Spacing",12),(int)Value("Padding",16),Value("Corner radius"),fields.GetValueOrDefault("Background color")?.Text??"#FFFFFF",fitCollage.IsChecked==true,imageOrder.Items.Count>0?imageOrder.Items.Cast<ListBoxItem>().Select(i=>(int)i.Tag).ToArray():null),Redactions=photoRegions.ToArray(),RedactionStyle=redactionStyle.SelectedItem as string??"solid"};
+        return original with{TargetBytes=Value("Target size (KB; 0 = auto)")>0?(long)(Value("Target size (KB; 0 = auto)")*1024):null,ReductionPercent=Value("Reduction (%; 0 = auto)")>0?Value("Reduction (%; 0 = auto)"):null,FlipHorizontal=flipHorizontal.IsChecked==true,FlipVertical=flipVertical.IsChecked==true,Adjustments=adjustments,Frame=new((int)Value("Padding",80),Value("Corner radius",24),fields.GetValueOrDefault("Background color")?.Text??"#FFFFFF",backdrop.SelectedItem as string??"solid",fields.GetValueOrDefault("Gradient end")?.Text??"#FFD85C",backgroundImage,Value("Background blur"),Value("Shadow radius",24),Value("Shadow opacity",.25),fields.ContainsKey("Canvas width")?(int)Value("Canvas width"):null,fields.ContainsKey("Canvas height")?(int)Value("Canvas height"):null,Value("Image scale",1),Value("Position X",.5),Value("Position Y",.5)),Collage=new(collageLayout.SelectedItem as string??"grid",(int)Value("Columns",2),(int)Value("Canvas width",2048),(int)Value("Canvas height",2048),(int)Value("Spacing",12),(int)Value("Padding",16),Value("Corner radius"),fields.GetValueOrDefault("Background color")?.Text??"#FFFFFF",fitCollage.IsChecked==true,imageOrder.Items.Count>0?imageOrder.Items.Cast<ListBoxItem>().Select(i=>(int)i.Tag).ToArray():null,LabelKind(collageLabels.SelectedItem as string),LabelPlace(collageLabelAnchor.SelectedItem as string),LabelStartValue(),HexOr(fields.GetValueOrDefault("Text color")?.Text,"#FFFFFF"),HexOr(fields.GetValueOrDefault("Label background")?.Text,"#1C1C1C"),LabelScaleValue(),LabelShape(collageLabelShape.SelectedItem as string)),Redactions=photoRegions.ToArray(),RedactionStyle=redactionStyle.SelectedItem as string??"solid"};
+    }
+    private void LabelText(string name,string value){labelSettings.Children.Add(L10n.Label(new TextBlock{Text=name,Margin=new(4,12,4,0)}));var box=new TextBox{Text=value};System.Windows.Automation.AutomationProperties.SetAutomationId(box,name);fields.Add(name,box);defaults.Add(name,value);labelSettings.Children.Add(box);}
+    private static string HexOr(string? text,string fallback)=>string.IsNullOrWhiteSpace(text)?fallback:text.Trim();
+    private static string LabelShape(string? item)=>(item??"Circle") switch{"Rounded rectangle"=>"rounded","Square"=>"square","Text only"=>"none",_=>"circle"};
+    private static string LabelKind(string? item)=>(item??"None").ToLowerInvariant() switch{"numbers"=>"numbers","letters"=>"letters",_=>"none"};
+    private int LabelStartValue()=>LabelKind(collageLabels.SelectedItem as string)=="none"?1:(int)Math.Round(Math.Clamp(Value("First label",1),1,9999));
+    private double LabelScaleValue()=>LabelKind(collageLabels.SelectedItem as string)=="none"?1:Math.Clamp(Value("Text size",100)/100d,0.15,2.5);
+    private static string LabelPlace(string? item)=>(item??"Top left") switch{"Top right"=>"topRight","Bottom left"=>"bottomLeft","Bottom right"=>"bottomRight","Center"=>"center",_=>"topLeft"};
+    /// A long collage is drawn smaller so the next setting change can replace it. The view keeps the requested canvas size.
+    private static bool CollageFits(CollageOptions source,int width,int height,int images,int spacing,int padding)
+    {
+        var count=Math.Max(1,images);var gap=(double)Math.Max(0,spacing);var pad=(double)Math.Max(0,padding);var innerW=width-pad*2;var innerH=height-pad*2;
+        if(innerW<=0||innerH<=0)return false;
+        if(source.Layout=="featured"){var feature=(innerW-gap)*2/3;var otherW=innerW-gap-feature;var otherH=count<=1?innerH:(innerH-gap*(count-2))/Math.Max(1,count-1);return feature>0&&otherW>0&&otherH>0;}
+        var columns=source.Layout=="row"?count:source.Layout=="column"?1:Math.Max(1,Math.Min(count,Math.Max(1,source.Columns)));var rows=(count+columns-1)/columns;
+        return (innerW-gap*(columns-1))/columns>0&&(innerH-gap*(rows-1))/rows>0;
+    }
+    private static (CollageOptions Options,int LayoutWidth,int LayoutHeight) PreviewCollage(CollageOptions source,int images)
+    {
+        var width=source.Width;var height=source.Height;
+        if(width<1||height<1||width>32000||height>32000)return (source,width,height);
+        var longEdge=Math.Max(width,height);
+        if(longEdge<=960)return (source,width,height);
+        var factor=960d/longEdge;var previewWidth=Math.Max(1,(int)Math.Round(width*factor));var previewHeight=Math.Max(1,(int)Math.Round(height*factor));
+        var spacing=Math.Max(0,(int)Math.Round(Math.Max(0,source.Spacing)*factor));var padding=Math.Max(0,(int)Math.Round(Math.Max(0,source.Padding)*factor));
+        if(CollageFits(source,width,height,images,Math.Max(0,source.Spacing),Math.Max(0,source.Padding))&&!CollageFits(source,previewWidth,previewHeight,images,spacing,padding))
+        {
+            while(!CollageFits(source,previewWidth,previewHeight,images,spacing,padding)&&(spacing>0||padding>0)){if(spacing>0)spacing--;else padding--;}
+        }
+        return (source with{Width=previewWidth,Height=previewHeight,Spacing=spacing,Padding=padding,CornerRadius=Math.Max(0,source.CornerRadius*factor)},width,height);
     }
     private async Task PreviewPhoto()
     {
-        if(bitmap is null||!IsVisible||showingOriginal)return;var generation=photoGeneration;
+        if(bitmap is null||showingOriginal||photoClosed)return;var generation=photoGeneration;
+        if(!IsVisible){QueuePhotoPreview();return;}
         if(!await previewGate.WaitAsync(0)){QueuePhotoPreview();return;}
         try
         {
@@ -102,6 +142,8 @@ public sealed partial class ToolEditor
             var settings=PhotoSettings(new((int)Value("Width",bitmap.PixelWidth),(int)Value("Height",bitmap.PixelHeight),(int)Value("Degrees",0)));
             var previewSource=bitmap.IsFrozen?bitmap:bitmap.CloneCurrentValue();previewSource.Freeze();
             var untouched=tool=="editImage"&&SizeUntouched;var inputs=collageInputs.ToArray();
+            CollageOptions? collagePreview=null;var layoutWidth=0;var layoutHeight=0;
+            if(tool=="createCollage"){var scaled=PreviewCollage(settings.Collage,inputs.Length);collagePreview=scaled.Options;layoutWidth=scaled.LayoutWidth;layoutHeight=scaled.LayoutHeight;}
             var result=await MainWindow.OnStaAsync(()=>
             {
                 PhotoWorkerGateForTest?.Invoke();
@@ -114,14 +156,22 @@ public sealed partial class ToolEditor
                     output=ImageEngine.TransformPhoto(adjusted,untouched?settings with{Width=null,Height=null}:settings with{Width=Math.Max(1,(int)Math.Round((settings.Width??previewSource.PixelWidth)*factor)),Height=Math.Max(1,(int)Math.Round((settings.Height??previewSource.PixelHeight)*factor))});
                 }
                 else if(tool=="frameImage")output=ImageEngine.Frame(previewSource,settings.Frame);
-                else output=ImageEngine.Collage(inputs,settings.Collage,CancellationToken.None);
+                else output=ImageEngine.Collage(inputs,collagePreview!,CancellationToken.None);
                 if(!output.IsFrozen)output.Freeze();return output;
             });
-            if(!IsVisible||showingOriginal||generation!=photoGeneration)return;SetPhotoPreview(result);
+            if(photoClosed||showingOriginal||generation!=photoGeneration)return;
+            if(tool=="createCollage"){photoStatus.Text="";SetPhotoPreview(result,layoutWidth,layoutHeight);}else SetPhotoPreview(result);
         }
-        catch(Exception error)when(error is ArgumentException or FormatException or InvalidDataException or ImageMagick.MagickException or IOException or NotSupportedException){ToolTip=error.Message;}finally{previewGate.Release();}
+        catch(Exception error)when(error is ArgumentException or FormatException or InvalidDataException or ImageMagick.MagickException or IOException or NotSupportedException or OperationCanceledException)
+        {
+            if(photoClosed||showingOriginal||generation!=photoGeneration)return;if(tool=="createCollage")photoStatus.Text=L10n.Text(error.Message);ToolTip=error.Message;
+        }finally{previewGate.Release();}
     }
-    private void SetPhotoPreview(BitmapSource result){drawing.Width=result.PixelWidth;drawing.Height=result.PixelHeight;if(drawing.Children[0] is Image image){image.Source=result;image.Width=result.PixelWidth;image.Height=result.PixelHeight;}}
+    private void SetPhotoPreview(BitmapSource result,double? layoutWidth=null,double? layoutHeight=null)
+    {
+        var width=layoutWidth??result.PixelWidth;var height=layoutHeight??result.PixelHeight;drawing.Width=width;drawing.Height=height;
+        if(drawing.Children[0] is Image image){image.Source=result;image.Width=width;image.Height=height;image.Stretch=Stretch.Fill;}
+    }
     private async Task DetectPhoto(bool text,bool faces)
     {
         if(bitmap is null)return;try{var regions=await NativePdf.DetectAsync(bitmap,text,faces);foreach(var r in regions){photoRegions.Add(r);var shape=new Rectangle{Width=r.Width,Height=r.Height,Fill=Brushes.Black,Stroke=Brushes.Gold,StrokeThickness=2,IsHitTestVisible=false};Canvas.SetLeft(shape,r.X);Canvas.SetTop(shape,r.Y);drawing.Children.Add(shape);}if(regions.Length==0)MessageBox.Show(this,L10n.Text("No matching regions were detected. You can still draw areas by hand."),L10n.Text("Redact Photo"));}catch(Exception error){MessageBox.Show(this,L10n.Text(error.Message),L10n.Text("Detection unavailable"));}

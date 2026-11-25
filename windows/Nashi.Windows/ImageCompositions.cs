@@ -1,10 +1,11 @@
+using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Media.Effects;
 namespace Nashi.Windows;
 public sealed record FrameOptions(int Padding=80,double CornerRadius=24,string Color="#FFFFFF",string Backdrop="solid",string GradientEnd="#FFD85C",string? BackgroundImage=null,double Blur=0,double Shadow=24,double ShadowOpacity=.25,int? Width=null,int? Height=null,double Scale=1,double X=.5,double Y=.5);
-public sealed record CollageOptions(string Layout="grid",int Columns=2,int Width=2048,int Height=2048,int Spacing=12,int Padding=16,double CornerRadius=0,string Color="#FFFFFF",bool Fill=true,int[]? Order=null);
+public sealed record CollageOptions(string Layout="grid",int Columns=2,int Width=2048,int Height=2048,int Spacing=12,int Padding=16,double CornerRadius=0,string Color="#FFFFFF",bool Fill=true,int[]? Order=null,string Labels="none",string LabelPosition="topLeft",int LabelStart=1,string LabelColor="#FFFFFF",string LabelBadge="#1C1C1C",double LabelScale=1,string LabelShape="circle");
 public static partial class ImageEngine
 {
     internal static byte[] PngBytes(BitmapSource source){var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(source));using var stream=new MemoryStream();encoder.Save(stream);return stream.ToArray();}
@@ -18,8 +19,28 @@ public static partial class ImageEngine
     internal static Brush ColorBrush(string color){try{return new SolidColorBrush((Color)ColorConverter.ConvertFromString(color));}catch(FormatException){throw new ArgumentException("Choose a hex background color, such as #FFFFFF or #00FFFFFF.");}}
     private static void Fitted(DrawingContext g,BitmapSource source,Rect area,bool fill,double radius=0)
     {
+        g.PushClip(new RectangleGeometry(area,radius,radius));g.DrawImage(source,Placed(source,area,fill));g.Pop();
+    }
+    private static Rect Placed(BitmapSource source,Rect area,bool fill)
+    {
         var scale=fill?Math.Max(area.Width/source.PixelWidth,area.Height/source.PixelHeight):Math.Min(area.Width/source.PixelWidth,area.Height/source.PixelHeight);var w=source.PixelWidth*scale;var h=source.PixelHeight*scale;
-        g.PushClip(new RectangleGeometry(area,radius,radius));g.DrawImage(source,new Rect(area.X+(area.Width-w)/2,area.Y+(area.Height-h)/2,w,h));g.Pop();
+        return new Rect(area.X+(area.Width-w)/2,area.Y+(area.Height-h)/2,w,h);
+    }
+    /// 1 is A, 26 is Z, 27 is AA. The first collage image uses LabelStart.
+    private static string? CollageMark(int index,CollageOptions o)
+    {
+        if(o.Labels is not ("numbers" or "letters"))return null;var n=Math.Clamp(o.LabelStart,1,9999)+index;if(n is <1 or >9999)return null;if(o.Labels=="numbers")return n.ToString(CultureInfo.InvariantCulture);
+        var text="";var x=n;while(x>0){x--;text=(char)('A'+x%26)+text;x/=26;}return text;
+    }
+    private static void DrawCollageMark(DrawingContext g,string text,Rect visible,CollageOptions o)
+    {
+        var side=Math.Min(visible.Width,visible.Height);var inset=Math.Max(4,side*0.045);var room=side-inset*2;if(room<=4)return;
+        var factor=Math.Clamp(double.IsFinite(o.LabelScale)?o.LabelScale:1,0.15,2.5);var font=Math.Min(Math.Max(12,side*0.10),side*0.46)*factor;var diameter=Math.Min(room,Math.Min(side*0.9,font*1.45));
+        var left=visible.X+inset;var right=visible.Right-inset-diameter;var top=visible.Y+inset;var bottom=visible.Bottom-inset-diameter;double x,y;
+        switch(o.LabelPosition){case "topRight":x=right;y=top;break;case "bottomLeft":x=left;y=bottom;break;case "bottomRight":x=right;y=bottom;break;case "center":x=visible.X+(visible.Width-diameter)/2;y=visible.Y+(visible.Height-diameter)/2;break;default:x=left;y=top;break;}
+        if(o.LabelShape!="none"){var plate=ColorBrush(o.LabelBadge);var bounds=new Rect(x,y,diameter,diameter);if(o.LabelShape=="square")g.DrawRectangle(plate,null,bounds);else if(o.LabelShape=="rounded")g.DrawRoundedRectangle(plate,null,bounds,diameter*0.28,diameter*0.28);else g.DrawEllipse(plate,null,new Point(x+diameter/2,y+diameter/2),diameter/2,diameter/2);}
+        var formatted=new FormattedText(text,CultureInfo.InvariantCulture,FlowDirection.LeftToRight,new Typeface(new FontFamily("Segoe UI"),FontStyles.Normal,FontWeights.Bold,FontStretches.Normal),Math.Max(1,font*0.62),ColorBrush(o.LabelColor),1);
+        g.DrawText(formatted,new Point(x+(diameter-formatted.Width)/2,y+(diameter-formatted.Height)/2));
     }
     internal static BitmapSource Frame(BitmapSource image,FrameOptions o)
     {
@@ -52,7 +73,9 @@ public static partial class ImageEngine
                     cell=n==0?new(o.Padding,o.Padding,largeWidth,availableHeight):new(o.Padding+largeWidth+o.Spacing,o.Padding+(n-1)*(smallHeight+o.Spacing),availableWidth-largeWidth-o.Spacing,smallHeight);
                 }
                 else cell=new(o.Padding+n%columns*(cw+o.Spacing),o.Padding+n/columns*(ch+o.Spacing),cw,ch);
-                Fitted(g,Load(inputs[order[n]]),cell,o.Fill,o.CornerRadius);
+                var source=Load(inputs[order[n]]);var radius=Math.Max(0,Math.Min(o.CornerRadius,Math.Min(cell.Width,cell.Height)/2));g.PushClip(new RectangleGeometry(cell,radius,radius));
+                try{var placed=Placed(source,cell,o.Fill);g.DrawImage(source,placed);var visible=Rect.Intersect(placed,cell);if(!visible.IsEmpty&&visible.Width>2&&visible.Height>2&&CollageMark(n,o) is string mark)DrawCollageMark(g,mark,visible,o);}
+                finally{g.Pop();}
             }
         });
     }

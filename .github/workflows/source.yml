@@ -21,6 +21,8 @@ jobs:
           persist-credentials: false
       - name: Check generated language tables
         run: python3 scripts/generate-localizations.py --check
+      - name: Collage layout regressions
+        run: node scripts/test-collage-layout.mjs
       - name: Owner merge authorization regressions
         run: python3 scripts/test-owner-auto-merge.py
       - name: Public source boundary

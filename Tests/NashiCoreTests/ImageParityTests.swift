@@ -118,6 +118,37 @@ final class ImageParityTests: XCTestCase {
         XCTAssertThrowsError(try ImageEngine.collageImage(images,settings:settings))
     }
 
+    func testCollageLabelsFollowTheVisibleImageAndAnchor() throws {
+        let images=try [canvas(60,30,color:"#0000FF"),canvas(60,30,color:"#0000FF")]
+        var settings=CollageOptions();settings.width=160;settings.height=80;settings.spacing=0;settings.outerPadding=0;settings.cornerRadius=0;settings.layout = .row;settings.imageFit = .fill;settings.backgroundColor="#FFFFFF"
+        settings.labels = .numbers;settings.labelAnchor = .topLeft;settings.labelStart=1;settings.labelColor="#FF0000";settings.labelBadge="#FF0000"
+        let topLeft=try ImageEngine.collageImage(images,settings:settings)
+        XCTAssertEqual(try pixel(topLeft,17,17),[255,0,0])
+        XCTAssertEqual(try pixel(topLeft,70,70),[0,0,255])
+        settings.labelAnchor = .bottomRight
+        let bottomRight=try ImageEngine.collageImage(images,settings:settings)
+        XCTAssertEqual(try pixel(bottomRight,63,63),[255,0,0])
+        XCTAssertEqual(try pixel(bottomRight,17,17),[0,0,255])
+        settings.imageFit = .fit;settings.labelAnchor = .topLeft
+        let fitted=try ImageEngine.collageImage(images,settings:settings)
+        XCTAssertEqual(try pixel(fitted,2,2),[255,255,255])
+        XCTAssertEqual(try pixel(fitted,13,33),[255,0,0])
+        settings.imageFit = .fill;settings.labelColor="#FFFFFF"
+        let numbers=try ImageEngine.collageImage(images,settings:settings)
+        settings.labels = .letters
+        let letters=try ImageEngine.collageImage(images,settings:settings)
+        XCTAssertGreaterThan(try difference(numbers,letters),0.02)
+        settings.labels = .numbers;settings.labelStart=2
+        let offset=try ImageEngine.collageImage(images,settings:settings)
+        XCTAssertGreaterThan(try difference(numbers,offset),0)
+        settings.labelStart=1;settings.labelColor="#FF0000";settings.labelBadge="#FF0000";settings.labelShape = .square
+        let square=try ImageEngine.collageImage(images,settings:settings)
+        XCTAssertEqual(try pixel(square,6,6),[255,0,0])
+        settings.labelShape = .circle;settings.labelScale=2
+        let larger=try ImageEngine.collageImage(images,settings:settings)
+        XCTAssertGreaterThan(try difference(topLeft,larger),0)
+    }
+
     func testSolidBlurAndPixelateRedactionsAffectOnlySelectedRegion() throws {
         let input=try canvas(128,128)
         var options=OperationOptions();options.redactions=[.init(x:32,y:32,width:64,height:64)]

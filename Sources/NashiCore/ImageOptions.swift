@@ -57,6 +57,9 @@ public struct ImageFrameOptions: Codable, Sendable {
 
 public enum CollageLayout: String, Codable, CaseIterable, Sendable { case grid, row, column, featured }
 public enum ImageFit: String, Codable, CaseIterable, Sendable { case fit, fill }
+public enum CollageLabelStyle: String, Codable, CaseIterable, Sendable { case none, numbers, letters }
+public enum CollageLabelAnchor: String, Codable, CaseIterable, Sendable { case topLeft, topRight, bottomLeft, bottomRight, center }
+public enum CollageLabelShape: String, Codable, CaseIterable, Sendable { case circle, rounded, square, none }
 public struct CollageOptions: Codable, Sendable {
     public var layout: CollageLayout = .grid
     public var columns: Int = 2
@@ -71,7 +74,64 @@ public struct CollageOptions: Codable, Sendable {
     public var imageFit: ImageFit = .fill
     /// An empty list retains selection order; a nonempty list must be a permutation.
     public var imageOrder: [Int] = []
+    /// Rising numbers or letters drawn on each image, in collage order.
+    public var labels: CollageLabelStyle = .none
+    public var labelAnchor: CollageLabelAnchor = .topLeft
+    /// 1 draws 1 or A on the first image. Later images count up from there.
+    public var labelStart: Int = 1
+    public var labelColor: String = "#FFFFFF"
+    public var labelBadge: String = "#1C1C1C"
+    /// 1 keeps the automatic size. The badge grows and shrinks with the text.
+    public var labelScale: Double = 1
+    public var labelShape: CollageLabelShape = .circle
     public init() {}
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        layout = try values.decodeIfPresent(CollageLayout.self, forKey: .layout) ?? layout
+        columns = try values.decodeIfPresent(Int.self, forKey: .columns) ?? columns
+        width = try values.decodeIfPresent(Int.self, forKey: .width) ?? width
+        height = try values.decodeIfPresent(Int.self, forKey: .height)
+        aspectRatio = try values.decodeIfPresent(Double.self, forKey: .aspectRatio) ?? aspectRatio
+        spacing = try values.decodeIfPresent(Int.self, forKey: .spacing) ?? spacing
+        outerPadding = try values.decodeIfPresent(Int.self, forKey: .outerPadding) ?? outerPadding
+        cornerRadius = try values.decodeIfPresent(Double.self, forKey: .cornerRadius) ?? cornerRadius
+        backgroundColor = try values.decodeIfPresent(String.self, forKey: .backgroundColor) ?? backgroundColor
+        backgroundImage = try values.decodeIfPresent(URL.self, forKey: .backgroundImage)
+        imageFit = try values.decodeIfPresent(ImageFit.self, forKey: .imageFit) ?? imageFit
+        imageOrder = try values.decodeIfPresent([Int].self, forKey: .imageOrder) ?? imageOrder
+        labels = try values.decodeIfPresent(CollageLabelStyle.self, forKey: .labels) ?? labels
+        labelAnchor = try values.decodeIfPresent(CollageLabelAnchor.self, forKey: .labelAnchor) ?? labelAnchor
+        labelStart = try values.decodeIfPresent(Int.self, forKey: .labelStart) ?? labelStart
+        labelColor = try values.decodeIfPresent(String.self, forKey: .labelColor) ?? labelColor
+        labelBadge = try values.decodeIfPresent(String.self, forKey: .labelBadge) ?? labelBadge
+        labelScale = try values.decodeIfPresent(Double.self, forKey: .labelScale) ?? labelScale
+        labelShape = try values.decodeIfPresent(CollageLabelShape.self, forKey: .labelShape) ?? labelShape
+    }
+    public func encode(to encoder: Encoder) throws {
+        var values = encoder.container(keyedBy: CodingKeys.self)
+        try values.encode(layout, forKey: .layout)
+        try values.encode(columns, forKey: .columns)
+        try values.encode(width, forKey: .width)
+        try values.encodeIfPresent(height, forKey: .height)
+        try values.encode(aspectRatio, forKey: .aspectRatio)
+        try values.encode(spacing, forKey: .spacing)
+        try values.encode(outerPadding, forKey: .outerPadding)
+        try values.encode(cornerRadius, forKey: .cornerRadius)
+        try values.encode(backgroundColor, forKey: .backgroundColor)
+        try values.encodeIfPresent(backgroundImage, forKey: .backgroundImage)
+        try values.encode(imageFit, forKey: .imageFit)
+        try values.encode(imageOrder, forKey: .imageOrder)
+        try values.encode(labels, forKey: .labels)
+        try values.encode(labelAnchor, forKey: .labelAnchor)
+        try values.encode(labelStart, forKey: .labelStart)
+        try values.encode(labelColor, forKey: .labelColor)
+        try values.encode(labelBadge, forKey: .labelBadge)
+        try values.encode(labelScale, forKey: .labelScale)
+        try values.encode(labelShape, forKey: .labelShape)
+    }
+    private enum CodingKeys: String, CodingKey {
+        case layout, columns, width, height, aspectRatio, spacing, outerPadding, cornerRadius, backgroundColor, backgroundImage, imageFit, imageOrder, labels, labelAnchor, labelStart, labelColor, labelBadge, labelScale, labelShape
+    }
 }
 
 public enum ImageAnnotationKind: String, Codable, CaseIterable, Sendable {
