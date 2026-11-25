@@ -35,6 +35,13 @@ internal static class InteractionChecks
         try
         {
             L10n.Language="en";Feedback.Enabled=false;window.Show();DesktopInput.Pump(500);
+            var trayShortcuts=window.TrayMenu().Items.OfType<MenuItem>().Single(item=>item.IsCheckable);var preferences=new PreferencesStore(library.DirectoryPath);var initial=preferences.Value.Enabled;
+            Verify(trayShortcuts.IsChecked==initial,"Tray shortcut item shows the saved setting");
+            trayShortcuts.IsChecked=!initial;trayShortcuts.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+            Verify(new PreferencesStore(library.DirectoryPath).Value.Enabled==!initial,"Tray shortcut item saves the setting");
+            var reopened=window.TrayMenu().Items.OfType<MenuItem>().Single(item=>item.IsCheckable);Verify(reopened.IsChecked==!initial,"Reopened tray menu shows the new setting");
+            reopened.IsChecked=initial;reopened.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+            Verify(new PreferencesStore(library.DirectoryPath).Value.Enabled==initial,"Tray shortcut item restores the setting");
             var open=Children(window).OfType<Button>().Single(button=>button.Content as string=="Open wheel");
             DesktopInput.Click(open);
             var wheel=Application.Current.Windows.OfType<WheelWindow>().FirstOrDefault(candidate=>candidate.Owner==window);
@@ -74,6 +81,8 @@ internal static class InteractionChecks
             Verify(wheel is not null,"Ctrl+Space did not open the selected files wheel");
             if(wheel is not null)
             {
+                foreach(var text in Children(wheel).OfType<Button>().SelectMany(button=>Children(button).OfType<TextBlock>()).Where(text=>text.TextWrapping==TextWrapping.Wrap))
+                    Verify(WheelPresentation.WordsFit(text.Text,text.FontSize,text.FontWeight,text.ActualWidth),"Wheel caption splits a word between letters: "+text.Text);
                 var convert=Caption(wheel,"Convert");Verify(convert is not null,"Ctrl+Space wheel has no Convert choice");
                 if(convert is not null)
                 {

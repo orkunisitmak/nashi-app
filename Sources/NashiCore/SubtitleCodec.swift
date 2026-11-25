@@ -1,4 +1,5 @@
 import Foundation
+import CoreFoundation
 
 enum SubtitleCodec {
     struct Cue: Equatable {
@@ -8,9 +9,9 @@ enum SubtitleCodec {
         var settings: String = ""
     }
 
-    static func convert(_ input: URL, to format: String, token: CancellationToken) throws -> String {
+    static func convert(_ input: URL, to format: String, token: CancellationToken, inputEncoding: String? = nil) throws -> String {
         try token.check()
-        let source = try DocumentText.read(input)
+        let source = try DocumentText.read(input, encoding: inputEncoding)
         // WebVTT requires cues in start-time order; the stable sort keeps the
         // file order of cues that start together.
         let cues = try parse(source).sorted { $0.start < $1.start }
@@ -82,14 +83,61 @@ enum SubtitleCodec {
         let hour = value / 3_600_000, min = value / 60_000 % 60, sec = value / 1000 % 60, ms = value % 1000
         return String(format: "%02lld:%02lld:%02lld%@%03lld", hour, min, sec, vtt ? "." : ",", ms)
     }
-    /// WebVTT reads a bare "<" as the start of a tag and ends a cue at "-->",
-    /// so SRT text keeps its markup tags and escapes everything else.
+    /// SRT files from VLC, mpv and Aegisub move a caption with the SSA-style {\an1} to {\an9} override, which players hide.
+    static func withoutPositionTags(_ text: String) -> String {
+        // One or more tags alone on a line leaves a blank line, which would end a WebVTT cue, so that line goes with it.
+        // A kept line's break is written only once another kept line follows, so tag lines at the end take the break
+        // before them. One pass over the lines keeps very long runs of tag lines from taking quadratic time.
+        let lines = text.unicodeScalars.split(separator: "\n", omittingEmptySubsequences: false)
+        var kept = "", lineBreak = ""
+        for (index, line) in lines.enumerated() {
+            let crlf = index < lines.count - 1 && line.last == "\r"
+            let content = crlf ? line.dropLast() : line
+            guard !isPositionTagLine(content) else { continue }
+            kept += lineBreak
+            kept.unicodeScalars.append(contentsOf: content)
+            lineBreak = crlf ? "\r\n" : "\n"
+        }
+        return kept.replacingOccurrences(of: #"\{\\an[1-9]\}"#, with: "", options: .regularExpression)
+    }
+    private static func isPositionTagLine(_ line: Substring.UnicodeScalarView) -> Bool {
+        var rest = line, sawTag = false
+        while let scalar = rest.first {
+            if scalar == "\t" || scalar.properties.generalCategory == .spaceSeparator {
+                rest.removeFirst()
+            } else if rest.starts(with: "{\\an".unicodeScalars), let digit = rest.dropFirst(4).first, ("1"..."9").contains(digit),
+                      rest.dropFirst(5).first == "}" {
+                rest.removeFirst(6); sawTag = true
+            } else {
+                return false
+            }
+        }
+        return sawTag
+    }
+    /// What follows the "<" of a real cue tag or timestamp: b/i/u/c/ruby/rt take classes only, v/lang take an
+    /// annotation and font takes attributes. "5 < 6 and 7 > 3" and "x <b + 1 and y > 3" are text.
+    private static let cueTag = #"/?(?:(?:b|i|u|c|ruby|rt)(?:\.[^<>\s]*)?|(?:v|lang)(?:\.[^<>\s]*)?(?:[ \t\f][^<>\n]*)?|font(?:[ \t\f][^<>\n]*)?)>|\d{2,}:\d{2}(?::\d{2})?\.\d{3}>"#
+    private static let cueTagName = try! NSRegularExpression(pattern: #"<(/?)(b|i|u|c|v|lang|ruby|rt|font)(?=[ \t\f.>])"#, options: .caseInsensitive)
+    /// WebVTT reads a bare "<" as the start of a tag, a bare "&" as the start of a character reference and
+    /// ends a cue at "-->", so only complete cue tags and references are kept and everything else is escaped.
     private static func vttText(_ text: String) -> String {
-        text.replacingOccurrences(of: #"<(?!/?[A-Za-z][^<>]*>)"#, with: "&lt;", options: .regularExpression)
-            .replacingOccurrences(of: "-->", with: "--&gt;")
+        let escaped = withoutPositionTags(text)
+            .replacingOccurrences(of: #"&(?!(?:[A-Za-z][A-Za-z0-9]*|#\d+|#[xX][0-9A-Fa-f]+);)"#, with: "&amp;", options: .regularExpression)
+            .replacingOccurrences(of: "(?i)<(?!" + cueTag + ")", with: "&lt;", options: .regularExpression)
+        // WebVTT tag names are case-sensitive, so <I> from SRT becomes <i>. Every "<" left is a cue tag's.
+        let ns = escaped as NSString
+        var result = "", end = 0
+        for match in cueTagName.matches(in: escaped, range: NSRange(location: 0, length: ns.length)) {
+            result += ns.substring(with: NSRange(location: end, length: match.range.location - end)) + ns.substring(with: match.range).lowercased()
+            end = match.range.upperBound
+        }
+        return (result + ns.substring(from: end)).replacingOccurrences(of: "-->", with: "--&gt;")
     }
     private static func srtText(_ text: String) -> String {
-        let withoutTags = text.replacingOccurrences(of: #"</?(?:c(?:\.[^ >]*)?|v|lang|ruby|rt)(?:\s+[^>]*)?>|<\d{2}:\d{2}[^>]*>"#, with: "", options: .regularExpression)
+        // WebVTT-only tags go, with or without classes; text such as "x <c + 1 and y > 3" stays.
+        let withoutTags = text.replacingOccurrences(of: #"(?i)<(?:/?(?:(?:c|ruby|rt)(?:\.[^<>\s]*)?|(?:v|lang)(?:\.[^<>\s]*)?(?:[ \t\f][^<>\n]*)?)>|\d{2,}:\d{2}(?::\d{2})?\.\d{3}>)"#, with: "", options: .regularExpression)
+            // SRT has no classes, so <b.loud> keeps its formatting as <b>.
+            .replacingOccurrences(of: #"(?i)<(/?[biu])\.[^<>\s]*>"#, with: "<$1>", options: .regularExpression)
         // WebVTT preserves no-break spaces and Unicode direction marks.
         let webVTT = withoutTags.replacingOccurrences(of: "&nbsp;", with: "\u{00A0}")
             .replacingOccurrences(of: "&lrm;", with: "\u{200E}")
@@ -97,15 +145,32 @@ enum SubtitleCodec {
         return DocumentText.decodeEntities(webVTT, html: true)
     }
     private static func plainText(_ text: String) -> String {
-        let withoutTags = text.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+        // Only real cue tags are markup. "5 < 6 and 7 > 3" is text and must survive export.
+        let withoutTags = withoutPositionTags(text).replacingOccurrences(of: "(?i)<(?:" + cueTag + ")", with: "", options: .regularExpression)
         // Direction marks keep right-to-left lines readable in the exported text too.
         return DocumentText.decodeEntities(withoutTags.replacingOccurrences(of: "&lrm;", with: "\u{200E}").replacingOccurrences(of: "&rlm;", with: "\u{200F}"), html: true)
     }
 }
 
 enum DocumentText {
-    static func read(_ url: URL) throws -> String {
+    /// `encoding` names the source encoding the user chose; nil or "auto"
+    /// keeps the automatic detection below.
+    static func read(_ url: URL, encoding name: String? = nil) throws -> String {
         let data = try Data(contentsOf: url)
+        if let name, name != "auto" {
+            let encoding: String.Encoding
+            switch name {
+            case "utf-8": encoding = .utf8
+            case "windows-1252": encoding = .windowsCP1252
+            case "windows-1254": encoding = String.Encoding(rawValue: CFStringConvertEncodingToNSStringEncoding(CFStringEncoding(CFStringEncodings.windowsLatin5.rawValue)))
+            case "mac-roman": encoding = .macOSRoman
+            default: throw NashiError.invalidInput("Unsupported input text encoding: \(name). Use auto, utf-8, windows-1252, windows-1254, or mac-roman.")
+            }
+            guard let text = String(data: data, encoding: encoding) else {
+                throw NashiError.invalidInput("The text encoding of \(url.lastPathComponent) could not be read.")
+            }
+            return text
+        }
         // The UTF-32LE byte order mark begins with the UTF-16LE one.
         if data.starts(with: [0xff, 0xfe, 0, 0]) || data.starts(with: [0, 0, 0xfe, 0xff]) {
             guard let text = String(data: data, encoding: .utf32) else {

@@ -10,6 +10,8 @@ Library and preferences live in `%LOCALAPPDATA%/Nashi`, outside the portable app
 
 While dragging in Explorer or another application, **Ctrl** opens tools, **Shift** conversion and **Alt** file actions. Settings can change the three chords. **Ctrl+Shift+D** opens a copied public media link. The app can remain in the system tray.
 
+On Windows, Settings → General provides an optional comma-separated list of foreground executable names (for example, `Photoshop, CalculatorApp`). In those apps, Nashi temporarily pauses its global drag wheels, Ctrl+Shift+D hotkey, and Shift/Alt title-bar arrangement wheel; it restores them when switching away. Names match entire process names, not window titles. For UWP `ApplicationFrameWindow` hosts, Nashi checks their `Windows.UI.Core.CoreWindow` child process. If another app holds Ctrl+Shift+D during restoration, Nashi retries registration every two seconds.
+
 **Ctrl+O** chooses files; **Ctrl+V** imports files/text/images/links outside text fields; **Ctrl+1/2** switches Home/Library; **Ctrl+F** searches; **Ctrl+U** checks updates. **Ctrl+Space** opens the selected files' wheel; choose **Convert** to select an output format. Arrows/Tab choose an item, Enter opens it and Escape closes it. In the Home file list, **Delete** removes the selected entries from Nashi without deleting the original files.
 
 Media editors use **Space** for play/pause, **Left/Right** for one-second seeking, **Shift+Left/Right** for frame steps, **I/O** for range marks and **Shift+Space** to play the selected range. Crop supports drag, Shift ratio lock, selection move/resize, aspect presets and Enter save. Annotation supports Select/Move, Delete and Ctrl+Z. Normal text-field editing is preserved.

@@ -194,11 +194,13 @@ struct WebDownloadView:View {
                 else if !model.completed.isEmpty { Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting(model.completed) } }
                 Spacer()
                 if !model.completed.isEmpty { Button("Use in Nashi") { model.onUseFiles?() }.buttonStyle(NashiButtonStyle(.primary)).disabled(state.working) }
-                else if let info=model.info { Button(!info.photos.isEmpty ? "Download \(model.selectedPhotos.count) \(model.selectedPhotos.count==1 ? "photo":"photos")":model.mode == .audioMP3 ? "Download MP3":info.kind == .image ? "Download image":"Download") { model.download() }.buttonStyle(NashiButtonStyle(.primary)).disabled(model.downloading || state.working || (!info.photos.isEmpty && model.selectedPhotos.isEmpty)) }
+                else if let info=model.info { Button(!info.photos.isEmpty ? photoDownloadTitle:model.mode == .audioMP3 ? "Download MP3":info.kind == .image ? "Download image":"Download") { model.download() }.buttonStyle(NashiButtonStyle(.primary)).disabled(model.downloading || state.working || (!info.photos.isEmpty && model.selectedPhotos.isEmpty)) }
                 else { Button("Check link") { model.inspect() }.buttonStyle(NashiButtonStyle(.primary)).disabled(model.linkText.isEmpty || model.inspecting) }
             }.padding(20)
         }.onChange(of:model.mode) { _ in model.configurationChanged() }.onChange(of:model.maximumHeight) { _ in model.configurationChanged() }.frame(minWidth:620,minHeight:520).background(NashiPalette.canvas).tint(.nashi).buttonStyle(NashiButtonStyle(.secondary,compact:true))
     }
+    /// One key per count form: French uses the singular for 0 and 1 ("Télécharger 1 photo").
+    var photoDownloadTitle:LocalizedStringKey { model.selectedPhotos.count==0 ? "Download 0 photos":model.selectedPhotos.count==1 ? "Download 1 photo":"Download \(model.selectedPhotos.count) photos" }
     @AppStorage("appLanguage") private var language="en"
     func details(_ info:WebMediaInfo)->String {
         var details=[info.site,AppLocalization.text(info.kind.rawValue.capitalized,language:language)]

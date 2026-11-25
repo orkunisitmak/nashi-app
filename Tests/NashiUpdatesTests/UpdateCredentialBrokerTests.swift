@@ -31,6 +31,27 @@ private final class SyntheticBrokerTransport: UpdateCredentialBrokerTransport, @
     func invalidate() { event("invalidate") }
 }
 
+/// Like the real broker, every connection shares one serial queue and work already sent
+/// still finishes after the client gives up. The test holds the queue to order completion.
+private final class QueuedBrokerTransport: UpdateCredentialBrokerTransport, @unchecked Sendable {
+    private let lock = NSLock(), queue = DispatchQueue(label: "synthetic-broker-queue"), gate = DispatchGroup()
+    private var items: [String: String] = [:]
+    var tokens: [String: String] { lock.lock(); defer { lock.unlock() }; return items }
+    var onFailure: (@Sendable () -> Void)?
+    func hold() { gate.enter() }
+    func releaseAndDrain() { gate.leave(); queue.sync {} }
+    private func commit(_ token: String?, _ repository: String, _ reply: @escaping @Sendable (Bool) -> Void) {
+        queue.async { [self] in gate.wait(); lock.lock(); items[repository] = token; lock.unlock(); reply(true) }
+    }
+    func setRequirement(_ requirement: String) {}
+    func resume() {}
+    func handshake(_ reply: @escaping @Sendable (Bool) -> Void) { reply(true) }
+    func read(repository: String, allowInteraction: Bool, reply: @escaping @Sendable (String?, Bool) -> Void) { reply(tokens[repository], true) }
+    func write(_ token: String, repository: String, reply: @escaping @Sendable (Bool) -> Void) { commit(token, repository, reply) }
+    func remove(repository: String, _ reply: @escaping @Sendable (Bool) -> Void) { commit(nil, repository, reply) }
+    func invalidate() {}
+}
+
 final class UpdateCredentialBrokerTests: XCTestCase {
     private func brokerInfo() -> [String: Any] {
         ["NashiCredentialBrokerService": UpdateCredentialBrokerConfiguration.service,
@@ -110,6 +131,25 @@ final class UpdateCredentialBrokerTests: XCTestCase {
         try await MainActor.run { XCTAssertThrowsError(try deniedClient.readToken(repository: try GitHubRepository("example/updater-test"))) }
     }
 
+    func testTimedOutWriteForNewRepositoryLeavesNoTokenWhenBrokerFinishesLate() async throws {
+        let config = try brokerConfiguration(), broker = QueuedBrokerTransport()
+        let client = UpdateCredentialBrokerClient(timeout: 0.05, configuration: { config }, validate: { _ in }, connect: { _ in broker })
+        let suite = "NashiBrokerTimeoutTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let updater = await MainActor.run { AppUpdater(credentials: BrokerUpdateCredentialStore(client: client), defaults: defaults, validateAccess: { _, _ in }) }
+        try await updater.connectGitHub(repository: "example/private", token: "accepted_fixture", requiresToken: true)
+        broker.hold()
+        do {
+            try await updater.connectGitHub(repository: "example/new", token: "late_fixture", requiresToken: true)
+            XCTFail("A broker that does not answer in time should fail the switch")
+        } catch { XCTAssertEqual(error as? UpdateCredentialBrokerError, .timeout) }
+        // The held write lands only after the client gave up, as with a stalled broker.
+        broker.releaseAndDrain()
+        await MainActor.run { XCTAssertEqual(updater.repository?.slug, "example/private") }
+        XCTAssertEqual(broker.tokens, ["example/private": "accepted_fixture"], "No token may remain for a repository that was not connected")
+    }
+
     func testFrozenBundleHashIncludesModesAndResourcesAndRejectsSymlinks() throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("synthetic-broker-seal-\(UUID())")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -126,6 +166,22 @@ final class UpdateCredentialBrokerTests: XCTestCase {
         XCTAssertNotEqual(try UpdateCredentialBrokerClient.bundleHash(folder), initial)
         try FileManager.default.createSymbolicLink(at: folder.appendingPathComponent("alias"), withDestinationURL: binary)
         XCTAssertThrowsError(try UpdateCredentialBrokerClient.bundleHash(folder))
+    }
+
+    // F702: content inside a directory the seal cannot read must fail closed, not be skipped.
+    func testFrozenBundleHashFailsClosedOnUnreadableDirectory() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("synthetic-broker-seal-\(UUID())")
+        let hidden = folder.appendingPathComponent("Hidden", isDirectory: true)
+        try FileManager.default.createDirectory(at: hidden, withIntermediateDirectories: true)
+        defer {
+            try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: hidden.path)
+            try? FileManager.default.removeItem(at: folder)
+        }
+        try Data("synthetic binary".utf8).write(to: folder.appendingPathComponent("binary"))
+        try Data("unsealed payload".utf8).write(to: hidden.appendingPathComponent("payload"))
+        XCTAssertNoThrow(try UpdateCredentialBrokerClient.bundleHash(folder))
+        try FileManager.default.setAttributes([.posixPermissions: 0o000], ofItemAtPath: hidden.path)
+        XCTAssertThrowsError(try UpdateCredentialBrokerClient.bundleHash(folder)) { XCTAssertEqual($0 as? UpdateCredentialBrokerError, .identity) }
     }
 
 }

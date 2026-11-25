@@ -20,6 +20,30 @@ internal static class ParityChecks
             check(runs[0].GetProperty("character").GetProperty("italic").GetBoolean()&&runs[2].GetProperty("character").GetProperty("backgroundColor").GetProperty("b").GetDouble()==0,"Character style inheritance or direct highlighting was lost");
         }
         check(FeatureCatalog.Conversions.Count==46&&FeatureCatalog.ToolNames.Count==27,"Mac/Windows catalog count diverged");
+        if (OperatingSystem.IsWindows())
+        {
+            var reserved = Path.Combine(root, "Reserved output names"); Directory.CreateDirectory(reserved);
+            var con = SafePaths.Unique(reserved, "CON.txt");
+            var aux = SafePaths.Unique(reserved, "AUX.jpg");
+            check(Path.GetFileName(con) == "CON 2.txt" && Path.GetFileName(aux) == "AUX 2.jpg",
+                "Windows reserved device names were offered as output files.");
+            File.WriteAllText(con, "synthetic"); File.WriteAllText(aux, "synthetic");
+            check(SafePaths.Unique(reserved, "CON.txt") == Path.Combine(reserved, "CON 3.txt"),
+                "Reserved output name fallback overwrote a previous export.");
+            var multiCon = SafePaths.Unique(reserved, "CON.tar.gz");
+            var multiAux = SafePaths.Unique(reserved, "AUX.backup.jpg");
+            check(Path.GetFileName(multiCon) == "CON 2.tar.gz" &&
+                  Path.GetFileName(multiAux) == "AUX 2.backup.jpg",
+                "Multi-dot reserved output names did not escape the DOS device prefix.");
+            File.WriteAllText(multiCon, "synthetic"); File.WriteAllText(multiAux, "synthetic");
+            check(File.Exists(multiCon) && File.Exists(multiAux) &&
+                  SafePaths.Unique(reserved, "CON.tar.gz") == Path.Combine(reserved, "CON 3.tar.gz"),
+                "Multi-dot reserved output names could not be written or numbered again.");
+            var ordinary = SafePaths.Unique(reserved, "report.final.txt");
+            File.WriteAllText(ordinary, "synthetic");
+            check(SafePaths.Unique(reserved, "report.final.txt") == Path.Combine(reserved, "report.final 2.txt"),
+                "Safe non-device multi-dot output numbering changed.");
+        }
         check(FeatureCatalog.Formats(["a.htm","b.html"]).SequenceEqual(new[]{"pdf"})&&FeatureCatalog.Tools(["a.html"]).Length==0,"HTML inputs lost their PDF route");
         check(FeatureCatalog.Formats(["a.jpeg","b.png"]).Contains("webp"),"Mixed image conversion intersection failed");
         check(!FeatureCatalog.Formats(["a.png","b.mp4"]).Any(),"Unrelated inputs offered an invalid format");
@@ -75,6 +99,27 @@ internal static class ParityChecks
         OfficeDocuments.PdfArea? asked=null;var mixedHtml=OfficeDocuments.PdfHtml(mixedPdf,"",(_,area)=>{asked=area;return area is null?null:[4,5,6];},out var mixedPages);
         check(mixedPages.SequenceEqual(new[]{1})&&asked is {Left:72,Width:200,Height:100} found&&Math.Abs(found.Top-(842-600))<.5&&mixedHtml.Contains("Caption")&&mixedHtml.Contains("data:image/png;base64,BAUG"),"An image PdfPig cannot decode vanished from a page with text: "+asked);
         var large=new byte[20_000_001];check(OfficeDocuments.PdfHtml(mixedPdf,"",(_,area)=>area is null?null:large,out _).Contains(Convert.ToBase64String(large)),"A large render of an image area was dropped although whole-page renders keep it");
+        // Office's HTML import takes a picture's height from its pixels whatever height:auto says, which stretched a square
+        // 60 pt logo to 60 × 137 pt. Pictures carry both sizes as the PDF shows them, scaled into the page's column.
+        check(mixedHtml.Contains("style=\"width:200pt;height:100pt\"")&&OfficeDocuments.PictureStyle(60,60)=="width:60pt;height:60pt"&&OfficeDocuments.PictureStyle(1020,700)=="width:510pt;height:350pt"&&OfficeDocuments.PictureStyle(100,1470)=="width:50pt;height:735pt"&&OfficeDocuments.PictureStyle(0,100)=="max-width:100%;height:auto","A PDF picture lost its proportions or overflowed the page in Office");
+        // PdfPig keeps a turned picture's pixels unturned and measures it along its own sides. A 2 × 1 picture turned a quarter covers
+        // 100 × 200 pt: the render of that area shows it as the page does, and without a render it stays 200 × 100 rather than stretched.
+        string ImagePdf(string name,string placement,Action<PdfSharp.Pdf.PdfDocument>? edit=null)=>Pdf(name,"q "+placement+" cm /Im1 Do Q",edit,(pdf,resources)=>{var image=new PdfSharp.Pdf.PdfDictionary(pdf);image.Elements.SetName("/Type","/XObject");image.Elements.SetName("/Subtype","/Image");image.Elements.SetInteger("/Width",2);image.Elements.SetInteger("/Height",1);image.Elements.SetName("/ColorSpace","/DeviceRGB");image.Elements.SetInteger("/BitsPerComponent",8);image.CreateStream([255,0,0,0,0,255]);pdf.Internals.AddObject(image);var objects=new PdfSharp.Pdf.PdfDictionary(pdf);objects.Elements.SetReference("/Im1",image);resources.Elements["/XObject"]=objects;});
+        var turnedPdf=ImagePdf("Turned image.pdf","0 200 -100 0 372 400");
+        OfficeDocuments.PdfArea? turnedArea=null;var turnedHtml=OfficeDocuments.PdfHtml(turnedPdf,"",(_,area)=>{turnedArea=area;return area is null?null:[7,8,9];},out var turnedPages);
+        check(turnedPages.SequenceEqual(new[]{1})&&turnedArea is {} turned&&Math.Abs(turned.Left-272)<.5&&Math.Abs(turned.Top-242)<.5&&Math.Abs(turned.Width-100)<.5&&Math.Abs(turned.Height-200)<.5&&turnedHtml.Contains("style=\"width:100pt;height:200pt\" src=\"data:image/png;base64,BwgJ\"")&&OfficeDocuments.PdfHtml(turnedPdf,"",null,out _).Contains("style=\"width:200pt;height:100pt\""),"A turned PDF picture came out stretched or unturned in Office: "+turnedArea);
+        // Past the page's top-left corner only the part on the page is rendered, at that part's size.
+        OfficeDocuments.PdfArea? edgeArea=null;var edgeHtml=OfficeDocuments.PdfHtml(ImagePdf("Turned image at the edge.pdf","0 200 -100 0 50 700"),"",(_,area)=>{edgeArea=area;return area is null?null:[7,8,9];},out _);
+        check(edgeArea is {} edge&&Math.Abs(edge.Left)<.5&&Math.Abs(edge.Top)<.5&&Math.Abs(edge.Width-50)<.5&&Math.Abs(edge.Height-142)<.5&&edgeHtml.Contains("style=\"width:50pt;height:142pt\""),"A PDF picture past the page edge was rendered with what lies beside it: "+edgeArea);
+        // A picture with no part on the page is left out and asks for no render, turned or not. PdfPig places pictures on the page as
+        // shown, so this holds on a page turned a quarter and outside a crop box that starts away from the origin, too.
+        void Turn(PdfSharp.Pdf.PdfDocument pdf)=>pdf.Pages[0].Elements["/Rotate"]=new PdfSharp.Pdf.PdfInteger(90);
+        void Crop(PdfSharp.Pdf.PdfDocument pdf)=>pdf.Pages[0].Elements["/CropBox"]=new PdfSharp.Pdf.PdfArray(pdf,new PdfSharp.Pdf.PdfInteger(50),new PdfSharp.Pdf.PdfInteger(50),new PdfSharp.Pdf.PdfInteger(595),new PdfSharp.Pdf.PdfInteger(842));
+        var offAreas=new List<OfficeDocuments.PdfArea>();string[] offHtml=[OfficeDocuments.PdfHtml(ImagePdf("Turned image off the page.pdf","0 200 -100 0 -50 500"),"",(_,area)=>{if(area is {} a)offAreas.Add(a);return area is null?null:[7,8,9];},out _),OfficeDocuments.PdfHtml(ImagePdf("Image off a turned page.pdf","200 0 0 100 -300 500",Turn),"",null,out _),OfficeDocuments.PdfHtml(ImagePdf("Image outside the crop box.pdf","50 0 0 25 10 10",Crop),"",null,out _)];
+        check(offAreas.Count==0&&offHtml.All(converted=>!converted.Contains("<img"))&&OfficeDocuments.PdfHtml(ImagePdf("Image on a turned page.pdf","200 0 0 100 72 500",Turn),"",null,out _).Contains("<img")&&OfficeDocuments.PdfHtml(ImagePdf("Image inside the crop box.pdf","200 0 0 100 72 500",Crop),"",null,out _).Contains("<img"),"A PDF picture off the page came out in Office, or one on the page was left out: "+offAreas.Count);
+        // A whole-page render takes its proportions from the render, so a page shown turned comes out landscape.
+        byte[] landscape=[0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,0,0,0,13,(byte)'I',(byte)'H',(byte)'D',(byte)'R',0,0,0,2,0,0,0,1,8,2,0,0,0];
+        check(OfficeDocuments.PngSize(landscape)==(2,1)&&OfficeDocuments.PngSize([1,2,3]) is null&&OfficeDocuments.PdfHtml(vectorPdf,"",(_,area)=>area is null?landscape:null,out _).Contains("style=\"width:510pt;height:255pt\""),"A whole-page render lost the proportions of the rendered page");
         PdfSharp.Pdf.PdfDictionary Form(PdfSharp.Pdf.PdfDocument pdf,bool field){var form=new PdfSharp.Pdf.PdfDictionary(pdf);var fields=new PdfSharp.Pdf.PdfArray(pdf);if(field){var item=new PdfSharp.Pdf.PdfDictionary(pdf);item.Elements.SetString("/T","Name");pdf.Internals.AddObject(item);fields.Elements.Add(item.Reference!);}form.Elements["/Fields"]=fields;pdf.Internals.AddObject(form);return form;}
         var formPdf=Pdf("Form.pdf","BT /F1 24 Tf 72 700 Td (Form) Tj ET",pdf=>pdf.Internals.Catalog.Elements.SetReference("/AcroForm",Form(pdf,true)));
         var emptyFormPdf=Pdf("Empty form.pdf","BT /F1 24 Tf 72 700 Td (No fields) Tj ET",pdf=>pdf.Internals.Catalog.Elements.SetReference("/AcroForm",Form(pdf,false)));
@@ -82,6 +127,32 @@ internal static class ParityChecks
         var attachmentPdf=Pdf("Attachment.pdf","BT /F1 24 Tf 72 700 Td (Files) Tj ET",pdf=>{var names=new PdfSharp.Pdf.PdfDictionary(pdf);names.Elements["/EmbeddedFiles"]=new PdfSharp.Pdf.PdfDictionary(pdf);Catalog(pdf,"/Names",names);});
         var taggedPdf=Pdf("Tagged.pdf","BT /F1 24 Tf 72 700 Td (Tags) Tj ET",pdf=>Catalog(pdf,"/StructTreeRoot",new PdfSharp.Pdf.PdfDictionary(pdf)));
         bool Refused(Func<IReadOnlyList<string>> run){try{run();return false;}catch(InvalidDataException error){return error.Message.EndsWith("No copy was exported.",StringComparison.Ordinal);}}
+        // A signed PDF is refused by name, as on macOS: a signature field with its value, and a certification signature reached only through /Perms.
+        PdfSharp.Pdf.PdfDictionary Signature(PdfSharp.Pdf.PdfDocument pdf,bool indirect=true,bool typed=true){var signature=new PdfSharp.Pdf.PdfDictionary(pdf);if(typed)signature.Elements.SetName("/Type","/Sig");signature.Elements["/ByteRange"]=new PdfSharp.Pdf.PdfArray(pdf,new PdfSharp.Pdf.PdfInteger(0),new PdfSharp.Pdf.PdfInteger(10),new PdfSharp.Pdf.PdfInteger(20),new PdfSharp.Pdf.PdfInteger(30));if(indirect)pdf.Internals.AddObject(signature);return signature;}
+        var signedPdf=Pdf("Signed.pdf","BT /F1 24 Tf 72 700 Td (Signed) Tj ET",pdf=>{var form=Form(pdf,true);var field=(PdfSharp.Pdf.PdfDictionary)((PdfSharp.Pdf.Advanced.PdfReference)form.Elements.GetArray("/Fields")!.Elements[0]).Value;field.Elements.SetName("/FT","/Sig");field.Elements.SetReference("/V",Signature(pdf));pdf.Internals.Catalog.Elements.SetReference("/AcroForm",form);});
+        var certifiedPdf=Pdf("Certified.pdf","BT /F1 24 Tf 72 700 Td (Certified) Tj ET",pdf=>{var perms=new PdfSharp.Pdf.PdfDictionary(pdf);perms.Elements.SetReference("/DocMDP",Signature(pdf));Catalog(pdf,"/Perms",perms);});
+        // The same certification signature written in place inside /Perms rather than as its own object.
+        var directCertifiedPdf=Pdf("Certified in place.pdf","BT /F1 24 Tf 72 700 Td (Certified) Tj ET",pdf=>{var perms=new PdfSharp.Pdf.PdfDictionary(pdf);perms.Elements["/DocMDP"]=Signature(pdf,false);Catalog(pdf,"/Perms",perms);});
+        // /Type is optional in a signature dictionary; /ByteRange alone must be enough.
+        var untypedCertifiedPdf=Pdf("Certified untyped.pdf","BT /F1 24 Tf 72 700 Td (Certified) Tj ET",pdf=>{var perms=new PdfSharp.Pdf.PdfDictionary(pdf);perms.Elements.SetReference("/DocMDP",Signature(pdf,typed:false));Catalog(pdf,"/Perms",perms);});
+        // A signature field nobody has signed yet is a form field, not a signature.
+        var unsignedFieldPdf=Pdf("Unsigned field.pdf","BT /F1 24 Tf 72 700 Td (Sign here) Tj ET",pdf=>{var form=Form(pdf,true);((PdfSharp.Pdf.PdfDictionary)((PdfSharp.Pdf.Advanced.PdfReference)form.Elements.GetArray("/Fields")!.Elements[0]).Value).Elements.SetName("/FT","/Sig");pdf.Internals.Catalog.Elements.SetReference("/AcroForm",form);});
+        // An incremental update that removed a signature leaves its dictionary in the file, unreachable from the catalog.
+        var unsignedLaterPdf=Path.Combine(root,"Signature removed later.pdf");
+        {
+            var original=File.ReadAllBytes(textPdf);var text=Encoding.Latin1.GetString(original);
+            var root0=System.Text.RegularExpressions.Regex.Match(text,@"/Root\s+(\d+\s+\d+)\s+R").Groups[1].Value;var size=int.Parse(System.Text.RegularExpressions.Regex.Matches(text,@"/Size\s+(\d+)").Last().Groups[1].Value);
+            var previous=System.Text.RegularExpressions.Regex.Matches(text,@"startxref\s+(\d+)").Last().Groups[1].Value;
+            var objectAt=original.Length;var update=$"\n{size} 0 obj\n<< /Type /Sig /ByteRange [0 10 20 30] >>\nendobj\n";var xrefAt=objectAt+update.Length;
+            update+=$"xref\n{size} 1\n{(objectAt+1).ToString("D10")} 00000 n \ntrailer\n<< /Size {size+1} /Root {root0} R /Prev {previous} >>\nstartxref\n{xrefAt}\n%%EOF\n";
+            File.WriteAllBytes(unsignedLaterPdf,[..original,..Encoding.Latin1.GetBytes(update)]);
+        }
+        const string signedMessage="This PDF contains digital signatures. This page operation cannot safely preserve that feature. No copy was exported.";
+        bool RefusedSigned(Func<IReadOnlyList<string>> run){try{run();return false;}catch(InvalidDataException error){return error.Message==signedMessage;}}
+        check(Refused(()=>DocumentEngine.Pdf("mergePDFs",[textPdf,unsignedFieldPdf],root))&&!RefusedSigned(()=>DocumentEngine.Pdf("mergePDFs",[textPdf,unsignedFieldPdf],root)),"An unsigned signature field was not refused as a form field");
+        check(DocumentEngine.Pdf("mergePDFs",[textPdf,unsignedLaterPdf],root).Count==1&&DocumentEngine.Pdf("splitPDF",[unsignedLaterPdf],root).Count==1,"A signature an incremental update left unreachable still refused the PDF");
+        check(new[]{signedPdf,certifiedPdf,directCertifiedPdf,untypedCertifiedPdf}.All(pdf=>RefusedSigned(()=>DocumentEngine.Pdf("mergePDFs",[textPdf,pdf],root))&&RefusedSigned(()=>DocumentEngine.Pdf("splitPDF",[pdf],root))&&RefusedSigned(()=>DocumentEngine.Pdf("organizePDF",[pdf],root,[1]))),"A signed PDF was not refused by name when merging, splitting or reordering pages");
+        check(Refused(()=>DocumentEngine.Pdf("removeMetadata",[signedPdf],root))&&!RefusedSigned(()=>DocumentEngine.Pdf("mergePDFs",[textPdf,formPdf],root))&&AppLocalization.Text(signedMessage,"tr")!=signedMessage,"The signature refusal changed metadata cleanup or unsigned forms, or has no Turkish copy");
         check(new[]{formPdf,attachmentPdf}.All(pdf=>Refused(()=>DocumentEngine.Pdf("splitPDF",[pdf],root))&&Refused(()=>DocumentEngine.Pdf("organizePDF",[pdf],root,[1]))&&Refused(()=>DocumentEngine.Pdf("removeMetadata",[pdf],root))&&Refused(()=>DocumentEngine.Pdf("mergePDFs",[textPdf,pdf],root))),"Rebuilding a PDF silently dropped its form fields or attachments");
         check(DocumentEngine.Pdf("splitPDF",[taggedPdf],root).Count==1&&DocumentEngine.Pdf("mergePDFs",[textPdf,vectorPdf],root).Count==1&&DocumentEngine.Pdf("removeMetadata",[taggedPdf],root).Count==1,"Tagged PDFs without forms or attachments were refused");
         var outlinePdf=Pdf("Outline.pdf","BT /F1 24 Tf 72 700 Td (Chapter 1) Tj ET",pdf=>{var page=pdf.AddPage();page.Size=PdfSharp.PageSize.A4;pdf.Outlines.Add("Bölüm 2",page).Top=500;pdf.Info.Title="Private title";});
@@ -326,6 +397,29 @@ internal static class ParityChecks
         // WebVTT needs cues in start-time order; editors write them in any order. Cues that start together keep their file order (as fixed on macOS).
         var shuffledCues="1\n00:00:05,000 --> 00:00:06,000\nThird\n\n2\n00:00:01,000 --> 00:00:09,000\nFirst\n\n3\n00:00:01,000 --> 00:00:02,000 align:start\nSecond\n";
         check(SubtitleCodec.Convert(shuffledCues,"vtt")=="WEBVTT\n\n00:00:01.000 --> 00:00:09.000\nFirst\n\n00:00:01.000 --> 00:00:02.000 align:start\nSecond\n\n00:00:05.000 --> 00:00:06.000\nThird\n"&&SubtitleCodec.Convert(shuffledCues,"srt").StartsWith("1\n00:00:01,000 --> 00:00:09,000\nFirst\n\n2\n00:00:01,000 --> 00:00:02,000\nSecond\n\n3\n00:00:05,000",StringComparison.Ordinal)&&SubtitleCodec.Convert(shuffledCues,"txt")=="First\n\nSecond\n\nThird\n","Subtitle cues were not written in start-time order");
+        // As on the Mac, only real cue tags are markup: text that merely looks like a tag survives WebVTT and plain text export.
+        var looksLikeMarkup="1\n00:00:01,000 --> 00:00:02,000\nI <3 you & him <i>really</i>\n\n2\n00:00:03,000 --> 00:00:04,000\n5 < 6 and 7 > 3\n";
+        var escapedVtt=SubtitleCodec.Convert(looksLikeMarkup,"vtt");
+        check(escapedVtt.Contains("I &lt;3 you &amp; him <i>really</i>")&&escapedVtt.Contains("5 &lt; 6 and 7 > 3"),"SRT to VTT left a bare < or & that WebVTT reads as markup");
+        check(SubtitleCodec.Convert("WEBVTT\n\n00:01.000 --> 00:02.000\nTom &amp; Jerry &lt;3 <c.red>hi</c> <00:01.500>late\n","vtt")=="WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nTom &amp; Jerry &lt;3 <c.red>hi</c> <00:01.500>late\n","VTT to VTT re-escaped entities or cue tags");
+        check(SubtitleCodec.Convert(looksLikeMarkup,"txt")=="I <3 you & him really\n\n5 < 6 and 7 > 3\n","TXT export stripped text that only looks like a tag");
+        var edgeTags="1\n100:00:01,000 --> 100:00:03,000\n<I>Hello</I> <i love you <100:00:02.000>late\n";
+        check(SubtitleCodec.Convert(edgeTags,"vtt").Contains("<i>Hello</i> &lt;i love you <100:00:02.000>late"),"VTT escaping mishandled an uppercase tag, an unterminated tag start or a three-digit hour timestamp");
+        check(SubtitleCodec.Convert(edgeTags,"txt")=="Hello <i love you late\n","TXT export mishandled an uppercase tag, an unterminated tag start or a three-digit hour timestamp");
+        var mathText="1\n00:00:01,000 --> 00:00:02,000\nx <b + 1 and y > 3 <v Ann Lee>hi</v> <c.red.big>ok</c>\n";
+        check(SubtitleCodec.Convert(mathText,"vtt").Contains("x &lt;b + 1 and y > 3 <v Ann Lee>hi</v> <c.red.big>ok</c>"),"VTT escaping treated text after a tag name as an annotation or broke voice/class tags");
+        check(SubtitleCodec.Convert(mathText,"txt")=="x <b + 1 and y > 3 hi ok\n","TXT export removed text that only starts like a tag");
+        var tabbedTags="1\n00:00:01,000 --> 00:00:02,000\n<font\tcolor=\"red\">Hi</font> <v\tAnn>yo</v>\n";
+        check(SubtitleCodec.Convert(tabbedTags,"vtt").Contains("<font\tcolor=\"red\">Hi</font> <v\tAnn>yo</v>")&&SubtitleCodec.Convert(tabbedTags,"txt")=="Hi yo\n","Tab-separated tag attributes were not treated as markup");
+        check(SubtitleCodec.Convert("WEBVTT\n\n00:01.000 --> 00:02.000\n<v\tAnn>Tom</v> <V Bob>Al</V> <c.red>x</c>\n","srt").Contains("Tom Al x"),"SRT export kept a WebVTT-only tag separated by a tab or written in upper case");
+        check(SubtitleCodec.Convert("1\n00:00:01,000 --> 00:00:02,000\nx <c + 1 and y > 3\n<v Ann\nnext line> ok\n","srt").Contains("x <c + 1 and y > 3\n<v Ann\nnext line> ok"),"SRT export removed text that only starts like a WebVTT tag or crossed a line break");
+        check(SubtitleCodec.Convert(looksLikeMarkup,"srt").Contains("5 < 6 and 7 > 3")&&SubtitleCodec.Convert("WEBVTT\n\n00:01.000 --> 00:02.000\n<v Ann>Tom &amp; <b>Jerry</b></v>\n","srt").Contains("Tom & <b>Jerry</b>"),"SRT export changed plain comparison text or SRT formatting tags");
+        // Class-qualified WebVTT tags go for SRT, and <b.x>/<i.x>/<u.x> lose only the class.
+        var classedVtt="WEBVTT\n\n00:01.000 --> 00:02.000\n<c.red>Red</c> <v.loud Ann>Hi</v> <lang.x en>yo</lang> <ruby.a>base<rt.b>top</rt></ruby>\n<b.big>Bold</b> <i.x>it</i> <u.y.z>un</u> <b>plain</b>\n";
+        check(SubtitleCodec.Convert(classedVtt,"srt")=="1\n00:00:01,000 --> 00:00:02,000\nRed Hi yo basetop\n<b>Bold</b> <i>it</i> <u>un</u> <b>plain</b>\n"&&SubtitleCodec.Convert(classedVtt,"txt")=="Red Hi yo basetop\nBold it un plain\n","Class-qualified WebVTT tags leaked into SRT or TXT output");
+        var tagNoise="1\n00:00:01,000 --> 00:00:02,000\n"+new string('<',200_000)+string.Concat(Enumerable.Repeat("<I>",50_000))+string.Concat(Enumerable.Repeat("&a",100_000))+string.Concat(Enumerable.Repeat("<v ",50_000))+"\n";
+        var noiseClock=System.Diagnostics.Stopwatch.StartNew();
+        check(SubtitleCodec.Convert(tagNoise,"vtt").Contains("&lt;<i><i>")&&SubtitleCodec.Convert(tagNoise,"txt").StartsWith("<<<",StringComparison.Ordinal)&&SubtitleCodec.Convert(tagNoise,"srt").Contains("<<<<I>")&&noiseClock.Elapsed<TimeSpan.FromSeconds(5),"Long runs of tag starts and ampersands were mangled or took too long to convert");
         var input=Path.Combine(root,"Archive source.txt");File.WriteAllText(input,"Türkçe 🍐 retained");var zip=DocumentEngine.Zip([input],root);
         foreach(var format in new[]{"tar","gz","zip"})
         {
@@ -388,6 +482,18 @@ internal static class ParityChecks
         // Only the centre is measured: edge pixels are clamped, so border stripes cannot fully average out.
         using(var stripes=new MagickImage(MagickColors.White,200,80)){for(var x=0;x<200;x+=8)new ImageMagick.Drawing.Drawables().FillColor(MagickColors.Black).Rectangle(x,0,x+3,79).Draw(stripes);
             using var blurred=new MagickImage(PhotoCodec.Adjust(stripes.ToByteArray(MagickFormat.Png),new(){Blur=24}));using var centre=blurred.CloneArea(new MagickGeometry(50,20,100,40));var spread=centre.Statistics().GetChannel(PixelChannel.Red)!.StandardDeviation/Quantum.Max;check(spread<.02,$"Redaction blur left stripe detail visible (spread {spread:0.000})");}
+        // Vignette darkens the edges like macOS CIVignette and keeps transparency. Expected values are the Mac's
+        // for a 200 × 100 grey (128) photo at Vignette 1; a PNG without bKGD reads with a white background.
+        using(var grey=new MagickImage(new MagickColor(128,128,128,128),200,100)){grey.BackgroundColor=MagickColors.White;using var vignetted=new MagickImage(PhotoCodec.Adjust(grey.ToByteArray(MagickFormat.Png),new(){Vignette=1}));using var pixels=vignetted.GetPixels();
+            foreach(var (x,y,expected) in new[]{(0,0,0),(10,50,23),(50,50,98),(25,25,50),(100,50,128)}){var colour=pixels.GetPixel(x,y).ToColor()!;check(Math.Abs(colour.R-expected)<=2&&colour.G==colour.R&&colour.B==colour.R&&colour.A==128,$"Vignette differs from macOS at {x},{y}: {colour}, expected grey {expected} at alpha 128");}}
+        // A greyscale JPEG reaches Adjust as a Gray PNG, with or without alpha; Vignette must darken only the colour and keep alpha.
+        foreach(var vignetteAlpha in new[]{false,true})
+        {
+            using var vignetteGrey=new MagickImage(new MagickColor(128,128,128,(byte)(vignetteAlpha?128:255)),200,100);vignetteGrey.HasAlpha=vignetteAlpha;vignetteGrey.Settings.SetDefine(MagickFormat.Png,"color-type",vignetteAlpha?"4":"0");var vignetteSource=vignetteGrey.ToByteArray(MagickFormat.Png);
+            using(var read=new MagickImage(vignetteSource))check(read.ColorSpace==ColorSpace.Gray&&read.HasAlpha==vignetteAlpha,$"Greyscale Vignette fixture reads as {read.ColorSpace} with alpha {read.HasAlpha}");
+            using var vignetteResult=new MagickImage(PhotoCodec.Adjust(vignetteSource,new(){Vignette=1}));using var vignettePixels=vignetteResult.GetPixels();var corner=vignettePixels.GetPixel(0,0).ToColor()!;var centre=vignettePixels.GetPixel(100,50).ToColor()!;
+            check(corner.R<=2&&Math.Abs(centre.R-128)<=2&&corner.A==(vignetteAlpha?128:255)&&centre.A==corner.A,$"Vignette on a greyscale PNG {(vignetteAlpha?"with":"without")} alpha gave corner {corner} and centre {centre}");
+        }
         // A killed tool can still hold a staged file when the user cancels.
         Exception? outcome=null;var hidden=false;FileStream? held=null;string? staging=null;var cleanup=new System.Diagnostics.Stopwatch();
         try{using var tx=new ExportTransaction(Path.Combine(root,"Held export"));staging=tx.StagingDirectory;hidden=File.GetAttributes(staging).HasFlag(FileAttributes.Hidden);held=File.Create(Path.Combine(staging,"partial.mp4"));cleanup.Start();throw new OperationCanceledException();}
@@ -395,6 +501,7 @@ internal static class ParityChecks
         check(hidden&&outcome is OperationCanceledException&&cleanup.ElapsedMilliseconds<300,"Staging cleanup replaced a cancellation with "+outcome?.GetType().Name+", blocked for "+cleanup.ElapsedMilliseconds+" ms, or staging was visible");
         var released=System.Diagnostics.Stopwatch.StartNew();while(Directory.Exists(staging)&&released.Elapsed.TotalSeconds<5)Thread.Sleep(50);
         check(!Directory.Exists(staging),"A staging folder was left behind after its file was released");
+        check(!OfficeDocuments.HasDelimitedContent("", "csv")&&!OfficeDocuments.HasDelimitedContent(",,,\r\n,,,\r\n", "csv")&&!OfficeDocuments.HasDelimitedContent("\t\t\n", "tsv")&&OfficeDocuments.HasDelimitedContent(",a,\n", "csv")&&OfficeDocuments.HasDelimitedContent("\t1\n", "tsv"),"Delimited emptiness check misclassified separator-only or populated sheet");
     }
     private static void StoredRar(string output)
     {

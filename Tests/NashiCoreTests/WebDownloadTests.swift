@@ -26,6 +26,20 @@ final class WebDownloadTests:XCTestCase {
         XCTAssertEqual(WebDownloadEngine.cleanFilename("clip.exe",mime:"video/mp4"),"clip.mp4")
         XCTAssertEqual(WebDownloadEngine.cleanFilename("notes.ts",mime:"text/plain"),"notes")
     }
+    func testServerChosenNonMediaExtensionsAreDroppedWithoutMediaMIME() {
+        for mime in [nil,"","application/octet-stream","binary/octet-stream"] as [String?] {
+            XCTAssertEqual(WebDownloadEngine.cleanFilename("invoice.html",mime:mime),"invoice",mime ?? "nil")
+            XCTAssertEqual(WebDownloadEngine.cleanFilename("run.command",mime:mime),"run",mime ?? "nil")
+            XCTAssertEqual(WebDownloadEngine.cleanFilename("x.html.command",mime:mime),"x",mime ?? "nil")
+            XCTAssertEqual(WebDownloadEngine.cleanFilename("clip.mp4.html",mime:mime),"clip.mp4",mime ?? "nil")
+            XCTAssertEqual(WebDownloadEngine.cleanFilename("clip.avi.command",mime:mime),"clip.avi",mime ?? "nil")
+            XCTAssertEqual(WebDownloadEngine.cleanFilename("clip.mp4",mime:mime),"clip.mp4",mime ?? "nil")
+            XCTAssertEqual(WebDownloadEngine.cleanFilename("Artist.Name.Live.2024",mime:mime),"Artist.Name.Live",mime ?? "nil")
+        }
+        XCTAssertEqual(WebDownloadEngine.cleanFilename("x.html.command",mime:"image/x-unknown-subtype"),"x")
+        XCTAssertEqual(WebDownloadEngine.cleanFilename("clip.avi",mime:"video/x-msvideo"),"clip.avi")
+        XCTAssertEqual(WebDownloadEngine.cleanFilename("x.html.command",mime:"video/mp4"),"x.html.mp4")
+    }
     func testMetadataModesQualityAndDuration() throws {
         let json=Data(#"{"title":"A test","duration":12.5,"extractor_key":"YouTube","formats":[{"height":1080,"vcodec":"avc1"},{"height":720},{"height":1080},{"height":-1},{"height":999999}]}"#.utf8)
         let info=try WebDownloadEngine.parseMetadata(json,url:URL(string:"https://example.org/watch")!)

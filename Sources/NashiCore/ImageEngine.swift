@@ -50,12 +50,15 @@ public enum ImageEngine {
         if format == "pdf" { return try PDFEngine.create(inputs:[input],options:options,token:token) }
         let image = try load(input)
         let output=OutputFiles.unique(for:input,extension:format,directory:options.outputDirectory)
-        var complete=false;defer { if !complete { try? FileManager.default.removeItem(at:output) } }
+        // Encode in a private folder: failure cleanup then removes only this job's
+        // own file, never one another writer created at the chosen name.
+        let staging=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:staging) }
+        let staged=staging.appendingPathComponent(output.lastPathComponent)
         let metadata = options.preserveMetadata ? CGImageSourceCreateWithURL(input as CFURL,nil).map { imageProperties($0,input:input) as CFDictionary } : nil
-        try write(image,to:output,quality:options.quality,metadata:metadata,token:token)
-        if options.preserveMetadata { try ImageMetadataEngine.copyMetadata(from:input,to:output,token:token) }
-        complete=true
-        return [output]
+        try write(image,to:staged,quality:options.quality,metadata:metadata,token:token)
+        if options.preserveMetadata { try ImageMetadataEngine.copyMetadata(from:input,to:staged,token:token) }
+        try token.check()
+        return [try OutputFiles.move(staged,into:output.deletingLastPathComponent())]
     }
 
     public static func write(_ image: CGImage, to url: URL, quality: Double = 0.8, metadata: CFDictionary? = nil, token: CancellationToken = .init()) throws {
@@ -88,8 +91,12 @@ public enum ImageEngine {
             var args=["-v","error","-i",png.path,"-frames:v","1"]
             if ext == "webp" { args += ["-c:v","libwebp","-quality",String(Int(quality*100))] }
             if ext == "avif" { args += ["-c:v","libaom-av1","-still-picture","1","-cpu-used","6","-crf",String(Int((1-quality)*50)+8)] }
-            args += [url.path]
+            // FFmpeg opens its output with O_TRUNC and follows symlinks. Encode into
+            // the private folder; moveItem never follows a link at the output name.
+            let encoded=temp.appendingPathComponent("encoded").appendingPathExtension(ext)
+            args += [encoded.path]
             try ProcessRunner.run(Dependencies.executable("ffmpeg"),args,token:token)
+            try FileManager.default.moveItem(at:encoded,to:url)
         }
     }
 
@@ -126,8 +133,8 @@ public enum ImageEngine {
                 case .frameImage: image=try frame(image,options:options); suffix=" - Framed"
                 default: throw NashiError.unsupported("\(kind.title) is not an image operation.")
                 }
-                let output=OutputFiles.unique(for:input,extension:kind == .annotateImage ? "png" : ext,suffix:suffix,directory:options.outputDirectory)
-                try write(image,to:output,quality:options.quality)
+                let output=OutputFiles.unique(for:input,extension:ext,suffix:suffix,directory:options.outputDirectory)
+                do { try write(image,to:output,quality:options.quality,token:token) } catch { try? FileManager.default.removeItem(at:output); throw error }
                 outputs.append(output)
             } catch NashiError.invalidInput(let message) where kind == .cropImage || kind == .redactImage {
                 throw NashiError.invalidInput("\(input.lastPathComponent): \(message)")
@@ -185,6 +192,12 @@ public enum ImageEngine {
         return try resized(image, width: width, height: height)
     }
 
+    /// Core Image works in linear light, so contrast would pivot around linear 0.5 (sRGB 188) and darken the photo.
+    /// Running the filter on sRGB-encoded values keeps mid-gray in place, as the Windows editor does.
+    private static func colorControls(_ image: CIImage, parameters: [String: Any]) -> CIImage {
+        image.applyingFilter("CILinearToSRGBToneCurve").applyingFilter("CIColorControls", parameters: parameters).applyingFilter("CISRGBToneCurveToLinear")
+    }
+
     private static func edit(_ image: CGImage, options: OperationOptions) throws -> CGImage {
         let a = options.imageAdjustments
         let values = [a.exposure,a.brightness,a.contrast,a.highlights,a.shadows,a.whites,a.blacks,a.gamma,a.temperature,a.tint,a.saturation,a.vibrance,a.hue,a.clarity,a.texture,a.fade,a.blur,a.sharpen,a.dehaze,a.grain,a.noiseReduction,a.vignette,options.brightness,options.contrast,options.saturation]
@@ -198,7 +211,7 @@ public enum ImageEngine {
             // Positive values warm and add magenta, matching the Windows editor.
             ci = ci.applyingFilter("CITemperatureAndTint", parameters: ["inputNeutral": CIVector(x:6500,y:0), "inputTargetNeutral": CIVector(x:6500 - max(-1,min(1,a.temperature)) * 3000, y:-max(-1,min(1,a.tint)) * 100)])
         }
-        ci=ci.applyingFilter("CIColorControls",parameters:[kCIInputBrightnessKey:options.brightness+a.brightness,kCIInputContrastKey:max(0,options.contrast*a.contrast),kCIInputSaturationKey:max(0,options.saturation*a.saturation)])
+        ci=colorControls(ci,parameters:[kCIInputBrightnessKey:options.brightness+a.brightness,kCIInputContrastKey:max(0,options.contrast*a.contrast),kCIInputSaturationKey:max(0,options.saturation*a.saturation)])
         if a.highlights != 0 || a.shadows != 0 || a.whites != 0 || a.blacks != 0 {
             // Five monotonic luminance anchors let the four tonal ranges vary independently.
             let xs: [Double] = [0,0.25,0.5,0.75,1]
@@ -211,10 +224,11 @@ public enum ImageEngine {
             for index in xs.indices { parameters["inputPoint\(index)"] = CIVector(x:xs[index],y:ys[index]) }
             ci = ci.applyingFilter("CIToneCurve",parameters:parameters)
         }
-        if a.gamma != 1 { ci = ci.applyingFilter("CIGammaAdjust",parameters:["inputPower":max(0.1,min(5,a.gamma))]) }
+        // CIGammaAdjust computes in^power, so use 1/gamma to brighten above 1, as the Windows editor does.
+        if a.gamma != 1 { ci = ci.applyingFilter("CIGammaAdjust",parameters:["inputPower":1 / max(0.1,min(5,a.gamma))]) }
         if a.vibrance != 0 { ci = ci.applyingFilter("CIVibrance",parameters:["inputAmount":max(-1,min(1,a.vibrance))]) }
         if a.hue != 0 { ci = ci.applyingFilter("CIHueAdjust",parameters:["inputAngle":a.hue * .pi / 180]) }
-        if a.dehaze != 0 { ci = ci.applyingFilter("CIColorControls",parameters:[kCIInputContrastKey:1 + max(-1,min(1,a.dehaze))*0.65,kCIInputBrightnessKey:-a.dehaze*0.045,kCIInputSaturationKey:1+a.dehaze*0.12]) }
+        if a.dehaze != 0 { ci = colorControls(ci,parameters:[kCIInputContrastKey:1 + max(-1,min(1,a.dehaze))*0.65,kCIInputBrightnessKey:-a.dehaze*0.045,kCIInputSaturationKey:1+a.dehaze*0.12]) }
         if a.clarity > 0 { ci = ci.applyingFilter("CIUnsharpMask",parameters:[kCIInputRadiusKey:4,kCIInputIntensityKey:min(1,a.clarity)*1.5]) }
         if a.clarity < 0 { ci = ci.clampedToExtent().applyingFilter("CIGaussianBlur",parameters:[kCIInputRadiusKey:min(1,-a.clarity)*3]).cropped(to:bounds) }
         if a.sharpen > 0 { ci = ci.applyingFilter("CISharpenLuminance",parameters:[kCIInputSharpnessKey:min(2,a.sharpen)]) }

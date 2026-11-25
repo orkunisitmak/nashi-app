@@ -25,18 +25,56 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
             if(new[]{"docx","doc","pptx","ppt","xlsx","xls","ods","odt","rtf","pdf","epub"}.Contains(ext)){input=Path.Combine(job,"Source."+ext);File.Copy(original,input);}
             var spreadsheet=new[]{"csv","tsv","xls","xlsx","ods"}.Contains(ext);var slides=new[]{"ppt","pptx"}.Contains(ext);
             var filter=format switch{"docx"=>"docx:Office Open XML Text","pptx"=>"pptx:Impress MS PowerPoint 2007 XML","xlsx"=>"xlsx:Calc MS Excel 2007 XML","pdf"=>"pdf:"+(spreadsheet?"calc_pdf_Export":slides?"impress_pdf_Export":"writer_pdf_Export"),"txt"=>"txt:Text (encoded):UTF8,LF","csv"=>"csv:Text - txt - csv (StarCalc):44,34,76,1,,0,false,true,true,false,false,0","tsv"=>"csv:Text - txt - csv (StarCalc):9,34,76,1,,0,false,true,true,false,false,0","html"=>"html:HTML (StarWriter)","md"=>"md:Markdown","epub"=>"epub:EPUB",_=>format};
-            var args=new List<string>{"-env:UserInstallation="+new Uri(profile+Path.DirectorySeparatorChar).AbsoluteUri,"--headless","--nologo","--nodefault","--nolockcheck","--nofirststartwizard","--norestore"};
-            if(ext is "csv" or "tsv"){var (delimiter,language)=DelimitedLayout(input,ext);args.Add("--infilter=Text - txt - csv (StarCalc):"+delimiter+",34,76,1,,"+language+",true,true");}else if(ext=="txt")args.Add("--infilter=Text (encoded):UTF8,LF");else if(ext=="md")args.Add("--infilter=Markdown");
-            if(ext=="html"&&format is "xlsx" or "ods" or "csv" or "tsv")args.Add("--infilter=HTML (StarCalc)");
-            if(ext=="pdf"&&format=="pptx")args.Add("--infilter=impress_pdf_import");
-            args.AddRange(["--convert-to",filter,"--outdir",rendered,Path.GetFullPath(input)]);
+            List<string> BuildArgs(string activeFilter)
+            {
+                var list=new List<string>{"-env:UserInstallation="+new Uri(profile+Path.DirectorySeparatorChar).AbsoluteUri,"--headless","--nologo","--nodefault","--nolockcheck","--nofirststartwizard","--norestore"};
+                if(ext is "csv" or "tsv"){var (delimiter,language)=DelimitedLayout(input,ext);list.Add("--infilter=Text - txt - csv (StarCalc):"+delimiter+",34,76,1,,"+language+",true,true");}else if(ext=="txt")list.Add("--infilter=Text (encoded):UTF8,LF");else if(ext=="md")list.Add("--infilter=Markdown");
+                if(ext=="html"&&format is "xlsx" or "ods" or "csv" or "tsv")list.Add("--infilter=HTML (StarCalc)");
+                if(ext=="pdf"&&format=="pptx")list.Add("--infilter=impress_pdf_import");
+                list.AddRange(["--convert-to",activeFilter,"--outdir",rendered,Path.GetFullPath(input)]);
+                return list;
+            }
             // A stuck soffice otherwise keeps Nashi busy until the user cancels; stop it after a generous limit.
-            using var limit=CancellationTokenSource.CreateLinkedTokenSource(token);limit.CancelAfter(ConversionTimeout);ProcessResult result;
-            try{result=await ProcessRunner.RunAsync(office,args,limit.Token);}
-            catch(OperationCanceledException)when(!token.IsCancellationRequested){throw new TimeoutException(TimeoutMessage);}
-            var output=Path.Combine(rendered,Path.GetFileNameWithoutExtension(input)+"."+(format=="tsv"?"csv":format));if(!File.Exists(output)||new FileInfo(output).Length==0)throw new IOException("Office could not convert this document to "+format.ToUpperInvariant()+". "+(result.Error+" "+result.Output).Trim());var destination=SafePaths.Unique(outputDirectory,Path.GetFileNameWithoutExtension(original)+"."+(format=="tsv"?"csv":format));File.Move(output,destination);return destination;
+            using var limit=CancellationTokenSource.CreateLinkedTokenSource(token);limit.CancelAfter(ConversionTimeout);
+            ProcessResult result=default!;
+            var output=Path.Combine(rendered,Path.GetFileNameWithoutExtension(input)+"."+(format=="tsv"?"csv":format));
+            if(spreadsheet && format is "csv" or "tsv")
+            {
+                var delimiter=format=="tsv"?9:44;
+                string? fallback=null;
+                var reachedLimit=true;
+                for(var sheet=1;sheet<=256;sheet++)
+                {
+                    foreach(var existing in Directory.GetFiles(rendered))File.Delete(existing);
+                    var sheetFilter=$"csv:Text - txt - csv (StarCalc):{delimiter},34,76,1,,0,false,true,true,false,false,{sheet}";
+                    try{result=await ProcessRunner.RunAsync(office,BuildArgs(sheetFilter),limit.Token);}
+                    catch(OperationCanceledException)when(!token.IsCancellationRequested){throw new TimeoutException(TimeoutMessage);}
+                    // LibreOffice exits with 0x40c02 ("Please verify input parameters...") once the 1-based sheet index passes the last sheet.
+                    catch(IOException ex)when(sheet>1&&(ex.Message.Contains("0x40c02",StringComparison.OrdinalIgnoreCase)||ex.Message.Contains("Please verify input parameters",StringComparison.OrdinalIgnoreCase))){reachedLimit=false;break;}
+                    var produced=Directory.GetFiles(rendered,"*.csv").FirstOrDefault();
+                    if(produced is null){reachedLimit=false;break;}
+                    var text=await File.ReadAllTextAsync(produced,token);
+                    if(HasDelimitedContent(text,format)){output=produced;fallback=null;reachedLimit=false;break;}
+                    if(fallback is null){fallback=Path.Combine(job,"fallback.csv");File.Move(produced,fallback,true);}
+                    else File.Delete(produced);
+                }
+                if(reachedLimit)throw new IOException("This workbook has more than 256 leading empty sheets; no populated sheet was found to export to "+format.ToUpperInvariant()+".");
+                if(!File.Exists(output) && fallback is not null)File.Move(fallback,output,true);
+            }
+            else
+            {
+                try{result=await ProcessRunner.RunAsync(office,BuildArgs(filter),limit.Token);}
+                catch(OperationCanceledException)when(!token.IsCancellationRequested){throw new TimeoutException(TimeoutMessage);}
+            }
+            if(!File.Exists(output)||new FileInfo(output).Length==0)throw new IOException("Office could not convert this document to "+format.ToUpperInvariant()+". "+(result.Error+" "+result.Output).Trim());var destination=SafePaths.Unique(outputDirectory,Path.GetFileNameWithoutExtension(original)+"."+(format=="tsv"?"csv":format));File.Move(output,destination);return destination;
         }
         finally{if(Directory.Exists(job))Directory.Delete(job,true);}
+    }
+    internal static bool HasDelimitedContent(string text,string format)
+    {
+        var separator=format=="tsv"?'\t':',';
+        foreach(var ch in text)if(!char.IsWhiteSpace(ch)&&ch!=separator)return true;
+        return false;
     }
     // Excel saves semicolon-separated "CSV" where the comma is the decimal mark (Turkish,
     // German…). Read those with the user's locale so 1,5 stays a number, not text.
@@ -131,16 +169,47 @@ public sealed partial class OfficeDocuments(string office,string deno,string ass
             }
             foreach(var image in page.GetImages())
             {
-                byte[]? data=null;var mime="image/png";if(image.TryGetPng(out var png))data=png;else if(image.RawBytes.Length>=2&&image.RawBytes[0]==0xff&&image.RawBytes[1]==0xd8){data=image.RawBytes.ToArray();mime="image/jpeg";}if(data?.Length>20_000_000)continue;
-                // A render is bounded by the page and DPI, like the whole-page renders below.
-                if(data is null&&mappable){needed=true;data=pageImage?.Invoke(page.Number,new(image.BoundingBox.Left,page.Height-image.BoundingBox.Top,image.BoundingBox.Width,image.BoundingBox.Height));}if(data is null)continue;
-                blocks.Add((page.Height-image.BoundingBox.Top,"<p><img style=\"max-width:100%;width:"+image.BoundingBox.Width.ToString("0.###",System.Globalization.CultureInfo.InvariantCulture)+"pt;height:auto\" src=\"data:"+mime+";base64,"+Convert.ToBase64String(data)+"\"/></p>"));
+                // PdfPig measures a picture along its own sides and keeps its pixels unturned. A turned or mirrored picture covers the
+                // page area its corners span; where that area maps onto a render, the render shows it the way the page does.
+                var box=image.BoundingBox;UglyToad.PdfPig.Core.PdfPoint[] corners=[box.BottomLeft,box.BottomRight,box.TopLeft,box.TopRight];
+                double left=corners.Min(c=>c.X),right=corners.Max(c=>c.X),bottom=corners.Min(c=>c.Y),top=corners.Max(c=>c.Y);
+                // Only the part on the page is rendered, so a render holds nothing beside the picture and keeps that part's size.
+                double visibleLeft=Math.Max(left,0),visibleTop=Math.Max(page.Height-top,0);var area=new PdfArea(visibleLeft,visibleTop,Math.Min(right,page.Width)-visibleLeft,Math.Min(page.Height-bottom,page.Height)-visibleTop);
+                // A picture with no part on the page is not shown, so it is left out. PdfPig places pictures on the page as shown
+                // (from the crop box's corner, turned with the page), so this holds on any page.
+                if(!(area.Width>0&&area.Height>0))continue;
+                var upright=Math.Abs(box.BottomLeft.Y-box.BottomRight.Y)<.01&&Math.Abs(box.BottomLeft.X-box.TopLeft.X)<.01&&box.BottomRight.X>box.BottomLeft.X&&box.TopLeft.Y>box.BottomLeft.Y;
+                byte[]? data=null;var mime="image/png";var (width,height)=(area.Width,area.Height);if(!upright&&mappable){needed=true;data=pageImage?.Invoke(page.Number,area);}
+                if(data is null)
+                {
+                    if(image.TryGetPng(out var png))data=png;else if(image.RawBytes.Length>=2&&image.RawBytes[0]==0xff&&image.RawBytes[1]==0xd8){data=image.RawBytes.ToArray();mime="image/jpeg";}if(data?.Length>20_000_000)continue;
+                    // Without a render a turned picture keeps its own proportions, unturned, rather than being stretched over the area.
+                    if(data is not null)(width,height)=(box.Width,box.Height);
+                    // A render is bounded by the page and DPI, like the whole-page renders below.
+                    else if(upright&&mappable){needed=true;data=pageImage?.Invoke(page.Number,area);}if(data is null)continue;
+                }
+                blocks.Add((page.Height-top,"<p><img style=\""+PictureStyle(width,height)+"\" src=\"data:"+mime+";base64,"+Convert.ToBase64String(data)+"\"/></p>"));
             }
-            if(blocks.Count==0){needed=true;if(pageImage?.Invoke(page.Number,null) is {} rendered)blocks.Add((0,"<p><img style=\"max-width:100%;width:"+page.Width.ToString("0.###",System.Globalization.CultureInfo.InvariantCulture)+"pt;height:auto\" src=\"data:image/png;base64,"+Convert.ToBase64String(rendered)+"\"/></p>"));}
+            // A rotated page renders turned, so the render's own proportions give the height.
+            if(blocks.Count==0){needed=true;if(pageImage?.Invoke(page.Number,null) is {} rendered)blocks.Add((0,"<p><img style=\""+PictureStyle(page.Width,PngSize(rendered) is {} size?page.Width*size.Height/size.Width:page.Height)+"\" src=\"data:image/png;base64,"+Convert.ToBase64String(rendered)+"\"/></p>"));}
             if(needed)render.Add(page.Number);
             html.Append("<section style=\"page-break-after:always\">");foreach(var block in blocks.OrderBy(b=>b.Top))html.Append(block.Html);html.Append("</section>");
         }
         pagesToRender=render.ToArray();return html.Append("</body></html>").ToString();
+    }
+    // LibreOffice's HTML import takes a picture's height from its pixels at 96 DPI whatever height:auto says, and ignores
+    // max-width and @page: it lays the text out on A4 or Letter with 2 cm and 1 cm side margins. A picture therefore gets
+    // both sizes, as the PDF shows it, scaled down in proportion to fit a 510 × 735 pt column.
+    public static string PictureStyle(double width,double height)
+    {
+        if(!(double.IsFinite(width)&&double.IsFinite(height)&&width>0&&height>0))return "max-width:100%;height:auto";
+        var scale=Math.Min(1,Math.Min(510/width,735/height));return "width:"+CssNumber(width*scale)+"pt;height:"+CssNumber(height*scale)+"pt";
+    }
+    /// The pixel size from a PNG's header, or null for anything else.
+    public static (int Width,int Height)? PngSize(byte[] png)
+    {
+        if(png.Length<24||!png.AsSpan(0,8).SequenceEqual(new byte[]{0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A}))return null;
+        var width=System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(png.AsSpan(16));var height=System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(png.AsSpan(20));return width>0&&height>0?(width,height):null;
     }
     public static string SanitizedHtml(string html)
     {

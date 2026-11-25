@@ -15,6 +15,33 @@ var root = Path.Combine(Path.GetTempPath(), "Nashi-Verify-" + Guid.NewGuid().ToS
 Directory.CreateDirectory(root);
 try
 {
+    Check(ShortcutAppFilter.IsExcluded("Photoshop, Illustrator", "photoshop.exe"), "Configured Photoshop process was not excluded");
+    Check(ShortcutAppFilter.IsExcluded("Photoshop, Illustrator", "ILLUSTRATOR"), "Excluded process match was case-sensitive");
+    Check(!ShortcutAppFilter.IsExcluded("Photoshop, Illustrator", "PhotoshopHelper.exe"), "An unrelated process was excluded by a partial match");
+    Check(!ShortcutAppFilter.IsExcluded("", "Photoshop.exe"), "Empty exclusion list disabled shortcuts");
+    Check(!ShortcutAppFilter.IsExcluded("Photoshop", null), "Missing process identity was excluded");
+    Check(ShortcutAppFilter.IsExcluded("Photoshop.exe, Illustrator", "Photoshop"), "Executable suffix was not normalized");
+    var retry = new HotkeyRegistrationRetry();
+    var firstAttempt = new DateTimeOffset(2026, 11, 5, 10, 0, 0, TimeSpan.Zero);
+    Check(retry.ShouldAttempt(true, false, firstAttempt), "Initial hotkey registration was not attempted");
+    retry.RecordFailure(firstAttempt);
+    Check(!retry.ShouldAttempt(true, false, firstAttempt.AddMilliseconds(1999)), "Hotkey conflict retried before two seconds");
+    Check(retry.ShouldAttempt(true, false, firstAttempt.AddSeconds(2)), "Hotkey did not retry when its cooldown expired");
+    Check(!retry.ShouldAttempt(true, true, firstAttempt.AddSeconds(5)), "Already registered hotkey attempted a duplicate registration");
+    retry.RecordFailure(firstAttempt.AddSeconds(5));
+    retry.Reset();
+    Check(retry.ShouldAttempt(true, false, firstAttempt.AddSeconds(5)), "Foreground exclusion reset did not allow immediate hotkey restoration");
+    Check(!retry.ShouldAttempt(false, false, firstAttempt.AddSeconds(9)), "Disabled hotkey attempted registration");
+    Check(HostedAppProcess.SelectProcessId("ApplicationFrameWindow", 5, [("Windows.UI.Core.CoreWindow", 25)]) == 25, "UWP hosted window retained ApplicationFrameHost instead of app PID");
+    Check(HostedAppProcess.SelectProcessId("ApplicationFrameWindow", 5, [("OtherWindow", 99), ("Windows.UI.Core.CoreWindow", 24)]) == 24, "UWP resolver chose an unrelated child window");
+    Check(HostedAppProcess.SelectProcessId("ApplicationFrameWindow", 5, [("Windows.UI.Core.CoreWindow", 0)]) == 5, "UWP resolver accepted an invalid process ID");
+    Check(HostedAppProcess.SelectProcessId("NormalWindow", 5, [("Windows.UI.Core.CoreWindow", 25)]) == 5, "Normal foreground window unexpectedly used an unrelated child PID");
+    var exclusionRoot=Path.Combine(root,"Shortcut exclusions");
+    var exclusionSettings=new PreferencesStore(exclusionRoot);
+    exclusionSettings.Save(exclusionSettings.Value with{ShortcutExcludedApps="Photoshop, Illustrator"});
+    Check(new PreferencesStore(exclusionRoot).Value.ShortcutExcludedApps=="Photoshop, Illustrator", "Excluded application preferences were not persisted");
+    Directory.Delete(exclusionRoot,true);
+    Check(AppLocalization.Turkish.ContainsKey("Pause Nashi shortcuts in these applications"), "App exclusion Settings title was not translated");
     var languageRoot=Path.Combine(root,"Language checks");Directory.CreateDirectory(languageRoot);
     try{LocalizationChecks.Run(Check,languageRoot);}finally{Directory.Delete(languageRoot,true);}
     await DownloadChecks.Run(Check,root);
@@ -94,6 +121,17 @@ try
     Check(File.GetLastWriteTime(Path.Combine(ArchiveEngine.Extract(datedZip,root)[0],"Dated.txt"))==dated,"Extracted files lost their modification dates");
     var rarFixtures=AppContext.BaseDirectory;while(!Directory.Exists(Path.Combine(rarFixtures,"Reference","archive-fixtures")))rarFixtures=Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(rarFixtures))??throw new DirectoryNotFoundException("Reference/archive-fixtures");rarFixtures=Path.Combine(rarFixtures,"Reference","archive-fixtures");
     Check(File.GetLastWriteTime(Path.Combine(ArchiveEngine.Extract(Path.Combine(rarFixtures,"test_read_format_rar.rar"),root)[0],"test.txt"))==new DateTime(2011,6,26,14,53,47)&&File.GetLastWriteTimeUtc(Path.Combine(ArchiveEngine.Extract(Path.Combine(rarFixtures,"test_read_format_rar5_stored.rar"),root)[0],"helloworld.txt"))==new DateTime(2018,9,26,4,43,42,DateTimeKind.Utc),"Extracted RAR files lost their modification dates");
+    // An empty password box or a wrong password names the problem, not SharpCompress's "bad password" or "Data Error".
+    foreach(var (encrypted,correct) in new[]{("test_read_format_zip_winzip_aes256.zip","password"),("nashi_encrypted_headers.7z","password"),("Rar.encrypted_filesAndHeader.rar","test"),("Rar5.encrypted_filesAndHeader.rar","test")})
+    {
+        foreach(var (password,message) in new[]{((string?)"","This archive is protected. Enter its password."),(null,"This archive is protected. Enter its password."),("wrong","The password is incorrect, or the archive is damaged.")})
+        {
+            try{ArchiveEngine.Extract(Path.Combine(rarFixtures,encrypted),root,password);throw new Exception(encrypted+" opened without its password");}
+            catch(InvalidDataException error){Check(error.Message==message&&AppLocalization.Text(message,"tr")!=message,encrypted+" reported \""+error.Message+"\" for the password \""+password+"\"");}
+        }
+        Check(Directory.EnumerateFiles(ArchiveEngine.Extract(Path.Combine(rarFixtures,encrypted),root,correct)[0],"*",SearchOption.AllDirectories).Any(),encrypted+" did not open with its password");
+    }
+    Check(!Directory.EnumerateDirectories(root,".nashi-*").Any(),"A refused password left staging files");
     using(var converted=System.IO.Compression.ZipFile.OpenRead(ArchiveEngine.Convert(datedZip,"zip",root)[0]))Check(converted.GetEntry("Dated.txt")!.LastWriteTime.DateTime==dated,"Converted ZIP lost its file dates");
     using(var converted=File.OpenRead(ArchiveEngine.Convert(datedZip,"tar",root)[0]))Check(new System.Formats.Tar.TarReader(converted).GetNextEntry()!.ModificationTime.LocalDateTime==dated,"Converted TAR lost its file dates");
     var fake=Path.Combine(root,"fake.zip");File.WriteAllText(fake,"untrusted");
@@ -127,6 +165,15 @@ if(Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG") is {} encoder && En
             Check(paddedInfo.Video is {Width:98,Height:66}&&paddedInfo.Duration>0,"Odd video dimensions could not convert to "+format);
         }
         Check((await engine.InspectAsync(odd)).Video is {Width:97,Height:65},"Odd-dimension conversion changed the source");
+        // A raw ADTS AAC voice memo has no stored length; FFprobe's bitrate guess for 4 s of tone and 6 s of quiet is about 4.5 s.
+        var memo=Path.Combine(directory,"Voice memo.aac");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","sine=frequency=440:duration=4,apad=whole_dur=10","-c:a","aac","-b:a","128k",memo]);
+        Check(Math.Abs((await engine.InspectAsync(memo)).Duration-10)<.1,"A raw AAC file's duration was taken from FFprobe's bitrate guess");
+        var memoEnd=await engine.InspectAsync((await engine.ToolAsync("trimAudio",[memo],directory,new(){Start=1,End=9}))[0]);
+        Check(Math.Abs(memoEnd.Duration-8)<.1,"Trimming a raw AAC file past FFprobe's bitrate guess failed or lost its end");
+        // ADTS headers with no sample rate FFmpeg accepts: FFprobe still guesses a length, while copying the stream fails.
+        var brokenMemo=Path.Combine(directory,"Broken memo.aac");var junk=new Random(7);
+        File.WriteAllBytes(brokenMemo,Enumerable.Range(0,400).SelectMany(_=>new byte[]{0xff,0xf1,0x50,0x80,0x02,0x1f,0xfc}.Concat(Enumerable.Range(0,9).Select(_=>(byte)junk.Next(256)))).ToArray());
+        Check((await engine.InspectAsync(brokenMemo)).Duration>0,"A raw AAC file FFmpeg cannot measure lost FFprobe's estimate");
         // iPhones store location, make, model and capture date as QuickTime keys, which the MP4 and MOV muxer writes only when asked to.
         var iphone=Path.Combine(directory,"IMG_0001.MOV");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","testsrc2=size=128x72:rate=12:duration=0.5","-c:v","libx264","-movflags","use_metadata_tags","-metadata","com.apple.quicktime.location.ISO6709=+35.6895+139.6917+040.000/","-metadata","com.apple.quicktime.make=Apple","-metadata","com.apple.quicktime.model=iPhone 15","-metadata","com.apple.quicktime.creationdate=2026-10-31T12:00:00+0900",iphone]);Check((await FileTags(iphone)).GetValueOrDefault("com.apple.quicktime.model")=="iPhone 15","iPhone fixture lacks its QuickTime keys");
         foreach(var (iphoneFormat,iphoneKeep) in new[]{("mp4",true),("mov",true),("m4v",true),("mkv",true),("mp4",false),("mov",false)})
@@ -267,6 +314,14 @@ if(Environment.GetEnvironmentVariable("NASHI_VERIFY_FFMPEG") is {} encoder && En
         var visualized=await engine.ToolAsync("audioToVideo",audio,directory,new(){Width=128,Height=72});Check((await engine.InspectAsync(visualized[0])).Video?.Width==128,"Audio visualization failed");
         var cover=Path.Combine(directory,"Cover.png");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","color=c=red:s=64x64","-frames:v","1",cover]);var still=await engine.ToolAsync("audioToVideo",audio,directory,new(){Width=128,Height=72,Visualization="image",VisualizationImage=cover});Check((await engine.InspectAsync(still[0])).Video?.Width==128,"Still-image visualization failed");
         var compressed=await engine.ToolAsync("compress",[source],directory,new(){TargetBytes=100000});Check(new FileInfo(compressed[0]).Length<=100000,"Compression ignored target");
+        // Recordings of a selected screen area are often odd-sized; H.264 4:2:0 output needs even dimensions.
+        var oddArea=Path.Combine(directory,"Odd area.mov");await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","testsrc=size=97x65:rate=12:duration=2","-f","lavfi","-i","sine=duration=2:sample_rate=48000","-c:v","libx264","-pix_fmt","yuv444p","-c:a","aac","-shortest",oddArea]);Check((await engine.InspectAsync(oddArea)).Video is {Width:97,Height:65},"Odd-sized video fixture was rounded");
+        foreach(var (tool,oddOptions) in new (string,MediaOptions)[]{("trimVideo",new(){Start=.25,End=1.25}),("changeVideoSpeed",new(){Speed=2}),("redactVideo",new(){Regions=[new(0,0,32,32)]}),("splitVideo",new(){EqualClips=2}),("compress",new(){ReductionPercent=50})})
+        {var edited=await engine.ToolAsync(tool,[oddArea],directory,oddOptions);Check((await engine.InspectAsync(edited[0])).Video is {Width:98,Height:66},"An odd-sized video could not be edited with "+tool);}
+        // VP9 and MPEG-4 accept odd sizes, so WebM and AVI edits keep the original frame.
+        foreach(var (oddExt,oddCodec) in new[]{("webm","libvpx-vp9"),("avi","mpeg4")})
+        {var oddOther=Path.Combine(directory,"Odd area."+oddExt);await ProcessRunner.RunAsync(encoder,["-v","error","-f","lavfi","-i","testsrc=size=97x65:rate=12:duration=2","-c:v",oddCodec,oddOther]);foreach(var (tool,toolOptions) in new (string,MediaOptions)[]{("trimVideo",new(){Start=.25,End=1.25}),("changeVideoSpeed",new(){Speed=2}),("redactVideo",new(){Regions=[new(0,0,32,32)]})})
+        {var kept=await engine.ToolAsync(tool,[oddOther],directory,toolOptions);Check((await engine.InspectAsync(kept[0])).Video is {Width:97,Height:65},"An odd-sized "+oddExt+" "+tool+" edit was padded");}}
         var metadata=await engine.ToolAsync("removeMetadata",[source],directory,new());Check((await engine.InspectAsync(metadata[0])).Video is not null,"Metadata export failed");
         foreach(var ext in MediaEngine.AudioFormats)
         {

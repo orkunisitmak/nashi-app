@@ -6,15 +6,11 @@ public sealed partial class MainWindow
     private string[]? pendingLaunch;private System.Windows.Threading.DispatcherTimer? launchTimer;
     internal void AcceptLaunch(string[] paths)
     {
-        if(!DesktopGeometry.IsInteractive(this))
-        {
-            var openModal=Application.Current?.Windows.OfType<Window>().LastOrDefault(w=>w!=this&&w.IsVisible&&(w.Owner==this||!w.IsEnabled));
-            if(openModal is not null){if(openModal.WindowState==WindowState.Minimized)openModal.WindowState=WindowState.Normal;openModal.Activate();}
-            else ShowMain();
-        }
-        else ShowMain();
+        if(OpenModal() is {} modal)Raise(modal);else ShowMain();
         if(paths.Length==0)return;if(busy||!DesktopGeometry.IsInteractive(this)){pendingLaunch=paths;launchTimer??=new(){Interval=TimeSpan.FromMilliseconds(200)};launchTimer.Stop();launchTimer.Tick-=AcceptPending;launchTimer.Tick+=AcceptPending;launchTimer.Start();return;}files.Clear();Add(paths);ShowLibrary(false);
     }
+    private Window? OpenModal()=>DesktopGeometry.IsInteractive(this)?null:Application.Current?.Windows.OfType<Window>().LastOrDefault(w=>w!=this&&w!=settingsWindow&&w.IsVisible&&(w.Owner==this||!w.IsEnabled));
+    private static void Raise(Window window){if(window.WindowState==WindowState.Minimized)window.WindowState=WindowState.Normal;window.Activate();}
     private void AcceptPending(object? sender,EventArgs e){if(busy||!DesktopGeometry.IsInteractive(this))return;launchTimer?.Stop();if(pendingLaunch is {} paths){pendingLaunch=null;AcceptLaunch(paths);}}
     private TrayHost? tray;private bool quitting;
     private void SetupDesktop()
@@ -26,14 +22,31 @@ public sealed partial class MainWindow
         Closed+=(_,_)=>{launchTimer?.Stop();tray?.Dispose();};if(tray is not null&&Environment.GetCommandLineArgs().Contains("--background"))Hide();
     }
     private void ShowMain(){Show();if(WindowState==WindowState.Minimized)WindowState=WindowState.Normal;Activate();if(monitorToolSetup)Dispatcher.BeginInvoke(OfferFirstRunTools);}
-    private System.Windows.Controls.ContextMenu TrayMenu()
+    // Internal for the native interaction check, which drives the real menu item.
+    internal System.Windows.Controls.ContextMenu TrayMenu()
     {
         var menu=new System.Windows.Controls.ContextMenu();
         void Item(string text,Action action){var item=new System.Windows.Controls.MenuItem();L10n.Bind(item,System.Windows.Controls.HeaderedItemsControl.HeaderProperty,text);item.Click+=(_,_)=>action();menu.Items.Add(item);}
-        Item("Open Nashi",ShowMain);Item("Library",()=>{ShowMain();ShowLibrary(true);});Item("Download copied link",OpenCopiedLink);Item("Settings",()=>{ShowMain();ShowSettings();});Item(update is null?"Check for updates":"Update to "+update.Version,()=>{ShowMain();_ = CheckUpdatesAsync(true);});menu.Items.Add(new System.Windows.Controls.Separator());Item("Quit Nashi",()=>{if(busy){ShowMain();L10n.SetText(status,"Finish or cancel the current operation before quitting.");return;}quitting=true;Application.Current.Shutdown();});return menu;
+        Item("Open Nashi",ShowMain);Item("Library",()=>{ShowMain();ShowLibrary(true);});Item("Download copied link",OpenCopiedLink);Item("Settings",()=>{ShowMain();ShowSettings();});menu.Items.Add(DragShortcutsItem());Item(update is null?"Check for updates":"Update to "+update.Version,()=>{ShowMain();_ = CheckUpdatesAsync(true);});menu.Items.Add(new System.Windows.Controls.Separator());Item("Quit Nashi",()=>{if(busy){ShowMain();L10n.SetText(status,"Finish or cancel the current operation before quitting.");return;}quitting=true;Application.Current.Shutdown();});return menu;
+    }
+    // Same setting as the Settings toggle, reachable without leaving a game or an editor.
+    // Disabled while a dialog is open so an open Settings window cannot show a stale value.
+    private System.Windows.Controls.MenuItem DragShortcutsItem()
+    {
+        var item=new System.Windows.Controls.MenuItem{IsCheckable=true,IsChecked=preferences.Value.Enabled,IsEnabled=DesktopGeometry.IsInteractive(this)};L10n.Bind(item,System.Windows.Controls.HeaderedItemsControl.HeaderProperty,"Enable Nashi drag shortcuts");
+        item.Click+=(_,_)=>{try{preferences.Save(preferences.Value with{Enabled=item.IsChecked});ApplyPreferences();}catch(Exception error) when(error is IOException or UnauthorizedAccessException){item.IsChecked=preferences.Value.Enabled;ShowMain();L10n.SetText(status,error.Message);}};
+        return item;
     }
     private void ApplyPreferences(){L10n.Language=preferences.Value.Language;Feedback.Enabled=preferences.Value.Feedback;WheelPresentation.Preferences=preferences.Value;}
-    private void ShowSettings(){new SettingsWindow(this,preferences,ApplyPreferences,()=>CheckUpdatesAsync(true),library).ShowDialog();appearance.SelectedItem=char.ToUpper(library.Appearance[0])+library.Appearance[1..];}
+    private SettingsWindow? settingsWindow;
+    internal SettingsWindow? OpenSettings=>settingsWindow;
+    // A separate window, not a dialog: a dialog disables this window, and that pauses the global wheel and Ctrl+Shift+D.
+    internal void ShowSettings()
+    {
+        if(OpenModal() is {} modal){Raise(modal);return;}
+        if(settingsWindow is null){settingsWindow=new(this,preferences,ApplyPreferences,()=>CheckUpdatesAsync(true),library);settingsWindow.Closed+=(_,_)=>{settingsWindow=null;appearance.SelectedItem=char.ToUpper(library.Appearance[0])+library.Appearance[1..];};settingsWindow.Show();}
+        Raise(settingsWindow);
+    }
     private void OpenCopiedLink()
     {
         if(busy)return;try{var payload=WebMediaPayload.Parse(Clipboard.GetText());if(payload is null){L10n.SetText(status,"Copy a public media link first.");return;}Show();if(WindowState==WindowState.Minimized)WindowState=WindowState.Normal;Activate();link.Text=payload.Url;SetDownloadKind(payload);OpenDownload();}catch(Exception error)when(ClipboardImport.IsClipboardError(error)){L10n.SetText(status,"Clipboard is busy. Try again.");}
