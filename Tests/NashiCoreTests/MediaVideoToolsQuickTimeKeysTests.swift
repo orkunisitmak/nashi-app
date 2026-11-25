@@ -26,13 +26,24 @@ final class MediaVideoToolsQuickTimeKeysTests: XCTestCase {
         return arguments.indices.filter { arguments[$0] == "-movflags" }.map { arguments[$0 + 1] }
     }
 
+    private let iphone = #"{"com.apple.quicktime.location.ISO6709":"+35.6895+139.6917+040.000/","com.apple.quicktime.make":"Apple","com.apple.quicktime.creationdate":"2026-05-01T10:00:00+0300"}"#
+
     func testVideoToolsKeepQuickTimeKeys() throws {
-        let iphone = #"{"com.apple.quicktime.location.ISO6709":"+35.6895+139.6917+040.000/","com.apple.quicktime.make":"Apple","com.apple.quicktime.creationdate":"2026-05-01T10:00:00+0300"}"#
         XCTAssertEqual(try movflags(.trimVideo, tags: iphone) { $0.start = 1; $0.end = 5 }, ["+faststart+use_metadata_tags"])
         XCTAssertEqual(try movflags(.cropVideo, tags: iphone) { $0.crop = EditRect(x: 0, y: 0, width: 960, height: 540) }, ["+faststart+use_metadata_tags"])
         XCTAssertEqual(try movflags(.changeVideoSpeed, tags: iphone) { $0.speed = 2 }, ["+faststart+use_metadata_tags"])
-        XCTAssertEqual(try movflags(.redactVideo, tags: iphone) { $0.redactions = [EditRect(x: 10, y: 10, width: 100, height: 100)] }, ["+faststart+use_metadata_tags"])
         XCTAssertEqual(try movflags(.muteVideo, tags: iphone), ["+use_metadata_tags"])
+    }
+
+    func testVideoToolsLeaveQuickTimeKeysOutWhenPreserveMetadataIsOff() throws {
+        XCTAssertEqual(try movflags(.trimVideo, tags: iphone) { $0.preserveMetadata = false; $0.start = 1; $0.end = 5 }, ["+faststart"])
+        XCTAssertEqual(try movflags(.cropVideo, tags: iphone) { $0.preserveMetadata = false; $0.crop = EditRect(x: 0, y: 0, width: 960, height: 540) }, ["+faststart"])
+        XCTAssertEqual(try movflags(.changeVideoSpeed, tags: iphone) { $0.preserveMetadata = false; $0.speed = 2 }, ["+faststart"])
+        XCTAssertEqual(try movflags(.muteVideo, tags: iphone) { $0.preserveMetadata = false }, [])
+    }
+
+    func testRedactLeavesQuickTimeKeysOut() throws {
+        XCTAssertEqual(try movflags(.redactVideo, tags: iphone) { $0.redactions = [EditRect(x: 10, y: 10, width: 100, height: 100)] }, ["+faststart"])
     }
 
     func testVideoToolsLeaveFlagsAloneWithoutQuickTimeKeys() throws {
