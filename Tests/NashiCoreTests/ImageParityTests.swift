@@ -118,6 +118,41 @@ final class ImageParityTests: XCTestCase {
         XCTAssertThrowsError(try ImageEngine.collageImage(images,settings:settings))
     }
 
+    /// Runs of equal pixels along one line through the middle of a row (or column) collage of alternating white and red images on black.
+    private func collageRuns(count:Int,length:Int,spacing:Int,layout:CollageLayout = .row) throws -> [(color:[UInt8],length:Int)] {
+        let images=try (0..<count).map { try canvas(50,50,color:$0%2==0 ? "#FFFFFF" : "#FF0000") }
+        var settings=CollageOptions();settings.layout=layout;settings.spacing=spacing;settings.outerPadding=0;settings.cornerRadius=0;settings.backgroundColor="#000000"
+        settings.width=layout == .row ? length : 100;settings.height=layout == .row ? 100 : length
+        let result=try ImageEngine.collageImage(images,settings:settings)
+        let line=try bytes(try XCTUnwrap(result.cropping(to:layout == .row ? CGRect(x:0,y:50,width:length,height:1) : CGRect(x:50,y:0,width:1,height:length))))
+        var runs:[(color:[UInt8],length:Int)]=[]
+        for offset in stride(from:0,to:line.count,by:4) {
+            let color=Array(line[offset..<offset+3])
+            if runs.last?.color==color { runs[runs.count-1].length+=1 } else { runs.append((color,1)) }
+        }
+        return runs
+    }
+
+    /// Splitting 1000 px into 3 or 7 cells puts the shared edges inside pixels, and 101 px into 12 puts one exactly
+    /// on a half pixel; with no spacing the background used to show through as a hairline between images that should touch.
+    func testCollageCellsWithoutSpacingTouchWithoutSeams() throws {
+        for (length,count,layout) in [(1000,3,CollageLayout.row),(1000,7,.row),(101,12,.row),(13,12,.row),(101,12,.column)] {
+            let runs=try collageRuns(count:count,length:length,spacing:0,layout:layout),label="\(count) images in \(length) px \(layout.rawValue)"
+            XCTAssertEqual(runs.map(\.color),(0..<count).map { $0%2==0 ? [255,255,255] : [255,0,0] },label)
+            XCTAssertEqual(runs.map(\.length).reduce(0,+),length,label)
+            XCTAssertLessThanOrEqual((runs.map(\.length).max() ?? 0)-(runs.map(\.length).min() ?? 0),1,label)
+        }
+    }
+
+    /// 101 px with four cells and 5 px spacing leaves 21.5 px per cell: every gap must stay exactly 5 px of pure background.
+    func testCollageSpacingStaysBackgroundBetweenWholePixelCells() throws {
+        let runs=try collageRuns(count:4,length:101,spacing:5)
+        XCTAssertEqual(runs.map(\.color),[[255,255,255],[0,0,0],[255,0,0],[0,0,0],[255,255,255],[0,0,0],[255,0,0]])
+        XCTAssertEqual(runs.enumerated().filter { $0.offset%2==1 }.map(\.element.length),[5,5,5])
+        let cells=runs.enumerated().filter { $0.offset%2==0 }.map(\.element.length)
+        XCTAssertEqual(cells.reduce(0,+),86);XCTAssertLessThanOrEqual((cells.max() ?? 0)-(cells.min() ?? 0),1)
+    }
+
     func testSolidBlurAndPixelateRedactionsAffectOnlySelectedRegion() throws {
         let input=try canvas(128,128)
         var options=OperationOptions();options.redactions=[.init(x:32,y:32,width:64,height:64)]
