@@ -7,6 +7,9 @@
 "%@ (Not installed)" = "%@ (Not installed)";
 "%@ QR code found." = "%@ QR code found.";
 "%@ QR codes found." = "%@ QR codes found.";
+"%@ QR codes on page %@ were found, but the content is not text." = "%@ QR codes on page %@ were found, but the content is not text.";
+"%@ QR codes on page %lld were found, but the content is not text." = "%@ QR codes on page %lld were found, but the content is not text.";
+"%@ QR codes were found, but the content is not text." = "%@ QR codes were found, but the content is not text.";
 "%@ annotations" = "%@ annotations";
 "%@ areas selected" = "%@ areas selected";
 "%@ exports" = "%@ exports";
@@ -39,6 +42,9 @@
 "%lld (Not installed)" = "%lld (Not installed)";
 "%lld QR code found." = "%lld QR code found.";
 "%lld QR codes found." = "%lld QR codes found.";
+"%lld QR codes on page %@ were found, but the content is not text." = "%lld QR codes on page %@ were found, but the content is not text.";
+"%lld QR codes on page %lld were found, but the content is not text." = "%lld QR codes on page %lld were found, but the content is not text.";
+"%lld QR codes were found, but the content is not text." = "%lld QR codes were found, but the content is not text.";
 "%lld annotations" = "%lld annotations";
 "%lld areas selected" = "%lld areas selected";
 "%lld exports" = "%lld exports";
@@ -135,6 +141,10 @@
 "A PHOTO IN THIS POST IS UNAVAILABLE. TRY A FRESH PUBLIC POST LINK." = "A PHOTO IN THIS POST IS UNAVAILABLE. TRY A FRESH PUBLIC POST LINK.";
 "A PHOTO IS UNAVAILABLE. TRY A FRESH PUBLIC POST LINK." = "A PHOTO IS UNAVAILABLE. TRY A FRESH PUBLIC POST LINK.";
 "A PLACE FOR FRESH FILES." = "A PLACE FOR FRESH FILES.";
+"A QR CODE WAS FOUND, BUT THE CONTENT IS NOT TEXT." = "A QR CODE WAS FOUND, BUT THE CONTENT IS NOT TEXT.";
+"A QR code on page %@ was found, but the content is not text." = "A QR code on page %@ was found, but the content is not text.";
+"A QR code on page %lld was found, but the content is not text." = "A QR code on page %lld was found, but the content is not text.";
+"A QR code was found, but the content is not text." = "A QR code was found, but the content is not text.";
 "A SELECTED ITEM IS MISSING." = "A SELECTED ITEM IS MISSING.";
 "A SNAPSHOT TIME IS OUTSIDE THE VIDEO." = "A SNAPSHOT TIME IS OUTSIDE THE VIDEO.";
 "A SPLIT POINT LIES OUTSIDE THE VIDEO." = "A SPLIT POINT LIES OUTSIDE THE VIDEO.";

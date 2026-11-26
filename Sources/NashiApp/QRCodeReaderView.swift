@@ -74,7 +74,7 @@ struct QRCodeReaderView:View {
             }
             ScrollView {
                 VStack(alignment:.leading,spacing:14) {
-                    if model.report.results.isEmpty,!model.busy {
+                    if model.report.foundNothing,!model.busy {
                         VStack(spacing:13) { Image(systemName:"qrcode.viewfinder").font(.system(size:44,weight:.light)).foregroundStyle(NashiPalette.forest);Text("No QR codes this time.").font(.system(size:19,weight:.bold,design:.rounded));Text("Try a clearer image or another PDF.").font(.system(size:12)).foregroundStyle(.secondary) }.frame(maxWidth:.infinity).padding(.vertical,45)
                     }
                     ForEach(model.report.results) { result in

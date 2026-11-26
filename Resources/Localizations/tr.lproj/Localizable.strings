@@ -7,6 +7,9 @@
 "%@ (Not installed)" = "%@ (Kurulu değil)";
 "%@ QR code found." = "%@ QR kodu bulundu.";
 "%@ QR codes found." = "%@ QR kodu bulundu.";
+"%@ QR codes on page %@ were found, but the content is not text." = "%@. sayfada %@ QR kodu bulundu ama içerikleri metin değil.";
+"%@ QR codes on page %lld were found, but the content is not text." = "%lld. sayfada %@ QR kodu bulundu ama içerikleri metin değil.";
+"%@ QR codes were found, but the content is not text." = "%@ QR kodu bulundu ama içerikleri metin değil.";
 "%@ annotations" = "%@ işaretleme";
 "%@ areas selected" = "%@ alan seçili";
 "%@ exports" = "%@ çıktıları";
@@ -39,6 +42,9 @@
 "%lld (Not installed)" = "%lld (Kurulu değil)";
 "%lld QR code found." = "%lld QR kodu bulundu.";
 "%lld QR codes found." = "%lld QR kodu bulundu.";
+"%lld QR codes on page %@ were found, but the content is not text." = "%@. sayfada %lld QR kodu bulundu ama içerikleri metin değil.";
+"%lld QR codes on page %lld were found, but the content is not text." = "%lld. sayfada %lld QR kodu bulundu ama içerikleri metin değil.";
+"%lld QR codes were found, but the content is not text." = "%lld QR kodu bulundu ama içerikleri metin değil.";
 "%lld annotations" = "%lld işaretleme";
 "%lld areas selected" = "%lld alan seçili";
 "%lld exports" = "%lld çıktıları";
@@ -135,6 +141,10 @@
 "A PHOTO IN THIS POST IS UNAVAILABLE. TRY A FRESH PUBLIC POST LINK." = "BU GÖNDERİDEKİ BİR FOTOĞRAFA ULAŞILAMIYOR. GÖNDERİNİN GÜNCEL, HERKESE AÇIK BAĞLANTISINI DENE.";
 "A PHOTO IS UNAVAILABLE. TRY A FRESH PUBLIC POST LINK." = "BİR FOTOĞRAFA ULAŞILAMIYOR. GÖNDERİNİN GÜNCEL, HERKESE AÇIK BAĞLANTISINI DENE.";
 "A PLACE FOR FRESH FILES." = "YENİ DOSYALAR İÇİN BİR YER.";
+"A QR CODE WAS FOUND, BUT THE CONTENT IS NOT TEXT." = "BİR QR KODU BULUNDU AMA İÇERİĞİ METİN DEĞİL.";
+"A QR code on page %@ was found, but the content is not text." = "%@. sayfada bir QR kodu bulundu ama içeriği metin değil.";
+"A QR code on page %lld was found, but the content is not text." = "%lld. sayfada bir QR kodu bulundu ama içeriği metin değil.";
+"A QR code was found, but the content is not text." = "Bir QR kodu bulundu ama içeriği metin değil.";
 "A SELECTED ITEM IS MISSING." = "SEÇİLEN ÖĞELERDEN BİRİ BULUNAMIYOR.";
 "A SNAPSHOT TIME IS OUTSIDE THE VIDEO." = "SEÇİLEN BİR KARE ZAMANI VİDEONUN DIŞINDA.";
 "A SPLIT POINT LIES OUTSIDE THE VIDEO." = "BİR BÖLME NOKTASI VİDEONUN DIŞINDA KALIYOR.";

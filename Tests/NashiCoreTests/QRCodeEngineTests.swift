@@ -58,4 +58,32 @@ final class QRCodeEngineTests:XCTestCase {
         XCTAssertTrue(try QRCodeEngine.scan([empty]).results.isEmpty)
         let cancelled=CancellationToken();cancelled.cancel();XCTAssertThrowsError(try QRCodeEngine.scan([image],token:cancelled))
     }
+    private func binaryCode() throws -> CGImage {
+        let filter=CIFilter(name:"CIQRCodeGenerator")!;filter.setValue(Data([0xff,0xfe,0x00,0x80,0x81,0xc3,0x28,0x00]),forKey:"inputMessage")
+        let code=try XCTUnwrap(filter.outputImage).transformed(by:CGAffineTransform(scaleX:10,y:10))
+        let padded=code.composited(over:CIImage(color:.white).cropped(to:code.extent.insetBy(dx:-40,dy:-40)))
+        return try XCTUnwrap(CIContext().createCGImage(padded,from:padded.extent))
+    }
+    func testBinaryQRCodeIsReportedInsteadOfAnEmptyScan() throws {
+        let directory=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:directory) }
+        let url=directory.appendingPathComponent("binary.png");try ImageEngine.write(try binaryCode(),to:url)
+        let report=try QRCodeEngine.scan([url])
+        XCTAssertTrue(report.results.isEmpty);XCTAssertEqual(report.errors,["binary.png: A QR code was found, but the content is not text."])
+        // The reader's "No QR codes this time." state is only for a scan with nothing to say.
+        XCTAssertFalse(report.foundNothing);XCTAssertTrue(QRCodeScanReport().foundNothing)
+        XCTAssertEqual(AppLocalization.text(report.errors[0],language:"tr"),"binary.png: Bir QR kodu bulundu ama içeriği metin değil.")
+        XCTAssertEqual(AppLocalization.text(report.errors[0],language:"fr"),"binary.png\u{00A0}: Un code QR a été trouvé, mais son contenu n’est pas du texte.")
+    }
+    func testBinaryQRCodeOnAPDFPageNamesThePage() throws {
+        let directory=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:directory) }
+        let image=try binaryCode(),readable=try XCTUnwrap(NSImage(contentsOf:try fixture(directory,"Readable code")))
+        let pdf=PDFDocument();pdf.insert(try XCTUnwrap(PDFPage(image:readable)),at:0)
+        pdf.insert(try XCTUnwrap(PDFPage(image:NSImage(cgImage:image,size:NSSize(width:image.width,height:image.height)))),at:1)
+        let document=directory.appendingPathComponent("mixed.pdf");XCTAssertTrue(pdf.write(to:document))
+        let report=try QRCodeEngine.scan([document])
+        XCTAssertEqual(report.results.map(\.text),["Readable code"]);XCTAssertEqual(report.errors,["mixed.pdf: A QR code on page 2 was found, but the content is not text."])
+        XCTAssertEqual(AppLocalization.text(report.errors[0],language:"tr"),"mixed.pdf: 2. sayfada bir QR kodu bulundu ama içeriği metin değil.")
+        XCTAssertEqual(AppLocalization.text("scan.png: 3 QR codes were found, but the content is not text.",language:"tr"),"scan.png: 3 QR kodu bulundu ama içerikleri metin değil.")
+        XCTAssertEqual(AppLocalization.text("scan.pdf: 3 QR codes on page 4 were found, but the content is not text.",language:"fr"),"scan.pdf\u{00A0}: 3 codes QR ont été trouvés à la page 4, mais leur contenu n’est pas du texte.")
+    }
 }
