@@ -20,6 +20,17 @@ final class PagesDOCXFieldHyperlinkTests: XCTestCase {
         XCTAssertEqual(runs.filter { $0.link != nil }.map(\.text), ["the docs"])
     }
 
+    func testSimpleHyperlinkFieldKeepsItsLink() throws {
+        let simple = "<w:fldSimple w:instr=\" HYPERLINK &quot;https://example.com/simple&quot; \\o &quot;Tip&quot; \">\(run("the guide"))</w:fldSimple>"
+        let nonLink = "<w:fldSimple w:instr=\" DATE \">\(run(" today"))</w:fldSimple>"
+        let nestedInLink = "<w:hyperlink r:id=\"rIdLink\"><w:fldSimple w:instr=\" PAGE \">\(run(" p.3"))</w:fldSimple></w:hyperlink>"
+        let runs = try convert(name: "Simple field link", body: "<w:p>\(run("Read "))\(simple)\(nonLink)\(nestedInLink)</w:p>")
+        XCTAssertEqual(runs.map(\.text).joined(), "Read the guide today p.3")
+        XCTAssertEqual(runs.first { $0.text == "the guide" }?.link, "https://example.com/simple")
+        XCTAssertNil(runs.first { $0.text == " today" }?.link)
+        XCTAssertEqual(runs.first { $0.text == " p.3" }?.link, "https://example.com/site")
+    }
+
     // F1801
     func testSplitInstructionAndNestedFieldsKeepTheOuterLink() throws {
         let begin = "<w:r><w:fldChar w:fldCharType=\"begin\"/></w:r>"

@@ -263,7 +263,10 @@ private enum PagesDOCXReader {
                         // Word keeps a URL's #fragment in w:anchor, not in the relationship target.
                         if let target = destination, !target.contains("#"), let anchor = item.attr("anchor")?.addingPercentEncoding(withAllowedCharacters: .urlFragmentAllowed), !anchor.isEmpty { destination = target + "#" + anchor }
                         for child in item.elements(nil) { try visit(child, link:destination) }
-                    } else if ["sdt","sdtContent","ins","smartTag","fldSimple","customXml","moveTo","dir","bdo"].contains(item.local) { for child in item.elements(nil) { try visit(child, link:link) } }
+                    } else if item.local == "fldSimple" {
+                        let fieldLink = item.attr("instr").flatMap(hyperlinkField) ?? link
+                        for child in item.elements(nil) { try visit(child, link:fieldLink) }
+                    } else if ["sdt","sdtContent","ins","smartTag","customXml","moveTo","dir","bdo"].contains(item.local) { for child in item.elements(nil) { try visit(child, link:link) } }
                 }
                 for child in element.elements(nil) { try visit(child) }
                 // An empty paragraph has no run from which to recover its font.
