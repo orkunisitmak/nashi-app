@@ -902,6 +902,7 @@
 "DRAG EITHER EDGE TO RESIZE THE RANGE, OR DRAG ITS MIDDLE TO MOVE IT." = "DRAG EITHER EDGE TO RESIZE THE RANGE, OR DRAG ITS MIDDLE TO MOVE IT.";
 "DRAG INSIDE TO MOVE. DRAG NEAR A CORNER TO RESIZE. DRAG OUTSIDE TO START A NEW SELECTION." = "DRAG INSIDE TO MOVE. DRAG NEAR A CORNER TO RESIZE. DRAG OUTSIDE TO START A NEW SELECTION.";
 "DRAG ON THE PREVIEW TO ADD AN AREA. EACH AREA IS SAVED INTO THE NEW COPY." = "DRAG ON THE PREVIEW TO ADD AN AREA. EACH AREA IS SAVED INTO THE NEW COPY.";
+"DRAG OVER EACH AREA TO COVER, THEN PICK HOW IT IS HIDDEN." = "DRAG OVER EACH AREA TO COVER, THEN PICK HOW IT IS HIDDEN.";
 "DRAG SHORTCUTS" = "DRAG SHORTCUTS";
 "DRAG THE STACK TO CARRY ALL FILES. DRAG THE PAPERCLIP TO MOVE FLOAT." = "DRAG THE STACK TO CARRY ALL FILES. DRAG THE PAPERCLIP TO MOVE FLOAT.";
 "DRAG TO DRAW WITH THE SELECTED TOOL. USE SELECT / MOVE TO EDIT AN EXISTING ANNOTATION." = "DRAG TO DRAW WITH THE SELECTED TOOL. USE SELECT / MOVE TO EDIT AN EXISTING ANNOTATION.";
@@ -999,6 +1000,7 @@
 "Drag either edge to resize the range, or drag its middle to move it." = "Drag either edge to resize the range, or drag its middle to move it.";
 "Drag inside to move. Drag near a corner to resize. Drag outside to start a new selection." = "Drag inside to move. Drag near a corner to resize. Drag outside to start a new selection.";
 "Drag on the preview to add an area. Each area is saved into the new copy." = "Drag on the preview to add an area. Each area is saved into the new copy.";
+"Drag over each area to cover, then pick how it is hidden." = "Drag over each area to cover, then pick how it is hidden.";
 "Drag shortcuts" = "Drag shortcuts";
 "Drag the stack to carry all files. Drag the paperclip to move Float." = "Drag the stack to carry all files. Drag the paperclip to move Float.";
 "Drag to draw with the selected tool. Use Select / Move to edit an existing annotation." = "Drag to draw with the selected tool. Use Select / Move to edit an existing annotation.";
