@@ -64,7 +64,16 @@ enum PDFOfficeCodec {
 
     static func text(_ page: PDFPage, token: CancellationToken) throws -> String {
         if let text = page.string, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return text }
-        return try recognizedCells(page, token: token).sorted { $0.rect.midY > $1.rect.midY }.map(\.text).joined(separator: "\n")
+        // Vision returns words on one printed line as separate boxes whose midY
+        // differs slightly; group them into lines and read each left to right.
+        // A line is anchored on its shortest cell, so a tall cell cannot chain
+        // the printed line above or below into it.
+        var lines: [[TextCell]] = []
+        for cell in try recognizedCells(page, token: token).sorted(by: { $0.rect.midY > $1.rect.midY }) {
+            if let anchor = lines.last?.min(by: { $0.rect.height < $1.rect.height })?.rect, (anchor.minY...anchor.maxY).contains(cell.rect.midY) || (cell.rect.minY...cell.rect.maxY).contains(anchor.midY) { lines[lines.count - 1].append(cell) }
+            else { lines.append([cell]) }
+        }
+        return lines.map { $0.sorted { $0.rect.minX < $1.rect.minX }.map(\.text).joined(separator: " ") }.joined(separator: "\n")
     }
 
     /// PDF text is literal. Without escapes Markdown reads "*", "_", "[", "<",
