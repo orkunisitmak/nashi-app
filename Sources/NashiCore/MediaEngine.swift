@@ -194,6 +194,21 @@ public enum MediaEngine {
         return [output]
     }
 
+    /// Copies a QuickTime-compatible video stream unchanged while transcoding only incompatible audio to AAC in MP4.
+    static func remuxVideoWithAACAudio(_ input: URL, options: OperationOptions, token: CancellationToken, progress: @escaping ProgressHandler = {_,_ in}) throws -> URL {
+        let info = try inspect(input, token: token)
+        try requireVideo(info)
+        try validateQuality(options.quality)
+        try validateMediaPreferences(options)
+        let output = try outputURL(input, ext: "mp4", options: options)
+        var arguments = ["-i", input.path, "-map", "0:v:0", "-c:v", "copy", "-map", "0:a:0?"]
+        arguments += audioEncoding("m4a", quality: options.quality, bitrate: options.audioBitrate * 1000, source: info.audio)
+        arguments += ["-movflags", "+faststart"]
+        if options.preserveMetadata { arguments += ["-map_metadata", "0"] }
+        try render(arguments, to: output, token: token, duration: info.duration, progress: progress)
+        return output
+    }
+
     public static func tool(_ kind: ToolKind, inputs: [URL], options: OperationOptions, token: CancellationToken, progress: @escaping ProgressHandler = {_,_ in}) throws -> [URL] {
         guard !inputs.isEmpty else { throw NashiError.invalidInput("Choose at least one media file.") }
         try token.check()

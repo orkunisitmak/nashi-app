@@ -793,6 +793,7 @@
 "Convert · while dragging" = "Convert · while dragging";
 "Convert, fine-tune, and send them on their way." = "Convert, fine-tune, and send them on their way.";
 "Converting downloaded audio…" = "Converting downloaded audio…";
+"Converting video for QuickTime…" = "Converting video for QuickTime…";
 "Copied all" = "Copied all";
 "Copied link" = "Copied link";
 "Copy" = "Copy";
@@ -2675,6 +2676,7 @@
 "The downloaded file contains no video." = "The downloaded file contains no video.";
 "The downloaded file has no readable video." = "The downloaded file has no readable video.";
 "The downloaded tools are incomplete. Please try setup again." = "The downloaded tools are incomplete. Please try setup again.";
+"The downloaded video could not be converted for QuickTime." = "The downloaded video could not be converted for QuickTime.";
 "The file has no audio track." = "The file has no audio track.";
 "The file has no playable audio or video track." = "The file has no playable audio or video track.";
 "The file has no video track." = "The file has no video track.";

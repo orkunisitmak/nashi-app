@@ -793,6 +793,7 @@
 "Convert · while dragging" = "Convertir · pendant le glissement";
 "Convert, fine-tune, and send them on their way." = "Convertissez, peaufinez et envoyez-les sur leur chemin.";
 "Converting downloaded audio…" = "Conversion de l’audio téléchargé…";
+"Converting video for QuickTime…" = "Conversion de la vidéo pour QuickTime…";
 "Copied all" = "Tout copié";
 "Copied link" = "Lien copié";
 "Copy" = "Copier";
@@ -2675,6 +2676,7 @@
 "The downloaded file contains no video." = "Le fichier téléchargé ne contient pas de vidéo.";
 "The downloaded file has no readable video." = "Le fichier téléchargé ne contient aucune vidéo lisible.";
 "The downloaded tools are incomplete. Please try setup again." = "Les outils téléchargés sont incomplets. Veuillez relancer la configuration.";
+"The downloaded video could not be converted for QuickTime." = "La vidéo téléchargée n’a pas pu être convertie pour QuickTime.";
 "The file has no audio track." = "Le fichier ne contient aucune piste audio.";
 "The file has no playable audio or video track." = "Le fichier ne contient aucune piste audio ou vidéo lisible.";
 "The file has no video track." = "Le fichier ne contient aucune piste vidéo.";

@@ -111,12 +111,13 @@ public enum WebDownloadEngine {
             }
         }
         try Task.checkCancellation();try token.check()
-        // Confine the reported paths to staging before the size fit replaces them.
+        // Confine the reported paths to staging before post-processing replaces them.
         try transaction.record(results,in:area)
-        if mode == .video,let maximumHeight {
-            try await Task.detached {
-                try enforceVideoHeight(results,maximum:maximumHeight,directory:area.directory,token:token,progress:progress)
+        if mode == .video {
+            let prepared=try await Task.detached {
+                try prepareVideoOutputs(results,maximumHeight:maximumHeight,directory:area.directory,token:token,progress:progress)
             }.value
+            if prepared != results { try transaction.record(prepared,in:area) }
         }
         progress(OperationProgress.indeterminate,"Finishing your file…")
         let output=try transaction.publish(token:token)
@@ -124,24 +125,56 @@ public enum WebDownloadEngine {
         return output
     }
 
-    // Some sites omit dimensions or report stale values for their direct formats.
-    // Verify the actual local file instead of trusting the format selector alone.
-    static func enforceVideoHeight(_ files:[URL],maximum:Int,directory:URL,token:CancellationToken,progress:@escaping ProgressHandler) throws {
+    private static let quickTimeVideoCodecs:Set<String> = ["h264","mpeg4","prores"]
+    private static let quickTimeAudioCodecs:Set<String> = ["aac","mp3","alac","ac3","eac3","pcm_s16le","pcm_s24le"]
+
+    // Some sites omit dimensions, report stale values, or serve VP9/AV1 inside MP4
+    // containers that QuickTime Player cannot open. Verify the actual local file
+    // instead of trusting the format selector alone.
+    static func prepareVideoOutputs(_ files:[URL],maximumHeight:Int?,directory:URL,token:CancellationToken,progress:@escaping ProgressHandler) throws -> [URL] {
+        var prepared:[URL]=[]
         for file in files {
             try token.check()
             let media=try MediaEngine.inspect(file,token:token)
-            guard let height=media.video?.height else { throw NashiError.failed("The downloaded file has no readable video.") }
-            guard height>maximum else { continue }
-            progress(OperationProgress.indeterminate,"Fitting video to the selected size…")
-            var options=OperationOptions();options.outputDirectory=directory;options.videoMaxHeight=maximum
-            let converted=try MediaEngine.convert(file,to:"mp4",options:options,token:token,progress:{ value,_ in progress(value,"Fitting video to the selected size…") })
-            guard converted.count==1,let replacement=converted.first,
-                  let outputHeight=try MediaEngine.inspect(replacement,token:token).video?.height,outputHeight<=maximum else {
-                throw NashiError.failed("The selected video size could not be applied.")
+            guard let video=media.video,let height=video.height else { throw NashiError.failed("The downloaded file has no readable video.") }
+            let needsResize = maximumHeight.map { height > $0 } ?? false
+            let needsVideoTranscode = !quickTimeVideoCodecs.contains(video.codec.lowercased())
+            let needsAudioTranscode = media.audio.map { !quickTimeAudioCodecs.contains($0.codec.lowercased()) } ?? false
+            guard needsResize || needsVideoTranscode || needsAudioTranscode else {
+                prepared.append(file)
+                continue
+            }
+            let status = needsResize ? "Fitting video to the selected size…" : "Converting video for QuickTime…"
+            progress(OperationProgress.indeterminate,status)
+            var options=OperationOptions();options.outputDirectory=directory
+            if needsResize,let maximumHeight { options.videoMaxHeight=maximumHeight }
+            let replacement:URL
+            if needsResize || needsVideoTranscode {
+                let converted=try MediaEngine.convert(file,to:"mp4",options:options,token:token,progress:{ value,_ in progress(value,status) })
+                guard converted.count==1,let first=converted.first else {
+                    throw NashiError.failed(needsResize ? "The selected video size could not be applied." : "The downloaded video could not be converted for QuickTime.")
+                }
+                replacement=first
+            } else {
+                replacement=try MediaEngine.remuxVideoWithAACAudio(file,options:options,token:token,progress:{ value,_ in progress(value,status) })
+            }
+            let outputMedia=try MediaEngine.inspect(replacement,token:token)
+            let audioCompatible=outputMedia.audio.map { quickTimeAudioCodecs.contains($0.codec.lowercased()) } ?? true
+            guard let outputVideo=outputMedia.video,let outputHeight=outputVideo.height,
+                  quickTimeVideoCodecs.contains(outputVideo.codec.lowercased()),audioCompatible,
+                  maximumHeight.map({ !needsResize || outputHeight <= $0 }) ?? true else {
+                throw NashiError.failed(needsResize ? "The selected video size could not be applied." : "The downloaded video could not be converted for QuickTime.")
             }
             try token.check()
-            _ = try FileManager.default.replaceItemAt(file,withItemAt:replacement)
+            if file.pathExtension.lowercased() == "mp4" {
+                _ = try FileManager.default.replaceItemAt(file,withItemAt:replacement)
+                prepared.append(file)
+            } else {
+                try FileManager.default.removeItem(at:file)
+                prepared.append(replacement)
+            }
         }
+        return prepared
     }
 
     static func baseArguments(photoPost:Bool=false) throws -> [String] {
@@ -164,7 +197,7 @@ public enum WebDownloadEngine {
         case .audioMP3:args += ["--format","bestaudio/best","--extract-audio","--audio-format","mp3","--audio-quality","0"]
         case .video:
             let limit=maximumHeight.map{"[height<=?\($0)]"} ?? ""
-            args += ["--format","bestvideo[ext=mp4]\(limit)+bestaudio[ext=m4a]/best[ext=mp4]\(limit)/bestvideo\(limit)+bestaudio/best\(limit)","--merge-output-format","mp4","--remux-video","mp4"]
+            args += ["--format","bestvideo[ext=mp4]\(limit)+bestaudio[ext=m4a]/best[ext=mp4]\(limit)/bestvideo\(limit)+bestaudio/best\(limit)","--format-sort","res,vcodec:h264,acodec:m4a","--merge-output-format","mp4","--remux-video","mp4"]
         case .original:args += ["--format","bestaudio/best"]
         }
         return args+["--",info.url.absoluteString]

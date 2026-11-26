@@ -157,6 +157,57 @@ final class WebDownloadTests:XCTestCase {
         let files=try await WebDownloadEngine.download(info,mode:.video,maximumHeight:720,destination:root.appendingPathComponent("Downloads",isDirectory:true)) { _,_ in }
         XCTAssertEqual(files.map(\.lastPathComponent),["a.mp4"]);XCTAssertEqual(try String(contentsOf:files[0],encoding:.utf8),"H480")
     }
+    // Issue #804: Instagram and similar sites serve VP9 in MP4, which QuickTime cannot open.
+    func testVideoDownloadPrefersH264AndTranscodesVP9MP4ForQuickTime() async throws {
+        let info=try WebDownloadEngine.parseMetadata(Data(#"{"formats":[{"height":1080}]}"#.utf8),url:URL(string:"https://example.org/reel/1")!)
+        let args=try WebDownloadEngine.downloadArguments(info,mode:.video,maximumHeight:720,directory:URL(fileURLWithPath:"/tmp/stage"))
+        let sortIndex=try XCTUnwrap(args.firstIndex(of:"--format-sort"))
+        XCTAssertEqual(args[sortIndex+1],"res,vcodec:h264,acodec:m4a")
+
+        let fm=FileManager.default,root=fm.temporaryDirectory.appendingPathComponent("nashi-web-vp9-\(UUID().uuidString)",isDirectory:true)
+        try fm.createDirectory(at:root,withIntermediateDirectories:true)
+        addTeardownBlock { try? fm.removeItem(at:root) }
+        let ffmpegLog=root.appendingPathComponent("ffmpeg.log")
+        let modeFile=root.appendingPathComponent("mode")
+        let tools=[
+            "yt-dlp":"out=\"\";prev=\"\"\nfor a in \"$@\"; do [ \"$prev\" = --output ] && out=\"$a\";prev=\"$a\"; done\nstage=$(dirname \"$out\")\nmode=$(cat '\(modeFile.path)')\nprintf '%s' \"$mode\" > \"$stage/reel.mp4\"\necho NASHI_FILE:\\\"$stage/reel.mp4\\\"\n",
+            "ffprobe":"for f; do :; done\ncontent=$(cat \"$f\")\ncase \"$content\" in\n  VP9_DATA) vc=vp9; ac=aac ;;\n  OPUS_DATA) vc=h264; ac=opus ;;\n  *) vc=h264; ac=aac ;;\nesac\nprintf '{\"format\":{\"duration\":\"3\"},\"streams\":[{\"index\":0,\"codec_type\":\"video\",\"codec_name\":\"%s\",\"width\":720,\"height\":1280},{\"index\":1,\"codec_type\":\"audio\",\"codec_name\":\"%s\",\"channels\":2}]}' $vc $ac\n",
+            "ffmpeg":"echo \"$*\" >> '\(ffmpegLog.path)'\nfor o; do :; done\nprintf H264_AAC > \"$o\"\n",
+            "deno":"exit 0\n"
+        ]
+        for (name,body) in tools {
+            let tool=root.appendingPathComponent(name);try Data(("#!/bin/sh\n"+body).utf8).write(to:tool)
+            try fm.setAttributes([.posixPermissions:0o755],ofItemAtPath:tool.path)
+            let variable="NASHI_"+name.uppercased(),previous=ProcessInfo.processInfo.environment[variable]
+            setenv(variable,tool.path,1)
+            addTeardownBlock { if let previous { setenv(variable,previous,1) } else { unsetenv(variable) } }
+        }
+
+        // 1. VP9 video in MP4 is transcoded to H.264/AAC.
+        try Data("VP9_DATA".utf8).write(to:modeFile)
+        let files=try await WebDownloadEngine.download(info,mode:.video,maximumHeight:nil,destination:root.appendingPathComponent("DownloadsVP9",isDirectory:true)) { _,_ in }
+        XCTAssertEqual(files.map(\.lastPathComponent),["reel.mp4"])
+        XCTAssertEqual(try String(contentsOf:files[0],encoding:.utf8),"H264_AAC")
+        var calls=try String(contentsOf:ffmpegLog,encoding:.utf8).split(separator:"\n").map(String.init)
+        XCTAssertEqual(calls.count,1)
+        XCTAssertTrue(calls[0].contains("-c:v libx264"))
+
+        // 2. H.264 video with incompatible Opus audio copies the video stream and transcodes only audio.
+        try Data("OPUS_DATA".utf8).write(to:modeFile)
+        let remuxed=try await WebDownloadEngine.download(info,mode:.video,maximumHeight:nil,destination:root.appendingPathComponent("DownloadsOpus",isDirectory:true)) { _,_ in }
+        XCTAssertEqual(try String(contentsOf:remuxed[0],encoding:.utf8),"H264_AAC")
+        calls=try String(contentsOf:ffmpegLog,encoding:.utf8).split(separator:"\n").map(String.init)
+        XCTAssertEqual(calls.count,2)
+        XCTAssertTrue(calls[1].contains("-c:v copy"))
+        XCTAssertTrue(calls[1].contains("-c:a aac"))
+
+        // 3. Control: an already QuickTime-compatible H.264/AAC download skips ffmpeg completely.
+        try Data("H264_ORIG".utf8).write(to:modeFile)
+        let fastFiles=try await WebDownloadEngine.download(info,mode:.video,maximumHeight:nil,destination:root.appendingPathComponent("DownloadsFast",isDirectory:true)) { _,_ in }
+        XCTAssertEqual(try String(contentsOf:fastFiles[0],encoding:.utf8),"H264_ORIG")
+        calls=try String(contentsOf:ffmpegLog,encoding:.utf8).split(separator:"\n").map(String.init)
+        XCTAssertEqual(calls.count,2)
+    }
     // F3510: presigned storage links are signed for GET only and some servers refuse HEAD; the photo went to yt-dlp.
     func testDirectImageWhoseServerRefusesHEADStaysAPhoto() async throws {
         let fm=FileManager.default,root=try OutputFiles.temporaryDirectory();addTeardownBlock { try? FileManager.default.removeItem(at:root) }
