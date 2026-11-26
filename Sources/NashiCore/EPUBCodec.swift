@@ -127,8 +127,10 @@ enum EPUBCodec {
             if source.hasPrefix("data:") {
                 guard let comma=source.firstIndex(of:",") else { node.stringValue="";continue }
                 let encoded=String(source[source.index(after:comma)...])
-                guard encoded.utf8.count<=67_000_000,
-                      let decoded=Data(base64Encoded:encoded),
+                guard encoded.utf8.count<=67_000_000 else { node.stringValue="";continue }
+                let unescaped=encoded.removingPercentEncoding ?? encoded
+                let compact=String(String.UnicodeScalarView(unescaped.unicodeScalars.filter{ $0 != " " && $0 != "\t" && $0 != "\r" && $0 != "\n" }))
+                guard let decoded=Data(base64Encoded:compact),
                       decoded.count<=50_000_000 else { node.stringValue="";continue }
                 data = decoded
                 mime = String(source.dropFirst(5).prefix(while: { $0 != ";" && $0 != "," }))

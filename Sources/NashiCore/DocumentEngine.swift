@@ -329,7 +329,11 @@ public enum DocumentEngine {
         func imageData(_ value:String)->String {
             let data:Data
             if value.lowercased().hasPrefix("data:") {
-                guard value.utf8.count<70_000_000,let comma=value.firstIndex(of:","),value[..<comma].lowercased().hasSuffix(";base64"),let decoded=Data(base64Encoded:String(value[value.index(after:comma)...])) else{return ""}
+                guard value.utf8.count<70_000_000,let comma=value.firstIndex(of:","),value[..<comma].lowercased().hasSuffix(";base64") else{return ""}
+                let payload=String(value[value.index(after:comma)...])
+                let unescaped=payload.removingPercentEncoding ?? payload
+                let compact=String(String.UnicodeScalarView(unescaped.unicodeScalars.filter{ $0 != " " && $0 != "\t" && $0 != "\r" && $0 != "\n" }))
+                guard let decoded=Data(base64Encoded:compact) else{return ""}
                 data=decoded
             } else {
                 guard let decoded=value.removingPercentEncoding else{return ""}
