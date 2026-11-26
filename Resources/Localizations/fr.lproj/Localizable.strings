@@ -7,6 +7,9 @@
 "%@ (Not installed)" = "%@ (non installé)";
 "%@ QR code found." = "%@ code QR trouvé.";
 "%@ QR codes found." = "%@ codes QR trouvés.";
+"%@ QR codes on page %@ were found, but the content is not text." = "%@ codes QR ont été trouvés à la page %@, mais leur contenu n’est pas du texte.";
+"%@ QR codes on page %lld were found, but the content is not text." = "%@ codes QR ont été trouvés à la page %lld, mais leur contenu n’est pas du texte.";
+"%@ QR codes were found, but the content is not text." = "%@ codes QR ont été trouvés, mais leur contenu n’est pas du texte.";
 "%@ annotations" = "%@ annotations";
 "%@ areas selected" = "%@ zones sélectionnées";
 "%@ exports" = "Exports %@";
@@ -39,6 +42,9 @@
 "%lld (Not installed)" = "%lld (non installé)";
 "%lld QR code found." = "%lld code QR trouvé.";
 "%lld QR codes found." = "%lld codes QR trouvés.";
+"%lld QR codes on page %@ were found, but the content is not text." = "%lld codes QR ont été trouvés à la page %@, mais leur contenu n’est pas du texte.";
+"%lld QR codes on page %lld were found, but the content is not text." = "%lld codes QR ont été trouvés à la page %lld, mais leur contenu n’est pas du texte.";
+"%lld QR codes were found, but the content is not text." = "%lld codes QR ont été trouvés, mais leur contenu n’est pas du texte.";
 "%lld annotations" = "%lld annotations";
 "%lld areas selected" = "%lld zones sélectionnées";
 "%lld exports" = "Exports %lld";
@@ -135,6 +141,10 @@
 "A PHOTO IN THIS POST IS UNAVAILABLE. TRY A FRESH PUBLIC POST LINK." = "UNE PHOTO DE CETTE PUBLICATION EST INDISPONIBLE. ESSAYEZ UN NOUVEAU LIEN DE PUBLICATION PUBLIQUE.";
 "A PHOTO IS UNAVAILABLE. TRY A FRESH PUBLIC POST LINK." = "UNE PHOTO EST INDISPONIBLE. ESSAYEZ UN NOUVEAU LIEN DE PUBLICATION PUBLIQUE.";
 "A PLACE FOR FRESH FILES." = "UN ENDROIT POUR LES NOUVEAUX FICHIERS.";
+"A QR CODE WAS FOUND, BUT THE CONTENT IS NOT TEXT." = "UN CODE QR A ÉTÉ TROUVÉ, MAIS SON CONTENU N’EST PAS DU TEXTE.";
+"A QR code on page %@ was found, but the content is not text." = "Un code QR a été trouvé à la page %@, mais son contenu n’est pas du texte.";
+"A QR code on page %lld was found, but the content is not text." = "Un code QR a été trouvé à la page %lld, mais son contenu n’est pas du texte.";
+"A QR code was found, but the content is not text." = "Un code QR a été trouvé, mais son contenu n’est pas du texte.";
 "A SELECTED ITEM IS MISSING." = "UN ÉLÉMENT SÉLECTIONNÉ EST MANQUANT.";
 "A SNAPSHOT TIME IS OUTSIDE THE VIDEO." = "UN INSTANT DE CAPTURE SE TROUVE EN DEHORS DE LA VIDÉO.";
 "A SPLIT POINT LIES OUTSIDE THE VIDEO." = "UN POINT DE COUPURE SE TROUVE EN DEHORS DE LA VIDÉO.";

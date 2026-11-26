@@ -14,6 +14,8 @@ public struct QRCodeMatch:Codable,Sendable,Identifiable {
 public struct QRCodeScanReport:Codable,Sendable {
     public var results:[QRCodeMatch]=[]
     public var errors:[String]=[]
+    /// Nothing to show at all. A file error or an unreadable code is a finding, not "no codes".
+    public var foundNothing:Bool { results.isEmpty && errors.isEmpty }
     public init() {}
 }
 
@@ -37,11 +39,11 @@ public enum QRCodeEngine {
                         let box=page.bounds(for:.cropBox),size=abs(page.rotation)%180==90 ? CGSize(width:box.height,height:box.width):box.size,scale=min(3,4096/max(size.width,size.height))
                         let thumbnail=page.thumbnail(of:NSSize(width:max(1,size.width*scale),height:max(1,size.height*scale)),for:.cropBox)
                         guard let image=thumbnail.cgImage(forProposedRect:nil,context:nil,hints:nil) else { throw NashiError.failed("Could not render PDF page \(pageIndex+1).") }
-                        report.results += try scanImage(image,input:input,page:pageIndex+1,token:token)
+                        try scanImage(image,input:input,page:pageIndex+1,token:token,into:&report)
                         progress((Double(index)+Double(pageIndex+1)/Double(max(1,document.pageCount)))/Double(max(1,inputs.count)),"\(input.lastPathComponent), page \(pageIndex+1)")
                     }
                 } else {
-                    report.results += try scanImage(ImageEngine.load(input),input:input,page:nil,token:token)
+                    try scanImage(ImageEngine.load(input),input:input,page:nil,token:token,into:&report)
                 }
             } catch {
                 try token.check()
@@ -59,18 +61,27 @@ public enum QRCodeEngine {
         try token.check();try encoder.encode(report).write(to:output,options:.atomic)
         return [output]
     }
-    private static func scanImage(_ image:CGImage,input:URL,page:Int?,token:CancellationToken) throws -> [QRCodeMatch] {
+    private static func scanImage(_ image:CGImage,input:URL,page:Int?,token:CancellationToken,into report:inout QRCodeScanReport) throws {
         try token.check()
-        if [.none,.noneSkipFirst,.noneSkipLast].contains(image.alphaInfo) { return try detect(image,input:input,page:page,token:token) }
-        let flattened=try detect(onWhite(image),input:input,page:page,token:token)
-        return flattened.isEmpty ? try detect(image,input:input,page:page,token:token) : flattened
+        var found:(matches:[QRCodeMatch],unreadable:Int)
+        if [.none,.noneSkipFirst,.noneSkipLast].contains(image.alphaInfo) { found=try detect(image,input:input,page:page,token:token) }
+        else {
+            found=try detect(onWhite(image),input:input,page:page,token:token)
+            if found.matches.isEmpty { let raw=try detect(image,input:input,page:page,token:token);if !raw.matches.isEmpty || found.unreadable==0 { found=raw } }
+        }
+        report.results += found.matches
+        // A detected code without a text payload (binary content) must not read as "no codes".
+        guard found.unreadable>0 else { return }
+        let codes=found.unreadable == 1 ? "A QR code":"\(found.unreadable) QR codes"
+        report.errors.append("\(input.lastPathComponent): \(codes)\(page.map { " on page \($0)" } ?? "") \(found.unreadable == 1 ? "was":"were") found, but the content is not text.")
     }
-    private static func detect(_ image:CGImage,input:URL,page:Int?,token:CancellationToken) throws -> [QRCodeMatch] {
+    private static func detect(_ image:CGImage,input:URL,page:Int?,token:CancellationToken) throws -> (matches:[QRCodeMatch],unreadable:Int) {
         let request=VNDetectBarcodesRequest();request.symbologies=[.qr]
         try VNImageRequestHandler(cgImage:image).perform([request]);try token.check()
-        return request.results?.compactMap { observation in
+        let observations=request.results ?? []
+        return (observations.compactMap { observation in
             observation.payloadStringValue.map{QRCodeMatch(sourceName:input.lastPathComponent,sourcePath:input.path,page:page,text:$0)}
-        } ?? []
+        },observations.filter { $0.payloadStringValue == nil }.count)
     }
     /// Vision reads transparent pixels as black, so a code with no background looks like a solid square. Light-on-transparent codes only read unflattened, so that scan is the fallback.
     private static func onWhite(_ image:CGImage)->CGImage {
