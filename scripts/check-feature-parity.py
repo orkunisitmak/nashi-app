@@ -4,11 +4,19 @@ import json, pathlib, re
 root = pathlib.Path(__file__).resolve().parents[1]
 source = (root / 'Sources/NashiCore/FeatureCatalog.swift').read_text()
 expected = {}
-for name in ['conversionMatrix', 'singleTools', 'multipleTools']:
+def entries(name, pattern):
     block = source.split('let '+name+':',1)[1].split('= [',1)[1].split('\n    ]',1)[0]
-    expected[name] = {key:(re.findall(r'"([^"]+)"',value) if name=='conversionMatrix' else re.findall(r'\.([A-Za-z]+)',value)) for key,value in re.findall(r'"([a-z0-9]+)": \[([^\]]*)\]',block)}
-block = source.split('let toolNames:',1)[1].split('= [',1)[1].split('\n    ]',1)[0]
-expected['toolNames'] = dict(re.findall(r'\.([A-Za-z]+): "([^"]+)"',block))
+    # Drop Swift comments but keep string literals, so a commented-out entry is
+    # neither parsed nor counted.
+    block = re.sub(r'("(?:\\.|[^"\\\n])*")|//[^\n]*|/\*.*?\*/', lambda match: match[1] or '', block, flags=re.S)
+    # Whatever the strict pattern leaves behind is an entry it could not read;
+    # skipping it would let a Mac-only entry pass unchecked.
+    if re.sub(pattern,'',block).replace(',','').strip():
+        raise SystemExit(f'{name}: a Swift catalog entry could not be parsed')
+    return re.findall(pattern,block)
+for name in ['conversionMatrix', 'singleTools', 'multipleTools']:
+    expected[name] = {key:(re.findall(r'"([^"]+)"',value) if name=='conversionMatrix' else re.findall(r'\.([A-Za-z]+)',value)) for key,value in entries(name, r'"([a-z0-9]+)": \[([^\]]*)\]')}
+expected['toolNames'] = dict(entries('toolNames', r'\.([A-Za-z]+): "([^"]+)"'))
 actual = json.loads((root/'Resources/FeatureCatalog.json').read_text())
 for name, value in expected.items():
     if actual.get(name) != value:
