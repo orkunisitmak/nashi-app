@@ -535,6 +535,10 @@ public enum ImageEngine {
         try write(ctx.makeImage()!,to:output);return [output]
     }
 
+    /// Whole-pixel cell edges for `count` cells sharing `total` pixels. Neighbours read the same edge value, so
+    /// they can never round a shared edge apart and leave a hairline of background or an overlap between them.
+    private static func pixelEdges(_ total:Double,_ count:Int) -> [Double] { (0...count).map { (total*Double($0)/Double(count)).rounded() } }
+
     public static func collageImage(_ inputs:[CGImage],settings:CollageOptions) throws -> CGImage {
         guard inputs.count>=2 else { throw NashiError.invalidInput("Choose at least two images for a collage.") }
         guard settings.aspectRatio.isFinite,settings.aspectRatio>0,settings.cornerRadius.isFinite else { throw NashiError.invalidInput("Collage ratio and corner radius must be valid.") }
@@ -557,13 +561,18 @@ public enum ImageEngine {
         if settings.layout == .featured {
             let featureWidth=(area.width-gap)*2/3,otherWidth=area.width-gap-featureWidth,otherHeight=(area.height-gap*Double(images.count-2))/Double(images.count-1)
             guard featureWidth>0,otherWidth>0,otherHeight>0 else { throw NashiError.invalidInput("Reduce collage spacing or increase the canvas.") }
-            cells.append(CGRect(x:area.minX,y:area.minY,width:featureWidth,height:area.height))
-            for index in 1..<images.count { cells.append(CGRect(x:area.minX+featureWidth+gap,y:area.maxY-Double(index)*otherHeight-Double(index-1)*gap,width:otherWidth,height:otherHeight)) }
+            let split=featureWidth.rounded(),ys=pixelEdges(area.height-gap*Double(images.count-2),images.count-1)
+            cells.append(CGRect(x:area.minX,y:area.minY,width:split,height:area.height))
+            for index in 1..<images.count { cells.append(CGRect(x:area.minX+split+gap,y:area.maxY-ys[index]-Double(index-1)*gap,width:area.width-gap-split,height:ys[index]-ys[index-1])) }
         } else {
             let columns=settings.layout == .row ? images.count : settings.layout == .column ? 1 : max(1,min(images.count,settings.columns))
             let rows=(images.count+columns-1)/columns,cellWidth=(area.width-gap*Double(columns-1))/Double(columns),cellHeight=(area.height-gap*Double(rows-1))/Double(rows)
             guard cellWidth>0,cellHeight>0 else { throw NashiError.invalidInput("Reduce collage spacing or increase the canvas.") }
-            for index in images.indices { cells.append(CGRect(x:area.minX+Double(index%columns)*(cellWidth+gap),y:area.maxY-Double(index/columns+1)*cellHeight-Double(index/columns)*gap,width:cellWidth,height:cellHeight)) }
+            let xs=pixelEdges(area.width-gap*Double(columns-1),columns),ys=pixelEdges(area.height-gap*Double(rows-1),rows)
+            for index in images.indices {
+                let column=index%columns,row=index/columns
+                cells.append(CGRect(x:area.minX+xs[column]+Double(column)*gap,y:area.maxY-ys[row+1]-Double(row)*gap,width:xs[column+1]-xs[column],height:ys[row+1]-ys[row]))
+            }
         }
         for (image,cell) in zip(images,cells) {
             ctx.saveGState();let radius=max(0,min(settings.cornerRadius,min(cell.width,cell.height)/2));ctx.addPath(CGPath(roundedRect:cell,cornerWidth:radius,cornerHeight:radius,transform:nil));ctx.clip();drawFitted(image,in:cell,context:ctx,fit:settings.imageFit);ctx.restoreGState()
