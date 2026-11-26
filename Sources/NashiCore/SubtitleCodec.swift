@@ -138,17 +138,12 @@ enum SubtitleCodec {
         let withoutTags = text.replacingOccurrences(of: #"(?i)<(?:/?(?:(?:c|ruby|rt)(?:\.[^<>\s]*)?|(?:v|lang)(?:\.[^<>\s]*)?(?:[ \t\f][^<>\n]*)?)>|\d{2,}:\d{2}(?::\d{2})?\.\d{3}>)"#, with: "", options: .regularExpression)
             // SRT has no classes, so <b.loud> keeps its formatting as <b>.
             .replacingOccurrences(of: #"(?i)<(/?[biu])\.[^<>\s]*>"#, with: "<$1>", options: .regularExpression)
-        // WebVTT preserves no-break spaces and Unicode direction marks.
-        let webVTT = withoutTags.replacingOccurrences(of: "&nbsp;", with: "\u{00A0}")
-            .replacingOccurrences(of: "&lrm;", with: "\u{200E}")
-            .replacingOccurrences(of: "&rlm;", with: "\u{200F}")
-        return DocumentText.decodeEntities(webVTT, html: true)
+        return DocumentText.decodeEntities(withoutTags, html: true)
     }
     private static func plainText(_ text: String) -> String {
         // Only real cue tags are markup. "5 < 6 and 7 > 3" is text and must survive export.
         let withoutTags = withoutPositionTags(text).replacingOccurrences(of: "(?i)<(?:" + cueTag + ")", with: "", options: .regularExpression)
-        // Direction marks keep right-to-left lines readable in the exported text too.
-        return DocumentText.decodeEntities(withoutTags.replacingOccurrences(of: "&lrm;", with: "\u{200E}").replacingOccurrences(of: "&rlm;", with: "\u{200F}"), html: true)
+        return DocumentText.decodeEntities(withoutTags, html: true)
     }
 }
 
@@ -222,9 +217,9 @@ enum DocumentText {
         for match in pattern.matches(in: result, range: NSRange(result.startIndex..., in: result)).reversed() {
             let name = (result as NSString).substring(with: match.range(at: 1))
             let replacement: String?
-            if let value = named[name] { replacement = value }
-            else if !name.hasPrefix("#") { replacement = htmlNamedReferences[name] }
-            else {
+            if !name.hasPrefix("#") {
+                replacement = html ? (htmlNamedReferences[name] ?? named[name]) : named[name]
+            } else {
                 let number = name.dropFirst()
                 let value = number.first == "x" || number.first == "X" ? UInt32(number.dropFirst(), radix: 16) : UInt32(number)
                 replacement = html ? htmlNumericReference(value) : value.flatMap(UnicodeScalar.init).map { String($0) }
