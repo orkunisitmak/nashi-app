@@ -293,7 +293,8 @@ enum FloatShelfViewMode:Int { case icons,list }
         if event.keyCode==49 { showQuickLook();return true }
         if event.keyCode==36 || event.keyCode==76 { openSelection();return true }
         if event.keyCode==51 || event.keyCode==117 { removeSelection();return true }
-        if event.keyCode==53 { if !collection.selectionIndexPaths.isEmpty { collection.selectionIndexPaths=[];updateLabels() } else { setExpanded(false) };return true }
+        // A held Escape is one press: its auto-repeat must not also collapse the shelf.
+        if event.keyCode==53 { if event.isARepeat { return true };if !collection.selectionIndexPaths.isEmpty { collection.selectionIndexPaths=[];updateLabels() } else { setExpanded(false) };return true }
         guard !event.modifierFlags.contains(.control),!event.modifierFlags.contains(.option),let value=event.characters,!value.isEmpty,value.unicodeScalars.allSatisfy({CharacterSet.alphanumerics.contains($0) || $0==" "}) else { return false }
         let time=ProcessInfo.processInfo.systemUptime,query=Self.typeSelectKey(value)
         if time-lastTypeTime>1 { typeBuffer="" };lastTypeTime=time

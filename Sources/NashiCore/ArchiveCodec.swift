@@ -37,6 +37,7 @@ enum ArchiveCodec {
         var links: [DeferredLink] = []
         var entries = 0
         var expandedBytes:Int64=0
+        var directoryDates: [(URL, Int64)] = []
         var buffer = [UInt8](repeating: 0, count: 128 * 1024)
         while true {
             try token.check()
@@ -44,8 +45,9 @@ enum ArchiveCodec {
             let status = a.readNext(reader, &entry)
             if status == 1 { break }
             try a.check(status, handle: reader)
-            guard let entry, let rawName = a.entryPath(entry) else { throw NashiError.failed("The archive contains an unnamed entry.") }
-            var name = String(cString: rawName)
+            // Only ZIP stores names in a DOS code page; other formats keep rejecting names they cannot decode.
+            guard let entry, let entryName = a.entryPath(entry).map({ String(cString: $0) }) ?? (a.format(reader) & 0xff0000 == 0x50000 ? a.entryRawPath(entry).map(legacyName) : nil) else { throw NashiError.failed("The archive contains an unnamed entry.") }
+            var name = entryName
             if a.format(reader) == 0x90000 {
                 // A gzip stream can hold one ordinary file instead of a tar.
                 name = input.deletingPathExtension().lastPathComponent
@@ -75,6 +77,13 @@ enum ArchiveCodec {
             let kind = a.entryFiletype(entry) & 0o170000
             if kind == 0o040000 {
                 try fm.createDirectory(at: destination, withIntermediateDirectories: true)
+                // The owner keeps full access so later entries, conversion and cleanup still work.
+                let mode = a.entryPerm(entry) & 0o777
+                // A folder stored as 000 must not fall back to the default, which other users can list.
+                let stored = mode != 0 || (a.entryPermIsSet.map { $0(entry) != 0 } ?? false)
+                if stored { try? fm.setAttributes([.posixPermissions: NSNumber(value: mode | 0o700)], ofItemAtPath: destination.path) }
+                let mtime = a.entryMtime(entry)
+                if mtime > 0 { directoryDates.append((destination, mtime)) }
                 continue
             }
             guard kind == 0o100000 || kind == 0 else {
@@ -124,6 +133,10 @@ enum ArchiveCodec {
             guard attributes[.type] as? FileAttributeType == .typeRegular else {
                 throw NashiError.invalidInput("An archive hard link does not point to a regular file.")
             }
+            // Conversion writes each hard link back out as a full copy, so it counts like one.
+            let size=(attributes[.size] as? NSNumber)?.int64Value ?? 0
+            guard size<=limits.maximumBytes-expandedBytes else {throw NashiError.invalidInput("The archive expands beyond the 20 GB safety limit.")}
+            expandedBytes+=size
             try fm.createDirectory(at: link.destination.deletingLastPathComponent(), withIntermediateDirectories: true)
             try fm.linkItem(at: target, to: link.destination)
         }
@@ -142,6 +155,10 @@ enum ArchiveCodec {
                 throw NashiError.invalidInput("An archive link points outside the extraction folder.")
             }
         }
+        // Directory dates go last: adding entries to a directory changes its date.
+        for (directory, mtime) in directoryDates {
+            try? fm.setAttributes([.modificationDate: Date(timeIntervalSince1970: TimeInterval(mtime))], ofItemAtPath: directory.path)
+        }
     }
 
     static func create(from root: URL, at output: URL, format: String, compressionLevel: Int = 6, token: CancellationToken) throws {
@@ -149,7 +166,10 @@ enum ArchiveCodec {
         guard let writer = a.writeNew() else { throw NashiError.failed("Could not initialize the archive writer.") }
         defer { _ = a.writeFree(writer) }
         switch format {
-        case "zip": try a.check(a.writeZIP(writer), handle: writer)
+        case "zip":
+            try a.check(a.writeZIP(writer), handle: writer)
+            // Without this, UTF-8 names lack the ZIP UTF-8 flag and other systems read them as CP437.
+            try a.check(a.writeOptions(writer, "zip:hdrcharset=UTF-8"), handle: writer)
         case "tar": try a.check(a.writeTar(writer), handle: writer)
         case "gz", "gzip", "tgz":
             try a.check(a.writeTar(writer), handle: writer)
@@ -228,6 +248,17 @@ enum ArchiveCodec {
         let url = root.appendingPathComponent(relative).standardizedFileURL
         guard contains(url, root: root) else { throw NashiError.invalidInput("An archive path leaves its extraction folder.") }
         return url
+    }
+
+    /// ZIP names without the UTF-8 flag are in the creator's DOS code page
+    /// (CP437 by the ZIP spec, CP857 on Turkish Windows), which libarchive
+    /// cannot convert in the C locale. Like 7-Zip, keep valid UTF-8.
+    private static func legacyName(_ raw: UnsafePointer<CChar>) -> String {
+        let data = Data(bytes: raw, count: strlen(raw))
+        if let name = String(data: data, encoding: .utf8) { return name }
+        let turkish = Locale.current.language.languageCode == .turkish || Locale.current.region == .turkey
+        let dos: CFStringEncodings = turkish ? .dosTurkish : .dosLatinUS
+        return String(data: data, encoding: .init(rawValue: CFStringConvertEncodingToNSStringEncoding(CFStringEncoding(dos.rawValue)))) ?? String(decoding: data, as: UTF8.self)
     }
 
     private static func contains(_ url: URL, root: URL) -> Bool {
@@ -309,10 +340,13 @@ enum ArchiveCodec {
         var format: Call { symbol("archive_format", Call.self) }
         var errorString: StringGet { symbol("archive_error_string", StringGet.self) }
         var entryPath: StringGet { symbol("archive_entry_pathname_utf8", StringGet.self) }
+        var entryRawPath: StringGet { symbol("archive_entry_pathname", StringGet.self) }
         var entrySymlink: StringGet { symbol("archive_entry_symlink_utf8", StringGet.self) }
         var entryHardlink: StringGet { symbol("archive_entry_hardlink_utf8", StringGet.self) }
         var entryFiletype: UIntGet { symbol("archive_entry_filetype", UIntGet.self) }
         var entryPerm: UIntGet { symbol("archive_entry_perm", UIntGet.self) }
+        /// Not confirmed on every libarchive macOS 13+ ships, so a missing symbol is nil instead of a crash.
+        var entryPermIsSet: Call? { dlsym(library, "archive_entry_perm_is_set").map { unsafeBitCast($0, to: Call.self) } }
         var entryMtime: TimeGet { symbol("archive_entry_mtime", TimeGet.self) }
         var writeNew: New { symbol("archive_write_new", New.self) }
         var writeZIP: Call { symbol("archive_write_set_format_zip", Call.self) }

@@ -16,6 +16,8 @@ public struct MediaStream: Sendable, Equatable {
     public let frameRate: Double?
     public let isAttachedPicture: Bool
     public let rotation: Int
+    /// Width of one frame pixel relative to its height, in the displayed (rotated) frame; 1 for square pixels.
+    public let sampleAspectRatio: Double
     public let metadata: [String: String]
 }
 
@@ -49,12 +51,15 @@ public struct AudioLoudness: Sendable, Equatable {
 
 /// Local media operations. Every export creates a new file; source files are never rewritten.
 public enum MediaEngine {
+    /// Smallest width and height, in pixels, a video crop may have.
+    public static let minimumVideoCropSide = 2.0
     public static let audioFormats: Set<String> = ["mp3", "m4a", "wav", "flac", "ogg", "opus", "aiff", "aif", "wma", "aac"]
     public static let videoFormats: Set<String> = ["mp4", "mov", "mkv", "webm", "avi", "wmv", "m4v", "gif"]
 
     public static func inspect(_ input: URL, token: CancellationToken = .init()) throws -> MediaInfo {
         try validateInput(input, token: token)
-        let result = try ProcessRunner.run(Dependencies.executable("ffprobe"), ["-v", "error", "-show_format", "-show_streams", "-show_chapters", "-of", "json", input.path], token: token)
+        // Warnings are read only to learn whether the duration below is a guess.
+        let result = try ProcessRunner.run(Dependencies.executable("ffprobe"), ["-v", "warning", "-show_format", "-show_streams", "-show_chapters", "-of", "json", input.path], token: token)
         guard let root = try JSONSerialization.jsonObject(with: result.output) as? [String: Any] else { throw NashiError.failed("Could not inspect media information.") }
         let format = root["format"] as? [String: Any] ?? [:]
         let streams = (root["streams"] as? [[String: Any]] ?? []).map { item in
@@ -65,14 +70,31 @@ public enum MediaEngine {
             let swap = abs(rotation % 180) == 90
             // FFmpeg and AVPlayer apply the display matrix; editing coordinates use that canvas.
             let width = integer(item[swap ? "height" : "width"]), height = integer(item[swap ? "width" : "height"])
-            return MediaStream(index: integer(item["index"]) ?? 0, kind: item["codec_type"] as? String ?? "unknown", codec: item["codec_name"] as? String ?? "unknown", duration: number(item["duration"]), width: width, height: height, channels: count(item["channels"], upTo: 512), sampleRate: count(item["sample_rate"], upTo: Int(Int32.max)), bitsPerSample: integer(item["bits_per_sample"]), bitsPerRawSample: integer(item["bits_per_raw_sample"]), sampleFormat: item["sample_fmt"] as? String, bitRate: integer(item["bit_rate"]), frameRate: fraction(item["avg_frame_rate"] as? String) ?? fraction(item["r_frame_rate"] as? String), isAttachedPicture: integer(disposition["attached_pic"]) == 1, rotation: rotation, metadata: metadata)
+            // Players stretch non-square pixels; the editor needs this to match its canvas to the picture.
+            let sar = (item["sample_aspect_ratio"] as? String)?.split(separator: ":").compactMap { Double($0) }
+            let aspect = sar.flatMap { $0.count == 2 && $0[0] > 0 && $0[1] > 0 && ($0[0] / $0[1]).isFinite ? $0[0] / $0[1] : nil } ?? 1
+            return MediaStream(index: integer(item["index"]) ?? 0, kind: item["codec_type"] as? String ?? "unknown", codec: item["codec_name"] as? String ?? "unknown", duration: number(item["duration"]), width: width, height: height, channels: count(item["channels"], upTo: 512), sampleRate: count(item["sample_rate"], upTo: Int(Int32.max)), bitsPerSample: integer(item["bits_per_sample"]), bitsPerRawSample: integer(item["bits_per_raw_sample"]), sampleFormat: item["sample_fmt"] as? String, bitRate: integer(item["bit_rate"]), frameRate: fraction(item["avg_frame_rate"] as? String) ?? fraction(item["r_frame_rate"] as? String), isAttachedPicture: integer(disposition["attached_pic"]) == 1, rotation: rotation, sampleAspectRatio: swap ? 1 / aspect : aspect, metadata: metadata)
         }
         let chapters = (root["chapters"] as? [[String: Any]] ?? []).enumerated().map { index, item in
             MediaChapter(index: index, start: number(item["start_time"]) ?? 0, end: number(item["end_time"]) ?? 0, metadata: tags(item["tags"]))
         }
-        let duration = number(format["duration"]) ?? streams.compactMap(\.duration).max() ?? 0
-        let size = (try input.resourceValues(forKeys: [.fileSizeKey]).fileSize).map(Int64.init) ?? 0
+        var duration = number(format["duration"]) ?? streams.compactMap(\.duration).max() ?? 0
+        // Raw ADTS AAC and MP3 without a length header store no duration, so ffprobe guesses one from the bitrate.
+        // A recording that goes quiet shortens the guess, and trims, bleeps and visualizations then stopped there.
+        if String(decoding: result.errorOutput, as: UTF8.self).contains("Estimating duration from bitrate"), let measured = try measuredDuration(input, token: token) { duration = measured }
+        // A symlink's own size is a few bytes; compression targets come from the media it points to.
+        let size = (try input.resolvingSymlinksInPath().resourceValues(forKeys: [.fileSizeKey]).fileSize).map(Int64.init) ?? 0
         return MediaInfo(duration: duration, size: size, format: format["format_name"] as? String ?? input.pathExtension, streams: streams, chapters: chapters, metadata: tags(format["tags"]))
+    }
+
+    /// The end of the last packet, read by copying every stream to the null muxer without decoding.
+    /// Nil when that fails, so the file stays usable with ffprobe's guess; cancellation still throws.
+    private static func measuredDuration(_ input: URL, token: CancellationToken) throws -> Double? {
+        let result: ProcessResult
+        do { result = try ffmpeg(["-i", input.path, "-map", "0", "-c", "copy", "-f", "null", "-"], token: token) }
+        catch { try token.check(); return nil }
+        let ends = result.text.split(separator: "\n").compactMap { $0.hasPrefix("out_time_us=") ? Double($0.dropFirst("out_time_us=".count)) : nil }
+        return ends.last.flatMap { $0.isFinite && $0 > 0 ? $0 / 1_000_000 : nil }
     }
 
     /// Keys are `file:title`, `track[0]:language`, or `chapter[0]:title`.
@@ -101,6 +123,9 @@ public enum MediaEngine {
         }
         for key in metadata.keys.sorted() {
             guard let value = metadata[key], !key.isEmpty, !key.contains("\0"), !value.contains("\0") else { throw NashiError.invalidInput("Metadata fields cannot be empty or contain null characters.") }
+            // Remove All already clears every tag and drops chapters, artwork and data tracks; the
+            // editor still sends each listed field as a blank, which would address removed items.
+            if removeAll && value.isEmpty { continue }
             let (requested, field) = try metadataSpecifier(key)
             var specifier = requested
             guard !field.isEmpty, !field.contains("=") else { throw NashiError.invalidInput("Invalid metadata field: \(key)") }
@@ -117,6 +142,13 @@ public enum MediaEngine {
         return [output]
     }
 
+    /// Album art is an attached picture stream, not a tag; keep it where the container stores JPEG/PNG art.
+    private static func albumArtArguments(_ info: MediaInfo, ext: String, options: OperationOptions, input: Int = 0) -> [String]? {
+        guard options.preserveMetadata, ["mp3", "m4a", "flac"].contains(ext),
+              let artwork = info.streams.first(where: { $0.isAttachedPicture && ["mjpeg", "png"].contains($0.codec) }) else { return nil }
+        return ["-map", "\(input):\(artwork.index)", "-c:v", "copy"]
+    }
+
     public static func convert(_ input: URL, to format: String, options: OperationOptions, token: CancellationToken, progress: @escaping ProgressHandler = {_,_ in}) throws -> [URL] {
         let info = try inspect(input, token: token)
         let ext = format.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "."))
@@ -127,14 +159,20 @@ public enum MediaEngine {
         var arguments = ["-i", input.path]
         if audioFormats.contains(ext) {
             try requireAudio(info)
-            arguments += ["-map", "0:a:0", "-vn"] + audioEncoding(ext, quality: options.quality, bitrate: options.audioBitrate * 1000, source: info.audio, pcmCodec: try pcmCodec(for: ext, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset)
+            arguments += ["-map", "0:a:0"] + (albumArtArguments(info, ext: ext, options: options) ?? ["-vn"]) + audioEncoding(ext, quality: options.quality, bitrate: options.audioBitrate * 1000, source: info.audio, pcmCodec: try pcmCodec(for: ext, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset)
         } else {
             try requireVideo(info)
             arguments += ["-map", "0:v:0"]
             if ext == "gif" {
-                let scale = try scalingFilter(options)
-                let first = (["fps=\(options.gifFrameRate)"] + (scale.map { [$0] } ?? []) + ["scale=w='min(\(options.gifMaxWidth),iw)':h=-2:force_original_aspect_ratio=decrease"]).joined(separator: ",")
-                arguments += ["-filter_complex", "[0:v:0]\(first),split[p0][p1];[p0]palettegen=stats_mode=diff[pal];[p1][pal]paletteuse=dither=sierra2_4a", "-an", "-loop", "0"]
+                // GIF has no even-size rule; padding an odd-sized video would add a black edge to every frame.
+                let scale = try scalingFilter(options, padToEven: false)
+                // GIF viewers ignore a pixel aspect, so non-square pixels are resized to their displayed shape.
+                let first = (["fps=\(options.gifFrameRate)"] + (scale.map { [$0] } ?? []) + ["scale=w='min(\(options.gifMaxWidth),iw)':h=-2:force_original_aspect_ratio=decrease:reset_sar=1"]).joined(separator: ",")
+                // Fast skips error diffusion; Maximum uses fewer colors and rewrites only the changed rectangle of each frame.
+                let palette = options.compressionPreset == "fast" ? (generate: "palettegen=stats_mode=diff", apply: "paletteuse=dither=bayer:bayer_scale=5")
+                    : options.compressionPreset == "maximum" ? (generate: "palettegen=max_colors=128:stats_mode=diff", apply: "paletteuse=dither=sierra2_4a:diff_mode=rectangle")
+                    : (generate: "palettegen=stats_mode=diff", apply: "paletteuse=dither=sierra2_4a")
+                arguments += ["-filter_complex", "[0:v:0]\(first),split[p0][p1];[p0]\(palette.generate)[pal];[p1][pal]\(palette.apply)", "-an", "-loop", "0"]
                 // Complex filters map their final output automatically.
                 arguments.removeSubrange(2..<4)
             } else {
@@ -143,8 +181,14 @@ public enum MediaEngine {
                 arguments += videoEncoding(ext, quality: options.quality, audioBitrate: options.audioBitrate * 1000, sourceAudio: info.audio)
             }
         }
-        if options.preserveMetadata { arguments += ["-map_metadata", "0"] }
-        else { arguments += ["-map_metadata", "-1", "-map_metadata:s", "-1", "-map_chapters", "-1"] }
+        if options.preserveMetadata {
+            arguments += ["-map_metadata", "0"]
+            // Ogg keeps Vorbis/Opus comments on the audio stream; other containers write file-level tags.
+            if info.format.split(separator: ",").contains("ogg"), info.audio?.metadata.isEmpty == false { arguments += ["-map_metadata", "0:s:a:0"] }
+            // Apple devices store location, make, model and capture date as QuickTime keys. The MP4/MOV
+            // muxer writes only its fixed tag list unless those keys are requested; -movflags is set once.
+            if info.metadata.keys.contains(where: { $0.hasPrefix("com.apple.quicktime.") }), let flags = arguments.firstIndex(of: "-movflags") { arguments[flags + 1] += "+use_metadata_tags" }
+        } else { arguments += ["-map_metadata", "-1", "-map_metadata:s", "-1", "-map_chapters", "-1"] }
         arguments += metadataArguments(options.metadata)
         try render(arguments, to: output, token: token, duration: info.duration, progress: progress)
         return [output]
@@ -172,7 +216,7 @@ public enum MediaEngine {
                 case .muteVideo:
                     try requireVideo(info)
                     let out = try outputURL(input, ext: videoExtension(input), suffix: " Muted", options: options)
-                    try render(["-i", input.path, "-map", "0:v:0", "-c:v", "copy", "-an"], to: out, token: token, duration: info.duration, progress: itemProgress)
+                    try render(keepingQuickTimeKeys(["-i", input.path, "-map", "0:v:0", "-c:v", "copy", "-an"], info: info, ext: out.pathExtension, options: options), to: out, token: token, duration: info.duration, progress: itemProgress)
                     results.append(out)
                 case .trimVideo, .trimAudio: results += try trim(input, info: info, audio: kind == .trimAudio, options: options, token: token, progress: itemProgress)
                 case .cropVideo: results += try crop(input, info: info, options: options, token: token, progress: itemProgress)
@@ -227,7 +271,7 @@ public enum MediaEngine {
         }
         let ext = audioExtension(input)
         let out = try outputURL(input, ext: ext, suffix: " Normalized", options: options)
-        try render(["-i", input.path, "-map", "0:a:0", "-af", filter, "-ar", String(info.audio?.sampleRate ?? 48000)] + audioEncoding(ext, quality: options.quality, source: info.audio, pcmCodec: try pcmCodec(for: ext, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset), to: out, token: token, duration: info.duration, progress: { value,label in progress(OperationProgress.map(value, from: 0.45, to: 1),label) })
+        try render(["-i", input.path, "-map", "0:a:0"] + (albumArtArguments(info, ext: ext, options: options) ?? []) + ["-af", filter, "-ar", String(info.audio?.sampleRate ?? 48000)] + audioEncoding(ext, quality: options.quality, source: info.audio, pcmCodec: try pcmCodec(for: ext, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset), to: out, token: token, duration: info.duration, progress: { value,label in progress(OperationProgress.map(value, from: 0.45, to: 1),label) })
         return [out]
     }
 
@@ -236,13 +280,17 @@ public enum MediaEngine {
         let interval = try timeRange(options.start, options.end, duration: info.duration)
         let ext = audio ? audioExtension(input) : videoExtension(input)
         let out = try outputURL(input, ext: ext, suffix: suffix, options: options)
-        var arguments = ["-i", input.path, "-ss", decimal(interval.0), "-t", decimal(interval.1 - interval.0)]
+        let range = ["-ss", decimal(interval.0), "-t", decimal(interval.1 - interval.0)]
+        // Output -ss/-t cut after -af, so silence removal would scan the whole file; read only the selection instead.
+        // An output-side -ss drops the attached cover packet, so a cover comes from a second, unseeked input.
+        let cover = audio ? albumArtArguments(info, ext: ext, options: options, input: 1) : nil
+        var arguments = audio && (options.trimSilence || cover != nil) ? range + ["-i", input.path] + (cover == nil ? [] : ["-i", input.path]) : ["-i", input.path] + range
         if audio {
-            arguments += ["-map", "0:a:0", "-vn"]
+            arguments += ["-map", "0:a:0"] + (cover ?? ["-vn"])
             if options.trimSilence { arguments += ["-af", "silenceremove=start_periods=1:start_duration=0.02:start_threshold=\(decimal(options.silenceThresholdDb))dB,areverse,silenceremove=start_periods=1:start_duration=0.02:start_threshold=\(decimal(options.silenceThresholdDb))dB,areverse"] }
             arguments += audioEncoding(ext, quality: options.quality, source: info.audio, pcmCodec: try pcmCodec(for: ext, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset)
-        } else { arguments += ["-map", "0:v:0", "-map", "0:a:0?"] + videoEncoding(ext, quality: options.quality, sourceAudio: info.audio) }
-        try render(arguments, to: out, token: token, duration: audio && options.trimSilence ? nil : interval.1 - interval.0, progress: progress)
+        } else { arguments += ["-map", "0:v:0", "-map", "0:a:0?", "-vf", evenSize(ext)] + videoEncoding(ext, quality: options.quality, sourceAudio: info.audio) }
+        try render(keepingQuickTimeKeys(arguments, info: info, ext: ext, options: options), to: out, token: token, duration: audio && options.trimSilence ? nil : interval.1 - interval.0, progress: progress)
         return [out]
     }
 
@@ -253,7 +301,7 @@ public enum MediaEngine {
         let rect = try pixelRect(requested, width: width, height: height)
         let out = try outputURL(input, ext: videoExtension(input), suffix: " Cropped", options: options)
         let filter = "crop=\(rect.w):\(rect.h):\(rect.x):\(rect.y):exact=1,pad=ceil(iw/2)*2:ceil(ih/2)*2"
-        try render(["-i", input.path, "-map", "0:v:0", "-map", "0:a:0?", "-vf", filter] + videoEncoding(out.pathExtension, quality: options.quality, copyAudio: true), to: out, token: token, duration: info.duration, progress: progress)
+        try render(keepingQuickTimeKeys(["-i", input.path, "-map", "0:v:0", "-map", "0:a:0?", "-vf", filter] + videoEncoding(out.pathExtension, quality: options.quality, copyAudio: true), info: info, ext: out.pathExtension, options: options), to: out, token: token, duration: info.duration, progress: progress)
         return [out]
     }
 
@@ -261,10 +309,10 @@ public enum MediaEngine {
         try requireVideo(info)
         guard options.speed.isFinite, options.speed >= 0.05, options.speed <= 100 else { throw NashiError.invalidInput("Playback speed must be between 0.05× and 100×.") }
         let out = try outputURL(input, ext: videoExtension(input), suffix: " \(decimal(options.speed))x", options: options)
-        var arguments = ["-i", input.path, "-map", "0:v:0", "-map", "0:a:0?", "-vf", "setpts=(PTS-STARTPTS)/\(decimal(options.speed))", "-r", decimal((info.video?.frameRate ?? 30) * options.speed), "-fps_mode", "cfr"]
+        var arguments = ["-i", input.path, "-map", "0:v:0", "-map", "0:a:0?", "-vf", "setpts=(PTS-STARTPTS)/\(decimal(options.speed)),\(evenSize(out.pathExtension))", "-r", decimal((info.video?.frameRate ?? 30) * options.speed), "-fps_mode", "cfr"]
         if info.hasAudio { arguments += ["-af", tempoFilter(options.speed)] }
         arguments += videoEncoding(out.pathExtension, quality: options.quality, sourceAudio: info.audio)
-        try render(arguments, to: out, token: token, duration: info.duration / options.speed, progress: progress)
+        try render(keepingQuickTimeKeys(arguments, info: info, ext: out.pathExtension, options: options), to: out, token: token, duration: info.duration / options.speed, progress: progress)
         return [out]
     }
 
@@ -273,7 +321,8 @@ public enum MediaEngine {
         let infos = try inputs.map { try inspect($0, token: token) }
         try infos.forEach(requireVideo)
         guard let first = infos.first?.video else { throw NashiError.invalidInput("The first clip has no video.") }
-        let width = max(2, (first.width ?? 1280) / 2 * 2), height = max(2, (first.height ?? 720) / 2 * 2)
+        // Clips are squared below, so an anamorphic first clip sets the canvas at its displayed width.
+        let width = max(2, Int(min(16384, Double(first.width ?? 1280) * first.sampleAspectRatio) / 2) * 2), height = max(2, (first.height ?? 720) / 2 * 2)
         let fps = 30.0
         let audio = infos.contains { $0.hasAudio }
         let temp = try OutputFiles.temporaryDirectory()
@@ -284,9 +333,14 @@ public enum MediaEngine {
             let clip = temp.appendingPathComponent("clip-\(index).mp4")
             var arguments = ["-i", input.path]
             if audio && !infos[index].hasAudio { arguments += ["-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo"] }
-            arguments += ["-map", "0:v:0", "-vf", "scale=\(width):\(height):force_original_aspect_ratio=decrease,pad=\(width):\(height):(ow-iw)/2:(oh-ih)/2,setsar=1,fps=\(decimal(fps)),setpts=PTS-STARTPTS"]
+            // Fitting keeps the stored width/height ratio and setsar=1 then drops the pixel aspect,
+            // so anamorphic clips are first scaled to square pixels to keep their display shape.
+            arguments += ["-map", "0:v:0", "-vf", "scale=trunc(iw*sar/2)*2:ih,setsar=1,scale=\(width):\(height):force_original_aspect_ratio=decrease,pad=\(width):\(height):(ow-iw)/2:(oh-ih)/2,setsar=1,fps=\(decimal(fps)),setpts=PTS-STARTPTS"]
             if audio { arguments += ["-map", infos[index].hasAudio ? "0:a:0" : "1:a:0", "-af", "aresample=48000,asetpts=PTS-STARTPTS", "-ac", "2", "-ar", "48000"] } else { arguments += ["-an"] }
-            arguments += ["-t", decimal(infos[index].duration)] + videoEncoding("mp4", quality: options.quality)
+            // An unknown duration is 0, and `-t 0` would encode an empty clip. The clip's own
+            // video then bounds the generated silence instead.
+            let silent = audio && !infos[index].hasAudio
+            arguments += (infos[index].duration > 0 ? ["-t", decimal(infos[index].duration)] : silent ? ["-shortest"] : []) + videoEncoding("mp4", quality: options.quality)
             try render(arguments, to: clip, token: token, duration: infos[index].duration, progress: { value,_ in progress(OperationProgress.map(value, from: Double(index)/Double(inputs.count)*0.95, to: Double(index+1)/Double(inputs.count)*0.95),"Joining clip \(index+1) of \(inputs.count)…") })
             clips.append(clip)
         }
@@ -301,17 +355,41 @@ public enum MediaEngine {
     private static func snapshots(_ input: URL, info: MediaInfo, options: OperationOptions, token: CancellationToken, progress: @escaping ProgressHandler = {_,_ in}) throws -> [URL] {
         try requireVideo(info)
         guard !options.snapshotTimes.isEmpty else { throw NashiError.invalidInput("Choose at least one frame to save.") }
-        var outputs: [URL] = []
+        var outputs: [URL] = [], lastVideo: Double?? = nil
         do {
             for (index, time) in options.snapshotTimes.enumerated() {
-                guard time.isFinite, time >= 0, info.duration <= 0 || time < info.duration else { throw NashiError.invalidInput("A snapshot time is outside the video.") }
+                guard time.isFinite, time >= 0, info.duration <= 0 || time <= info.duration else { throw NashiError.invalidInput("A snapshot time is outside the video.") }
                 let out = try outputURL(input, ext: "png", suffix: " Frame \(index + 1)", options: options)
-                try render(["-ss", decimal(time), "-i", input.path, "-map", "0:v:0", "-frames:v", "1", "-update", "1", "-c:v", "png"], to: out, token: token)
+                // Image viewers ignore a PNG pixel aspect, so non-square pixels are resized to their displayed shape.
+                do { try render(["-ss", decimal(time), "-i", input.path, "-map", "0:v:0", "-frames:v", "1", "-update", "1", "-vf", "scale=-1:ih:reset_sar=1", "-c:v", "png"], to: out, token: token) }
+                catch let error as NSError where error.domain == NSCocoaErrorDomain && error.code == NSFileReadNoSuchFileError {
+                    // FFmpeg writes the first frame at or after -ss. Past the start of the last frame (the
+                    // end, a long last frame or an audio tail) there is none, yet the player shows the last
+                    // frame there. Packet times can be missing or early (B-frames in AVI), so decode the last
+                    // second of video to the end and keep the final frame.
+                    try token.check()
+                    if lastVideo == nil { lastVideo = .some(try lastVideoTimestamp(input, duration: info.duration, token: token)) }
+                    guard let last = lastVideo ?? nil else { throw error }
+                    try render((last > 1 ? ["-ss", decimal(last - 1)] : []) + ["-i", input.path, "-map", "0:v:0", "-update", "1", "-vf", "scale=-1:ih:reset_sar=1", "-c:v", "png"], to: out, token: token)
+                }
                 outputs.append(out)
                 progress(Double(index+1)/Double(options.snapshotTimes.count),"Saving frame \(index+1) of \(options.snapshotTimes.count)…")
             }
             return outputs
         } catch { outputs.forEach { try? FileManager.default.removeItem(at: $0) }; throw error }
+    }
+
+    /// The last video packet's time from the container start, read without decoding: the final minute first, then the whole file.
+    private static func lastVideoTimestamp(_ input: URL, duration: Double, token: CancellationToken) throws -> Double? {
+        for interval in duration > 60 ? ["\(decimal(duration - 60))%", nil] : [nil] {
+            let result = try ProcessRunner.run(Dependencies.executable("ffprobe"), ["-v", "error", "-select_streams", "v:0"] + (interval.map { ["-read_intervals", $0] } ?? []) + ["-show_entries", "packet=pts_time,dts_time:format=start_time", "-of", "json=c=1", input.path], token: token)
+            guard let root = try JSONSerialization.jsonObject(with: result.output) as? [String: Any] else { return nil }
+            // B-frames in AVI leave many packets without a PTS; their DTS still places them.
+            guard let last = (root["packets"] as? [[String: Any]] ?? []).compactMap({ number($0["pts_time"]) ?? number($0["dts_time"]) }).filter(\.isFinite).max() else { continue }
+            // Input -ss counts from the container's start time.
+            return last - (number((root["format"] as? [String: Any])?["start_time"]).flatMap { $0.isFinite ? $0 : nil } ?? 0)
+        }
+        return nil
     }
 
     private static func split(_ input: URL, info: MediaInfo, options: OperationOptions, token: CancellationToken, progress: @escaping ProgressHandler = {_,_ in}) throws -> [URL] {
@@ -320,7 +398,9 @@ public enum MediaEngine {
         var points: [Double]
         if !options.splitPoints.isEmpty {
             guard options.splitPoints.allSatisfy({ $0.isFinite && $0 > 0 && $0 < info.duration }) else { throw NashiError.invalidInput("Split points must fall inside the video.") }
-            points = Array(Set(options.splitPoints)).sorted()
+            // Keep duplicates: discardedClips index the segments of the sorted points, so the
+            // spacing check must reject a repeated point rather than silently renumbering.
+            points = options.splitPoints.sorted()
         } else if let count = options.equalClips {
             guard count >= 2, count <= 10000 else { throw NashiError.invalidInput("Choose between 2 and 10,000 equal clips.") }
             points = (1..<count).map { info.duration * Double($0) / Double(count) }
@@ -411,7 +491,7 @@ public enum MediaEngine {
         try requireAudio(info)
         let filter = try channelFilter(info: info, options: options)
         let ext = audioExtension(input), out = try outputURL(input, ext: audioExtension(input), suffix: options.channels == 1 ? " Mono" : " Stereo", options: options)
-        try render(["-i", input.path, "-map", "0:a:0", "-af", filter, "-ac", String(options.channels)] + audioEncoding(ext, quality: options.quality, source: info.audio, channels: options.channels, pcmCodec: try pcmCodec(for: ext, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset), to: out, token: token, duration: info.duration, progress: progress)
+        try render(["-i", input.path, "-map", "0:a:0"] + (albumArtArguments(info, ext: ext, options: options) ?? []) + ["-af", filter, "-ac", String(options.channels)] + audioEncoding(ext, quality: options.quality, source: info.audio, channels: options.channels, pcmCodec: try pcmCodec(for: ext, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset), to: out, token: token, duration: info.duration, progress: progress)
         return [out]
     }
 
@@ -442,13 +522,20 @@ public enum MediaEngine {
             if mode == "solid" {
                 graph.append("[\(previous)]drawbox=x=\(rect.x):y=\(rect.y):w=\(rect.w):h=\(rect.h):color=\(try ffmpegColor(options.backgroundColor,opaque:true)):t=fill:enable='\(enable)'[\(next)]")
             } else {
+                // overlay rounds x/y down to the 4:2:0 chroma grid, which would shift an odd-origin
+                // patch and leave the last column/row visible. Start the patch on even pixels.
+                let x = rect.x / 2 * 2, y = rect.y / 2 * 2
+                let rect = (x: x, y: y, w: rect.w + rect.x - x, h: rect.h + rect.y - y)
                 let effect = mode == "blur" ? "gblur=sigma=20:steps=2" : "scale=\(max(1, rect.w / 16)):\(max(1, rect.h / 16)):flags=neighbor,scale=\(rect.w):\(rect.h):flags=neighbor"
-                graph.append("[\(previous)]split[base\(index)][crop\(index)];[crop\(index)]crop=\(rect.w):\(rect.h):\(rect.x):\(rect.y):exact=1,\(effect)[effect\(index)];[base\(index)][effect\(index)]overlay=\(rect.x):\(rect.y):enable='\(enable)'[\(next)]")
+                // overlay alpha-blends its second input. Drop the patch's alpha so it replaces
+                // the area: otherwise transparent pixels in videos with alpha show the original.
+                graph.append("[\(previous)]split[base\(index)][crop\(index)];[crop\(index)]crop=\(rect.w):\(rect.h):\(rect.x):\(rect.y):exact=1,\(effect),format=yuv420p[effect\(index)];[base\(index)][effect\(index)]overlay=\(rect.x):\(rect.y):enable='\(enable)'[\(next)]")
             }
             previous = next
         }
         let out = try outputURL(input, ext: videoExtension(input), suffix: " Redacted", options: options)
-        try render(["-i", input.path, "-filter_complex", graph.joined(separator: ";"), "-map", "[\(previous)]", "-map", "0:a:0?"] + videoEncoding(out.pathExtension, quality: options.quality, copyAudio: true), to: out, token: token, duration: info.duration, progress: progress)
+        graph.append("[\(previous)]\(evenSize(out.pathExtension))[even]")
+        try render(["-i", input.path, "-filter_complex", graph.joined(separator: ";"), "-map", "[even]", "-map", "0:a:0?"] + videoEncoding(out.pathExtension, quality: options.quality, copyAudio: true), to: out, token: token, duration: info.duration, progress: progress)
         return [out]
     }
 
@@ -462,7 +549,7 @@ public enum MediaEngine {
         let out = try outputURL(input, ext: audioExtension(input), suffix: mode == "mute" || mode == "silence" ? " Redacted" : " Bleeped", options: options)
         let replacement = mode == "mute" || mode == "silence" ? "0" : "0.18*sin(2*PI*1000*t)"
         let expressions = (0..<(info.audio?.channels ?? 2)).map { "if(\(expression),\(replacement),val(\($0)))" }.joined(separator: "|")
-        var arguments = ["-i", input.path, "-map", "0:a:0", "-af", "aeval=exprs='\(expressions)':c=same"]
+        var arguments = ["-i", input.path, "-map", "0:a:0"] + (albumArtArguments(info, ext: out.pathExtension.lowercased(), options: options) ?? []) + ["-af", "aeval=exprs='\(expressions)':c=same"]
         arguments += ["-ac", String(info.audio?.channels ?? 2), "-ar", String(info.audio?.sampleRate ?? 48000)] + audioEncoding(out.pathExtension, quality: options.quality, source: info.audio, pcmCodec: try pcmCodec(for: out.pathExtension, source: info.audio, setting: options.audioSampleDepth), compressionPreset: options.compressionPreset)
         try render(arguments, to: out, token: token, duration: info.duration, progress: progress)
         return [out]
@@ -485,40 +572,59 @@ public enum MediaEngine {
         let temp = try OutputFiles.temporaryDirectory()
         defer { try? FileManager.default.removeItem(at: temp) }
         var budget = max(1000, Double(target) * 0.93 - (video ? 2048 : 1024))
-        var ownsOutput = false
+        var ownsOutput = false, previous: [String] = [], shrink = 1.0
+        // The encode for a byte budget, with the analysis pass that two-pass video runs before it.
+        func command(_ budget: Double) throws -> (arguments: [String], firstPass: [String]?) {
+            let totalRate = min(500_000_000, budget * 8 / info.duration)
+            let audioRate = info.hasAudio ? min(128000.0, max(8000, totalRate * (video ? 0.18 : 1))) : 0
+            var arguments = ["-i", input.path, "-map_metadata", "-1", "-map_chapters", "-1"], firstPass: [String]?
+            if video {
+                let videoRate = max(1000, Int(totalRate - audioRate))
+                arguments += ["-map", "0:v:0", "-map", "0:a:0?"]
+                if let scale = try scalingFilter(options) { arguments += ["-vf", scale] }
+                let codec = ext == "webm" ? "libvpx-vp9" : ext == "wmv" ? "wmv2" : ext == "avi" ? "mpeg4" : "libx264"
+                arguments += ["-c:v", codec, "-b:v", String(videoRate), "-pix_fmt", "yuv420p"]
+                if codec == "libx264" { arguments += ["-preset", "medium"] }
+                // One log name for every attempt keeps equal attempts comparable; pass 1 rewrites it.
+                let log = temp.appendingPathComponent("pass").path
+                firstPass = arguments + ["-an", "-pass", "1", "-passlogfile", log, "-f", "null", "/dev/null"]
+                arguments += ["-pass", "2", "-passlogfile", log]
+                if info.hasAudio { arguments += audioEncoding(ext == "webm" ? "opus" : ext == "wmv" ? "wma" : ext == "avi" ? "mp3" : "m4a", quality: options.quality, bitrate: Int(audioRate), source: info.audio) }
+                if ["mp4", "mov", "m4v"].contains(ext) { arguments += ["-movflags", "+faststart"] }
+            } else {
+                arguments += ["-map", "0:a:0", "-vn"] + audioEncoding(ext, quality: options.quality, bitrate: Int(audioRate), source: info.audio, channels: audioRate < 24000 ? 1 : nil)
+                // libopus cannot encode at 22.05 kHz; 24 kHz is its nearest supported rate.
+                if audioRate < 24000 { arguments += ["-ac", "1", "-ar", ext == "opus" ? "24000" : "22050"] }
+            }
+            return (arguments, firstPass)
+        }
         do {
-            for attempt in 0..<6 {
-                progress(OperationProgress.indeterminate,"Compression attempt \(attempt+1)…")
-                let attemptProgress: ProgressHandler = { value,label in progress(value,"Compression attempt \(attempt+1) · \(label)") }
+            let floor = try command(0).arguments
+            var attempt = 0
+            while attempt < 6 {
                 try token.check()
-                let totalRate = min(500_000_000, budget * 8 / info.duration)
-                let audioRate = info.hasAudio ? min(128000.0, max(8000, totalRate * (video ? 0.18 : 1))) : 0
-                var arguments = ["-i", input.path, "-map_metadata", "-1", "-map_chapters", "-1"]
-                if video {
-                    let videoRate = max(1000, Int(totalRate - audioRate))
-                    arguments += ["-map", "0:v:0", "-map", "0:a:0?"]
-                    if let scale = try scalingFilter(options) { arguments += ["-vf", scale] }
-                    let codec = ext == "webm" ? "libvpx-vp9" : ext == "wmv" ? "wmv2" : ext == "avi" ? "mpeg4" : "libx264"
-                    arguments += ["-c:v", codec, "-b:v", String(videoRate), "-pix_fmt", "yuv420p"]
-                    if codec == "libx264" { arguments += ["-preset", "medium"] }
-                    let log = temp.appendingPathComponent("pass-\(attempt)").path
-                    let firstPass = arguments + ["-an", "-pass", "1", "-passlogfile", log, "-f", "null", "/dev/null"]
-                    try ffmpeg(firstPass, token: token, overwrite: true, duration: info.duration, progress: { value,_ in attemptProgress(OperationProgress.map(value, from: 0, to: 0.5),"Analyzing video…") })
-                    arguments += ["-pass", "2", "-passlogfile", log]
-                    if info.hasAudio { arguments += audioEncoding(ext == "webm" ? "opus" : ext == "wmv" ? "wma" : ext == "avi" ? "mp3" : "m4a", quality: options.quality, bitrate: Int(audioRate), source: info.audio) }
-                    if ["mp4", "mov", "m4v"].contains(ext) { arguments += ["-movflags", "+faststart"] }
-                } else {
-                    arguments += ["-map", "0:a:0", "-vn"] + audioEncoding(ext, quality: options.quality, bitrate: Int(audioRate), source: info.audio)
-                    // libopus cannot encode at 22.05 kHz; 24 kHz is its nearest supported rate.
-                    if audioRate < 24000 { arguments += ["-ac", "1", "-ar", ext == "opus" ? "24000" : "22050"] }
+                let (arguments, firstPass) = try command(budget)
+                // Encoders round and clamp bitrates, so a smaller budget can ask for the last encode again. Its size is
+                // known: shrink the budget once more without running it, and stop when every rate is at its floor.
+                if arguments == previous {
+                    if arguments == floor { break }
+                    budget *= shrink
+                    continue
                 }
+                previous = arguments
+                attempt += 1
+                let number = attempt
+                progress(OperationProgress.indeterminate,"Compression attempt \(number)…")
+                let attemptProgress: ProgressHandler = { value,label in progress(value,"Compression attempt \(number) · \(label)") }
+                if let firstPass { try ffmpeg(firstPass, token: token, overwrite: true, duration: info.duration, progress: { value,_ in attemptProgress(OperationProgress.map(value, from: 0, to: 0.5),"Analyzing video…") }) }
                 try render(arguments, to: out, token: token, duration: info.duration, progress: { value,_ in attemptProgress(OperationProgress.map(value, from: video ? 0.5 : 0, to: 1),"Encoding…") })
                 ownsOutput = true
                 let actual = Int64(try out.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0)
                 if actual <= target { return [out] }
                 try FileManager.default.removeItem(at: out)
                 ownsOutput = false
-                budget *= max(0.2, min(0.9, Double(target) / Double(actual) * 0.88))
+                shrink = max(0.2, min(0.9, Double(target) / Double(actual) * 0.88))
+                budget *= shrink
             }
             throw NashiError.failed("The requested size cannot be reached with this format. Choose a larger target size or a smaller video resolution.")
         } catch { if ownsOutput { try? FileManager.default.removeItem(at: out) }; throw error }
@@ -527,6 +633,16 @@ public enum MediaEngine {
     @discardableResult private static func ffmpeg(_ arguments: [String], token: CancellationToken, verbosity: String = "error", overwrite: Bool = false, duration: Double? = nil, progress: @escaping ProgressHandler = {_,_ in}) throws -> ProcessResult {
         let parser = FFmpegProgressParser(duration: duration, progress: progress)
         return try ProcessRunner.run(Dependencies.executable("ffmpeg"), ["-hide_banner", "-nostdin", "-v", verbosity, overwrite ? "-y" : "-n", "-nostats", "-stats_period", "0.2", "-progress", "pipe:1"] + arguments, token: token, onOutput: { parser.append($0) })
+    }
+
+    /// FFmpeg copies an iPhone video's location, make, model and capture date from the input, but the MP4/MOV
+    /// muxer writes those com.apple.quicktime.* keys only with +use_metadata_tags, as Convert already requests
+    /// when Preserve metadata is on. Redact does not use this: a redacted copy is made to be shared safely.
+    private static func keepingQuickTimeKeys(_ arguments: [String], info: MediaInfo, ext: String, options: OperationOptions) -> [String] {
+        guard options.preserveMetadata, ["mp4", "mov", "m4v"].contains(ext.lowercased()), info.metadata.keys.contains(where: { $0.hasPrefix("com.apple.quicktime.") }) else { return arguments }
+        var result = arguments
+        if let flags = result.firstIndex(of: "-movflags") { result[flags + 1] += "+use_metadata_tags" } else { result += ["-movflags", "+use_metadata_tags"] }
+        return result
     }
 
     private static func render(_ arguments: [String], to output: URL, token: CancellationToken, duration: Double? = nil, progress: @escaping ProgressHandler = {_,_ in}) throws {
@@ -564,14 +680,19 @@ public enum MediaEngine {
         case "mp3":
             let maximum = sampleRate <= 12000 ? 64000 : sampleRate < 32000 ? 160000 : 320000
             return ["-c:a", "libmp3lame", "-b:a", String(max(8000, min(maximum, rate / 8000 * 8000)))] + (channelCount > 2 ? ["-ac", "2"] : [])
-        case "m4a", "aac": return ["-c:a", "aac", "-b:a", String(min(512000, min(rate, 6 * sampleRate * channelCount)))]
+        case "m4a", "aac":
+            // AAC stops at 96 kHz. Hi-res ALAC sources need a supported rate, or Normalize/Bleep's source -ar fails.
+            let aacRate = [96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350].first { $0 <= sampleRate } ?? 7350
+            return ["-c:a", "aac", "-b:a", String(min(512000, min(rate, 6 * aacRate * channelCount)))] + (aacRate == sampleRate ? [] : ["-ar", String(aacRate)])
         case "wav": return ["-c:a", pcmCodec ?? "pcm_s16le"]
         case "aiff", "aif": return ["-c:a", pcmCodec ?? "pcm_s16be"]
         case "flac": return ["-c:a", "flac", "-compression_level", compressionPreset == "fast" ? "0" : compressionPreset == "maximum" ? "12" : "8"]
         case "ogg": return ["-c:a", "libvorbis", "-b:a", String(max(32000, min(320000, rate)))]
         case "opus":
             let encoderRate = [48000, 24000, 16000, 12000, 8000].contains(sampleRate) ? sampleRate : 48000
-            return ["-c:a", "libopus", "-b:a", String(min(512000, min(rate, 256000 * channelCount))), "-ar", String(encoderRate)]
+            // libopus rejects surround layouts outside Vorbis order, such as the 5.1(side) of FLAC and AC-3 sources.
+            let layout = [3: "3.0", 4: "quad", 5: "5.0", 6: "5.1", 7: "6.1", 8: "7.1"][channelCount]
+            return ["-c:a", "libopus", "-b:a", String(min(512000, min(rate, 256000 * channelCount))), "-ar", String(encoderRate)] + (layout.map { ["-ch_layout", $0] } ?? [])
         case "wma": return ["-c:a", "wmav2", "-b:a", String(max(24000, min(320000, rate))), "-ar", String(max(8000, min(48000, sampleRate)))] + (channelCount > 2 ? ["-ac", "2"] : [])
         default: return ["-c:a", "aac", "-b:a", String(rate)]
         }
@@ -610,18 +731,19 @@ public enum MediaEngine {
         return arguments
     }
 
-    private static func scalingFilter(_ options: OperationOptions) throws -> String? {
+    private static func scalingFilter(_ options: OperationOptions, padToEven: Bool = true) throws -> String? {
         if let width = options.width, width < 2 || width > 16384 { throw NashiError.invalidInput("Width must be between 2 and 16,384 pixels.") }
         if let height = options.height, height < 2 || height > 16384 { throw NashiError.invalidInput("Height must be between 2 and 16,384 pixels.") }
-        var filter: String
+        var filter: String?
+        // setsar=1 drops a non-square pixel aspect; reset_sar sizes from the displayed shape instead.
         if let width = options.width, let height = options.height {
             let w = width / 2 * 2, h = height / 2 * 2
-            filter = "scale=\(w):\(h):force_original_aspect_ratio=decrease,pad=\(w):\(h):(ow-iw)/2:(oh-ih)/2,setsar=1"
+            filter = "scale=\(w):\(h):force_original_aspect_ratio=decrease:reset_sar=1,pad=\(w):\(h):(ow-iw)/2:(oh-ih)/2,setsar=1"
         }
-        else if let width = options.width { filter = "scale=\(width / 2 * 2):-2,setsar=1" }
-        else if let height = options.height { filter = "scale=-2:\(height / 2 * 2),setsar=1" }
-        else { filter = "pad=ceil(iw/2)*2:ceil(ih/2)*2" }
-        if options.videoMaxHeight > 0 { filter += ",scale=-2:'trunc(min(\(options.videoMaxHeight),ih)/2)*2',setsar=1" }
+        else if let width = options.width { filter = "scale=\(width / 2 * 2):-2:reset_sar=1,setsar=1" }
+        else if let height = options.height { filter = "scale=-2:\(height / 2 * 2):reset_sar=1,setsar=1" }
+        else if padToEven { filter = "pad=ceil(iw/2)*2:ceil(ih/2)*2" }
+        if options.videoMaxHeight > 0 { filter = (filter.map { $0 + "," } ?? "") + "scale=-2:'trunc(min(\(options.videoMaxHeight),ih)/2)*2':reset_sar=1,setsar=1" }
         return filter
     }
 
@@ -649,6 +771,10 @@ public enum MediaEngine {
         }
     }
 
+    // libx264 (yuv420p) and wmv2 need even dimensions, and recordings of a selected screen area are
+    // often odd. VP9 (WebM) and MPEG-4 (AVI) keep odd sizes, so those pass through unchanged.
+    private static func evenSize(_ ext: String) -> String { ["webm", "avi"].contains(ext.lowercased()) ? "null" : "pad=ceil(iw/2)*2:ceil(ih/2)*2" }
+
     private static func tempoFilter(_ speed: Double) -> String {
         var rate = speed, factors: [Double] = []
         while rate > 2 { factors.append(2); rate /= 2 }
@@ -659,7 +785,8 @@ public enum MediaEngine {
 
     private static func validateInput(_ url: URL, token: CancellationToken) throws {
         try token.check()
-        guard url.isFileURL, FileManager.default.isReadableFile(atPath: url.path), (try? url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true else { throw NashiError.invalidInput("Choose a readable local media file.") }
+        // A symlink is never a regular file itself; check the file it points to.
+        guard url.isFileURL, FileManager.default.isReadableFile(atPath: url.path), (try? url.resolvingSymlinksInPath().resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true else { throw NashiError.invalidInput("Choose a readable local media file.") }
     }
     private static func requireAudio(_ info: MediaInfo) throws { guard info.hasAudio else { throw NashiError.invalidInput("The file has no audio track.") } }
     private static func requireVideo(_ info: MediaInfo) throws { guard info.hasVideo else { throw NashiError.invalidInput("The file has no video track.") } }
@@ -681,7 +808,7 @@ public enum MediaEngine {
         return (start, min(finish, duration > 0 ? duration : finish))
     }
     private static func pixelRect(_ rect: EditRect, width: Int, height: Int) throws -> (x: Int, y: Int, w: Int, h: Int) {
-        guard [rect.x, rect.y, rect.width, rect.height].allSatisfy(\.isFinite), rect.x >= 0, rect.y >= 0, rect.width >= 2, rect.height >= 2, rect.x + rect.width <= Double(width) + 0.01, rect.y + rect.height <= Double(height) + 0.01 else { throw NashiError.invalidInput("The selected rectangle must be inside the video and at least 2 × 2 pixels.") }
+        guard [rect.x, rect.y, rect.width, rect.height].allSatisfy(\.isFinite), rect.x >= 0, rect.y >= 0, rect.width >= minimumVideoCropSide, rect.height >= minimumVideoCropSide, rect.x + rect.width <= Double(width) + 0.01, rect.y + rect.height <= Double(height) + 0.01 else { throw NashiError.invalidInput("The selected rectangle must be inside the video and at least 2 × 2 pixels.") }
         return (Int(rect.x), Int(rect.y), Int(rect.width), Int(rect.height))
     }
     private static func redactionPixelRect(_ rect: EditRect, width: Int, height: Int) throws -> (x: Int, y: Int, w: Int, h: Int) {

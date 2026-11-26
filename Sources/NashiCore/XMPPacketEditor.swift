@@ -64,7 +64,8 @@ enum XMPPacketEditor {
             let node:XMLElement
             if let existing { node=existing }
             else {
-                let uri=owner.resolveNamespace(forName:prefix+":"+name)?.stringValue ?? schemas[prefix]
+                // ExifTool declares each namespace on its own Description.
+                let uri=try ([owner]+descriptions(doc)).lazy.compactMap{$0.resolveNamespace(forName:prefix+":"+name)?.stringValue}.first ?? schemas[prefix]
                 guard let uri,!uri.isEmpty else { throw NashiError.invalidInput("The custom XMP namespace \(prefix) is not declared in this file.") }
                 owner.addNamespace(XMLNode.namespace(withName:prefix,stringValue:uri) as! XMLNode)
                 let local=prefix=="dc" ? name.prefix(1).lowercased()+name.dropFirst():name

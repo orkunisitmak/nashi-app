@@ -46,7 +46,10 @@ public static class PhotoCodec
     public static void EncodePng(byte[] pixels,string output,string format,int quality=85,string? encoder=null,CancellationToken token=default)
     {
         using var image=new MagickImage(pixels,new MagickReadSettings{Format=MagickFormat.Png});image.Strip();image.Quality=(uint)Math.Clamp(quality,1,100);
-        if(format=="heic"){if(encoder is null)throw new InvalidOperationException("Set up media tools once to enable HEIC encoding on Windows.");var width=(int)image.Width;var height=(int)image.Height;Task.Run(()=>HeifCodec.EncodeAsync(encoder,pixels,output,width,height,quality,token),token).GetAwaiter().GetResult();return;}image.Write(output,Format(format));
+        if(format=="heic"){if(encoder is null)throw new InvalidOperationException("Set up media tools once to enable HEIC encoding on Windows.");var width=(int)image.Width;var height=(int)image.Height;
+            // FFmpeg's HEVC still drops alpha; like macOS, keep it as a separate plane. Opaque images encode as before.
+            byte[]? alpha=null;if(!image.IsOpaque){using var mask=image.Separate(Channels.Alpha).Single();alpha=mask.ToByteArray(MagickFormat.Png);}
+            Task.Run(()=>HeifCodec.EncodeAsync(encoder,pixels,output,width,height,quality,token,alpha),token).GetAwaiter().GetResult();return;}image.Write(output,Format(format));
     }
     /// Encodes straight (non-premultiplied) BGRA32 pixels without an intermediate PNG.
     public static void EncodePixels(byte[] bgra,int width,int height,string output,string format,int quality=85,string? encoder=null,CancellationToken token=default)
@@ -60,28 +63,34 @@ public static class PhotoCodec
     public static MagickFormat Format(string format)=>format switch{"jpg"=>MagickFormat.Jpeg,"webp"=>MagickFormat.WebP,"heic"=>MagickFormat.Heic,"avif"=>MagickFormat.Avif,"tiff"=>MagickFormat.Tiff,"bmp"=>MagickFormat.Bmp,"gif"=>MagickFormat.Gif,"png"=>MagickFormat.Png,_=>throw new ArgumentException("Unsupported image format.")};
     public static byte[] Adjust(byte[] png,PhotoAdjustments o)
     {
-        foreach(var property in typeof(PhotoAdjustments).GetProperties()){var n=(double)property.GetValue(o)!;if(!double.IsFinite(n)||Math.Abs(n)>100)throw new ArgumentException("Choose finite photo adjustments within their ranges.");}
+        foreach(var property in typeof(PhotoAdjustments).GetProperties()){var n=(double)property.GetValue(o)!;if(!double.IsFinite(n)||Math.Abs(n)>(property.Name==nameof(PhotoAdjustments.Hue)?180:100))throw new ArgumentException("Choose finite photo adjustments within their ranges.");}
         if(o.Gamma<=0||o.Contrast<0||o.Saturation<0)throw new ArgumentException("Gamma must be positive; contrast and saturation cannot be negative.");
         using var image=new MagickImage(png,new MagickReadSettings{Format=MagickFormat.Png});
+        // The pixel loop below reads channels 0..2 as R, G, B and 3 as alpha. A grayscale
+        // PNG has one gray channel (plus alpha), so expand it to RGB first.
+        if(image.ColorType is ColorType.Grayscale or ColorType.GrayscaleAlpha){image.ColorSpace=ColorSpace.sRGB;image.ColorType=image.HasAlpha?ColorType.TrueColorAlpha:ColorType.TrueColor;}
         if(o.Exposure!=0)image.Evaluate(Channels.RGB,EvaluateOperator.Multiply,Math.Pow(2,o.Exposure));
-        image.BrightnessContrast(new Percentage(o.Brightness*100),new Percentage((o.Contrast-1)*50));
+        // Colour only, as on macOS: on alpha, brightness made transparent areas visible and contrast faded opaque ones.
+        image.BrightnessContrast(new Percentage(o.Brightness*100),new Percentage((o.Contrast-1)*50),Channels.RGB);
         if(o.Gamma!=1)image.GammaCorrect(o.Gamma,Channels.RGB);
         if(o.Shadows!=0||o.Highlights!=0||o.Whites!=0||o.Blacks!=0||o.Saturation!=1||o.Vibrance!=0||o.Temperature!=0||o.Tint!=0||o.Fade!=0)
         {
-        var pixels=image.GetPixels();
-        for(var y=0;y<image.Height;y++)for(var x=0;x<image.Width;x++)
+        var pixels=image.GetPixels();var data=pixels.GetValues()??throw new InvalidDataException("Image pixels could not be read.");var channels=(int)image.ChannelCount;
+        var grey=channels<3;   // grey (and grey+alpha) pixels hold one colour value, not R, G and B side by side
+        for(var offset=0;offset+(grey?0:2)<data.Length;offset+=channels)
         {
-            var p=pixels.GetPixel(x,y);var r=p.GetChannel(0)/255d;var g=p.GetChannel(1)/255d;var b=p.GetChannel(2)/255d;var lum=.2126*r+.7152*g+.0722*b;
+            var r=data[offset]/255d;var g=grey?r:data[offset+1]/255d;var b=grey?r:data[offset+2]/255d;var lum=.2126*r+.7152*g+.0722*b;
             var tone=o.Shadows*Math.Pow(1-lum,2)*.3+o.Highlights*lum*lum*.3+o.Whites*Math.Pow(lum,4)*.3+o.Blacks*Math.Pow(1-lum,4)*.3;
             var saturation=o.Saturation+o.Vibrance*(1-(Math.Max(r,Math.Max(g,b))-Math.Min(r,Math.Min(g,b))));
             r=lum+(r-lum)*saturation+tone+o.Temperature*.12+o.Tint*.06;g=lum+(g-lum)*saturation+tone-o.Tint*.1;b=lum+(b-lum)*saturation+tone-o.Temperature*.12+o.Tint*.06;
             var fade=Math.Clamp(o.Fade,0,1)*.3;r=r*(1-fade)+fade;g=g*(1-fade)+fade;b=b*(1-fade)+fade;
-            p.SetChannel(0,(byte)Math.Clamp(Math.Round(r*255),0,255));p.SetChannel(1,(byte)Math.Clamp(Math.Round(g*255),0,255));p.SetChannel(2,(byte)Math.Clamp(Math.Round(b*255),0,255));
+            if(grey){data[offset]=(byte)Math.Clamp(Math.Round((.2126*r+.7152*g+.0722*b)*255),0,255);continue;}
+            data[offset]=(byte)Math.Clamp(Math.Round(r*255),0,255);data[offset+1]=(byte)Math.Clamp(Math.Round(g*255),0,255);data[offset+2]=(byte)Math.Clamp(Math.Round(b*255),0,255);
         }
-        pixels.Dispose();
+        pixels.SetPixels(data);pixels.Dispose();
         }
         if(o.Hue!=0)image.Modulate(new Percentage(100),new Percentage(100),new Percentage(100+o.Hue/1.8));
-        if(o.Dehaze!=0)image.BrightnessContrast(new Percentage(-o.Dehaze*8),new Percentage(o.Dehaze*25));
+        if(o.Dehaze!=0)image.BrightnessContrast(new Percentage(-o.Dehaze*8),new Percentage(o.Dehaze*25),Channels.RGB);
         if(o.NoiseReduction>0)image.MedianFilter((uint)Math.Clamp(Math.Ceiling(o.NoiseReduction*2),1,3));
         // Blur is the Gaussian standard deviation, like macOS CIGaussianBlur's radius.
         // GaussianBlur(radius) keeps sigma at 1 (barely blurred, still readable when
@@ -89,12 +98,54 @@ public static class PhotoCodec
         if(o.Blur>0)image.Blur(0,Math.Min(50,o.Blur));
         if(o.Sharpen>0||o.Clarity>0||o.Texture>0)image.UnsharpMask(0,1+Math.Max(0,o.Clarity)*3,Math.Max(0,o.Sharpen)+Math.Max(0,o.Texture),.02);
         if(o.Grain>0)image.AddNoise(NoiseType.Gaussian,Math.Min(1,o.Grain)*.15,Channels.RGB);
-        if(o.Vignette>0)image.Vignette(0,Math.Max(1,Math.Min(image.Width,image.Height)*o.Vignette*.25),0,0);
+        if(o.Vignette>0)Vignette(image,Math.Min(2,o.Vignette));
         return image.ToByteArray(MagickFormat.Png);
+    }
+    /// Lossless PNG with maximum zlib effort, adaptive filtering and no unused alpha channel
+    /// (WPF's encoder writes unfiltered 32-bit PNGs that are several times larger).
+    /// Never overwrites an existing file. The output is always 8-bit RGB or RGBA: left alone, Magick picks grey or
+    /// 1-4 bit palette PNGs for simple images, which PdfSharp (Image to PDF) cannot read.
+    public static void OptimizePngPixels(byte[] bgra,int width,int height,string output)
+    {
+        if(width<1||height<1||bgra.Length<(long)width*height*4)throw new ArgumentException("Choose a nonempty image.");
+        using var image=new MagickImage();image.ReadPixels(bgra,new PixelReadSettings((uint)width,(uint)height,StorageType.Char,PixelMapping.BGRA));image.ColorSpace=ColorSpace.sRGB;
+        if(image.HasAlpha&&image.IsOpaque)image.HasAlpha=false;
+        image.Strip();image.Quality=95;image.Depth=8;image.Settings.SetDefine(MagickFormat.Png,"color-type",image.HasAlpha?"6":"2");
+        using var file=new FileStream(output,FileMode.CreateNew,FileAccess.Write,FileShare.None);image.Write(file,MagickFormat.Png);
+    }
+    /// Strong blur for redaction: works on a reduced copy so large sigmas stay fast and unrecognizable.
+    public static byte[] BlurRegion(byte[] png,double sigma)
+    {
+        if(!double.IsFinite(sigma)||sigma<=0)throw new ArgumentOutOfRangeException(nameof(sigma));
+        using var image=new MagickImage(png,new MagickReadSettings{Format=MagickFormat.Png});var width=image.Width;var height=image.Height;
+        var factor=Math.Max(1,sigma/4);var small=(uint)Math.Max(1,Math.Round(width/factor));var smallHeight=(uint)Math.Max(1,Math.Round(height/factor));
+        image.Resize(small,smallHeight);image.GaussianBlur(0,Math.Max(1,sigma/factor));image.Resize(width,height);image.HasAlpha=false;return image.ToByteArray(MagickFormat.Png);
     }
     public static IReadOnlyDictionary<string,string> Metadata(string input)
     {
         using var image=Read(input);var values=new SortedDictionary<string,string>(StringComparer.Ordinal);foreach(var name in image.AttributeNames){var value=image.GetAttribute(name);if(!string.IsNullOrEmpty(value))values[name]=value;}
         var exif=image.GetExifProfile();if(exif is not null)foreach(var v in exif.Values)values["EXIF · "+v.Tag]=v.ToString()??"";return values;
+    }
+    /// Darkens the edges like macOS CIVignette: in linear light, colour is multiplied by (1-d²/4)^(2·intensity),
+    /// d being the distance from the centre over half the shorter side. Alpha is kept. ImageMagick's
+    /// Vignette instead faded the edges to the white background colour and painted over transparency.
+    private static void Vignette(MagickImage image,double intensity)
+    {
+        // The loop reads three colour channels; make that hold for any input, not only after Adjust's grey expansion.
+        if(image.ColorSpace!=ColorSpace.sRGB)image.ColorSpace=ColorSpace.sRGB;
+        var linear=new double[256];for(var i=0;i<256;i++){var c=i/255d;linear[i]=c<=.04045?c/12.92:Math.Pow((c+.055)/1.055,2.4);}
+        var srgb=new byte[65536];for(var i=0;i<srgb.Length;i++){var c=i/65535d;srgb[i]=(byte)Math.Round(255*(c<=.0031308?c*12.92:1.055*Math.Pow(c,1/2.4)-.055));}
+        var width=(int)image.Width;var height=(int)image.Height;var channels=(int)image.ChannelCount;var radius=Math.Min(width,height)/2d;
+        using var pixels=image.GetPixelsUnsafe();
+        for(var y=0;y<height;y++)
+        {
+            var row=pixels.GetArea(0,y,(uint)width,1)!;var dy=(y+.5-height/2d)/radius;
+            for(var x=0;x<width;x++)
+            {
+                var dx=(x+.5-width/2d)/radius;var falloff=1-(dx*dx+dy*dy)/4;var factor=falloff>0?Math.Pow(falloff,2*intensity):0;
+                for(int c=0,i=x*channels;c<3;c++)row[i+c]=srgb[(int)(linear[row[i+c]]*factor*65535+.5)];
+            }
+            pixels.SetArea(0,y,(uint)width,1,row);
+        }
     }
 }

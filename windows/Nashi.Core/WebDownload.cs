@@ -1,7 +1,18 @@
+using System.Globalization;
 using System.Text.Json;
 namespace Nashi.Core;
 public sealed partial class WebDownload(Toolchain tools)
 {
+    /// Reads a "NASHI:downloaded:total" progress line. yt-dlp prints Python floats
+    /// such as 1048576.0, so the numbers are parsed with the invariant culture;
+    /// under tr-TR or de-DE the "." would otherwise be read as a group separator.
+    internal static double? ProgressFraction(string line)
+    {
+        if(!line.StartsWith("NASHI:",StringComparison.Ordinal))return null;
+        var parts=line.Split(':');
+        if(parts.Length!=3||!double.TryParse(parts[1],NumberStyles.Float,CultureInfo.InvariantCulture,out var current)||!double.TryParse(parts[2],NumberStyles.Float,CultureInfo.InvariantCulture,out var total)||!double.IsFinite(current)||!double.IsFinite(total)||total<=0)return null;
+        return Math.Clamp(current/total,0,.98);
+    }
     public static Uri Validate(string input)
     {
         if(!Uri.TryCreate(input,UriKind.Absolute,out var url)||url.Scheme is not ("http" or "https")||!string.IsNullOrEmpty(url.UserInfo)||url.IsLoopback||url.Host.EndsWith(".local",StringComparison.OrdinalIgnoreCase))throw new ArgumentException("Paste a public http(s) media or page link.");return url;
@@ -24,8 +35,7 @@ public sealed partial class WebDownload(Toolchain tools)
         progress?.Report(new(null,"Resolving media…"));
         await ProcessRunner.RunAsync(tools.Executable("yt-dlp"),args,token,line=>
         {
-            if(!line.StartsWith("NASHI:",StringComparison.Ordinal))return;
-            var parts=line.Split(':');if(parts.Length==3&&double.TryParse(parts[1],out var current)&&double.TryParse(parts[2],out var total)&&total>0)progress?.Report(new(Math.Clamp(current/total,0,.98),"Downloading media…"));
+            if(ProgressFraction(line) is {} fraction)progress?.Report(new(fraction,"Downloading media…"));
         });
         var files=Directory.GetFiles(tx.StagingDirectory).Where(p=>new FileInfo(p).Length>0).ToList();
         if(files.Count==0)throw new IOException("No public downloadable media found. Some sites require sign-in or do not expose downloadable media.");

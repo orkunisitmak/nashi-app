@@ -10,9 +10,16 @@ public enum DocumentEngine {
         guard FileManager.default.fileExists(atPath: input.path) else { throw NashiError.invalidInput("The input file does not exist.") }
         let format = normalized(requestedFormat)
         let category = FileCategory.detect(input)
+        // Decode explicit TXT input before creating the destination. Markdown's
+        // relative resources require its original directory; keep that import path.
+        let explicitEncoding = options.textEncoding.flatMap { $0 == "auto" ? nil : $0 }
+        if explicitEncoding != nil, normalized(input.pathExtension) == "md" {
+            throw NashiError.unsupported("Explicit text encoding is supported for subtitles and TXT files only.")
+        }
+        let decodedText = explicitEncoding != nil && normalized(input.pathExtension) == "txt" ? try DocumentText.read(input, encoding: explicitEncoding) : nil
         if category == .archive { return try convertArchive(input, to: format, options: options, token: token) }
         if category == .subtitle {
-            let text = try SubtitleCodec.convert(input, to: format, token: token)
+            let text = try SubtitleCodec.convert(input, to: format, token: token, inputEncoding: options.textEncoding)
             let output = try destination(input, format: format, options: options)
             try token.check()
             try text.write(to: output, atomically: true, encoding: .utf8)
@@ -65,11 +72,12 @@ public enum DocumentEngine {
             source = try TextClippingCodec.materialize(input, in: work)
         } else if ext == "rtfd" {
             source = try RichTextCodec.materializeHTML(input, in: work)
-        } else if ext == "txt" || ext == "md" {
+        } else if ["txt", "md", "csv", "tsv"].contains(ext) {
+            // The office import filters for these formats always read UTF-8.
             let data = try Data(contentsOf: input)
-            if String(data: data, encoding: .utf8) == nil || data.contains(0) {
+            if decodedText != nil || String(data: data, encoding: .utf8) == nil || data.contains(0) {
                 source = work.appendingPathComponent(input.lastPathComponent)
-                try DocumentText.read(input).write(to: source, atomically: true, encoding: .utf8)
+                try (decodedText ?? DocumentText.read(input)).write(to: source, atomically: true, encoding: .utf8)
             }
         }
 
@@ -96,6 +104,9 @@ public enum DocumentEngine {
             try PagesCodec.create(fromDOCX: docx, at: output, token: token)
             return try checked([output])
         }
+        if category == .spreadsheet && ["csv", "tsv"].contains(format) {
+            return try convertSpreadsheet(source, original: input, to: format, in: staging, options: options, token: token)
+        }
         let converted: URL
         do { converted = try office(source, to: format, in: staging, token: token) }
         catch {
@@ -115,8 +126,8 @@ public enum DocumentEngine {
     public static func extractArchive(_ input: URL, options: OperationOptions, token: CancellationToken) throws -> [URL] {
         let parent = options.outputDirectory ?? input.deletingLastPathComponent()
         try FileManager.default.createDirectory(at: parent, withIntermediateDirectories: true)
-        let name = archiveNamed(input).deletingPathExtension().lastPathComponent + " Extracted"
-        let output = uniqueFolder(name, in: parent)
+        let output = OutputFiles.unique(for: archiveNamed(input), extension: "", suffix: " Extracted", directory: parent)
+        let name = output.lastPathComponent
         let work = try OutputFiles.temporaryDirectory()
         defer { try? FileManager.default.removeItem(at: work) }
         let extracted = work.appendingPathComponent(name, isDirectory: true)
@@ -146,9 +157,8 @@ public enum DocumentEngine {
 
     /// Each invocation owns an isolated LibreOffice profile. Headless conversion
     /// therefore cannot reuse or alter a user's open LibreOffice documents.
-    static func office(_ input: URL, to format: String, in directory: URL, token: CancellationToken) throws -> URL {
+    static func runOfficeInvocation(_ input: URL, filter: String, in directory: URL, token: CancellationToken) throws -> ProcessResult {
         try token.check()
-        let filter = try officeFilter(format, category: FileCategory.detect(input))
         let fm = FileManager.default
         try fm.createDirectory(at: directory, withIntermediateDirectories: true)
         let profile = try OutputFiles.temporaryDirectory()
@@ -180,13 +190,19 @@ public enum DocumentEngine {
         // LibreOffice imports linked HTML resources. Denying IP networking at
         // the process boundary keeps conversions local. Unix-domain IPC remains
         // available because the upstream macOS build requires it to start.
-        let result: ProcessResult
         let sandbox = URL(fileURLWithPath: "/usr/bin/sandbox-exec")
         if fm.isExecutableFile(atPath: sandbox.path) {
-            result = try ProcessRunner.run(sandbox, ["-p", "(version 1)(allow default)(deny network* (remote ip))", executable.path] + arguments, token: token, environment: ["SAL_DISABLE_OPENCL": "1", "LC_ALL": "en_US.UTF-8"])
+            return try ProcessRunner.run(sandbox, ["-p", "(version 1)(allow default)(deny network* (remote ip))", executable.path] + arguments, token: token, environment: ["SAL_DISABLE_OPENCL": "1", "LC_ALL": "en_US.UTF-8"])
         } else {
-            result = try ProcessRunner.run(executable, arguments, token: token, environment: ["SAL_DISABLE_OPENCL": "1", "LC_ALL": "en_US.UTF-8"])
+            return try ProcessRunner.run(executable, arguments, token: token, environment: ["SAL_DISABLE_OPENCL": "1", "LC_ALL": "en_US.UTF-8"])
         }
+    }
+
+    static func office(_ input: URL, to format: String, in directory: URL, token: CancellationToken) throws -> URL {
+        try token.check()
+        let filter = try officeFilter(format, category: FileCategory.detect(input))
+        let result = try runOfficeInvocation(input, filter: filter, in: directory, token: token)
+        let fm = FileManager.default
         let output = directory.appendingPathComponent(input.deletingPathExtension().lastPathComponent).appendingPathExtension(format)
         guard fm.fileExists(atPath: output.path) else {
             let diagnostic = result.text + String(decoding: result.errorOutput, as: UTF8.self)
@@ -195,6 +211,92 @@ public enum DocumentEngine {
         try OutputFiles.validate([output])
         if format == "html" { try embedHTMLImages(output, token: token) }
         return output
+    }
+
+    private static func convertSpreadsheet(_ source: URL, original: URL, to format: String, in staging: URL, options: OperationOptions, token: CancellationToken) throws -> [URL] {
+        try token.check()
+        let fm = FileManager.default
+        let filter = "\(format):Text - txt - csv (StarCalc):\(format == "csv" ? 44 : 9),34,76,1,,0,false,true,false,false,false,-1"
+        let result = try runOfficeInvocation(source, filter: filter, in: staging, token: token)
+        let items = ((try? fm.contentsOfDirectory(at: staging, includingPropertiesForKeys: [.fileSizeKey])) ?? [])
+            .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
+        let stem = source.deletingPathExtension().lastPathComponent
+        let generated = items.filter { $0.pathExtension.lowercased() == format && $0.lastPathComponent.hasPrefix(stem) }
+        
+        var populated: [(url: URL, sheetName: String)] = []
+        for file in generated {
+            let content = (try? String(contentsOf: file, encoding: .utf8)) ?? ""
+            if !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                var sheetName = file.deletingPathExtension().lastPathComponent
+                if sheetName.hasPrefix(stem + "-") {
+                    sheetName = String(sheetName.dropFirst(stem.count + 1))
+                }
+                populated.append((file, sheetName))
+            }
+        }
+        
+        let destinationDir = options.outputDirectory ?? original.deletingLastPathComponent()
+        try fm.createDirectory(at: destinationDir, withIntermediateDirectories: true)
+        
+        if populated.isEmpty {
+            if let first = generated.first {
+                let target = OutputFiles.unique(for: original, extension: format, directory: destinationDir)
+                do {
+                    return try publish(first, to: target, token: token)
+                } catch {
+                    try? fm.removeItem(at: target)
+                    throw error
+                }
+            }
+            let diagnostic = result.text + String(decoding: result.errorOutput, as: UTF8.self)
+            throw NashiError.failed("The local document converter did not produce a \(format.uppercased()) file. \(diagnostic.trimmingCharacters(in: .whitespacesAndNewlines))")
+        }
+        
+        if populated.count == 1 {
+            let target = OutputFiles.unique(for: original, extension: format, directory: destinationDir)
+            do {
+                return try publish(populated[0].url, to: target, token: token)
+            } catch {
+                try? fm.removeItem(at: target)
+                throw error
+            }
+        }
+        
+        return try publishSpreadsheetSheets(populated, original: original, format: format, to: destinationDir, token: token)
+    }
+
+    /// Publishes multiple populated spreadsheet sheets to `destinationDir`, removing any
+    /// already-published outputs if a subsequent sheet fails or is cancelled.
+    static func publishSpreadsheetSheets(
+        _ populated: [(url: URL, sheetName: String)],
+        original: URL,
+        format: String,
+        to destinationDir: URL,
+        token: CancellationToken,
+        beforeSheet: ((Int) -> Void)? = nil
+    ) throws -> [URL] {
+        let fm = FileManager.default
+        var results: [URL] = []
+        var pendingTarget: URL?
+        do {
+            for (index, item) in populated.enumerated() {
+                beforeSheet?(index)
+                try token.check()
+                let target = OutputFiles.unique(for: original, extension: format, suffix: " (\(item.sheetName))", directory: destinationDir)
+                pendingTarget = target
+                results += try publish(item.url, to: target, token: token)
+                pendingTarget = nil
+            }
+            return results
+        } catch {
+            for published in results {
+                try? fm.removeItem(at: published)
+            }
+            if let pending = pendingTarget {
+                try? fm.removeItem(at: pending)
+            }
+            throw error
+        }
     }
 
     private static func officeFilter(_ format: String, category: FileCategory) throws -> String {
@@ -276,14 +378,6 @@ public enum DocumentEngine {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         return OutputFiles.unique(for: input, extension: format, directory: directory)
     }
-    private static func uniqueFolder(_ name: String, in parent: URL) -> URL {
-        var candidate = parent.appendingPathComponent(name, isDirectory: true), index = 2
-        // lstat-based, so a dangling link with this name is not chosen for moveItem.
-        while (try? FileManager.default.attributesOfItem(atPath: candidate.path)) != nil {
-            candidate = parent.appendingPathComponent("\(name) \(index)", isDirectory: true); index += 1
-        }
-        return candidate
-    }
     private static func publish(_ source: URL, to output: URL, token: CancellationToken) throws -> [URL] {
         try token.check()
         try OutputFiles.validate([source])
@@ -307,8 +401,10 @@ enum RichTextCodec {
             let pattern = try NSRegularExpression(pattern: #"(?i)\bsrc\s*=\s*(["'])(file:[^"']+)\1"#)
             for match in pattern.matches(in: html, range: NSRange(html.startIndex..., in: html)).reversed() {
                 let source = (html as NSString).substring(with: match.range(at: 2))
-                guard let original = URL(string: source) else { continue }
-                let candidate = directory.appendingPathComponent(original.lastPathComponent)
+                // Cocoa leaves "?" in a file name unescaped; read the name from the raw
+                // link, as a URL parser would take "Why?.png" for "Why" and a query.
+                guard let name = source.split(separator: "/").last?.removingPercentEncoding, !name.contains("/") else { continue }
+                let candidate = directory.appendingPathComponent(name)
                 if FileManager.default.fileExists(atPath: candidate.path), let range = Range(match.range(at: 2), in: html) {
                     html.replaceSubrange(range, with: candidate.absoluteString)
                 }

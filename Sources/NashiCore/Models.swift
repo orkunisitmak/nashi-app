@@ -96,6 +96,8 @@ public struct VideoRedaction: Codable, Sendable {
 }
 
 public struct OperationOptions: Codable, Sendable {
+    /// Optional source encoding for subtitle and TXT imports; nil preserves automatic detection.
+    public var textEncoding: String? = nil
     public var quality: Double = 0.8
     public var audioBitrate: Int = 256
     public var audioSampleDepth: String = "matchSource"
@@ -107,6 +109,10 @@ public struct OperationOptions: Codable, Sendable {
     public var targetBytes: Int64? = nil
     /// Percentage reduction: 20 means at most 80% of the original bytes.
     public var percentage: Double? = nil
+    /// Compress: resize each image to this fraction of its own size (0.5 = half).
+    public var imageScale: Double? = nil
+    /// Compress: shrink each image so its longest edge is at most this many pixels.
+    public var imageMaxEdge: Int? = nil
     public var width: Int? = nil
     public var height: Int? = nil
     public var crop: EditRect? = nil

@@ -9,10 +9,34 @@ import Vision
 public enum ImageEngine {
     private static let imageColorSpace = CGColorSpace(name: CGColorSpace.sRGB)!
     private static let imageContext = CIContext(options: [.cacheIntermediates: false])
+    private static func rasterize(_ image:NSImage) throws -> CGImage? {
+        guard image.size.width.isFinite,image.size.height.isFinite,image.size.width<=32000,image.size.height<=32000,image.size.width*image.size.height<=100_000_000 else { throw NashiError.invalidInput("This image is too large to convert.") }
+        let width=Int(image.size.width.rounded()),height=Int(image.size.height.rounded())
+        guard width>0,height>0,let rep=NSBitmapImageRep(bitmapDataPlanes:nil,pixelsWide:width,pixelsHigh:height,bitsPerSample:8,samplesPerPixel:4,hasAlpha:true,isPlanar:false,colorSpaceName:.deviceRGB,bytesPerRow:0,bitsPerPixel:0),let context=NSGraphicsContext(bitmapImageRep:rep) else { return nil }
+        NSGraphicsContext.saveGraphicsState();defer { NSGraphicsContext.restoreGraphicsState() }
+        NSGraphicsContext.current=context
+        image.draw(in:NSRect(x:0,y:0,width:width,height:height))
+        return rep.cgImage
+    }
     public static func load(_ url: URL) throws -> CGImage {
-        if let source = CGImageSourceCreateWithURL(url as CFURL, nil),
-           let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [kCGImageSourceCreateThumbnailFromImageAlways:true, kCGImageSourceCreateThumbnailWithTransform:true, kCGImageSourceThumbnailMaxPixelSize:32000] as CFDictionary) { return image }
-        if let image = NSImage(contentsOf: url), let cg = image.cgImage(forProposedRect:nil,context:nil,hints:nil) { return cg }
+        if let source = CGImageSourceCreateWithURL(url as CFURL, nil) {
+            // The thumbnail transform also applies the pixel aspect ratio implied by unequal
+            // horizontal and vertical DPI, which resamples the stored pixels. Orient those files here.
+            let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString:Any]
+            let squarePixels = (properties?[kCGImagePropertyDPIWidth] as? Double) == (properties?[kCGImagePropertyDPIHeight] as? Double)
+            if let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [kCGImageSourceCreateThumbnailFromImageAlways:true, kCGImageSourceCreateThumbnailWithTransform:squarePixels, kCGImageSourceThumbnailMaxPixelSize:32000] as CFDictionary) {
+                let orientation = (properties?[kCGImagePropertyOrientation] as? NSNumber)?.int32Value ?? 1
+                if squarePixels || !(2...8).contains(orientation) { return image }
+                let oriented = CIImage(cgImage: image).oriented(forExifOrientation: orientation)
+                guard let result = imageContext.createCGImage(oriented, from: oriented.extent) else { throw NashiError.failed("Could not orient image.") }
+                return result
+            }
+        }
+        if let image = NSImage(contentsOf: url) {
+            // A vector image drawn without a context takes the display's scale, so size it from its own width and height.
+            if image.representations.allSatisfy({ !($0 is NSBitmapImageRep) }), let cg = try rasterize(image) { return cg }
+            if let cg = image.cgImage(forProposedRect:nil,context:nil,hints:nil) { return cg }
+        }
         // FFmpeg handles additional decoders (including animated inputs' first frame).
         let temp = try OutputFiles.temporaryDirectory(); defer { try? FileManager.default.removeItem(at:temp) }
         let png = temp.appendingPathComponent("decoded.png")
@@ -26,12 +50,15 @@ public enum ImageEngine {
         if format == "pdf" { return try PDFEngine.create(inputs:[input],options:options,token:token) }
         let image = try load(input)
         let output=OutputFiles.unique(for:input,extension:format,directory:options.outputDirectory)
-        var complete=false;defer { if !complete { try? FileManager.default.removeItem(at:output) } }
+        // Encode in a private folder: failure cleanup then removes only this job's
+        // own file, never one another writer created at the chosen name.
+        let staging=try OutputFiles.temporaryDirectory();defer { try? FileManager.default.removeItem(at:staging) }
+        let staged=staging.appendingPathComponent(output.lastPathComponent)
         let metadata = options.preserveMetadata ? CGImageSourceCreateWithURL(input as CFURL,nil).map { imageProperties($0,input:input) as CFDictionary } : nil
-        try write(image,to:output,quality:options.quality,metadata:metadata,token:token)
-        if options.preserveMetadata { try ImageMetadataEngine.copyMetadata(from:input,to:output,token:token) }
-        complete=true
-        return [output]
+        try write(image,to:staged,quality:options.quality,metadata:metadata,token:token)
+        if options.preserveMetadata { try ImageMetadataEngine.copyMetadata(from:input,to:staged,token:token) }
+        try token.check()
+        return [try OutputFiles.move(staged,into:output.deletingLastPathComponent())]
     }
 
     public static func write(_ image: CGImage, to url: URL, quality: Double = 0.8, metadata: CFDictionary? = nil, token: CancellationToken = .init()) throws {
@@ -52,7 +79,8 @@ public enum ImageEngine {
         }
         if (CGImageDestinationCopyTypeIdentifiers() as! [String]).contains(type),let destination=CGImageDestinationCreateWithURL(url as CFURL,type as CFString,1,nil) {
             var properties = (metadata as? [CFString:Any]) ?? [:]
-            properties[kCGImageDestinationLossyCompressionQuality] = quality
+            // ImageIO's AVIF encoder fails to write at 1.0; 0.99 already gives its best quality.
+            properties[kCGImageDestinationLossyCompressionQuality] = type == "public.avif" ? min(quality,0.99) : quality
             properties[kCGImagePropertyOrientation] = 1
             CGImageDestinationAddImage(destination,image,properties as CFDictionary)
             guard CGImageDestinationFinalize(destination) else { throw NashiError.failed("Could not write \(url.lastPathComponent)") }
@@ -63,8 +91,12 @@ public enum ImageEngine {
             var args=["-v","error","-i",png.path,"-frames:v","1"]
             if ext == "webp" { args += ["-c:v","libwebp","-quality",String(Int(quality*100))] }
             if ext == "avif" { args += ["-c:v","libaom-av1","-still-picture","1","-cpu-used","6","-crf",String(Int((1-quality)*50)+8)] }
-            args += [url.path]
+            // FFmpeg opens its output with O_TRUNC and follows symlinks. Encode into
+            // the private folder; moveItem never follows a link at the output name.
+            let encoded=temp.appendingPathComponent("encoded").appendingPathExtension(ext)
+            args += [encoded.path]
             try ProcessRunner.run(Dependencies.executable("ffmpeg"),args,token:token)
+            try FileManager.default.moveItem(at:encoded,to:url)
         }
     }
 
@@ -101,8 +133,8 @@ public enum ImageEngine {
                 case .frameImage: image=try frame(image,options:options); suffix=" - Framed"
                 default: throw NashiError.unsupported("\(kind.title) is not an image operation.")
                 }
-                let output=OutputFiles.unique(for:input,extension:kind == .annotateImage ? "png" : ext,suffix:suffix,directory:options.outputDirectory)
-                try write(image,to:output,quality:options.quality)
+                let output=OutputFiles.unique(for:input,extension:ext,suffix:suffix,directory:options.outputDirectory)
+                do { try write(image,to:output,quality:options.quality,token:token) } catch { try? FileManager.default.removeItem(at:output); throw error }
                 outputs.append(output)
             } catch NashiError.invalidInput(let message) where kind == .cropImage || kind == .redactImage {
                 throw NashiError.invalidInput("\(input.lastPathComponent): \(message)")
@@ -160,6 +192,12 @@ public enum ImageEngine {
         return try resized(image, width: width, height: height)
     }
 
+    /// Core Image works in linear light, so contrast would pivot around linear 0.5 (sRGB 188) and darken the photo.
+    /// Running the filter on sRGB-encoded values keeps mid-gray in place, as the Windows editor does.
+    private static func colorControls(_ image: CIImage, parameters: [String: Any]) -> CIImage {
+        image.applyingFilter("CILinearToSRGBToneCurve").applyingFilter("CIColorControls", parameters: parameters).applyingFilter("CISRGBToneCurveToLinear")
+    }
+
     private static func edit(_ image: CGImage, options: OperationOptions) throws -> CGImage {
         let a = options.imageAdjustments
         let values = [a.exposure,a.brightness,a.contrast,a.highlights,a.shadows,a.whites,a.blacks,a.gamma,a.temperature,a.tint,a.saturation,a.vibrance,a.hue,a.clarity,a.texture,a.fade,a.blur,a.sharpen,a.dehaze,a.grain,a.noiseReduction,a.vignette,options.brightness,options.contrast,options.saturation]
@@ -169,9 +207,11 @@ public enum ImageEngine {
         if a.noiseReduction > 0 { ci = ci.applyingFilter("CINoiseReduction", parameters: ["inputNoiseLevel": min(1,a.noiseReduction) * 0.1, "inputSharpness": 0]) }
         if a.exposure != 0 { ci = ci.applyingFilter("CIExposureAdjust", parameters: [kCIInputEVKey: min(10,max(-10,a.exposure))]) }
         if a.temperature != 0 || a.tint != 0 {
-            ci = ci.applyingFilter("CITemperatureAndTint", parameters: ["inputNeutral": CIVector(x:6500,y:0), "inputTargetNeutral": CIVector(x:6500 + max(-1,min(1,a.temperature)) * 3000, y:max(-1,min(1,a.tint)) * 100)])
+            // A lower target neutral warms and a negative target tint adds magenta.
+            // Positive values warm and add magenta, matching the Windows editor.
+            ci = ci.applyingFilter("CITemperatureAndTint", parameters: ["inputNeutral": CIVector(x:6500,y:0), "inputTargetNeutral": CIVector(x:6500 - max(-1,min(1,a.temperature)) * 3000, y:-max(-1,min(1,a.tint)) * 100)])
         }
-        ci=ci.applyingFilter("CIColorControls",parameters:[kCIInputBrightnessKey:options.brightness+a.brightness,kCIInputContrastKey:max(0,options.contrast*a.contrast),kCIInputSaturationKey:max(0,options.saturation*a.saturation)])
+        ci=colorControls(ci,parameters:[kCIInputBrightnessKey:options.brightness+a.brightness,kCIInputContrastKey:max(0,options.contrast*a.contrast),kCIInputSaturationKey:max(0,options.saturation*a.saturation)])
         if a.highlights != 0 || a.shadows != 0 || a.whites != 0 || a.blacks != 0 {
             // Five monotonic luminance anchors let the four tonal ranges vary independently.
             let xs: [Double] = [0,0.25,0.5,0.75,1]
@@ -184,10 +224,11 @@ public enum ImageEngine {
             for index in xs.indices { parameters["inputPoint\(index)"] = CIVector(x:xs[index],y:ys[index]) }
             ci = ci.applyingFilter("CIToneCurve",parameters:parameters)
         }
-        if a.gamma != 1 { ci = ci.applyingFilter("CIGammaAdjust",parameters:["inputPower":max(0.1,min(5,a.gamma))]) }
+        // CIGammaAdjust computes in^power, so use 1/gamma to brighten above 1, as the Windows editor does.
+        if a.gamma != 1 { ci = ci.applyingFilter("CIGammaAdjust",parameters:["inputPower":1 / max(0.1,min(5,a.gamma))]) }
         if a.vibrance != 0 { ci = ci.applyingFilter("CIVibrance",parameters:["inputAmount":max(-1,min(1,a.vibrance))]) }
         if a.hue != 0 { ci = ci.applyingFilter("CIHueAdjust",parameters:["inputAngle":a.hue * .pi / 180]) }
-        if a.dehaze != 0 { ci = ci.applyingFilter("CIColorControls",parameters:[kCIInputContrastKey:1 + max(-1,min(1,a.dehaze))*0.65,kCIInputBrightnessKey:-a.dehaze*0.045,kCIInputSaturationKey:1+a.dehaze*0.12]) }
+        if a.dehaze != 0 { ci = colorControls(ci,parameters:[kCIInputContrastKey:1 + max(-1,min(1,a.dehaze))*0.65,kCIInputBrightnessKey:-a.dehaze*0.045,kCIInputSaturationKey:1+a.dehaze*0.12]) }
         if a.clarity > 0 { ci = ci.applyingFilter("CIUnsharpMask",parameters:[kCIInputRadiusKey:4,kCIInputIntensityKey:min(1,a.clarity)*1.5]) }
         if a.clarity < 0 { ci = ci.clampedToExtent().applyingFilter("CIGaussianBlur",parameters:[kCIInputRadiusKey:min(1,-a.clarity)*3]).cropped(to:bounds) }
         if a.sharpen > 0 { ci = ci.applyingFilter("CISharpenLuminance",parameters:[kCIInputSharpnessKey:min(2,a.sharpen)]) }
@@ -201,7 +242,8 @@ public enum ImageEngine {
         if a.grain > 0, let random = CIFilter(name:"CIRandomGenerator")?.outputImage {
             let monochrome = CIVector(x:0.3333,y:0.3333,z:0.3334,w:0)
             let grain = random.cropped(to:bounds).applyingFilter("CIColorMatrix",parameters:["inputRVector":monochrome,"inputGVector":monochrome,"inputBVector":monochrome,"inputAVector":CIVector(x:0,y:0,z:0,w:0),"inputBiasVector":CIVector(x:0,y:0,z:0,w:min(1,a.grain)*0.25)])
-            ci = grain.composited(over:ci)
+            // Source-atop keeps the image's own alpha, so grain does not cover transparent pixels.
+            ci = grain.applyingFilter("CISourceAtopCompositing",parameters:[kCIInputBackgroundImageKey:ci])
         }
         if a.vignette != 0 { ci = ci.applyingFilter("CIVignette",parameters:[kCIInputIntensityKey:max(-2,min(2,a.vignette)),kCIInputRadiusKey:Double(min(image.width,image.height))*0.5]) }
         ci = ci.cropped(to:bounds)
@@ -302,7 +344,11 @@ public enum ImageEngine {
                 let source=item.sourceRect ?? EditRect(x:rect.x+rect.width*(1-1/item.magnification)/2,y:rect.y+rect.height*(1-1/item.magnification)/2,width:rect.width/item.magnification,height:rect.height/item.magnification)
                 let sourcePixels=CGRect(x:source.x,y:source.y,width:source.width,height:source.height).intersection(CGRect(x:0,y:0,width:image.width,height:image.height))
                 if let crop=image.cropping(to:sourcePixels), !sourcePixels.isEmpty {
-                    ctx.saveGState();ctx.addEllipse(in:r);ctx.clip();ctx.interpolationQuality = .high;ctx.draw(crop,in:r);ctx.restoreGState();ctx.strokeEllipse(in:r)
+                    ctx.saveGState();ctx.addEllipse(in:r);ctx.clip();ctx.interpolationQuality = .high
+                    // Replace the lens area instead of drawing over it: remove the original at the
+                    // lens opacity, then add the magnified pixels, so its transparency stays transparent.
+                    ctx.setBlendMode(.destinationOut);ctx.setFillColor(CGColor(gray:0,alpha:1));ctx.fill(r)
+                    ctx.setBlendMode(.plusLighter);ctx.draw(crop,in:r);ctx.restoreGState();ctx.strokeEllipse(in:r)
                 }
             case .image:
                 guard let imageURL=item.imageURL else { throw NashiError.invalidInput("Choose an image for the annotation.") }
@@ -372,7 +418,10 @@ public enum ImageEngine {
                 let filtered:CIImage
                 if settings.style == .blur { filtered=original.clampedToExtent().applyingFilter("CIGaussianBlur",parameters:[kCIInputRadiusKey:max(1,settings.blurRadius)]).cropped(to:bounds) }
                 else { filtered=original.clampedToExtent().applyingFilter("CIPixellate",parameters:[kCIInputScaleKey:max(2,settings.pixelSize),kCIInputCenterKey:CIVector(x:bounds.midX,y:bounds.midY)]).cropped(to:bounds) }
-                guard let cg=imageContext.createCGImage(filtered,from:bounds) else { throw NashiError.failed("Could not render the redaction.") };ctx.draw(cg,in:target)
+                guard let cg=imageContext.createCGImage(filtered,from:bounds) else { throw NashiError.failed("Could not render the redaction.") }
+                // Replace the area. Drawing over it would let the original show
+                // through every transparent or translucent filtered pixel.
+                ctx.saveGState();ctx.setBlendMode(.copy);ctx.draw(cg,in:target);ctx.restoreGState()
             }
         }
         guard let result=ctx.makeImage() else { throw NashiError.failed("Could not redact image.") };return result
@@ -446,13 +495,18 @@ public enum ImageEngine {
         let availableWidth=max(1,width-padding*2),availableHeight=max(1,height-padding*2)
         let scale=min(1,min(Double(availableWidth)/Double(image.width),Double(availableHeight)/Double(image.height)))*settings.imageScale
         let imageWidth=Double(image.width)*scale,imageHeight=Double(image.height)*scale
-        let x=(Double(width)-imageWidth)*max(0,min(1,settings.position.x)),top=(Double(height)-imageHeight)*max(0,min(1,settings.position.y))
+        // Whole-pixel origin: half a pixel off the grid resamples, and blurs, every pixel of the image.
+        let x=((Double(width)-imageWidth)*max(0,min(1,settings.position.x))).rounded(),top=((Double(height)-imageHeight)*max(0,min(1,settings.position.y))).rounded()
         let r=CGRect(x:x,y:Double(height)-top-imageHeight,width:imageWidth,height:imageHeight)
         let radius=max(0,min(settings.cornerRadius,min(r.width,r.height)/2)),path=CGPath(roundedRect:r,cornerWidth:radius,cornerHeight:radius,transform:nil)
-        if settings.shadowRadius>0,settings.shadowOpacity>0 {
-            ctx.saveGState();ctx.setShadow(offset:CGSize(width:0,height:-settings.shadowRadius/4),blur:settings.shadowRadius,color:CGColor(gray:0,alpha:max(0,min(1,settings.shadowOpacity))));ctx.setFillColor(CGColor(gray:0,alpha:1));ctx.addPath(path);ctx.fillPath();ctx.restoreGState()
-        }
+        // Cast the shadow from the clipped image itself. Filling the shape with black
+        // to cast it would show through every transparent pixel of the image.
+        let shadowed=settings.shadowRadius>0 && settings.shadowOpacity>0
+        ctx.saveGState()
+        if shadowed { ctx.setShadow(offset:CGSize(width:0,height:-settings.shadowRadius/4),blur:settings.shadowRadius,color:CGColor(gray:0,alpha:max(0,min(1,settings.shadowOpacity))));ctx.beginTransparencyLayer(auxiliaryInfo:nil) }
         ctx.saveGState();ctx.addPath(path);ctx.clip();ctx.interpolationQuality = .high;ctx.draw(image,in:r);ctx.restoreGState()
+        if shadowed { ctx.endTransparencyLayer() }
+        ctx.restoreGState()
         guard let result=ctx.makeImage() else { throw NashiError.failed("Could not frame image.") };return result
     }
 
@@ -481,6 +535,10 @@ public enum ImageEngine {
         try write(ctx.makeImage()!,to:output);return [output]
     }
 
+    /// Whole-pixel cell edges for `count` cells sharing `total` pixels. Neighbours read the same edge value, so
+    /// they can never round a shared edge apart and leave a hairline of background or an overlap between them.
+    private static func pixelEdges(_ total:Double,_ count:Int) -> [Double] { (0...count).map { (total*Double($0)/Double(count)).rounded() } }
+
     public static func collageImage(_ inputs:[CGImage],settings:CollageOptions) throws -> CGImage {
         guard inputs.count>=2 else { throw NashiError.invalidInput("Choose at least two images for a collage.") }
         guard settings.aspectRatio.isFinite,settings.aspectRatio>0,settings.cornerRadius.isFinite else { throw NashiError.invalidInput("Collage ratio and corner radius must be valid.") }
@@ -503,13 +561,18 @@ public enum ImageEngine {
         if settings.layout == .featured {
             let featureWidth=(area.width-gap)*2/3,otherWidth=area.width-gap-featureWidth,otherHeight=(area.height-gap*Double(images.count-2))/Double(images.count-1)
             guard featureWidth>0,otherWidth>0,otherHeight>0 else { throw NashiError.invalidInput("Reduce collage spacing or increase the canvas.") }
-            cells.append(CGRect(x:area.minX,y:area.minY,width:featureWidth,height:area.height))
-            for index in 1..<images.count { cells.append(CGRect(x:area.minX+featureWidth+gap,y:area.maxY-Double(index)*otherHeight-Double(index-1)*gap,width:otherWidth,height:otherHeight)) }
+            let split=featureWidth.rounded(),ys=pixelEdges(area.height-gap*Double(images.count-2),images.count-1)
+            cells.append(CGRect(x:area.minX,y:area.minY,width:split,height:area.height))
+            for index in 1..<images.count { cells.append(CGRect(x:area.minX+split+gap,y:area.maxY-ys[index]-Double(index-1)*gap,width:area.width-gap-split,height:ys[index]-ys[index-1])) }
         } else {
             let columns=settings.layout == .row ? images.count : settings.layout == .column ? 1 : max(1,min(images.count,settings.columns))
             let rows=(images.count+columns-1)/columns,cellWidth=(area.width-gap*Double(columns-1))/Double(columns),cellHeight=(area.height-gap*Double(rows-1))/Double(rows)
             guard cellWidth>0,cellHeight>0 else { throw NashiError.invalidInput("Reduce collage spacing or increase the canvas.") }
-            for index in images.indices { cells.append(CGRect(x:area.minX+Double(index%columns)*(cellWidth+gap),y:area.maxY-Double(index/columns+1)*cellHeight-Double(index/columns)*gap,width:cellWidth,height:cellHeight)) }
+            let xs=pixelEdges(area.width-gap*Double(columns-1),columns),ys=pixelEdges(area.height-gap*Double(rows-1),rows)
+            for index in images.indices {
+                let column=index%columns,row=index/columns
+                cells.append(CGRect(x:area.minX+xs[column]+Double(column)*gap,y:area.maxY-ys[row+1]-Double(row)*gap,width:xs[column+1]-xs[column],height:ys[row+1]-ys[row]))
+            }
         }
         for (image,cell) in zip(images,cells) {
             ctx.saveGState();let radius=max(0,min(settings.cornerRadius,min(cell.width,cell.height)/2));ctx.addPath(CGPath(roundedRect:cell,cornerWidth:radius,cornerHeight:radius,transform:nil));ctx.clip();drawFitted(image,in:cell,context:ctx,fit:settings.imageFit);ctx.restoreGState()
@@ -522,16 +585,25 @@ public enum ImageEngine {
         var image=try load(input)
         let originalWidth=image.width,originalHeight=image.height
         image=try resizeUsingOptions(image,options:options)
-        let inputSize=Int64((try input.resourceValues(forKeys:[.fileSizeKey])).fileSize ?? 0)
+        if options.width == nil,options.height == nil {
+            var factor=1.0
+            if let scale=options.imageScale { guard scale.isFinite,scale>0 else { throw NashiError.invalidInput("Image scale must be greater than 0.") };factor=scale }
+            if let edge=options.imageMaxEdge { guard edge>0,edge<=32000 else { throw NashiError.invalidInput("Image dimensions must be between 1 and 32,000 pixels.") };factor=min(factor,Double(edge)/Double(max(image.width,image.height))) }
+            factor=min(1,factor)
+            if factor<1 { image=try resized(image,width:max(1,Int(Double(image.width)*factor)),height:max(1,Int(Double(image.height)*factor))) }
+        }
+        // A symlink's own size is a few bytes; a percentage applies to the image it points to.
+        let inputSize=Int64((try input.resolvingSymlinksInPath().resourceValues(forKeys:[.fileSizeKey])).fileSize ?? 0)
         if let percent=options.percentage { guard percent.isFinite,percent>0,percent<100 else { throw NashiError.invalidInput("Percentage reduction must be greater than 0 and less than 100.") } }
         let target=options.targetBytes ?? options.percentage.map { Int64(Double(inputSize)*(1-$0/100)) }
         if let target { guard target>0 else { throw NashiError.invalidInput("Choose a positive target file size.") } }
-        let ext=["jpg","jpeg","heic","webp","avif","png"].contains(input.pathExtension.lowercased()) ? input.pathExtension : "jpg"
+        let ext=["jpg","jpeg","heic","heif","webp","avif","png"].contains(input.pathExtension.lowercased()) ? input.pathExtension : "jpg"
         let output=OutputFiles.unique(for:input,extension:ext,suffix:" - Compressed",directory:options.outputDirectory)
         // Attempts are encoded privately; a failed or cancelled pass leaves no partial output.
         let temporary=output.deletingLastPathComponent().appendingPathComponent(".nashi-\(UUID().uuidString)").appendingPathExtension(output.pathExtension)
         defer { try? FileManager.default.removeItem(at:temporary) }
-        var quality=max(0.01,min(1,options.quality))
+        var quality=max(0.01,min(1,options.quality)),scale=1.0
+        let start=image
         for iteration in 0..<24 {
             try token.check();try? FileManager.default.removeItem(at:temporary)
             try write(image,to:temporary,quality:quality)
@@ -543,7 +615,14 @@ public enum ImageEngine {
                 return [output]
             }
             if quality>0.15 && !["png"].contains(ext.lowercased()) { quality *= 0.72 }
-            else { image=try resized(image,width:max(1,Int(Double(image.width)*0.8)),height:max(1,Int(Double(image.height)*0.8))) }
+            else {
+                // Scale both sides from the starting image so rounding does not compound, and stop
+                // once the shorter side is one pixel: shrinking only the longer side would distort it.
+                scale=max(scale*0.8,1/Double(min(start.width,start.height)))
+                let width=max(1,Int((Double(start.width)*scale).rounded())),height=max(1,Int((Double(start.height)*scale).rounded()))
+                guard width<image.width || height<image.height else { throw NashiError.failed("The requested file size could not be reached. Choose a larger target.") }
+                image=try resized(start,width:width,height:height)
+            }
             if iteration == 23 { throw NashiError.failed("The requested file size could not be reached. Choose a larger target.") }
         }
         return [output]

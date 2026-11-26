@@ -189,7 +189,8 @@ final class WheelView:NSView {
         let children=items.enumerated().map { index,item -> WheelAccessibilityItem in
             let child=WheelAccessibilityItem();child.setAccessibilityRole(.button);child.setAccessibilityEnabled(true);child.setAccessibilityLabel(L10n.text(item.operation?.title ?? item.title));child.setAccessibilityParent(self)
             if let window { child.setAccessibilityFrame(window.convertToScreen(convert(petal(index).bounds,to:nil))) }
-            child.activate = { [weak self] in guard let self else { return false };self.onSelect?(item);return true };return child
+            // An assistive app can still hold a petal of a closed or redrawn wheel; only the shown wheel's own petals act.
+            child.activate = { [weak self,weak child] in guard let self,let child,self.window?.isVisible == true,self.accessibilityChildren()?.contains(where:{($0 as AnyObject) === child}) == true else { return false };self.onSelect?(item);return true };return child
         }
         setAccessibilityChildren(children)
     }

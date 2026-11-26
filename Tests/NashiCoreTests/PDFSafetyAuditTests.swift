@@ -36,6 +36,29 @@ final class PDFSafetyAuditTests:XCTestCase {
         XCTAssertEqual(try Data(contentsOf:input),before)
     }
 
+    func testRemoveAllDropsTheAuthorOfEveryReviewAnnotationType() throws {
+        func stream(_ body:String)->String { "<< /Length \(body.utf8.count) >>\nstream\n\(body)\nendstream" }
+        for subtype in ["Text","Highlight","Caret","Squiggly","Polygon","PolyLine","Sound"] {
+            let objects=[
+                "<< /Type /Catalog /Pages 2 0 R >>","<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+                "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 300] /Contents 4 0 R /Annots [5 0 R] >>",stream("BT ET"),
+                "<< /Type /Annot /Subtype /\(subtype) /Rect [20 20 120 60] /QuadPoints [20 60 120 60 20 20 120 20] /Vertices [20 20 120 20 70 60] /T (SECRET_REVIEWER) /Contents (Public comment) >>"
+            ]
+            var data=Data("%PDF-1.7\n".utf8),offsets=[Int]()
+            for (index,object) in objects.enumerated() { offsets.append(data.count);data.append(Data("\(index+1) 0 obj\n\(object)\nendobj\n".utf8)) }
+            let xref=data.count
+            data.append(Data("xref\n0 \(objects.count+1)\n0000000000 65535 f \n".utf8))
+            for offset in offsets { data.append(Data(String(format:"%010d 00000 n \n",offset).utf8)) }
+            data.append(Data("trailer\n<< /Size \(objects.count+1) /Root 1 0 R >>\nstartxref\n\(xref)\n%%EOF\n".utf8))
+            let input=root.appendingPathComponent("\(subtype).pdf");try data.write(to:input)
+            var options=OperationOptions();options.metadataRemoveAll=true
+            let output=try XCTUnwrap(ConversionEngine.run(.init(inputs:[input],operation:.tool(.removeMetadata),options:options)).first)
+            XCTAssertNil(try Data(contentsOf:output).range(of:Data("SECRET_REVIEWER".utf8)),subtype)
+            let annotation=try XCTUnwrap(PDFEngine.open(output).page(at:0)?.annotations.first{$0.type==subtype},subtype)
+            XCTAssertNil(annotation.userName,subtype);XCTAssertEqual(annotation.contents,"Public comment",subtype)
+        }
+    }
+
     func testEditableFormMetadataRemovalRefusesWithoutPublishingOrChangingFields() throws {
         let input=try fixture(rotation:0,includeForm:true),before=try Data(contentsOf:input)
         let source=try PDFEngine.open(input)
@@ -69,6 +92,33 @@ final class PDFSafetyAuditTests:XCTestCase {
             XCTAssertFalse(FileManager.default.fileExists(atPath:folder.path))
             XCTAssertEqual(try Data(contentsOf:input),before)
         }
+    }
+
+    func testMetadataCleanupRefusesPaperclipAttachmentsInsteadOfDroppingTheFile() throws {
+        func stream(_ body:String,_ attributes:String="")->String { "<< /Length \(body.utf8.count) \(attributes) >>\nstream\n\(body)\nendstream" }
+        let objects=[
+            "<< /Type /Catalog /Pages 2 0 R >>","<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 300] /Contents 4 0 R /Annots [5 0 R] >>",stream("BT ET"),
+            "<< /Type /Annot /Subtype /FileAttachment /Rect [20 20 40 40] /Name /PushPin /FS 6 0 R /Contents (Invoice) >>",
+            "<< /Type /Filespec /F (Invoice.txt) /EF << /F 7 0 R >> >>",stream("Important attachment text","/Type /EmbeddedFile")
+        ]
+        var data=Data("%PDF-1.7\n".utf8),offsets=[Int]()
+        for (index,object) in objects.enumerated() { offsets.append(data.count);data.append(Data("\(index+1) 0 obj\n\(object)\nendobj\n".utf8)) }
+        let xref=data.count
+        data.append(Data("xref\n0 \(objects.count+1)\n0000000000 65535 f \n".utf8))
+        for offset in offsets { data.append(Data(String(format:"%010d 00000 n \n",offset).utf8)) }
+        data.append(Data("trailer\n<< /Size \(objects.count+1) /Root 1 0 R >>\nstartxref\n\(xref)\n%%EOF\n".utf8))
+        let input=root.appendingPathComponent("Paperclip.pdf");try data.write(to:input)
+        for edit in [false,true] {
+            var options=OperationOptions()
+            if edit { options.metadata=["Title":"Edited"] } else { options.metadataRemoveAll=true }
+            let folder=root.appendingPathComponent("paperclip-\(edit)",isDirectory:true);options.outputDirectory=folder
+            XCTAssertThrowsError(try ConversionEngine.run(.init(inputs:[input],operation:.tool(.removeMetadata),options:options))) { error in
+                XCTAssertTrue(error.localizedDescription.contains("embedded files"),error.localizedDescription)
+            }
+            XCTAssertFalse(FileManager.default.fileExists(atPath:folder.path))
+        }
+        XCTAssertEqual(try Data(contentsOf:input),data)
     }
 
     func testRasterExportUsesDisplayedRotationAndFillsTheWholePage() throws {

@@ -18,7 +18,8 @@ public static class FeatureCatalog
     public static string[] Tools(IReadOnlyList<string> inputs)
     {
         var result=Intersect(inputs,inputs.Count>1?Data.MultipleTools:Data.SingleTools).ToList();
-        if(inputs.Count>0&&inputs.All(p=>IsImage(p)||Extension(p)=="pdf"))result.Add("readQRCode");return result.ToArray();
+        // Like the Mac's QRCodeEngine.supports: GIF is a video format here, but its first frame can hold a code.
+        if(inputs.Count>0&&inputs.All(p=>IsImage(p)||Extension(p) is "pdf" or "gif"))result.Add("readQRCode");return result.ToArray();
     }
     private static string[] Intersect(IReadOnlyList<string> inputs,Dictionary<string,string[]> table)
     {

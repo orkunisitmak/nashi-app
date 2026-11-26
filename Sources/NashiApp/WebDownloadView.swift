@@ -53,7 +53,7 @@ import NashiCore
                 self.info=found;self.maximumHeight=0;self.selectedPhotos=Set(found.photos.map(\.id))
                 if found.kind == .image { self.linkText=found.url.absoluteString }
                 self.mode=found.modes.contains(self.pendingMode ?? .video) ? (self.pendingMode ?? .video):(found.modes.first ?? .original)
-                self.pendingMode=nil;self.inspecting=false
+                self.pendingMode=nil;self.error=nil;self.inspecting=false
             } catch {
                 guard let self,self.revision==current,!token.isCancelled,!Task.isCancelled else { return }
                 self.error=error.localizedDescription;self.errorDetails=(error as? WebDownloadFailure)?.details;self.inspecting=false
@@ -95,6 +95,7 @@ import NashiCore
 struct WebDownloadView:View {
     @ObservedObject var model:WebDownloadModel
     @ObservedObject var state:AppState
+    @Environment(\.locale) private var locale
     var body:some View {
         VStack(alignment:.leading,spacing:0) {
             HStack(spacing:14) {
@@ -133,7 +134,7 @@ struct WebDownloadView:View {
                                     Button("All") { model.selectPhotos(Set(info.photos.map(\.id))) }
                                     Button("None") { model.selectPhotos([]) }
                                 }
-                                if info.skippedVideoCount>0 { Text("\(info.skippedVideoCount) video items are not included. Only photos will be saved.").font(.caption).foregroundStyle(.secondary) }
+                                if info.skippedVideoCount>0 { LText("\(info.skippedVideoCount) video items are not included. Only photos will be saved.").font(.caption).foregroundStyle(.secondary) }
                                 Text("Saved in post order in a new Instagram folder.").font(.caption).foregroundStyle(.secondary)
                                 ForEach(info.photos) { photo in
                                     Toggle(isOn:Binding(get:{model.selectedPhotos.contains(photo.id)},set:{ selected in
@@ -193,11 +194,13 @@ struct WebDownloadView:View {
                 else if !model.completed.isEmpty { Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting(model.completed) } }
                 Spacer()
                 if !model.completed.isEmpty { Button("Use in Nashi") { model.onUseFiles?() }.buttonStyle(NashiButtonStyle(.primary)).disabled(state.working) }
-                else if let info=model.info { Button(!info.photos.isEmpty ? "Download \(model.selectedPhotos.count) \(model.selectedPhotos.count==1 ? "photo":"photos")":model.mode == .audioMP3 ? "Download MP3":info.kind == .image ? "Download image":"Download") { model.download() }.buttonStyle(NashiButtonStyle(.primary)).disabled(model.downloading || state.working || (!info.photos.isEmpty && model.selectedPhotos.isEmpty)) }
+                else if let info=model.info { Button(!info.photos.isEmpty ? photoDownloadTitle:model.mode == .audioMP3 ? "Download MP3":info.kind == .image ? "Download image":"Download") { model.download() }.buttonStyle(NashiButtonStyle(.primary)).disabled(model.downloading || state.working || (!info.photos.isEmpty && model.selectedPhotos.isEmpty)) }
                 else { Button("Check link") { model.inspect() }.buttonStyle(NashiButtonStyle(.primary)).disabled(model.linkText.isEmpty || model.inspecting) }
             }.padding(20)
         }.onChange(of:model.mode) { _ in model.configurationChanged() }.onChange(of:model.maximumHeight) { _ in model.configurationChanged() }.frame(minWidth:620,minHeight:520).background(NashiPalette.canvas).tint(.nashi).buttonStyle(NashiButtonStyle(.secondary,compact:true))
     }
+    /// One key per count form: French uses the singular for 0 and 1 ("Télécharger 1 photo").
+    var photoDownloadTitle:LocalizedStringKey { model.selectedPhotos.count==0 ? "Download 0 photos":model.selectedPhotos.count==1 ? "Download 1 photo":"Download \(model.selectedPhotos.count) photos" }
     @AppStorage("appLanguage") private var language="en"
     func details(_ info:WebMediaInfo)->String {
         var details=[info.site,AppLocalization.text(info.kind.rawValue.capitalized,language:language)]
@@ -205,7 +208,7 @@ struct WebDownloadView:View {
         if let width=info.imageWidth,let height=info.imageHeight { details.append("\(width) × \(height)") }
         if let duration=info.duration { details.append("\(Int(duration)/60):\(String(format:"%02d",Int(duration)%60))") }
         if let height=info.heights.max() { details.append("\(height)p") }
-        if let bytes=info.byteCount { details.append(ByteCountFormatter.string(fromByteCount:bytes,countStyle:.file)) }
+        if let bytes=info.byteCount { details.append(bytes.formatted(.byteCount(style:.file).locale(locale))) }
         return details.joined(separator:" · ")
     }
 }

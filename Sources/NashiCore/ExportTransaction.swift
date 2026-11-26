@@ -97,19 +97,18 @@ final class ExportTransaction {
     private func uniqueDestination(for source:URL,in parent:URL) -> URL {
         // lstat-based: a dangling link still occupies its name and moveItem refuses it.
         let occupied={ (url:URL) in (try? self.manager.attributesOfItem(atPath:url.path)) != nil }
-        if (try? source.resourceValues(forKeys:[.isDirectoryKey]).isDirectory) != true {
-            let stem=source.deletingPathExtension().lastPathComponent,ext=source.pathExtension.lowercased()
-            var destination=OutputFiles.unique(for:parent.appendingPathComponent(source.lastPathComponent),extension:source.pathExtension,directory:parent)
-            var number=2
-            while occupied(destination) {
-                destination=parent.appendingPathComponent("\(stem) \(number)").appendingPathExtension(ext);number += 1
-            }
-            return destination
-        }
-        var destination=parent.appendingPathComponent(source.lastPathComponent,isDirectory:true),number=2
-        while occupied(destination) {
-            destination=parent.appendingPathComponent("\(source.lastPathComponent) \(number)",isDirectory:true);number += 1
-        }
+        let isFile=(try? source.resourceValues(forKeys:[.isDirectoryKey]).isDirectory) != true
+        let stem=isFile ? source.deletingPathExtension().lastPathComponent:source.lastPathComponent
+        let ext=isFile ? source.pathExtension.lowercased():""
+        var destination:URL,number=1
+        repeat {
+            let tail=(number==1 ? "":" \(number)")+(ext.isEmpty ? "":".\(ext)")
+            // macOS limits a name to 255 UTF-16 units of its decomposed form. A
+            // staged name at that limit is shortened so " 2" still fits.
+            var base=stem
+            while !base.isEmpty,(base+tail).decomposedStringWithCanonicalMapping.utf16.count>255 { base.removeLast() }
+            destination=parent.appendingPathComponent(base+tail,isDirectory:!isFile);number += 1
+        } while occupied(destination)
         return destination
     }
 

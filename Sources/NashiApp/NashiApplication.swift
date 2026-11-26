@@ -11,7 +11,7 @@ import ApplicationServices
 @main
 enum NashiApplication {
     @MainActor static func main() {
-        if CommandLine.arguments.count>1,["convert","tool","inspect","catalog","dependencies"].contains(CommandLine.arguments[1]) { exit(NashiCommandLine.run()) }
+        if CommandLine.arguments.count>1,["convert","tool","inspect","catalog","dependencies","hash"].contains(CommandLine.arguments[1]) { exit(NashiCommandLine.run()) }
         let app=NSApplication.shared
         if CommandLine.arguments.contains("--ui-audit") {
             do {
@@ -97,6 +97,14 @@ enum NashiApplication {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender:NSApplication)->Bool { true }
 }
 
+/// Status menu rows the user can hide. Raw values are the English menu titles.
+enum StatusMenuItem:String,CaseIterable,Identifiable {
+    case home="Nashi",chooseFiles="Choose Files…",downloadLink="Download Link…",enable="Enable Nashi",welcome="Welcome…",recent="Recent Conversions",updates="Check for Updates…",updateConnection="Update Connection…"
+    var id:String { rawValue }
+    var label:String { self == .home ? "Open Nashi":rawValue }
+    static let defaultsKey="hiddenStatusMenuItems"
+    static var hidden:Set<String> { Set((UserDefaults.standard.string(forKey:defaultsKey) ?? "").split(separator:"\n").map(String.init)) }
+}
 @MainActor final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     let state=AppState()
     let updater=AppUpdater()
@@ -152,7 +160,7 @@ enum NashiApplication {
         menu.addItem(withTitle:"Update Connection…",action:#selector(showUpdateConnection),keyEquivalent:"")
         menu.addItem(NSMenuItem.separator())
         menu.addItem(withTitle:"Quit Nashi",action:#selector(quit),keyEquivalent:"q")
-        for item in menu.items { item.target=self }
+        for item in menu.items { item.target=self;if let row=StatusMenuItem(rawValue:item.title) { item.identifier=NSUserInterfaceItemIdentifier(row.rawValue) } }
         statusItem=NSStatusBar.system.statusItem(withLength:NSStatusItem.squareLength)
         statusItem.button?.image=NashiArtwork.menuIcon()
         statusItem.menu=menu;menu.delegate=self
@@ -178,8 +186,8 @@ enum NashiApplication {
         monitor=DragMonitor(onEnd:{ [weak self] in self?.wheel.endDrag() }) { [weak self] urls,mode,point in self?.wheel.show(inputs:urls,mode:mode,at:point) }
         windowManagement=WindowManagementController(fileWheelIsVisible:{ [weak self] in self?.wheel.panel?.isVisible == true })
         windowManagement.onNotice = { message in
-            let alert=NSAlert();alert.messageText="Window arrangement";alert.informativeText=message
-            alert.addButton(withTitle:"OK");alert.runModal()
+            let alert=NSAlert();alert.messageText=L10n.text("Window arrangement");alert.informativeText=L10n.text(message)
+            alert.addButton(withTitle:L10n.text("OK"));alert.runModal()
         }
         state.onOpenWheel = { [weak self] in self?.wheel.show(inputs:self?.state.inputs ?? [],mode:.tools,at:NSEvent.mouseLocation,keyboard:true) }
         state.onWebDownload = { [weak self] url,mode in self?.showWebDownload(url,mode:mode) }
@@ -263,7 +271,7 @@ enum NashiApplication {
     @objc func chooseFiles() {
         guard !state.working else { return }
         NSApp.activate(ignoringOtherApps:true)
-        let panel=NSOpenPanel();panel.allowsMultipleSelection=true;panel.canChooseDirectories=true;panel.prompt="Choose Files"
+        let panel=NSOpenPanel();panel.allowsMultipleSelection=true;panel.canChooseDirectories=true;panel.prompt=L10n.text("Choose Files")
         if panel.runModal() == .OK { state.inputs=panel.urls;showHome() }
     }
     @objc func showSettings() {
@@ -301,7 +309,14 @@ enum NashiApplication {
         updateConnection?.contentMinSize=NSSize(width:560,height:570)
         updateConnection?.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true)
     }
-    func menuNeedsUpdate(_ menu:NSMenu) { menu.items.first(where:{$0.action == #selector(toggleEnabled)})?.state=UserDefaults.standard.bool(forKey:"enabled") ? .on:.off }
+    func menuNeedsUpdate(_ menu:NSMenu) {
+        menu.items.first(where:{$0.action == #selector(toggleEnabled)})?.state=UserDefaults.standard.bool(forKey:"enabled") ? .on:.off
+        guard menu === statusItem.menu else { return }
+        let hidden=StatusMenuItem.hidden
+        for item in menu.items { if let id=item.identifier?.rawValue { item.isHidden=hidden.contains(id) } }
+        // The separator under the Nashi row goes with it.
+        menu.items.first(where:{$0.isSeparatorItem})?.isHidden=hidden.contains(StatusMenuItem.home.rawValue)
+    }
     @objc func quit() { NSApp.terminate(nil) }
     func showProgress() {
         guard state.working else { return }
