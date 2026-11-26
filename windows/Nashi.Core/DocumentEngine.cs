@@ -146,7 +146,7 @@ public static partial class DocumentEngine
         var root=Value(source.Internals.Catalog.Elements["/Outlines"]) as PdfDictionary;if(Value(root?.Elements["/First"]) is PdfDictionary first&&visited.Add(root!)){Copy(first,result.Outlines,0);result.Internals.Catalog.Elements["/PageMode"]=Value(source.Internals.Catalog.Elements["/PageMode"]) as PdfName??new PdfName("/UseNone");}
     }
     // Page labels (i, ii, A-1…) number pages by position, and cleanup keeps every page in order, so the catalog's number tree is
-    // copied as it is. macOS refuses these files; LaTeX and most book PDFs carry labels, so refusing would leave them uncleanable.
+    // copied as it is, as on macOS. LaTeX and most book PDFs carry labels, so refusing would leave them uncleanable.
     // Indirect nodes stay indirect and shared ones are copied once; anything that cannot be copied faithfully is refused.
     private static void CopyPageLabels(PdfDocument source,PdfDocument result)
     {

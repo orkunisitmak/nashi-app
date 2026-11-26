@@ -106,9 +106,13 @@ public enum PDFEngine {
                 // packet in the saved PDF. A fresh document copies page content
                 // without that catalog, then restores navigation and annotations.
                 let cleaned=try withoutSourceMetadata(pdf,clearAnnotationMetadata:options.metadataRemoveAll || options.metadata.isEmpty,token:token)
+                // Page numbering such as i, ii or A-1 lives in the catalog and is not copied with the pages.
+                let labels=try PDFPageLabels.numberTree(of:pdf)
                 cleaned.documentAttributes=options.metadataRemoveAll ? [:]:Dictionary(uniqueKeysWithValues:options.metadata.map{(AnyHashable($0.key),$0.value as Any)})
                 let output=OutputFiles.unique(for:input,extension:"pdf",suffix:" - Clean",directory:options.outputDirectory)
-                guard cleaned.write(to:output) else { throw NashiError.failed("Could not save PDF.") };outputs.append(output)
+                if let labels { try PDFPageLabels.preserving(labels,from:pdf,in:cleaned).write(to:output,options:.atomic) }
+                else { guard cleaned.write(to:output) else { throw NashiError.failed("Could not save PDF.") } }
+                outputs.append(output)
             case .compress:
                 let output=OutputFiles.unique(for:input,extension:"pdf",suffix:" - Compressed",directory:options.outputDirectory)
                 // A symlink's own size is a few bytes; a percentage applies to the PDF it points to.
@@ -229,8 +233,6 @@ public enum PDFEngine {
         else if hasKey(names,"EmbeddedFiles") || hasKey(catalog,"AF") || hasKey(catalog,"Collection") || pages.contains(where:{hasKey($0.pageRef?.dictionary,"AF") || $0.annotations.contains(where:{$0.type=="FileAttachment"})}) { feature="embedded files" }
         else if hasKey(catalog,"OCProperties") { feature="optional content layers" }
         else if hasKey(catalog,"StructTreeRoot") { feature="accessibility tags" }
-        // Page numbering such as i, ii or A-1 lives in the catalog and is not copied with the pages.
-        else if hasKey(catalog,"PageLabels") { feature="custom page labels" }
         else { feature=nil }
         if let feature { throw NashiError.unsupported("This PDF contains \(feature). Metadata cleanup cannot safely preserve those features. No copy was exported.") }
         let result=PDFDocument()

@@ -157,7 +157,7 @@ internal static class ParityChecks
         check(DocumentEngine.Pdf("splitPDF",[taggedPdf],root).Count==1&&DocumentEngine.Pdf("mergePDFs",[textPdf,vectorPdf],root).Count==1&&DocumentEngine.Pdf("removeMetadata",[taggedPdf],root).Count==1,"Tagged PDFs without forms or attachments were refused");
         var outlinePdf=Pdf("Outline.pdf","BT /F1 24 Tf 72 700 Td (Chapter 1) Tj ET",pdf=>{var page=pdf.AddPage();page.Size=PdfSharp.PageSize.A4;pdf.Outlines.Add("Bölüm 2",page).Top=500;pdf.Info.Title="Private title";});
         using(var cleaned=PdfSharp.Pdf.IO.PdfReader.Open(DocumentEngine.Pdf("removeMetadata",[outlinePdf],root)[0],PdfSharp.Pdf.IO.PdfDocumentOpenMode.Import))check(cleaned.Info.Title==""&&cleaned.Outlines.Count==1&&cleaned.Outlines[0] is {Title:"Bölüm 2",Top:500} chapter&&chapter.DestinationPage==cleaned.Pages[1],"Metadata cleanup dropped the PDF's bookmarks");
-        // Page labels (i, ii, Ön-5…) number pages by position and cleanup keeps every page in order, so they survive it; the Mac refuses such files.
+        // Page labels (i, ii, Ön-5…) number pages by position and cleanup keeps every page in order, so they survive it, as on the Mac.
         PdfSharp.Pdf.PdfDictionary LabelNode(PdfSharp.Pdf.PdfDocument pdf,string key,PdfSharp.Pdf.PdfArray value){var node=new PdfSharp.Pdf.PdfDictionary(pdf);pdf.Internals.AddObject(node);node.Elements[key]=value;return node;}
         var labelledPdf=Pdf("Page labels.pdf","BT /F1 24 Tf 72 700 Td (Preface) Tj ET",pdf=>
         {
