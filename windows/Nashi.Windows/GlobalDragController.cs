@@ -108,6 +108,8 @@ internal sealed class GlobalDropWheel:Window
     internal static bool PassesThrough(bool revealed,int choices,bool noTools,bool hintSettled)=>!revealed&&choices==0&&!noTools&&hintSettled;
     private volatile bool passThrough;internal bool PassingThrough{get{var handle=new WindowInteropHelper(this).Handle;return handle!=IntPtr.Zero&&(WindowManagement.Native.GetWindowLongPtr(handle,-20).ToInt64()&0x20)!=0;}}
     internal void PassThrough(){var handle=new WindowInteropHelper(this).Handle;if(handle==IntPtr.Zero||PassingThrough)return;_=WindowManagement.Native.SetWindowLongPtr(handle,-20,new nint(WindowManagement.Native.GetWindowLongPtr(handle,-20).ToInt64()|0x20));passThrough=PassingThrough;}
+    // A wheel that had nothing to offer passed the drag through; it has to take events again before another mode can build its choices.
+    private void ClearPassThrough(){if(!PassingThrough)return;var handle=new WindowInteropHelper(this).Handle;_=WindowManagement.Native.SetWindowLongPtr(handle,-20,new nint(WindowManagement.Native.GetWindowLongPtr(handle,-20).ToInt64()&~0x20L));passThrough=PassingThrough;}
     private void Settle(bool settled){if(choices.Count>0||noTools)Reveal();else if(PassesThrough(Revealed,choices.Count,noTools,settled))PassThrough();}
     private void Reveal(){if(Revealed)return;Revealed=true;foreach(var label in canvas.Children.OfType<Border>())label.Visibility=Visibility.Visible;WheelPresentation.Animate(this,HiddenOpacity);if(Opacity<1&&!HasAnimatedProperties)Opacity=1;}
     private string mode;private readonly Action<IDataObject,string> chosen;private readonly Func<string?> hint;private readonly Func<bool> hintSettled;private readonly Canvas canvas=new(){Width=540,Height=540,Background=Brushes.Transparent,AllowDrop=true};private string selection="";private IReadOnlyList<ToolChoice> choices=[];private string[] draggedFiles=[],resolvedFiles=[];
@@ -122,7 +124,7 @@ internal sealed class GlobalDropWheel:Window
     }
     // After a switch the wheel still shows the old mode until the next drag event rebuilds it, so a drop in between must not run the old selection.
     private bool switched;
-    internal void SwitchMode(string next){if(mode==next)return;mode=next;Title="Nashi · "+next;selection="";Highlight(-1);switched=true;}
+    internal void SwitchMode(string next){if(mode==next)return;mode=next;Title="Nashi · "+next;selection="";Highlight(-1);switched=true;ClearPassThrough();}
     private void Track(DragEventArgs e)
     {
         // DragOver fires on every pointer move, so shortcuts are only resolved when the dragged files change.
