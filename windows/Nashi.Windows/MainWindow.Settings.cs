@@ -55,14 +55,23 @@ public sealed partial class MainWindow
     {
         var formats=payload.Kind switch{"youtube"=>new[]{"video","audio","thumbnail"},"instagramPhotos"=>["photos"],"instagramReel"=>["video","audio"],"image"=>["image"],_=>["video","audio","image"]};downloadKind.ItemsSource=formats;downloadKind.SelectedItem=formats.Contains(chosen??"")?chosen:formats[0];
     }
-    private void OnGlobalDrop(string action,IDataObject data,string? hint)
+    internal void OnGlobalDrop(string action,IDataObject data,string? hint)
     {
         if(busy)return;var paths=data.GetData(DataFormats.FileDrop) as string[];var payload=DragPayload.Parse(data,hint);
         Dispatcher.BeginInvoke(async()=>
         {
             if(busy)return;
             if(paths is {Length:>0}&&!action.StartsWith("download:",StringComparison.Ordinal)){files.Clear();Add(paths);if(action.StartsWith("convert:",StringComparison.Ordinal))await EditAsync(new(action,"Convert","↗"));else if(new[]{"share","float","copy","move","copyPath","terminal"}.Contains(action))await PerformFileAction(action,paths);else await EditAsync(new(action,FeatureCatalog.ToolNames.GetValueOrDefault(action,action),"✦"));}
-            else if(payload is not null){link.Text=payload.Url;SetDownloadKind(payload,action.StartsWith("download:",StringComparison.Ordinal)?action[9..]:null);Show();if(WindowState==WindowState.Minimized)WindowState=WindowState.Normal;Activate();OpenDownload();}
+            else if(payload is not null)
+            {
+                var chosen=action.StartsWith("download:",StringComparison.Ordinal)?action[9..]:null;
+                link.Text=payload.Url;SetDownloadKind(payload,chosen);Show();if(WindowState==WindowState.Minimized)WindowState=WindowState.Normal;Activate();
+                var folder=preferences.Value.DownloadFolder;
+                // Only supported Video/Audio wheel actions bypass the chooser. A broken folder setting can still be changed there.
+                if(chosen is ("video" or "audio")&&Equals(downloadKind.SelectedItem,chosen)&&Path.IsPathFullyQualified(folder))
+                    await DownloadAsync(folder);
+                else OpenDownload();
+            }
         });
     }
 }
