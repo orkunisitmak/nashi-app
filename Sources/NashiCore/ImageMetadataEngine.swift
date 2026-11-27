@@ -104,6 +104,15 @@ public enum ImageMetadataEngine {
         }
         let after=try fingerprint(staged,token:token)
         guard original==after else { throw NashiError.failed("Metadata changes would alter encoded image data or its appearance. No output was saved.") }
+        // ExifTool can exit 0 yet leave a group it could not delete. A clean copy
+        // must not keep location beyond the fields the user explicitly added back.
+        if changes.removeAll {
+            let explicit=try changes.updates.keys.map{try tagName($0).lowercased()}.filter(isLocationTag)
+            let allowed=impliedLocationTags(explicit)
+            let remaining=try read(staged,token:token).keys.filter{isLocationTag($0) && !allowed.contains($0.lowercased())}
+            // ImageIO cannot tell an added GPS field from a leftover one; ExifTool's read above can.
+            guard remaining.isEmpty,explicit.contains(where:isGPSTag) || !imageIOReportsGPS(staged) else { throw NashiError.failed("Location metadata could not be removed. No output was saved.") }
+        }
         let written=try fields(staged,token:token)
         for (key,value) in changes.updates {
             let expectedKey=displayKey(try tagName(key))
@@ -190,6 +199,34 @@ public enum ImageMetadataEngine {
         return Fingerprint(imageHash:hash,profile:profile,frames:frames)
     }
 
+    private static func isGPSTag(_ tag:String)->Bool {
+        let parts=tag.split(separator:":").map{$0.lowercased()}
+        return parts.dropLast().contains("gps") || parts.last?.hasPrefix("gps")==true
+    }
+    private static func isLocationTag(_ tag:String)->Bool {
+        guard let name=tag.split(separator:":").last?.lowercased() else { return false }
+        return isGPSTag(tag) || ["city","country","countrycode","country-primarylocationname","country-primarylocationcode","province-state","state","sub-location","location","locationcreated","locationshown"].contains(name)
+    }
+    /// Lowercased tags that explicitly written location tags account for: the
+    /// tags themselves, their GPS*Ref, the version tag ExifTool adds to a new
+    /// GPS IFD, and the Composite values ExifTool derives from them.
+    private static func impliedLocationTags(_ explicit:[String])->Set<String> {
+        var allowed=Set(explicit),names:Set<String>=[]
+        for tag in explicit where isGPSTag(tag) {
+            guard let colon=tag.lastIndex(of:":") else { continue }
+            let name=String(tag[tag.index(after:colon)...])
+            names.insert(name)
+            allowed.formUnion([tag+"ref","composite:"+name])
+            if tag.hasPrefix("gps:") { allowed.insert("gps:gpsversionid") }
+        }
+        if names.isSuperset(of:["gpslatitude","gpslongitude"]) { allowed.insert("composite:gpsposition") }
+        if names.isSuperset(of:["gpsdatestamp","gpstimestamp"]) { allowed.insert("composite:gpsdatetime") }
+        return allowed
+    }
+    private static func imageIOReportsGPS(_ input:URL)->Bool {
+        guard let source=CGImageSourceCreateWithURL(input as CFURL,nil) else { return true }
+        return (0..<CGImageSourceGetCount(source)).contains { (CGImageSourceCopyPropertiesAtIndex(source,$0,nil) as? [String:Any])?[kCGImagePropertyGPSDictionary as String] != nil }
+    }
     private static func read(_ input:URL,token:CancellationToken) throws -> [String:Any] {
         let result=try run(["-j","-G1","-s","-n","-a",input.path],token:token)
         guard let rows=try JSONSerialization.jsonObject(with:result.output) as? [[String:Any]],let first=rows.first else { throw NashiError.failed("Could not inspect image metadata.") }
