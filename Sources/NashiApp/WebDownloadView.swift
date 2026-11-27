@@ -69,7 +69,7 @@ import NashiCore
         if panel.runModal() == .OK,let url=panel.url { do { try FolderAccessPreferences.add([url]);configurationChanged();destination=url;UserDefaults.standard.set(url.path,forKey:"webDownloadDestination") } catch { self.error=error.localizedDescription } }
     }
     func download() {
-        guard let info,!downloading,!state.working,info.photos.isEmpty || !selectedPhotos.isEmpty else { return }
+        guard let info,!downloading,!state.working,state.termination.allowsNewWork,info.photos.isEmpty || !selectedPhotos.isEmpty else { return }
         let mode=mode,maximum=maximumHeight>0 ? maximumHeight:nil,folder=destination
         let selection=info.photos.isEmpty ? nil:selectedPhotos
         downloading=true;error=nil;completed=[]

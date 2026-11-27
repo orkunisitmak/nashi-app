@@ -42,6 +42,8 @@ struct JobRecord:Codable,Identifiable {
         }catch{self.error=error.localizedDescription}
     }
     var token=CancellationToken()
+    /// Pending once SIGTERM asked Nashi to quit; no job starts after that.
+    var termination=TerminationRequest()
     var onOpenWheel:(()->Void)?
     var onChooseFiles:(()->Void)?
     var onSettings:(()->Void)?
@@ -82,7 +84,7 @@ struct JobRecord:Codable,Identifiable {
         execute(operation,options:settings)
     }
     func execute(_ operation:NashiCore.Operation,options:NashiCore.OperationOptions = .init(),inputs:[URL]?=nil) {
-        guard !working else { return }
+        guard !working,termination.allowsNewWork else { return }
         let selected=inputs ?? self.inputs
         beginJob(operation.title)
         let cancel=token
