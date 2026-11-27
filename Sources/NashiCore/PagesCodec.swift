@@ -187,7 +187,29 @@ private enum PagesDOCXReader {
         let defaultParagraph = paragraph(defaults?.first("pPrDefault")?.first("pPr"))
         let relationships = try relationMap(package.appendingPathComponent("word/_rels/document.xml.rels"))
         let reader = Reader(package: package, relationships: relationships, styles: styles, defaultCharacter: defaultCharacter, defaultParagraph: defaultParagraph, token: token)
-        var blocks = try blockElements(body).flatMap { try reader.blocks($0) }
+        // A paragraph-level sectPr ends a section, but its w:type says how that
+        // section itself began (ECMA-376 17.6.22). Whether the text after it
+        // starts a new page is decided by the next section's sectPr: the next
+        // paragraph-level one, or the body's for the last section.
+        let elements = blockElements(body)
+        let sections = elements.compactMap { $0.local == "p" ? $0.first("pPr")?.first("sectPr") : nil } + [body.first("sectPr")].compactMap { $0 }
+        var blocks: [[String: Any]] = [], endedSections = 0, sectionStartsPage = false
+        for element in elements {
+            for var block in try reader.blocks(element) {
+                if sectionStartsPage {
+                    // A table has no paragraph properties to carry the break:
+                    // an empty paragraph before it starts the page instead.
+                    if block["type"] as? String == "paragraph" { block["paragraph"] = (block["paragraph"] as? [String:Any] ?? [:]).merging(["pageBreakBefore":true]) { _,new in new } }
+                    else { blocks.append(["type":"paragraph","runs":[[String:Any]](),"character":visible(defaultCharacter),"paragraph":defaultParagraph.merging(["pageBreakBefore":true]) { _,new in new }]) }
+                    sectionStartsPage = false
+                }
+                blocks.append(block)
+            }
+            guard element.local == "p", element.first("pPr")?.first("sectPr") != nil else { continue }
+            endedSections += 1
+            let type = endedSections < sections.count ? sections[endedSections].first("type")?.attr("val") : nil
+            sectionStartsPage = ["nextPage","oddPage","evenPage"].contains(type ?? "nextPage")
+        }
         // A page break that ends its Word paragraph leaves nothing to carry it.
         // Start the next paragraph on the new page instead of keeping an empty
         // one there, which would push a full-page image onto a third page.
