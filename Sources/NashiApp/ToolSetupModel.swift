@@ -13,6 +13,8 @@ import NashiCore
     private var task: Task<Void, Never>?
     private var token = CancellationToken()
     var onWorkingChange: (Bool) -> Void = { _ in }
+    /// False once Nashi was asked to quit: a download started then would keep it running.
+    var canStart: () -> Bool = { true }
     init(probe: @escaping () -> ToolSetupStatus = { ExternalToolSetup.status }, install: @escaping Install = { group, token, report in
         if group == .media { try await ExternalToolSetup.installMedia(token: token, progress: report) }
         else { try await ExternalToolSetup.installOffice(token: token, progress: report) }
@@ -27,7 +29,7 @@ import NashiCore
         else if previous.ready || status != previous { message = "Download the missing tools to enable all conversions, previews and web downloads. Tools already found on your computer are kept." }
     }
     func install(_ group: ToolGroup? = nil) {
-        guard !working else { return }
+        guard !working, canStart() else { return }
         refresh()
         let groups = status.missing.filter { group == nil || $0 == group }
         guard !groups.isEmpty else { return }

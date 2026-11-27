@@ -127,6 +127,28 @@ enum StatusMenuItem:String,CaseIterable,Identifiable {
     var monitor:DragMonitor!
     var wheel:WheelController!
     var windowManagement:WindowManagementController!
+    private var toolSetupModel:ToolSetupModel?
+    private var terminationSignal:DispatchSourceSignal?
+
+    func applicationWillFinishLaunching(_ notification:Notification) {
+        // kill, launchctl and the shutdown command send SIGTERM. Its default action would end Nashi mid-job,
+        // leaving the job's tools running and its hidden staging folder in the output folder.
+        let source=DispatchSource.makeSignalSource(signal:SIGTERM,queue:.main)
+        source.setEventHandler { [weak self] in self?.terminateAfterStoppingWork() }
+        // An empty handler, not SIG_IGN: tools inherit an ignored SIGTERM and Cancel could no longer stop them.
+        source.resume();signal(SIGTERM) { _ in };terminationSignal=source
+    }
+    private func terminateAfterStoppingWork() {
+        // A cancelled job stops its tools and removes its staging folder before it stops working.
+        // The request stays pending meanwhile, and no new job or tool setup starts while it does.
+        if state.termination.request(working:state.working || toolSetupWorking,cancel:{ if state.working { state.token.cancel() };toolSetupModel?.cancel() }) { terminateIfWorkStopped() }
+    }
+    private func terminateIfWorkStopped() {
+        guard state.termination.canTerminate(working:state.working || toolSetupWorking) else { return }
+        NSApp.terminate(nil)
+        // Only reached when the quit was refused. SIGTERM must still end Nashi, so take its default action.
+        ProcessRunner.terminateAll();signal(SIGTERM,SIG_DFL);raise(SIGTERM)
+    }
 
     func applicationDidFinishLaunching(_ notification:Notification) {
         NashiAppearance.apply()
@@ -168,6 +190,8 @@ enum StatusMenuItem:String,CaseIterable,Identifiable {
         L10n.localize(mainMenu);L10n.localize(menu)
         NotificationCenter.default.publisher(for:.nashiLanguageChanged).sink { _ in L10n.localize(NSApp.mainMenu);L10n.localize(menu);L10n.updateWindowTitles() }.store(in:&updateObservations)
         state.$working.sink { [weak self] working in guard let self else{return};self.updater.setBusy(working || self.toolSetupWorking) }.store(in:&updateObservations)
+        // The value is published before it is stored, so look again once the job has really stopped.
+        state.$working.filter { !$0 }.receive(on:DispatchQueue.main).sink { [weak self] _ in self?.terminateIfWorkStopped() }.store(in:&updateObservations)
         updater.$availableVersion.sink { [weak self] version in
             guard let self else { return }
             let title=version.map { "Update to \($0)…" } ?? "Check for Updates…"
@@ -227,8 +251,9 @@ enum StatusMenuItem:String,CaseIterable,Identifiable {
     @objc func showToolSetup() {
         toolSetupOffered=true
         if toolSetupWindow == nil {
-            let model=ToolSetupModel()
-            model.onWorkingChange={ [weak self] working in guard let self else{return};self.toolSetupWorking=working;self.toolSetupWindow?.standardWindowButton(.closeButton)?.isEnabled = !working;self.updater.setBusy(working || self.state.working) }
+            let model=ToolSetupModel();toolSetupModel=model
+            model.canStart={ [weak self] in self?.state.termination.allowsNewWork ?? true }
+            model.onWorkingChange={ [weak self] working in guard let self else{return};self.toolSetupWorking=working;self.toolSetupWindow?.standardWindowButton(.closeButton)?.isEnabled = !working;self.updater.setBusy(working || self.state.working);if !working { DispatchQueue.main.async { [weak self] in self?.terminateIfWorkStopped() } } }
             toolSetupWindow=makeWindow(title:"Set up Nashi tools",size:NSSize(width:646,height:690),view:ToolSetupView(model:model,onDone:{ [weak self] in
                 guard ExternalToolSetup.status.ready else{return}
                 UserDefaults.standard.set(true,forKey:"hasCompletedWelcome");self?.toolSetupWindow?.close();self?.showHome()
