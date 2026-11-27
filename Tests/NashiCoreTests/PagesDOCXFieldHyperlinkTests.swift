@@ -31,6 +31,31 @@ final class PagesDOCXFieldHyperlinkTests: XCTestCase {
         XCTAssertEqual(runs.first { $0.text == " p.3" }?.link, "https://example.com/site")
     }
 
+    func testNestedSimpleAndComplexHyperlinkFieldsKeepInnermostLink() throws {
+        let complexInner = fieldRuns(instruction: " HYPERLINK \"https://example.com/inner-complex\" ", result: "inner-complex")
+        let simpleWrappingComplex = "<w:fldSimple w:instr=\" HYPERLINK &quot;https://example.com/outer-simple&quot; \">\(run("before "))\(complexInner)\(run(" after"))</w:fldSimple>"
+
+        let simpleInner = "<w:fldSimple w:instr=\" HYPERLINK &quot;https://example.com/inner-simple&quot; \">\(run("inner-simple"))</w:fldSimple>"
+        let complexWrappingSimple = "<w:r><w:fldChar w:fldCharType=\"begin\"/></w:r><w:r><w:instrText xml:space=\"preserve\"> HYPERLINK \"https://example.com/outer-complex\" </w:instrText></w:r><w:r><w:fldChar w:fldCharType=\"separate\"/></w:r>\(run("start "))\(simpleInner)\(run(" tail"))<w:r><w:fldChar w:fldCharType=\"end\"/></w:r>"
+
+        let strayEnd = "<w:fldSimple w:instr=\" HYPERLINK &quot;https://example.com/stray&quot; \"><w:r><w:fldChar w:fldCharType=\"end\"/></w:r>\(run("kept"))</w:fldSimple>"
+        let unclosedNonLink = "<w:fldSimple w:instr=\" HYPERLINK &quot;https://example.com/scoped&quot; \"><w:r><w:fldChar w:fldCharType=\"begin\"/></w:r><w:r><w:instrText> DATE </w:instrText></w:r><w:r><w:fldChar w:fldCharType=\"separate\"/></w:r>\(run("inside"))</w:fldSimple>\(run(" outside"))"
+
+        let runs = try convert(
+            name: "Nested simple and complex fields",
+            body: "<w:p>\(simpleWrappingComplex)</w:p><w:p>\(complexWrappingSimple)</w:p><w:p>\(strayEnd)</w:p><w:p>\(unclosedNonLink)</w:p>"
+        )
+        XCTAssertEqual(runs.first { $0.text == "before " }?.link, "https://example.com/outer-simple")
+        XCTAssertEqual(runs.first { $0.text == "inner-complex" }?.link, "https://example.com/inner-complex")
+        XCTAssertEqual(runs.first { $0.text == " after" }?.link, "https://example.com/outer-simple")
+        XCTAssertEqual(runs.first { $0.text == "start " }?.link, "https://example.com/outer-complex")
+        XCTAssertEqual(runs.first { $0.text == "inner-simple" }?.link, "https://example.com/inner-simple")
+        XCTAssertEqual(runs.first { $0.text == " tail" }?.link, "https://example.com/outer-complex")
+        XCTAssertEqual(runs.first { $0.text == "kept" }?.link, "https://example.com/stray")
+        XCTAssertEqual(runs.first { $0.text == "inside" }?.link, "https://example.com/scoped")
+        XCTAssertNil(runs.first { $0.text == " outside" }?.link)
+    }
+
     // F1801
     func testSplitInstructionAndNestedFieldsKeepTheOuterLink() throws {
         let begin = "<w:r><w:fldChar w:fldCharType=\"begin\"/></w:r>"

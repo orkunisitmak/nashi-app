@@ -226,12 +226,16 @@ private enum PagesDOCXReader {
                 let properties = element.first("pPr")
                 let base = resolved(properties?.first("pStyle")?.attr("val"))
                 var runs: [[String:Any]] = []
-                // Open complex fields (fldChar begin ... end). A field's instruction
-                // ends at its first separate, where a HYPERLINK field resolves its
-                // link once; each entry carries the innermost link in effect, so a
-                // run reads it in constant time however deeply fields nest.
-                var fields: [(instruction: String, link: String?, result: Bool)] = []
-                func visit(_ item: XMLElement, link: String? = nil) throws {
+                // Open complex fields (fldChar begin ... end) and active hyperlink
+                // scopes in nesting order (outermost to innermost). A complex
+                // field's instruction ends at its first separate, where a
+                // HYPERLINK field pushes its link once; activeLinks keeps only
+                // scopes that carry a URL, so a run reads the innermost link in
+                // constant time however deeply fields nest.
+                var fields: [(instruction: String, result: Bool, id: Int, hasLink: Bool)] = []
+                var activeLinks: [(link: String, owner: Int)] = []
+                var nextScope = 1
+                func visit(_ item: XMLElement) throws {
                     try token.check()
                     if item.local == "r" {
                         let runBase = item.first("rPr")?.first("rStyle")?.attr("val").map {resolved($0).0} ?? [:]
@@ -239,19 +243,27 @@ private enum PagesDOCXReader {
                         for child in item.elements(nil) {
                             if child.local == "fldChar" {
                                 switch child.attr("fldCharType") {
-                                case "begin": fields.append(("", fields.last?.link, false))
+                                case "begin":
+                                    let id = nextScope; nextScope += 1
+                                    fields.append(("", false, id, false))
                                 case "separate":
                                     if fields.last?.result == false {
                                         let index = fields.count - 1
-                                        fields[index].link = hyperlinkField(fields[index].instruction) ?? fields[index].link
+                                        if let resolvedLink = hyperlinkField(fields[index].instruction) {
+                                            activeLinks.append((resolvedLink, fields[index].id))
+                                            fields[index].hasLink = true
+                                        }
                                         fields[index].result = true
                                     }
-                                case "end": _ = fields.popLast()
+                                case "end":
+                                    if let popped = fields.popLast(), popped.hasLink, let index = activeLinks.lastIndex(where: { $0.owner == popped.id }) {
+                                        activeLinks.remove(at: index)
+                                    }
                                 default: break
                                 }
                             }
                             else if child.local == "instrText", fields.last?.result == false { fields[fields.count-1].instruction += text(child) }
-                            else if child.local == "t" { var run: [String:Any] = ["text":text(child),"character":formatting];if let link = link ?? fields.last?.link {run["link"]=link};runs.append(run) }
+                            else if child.local == "t" { var run: [String:Any] = ["text":text(child),"character":formatting];if let link = activeLinks.last?.link {run["link"]=link};runs.append(run) }
                             else if child.local == "tab" { runs.append(["text":"\t","character":formatting]) }
                             else if child.local == "noBreakHyphen" { runs.append(["text":"\u{2011}","character":formatting]) }
                             else if child.local == "br", child.attr("type") == "page" { runs.append(["type":"pageBreak"]) }
@@ -262,11 +274,14 @@ private enum PagesDOCXReader {
                         var destination = item.attr("id").flatMap { relationships[$0] }
                         // Word keeps a URL's #fragment in w:anchor, not in the relationship target.
                         if let target = destination, !target.contains("#"), let anchor = item.attr("anchor")?.addingPercentEncoding(withAllowedCharacters: .urlFragmentAllowed), !anchor.isEmpty { destination = target + "#" + anchor }
-                        for child in item.elements(nil) { try visit(child, link:destination) }
+                        let owner: Int? = destination.map { target in let id = nextScope; nextScope += 1; activeLinks.append((target, id)); return id }
+                        defer { if let owner, let index = activeLinks.lastIndex(where: { $0.owner == owner }) { activeLinks.remove(at: index) } }
+                        for child in item.elements(nil) { try visit(child) }
                     } else if item.local == "fldSimple" {
-                        let fieldLink = item.attr("instr").flatMap(hyperlinkField) ?? link
-                        for child in item.elements(nil) { try visit(child, link:fieldLink) }
-                    } else if ["sdt","sdtContent","ins","smartTag","customXml","moveTo","dir","bdo"].contains(item.local) { for child in item.elements(nil) { try visit(child, link:link) } }
+                        let owner: Int? = item.attr("instr").flatMap(hyperlinkField).map { target in let id = nextScope; nextScope += 1; activeLinks.append((target, id)); return id }
+                        defer { if let owner, let index = activeLinks.lastIndex(where: { $0.owner == owner }) { activeLinks.remove(at: index) } }
+                        for child in item.elements(nil) { try visit(child) }
+                    } else if ["sdt","sdtContent","ins","smartTag","customXml","moveTo","dir","bdo"].contains(item.local) { for child in item.elements(nil) { try visit(child) } }
                 }
                 for child in element.elements(nil) { try visit(child) }
                 // An empty paragraph has no run from which to recover its font.
