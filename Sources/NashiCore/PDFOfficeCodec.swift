@@ -62,8 +62,10 @@ enum PDFOfficeCodec {
                 pages.append(format == "md" ? markdown(value) : value)
             }
             let output = work.appendingPathComponent("Extracted text").appendingPathExtension(format)
+            guard pages.contains(where: { $0.rangeOfCharacter(from: CharacterSet.whitespacesAndNewlines.inverted) != nil }) else {
+                throw NashiError.failed("No text could be extracted or recognized in this PDF.")
+            }
             let content = pages.joined(separator: format == "md" ? "\n\n---\n\n" : "\n\n\u{0c}\n\n")
-            guard !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw NashiError.failed("No text could be extracted or recognized in this PDF.") }
             try content.write(to: output, atomically: true, encoding: .utf8)
             return output
         }
