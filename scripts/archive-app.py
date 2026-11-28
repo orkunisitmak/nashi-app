@@ -5,6 +5,7 @@ import os,stat,sys,zipfile
 root=Path(sys.argv[1]).resolve();output=Path(sys.argv[2])
 if root.suffix!='.app' or not (root/'Contents/Info.plist').is_file():sys.exit('Choose a built .app bundle')
 if output.exists():sys.exit('Refusing to replace an existing release archive')
+if output.resolve().is_relative_to(root):sys.exit('Release archive output must be outside the app bundle')
 try:
   # Mode 'x' fails without touching a file that appeared since the check above.
   try:archive=zipfile.ZipFile(output,'x',compression=zipfile.ZIP_DEFLATED,compresslevel=9)
