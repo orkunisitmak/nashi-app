@@ -26,6 +26,18 @@ final class EPUBAuditRegressionTests: XCTestCase {
         XCTAssertEqual(try xml.nodes(forXPath: "//*[local-name()='drawing']").count, 2)
     }
 
+    func testUnpackedChaptersKeepTheirOwnLanguageAndDirection() throws {
+        let epub = try fixture(name: "Bilingual", encoding: .utf8, declaration: "", meta: "", tolerantHTML: false,
+                               htmlAttributes: " xml:lang=\"he-IL\" dir=\"rtl\"", secondBodyAttributes: " lang=\"en-GB\" dir=\"ltr\"")
+        let html = try EPUBCodec.unpackToHTML(epub, in: root, token: .init())
+        let document = try XMLDocument(contentsOf: html, options: [.documentTidyHTML, .nodeLoadExternalEntitiesNever])
+        for (chapter, language, direction) in [("first", "he-IL", "rtl"), ("second", "en-GB", "ltr")] {
+            let paragraph = try XCTUnwrap(document.nodes(forXPath: "//*[local-name()='p' and normalize-space(.)='Body marker \(chapter)']").first)
+            XCTAssertEqual(try paragraph.nodes(forXPath: "ancestor::*[@lang][1]/@lang").first?.stringValue, language)
+            XCTAssertEqual(try paragraph.nodes(forXPath: "ancestor::*[@dir][1]/@dir").first?.stringValue, direction)
+        }
+    }
+
     func testHTML5CharsetUTF8KeepsAccentsWithoutXMLDeclaration() throws {
         let epub = try fixture(name: "HTML5 book", encoding: .utf8, declaration: "", meta: "<meta charset=\"UTF-8\"/>", tolerantHTML: false)
         XCTAssertTrue(try convertedText(epub).contains("First chapter Şişli café"))
@@ -103,7 +115,8 @@ final class EPUBAuditRegressionTests: XCTestCase {
         return try DocumentText.read(output)
     }
 
-    private func fixture(name: String, encoding: String.Encoding, declaration: String, meta: String, tolerantHTML: Bool, marker: String = "Şişli café") throws -> URL {
+    private func fixture(name: String, encoding: String.Encoding, declaration: String, meta: String, tolerantHTML: Bool, marker: String = "Şişli café",
+                         htmlAttributes: String = "", secondBodyAttributes: String = "") throws -> URL {
         let package = root.appendingPathComponent(name, isDirectory: true)
         let metadata = package.appendingPathComponent("META-INF", isDirectory: true)
         let chapters = package.appendingPathComponent("OEBPS/chapters", isDirectory: true)
@@ -122,7 +135,8 @@ final class EPUBAuditRegressionTests: XCTestCase {
         try XCTUnwrap(bitmap.representation(using: .png, properties: [:])).write(to: images.appendingPathComponent("orange.png"))
         for (file, title) in [("first", "First"), ("second", "Second")] {
             let image = "<img src=\"../images/orange.png\" alt=\"Orange\"\(tolerantHTML ? ">" : "/>")"
-            let html = "\(declaration)<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><title>\(title)</title>\(meta)</head><body><h1>\(title) chapter \(marker)</h1><p>Body marker \(file)</p>\(image)</body></html>"
+            let bodyAttributes = file == "second" ? secondBodyAttributes : ""
+            let html = "\(declaration)<html xmlns=\"http://www.w3.org/1999/xhtml\"\(htmlAttributes)><head><title>\(title)</title>\(meta)</head><body\(bodyAttributes)><h1>\(title) chapter \(marker)</h1><p>Body marker \(file)</p>\(image)</body></html>"
             try XCTUnwrap(html.data(using: encoding)).write(to: chapters.appendingPathComponent(file + ".xhtml"))
         }
         let epub = root.appendingPathComponent(name).appendingPathExtension("epub")
