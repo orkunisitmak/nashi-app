@@ -33,7 +33,7 @@ public static class PhotoCodec
     }
     private static void ValidateSvg(string path)
     {
-        using var reader=XmlReader.Create(path,new XmlReaderSettings{DtdProcessing=DtdProcessing.Prohibit,XmlResolver=null,MaxCharactersInDocument=20_000_000});var xml=XDocument.Load(reader);
+        using var reader=XmlReader.Create(path,new XmlReaderSettings{DtdProcessing=DtdProcessing.Parse,XmlResolver=null,MaxCharactersFromEntities=1_000_000,MaxCharactersInDocument=20_000_000});var xml=XDocument.Load(reader);
         foreach(var element in xml.Descendants())
         {
             if(element.Name.LocalName is "script" or "foreignObject")throw new InvalidDataException("Use a static SVG without embedded scripts or HTML.");
