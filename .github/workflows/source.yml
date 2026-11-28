@@ -11,6 +11,22 @@ concurrency:
   group: source-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  web-regressions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Browser state, selection and search regressions
+        run: >-
+          node --test
+          scripts/test-format-search.mjs
+          scripts/test-file-selection.mjs
+          scripts/test-library-limit.mjs
+          scripts/test-reset-state.mjs
+          scripts/test-reset-generation.mjs
+          scripts/test-download-preview.mjs
   security:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -50,6 +66,10 @@ jobs:
           if-no-files-found: warn
       - name: Archive link boundary and extraction regressions
         run: swift test --filter 'ArchiveLinkBoundaryTests|ArchiveResourceLimitsTests|DocumentEngineTests/testArchive|DocumentEngineTests/testZIPTARGZIPRoundTripsNestedFilesAndUnicodeWithoutOverwritingOriginals|DocumentEngineTests/testStoredRARAndOrdinaryGZIPAreReadable|DocumentEngineTests/testCancellationProducesNoPublishedDocumentOrExtractedFolder'
+      - name: Install pinned ExifTool for CLI and export regressions
+        run: scripts/setup-exiftool.sh
+      - name: Subtitle, CLI, export transaction and editor-state regressions
+        run: swift test --filter 'TextEncodingDetectionTests|SubtitleCueBoundaryTests|CommandLineTests|ExportTransactionTests|PDFPageEditorStateTests|MediaConvertAlbumArtTests'
       - name: Update trust, web photo and window placement and setup regressions
         run: swift test --filter 'NashiUpdatesTests|WebMediaDragPayloadTests|InstagramPhotosTests|YouTubeThumbnailTests|WindowPlacementTests|AppLocalizationTests|ToolSetupTests'
       - name: HTML to PDF layout, offline isolation and cancellation
