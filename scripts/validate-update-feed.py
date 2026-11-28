@@ -36,8 +36,11 @@ def validate(feed_path, build_number, must_be_newer=False):
     archive_name = url[len(release):]
     if not short_version or not url.startswith(release) or not re.fullmatch(r"[A-Za-z0-9._-]+", archive_name) or archive_name in (".", ".."):
         raise ValueError("The release download must be the official HTTPS GitHub release for this version and build")
-    if not (Path(feed_path).parent / archive_name).is_file():
+    archive = Path(feed_path).parent / archive_name
+    if not archive.is_file():
         raise ValueError("The signed release archive is missing")
+    if archive.stat().st_size != int(enclosure.get("length", "0")):
+        raise ValueError("The signed release archive size does not match its feed enclosure length")
 
 
 if __name__ == "__main__":
