@@ -22,11 +22,11 @@ public sealed class LibraryStore
     private sealed record State(string Appearance,List<LibraryEntry> Entries,bool WindowManagementEnabled=true);
     public LibraryStore(string? directory=null)
     {
-        DirectoryPath=directory??Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Nashi");
+        DirectoryPath=directory??Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Nashi");AtomicFile.RecoverOrphan(FilePath,ValidateRecovery,4*1024*1024);
         if(!File.Exists(FilePath))return;
         try
         {
-            if(new FileInfo(FilePath).Length>4*1024*1024)throw new InvalidDataException("Library is too large.");
+            if(new FileInfo(FilePath).Length>LimitBytes)throw new InvalidDataException("Library is too large.");
             var loaded=JsonSerializer.Deserialize<State>(File.ReadAllText(FilePath))??throw new InvalidDataException("Empty Library.");
             if(loaded.Entries is null||loaded.Entries.Any(e=>e is null||e.Paths is null||e.Paths.Length==0||e.Paths.Length>10000||string.IsNullOrWhiteSpace(e.Action)||e.Paths.Any(p=>string.IsNullOrWhiteSpace(p)||!Path.IsPathFullyQualified(p))))throw new InvalidDataException("Invalid Library entry.");
             state=new(ValidAppearance(loaded.Appearance),loaded.Entries.OrderByDescending(e=>e.Created).Take(Limit).ToList(),loaded.WindowManagementEnabled);
@@ -55,10 +55,16 @@ public sealed class LibraryStore
         return state.Entries.Where(e=>query.Length==0||AppLocalization.Matches(e.Action,query,language)||e.Paths.Any(p=>AppLocalization.Contains(Path.GetFileName(p),query,language)));
     }
     private static string ValidAppearance(string? value)=>value is "light" or "dark"?value:"system";
+    private const long LimitBytes=4*1024*1024;
+    private static bool ValidateRecovery(string contents)
+    {
+        var loaded=JsonSerializer.Deserialize<State>(contents)??throw new InvalidDataException("Empty Library.");
+        if(loaded.Entries is null||loaded.Entries.Any(e=>e is null||e.Paths is null||e.Paths.Length==0||e.Paths.Length>10000||string.IsNullOrWhiteSpace(e.Action)||e.Paths.Any(p=>string.IsNullOrWhiteSpace(p)||!Path.IsPathFullyQualified(p))))throw new InvalidDataException("Invalid Library entry.");
+        ValidAppearance(loaded.Appearance);
+        return true;
+    }
     private void Save(State next)
     {
-        Directory.CreateDirectory(DirectoryPath);var temporary=FilePath+"."+Guid.NewGuid().ToString("N")+".tmp";
-        try{File.WriteAllText(temporary,JsonSerializer.Serialize(next));File.Move(temporary,FilePath,true);state=next;}
-        finally{if(File.Exists(temporary))File.Delete(temporary);}
+        AtomicFile.WriteAllText(FilePath,JsonSerializer.Serialize(next));state=next;
     }
 }
