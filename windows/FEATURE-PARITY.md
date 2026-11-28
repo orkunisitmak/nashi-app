@@ -21,6 +21,8 @@ These features are included in the published [0.7.5 release](https://github.com/
 | File actions / Float | Copy/move/path/terminal, native Windows Share, reusable Float windows with add/remove, multi-select, drag out, preview, collapse and edge pinning | Native Float input, files retained after removal, transactional move |
 | Preferences / tray / update | Login option, background tray, output/download folders, format defaults; existing signed public updater and external Library/preferences storage | Preference persistence/collisions; updater trust and extraction regressions; public 0.7.5 update download, replacement, restart and saved-state verification are tracked in the release verification workflow |
 
+Windows adds one format outside the shared contract: UYAP Doküman Editörü documents (`.udf`), which Turkish courts and lawyers exchange. UDF converts to DOCX natively and on to every DOCX target through Office; DOCX, PDF, Pages, RTF/RTFD, text, Markdown, EPUB and text clippings convert to UDF the same way, with Word list numbers kept as text. `FeatureCatalog.WindowsOnlyFormats` lists it, and `Nashi.Verify` round-trips UYAP-shaped documents.
+
 Windows uses Explorer, Windows keyboard conventions and Windows Share. Apple AirDrop has no Windows implementation; Windows Share is the corresponding file action. OCR requires a Windows OCR language. Optional media, Office and metadata runtimes are downloaded from pinned upstream packages into the user's Nashi tools directory without administrator installation. Native playback uses Windows codecs, with an FFmpeg preview proxy fallback.
 
 ## Commands and evidence
