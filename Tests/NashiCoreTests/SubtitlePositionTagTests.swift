@@ -62,6 +62,7 @@ final class SubtitlePositionTagTests: XCTestCase {
         XCTAssertEqual(try SubtitleCodec.convert(input, to: "txt", token: .init()), "Hello\n")
     }
 
+    /// 100,000 tag-only lines in a cue convert to VTT and TXT without the old quadratic slowdown.
     func testVeryLongRunsOfPositionTagLinesConvertQuickly() throws {
         let root = try OutputFiles.temporaryDirectory()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -75,6 +76,7 @@ final class SubtitlePositionTagTests: XCTestCase {
         XCTAssertLessThan(Date().timeIntervalSince(started), 5)
     }
 
+    /// Removing tag lines keeps the `\r\n` breaks of the lines around them.
     func testPositionTagLinesKeepTheWindowsLineBreaksOfTheLinesAroundThem() {
         XCTAssertEqual(SubtitleCodec.withoutPositionTags("Hello\r\n {\\an8}\r\nWorld\r\n{\\an2}"), "Hello\r\nWorld")
     }
