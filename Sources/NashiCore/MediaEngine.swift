@@ -35,7 +35,7 @@ public struct MediaInfo: Sendable, Equatable {
     public let streams: [MediaStream]
     public let chapters: [MediaChapter]
     public let metadata: [String: String]
-    public var video: MediaStream? { streams.first { $0.kind == "video" && ($0.width ?? 0) > 0 } }
+    public var video: MediaStream? { streams.first { $0.kind == "video" && !$0.isAttachedPicture && ($0.width ?? 0) > 0 } }
     public var audio: MediaStream? { streams.first { $0.kind == "audio" } }
     public var hasVideo: Bool { video != nil }
     public var hasAudio: Bool { audio != nil }
