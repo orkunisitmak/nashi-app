@@ -18,6 +18,17 @@ final class PDFMarkdownExportTests: XCTestCase {
         XCTAssertEqual(plain, "Nashi fixture\n\n---\n\nPage two")
     }
 
+    func testPageSeparatorsDoNotCountAsRecognizedText() throws {
+        XCTAssertThrowsError(try export(pages: [[], []], to: "md")) { error in
+            guard case NashiError.failed(let message) = error else {
+                return XCTFail("Unexpected error: \(error)")
+            }
+            XCTAssertEqual(message, "No text could be extracted or recognized in this PDF.")
+        }
+        let markdown = try String(contentsOf: export(pages: [[], ["Page two"]], to: "md"), encoding: .utf8)
+        XCTAssertEqual(markdown, "\n\n---\n\nPage two")
+    }
+
     private func export(pages: [[String]], to format: String) throws -> URL {
         let input = root.appendingPathComponent("Text \(format).pdf")
         var bounds = CGRect(x: 0, y: 0, width: 612, height: 792)
@@ -33,6 +44,7 @@ final class PDFMarkdownExportTests: XCTestCase {
             context.endPDFPage()
         }
         context.closePDF()
-        return try XCTUnwrap(DocumentEngine.convert(input, to: format, options: .init(), token: .init()).first)
+        let outputs = try DocumentEngine.convert(input, to: format, options: .init(), token: .init())
+        return try XCTUnwrap(outputs.first)
     }
 }
