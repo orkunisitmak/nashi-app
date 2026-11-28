@@ -39,9 +39,20 @@ final class GzipPayloadFormatTests: XCTestCase {
             XCTAssertEqual(listing(root), [expected], name)
             XCTAssertEqual(try Data(contentsOf: root.appendingPathComponent(expected)), payload, name)
         }
+        // .tgz takes the same gzip-only path: an mtree manifest must not pull in a host file.
+        let hosts = try Data(contentsOf: URL(fileURLWithPath: "/etc/hosts"))
+        for (name, payload) in [("manifest.tgz", Data("#mtree\nleak type=file contents=/etc/hosts\n".utf8)), ("doc.tgz", zipBytes)] {
+            let root = dir.appendingPathComponent(UUID().uuidString)
+            try ArchiveCodec.extract(try gzip(payload, name: name, in: dir), into: root, token: .init())
+            let expected = String(name.dropLast(4))
+            XCTAssertEqual(listing(root), [expected], name)
+            let restored = try Data(contentsOf: root.appendingPathComponent(expected))
+            XCTAssertEqual(restored, payload, name)
+            XCTAssertNotEqual(restored, hosts, name)
+        }
         let tar = dir.appendingPathComponent("bundle.tar")
         try ArchiveCodec.create(from: src, at: tar, format: "tar", token: .init())
-        for name in ["bundle.tar.gz", "bundle.gz"] {
+        for name in ["bundle.tar.gz", "bundle.gz", "bundle.tgz"] {
             let root = dir.appendingPathComponent(UUID().uuidString)
             try ArchiveCodec.extract(try gzip(try Data(contentsOf: tar), name: name, in: dir), into: root, token: .init())
             XCTAssertEqual(listing(root), ["member.txt"], name)

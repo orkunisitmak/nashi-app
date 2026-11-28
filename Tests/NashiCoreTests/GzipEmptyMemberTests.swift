@@ -18,6 +18,13 @@ final class GzipEmptyMemberTests: XCTestCase {
         XCTAssertEqual(try fm.contentsOfDirectory(atPath: root.path), ["empty.txt"])
         XCTAssertEqual(try Data(contentsOf: root.appendingPathComponent("empty.txt")).count, 0)
 
+        // Like any other entry, the empty file never replaces one already in the folder.
+        let occupied = dir.appendingPathComponent("occupied", isDirectory: true)
+        try fm.createDirectory(at: occupied, withIntermediateDirectories: true)
+        try Data("keep".utf8).write(to: occupied.appendingPathComponent("empty.txt"))
+        XCTAssertThrowsError(try ArchiveCodec.extract(input, into: occupied, token: .init()))
+        XCTAssertEqual(try Data(contentsOf: occupied.appendingPathComponent("empty.txt")), Data("keep".utf8))
+
         let source = dir.appendingPathComponent("source", isDirectory: true)
         try fm.createDirectory(at: source, withIntermediateDirectories: true)
         let tgz = dir.appendingPathComponent("nothing.tar.gz")
