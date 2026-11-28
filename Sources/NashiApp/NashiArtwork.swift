@@ -49,6 +49,6 @@ enum NashiArtwork {
             if updateAvailable { NSColor.black.setFill();NSBezierPath(ovalIn:NSRect(x:15,y:15,width:4,height:4)).fill() }
             return true
         }
-        image.isTemplate=true;image.accessibilityDescription=updateAvailable ? "Nashi update available":"Nashi";return image
+        image.isTemplate=true;image.accessibilityDescription=updateAvailable ? L10n.text("Nashi update available"):"Nashi";return image
     }
 }
