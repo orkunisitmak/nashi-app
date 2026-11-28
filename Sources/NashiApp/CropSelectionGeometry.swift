@@ -8,6 +8,41 @@ enum CropSelectionGeometry {
         var y: CGFloat { [0, 0, 0, 0.5, 1, 1, 1, 0.5][rawValue] }
     }
 
+    enum HorizontalAlignment: String, CaseIterable {
+        case left, center, right
+    }
+
+    enum VerticalAlignment: String, CaseIterable {
+        case top, center, bottom
+    }
+
+    static func align(_ rect: CGRect, horizontal: HorizontalAlignment, bounds: CGSize) -> CGRect {
+        let maxW = max(0, bounds.width - rect.width)
+        let x: CGFloat
+        switch horizontal {
+        case .left: x = 0
+        case .center: x = (maxW / 2).rounded(.down)
+        case .right: x = maxW
+        }
+        return CGRect(x: max(0, min(maxW, x)), y: rect.minY, width: rect.width, height: rect.height)
+    }
+
+    static func align(_ rect: CGRect, vertical: VerticalAlignment, bounds: CGSize) -> CGRect {
+        let maxH = max(0, bounds.height - rect.height)
+        let y: CGFloat
+        switch vertical {
+        case .top: y = 0
+        case .center: y = (maxH / 2).rounded(.down)
+        case .bottom: y = maxH
+        }
+        return CGRect(x: rect.minX, y: max(0, min(maxH, y)), width: rect.width, height: rect.height)
+    }
+
+    static func align(_ rect: CGRect, horizontal: HorizontalAlignment, vertical: VerticalAlignment, bounds: CGSize) -> CGRect {
+        let h = align(rect, horizontal: horizontal, bounds: bounds)
+        return align(h, vertical: vertical, bounds: bounds)
+    }
+
     static func selection(from anchor: CGPoint, to point: CGPoint, bounds: CGSize,
                           aspectRatio: CGFloat?) -> CGRect {
         let start = CGPoint(x: min(bounds.width, max(0, anchor.x)), y: min(bounds.height, max(0, anchor.y)))

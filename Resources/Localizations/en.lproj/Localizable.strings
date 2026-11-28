@@ -202,6 +202,7 @@
 "ADDING PAGES…" = "ADDING PAGES…";
 "ADDITIONAL OPTIONS" = "ADDITIONAL OPTIONS";
 "AIRDROP IS UNAVAILABLE ON THIS MAC." = "AIRDROP IS UNAVAILABLE ON THIS MAC.";
+"ALIGNMENT" = "ALIGNMENT";
 "ALL" = "ALL";
 "ALL METADATA" = "ALL METADATA";
 "ALL SET. YOU’RE READY TO GO." = "ALL SET. YOU’RE READY TO GO.";
@@ -290,6 +291,7 @@
 "Adding pages…" = "Adding pages…";
 "Additional options" = "Additional options";
 "AirDrop is unavailable on this Mac." = "AirDrop is unavailable on this Mac.";
+"Alignment" = "Alignment";
 "All" = "All";
 "All metadata" = "All metadata";
 "All set. You’re ready to go." = "All set. You’re ready to go.";
@@ -411,6 +413,8 @@
 "CANVAS" = "CANVAS";
 "CANVAS HEIGHT" = "CANVAS HEIGHT";
 "CANVAS WIDTH" = "CANVAS WIDTH";
+"CENTER" = "CENTER";
+"CENTER SELECTION" = "CENTER SELECTION";
 "CHANGE SPEED" = "CHANGE SPEED";
 "CHANGE SPEED · NASHI" = "CHANGE SPEED · NASHI";
 "CHANGE VIDEO SPEED" = "CHANGE VIDEO SPEED";
@@ -613,6 +617,8 @@
 "Canvas" = "Canvas";
 "Canvas height" = "Canvas height";
 "Canvas width" = "Canvas width";
+"Center" = "Center";
+"Center Selection" = "Center Selection";
 "Change Speed" = "Change Speed";
 "Change Speed · Nashi" = "Change Speed · Nashi";
 "Change Video Speed" = "Change Video Speed";
@@ -1299,6 +1305,7 @@
 "HIGHLIGHTS" = "HIGHLIGHTS";
 "HOLD A KEY WHILE DRAGGING IN FINDER" = "HOLD A KEY WHILE DRAGGING IN FINDER";
 "HOME" = "HOME";
+"HORIZONTAL" = "HORIZONTAL";
 "HUE" = "HUE";
 "Height" = "Height";
 "Hello" = "Hello";
@@ -1307,6 +1314,7 @@
 "Highlights" = "Highlights";
 "Hold a key while dragging in Finder" = "Hold a key while dragging in Finder";
 "Home" = "Home";
+"Horizontal" = "Horizontal";
 "Hue" = "Hue";
 "ICONS" = "ICONS";
 "IMAGE" = "IMAGE";
@@ -2887,6 +2895,7 @@
 "VALUE" = "VALUE";
 "VERIFYING AND PREPARING OFFICE TOOLS…" = "VERIFYING AND PREPARING OFFICE TOOLS…";
 "VERIFYING UPDATE SIGNATURE…" = "VERIFYING UPDATE SIGNATURE…";
+"VERTICAL" = "VERTICAL";
 "VIBRANCE" = "VIBRANCE";
 "VIDEO" = "VIDEO";
 "VIDEO COMPRESSION" = "VIDEO COMPRESSION";
@@ -2907,6 +2916,7 @@
 "Version %lld" = "Version %lld";
 "Version %lld is available" = "Version %lld is available";
 "Version %lld · Install when you’re ready." = "Version %lld · Install when you’re ready.";
+"Vertical" = "Vertical";
 "Vibrance" = "Vibrance";
 "Video" = "Video";
 "Video Compression" = "Video Compression";
