@@ -30,7 +30,32 @@ public enum WebDownloadEngine {
               let host=url.host,!host.isEmpty,url.user==nil,url.password==nil else {
             throw NashiError.invalidInput("Paste one complete http:// or https:// media link.")
         }
+        guard !isPrivateHost(host) else { throw NashiError.invalidInput("Links to this computer or a private network are not downloaded.") }
         return url
+    }
+    /// True for localhost and literal loopback, link-local and private-range addresses.
+    /// A DNS name that resolves to a private address is not caught here.
+    static func isPrivateHost(_ host:String) -> Bool {
+        let name=host.lowercased().trimmingCharacters(in:CharacterSet(charactersIn:"[]."))
+        if name == "localhost" || name.hasSuffix(".localhost") { return true }
+        var v4=in_addr()
+        // inet_aton also reads the short and numeric forms a resolver accepts (127.1, 2130706433, 0x7f.1).
+        if inet_aton(name,&v4) != 0 {
+            let a=UInt32(bigEndian:v4.s_addr)
+            let first=a>>24,second=(a>>16)&0xff
+            return first == 0 || first == 10 || first == 127 || (first == 169 && second == 254) || (first == 172 && (16...31).contains(second)) || (first == 192 && second == 168) || (first == 100 && (64...127).contains(second)) || (first == 198 && (18...19).contains(second))
+        }
+        var v6=in6_addr()
+        if inet_pton(AF_INET6,name,&v6) == 1 {
+            let bytes=withUnsafeBytes(of:&v6){ Array($0) }
+            if bytes.dropLast().allSatisfy({ $0 == 0 }) && bytes[15] <= 1 { return true }
+            if bytes[0] == 0xfe && (bytes[1] & 0xc0) == 0x80 { return true }
+            if (bytes[0] & 0xfe) == 0xfc { return true }
+            if bytes[0..<10].allSatisfy({ $0 == 0 }) && bytes[10] == 0xff && bytes[11] == 0xff {
+                return isPrivateHost("\(bytes[12]).\(bytes[13]).\(bytes[14]).\(bytes[15])")
+            }
+        }
+        return false
     }
     public static func inspect(_ url:URL,token:CancellationToken = .init()) async throws -> WebMediaInfo {
         let url=try link(url.absoluteString);try token.check()
