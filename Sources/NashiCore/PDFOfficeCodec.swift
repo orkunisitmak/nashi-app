@@ -15,6 +15,14 @@ enum PDFOfficeCodec {
         return CGRect(origin: .zero, size: rotated ? CGSize(width: box.height, height: box.width) : box.size)
     }
 
+    /// The page as displayed and the map into it from unrotated page space,
+    /// where PDFKit reports glyph, selection and image geometry. A page with
+    /// /Rotate maps through its crop box onto `visualBounds`; an unrotated
+    /// page keeps crop-box coordinates.
+    static func displayed(_ page: PDFPage) -> (bounds: CGRect, transform: CGAffineTransform) {
+        page.rotation % 360 == 0 ? (page.bounds(for: .cropBox), .identity) : (visualBounds(page), page.transform(for: .cropBox))
+    }
+
     static func rasterPNG(_ page: PDFPage, rect crop: CGRect? = nil, dpi: Int = 144, token: CancellationToken) throws -> Data {
         try token.check()
         let bounds = crop ?? visualBounds(page)
@@ -86,7 +94,10 @@ enum PDFOfficeCodec {
 
     static func recognizedCells(_ page: PDFPage, token: CancellationToken) throws -> [TextCell] {
         try token.check()
-        let bounds = page.bounds(for: .cropBox)
+        // The thumbnail is drawn upright (with /Rotate applied). Size it and
+        // scale Vision's boxes by the displayed page, so a rotated page is
+        // neither shrunk to fit an unrotated canvas nor read in the wrong frame.
+        let bounds = displayed(page).bounds
         let size = NSSize(width: max(1, bounds.width * 2), height: max(1, bounds.height * 2))
         let image = page.thumbnail(of: size, for: .cropBox)
         var rect = CGRect(origin: .zero, size: size)
