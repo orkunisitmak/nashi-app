@@ -60,7 +60,7 @@ public static class PhotoCodec
         if(format=="heic"){byte[] png;using(var source=Read())png=source.ToByteArray(MagickFormat.Png);EncodePng(png,output,format,quality,encoder,token);return;}
         using var image=Read();image.Strip();image.Quality=(uint)Math.Clamp(quality,1,100);image.Write(output,Format(format));
     }
-    public static MagickFormat Format(string format)=>format switch{"jpg"=>MagickFormat.Jpeg,"webp"=>MagickFormat.WebP,"heic"=>MagickFormat.Heic,"avif"=>MagickFormat.Avif,"tiff"=>MagickFormat.Tiff,"bmp"=>MagickFormat.Bmp,"gif"=>MagickFormat.Gif,"png"=>MagickFormat.Png,_=>throw new ArgumentException("Unsupported image format.")};
+    public static MagickFormat Format(string format)=>format switch{"jpg"=>MagickFormat.Jpeg,"webp"=>MagickFormat.WebP,"heic"=>MagickFormat.Heic,"avif"=>MagickFormat.Avif,"tiff"=>MagickFormat.Tiff,"bmp"=>MagickFormat.Bmp,"gif"=>MagickFormat.Gif,"png"=>MagickFormat.Png,"dng"=>MagickFormat.Dng,_=>throw new ArgumentException("Unsupported image format.")};
     public static byte[] Adjust(byte[] png,PhotoAdjustments o)
     {
         foreach(var property in typeof(PhotoAdjustments).GetProperties()){var n=(double)property.GetValue(o)!;if(!double.IsFinite(n)||Math.Abs(n)>(property.Name==nameof(PhotoAdjustments.Hue)?180:100))throw new ArgumentException("Choose finite photo adjustments within their ranges.");}

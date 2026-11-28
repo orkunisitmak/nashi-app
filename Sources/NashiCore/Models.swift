@@ -19,7 +19,7 @@ public enum FileCategory: String, Codable, CaseIterable, Sendable {
     }
     public static func detect(_ url: URL) -> FileCategory {
         let ext = url.pathExtension.lowercased()
-        if ["jpg", "jpeg", "png", "webp", "heic", "heif", "tif", "tiff", "avif", "bmp", "svg"].contains(ext) { return .image }
+        if ["jpg", "jpeg", "png", "webp", "heic", "heif", "tif", "tiff", "avif", "bmp", "svg", "dng"].contains(ext) { return .image }
         if ["mp4", "mov", "mkv", "webm", "avi", "wmv", "m4v", "gif"].contains(ext) { return .video }
         if ["mp3", "m4a", "wav", "flac", "ogg", "opus", "aiff", "aif", "wma", "aac"].contains(ext) { return .audio }
         if ext == "pdf" { return .pdf }
