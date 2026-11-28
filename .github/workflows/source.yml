@@ -19,6 +19,8 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Browser editor export lifecycle regressions
+        run: node --test scripts/test-web-editor-lifecycle.cjs
       - name: Check generated language tables
         run: python3 scripts/generate-localizations.py --check
       - name: Owner merge authorization regressions
