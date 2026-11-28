@@ -33,7 +33,21 @@ internal static class EditorReliabilityChecks
                 Exception? failure=null;try{play.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));}catch(Exception error){failure=error;}
                 check(failure is null&&!editor.Playing,"Invalid range playback escaped the editor: "+end+" "+failure?.Message);
             }
-            editor.FieldForTest("End").Text="2";play.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            var playToggle=Children(editor).OfType<Button>().Single(b=>b.Content as string=="▶ / Ⅱ");
+            editor.SeekForTest(0);editor.FieldForTest("End").Focus();editor.FieldForTest("End").Text="00:02.500";playToggle.Focus();DesktopInput.Pump();
+            check(Math.Abs(editor.PreviewSeconds-2.5)<.05,"Focusing Play after editing an endpoint did not seek to the edited time");
+            playToggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));check(editor.Playing,"Play did not start after editing an endpoint");
+            playToggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));check(!editor.Playing,"Play/Pause did not pause after the edited endpoint was previewed");
+            editor.FieldForTest("Start").Text="00:01.250";editor.FieldForTest("End").Text="00:04.500";
+            check(editor.AcceptForTest()&&Math.Abs(editor.MediaOptions.Start-1.25)<.001&&Math.Abs(editor.MediaOptions.End!.Value-4.5)<.001,"Trim fields did not accept mm:ss.fff");
+            editor.FieldForTest("End").Focus();editor.FieldForTest("End").Text="00:03.750";editor.Timeline.Focus();DesktopInput.Pump();
+            check(Math.Abs(editor.PreviewSeconds-3.75)<.05,"Typing a trim endpoint did not update the preview");
+            editor.SeekForTest(2.5);editor.FieldForTest("Start").Focus();editor.FieldForTest("Start").Text="00:01.250";
+            var setStart=Children(editor).OfType<Button>().Single(b=>b.Content as string=="Set Start Here");setStart.Focus();DesktopInput.Pump();setStart.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            check(editor.FieldForTest("Start").Text=="00:02.500"&&Math.Abs(editor.PreviewSeconds-2.5)<.05,"Set Start Here did not preserve the playhead frame: start="+editor.FieldForTest("Start").Text+"; preview="+editor.PreviewSeconds);
+            editor.SeekForTest(4.25);var setEnd=Children(editor).OfType<Button>().Single(b=>b.Content as string=="Set End Here");setEnd.Focus();DesktopInput.Pump();setEnd.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            check(editor.FieldForTest("End").Text=="00:04.250"&&Math.Abs(editor.PreviewSeconds-4.25)<.05,"Set End Here did not preserve the playhead frame");
+            editor.FieldForTest("Start").Text="0";editor.FieldForTest("End").Text="2";editor.SeekForTest(0);DesktopInput.Pump(300);play.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             check(editor.Playing,"Valid range playback did not start after correcting invalid input");
             editor.FieldForTest("End").Text="editing";DesktopInput.Pump(250);
             check(editor.IsVisible,"Editing the range during playback closed the editor");
@@ -47,7 +61,7 @@ internal static class EditorReliabilityChecks
             check(scrub.Value>value&&scrub.Value-value<1&&Math.Abs(editor.PreviewSeconds-scrub.Value)<.05,"Focused scrubber did not seek using its own keyboard increment");
             var silence=Children(editor).OfType<CheckBox>().Single(c=>c.Content as string=="Remove silence at the beginning and end");silence.IsChecked=true;
             Children(editor).OfType<Button>().Single(b=>b.Content as string=="↶ Reset").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-            check(silence.IsChecked==false&&!editor.Playing&&editor.FieldForTest("Start").Text=="0"&&editor.FieldForTest("End").Text=="5","Reset retained media options or playback state");
+            check(silence.IsChecked==false&&!editor.Playing&&editor.FieldForTest("Start").Text=="00:00.000"&&editor.FieldForTest("End").Text=="00:05.000","Reset retained media options or playback state");
             var preferences=new PreferencesStore(Path.Combine(root,"Reset profiles"));preferences.SetProfile("wav",new(Quality:.62,SampleDepth:"pcm24",PreserveMetadata:false));
             var convert=new ToolEditor(owner,"convert","Convert",audio,new MediaInfo(5,new FileInfo(audio).Length,[new MediaStream(0,"audio","pcm_s16le",null,null,false)]),outputFormats:["wav"]);
             try

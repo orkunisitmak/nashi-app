@@ -23,6 +23,7 @@ public sealed partial class ToolEditor:Window
     internal RangeTimeline Timeline=>timeline;
     internal TextBox FieldForTest(string name)=>fields[name];
     internal bool AcceptForTest()=>ReadSettings(false);
+    internal void SeekForTest(double seconds)=>Seek(seconds);
     internal void ChooseAnnotationImageForTest(string file)=>ChooseAnnotationImage(file);
     private readonly string input;private readonly MediaInfo? media;private readonly StackPanel options=new(){Margin=new(18,0,0,0)};
     public ToolEditor(Window owner,string tool,string title,string input,MediaInfo? media=null,BitmapSource? preview=null,IReadOnlyList<string>? inputs=null,string[]? outputFormats=null)
@@ -52,7 +53,11 @@ public sealed partial class ToolEditor:Window
             player.ScrubbingEnabled=true;player.Loaded+=(_,_)=>{player.Play();player.Pause();};player.MediaFailed+=async(_,_)=>await CreatePreviewProxy();
             if(tool is "trimVideo" or "trimAudio" or "redactAudio")
             {
-                timeline.Set(duration,0,duration);previewStack.Children.Add(timeline);timeline.Changed+=(a,b)=>{var valid=double.TryParse(fields["Start"].Text,NumberStyles.Float,CultureInfo.CurrentCulture,out var previousStart)&&double.IsFinite(previousStart);fields["Start"].Text=Number(a);fields["End"].Text=Number(b);Seek(!valid||Math.Abs(a-previousStart)>.0001?a:b);};
+                timeline.Set(duration,0,duration);previewStack.Children.Add(timeline);timeline.Changed+=(a,b)=>
+                {
+                    var valid=true;var previousStart=0d;try{previousStart=Value("Start");}catch(ArgumentException){valid=false;}
+                    fields["Start"].Text=MediaTimecode.Format(a);fields["End"].Text=MediaTimecode.Format(b);Seek(!valid||Math.Abs(a-previousStart)>.0001?a:b);
+                };
             }
             var controls=new StackPanel{Orientation=Orientation.Horizontal};var play=MainWindow.Button("▶ / Ⅱ",TogglePlayback);controls.Children.Add(MainWindow.Button("−1s",()=>Seek(player.Position.TotalSeconds-1)));controls.Children.Add(play);controls.Children.Add(MainWindow.Button("+1s",()=>Seek(player.Position.TotalSeconds+1)));previewStack.Children.Add(controls);previewStack.Children.Add(time);
             if((media.Video is null&&tool is "normalizeAudio" or "audioChannels" or "redactAudio")||tool is "redactVideo" or "splitVideo" or "audioToVideo")
@@ -116,11 +121,23 @@ public sealed partial class ToolEditor:Window
     {
         if(media is not {Duration:<=0}||!player.NaturalDuration.HasTimeSpan)return;
         duration=player.NaturalDuration.TimeSpan.TotalSeconds;scrubber.Maximum=duration;
-        if(fields.TryGetValue("End",out var end)&&end.Text==defaults["End"])end.Text=defaults["End"]=Number(duration);
+        if(fields.TryGetValue("End",out var end)&&end.Text==defaults["End"])end.Text=defaults["End"]=MediaTimecode.Format(duration);
         try{SyncTimeline();}catch(ArgumentException){}
     }
-    private void Field(string name,double value)=>TextField(name,Number(value));
-    private void TextField(string name,string value){options.Children.Add(L10n.Label(new TextBlock{Text=name,Margin=new(4,12,4,0)}));var box=new TextBox{Text=value};System.Windows.Automation.AutomationProperties.SetAutomationId(box,name);if(name is "Start" or "End")box.LostKeyboardFocus+=(_,_)=>{try{SyncTimeline();}catch(ArgumentException){}};fields.Add(name,box);defaults.Add(name,value);options.Children.Add(box);}
+    private void Field(string name,double value)=>TextField(name,name is "Start" or "End"?MediaTimecode.Format(value):Number(value));
+    private void TextField(string name,string value)
+    {
+        options.Children.Add(L10n.Label(new TextBlock{Text=name,Margin=new(4,12,4,0)}));
+        var box=new TextBox{Text=value};System.Windows.Automation.AutomationProperties.SetAutomationId(box,name);
+        if(name is "Start" or "End")box.LostKeyboardFocus+=(_,e)=>{try{SyncTimeline();if((tool is "trimAudio" or "trimVideo")&&e.NewFocus is not Button{Tag:true})Seek(Value(name,name=="Start"?0:duration));}catch(ArgumentException){}};
+        fields.Add(name,box);defaults.Add(name,value);
+        if((name is "Start" or "End")&&(tool is "trimAudio" or "trimVideo"))
+        {
+            var setHere=MainWindow.Button(name=="Start"?"Set Start Here":"Set End Here",()=>SetRangeEndpoint(name=="Start"));setHere.Tag=true;setHere.Margin=new(8,0,0,0);
+            var row=new DockPanel();DockPanel.SetDock(setHere,Dock.Right);row.Children.Add(setHere);row.Children.Add(box);options.Children.Add(row);
+        }
+        else options.Children.Add(box);
+    }
     private Action? resetCompression,resetPhotoView,resetPreviewZoom,applyExportProfile;
     private void Reset()
     {
@@ -137,9 +154,23 @@ public sealed partial class ToolEditor:Window
         drawing.ReleaseMouseCapture();dragging=false;cropGesture=null;selection=activeRectangle=null;activeStroke=null;annotationShape=selectedAnnotation=null;
         photoRegions.Clear();videoRegions.Clear();bleepRanges.Clear();ReloadRanges();markNumber=1;applyExportProfile?.Invoke();timeline.Set(duration,0,duration);QueuePhotoPreview();
     }
+    private void SetRangeEndpoint(bool start)
+    {
+        if(media is null||processingPreview||processedPlayback)return;
+        try
+        {
+            var current=player.Position.TotalSeconds;var other=Value(start?"End":"Start",start?duration:0);
+            var minimum=start?0:other+MinRange;var maximum=start?other-MinRange:duration;
+            if(maximum<minimum)throw new ArgumentException("Choose a valid range first.");
+            var selected=Math.Clamp(current,minimum,maximum);
+            fields[start?"Start":"End"].Text=MediaTimecode.Format(selected);SyncTimeline();Seek(selected);
+        }
+        catch(ArgumentException error){time.Text=L10n.Text(error.Message);}
+    }
     private double Value(string key,double fallback=0)
     {
         if(!fields.TryGetValue(key,out var box))return fallback;
+        if(key is "Start" or "End")return MediaTimecode.Parse(box.Text);
         if(!double.TryParse(box.Text,NumberStyles.Float,CultureInfo.CurrentCulture,out var value)&&!double.TryParse(box.Text,NumberStyles.Float,CultureInfo.InvariantCulture,out value)||!double.IsFinite(value))throw new ArgumentException("Enter a valid number for "+key+".");return value;
     }
     private void BeginDraw(object sender,MouseButtonEventArgs e)
@@ -200,9 +231,9 @@ public sealed partial class ToolEditor:Window
         if(media is null||modifiers is not (ModifierKeys.None or ModifierKeys.Shift)||Keyboard.FocusedElement is System.Windows.Controls.Primitives.ButtonBase or System.Windows.Controls.Primitives.RangeBase)return;
         try
         {
-            switch(e.Key){case Key.Space:if(modifiers.HasFlag(ModifierKeys.Shift)){PlayRange();break;}TogglePlayback();break;case Key.Left:Seek(player.Position.TotalSeconds-(modifiers.HasFlag(ModifierKeys.Shift)?FineSeekStep:1));break;case Key.Right:Seek(player.Position.TotalSeconds+(modifiers.HasFlag(ModifierKeys.Shift)?FineSeekStep:1));break;case Key.I:if(fields.TryGetValue("Start",out var start)&&player.Position.TotalSeconds<Value("End",duration))start.Text=Number(player.Position.TotalSeconds);SyncTimeline();break;case Key.O:if(fields.TryGetValue("End",out var end)&&player.Position.TotalSeconds>Value("Start"))end.Text=Number(player.Position.TotalSeconds);SyncTimeline();break;default:return;}
+            switch(e.Key){case Key.Space:if(modifiers.HasFlag(ModifierKeys.Shift)){PlayRange();break;}TogglePlayback();break;case Key.Left:Seek(player.Position.TotalSeconds-(modifiers.HasFlag(ModifierKeys.Shift)?FineSeekStep:1));break;case Key.Right:Seek(player.Position.TotalSeconds+(modifiers.HasFlag(ModifierKeys.Shift)?FineSeekStep:1));break;case Key.I:if(fields.TryGetValue("Start",out var start)&&player.Position.TotalSeconds<Value("End",duration))start.Text=MediaTimecode.Format(player.Position.TotalSeconds);SyncTimeline();break;case Key.O:if(fields.TryGetValue("End",out var end)&&player.Position.TotalSeconds>Value("Start"))end.Text=MediaTimecode.Format(player.Position.TotalSeconds);SyncTimeline();break;default:return;}
         }
-        catch(ArgumentException error){time.Text=error.Message;}
+        catch(ArgumentException error){time.Text=L10n.Text(error.Message);}
         e.Handled=true;
     }
     private void SyncTimeline(){if(fields.ContainsKey("Start")&&fields.ContainsKey("End"))timeline.Set(duration,Value("Start"),Value("End",duration));}

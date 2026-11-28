@@ -7,7 +7,7 @@ public sealed partial class ToolEditor
 {
     private readonly CancellationTokenSource previewLifetime=new();private Toolchain? previewTools;private string? previewDirectory,originalPreviewPath;private bool triedProxy;
     internal void ConfigureMediaRuntime(Toolchain tools){previewTools=tools;if(media is not null&&tools.Ready)Loaded+=async(_,_)=>await LoadTimelineArtwork();}
-    private string PreviewDirectory()=>previewDirectory??=Directory.CreateDirectory(Path.Combine(Path.GetTempPath(),"Nashi-preview-"+Guid.NewGuid().ToString("N"))).FullName;
+    private string PreviewDirectory()=>previewDirectory??=AtomicFile.CreateTemporaryDirectory("Nashi-preview-");
     internal async Task CreatePreviewProxy()
     {
         if(processedPlayback||processingPreview){time.Text=L10n.Text("Processed preview unavailable for this Windows codec.");return;}

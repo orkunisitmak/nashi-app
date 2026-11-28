@@ -1043,6 +1043,7 @@
 "ENTER A FINITE NUMBER." = "ENTER A FINITE NUMBER.";
 "ENTER A POSITIVE, FINITE TARGET SIZE." = "ENTER A POSITIVE, FINITE TARGET SIZE.";
 "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%." = "ENTER A REDUCTION GREATER THAN 0% AND LESS THAN 100%.";
+"ENTER A VALID TIMECODE OR SECONDS." = "ENTER A VALID TIMECODE OR SECONDS.";
 "ENTER PAGE NUMBERS WITHIN THIS PDF, IN THE DESIRED ORDER." = "ENTER PAGE NUMBERS WITHIN THIS PDF, IN THE DESIRED ORDER.";
 "EPUB LAYOUT" = "EPUB LAYOUT";
 "EPUB layout" = "EPUB layout";
@@ -1079,6 +1080,7 @@
 "Enter a target of at least one byte and less than %lld bytes." = "Enter a target of at least one byte and less than %lld bytes.";
 "Enter a valid number for %@." = "Enter a valid number for %@.";
 "Enter a valid number for %lld." = "Enter a valid number for %lld.";
+"Enter a valid timecode or seconds." = "Enter a valid timecode or seconds.";
 "Enter page numbers within this PDF, in the desired order." = "Enter page numbers within this PDF, in the desired order.";
 "Equal clips: %@" = "Equal clips: %@";
 "Equal clips: %lld" = "Equal clips: %lld";

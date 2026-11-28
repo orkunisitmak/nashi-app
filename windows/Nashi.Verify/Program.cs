@@ -44,6 +44,7 @@ try
     Check(AppLocalization.Turkish.ContainsKey("Pause Nashi shortcuts in these applications"), "App exclusion Settings title was not translated");
     var languageRoot=Path.Combine(root,"Language checks");Directory.CreateDirectory(languageRoot);
     try{LocalizationChecks.Run(Check,languageRoot);}finally{Directory.Delete(languageRoot,true);}
+    MediaTimecodeChecks.Run(Check);
     await DownloadChecks.Run(Check,root);
     ToolSetupChecks.Run(Check,root);
     var parityRoot=Path.Combine(root,"Parity");Directory.CreateDirectory(parityRoot);try{ParityChecks.Run(Check,parityRoot);}finally{Directory.Delete(parityRoot,true);}
@@ -424,4 +425,3 @@ sealed class InlineProgress(Action<OperationProgress> report):IProgress<Operatio
 {
     public void Report(OperationProgress value)=>report(value);
 }
-
