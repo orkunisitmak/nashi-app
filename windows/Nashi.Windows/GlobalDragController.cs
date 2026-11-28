@@ -58,13 +58,17 @@ public sealed class GlobalDragController:IDisposable
     }
     private IntPtr Hook(IntPtr window,int message,IntPtr w,IntPtr l,ref bool handled){if(message==0x0312&&w.ToInt32()==7701){if(preferences.Value.Enabled&&!IsExcludedApplication()&&OwnerAvailable)link();handled=true;}return IntPtr.Zero;}
     private static bool Held(int key)=>(GetAsyncKeyState(key)&0x8000)!=0;
+    private string? openedKind;
     private string Chord()=>DragChord.Name(Held(0x11),Held(0x10),Held(0x12));
     private void Poll()
     {
         UpdateShortcut();if(shortcutEnabled!=true||!OwnerAvailable){wheel?.Close();wheel=null;down=false;opened=false;hint=null;return;}var held=PrimaryMouseButton.IsPressed;GetCursorPos(out var point);
         if(!held){if(down){down=false;opened=false;hint=null;if(wheel is {IsVisible:true}){var old=wheel;var dismiss=new System.Windows.Threading.DispatcherTimer{Interval=TimeSpan.FromMilliseconds(150)};dismiss.Tick+=(_,_)=>{dismiss.Stop();if(old.IsVisible)old.Close();};dismiss.Start();}wheel=null;}return;}
-        if(!down){down=true;start=point;opened=false;hint=null;return;}if(opened||Math.Abs(point.X-start.X)+Math.Abs(point.Y-start.Y)<10)return;
-        hint??=Task.Run(()=>LinkAt(start));var chord=Chord();var p=preferences.Value;var kind=DragChord.Wheel(chord,p);if(kind is null)return;opened=true;if(InMoveSize())return;
+        if(!down){down=true;start=point;opened=false;openedKind=null;hint=null;return;}
+        // Holding another shortcut while the wheel is open switches it in place (Ctrl, Shift and Alt each pick their own wheel).
+        if(opened){var next=DragChord.Wheel(Chord(),preferences.Value);if(next is not null&&next!=openedKind&&wheel is {IsVisible:true}){wheel.SwitchMode(next);openedKind=next;}return;}
+        if(Math.Abs(point.X-start.X)+Math.Abs(point.Y-start.Y)<10)return;
+        hint??=Task.Run(()=>LinkAt(start));var chord=Chord();var p=preferences.Value;var kind=DragChord.Wheel(chord,p);if(kind is null)return;opened=true;openedKind=kind;if(InMoveSize())return;
         var sourceHint=hint;wheel=new GlobalDropWheel(kind,p.WheelScale,(data,id)=>dropped(id,data,sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null),()=>sourceHint?.IsCompletedSuccessfully==true?sourceHint.Result:null,()=>sourceHint?.IsCompleted!=false);wheel.Show();DesktopGeometry.PlaceWheel(wheel,point.X,point.Y,WheelPresentation.Diameter*p.WheelScale);
     }
     private static string? LinkAt(NativePoint point)
@@ -104,9 +108,11 @@ internal sealed class GlobalDropWheel:Window
     internal static bool PassesThrough(bool revealed,int choices,bool noTools,bool hintSettled)=>!revealed&&choices==0&&!noTools&&hintSettled;
     private volatile bool passThrough;internal bool PassingThrough{get{var handle=new WindowInteropHelper(this).Handle;return handle!=IntPtr.Zero&&(WindowManagement.Native.GetWindowLongPtr(handle,-20).ToInt64()&0x20)!=0;}}
     internal void PassThrough(){var handle=new WindowInteropHelper(this).Handle;if(handle==IntPtr.Zero||PassingThrough)return;_=WindowManagement.Native.SetWindowLongPtr(handle,-20,new nint(WindowManagement.Native.GetWindowLongPtr(handle,-20).ToInt64()|0x20));passThrough=PassingThrough;}
+    // A wheel that had nothing to offer passed the drag through; it has to take events again before another mode can build its choices.
+    private void ClearPassThrough(){if(!PassingThrough)return;var handle=new WindowInteropHelper(this).Handle;_=WindowManagement.Native.SetWindowLongPtr(handle,-20,new nint(WindowManagement.Native.GetWindowLongPtr(handle,-20).ToInt64()&~0x20L));passThrough=PassingThrough;}
     private void Settle(bool settled){if(choices.Count>0||noTools)Reveal();else if(PassesThrough(Revealed,choices.Count,noTools,settled))PassThrough();}
     private void Reveal(){if(Revealed)return;Revealed=true;foreach(var label in canvas.Children.OfType<Border>())label.Visibility=Visibility.Visible;WheelPresentation.Animate(this,HiddenOpacity);if(Opacity<1&&!HasAnimatedProperties)Opacity=1;}
-    private readonly string mode;private readonly Action<IDataObject,string> chosen;private readonly Func<string?> hint;private readonly Func<bool> hintSettled;private readonly Canvas canvas=new(){Width=540,Height=540,Background=Brushes.Transparent,AllowDrop=true};private string selection="";private IReadOnlyList<ToolChoice> choices=[];private string[] draggedFiles=[],resolvedFiles=[];
+    private string mode;private readonly Action<IDataObject,string> chosen;private readonly Func<string?> hint;private readonly Func<bool> hintSettled;private readonly Canvas canvas=new(){Width=540,Height=540,Background=Brushes.Transparent,AllowDrop=true};private string selection="";private IReadOnlyList<ToolChoice> choices=[];private string[] draggedFiles=[],resolvedFiles=[];
     public GlobalDropWheel(string mode,double scale,Action<IDataObject,string> chosen,Func<string?> hint,Func<bool> hintSettled)
     {
         this.mode=mode;this.chosen=chosen;this.hint=hint;this.hintSettled=hintSettled;Title="Nashi · "+mode;Width=Height=WheelPresentation.Diameter*scale;WindowStyle=WindowStyle.None;AllowsTransparency=true;Background=Brushes.Transparent;ResizeMode=ResizeMode.NoResize;ShowInTaskbar=false;ShowActivated=false;Topmost=true;AllowDrop=true;Content=new Viewbox{Child=canvas};Build([]);Opacity=HiddenOpacity;
@@ -114,8 +120,11 @@ internal sealed class GlobalDropWheel:Window
         // so e.Effects is still None even for a valid file drag.
         DragEnter+=(_,e)=>{entered++;var settled=hintSettled();Track(e);Settle(settled);};
         DragOver+=(_,e)=>{over++;var settled=hintSettled();Track(e);Settle(settled);};
-        Drop+=(_,e)=>{dropCount++;Track(e);var id=selection;Close();if(id.Length>0)chosen(e.Data,id);e.Handled=true;};PreviewKeyDown+=(_,e)=>{if(e.Key==Key.Escape){Close();e.Handled=true;}};
+        Drop+=(_,e)=>{dropCount++;var stale=switched;Track(e);var id=stale?"":selection;if(stale)e.Effects=DragDropEffects.None;Close();if(id.Length>0)chosen(e.Data,id);e.Handled=true;};PreviewKeyDown+=(_,e)=>{if(e.Key==Key.Escape){Close();e.Handled=true;}};
     }
+    // After a switch the wheel still shows the old mode until the next drag event rebuilds it, so a drop in between must not run the old selection.
+    private bool switched;
+    internal void SwitchMode(string next){if(mode==next)return;mode=next;Title="Nashi · "+next;selection="";Highlight(-1);switched=true;ClearPassThrough();}
     private void Track(DragEventArgs e)
     {
         // DragOver fires on every pointer move, so shortcuts are only resolved when the dragged files change.
@@ -132,7 +141,7 @@ internal sealed class GlobalDropWheel:Window
         var p=e.GetPosition(canvas);var distance=(p-new Point(270,270)).Length;
         if(distance<108||distance>250||choices.Count==0){selection="";Highlight(-1);}
         else{var angle=(Math.Atan2(p.Y-270,p.X-270)*180/Math.PI-WheelPresentation.StartAngle(choices.Count)+360+180d/choices.Count)%360;var index=(int)(angle/(360d/choices.Count));var id=choices[index].Id;if(id!=selection){selection=id;Feedback.Play();}Highlight(index);}
-        e.Effects=selection.Length>0?DragDropEffects.Copy:DragDropEffects.None;e.Handled=true;
+        switched=false;e.Effects=selection.Length>0?DragDropEffects.Copy:DragDropEffects.None;e.Handled=true;
     }
     private WebMediaPayload? Payload(IDataObject data)=>DragPayload.Parse(data,hint());
     private IReadOnlyList<ToolChoice> Choices(string[] files,WebMediaPayload? dataLink,WebMediaPayload? web)
