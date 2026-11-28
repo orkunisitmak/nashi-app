@@ -65,6 +65,15 @@ public partial class App:Application
             }catch(Exception error){Console.Error.WriteLine(error.Message);Shutdown(64);}
             return;
         }
+        if(e.Args.Contains("--smoke-test-background"))
+        {
+            // Convert › Remove background alone; it sends no desktop input.
+            IsSmokeTest=true;ShutdownMode=ShutdownMode.OnExplicitShutdown;
+            var directory=Environment.GetEnvironmentVariable("NASHI_SMOKE_DIRECTORY")??Path.Combine(Path.GetTempPath(),"Nashi-Background-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(directory);
+            var checks=0;var failures=new List<string>();
+            try{BackgroundChecks.Run(directory,(passed,message)=>{if(!passed)throw new Exception(message);checks++;});}catch(Exception error){failures.Add(error.ToString());}
+            File.WriteAllText(Path.Combine(directory,"background.json"),System.Text.Json.JsonSerializer.Serialize(new{checks,failures}));Shutdown(failures.Count==0?0:1);return;
+        }
         if(e.Args.Contains("--window-management-fixture"))
         {
             var key=Array.IndexOf(e.Args,"--minimum-window-width");var minimum=key>=0&&key+1<e.Args.Length&&int.TryParse(e.Args[key+1],out var parsed)?Math.Clamp(parsed,160,1200):160;
