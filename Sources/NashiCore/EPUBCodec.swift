@@ -92,8 +92,18 @@ enum EPUBCodec {
                 guard isInside(target, root: root) else { throw NashiError.invalidInput("An EPUB image points outside its package.") }
                 image.stringValue = target.absoluteString
             }
-            let body = try chapter.nodes(forXPath: "//*[local-name()='body']").first
-            if let body { chapters.append((body.children ?? []).map(\.xmlString).joined()) }
+            guard let body = try chapter.nodes(forXPath: "//*[local-name()='body']").first as? XMLElement else { continue }
+            let content = (body.children ?? []).map(\.xmlString).joined()
+            let sources = [body, chapter.rootElement()].compactMap { $0 }
+            let language = sources.lazy.compactMap {
+                $0.attribute(forName: "xml:lang")?.stringValue ?? $0.attribute(forName: "lang")?.stringValue
+            }.first
+            let direction = sources.lazy.compactMap { $0.attribute(forName: "dir")?.stringValue?.lowercased() }
+                .first { ["ltr", "rtl", "auto"].contains($0) }
+            let attributes = (language.map { " lang=\"\(DocumentText.escapeXML($0))\"" } ?? "")
+                + (direction.map { " dir=\"\($0)\"" } ?? "")
+            // Writer inherits lang and dir from a div, but ignores them on an HTML5 section.
+            chapters.append(attributes.isEmpty ? content : "<div\(attributes)>\(content)</div>")
         }
         guard !chapters.isEmpty else { throw NashiError.invalidInput("The EPUB contains no readable chapters.") }
         let title = try package.nodes(forXPath: "//*[local-name()='metadata']/*[local-name()='title']").first?.stringValue ?? input.deletingPathExtension().lastPathComponent
