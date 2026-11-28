@@ -1,4 +1,5 @@
 import AppKit
+import NashiCore
 import QuickLookUI
 import QuickLookThumbnailing
 import UniformTypeIdentifiers
@@ -36,6 +37,7 @@ enum FloatShelfViewMode:Int { case icons,list }
     private var typeBuffer=""
     private var lastTypeTime:TimeInterval=0
     private var isClosed=false
+    private var draggedIDs:Set<UUID>=[]
     private var languageObserver:NSObjectProtocol?
     private var selectedIndices:[Int] { collection.selectionIndexPaths.map(\.item).filter{items.indices.contains($0)}.sorted() }
     private var actionURLs:[URL] { selectedURLs.isEmpty ? urls:selectedURLs }
@@ -110,6 +112,7 @@ enum FloatShelfViewMode:Int { case icons,list }
         carryGrip.urls={ [weak self] in self?.urls ?? [] }
         carryGrip.contextMenu={ [weak self] in self?.makeContextMenu() }
         carryGrip.onClick={ [weak self] in self?.toggleExpanded() }
+        carryGrip.onDragBegan={ [weak self] in self?.draggedIDs=Set(self?.items.map(\.id) ?? []) }
         carryGrip.onDragEnded={ [weak self] in self?.interacting=false;self?.refreshAfterDrag();self?.scheduleHover(false) }
         carryGrip.onInteraction={ [weak self] in self?.interacting=$0;self?.hoverTask?.cancel() }
         carryGrip.onMoveEnded={ [weak self] in self?.snapAfterMove() }
@@ -264,6 +267,9 @@ enum FloatShelfViewMode:Int { case icons,list }
     func collectionView(_ collectionView:NSCollectionView,didDeselectItemsAt indexPaths:Set<IndexPath>) { updateLabels();updatePreviewIfVisible() }
     func collectionView(_ collectionView:NSCollectionView,canDragItemsAt indexPaths:Set<IndexPath>,with event:NSEvent)->Bool { !indexPaths.isEmpty }
     func collectionView(_ collectionView:NSCollectionView,pasteboardWriterForItemAt indexPath:IndexPath)->NSPasteboardWriting? { items[indexPath.item].url as NSURL }
+    func collectionView(_ collectionView:NSCollectionView,draggingSession session:NSDraggingSession,willBeginAt screenPoint:NSPoint,forItemsAt indexPaths:Set<IndexPath>) {
+        draggedIDs=Set(indexPaths.map(\.item).filter{items.indices.contains($0)}.map{items[$0].id})
+    }
     func collectionView(_ collectionView:NSCollectionView,draggingSession session:NSDraggingSession,endedAt screenPoint:NSPoint,dragOperation operation:NSDragOperation) { refreshAfterDrag() }
     func collectionView(_ collectionView:NSCollectionView,validateDrop draggingInfo:NSDraggingInfo,proposedIndexPath proposedDropIndexPath:AutoreleasingUnsafeMutablePointer<NSIndexPath>,dropOperation proposedDropOperation:UnsafeMutablePointer<NSCollectionView.DropOperation>)->NSDragOperation {
         if let source=draggingInfo.draggingSource as? NSCollectionView,source === collectionView { return [] }
@@ -274,8 +280,14 @@ enum FloatShelfViewMode:Int { case icons,list }
         let values=ShelfDropSurface.fileURLs(draggingInfo.draggingPasteboard);guard !values.isEmpty else { return false };append(values);return true
     }
     private func refreshAfterDrag() {
-        let selected=Set(selectedIndices.map{items[$0].id})
+        let selected=Set(selectedIndices.map{items[$0].id}),count=items.count,dragged=draggedIDs;draggedIDs=[]
+        // The destination may have moved or trashed the dragged files. Only those are checked,
+        // so a file on an unmounted volume that was not part of this drag keeps its place and scope.
+        let vanished=FloatShelfDrag.vanished(items.map{($0.id,$0.url)},dragged:dragged)
+        for item in items where vanished.contains(item.id) { item.releaseScope() }
+        items.removeAll{vanished.contains($0.id)}
         reload(preserving:selected)
+        if isExpanded,items.count != count { setExpanded(true,forceLayout:true) }
     }
 
     private func handleKey(_ event:NSEvent)->Bool {
@@ -533,6 +545,7 @@ private final class ShelfPanel:NSPanel {
 /// The files are the drag target; the visible paperclip is a separate window grip.
 @MainActor private final class ShelfCarryGrip:NSView,NSDraggingSource {
     var urls:(()->[URL])?
+    var onDragBegan:(()->Void)?
     var onDragEnded:(()->Void)?
     var contextMenu:(()->NSMenu?)?
     override func menu(for event:NSEvent)->NSMenu? { contextMenu?() }
@@ -601,7 +614,7 @@ private final class ShelfPanel:NSPanel {
             let item=NSDraggingItem(pasteboardWriter:url as NSURL),image=(thumbnails[url] ?? NSWorkspace.shared.icon(forFile:url.path)).copy() as! NSImage;image.size=NSSize(width:42,height:42)
             item.setDraggingFrame(NSRect(x:point.x+CGFloat(index%5)*3,y:point.y+CGFloat(index%5)*3,width:42,height:42),contents:image);return item
         }
-        sessionActive=true;beginDraggingSession(with:items,event:event,source:self)
+        sessionActive=true;onDragBegan?();beginDraggingSession(with:items,event:event,source:self)
     }
     func draggingSession(_ session:NSDraggingSession,sourceOperationMaskFor context:NSDraggingContext)->NSDragOperation { [.copy,.move,.link] }
     func draggingSession(_ session:NSDraggingSession,endedAt screenPoint:NSPoint,operation:NSDragOperation) { sessionActive=false;onInteraction?(false);onDragEnded?() }
