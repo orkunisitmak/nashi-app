@@ -793,6 +793,7 @@
 "Convert · while dragging" = "Dönüştür · sürüklerken";
 "Convert, fine-tune, and send them on their way." = "Dönüştür, ince ayar yap ve paylaş.";
 "Converting downloaded audio…" = "İndirilen ses dönüştürülüyor…";
+"Converting video for QuickTime…" = "Video QuickTime için dönüştürülüyor…";
 "Copied all" = "Tümü kopyalandı";
 "Copied link" = "Kopyalanan bağlantı";
 "Copy" = "Kopyala";
@@ -2675,6 +2676,7 @@
 "The downloaded file contains no video." = "İndirilen dosyada video yok.";
 "The downloaded file has no readable video." = "İndirilen dosyada okunabilir video yok.";
 "The downloaded tools are incomplete. Please try setup again." = "İndirilen araçlar eksik. Kurulumu tekrar dene.";
+"The downloaded video could not be converted for QuickTime." = "İndirilen video QuickTime için dönüştürülemedi.";
 "The file has no audio track." = "Dosyada ses izi yok.";
 "The file has no playable audio or video track." = "Dosyada oynatılabilir bir ses veya video izi yok.";
 "The file has no video track." = "Dosyada video izi yok.";
