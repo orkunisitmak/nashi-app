@@ -8,7 +8,9 @@ public struct WebPhoto:Identifiable,Sendable {
 }
 
 enum InstagramPhotos {
-    static func parse(_ data:Data,url:URL) throws -> WebMediaInfo {
+    /// Returns nil when the post holds only videos: saved and grid reels are shared as /p/ links,
+    /// so the caller inspects such a post as video instead of failing as a photo post.
+    static func parse(_ data:Data,url:URL) throws -> WebMediaInfo? {
         guard WebMediaDragPayload.isInstagramPhotoPost(url),
               let root=try JSONSerialization.jsonObject(with:data) as? [String:Any] else {
             throw NashiError.failed("The post did not return readable photo details.")
@@ -40,7 +42,7 @@ enum InstagramPhotos {
             }
             photos.append(WebPhoto(id:index+1,url:best.0,width:best.1,height:best.2))
         }
-        guard !photos.isEmpty else { throw NashiError.unsupported("This post contains videos, not photos. Use its Reel link to download video.") }
+        guard !photos.isEmpty else { return nil }
         return WebMediaInfo(url:url,title:photos.count==1 ? "Instagram photo":"Instagram photos",kind:.image,site:"Instagram",duration:nil,heights:[],direct:false,filename:nil,byteCount:nil,photos:photos,skippedVideoCount:videos)
     }
 

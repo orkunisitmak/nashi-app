@@ -184,7 +184,7 @@ struct WebDownloadView:View {
                     if state.working,!model.downloading { Text("Another task is running. Your link is ready when it finishes.").font(.caption).foregroundStyle(.secondary) }
                     VStack(alignment:.leading,spacing:7) {
                         LText(model.shortcutAvailable ? "Copy a link → ⌃⇧D, or drag it with ⌘.":"Copy a link, then choose Download Link from the Nashi menu.").font(.caption)
-                        Text("Instagram photo posts open a photo selection. For videos, use the share link; for other photos, drag the image or use Copy Image Address. Public media only; login-required and protected items may be unavailable.").font(.caption).foregroundStyle(.secondary).fixedSize(horizontal:false,vertical:true)
+                        Text("Instagram posts open a photo selection, or video when the post is a reel. For other photos, drag the image or use Copy Image Address. Public media only; login-required and protected items may be unavailable.").font(.caption).foregroundStyle(.secondary).fixedSize(horizontal:false,vertical:true)
                     }
                 }.padding(24)
             }

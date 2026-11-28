@@ -2,6 +2,9 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 namespace Nashi.Core;
 public sealed record WebPhoto(int Id,string Url,int Width=0,int Height=0);
+/// A /p/ link is also how Instagram shares a saved or grid reel, so a "photo post" can hold only videos.
+/// Callers switch such a post to video or audio instead of asking for its /reel/ link.
+public sealed class InstagramVideoPostException():Exception("This post is a video. Choose video or audio to download it.");
 public static class WebPhotos
 {
     public static WebPhoto[] Instagram(string json)
@@ -9,7 +12,7 @@ public static class WebPhotos
         using var doc=JsonDocument.Parse(json);var root=doc.RootElement;var entries=root.TryGetProperty("entries",out var collection)&&collection.ValueKind==JsonValueKind.Array?collection.EnumerateArray().ToArray():[root];if(entries.Length==0||entries.Length>50)throw new InvalidDataException("Choose one Instagram post with up to 50 items.");var photos=new List<WebPhoto>();
         for(var n=0;n<entries.Length;n++)
         {
-            var entry=entries[n];if(entry.TryGetProperty("duration",out var duration)&&duration.ValueKind==JsonValueKind.Number&&duration.TryGetDouble(out var seconds)&&seconds>0)continue;if(entry.TryGetProperty("formats",out var formats)&&formats.ValueKind==JsonValueKind.Array&&formats.EnumerateArray().Any(f=>f.ValueKind==JsonValueKind.Object&&f.TryGetProperty("url",out _)))continue;
+            var entry=entries[n];if(IsVideo(entry))continue;
             if(!entry.TryGetProperty("thumbnails",out var thumbs)||thumbs.ValueKind!=JsonValueKind.Array)throw new InvalidDataException("A photo is unavailable. Try a fresh public post link.");
             var variants=new List<(WebPhoto Photo,int Uncropped,int Unscaled,int Area,int Position)>();var i=0;
             foreach(var thumbnail in thumbs.EnumerateArray())
@@ -20,8 +23,24 @@ public static class WebPhotos
             }
             if(variants.Count==0)throw new InvalidDataException("A photo is unavailable. Try a fresh public post link.");photos.Add(variants.OrderBy(v=>v.Uncropped).ThenBy(v=>v.Unscaled).ThenBy(v=>v.Area).ThenBy(v=>v.Position).Last().Photo);
         }
-        if(photos.Count==0)throw new InvalidDataException("This post contains videos. Use its Reel link to download video.");return photos.ToArray();
+        if(photos.Count==0)throw new InstagramVideoPostException();return photos.ToArray();
     }
+    /// The 1-based playlist items of a post's videos, so video and audio downloads skip its photos;
+    /// null when the link is a single video rather than a carousel. A post without videos is refused.
+    public static int[]? InstagramVideoItems(string json)
+    {
+        using var doc=JsonDocument.Parse(json);var root=doc.RootElement;
+        if(!root.TryGetProperty("entries",out var collection)||collection.ValueKind!=JsonValueKind.Array)return IsVideo(root)?null:throw new InvalidDataException("This post has no videos. Choose photos to download it.");
+        var entries=collection.EnumerateArray().ToArray();if(entries.Length==0||entries.Length>50)throw new InvalidDataException("Choose one Instagram post with up to 50 items.");
+        var items=Enumerable.Range(1,entries.Length).Where(n=>IsVideo(entries[n-1])).ToArray();return items.Length>0?items:throw new InvalidDataException("This post has no videos. Choose photos to download it.");
+    }
+    /// The metadata of a post's first video item, or of the post itself when it is a single item.
+    public static string InstagramVideoEntry(string json)
+    {
+        var items=InstagramVideoItems(json);if(items is null)return json;
+        using var doc=JsonDocument.Parse(json);return doc.RootElement.GetProperty("entries")[items[0]-1].GetRawText();
+    }
+    private static bool IsVideo(JsonElement entry)=>entry.ValueKind==JsonValueKind.Object&&(entry.TryGetProperty("duration",out var duration)&&duration.ValueKind==JsonValueKind.Number&&duration.TryGetDouble(out var seconds)&&seconds>0||entry.TryGetProperty("formats",out var formats)&&formats.ValueKind==JsonValueKind.Array&&formats.EnumerateArray().Any(f=>f.ValueKind==JsonValueKind.Object&&f.TryGetProperty("url",out _)));
     public static async Task<string> DownloadImageAsync(string url,string directory,IProgress<OperationProgress>? progress,CancellationToken token,string name="Image")
     {
         var uri=WebDownload.Validate(url);using var handler=new HttpClientHandler{AllowAutoRedirect=false};using var client=new HttpClient(handler){Timeout=TimeSpan.FromMinutes(10)};client.DefaultRequestHeaders.UserAgent.ParseAdd("Nashi");

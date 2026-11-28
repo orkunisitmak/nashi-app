@@ -12,9 +12,10 @@ final class InstagramPhotosTests:XCTestCase {
         ["formats":[["url":"https://scontent.cdninstagram.com/video.mp4"]],
          "thumbnails":[["url":"https://scontent.cdninstagram.com/video-cover.jpg","width":1080,"height":1920]]]
     }
-    private func parse(_ value:[String:Any]) throws -> WebMediaInfo {
+    private func parseOptional(_ value:[String:Any]) throws -> WebMediaInfo? {
         try InstagramPhotos.parse(JSONSerialization.data(withJSONObject:value),url:post)
     }
+    private func parse(_ value:[String:Any]) throws -> WebMediaInfo { try XCTUnwrap(parseOptional(value)) }
     func testMixedCarouselKeepsPhotosInOrderWithoutVideoCovers() throws {
         let info=try parse(["entries":[photo("first"),video,photo("third")]])
         XCTAssertEqual(info.kind,.image);XCTAssertEqual(info.modes,[.original])
@@ -35,8 +36,10 @@ final class InstagramPhotosTests:XCTestCase {
         let info=try parse(root)
         XCTAssertEqual(URLComponents(url:info.photos[0].url,resolvingAgainstBaseURL:false)?.queryItems?.first?.value,"dst-jpg_e35_tt6")
     }
-    func testVideoOnlyPostCannotBeDownloadedAsPhotoCovers() throws {
-        XCTAssertThrowsError(try parse(["entries":[video,video]]))
+    func testVideoOnlyPostIsLeftForVideoInspectionNotPhotoCovers() throws {
+        // Saved reels open as /p/ links; their covers must not become a photo album.
+        XCTAssertNil(try parseOptional(["entries":[video,video]]))
+        XCTAssertNil(try parseOptional(video))
     }
     func testMissingOrUnsafePhotoDoesNotSilentlyReturnPartialGallery() throws {
         for url in ["file:///etc/passwd","https://fbcdn.net.evil.example/a.jpg","https://user:secret@scontent.cdninstagram.com/a.jpg"] {
@@ -56,6 +59,18 @@ final class InstagramPhotosTests:XCTestCase {
             } catch {}
             // Not even the destination folder the failed download created is left.
             XCTAssertFalse(FileManager.default.fileExists(atPath:destination.path))
+        }
+    }
+    func testOptInSavedReelPostInspectsAndDownloadsAsVideo() async throws {
+        guard let text=ProcessInfo.processInfo.environment["NASHI_TEST_INSTAGRAM_REEL_POST"] else { throw XCTSkip("Live public Instagram check is opt-in") }
+        let info=try await WebDownloadEngine.inspect(try WebDownloadEngine.link(text))
+        XCTAssertTrue(info.photos.isEmpty);XCTAssertEqual(info.kind,.video);XCTAssertEqual(info.modes,[.video,.audioMP3])
+        for mode:WebDownloadMode in [.video,.audioMP3] {
+            let destination=FileManager.default.temporaryDirectory.appendingPathComponent("Nashi-Instagram-Reel-\(UUID().uuidString)")
+            defer{try? FileManager.default.removeItem(at:destination)}
+            let files=try await WebDownloadEngine.download(info,mode:mode,maximumHeight:nil,destination:destination,progress:{_,_ in})
+            XCTAssertFalse(files.isEmpty)
+            XCTAssertEqual(Set(files.map{$0.pathExtension.lowercased()}),[mode == .video ? "mp4":"mp3"])
         }
     }
     func testOptInRealCarouselDownloadsEveryPhotoInOrder() async throws {
