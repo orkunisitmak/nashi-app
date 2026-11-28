@@ -46,6 +46,30 @@ final class EPUBAuditRegressionTests: XCTestCase {
         XCTAssertTrue(try convertedText(epub).contains("Second chapter Café déjà vu — résumé"))
     }
 
+    func testCreatedBookKeepsUTF8TextWithoutMetaCharset() throws {
+        let html = root.appendingPathComponent("Plain UTF8.html")
+        try "<!DOCTYPE html><html><head><title>Türkçe</title></head><body><p>Şişli café — Türkçe</p></body></html>".write(to: html, atomically: true, encoding: .utf8)
+        let epub = root.appendingPathComponent("Plain UTF8.epub")
+        try EPUBCodec.create(fromHTML: html, title: "Book", at: epub, token: .init())
+        let package = root.appendingPathComponent("Created UTF8", isDirectory: true)
+        try ArchiveCodec.extract(epub, into: package, token: .init())
+        let xml = try XMLDocument(contentsOf: package.appendingPathComponent("OEBPS/book.xhtml"), options: .nodeLoadExternalEntitiesNever)
+        XCTAssertEqual(try xml.nodes(forXPath: "//*[local-name()='p']").first?.stringValue?.trimmingCharacters(in: .whitespacesAndNewlines), "Şişli café — Türkçe")
+    }
+
+    func testCreatedBookKeepsDeclaredLegacyCharset() throws {
+        let html = root.appendingPathComponent("Legacy Windows1254.html")
+        let source = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=windows-1254\"></head><body><p>Şişli İğne</p></body></html>"
+        let encoding = String.Encoding(rawValue: CFStringConvertEncodingToNSStringEncoding(CFStringEncoding(CFStringEncodings.windowsLatin5.rawValue)))
+        try XCTUnwrap(source.data(using: encoding)).write(to: html)
+        let epub = root.appendingPathComponent("Legacy Windows1254.epub")
+        try EPUBCodec.create(fromHTML: html, title: "Book", at: epub, token: .init())
+        let package = root.appendingPathComponent("Created Windows1254", isDirectory: true)
+        try ArchiveCodec.extract(epub, into: package, token: .init())
+        let xml = try XMLDocument(contentsOf: package.appendingPathComponent("OEBPS/book.xhtml"), options: .nodeLoadExternalEntitiesNever)
+        XCTAssertEqual(try xml.nodes(forXPath: "//*[local-name()='p']").first?.stringValue?.trimmingCharacters(in: .whitespacesAndNewlines), "Şişli İğne")
+    }
+
     func testCreatedBookStaysWellFormedWithForbiddenCharacterReferences() throws {
         let html = root.appendingPathComponent("Office export.html")
         try "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\"><html><head><meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\"/><title>x</title></head><body><p title=\"x&#11;y\">a&#12;b&#x1F; Şişli café</p></body></html>".write(to: html, atomically: true, encoding: .utf8)

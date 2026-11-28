@@ -114,7 +114,17 @@ enum EPUBCodec {
         try fm.createDirectory(at: oebps, withIntermediateDirectories: true)
         try "application/epub+zip".write(to: work.appendingPathComponent("mimetype"), atomically: true, encoding: .utf8)
         try "<?xml version=\"1.0\"?><container version=\"1.0\" xmlns=\"urn:oasis:names:tc:opendocument:xmlns:container\"><rootfiles><rootfile full-path=\"OEBPS/content.opf\" media-type=\"application/oebps-package+xml\"/></rootfiles></container>".write(to: meta.appendingPathComponent("container.xml"), atomically: true, encoding: .utf8)
-        let html = try XMLDocument(contentsOf: input, options: [.documentTidyHTML, .nodePreserveWhitespace, .nodeLoadExternalEntitiesNever])
+        // Decode text before handing it to libxml2's HTML parser; XMLDocument(contentsOf:)
+        // otherwise drops non-ASCII characters when no UTF-8 meta charset is present.
+        let htmlOptions: XMLNode.Options = [.documentTidyHTML, .nodePreserveWhitespace, .nodeLoadExternalEntitiesNever]
+        let rawHTML = try Data(contentsOf: input)
+        let html: XMLDocument
+        if let utf8 = String(data: rawHTML, encoding: .utf8) {
+            let text = utf8.hasPrefix("\u{FEFF}") ? String(utf8.dropFirst()) : utf8
+            html = try XMLDocument(xmlString: text, options: htmlOptions)
+        } else {
+            html = try XMLDocument(contentsOf: input, options: htmlOptions)
+        }
         let htmlRoot=input.deletingLastPathComponent().standardizedFileURL.resolvingSymlinksInPath()
         let htmlRootPrefix=htmlRoot.path.hasSuffix("/") ? htmlRoot.path:htmlRoot.path+"/"
         var imageManifestParts:[String]=[],imageIndex = 0
